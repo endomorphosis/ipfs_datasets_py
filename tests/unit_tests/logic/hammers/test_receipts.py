@@ -370,9 +370,7 @@ class TestHammerReceiptConstruction:
             status=SubgoalStatus.PENDING,
             content_digest=compute_content_digest({"statement": "m = m"}),
         )
-        bad_plan = make_decomposition_plan(
-            request_id="other-req", subgoals=[other_subgoal]
-        )
+        bad_plan = make_decomposition_plan(request_id="other-req", subgoals=[other_subgoal])
         with pytest.raises(rc.ReceiptValidationError, match="request_id"):
             rc.HammerReceipt(result=result, decomposition_plan=bad_plan)
 
@@ -400,9 +398,7 @@ class TestReceiptDigest:
     def test_receipt_id_stable_across_notes_and_metadata(self):
         components = make_receipt_components()
         receipt_a = rc.HammerReceipt(**components, notes=["note A"], metadata={"x": 1})
-        receipt_b = rc.HammerReceipt(
-            **components, notes=["note B", "note C"], metadata={"y": 2}
-        )
+        receipt_b = rc.HammerReceipt(**components, notes=["note B", "note C"], metadata={"y": 2})
         assert receipt_a.receipt_id == receipt_b.receipt_id
 
     def test_compute_receipt_digest_matches_receipt_id(self):
@@ -520,9 +516,7 @@ class TestPublishableView:
         blob = json.dumps(published)
         assert FAKE_API_KEY not in blob
         # the request metadata credential key is fully replaced.
-        assert published["result"]["request"]["metadata"]["api_key"] == (
-            rc._CREDENTIAL_PLACEHOLDER
-        )
+        assert published["result"]["request"]["metadata"]["api_key"] == (rc._CREDENTIAL_PLACEHOLDER)
         assert published["metadata"]["secret_token"] == rc._CREDENTIAL_PLACEHOLDER
         assert rc._CREDENTIAL_PLACEHOLDER in published["notes"][0]
 

@@ -22,7 +22,9 @@ class WorldIdBindingError(ValueError):
 
 
 def _canonical_bytes(value: Mapping[str, Any]) -> bytes:
-    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("utf-8")
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode(
+        "utf-8"
+    )
 
 
 def _required(value: object, name: str) -> str:
@@ -155,9 +157,13 @@ class WorldIdBindingStore:
         if selected_environment not in {"staging", "production"}:
             raise WorldIdBindingError("environment must be staging or production")
         raw = str(raw_nullifier or "").strip()
-        replay_commitment = self.nullifier_replay_commitment(
-            relying_party, selected_action, selected_environment, raw
-        ) if raw else ""
+        replay_commitment = (
+            self.nullifier_replay_commitment(
+                relying_party, selected_action, selected_environment, raw
+            )
+            if raw
+            else ""
+        )
         normalized_ref = str(nullifier_ref or "").strip()
         if raw:
             normalized_ref = self.nullifier_reference(
@@ -200,7 +206,11 @@ class WorldIdBindingStore:
             existing_ref_id = self.binding_ids_by_nullifier.get(normalized_ref)
             if existing_ref_id:
                 existing = self.bindings[existing_ref_id]
-                if existing.wallet_id == wallet and existing.rp_id == relying_party and existing.action == selected_action:
+                if (
+                    existing.wallet_id == wallet
+                    and existing.rp_id == relying_party
+                    and existing.action == selected_action
+                ):
                     return existing, False
                 raise WorldIdBindingError("World ID nullifier reference is already bound")
             now = utc_now()
@@ -258,7 +268,9 @@ class WorldIdBindingStore:
         binding_id = self.binding_ids_by_nullifier.get(str(nullifier_ref or "").strip())
         return self.bindings.get(binding_id) if binding_id else None
 
-    def revoke(self, binding_id: str, *, reason: str = "", now: str | None = None) -> WorldIdBinding:
+    def revoke(
+        self, binding_id: str, *, reason: str = "", now: str | None = None
+    ) -> WorldIdBinding:
         with self._lock:
             binding = self.get(binding_id)
             if binding.status != "revoked":
@@ -266,7 +278,10 @@ class WorldIdBindingStore:
                 binding.status = "revoked"
                 binding.revoked_at = timestamp
                 binding.updated_at = timestamp
-                binding.metadata = {**dict(binding.metadata), "revoked_reason": str(reason or "").strip()}
+                binding.metadata = {
+                    **dict(binding.metadata),
+                    "revoked_reason": str(reason or "").strip(),
+                }
             return binding
 
     def active(self, binding_id: str, *, now_min: int | None = None) -> WorldIdBinding:
@@ -305,14 +320,16 @@ class WorldIdBindingStore:
     def snapshot(self, *, wallet_id: str | None = None) -> dict[str, Any]:
         with self._lock:
             selected = [
-                binding for binding in self.bindings.values()
+                binding
+                for binding in self.bindings.values()
                 if wallet_id is None or binding.wallet_id == wallet_id
             ]
             selected_ids = {binding.binding_id for binding in selected}
             return {
                 "version": self.SNAPSHOT_VERSION,
                 "bindings": [
-                    binding.to_dict() for binding in sorted(selected, key=lambda value: value.binding_id)
+                    binding.to_dict()
+                    for binding in sorted(selected, key=lambda value: value.binding_id)
                 ],
                 "replay_commitments": {
                     commitment: binding_id
@@ -344,9 +361,10 @@ class WorldIdBindingStore:
             "raw_nullifier": _required(raw_nullifier, "raw_nullifier"),
         }
         if self._hmac_key:
-            return "hmac-sha256:" + hmac.new(
-                self._hmac_key, _canonical_bytes(payload), hashlib.sha256
-            ).hexdigest()
+            return (
+                "hmac-sha256:"
+                + hmac.new(self._hmac_key, _canonical_bytes(payload), hashlib.sha256).hexdigest()
+            )
         return "sha256:" + hashlib.sha256(_canonical_bytes(payload)).hexdigest()
 
     def nullifier_reference(

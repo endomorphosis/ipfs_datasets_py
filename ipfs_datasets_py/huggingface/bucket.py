@@ -108,9 +108,7 @@ def _link_header_next_targets(value: Any) -> tuple[str, ...]:
                     parsed_value.append(character)
                     cursor += 1
                 if cursor >= length:
-                    raise HuggingFaceBucketError(
-                        "bucket pagination Link quoted value is malformed"
-                    )
+                    raise HuggingFaceBucketError("bucket pagination Link quoted value is malformed")
                 cursor += 1
                 parameter_value = "".join(parsed_value)
             else:
@@ -127,9 +125,7 @@ def _link_header_next_targets(value: Any) -> tuple[str, ...]:
                         "bucket pagination Link value has multiple rel parameters"
                     )
                 saw_relation = True
-                relations.extend(
-                    relation.casefold() for relation in parameter_value.split()
-                )
+                relations.extend(relation.casefold() for relation in parameter_value.split())
 
         if "next" in relations:
             targets.append(target)
@@ -162,7 +158,9 @@ def _content_length(value: Any) -> int | None:
 
 def _text(value: Any, *, label: str) -> str:
     if not isinstance(value, str) or not value or value.strip() != value:
-        raise HuggingFaceBucketError(f"{label} must be a non-empty string without surrounding whitespace")
+        raise HuggingFaceBucketError(
+            f"{label} must be a non-empty string without surrounding whitespace"
+        )
     if "\x00" in value:
         raise HuggingFaceBucketError(f"{label} must not contain NUL")
     return value
@@ -173,7 +171,11 @@ def _path(value: Any, *, label: str = "path") -> str:
     if "\\" in text:
         raise HuggingFaceBucketError(f"{label} must use POSIX separators")
     parsed = PurePosixPath(text)
-    if parsed.is_absolute() or parsed.as_posix() != text or any(part in {"", ".", ".."} for part in parsed.parts):
+    if (
+        parsed.is_absolute()
+        or parsed.as_posix() != text
+        or any(part in {"", ".", ".."} for part in parsed.parts)
+    ):
         raise HuggingFaceBucketError(f"{label} must be a normalized root-relative POSIX path")
     return text
 
@@ -181,14 +183,18 @@ def _path(value: Any, *, label: str = "path") -> str:
 def _sha256(value: Any) -> str:
     text = _text(value, label="sha256")
     if re.fullmatch(r"[0-9a-f]{64}", text) is None:
-        raise HuggingFaceBucketError("sha256 must be a full 64-character lowercase hexadecimal digest")
+        raise HuggingFaceBucketError(
+            "sha256 must be a full 64-character lowercase hexadecimal digest"
+        )
     return text
 
 
 def _xet_hash(value: Any) -> str:
     text = _text(value, label="xet_hash")
     if re.fullmatch(r"[0-9a-f]{64}", text) is None:
-        raise HuggingFaceBucketError("xet_hash must be a full 64-character lowercase hexadecimal digest")
+        raise HuggingFaceBucketError(
+            "xet_hash must be a full 64-character lowercase hexadecimal digest"
+        )
     return text
 
 
@@ -240,7 +246,11 @@ class HuggingFaceBucketListingObject:
 
     def __post_init__(self) -> None:
         path = _path(self.path)
-        if isinstance(self.size_bytes, bool) or not isinstance(self.size_bytes, int) or self.size_bytes < 0:
+        if (
+            isinstance(self.size_bytes, bool)
+            or not isinstance(self.size_bytes, int)
+            or self.size_bytes < 0
+        ):
             raise HuggingFaceBucketError("size_bytes must be a non-negative integer")
         xet_hash = _xet_hash(self.xet_hash)
         media_type = _text(self.media_type, label="media_type").casefold()
@@ -303,9 +313,13 @@ class HuggingFaceBucketListing:
         try:
             objects = tuple(sorted(self.objects, key=lambda item: item.path))
         except (AttributeError, TypeError) as exc:
-            raise HuggingFaceBucketError("objects must contain HuggingFaceBucketListingObject values") from exc
+            raise HuggingFaceBucketError(
+                "objects must contain HuggingFaceBucketListingObject values"
+            ) from exc
         if any(not isinstance(item, HuggingFaceBucketListingObject) for item in objects):
-            raise HuggingFaceBucketError("objects must contain HuggingFaceBucketListingObject values")
+            raise HuggingFaceBucketError(
+                "objects must contain HuggingFaceBucketListingObject values"
+            )
         paths = [item.path for item in objects]
         if len(paths) != len(set(paths)):
             raise HuggingFaceBucketError("bucket listing paths must be unique")
@@ -386,7 +400,11 @@ class HuggingFaceBucketObject:
 
     def __post_init__(self) -> None:
         path = _path(self.path)
-        if isinstance(self.size_bytes, bool) or not isinstance(self.size_bytes, int) or self.size_bytes < 0:
+        if (
+            isinstance(self.size_bytes, bool)
+            or not isinstance(self.size_bytes, int)
+            or self.size_bytes < 0
+        ):
             raise HuggingFaceBucketError("size_bytes must be a non-negative integer")
         sha256 = _sha256(self.sha256)
         etag = _text(self.etag, label="etag")
@@ -420,7 +438,9 @@ class HuggingFaceBucketObject:
         for field, names in aliases.items():
             present = [name for name in names if name in value]
             if len(present) != 1:
-                raise HuggingFaceBucketError(f"bucket object must provide exactly one {field} field")
+                raise HuggingFaceBucketError(
+                    f"bucket object must provide exactly one {field} field"
+                )
             normalized[field] = value[present[0]]
         return cls(**normalized)
 
@@ -442,7 +462,9 @@ class HuggingFaceBucketInventory:
         try:
             objects = tuple(sorted(self.objects, key=lambda item: item.path))
         except (AttributeError, TypeError) as exc:
-            raise HuggingFaceBucketError("objects must contain HuggingFaceBucketObject values") from exc
+            raise HuggingFaceBucketError(
+                "objects must contain HuggingFaceBucketObject values"
+            ) from exc
         if any(not isinstance(item, HuggingFaceBucketObject) for item in objects):
             raise HuggingFaceBucketError("objects must contain HuggingFaceBucketObject values")
         paths = [item.path for item in objects]
@@ -554,7 +576,9 @@ class HuggingFaceBucketStore:
             raw_objects = response.get("objects", response.get("items"))
         else:
             raw_objects = response
-        if isinstance(raw_objects, str | bytes | bytearray | Mapping) or not isinstance(raw_objects, Iterable):
+        if isinstance(raw_objects, str | bytes | bytearray | Mapping) or not isinstance(
+            raw_objects, Iterable
+        ):
             raise HuggingFaceBucketError("list_bucket_tree must return an object sequence")
         objects: list[HuggingFaceBucketListingObject] = []
         for item in raw_objects:
@@ -587,10 +611,14 @@ class HuggingFaceBucketStore:
             raw_objects = response.get("objects", response.get("items"))
         else:
             raw_objects = response
-        if isinstance(raw_objects, str | bytes | bytearray | Mapping) or not isinstance(raw_objects, Iterable):
+        if isinstance(raw_objects, str | bytes | bytearray | Mapping) or not isinstance(
+            raw_objects, Iterable
+        ):
             raise HuggingFaceBucketError("list_bucket_tree must return an object sequence")
         objects = tuple(
-            item if isinstance(item, HuggingFaceBucketObject) else HuggingFaceBucketObject.from_mapping(item)
+            item
+            if isinstance(item, HuggingFaceBucketObject)
+            else HuggingFaceBucketObject.from_mapping(item)
             for item in raw_objects
         )
         return HuggingFaceBucketInventory(
@@ -637,7 +665,9 @@ class HuggingFaceBucketStore:
             elif result is not None:
                 source = Path(result)
                 if source.is_symlink() or not source.is_file():
-                    raise HuggingFaceBucketError("bucket client returned a path that is not a regular file")
+                    raise HuggingFaceBucketError(
+                        "bucket client returned a path that is not a regular file"
+                    )
                 if source.resolve() != temporary_path.resolve():
                     shutil.copyfile(source, temporary_path)
             self.verify_download(item, temporary_path)
@@ -669,9 +699,7 @@ class HuggingFaceBucketStore:
             raise TypeError("item must be a HuggingFaceBucketListingObject")
         destination_path = Path(destination)
         if destination_path.exists() or destination_path.is_symlink():
-            raise HuggingFaceBucketError(
-                "bucket download destination must not already exist"
-            )
+            raise HuggingFaceBucketError("bucket download destination must not already exist")
         download = getattr(self.client, "download_bucket_file", None)
         if not callable(download):
             raise HuggingFaceBucketError(
@@ -757,9 +785,7 @@ class HuggingFaceBucketStore:
         expected = _sha256(expected_sha256)
         verified = HuggingFaceBucketStore._hash_discovered_file(item, path)
         if verified.sha256 != expected:
-            raise HuggingFaceBucketError(
-                "cached bucket object sha256 mismatch"
-            )
+            raise HuggingFaceBucketError("cached bucket object sha256 mismatch")
         return verified
 
     @staticmethod
@@ -827,7 +853,12 @@ class HuggingFaceBucketHttpClient:
     ) -> None:
         endpoint = _text(endpoint, label="endpoint").rstrip("/")
         parsed = urlparse(endpoint)
-        if parsed.scheme not in {"http", "https"} or not parsed.netloc or parsed.query or parsed.fragment:
+        if (
+            parsed.scheme not in {"http", "https"}
+            or not parsed.netloc
+            or parsed.query
+            or parsed.fragment
+        ):
             raise HuggingFaceBucketError("endpoint must be an absolute HTTP(S) URL")
         if token is not None:
             token = _text(token, label="token")
@@ -893,8 +924,12 @@ class HuggingFaceBucketHttpClient:
                         raw_link_values = [] if raw_link is None else [raw_link]
             except Exception as exc:
                 raise HuggingFaceBucketError(f"failed to list Hugging Face bucket: {exc}") from exc
-            if not isinstance(payload, list) or not all(isinstance(item, Mapping) for item in payload):
-                raise HuggingFaceBucketError("Hugging Face bucket tree response must be an array of objects")
+            if not isinstance(payload, list) or not all(
+                isinstance(item, Mapping) for item in payload
+            ):
+                raise HuggingFaceBucketError(
+                    "Hugging Face bucket tree response must be an array of objects"
+                )
             rows.extend(dict(item) for item in payload)
             if not all(isinstance(value, str) for value in raw_link_values):
                 raise HuggingFaceBucketError("bucket pagination Link header must be text")
@@ -937,7 +972,9 @@ class HuggingFaceBucketHttpClient:
         if expected_xet_hash is not None:
             expected_xet_hash = _xet_hash(expected_xet_hash)
         if expected_size_bytes is not None and (
-            isinstance(expected_size_bytes, bool) or not isinstance(expected_size_bytes, int) or expected_size_bytes < 0
+            isinstance(expected_size_bytes, bool)
+            or not isinstance(expected_size_bytes, int)
+            or expected_size_bytes < 0
         ):
             raise HuggingFaceBucketError("expected_size_bytes must be a non-negative integer")
         url = f"{self.endpoint}/buckets/{quote(bucket_id, safe='/')}/resolve/{quote(normalized_path, safe='')}"
@@ -950,21 +987,14 @@ class HuggingFaceBucketHttpClient:
         try:
             with self._open(request) as response:
                 response_xet = response.headers.get("X-Xet-Hash")
-                declared_size = _content_length(
-                    response.headers.get("Content-Length")
-                )
+                declared_size = _content_length(response.headers.get("Content-Length"))
                 if (
                     expected_size_bytes is not None
                     and declared_size is not None
                     and declared_size > expected_size_bytes
                 ):
-                    raise HuggingFaceBucketError(
-                        "download Content-Length exceeds expected size"
-                    )
-                if (
-                    expected_xet_hash is not None
-                    and response_xet != expected_xet_hash
-                ):
+                    raise HuggingFaceBucketError("download Content-Length exceeds expected size")
+                if expected_xet_hash is not None and response_xet != expected_xet_hash:
                     final_path_segments = tuple(
                         unquote(segment, errors="strict")
                         for segment in urlparse(response.geturl()).path.split("/")
@@ -977,9 +1007,7 @@ class HuggingFaceBucketHttpClient:
                 stream_limit = expected_size_bytes
                 if declared_size is not None:
                     stream_limit = (
-                        declared_size
-                        if stream_limit is None
-                        else min(stream_limit, declared_size)
+                        declared_size if stream_limit is None else min(stream_limit, declared_size)
                     )
                 with destination_path.open("wb") as handle:
                     while True:
@@ -999,7 +1027,9 @@ class HuggingFaceBucketHttpClient:
         except HuggingFaceBucketError:
             raise
         except Exception as exc:
-            raise HuggingFaceBucketError(f"failed to download Hugging Face bucket file: {exc}") from exc
+            raise HuggingFaceBucketError(
+                f"failed to download Hugging Face bucket file: {exc}"
+            ) from exc
         if declared_size is not None and size != declared_size:
             raise HuggingFaceBucketError("download Content-Length does not match response body")
         if expected_size_bytes is not None and size != expected_size_bytes:

@@ -130,9 +130,7 @@ class HashAnchor:
 
     def __post_init__(self) -> None:
         _non_negative_int(self.sequence, "sequence")
-        object.__setattr__(
-            self, "block_hash", _required_str(self.block_hash, "block_hash")
-        )
+        object.__setattr__(self, "block_hash", _required_str(self.block_hash, "block_hash"))
 
     def to_position(self) -> LedgerPosition:
         return LedgerPosition(sequence=self.sequence, hash=self.block_hash)
@@ -305,9 +303,7 @@ def validate_resume(
     # Divergence is not itself an error here; reorg resolution handles it.
     # Missing hashes on the stored checkpoint are always fatal.
     if not checkpoint.anchor.block_hash.strip():
-        raise CheckpointError(
-            "stored checkpoint is missing a canonical hash anchor"
-        )
+        raise CheckpointError("stored checkpoint is missing a canonical hash anchor")
 
 
 @dataclass(frozen=True, slots=True)
@@ -358,16 +354,12 @@ class CheckpointCommitCoordinator:
 
         context.check_active()
         if not checkpoint.identity.compatible_with(identity):
-            raise CheckpointError(
-                "checkpoint identity does not match the store key identity"
-            )
+            raise CheckpointError("checkpoint identity does not match the store key identity")
         scope_key = identity.key
         receipt = self._pending.get(scope_key)
         if require_commit:
             if receipt is None:
-                raise CheckpointError(
-                    "sink commit must precede checkpoint compare-and-set"
-                )
+                raise CheckpointError("sink commit must precede checkpoint compare-and-set")
             if checkpoint.sink_commit_id is None:
                 raise CheckpointError(
                     "checkpoint is missing sink_commit_id from the prior sink commit"
@@ -449,17 +441,13 @@ class InMemoryCheckpointStore:
         # Identity must bind to the store key: either the computed key or the
         # human scope string the identity advertises.
         if not checkpoint.identity.matches_scope_key(scope):
-            raise CheckpointError(
-                "checkpoint identity does not bind to the provided scope key"
-            )
+            raise CheckpointError("checkpoint identity does not bind to the provided scope key")
         store_key = checkpoint.identity.key
         current = self._entries.get(store_key)
         current_revision = None if current is None else current.revision
         if current_revision != expected_revision:
             return False
-        if current is not None and not current.identity.compatible_with(
-            checkpoint.identity
-        ):
+        if current is not None and not current.identity.compatible_with(checkpoint.identity):
             raise CheckpointError(
                 "refusing to overwrite checkpoint with incompatible identity "
                 "(chain/network/genesis/provider/scope/schema/normalizer)"

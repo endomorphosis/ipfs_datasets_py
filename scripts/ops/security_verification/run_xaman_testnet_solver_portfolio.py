@@ -46,26 +46,28 @@ def _load_json(path: Path, *, required: bool = True) -> dict[str, Any] | None:
         if required:
             raise FileNotFoundError(path)
         return None
-    payload = json.loads(path.read_text(encoding='utf-8'))
+    payload = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
-        raise ValueError(f'{path} did not contain a JSON object')
+        raise ValueError(f"{path} did not contain a JSON object")
     return payload
 
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
-        json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=True) + '\n',
-        encoding='utf-8',
+        json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=True) + "\n",
+        encoding="utf-8",
     )
 
 
 def _write_text(path: Path, body: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(body, encoding='utf-8')
+    path.write_text(body, encoding="utf-8")
 
 
-def generate(repo_root: Path, *, out: Path | None = None) -> tuple[dict[str, Any], dict[str, Any], str]:
+def generate(
+    repo_root: Path, *, out: Path | None = None
+) -> tuple[dict[str, Any], dict[str, Any], str]:
     model_payload = _load_json(repo_root / MODEL_PATH)
     assumptions_payload = _load_json(repo_root / ASSUMPTIONS_PATH)
     claim_trace_map = _load_json(repo_root / CLAIM_TRACE_MAP_PATH)
@@ -80,9 +82,11 @@ def generate(repo_root: Path, *, out: Path | None = None) -> tuple[dict[str, Any
     fuzz_counterexample_manifest = _load_json(repo_root / FUZZ_COUNTEREXAMPLE_MANIFEST_PATH)
     source_manifest = _load_json(repo_root / SOURCE_MANIFEST_PATH, required=False)
     source_claim_map = _load_json(repo_root / SOURCE_CLAIM_MAP_PATH, required=False)
-    xrpl_transaction_coverage = _load_json(repo_root / XRPL_TRANSACTION_COVERAGE_PATH, required=False)
+    xrpl_transaction_coverage = _load_json(
+        repo_root / XRPL_TRANSACTION_COVERAGE_PATH, required=False
+    )
     disproof_vectors = _load_json(repo_root / DISPROOF_VECTORS_PATH, required=False)
-    model_cid = (repo_root / MODEL_CID_PATH).read_text(encoding='utf-8').strip()
+    model_cid = (repo_root / MODEL_CID_PATH).read_text(encoding="utf-8").strip()
 
     if (
         model_payload is None
@@ -98,7 +102,7 @@ def generate(repo_root: Path, *, out: Path | None = None) -> tuple[dict[str, Any
         or fuzz_report is None
         or fuzz_counterexample_manifest is None
     ):
-        raise FileNotFoundError('required Testnet solver portfolio inputs are missing')
+        raise FileNotFoundError("required Testnet solver portfolio inputs are missing")
 
     manifest = build_xaman_testnet_solver_portfolio_manifest(
         model_payload=model_payload,
@@ -143,11 +147,15 @@ def generate(repo_root: Path, *, out: Path | None = None) -> tuple[dict[str, Any
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--repo-root', default=str(ROOT_DIR), help='Repository root containing security_ir_artifacts.')
     parser.add_argument(
-        '--out',
+        "--repo-root",
+        default=str(ROOT_DIR),
+        help="Repository root containing security_ir_artifacts.",
+    )
+    parser.add_argument(
+        "--out",
         default=PORTFOLIO_REPORT_PATH,
-        help='Portfolio report output path. The manifest and markdown use their standard task paths.',
+        help="Portfolio report output path. The manifest and markdown use their standard task paths.",
     )
     args = parser.parse_args(argv)
 
@@ -159,13 +167,15 @@ def main(argv: list[str] | None = None) -> int:
     print(
         json.dumps(
             {
-                'manifest_path': PORTFOLIO_MANIFEST_PATH,
-                'manifest_cid': manifest['artifact_cid'],
-                'report_path': str(out.relative_to(repo_root) if out.is_relative_to(repo_root) else out),
-                'report_cid': report['artifact_cid'],
-                'overall_status': report['overall_status'],
-                'security_decision': report['security_decision'],
-                'doc_path': PORTFOLIO_DOC_PATH,
+                "manifest_path": PORTFOLIO_MANIFEST_PATH,
+                "manifest_cid": manifest["artifact_cid"],
+                "report_path": str(
+                    out.relative_to(repo_root) if out.is_relative_to(repo_root) else out
+                ),
+                "report_cid": report["artifact_cid"],
+                "overall_status": report["overall_status"],
+                "security_decision": report["security_decision"],
+                "doc_path": PORTFOLIO_DOC_PATH,
             },
             sort_keys=True,
         )
@@ -173,5 +183,5 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
-if __name__ == '__main__':  # pragma: no cover
+if __name__ == "__main__":  # pragma: no cover
     raise SystemExit(main())

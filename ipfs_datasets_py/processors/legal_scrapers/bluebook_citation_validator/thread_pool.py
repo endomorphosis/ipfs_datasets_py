@@ -12,6 +12,7 @@ from typing import Any, Callable, Generator, Iterable
 
 try:
     import tqdm as _tqdm_module
+
     _TQDM_AVAILABLE = True
 except ImportError:
     _TQDM_AVAILABLE = False

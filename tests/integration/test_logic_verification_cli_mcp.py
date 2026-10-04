@@ -368,9 +368,7 @@ def test_mcp_monitor_receipt_advisor_attestation() -> None:
         ],
         "kind": "finite",
     }
-    monitored = _run(
-        lv.verification_monitor(formula, observations, request_id="req:mon")
-    )
+    monitored = _run(lv.verification_monitor(formula, observations, request_id="req:mon"))
     _assert_python_envelope(monitored, operation="monitor")
     assert monitored["status"] in {"succeeded", "invalid", "unavailable", "error"}
     if monitored["status"] == "succeeded":
@@ -395,17 +393,13 @@ def test_mcp_monitor_receipt_advisor_attestation() -> None:
     assert missing["status"] == "invalid"
     assert "receipt" in missing["unsupported_features"]
 
-    advised = _run(
-        lv.verification_advise({"goal_text": "prove P -> Q"}, provider="static")
-    )
+    advised = _run(lv.verification_advise({"goal_text": "prove P -> Q"}, provider="static"))
     _assert_python_envelope(advised, operation="advise")
     assert advised["status"] == "succeeded"
     assert advised["authority"] == "advisory"
     assert "never" in advised["result"]["authority_note"].lower()
 
-    unknown = _run(
-        lv.verification_advise({"goal_text": "prove P"}, provider="not-real")
-    )
+    unknown = _run(lv.verification_advise({"goal_text": "prove P"}, provider="not-real"))
     assert unknown["status"] == "unsupported"
     assert "advisor:not-real" in unknown["unsupported_features"]
 
@@ -574,9 +568,7 @@ def test_schema_operation_names_match_python() -> None:
         if operation == "list_features":
             assert hasattr(get_verification_api(), "list_features")
         else:
-            assert operation in STABLE_OPERATIONS or hasattr(
-                get_verification_api(), operation
-            )
+            assert operation in STABLE_OPERATIONS or hasattr(get_verification_api(), operation)
 
 
 def test_bounded_result_depth() -> None:

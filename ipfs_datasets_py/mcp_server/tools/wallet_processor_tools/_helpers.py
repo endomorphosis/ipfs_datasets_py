@@ -33,9 +33,7 @@ def default_trust_policy(
     extra_secret_prefixes: list[str] | None = None,
 ) -> TrustPolicy:
     hosts = set(_split_csv(os.environ.get("WALLET_PROCESSOR_MCP_ALLOWED_HOSTS")))
-    prefixes = set(
-        _split_csv(os.environ.get("WALLET_PROCESSOR_MCP_ALLOWED_SECRET_PREFIXES"))
-    )
+    prefixes = set(_split_csv(os.environ.get("WALLET_PROCESSOR_MCP_ALLOWED_SECRET_PREFIXES")))
     if extra_hosts:
         hosts.update(h.strip().lower() for h in extra_hosts if h and h.strip())
     if extra_secret_prefixes:

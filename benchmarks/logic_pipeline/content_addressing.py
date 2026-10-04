@@ -92,11 +92,7 @@ def _fallback_validate_cid(value: str, *, codecs: Iterable[str]) -> str:
     codec_code, offset = _decode_uvarint(binary, offset)
     hash_code, offset = _decode_uvarint(binary, offset)
     digest_size, offset = _decode_uvarint(binary, offset)
-    allowed_codes = {
-        _CODEC_CODES[item]
-        for item in codecs
-        if item in _CODEC_CODES
-    }
+    allowed_codes = {_CODEC_CODES[item] for item in codecs if item in _CODEC_CODES}
     if (
         parsed_version != 1
         or codec_code not in allowed_codes
@@ -104,9 +100,7 @@ def _fallback_validate_cid(value: str, *, codecs: Iterable[str]) -> str:
         or digest_size != _SHA2_256_SIZE
         or len(binary) - offset != digest_size
     ):
-        raise ValueError(
-            "CID must use the frozen CIDv1/base32/codec/sha2-256 profile"
-        )
+        raise ValueError("CID must use the frozen CIDv1/base32/codec/sha2-256 profile")
     canonical_binary = b"".join(
         (
             _encode_uvarint(parsed_version),
@@ -116,13 +110,7 @@ def _fallback_validate_cid(value: str, *, codecs: Iterable[str]) -> str:
             binary[offset:],
         )
     )
-    canonical = (
-        "b"
-        + base64.b32encode(canonical_binary)
-        .decode("ascii")
-        .rstrip("=")
-        .lower()
-    )
+    canonical = "b" + base64.b32encode(canonical_binary).decode("ascii").rstrip("=").lower()
     if canonical != value:
         raise ValueError("CID is not canonically encoded")
     return value
@@ -148,9 +136,7 @@ def _validate_dag_json_value(value: Any, *, path: str = "$") -> None:
         return
     if type(value) is float:
         if not math.isfinite(value):
-            raise ValueError(
-                f"{path} is not JSON compliant: non-finite number"
-            )
+            raise ValueError(f"{path} is not JSON compliant: non-finite number")
         return
     if type(value) is list:
         for index, item in enumerate(value):
@@ -159,18 +145,13 @@ def _validate_dag_json_value(value: Any, *, path: str = "$") -> None:
     if type(value) is dict:
         for key, item in value.items():
             if type(key) is not str:
-                raise TypeError(
-                    f"{path} contains a non-string DAG-JSON map key"
-                )
+                raise TypeError(f"{path} contains a non-string DAG-JSON map key")
             _validate_dag_json_value(
                 item,
                 path=f"{path}.{key}",
             )
         return
-    raise TypeError(
-        f"{path} is not JSON serializable as DAG-JSON: "
-        f"{type(value).__name__}"
-    )
+    raise TypeError(f"{path} is not JSON serializable as DAG-JSON: {type(value).__name__}")
 
 
 def cid_for_bytes(
@@ -185,15 +166,9 @@ def cid_for_bytes(
 
     if not isinstance(data, bytes):
         raise TypeError("CID input must be bytes")
-    if (
-        base != "base32"
-        or mh_type != "sha2-256"
-        or version != 1
-        or codec not in _CODEC_CODES
-    ):
+    if base != "base32" or mh_type != "sha2-256" or version != 1 or codec not in _CODEC_CODES:
         raise ValueError(
-            "benchmark CID bridge supports only CIDv1/base32, "
-            "raw or dag-json, and sha2-256"
+            "benchmark CID bridge supports only CIDv1/base32, raw or dag-json, and sha2-256"
         )
     try:
         from multiformats import CID, multihash
@@ -241,19 +216,10 @@ def validate_cid(
     if not isinstance(value, str) or not value or value != value.lower():
         raise ValueError("CID must be a nonempty lowercase string")
 
-    if (
-        version != 1
-        or base != "base32"
-        or mh_type != "sha2-256"
-    ):
-        raise ValueError(
-            "benchmark CID bridge supports only CIDv1/base32/sha2-256"
-        )
+    if version != 1 or base != "base32" or mh_type != "sha2-256":
+        raise ValueError("benchmark CID bridge supports only CIDv1/base32/sha2-256")
     accepted_codecs = tuple(codecs)
-    if (
-        not accepted_codecs
-        or any(codec not in _CODEC_CODES for codec in accepted_codecs)
-    ):
+    if not accepted_codecs or any(codec not in _CODEC_CODES for codec in accepted_codecs):
         raise ValueError("benchmark CID bridge received an unsupported codec")
     try:
         from multiformats import CID, multihash
@@ -269,16 +235,11 @@ def validate_cid(
         parsed.version != version
         or parsed.codec.name not in frozenset(accepted_codecs)
         or parsed.hashfun.name != mh_type
-        or (
-            expected_digest_size is not None
-            and len(parsed.raw_digest) != expected_digest_size
-        )
+        or (expected_digest_size is not None and len(parsed.raw_digest) != expected_digest_size)
         or parsed.base.name != base
         or str(parsed) != value
     ):
-        raise ValueError(
-            "CID must use the requested canonical version/base/codec/multihash"
-        )
+        raise ValueError("CID must use the requested canonical version/base/codec/multihash")
     return value
 
 

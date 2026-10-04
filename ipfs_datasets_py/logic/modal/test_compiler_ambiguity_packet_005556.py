@@ -168,9 +168,7 @@ def test_compiler_preserves_packet_005556_explicit_ambiguity_margins() -> None:
         margin_direction,
         severity,
     ) in evidence_cases:
-        compiler = DeterministicModalCompiler(
-            config=ModalCompilerConfig(parser_backend="spacy")
-        )
+        compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
         ranking = _mock_ranking(
             predicted_family=predicted_family,
             target_family=target_family,
@@ -214,13 +212,6 @@ def test_compiler_preserves_packet_005556_explicit_ambiguity_margins() -> None:
         assert ambiguity.metadata.get("is_explicit_adaptive_ambiguity") is True
         assert ambiguity.metadata.get("adaptive_margin_direction") == margin_direction
         assert (
-            abs(
-                float(ambiguity.metadata.get("family_margin_raw", 0.0))
-                - expected_margin
-            )
-            <= 1e-12
+            abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - expected_margin) <= 1e-12
         )
-        assert (
-            abs(float(ambiguity.metadata.get("priority", 0.0)) - expected_priority)
-            <= 1e-12
-        )
+        assert abs(float(ambiguity.metadata.get("priority", 0.0)) - expected_priority) <= 1e-12

@@ -88,7 +88,14 @@ def call_function(func_name: str, args: List[Any]) -> Any:
             return func()
         except KnowledgeGraphError:
             raise
-        except (AttributeError, TypeError, ValueError, KeyError, ZeroDivisionError, OverflowError) as e:
+        except (
+            AttributeError,
+            TypeError,
+            ValueError,
+            KeyError,
+            ZeroDivisionError,
+            OverflowError,
+        ) as e:
             logger.warning(
                 "Function %s raised %s: %s",
                 func_name,

@@ -354,6 +354,4 @@ def test_module_level_wrappers_match_facade() -> None:
     via_facade = get_verification_api().list_providers()
     assert via_module.status.value == via_facade.status.value
     assert via_module.result["count"] == via_facade.result["count"]
-    assert vap.get_verification_api().to_dict()["interface"] == (
-        LOGIC_VERIFICATION_API_INTERFACE
-    )
+    assert vap.get_verification_api().to_dict()["interface"] == (LOGIC_VERIFICATION_API_INTERFACE)

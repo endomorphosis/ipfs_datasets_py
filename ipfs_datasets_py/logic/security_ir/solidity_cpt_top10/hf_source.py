@@ -136,11 +136,17 @@ def _safe_file(root: Path, relative: str) -> Path:
     if not isinstance(relative, str) or not relative or "\\" in relative or "\x00" in relative:
         raise HuggingFaceSourceIntegrityError("cache path is malformed")
     pure = PurePosixPath(relative)
-    if pure.is_absolute() or pure.as_posix() != relative or any(part in {"", ".", ".."} for part in pure.parts):
+    if (
+        pure.is_absolute()
+        or pure.as_posix() != relative
+        or any(part in {"", ".", ".."} for part in pure.parts)
+    ):
         raise HuggingFaceSourceIntegrityError("cache path escapes root")
     path = root.joinpath(*pure.parts)
     if path.is_symlink() or not path.is_file():
-        raise HuggingFaceSourceIntegrityError(f"cache artifact is missing, non-regular, or symlink: {relative}")
+        raise HuggingFaceSourceIntegrityError(
+            f"cache artifact is missing, non-regular, or symlink: {relative}"
+        )
     try:
         path.resolve(strict=True).relative_to(root)
     except (OSError, ValueError) as exc:
@@ -226,16 +232,24 @@ class HuggingFaceIngestReceipt:
             or self.row_count != len(self.source_body_cids)
             or self.row_count != SOLIDITY_CPT_ROW_COUNT
         ):
-            raise HuggingFaceSourceIntegrityError("receipt row_count does not match exact source inventory")
+            raise HuggingFaceSourceIntegrityError(
+                "receipt row_count does not match exact source inventory"
+            )
         if self.source_snapshot_cid != PINNED_SOURCE_SNAPSHOT.cid:
-            raise HuggingFaceSourceIntegrityError("receipt source snapshot differs from reviewed pin")
+            raise HuggingFaceSourceIntegrityError(
+                "receipt source snapshot differs from reviewed pin"
+            )
         if self.verified is not True or self.grants_authority is not False:
-            raise HuggingFaceSourceIntegrityError("ingest receipt must be verified and non-authoritative")
+            raise HuggingFaceSourceIntegrityError(
+                "ingest receipt must be verified and non-authoritative"
+            )
         if self.schema_version != HF_INGEST_RECEIPT_SCHEMA_VERSION:
             raise HuggingFaceSourceIntegrityError("unknown ingest receipt schema")
         computed = self.identity.cid
         if self.receipt_id and self.receipt_id != computed:
-            raise HuggingFaceSourceIntegrityError("receipt_id does not match rehashed ingest receipt")
+            raise HuggingFaceSourceIntegrityError(
+                "receipt_id does not match rehashed ingest receipt"
+            )
         object.__setattr__(self, "receipt_id", computed)
 
     def deterministic_dict(self) -> dict[str, Any]:
@@ -318,15 +332,20 @@ class HuggingFaceIngestResult:
         object.__setattr__(self, "diagnostics", diagnostics)
         if self.admitted:
             if diagnostics or self.receipt is None:
-                raise HuggingFaceSourceIntegrityError("admitted result cannot contain quarantine diagnostics")
+                raise HuggingFaceSourceIntegrityError(
+                    "admitted result cannot contain quarantine diagnostics"
+                )
             if len(rows) != SOLIDITY_CPT_ROW_COUNT or len(bodies) != len(rows):
-                raise HuggingFaceSourceIntegrityError("admitted result must contain exact source inventory")
+                raise HuggingFaceSourceIntegrityError(
+                    "admitted result must contain exact source inventory"
+                )
             row_ids = tuple(item.row_id for item in rows)
             body_ids = tuple(item.content_cid for item in bodies)
             if self.receipt.row_ids != row_ids or self.receipt.source_body_cids != body_ids:
                 raise HuggingFaceSourceIntegrityError("admitted inventories do not match receipt")
             if any(
-                row.config_cid != self.receipt.config_cid or row.source_snapshot_cid != self.receipt.source_snapshot_cid
+                row.config_cid != self.receipt.config_cid
+                or row.source_snapshot_cid != self.receipt.source_snapshot_cid
                 for row in rows
             ):
                 raise HuggingFaceSourceIntegrityError("admitted row lineage does not match receipt")
@@ -339,7 +358,9 @@ class HuggingFaceIngestResult:
                 if body.sha256 != row.source_body_sha256 or len(body.text) != row.n_chars:
                     raise HuggingFaceSourceIntegrityError("row source body binding mismatch")
         elif rows or bodies or self.receipt is not None:
-            raise HuggingFaceSourceIntegrityError("rejected result must not expose partial admitted artifacts")
+            raise HuggingFaceSourceIntegrityError(
+                "rejected result must not expose partial admitted artifacts"
+            )
 
 
 class HuggingFaceSnapshotIngestor:
@@ -374,9 +395,13 @@ class HuggingFaceSnapshotIngestor:
             raise HuggingFaceSourceIntegrityError("cannot read verified Parquet bytes") from exc
         observed_schema = tuple((field.name, str(field.type)) for field in parquet.schema_arrow)
         if observed_schema != SOLIDITY_CPT_COLUMN_TYPES:
-            raise HuggingFaceSourceIntegrityError("Parquet ordered typed schema differs from reviewed pin")
+            raise HuggingFaceSourceIntegrityError(
+                "Parquet ordered typed schema differs from reviewed pin"
+            )
         if parquet.metadata.num_rows != expected_rows:
-            raise HuggingFaceSourceIntegrityError("Parquet footer row_count differs from reviewed pin")
+            raise HuggingFaceSourceIntegrityError(
+                "Parquet footer row_count differs from reviewed pin"
+            )
         for batch in parquet.iter_batches(batch_size=self.limits.parquet_batch_rows):
             yield from batch.to_pylist()
 
@@ -407,7 +432,9 @@ class HuggingFaceSnapshotIngestor:
                 try:
                     candidate = next(supplied)
                 except StopIteration as exc:
-                    raise HuggingFaceSourceIntegrityError("injected row stream is truncated") from exc
+                    raise HuggingFaceSourceIntegrityError(
+                        "injected row stream is truncated"
+                    ) from exc
                 if canonical_json_bytes(candidate) != canonical_json_bytes(trusted):
                     raise HuggingFaceSourceIntegrityError(
                         f"injected row {row_index} differs from verified Parquet bytes"
@@ -607,14 +634,18 @@ class CachedBodyDescriptor:
             or "\\" in self.path
             or not self.path.startswith("bodies/")
         ):
-            raise HuggingFaceSourceIntegrityError("body descriptor path must be safe cache-relative text")
+            raise HuggingFaceSourceIntegrityError(
+                "body descriptor path must be safe cache-relative text"
+            )
         _cid(self.content_cid, "body descriptor content_cid")
         if (
             not isinstance(self.sha256, str)
             or len(self.sha256) != 64
             or any(character not in _SHA256_ALPHABET for character in self.sha256)
         ):
-            raise HuggingFaceSourceIntegrityError("body descriptor sha256 must be lowercase SHA-256")
+            raise HuggingFaceSourceIntegrityError(
+                "body descriptor sha256 must be lowercase SHA-256"
+            )
         if type(self.byte_length) is not int or self.byte_length <= 0:
             raise HuggingFaceSourceIntegrityError("body descriptor byte_length must be positive")
 
@@ -659,7 +690,8 @@ class CacheManifest:
         if tuple(item.content_cid for item in bodies) != self.receipt.source_body_cids:
             raise HuggingFaceSourceIntegrityError("cache body inventory differs from receipt")
         if any(
-            item.config_cid != self.receipt.config_cid or item.source_snapshot_cid != self.receipt.source_snapshot_cid
+            item.config_cid != self.receipt.config_cid
+            or item.source_snapshot_cid != self.receipt.source_snapshot_cid
             for item in rows
         ):
             raise HuggingFaceSourceIntegrityError("cache rows differ from receipt lineage")
@@ -667,7 +699,9 @@ class CacheManifest:
         object.__setattr__(self, "bodies", bodies)
         computed = self.identity.cid
         if self.manifest_id and self.manifest_id != computed:
-            raise HuggingFaceSourceIntegrityError("manifest_id does not match rehashed cache inventory")
+            raise HuggingFaceSourceIntegrityError(
+                "manifest_id does not match rehashed cache inventory"
+            )
         object.__setattr__(self, "manifest_id", computed)
 
     def deterministic_dict(self) -> dict[str, Any]:
@@ -711,7 +745,10 @@ class CacheManifest:
         return cls(
             receipt=HuggingFaceIngestReceipt.from_dict(_mapping(value["receipt"], "receipt")),
             rows=tuple(SolidityCPTRow.from_dict(_mapping(item, "row")) for item in raw_rows),
-            bodies=tuple(CachedBodyDescriptor.from_dict(_mapping(item, "body descriptor")) for item in raw_bodies),
+            bodies=tuple(
+                CachedBodyDescriptor.from_dict(_mapping(item, "body descriptor"))
+                for item in raw_bodies
+            ),
             manifest_id=value["manifest_id"],
             schema_version=value["schema_version"],
         )
@@ -731,7 +768,9 @@ class HuggingFaceCachePin:
         for name in self.__dataclass_fields__:
             _cid(getattr(self, name), name)
         if self.source_snapshot_cid != PINNED_SOURCE_SNAPSHOT.cid:
-            raise HuggingFaceSourceIntegrityError("cache pin source snapshot differs from reviewed pin")
+            raise HuggingFaceSourceIntegrityError(
+                "cache pin source snapshot differs from reviewed pin"
+            )
 
     def to_dict(self) -> dict[str, str]:
         return {name: getattr(self, name) for name in self.__dataclass_fields__}
@@ -864,7 +903,9 @@ class HuggingFaceSourceCache:
         )
         manifest = CacheManifest.from_dict(_strict_json_object(manifest_content, "cache manifest"))
         if manifest_content != canonical_json_bytes(manifest.to_dict()):
-            raise HuggingFaceSourceIntegrityError("cache manifest is not canonical or has byte drift")
+            raise HuggingFaceSourceIntegrityError(
+                "cache manifest is not canonical or has byte drift"
+            )
         if (
             manifest.manifest_id != pin.manifest_id
             or manifest.receipt.receipt_id != pin.receipt_id
@@ -873,7 +914,10 @@ class HuggingFaceSourceCache:
             or manifest.receipt.config_cid != pin.config_cid
         ):
             raise HuggingFaceSourceIntegrityError("cache inventory differs from out-of-band pin")
-        if any(len(canonical_json_bytes(item.to_dict())) > self.limits.max_row_record_bytes for item in manifest.rows):
+        if any(
+            len(canonical_json_bytes(item.to_dict())) > self.limits.max_row_record_bytes
+            for item in manifest.rows
+        ):
             raise HuggingFaceSourceLimitError("cached row record exceeds byte limit")
         bodies: list[SolidityCPTSourceBody] = []
         for descriptor in manifest.bodies:
@@ -916,7 +960,9 @@ class HuggingFaceSourceCache:
 
         if self.path.exists():
             if not isinstance(pin, HuggingFaceCachePin):
-                raise HuggingFaceSourceIntegrityError("cached materialization requires an out-of-band cache pin")
+                raise HuggingFaceSourceIntegrityError(
+                    "cached materialization requires an out-of-band cache pin"
+                )
             return self.load(pin), pin
         if self.fetcher is None:
             raise HuggingFaceSourceCacheMiss("offline exact snapshot cache miss")
@@ -924,7 +970,9 @@ class HuggingFaceSourceCache:
         stage = Path(tempfile.mkdtemp(prefix=".fetch-", dir=self.root))
         try:
             returned = self.fetcher(PINNED_SOURCE_SNAPSHOT, stage)
-            source = Path(returned).expanduser().resolve(strict=True) if returned is not None else stage
+            source = (
+                Path(returned).expanduser().resolve(strict=True) if returned is not None else stage
+            )
             if source.is_symlink():
                 raise HuggingFaceSourceIntegrityError("fetcher returned a symlink")
             shard_path = source / PINNED_SOURCE_SHARD.path

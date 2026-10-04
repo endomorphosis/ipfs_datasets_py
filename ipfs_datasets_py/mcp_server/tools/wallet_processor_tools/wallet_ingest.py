@@ -69,9 +69,7 @@ async def wallet_ingest(
             extra_hosts=allowed_provider_hosts,
             extra_secret_prefixes=allowed_secret_prefixes,
         )
-        formats = tuple(
-            ExportFormat(f) for f in (export_formats or ())
-        )
+        formats = tuple(ExportFormat(f) for f in (export_formats or ()))
         request = WalletIngestRequest(
             scope=scope,
             chain=parse_chain(chain),

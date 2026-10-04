@@ -44,18 +44,14 @@ from .modal_autoencoder_feature_transfer import (
 )
 
 
-MODAL_AUTOENCODER_FEATURE_INVENTORY_SCHEMA_VERSION = (
-    "modal-autoencoder-legacy-feature-inventory-v1"
-)
+MODAL_AUTOENCODER_FEATURE_INVENTORY_SCHEMA_VERSION = "modal-autoencoder-legacy-feature-inventory-v1"
 MODAL_AUTOENCODER_FEATURE_INVENTORY_ARCHITECTURE_SCHEMA_VERSION = (
     "modal-autoencoder-feature-inventory-architecture-v1"
 )
 MODAL_AUTOENCODER_FEATURE_TOKENIZER_BINDING_SCHEMA_VERSION = (
     "legal-ir-feature-tokenizer-source-bundle-v1"
 )
-MODAL_AUTOENCODER_COMPILER_BINDING_SCHEMA_VERSION = (
-    "legal-ir-compiler-source-bundle-v1"
-)
+MODAL_AUTOENCODER_COMPILER_BINDING_SCHEMA_VERSION = "legal-ir-compiler-source-bundle-v1"
 
 CANONICAL_LEGACY_STATE_SHA256 = (
     "sha256:7236de26bd3d7f8414ffa04805f1b6e8a8849f9e0103cec6edb4985b911658be"
@@ -272,13 +268,9 @@ class LegacyFeatureInventoryPolicy:
             if int(getattr(self, name)) < 0:
                 raise LegacyFeatureInventoryError(f"{name} must be non-negative")
         if self.exact_row_count + self.overridden_row_count != self.accepted_row_count:
-            raise LegacyFeatureInventoryError(
-                "accepted rows must equal exact plus overridden rows"
-            )
+            raise LegacyFeatureInventoryError("accepted rows must equal exact plus overridden rows")
         if self.accepted_row_count + self.omitted_row_count != self.legacy_row_count:
-            raise LegacyFeatureInventoryError(
-                "legacy rows must equal accepted plus omitted rows"
-            )
+            raise LegacyFeatureInventoryError("legacy rows must equal accepted plus omitted rows")
         for name in (
             "legacy_state_sha256",
             "accepted_state_sha256",
@@ -416,8 +408,7 @@ def _load_state(path: Path) -> tuple[ModalAutoencoderTrainingState, dict[str, An
     state = ModalAutoencoderTrainingState.from_dict(value)
     return state, {
         "declared_architecture": str(
-            value.get("architecture_version")
-            or MODAL_AUTOENCODER_LEGACY_ARCHITECTURE_VERSION
+            value.get("architecture_version") or MODAL_AUTOENCODER_LEGACY_ARCHITECTURE_VERSION
         ),
         "format": "json",
     }
@@ -443,9 +434,7 @@ def _row_values(
     if field_name.endswith("_embedding_weights"):
         if isinstance(row, (str, bytes, bytearray)) or not isinstance(row, Sequence):
             raise LegacyFeatureInventoryError(f"{label} must be a numeric vector")
-        values = tuple(
-            _finite_number(value, label=f"{label} vector value") for value in row
-        )
+        values = tuple(_finite_number(value, label=f"{label} vector value") for value in row)
         if not values:
             raise LegacyFeatureInventoryError(f"{label} has an empty vector")
         return (), values, len(values)
@@ -456,9 +445,7 @@ def _row_values(
     for raw_key in sorted(row, key=str):
         key = str(raw_key)
         if not key or raw_key != key:
-            raise LegacyFeatureInventoryError(
-                f"{label} contains a non-canonical label"
-            )
+            raise LegacyFeatureInventoryError(f"{label} contains a non-canonical label")
         labels.append(key)
         values.append(_finite_number(row[raw_key], label=f"{label} value"))
     return tuple(labels), tuple(values), None
@@ -480,9 +467,7 @@ def _validate_field_dimensions(
     legacy_rows: dict[str, tuple[tuple[str, ...], int | None]] = {}
     for state_label, mapping in (("legacy", legacy), ("accepted", accepted)):
         if not isinstance(mapping, Mapping):
-            raise LegacyFeatureInventoryError(
-                f"{state_label}.{field_name} must be an object"
-            )
+            raise LegacyFeatureInventoryError(f"{state_label}.{field_name} must be an object")
         for key, row in mapping.items():
             if not isinstance(key, str) or not key:
                 raise LegacyFeatureInventoryError(
@@ -564,9 +549,7 @@ def _signal_summary(
         "positive_signal_mass": math.fsum(positive_parts),
         "row_count": row_count,
         "signed_signal_mass": math.fsum(signed_parts),
-        "value_activation_frequency": (
-            nonzero_values / numeric_values if numeric_values else 0.0
-        ),
+        "value_activation_frequency": (nonzero_values / numeric_values if numeric_values else 0.0),
     }
 
 
@@ -579,26 +562,16 @@ def _merge_signals(values: Iterable[Mapping[str, Any]]) -> dict[str, Any]:
     numeric_values = sum(int(item["numeric_values"]) for item in items)
     nonzero_values = sum(int(item["nonzero_values"]) for item in items)
     return {
-        "absolute_signal_mass": math.fsum(
-            float(item["absolute_signal_mass"]) for item in items
-        ),
+        "absolute_signal_mass": math.fsum(float(item["absolute_signal_mass"]) for item in items),
         "activation_frequency": active_rows / row_count if row_count else 0.0,
         "active_rows": active_rows,
-        "negative_signal_mass": math.fsum(
-            float(item["negative_signal_mass"]) for item in items
-        ),
+        "negative_signal_mass": math.fsum(float(item["negative_signal_mass"]) for item in items),
         "nonzero_values": nonzero_values,
         "numeric_values": numeric_values,
-        "positive_signal_mass": math.fsum(
-            float(item["positive_signal_mass"]) for item in items
-        ),
+        "positive_signal_mass": math.fsum(float(item["positive_signal_mass"]) for item in items),
         "row_count": row_count,
-        "signed_signal_mass": math.fsum(
-            float(item["signed_signal_mass"]) for item in items
-        ),
-        "value_activation_frequency": (
-            nonzero_values / numeric_values if numeric_values else 0.0
-        ),
+        "signed_signal_mass": math.fsum(float(item["signed_signal_mass"]) for item in items),
+        "value_activation_frequency": (nonzero_values / numeric_values if numeric_values else 0.0),
     }
 
 
@@ -694,9 +667,7 @@ def _group_inventory(
         "omitted",
     )
     dispositions = {
-        name: _merge_signals(
-            field["dispositions"][name] for field in field_inventories
-        )
+        name: _merge_signals(field["dispositions"][name] for field in field_inventories)
         for name in disposition_names
     }
     semantic_family, transfer_risk = _GROUP_SEMANTICS[group_name]
@@ -707,16 +678,12 @@ def _group_inventory(
         accepted_unique_keys.update(getattr(accepted_state, field_name))
     return {
         "accepted_unique_keys": len(accepted_unique_keys),
-        "accepted_signal": _merge_signals(
-            field["accepted_signal"] for field in field_inventories
-        ),
+        "accepted_signal": _merge_signals(field["accepted_signal"] for field in field_inventories),
         "dispositions": dispositions,
         "fields": field_inventories,
         "group": group_name,
         "legacy_unique_keys": len(legacy_unique_keys),
-        "legacy_signal": _merge_signals(
-            field["legacy_signal"] for field in field_inventories
-        ),
+        "legacy_signal": _merge_signals(field["legacy_signal"] for field in field_inventories),
         "semantic_family": semantic_family,
         "transfer_risk": transfer_risk,
     }
@@ -734,8 +701,7 @@ def _verify_embedded_digest(
     observed = content_sha256(payload)
     if expected != observed:
         raise LegacyFeatureInventoryError(
-            f"{label} embedded digest mismatch: "
-            f"{expected or '<missing>'} != {observed}"
+            f"{label} embedded digest mismatch: {expected or '<missing>'} != {observed}"
         )
     return observed
 
@@ -780,9 +746,7 @@ def _verify_transfer_report_schema(report: Mapping[str, Any]) -> None:
     expected_groups = set(MODAL_AUTOENCODER_GENERALIZABLE_CAPACITY_GROUPS)
     groups = _mapping(report.get("group_reports"), label="transfer group reports")
     if set(groups) != expected_groups:
-        raise LegacyFeatureInventoryError(
-            "transfer group set does not match architecture schema"
-        )
+        raise LegacyFeatureInventoryError("transfer group set does not match architecture schema")
     for group_name, group_report in groups.items():
         group_mapping = _mapping(
             group_report,
@@ -796,9 +760,7 @@ def _verify_transfer_report_schema(report: Mapping[str, Any]) -> None:
         if tuple(group_mapping.get("fields") or ()) != tuple(
             MODAL_AUTOENCODER_GENERALIZABLE_CAPACITY_GROUPS[group_name]
         ):
-            raise LegacyFeatureInventoryError(
-                f"transfer fields mismatch for group {group_name}"
-            )
+            raise LegacyFeatureInventoryError(f"transfer fields mismatch for group {group_name}")
     _verify_embedded_digest(
         report,
         field="report_sha256",
@@ -864,18 +826,12 @@ def architecture_schema_binding() -> dict[str, Any]:
     """Return the content-addressed current state/transfer architecture."""
 
     descriptor = {
-        "architecture_versions": sorted(
-            MODAL_AUTOENCODER_COMPATIBLE_ARCHITECTURE_VERSIONS
-        ),
+        "architecture_versions": sorted(MODAL_AUTOENCODER_COMPATIBLE_ARCHITECTURE_VERSIONS),
         "capacity_groups": {
             group: list(fields)
-            for group, fields in sorted(
-                MODAL_AUTOENCODER_GENERALIZABLE_CAPACITY_GROUPS.items()
-            )
+            for group, fields in sorted(MODAL_AUTOENCODER_GENERALIZABLE_CAPACITY_GROUPS.items())
         },
-        "capacity_schema_version": (
-            MODAL_AUTOENCODER_GENERALIZABLE_CAPACITY_SCHEMA_VERSION
-        ),
+        "capacity_schema_version": (MODAL_AUTOENCODER_GENERALIZABLE_CAPACITY_SCHEMA_VERSION),
         "current_architecture_version": MODAL_AUTOENCODER_ARCHITECTURE_VERSION,
         "generalizable_fields": sorted(_GENERALIZABLE_FIELDS),
         "field_shapes": {
@@ -890,9 +846,7 @@ def architecture_schema_binding() -> dict[str, Any]:
         },
         "legacy_architecture_version": MODAL_AUTOENCODER_LEGACY_ARCHITECTURE_VERSION,
         "proof_head_schema_version": PROOF_AUXILIARY_HEAD_SCHEMA_VERSION,
-        "schema_version": (
-            MODAL_AUTOENCODER_FEATURE_INVENTORY_ARCHITECTURE_SCHEMA_VERSION
-        ),
+        "schema_version": (MODAL_AUTOENCODER_FEATURE_INVENTORY_ARCHITECTURE_SCHEMA_VERSION),
         "state_component_fields": list(MODAL_AUTOENCODER_STATE_COMPONENT_FIELDS),
         "state_schema_version": MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
     }
@@ -917,9 +871,7 @@ def _source_bundle_binding(
         elif candidate.is_file():
             files.add(candidate)
         else:
-            raise LegacyFeatureInventoryError(
-                f"binding source does not exist: {relative}"
-            )
+            raise LegacyFeatureInventoryError(f"binding source does not exist: {relative}")
     entries = []
     for path in sorted(files):
         entries.append(
@@ -987,9 +939,7 @@ def _validate_lineage(
     policy: LegacyFeatureInventoryPolicy,
 ) -> dict[str, int]:
     totals = {
-        name: sum(
-            int(group["dispositions"][name]["row_count"]) for group in groups
-        )
+        name: sum(int(group["dispositions"][name]["row_count"]) for group in groups)
         for name in (
             "transferable_exact",
             "remapped",
@@ -998,13 +948,9 @@ def _validate_lineage(
         )
     }
     legacy_rows = sum(int(group["legacy_signal"]["row_count"]) for group in groups)
-    accepted_rows = sum(
-        int(group["accepted_signal"]["row_count"]) for group in groups
-    )
+    accepted_rows = sum(int(group["accepted_signal"]["row_count"]) for group in groups)
     if totals["remapped"] != 0:
-        raise LegacyFeatureInventoryError(
-            "current architecture declares no legacy field remaps"
-        )
+        raise LegacyFeatureInventoryError("current architecture declares no legacy field remaps")
     if totals["transferable_exact"] + totals["overridden"] != accepted_rows:
         raise LegacyFeatureInventoryError(
             "accepted rows do not reconcile to exact and overridden legacy rows"
@@ -1022,21 +968,15 @@ def _validate_lineage(
         "legacy_rows": legacy_rows,
         "accepted_rows": accepted_rows,
     }:
-        raise LegacyFeatureInventoryError(
-            f"transfer report row counts mismatch: {report_counts}"
-        )
+        raise LegacyFeatureInventoryError(f"transfer report row counts mismatch: {report_counts}")
     if report.get("accepted") is not True or report.get("target_preserved") is not True:
         raise LegacyFeatureInventoryError(
             "transfer report does not identify an accepted target-preserving transfer"
         )
     if int(report.get("incompatible_shared_rows_preserved_from_target", -1)) != 0:
-        raise LegacyFeatureInventoryError(
-            "transfer report declares incompatible shared rows"
-        )
+        raise LegacyFeatureInventoryError("transfer report declares incompatible shared rows")
     if int(report.get("target_preservation_failure_count", -1)) != 0:
-        raise LegacyFeatureInventoryError(
-            "transfer report declares target preservation failures"
-        )
+        raise LegacyFeatureInventoryError("transfer report declares target preservation failures")
     source_fill_rows = int(report.get("imported_source_field_entries", -1))
     target_preserved_rows = int(report.get("target_generalizable_entry_count", -1))
     if source_fill_rows + target_preserved_rows != accepted_rows:
@@ -1044,12 +984,8 @@ def _validate_lineage(
             "accepted rows do not reconcile to target-preserved plus source-fill rows"
         )
     if policy.require_canonical_artifacts:
-        if tuple(report.get("source_field_allowlist") or ()) != (
-            _CANONICAL_SOURCE_FIELD_ALLOWLIST
-        ):
-            raise LegacyFeatureInventoryError(
-                "canonical source field allowlist mismatch"
-            )
+        if tuple(report.get("source_field_allowlist") or ()) != (_CANONICAL_SOURCE_FIELD_ALLOWLIST):
+            raise LegacyFeatureInventoryError("canonical source field allowlist mismatch")
         if report.get("source_embedding_transfer_enabled") is not False:
             raise LegacyFeatureInventoryError(
                 "canonical transfer must defer direct legacy embeddings"
@@ -1079,21 +1015,28 @@ def _validate_lineage(
                 raise LegacyFeatureInventoryError(
                     f"legacy unique-key count mismatch for {group_name}"
                 )
-        if sum(
-            int(_mapping(value, label="transfer group").get(
-                "imported_source_field_entries",
-                -1,
-            ))
-            for value in report_groups.values()
-        ) != source_fill_rows:
+        if (
+            sum(
+                int(
+                    _mapping(value, label="transfer group").get(
+                        "imported_source_field_entries",
+                        -1,
+                    )
+                )
+                for value in report_groups.values()
+            )
+            != source_fill_rows
+        ):
             raise LegacyFeatureInventoryError(
                 "group source-fill rows do not reconcile to transfer report"
             )
         if sum(
-            int(_mapping(value, label="transfer group").get(
-                "shared_field_entries_preserved_from_target",
-                -1,
-            ))
+            int(
+                _mapping(value, label="transfer group").get(
+                    "shared_field_entries_preserved_from_target",
+                    -1,
+                )
+            )
             for value in report_groups.values()
         ) != int(report.get("shared_field_entries_preserved_from_target", -1)):
             raise LegacyFeatureInventoryError(
@@ -1101,15 +1044,21 @@ def _validate_lineage(
             )
 
     report_artifacts = _mapping(report.get("artifacts"), label="transfer artifacts")
-    if _mapping(
-        report_artifacts.get("legacy_state"),
-        label="legacy artifact",
-    ).get("sha256") != bindings["legacy_state"]:
+    if (
+        _mapping(
+            report_artifacts.get("legacy_state"),
+            label="legacy artifact",
+        ).get("sha256")
+        != bindings["legacy_state"]
+    ):
         raise LegacyFeatureInventoryError("transfer report legacy state hash mismatch")
-    if _mapping(
-        report_artifacts.get("output_state"),
-        label="accepted artifact",
-    ).get("sha256") != bindings["accepted_state"]:
+    if (
+        _mapping(
+            report_artifacts.get("output_state"),
+            label="accepted artifact",
+        ).get("sha256")
+        != bindings["accepted_state"]
+    ):
         raise LegacyFeatureInventoryError("transfer report accepted state hash mismatch")
     target_artifact_hash = str(
         _mapping(
@@ -1137,25 +1086,32 @@ def _validate_lineage(
         label="selection lineage",
     )
     if selection_lineage.get("target_state_sha256") != target_artifact_hash:
-        raise LegacyFeatureInventoryError(
-            "selection target state hash mismatch"
-        )
+        raise LegacyFeatureInventoryError("selection target state hash mismatch")
 
     canary_artifacts = _mapping(canary.get("artifacts"), label="canary artifacts")
-    if _mapping(
-        canary_artifacts.get("teacher"),
-        label="canary teacher",
-    ).get("sha256") != bindings["legacy_state"]:
+    if (
+        _mapping(
+            canary_artifacts.get("teacher"),
+            label="canary teacher",
+        ).get("sha256")
+        != bindings["legacy_state"]
+    ):
         raise LegacyFeatureInventoryError("canary teacher hash mismatch")
-    if _mapping(
-        canary_artifacts.get("candidate"),
-        label="canary candidate",
-    ).get("sha256") != bindings["accepted_state"]:
+    if (
+        _mapping(
+            canary_artifacts.get("candidate"),
+            label="canary candidate",
+        ).get("sha256")
+        != bindings["accepted_state"]
+    ):
         raise LegacyFeatureInventoryError("canary candidate hash mismatch")
-    if _mapping(
-        canary_artifacts.get("target"),
-        label="canary target",
-    ).get("sha256") != target_artifact_hash:
+    if (
+        _mapping(
+            canary_artifacts.get("target"),
+            label="canary target",
+        ).get("sha256")
+        != target_artifact_hash
+    ):
         raise LegacyFeatureInventoryError("canary target state hash mismatch")
     canary_transfer = _mapping(
         canary.get("transfer_report"),
@@ -1164,9 +1120,7 @@ def _validate_lineage(
     if canary_transfer.get("file_sha256") != bindings["transfer_report"]:
         raise LegacyFeatureInventoryError("canary transfer report hash mismatch")
     if canary_transfer.get("embedded_sha256") != report.get("report_sha256"):
-        raise LegacyFeatureInventoryError(
-            "canary embedded transfer report digest mismatch"
-        )
+        raise LegacyFeatureInventoryError("canary embedded transfer report digest mismatch")
     if (
         canary.get("decision") != "passed"
         or _mapping(canary.get("gate"), label="canary gate").get("accepted") is not True
@@ -1188,9 +1142,7 @@ def _validate_lineage(
             **totals,
         }
         if observed_counts != expected_counts:
-            raise LegacyFeatureInventoryError(
-                f"canonical row lineage mismatch: {observed_counts}"
-            )
+            raise LegacyFeatureInventoryError(f"canonical row lineage mismatch: {observed_counts}")
     return {
         "accepted_rows": accepted_rows,
         "legacy_rows": legacy_rows,
@@ -1219,9 +1171,7 @@ def build_legacy_feature_inventory(
         legacy_state_sha256=str(artifact_bindings.get("legacy_state") or ""),
         accepted_state_sha256=str(artifact_bindings.get("accepted_state") or ""),
         transfer_report_sha256=str(artifact_bindings.get("transfer_report") or ""),
-        evaluation_canary_sha256=str(
-            artifact_bindings.get("evaluation_canary") or ""
-        ),
+        evaluation_canary_sha256=str(artifact_bindings.get("evaluation_canary") or ""),
         legacy_row_count=int(transfer_report.get("source_generalizable_entry_count", 0)),
         accepted_row_count=int(transfer_report.get("output_generalizable_entry_count", 0)),
         exact_row_count=int(transfer_report.get("output_generalizable_entry_count", 0)),
@@ -1240,14 +1190,11 @@ def build_legacy_feature_inventory(
     }
     if set(artifact_bindings) != required_binding_names:
         raise LegacyFeatureInventoryError(
-            "artifact bindings must contain exactly: "
-            + ", ".join(sorted(required_binding_names))
+            "artifact bindings must contain exactly: " + ", ".join(sorted(required_binding_names))
         )
     for name, digest in artifact_bindings.items():
         if not _is_sha256(str(digest)):
-            raise LegacyFeatureInventoryError(
-                f"artifact binding {name} is not a SHA-256 digest"
-            )
+            raise LegacyFeatureInventoryError(f"artifact binding {name} is not a SHA-256 digest")
     if audit_policy.require_canonical_artifacts:
         expected_artifact_bindings = {
             "accepted_state": audit_policy.accepted_state_sha256,
@@ -1266,15 +1213,9 @@ def build_legacy_feature_inventory(
     tokenizer = dict(
         tokenizer_source_binding
         or {
-            "schema_version": (
-                MODAL_AUTOENCODER_FEATURE_TOKENIZER_BINDING_SCHEMA_VERSION
-            ),
+            "schema_version": (MODAL_AUTOENCODER_FEATURE_TOKENIZER_BINDING_SCHEMA_VERSION),
             "sha256": content_sha256(
-                {
-                    "schema_version": (
-                        MODAL_AUTOENCODER_FEATURE_TOKENIZER_BINDING_SCHEMA_VERSION
-                    )
-                }
+                {"schema_version": (MODAL_AUTOENCODER_FEATURE_TOKENIZER_BINDING_SCHEMA_VERSION)}
             ),
         }
     )
@@ -1283,11 +1224,7 @@ def build_legacy_feature_inventory(
         or {
             "schema_version": MODAL_AUTOENCODER_COMPILER_BINDING_SCHEMA_VERSION,
             "sha256": content_sha256(
-                {
-                    "schema_version": (
-                        MODAL_AUTOENCODER_COMPILER_BINDING_SCHEMA_VERSION
-                    )
-                }
+                {"schema_version": (MODAL_AUTOENCODER_COMPILER_BINDING_SCHEMA_VERSION)}
             ),
         }
     )
@@ -1307,9 +1244,7 @@ def build_legacy_feature_inventory(
             legacy_state,
             accepted_state,
         )
-        for group_name, fields in sorted(
-            MODAL_AUTOENCODER_GENERALIZABLE_CAPACITY_GROUPS.items()
-        )
+        for group_name, fields in sorted(MODAL_AUTOENCODER_GENERALIZABLE_CAPACITY_GROUPS.items())
     ]
     row_counts = _validate_lineage(
         groups,
@@ -1320,16 +1255,10 @@ def build_legacy_feature_inventory(
     )
     omitted_by_semantic_family = {
         str(group["semantic_family"]): {
-            "activation_frequency": group["dispositions"]["omitted"][
-                "activation_frequency"
-            ],
-            "absolute_signal_mass": group["dispositions"]["omitted"][
-                "absolute_signal_mass"
-            ],
+            "activation_frequency": group["dispositions"]["omitted"]["activation_frequency"],
+            "absolute_signal_mass": group["dispositions"]["omitted"]["absolute_signal_mass"],
             "row_count": group["dispositions"]["omitted"]["row_count"],
-            "signed_signal_mass": group["dispositions"]["omitted"][
-                "signed_signal_mass"
-            ],
+            "signed_signal_mass": group["dispositions"]["omitted"]["signed_signal_mass"],
             "transfer_risk": max(
                 (
                     str(field["transfer_risk"])
@@ -1345,15 +1274,12 @@ def build_legacy_feature_inventory(
         }
         for group in groups
     }
-    if sum(
-        int(value["row_count"]) for value in omitted_by_semantic_family.values()
-    ) != row_counts["omitted"]:
-        raise LegacyFeatureInventoryError(
-            "semantic-family omission ledger does not reconcile"
-        )
-    omitted_signal = _merge_signals(
-        group["dispositions"]["omitted"] for group in groups
-    )
+    if (
+        sum(int(value["row_count"]) for value in omitted_by_semantic_family.values())
+        != row_counts["omitted"]
+    ):
+        raise LegacyFeatureInventoryError("semantic-family omission ledger does not reconcile")
+    omitted_signal = _merge_signals(group["dispositions"]["omitted"] for group in groups)
     omitted_by_transfer_risk = {
         risk: _merge_signals(
             field["dispositions"]["omitted"]
@@ -1363,21 +1289,18 @@ def build_legacy_feature_inventory(
         )
         for risk in ("low", "medium", "high")
     }
-    if sum(
-        int(value["row_count"]) for value in omitted_by_transfer_risk.values()
-    ) != row_counts["omitted"]:
-        raise LegacyFeatureInventoryError(
-            "transfer-risk omission ledger does not reconcile"
-        )
+    if (
+        sum(int(value["row_count"]) for value in omitted_by_transfer_risk.values())
+        != row_counts["omitted"]
+    ):
+        raise LegacyFeatureInventoryError("transfer-risk omission ledger does not reconcile")
 
     sample_memory_counts = {
         "accepted_sample_memory_rows": sum(
-            len(getattr(accepted_state, field_name))
-            for field_name in _SAMPLE_MEMORY_FIELDS
+            len(getattr(accepted_state, field_name)) for field_name in _SAMPLE_MEMORY_FIELDS
         ),
         "legacy_sample_memory_rows": sum(
-            len(getattr(legacy_state, field_name))
-            for field_name in _SAMPLE_MEMORY_FIELDS
+            len(getattr(legacy_state, field_name)) for field_name in _SAMPLE_MEMORY_FIELDS
         ),
     }
     inventory: dict[str, Any] = {
@@ -1431,9 +1354,7 @@ def build_legacy_feature_inventory(
         "schema_version": MODAL_AUTOENCODER_FEATURE_INVENTORY_SCHEMA_VERSION,
         "transfer_lineage": {
             "accepted_row_provenance": {
-                "source_fill_rows": int(
-                    transfer_report.get("imported_source_field_entries", -1)
-                ),
+                "source_fill_rows": int(transfer_report.get("imported_source_field_entries", -1)),
                 "target_preserved_rows": int(
                     transfer_report.get("target_generalizable_entry_count", -1)
                 ),
@@ -1455,9 +1376,7 @@ def build_legacy_feature_inventory(
             "source_embedding_transfer_enabled": bool(
                 transfer_report.get("source_embedding_transfer_enabled")
             ),
-            "source_signal_coverage": float(
-                transfer_report.get("source_signal_coverage", 0.0)
-            ),
+            "source_signal_coverage": float(transfer_report.get("source_signal_coverage", 0.0)),
             "target_preserved": bool(transfer_report.get("target_preserved")),
         },
         "trust_boundary": {
@@ -1491,12 +1410,8 @@ def audit_legacy_feature_inventory(
     }
     for name, path in paths.items():
         if not path.is_file():
-            raise LegacyFeatureInventoryError(
-                f"required {name} input does not exist: {path}"
-            )
-    artifact_bindings = {
-        name: sha256_file(path) for name, path in paths.items()
-    }
+            raise LegacyFeatureInventoryError(f"required {name} input does not exist: {path}")
+    artifact_bindings = {name: sha256_file(path) for name, path in paths.items()}
     if audit_policy.require_canonical_artifacts:
         expected = {
             "accepted_state": audit_policy.accepted_state_sha256,
@@ -1538,19 +1453,13 @@ def audit_legacy_feature_inventory(
     )
     checkpoint_metadata = accepted_metadata.get("metadata")
     if isinstance(checkpoint_metadata, Mapping):
-        if checkpoint_metadata.get("legacy_state_sha256") != artifact_bindings[
-            "legacy_state"
-        ]:
-            raise LegacyFeatureInventoryError(
-                "accepted checkpoint legacy binding mismatch"
-            )
+        if checkpoint_metadata.get("legacy_state_sha256") != artifact_bindings["legacy_state"]:
+            raise LegacyFeatureInventoryError("accepted checkpoint legacy binding mismatch")
         if (
             checkpoint_metadata.get("feature_transfer_schema_version")
             != MODAL_AUTOENCODER_FEATURE_TRANSFER_SCHEMA_VERSION
         ):
-            raise LegacyFeatureInventoryError(
-                "accepted checkpoint transfer schema mismatch"
-            )
+            raise LegacyFeatureInventoryError("accepted checkpoint transfer schema mismatch")
     return inventory
 
 

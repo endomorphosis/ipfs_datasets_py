@@ -4,11 +4,13 @@ Test stubs for fastapi_service module.
 Feature: FastAPI Service
   REST API service implementation using FastAPI
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def cors_is_enabled():
@@ -101,6 +103,7 @@ def the_fastapi_app_is_running():
 
 
 # Test scenarios
+
 
 def test_initialize_fastapi_application():
     """
@@ -215,6 +218,7 @@ def test_serve_api_documentation():
 
 
 # Step definitions
+
 
 # Given steps
 @given("CORS is enabled")

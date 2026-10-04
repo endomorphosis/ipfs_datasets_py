@@ -149,10 +149,7 @@ def _evaluate_budget(
         failures.append("max_wall_seconds")
     if peak_memory_bytes > budget.max_peak_memory_bytes:
         failures.append("max_peak_memory_bytes")
-    if (
-        budget.min_records_per_second > 0
-        and records_per_second < budget.min_records_per_second
-    ):
+    if budget.min_records_per_second > 0 and records_per_second < budget.min_records_per_second:
         failures.append("min_records_per_second")
     return (not failures, tuple(failures))
 
@@ -172,9 +169,7 @@ def run_fixture_benchmark(
     if budget is None:
         budget = ResourceBudget.fixture_default()
     if budget.source in {"live-provider-latency", "live_provider_latency"}:
-        raise ValueError(
-            "fixture benchmarks refuse budgets sourced from live provider latency"
-        )
+        raise ValueError("fixture benchmarks refuse budgets sourced from live provider latency")
 
     records = build_fixture_records(record_count)
     pages = paginate_records(records, page_size=page_size)

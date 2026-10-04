@@ -15,6 +15,7 @@ end-to-end *without* real I/O:
 All external I/O (mcp.run_stdio_async, anyio.run, ipfs_accelerate_py) is
 mocked out so the test suite runs without network or IPFS.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -30,6 +31,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 # ---------------------------------------------------------------------------
 # Inject minimal MCP stub before server import
 # ---------------------------------------------------------------------------
+
 
 def _inject_mcp():
     mcp_mod = types.ModuleType("mcp")
@@ -56,6 +58,7 @@ from ipfs_datasets_py.mcp_server.monitoring import (
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_server() -> IPFSDatasetsMCPServer:
     srv = IPFSDatasetsMCPServer.__new__(IPFSDatasetsMCPServer)
     srv.tools = {}
@@ -71,8 +74,8 @@ def _make_server() -> IPFSDatasetsMCPServer:
 # 1. Server init → register_tools lifecycle
 # ===========================================================================
 
-class TestServerRegisterToolsLifecycle:
 
+class TestServerRegisterToolsLifecycle:
     async def test_register_tools_adds_4_meta_tools(self):
         """register_tools() must register exactly the 4 hierarchical meta-tools."""
         srv = _make_server()
@@ -90,6 +93,7 @@ class TestServerRegisterToolsLifecycle:
 
     async def test_register_tools_mcp_none_raises(self):
         from ipfs_datasets_py.mcp_server.exceptions import ServerStartupError
+
         srv = _make_server()
         srv.mcp = None
         with pytest.raises(ImportError):
@@ -100,8 +104,8 @@ class TestServerRegisterToolsLifecycle:
 # 2. HierarchicalToolManager list_categories / list_tools
 # ===========================================================================
 
-class TestHierarchicalToolManagerListOps:
 
+class TestHierarchicalToolManagerListOps:
     async def test_list_categories_returns_list(self):
         mgr = HierarchicalToolManager()
         cats = await mgr.list_categories()
@@ -130,8 +134,8 @@ class TestHierarchicalToolManagerListOps:
 # 3. HierarchicalToolManager dispatch
 # ===========================================================================
 
-class TestHierarchicalToolManagerDispatch:
 
+class TestHierarchicalToolManagerDispatch:
     async def test_dispatch_known_meta_tool(self):
         """dispatch for admin_tools/list_tools exists and returns a result."""
         mgr = HierarchicalToolManager()
@@ -169,8 +173,8 @@ class TestHierarchicalToolManagerDispatch:
 # 4. EnhancedMetricsCollector post-dispatch tracking
 # ===========================================================================
 
-class TestMetricsIntegration:
 
+class TestMetricsIntegration:
     def test_track_tool_execution_after_dispatch_stub(self):
         """Simulate tracking after a dispatch completes."""
         col = EnhancedMetricsCollector(enabled=True)
@@ -205,8 +209,8 @@ class TestMetricsIntegration:
 # 5. Full round-trip: server register → dispatch via manager
 # ===========================================================================
 
-class TestFullRoundTrip:
 
+class TestFullRoundTrip:
     async def test_server_register_then_dispatch(self):
         """After register_tools(), the tool functions can be dispatched directly."""
         srv = _make_server()
@@ -238,4 +242,6 @@ class TestFullRoundTrip:
         col.track_tool_execution("bad_tool_chain_test", execution_time_ms=0.5, success=success)
 
         assert col.tool_metrics["call_counts"]["bad_tool_chain_test"] == 1
-        assert col.tool_metrics["error_counts"]["bad_tool_chain_test"] == 1  # unknown category → failure
+        assert (
+            col.tool_metrics["error_counts"]["bad_tool_chain_test"] == 1
+        )  # unknown category → failure

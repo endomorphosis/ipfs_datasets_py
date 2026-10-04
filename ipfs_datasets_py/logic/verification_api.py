@@ -767,9 +767,7 @@ def _trusted_binding_issues(
 
     property_id = expectation.get("property_id")
     if property_id is not None and str(property_id) != str(receipt.property_id):
-        issues.append(
-            f"wrong-property: expected {property_id!r}, got {receipt.property_id!r}"
-        )
+        issues.append(f"wrong-property: expected {property_id!r}, got {receipt.property_id!r}")
 
     if "assumptions" in expectation:
         expected_assumptions = _normalize_string_set(expectation.get("assumptions"))
@@ -789,23 +787,22 @@ def _trusted_binding_issues(
         actual_bounds = _normalize_bounds(metadata.get("bounds", {}))
         expected_bounds = _normalize_bounds(expectation.get("bounds"))
         if expected_bounds != actual_bounds:
-            issues.append(
-                f"wrong-bound: expected {expected_bounds!r}, got {actual_bounds!r}"
-            )
+            issues.append(f"wrong-bound: expected {expected_bounds!r}, got {actual_bounds!r}")
 
     tool = expectation.get("tool_id", expectation.get("backend_id"))
     if tool is not None and str(tool) != str(receipt.backend_id):
         issues.append(f"wrong-tool: expected {tool!r}, got {receipt.backend_id!r}")
 
     if "authority" in expectation:
-        expected_authority = str(
-            getattr(expectation["authority"], "value", expectation["authority"])
-        ).strip().lower()
+        expected_authority = (
+            str(getattr(expectation["authority"], "value", expectation["authority"]))
+            .strip()
+            .lower()
+        )
         actual_authority = str(receipt.underlying_authority.value)
         if expected_authority != actual_authority:
             issues.append(
-                "cross-authority: expected "
-                f"{expected_authority!r}, got {actual_authority!r}"
+                f"cross-authority: expected {expected_authority!r}, got {actual_authority!r}"
             )
 
     if "source_result_digest" in expectation:
@@ -818,13 +815,9 @@ def _trusted_binding_issues(
 
     claimed_content = expectation.get("content_id")
     if claimed_content is not None and str(claimed_content) != str(receipt.content_id):
-        issues.append(
-            "forged identity: content_id does not match trusted receipt payload"
-        )
+        issues.append("forged identity: content_id does not match trusted receipt payload")
 
-    if "receipt_id" in expectation and str(expectation["receipt_id"]) != str(
-        receipt.receipt_id
-    ):
+    if "receipt_id" in expectation and str(expectation["receipt_id"]) != str(receipt.receipt_id):
         issues.append(
             f"stale: receipt_id mismatch (expected {expectation['receipt_id']!r}, "
             f"got {receipt.receipt_id!r})"
@@ -841,13 +834,9 @@ def _trusted_binding_issues(
     issued_at = expectation.get("issued_at") or metadata.get("issued_at")
     if now and expires_at:
         if str(now) > str(expires_at):
-            issues.append(
-                f"stale: receipt expired (as_of={now!r}, expires_at={expires_at!r})"
-            )
+            issues.append(f"stale: receipt expired (as_of={now!r}, expires_at={expires_at!r})")
     if now and issued_at and str(now) < str(issued_at):
-        issues.append(
-            f"stale: receipt not yet valid (as_of={now!r}, issued_at={issued_at!r})"
-        )
+        issues.append(f"stale: receipt not yet valid (as_of={now!r}, issued_at={issued_at!r})")
 
     return issues
 
@@ -875,7 +864,9 @@ class LogicVerificationAPI:
         families = []
         for family_id in sorted(registry.families):
             descriptor = registry.family(family_id)
-            payload = descriptor.to_dict() if hasattr(descriptor, "to_dict") else {"family_id": family_id}
+            payload = (
+                descriptor.to_dict() if hasattr(descriptor, "to_dict") else {"family_id": family_id}
+            )
             families.append(payload)
         return _response(
             "list_logic_families",
@@ -900,11 +891,17 @@ class LogicVerificationAPI:
         taxonomy_caps = family_registry.provider_capabilities
         for provider_id in sorted(taxonomy_caps):
             descriptor = taxonomy_caps[provider_id]
-            payload = descriptor.to_dict() if hasattr(descriptor, "to_dict") else {"provider_id": provider_id}
+            payload = (
+                descriptor.to_dict()
+                if hasattr(descriptor, "to_dict")
+                else {"provider_id": provider_id}
+            )
             providers.append(
                 {
                     "provider_id": payload.get("provider_id", provider_id),
-                    "provider_version": payload.get("provider_version", payload.get("version", "declared")),
+                    "provider_version": payload.get(
+                        "provider_version", payload.get("version", "declared")
+                    ),
                     "logic_families": [
                         item.get("family_id", item) if isinstance(item, Mapping) else str(item)
                         for item in payload.get("family_support", ())
@@ -961,9 +958,7 @@ class LogicVerificationAPI:
                 cache=_empty_cache(source="backend_registry"),
             )
         declared = {
-            backend_id: (
-                caps.to_dict() if hasattr(caps, "to_dict") else dict(caps)
-            )
+            backend_id: (caps.to_dict() if hasattr(caps, "to_dict") else dict(caps))
             for backend_id, caps in sorted(capabilities.items())
         }
         return _response(
@@ -1054,9 +1049,7 @@ class LogicVerificationAPI:
                     else SmtObligation(**payload)  # type: ignore[arg-type]
                 )
             else:
-                raise VerificationAPIError(
-                    "artifact must be an SmtObligation or mapping"
-                )
+                raise VerificationAPIError("artifact must be an SmtObligation or mapping")
             compilation = compile_obligation(obligation)
         except Exception as error:
             return _response(
@@ -1071,7 +1064,9 @@ class LogicVerificationAPI:
             )
 
         compilation_dict = (
-            compilation.to_dict() if hasattr(compilation, "to_dict") else {"compilation": str(compilation)}
+            compilation.to_dict()
+            if hasattr(compilation, "to_dict")
+            else {"compilation": str(compilation)}
         )
         translations = ()
         if hasattr(compilation, "receipt") and compilation.receipt is not None:
@@ -1088,8 +1083,7 @@ class LogicVerificationAPI:
         assumptions = ()
         if hasattr(obligation, "assumptions"):
             assumptions = tuple(
-                item.name if hasattr(item, "name") else str(item)
-                for item in obligation.assumptions
+                item.name if hasattr(item, "name") else str(item) for item in obligation.assumptions
             )
         bounds: dict[str, Any] = {}
         if hasattr(obligation, "bounds") and obligation.bounds:
@@ -1101,9 +1095,7 @@ class LogicVerificationAPI:
             }
         return _response(
             "compile_verification_artifact",
-            VerificationStatus.SUCCEEDED
-            if not unsupported
-            else VerificationStatus.PARTIAL,
+            VerificationStatus.SUCCEEDED if not unsupported else VerificationStatus.PARTIAL,
             authority=VerificationAuthority.BOUNDED,
             result={
                 "target": target,
@@ -1162,12 +1154,8 @@ class LogicVerificationAPI:
                     bounds = ExecutionBounds(
                         timeout_ms=int(bounds_payload.get("timeout_ms", 30_000)),
                         max_steps=int(bounds_payload.get("max_steps", 100_000)),
-                        max_memory_bytes=int(
-                            bounds_payload.get("max_memory_bytes", 536_870_912)
-                        ),
-                        max_output_bytes=int(
-                            bounds_payload.get("max_output_bytes", 1_048_576)
-                        ),
+                        max_memory_bytes=int(bounds_payload.get("max_memory_bytes", 536_870_912)),
+                        max_output_bytes=int(bounds_payload.get("max_output_bytes", 1_048_576)),
                     )
                 else:
                     bounds = ExecutionBounds()
@@ -1318,8 +1306,12 @@ class LogicVerificationAPI:
             status,
             authority=authority,
             result={
-                "attempt": attempt.to_dict() if hasattr(attempt, "to_dict") else {"digest": getattr(attempt, "digest", "")},
-                "result": result.to_dict() if hasattr(result, "to_dict") else {"status": result_status},
+                "attempt": attempt.to_dict()
+                if hasattr(attempt, "to_dict")
+                else {"digest": getattr(attempt, "digest", "")},
+                "result": result.to_dict()
+                if hasattr(result, "to_dict")
+                else {"status": result_status},
                 "result_status": result_status,
                 "supporting": list(supporting),
             },
@@ -1505,7 +1497,9 @@ class LogicVerificationAPI:
                 if not isinstance(assurance, EvidenceAuthority):
                     assurance = EvidenceAuthority(assurance)
                 portfolio_obligation = PortfolioObligation(
-                    obligation_id=str(payload.get("obligation_id") or request_id or "obl:portfolio"),
+                    obligation_id=str(
+                        payload.get("obligation_id") or request_id or "obl:portfolio"
+                    ),
                     property_kind=kind,
                     statement=str(payload.get("statement") or ""),
                     required_assurance=assurance,
@@ -1523,9 +1517,7 @@ class LogicVerificationAPI:
                     backend_caps = backend.capabilities
                     matrix_entry = getattr(backend, "matrix_entry", None)
                     if matrix_entry is not None and getattr(matrix_entry, "family", ""):
-                        family = family_map.get(
-                            matrix_entry.family, AttemptFamily.SOLVER
-                        )
+                        family = family_map.get(matrix_entry.family, AttemptFamily.SOLVER)
                     else:
                         families = {
                             str(item).lower()
@@ -1642,7 +1634,9 @@ class LogicVerificationAPI:
 
                 selection = select_portfolio(plan, recorded)
                 selection_dict = (
-                    selection.to_dict() if hasattr(selection, "to_dict") else {"selection": str(selection)}
+                    selection.to_dict()
+                    if hasattr(selection, "to_dict")
+                    else {"selection": str(selection)}
                 )
                 verdict = getattr(selection, "verdict", None)
                 if verdict is PortfolioVerdict.QUARANTINED:
@@ -2380,9 +2374,7 @@ class LogicVerificationAPI:
                 "verify_receipt",
                 VerificationStatus.INVALID,
                 authority=VerificationAuthority.NONE,
-                diagnostics=(
-                    "trusted proof receipt expectation must be a binding mapping",
-                ),
+                diagnostics=("trusted proof receipt expectation must be a binding mapping",),
                 result={
                     "valid": False,
                     "kind": "trusted_proof_receipt",
@@ -2475,9 +2467,7 @@ class LogicVerificationAPI:
                 VerificationStatus.UNAVAILABLE,
                 authority=VerificationAuthority.NONE,
                 unsupported_features=("proof_receipt_attestation",),
-                diagnostics=(
-                    f"attestation module unavailable: {type(error).__name__}: {error}",
-                ),
+                diagnostics=(f"attestation module unavailable: {type(error).__name__}: {error}",),
                 request_id=request_id,
             )
 
@@ -2504,20 +2494,21 @@ class LogicVerificationAPI:
                 mode_enum = None
             else:
                 mode_enum = AttestationBackendMode(mode_raw)
-            mode = (
-                mode_enum.value
-                if mode_enum is not None
-                else (mode_raw or "disabled")
-            )
+            mode = mode_enum.value if mode_enum is not None else (mode_raw or "disabled")
         except Exception:
             mode_enum = None
             mode = mode_raw or str(backend_mode)
 
-        if mode in {"disabled", "none", ""} or mode_enum is None and mode_raw in {
-            "disabled",
-            "none",
-            "",
-        }:
+        if (
+            mode in {"disabled", "none", ""}
+            or mode_enum is None
+            and mode_raw
+            in {
+                "disabled",
+                "none",
+                "",
+            }
+        ):
             return _response(
                 "attest_receipt",
                 VerificationStatus.UNAVAILABLE,
@@ -2540,9 +2531,7 @@ class LogicVerificationAPI:
                 "attest_receipt",
                 VerificationStatus.INVALID,
                 authority=VerificationAuthority.NONE,
-                diagnostics=(
-                    f"backend_mode {mode!r} is not a recognized AttestationBackendMode",
-                ),
+                diagnostics=(f"backend_mode {mode!r} is not a recognized AttestationBackendMode",),
                 result={
                     "backend_mode": mode,
                     "proof_success": False,
@@ -2589,10 +2578,7 @@ class LogicVerificationAPI:
                 policy = backend_policy
 
             # Align policy mode with the explicit facade backend_mode.
-            if (
-                hasattr(policy, "backend_mode")
-                and policy.backend_mode is not mode_enum
-            ):
+            if hasattr(policy, "backend_mode") and policy.backend_mode is not mode_enum:
                 policy = AttestationBackendPolicy(
                     backend_id=policy.backend_id,
                     backend_version=policy.backend_version,
@@ -2615,9 +2601,7 @@ class LogicVerificationAPI:
                 # Preparation-only path: no secret material is admitted.
                 private_witness = PrivateWitness({"_prepared_placeholder": True})
             else:
-                raise VerificationAPIError(
-                    "witness must be a PrivateWitness, mapping, or omitted"
-                )
+                raise VerificationAPIError("witness must be a PrivateWitness, mapping, or omitted")
 
             attestation_request = prepare_receipt_attestation(
                 typed_receipt,
@@ -2663,9 +2647,7 @@ class LogicVerificationAPI:
         # Envelope generation is preparation, never independent proof success.
         proof_success = False
         authoritative = bool(getattr(envelope, "authoritative", False))
-        status = (
-            VerificationStatus.PARTIAL if simulated else VerificationStatus.SUCCEEDED
-        )
+        status = VerificationStatus.PARTIAL if simulated else VerificationStatus.SUCCEEDED
         diagnostics: tuple[str, ...] = ()
         if simulated:
             diagnostics = (
@@ -2767,9 +2749,7 @@ class LogicVerificationAPI:
             static_model = StaticProposalModel(response='{"candidates":[]}')
             if provider in {LEANSTRAL_ADVISOR_ID, "leanstral", "static"}:
                 advisor = LeanstralProposalAdvisor(model=static_model)
-                provider_id = (
-                    LEANSTRAL_ADVISOR_ID if provider != "static" else "static"
-                )
+                provider_id = LEANSTRAL_ADVISOR_ID if provider != "static" else "static"
             elif provider in {SYMAI_ADVISOR_ID, "symai", "sym_ai"}:
                 advisor = SymAIProposalAdvisor(model=static_model)
                 provider_id = SYMAI_ADVISOR_ID
@@ -3011,9 +2991,7 @@ class LogicVerificationAPI:
             elif isinstance(request, Mapping):
                 formalizer_request = EndGoalFormalizerRequest.from_dict(request)
             else:
-                raise EndGoalFormalizerError(
-                    "request must be EndGoalFormalizerRequest or mapping"
-                )
+                raise EndGoalFormalizerError("request must be EndGoalFormalizerRequest or mapping")
             result = EndGoalFormalizer().formalize(formalizer_request)
         except EndGoalFormalizerError as exc:
             return _response(
@@ -3687,21 +3665,20 @@ class LogicVerificationAPI:
 
         plan = request.get("plan") if isinstance(request.get("plan"), Mapping) else request
         plan_id = str(plan.get("plan_id") or request.get("plan_id") or "").strip()
-        status_text = str(
-            plan.get("status")
-            or request.get("status")
-            or plan.get("plan_status")
-            or "unknown"
-        ).strip().lower()
+        status_text = (
+            str(plan.get("status") or request.get("status") or plan.get("plan_status") or "unknown")
+            .strip()
+            .lower()
+        )
         receipts = plan.get("receipts") or request.get("receipts") or ()
-        receipt_count = len(receipts) if isinstance(receipts, Sequence) and not isinstance(
-            receipts, (str, bytes)
-        ) else 0
+        receipt_count = (
+            len(receipts)
+            if isinstance(receipts, Sequence) and not isinstance(receipts, (str, bytes))
+            else 0
+        )
         steps = plan.get("steps") or plan.get("candidates") or ()
         step_count = (
-            len(steps)
-            if isinstance(steps, Sequence) and not isinstance(steps, (str, bytes))
-            else 0
+            len(steps) if isinstance(steps, Sequence) and not isinstance(steps, (str, bytes)) else 0
         )
         # Never treat transport-present status alone as proof success.
         claimed_complete = bool(
@@ -3734,15 +3711,15 @@ class LogicVerificationAPI:
         api_status = VerificationStatus.SUCCEEDED
         if not proof_success and claimed_complete:
             api_status = VerificationStatus.PARTIAL
-            result["diagnostics_note"] = (
-                "completion claim rejected without adequate receipts"
-            )
+            result["diagnostics_note"] = "completion claim rejected without adequate receipts"
         elif status_text in {"unknown", ""}:
             api_status = VerificationStatus.PARTIAL
         return _response(
             "proof_status",
             api_status,
-            authority=VerificationAuthority.BOUNDED if proof_success else VerificationAuthority.NONE,
+            authority=VerificationAuthority.BOUNDED
+            if proof_success
+            else VerificationAuthority.NONE,
             result=result,
             request_id=request_id,
             cache=_empty_cache(source="goal_tactician_status"),
@@ -3804,9 +3781,7 @@ class LogicVerificationAPI:
                 "minimize_counterexample",
                 VerificationStatus.UNAVAILABLE,
                 authority=VerificationAuthority.NONE,
-                diagnostics=(
-                    f"minimization import failed: {type(error).__name__}: {error}",
-                ),
+                diagnostics=(f"minimization import failed: {type(error).__name__}: {error}",),
                 request_id=request_id,
             )
 
@@ -3825,11 +3800,14 @@ class LogicVerificationAPI:
                 cand_assign = candidate.get("assignments") or candidate.get("model") or candidate
                 if not isinstance(seed_assign, Mapping) or not isinstance(cand_assign, Mapping):
                     return candidate == seed
-                return all(
-                    cand_assign.get(key) == value
-                    for key, value in seed_assign.items()
-                    if value is not None
-                ) or candidate == seed
+                return (
+                    all(
+                        cand_assign.get(key) == value
+                        for key, value in seed_assign.items()
+                        if value is not None
+                    )
+                    or candidate == seed
+                )
 
         try:
             outcome = _minimize(
@@ -3942,9 +3920,7 @@ class LogicVerificationAPI:
                 "explain_counterexample_causal",
                 VerificationStatus.UNAVAILABLE,
                 authority=VerificationAuthority.NONE,
-                diagnostics=(
-                    f"explanation import failed: {type(error).__name__}: {error}",
-                ),
+                diagnostics=(f"explanation import failed: {type(error).__name__}: {error}",),
                 request_id=request_id,
             )
         try:
@@ -4080,9 +4056,15 @@ class LogicVerificationAPI:
         public["goal_tactician_interface"] = GOAL_TACTICIAN_API_INTERFACE
         public["proof_success"] = False
         status_value = public.get("status")
-        if status_value == getattr(ReplayStatus, "REPRODUCED", "reproduced") or status_value == "reproduced":
+        if (
+            status_value == getattr(ReplayStatus, "REPRODUCED", "reproduced")
+            or status_value == "reproduced"
+        ):
             api_status = VerificationStatus.SUCCEEDED
-        elif status_value in {"unavailable", ReplayStatus.UNAVAILABLE if hasattr(ReplayStatus, "UNAVAILABLE") else "unavailable"}:
+        elif status_value in {
+            "unavailable",
+            ReplayStatus.UNAVAILABLE if hasattr(ReplayStatus, "UNAVAILABLE") else "unavailable",
+        }:
             api_status = VerificationStatus.UNAVAILABLE
         elif status_value in {
             "binding_mismatch",
@@ -4225,6 +4207,7 @@ def get_verification_api(
 
 # Module-level convenience wrappers (thin, for stable import paths).
 
+
 def list_logic_families() -> VerificationResponse:
     return get_verification_api().list_logic_families()
 
@@ -4264,7 +4247,9 @@ def explain_counterexample(witness: Mapping[str, Any] | Any, **kwargs: Any) -> V
     return get_verification_api().explain_counterexample(witness, **kwargs)
 
 
-def verify_receipt(receipt: Any, expectation: Any | None = None, **kwargs: Any) -> VerificationResponse:
+def verify_receipt(
+    receipt: Any, expectation: Any | None = None, **kwargs: Any
+) -> VerificationResponse:
     return get_verification_api().verify_receipt(receipt, expectation, **kwargs)
 
 
@@ -4314,9 +4299,7 @@ def validate_proof_candidate(
     return get_verification_api().validate_proof_candidate(request, **kwargs)
 
 
-def execute_proof_plan(
-    request: Mapping[str, Any] | Any, **kwargs: Any
-) -> VerificationResponse:
+def execute_proof_plan(request: Mapping[str, Any] | Any, **kwargs: Any) -> VerificationResponse:
     return get_verification_api().execute_proof_plan(request, **kwargs)
 
 
@@ -4336,9 +4319,7 @@ def explain_counterexample_causal(
     return get_verification_api().explain_counterexample_causal(request, **kwargs)
 
 
-def replay_counterexample(
-    request: Mapping[str, Any] | Any, **kwargs: Any
-) -> VerificationResponse:
+def replay_counterexample(request: Mapping[str, Any] | Any, **kwargs: Any) -> VerificationResponse:
     return get_verification_api().replay_counterexample(request, **kwargs)
 
 

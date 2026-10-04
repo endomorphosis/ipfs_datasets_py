@@ -12,7 +12,7 @@ from tests._test_utils import (
     raise_on_bad_callable_code_quality,
     get_ast_tree,
     BadDocumentationError,
-    BadSignatureError
+    BadSignatureError,
 )
 
 work_dir = os.path.abspath(os.path.dirname(__file__))
@@ -25,8 +25,12 @@ file_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/batch_proces
 md_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/batch_processor_stubs.md")
 
 # Make sure the input file and documentation file exist.
-assert os.path.exists(file_path), f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
-assert os.path.exists(md_path), f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+assert os.path.exists(file_path), (
+    f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
+)
+assert os.path.exists(md_path), (
+    f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+)
 
 import pytest
 import json
@@ -47,17 +51,17 @@ from ipfs_datasets_py.pdf_processing.batch_processor import (
     BatchProcessor,
     ProcessingJob,
     BatchJobResult,
-    BatchStatus
+    BatchStatus,
 )
 
 import pytest
 from datetime import datetime
 from ipfs_datasets_py.pdf_processing.batch_processor import (
-    ProcessingJob, BatchJobResult, BatchStatus
+    ProcessingJob,
+    BatchJobResult,
+    BatchStatus,
 )
-from .conftest import (
-    PENDING_JOBS_COUNT, FAILED_JOBS_COUNT, SUCCESSFUL_JOBS_COUNT
-)
+from .conftest import PENDING_JOBS_COUNT, FAILED_JOBS_COUNT, SUCCESSFUL_JOBS_COUNT
 
 
 from ipfs_datasets_py.ipld.storage import IPLDStorage
@@ -86,11 +90,7 @@ class TestBatchStatusDataclass:
     @pytest.fixture
     def resource_usage_data(self):
         """Create resource usage data for testing."""
-        return {
-            "memory_mb": 2048.0,
-            "cpu_percent": 35.5,
-            "active_workers": PENDING_JOBS_COUNT
-        }
+        return {"memory_mb": 2048.0, "cpu_percent": 35.5, "active_workers": PENDING_JOBS_COUNT}
 
     @pytest.fixture
     def batch_status_initialized(self, resource_usage_data):
@@ -107,7 +107,7 @@ class TestBatchStatusDataclass:
             total_processing_time=3600.0,
             average_job_time=240.0,
             throughput=0.2,
-            resource_usage=resource_usage_data
+            resource_usage=resource_usage_data,
         )
 
     def test_batch_status_has_correct_batch_id(self, batch_status_initialized):
@@ -198,7 +198,9 @@ class TestBatchStatusDataclass:
         """
         assert batch_status_initialized.throughput == 0.2
 
-    def test_batch_status_has_correct_resource_usage(self, batch_status_initialized, resource_usage_data):
+    def test_batch_status_has_correct_resource_usage(
+        self, batch_status_initialized, resource_usage_data
+    ):
         """
         GIVEN valid parameters for BatchStatus
         WHEN BatchStatus is instantiated
@@ -236,8 +238,12 @@ class TestBatchStatusDataclass:
         WHEN BatchStatus represents ongoing processing
         THEN job counts should sum to total
         """
-        total = (batch_status_active.completed_jobs + batch_status_active.failed_jobs + 
-                batch_status_active.pending_jobs + batch_status_active.processing_jobs)
+        total = (
+            batch_status_active.completed_jobs
+            + batch_status_active.failed_jobs
+            + batch_status_active.pending_jobs
+            + batch_status_active.processing_jobs
+        )
         assert total == batch_status_active.total_jobs
 
     def test_completed_batch_has_end_time(self, batch_status_completed):
@@ -270,8 +276,10 @@ class TestBatchStatusDataclass:
         WHEN BatchStatus represents finished processing
         THEN completed_jobs + failed_jobs should equal total_jobs
         """
-        assert (batch_status_completed.completed_jobs + 
-                batch_status_completed.failed_jobs == batch_status_completed.total_jobs)
+        assert (
+            batch_status_completed.completed_jobs + batch_status_completed.failed_jobs
+            == batch_status_completed.total_jobs
+        )
 
     def test_completed_batch_has_positive_throughput(self, batch_status_completed):
         """
@@ -295,7 +303,7 @@ class TestBatchStatusDataclass:
             total_processing_time=1500.0,
             average_job_time=100.0,
             throughput=0.0,
-            resource_usage={}
+            resource_usage={},
         )
 
     def test_job_count_consistency_normal_case(self, consistency_test_status_normal):
@@ -305,8 +313,12 @@ class TestBatchStatusDataclass:
         THEN completed + failed + pending + processing should equal total_jobs
         """
         status = consistency_test_status_normal
-        total = (status.completed_jobs + status.failed_jobs + 
-                status.pending_jobs + status.processing_jobs)
+        total = (
+            status.completed_jobs
+            + status.failed_jobs
+            + status.pending_jobs
+            + status.processing_jobs
+        )
         assert total == status.total_jobs
 
     @pytest.fixture
@@ -324,7 +336,7 @@ class TestBatchStatusDataclass:
             total_processing_time=750.0,
             average_job_time=150.0,
             throughput=0.167,
-            resource_usage={}
+            resource_usage={},
         )
 
     def test_job_count_consistency_all_completed(self, consistency_test_status_complete):
@@ -334,8 +346,12 @@ class TestBatchStatusDataclass:
         THEN job counts should maintain mathematical consistency
         """
         status = consistency_test_status_complete
-        total = (status.completed_jobs + status.failed_jobs + 
-                status.pending_jobs + status.processing_jobs)
+        total = (
+            status.completed_jobs
+            + status.failed_jobs
+            + status.pending_jobs
+            + status.processing_jobs
+        )
         assert total == status.total_jobs
 
     @pytest.fixture
@@ -353,7 +369,7 @@ class TestBatchStatusDataclass:
             total_processing_time=3000.0,
             average_job_time=300.0,
             throughput=0.1,
-            resource_usage={}
+            resource_usage={},
         )
 
     def test_timing_metrics_start_time_format(self, timing_test_status):
@@ -427,11 +443,7 @@ class TestBatchStatusDataclass:
             "active_workers": 8,
             "queue_size": 15,
             "peak_memory_mb": 5120.0,
-            "system_info": {
-                "total_memory_gb": 16,
-                "cpu_cores": 8,
-                "platform": "linux"
-            }
+            "system_info": {"total_memory_gb": 16, "cpu_cores": 8, "platform": "linux"},
         }
 
     @pytest.fixture
@@ -448,7 +460,7 @@ class TestBatchStatusDataclass:
             total_processing_time=300.0,
             average_job_time=50.0,
             throughput=0.0,
-            resource_usage=detailed_resource_usage
+            resource_usage=detailed_resource_usage,
         )
 
     def test_resource_usage_memory_mb(self, resource_test_status):
@@ -489,7 +501,7 @@ class TestBatchStatusDataclass:
             total_processing_time=120.0,
             average_job_time=60.0,
             throughput=0.0,
-            resource_usage={}
+            resource_usage={},
         )
 
     def test_resource_usage_empty_dict(self, empty_resource_status):
@@ -514,7 +526,7 @@ class TestBatchStatusDataclass:
             total_processing_time=1800.0,
             average_job_time=60.0,
             throughput=0.0,
-            resource_usage={}
+            resource_usage={},
         )
 
     def test_progress_completion_rate_calculation(self, progress_partial_status):
@@ -523,7 +535,9 @@ class TestBatchStatusDataclass:
         WHEN progress is calculated from job counts
         THEN it should calculate completion percentage correctly
         """
-        completion_rate = progress_partial_status.completed_jobs / progress_partial_status.total_jobs
+        completion_rate = (
+            progress_partial_status.completed_jobs / progress_partial_status.total_jobs
+        )
         assert completion_rate == 0.6
 
     def test_progress_processed_rate_calculation(self, progress_partial_status):
@@ -532,8 +546,9 @@ class TestBatchStatusDataclass:
         WHEN progress is calculated from job counts
         THEN it should distinguish between completed and total processed
         """
-        processed_rate = ((progress_partial_status.completed_jobs + progress_partial_status.failed_jobs) / 
-                         progress_partial_status.total_jobs)
+        processed_rate = (
+            progress_partial_status.completed_jobs + progress_partial_status.failed_jobs
+        ) / progress_partial_status.total_jobs
         assert processed_rate == 0.7
 
     @pytest.fixture
@@ -550,7 +565,7 @@ class TestBatchStatusDataclass:
             total_processing_time=0.0,
             average_job_time=0.0,
             throughput=0.0,
-            resource_usage={}
+            resource_usage={},
         )
 
     def test_progress_zero_completion_rate(self, progress_zero_status):
@@ -577,7 +592,7 @@ class TestBatchStatusDataclass:
             total_processing_time=2400.0,
             average_job_time=400.0,
             throughput=0.133,
-            resource_usage={}
+            resource_usage={},
         )
 
     def test_progress_full_processed_rate(self, progress_complete_status):
@@ -586,8 +601,9 @@ class TestBatchStatusDataclass:
         WHEN progress is calculated from job counts
         THEN it should handle edge case of 100% processed
         """
-        processed_rate = ((progress_complete_status.completed_jobs + progress_complete_status.failed_jobs) / 
-                         progress_complete_status.total_jobs)
+        processed_rate = (
+            progress_complete_status.completed_jobs + progress_complete_status.failed_jobs
+        ) / progress_complete_status.total_jobs
         assert processed_rate == 1.0
 
     @pytest.fixture
@@ -605,11 +621,7 @@ class TestBatchStatusDataclass:
             total_processing_time=12750.0,
             average_job_time=150.0,
             throughput=0.0,
-            resource_usage={
-                "memory_mb": 3072.0,
-                "cpu_percent": 55.8,
-                "active_workers": 6
-            }
+            resource_usage={"memory_mb": 3072.0, "cpu_percent": 55.8, "active_workers": 6},
         )
 
     def test_performance_metrics_time_relationship(self, performance_test_status):
@@ -618,7 +630,9 @@ class TestBatchStatusDataclass:
         WHEN performance metrics are examined
         THEN total time should match completed jobs * average time
         """
-        expected_total_time = performance_test_status.completed_jobs * performance_test_status.average_job_time
+        expected_total_time = (
+            performance_test_status.completed_jobs * performance_test_status.average_job_time
+        )
         assert abs(performance_test_status.total_processing_time - expected_total_time) < 1.0
 
     def test_performance_metrics_positive_average_time(self, performance_test_status):
@@ -652,22 +666,19 @@ class TestBatchStatusDataclass:
         THEN modifications should not affect other instances
         """
         import copy
+
         original_metadata = {"batch_id": "test", "config": {"param": "value"}}
-        
+
         job1 = ProcessingJob(
-            job_id="copy_test_1",
-            pdf_path="/test1.pdf",
-            metadata=copy.deepcopy(original_metadata)
+            job_id="copy_test_1", pdf_path="/test1.pdf", metadata=copy.deepcopy(original_metadata)
         )
-        
+
         job2 = ProcessingJob(
-            job_id="copy_test_2", 
-            pdf_path="/test2.pdf",
-            metadata=copy.deepcopy(original_metadata)
+            job_id="copy_test_2", pdf_path="/test2.pdf", metadata=copy.deepcopy(original_metadata)
         )
-        
+
         job1.metadata["config"]["param"] = "modified"
-        
+
         assert job2.metadata["config"]["param"] == "value"
 
     def test_dataclass_copying_modification_isolation(self):
@@ -677,22 +688,19 @@ class TestBatchStatusDataclass:
         THEN modifications should be isolated to that instance
         """
         import copy
+
         original_metadata = {"batch_id": "test", "config": {"param": "value"}}
-        
+
         job1 = ProcessingJob(
-            job_id="copy_test_1",
-            pdf_path="/test1.pdf",
-            metadata=copy.deepcopy(original_metadata)
+            job_id="copy_test_1", pdf_path="/test1.pdf", metadata=copy.deepcopy(original_metadata)
         )
-        
+
         job2 = ProcessingJob(
-            job_id="copy_test_2", 
-            pdf_path="/test2.pdf",
-            metadata=copy.deepcopy(original_metadata)
+            job_id="copy_test_2", pdf_path="/test2.pdf", metadata=copy.deepcopy(original_metadata)
         )
-        
+
         job1.metadata["config"]["param"] = "modified"
-        
+
         assert job1.metadata["config"]["param"] == "modified"
 
     def test_dataclass_instance_uniqueness(self):
@@ -702,20 +710,17 @@ class TestBatchStatusDataclass:
         THEN they should be distinct instances
         """
         import copy
+
         original_metadata = {"batch_id": "test", "config": {"param": "value"}}
-        
+
         job1 = ProcessingJob(
-            job_id="copy_test_1",
-            pdf_path="/test1.pdf",
-            metadata=copy.deepcopy(original_metadata)
+            job_id="copy_test_1", pdf_path="/test1.pdf", metadata=copy.deepcopy(original_metadata)
         )
-        
+
         job2 = ProcessingJob(
-            job_id="copy_test_2", 
-            pdf_path="/test2.pdf",
-            metadata=copy.deepcopy(original_metadata)
+            job_id="copy_test_2", pdf_path="/test2.pdf", metadata=copy.deepcopy(original_metadata)
         )
-        
+
         assert job1.job_id != job2.job_id
 
     def test_dataclass_path_uniqueness(self):
@@ -725,22 +730,18 @@ class TestBatchStatusDataclass:
         THEN they should maintain distinct paths
         """
         import copy
-        original_metadata = {"batch_id": "test", "config": {"param": "value"}}
-        
-        job1 = ProcessingJob(
-            job_id="copy_test_1",
-            pdf_path="/test1.pdf",
-            metadata=copy.deepcopy(original_metadata)
-        )
-        
-        job2 = ProcessingJob(
-            job_id="copy_test_2", 
-            pdf_path="/test2.pdf",
-            metadata=copy.deepcopy(original_metadata)
-        )
-        
-        assert job1.pdf_path != job2.pdf_path
 
+        original_metadata = {"batch_id": "test", "config": {"param": "value"}}
+
+        job1 = ProcessingJob(
+            job_id="copy_test_1", pdf_path="/test1.pdf", metadata=copy.deepcopy(original_metadata)
+        )
+
+        job2 = ProcessingJob(
+            job_id="copy_test_2", pdf_path="/test2.pdf", metadata=copy.deepcopy(original_metadata)
+        )
+
+        assert job1.pdf_path != job2.pdf_path
 
 
 if __name__ == "__main__":

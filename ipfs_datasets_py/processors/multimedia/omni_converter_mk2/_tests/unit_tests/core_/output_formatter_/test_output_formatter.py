@@ -22,10 +22,11 @@ from core.content_extractor._content import Content
 def make_mock_resources() -> dict[str, MagicMock]:
     """
     Create mock resources for OutputFormatter testing.
-    
+
     Returns:
         Dictionary containing mocked dependencies.
     """
+
     def _make_mock():
         mock_logger = MagicMock(spec=Logger)
         mock_formatted_output = MagicMock(spec=FormattedOutput)
@@ -35,21 +36,25 @@ def make_mock_resources() -> dict[str, MagicMock]:
             "formatted_output": mock_formatted_output,
             "logger": mock_logger,
         }
+
     output = _make_mock()
     return copy.copy(output)
+
 
 def make_mock_configs() -> MagicMock:
     """
     Create mock configuration object for OutputFormatter testing.
-    
+
     Returns:
         Mocked Configs object with necessary attributes.
     """
+
     def _make_mock():
         mock_configs = MagicMock()
         mock_configs.output = MagicMock()
-        mock_configs.output.default_format = 'txt'
+        mock_configs.output.default_format = "txt"
         return mock_configs
+
     output = _make_mock()
     return copy.copy(output)
 
@@ -57,23 +62,24 @@ def make_mock_configs() -> MagicMock:
 def make_mock_content() -> MagicMock:
     """
     Create mock Content object for testing.
-    
+
     Returns:
         Mocked Content object with sample data.
     """
+
     def _make_mock():
         mock_content = MagicMock(spec=Content)
         mock_content.text = "Sample content text for testing"
         mock_content.metadata = {
             "title": "Test Document",
-            "author": "Test Author", 
+            "author": "Test Author",
             "created_at": "2023-01-01T12:00:00",
             "tags": ["test", "sample"],
-            "word_count": 6
+            "word_count": 6,
         }
         mock_content.sections = [
             {"title": "Introduction", "content": "Intro content"},
-            {"title": "Body", "content": "Main body content"}
+            {"title": "Body", "content": "Main body content"},
         ]
         mock_content.source_path = "test_document.txt"
         mock_content.source_format = "text/plain"
@@ -85,11 +91,13 @@ def make_mock_content() -> MagicMock:
             "source_path": mock_content.source_path,
             "source_format": mock_content.source_format,
             "sections": mock_content.sections,
-            "extraction_time": mock_content.extraction_time
+            "extraction_time": mock_content.extraction_time,
         }
         return mock_content
+
     output = _make_mock()
     return copy.copy(output)
+
 
 def make_mock_normalized_content(mock_content: MagicMock = None) -> MagicMock:
     def _make_mock(mock_content=None):
@@ -97,19 +105,22 @@ def make_mock_normalized_content(mock_content: MagicMock = None) -> MagicMock:
         mock_normalized_content.content = mock_content or make_mock_content()
         mock_normalized_content.normalized_by = ["newlines", "whitespace"]
         return mock_normalized_content
+
     output = _make_mock(mock_content)
     return copy.copy(output)
+
 
 def make_sample_content_variations() -> list[MagicMock]:
     """
     Create various Content objects for comprehensive testing.
-    
+
     Returns:
         List of different Content mock objects for edge case testing.
     """
+
     def _make_mocks():
         variations = []
- 
+
         # Empty content
         empty_content = MagicMock(spec=Content)
         empty_content.text = ""
@@ -124,7 +135,7 @@ def make_sample_content_variations() -> list[MagicMock]:
             "source_path": empty_content.source_path,
             "source_format": empty_content.source_format,
             "sections": empty_content.sections,
-            "extraction_time": empty_content.extraction_time
+            "extraction_time": empty_content.extraction_time,
         }
         variations.append(empty_content)
 
@@ -136,10 +147,12 @@ def make_sample_content_variations() -> list[MagicMock]:
             "author": {"name": "John Doe", "email": "john@example.com"},
             "tags": ["complex", "metadata", "nested"],
             "statistics": {"words": 100, "characters": 500},
-            "nested": {"level1": {"level2": "deep value"}}
+            "nested": {"level1": {"level2": "deep value"}},
         }
         rich_content.source_path = "complex_doc.docx"
-        rich_content.source_format = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        rich_content.source_format = (
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        )
         rich_content.sections = []
         rich_content.extraction_time = datetime.now().isoformat()
         rich_content.to_dict.return_value = {
@@ -148,17 +161,19 @@ def make_sample_content_variations() -> list[MagicMock]:
             "source_path": rich_content.source_path,
             "source_format": rich_content.source_format,
             "sections": rich_content.sections,
-            "extraction_time": rich_content.extraction_time
+            "extraction_time": rich_content.extraction_time,
         }
         variations.append(rich_content)
-        
+
         # Content with special characters
         special_content = MagicMock(spec=Content)
         special_content.text = "Special chars: 🌍 测试 \t\n\"quotes\" and 'apostrophes'"
         special_content.metadata = {"title": "Special Characters Test"}
         special_content.source_path = "special_chars.pdf"
         special_content.source_format = "application/pdf"
-        special_content.sections = [{"title": "Special Section", "content": "Content with special characters"}]
+        special_content.sections = [
+            {"title": "Special Section", "content": "Content with special characters"}
+        ]
         special_content.extraction_time = datetime.now().isoformat()
         special_content.to_dict.return_value = {
             "text": special_content.text,
@@ -166,17 +181,19 @@ def make_sample_content_variations() -> list[MagicMock]:
             "source_path": special_content.source_path,
             "source_format": special_content.source_format,
             "sections": special_content.sections,
-            "extraction_time": special_content.extraction_time
+            "extraction_time": special_content.extraction_time,
         }
         variations.append(special_content)
-        
+
         # Large content
         large_content = MagicMock(spec=Content)
         large_content.text = "Large content " * 1000  # Repeated text
         large_content.metadata = {"title": "Large Document", "size": "large"}
         large_content.source_path = "large_document.pdf"
         large_content.source_format = "application/pdf"
-        large_content.sections = [{"title": "Large Section", "content": "This section contains a lot of text." * 1000}]
+        large_content.sections = [
+            {"title": "Large Section", "content": "This section contains a lot of text." * 1000}
+        ]
         large_content.extraction_time = datetime.now().isoformat()
         large_content.to_dict.return_value = {
             "text": large_content.text,
@@ -184,10 +201,10 @@ def make_sample_content_variations() -> list[MagicMock]:
             "source_path": large_content.source_path,
             "source_format": large_content.source_format,
             "sections": large_content.sections,
-            "extraction_time": large_content.extraction_time
+            "extraction_time": large_content.extraction_time,
         }
         variations.append(large_content)
-        
+
         # Content with None values
         none_content = MagicMock(spec=Content)
         none_content.text = "Content with None metadata"
@@ -202,10 +219,11 @@ def make_sample_content_variations() -> list[MagicMock]:
             "source_path": none_content.source_path,
             "source_format": none_content.source_format,
             "sections": none_content.sections,
-            "extraction_time": none_content.extraction_time
+            "extraction_time": none_content.extraction_time,
         }
         variations.append(none_content)
         return variations
+
     output = _make_mocks()
     return copy.copy(output)
 
@@ -213,24 +231,28 @@ def make_sample_content_variations() -> list[MagicMock]:
 def make_sample_normalized_content_variations():
     def _make_mocks():
         various_content = make_sample_content_variations()
-        various_normalized_contents = [make_mock_normalized_content(cont) for cont in various_content]
+        various_normalized_contents = [
+            make_mock_normalized_content(cont) for cont in various_content
+        ]
         return various_normalized_contents
+
     output = _make_mocks()
     return copy.copy(output)
 
 
 def create_test_formatter_function(format_name: str):
     """Create a test formatter function for registration testing.
-    
+
     Args:
         format_name: Name to include in the formatter output
-        
+
     Returns:
         Formatter function that can be registered
     """
+
     def test_formatter(content: Content) -> str:
         return f"{format_name.upper()}: {content.text[:50]}..."
-    
+
     test_formatter.__name__ = f"_format_as_{format_name}"
     return test_formatter
 
@@ -238,13 +260,13 @@ def create_test_formatter_function(format_name: str):
 def assert_valid_json(test_case: unittest.TestCase, json_string: str):
     """
     Helper to assert that a string is valid JSON.
-    
+
     Args:
         test_case: The test case instance for assertions
         json_string: String to validate as JSON
     """
     import json
-    
+
     try:
         parsed = json.loads(json_string)
         test_case.assertIsInstance(parsed, (dict, list))
@@ -256,28 +278,28 @@ def assert_valid_json(test_case: unittest.TestCase, json_string: str):
 def assert_valid_markdown(test_case: unittest.TestCase, markdown_string: str):
     """
     Helper to assert basic markdown validity.
-    
+
     Args:
-        test_case: The test case instance for assertions  
+        test_case: The test case instance for assertions
         markdown_string: String to validate as markdown
     """
     test_case.assertIsInstance(markdown_string, str)
     test_case.assertGreater(len(markdown_string), 0)
-    
+
     # Basic markdown checks
-    lines = markdown_string.split('\n')
+    lines = markdown_string.split("\n")
     test_case.assertGreater(len(lines), 0)
-    
+
     # Should have some structure (headers, content, etc.)
     has_structure = any(
-        line.startswith('#') or 
-        line.startswith('*') or 
-        line.startswith('-') or
-        '**' in line or
-        '__' in line
+        line.startswith("#")
+        or line.startswith("*")
+        or line.startswith("-")
+        or "**" in line
+        or "__" in line
         for line in lines
     )
-    
+
     # Note: Not all markdown needs special formatting, so we don't require it
     # but if present, it should be reasonable
     return True
@@ -286,22 +308,19 @@ def assert_valid_markdown(test_case: unittest.TestCase, markdown_string: str):
 def setup_formatter_with_mocks() -> tuple[OutputFormatter, dict]:
     """
     Create an OutputFormatter with all mocked dependencies.
-    
+
     Returns:
         Tuple of (formatter_instance, mocks_dict) for testing
     """
     mocks = {
-        'logger': Mock(),
-        'configs': make_mock_configs(),
-        'resources': make_mock_resources(),
-        'content': make_mock_content()
+        "logger": Mock(),
+        "configs": make_mock_configs(),
+        "resources": make_mock_resources(),
+        "content": make_mock_content(),
     }
-    
-    formatter = OutputFormatter(
-        resources=mocks['resources'],
-        configs=mocks['configs']
-    )
-    
+
+    formatter = OutputFormatter(resources=mocks["resources"], configs=mocks["configs"])
+
     return formatter, mocks
 
 
@@ -313,10 +332,7 @@ class TestOutputFormatterInitialization(unittest.TestCase):
         self.mock_configs = make_mock_configs()
         self.mock_resources = make_mock_resources()
 
-        self.formatter = OutputFormatter(
-            resources=self.mock_resources,
-            configs=self.mock_configs
-        )
+        self.formatter = OutputFormatter(resources=self.mock_resources, configs=self.mock_configs)
 
     def test_init_with_valid_resources_and_configs(self):
         """
@@ -336,7 +352,7 @@ class TestOutputFormatterInitialization(unittest.TestCase):
         """
         # When
         formatter = OutputFormatter(resources=self.mock_resources, configs=self.mock_configs)
-        
+
         # Then
         self.assertIsInstance(formatter, OutputFormatter)
         self.assertEqual(formatter.resources, self.mock_resources)
@@ -344,12 +360,12 @@ class TestOutputFormatterInitialization(unittest.TestCase):
         self.assertIsInstance(formatter.output_formats, dict)
 
         format = formatter.default_format
-        self.assertEqual(format, 'txt')
-        
+        self.assertEqual(format, "txt")
+
         # Check default formatters are registered
-        expected_formats = {'txt', 'json', 'md'}
+        expected_formats = {"txt", "json", "md"}
         self.assertEqual(set(formatter.output_formats.keys()), expected_formats)
-        
+
         # Check formatters are callable
         for format_name in expected_formats:
             self.assertTrue(callable(formatter.output_formats[format_name]))
@@ -388,15 +404,15 @@ class TestOutputFormatterInitialization(unittest.TestCase):
         """
         # When
         formatter = OutputFormatter(resources=self.mock_resources, configs=self.mock_configs)
-        
+
         # Then
         self.assertIs(formatter.resources, self.mock_resources)
         self.assertIs(formatter.configs, self.mock_configs)
-        
-        expected_formats = {'txt', 'json', 'md'}
+
+        expected_formats = {"txt", "json", "md"}
         self.assertEqual(set(formatter.output_formats.keys()), expected_formats)
-        self.assertEqual(formatter.default_format, 'txt')
-        
+        self.assertEqual(formatter.default_format, "txt")
+
         available = formatter.available_formats
         self.assertEqual(set(available), expected_formats)
         self.assertIsInstance(available, list)
@@ -410,10 +426,7 @@ class TestDefaultFormattersRegistration(unittest.TestCase):
         self.mock_configs = make_mock_configs()
         self.mock_resources = make_mock_resources()
 
-        self.formatter = OutputFormatter(
-            resources=self.mock_resources,
-            configs=self.mock_configs
-        )
+        self.formatter = OutputFormatter(resources=self.mock_resources, configs=self.mock_configs)
 
     def test_register_default_formatters_creates_txt_formatter(self):
         """
@@ -426,14 +439,14 @@ class TestDefaultFormattersRegistration(unittest.TestCase):
         """
         # Given
         formatter = OutputFormatter(resources=self.mock_resources, configs=self.mock_configs)
-        
+
         # When - already called during init, but verify state
         # Then
-        self.assertIn('txt', formatter.output_formats)
-        self.assertTrue(callable(formatter.output_formats['txt']))
-        
+        self.assertIn("txt", formatter.output_formats)
+        self.assertTrue(callable(formatter.output_formats["txt"]))
+
         # Verify it's bound to the correct method
-        self.assertEqual(formatter.output_formats['txt'].__name__, '_format_as_txt')
+        self.assertEqual(formatter.output_formats["txt"].__name__, "_format_as_txt")
 
     def test_register_default_formatters_creates_json_formatter(self):
         """
@@ -446,14 +459,14 @@ class TestDefaultFormattersRegistration(unittest.TestCase):
         """
         # Given
         formatter = OutputFormatter(resources=self.mock_resources, configs=self.mock_configs)
-        
+
         # When - already called during init, but verify state
         # Then
-        self.assertIn('json', formatter.output_formats)
-        self.assertTrue(callable(formatter.output_formats['json']))
-        
+        self.assertIn("json", formatter.output_formats)
+        self.assertTrue(callable(formatter.output_formats["json"]))
+
         # Verify it's bound to the correct method
-        self.assertEqual(formatter.output_formats['json'].__name__, '_format_as_json')
+        self.assertEqual(formatter.output_formats["json"].__name__, "_format_as_json")
 
     def test_register_default_formatters_creates_markdown_formatter(self):
         """
@@ -466,14 +479,14 @@ class TestDefaultFormattersRegistration(unittest.TestCase):
         """
         # Given
         formatter = OutputFormatter(resources=self.mock_resources, configs=self.mock_configs)
-        
+
         # When - already called during init, but verify state
         # Then
-        self.assertIn('md', formatter.output_formats)
-        self.assertTrue(callable(formatter.output_formats['md']))
-        
+        self.assertIn("md", formatter.output_formats)
+        self.assertTrue(callable(formatter.output_formats["md"]))
+
         # Verify it's bound to the correct method
-        self.assertEqual(formatter.output_formats['md'].__name__, '_format_as_markdown')
+        self.assertEqual(formatter.output_formats["md"].__name__, "_format_as_markdown")
 
     def test_register_default_formatters_called_during_init(self):
         """
@@ -484,16 +497,16 @@ class TestDefaultFormattersRegistration(unittest.TestCase):
             - All default formatters are available immediately after init
         """
         # When
-        with patch.object(OutputFormatter, '_register_default_formatters') as mock_register:
+        with patch.object(OutputFormatter, "_register_default_formatters") as mock_register:
             formatter = OutputFormatter(resources=self.mock_resources, configs=self.mock_configs)
-            
+
             # Then
             mock_register.assert_called_once()
-            
+
         # Verify the method actually sets up the formatters when not mocked
         formatter_real = OutputFormatter(resources=self.mock_resources, configs=self.mock_configs)
         print(formatter_real.output_formats.keys())
-        expected_formats = {'txt', 'json', 'md'}
+        expected_formats = {"txt", "json", "md"}
         self.assertEqual(set(formatter_real.output_formats.keys()), expected_formats)
 
 
@@ -505,14 +518,10 @@ class TestTxtFormatter(unittest.TestCase):
         self.mock_configs = make_mock_configs()
         self.mock_resources = make_mock_resources()
 
-        self.formatter = OutputFormatter(
-            resources=self.mock_resources,
-            configs=self.mock_configs
-        )
+        self.formatter = OutputFormatter(resources=self.mock_resources, configs=self.mock_configs)
         self.mock_normalized_content = make_mock_normalized_content()
         self.output_dict = self.mock_normalized_content.content.to_dict()
-        self.output_dict['normalized_by'] = self.mock_normalized_content.normalized_by
-
+        self.output_dict["normalized_by"] = self.mock_normalized_content.normalized_by
 
     def test_format_as_txt_with_simple_content(self):
         """
@@ -524,16 +533,16 @@ class TestTxtFormatter(unittest.TestCase):
             - No additional information or formatting
         """
         # Given
-        self.output_dict['text'] = "Hello World"
+        self.output_dict["text"] = "Hello World"
         # Set all other keys to None.
-        self.output_dict['metadata'] = None
-        self.output_dict['source_format'] = None
-        self.output_dict['sections'] = None
-        self.output_dict['normalized_by'] = None
+        self.output_dict["metadata"] = None
+        self.output_dict["source_format"] = None
+        self.output_dict["sections"] = None
+        self.output_dict["normalized_by"] = None
 
         # When
         result = self.formatter._format_as_txt(self.output_dict)
-    
+
         # Then
         self.assertIsInstance(result, str)
         self.assertIn("Hello World", result)
@@ -549,19 +558,19 @@ class TestTxtFormatter(unittest.TestCase):
         """
         # Given
         multiline_text = "Line 1\nLine 2\n\nLine 4"
-        self.output_dict['text'] = multiline_text
+        self.output_dict["text"] = multiline_text
         # Set all other keys to None.
-        self.output_dict['metadata'] = None
-        self.output_dict['source_format'] = None
-        self.output_dict['sections'] = None
-        self.output_dict['normalized_by'] = None
+        self.output_dict["metadata"] = None
+        self.output_dict["source_format"] = None
+        self.output_dict["sections"] = None
+        self.output_dict["normalized_by"] = None
 
         # When
         result = self.formatter._format_as_txt(self.output_dict)
-        
+
         # Then
         self.assertIn(multiline_text, result)
-        self.assertIn('\n', result)
+        self.assertIn("\n", result)
 
     def test_format_as_txt_with_empty_content(self):
         """
@@ -572,11 +581,11 @@ class TestTxtFormatter(unittest.TestCase):
             - No errors raised
         """
         # Given
-        self.output_dict['text'] = ""
-        
+        self.output_dict["text"] = ""
+
         # When
         result = self.formatter._format_as_txt(self.output_dict)
-        
+
         # Then
         self.assertEqual(result, "")
         self.assertIsInstance(result, str)
@@ -589,8 +598,8 @@ class TestTxtFormatter(unittest.TestCase):
             - Handles gracefully (returns empty string or raises appropriate error)
         """
         # Given
-        self.output_dict['text'] = None
-        
+        self.output_dict["text"] = None
+
         # When/Then
         try:
             result = self.formatter._format_as_txt(self.output_dict)
@@ -610,20 +619,18 @@ class TestTxtFormatter(unittest.TestCase):
         """
         # Given
         special_text = "Hello\tWorld\n🌍 Unicode 测试 \u2603"
-        
-        self.output_dict['text'] = special_text
-        
+
+        self.output_dict["text"] = special_text
+
         # When
         result = self.formatter._format_as_txt(self.output_dict)
-        
+
         # Then
         self.assertIn(special_text, result)
-        self.assertIn('\t', result)
-        self.assertIn('🌍', result)
-        self.assertIn('测试', result)
-        self.assertIn('\u2603', result)
-
-
+        self.assertIn("\t", result)
+        self.assertIn("🌍", result)
+        self.assertIn("测试", result)
+        self.assertIn("\u2603", result)
 
 
 class TestJsonFormatter(unittest.TestCase):
@@ -634,13 +641,10 @@ class TestJsonFormatter(unittest.TestCase):
         self.mock_configs = make_mock_configs()
         self.mock_resources = make_mock_resources()
 
-        self.formatter = OutputFormatter(
-            resources=self.mock_resources,
-            configs=self.mock_configs
-        )
+        self.formatter = OutputFormatter(resources=self.mock_resources, configs=self.mock_configs)
         self.mock_normalized_content = make_mock_normalized_content()
         self.output_dict = self.mock_normalized_content.content.to_dict()
-        self.output_dict['normalized_by'] = self.mock_normalized_content.normalized_by
+        self.output_dict["normalized_by"] = self.mock_normalized_content.normalized_by
 
     def test_format_as_json_with_simple_content(self):
         """
@@ -652,15 +656,15 @@ class TestJsonFormatter(unittest.TestCase):
             - JSON is properly formatted with indentation
         """
         # When
-        result = self.formatter._format_as_json(self.output_dict )
-        
+        result = self.formatter._format_as_json(self.output_dict)
+
         # Then
         self.assertIsInstance(result, str)
-        
+
         # Verify it's valid JSON
         parsed = json.loads(result)
         self.assertIsInstance(parsed, dict)
-        
+
         # Check that it contains expected content
         self.assertIn("text", parsed)
         self.assertEqual(parsed["text"], "Sample content text for testing")
@@ -675,26 +679,22 @@ class TestJsonFormatter(unittest.TestCase):
             - No circular reference errors
         """
         # Given
-        self.output_dict['text'] = "Complex content"
-        self.output_dict['metadata'] = {
+        self.output_dict["text"] = "Complex content"
+        self.output_dict["metadata"] = {
             "title": "Test",
-            "nested": {
-                "level1": {
-                    "level2": ["item1", "item2"]
-                }
-            },
-            "list": [1, 2, {"key": "value"}]
+            "nested": {"level1": {"level2": ["item1", "item2"]}},
+            "list": [1, 2, {"key": "value"}],
         }
         # When
         result = self.formatter._format_as_json(self.output_dict)
-        
+
         # Then
         self.assertIsInstance(result, str)
 
         # Verify it's valid JSON
         parsed = json.loads(result)
         self.assertIsInstance(parsed, dict)
-        
+
         # Verify nested structures are preserved
         if "metadata" in parsed:
             self.assertIn("nested", parsed["metadata"])
@@ -710,23 +710,24 @@ class TestJsonFormatter(unittest.TestCase):
         """
         # Given
         test_datetime = datetime(2023, 1, 1, 12, 0, 0)
-        self.output_dict['text'] = "DateTime test"
-        self.output_dict['extraction_time'] = test_datetime.isoformat() # NOTE This is already done in the Content class
-        self.output_dict['metadata'] = {"timestamp": test_datetime}
+        self.output_dict["text"] = "DateTime test"
+        self.output_dict["extraction_time"] = (
+            test_datetime.isoformat()
+        )  # NOTE This is already done in the Content class
+        self.output_dict["metadata"] = {"timestamp": test_datetime}
 
         # When
         result = self.formatter._format_as_json(self.output_dict)
-        
+
         # Then
         self.assertIsInstance(result, str)
-        
+
         # Verify it's valid JSON (datetime should be serialized)
         try:
             parsed = json.loads(result)
             self.assertIsInstance(parsed, dict)
         except json.JSONDecodeError:
             self.fail("JSON should be valid even with datetime objects")
-
 
     def test_format_as_json_encoding_special_characters(self):
         """
@@ -738,25 +739,25 @@ class TestJsonFormatter(unittest.TestCase):
         """
         # Given
         special_text = 'Text with "quotes" and \\backslashes\\ and unicode: 🌍'
-        self.output_dict['text'] = special_text
-        self.output_dict['metadata'] = {"title": 'Title with "quotes"'}
+        self.output_dict["text"] = special_text
+        self.output_dict["metadata"] = {"title": 'Title with "quotes"'}
 
         # When
         result = self.formatter._format_as_json(self.output_dict)
-        
+
         # Then
         self.assertIsInstance(result, str)
-        
+
         # Verify it's valid JSON
         parsed = json.loads(result)
         self.assertIsInstance(parsed, dict)
-        
+
         # Verify special characters are preserved after parsing
         if "text" in parsed:
             print(parsed["text"])
             self.assertIn('"', parsed["text"])
-            self.assertIn('\\', parsed["text"])
-            self.assertIn('🌍', parsed["text"])
+            self.assertIn("\\", parsed["text"])
+            self.assertIn("🌍", parsed["text"])
 
 
 class TestMarkdownFormatter(unittest.TestCase):
@@ -767,13 +768,10 @@ class TestMarkdownFormatter(unittest.TestCase):
         self.mock_configs = make_mock_configs()
         self.mock_resources = make_mock_resources()
 
-        self.formatter = OutputFormatter(
-            resources=self.mock_resources,
-            configs=self.mock_configs
-        )
+        self.formatter = OutputFormatter(resources=self.mock_resources, configs=self.mock_configs)
         self.mock_normalized_content = make_mock_normalized_content()
         self.output_dict = self.mock_normalized_content.content.to_dict()
-        self.output_dict['normalized_by'] = self.mock_normalized_content.normalized_by
+        self.output_dict["normalized_by"] = self.mock_normalized_content.normalized_by
 
     def test_format_as_markdown_with_simple_content(self):
         """
@@ -786,18 +784,18 @@ class TestMarkdownFormatter(unittest.TestCase):
         """
         # When
         result = self.formatter._format_as_markdown(self.output_dict)
-        
+
         # Then
         self.assertIsInstance(result, str)
         self.assertIn("Sample content text for testing", result)
-        
+
         # Should contain some markdown formatting
         # (exact format depends on implementation, but should have structure)
         # TODO - this is a bit vague, need to define what we expect
-        self.assertTrue(len(result) >= len(self.output_dict['text']))
+        self.assertTrue(len(result) >= len(self.output_dict["text"]))
 
         # Check for '# Content from' in in result, since that's always added
-        self.assertIn('# Content from', result)
+        self.assertIn("# Content from", result)
 
     def test_format_as_markdown_with_metadata(self):
         """
@@ -808,12 +806,12 @@ class TestMarkdownFormatter(unittest.TestCase):
             - Proper Markdown syntax used
         """
         # Given
-        self.output_dict['text'] = "Content with metadata"
-        self.output_dict['metadata'] = {
+        self.output_dict["text"] = "Content with metadata"
+        self.output_dict["metadata"] = {
             "title": "Test Document",
             "author": "Test Author",
             "date": "2023-01-01",
-            "description": "A test document"
+            "description": "A test document",
         }
 
         # When
@@ -821,15 +819,17 @@ class TestMarkdownFormatter(unittest.TestCase):
 
         # Then
         self.assertIsInstance(result, str)
-        
+
         # Should include metadata in some form
         self.assertIn("Test Document", result)
         self.assertIn("Content with metadata", result)
-        
+
         # Should have markdown structure (headers, etc.)
-        self.assertTrue(any(line.startswith('#') for line in result.split('\n')) or 
-                       'title' in result.lower() or 
-                       'author' in result.lower())
+        self.assertTrue(
+            any(line.startswith("#") for line in result.split("\n"))
+            or "title" in result.lower()
+            or "author" in result.lower()
+        )
 
     def test_format_as_markdown_with_sections(self):
         """
@@ -841,23 +841,23 @@ class TestMarkdownFormatter(unittest.TestCase):
             - Table of contents generated if applicable
         """
         # Given
-        self.output_dict['text']= "Chapter 1: Introduction\n\nChapter 2: Main Content"
-        self.output_dict['sections'] = [
+        self.output_dict["text"] = "Chapter 1: Introduction\n\nChapter 2: Main Content"
+        self.output_dict["sections"] = [
             {"title": "Introduction", "content": "Intro content"},
-            {"title": "Main Content", "content": "Main content here"}
+            {"title": "Main Content", "content": "Main content here"},
         ]
-        self.output_dict['metadata'] = {"title": "Multi-Section Document"}
-        
+        self.output_dict["metadata"] = {"title": "Multi-Section Document"}
+
         # When
         result = self.formatter._format_as_markdown(self.output_dict)
-        
+
         # Then
         self.assertIsInstance(result, str)
         self.assertIn("Introduction", result)
         self.assertIn("Main Content", result)
-        
+
         # Should have some structure for sections
-        lines = result.split('\n')
+        lines = result.split("\n")
         self.assertTrue(len(lines) > 1)
 
     def test_format_as_markdown_with_lists_and_formatting(self):
@@ -870,20 +870,20 @@ class TestMarkdownFormatter(unittest.TestCase):
             - Text formatting is preserved or converted
         """
         # Given
-        
-        self.output_dict['text'] = "Bold text and italic text with a list:\n- Item 1\n- Item 2"
-        self.output_dict['metadata'] = {"title": "Formatted Content"}
-        
+
+        self.output_dict["text"] = "Bold text and italic text with a list:\n- Item 1\n- Item 2"
+        self.output_dict["metadata"] = {"title": "Formatted Content"}
+
         # When
         result = self.formatter._format_as_markdown(self.output_dict)
-        
+
         # Then
         self.assertIsInstance(result, str)
         self.assertIn("Item 1", result)
         self.assertIn("Item 2", result)
-        
+
         # Should preserve or enhance markdown formatting
-        self.assertTrue(len(result) >= len(self.output_dict['text']))
+        self.assertTrue(len(result) >= len(self.output_dict["text"]))
 
     def test_format_as_markdown_escaping_special_characters(self):
         """
@@ -895,22 +895,22 @@ class TestMarkdownFormatter(unittest.TestCase):
         """
         # Given
         special_text = "Text with *asterisks* and _underscores_ and #hashtags"
-        
-        self.output_dict['text'] = special_text
-        self.output_dict['metadata'] = {"title": "Special #Characters"}
-        
+
+        self.output_dict["text"] = special_text
+        self.output_dict["metadata"] = {"title": "Special #Characters"}
+
         # When
         result = self.formatter._format_as_markdown(self.output_dict)
-        
+
         # Then
         self.assertIsInstance(result, str)
-        
+
         # Should contain the special characters in some form
         # (either escaped or as part of formatting)
         self.assertIn("asterisks", result)
         self.assertIn("underscores", result)
         self.assertIn("hashtags", result)
-        
+
         # Should be valid markdown (no unmatched formatting)
         # This is a basic check - in practice, you'd want more sophisticated validation
         self.assertTrue(len(result) > 0)
@@ -943,7 +943,7 @@ class TestFormatOutput(unittest.TestCase):
         result = self.formatter.format_output(self.mock_normalized_content, format=None)
 
         # Then TODO Figure out how to do proper instance checking with mocks.
-        #self.assertEqual(result, self.formatter._formatted_output)
+        # self.assertEqual(result, self.formatter._formatted_output)
         self.formatter._formatted_output.assert_called_once()
 
         # Verify the call was made with correct parameters
@@ -961,18 +961,17 @@ class TestFormatOutput(unittest.TestCase):
             - FormattedOutput.content contains JSON
         """
         # When
-        result = self.formatter.format_output(self.mock_normalized_content, format='json')
+        result = self.formatter.format_output(self.mock_normalized_content, format="json")
 
         # Then
-        #self.assertEqual(result, self.formatter._formatted_output)
+        # self.assertEqual(result, self.formatter._formatted_output)
         self.formatter._formatted_output.assert_called_once()
 
         # Verify the call was made with correct parameters
         call_args = self.formatter._formatted_output.call_args
         self.assertIsNotNone(call_args)
 
-        self.assertEqual(call_args[1]['format'], 'json')
-
+        self.assertEqual(call_args[1]["format"], "json")
 
     def test_format_output_with_invalid_format(self):
         """
@@ -985,10 +984,10 @@ class TestFormatOutput(unittest.TestCase):
         """
         # When/Then
         with self.assertRaises(ValueError) as context:
-            self.formatter.format_output(self.mock_normalized_content, format='invalid_format')
-        
+            self.formatter.format_output(self.mock_normalized_content, format="invalid_format")
+
         error_message = str(context.exception)
-        self.assertIn('invalid_format', error_message.lower())
+        self.assertIn("invalid_format", error_message.lower())
 
     def test_format_output_with_options(self):
         """
@@ -1000,13 +999,15 @@ class TestFormatOutput(unittest.TestCase):
             - Output reflects the options
         """
         # Given
-        options = {'indent': 4, 'sort_keys': True}
+        options = {"indent": 4, "sort_keys": True}
 
         # When
-        result = self.formatter.format_output(self.mock_normalized_content, format='json', options=options)
+        result = self.formatter.format_output(
+            self.mock_normalized_content, format="json", options=options
+        )
 
         # Then
-        #self.assertEqual(result, self.formatter._formatted_output)
+        # self.assertEqual(result, self.formatter._formatted_output)
         self.formatter._formatted_output.assert_called_once()
 
         # Verify the call was made with correct parameters
@@ -1015,13 +1016,13 @@ class TestFormatOutput(unittest.TestCase):
         pprint(call_args)
         print(len(call_args))
 
-        self.assertEqual(call_args[1]['format'], 'json')
+        self.assertEqual(call_args[1]["format"], "json")
 
         # The options are merged into metadata, not passed as separate 'options'
-        metadata = call_args[1]['metadata']
-        self.assertEqual(metadata['indent'], 4)
-        self.assertEqual(metadata['sort_keys'], True)
-        
+        metadata = call_args[1]["metadata"]
+        self.assertEqual(metadata["indent"], 4)
+        self.assertEqual(metadata["sort_keys"], True)
+
         # Or if you want to check that the options are present in metadata:
         for key, value in options.items():
             self.assertEqual(metadata[key], value)
@@ -1036,34 +1037,32 @@ class TestFormatOutput(unittest.TestCase):
         """
         # Given
 
-
         with tempfile.TemporaryDirectory() as temp_dir:
-
-            output_path = f'{temp_dir}/output.txt'
+            output_path = f"{temp_dir}/output.txt"
 
             mock_configs = make_mock_configs()
             mock_resources = make_mock_resources()
 
             formatted_output = Mock(spec=FormattedOutput)
             formatted_output.output_path = output_path
-            mock_resources['formatted_output'] = formatted_output
+            mock_resources["formatted_output"] = formatted_output
 
             formatter = OutputFormatter(resources=mock_resources, configs=mock_configs)
 
             # Configure _formatted_output to return the object from resources
-            formatter._formatted_output.return_value = mock_resources['formatted_output']
+            formatter._formatted_output.return_value = mock_resources["formatted_output"]
 
             # When
             result = formatter.format_output(self.mock_normalized_content, output_path=output_path)
 
             # Then
-            #self.assertEqual(result, self.formatter._formatted_output)
+            # self.assertEqual(result, self.formatter._formatted_output)
             formatter._formatted_output.assert_called_once()
 
             # Verify the output path is set correctly
             call_args = formatter._formatted_output.call_args
             self.assertIsNotNone(call_args)
-            self.assertEqual(call_args[1]['output_path'], output_path)
+            self.assertEqual(call_args[1]["output_path"], output_path)
 
             # Check that the output_path is stored in the FormattedOutput
             return_value = result.output_path
@@ -1071,7 +1070,6 @@ class TestFormatOutput(unittest.TestCase):
 
             # Check that the file is not written yet
             self.assertFalse(os.path.exists(output_path))
-
 
     def test_format_output_with_all_parameters(self):
         """
@@ -1086,43 +1084,39 @@ class TestFormatOutput(unittest.TestCase):
             - Returns properly configured FormattedOutput
         """
         # Given
-        options = {'include_toc': True}
-        output_path = '/path/to/output.md'
+        options = {"include_toc": True}
+        output_path = "/path/to/output.md"
 
         mock_configs = make_mock_configs()
         mock_resources = make_mock_resources()
 
         formatted_output = Mock(spec=FormattedOutput)
         formatted_output.output_path = output_path
-        mock_resources['formatted_output'] = formatted_output
+        mock_resources["formatted_output"] = formatted_output
 
         formatter = OutputFormatter(resources=mock_resources, configs=mock_configs)
 
         # Configure _formatted_output to return the object from resources
-        formatter._formatted_output.return_value = mock_resources['formatted_output']
+        formatter._formatted_output.return_value = mock_resources["formatted_output"]
 
         # When
         result = self.formatter.format_output(
-            self.mock_normalized_content, 
-            format='md', 
-            options=options, 
-            output_path=output_path
+            self.mock_normalized_content, format="md", options=options, output_path=output_path
         )
-        
+
         # Then
-        #self.assertEqual(result, self.formatter._formatted_output)
+        # self.assertEqual(result, self.formatter._formatted_output)
         self.formatter._formatted_output.assert_called_once()
 
         # Verify the call was made with correct parameters
         call_args = self.formatter._formatted_output.call_args
         self.assertIsNotNone(call_args)
-        self.assertEqual(call_args[1]['format'], 'md')
-        self.assertEqual(call_args[1]['output_path'], output_path)
+        self.assertEqual(call_args[1]["format"], "md")
+        self.assertEqual(call_args[1]["output_path"], output_path)
 
         # The options are merged into metadata, not passed as separate 'options'
-        metadata = call_args[1]['metadata']
-        self.assertEqual(metadata['include_toc'], True)
-
+        metadata = call_args[1]["metadata"]
+        self.assertEqual(metadata["include_toc"], True)
 
     def test_format_output_with_none_content(self):
         """
@@ -1135,7 +1129,7 @@ class TestFormatOutput(unittest.TestCase):
         # When/Then
         with self.assertRaises((TypeError, ValueError, AttributeError)) as context:
             self.formatter.format_output(None)
-        
+
         # Should raise some kind of error for None content
         self.assertIsNotNone(context.exception)
 
@@ -1159,17 +1153,18 @@ class TestRegisterFormat(unittest.TestCase):
             - 'custom' appears in available_formats
             - format_output can use 'custom' format
         """
+
         # Given
         def custom_formatter(content):
             return f"CUSTOM: {content.text}"
-        
+
         # When
-        self.formatter.register_format('custom', custom_formatter)
-        
+        self.formatter.register_format("custom", custom_formatter)
+
         # Then
-        self.assertIn('custom', self.formatter.output_formats)
-        self.assertIn('custom', self.formatter.available_formats)
-        self.assertEqual(self.formatter.output_formats['custom'], custom_formatter)
+        self.assertIn("custom", self.formatter.output_formats)
+        self.assertIn("custom", self.formatter.available_formats)
+        self.assertEqual(self.formatter.output_formats["custom"], custom_formatter)
 
     def test_register_format_with_duplicate_name(self):
         """
@@ -1180,22 +1175,23 @@ class TestRegisterFormat(unittest.TestCase):
             - Error message indicates format already exists
             - Existing formatter remains unchanged
         """
+
         # Given
         def duplicate_formatter(content):
             return "duplicate"
-        
-        original_formatter = self.formatter.output_formats['txt']
-        
+
+        original_formatter = self.formatter.output_formats["txt"]
+
         # When/Then
         with self.assertRaises(ValueError) as context:
-            self.formatter.register_format('txt', duplicate_formatter)
-        
+            self.formatter.register_format("txt", duplicate_formatter)
+
         error_message = str(context.exception)
-        self.assertIn('txt', error_message.lower())
-        self.assertIn('exists', error_message.lower())
-        
+        self.assertIn("txt", error_message.lower())
+        self.assertIn("exists", error_message.lower())
+
         # Verify original formatter unchanged
-        self.assertEqual(self.formatter.output_formats['txt'], original_formatter)
+        self.assertEqual(self.formatter.output_formats["txt"], original_formatter)
 
     def test_register_format_with_invalid_formatter(self):
         """
@@ -1207,13 +1203,13 @@ class TestRegisterFormat(unittest.TestCase):
         """
         # Given
         non_callable_formatter = "not a function"
-        
+
         # When/Then
         with self.assertRaises((TypeError, ValueError)) as context:
-            self.formatter.register_format('invalid', non_callable_formatter)
-        
+            self.formatter.register_format("invalid", non_callable_formatter)
+
         error_message = str(context.exception)
-        self.assertIn('callable', error_message.lower())
+        self.assertIn("callable", error_message.lower())
 
     def test_register_format_updates_available_formats(self):
         """
@@ -1223,19 +1219,20 @@ class TestRegisterFormat(unittest.TestCase):
             - available_formats property includes new format
             - Order is maintained or alphabetical
         """
+
         # Given
         def new_formatter(content):
             return "new format"
-        
+
         original_formats = set(self.formatter.available_formats)
-        
+
         # When
-        self.formatter.register_format('new_format', new_formatter)
-        
+        self.formatter.register_format("new_format", new_formatter)
+
         # Then
         updated_formats = set(self.formatter.available_formats)
-        self.assertEqual(updated_formats, original_formats | {'new_format'})
-        self.assertIn('new_format', self.formatter.available_formats)
+        self.assertEqual(updated_formats, original_formats | {"new_format"})
+        self.assertIn("new_format", self.formatter.available_formats)
 
     def test_register_format_case_sensitivity(self):
         """
@@ -1246,15 +1243,16 @@ class TestRegisterFormat(unittest.TestCase):
             - Or normalizes to lowercase
             - Behavior is consistent
         """
+
         # Given
         def uppercase_formatter(content):
             return "UPPERCASE"
-        
+
         # When
         try:
-            self.formatter.register_format('TXT', uppercase_formatter)
+            self.formatter.register_format("TXT", uppercase_formatter)
             # If it doesn't raise an error, it should be treated as different from 'txt'
-            self.assertIn('TXT', self.formatter.output_formats)
+            self.assertIn("TXT", self.formatter.output_formats)
         except ValueError:
             # If it raises an error, it's treating 'TXT' as same as 'txt'
             # This is also acceptable behavior
@@ -1270,13 +1268,13 @@ class TestRegisterFormat(unittest.TestCase):
         """
         # Given
         lambda_formatter = lambda content: f"LAMBDA: {content.text}"
-        
+
         # When
-        self.formatter.register_format('lambda_format', lambda_formatter)
-        
+        self.formatter.register_format("lambda_format", lambda_formatter)
+
         # Then
-        self.assertIn('lambda_format', self.formatter.output_formats)
-        self.assertEqual(self.formatter.output_formats['lambda_format'], lambda_formatter)
+        self.assertIn("lambda_format", self.formatter.output_formats)
+        self.assertEqual(self.formatter.output_formats["lambda_format"], lambda_formatter)
 
     def test_register_format_with_method_reference(self):
         """
@@ -1286,19 +1284,22 @@ class TestRegisterFormat(unittest.TestCase):
             - Method reference is accepted as valid formatter
             - Format is registered correctly
         """
+
         # Given
         class CustomFormatter:
             def format_content(self, content):
                 return f"METHOD: {content.text}"
-        
+
         custom_instance = CustomFormatter()
-        
+
         # When
-        self.formatter.register_format('method_format', custom_instance.format_content)
-        
+        self.formatter.register_format("method_format", custom_instance.format_content)
+
         # Then
-        self.assertIn('method_format', self.formatter.output_formats)
-        self.assertEqual(self.formatter.output_formats['method_format'], custom_instance.format_content)
+        self.assertIn("method_format", self.formatter.output_formats)
+        self.assertEqual(
+            self.formatter.output_formats["method_format"], custom_instance.format_content
+        )
 
 
 class TestAvailableFormatsProperty(unittest.TestCase):
@@ -1308,7 +1309,6 @@ class TestAvailableFormatsProperty(unittest.TestCase):
         """Set up test fixtures."""
         self.mock_configs = make_mock_configs()
         self.mock_resources = make_mock_resources()
-
 
         self.formatter = OutputFormatter(resources=self.mock_resources, configs=self.mock_configs)
 
@@ -1322,7 +1322,7 @@ class TestAvailableFormatsProperty(unittest.TestCase):
         """
         # When
         result = self.formatter.available_formats
-        
+
         # Then
         self.assertIsInstance(result, list)
         self.assertNotIsInstance(result, dict)
@@ -1339,7 +1339,7 @@ class TestAvailableFormatsProperty(unittest.TestCase):
         result = self.formatter.available_formats
 
         # Then
-        expected_defaults = {'txt', 'json', 'md'}
+        expected_defaults = {"txt", "json", "md"}
         result_set = set(result)
 
         self.assertTrue(expected_defaults.issubset(result_set))
@@ -1353,18 +1353,19 @@ class TestAvailableFormatsProperty(unittest.TestCase):
             - New format appears in list
             - All previous formats still present
         """
+
         # Given
         def new_formatter(content):
             return "new format"
-        
+
         original_formats = set(self.formatter.available_formats)
-        
+
         # When
-        self.formatter.register_format('new_test_format', new_formatter)
+        self.formatter.register_format("new_test_format", new_formatter)
         updated_formats = set(self.formatter.available_formats)
-        
+
         # Then
-        self.assertIn('new_test_format', updated_formats)
+        self.assertIn("new_test_format", updated_formats)
         self.assertTrue(original_formats.issubset(updated_formats))
         self.assertEqual(len(updated_formats), len(original_formats) + 1)
 
@@ -1378,16 +1379,16 @@ class TestAvailableFormatsProperty(unittest.TestCase):
         """
         # Given
         original_count = len(self.formatter.output_formats)
-        
+
         # When
         formats_list = self.formatter.available_formats
-        formats_list.append('external_modification')
+        formats_list.append("external_modification")
         formats_list.clear()
-        
+
         # Then
         # Verify internal state unchanged
         self.assertEqual(len(self.formatter.output_formats), original_count)
-        
+
         # Verify next call returns fresh list
         new_list = self.formatter.available_formats
         self.assertGreaterEqual(len(new_list), 3)
@@ -1404,7 +1405,7 @@ class TestAvailableFormatsProperty(unittest.TestCase):
         # When
         formats_list = self.formatter.available_formats
         output_formats_keys = list(self.formatter.output_formats.keys())
-        
+
         # Then
         self.assertEqual(set(formats_list), set(output_formats_keys))
 
@@ -1418,23 +1419,23 @@ class TestAvailableFormatsProperty(unittest.TestCase):
         """
         # Given
         formatters = {
-            'format1': lambda c: "format1",
-            'format2': lambda c: "format2", 
-            'format3': lambda c: "format3"
+            "format1": lambda c: "format1",
+            "format2": lambda c: "format2",
+            "format3": lambda c: "format3",
         }
-        
+
         original_count = len(self.formatter.available_formats)
-        
+
         # When
         for name, formatter in formatters.items():
             self.formatter.register_format(name, formatter)
-        
+
         final_formats = self.formatter.available_formats
-        
+
         # Then
         self.assertEqual(len(final_formats), original_count + 3)
         self.assertEqual(len(final_formats), len(set(final_formats)))  # No duplicates
-        
+
         for name in formatters.keys():
             self.assertIn(name, final_formats)
 
@@ -1447,10 +1448,7 @@ class TestOutputFormatterIntegration(unittest.TestCase):
         self.mock_configs = make_mock_configs()
         self.mock_resources = make_mock_resources()
 
-        self.formatter = OutputFormatter(
-            resources=self.mock_resources,
-            configs=self.mock_configs
-        )
+        self.formatter = OutputFormatter(resources=self.mock_resources, configs=self.mock_configs)
         # Create mock content with metadata
         self.mock_normalized_content = make_mock_normalized_content()
 
@@ -1464,12 +1462,12 @@ class TestOutputFormatterIntegration(unittest.TestCase):
             - Instance is properly initialized
         """
         # When
-        result = self.formatter.format_output(self.mock_normalized_content, format='txt')
-        
+        result = self.formatter.format_output(self.mock_normalized_content, format="txt")
+
         # Then
-        #self.assertEqual(result, self.mock_resources['formatted_output'])
+        # self.assertEqual(result, self.mock_resources['formatted_output'])
         self.formatter._formatted_output.assert_called_once()
-        
+
         # Verify the FormattedOutput was created with appropriate parameters
         call_args, call_kwargs = self.formatter._formatted_output.call_args
         self.assertIsNotNone(call_args or call_kwargs)
@@ -1483,12 +1481,12 @@ class TestOutputFormatterIntegration(unittest.TestCase):
             - Metadata is properly transferred from Content
         """
         # When
-        result = self.formatter.format_output(self.mock_normalized_content, format='json')
-        
+        result = self.formatter.format_output(self.mock_normalized_content, format="json")
+
         # Then
-        #self.assertEqual(result, self.mock_resources['formatted_output'])
+        # self.assertEqual(result, self.mock_resources['formatted_output'])
         self.formatter._formatted_output.assert_called_once()
-        
+
         # The exact way metadata is passed depends on implementation,
         # but the FormattedOutput should be created with content that includes metadata
         call_args, call_kwargs = self.formatter._formatted_output.call_args
@@ -1505,23 +1503,21 @@ class TestOutputFormatterIntegration(unittest.TestCase):
         """
         # Given
         output_path = "/tmp/test_output.md"
-        
+
         # Mock the write_to_file method on the FormattedOutput instance
         self.formatter._formatted_output.write_to_file = Mock(return_value=True)
-        
+
         # When
         result = self.formatter.format_output(
-            self.mock_normalized_content, 
-            format='md', 
-            output_path=output_path
+            self.mock_normalized_content, format="md", output_path=output_path
         )
-        
+
         # Simulate writing to file
         # NOTE This is not done in the formatter, but in the pipeline itself.
         write_success = result.write_to_file()
-        
+
         # Then
-        #self.assertEqual(result, self.formatter._formatted_output)
+        # self.assertEqual(result, self.formatter._formatted_output)
         self.assertTrue(write_success)
         result.write_to_file.assert_called_once()
 
@@ -1534,16 +1530,16 @@ class TestOutputFormatterIntegration(unittest.TestCase):
             - FormattedOutput is created for each
         """
         import random
+
         random.seed(420)  # For reproducibility
 
         # Given - Content with different characteristics
         content_variations = make_sample_normalized_content_variations()
-        
+
         for content in content_variations:
             with self.subTest(content=content):
-
                 # Choose a given format randomly
-                formats = ['txt', 'json', 'md']
+                formats = ["txt", "json", "md"]
                 chosen_format = random.choice(formats)
 
                 # Reset mock
@@ -1551,9 +1547,9 @@ class TestOutputFormatterIntegration(unittest.TestCase):
 
                 # When
                 result = self.formatter.format_output(content, format=chosen_format)
-                
+
                 # Then
-                #self.assertEqual(result, self.formatter._formatted_output)
+                # self.assertEqual(result, self.formatter._formatted_output)
                 self.formatter._formatted_output.assert_called_once()
 
     def test_integration_with_custom_formatter(self):
@@ -1565,27 +1561,28 @@ class TestOutputFormatterIntegration(unittest.TestCase):
             - FormattedOutput is created with custom formatted content
             - Integration works seamlessly
         """
+
         # Given
         def custom_formatter(output_dict):
             return f"CUSTOM PREFIX: {output_dict['text']} | METADATA: {output_dict['metadata']}"
-        
-        self.formatter.register_format('custom_test', custom_formatter)
-        
+
+        self.formatter.register_format("custom_test", custom_formatter)
+
         # When
-        result = self.formatter.format_output(self.mock_normalized_content, format='custom_test')
-        
+        result = self.formatter.format_output(self.mock_normalized_content, format="custom_test")
+
         # Then
-        #self.assertEqual(result, self.formatter._formatted_output)
+        # self.assertEqual(result, self.formatter._formatted_output)
         self.formatter._formatted_output.assert_called_once()
 
         # Verify the call was made with correct parameters
         call_args, call_kwargs = self.formatter._formatted_output.call_args
         self.assertIsNotNone(call_args or call_kwargs)
-        self.assertEqual(call_kwargs['format'], 'custom_test')
+        self.assertEqual(call_kwargs["format"], "custom_test")
 
         # Check if the custom formatter was used
         formatters = self.formatter.output_formats
-        self.assertIn('custom_test', formatters)
+        self.assertIn("custom_test", formatters)
 
 
 class TestOutputFormatterErrorHandling(unittest.TestCase):
@@ -1610,15 +1607,16 @@ class TestOutputFormatterErrorHandling(unittest.TestCase):
             - Error is logged
             - User-friendly error returned or re-raised
         """
+
         # Given
         def failing_formatter(content):
             raise RuntimeError("Formatter failed!")
-        
-        self.formatter.register_format('failing_format', failing_formatter)
-        
+
+        self.formatter.register_format("failing_format", failing_formatter)
+
         # When/Then
         with self.assertRaises((RuntimeError, Exception)):
-            self.formatter.format_output(self.mock_norm_content, format='failing_format')
+            self.formatter.format_output(self.mock_norm_content, format="failing_format")
 
     def test_invalid_content_type_handling(self):
         """
@@ -1634,9 +1632,9 @@ class TestOutputFormatterErrorHandling(unittest.TestCase):
             {"dict": "content"},
             ["list", "content"],
             123,
-            None
+            None,
         ]
-        
+
         for invalid_content in invalid_content_types:
             with self.subTest(content_type=type(invalid_content).__name__):
                 # When/Then
@@ -1655,33 +1653,33 @@ class TestOutputFormatterErrorHandling(unittest.TestCase):
         # Given
         results = {}
         errors = {}
-        
+
         def register_format_thread(thread_id):
             try:
                 formatter_func = lambda content: f"Thread {thread_id} format"
-                self.formatter.register_format(f'thread_{thread_id}', formatter_func)
+                self.formatter.register_format(f"thread_{thread_id}", formatter_func)
                 results[thread_id] = True
             except Exception as e:
                 errors[thread_id] = e
-        
+
         # When
         threads = []
         for i in range(5):
             thread = threading.Thread(target=register_format_thread, args=(i,))
             threads.append(thread)
             thread.start()
-        
+
         # Wait for all threads to complete
         for thread in threads:
             thread.join()
-        
+
         # Then
         # Check that most or all registrations succeeded
         self.assertGreater(len(results), 0)
-        
+
         # Verify formats were actually registered
         for thread_id in results.keys():
-            self.assertIn(f'thread_{thread_id}', self.formatter.available_formats)
+            self.assertIn(f"thread_{thread_id}", self.formatter.available_formats)
 
     def test_malformed_formatter_function(self):
         """
@@ -1691,13 +1689,14 @@ class TestOutputFormatterErrorHandling(unittest.TestCase):
             - TypeError raised
             - Clear error message about function signature
         """
+
         # Given - formatter with wrong signature (no parameters)
         def bad_signature_formatter():
             return "bad formatter"
 
         # When/Then
         with self.assertRaises(TypeError):
-            self.formatter.register_format('bad_signature', bad_signature_formatter)
+            self.formatter.register_format("bad_signature", bad_signature_formatter)
 
     def test_formatter_returns_non_string(self):
         """
@@ -1707,16 +1706,17 @@ class TestOutputFormatterErrorHandling(unittest.TestCase):
             - Either handled gracefully (converted to string)
             - Or raises appropriate error with clear message
         """
+
         # Given
         def non_string_formatter(output_dict):
             return {"formatted": 420}  # Returns int instead of string
-        
-        self.formatter.register_format('non_string', non_string_formatter)
-        
+
+        self.formatter.register_format("non_string", non_string_formatter)
+
         # When/Then
         # This should either work (with conversion) or fail clearly
         try:
-            result = self.formatter.format_output(self.mock_norm_content, format='non_string')
+            result = self.formatter.format_output(self.mock_norm_content, format="non_string")
             # If it succeeds, verify result is reasonable
             self.assertIsNotNone(result)
         except (TypeError, ValueError) as e:
@@ -1734,10 +1734,10 @@ class TestOutputFormatterErrorHandling(unittest.TestCase):
         # Given
         incomplete_content = Mock()
         # Don't set .text or .metadata attributes
- 
+
         # When/Then
         with self.assertRaises((AttributeError, TypeError, ValueError)):
-            self.formatter.format_output(incomplete_content, format='txt')
+            self.formatter.format_output(incomplete_content, format="txt")
 
     def test_large_content_handling(self):
         """
@@ -1750,10 +1750,10 @@ class TestOutputFormatterErrorHandling(unittest.TestCase):
         # Given
         self.mock_norm_content.content.text = "x" * 1000000  # 1MB of text
         self.mock_norm_content.content.metadata = {"size": "large"}
-        
+
         # When/Then
         try:
-            result = self.formatter.format_output(self.mock_norm_content, format='txt')
+            result = self.formatter.format_output(self.mock_norm_content, format="txt")
             self.assertIsNotNone(result)
         except (MemoryError, OverflowError) as e:
             # These are acceptable for very large content

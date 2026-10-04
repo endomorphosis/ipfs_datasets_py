@@ -8,7 +8,11 @@ from ipfs_datasets_py.processors import (
 def test_build_bm25_index_exports_reusable_payload():
     index = build_bm25_index(
         [
-            {"id": "doc-1", "title": "Extension of time", "text": "Motion for extension of time to answer"},
+            {
+                "id": "doc-1",
+                "title": "Extension of time",
+                "text": "Motion for extension of time to answer",
+            },
             {"id": "doc-2", "title": "Notice", "text": "Simple notice of appearance"},
         ]
     )
@@ -32,7 +36,11 @@ def test_build_bm25_index_exports_reusable_payload():
 def test_search_bm25_index_returns_ranked_results():
     index = build_bm25_index(
         [
-            {"id": "doc-1", "title": "Extension of time", "text": "Motion for extension of time to answer"},
+            {
+                "id": "doc-1",
+                "title": "Extension of time",
+                "text": "Motion for extension of time to answer",
+            },
             {"id": "doc-2", "title": "Notice", "text": "Notice of filing"},
         ]
     )
@@ -48,7 +56,11 @@ def test_bm25_search_documents_prefers_title_matches():
     results = bm25_search_documents(
         "screening approval",
         [
-            {"id": "doc-1", "title": "Approved screening", "text": "Parkside Manor approved screening email"},
+            {
+                "id": "doc-1",
+                "title": "Approved screening",
+                "text": "Parkside Manor approved screening email",
+            },
             {"id": "doc-2", "title": "Miscellaneous", "text": "Unrelated filing text"},
         ],
         top_k=2,

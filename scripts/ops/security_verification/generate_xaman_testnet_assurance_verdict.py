@@ -36,26 +36,26 @@ from ipfs_datasets_py.logic.security_models.crypto_exchange.reports.xaman_testne
 
 
 def _load_json(path: Path) -> dict[str, Any]:
-    return json.loads(path.read_text(encoding='utf-8'))
+    return json.loads(path.read_text(encoding="utf-8"))
 
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
-        json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=True) + '\n',
-        encoding='utf-8',
+        json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=True) + "\n",
+        encoding="utf-8",
     )
 
 
 def _write_text(path: Path, body: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(body, encoding='utf-8')
+    path.write_text(body, encoding="utf-8")
 
 
 def generate(repo_root: Path) -> tuple[dict[str, Any], dict[str, Any], str]:
     bundle = build_xaman_testnet_assurance_bundle(
         model_payload=_load_json(repo_root / MODEL_PATH),
-        model_cid=(repo_root / MODEL_CID_PATH).read_text(encoding='utf-8').strip(),
+        model_cid=(repo_root / MODEL_CID_PATH).read_text(encoding="utf-8").strip(),
         assumptions_payload=_load_json(repo_root / ASSUMPTIONS_PATH),
         claim_trace_map=_load_json(repo_root / CLAIM_TRACE_MAP_PATH),
         smt_report=_load_json(repo_root / SMT_REPORT_PATH),
@@ -78,9 +78,9 @@ def generate(repo_root: Path) -> tuple[dict[str, Any], dict[str, Any], str]:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        '--repo-root',
+        "--repo-root",
         default=str(ROOT_DIR),
-        help='Repository root containing security_ir_artifacts.',
+        help="Repository root containing security_ir_artifacts.",
     )
     args = parser.parse_args(argv)
 
@@ -88,12 +88,12 @@ def main(argv: list[str] | None = None) -> int:
     print(
         json.dumps(
             {
-                'bundle_path': BUNDLE_PATH,
-                'bundle_cid': bundle['artifact_cid'],
-                'verdict_path': VERDICT_PATH,
-                'verdict_cid': verdict['artifact_cid'],
-                'verdict': verdict['verdict'],
-                'doc_path': VERDICT_DOC_PATH,
+                "bundle_path": BUNDLE_PATH,
+                "bundle_cid": bundle["artifact_cid"],
+                "verdict_path": VERDICT_PATH,
+                "verdict_cid": verdict["artifact_cid"],
+                "verdict": verdict["verdict"],
+                "doc_path": VERDICT_DOC_PATH,
             },
             sort_keys=True,
         )
@@ -101,5 +101,5 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
-if __name__ == '__main__':  # pragma: no cover
+if __name__ == "__main__":  # pragma: no cover
     raise SystemExit(main())

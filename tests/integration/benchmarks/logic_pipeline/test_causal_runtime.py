@@ -40,10 +40,7 @@ RUN_ID = "synthetic-causal-runtime"
 CASE_ID = "synthetic-case"
 MANIFEST_SHA256 = "a" * 64
 ENVIRONMENT_SHA256 = "b" * 64
-SOURCE_TEXT = (
-    "Every archivist is trained. Ada is an archivist. "
-    "Therefore Ada is trained."
-)
+SOURCE_TEXT = "Every archivist is trained. Ada is an archivist. Therefore Ada is trained."
 PROOF_CONTEXT: dict[str, object] = {
     "obligation_id": "synthetic-reviewed-obligation",
     "proof_obligation": {
@@ -66,14 +63,10 @@ class _SyntheticKernelSupervisor:
     ) -> None:
         self.root = root
         self.expected_proofs = (
-            (expected_proof,)
-            if isinstance(expected_proof, str)
-            else expected_proof
+            (expected_proof,) if isinstance(expected_proof, str) else expected_proof
         )
         self.returncodes = (
-            (returncode,) * len(self.expected_proofs)
-            if isinstance(returncode, int)
-            else returncode
+            (returncode,) * len(self.expected_proofs) if isinstance(returncode, int) else returncode
         )
         if len(self.expected_proofs) != len(self.returncodes):
             raise ValueError("synthetic kernel outcomes must align")
@@ -132,9 +125,7 @@ def _compiler_payload(
     )
     certificate = (
         None
-        if not include_candidate
-        or translation is None
-        or translation.native_proof_text is None
+        if not include_candidate or translation is None or translation.native_proof_text is None
         else translation.native_proof_text
     )
     native_candidate = (
@@ -155,12 +146,8 @@ def _compiler_payload(
         {
             "compiled_obligation": compiled.to_dict(),
             "compiled_obligation_sha256": compiled.digest,
-            "entailment_translation": (
-                None if translation is None else translation.to_dict()
-            ),
-            "entailment_translation_sha256": (
-                None if translation is None else translation.digest
-            ),
+            "entailment_translation": (None if translation is None else translation.to_dict()),
+            "entailment_translation_sha256": (None if translation is None else translation.digest),
             "native_proof_candidate": native_candidate,
             "synthetic_note": non_ascii_note,
         },
@@ -182,9 +169,9 @@ def _semantic_compiler_record(
         split=contracts.Split.PILOT,
         cache_mode=contracts.CacheMode.COLD,
         input_data={"text": source_text},
-        requested_identity=variants.get_variant_definition(
-            variant_id
-        ).requested_identity(contracts.StageName.COMPILER),
+        requested_identity=variants.get_variant_definition(variant_id).requested_identity(
+            contracts.StageName.COMPILER
+        ),
         environment_sha256=ENVIRONMENT_SHA256,
         source=("synthetic-causal-runtime-test",),
         semantic_protocol_cid=contracts.SEMANTIC_PROTOCOL_V2_CID,
@@ -219,9 +206,7 @@ def _compiler_exposure(
 def _semantic_result(
     exposure: CompilerReferenceExposureV2,
 ) -> contracts.CaseResultRecord:
-    return contracts.CaseResultRecord.from_stages(
-        (exposure.compiler_record,)
-    )
+    return contracts.CaseResultRecord.from_stages((exposure.compiler_record,))
 
 
 def _semantic_frontend_result(
@@ -243,9 +228,9 @@ def _semantic_frontend_result(
         split=contracts.Split.PILOT,
         cache_mode=contracts.CacheMode.COLD,
         input_data={"text": source_text},
-        requested_identity=variants.get_variant_definition(
-            variant_id
-        ).requested_identity(contracts.StageName.SPACY),
+        requested_identity=variants.get_variant_definition(variant_id).requested_identity(
+            contracts.StageName.SPACY
+        ),
         environment_sha256=ENVIRONMENT_SHA256,
         upstream_stage_digests=(compiler.digest,),
         source=("synthetic-causal-runtime-test",),
@@ -263,27 +248,19 @@ def _semantic_frontend_result(
     )
     spacy = adapter.run(request)
     records = [compiler, spacy]
-    if (
-        contracts.StageName.SYMAI
-        in variants.get_variant_definition(variant_id).stages
-    ):
+    if contracts.StageName.SYMAI in variants.get_variant_definition(variant_id).stages:
         symai_request = replace(
             request,
-            requested_identity=variants.get_variant_definition(
-                variant_id
-            ).requested_identity(contracts.StageName.SYMAI),
-            upstream_stage_digests=tuple(
-                record.digest for record in records
+            requested_identity=variants.get_variant_definition(variant_id).requested_identity(
+                contracts.StageName.SYMAI
             ),
+            upstream_stage_digests=tuple(record.digest for record in records),
         )
         symai_adapter = adapters.StageAdapter(
             contracts.StageName.SYMAI,
             handler=lambda _request: adapters.StageOutput(
                 data={
-                    "schema": (
-                        "ipfs-datasets.logic-pipeline-benchmark."
-                        "policy-decision.v1"
-                    ),
+                    "schema": ("ipfs-datasets.logic-pipeline-benchmark.policy-decision.v1"),
                     "stage": "symai",
                     "invoked": True,
                     "reason": "synthetic semantic policy evidence",
@@ -335,7 +312,7 @@ def _execute_compiler_path(
             contracts.StageName.KERNEL: adapters.StageAdapter(
                 contracts.StageName.KERNEL,
                 handler=runner,
-            )
+            ),
         },
     )
     return evidence, supervisor
@@ -361,11 +338,7 @@ def _rebase_case_result_and_evidence(
         )
     )
     persisted["receipt_cid"] = cid_for_dag_json(
-        {
-            key: value
-            for key, value in persisted.items()
-            if key != "receipt_cid"
-        }
+        {key: value for key, value in persisted.items() if key != "receipt_cid"}
     )
 
 
@@ -381,8 +354,7 @@ def test_compiler_candidate_is_checked_once_and_persistently_replays(
     assert len(sidecars[0]["receipt"]["candidate_attempts"]) == 1
     assert evidence.case_result.kernel_accepted is True
     assert (
-        validate_causal_runtime_evidence_v2(evidence.to_dict()).receipt_cid
-        == evidence.receipt_cid
+        validate_causal_runtime_evidence_v2(evidence.to_dict()).receipt_cid == evidence.receipt_cid
     )
 
 
@@ -445,9 +417,7 @@ def test_live_hammer_overlap_uses_semantic_v2_cids_and_no_duplicate_check(
         {
             contracts.StageName.HAMMER: adapters.StageAdapter(
                 contracts.StageName.HAMMER,
-                handler=runtime._hammer_live_handler(
-                    hammer_capability
-                ),
+                handler=runtime._hammer_live_handler(hammer_capability),
             ),
             contracts.StageName.KERNEL: adapters.StageAdapter(
                 contracts.StageName.KERNEL,
@@ -458,26 +428,18 @@ def test_live_hammer_overlap_uses_semantic_v2_cids_and_no_duplicate_check(
 
     assert len(supervisor.sources) == 1
     assert evidence.selection_result.selected_source is None
-    optional = evidence.selection_result.receipt[
-        "optional_candidates"
-    ][0]
+    optional = evidence.selection_result.receipt["optional_candidates"][0]
     assert optional["overlap"] is True
     assert optional["causal_rescue"] is False
     assert optional["zero_credit_reason"] == "duplicate_certificate"
     sidecars = evidence.selection_result.receipt["kernel_receipts"]
     assert [len(item["receipt"]["candidate_attempts"]) for item in sidecars] == [1]
     hammer_record = next(
-        stage
-        for stage in evidence.case_result.stages
-        if stage.stage is contracts.StageName.HAMMER
+        stage for stage in evidence.case_result.stages if stage.stage is contracts.StageName.HAMMER
     )
-    semantic_context_cid = hammer_record.provenance.effective_identity[
-        "semantic_context_cid"
-    ]
+    semantic_context_cid = hammer_record.provenance.effective_identity["semantic_context_cid"]
     assert semantic_context_cid.startswith("b")
-    assert "semantic_context_sha256" not in (
-        hammer_record.provenance.effective_identity
-    )
+    assert "semantic_context_sha256" not in (hammer_record.provenance.effective_identity)
     validate_causal_runtime_evidence_v2(evidence.to_dict())
 
 
@@ -598,9 +560,7 @@ def test_hammer_failure_then_distinct_leanstral_rescue_replays(
                 contracts.StageName.HAMMER,
                 handler=lambda _request: adapters.StageOutput(
                     status=contracts.StageStatus.FAILED,
-                    failure_code=(
-                        contracts.FailureCode.PREMISE_SELECTION_MISS
-                    ),
+                    failure_code=(contracts.FailureCode.PREMISE_SELECTION_MISS),
                     failure_detail="synthetic premise miss",
                 ),
             ),
@@ -631,9 +591,7 @@ def test_hammer_failure_then_distinct_leanstral_rescue_replays(
         "hammer",
         "leanstral",
     )
-    assert optional[0]["failure_code"] == (
-        "hammer_premise_selection_miss"
-    )
+    assert optional[0]["failure_code"] == ("hammer_premise_selection_miss")
     assert optional[1]["causal_rescue"] is True
     assert evidence.case_result.kernel_accepted is True
     validate_causal_runtime_evidence_v2(evidence.to_dict())
@@ -723,9 +681,7 @@ def test_leanstral_failure_then_hammer_acceptance_gets_zero_rescue_credit(
     assert optional[0]["failure_code"] == "leanstral_timeout"
     assert optional[1]["accepted"] is True
     assert optional[1]["causal_rescue"] is False
-    assert optional[1]["zero_credit_reason"] == (
-        "post_model_failure_continuation"
-    )
+    assert optional[1]["zero_credit_reason"] == ("post_model_failure_continuation")
     assert evidence.case_result.kernel_accepted is True
     validate_causal_runtime_evidence_v2(evidence.to_dict())
 
@@ -865,9 +821,7 @@ def test_invalid_coordinate_or_null_obligation_fails_before_adapter_call(
         match="case/cache coordinate",
     ):
         execute_causal_runtime_case_v2(
-            contracts.CaseResultRecord.from_stages(
-                (mismatched_record,)
-            ),
+            contracts.CaseResultRecord.from_stages((mismatched_record,)),
             SOURCE_TEXT,
             PROOF_CONTEXT,
             exposure,
@@ -905,9 +859,10 @@ def test_compiler_artifact_raw_cid_covers_exact_legacy_non_ascii_bytes() -> None
     assert b"caf\\u00e9" in exact_bytes
     assert b"\\u2200" in exact_bytes
     assert artifact_cid == cid_for_bytes(exact_bytes)
-    assert sha256_digest_for_cid(
-        artifact_cid, codecs=("raw",)
-    ) == hashlib.sha256(exact_bytes).hexdigest()
+    assert (
+        sha256_digest_for_cid(artifact_cid, codecs=("raw",))
+        == hashlib.sha256(exact_bytes).hexdigest()
+    )
     assert exposure.compiler_candidate is not None
     assert exposure.compiler_candidate.artifact_cid == artifact_cid
 
@@ -1010,9 +965,7 @@ def test_optional_failure_is_bound_to_its_typed_stage_record(
                 contracts.StageName.HAMMER,
                 handler=lambda _request: adapters.StageOutput(
                     status=contracts.StageStatus.FAILED,
-                    failure_code=(
-                        contracts.FailureCode.PREMISE_SELECTION_MISS
-                    ),
+                    failure_code=(contracts.FailureCode.PREMISE_SELECTION_MISS),
                     failure_detail="synthetic premise miss",
                 ),
             ),
@@ -1024,17 +977,13 @@ def test_optional_failure_is_bound_to_its_typed_stage_record(
     )
 
     assert supervisor.sources == []
-    optional = evidence.selection_result.receipt[
-        "optional_candidates"
-    ][0]
+    optional = evidence.selection_result.receipt["optional_candidates"][0]
     assert optional["failure_code"] == "hammer_premise_selection_miss"
     assert optional["candidate_cid"] is None
     assert optional["artifact_cid"] is None
     restored = validate_causal_runtime_evidence_v2(evidence.to_dict())
     hammer_record = next(
-        stage
-        for stage in restored.case_result.stages
-        if stage.stage is contracts.StageName.HAMMER
+        stage for stage in restored.case_result.stages if stage.stage is contracts.StageName.HAMMER
     )
     tampered = dict(optional)
     tampered["failure_code"] = "hammer_timeout"
@@ -1069,13 +1018,11 @@ def test_persisted_evidence_rejects_bound_evidence_tampering(
     if tamper == "proof_context":
         persisted["proof_context"]["obligation_id"] = "substituted"
     elif tamper == "compiler_provenance":
-        persisted["compiler_reference_exposure"]["compiler_record"][
-            "provenance"
-        ]["effective_identity"]["source_cid"] = cid_for_bytes(b"substituted")
+        persisted["compiler_reference_exposure"]["compiler_record"]["provenance"][
+            "effective_identity"
+        ]["source_cid"] = cid_for_bytes(b"substituted")
     elif tamper == "kernel_telemetry":
-        persisted["kernel_check_telemetry"][0]["telemetry"][
-            "bytes_in"
-        ] += 1
+        persisted["kernel_check_telemetry"][0]["telemetry"]["bytes_in"] += 1
     elif tamper == "native_semantic_context":
         persisted["selection_receipt"]["kernel_receipts"][0]["receipt"][
             "semantic_context_sha256"
@@ -1085,9 +1032,7 @@ def test_persisted_evidence_rejects_bound_evidence_tampering(
         attempts = sidecar["receipt"]["candidate_attempts"]
         attempts.append(copy.deepcopy(attempts[0]))
 
-    with pytest.raises(
-        (CausalRuntimeBridgeError, contracts.ProtocolContractError, ValueError)
-    ):
+    with pytest.raises((CausalRuntimeBridgeError, contracts.ProtocolContractError, ValueError)):
         validate_causal_runtime_evidence_v2(persisted)
 
 
@@ -1125,10 +1070,7 @@ def test_rebased_terminal_provenance_tampering_is_rejected(
 
     with pytest.raises(
         CausalRuntimeBridgeError,
-        match=(
-            "semantic/proof boundary|terminal kernel identity|"
-            "frozen causal treatment"
-        ),
+        match=("semantic/proof boundary|terminal kernel identity|frozen causal treatment"),
     ):
         validate_causal_runtime_evidence_v2(persisted)
 

@@ -49,9 +49,7 @@ class TestCrossDocumentDocstringFixed:
 
     def test_note_mentions_chronology(self):
         """Updated note should mention chronology as a factor."""
-        assert "chronology" in self._read().lower(), (
-            "Docstring note should mention chronology"
-        )
+        assert "chronology" in self._read().lower(), "Docstring note should mention chronology"
 
 
 class TestMasterStatusDocRef:
@@ -64,11 +62,17 @@ class TestMasterStatusDocRef:
         """Documentation row should reference v3.22.18 or later."""
         text = self._read()
         # Check any recent version is there
-        assert any(v in text for v in ("v3.22.18", "v3.22.19", "v3.22.20",
-                                       "Reflects v3.22.18", "Reflects v3.22.19",
-                                       "Reflects v3.22.20")), (
-            "Documentation row should reference current version v3.22.18 or later"
-        )
+        assert any(
+            v in text
+            for v in (
+                "v3.22.18",
+                "v3.22.19",
+                "v3.22.20",
+                "Reflects v3.22.18",
+                "Reflects v3.22.19",
+                "Reflects v3.22.20",
+            )
+        ), "Documentation row should reference current version v3.22.18 or later"
 
     def test_stale_v3_22_15_documentation_row_gone(self):
         """'Reflects v3.22.15 structure' must no longer appear in Documentation row."""
@@ -79,9 +83,7 @@ class TestMasterStatusDocRef:
     def test_test_files_count_102(self):
         """Test file count should be 102 or higher (as of v3.22.18+)."""
         text = self._read()
-        assert "102 total" in text or "103 total" in text, (
-            "Test files count should show 102+ total"
-        )
+        assert "102 total" in text or "103 total" in text, "Test files count should show 102+ total"
 
     def test_stale_95_total_gone(self):
         """'### Test Files: 95 total' header should no longer appear."""
@@ -109,12 +111,18 @@ class TestMasterRefactoringPlanSession65:
     def test_version_is_3_22_18_or_later(self):
         """Version should be 3.22.18 or later (not stale 3.22.17)."""
         text = self._read()
-        assert any(v in text for v in ("**Version:** 3.22.18", "**Version:** 3.22.19",
-                                       "**Version:** 3.22.20", "**Version:** 3.22.21",
-                                       "**Version:** 3.22.22", "**Version:** 3.22.23",
-                                       "**Version:** 3.22.24")), (
-            "MASTER_REFACTORING_PLAN version should be 3.22.18 or later"
-        )
+        assert any(
+            v in text
+            for v in (
+                "**Version:** 3.22.18",
+                "**Version:** 3.22.19",
+                "**Version:** 3.22.20",
+                "**Version:** 3.22.21",
+                "**Version:** 3.22.22",
+                "**Version:** 3.22.23",
+                "**Version:** 3.22.24",
+            )
+        ), "MASTER_REFACTORING_PLAN version should be 3.22.18 or later"
 
     def test_stale_3_22_17_version_header_gone(self):
         """'**Version:** 3.22.17' must not appear as the version header."""
@@ -141,24 +149,34 @@ class TestDocVersionAgreement:
     def test_master_status_version_is_3_22_19(self):
         """MASTER_STATUS.md should declare version 3.22.19 or later."""
         text = MASTER_STATUS.read_text(encoding="utf-8")
-        assert any(v in text for v in ("**Version:** 3.22.19", "**Version:** 3.22.20",
-                                       "**Version:** 3.22.21", "**Version:** 3.22.22",
-                                       "**Version:** 3.22.23", "**Version:** 3.22.24")), (
-            "MASTER_STATUS.md version header should be 3.22.19 or later"
-        )
+        assert any(
+            v in text
+            for v in (
+                "**Version:** 3.22.19",
+                "**Version:** 3.22.20",
+                "**Version:** 3.22.21",
+                "**Version:** 3.22.22",
+                "**Version:** 3.22.23",
+                "**Version:** 3.22.24",
+            )
+        ), "MASTER_STATUS.md version header should be 3.22.19 or later"
 
     def test_changelog_has_3_22_19_section(self):
         """CHANGELOG should have a [3.22.19] section."""
         text = CHANGELOG.read_text(encoding="utf-8")
-        assert "## [3.22.19]" in text, (
-            "CHANGELOG_KNOWLEDGE_GRAPHS.md missing ## [3.22.19] section"
-        )
+        assert "## [3.22.19]" in text, "CHANGELOG_KNOWLEDGE_GRAPHS.md missing ## [3.22.19] section"
 
     def test_roadmap_current_version_is_3_22_19(self):
         """ROADMAP.md Current Version header should be 3.22.19 or later."""
         text = ROADMAP.read_text(encoding="utf-8")
-        assert any(v in text for v in ("**Current Version:** 3.22.19", "**Current Version:** 3.22.20",
-                                       "**Current Version:** 3.22.21", "**Current Version:** 3.22.22",
-                                       "**Current Version:** 3.22.23", "**Current Version:** 3.22.24")), (
-            "ROADMAP.md Current Version header should be 3.22.19 or later"
-        )
+        assert any(
+            v in text
+            for v in (
+                "**Current Version:** 3.22.19",
+                "**Current Version:** 3.22.20",
+                "**Current Version:** 3.22.21",
+                "**Current Version:** 3.22.22",
+                "**Current Version:** 3.22.23",
+                "**Current Version:** 3.22.24",
+            )
+        ), "ROADMAP.md Current Version header should be 3.22.19 or later"

@@ -40,26 +40,28 @@ from ipfs_datasets_py.mcp_server.tools.development_tools.linting_tools import Li
 # Create the linting tool instance
 linter = LintingTools()
 
+
 # Run asynchronously
 async def run_linting():
     result = await linter.execute(
         path="/path/to/code",
         fix_issues=True,  # Automatically fix basic issues
         include_dataset_rules=True,  # Include dataset-specific rules
-        dry_run=False  # False to apply changes, True to only show what would change
+        dry_run=False,  # False to apply changes, True to only show what would change
     )
     return result
+
 
 # Execute the linting
 result = asyncio.run(run_linting())
 
 # Process results
-if result['success']:
+if result["success"]:
     print(f"Found {result['result']['total_issues']} issues")
     print(f"Fixed {result['result']['total_fixes']} issues")
-    
+
     # Access detailed information about issues
-    for issue in result['result']['issues']:
+    for issue in result["result"]["issues"]:
         print(f"{issue['file']}:{issue['line']} - {issue['rule']}: {issue['message']}")
 ```
 
@@ -71,14 +73,10 @@ The `lint_python_codebase()` function is a wrapper for the MCP server, but can b
 from ipfs_datasets_py.mcp_server.tools.development_tools.linting_tools import lint_python_codebase
 
 # This returns the result directly (not a tool instance!)
-result = lint_python_codebase(
-    path="/path/to/code",
-    fix_issues=True,
-    dry_run=False
-)
+result = lint_python_codebase(path="/path/to/code", fix_issues=True, dry_run=False)
 
 # Process results as above
-if result['success']:
+if result["success"]:
     print(f"Found {result['result']['total_issues']} issues")
 ```
 

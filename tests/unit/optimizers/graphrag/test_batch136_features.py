@@ -8,6 +8,7 @@ Methods under test:
   - OntologyLearningAdapter.feedback_percentile(value)
   - OntologyLearningAdapter.recent_average(n)
 """
+
 import pytest
 from unittest.mock import MagicMock
 
@@ -16,8 +17,10 @@ from unittest.mock import MagicMock
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_critic():
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
     return OntologyCritic(use_llm=False)
 
 
@@ -30,7 +33,10 @@ def _cs(overall, coherence=0.5, completeness=0.5):
 
 
 def _make_adapter():
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter()
 
 
@@ -48,6 +54,7 @@ def _push_adapter(a, *scores):
 # ---------------------------------------------------------------------------
 # OntologyCritic.top_k_scores
 # ---------------------------------------------------------------------------
+
 
 class TestTopKScores:
     @pytest.mark.parametrize(
@@ -72,6 +79,7 @@ class TestTopKScores:
 # OntologyCritic.below_threshold_count
 # ---------------------------------------------------------------------------
 
+
 class TestBelowThresholdCount:
     @pytest.mark.parametrize(
         "overall_scores,threshold,expected",
@@ -93,6 +101,7 @@ class TestBelowThresholdCount:
 # ---------------------------------------------------------------------------
 # OntologyCritic.average_dimension
 # ---------------------------------------------------------------------------
+
 
 class TestAverageDimension:
     @pytest.mark.parametrize(
@@ -120,6 +129,7 @@ class TestAverageDimension:
 # OntologyLearningAdapter.feedback_streak
 # ---------------------------------------------------------------------------
 
+
 class TestFeedbackStreak:
     @pytest.mark.parametrize(
         "scores,threshold,expected",
@@ -139,6 +149,7 @@ class TestFeedbackStreak:
 # ---------------------------------------------------------------------------
 # OntologyLearningAdapter.feedback_percentile
 # ---------------------------------------------------------------------------
+
 
 class TestFeedbackPercentile:
     @pytest.mark.parametrize(
@@ -163,6 +174,7 @@ class TestFeedbackPercentile:
 # ---------------------------------------------------------------------------
 # OntologyLearningAdapter.recent_average
 # ---------------------------------------------------------------------------
+
 
 class TestRecentAverage:
     @pytest.mark.parametrize(

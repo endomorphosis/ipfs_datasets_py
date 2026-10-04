@@ -38,24 +38,14 @@ PROOF_HOLE_INTERFACE: Final = "ProofHole@1"
 PROOF_OBLIGATION_GRAPH_INTERFACE: Final = "ProofObligationGraph@1"
 GOAL_DIRECTED_PROOF_PLAN_INTERFACE: Final = "GoalDirectedProofPlan@1"
 
-END_GOAL_SPEC_SCHEMA: Final = (
-    "ipfs_datasets_py/logic/software_verification/end-goal-spec@1"
-)
+END_GOAL_SPEC_SCHEMA: Final = "ipfs_datasets_py/logic/software_verification/end-goal-spec@1"
 END_GOAL_INTERPRETATION_SCHEMA: Final = (
     "ipfs_datasets_py/logic/software_verification/end-goal-interpretation@1"
 )
-FORMAL_GOAL_SCHEMA: Final = (
-    "ipfs_datasets_py/logic/software_verification/formal-goal@1"
-)
-PROOF_HOLE_SCHEMA: Final = (
-    "ipfs_datasets_py/logic/software_verification/proof-hole@1"
-)
-PROOF_GRAPH_NODE_SCHEMA: Final = (
-    "ipfs_datasets_py/logic/software_verification/proof-graph-node@1"
-)
-PROOF_GRAPH_EDGE_SCHEMA: Final = (
-    "ipfs_datasets_py/logic/software_verification/proof-graph-edge@1"
-)
+FORMAL_GOAL_SCHEMA: Final = "ipfs_datasets_py/logic/software_verification/formal-goal@1"
+PROOF_HOLE_SCHEMA: Final = "ipfs_datasets_py/logic/software_verification/proof-hole@1"
+PROOF_GRAPH_NODE_SCHEMA: Final = "ipfs_datasets_py/logic/software_verification/proof-graph-node@1"
+PROOF_GRAPH_EDGE_SCHEMA: Final = "ipfs_datasets_py/logic/software_verification/proof-graph-edge@1"
 PROOF_OBLIGATION_GRAPH_SCHEMA: Final = (
     "ipfs_datasets_py/logic/software_verification/proof-obligation-graph@1"
 )
@@ -68,9 +58,7 @@ CANDIDATE_VALIDATION_SCHEMA: Final = (
 GOAL_DIRECTED_PROOF_PLAN_SCHEMA: Final = (
     "ipfs_datasets_py/logic/software_verification/goal-directed-proof-plan@1"
 )
-GOAL_COMPLETION_SCHEMA: Final = (
-    "ipfs_datasets_py/logic/software_verification/goal-completion@1"
-)
+GOAL_COMPLETION_SCHEMA: Final = "ipfs_datasets_py/logic/software_verification/goal-completion@1"
 
 TACTICIAN_CONTRACT_VERSION: Final = 1
 
@@ -313,9 +301,7 @@ def _text(
     if not optional and not text:
         raise TacticianContractError(f"{label} is required")
     if len(text) > maximum:
-        raise TacticianContractError(
-            f"{label} exceeds maximum length of {maximum}"
-        )
+        raise TacticianContractError(f"{label} exceeds maximum length of {maximum}")
     return text
 
 
@@ -331,9 +317,7 @@ def _string_tuple(
         items: Iterable[Any] = ()
     elif isinstance(value, str):
         items = (value,)
-    elif isinstance(value, Sequence) and not isinstance(
-        value, (bytes, bytearray, memoryview)
-    ):
+    elif isinstance(value, Sequence) and not isinstance(value, (bytes, bytearray, memoryview)):
         items = value
     else:
         raise TacticianContractError(f"{label} must be a sequence of strings")
@@ -355,9 +339,7 @@ def _enum(value: object, enum_type: type[StrEnum], label: str) -> Any:
         return enum_type(str(raw).strip().lower())
     except (TypeError, ValueError) as exc:
         allowed = ", ".join(item.value for item in enum_type)
-        raise TacticianContractError(
-            f"{label} must be one of: {allowed}"
-        ) from exc
+        raise TacticianContractError(f"{label} must be one of: {allowed}") from exc
 
 
 def _nonnegative_int(value: object, label: str) -> int:
@@ -386,9 +368,7 @@ def _canonical_value(value: Any) -> Any:
     if value is None or isinstance(value, (str, bool, int)):
         return value
     if isinstance(value, float):
-        raise TacticianContractError(
-            "tactician contracts cannot contain floating-point values"
-        )
+        raise TacticianContractError("tactician contracts cannot contain floating-point values")
     if isinstance(value, StrEnum):
         return value.value
     if isinstance(value, TacticianContract):
@@ -400,9 +380,7 @@ def _canonical_value(value: Any) -> Any:
     if isinstance(value, (set, frozenset)):
         items = [_canonical_value(item) for item in value]
         return sorted(items, key=lambda item: json.dumps(item, sort_keys=True))
-    raise TacticianContractError(
-        f"unsupported contract value type: {type(value).__name__}"
-    )
+    raise TacticianContractError(f"unsupported contract value type: {type(value).__name__}")
 
 
 def canonical_json_bytes(value: Any) -> bytes:
@@ -423,9 +401,7 @@ def content_identity(value: Any) -> str:
     return "sha256:" + hashlib.sha256(canonical_json_bytes(value)).hexdigest()
 
 
-def _reject_unknown(
-    payload: Mapping[str, Any], allowed: Iterable[str], *, artifact: str
-) -> None:
+def _reject_unknown(payload: Mapping[str, Any], allowed: Iterable[str], *, artifact: str) -> None:
     unknown = sorted(set(payload) - set(allowed))
     if unknown:
         raise TacticianContractError(
@@ -433,21 +409,16 @@ def _reject_unknown(
         )
 
 
-def _reject_proposal_authority_claims(
-    payload: Mapping[str, Any], *, artifact: str
-) -> None:
+def _reject_proposal_authority_claims(payload: Mapping[str, Any], *, artifact: str) -> None:
     """Fail closed when a proposal smuggles proof or completion authority."""
 
     for key in _PROPOSAL_FORBIDDEN_TRUE_CLAIMS:
         if key in payload and payload[key] is not False and payload[key] is not None:
             if payload[key] is True or (
                 isinstance(payload[key], str)
-                and payload[key].strip().lower()
-                in {"true", "yes", "proved", "complete", "1"}
+                and payload[key].strip().lower() in {"true", "yes", "proved", "complete", "1"}
             ):
-                raise TacticianContractError(
-                    f"{artifact} cannot claim {key.replace('_', ' ')}"
-                )
+                raise TacticianContractError(f"{artifact} cannot claim {key.replace('_', ' ')}")
 
 
 def _schema_check(payload: Mapping[str, Any], expected: str) -> None:
@@ -455,14 +426,10 @@ def _schema_check(payload: Mapping[str, Any], expected: str) -> None:
         raise TacticianContractError("contract payload must be an object")
     supplied = payload.get("schema")
     if supplied not in (None, "", expected):
-        raise TacticianContractError(
-            f"unsupported contract schema; use {expected}"
-        )
+        raise TacticianContractError(f"unsupported contract schema; use {expected}")
     version = payload.get("contract_version", payload.get("schema_version"))
     if version not in (None, TACTICIAN_CONTRACT_VERSION, str(TACTICIAN_CONTRACT_VERSION)):
-        raise TacticianContractError(
-            "unsupported tactician contract version"
-        )
+        raise TacticianContractError("unsupported tactician contract version")
 
 
 def _claim_identity(
@@ -475,9 +442,7 @@ def _claim_identity(
     for name in names:
         claimed = payload.get(name)
         if claimed not in (None, "") and claimed != actual:
-            raise TacticianContractError(
-                f"{artifact} content identity does not match payload"
-            )
+            raise TacticianContractError(f"{artifact} content identity does not match payload")
 
 
 # ---------------------------------------------------------------------------
@@ -531,9 +496,7 @@ class TacticianContract:
 class SourceSpanBinding(TacticianContract):
     """Repository tree and source/AST span binding."""
 
-    SCHEMA: ClassVar[str] = (
-        "ipfs_datasets_py/logic/software_verification/source-span-binding@1"
-    )
+    SCHEMA: ClassVar[str] = "ipfs_datasets_py/logic/software_verification/source-span-binding@1"
 
     tree_id: str = ""
     source_ref_ids: tuple[str, ...] = ()
@@ -550,9 +513,7 @@ class SourceSpanBinding(TacticianContract):
             "source_ref_ids",
             _string_tuple(self.source_ref_ids, "source_ref_ids"),
         )
-        object.__setattr__(
-            self, "span_ids", _string_tuple(self.span_ids, "span_ids")
-        )
+        object.__setattr__(self, "span_ids", _string_tuple(self.span_ids, "span_ids"))
         object.__setattr__(
             self,
             "ast_scope_ids",
@@ -605,9 +566,7 @@ class SourceSpanBinding(TacticianContract):
 class PhraseProvenance(TacticianContract):
     """Maps a caller phrase span to a structured clause identifier."""
 
-    SCHEMA: ClassVar[str] = (
-        "ipfs_datasets_py/logic/software_verification/phrase-provenance@1"
-    )
+    SCHEMA: ClassVar[str] = "ipfs_datasets_py/logic/software_verification/phrase-provenance@1"
 
     phrase: str
     clause_id: str
@@ -617,32 +576,22 @@ class PhraseProvenance(TacticianContract):
     end_offset: int = 0
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "phrase", _text(self.phrase, "phrase", maximum=2048)
-        )
-        object.__setattr__(
-            self, "clause_id", _text(self.clause_id, "clause_id", maximum=256)
-        )
+        object.__setattr__(self, "phrase", _text(self.phrase, "phrase", maximum=2048))
+        object.__setattr__(self, "clause_id", _text(self.clause_id, "clause_id", maximum=256))
         object.__setattr__(
             self,
             "source_ref_ids",
             _string_tuple(self.source_ref_ids, "source_ref_ids"),
         )
-        object.__setattr__(
-            self, "span_ids", _string_tuple(self.span_ids, "span_ids")
-        )
+        object.__setattr__(self, "span_ids", _string_tuple(self.span_ids, "span_ids"))
         object.__setattr__(
             self,
             "start_offset",
             _nonnegative_int(self.start_offset, "start_offset"),
         )
-        object.__setattr__(
-            self, "end_offset", _nonnegative_int(self.end_offset, "end_offset")
-        )
+        object.__setattr__(self, "end_offset", _nonnegative_int(self.end_offset, "end_offset"))
         if self.end_offset < self.start_offset:
-            raise TacticianContractError(
-                "end_offset must be greater than or equal to start_offset"
-            )
+            raise TacticianContractError("end_offset must be greater than or equal to start_offset")
 
     def _payload(self) -> dict[str, Any]:
         return {
@@ -688,9 +637,7 @@ class PhraseProvenance(TacticianContract):
 class AssumptionBinding(TacticianContract):
     """Assumption bound by class, kind, statement, and source map."""
 
-    SCHEMA: ClassVar[str] = (
-        "ipfs_datasets_py/logic/software_verification/assumption-binding@1"
-    )
+    SCHEMA: ClassVar[str] = "ipfs_datasets_py/logic/software_verification/assumption-binding@1"
 
     assumption_id: str
     assumption_class: AssumptionClass
@@ -711,9 +658,7 @@ class AssumptionBinding(TacticianContract):
             "assumption_class",
             _enum(self.assumption_class, AssumptionClass, "assumption_class"),
         )
-        object.__setattr__(
-            self, "kind", _text(self.kind, "kind", maximum=128)
-        )
+        object.__setattr__(self, "kind", _text(self.kind, "kind", maximum=128))
         object.__setattr__(
             self,
             "statement",
@@ -725,12 +670,8 @@ class AssumptionBinding(TacticianContract):
         elif not isinstance(source, SourceSpanBinding):
             raise TacticianContractError("source must be a SourceSpanBinding")
         object.__setattr__(self, "source", source)
-        object.__setattr__(
-            self, "authority", _enum(self.authority, AuthorityCeiling, "authority")
-        )
-        object.__setattr__(
-            self, "reviewable", _bool(self.reviewable, "reviewable")
-        )
+        object.__setattr__(self, "authority", _enum(self.authority, AuthorityCeiling, "authority"))
+        object.__setattr__(self, "reviewable", _bool(self.reviewable, "reviewable"))
         if self.assumption_class is AssumptionClass.HYPOTHETICAL:
             if self.authority not in {
                 AuthorityCeiling.NONE,
@@ -776,9 +717,7 @@ class AssumptionBinding(TacticianContract):
         source_raw = payload.get("source") or {}
         return cls(
             assumption_id=payload.get("assumption_id", ""),
-            assumption_class=payload.get(
-                "assumption_class", AssumptionClass.HYPOTHETICAL
-            ),
+            assumption_class=payload.get("assumption_class", AssumptionClass.HYPOTHETICAL),
             kind=payload.get("kind", "semantic"),
             statement=payload.get("statement", ""),
             source=(
@@ -795,9 +734,7 @@ class AssumptionBinding(TacticianContract):
 class ResourceBounds(TacticianContract):
     """Integer-only finite bounds and resource policy for a goal or plan."""
 
-    SCHEMA: ClassVar[str] = (
-        "ipfs_datasets_py/logic/software_verification/resource-bounds@1"
-    )
+    SCHEMA: ClassVar[str] = "ipfs_datasets_py/logic/software_verification/resource-bounds@1"
 
     wall_time_ms: int = 0
     memory_bytes: int = 0
@@ -819,9 +756,7 @@ class ResourceBounds(TacticianContract):
             "max_candidates",
             "model_token_limit",
         ):
-            object.__setattr__(
-                self, name, _nonnegative_int(getattr(self, name), name)
-            )
+            object.__setattr__(self, name, _nonnegative_int(getattr(self, name), name))
         object.__setattr__(
             self,
             "network_allowed",
@@ -890,9 +825,7 @@ class ResourceBounds(TacticianContract):
 class ValidationRecipe(TacticianContract):
     """Machine-readable recipe for validating a hole or candidate."""
 
-    SCHEMA: ClassVar[str] = (
-        "ipfs_datasets_py/logic/software_verification/validation-recipe@1"
-    )
+    SCHEMA: ClassVar[str] = "ipfs_datasets_py/logic/software_verification/validation-recipe@1"
 
     recipe_id: str
     checker_kind: str
@@ -903,9 +836,7 @@ class ValidationRecipe(TacticianContract):
     oracle_id: str = ""
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "recipe_id", _text(self.recipe_id, "recipe_id", maximum=256)
-        )
+        object.__setattr__(self, "recipe_id", _text(self.recipe_id, "recipe_id", maximum=256))
         object.__setattr__(
             self,
             "checker_kind",
@@ -975,9 +906,7 @@ class ValidationRecipe(TacticianContract):
             recipe_id=payload.get("recipe_id", ""),
             checker_kind=payload.get("checker_kind", ""),
             provider_ids=tuple(payload.get("provider_ids") or ()),
-            required_authority=payload.get(
-                "required_authority", AuthorityCeiling.CANDIDATE
-            ),
+            required_authority=payload.get("required_authority", AuthorityCeiling.CANDIDATE),
             bounds=(
                 ResourceBounds.from_dict(bounds_raw)
                 if isinstance(bounds_raw, Mapping)
@@ -1027,22 +956,13 @@ class EndGoalInterpretation(TacticianContract):
             _enum(self.property_class, PropertyClass, "property_class"),
         )
         quantifiers = tuple(
-            _enum(item, QuantifierKind, "quantifiers")
-            for item in (self.quantifiers or ())
+            _enum(item, QuantifierKind, "quantifiers") for item in (self.quantifiers or ())
         )
         object.__setattr__(self, "quantifiers", quantifiers)
-        object.__setattr__(
-            self, "current_state", _mapping(self.current_state, "current_state")
-        )
-        object.__setattr__(
-            self, "target_state", _mapping(self.target_state, "target_state")
-        )
-        object.__setattr__(
-            self, "environment", _mapping(self.environment, "environment")
-        )
-        object.__setattr__(
-            self, "semantic_diff", _mapping(self.semantic_diff, "semantic_diff")
-        )
+        object.__setattr__(self, "current_state", _mapping(self.current_state, "current_state"))
+        object.__setattr__(self, "target_state", _mapping(self.target_state, "target_state"))
+        object.__setattr__(self, "environment", _mapping(self.environment, "environment"))
+        object.__setattr__(self, "semantic_diff", _mapping(self.semantic_diff, "semantic_diff"))
         object.__setattr__(
             self,
             "unresolved_fields",
@@ -1091,9 +1011,7 @@ class EndGoalInterpretation(TacticianContract):
         return cls(
             interpretation_id=payload.get("interpretation_id", ""),
             controlled_english=payload.get("controlled_english", ""),
-            property_class=payload.get(
-                "property_class", PropertyClass.UNSPECIFIED
-            ),
+            property_class=payload.get("property_class", PropertyClass.UNSPECIFIED),
             quantifiers=tuple(payload.get("quantifiers") or ()),
             current_state=payload.get("current_state") or {},
             target_state=payload.get("target_state") or {},
@@ -1143,9 +1061,7 @@ class EndGoalSpec(TacticianContract):
     root_goal_id: str = ""
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "goal_id", _text(self.goal_id, "goal_id", maximum=256)
-        )
+        object.__setattr__(self, "goal_id", _text(self.goal_id, "goal_id", maximum=256))
         object.__setattr__(
             self,
             "caller_text",
@@ -1169,36 +1085,23 @@ class EndGoalSpec(TacticianContract):
         object.__setattr__(
             self,
             "quantifiers",
-            tuple(
-                _enum(item, QuantifierKind, "quantifiers")
-                for item in (self.quantifiers or ())
-            ),
+            tuple(_enum(item, QuantifierKind, "quantifiers") for item in (self.quantifiers or ())),
         )
-        object.__setattr__(
-            self, "actors", _string_tuple(self.actors, "actors")
-        )
+        object.__setattr__(self, "actors", _string_tuple(self.actors, "actors"))
         object.__setattr__(
             self,
             "state_variables",
             _string_tuple(self.state_variables, "state_variables"),
         )
-        object.__setattr__(
-            self, "current_state", _mapping(self.current_state, "current_state")
-        )
-        object.__setattr__(
-            self, "target_state", _mapping(self.target_state, "target_state")
-        )
+        object.__setattr__(self, "current_state", _mapping(self.current_state, "current_state"))
+        object.__setattr__(self, "target_state", _mapping(self.target_state, "target_state"))
         object.__setattr__(
             self,
             "transitions",
             _string_tuple(self.transitions, "transitions"),
         )
-        object.__setattr__(
-            self, "environment", _mapping(self.environment, "environment")
-        )
-        object.__setattr__(
-            self, "interference", _mapping(self.interference, "interference")
-        )
+        object.__setattr__(self, "environment", _mapping(self.environment, "environment"))
+        object.__setattr__(self, "interference", _mapping(self.interference, "interference"))
         assumptions: list[AssumptionBinding] = []
         for item in self.assumptions or ():
             if isinstance(item, AssumptionBinding):
@@ -1206,9 +1109,7 @@ class EndGoalSpec(TacticianContract):
             elif isinstance(item, Mapping):
                 assumptions.append(AssumptionBinding.from_dict(item))
             else:
-                raise TacticianContractError(
-                    "assumptions must contain AssumptionBinding values"
-                )
+                raise TacticianContractError("assumptions must contain AssumptionBinding values")
         object.__setattr__(
             self,
             "assumptions",
@@ -1242,9 +1143,7 @@ class EndGoalSpec(TacticianContract):
             elif isinstance(item, Mapping):
                 provenance.append(PhraseProvenance.from_dict(item))
             else:
-                raise TacticianContractError(
-                    "provenance must contain PhraseProvenance values"
-                )
+                raise TacticianContractError("provenance must contain PhraseProvenance values")
         object.__setattr__(self, "provenance", tuple(provenance))
         interpretations: list[EndGoalInterpretation] = []
         for item in self.interpretations or ():
@@ -1262,13 +1161,8 @@ class EndGoalSpec(TacticianContract):
             "ambiguity_status",
             _enum(self.ambiguity_status, AmbiguityStatus, "ambiguity_status"),
         )
-        if (
-            len(interpretations) > 1
-            and self.ambiguity_status is AmbiguityStatus.NONE
-        ):
-            object.__setattr__(
-                self, "ambiguity_status", AmbiguityStatus.CANDIDATES_PRESENT
-            )
+        if len(interpretations) > 1 and self.ambiguity_status is AmbiguityStatus.NONE:
+            object.__setattr__(self, "ambiguity_status", AmbiguityStatus.CANDIDATES_PRESENT)
         object.__setattr__(
             self,
             "unsupported_semantics",
@@ -1287,37 +1181,25 @@ class EndGoalSpec(TacticianContract):
         object.__setattr__(
             self,
             "expected_receipt_classes",
-            _string_tuple(
-                self.expected_receipt_classes, "expected_receipt_classes"
-            ),
+            _string_tuple(self.expected_receipt_classes, "expected_receipt_classes"),
         )
-        object.__setattr__(
-            self, "status", _text(self.status, "status", maximum=64)
-        )
-        object.__setattr__(
-            self, "authority", _enum(self.authority, AuthorityCeiling, "authority")
-        )
+        object.__setattr__(self, "status", _text(self.status, "status", maximum=64))
+        object.__setattr__(self, "authority", _enum(self.authority, AuthorityCeiling, "authority"))
         if self.authority not in {
             AuthorityCeiling.NONE,
             AuthorityCeiling.ADVISORY,
             AuthorityCeiling.CANDIDATE,
             AuthorityCeiling.DECLARATIVE,
         }:
-            raise TacticianContractError(
-                "EndGoalSpec authority cannot claim proof-level authority"
-            )
-        object.__setattr__(
-            self, "proof_claimed", _bool(self.proof_claimed, "proof_claimed")
-        )
+            raise TacticianContractError("EndGoalSpec authority cannot claim proof-level authority")
+        object.__setattr__(self, "proof_claimed", _bool(self.proof_claimed, "proof_claimed"))
         object.__setattr__(
             self,
             "completion_claimed",
             _bool(self.completion_claimed, "completion_claimed"),
         )
         if self.proof_claimed or self.completion_claimed:
-            raise TacticianContractError(
-                "EndGoalSpec cannot claim proof or completion"
-            )
+            raise TacticianContractError("EndGoalSpec cannot claim proof or completion")
         object.__setattr__(
             self,
             "root_goal_id",
@@ -1421,9 +1303,7 @@ class EndGoalSpec(TacticianContract):
                 if isinstance(source_raw, Mapping)
                 else SourceSpanBinding()
             ),
-            property_class=payload.get(
-                "property_class", PropertyClass.UNSPECIFIED
-            ),
+            property_class=payload.get("property_class", PropertyClass.UNSPECIFIED),
             quantifiers=tuple(payload.get("quantifiers") or ()),
             actors=tuple(payload.get("actors") or ()),
             state_variables=tuple(payload.get("state_variables") or ()),
@@ -1435,9 +1315,7 @@ class EndGoalSpec(TacticianContract):
             assumptions=tuple(payload.get("assumptions") or ()),
             logic_family=payload.get("logic_family", ""),
             provider_ids=tuple(payload.get("provider_ids") or ()),
-            assurance_target=payload.get(
-                "assurance_target", AuthorityCeiling.BOUNDED
-            ),
+            assurance_target=payload.get("assurance_target", AuthorityCeiling.BOUNDED),
             bounds=(
                 ResourceBounds.from_dict(bounds_raw)
                 if isinstance(bounds_raw, Mapping)
@@ -1445,17 +1323,11 @@ class EndGoalSpec(TacticianContract):
             ),
             provenance=tuple(payload.get("provenance") or ()),
             interpretations=tuple(payload.get("interpretations") or ()),
-            ambiguity_status=payload.get(
-                "ambiguity_status", AmbiguityStatus.NONE
-            ),
-            unsupported_semantics=tuple(
-                payload.get("unsupported_semantics") or ()
-            ),
+            ambiguity_status=payload.get("ambiguity_status", AmbiguityStatus.NONE),
+            unsupported_semantics=tuple(payload.get("unsupported_semantics") or ()),
             translation_loss=tuple(payload.get("translation_loss") or ()),
             acceptance_evidence=tuple(payload.get("acceptance_evidence") or ()),
-            expected_receipt_classes=tuple(
-                payload.get("expected_receipt_classes") or ()
-            ),
+            expected_receipt_classes=tuple(payload.get("expected_receipt_classes") or ()),
             status=payload.get("status", "draft"),
             authority=payload.get("authority", AuthorityCeiling.NONE),
             proof_claimed=False,
@@ -1506,16 +1378,10 @@ class FormalGoal(TacticianContract):
                 maximum=256,
             ),
         )
-        selected_ids = {
-            item.interpretation_id for item in end_goal.interpretations
-        }
-        if (
-            end_goal.interpretations
-            and self.selected_interpretation_id not in selected_ids
-        ):
+        selected_ids = {item.interpretation_id for item in end_goal.interpretations}
+        if end_goal.interpretations and self.selected_interpretation_id not in selected_ids:
             raise TacticianContractError(
-                "selected_interpretation_id must reference an interpretation "
-                "on the EndGoalSpec"
+                "selected_interpretation_id must reference an interpretation on the EndGoalSpec"
             )
         if end_goal.ambiguity_status is AmbiguityStatus.REQUIRES_SELECTION:
             raise TacticianContractError(
@@ -1531,12 +1397,8 @@ class FormalGoal(TacticianContract):
                 maximum=256,
             ),
         )
-        object.__setattr__(
-            self, "status", _text(self.status, "status", maximum=64)
-        )
-        object.__setattr__(
-            self, "authority", _enum(self.authority, AuthorityCeiling, "authority")
-        )
+        object.__setattr__(self, "status", _text(self.status, "status", maximum=64))
+        object.__setattr__(self, "authority", _enum(self.authority, AuthorityCeiling, "authority"))
         if self.authority in {
             AuthorityCeiling.THEOREM,
             AuthorityCeiling.ATTESTATION,
@@ -1545,18 +1407,14 @@ class FormalGoal(TacticianContract):
             raise TacticianContractError(
                 "FormalGoal cannot self-assert theorem or attestation authority"
             )
-        object.__setattr__(
-            self, "proof_claimed", _bool(self.proof_claimed, "proof_claimed")
-        )
+        object.__setattr__(self, "proof_claimed", _bool(self.proof_claimed, "proof_claimed"))
         object.__setattr__(
             self,
             "completion_claimed",
             _bool(self.completion_claimed, "completion_claimed"),
         )
         if self.proof_claimed or self.completion_claimed:
-            raise TacticianContractError(
-                "FormalGoal cannot claim proof or completion"
-            )
+            raise TacticianContractError("FormalGoal cannot claim proof or completion")
 
     @property
     def root_goal_id(self) -> str:
@@ -1603,13 +1461,9 @@ class FormalGoal(TacticianContract):
         result = cls(
             formal_goal_id=payload.get("formal_goal_id", ""),
             end_goal=(
-                EndGoalSpec.from_dict(end_raw)
-                if isinstance(end_raw, Mapping)
-                else end_raw  # type: ignore[arg-type]
+                EndGoalSpec.from_dict(end_raw) if isinstance(end_raw, Mapping) else end_raw  # type: ignore[arg-type]
             ),
-            selected_interpretation_id=payload.get(
-                "selected_interpretation_id", ""
-            ),
+            selected_interpretation_id=payload.get("selected_interpretation_id", ""),
             confirmation_receipt_id=payload.get("confirmation_receipt_id", ""),
             status=payload.get("status", "confirmed"),
             authority=payload.get("authority", AuthorityCeiling.DECLARATIVE),
@@ -1654,13 +1508,9 @@ class ProofHole(TacticianContract):
     completion_claimed: bool = False
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "hole_id", _text(self.hole_id, "hole_id", maximum=256)
-        )
+        object.__setattr__(self, "hole_id", _text(self.hole_id, "hole_id", maximum=256))
         object.__setattr__(self, "kind", _enum(self.kind, HoleKind, "kind"))
-        object.__setattr__(
-            self, "reason", _text(self.reason, "reason", maximum=4096)
-        )
+        object.__setattr__(self, "reason", _text(self.reason, "reason", maximum=4096))
         source = self.source
         if isinstance(source, Mapping):
             source = SourceSpanBinding.from_dict(source)
@@ -1670,16 +1520,12 @@ class ProofHole(TacticianContract):
         object.__setattr__(
             self,
             "formal_goal_id",
-            _text(
-                self.formal_goal_id, "formal_goal_id", optional=True, maximum=256
-            ),
+            _text(self.formal_goal_id, "formal_goal_id", optional=True, maximum=256),
         )
         object.__setattr__(
             self,
             "expected_authority",
-            _enum(
-                self.expected_authority, AuthorityCeiling, "expected_authority"
-            ),
+            _enum(self.expected_authority, AuthorityCeiling, "expected_authority"),
         )
         object.__setattr__(
             self,
@@ -1692,13 +1538,9 @@ class ProofHole(TacticianContract):
         elif isinstance(recipe, Mapping):
             recipe = ValidationRecipe.from_dict(recipe)
         elif not isinstance(recipe, ValidationRecipe):
-            raise TacticianContractError(
-                "validation_recipe must be a ValidationRecipe"
-            )
+            raise TacticianContractError("validation_recipe must be a ValidationRecipe")
         object.__setattr__(self, "validation_recipe", recipe)
-        object.__setattr__(
-            self, "status", _enum(self.status, HoleStatus, "status")
-        )
+        object.__setattr__(self, "status", _enum(self.status, HoleStatus, "status"))
         object.__setattr__(
             self,
             "property_class",
@@ -1720,18 +1562,14 @@ class ProofHole(TacticianContract):
         elif not isinstance(bounds, ResourceBounds):
             raise TacticianContractError("bounds must be a ResourceBounds")
         object.__setattr__(self, "bounds", bounds)
-        object.__setattr__(
-            self, "proof_claimed", _bool(self.proof_claimed, "proof_claimed")
-        )
+        object.__setattr__(self, "proof_claimed", _bool(self.proof_claimed, "proof_claimed"))
         object.__setattr__(
             self,
             "completion_claimed",
             _bool(self.completion_claimed, "completion_claimed"),
         )
         if self.proof_claimed or self.completion_claimed:
-            raise TacticianContractError(
-                "ProofHole cannot claim proof or completion"
-            )
+            raise TacticianContractError("ProofHole cannot claim proof or completion")
         if self.status is HoleStatus.DISCHARGED and self.expected_authority in {
             AuthorityCeiling.NONE,
             AuthorityCeiling.ADVISORY,
@@ -1751,9 +1589,7 @@ class ProofHole(TacticianContract):
             "expected_authority": self.expected_authority.value,
             "dependency_ids": list(self.dependency_ids),
             "validation_recipe": (
-                None
-                if self.validation_recipe is None
-                else self.validation_recipe.to_dict()
+                None if self.validation_recipe is None else self.validation_recipe.to_dict()
             ),
             "status": self.status.value,
             "property_class": self.property_class.value,
@@ -1807,19 +1643,13 @@ class ProofHole(TacticianContract):
                 else SourceSpanBinding()
             ),
             formal_goal_id=payload.get("formal_goal_id", ""),
-            expected_authority=payload.get(
-                "expected_authority", AuthorityCeiling.CANDIDATE
-            ),
+            expected_authority=payload.get("expected_authority", AuthorityCeiling.CANDIDATE),
             dependency_ids=tuple(payload.get("dependency_ids") or ()),
             validation_recipe=(
-                ValidationRecipe.from_dict(recipe_raw)
-                if isinstance(recipe_raw, Mapping)
-                else None
+                ValidationRecipe.from_dict(recipe_raw) if isinstance(recipe_raw, Mapping) else None
             ),
             status=payload.get("status", HoleStatus.OPEN),
-            property_class=payload.get(
-                "property_class", PropertyClass.UNSPECIFIED
-            ),
+            property_class=payload.get("property_class", PropertyClass.UNSPECIFIED),
             statement=payload.get("statement", ""),
             provider_ids=tuple(payload.get("provider_ids") or ()),
             bounds=(
@@ -1830,9 +1660,7 @@ class ProofHole(TacticianContract):
             proof_claimed=False,
             completion_claimed=False,
         )
-        _claim_identity(
-            payload, result.content_id, names=("content_id",), artifact="ProofHole"
-        )
+        _claim_identity(payload, result.content_id, names=("content_id",), artifact="ProofHole")
         return result
 
 
@@ -1852,31 +1680,21 @@ class ProofGraphNode(TacticianContract):
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "node_id", _text(self.node_id, "node_id", maximum=256)
-        )
+        object.__setattr__(self, "node_id", _text(self.node_id, "node_id", maximum=256))
         object.__setattr__(self, "kind", _enum(self.kind, GraphNodeKind, "kind"))
         object.__setattr__(
             self,
             "obligation_id",
-            _text(
-                self.obligation_id, "obligation_id", optional=True, maximum=256
-            ),
+            _text(self.obligation_id, "obligation_id", optional=True, maximum=256),
         )
         object.__setattr__(
             self,
             "hole_id",
             _text(self.hole_id, "hole_id", optional=True, maximum=256),
         )
-        object.__setattr__(
-            self, "label", _text(self.label, "label", optional=True, maximum=512)
-        )
-        object.__setattr__(
-            self, "status", _enum(self.status, HoleStatus, "status")
-        )
-        object.__setattr__(
-            self, "authority", _enum(self.authority, AuthorityCeiling, "authority")
-        )
+        object.__setattr__(self, "label", _text(self.label, "label", optional=True, maximum=512))
+        object.__setattr__(self, "status", _enum(self.status, HoleStatus, "status"))
+        object.__setattr__(self, "authority", _enum(self.authority, AuthorityCeiling, "authority"))
         object.__setattr__(self, "metadata", _mapping(self.metadata, "metadata"))
 
     def _payload(self) -> dict[str, Any]:
@@ -1940,9 +1758,7 @@ class ProofGraphEdge(TacticianContract):
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "edge_id", _text(self.edge_id, "edge_id", maximum=256)
-        )
+        object.__setattr__(self, "edge_id", _text(self.edge_id, "edge_id", maximum=256))
         object.__setattr__(
             self,
             "source_node_id",
@@ -1954,12 +1770,8 @@ class ProofGraphEdge(TacticianContract):
             _text(self.target_node_id, "target_node_id", maximum=256),
         )
         if self.source_node_id == self.target_node_id:
-            raise TacticianContractError(
-                "proof graph edges cannot be self-loops"
-            )
-        object.__setattr__(
-            self, "kind", _enum(self.kind, GraphEdgeKind, "kind")
-        )
+            raise TacticianContractError("proof graph edges cannot be self-loops")
+        object.__setattr__(self, "kind", _enum(self.kind, GraphEdgeKind, "kind"))
         object.__setattr__(
             self,
             "inference_rule",
@@ -2046,9 +1858,7 @@ class ProofObligationGraph(TacticianContract):
     completion_claimed: bool = False
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "graph_id", _text(self.graph_id, "graph_id", maximum=256)
-        )
+        object.__setattr__(self, "graph_id", _text(self.graph_id, "graph_id", maximum=256))
         object.__setattr__(
             self,
             "formal_goal_id",
@@ -2066,9 +1876,7 @@ class ProofObligationGraph(TacticianContract):
             elif isinstance(item, Mapping):
                 nodes.append(ProofGraphNode.from_dict(item))
             else:
-                raise TacticianContractError(
-                    "nodes must contain ProofGraphNode values"
-                )
+                raise TacticianContractError("nodes must contain ProofGraphNode values")
         if not nodes:
             raise TacticianContractError("nodes must not be empty")
         by_id = {node.node_id: node for node in nodes}
@@ -2088,9 +1896,7 @@ class ProofObligationGraph(TacticianContract):
             elif isinstance(item, Mapping):
                 edges.append(ProofGraphEdge.from_dict(item))
             else:
-                raise TacticianContractError(
-                    "edges must contain ProofGraphEdge values"
-                )
+                raise TacticianContractError("edges must contain ProofGraphEdge values")
         edge_ids: set[str] = set()
         adjacency: dict[str, list[str]] = {node_id: [] for node_id in by_id}
         for edge in edges:
@@ -2098,9 +1904,7 @@ class ProofObligationGraph(TacticianContract):
                 raise TacticianContractError("edge_id values must be unique")
             edge_ids.add(edge.edge_id)
             if edge.source_node_id not in by_id or edge.target_node_id not in by_id:
-                raise TacticianContractError(
-                    f"edge {edge.edge_id} references unknown nodes"
-                )
+                raise TacticianContractError(f"edge {edge.edge_id} references unknown nodes")
             adjacency[edge.source_node_id].append(edge.target_node_id)
         object.__setattr__(
             self,
@@ -2119,40 +1923,22 @@ class ProofObligationGraph(TacticianContract):
         elif not isinstance(bounds, ResourceBounds):
             raise TacticianContractError("bounds must be a ResourceBounds")
         if bounds.max_nodes and len(nodes) > bounds.max_nodes:
-            raise TacticianContractError(
-                "graph exceeds max_nodes resource bound"
-            )
+            raise TacticianContractError("graph exceeds max_nodes resource bound")
         object.__setattr__(self, "bounds", bounds)
         hole_ids = _string_tuple(self.hole_ids, "hole_ids")
         if not hole_ids:
-            hole_ids = tuple(
-                sorted(
-                    {
-                        node.hole_id
-                        for node in nodes
-                        if node.hole_id
-                    }
-                )
-            )
+            hole_ids = tuple(sorted({node.hole_id for node in nodes if node.hole_id}))
         object.__setattr__(self, "hole_ids", hole_ids)
-        object.__setattr__(
-            self, "status", _text(self.status, "status", maximum=64)
-        )
-        object.__setattr__(
-            self, "authority", _enum(self.authority, AuthorityCeiling, "authority")
-        )
-        object.__setattr__(
-            self, "proof_claimed", _bool(self.proof_claimed, "proof_claimed")
-        )
+        object.__setattr__(self, "status", _text(self.status, "status", maximum=64))
+        object.__setattr__(self, "authority", _enum(self.authority, AuthorityCeiling, "authority"))
+        object.__setattr__(self, "proof_claimed", _bool(self.proof_claimed, "proof_claimed"))
         object.__setattr__(
             self,
             "completion_claimed",
             _bool(self.completion_claimed, "completion_claimed"),
         )
         if self.proof_claimed or self.completion_claimed:
-            raise TacticianContractError(
-                "ProofObligationGraph cannot claim proof or completion"
-            )
+            raise TacticianContractError("ProofObligationGraph cannot claim proof or completion")
 
     @staticmethod
     def _assert_acyclic(adjacency: Mapping[str, Sequence[str]]) -> None:
@@ -2165,9 +1951,7 @@ class ProofObligationGraph(TacticianContract):
             color[node] = GRAY
             for nxt in adjacency[node]:
                 if color[nxt] is GRAY:
-                    raise TacticianContractError(
-                        "proof obligation graph must be acyclic"
-                    )
+                    raise TacticianContractError("proof obligation graph must be acyclic")
                 if color[nxt] is WHITE:
                     visit(nxt)
             color[node] = BLACK
@@ -2195,9 +1979,7 @@ class ProofObligationGraph(TacticianContract):
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "ProofObligationGraph":
         _schema_check(payload, cls.SCHEMA)
-        _reject_proposal_authority_claims(
-            payload, artifact="ProofObligationGraph"
-        )
+        _reject_proposal_authority_claims(payload, artifact="ProofObligationGraph")
         _reject_unknown(
             payload,
             {
@@ -2281,16 +2063,10 @@ class CandidateProofStep(TacticianContract):
             "candidate_id",
             _text(self.candidate_id, "candidate_id", maximum=256),
         )
-        object.__setattr__(
-            self, "hole_id", _text(self.hole_id, "hole_id", maximum=256)
-        )
+        object.__setattr__(self, "hole_id", _text(self.hole_id, "hole_id", maximum=256))
         object.__setattr__(self, "kind", _text(self.kind, "kind", maximum=128))
-        object.__setattr__(
-            self, "statement", _text(self.statement, "statement", maximum=8192)
-        )
-        object.__setattr__(
-            self, "status", _enum(self.status, CandidateStatus, "status")
-        )
+        object.__setattr__(self, "statement", _text(self.statement, "statement", maximum=8192))
+        object.__setattr__(self, "status", _enum(self.status, CandidateStatus, "status"))
         source = self.source
         if isinstance(source, Mapping):
             source = SourceSpanBinding.from_dict(source)
@@ -2302,23 +2078,17 @@ class CandidateProofStep(TacticianContract):
             "provider_ids",
             _string_tuple(self.provider_ids, "provider_ids"),
         )
-        object.__setattr__(
-            self, "authority", _enum(self.authority, AuthorityCeiling, "authority")
-        )
+        object.__setattr__(self, "authority", _enum(self.authority, AuthorityCeiling, "authority"))
         if self.authority not in {
             AuthorityCeiling.NONE,
             AuthorityCeiling.ADVISORY,
             AuthorityCeiling.CANDIDATE,
         }:
-            raise TacticianContractError(
-                "CandidateProofStep authority is capped at candidate"
-            )
+            raise TacticianContractError("CandidateProofStep authority is capped at candidate")
         object.__setattr__(
             self,
             "rank_score_millionths",
-            _nonnegative_int(
-                self.rank_score_millionths, "rank_score_millionths"
-            ),
+            _nonnegative_int(self.rank_score_millionths, "rank_score_millionths"),
         )
         object.__setattr__(
             self,
@@ -2330,21 +2100,15 @@ class CandidateProofStep(TacticianContract):
             "evidence_ids",
             _string_tuple(self.evidence_ids, "evidence_ids"),
         )
-        object.__setattr__(
-            self, "provenance", _mapping(self.provenance, "provenance")
-        )
-        object.__setattr__(
-            self, "proof_claimed", _bool(self.proof_claimed, "proof_claimed")
-        )
+        object.__setattr__(self, "provenance", _mapping(self.provenance, "provenance"))
+        object.__setattr__(self, "proof_claimed", _bool(self.proof_claimed, "proof_claimed"))
         object.__setattr__(
             self,
             "completion_claimed",
             _bool(self.completion_claimed, "completion_claimed"),
         )
         if self.proof_claimed or self.completion_claimed:
-            raise TacticianContractError(
-                "CandidateProofStep cannot claim proof or completion"
-            )
+            raise TacticianContractError("CandidateProofStep cannot claim proof or completion")
 
     def _payload(self) -> dict[str, Any]:
         return {
@@ -2367,9 +2131,7 @@ class CandidateProofStep(TacticianContract):
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "CandidateProofStep":
         _schema_check(payload, cls.SCHEMA)
-        _reject_proposal_authority_claims(
-            payload, artifact="CandidateProofStep"
-        )
+        _reject_proposal_authority_claims(payload, artifact="CandidateProofStep")
         _reject_unknown(
             payload,
             {
@@ -2409,9 +2171,7 @@ class CandidateProofStep(TacticianContract):
             ),
             provider_ids=tuple(payload.get("provider_ids") or ()),
             authority=payload.get("authority", AuthorityCeiling.CANDIDATE),
-            rank_score_millionths=int(
-                payload.get("rank_score_millionths") or 0
-            ),
+            rank_score_millionths=int(payload.get("rank_score_millionths") or 0),
             new_assumption_ids=tuple(payload.get("new_assumption_ids") or ()),
             evidence_ids=tuple(payload.get("evidence_ids") or ()),
             provenance=payload.get("provenance") or {},
@@ -2460,15 +2220,9 @@ class CandidateValidation(TacticianContract):
             "candidate_id",
             _text(self.candidate_id, "candidate_id", maximum=256),
         )
-        object.__setattr__(
-            self, "hole_id", _text(self.hole_id, "hole_id", maximum=256)
-        )
-        object.__setattr__(
-            self, "verdict", _enum(self.verdict, ValidationVerdict, "verdict")
-        )
-        object.__setattr__(
-            self, "tree_id", _text(self.tree_id, "tree_id", maximum=256)
-        )
+        object.__setattr__(self, "hole_id", _text(self.hole_id, "hole_id", maximum=256))
+        object.__setattr__(self, "verdict", _enum(self.verdict, ValidationVerdict, "verdict"))
+        object.__setattr__(self, "tree_id", _text(self.tree_id, "tree_id", maximum=256))
         object.__setattr__(
             self,
             "provider_id",
@@ -2484,9 +2238,7 @@ class CandidateValidation(TacticianContract):
                 maximum=128,
             ),
         )
-        object.__setattr__(
-            self, "authority", _enum(self.authority, AuthorityCeiling, "authority")
-        )
+        object.__setattr__(self, "authority", _enum(self.authority, AuthorityCeiling, "authority"))
         recipe = self.recipe
         if recipe is None:
             pass
@@ -2518,8 +2270,7 @@ class CandidateValidation(TacticianContract):
             "not_applicable",
         }:
             raise TacticianContractError(
-                "minimality must be one of: unknown, bounded, local, subset, "
-                "not_applicable"
+                "minimality must be one of: unknown, bounded, local, subset, not_applicable"
             )
         object.__setattr__(
             self,
@@ -2531,9 +2282,7 @@ class CandidateValidation(TacticianContract):
                 maximum=256,
             ),
         )
-        object.__setattr__(
-            self, "proof_claimed", _bool(self.proof_claimed, "proof_claimed")
-        )
+        object.__setattr__(self, "proof_claimed", _bool(self.proof_claimed, "proof_claimed"))
         object.__setattr__(
             self,
             "completion_claimed",
@@ -2542,9 +2291,7 @@ class CandidateValidation(TacticianContract):
         # Validation records may accept a candidate at a bounded authority,
         # but still cannot claim goal proof or completion by themselves.
         if self.proof_claimed or self.completion_claimed:
-            raise TacticianContractError(
-                "CandidateValidation cannot claim proof or completion"
-            )
+            raise TacticianContractError("CandidateValidation cannot claim proof or completion")
         if self.verdict is ValidationVerdict.ACCEPTED and self.authority in {
             AuthorityCeiling.NONE,
             AuthorityCeiling.ADVISORY,
@@ -2575,9 +2322,7 @@ class CandidateValidation(TacticianContract):
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "CandidateValidation":
         _schema_check(payload, cls.SCHEMA)
-        _reject_proposal_authority_claims(
-            payload, artifact="CandidateValidation"
-        )
+        _reject_proposal_authority_claims(payload, artifact="CandidateValidation")
         _reject_unknown(
             payload,
             {
@@ -2615,9 +2360,7 @@ class CandidateValidation(TacticianContract):
             provider_version=payload.get("provider_version", ""),
             authority=payload.get("authority", AuthorityCeiling.BOUNDED),
             recipe=(
-                ValidationRecipe.from_dict(recipe_raw)
-                if isinstance(recipe_raw, Mapping)
-                else None
+                ValidationRecipe.from_dict(recipe_raw) if isinstance(recipe_raw, Mapping) else None
             ),
             assumption_ids=tuple(payload.get("assumption_ids") or ()),
             evidence_ids=tuple(payload.get("evidence_ids") or ()),
@@ -2662,20 +2405,14 @@ class GoalDirectedProofPlan(TacticianContract):
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "plan_id", _text(self.plan_id, "plan_id", maximum=256)
-        )
+        object.__setattr__(self, "plan_id", _text(self.plan_id, "plan_id", maximum=256))
         object.__setattr__(
             self,
             "formal_goal_id",
             _text(self.formal_goal_id, "formal_goal_id", maximum=256),
         )
-        object.__setattr__(
-            self, "graph_id", _text(self.graph_id, "graph_id", maximum=256)
-        )
-        object.__setattr__(
-            self, "tree_id", _text(self.tree_id, "tree_id", maximum=256)
-        )
+        object.__setattr__(self, "graph_id", _text(self.graph_id, "graph_id", maximum=256))
+        object.__setattr__(self, "tree_id", _text(self.tree_id, "tree_id", maximum=256))
         candidates: list[CandidateProofStep] = []
         for item in self.candidates or ():
             if isinstance(item, CandidateProofStep):
@@ -2683,9 +2420,7 @@ class GoalDirectedProofPlan(TacticianContract):
             elif isinstance(item, Mapping):
                 candidates.append(CandidateProofStep.from_dict(item))
             else:
-                raise TacticianContractError(
-                    "candidates must contain CandidateProofStep values"
-                )
+                raise TacticianContractError("candidates must contain CandidateProofStep values")
         by_id = {c.candidate_id: c for c in candidates}
         if len(by_id) != len(candidates):
             raise TacticianContractError("candidate_id values must be unique")
@@ -2694,31 +2429,24 @@ class GoalDirectedProofPlan(TacticianContract):
             "candidates",
             tuple(sorted(candidates, key=lambda c: c.candidate_id)),
         )
-        step_order = _string_tuple(
-            self.step_order, "step_order", preserve_order=True
-        )
+        step_order = _string_tuple(self.step_order, "step_order", preserve_order=True)
         if step_order:
             missing = set(step_order) - set(by_id)
             if missing:
                 raise TacticianContractError(
-                    "step_order references unknown candidates: "
-                    + ", ".join(sorted(missing))
+                    "step_order references unknown candidates: " + ", ".join(sorted(missing))
                 )
         else:
             step_order = tuple(c.candidate_id for c in self.candidates)
         object.__setattr__(self, "step_order", step_order)
-        object.__setattr__(
-            self, "status", _enum(self.status, PlanStatus, "status")
-        )
+        object.__setattr__(self, "status", _enum(self.status, PlanStatus, "status"))
         bounds = self.bounds
         if isinstance(bounds, Mapping):
             bounds = ResourceBounds.from_dict(bounds)
         elif not isinstance(bounds, ResourceBounds):
             raise TacticianContractError("bounds must be a ResourceBounds")
         if bounds.max_candidates and len(candidates) > bounds.max_candidates:
-            raise TacticianContractError(
-                "plan exceeds max_candidates resource bound"
-            )
+            raise TacticianContractError("plan exceeds max_candidates resource bound")
         object.__setattr__(self, "bounds", bounds)
         object.__setattr__(
             self,
@@ -2728,9 +2456,7 @@ class GoalDirectedProofPlan(TacticianContract):
         object.__setattr__(
             self,
             "rank_score_millionths",
-            _nonnegative_int(
-                self.rank_score_millionths, "rank_score_millionths"
-            ),
+            _nonnegative_int(self.rank_score_millionths, "rank_score_millionths"),
         )
         object.__setattr__(
             self,
@@ -2741,9 +2467,7 @@ class GoalDirectedProofPlan(TacticianContract):
                 maximum=256,
             ),
         )
-        object.__setattr__(
-            self, "authority", _enum(self.authority, AuthorityCeiling, "authority")
-        )
+        object.__setattr__(self, "authority", _enum(self.authority, AuthorityCeiling, "authority"))
         if self.authority in {
             AuthorityCeiling.THEOREM,
             AuthorityCeiling.ATTESTATION,
@@ -2751,23 +2475,17 @@ class GoalDirectedProofPlan(TacticianContract):
             raise TacticianContractError(
                 "GoalDirectedProofPlan cannot claim theorem or attestation authority"
             )
-        object.__setattr__(
-            self, "proof_claimed", _bool(self.proof_claimed, "proof_claimed")
-        )
+        object.__setattr__(self, "proof_claimed", _bool(self.proof_claimed, "proof_claimed"))
         object.__setattr__(
             self,
             "completion_claimed",
             _bool(self.completion_claimed, "completion_claimed"),
         )
         if self.proof_claimed or self.completion_claimed:
-            raise TacticianContractError(
-                "GoalDirectedProofPlan cannot claim proof or completion"
-            )
+            raise TacticianContractError("GoalDirectedProofPlan cannot claim proof or completion")
         object.__setattr__(self, "metadata", _mapping(self.metadata, "metadata"))
         if "complete" in self.metadata or "proved" in self.metadata:
-            raise TacticianContractError(
-                "plan metadata cannot smuggle completion or proof claims"
-            )
+            raise TacticianContractError("plan metadata cannot smuggle completion or proof claims")
 
     def _payload(self) -> dict[str, Any]:
         return {
@@ -2791,9 +2509,7 @@ class GoalDirectedProofPlan(TacticianContract):
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "GoalDirectedProofPlan":
         _schema_check(payload, cls.SCHEMA)
-        _reject_proposal_authority_claims(
-            payload, artifact="GoalDirectedProofPlan"
-        )
+        _reject_proposal_authority_claims(payload, artifact="GoalDirectedProofPlan")
         _reject_unknown(
             payload,
             {
@@ -2835,9 +2551,7 @@ class GoalDirectedProofPlan(TacticianContract):
                 else ResourceBounds()
             ),
             provider_ids=tuple(payload.get("provider_ids") or ()),
-            rank_score_millionths=int(
-                payload.get("rank_score_millionths") or 0
-            ),
+            rank_score_millionths=int(payload.get("rank_score_millionths") or 0),
             root_goal_id=payload.get("root_goal_id", ""),
             authority=payload.get("authority", AuthorityCeiling.CANDIDATE),
             proof_claimed=False,
@@ -2893,15 +2607,9 @@ class GoalCompletion(TacticianContract):
             "root_goal_id",
             _text(self.root_goal_id, "root_goal_id", maximum=256),
         )
-        object.__setattr__(
-            self, "tree_id", _text(self.tree_id, "tree_id", maximum=256)
-        )
-        object.__setattr__(
-            self, "verdict", _enum(self.verdict, CompletionVerdict, "verdict")
-        )
-        object.__setattr__(
-            self, "authority", _enum(self.authority, AuthorityCeiling, "authority")
-        )
+        object.__setattr__(self, "tree_id", _text(self.tree_id, "tree_id", maximum=256))
+        object.__setattr__(self, "verdict", _enum(self.verdict, CompletionVerdict, "verdict"))
+        object.__setattr__(self, "authority", _enum(self.authority, AuthorityCeiling, "authority"))
         object.__setattr__(
             self,
             "evidence_ids",
@@ -2928,9 +2636,7 @@ class GoalCompletion(TacticianContract):
         elif not isinstance(bounds, ResourceBounds):
             raise TacticianContractError("bounds must be a ResourceBounds")
         object.__setattr__(self, "bounds", bounds)
-        object.__setattr__(
-            self, "proof_claimed", _bool(self.proof_claimed, "proof_claimed")
-        )
+        object.__setattr__(self, "proof_claimed", _bool(self.proof_claimed, "proof_claimed"))
         if self.verdict is CompletionVerdict.COMPLETE:
             if self.authority not in {
                 AuthorityCeiling.THEOREM,
@@ -2944,9 +2650,7 @@ class GoalCompletion(TacticianContract):
                 AuthorityCeiling.MONITOR,
                 AuthorityCeiling.BOUNDED,
             }:
-                raise TacticianContractError(
-                    "COMPLETE verdict requires elevated authority"
-                )
+                raise TacticianContractError("COMPLETE verdict requires elevated authority")
             if not self.evidence_ids and not self.receipt_ids:
                 raise TacticianContractError(
                     "COMPLETE verdict requires evidence_ids or receipt_ids"
@@ -2961,14 +2665,10 @@ class GoalCompletion(TacticianContract):
                 AuthorityCeiling.ADVISORY,
                 AuthorityCeiling.CANDIDATE,
             }:
-                raise TacticianContractError(
-                    "BOUNDED_COMPLETE requires at least bounded authority"
-                )
+                raise TacticianContractError("BOUNDED_COMPLETE requires at least bounded authority")
         else:
             if self.proof_claimed:
-                raise TacticianContractError(
-                    "non-complete GoalCompletion cannot claim proof"
-                )
+                raise TacticianContractError("non-complete GoalCompletion cannot claim proof")
 
     @property
     def completion_claimed(self) -> bool:
@@ -3043,9 +2743,7 @@ class GoalCompletion(TacticianContract):
         # completion_claimed is derived; reject mismatched producer claims.
         claimed = payload.get("completion_claimed")
         if claimed is not None and bool(claimed) != result.completion_claimed:
-            raise TacticianContractError(
-                "GoalCompletion completion_claimed does not match verdict"
-            )
+            raise TacticianContractError("GoalCompletion completion_claimed does not match verdict")
         _claim_identity(
             payload,
             result.content_id,
@@ -3073,9 +2771,7 @@ def end_goal_spec_from_goal_development_mapping(
     """
 
     if not isinstance(payload, Mapping):
-        raise TacticianContractError(
-            "goal-development payload must be an object"
-        )
+        raise TacticianContractError("goal-development payload must be an object")
     goal_id = _text(
         payload.get("goal_id")
         or payload.get("root_objective_id")
@@ -3086,18 +2782,12 @@ def end_goal_spec_from_goal_development_mapping(
         maximum=256,
     )
     root = _text(
-        root_goal_id
-        or payload.get("root_goal_id")
-        or payload.get("root_objective_id")
-        or goal_id,
+        root_goal_id or payload.get("root_goal_id") or payload.get("root_objective_id") or goal_id,
         "root_goal_id",
         maximum=256,
     )
     tree_id = _text(
-        payload.get("repository_tree_id")
-        or payload.get("tree_id")
-        or payload.get("tree")
-        or "",
+        payload.get("repository_tree_id") or payload.get("tree_id") or payload.get("tree") or "",
         "tree_id",
         optional=True,
         maximum=256,
@@ -3147,9 +2837,7 @@ def end_goal_spec_from_goal_development_mapping(
                     AssumptionBinding.from_dict(
                         {
                             "schema": AssumptionBinding.SCHEMA,
-                            "assumption_id": item.get(
-                                "assumption_id", f"assumption:{index}"
-                            ),
+                            "assumption_id": item.get("assumption_id", f"assumption:{index}"),
                             "assumption_class": item.get(
                                 "assumption_class",
                                 AssumptionClass.HYPOTHETICAL.value,
@@ -3188,21 +2876,15 @@ def end_goal_spec_from_goal_development_mapping(
         property_class=property_class,
         quantifiers=tuple(payload.get("quantifiers") or ()),
         actors=tuple(str(x) for x in (payload.get("actors") or ())),
-        state_variables=tuple(
-            str(x) for x in (payload.get("state_variables") or ())
-        ),
+        state_variables=tuple(str(x) for x in (payload.get("state_variables") or ())),
         current_state=payload.get("current_state") or {},
         target_state=payload.get("target_state") or payload.get("formula") or {},
         transitions=tuple(str(x) for x in (payload.get("transitions") or ())),
         environment=payload.get("environment") or {},
         assumptions=tuple(assumptions),
         logic_family=str(payload.get("logic_family") or ""),
-        provider_ids=tuple(
-            str(x) for x in (payload.get("provider_ids") or ())
-        ),
-        assurance_target=payload.get(
-            "assurance_target", AuthorityCeiling.BOUNDED
-        ),
+        provider_ids=tuple(str(x) for x in (payload.get("provider_ids") or ())),
+        assurance_target=payload.get("assurance_target", AuthorityCeiling.BOUNDED),
         bounds=ResourceBounds.from_dict(
             {
                 "schema": ResourceBounds.SCHEMA,
@@ -3258,9 +2940,7 @@ def goal_directed_plan_from_supervisor_proof_plan(
     steps = payload.get("steps") or ()
     candidates: list[CandidateProofStep] = []
     order: list[str] = []
-    if isinstance(steps, Sequence) and not isinstance(
-        steps, (str, bytes, bytearray)
-    ):
+    if isinstance(steps, Sequence) and not isinstance(steps, (str, bytes, bytearray)):
         for index, step in enumerate(steps):
             if not isinstance(step, Mapping):
                 continue
@@ -3302,9 +2982,7 @@ def goal_directed_plan_from_supervisor_proof_plan(
                 )
             )
     if not candidates:
-        raise TacticianContractError(
-            "supervisor proof plan adaptation requires at least one step"
-        )
+        raise TacticianContractError("supervisor proof plan adaptation requires at least one step")
     return GoalDirectedProofPlan(
         plan_id=plan_id,
         formal_goal_id=_text(formal_goal_id, "formal_goal_id", maximum=256),
@@ -3318,12 +2996,8 @@ def goal_directed_plan_from_supervisor_proof_plan(
         step_order=tuple(order),
         status=PlanStatus.DRAFT,
         bounds=ResourceBounds(),
-        provider_ids=_string_tuple(
-            payload.get("provider_ids") or (), "provider_ids"
-        ),
-        root_goal_id=_text(
-            root_goal_id or formal_goal_id, "root_goal_id", maximum=256
-        ),
+        provider_ids=_string_tuple(payload.get("provider_ids") or (), "provider_ids"),
+        root_goal_id=_text(root_goal_id or formal_goal_id, "root_goal_id", maximum=256),
         authority=AuthorityCeiling.CANDIDATE,
         proof_claimed=False,
         completion_claimed=False,

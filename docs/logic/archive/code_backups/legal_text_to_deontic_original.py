@@ -38,7 +38,14 @@ async def convert_legal_text_to_deontic(
             logger.warning(f"Unknown jurisdiction '{jurisdiction}', using 'general'")
             jurisdiction = "general"
 
-        if document_type not in ["statute", "regulation", "contract", "policy", "agreement", "general"]:
+        if document_type not in [
+            "statute",
+            "regulation",
+            "contract",
+            "policy",
+            "agreement",
+            "general",
+        ]:
             logger.warning(f"Unknown document type '{document_type}', using 'general'")
             document_type = "general"
 
@@ -48,7 +55,11 @@ async def convert_legal_text_to_deontic(
                 return {
                     "status": "success",
                     "deontic_formulas": [],
-                    "normative_structure": {"obligations": [], "permissions": [], "prohibitions": []},
+                    "normative_structure": {
+                        "obligations": [],
+                        "permissions": [],
+                        "prohibitions": [],
+                    },
                     "legal_entities": [],
                     "actions": [],
                     "temporal_constraints": [],
@@ -58,7 +69,11 @@ async def convert_legal_text_to_deontic(
                         "successful_conversions": 0,
                         "conversion_rate": 0.0,
                         "average_confidence": 0.0,
-                        "normative_distribution": {"obligations": 0, "permissions": 0, "prohibitions": 0},
+                        "normative_distribution": {
+                            "obligations": 0,
+                            "permissions": 0,
+                            "prohibitions": 0,
+                        },
                         "conflicts_detected": 0,
                         "unique_entities": 0,
                         "unique_actions": 0,
@@ -93,7 +108,11 @@ async def convert_legal_text_to_deontic(
                     "successful_conversions": 0,
                     "conversion_rate": 0.0,
                     "average_confidence": 0.0,
-                    "normative_distribution": {"obligations": 0, "permissions": 0, "prohibitions": 0},
+                    "normative_distribution": {
+                        "obligations": 0,
+                        "permissions": 0,
+                        "prohibitions": 0,
+                    },
                     "conflicts_detected": 0,
                     "unique_entities": 0,
                     "unique_actions": 0,
@@ -148,7 +167,9 @@ async def convert_legal_text_to_deontic(
 
                             if output_format in ["defeasible", "all"]:
                                 formula_result["defeasible_form"] = convert_to_defeasible_logic(
-                                    deontic_formula, element["norm_type"], element.get("exceptions", [])
+                                    deontic_formula,
+                                    element["norm_type"],
+                                    element.get("exceptions", []),
                                 )
 
                             results.append(formula_result)
@@ -161,13 +182,21 @@ async def convert_legal_text_to_deontic(
                 logger.warning(f"Failed to process legal section '{section[:50]}...': {exc}")
                 continue
 
-        normative_structure = identify_obligations(all_normative_elements) if extract_obligations else {
-            "obligations": [],
-            "permissions": [],
-            "prohibitions": [],
-        }
+        normative_structure = (
+            identify_obligations(all_normative_elements)
+            if extract_obligations
+            else {
+                "obligations": [],
+                "permissions": [],
+                "prohibitions": [],
+            }
+        )
 
-        conflicts = detect_normative_conflicts(all_normative_elements) if len(all_normative_elements) > 1 else []
+        conflicts = (
+            detect_normative_conflicts(all_normative_elements)
+            if len(all_normative_elements) > 1
+            else []
+        )
 
         legal_entities = extract_all_legal_entities(results)
         legal_actions = extract_all_legal_actions(results)
@@ -236,18 +265,18 @@ async def convert_legal_text_to_deontic(
 
 def extract_legal_text_from_dataset(dataset: Dict[str, Any]) -> List[str]:
     """Extract legal text content from various legal dataset formats.
-    
+
     Handles multiple legal document structures including:
     - Direct legal text fields (statute, regulation, contract_text, etc.)
     - Nested data with legal content
     - Lists of sections or provisions
-    
+
     Args:
         dataset: Dictionary containing legal dataset in various formats
-        
+
     Returns:
         List of extracted legal text strings, stripped of whitespace
-        
+
     Examples:
         >>> extract_legal_text_from_dataset({"statute": "All citizens shall..."})
         ["All citizens shall..."]
@@ -299,7 +328,7 @@ def extract_legal_text_from_dataset(dataset: Dict[str, Any]) -> List[str]:
 
 def calculate_deontic_confidence(element: Dict[str, Any], deontic_formula: str) -> float:
     """Calculate confidence score for deontic logic conversion quality.
-    
+
     Uses multiple heuristics to estimate conversion quality:
     - Valid deontic operator (O/P/F) presence (0.3)
     - Subject identification (0.2)
@@ -308,14 +337,14 @@ def calculate_deontic_confidence(element: Dict[str, Any], deontic_formula: str) 
     - Temporal constraints (0.1)
     - Conditions (0.05)
     - Base score (0.1)
-    
+
     Args:
         element: Normative element dictionary with extracted components
         deontic_formula: Generated deontic logic formula
-        
+
     Returns:
         Confidence score between 0.0 and 1.0
-        
+
     Examples:
         >>> calculate_deontic_confidence(
         ...     {"deontic_operator": "O", "subject": ["citizens"], "action": ["file taxes"]},
@@ -369,15 +398,15 @@ def calculate_deontic_confidence(element: Dict[str, Any], deontic_formula: str) 
 
 def convert_to_defeasible_logic(deontic_formula: str, norm_type: str, exceptions: List[str]) -> str:
     """Convert deontic formula to defeasible logic format with exceptions.
-    
+
     Args:
         deontic_formula: Deontic logic formula string
         norm_type: Type of norm ("obligation", "permission", "prohibition")
         exceptions: List of exception conditions
-        
+
     Returns:
         Defeasible logic formula string with exceptions clause if applicable
-        
+
     Examples:
         >>> convert_to_defeasible_logic("FileTaxes(x)", "obligation", ["under_18"])
         "obligation(FileTaxes(x)) unless (under_18)."
@@ -391,10 +420,10 @@ def convert_to_defeasible_logic(deontic_formula: str, norm_type: str, exceptions
 
 def extract_all_legal_entities(results: List[Dict[str, Any]]) -> List[str]:
     """Extract all legal entity subjects from conversion results.
-    
+
     Args:
         results: List of deontic conversion result dictionaries
-        
+
     Returns:
         List of all subject entities found across results
     """
@@ -406,10 +435,10 @@ def extract_all_legal_entities(results: List[Dict[str, Any]]) -> List[str]:
 
 def extract_all_legal_actions(results: List[Dict[str, Any]]) -> List[str]:
     """Extract all legal actions from conversion results.
-    
+
     Args:
         results: List of deontic conversion result dictionaries
-        
+
     Returns:
         List of all actions found across results
     """
@@ -421,10 +450,10 @@ def extract_all_legal_actions(results: List[Dict[str, Any]]) -> List[str]:
 
 def extract_all_temporal_constraints(results: List[Dict[str, Any]]) -> List[Dict[str, str]]:
     """Extract all temporal constraints from conversion results.
-    
+
     Args:
         results: List of deontic conversion result dictionaries
-        
+
     Returns:
         List of all temporal constraint dictionaries found across results
     """

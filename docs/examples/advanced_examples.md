@@ -89,11 +89,11 @@ This example demonstrates comprehensive PDF processing that integrates the compl
 
 ```python
 from ipfs_datasets_py.pdf_processing import (
-    PDFGraphRAGIntegrator, 
-    LLMOptimizedProcessor, 
+    PDFGraphRAGIntegrator,
+    LLMOptimizedProcessor,
     MultiEngineOCR,
     PDFGraphRAGQueryEngine,
-    PDFBatchProcessor
+    PDFBatchProcessor,
 )
 from ipfs_datasets_py.ipld import IPLDStorage
 from ipfs_datasets_py.monitoring import MonitoringSystem
@@ -102,19 +102,13 @@ from pathlib import Path
 
 # Initialize monitoring for comprehensive processing
 monitoring = MonitoringSystem(
-    metrics_path="pdf_processing_metrics",
-    enable_prometheus=True,
-    enable_alerts=True
+    metrics_path="pdf_processing_metrics", enable_prometheus=True, enable_alerts=True
 )
 
 # 1. Initialize PDF processing components
 pdf_integrator = PDFGraphRAGIntegrator()
 llm_processor = LLMOptimizedProcessor()
-batch_processor = PDFBatchProcessor(
-    batch_size=5,
-    parallel_workers=4,
-    enable_caching=True
-)
+batch_processor = PDFBatchProcessor(batch_size=5, parallel_workers=4, enable_caching=True)
 
 # 2. Process a collection of research papers
 pdf_directory = Path("research_papers/")
@@ -127,7 +121,7 @@ with monitoring.track_operation("pdf_batch_processing"):
     results = batch_processor.process_pdf_batch(
         pdf_paths=[str(f) for f in pdf_files],
         target_llm="gpt-4",  # Optimize for GPT-4
-        enable_cross_document_analysis=True
+        enable_cross_document_analysis=True,
     )
 
 # 3. Advanced multi-engine OCR demonstration
@@ -135,35 +129,38 @@ print("\nDemonstrating multi-engine OCR...")
 ocr = MultiEngineOCR()
 
 # Configure OCR engines with different strategies
-ocr_strategies = ['quality_first', 'speed_first', 'accuracy_first']
+ocr_strategies = ["quality_first", "speed_first", "accuracy_first"]
 for strategy in ocr_strategies:
     with open("sample_scanned_page.png", "rb") as f:
         image_data = f.read()
-    
+
     result = ocr.extract_with_ocr(image_data, strategy=strategy)
-    print(f"Strategy '{strategy}': {result['confidence']:.2f} confidence, "
-          f"engine: {result['engine']}")
+    print(
+        f"Strategy '{strategy}': {result['confidence']:.2f} confidence, engine: {result['engine']}"
+    )
 
 # 4. LLM-specific optimization for different architectures
-llm_targets = ['gpt-4', 'claude-3', 'gemini-pro', 'llama-2']
+llm_targets = ["gpt-4", "claude-3", "gemini-pro", "llama-2"]
 optimized_contents = {}
 
 for target_llm in llm_targets:
     print(f"\nOptimizing content for {target_llm}...")
-    
+
     optimized_content = llm_processor.optimize_for_target_llm(
         pdf_path=str(pdf_files[0]),  # Use first PDF as example
-        target_llm=target_llm
+        target_llm=target_llm,
     )
-    
+
     optimized_contents[target_llm] = optimized_content
-    
+
     # Print optimization statistics
-    chunks = optimized_content['chunks']
-    avg_chunk_size = sum(len(chunk['text']) for chunk in chunks) / len(chunks)
+    chunks = optimized_content["chunks"]
+    avg_chunk_size = sum(len(chunk["text"]) for chunk in chunks) / len(chunks)
     print(f"  - {len(chunks)} chunks created")
     print(f"  - Average chunk size: {avg_chunk_size:.0f} characters")
-    print(f"  - Total entities extracted: {sum(len(chunk.get('entities', [])) for chunk in chunks)}")
+    print(
+        f"  - Total entities extracted: {sum(len(chunk.get('entities', [])) for chunk in chunks)}"
+    )
 
 # 5. Advanced querying with cross-document reasoning
 query_engine = PDFGraphRAGQueryEngine(pdf_integrator)
@@ -173,7 +170,7 @@ complex_queries = [
     "What are the common methodologies used across these research papers for evaluating AI safety?",
     "How do the findings in paper A relate to the conclusions in paper B regarding model interpretability?",
     "What trends can be identified in the evolution of transformer architectures across these documents?",
-    "Which papers discuss similar ethical considerations, and what are their different perspectives?"
+    "Which papers discuss similar ethical considerations, and what are their different perspectives?",
 ]
 
 print("\nExecuting complex cross-document queries...")
@@ -181,33 +178,31 @@ query_results = {}
 
 for query in complex_queries:
     print(f"\nQuery: {query[:80]}...")
-    
+
     results = query_engine.query_pdf_corpus(
         query=query,
         query_type="cross_document",
         max_documents=len(pdf_files),
-        include_reasoning_trace=True
+        include_reasoning_trace=True,
     )
-    
+
     query_results[query] = results
-    
+
     print(f"Answer: {results['answer'][:200]}...")
     print(f"Confidence: {results['confidence']:.2f}")
     print(f"Sources: {len(results['source_documents'])} documents")
-    
+
     # Show entity connections
-    if 'entity_connections' in results:
+    if "entity_connections" in results:
         print("Key entity connections:")
-        for conn in results['entity_connections'][:3]:
+        for conn in results["entity_connections"][:3]:
             print(f"  - {conn['entity']} ({conn['type']}): {conn['relation']}")
 
 # 6. Document relationship analysis
 print("\nAnalyzing document relationships...")
 for result in results:
-    doc_analysis = query_engine.analyze_document_relationships(
-        result['document_id']
-    )
-    
+    doc_analysis = query_engine.analyze_document_relationships(result["document_id"])
+
     print(f"Document {result['document_id']}:")
     print(f"  - Internal relationships: {doc_analysis['internal_relationships']}")
     print(f"  - External relationships: {doc_analysis['external_relationships']}")
@@ -221,7 +216,7 @@ export_result = pdf_integrator.export_knowledge_graph_to_ipld(
     include_embeddings=True,
     include_relationships=True,
     include_document_content=True,
-    compression_level=6
+    compression_level=6,
 )
 
 print(f"Knowledge graph exported with root CID: {export_result['root_cid']}")
@@ -233,7 +228,9 @@ print(f"Compressed size: {export_result['compressed_size_mb']:.2f} MB")
 processing_metrics = monitoring.get_operation_metrics("pdf_batch_processing")
 print(f"\nProcessing Performance:")
 print(f"  - Total processing time: {processing_metrics['duration']:.2f} seconds")
-print(f"  - Average time per document: {processing_metrics['duration']/len(pdf_files):.2f} seconds")
+print(
+    f"  - Average time per document: {processing_metrics['duration'] / len(pdf_files):.2f} seconds"
+)
 print(f"  - Memory usage peak: {processing_metrics['peak_memory_mb']:.1f} MB")
 
 # Quality assessment
@@ -277,12 +274,14 @@ import datetime
 
 # Step 1: Archive a website using ArchiveNow
 print("Creating web archive...")
-warc_file = archivenow.push("https://en.wikipedia.org/wiki/IPFS", "warc", 
-                           {"warc": "ipfs_wiki", "agent": "wget"})
+warc_file = archivenow.push(
+    "https://en.wikipedia.org/wiki/IPFS", "warc", {"warc": "ipfs_wiki", "agent": "wget"}
+)
 
 # Step 2: Index the WARC file to IPFS using IPWB
 print("Indexing to IPFS...")
 from ipwb import indexer
+
 cdxj_path = indexer.index_file_at(warc_file, outfile="ipfs_wiki.cdxj")
 
 # Step 3: Extract structured data from the archive
@@ -293,14 +292,14 @@ pipeline = web_archive_utils.WARCProcessingPipeline(
         web_archive_utils.extractors.HTMLExtractor(),
         web_archive_utils.extractors.TextExtractor(),
         web_archive_utils.extractors.EntityExtractor(),
-        web_archive_utils.extractors.LinkExtractor()
+        web_archive_utils.extractors.LinkExtractor(),
     ],
     transformation_steps=[
         web_archive_utils.transformers.HTMLCleaner(),
         web_archive_utils.transformers.TextNormalizer(),
-        web_archive_utils.transformers.EntityLinker()
+        web_archive_utils.transformers.EntityLinker(),
     ],
-    output_format="dataset"
+    output_format="dataset",
 )
 
 # Process the archive into a dataset
@@ -318,11 +317,9 @@ embeddings = [embedding_model.encode(chunk) for chunk in text_chunks]
 
 # Create vector index
 vector_index = IPFSKnnIndex(dimension=embedding_model.dimension)
-vector_ids = vector_index.add_vectors(embeddings, metadata={
-    "source": "wikipedia",
-    "topic": "ipfs",
-    "chunks": text_chunks
-})
+vector_ids = vector_index.add_vectors(
+    embeddings, metadata={"source": "wikipedia", "topic": "ipfs", "chunks": text_chunks}
+)
 
 # Step 5: Build knowledge graph from extracted entities
 print("Building knowledge graph...")
@@ -330,12 +327,14 @@ kg = IPLDKnowledgeGraph()
 
 # Add entities from the dataset
 for entity in dataset.get_entities():
-    entity_cid = kg.add_entity({
-        "name": entity.name,
-        "type": entity.type,
-        "mentions": entity.mentions,
-        "vector_ids": [vector_ids[i] for i in entity.chunk_indices]
-    })
+    entity_cid = kg.add_entity(
+        {
+            "name": entity.name,
+            "type": entity.type,
+            "mentions": entity.mentions,
+            "vector_ids": [vector_ids[i] for i in entity.chunk_indices],
+        }
+    )
 
 # Add relationships between entities
 for relation in dataset.get_relations():
@@ -343,7 +342,7 @@ for relation in dataset.get_relations():
         source_cid=relation.source_entity_cid,
         target_cid=relation.target_entity_cid,
         relationship_type=relation.type,
-        properties=relation.properties
+        properties=relation.properties,
     )
 
 # Step 6: Export everything to CAR files for distribution
@@ -362,7 +361,7 @@ dataset_root = {
     "cdxj_index": cdxj_path,
     "vector_index_cid": vector_index.root_cid,
     "knowledge_graph_cid": kg.root_cid,
-    "created_at": datetime.datetime.now().isoformat()
+    "created_at": datetime.datetime.now().isoformat(),
 }
 
 # Store the root object
@@ -380,15 +379,11 @@ query_embedding = embedding_model.encode(query)
 vector_results = vector_index.search(query_embedding, top_k=5)
 
 # Get entities mentioned in the most relevant chunks
-mentioned_entities = kg.get_entities_by_vector_ids(
-    [result.id for result in vector_results]
-)
+mentioned_entities = kg.get_entities_by_vector_ids([result.id for result in vector_results])
 
 # Perform graph traversal to find related concepts
 related_concepts = kg.traverse_from_entities(
-    mentioned_entities,
-    relationship_types=["RELATED_TO", "IS_PART_OF"],
-    max_depth=2
+    mentioned_entities, relationship_types=["RELATED_TO", "IS_PART_OF"], max_depth=2
 )
 
 # Combine results for a comprehensive answer
@@ -419,21 +414,27 @@ models = {
         "tokenizer": AutoTokenizer.from_pretrained("sentence-transformers/all-MiniLM-L6-v2"),
         "model": AutoModel.from_pretrained("sentence-transformers/all-MiniLM-L6-v2"),
         "dimension": 384,
-        "weight": 0.3
+        "weight": 0.3,
     },
     "mpnet": {
-        "tokenizer": AutoTokenizer.from_pretrained("sentence-transformers/multi-qa-mpnet-base-dot-v1"),
+        "tokenizer": AutoTokenizer.from_pretrained(
+            "sentence-transformers/multi-qa-mpnet-base-dot-v1"
+        ),
         "model": AutoModel.from_pretrained("sentence-transformers/multi-qa-mpnet-base-dot-v1"),
         "dimension": 768,
-        "weight": 0.7
-    }
+        "weight": 0.7,
+    },
 }
+
 
 # Helper function for embedding generation
 def mean_pooling(model_output, attention_mask):
     token_embeddings = model_output[0]
     input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
-    return torch.sum(token_embeddings * input_mask_expanded, 1) / torch.clamp(input_mask_expanded.sum(1), min=1e-9)
+    return torch.sum(token_embeddings * input_mask_expanded, 1) / torch.clamp(
+        input_mask_expanded.sum(1), min=1e-9
+    )
+
 
 # Function to generate embeddings with multiple models
 def generate_multi_model_embeddings(text):
@@ -441,43 +442,38 @@ def generate_multi_model_embeddings(text):
     for model_name, model_info in models.items():
         tokenizer = model_info["tokenizer"]
         model = model_info["model"]
-        
+
         # Tokenize and get model output
         inputs = tokenizer(text, padding=True, truncation=True, return_tensors="pt")
         with torch.no_grad():
             outputs = model(**inputs)
-        
+
         # Mean pooling
-        embedding = mean_pooling(outputs, inputs['attention_mask'])
+        embedding = mean_pooling(outputs, inputs["attention_mask"])
         embeddings[model_name] = embedding[0].numpy()
-    
+
     return embeddings
+
 
 # Load knowledge graph
 kg = IPLDKnowledgeGraph.from_cid("bafybeihsl7tqdebswdmafvytgkofgxnpq5rwzzqpsbd7gtaiujwsn4qeyy")
 
 # Create multi-model vector search
 multi_model_search = MultiModelSearch(
-    models={
-        "miniLM": {"dimension": 384, "weight": 0.3},
-        "mpnet": {"dimension": 768, "weight": 0.7}
-    }
+    models={"miniLM": {"dimension": 384, "weight": 0.3}, "mpnet": {"dimension": 768, "weight": 0.7}}
 )
 
 # Add vectors to search index
 # (Assuming vectors were previously generated and stored)
 vectors_miniLM = [...]  # List of numpy arrays for miniLM
-vectors_mpnet = [...]   # List of numpy arrays for mpnet
-metadata = [...]        # List of metadata dictionaries
+vectors_mpnet = [...]  # List of numpy arrays for mpnet
+metadata = [...]  # List of metadata dictionaries
 
 multi_model_search.add_vectors("miniLM", vectors_miniLM, metadata)
 multi_model_search.add_vectors("mpnet", vectors_mpnet, metadata)
 
 # Create GraphRAG processor with multi-model search
-processor = GraphRAGLLMProcessor(
-    knowledge_graph=kg,
-    vector_search=multi_model_search
-)
+processor = GraphRAGLLMProcessor(knowledge_graph=kg, vector_search=multi_model_search)
 
 # Create query optimizer
 optimizer = UnifiedGraphRAGQueryOptimizer(auto_detect_graph_type=True)
@@ -491,19 +487,17 @@ optimized_plan = optimizer.optimize_query(
     query_text=query_text,
     query_vectors=query_embeddings,
     root_cids=[kg.root_cid],
-    content_types=["application/json"]
+    content_types=["application/json"],
 )
 
 # Execute with optimized plan
 results = processor.query(
-    query_text=query_text,
-    query_embeddings=query_embeddings,
-    optimized_plan=optimized_plan
+    query_text=query_text, query_embeddings=query_embeddings, optimized_plan=optimized_plan
 )
 
 # Process results
 for i, result in enumerate(results):
-    print(f"Result {i+1}: {result.text[:100]}...")
+    print(f"Result {i + 1}: {result.text[:100]}...")
     print(f"  Similarity: {result.similarity:.4f}")
     print(f"  Graph Distance: {result.graph_distance}")
     print(f"  Source: {result.source}")
@@ -525,7 +519,7 @@ sharded_index = ShardedVectorIndex(
     metric="cosine",
     num_shards=5,
     shard_strategy="hash",
-    redundancy=2  # Each vector is stored on 2 shards for redundancy
+    redundancy=2,  # Each vector is stored on 2 shards for redundancy
 )
 
 # Create vector data
@@ -541,52 +535,36 @@ nodes = [
     {"id": "node2", "address": "192.168.1.102", "shards": [1, 2]},
     {"id": "node3", "address": "192.168.1.103", "shards": [2, 3]},
     {"id": "node4", "address": "192.168.1.104", "shards": [3, 4]},
-    {"id": "node5", "address": "192.168.1.105", "shards": [0, 4]}
+    {"id": "node5", "address": "192.168.1.105", "shards": [0, 4]},
 ]
 
 # Create node selector
-node_selector = NodeSelector(
-    nodes=nodes,
-    selection_strategy="health_aware",
-    redundancy_level=2
-)
+node_selector = NodeSelector(nodes=nodes, selection_strategy="health_aware", redundancy_level=2)
 
 # Create retry strategy
-retry_strategy = RetryStrategy(
-    max_retries=3,
-    base_delay=0.5,
-    max_delay=5.0,
-    backoff_factor=2.0
-)
+retry_strategy = RetryStrategy(max_retries=3, base_delay=0.5, max_delay=5.0, backoff_factor=2.0)
 
 # Create circuit breaker
-circuit_breaker = CircuitBreaker(
-    failure_threshold=5,
-    recovery_timeout=30,
-    half_open_requests=2
-)
+circuit_breaker = CircuitBreaker(failure_threshold=5, recovery_timeout=30, half_open_requests=2)
 
 # Create federated search
 federated_search = FederatedSearch(
     node_selector=node_selector,
     retry_strategy=retry_strategy,
     circuit_breaker=circuit_breaker,
-    timeout_seconds=10
+    timeout_seconds=10,
 )
 
 # Perform distributed search
 query_vector = np.random.rand(768)
 results = federated_search.search(
-    query_vector=query_vector,
-    top_k=10,
-    min_similarity=0.7,
-    combine_method="score_based"
+    query_vector=query_vector, top_k=10, min_similarity=0.7, combine_method="score_based"
 )
 
 # Process results
 print(f"Found {len(results)} results")
 for i, result in enumerate(results):
-    print(f"Result {i+1}: ID={result.id}, Score={result.score:.4f}")
+    print(f"Result {i + 1}: ID={result.id}, Score={result.score:.4f}")
     print(f"  Content: {result.metadata['content']}")
     print(f"  Source Node: {result.source_node}")
 ```
@@ -610,16 +588,12 @@ index = IPFSKnnIndex.load("path/to/index")
 
 # Create reasoning tracer
 tracer = ReasoningTracer(
-    trace_storage_path="reasoning_traces",
-    visualization_enabled=True,
-    detailed_tracing=True
+    trace_storage_path="reasoning_traces", visualization_enabled=True, detailed_tracing=True
 )
 
 # Create reasoning enhancer
 enhancer = ReasoningEnhancer(
-    reasoning_tracer=tracer,
-    reasoning_depth="deep",
-    explanation_type="detailed"
+    reasoning_tracer=tracer, reasoning_depth="deep", explanation_type="detailed"
 )
 
 # Create GraphRAG processor
@@ -627,7 +601,7 @@ processor = GraphRAGLLMProcessor(
     knowledge_graph=kg,
     vector_index=index,
     embedding_model="sentence-transformers/all-MiniLM-L6-v2",
-    reasoning_enhancer=enhancer
+    reasoning_enhancer=enhancer,
 )
 
 # Perform cross-document reasoning
@@ -637,14 +611,14 @@ result = processor.cross_document_reasoning(
     max_hops=2,
     min_relevance=0.7,
     max_documents=5,
-    reasoning_depth="deep"
+    reasoning_depth="deep",
 )
 
 # Extract reasoning trace
 reasoning_trace = result["reasoning_trace"]
 print(f"Reasoning Steps: {len(reasoning_trace)}")
 for i, step in enumerate(reasoning_trace):
-    print(f"Step {i+1}: {step}")
+    print(f"Step {i + 1}: {step}")
 
 # Output answer with evidence
 print("\nAnswer:")
@@ -660,10 +634,7 @@ for path in result["evidence_paths"]:
     print(f"  Inference: {path['potential_inference']}")
 
 # Visualize reasoning process
-tracer.visualize_trace(
-    trace_id=result["trace_id"],
-    output_path="reasoning_visualization.html"
-)
+tracer.visualize_trace(trace_id=result["trace_id"], output_path="reasoning_visualization.html")
 ```
 
 ## DuckDB, Arrow, and IPLD Integration
@@ -716,10 +687,7 @@ arrow_table = duckdb_connector.query_to_arrow("""
 print(f"Arrow table has {len(arrow_table)} rows")
 
 # 3. Convert Arrow table to IPLD
-root_cid, blocks = arrow_ipld.table_to_ipld(
-    arrow_table,
-    hash_columns=["id", "product_name"]
-)
+root_cid, blocks = arrow_ipld.table_to_ipld(arrow_table, hash_columns=["id", "product_name"])
 
 print(f"Converted to IPLD with root CID: {root_cid}")
 print(f"Number of IPLD blocks: {len(blocks)}")
@@ -759,7 +727,7 @@ streaming_car_path = "large_dataset.car"
 streaming.stream_parquet_to_car(
     parquet_path=large_parquet_path,
     car_path=streaming_car_path,
-    hash_columns=["id", "product_name"]
+    hash_columns=["id", "product_name"],
 )
 
 print(f"Streamed large dataset to CAR file: {streaming_car_path}")
@@ -768,10 +736,9 @@ print(f"Streamed large dataset to CAR file: {streaming_car_path}")
 c_data = data_interchange.get_c_data_interface(arrow_table)
 
 # Serialize interface data (except for the actual memory buffers)
-interface_json = json.dumps({
-    "schema": c_data["schema"],
-    "buffer_addresses": [int(addr) for addr in c_data["buffers"]]
-})
+interface_json = json.dumps(
+    {"schema": c_data["schema"], "buffer_addresses": [int(addr) for addr in c_data["buffers"]]}
+)
 
 print(f"Prepared C Data Interface: {len(interface_json)} bytes")
 ```
@@ -782,8 +749,11 @@ This example demonstrates how to implement resilient operations in a distributed
 
 ```python
 from ipfs_datasets_py.resilient_operations import (
-    CircuitBreaker, RetryStrategy, HealthMonitor, 
-    NodeSelector, CheckpointManager
+    CircuitBreaker,
+    RetryStrategy,
+    HealthMonitor,
+    NodeSelector,
+    CheckpointManager,
 )
 from ipfs_datasets_py.distributed import DistributedProcessor
 import time
@@ -791,40 +761,23 @@ import random
 
 # Define retry strategy
 retry_strategy = RetryStrategy(
-    max_retries=3,
-    base_delay=1.0,
-    max_delay=10.0,
-    backoff_factor=2.0,
-    jitter=0.1
+    max_retries=3, base_delay=1.0, max_delay=10.0, backoff_factor=2.0, jitter=0.1
 )
 
 # Create circuit breaker
-circuit_breaker = CircuitBreaker(
-    failure_threshold=5,
-    recovery_timeout=30,
-    half_open_requests=2
-)
+circuit_breaker = CircuitBreaker(failure_threshold=5, recovery_timeout=30, half_open_requests=2)
 
 # Create health monitor
-health_monitor = HealthMonitor(
-    ping_interval=5,
-    timeout=2,
-    failure_threshold=3,
-    success_threshold=5
-)
+health_monitor = HealthMonitor(ping_interval=5, timeout=2, failure_threshold=3, success_threshold=5)
 
 # Create node selector
 node_selector = NodeSelector(
-    selection_strategy="health_aware",
-    min_healthy_ratio=0.5,
-    prefer_local=True
+    selection_strategy="health_aware", min_healthy_ratio=0.5, prefer_local=True
 )
 
 # Create checkpoint manager
 checkpoint_manager = CheckpointManager(
-    checkpoint_interval=60,
-    storage_path="checkpoints",
-    max_checkpoints=5
+    checkpoint_interval=60, storage_path="checkpoints", max_checkpoints=5
 )
 
 # Initialize sample nodes
@@ -833,7 +786,7 @@ nodes = [
     {"id": "node2", "address": "192.168.1.102", "status": "healthy"},
     {"id": "node3", "address": "192.168.1.103", "status": "degraded"},
     {"id": "node4", "address": "192.168.1.104", "status": "healthy"},
-    {"id": "node5", "address": "192.168.1.105", "status": "unhealthy"}
+    {"id": "node5", "address": "192.168.1.105", "status": "unhealthy"},
 ]
 
 # Register nodes with health monitor
@@ -843,17 +796,16 @@ for node in nodes:
 # Start health monitoring
 health_monitor.start()
 
+
 # Simulate node health changes
 def simulate_health_changes():
     while True:
         for node in nodes:
             if random.random() < 0.1:  # 10% chance to change status
                 node["status"] = random.choice(["healthy", "degraded", "unhealthy"])
-                health_monitor.update_node_status(
-                    node["id"], 
-                    {"status": node["status"]}
-                )
+                health_monitor.update_node_status(node["id"], {"status": node["status"]})
         time.sleep(10)
+
 
 # Create distributed processor
 processor = DistributedProcessor(
@@ -862,8 +814,9 @@ processor = DistributedProcessor(
     circuit_breaker=circuit_breaker,
     health_monitor=health_monitor,
     node_selector=node_selector,
-    checkpoint_manager=checkpoint_manager
+    checkpoint_manager=checkpoint_manager,
 )
+
 
 # Example distributed operation with checkpointing
 @processor.distributed
@@ -876,14 +829,14 @@ def process_dataset_chunk(chunk_id, data):
         raise Exception(f"Processing failed for chunk {chunk_id}")
     return {"chunk_id": chunk_id, "result": "processed", "records": len(data)}
 
+
 # Process dataset with resilience
 with processor.resilient_operation(
-    operation_name="process_large_dataset",
-    checkpoint_enabled=True
+    operation_name="process_large_dataset", checkpoint_enabled=True
 ) as op:
     # Split dataset into chunks
     dataset_chunks = [{"id": i, "data": list(range(100))} for i in range(20)]
-    
+
     # Process chunks with resilience
     results = []
     for chunk in dataset_chunks:
@@ -895,7 +848,7 @@ with processor.resilient_operation(
             op.checkpoint({"processed_chunks": len(results), "last_chunk_id": chunk["id"]})
         except Exception as e:
             print(f"Failed to process chunk {chunk['id']}: {e}")
-    
+
     # Final results
     print(f"Successfully processed {len(results)} chunks")
     print(f"Total records processed: {sum(r['records'] for r in results)}")
@@ -928,25 +881,18 @@ audit_logger.add_file_handler(
     file_path="logs/audit.log",
     min_level=AuditLevel.INFO,
     rotate_size_mb=10,
-    rotate_count=5
+    rotate_count=5,
 )
 
 # Add JSON handler for machine-readable logs
-audit_logger.add_json_handler(
-    name="json",
-    file_path="logs/audit.json",
-    min_level=AuditLevel.INFO
-)
+audit_logger.add_json_handler(name="json", file_path="logs/audit.json", min_level=AuditLevel.INFO)
 
 # 2. Set up provenance tracking
-provenance_manager = EnhancedProvenanceManager(
-    storage_path="provenance/records.db"
-)
+provenance_manager = EnhancedProvenanceManager(storage_path="provenance/records.db")
 
 # 3. Set up audit-provenance integration
 integrator = AuditProvenanceIntegrator(
-    audit_logger=audit_logger,
-    provenance_manager=provenance_manager
+    audit_logger=audit_logger, provenance_manager=provenance_manager
 )
 
 # 4. Record workflow overview
@@ -962,8 +908,8 @@ audit_logger.log(
         "workflow_id": workflow_id,
         "project_id": project_id,
         "user_id": user_id,
-        "start_time": datetime.datetime.now().isoformat()
-    }
+        "start_time": datetime.datetime.now().isoformat(),
+    },
 )
 
 provenance_manager.record_workflow(
@@ -971,22 +917,21 @@ provenance_manager.record_workflow(
     name="Data Processing Workflow",
     description="Extract, transform, and analyze data from multiple sources",
     initiated_by=user_id,
-    project_id=project_id
+    project_id=project_id,
 )
 
 # 5. Data source acquisition with audit and provenance
 source_id = str(uuid.uuid4())
 with audit_logger.create_context(
-    category=AuditCategory.DATA_SOURCE,
-    context={"workflow_id": workflow_id, "source_id": source_id}
+    category=AuditCategory.DATA_SOURCE, context={"workflow_id": workflow_id, "source_id": source_id}
 ) as audit_ctx:
     # Record audit event
     audit_ctx.log(
         level=AuditLevel.INFO,
         message="Acquiring data from external source",
-        context={"source_type": "api", "source_url": "https://example.com/api/data"}
+        context={"source_type": "api", "source_url": "https://example.com/api/data"},
     )
-    
+
     # Record provenance
     provenance_manager.record_data_source(
         source_id=source_id,
@@ -995,17 +940,17 @@ with audit_logger.create_context(
         access_time=datetime.datetime.now(),
         access_method="https",
         user_id=user_id,
-        workflow_id=workflow_id
+        workflow_id=workflow_id,
     )
-    
+
     # Simulate data acquisition
     source_data = {"records": [{"id": i, "value": i * 2} for i in range(100)]}
-    
+
     # Record completion
     audit_ctx.log(
         level=AuditLevel.INFO,
         message="Data acquisition completed",
-        context={"record_count": len(source_data["records"])}
+        context={"record_count": len(source_data["records"])},
     )
 
 # 6. Data transformation with audit and provenance
@@ -1014,15 +959,15 @@ output_id = str(uuid.uuid4())
 
 with audit_logger.create_context(
     category=AuditCategory.DATA_TRANSFORMATION,
-    context={"workflow_id": workflow_id, "transform_id": transform_id}
+    context={"workflow_id": workflow_id, "transform_id": transform_id},
 ) as audit_ctx:
     # Record start of transformation
     audit_ctx.log(
         level=AuditLevel.INFO,
         message="Starting data transformation",
-        context={"operation": "filter_and_enrich"}
+        context={"operation": "filter_and_enrich"},
     )
-    
+
     # Record provenance transformation
     provenance_manager.record_transformation(
         transformation_id=transform_id,
@@ -1031,35 +976,38 @@ with audit_logger.create_context(
         parameters={"min_value": 50, "add_metadata": True},
         output_id=output_id,
         workflow_id=workflow_id,
-        user_id=user_id
+        user_id=user_id,
     )
-    
+
     # Simulate transformation
     transformed_data = [
         {"id": r["id"], "value": r["value"], "metadata": {"processed": True}}
-        for r in source_data["records"] if r["value"] >= 50
+        for r in source_data["records"]
+        if r["value"] >= 50
     ]
-    
+
     # Record transformation steps in detail
     audit_ctx.log(
         level=AuditLevel.DEBUG,
         message="Applied filtering",
-        context={"filter_criteria": "value >= 50", "input_count": len(source_data["records"]), "output_count": len(transformed_data)}
+        context={
+            "filter_criteria": "value >= 50",
+            "input_count": len(source_data["records"]),
+            "output_count": len(transformed_data),
+        },
     )
-    
+
     audit_ctx.log(
-        level=AuditLevel.DEBUG,
-        message="Added metadata",
-        context={"metadata_fields": ["processed"]}
+        level=AuditLevel.DEBUG, message="Added metadata", context={"metadata_fields": ["processed"]}
     )
-    
+
     # Record transformation completion
     audit_ctx.log(
         level=AuditLevel.INFO,
         message="Data transformation completed",
-        context={"input_count": len(source_data["records"]), "output_count": len(transformed_data)}
+        context={"input_count": len(source_data["records"]), "output_count": len(transformed_data)},
     )
-    
+
     # Add transformation step details
     provenance_manager.add_transformation_step(
         transformation_id=transform_id,
@@ -1067,32 +1015,31 @@ with audit_logger.create_context(
         step_type="filter",
         parameters={"min_value": 50},
         input_count=len(source_data["records"]),
-        output_count=len(transformed_data)
+        output_count=len(transformed_data),
     )
-    
+
     provenance_manager.add_transformation_step(
         transformation_id=transform_id,
         step_number=2,
         step_type="enrich",
         parameters={"fields": ["metadata"]},
         input_count=len(transformed_data),
-        output_count=len(transformed_data)
+        output_count=len(transformed_data),
     )
 
 # 7. Data export with audit and provenance
 export_id = str(uuid.uuid4())
 
 with audit_logger.create_context(
-    category=AuditCategory.DATA_EXPORT,
-    context={"workflow_id": workflow_id, "export_id": export_id}
+    category=AuditCategory.DATA_EXPORT, context={"workflow_id": workflow_id, "export_id": export_id}
 ) as audit_ctx:
     # Record export start
     audit_ctx.log(
         level=AuditLevel.INFO,
         message="Starting data export",
-        context={"format": "parquet", "destination": "file"}
+        context={"format": "parquet", "destination": "file"},
     )
-    
+
     # Record provenance
     provenance_manager.record_data_export(
         export_id=export_id,
@@ -1103,24 +1050,21 @@ with audit_logger.create_context(
         export_time=datetime.datetime.now(),
         record_count=len(transformed_data),
         workflow_id=workflow_id,
-        user_id=user_id
+        user_id=user_id,
     )
-    
+
     # Simulate export
     output_hash = hashlib.sha256(str(transformed_data).encode()).hexdigest()
-    
+
     # Record export completion
     audit_ctx.log(
         level=AuditLevel.INFO,
         message="Data export completed",
-        context={"record_count": len(transformed_data), "file_hash": output_hash}
+        context={"record_count": len(transformed_data), "file_hash": output_hash},
     )
-    
+
     # Update provenance with hash
-    provenance_manager.update_data_export(
-        export_id=export_id,
-        metadata={"file_hash": output_hash}
-    )
+    provenance_manager.update_data_export(export_id=export_id, metadata={"file_hash": output_hash})
 
 # 8. Workflow completion with audit
 audit_logger.log(
@@ -1131,16 +1075,14 @@ audit_logger.log(
         "workflow_id": workflow_id,
         "end_time": datetime.datetime.now().isoformat(),
         "status": "success",
-        "records_processed": len(transformed_data)
-    }
+        "records_processed": len(transformed_data),
+    },
 )
 
 # 9. Generate provenance report
 lineage = provenance_manager.get_lineage(output_id)
 report = provenance_manager.generate_report(
-    entity_id=output_id,
-    report_type="full",
-    include_visualizations=True
+    entity_id=output_id, report_type="full", include_visualizations=True
 )
 
 # Save report
@@ -1152,7 +1094,7 @@ provenance_manager.visualize_lineage(
     entity_id=output_id,
     output_path="provenance/lineage_visualization.html",
     include_attributes=True,
-    include_operations=True
+    include_operations=True,
 )
 
 print(f"Workflow completed: {workflow_id}")

@@ -41,9 +41,7 @@ class SyntheticLedgerRecord:
             "amount_units": self.amount_units,
             # Opaque synthetic subject id — not a chain address.
             "subject_id": f"subject-{self.record_index:06d}",
-            "observed_at": datetime(
-                2025, 1, 1, tzinfo=timezone.utc
-            ).isoformat(),
+            "observed_at": datetime(2025, 1, 1, tzinfo=timezone.utc).isoformat(),
         }
 
 

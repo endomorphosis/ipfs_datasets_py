@@ -28,8 +28,9 @@ def _make_entity(eid: str, conf: float = 0.8) -> Entity:
 
 
 def _make_rel(source: str, target: str) -> Relationship:
-    return Relationship(id=f"{source}-{target}", source_id=source, target_id=target,
-                        type="RELATED", confidence=0.8)
+    return Relationship(
+        id=f"{source}-{target}", source_id=source, target_id=target, type="RELATED", confidence=0.8
+    )
 
 
 def _make_result(entities=None, rels=None) -> EntityExtractionResult:

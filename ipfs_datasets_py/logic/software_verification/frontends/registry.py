@@ -135,9 +135,7 @@ class SemanticModelingLevel(StrEnum):
 
 def _text(value: object, label: str) -> str:
     if not isinstance(value, str) or not value or value.strip() != value:
-        raise FrontendRegistryError(
-            f"{label} must be a non-empty trimmed string"
-        )
+        raise FrontendRegistryError(f"{label} must be a non-empty trimmed string")
     if "\x00" in value:
         raise FrontendRegistryError(f"{label} must not contain NUL bytes")
     return value
@@ -193,9 +191,7 @@ class NumericSemantics:
     implementation_defined: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "level", _enum(self.level, SemanticModelingLevel, "numeric.level")
-        )
+        object.__setattr__(self, "level", _enum(self.level, SemanticModelingLevel, "numeric.level"))
         object.__setattr__(self, "description", _text(self.description, "numeric.description"))
         object.__setattr__(
             self, "integer_model", _text(self.integer_model, "numeric.integer_model")
@@ -236,9 +232,7 @@ class MemorySemantics:
     undefined_behavior: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "level", _enum(self.level, SemanticModelingLevel, "memory.level")
-        )
+        object.__setattr__(self, "level", _enum(self.level, SemanticModelingLevel, "memory.level"))
         object.__setattr__(self, "description", _text(self.description, "memory.description"))
         object.__setattr__(self, "model", _text(self.model, "memory.model"))
         object.__setattr__(self, "aliasing", _text(self.aliasing, "memory.aliasing"))
@@ -272,9 +266,7 @@ class ConcurrencySemantics:
         object.__setattr__(
             self, "level", _enum(self.level, SemanticModelingLevel, "concurrency.level")
         )
-        object.__setattr__(
-            self, "description", _text(self.description, "concurrency.description")
-        )
+        object.__setattr__(self, "description", _text(self.description, "concurrency.description"))
         object.__setattr__(self, "model", _text(self.model, "concurrency.model"))
         object.__setattr__(
             self,
@@ -311,9 +303,7 @@ class ExceptionSemantics:
         object.__setattr__(
             self, "level", _enum(self.level, SemanticModelingLevel, "exception.level")
         )
-        object.__setattr__(
-            self, "description", _text(self.description, "exception.description")
-        )
+        object.__setattr__(self, "description", _text(self.description, "exception.description"))
         object.__setattr__(self, "model", _text(self.model, "exception.model"))
         object.__setattr__(self, "unwinding", _text(self.unwinding, "exception.unwinding"))
         object.__setattr__(
@@ -349,13 +339,9 @@ class SupportedFragmentCoverage:
     notes: str = ""
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "status", _enum(self.status, CoverageStatus, "coverage.status")
-        )
+        object.__setattr__(self, "status", _enum(self.status, CoverageStatus, "coverage.status"))
         admitted = _strings(self.admitted_constructs, "coverage.admitted_constructs")
-        unsupported = _strings(
-            self.documented_unsupported, "coverage.documented_unsupported"
-        )
+        unsupported = _strings(self.documented_unsupported, "coverage.documented_unsupported")
         object.__setattr__(self, "admitted_constructs", admitted)
         object.__setattr__(self, "documented_unsupported", unsupported)
         object.__setattr__(
@@ -443,15 +429,9 @@ class SourceFrontendSemanticProfile:
     metadata: FrozenMap = field(default_factory=FrozenMap)
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "language_id", _text(self.language_id, "language_id").lower()
-        )
-        object.__setattr__(
-            self, "display_name", _text(self.display_name, "display_name")
-        )
-        object.__setattr__(
-            self, "maturity", _enum(self.maturity, FrontendMaturity, "maturity")
-        )
+        object.__setattr__(self, "language_id", _text(self.language_id, "language_id").lower())
+        object.__setattr__(self, "display_name", _text(self.display_name, "display_name"))
+        object.__setattr__(self, "maturity", _enum(self.maturity, FrontendMaturity, "maturity"))
         object.__setattr__(
             self,
             "parser_fidelity",
@@ -472,13 +452,9 @@ class SourceFrontendSemanticProfile:
         if not isinstance(self.memory, MemorySemantics):
             raise FrontendRegistryError("memory must be a MemorySemantics instance")
         if not isinstance(self.concurrency, ConcurrencySemantics):
-            raise FrontendRegistryError(
-                "concurrency must be a ConcurrencySemantics instance"
-            )
+            raise FrontendRegistryError("concurrency must be a ConcurrencySemantics instance")
         if not isinstance(self.exceptions, ExceptionSemantics):
-            raise FrontendRegistryError(
-                "exceptions must be an ExceptionSemantics instance"
-            )
+            raise FrontendRegistryError("exceptions must be an ExceptionSemantics instance")
         object.__setattr__(
             self,
             "undefined_or_implementation_defined",
@@ -489,9 +465,7 @@ class SourceFrontendSemanticProfile:
             ),
         )
         if not isinstance(self.coverage, SupportedFragmentCoverage):
-            raise FrontendRegistryError(
-                "coverage must be a SupportedFragmentCoverage instance"
-            )
+            raise FrontendRegistryError("coverage must be a SupportedFragmentCoverage instance")
         for flag_name in (
             "source_spans_required",
             "opaque_bodies_admitted",
@@ -501,12 +475,8 @@ class SourceFrontendSemanticProfile:
         ):
             if not isinstance(getattr(self, flag_name), bool):
                 raise FrontendRegistryError(f"{flag_name} must be a bool")
-        object.__setattr__(
-            self, "media_types", _strings(self.media_types, "media_types")
-        )
-        object.__setattr__(
-            self, "file_suffixes", _strings(self.file_suffixes, "file_suffixes")
-        )
+        object.__setattr__(self, "media_types", _strings(self.media_types, "media_types"))
+        object.__setattr__(self, "file_suffixes", _strings(self.file_suffixes, "file_suffixes"))
         object.__setattr__(
             self, "frontend_version", _text(self.frontend_version, "frontend_version")
         )
@@ -524,11 +494,7 @@ class SourceFrontendSemanticProfile:
             "schema_version",
             _text(self.schema_version, "schema_version"),
         )
-        meta = (
-            self.metadata
-            if isinstance(self.metadata, FrozenMap)
-            else FrozenMap(self.metadata)
-        )
+        meta = self.metadata if isinstance(self.metadata, FrozenMap) else FrozenMap(self.metadata)
         object.__setattr__(self, "metadata", meta)
         # Fail-closed consistency rules for authority-sensitive flags.
         if self.parser_fidelity is ParserFidelity.REGEX_APPROXIMATION:
@@ -652,9 +618,7 @@ class SourceFrontendSemanticProfile:
             "source_spans_required": self.source_spans_required,
             "translation_authority_ceiling": self.translation_authority_ceiling().value,
             "translation_enabled": self.translation_enabled,
-            "undefined_or_implementation_defined": list(
-                self.undefined_or_implementation_defined
-            ),
+            "undefined_or_implementation_defined": list(self.undefined_or_implementation_defined),
             "unsupported_features": list(self.unsupported_features),
             "uses_regex_approximation": self.uses_regex_approximation,
         }
@@ -698,8 +662,10 @@ def extract_source_mapping(
 
     if not isinstance(result, SourceAdapterResult):
         raise FrontendRegistryError("result must be a SourceAdapterResult")
-    language = normalize_language_id(result.language) if result.language else (
-        profile.language_id if profile is not None else "python"
+    language = (
+        normalize_language_id(result.language)
+        if result.language
+        else (profile.language_id if profile is not None else "python")
     )
     source_ref_ids: set[str] = set()
     span_ids: set[str] = set()
@@ -752,7 +718,9 @@ def extract_source_mapping(
         source_ref_ids=tuple(sorted(source_ref_ids)),
         span_ids=tuple(sorted(span_ids)),
         path=result.path,
-        status=result.status.value if isinstance(result.status, SourceAdapterStatus) else str(result.status),
+        status=result.status.value
+        if isinstance(result.status, SourceAdapterStatus)
+        else str(result.status),
         authority_ceiling=authority,
         intact=intact,
     )
@@ -767,9 +735,7 @@ def source_mapping_survives_adapter(
 ) -> SourceMappingSnapshot:
     """Adapt source and verify source mapping remains intact end-to-end."""
 
-    result = adapt_source_to_software_verification(
-        source, path=path, language=language
-    )
+    result = adapt_source_to_software_verification(source, path=path, language=language)
     return extract_source_mapping(result, profile=profile)
 
 
@@ -1494,9 +1460,7 @@ class FrontendRegistry:
 
     def register(self, profile: SourceFrontendSemanticProfile) -> None:
         if not isinstance(profile, SourceFrontendSemanticProfile):
-            raise FrontendRegistryError(
-                "profile must be a SourceFrontendSemanticProfile instance"
-            )
+            raise FrontendRegistryError("profile must be a SourceFrontendSemanticProfile instance")
         language_id = profile.language_id
         if language_id in self._profiles:
             raise DuplicateFrontendError(
@@ -1541,14 +1505,11 @@ class FrontendRegistry:
     def require_no_whole_language_claims(self) -> None:
         for profile in self:
             if profile.coverage.whole_language_claim:
-                raise FrontendRegistryError(
-                    f"{profile.language_id} claims whole-language support"
-                )
+                raise FrontendRegistryError(f"{profile.language_id} claims whole-language support")
 
     def authority_matrix(self) -> dict[str, str]:
         return {
-            profile.language_id: profile.translation_authority_ceiling().value
-            for profile in self
+            profile.language_id: profile.translation_authority_ceiling().value for profile in self
         }
 
     def to_dict(self) -> dict[str, Any]:
@@ -1556,9 +1517,7 @@ class FrontendRegistry:
             "authority_matrix": self.authority_matrix(),
             "interface": self.INTERFACE,
             "languages": list(self.languages()),
-            "profiles": {
-                profile.language_id: profile.to_dict() for profile in self
-            },
+            "profiles": {profile.language_id: profile.to_dict() for profile in self},
             "schema_version": self.SCHEMA_VERSION,
         }
 
@@ -1593,13 +1552,13 @@ def adapt_with_profile(
     path: str = "",
     language: str = "",
     registry: FrontendRegistry | None = None,
-) -> tuple[SourceFrontendSemanticProfile, SourceAdapterResult, SourceMappingSnapshot, EvidenceAuthority]:
+) -> tuple[
+    SourceFrontendSemanticProfile, SourceAdapterResult, SourceMappingSnapshot, EvidenceAuthority
+]:
     """Adapt source under its declared profile and return mapping + authority."""
 
     reg = registry if registry is not None else default_frontend_registry()
-    result = adapt_source_to_software_verification(
-        source, path=path, language=language
-    )
+    result = adapt_source_to_software_verification(source, path=path, language=language)
     # Prefer explicit language, then adapter detection, then path-inferred.
     lang = language or result.language or ""
     try:

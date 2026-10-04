@@ -72,9 +72,7 @@ def test_injected_executor_observes_isolated_workspace_and_declared_outputs(
     assert result.interface_version == BOUNDED_TOOL_RUNNER_VERSION
     assert result.stdout == "proved\n"
     assert result.outputs == {"result.txt": b"P -> P"}
-    assert fake.calls[0].argv[1] == str(
-        fake.calls[0].cwd / "input" / "claim.txt"
-    )
+    assert fake.calls[0].argv[1] == str(fake.calls[0].cwd / "input" / "claim.txt")
     assert fake.calls[0].environment["HOME"] == str(fake.calls[0].cwd)
     assert fake.calls[0].environment["TMPDIR"] == str(fake.calls[0].cwd)
     assert not fake.calls[0].cwd.exists()
@@ -91,9 +89,7 @@ def test_injected_executor_observes_isolated_workspace_and_declared_outputs(
         ToolRuntime.WASM,
     ],
 )
-def test_runtime_families_share_one_injected_contract(
-    tmp_path: Path, runtime: ToolRuntime
-) -> None:
+def test_runtime_families_share_one_injected_contract(tmp_path: Path, runtime: ToolRuntime) -> None:
     fake = FakeExecutor()
     result = _runner(tmp_path, fake).run(
         ToolRunRequest(argv=("fake-host", "--version"), runtime=runtime)
@@ -129,9 +125,7 @@ def test_argv_is_not_a_shell_string_and_metacharacters_are_literal(
     "path",
     ["../escape", "/absolute", "nested/../../escape", r"windows\\escape"],
 )
-def test_workspace_paths_reject_escape_and_nonportable_forms(
-    tmp_path: Path, path: str
-) -> None:
+def test_workspace_paths_reject_escape_and_nonportable_forms(tmp_path: Path, path: str) -> None:
     with pytest.raises(ToolProcessError):
         _runner(tmp_path, FakeExecutor()).run(
             ToolRunRequest(argv=("fake",), input_files={path: "x"})
@@ -155,11 +149,7 @@ def test_path_count_length_and_input_bytes_are_bounded(tmp_path: Path) -> None:
             )
         )
     with pytest.raises(ToolProcessError, match="input files exceed"):
-        runner.run(
-            ToolRunRequest(
-                argv=("fake",), limits=limits, input_files={"a": b"12345"}
-            )
-        )
+        runner.run(ToolRunRequest(argv=("fake",), limits=limits, input_files={"a": b"12345"}))
     with pytest.raises(ToolProcessError, match="too many"):
         runner.run(
             ToolRunRequest(
@@ -209,9 +199,7 @@ def test_sensitive_argv_environment_output_and_errors_are_redacted(
 
     def fake(invocation: ProcessInvocation, cancellation=None) -> RawProcessResult:
         assert invocation.environment["API_TOKEN"] == secret
-        (invocation.cwd / "receipt.txt").write_text(
-            f"receipt contains {secret}", encoding="utf-8"
-        )
+        (invocation.cwd / "receipt.txt").write_text(f"receipt contains {secret}", encoding="utf-8")
         return RawProcessResult(
             returncode=2,
             stdout=f"received {secret}",
@@ -289,9 +277,7 @@ def test_precancelled_request_never_invokes_executor_or_creates_workspace(
     fake = FakeExecutor()
     token = CancellationToken()
     token.cancel()
-    result = _runner(tmp_path, fake).run(
-        ToolRunRequest(argv=("fake",)), cancellation=token
-    )
+    result = _runner(tmp_path, fake).run(ToolRunRequest(argv=("fake",)), cancellation=token)
     assert result.cancelled
     assert result.termination_reason == "cancelled"
     assert fake.calls == []
@@ -442,9 +428,7 @@ def test_output_symlinks_are_never_followed(tmp_path: Path) -> None:
             pytest.skip("symlinks are unavailable")
         return RawProcessResult(returncode=0)
 
-    result = _runner(tmp_path, fake).run(
-        ToolRunRequest(argv=("fake",), output_paths=("result",))
-    )
+    result = _runner(tmp_path, fake).run(ToolRunRequest(argv=("fake",), output_paths=("result",)))
     assert result.output_files == {}
 
 
@@ -523,8 +507,6 @@ def test_callable_fake_and_sequence_convenience_are_supported(tmp_path: Path) ->
 
 def test_subprocess_executor_is_explicitly_injectable(tmp_path: Path) -> None:
     runner = _runner(tmp_path, SubprocessExecutor())
-    result = runner.run(
-        ToolRunRequest(argv=(PYTHON, "-c", "print('explicit')"))
-    )
+    result = runner.run(ToolRunRequest(argv=(PYTHON, "-c", "print('explicit')")))
     assert result.ok
     assert result.stdout.strip() == "explicit"

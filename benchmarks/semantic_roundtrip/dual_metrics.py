@@ -33,9 +33,7 @@ from benchmarks.semantic_roundtrip.metrics import (
 
 
 DUAL_ROUND_TRIP_METRICS_INTERFACE: Final = "DualRoundTripMetrics@1"
-DUAL_ROUND_TRIP_METRICS_SCHEMA: Final = (
-    "ipfs-datasets.semantic-roundtrip-dual-metrics.v1"
-)
+DUAL_ROUND_TRIP_METRICS_SCHEMA: Final = "ipfs-datasets.semantic-roundtrip-dual-metrics.v1"
 
 METRIC_MODE_STRUCTURAL_ONLY: Final = "structural_only"
 METRIC_MODE_DUAL: Final = "dual"
@@ -79,9 +77,7 @@ class EmbeddingPairMetrics:
             or not math.isfinite(float(self.cross_entropy))
             or float(self.cross_entropy) < 0.0
         ):
-            raise ContractError(
-                "cross_entropy must be a finite non-negative number"
-            )
+            raise ContractError("cross_entropy must be a finite non-negative number")
         object.__setattr__(self, "cross_entropy", float(self.cross_entropy))
         if (
             isinstance(self.cosine_similarity, bool)
@@ -89,12 +85,8 @@ class EmbeddingPairMetrics:
             or not math.isfinite(float(self.cosine_similarity))
             or not -1.0 <= float(self.cosine_similarity) <= 1.0
         ):
-            raise ContractError(
-                "cosine_similarity must be a finite number from -1 to 1"
-            )
-        object.__setattr__(
-            self, "cosine_similarity", float(self.cosine_similarity)
-        )
+            raise ContractError("cosine_similarity must be a finite number from -1 to 1")
+        object.__setattr__(self, "cosine_similarity", float(self.cosine_similarity))
 
     def to_dict(self) -> dict[str, float]:
         return {
@@ -148,9 +140,7 @@ class DualRoundTripMetrics:
     cosine_cycle: float | None
     cosine_end_to_end: float | None
     promotion_primary_metric: str = PROMOTION_PRIMARY_METRIC
-    ce_cosine_may_substitute_for_promotion: bool = (
-        CE_COSINE_MAY_SUBSTITUTE_FOR_PROMOTION
-    )
+    ce_cosine_may_substitute_for_promotion: bool = CE_COSINE_MAY_SUBSTITUTE_FOR_PROMOTION
     promotion_policy_note: str = PROMOTION_POLICY_NOTE
     silent_metric_substitution: bool = False
 
@@ -167,24 +157,17 @@ class DualRoundTripMetrics:
                 or not math.isfinite(float(value))
                 or not 0.0 <= float(value) <= 1.0
             ):
-                raise ContractError(
-                    f"{field} must be a finite number from zero to one"
-                )
+                raise ContractError(f"{field} must be a finite number from zero to one")
             object.__setattr__(self, field, float(value))
 
         if not isinstance(self.metric_mode, DualMetricMode):
-            raise ContractError(
-                "metric_mode must be a DualMetricMode member"
-            )
+            raise ContractError("metric_mode must be a DualMetricMode member")
         if not isinstance(self.embedding_backend_present, bool):
             raise ContractError("embedding_backend_present must be a boolean")
         if self.embedding_backend_id is not None and (
-            not isinstance(self.embedding_backend_id, str)
-            or not self.embedding_backend_id.strip()
+            not isinstance(self.embedding_backend_id, str) or not self.embedding_backend_id.strip()
         ):
-            raise ContractError(
-                "embedding_backend_id must be None or a nonblank string"
-            )
+            raise ContractError("embedding_backend_id must be None or a nonblank string")
 
         optional_float_fields = (
             "cross_entropy_forward",
@@ -205,9 +188,7 @@ class DualRoundTripMetrics:
                     or not math.isfinite(float(value))
                     or float(value) < 0.0
                 ):
-                    raise ContractError(
-                        f"{field} must be None or a finite non-negative number"
-                    )
+                    raise ContractError(f"{field} must be None or a finite non-negative number")
                 object.__setattr__(self, field, float(value))
             else:
                 if (
@@ -216,9 +197,7 @@ class DualRoundTripMetrics:
                     or not math.isfinite(float(value))
                     or not -1.0 <= float(value) <= 1.0
                 ):
-                    raise ContractError(
-                        f"{field} must be None or a finite number from -1 to 1"
-                    )
+                    raise ContractError(f"{field} must be None or a finite number from -1 to 1")
                 object.__setattr__(self, field, float(value))
 
         ce_values = (
@@ -232,9 +211,7 @@ class DualRoundTripMetrics:
             self.cosine_end_to_end,
         )
         all_optional_none = all(v is None for v in (*ce_values, *cosine_values))
-        all_optional_present = all(
-            v is not None for v in (*ce_values, *cosine_values)
-        )
+        all_optional_present = all(v is not None for v in (*ce_values, *cosine_values))
 
         if self.metric_mode is DualMetricMode.STRUCTURAL_ONLY:
             if not all_optional_none:
@@ -247,17 +224,12 @@ class DualRoundTripMetrics:
                 pass
         elif self.metric_mode is DualMetricMode.DUAL:
             if not self.embedding_backend_present:
-                raise ContractError(
-                    "dual mode requires embedding_backend_present=True"
-                )
+                raise ContractError("dual mode requires embedding_backend_present=True")
             if self.embedding_backend_id is None:
-                raise ContractError(
-                    "dual mode requires a non-null embedding_backend_id"
-                )
+                raise ContractError("dual mode requires a non-null embedding_backend_id")
             if not all_optional_present:
                 raise ContractError(
-                    "dual mode requires CE and cosine on every leg; "
-                    "partial scores are not allowed"
+                    "dual mode requires CE and cosine on every leg; partial scores are not allowed"
                 )
         else:  # pragma: no cover - enum exhaustiveness
             raise ContractError(f"unknown metric_mode {self.metric_mode!r}")
@@ -268,13 +240,9 @@ class DualRoundTripMetrics:
                 "CE/cosine cannot become the promotion primary"
             )
         if self.ce_cosine_may_substitute_for_promotion is not False:
-            raise ContractError(
-                "ce_cosine_may_substitute_for_promotion must remain False"
-            )
+            raise ContractError("ce_cosine_may_substitute_for_promotion must remain False")
         if self.silent_metric_substitution is not False:
-            raise ContractError(
-                "silent_metric_substitution must remain False"
-            )
+            raise ContractError("silent_metric_substitution must remain False")
         if (
             not isinstance(self.promotion_policy_note, str)
             or not self.promotion_policy_note.strip()
@@ -316,9 +284,7 @@ class DualRoundTripMetrics:
             "cosine_cycle": self.cosine_cycle,
             "cosine_end_to_end": self.cosine_end_to_end,
             "promotion_primary_metric": self.promotion_primary_metric,
-            "ce_cosine_may_substitute_for_promotion": (
-                self.ce_cosine_may_substitute_for_promotion
-            ),
+            "ce_cosine_may_substitute_for_promotion": (self.ce_cosine_may_substitute_for_promotion),
             "silent_metric_substitution": self.silent_metric_substitution,
             "promotion_policy_note": self.promotion_policy_note,
         }
@@ -410,9 +376,7 @@ def compute_dual_metrics(
         raise ContractError("gold_ir is required")
     first = _coerce_ir(l1, field_name="l1")
     second = _coerce_ir(l2, field_name="l2")
-    losses = round_trip_losses(
-        gold, first, reconstruction, second, failed=failed
-    )
+    losses = round_trip_losses(gold, first, reconstruction, second, failed=failed)
 
     if embedding_backend is None:
         return _structural_only(
@@ -495,18 +459,12 @@ def dual_metrics_from_structural(
         )
     else:
         raise ContractError(
-            "structural must be RoundTripLosses or a mapping with "
-            "forward/cycle/end_to_end"
+            "structural must be RoundTripLosses or a mapping with forward/cycle/end_to_end"
         )
 
     if embedding_backend is None:
-        if any(
-            pair is not None
-            for pair in (forward_pair, cycle_pair, end_to_end_pair)
-        ):
-            raise ContractError(
-                "embedding pair metrics require an embedding_backend identity"
-            )
+        if any(pair is not None for pair in (forward_pair, cycle_pair, end_to_end_pair)):
+            raise ContractError("embedding pair metrics require an embedding_backend identity")
         return _structural_only(
             losses,
             embedding_backend_present=False,
@@ -527,12 +485,7 @@ def dual_metrics_from_structural(
     except Exception:
         is_available = False
 
-    if (
-        not is_available
-        or forward_pair is None
-        or cycle_pair is None
-        or end_to_end_pair is None
-    ):
+    if not is_available or forward_pair is None or cycle_pair is None or end_to_end_pair is None:
         return _structural_only(
             losses,
             embedding_backend_present=True,
@@ -584,9 +537,7 @@ def attach_dual_metrics_to_residual_row(
 # ---------------------------------------------------------------------------
 
 
-def cosine_similarity(
-    left: Sequence[float], right: Sequence[float]
-) -> float:
+def cosine_similarity(left: Sequence[float], right: Sequence[float]) -> float:
     """Return cosine similarity of two equal-length vectors in ``[-1, 1]``."""
 
     if len(left) != len(right):
@@ -601,9 +552,7 @@ def cosine_similarity(
     right_norm = math.sqrt(sum(v * v for v in right_vals))
     if left_norm == 0.0 or right_norm == 0.0:
         return 0.0
-    return sum(a * b for a, b in zip(left_vals, right_vals)) / (
-        left_norm * right_norm
-    )
+    return sum(a * b for a, b in zip(left_vals, right_vals)) / (left_norm * right_norm)
 
 
 def cross_entropy_from_distributions(
@@ -650,9 +599,7 @@ class CallableEmbeddingBackend:
     """
 
     identity: str
-    scorer: Callable[
-        [CanonicalRuleIR, CanonicalRuleIR], EmbeddingPairMetrics | None
-    ]
+    scorer: Callable[[CanonicalRuleIR, CanonicalRuleIR], EmbeddingPairMetrics | None]
     is_available: bool = True
 
     def __post_init__(self) -> None:
@@ -678,9 +625,7 @@ class CallableEmbeddingBackend:
         if result is None:
             return None
         if not isinstance(result, EmbeddingPairMetrics):
-            raise ContractError(
-                "scorer must return EmbeddingPairMetrics or None"
-            )
+            raise ContractError("scorer must return EmbeddingPairMetrics or None")
         return result
 
 

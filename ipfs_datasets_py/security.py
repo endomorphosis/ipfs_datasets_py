@@ -41,10 +41,15 @@ try:
     from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
     from cryptography.hazmat.primitives.asymmetric import rsa, padding as asym_padding
     from cryptography.hazmat.primitives.serialization import (
-        load_pem_private_key, load_pem_public_key,
-        Encoding, PrivateFormat, PublicFormat, NoEncryption
+        load_pem_private_key,
+        load_pem_public_key,
+        Encoding,
+        PrivateFormat,
+        PublicFormat,
+        NoEncryption,
     )
     from cryptography.hazmat.backends import default_backend
+
     CRYPTOGRAPHY_AVAILABLE = True
 except ImportError:
     CRYPTOGRAPHY_AVAILABLE = False
@@ -52,6 +57,7 @@ except ImportError:
 # For secure storage
 try:
     import keyring
+
     KEYRING_AVAILABLE = True
 except ImportError:
     KEYRING_AVAILABLE = False
@@ -59,6 +65,7 @@ except ImportError:
 # Import monitoring system for audit logging
 try:
     from ipfs_datasets_py.monitoring import get_logger, get_metrics_registry
+
     MONITORING_AVAILABLE = True
 except ImportError:
     MONITORING_AVAILABLE = False
@@ -66,8 +73,13 @@ except ImportError:
 # Import UCAN module for capability-based authorization
 try:
     from ipfs_datasets_py.ucan import (
-        initialize_ucan, get_ucan_manager, UCANCapability, UCANToken, UCANKeyPair
+        initialize_ucan,
+        get_ucan_manager,
+        UCANCapability,
+        UCANToken,
+        UCANKeyPair,
     )
+
     UCAN_AVAILABLE = True
 except ImportError:
     UCAN_AVAILABLE = False
@@ -161,7 +173,7 @@ class SecurityConfig:
             require_authentication=True,
             log_all_access=True
         )
-        
+
         # High-security configuration
         config = SecurityConfig(
             enabled=True,
@@ -174,7 +186,7 @@ class SecurityConfig:
             use_ucan=True,
             default_capability_ttl=1800  # 30 minutes
         )
-        
+
         # Development configuration
         config = SecurityConfig(
             enabled=False,  # Disable security for development
@@ -189,6 +201,7 @@ class SecurityConfig:
         - System keyring integration depends on platform support
         - UCAN features require the ipfs_datasets_py.ucan module
     """
+
     enabled: bool = True
     security_dir: str = DEFAULT_SECURITY_DIR
     encryption_algorithm: str = DEFAULT_ENCRYPTION_ALGORITHM
@@ -267,7 +280,7 @@ class UserCredentials:
             salt="random_salt_value",
             access_level="read"
         )
-        
+
         # Create user with specific permissions and group membership
         user = UserCredentials(
             username="project_lead",
@@ -298,6 +311,7 @@ class UserCredentials:
         - Group permissions are combined with individual permissions
         - Timestamps are stored in ISO 8601 format for consistency
     """
+
     username: str
     # Password hash is stored as a secure hash, not plaintext
     password_hash: str
@@ -385,7 +399,7 @@ class EncryptionKey:
                 "owner": "data_team"
             }
         )
-        
+
         # Key with expiration and UCAN DID
         key = EncryptionKey(
             key_id="550e8400-e29b-41d4-a716-446655440001",
@@ -416,6 +430,7 @@ class EncryptionKey:
         - UCAN integration enables decentralized access control
         - Expiration dates are advisory and enforced by policy
     """
+
     key_id: str
     algorithm: str
     key_material: bytes
@@ -510,7 +525,7 @@ class ResourcePolicy:
             write_access=["analyst1", "data_scientists"],
             admin_access=["lead_researcher"]
         )
-        
+
         # Restrictive model policy with limited access
         policy = ResourcePolicy(
             resource_id="model_proprietary_v2",
@@ -546,6 +561,7 @@ class ResourcePolicy:
         - Policy timestamps support audit and compliance requirements
         - Resource types enable type-specific access control logic
     """
+
     resource_id: str
     resource_type: str
     owner: str
@@ -669,7 +685,7 @@ class ProcessStep:
             inputs=["raw_data_001"],
             operator="data_engineer_alice"
         )
-        
+
         # Completed transformation step with metrics
         transform_step = ProcessStep(
             step_id="step_002_transform",
@@ -700,6 +716,7 @@ class ProcessStep:
             operator="automated_pipeline"
         )
     """
+
     step_id: str
     operation: str  # Type of operation (e.g., "filter", "transform", "join")
     description: str  # Human-readable description
@@ -714,6 +731,7 @@ class ProcessStep:
     metrics: Dict[str, Any] = field(default_factory=dict)  # Performance metrics
     environment: Dict[str, Any] = field(default_factory=dict)  # Execution environment details
     operator: Optional[str] = None  # User or system component that executed the step
+
 
 @dataclass
 class DataLineage:
@@ -808,7 +826,7 @@ class DataLineage:
                 "timeliness_hours": 2.5
             }
         )
-        
+
         # Complex lineage with versioning and graph
         complex_lineage = DataLineage(
             source_system="multi_source_etl",
@@ -867,6 +885,7 @@ class DataLineage:
         - Source attribution is essential for compliance requirements
         - Graph representation enables efficient relationship queries
     """
+
     source_system: str  # Original system/location the data came from
     source_type: str  # Type of source (e.g., "database", "file", "api")
     extraction_method: str  # How the data was extracted
@@ -874,9 +893,12 @@ class DataLineage:
     transformations: List[str] = field(default_factory=list)  # IDs of process steps
     derived_datasets: List[str] = field(default_factory=list)  # Datasets derived from this one
     upstream_datasets: List[str] = field(default_factory=list)  # Datasets this one derives from
-    lineage_graph: Dict[str, List[str]] = field(default_factory=dict)  # Graph representation of lineage
+    lineage_graph: Dict[str, List[str]] = field(
+        default_factory=dict
+    )  # Graph representation of lineage
     versioning: Dict[str, Any] = field(default_factory=dict)  # Version control information
     quality_metrics: Dict[str, Any] = field(default_factory=dict)  # Data quality metrics
+
 
 @dataclass
 class DataProvenance:
@@ -952,6 +974,7 @@ class DataProvenance:
             compliance={"gdpr": "true", "pii": "false"}
         )
     """
+
     data_id: str  # Unique identifier for the data
     source: str  # Source of the data
     creator: str  # User or system that created the data
@@ -971,7 +994,9 @@ class DataProvenance:
     retention_policy: Optional[str] = None  # Data retention policy
     lineage: Optional[DataLineage] = None  # Detailed lineage information
     access_history: List[Dict[str, Any]] = field(default_factory=list)  # History of data access
-    transformation_history: List[ProcessStep] = field(default_factory=list)  # Detailed transformation steps
+    transformation_history: List[ProcessStep] = field(
+        default_factory=list
+    )  # Detailed transformation steps
     data_flow: Dict[str, List[str]] = field(default_factory=dict)  # Data flow graph
     tags: List[str] = field(default_factory=list)  # Tags for categorization
     external_references: Dict[str, str] = field(default_factory=dict)  # External system references
@@ -1030,6 +1055,7 @@ class AuditLogEntry:
                        Provides a simple way to filter for successful or failed
                        events. Defaults to True.
     """
+
     event_id: str
     timestamp: str
     event_type: str
@@ -1045,9 +1071,10 @@ class AuditLogEntry:
 
 # ===== TypedDict Definitions for Return Types =====
 
+
 class EncryptFileDict(TypedDict, total=False):
     """Result of encrypt_file() operation."""
-    
+
     file_hash: str
     encrypted_path: str
     encryption_algorithm: str
@@ -1059,7 +1086,7 @@ class EncryptFileDict(TypedDict, total=False):
 
 class LineageGraphDict(TypedDict, total=False):
     """Data lineage graph structure from get_data_lineage_graph()."""
-    
+
     nodes: List[Dict[str, Any]]
     edges: List[Dict[str, Any]]
     node_count: int
@@ -1071,7 +1098,7 @@ class LineageGraphDict(TypedDict, total=False):
 
 class ProvenanceReportDict(TypedDict, total=False):
     """Provenance report from generate_provenance_report()."""
-    
+
     lineage: Dict[str, Any]
     data_sources: List[str]
     processing_steps: List[Dict[str, Any]]
@@ -1083,7 +1110,7 @@ class ProvenanceReportDict(TypedDict, total=False):
 
 class FormattedReportTextDict(TypedDict, total=False):
     """Text formatted report from _format_report_as_text()."""
-    
+
     formatted_text: str
     text_format: str
     line_count: int
@@ -1093,7 +1120,7 @@ class FormattedReportTextDict(TypedDict, total=False):
 
 class FormattedReportHtmlDict(TypedDict, total=False):
     """HTML formatted report from _format_report_as_html()."""
-    
+
     html_content: str
     html_format: str
     has_styles: bool
@@ -1103,7 +1130,7 @@ class FormattedReportHtmlDict(TypedDict, total=False):
 
 class FormattedReportMarkdownDict(TypedDict, total=False):
     """Markdown formatted report from _format_report_as_markdown()."""
-    
+
     markdown_content: str
     markdown_format: str
     section_count: int
@@ -1113,7 +1140,7 @@ class FormattedReportMarkdownDict(TypedDict, total=False):
 
 class LineageVisualizationDict(TypedDict, total=False):
     """Lineage visualization data from generate_lineage_visualization()."""
-    
+
     nodes: List[Dict[str, Any]]
     edges: List[Dict[str, Any]]
     visualization_formats: List[str]
@@ -1123,7 +1150,7 @@ class LineageVisualizationDict(TypedDict, total=False):
 
 class FormattedLineageDotDict(TypedDict, total=False):
     """DOT format lineage from _format_lineage_as_dot()."""
-    
+
     dot_content: str
     dot_format: str
     node_count: int
@@ -1133,7 +1160,7 @@ class FormattedLineageDotDict(TypedDict, total=False):
 
 class FormattedLineageMermaidDict(TypedDict, total=False):
     """Mermaid format lineage from _format_lineage_as_mermaid()."""
-    
+
     mermaid_content: str
     mermaid_format: str
     diagram_type: str
@@ -1144,7 +1171,7 @@ class FormattedLineageMermaidDict(TypedDict, total=False):
 
 class FormattedLineageD3Dict(TypedDict, total=False):
     """D3.js format lineage from _format_lineage_as_d3()."""
-    
+
     d3_json: Dict[str, Any]
     d3_format: str
     layout_type: str
@@ -1159,14 +1186,14 @@ class SecurityManager:
     _instance = None
 
     @classmethod
-    def get_instance(cls) -> 'SecurityManager':
+    def get_instance(cls) -> "SecurityManager":
         """Get the singleton instance."""
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
 
     @classmethod
-    def initialize(cls, config: Optional[SecurityConfig] = None) -> 'SecurityManager':
+    def initialize(cls, config: Optional[SecurityConfig] = None) -> "SecurityManager":
         """
         Initialize the security manager.
 
@@ -1214,7 +1241,9 @@ class SecurityManager:
             self.logger = logging.getLogger(__name__)
             if not self.logger.handlers:
                 handler = logging.StreamHandler()
-                formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+                formatter = logging.Formatter(
+                    "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+                )
                 handler.setFormatter(formatter)
                 self.logger.addHandler(handler)
                 self.logger.setLevel(logging.INFO)
@@ -1255,7 +1284,7 @@ class SecurityManager:
         users_file = os.path.join(self.config.security_dir, "users.json")
         if os.path.exists(users_file):
             try:
-                with open(users_file, 'r') as f:
+                with open(users_file, "r") as f:
                     user_data = json.load(f)
 
                 self.users = {}
@@ -1268,7 +1297,7 @@ class SecurityManager:
                         created_at=data.get("created_at", datetime.datetime.now().isoformat()),
                         last_login=data.get("last_login"),
                         permissions=data.get("permissions", {}),
-                        groups=data.get("groups", [])
+                        groups=data.get("groups", []),
                     )
 
                 self.logger.info(f"Loaded {len(self.users)} users from storage")
@@ -1289,10 +1318,10 @@ class SecurityManager:
                     "created_at": user.created_at,
                     "last_login": user.last_login,
                     "permissions": user.permissions,
-                    "groups": user.groups
+                    "groups": user.groups,
                 }
 
-            with open(users_file, 'w') as f:
+            with open(users_file, "w") as f:
                 json.dump(user_data, f, indent=2)
 
             self.logger.debug(f"Saved {len(self.users)} users to storage")
@@ -1306,7 +1335,7 @@ class SecurityManager:
         keys_file = os.path.join(self.config.security_dir, "encryption_keys.json")
         if os.path.exists(keys_file):
             try:
-                with open(keys_file, 'r') as f:
+                with open(keys_file, "r") as f:
                     keys_data = json.load(f)
 
                 self.encryption_keys = {}
@@ -1317,7 +1346,7 @@ class SecurityManager:
                         key_material=base64.b64decode(data["key_material"]),
                         created_at=data.get("created_at", datetime.datetime.now().isoformat()),
                         expires_at=data.get("expires_at"),
-                        context=data.get("context", {})
+                        context=data.get("context", {}),
                     )
 
                 self.logger.info(f"Loaded {len(self.encryption_keys)} encryption keys from storage")
@@ -1338,10 +1367,10 @@ class SecurityManager:
                     "key_material": base64.b64encode(key.key_material).decode(),
                     "created_at": key.created_at,
                     "expires_at": key.expires_at,
-                    "context": key.context
+                    "context": key.context,
                 }
 
-            with open(keys_file, 'w') as f:
+            with open(keys_file, "w") as f:
                 json.dump(keys_data, f, indent=2)
 
             self.logger.debug(f"Saved {len(self.encryption_keys)} encryption keys to storage")
@@ -1353,7 +1382,7 @@ class SecurityManager:
         policies_file = os.path.join(self.config.security_dir, "policies.json")
         if os.path.exists(policies_file):
             try:
-                with open(policies_file, 'r') as f:
+                with open(policies_file, "r") as f:
                     policies_data = json.load(f)
 
                 self.policies = {}
@@ -1368,7 +1397,7 @@ class SecurityManager:
                         write_access=data["write_access"],
                         admin_access=data["admin_access"],
                         created_at=data.get("created_at", datetime.datetime.now().isoformat()),
-                        modified_at=data.get("modified_at", datetime.datetime.now().isoformat())
+                        modified_at=data.get("modified_at", datetime.datetime.now().isoformat()),
                     )
 
                 self.logger.info(f"Loaded {len(self.policies)} resource policies from storage")
@@ -1384,7 +1413,7 @@ class SecurityManager:
             for resource_id, policy in self.policies.items():
                 policies_data[resource_id] = asdict(policy)
 
-            with open(policies_file, 'w') as f:
+            with open(policies_file, "w") as f:
                 json.dump(policies_data, f, indent=2)
 
             self.logger.debug(f"Saved {len(self.policies)} resource policies to storage")
@@ -1433,7 +1462,7 @@ class SecurityManager:
                 username=username,
                 password_hash=password_hash,
                 salt=salt_b64,
-                access_level=access_level
+                access_level=access_level,
             )
 
             # Store user
@@ -1449,7 +1478,7 @@ class SecurityManager:
                 action="create_user",
                 resource_id=username,
                 resource_type="user",
-                details={"access_level": access_level}
+                details={"access_level": access_level},
             )
 
             self.logger.info(f"Created user {username} with access level {access_level}")
@@ -1483,7 +1512,7 @@ class SecurityManager:
                     user=username,
                     action="authenticate",
                     details={"reason": "user_not_found"},
-                    success=False
+                    success=False,
                 )
                 return False
 
@@ -1503,7 +1532,7 @@ class SecurityManager:
                     user=username,
                     action="authenticate",
                     details={"reason": "invalid_password"},
-                    success=False
+                    success=False,
                 )
                 return False
 
@@ -1519,7 +1548,7 @@ class SecurityManager:
                 event_type="authentication_success",
                 user=username,
                 action="authenticate",
-                details={"last_login": user.last_login}
+                details={"last_login": user.last_login},
             )
 
             self.logger.info(f"User {username} authenticated successfully")
@@ -1542,7 +1571,7 @@ class SecurityManager:
             length=32,  # 256 bits
             salt=salt,
             iterations=self.config.kdf_iterations,
-            backend=default_backend()
+            backend=default_backend(),
         )
 
         # Hash password
@@ -1551,8 +1580,12 @@ class SecurityManager:
         # Convert to base64
         return base64.b64encode(password_hash).decode()
 
-    def generate_encryption_key(self, algorithm: Optional[str] = None, context: Optional[Dict[str, Any]] = None,
-                            with_ucan: bool = True) -> str:
+    def generate_encryption_key(
+        self,
+        algorithm: Optional[str] = None,
+        context: Optional[Dict[str, Any]] = None,
+        with_ucan: bool = True,
+    ) -> str:
         """
         Generate a new encryption key.
 
@@ -1601,9 +1634,13 @@ class SecurityManager:
 
                     # Add UCAN info to context
                     actual_context["ucan_enabled"] = True
-                    self.logger.info(f"Created UCAN capabilities for key {key_id} with DID {ucan_did}")
+                    self.logger.info(
+                        f"Created UCAN capabilities for key {key_id} with DID {ucan_did}"
+                    )
                 except Exception as e:
-                    self.logger.error(f"Error creating UCAN capabilities for key {key_id}: {str(e)}")
+                    self.logger.error(
+                        f"Error creating UCAN capabilities for key {key_id}: {str(e)}"
+                    )
 
             # Create key
             key = EncryptionKey(
@@ -1611,7 +1648,7 @@ class SecurityManager:
                 algorithm=algorithm,
                 key_material=key_material,
                 context=actual_context,
-                ucan_did=ucan_did
+                ucan_did=ucan_did,
             )
 
             # Store key
@@ -1627,10 +1664,7 @@ class SecurityManager:
                 action="generate_key",
                 resource_id=key_id,
                 resource_type="encryption_key",
-                details={
-                    "algorithm": algorithm,
-                    "ucan_enabled": ucan_did is not None
-                }
+                details={"algorithm": algorithm, "ucan_enabled": ucan_did is not None},
             )
 
             self.logger.info(f"Generated encryption key {key_id} using algorithm {algorithm}")
@@ -1655,10 +1689,7 @@ class SecurityManager:
         capabilities = []
 
         for action in ["encrypt", "decrypt", "delegate", "revoke"]:
-            capabilities.append(UCANCapability(
-                resource=key_id,
-                action=action
-            ))
+            capabilities.append(UCANCapability(resource=key_id, action=action))
 
         # Create token with these capabilities
         # Since this is self-issued, the issuer and audience are the same
@@ -1667,14 +1698,18 @@ class SecurityManager:
                 issuer_did=did,
                 audience_did=did,
                 capabilities=capabilities,
-                ttl=self.config.default_capability_ttl * 24 * 365  # Long-lived (1 year)
+                ttl=self.config.default_capability_ttl * 24 * 365,  # Long-lived (1 year)
             )
             self.logger.debug(f"Created self-issued UCAN token {token.token_id} for key {key_id}")
         except Exception as e:
             self.logger.error(f"Error creating UCAN token for key {key_id}: {str(e)}")
 
-    def encrypt_data(self, data: Union[bytes, str], key_id: Optional[str] = None,
-                    requestor_did: Optional[str] = None) -> Tuple[bytes, Dict[str, Any]]:
+    def encrypt_data(
+        self,
+        data: Union[bytes, str],
+        key_id: Optional[str] = None,
+        requestor_did: Optional[str] = None,
+    ) -> Tuple[bytes, Dict[str, Any]]:
         """
         Encrypt data using a specified key or a new key.
 
@@ -1723,7 +1758,9 @@ class SecurityManager:
             # Check UCAN capability if enabled and a requestor DID is provided
             if self.config.use_ucan and UCAN_AVAILABLE and self.ucan_manager and requestor_did:
                 if not self._check_key_capability(requestor_did, key_id, "encrypt"):
-                    self.logger.error(f"DID {requestor_did} does not have encrypt capability for key {key_id}")
+                    self.logger.error(
+                        f"DID {requestor_did} does not have encrypt capability for key {key_id}"
+                    )
                     return b"", {}
 
             # Generate IV
@@ -1731,9 +1768,7 @@ class SecurityManager:
 
             # Create cipher
             cipher = Cipher(
-                algorithms.AES(key.key_material),
-                modes.CBC(iv),
-                backend=default_backend()
+                algorithms.AES(key.key_material), modes.CBC(iv), backend=default_backend()
             )
 
             # Create encryptor
@@ -1754,15 +1789,12 @@ class SecurityManager:
                 "algorithm": key.algorithm,
                 "key_id": key_id,
                 "iv": base64.b64encode(iv).decode(),
-                "encryption_time": datetime.datetime.now().isoformat()
+                "encryption_time": datetime.datetime.now().isoformat(),
             }
 
             # Add UCAN info to metadata if applicable
             if requestor_did and key.ucan_did:
-                metadata["ucan"] = {
-                    "requestor": requestor_did,
-                    "key_did": key.ucan_did
-                }
+                metadata["ucan"] = {"requestor": requestor_did, "key_did": key.ucan_did}
 
             # Log audit event
             self._log_audit_event(
@@ -1774,8 +1806,8 @@ class SecurityManager:
                 details={
                     "data_size": len(data),
                     "algorithm": key.algorithm,
-                    "ucan_requestor": requestor_did
-                }
+                    "ucan_requestor": requestor_did,
+                },
             )
 
             self.logger.debug(f"Encrypted {len(data)} bytes using key {key_id}")
@@ -1813,7 +1845,9 @@ class SecurityManager:
             self.logger.error(f"Error checking capability: {str(e)}")
             return False
 
-    def decrypt_data(self, encrypted_data: bytes, key_id: str, requestor_did: Optional[str] = None) -> bytes:
+    def decrypt_data(
+        self, encrypted_data: bytes, key_id: str, requestor_did: Optional[str] = None
+    ) -> bytes:
         """
         Decrypt data using a specified key.
 
@@ -1855,7 +1889,9 @@ class SecurityManager:
             # Check UCAN capability if enabled and a requestor DID is provided
             if self.config.use_ucan and UCAN_AVAILABLE and self.ucan_manager and requestor_did:
                 if not self._check_key_capability(requestor_did, key_id, "decrypt"):
-                    self.logger.error(f"DID {requestor_did} does not have decrypt capability for key {key_id}")
+                    self.logger.error(
+                        f"DID {requestor_did} does not have decrypt capability for key {key_id}"
+                    )
                     return b""
 
             # Extract IV
@@ -1864,9 +1900,7 @@ class SecurityManager:
 
             # Create cipher
             cipher = Cipher(
-                algorithms.AES(key.key_material),
-                modes.CBC(iv),
-                backend=default_backend()
+                algorithms.AES(key.key_material), modes.CBC(iv), backend=default_backend()
             )
 
             # Create decryptor
@@ -1886,17 +1920,19 @@ class SecurityManager:
                 action="decrypt_data",
                 resource_id=key_id,
                 resource_type="encryption_key",
-                details={
-                    "data_size": len(actual_encrypted_data),
-                    "ucan_requestor": requestor_did
-                }
+                details={"data_size": len(actual_encrypted_data), "ucan_requestor": requestor_did},
             )
 
             self.logger.debug(f"Decrypted {len(actual_encrypted_data)} bytes using key {key_id}")
             return data
 
-    def encrypt_file(self, input_file: Union[str, BinaryIO], output_file: Union[str, BinaryIO],
-                   key_id: Optional[str] = None, requestor_did: Optional[str] = None) -> EncryptFileDict:
+    def encrypt_file(
+        self,
+        input_file: Union[str, BinaryIO],
+        output_file: Union[str, BinaryIO],
+        key_id: Optional[str] = None,
+        requestor_did: Optional[str] = None,
+    ) -> EncryptFileDict:
         """
         Encrypt a file using a specified key or a new key.
 
@@ -1918,8 +1954,8 @@ class SecurityManager:
             return {}
 
         # Ensure we have file objects
-        input_file_obj = input_file if hasattr(input_file, 'read') else open(input_file, 'rb')
-        output_file_obj = output_file if hasattr(output_file, 'write') else open(output_file, 'wb')
+        input_file_obj = input_file if hasattr(input_file, "read") else open(input_file, "rb")
+        output_file_obj = output_file if hasattr(output_file, "write") else open(output_file, "wb")
 
         try:
             # Read input file
@@ -1941,8 +1977,13 @@ class SecurityManager:
             if output_file_obj is not output_file:
                 output_file_obj.close()
 
-    def decrypt_file(self, input_file: Union[str, BinaryIO], output_file: Union[str, BinaryIO],
-                   key_id: str, requestor_did: Optional[str] = None) -> bool:
+    def decrypt_file(
+        self,
+        input_file: Union[str, BinaryIO],
+        output_file: Union[str, BinaryIO],
+        key_id: str,
+        requestor_did: Optional[str] = None,
+    ) -> bool:
         """
         Decrypt a file using a specified key.
 
@@ -1964,8 +2005,8 @@ class SecurityManager:
             return False
 
         # Ensure we have file objects
-        input_file_obj = input_file if hasattr(input_file, 'read') else open(input_file, 'rb')
-        output_file_obj = output_file if hasattr(output_file, 'write') else open(output_file, 'wb')
+        input_file_obj = input_file if hasattr(input_file, "read") else open(input_file, "rb")
+        output_file_obj = output_file if hasattr(output_file, "write") else open(output_file, "wb")
 
         try:
             # Read input file
@@ -1991,8 +2032,9 @@ class SecurityManager:
             if output_file_obj is not output_file:
                 output_file_obj.close()
 
-    def create_resource_policy(self, resource_id: str, resource_type: str,
-                             owner: Optional[str] = None) -> ResourcePolicy:
+    def create_resource_policy(
+        self, resource_id: str, resource_type: str, owner: Optional[str] = None
+    ) -> ResourcePolicy:
         """
         Create a new resource access policy.
 
@@ -2021,7 +2063,7 @@ class SecurityManager:
                 allowed_groups=[],
                 read_access=[actual_owner],
                 write_access=[actual_owner],
-                admin_access=[actual_owner]
+                admin_access=[actual_owner],
             )
 
             # Store policy
@@ -2037,10 +2079,12 @@ class SecurityManager:
                 action="create_policy",
                 resource_id=resource_id,
                 resource_type=resource_type,
-                details={"owner": actual_owner}
+                details={"owner": actual_owner},
             )
 
-            self.logger.info(f"Created resource policy for {resource_type} {resource_id} owned by {actual_owner}")
+            self.logger.info(
+                f"Created resource policy for {resource_type} {resource_id} owned by {actual_owner}"
+            )
             return policy
 
     def update_resource_policy(self, resource_id: str, updates: Dict[str, Any]) -> bool:
@@ -2069,7 +2113,9 @@ class SecurityManager:
             # Check if user has admin access
             current_user = self.current_user or "system"
             if current_user != policy.owner and current_user not in policy.admin_access:
-                self.logger.warning(f"User {current_user} does not have admin access to {resource_id}")
+                self.logger.warning(
+                    f"User {current_user} does not have admin access to {resource_id}"
+                )
                 self._log_audit_event(
                     event_type="policy_update_denied",
                     user=current_user,
@@ -2077,7 +2123,7 @@ class SecurityManager:
                     resource_id=resource_id,
                     resource_type=policy.resource_type,
                     details={"reason": "insufficient_permissions"},
-                    success=False
+                    success=False,
                 )
                 return False
 
@@ -2099,7 +2145,7 @@ class SecurityManager:
                 action="update_policy",
                 resource_id=resource_id,
                 resource_type=policy.resource_type,
-                details={"updates": updates}
+                details={"updates": updates},
             )
 
             self.logger.info(f"Updated resource policy for {resource_id}")
@@ -2162,19 +2208,31 @@ class SecurityManager:
                 resource_id=resource_id,
                 resource_type=policy.resource_type,
                 details={"access_type": access_type},
-                success=False
+                success=False,
             )
 
-            self.logger.info(f"Access denied for user {current_user} to {access_type} {resource_id}")
+            self.logger.info(
+                f"Access denied for user {current_user} to {access_type} {resource_id}"
+            )
             return False
 
-    def record_provenance(self, data_id: str, source: str, process_steps: List[Dict[str, Any]],
-                        parent_ids: List[str], checksum: str, metadata: Optional[Dict[str, Any]] = None,
-                        data_type: str = "unknown", schema: Optional[Dict[str, Any]] = None,
-                        size_bytes: Optional[int] = None, record_count: Optional[int] = None,
-                        content_type: Optional[str] = None, lineage_info: Optional[Dict[str, Any]] = None,
-                        transformation_history: Optional[List[Dict[str, Any]]] = None,
-                        tags: Optional[List[str]] = None) -> DataProvenance:
+    def record_provenance(
+        self,
+        data_id: str,
+        source: str,
+        process_steps: List[Dict[str, Any]],
+        parent_ids: List[str],
+        checksum: str,
+        metadata: Optional[Dict[str, Any]] = None,
+        data_type: str = "unknown",
+        schema: Optional[Dict[str, Any]] = None,
+        size_bytes: Optional[int] = None,
+        record_count: Optional[int] = None,
+        content_type: Optional[str] = None,
+        lineage_info: Optional[Dict[str, Any]] = None,
+        transformation_history: Optional[List[Dict[str, Any]]] = None,
+        tags: Optional[List[str]] = None,
+    ) -> DataProvenance:
         """
         Record comprehensive provenance information for a piece of data.
 
@@ -2217,35 +2275,39 @@ class SecurityManager:
                     source_system=lineage_info.get("source_system", "unknown"),
                     source_type=lineage_info.get("source_type", "unknown"),
                     extraction_method=lineage_info.get("extraction_method", "unknown"),
-                    extraction_time=lineage_info.get("extraction_time", datetime.datetime.now().isoformat()),
+                    extraction_time=lineage_info.get(
+                        "extraction_time", datetime.datetime.now().isoformat()
+                    ),
                     transformations=lineage_info.get("transformations", []),
                     derived_datasets=lineage_info.get("derived_datasets", []),
                     upstream_datasets=lineage_info.get("upstream_datasets", []),
                     lineage_graph=lineage_info.get("lineage_graph", {}),
                     versioning=lineage_info.get("versioning", {}),
-                    quality_metrics=lineage_info.get("quality_metrics", {})
+                    quality_metrics=lineage_info.get("quality_metrics", {}),
                 )
 
             # Process transformation history if provided
             process_step_objects = []
             if transformation_history:
                 for step in transformation_history:
-                    process_step_objects.append(ProcessStep(
-                        step_id=step.get("step_id", str(uuid.uuid4())),
-                        operation=step.get("operation", "unknown"),
-                        description=step.get("description", ""),
-                        tool=step.get("tool", "unknown"),
-                        parameters=step.get("parameters", {}),
-                        start_time=step.get("start_time", datetime.datetime.now().isoformat()),
-                        end_time=step.get("end_time"),
-                        status=step.get("status", "completed"),
-                        error=step.get("error"),
-                        inputs=step.get("inputs", []),
-                        outputs=step.get("outputs", []),
-                        metrics=step.get("metrics", {}),
-                        environment=step.get("environment", {}),
-                        operator=step.get("operator", self.current_user or "system")
-                    ))
+                    process_step_objects.append(
+                        ProcessStep(
+                            step_id=step.get("step_id", str(uuid.uuid4())),
+                            operation=step.get("operation", "unknown"),
+                            description=step.get("description", ""),
+                            tool=step.get("tool", "unknown"),
+                            parameters=step.get("parameters", {}),
+                            start_time=step.get("start_time", datetime.datetime.now().isoformat()),
+                            end_time=step.get("end_time"),
+                            status=step.get("status", "completed"),
+                            error=step.get("error"),
+                            inputs=step.get("inputs", []),
+                            outputs=step.get("outputs", []),
+                            metrics=step.get("metrics", {}),
+                            environment=step.get("environment", {}),
+                            operator=step.get("operator", self.current_user or "system"),
+                        )
+                    )
 
             # Create comprehensive provenance record
             provenance = DataProvenance(
@@ -2265,7 +2327,7 @@ class SecurityManager:
                 content_type=content_type,
                 lineage=lineage,
                 transformation_history=process_step_objects,
-                tags=tags or []
+                tags=tags or [],
             )
 
             # Record initial access entry
@@ -2273,7 +2335,7 @@ class SecurityManager:
                 "accessor": self.current_user or "system",
                 "access_time": datetime.datetime.now().isoformat(),
                 "operation": "create",
-                "details": {"initial_creation": True}
+                "details": {"initial_creation": True},
             }
             provenance.access_history.append(access_entry)
 
@@ -2287,7 +2349,10 @@ class SecurityManager:
                     # Update parent provenance records if they exist
                     parent_provenance = self.get_provenance(parent_id)
                     if parent_provenance:
-                        if not hasattr(parent_provenance, "lineage") or not parent_provenance.lineage:
+                        if (
+                            not hasattr(parent_provenance, "lineage")
+                            or not parent_provenance.lineage
+                        ):
                             # Handle older provenance records without lineage
                             continue
 
@@ -2313,8 +2378,8 @@ class SecurityManager:
                     "parent_count": len(parent_ids),
                     "data_type": data_type,
                     "size_bytes": size_bytes,
-                    "record_count": record_count
-                }
+                    "record_count": record_count,
+                },
             )
 
             self.logger.info(f"Recorded comprehensive provenance for data {data_id} from {source}")
@@ -2363,7 +2428,7 @@ class SecurityManager:
                     "accessor": self.current_user or "system",
                     "access_time": datetime.datetime.now().isoformat(),
                     "operation": "read",
-                    "details": {"read_provenance": True}
+                    "details": {"read_provenance": True},
                 }
 
                 # Handle older provenance records that might not have access_history
@@ -2380,12 +2445,14 @@ class SecurityManager:
                     action="get_provenance",
                     resource_id=data_id,
                     resource_type="data",
-                    details={"operation": "read"}
+                    details={"operation": "read"},
                 )
 
             return provenance
 
-    def record_data_access(self, data_id: str, operation: str, details: Optional[Dict[str, Any]] = None) -> bool:
+    def record_data_access(
+        self, data_id: str, operation: str, details: Optional[Dict[str, Any]] = None
+    ) -> bool:
         """
         Record an access to a data item in its provenance information.
 
@@ -2412,7 +2479,9 @@ class SecurityManager:
             # Get existing provenance
             provenance = self.get_provenance(data_id, record_access=False)
             if not provenance:
-                self.logger.warning(f"Cannot record access: Provenance not found for data {data_id}")
+                self.logger.warning(
+                    f"Cannot record access: Provenance not found for data {data_id}"
+                )
                 return False
 
             # Create access entry
@@ -2420,7 +2489,7 @@ class SecurityManager:
                 "accessor": self.current_user or "system",
                 "access_time": datetime.datetime.now().isoformat(),
                 "operation": operation,
-                "details": details or {}
+                "details": details or {},
             }
 
             # Add to access history
@@ -2440,10 +2509,12 @@ class SecurityManager:
                 action=operation,
                 resource_id=data_id,
                 resource_type="data",
-                details=details or {}
+                details=details or {},
             )
 
-            self.logger.debug(f"Recorded {operation} access to data {data_id} by {self.current_user or 'system'}")
+            self.logger.debug(
+                f"Recorded {operation} access to data {data_id} by {self.current_user or 'system'}"
+            )
             return True
 
     def _write_provenance_log(self, provenance: DataProvenance) -> bool:
@@ -2463,7 +2534,7 @@ class SecurityManager:
         # Write to individual file
         file_path = os.path.join(provenance_dir, f"{provenance.data_id}.json")
         try:
-            with open(file_path, 'w') as f:
+            with open(file_path, "w") as f:
                 json.dump(asdict(provenance), f, indent=2)
             return True
         except Exception as e:
@@ -2491,7 +2562,7 @@ class SecurityManager:
             return None
 
         try:
-            with open(file_path, 'r') as f:
+            with open(file_path, "r") as f:
                 data = json.load(f)
 
                 # Create basic provenance record with required fields
@@ -2504,7 +2575,7 @@ class SecurityManager:
                     parent_ids=data["parent_ids"],
                     version=data["version"],
                     checksum=data["checksum"],
-                    metadata=data.get("metadata", {})
+                    metadata=data.get("metadata", {}),
                 )
 
                 # Add enhanced fields if they exist in the data (for backward compatibility)
@@ -2558,7 +2629,7 @@ class SecurityManager:
                             upstream_datasets=lineage_data.get("upstream_datasets", []),
                             lineage_graph=lineage_data.get("lineage_graph", {}),
                             versioning=lineage_data.get("versioning", {}),
-                            quality_metrics=lineage_data.get("quality_metrics", {})
+                            quality_metrics=lineage_data.get("quality_metrics", {}),
                         )
 
                 # Process transformation history if it exists
@@ -2580,7 +2651,7 @@ class SecurityManager:
                                 outputs=step_data.get("outputs", []),
                                 metrics=step_data.get("metrics", {}),
                                 environment=step_data.get("environment", {}),
-                                operator=step_data.get("operator", "")
+                                operator=step_data.get("operator", ""),
                             )
                             provenance.transformation_history.append(step)
 
@@ -2590,8 +2661,7 @@ class SecurityManager:
             self.logger.error(f"Error reading provenance log: {str(e)}")
             return None
 
-    def search_provenance(self, criteria: Dict[str, Any],
-                          limit: int = 100) -> List[DataProvenance]:
+    def search_provenance(self, criteria: Dict[str, Any], limit: int = 100) -> List[DataProvenance]:
         """
         Search for data provenance records matching specified criteria.
 
@@ -2634,7 +2704,7 @@ class SecurityManager:
 
         # List all provenance files
         try:
-            files = [f for f in os.listdir(provenance_dir) if f.endswith('.json')]
+            files = [f for f in os.listdir(provenance_dir) if f.endswith(".json")]
 
             # Process each file
             for file in files:
@@ -2644,67 +2714,84 @@ class SecurityManager:
                 try:
                     # Read the provenance record
                     file_path = os.path.join(provenance_dir, file)
-                    with open(file_path, 'r') as f:
+                    with open(file_path, "r") as f:
                         data = json.load(f)
 
                     # Check if it matches the criteria
                     matches = True
 
                     # Basic criteria
-                    if 'creator' in criteria and data.get('creator') != criteria['creator']:
+                    if "creator" in criteria and data.get("creator") != criteria["creator"]:
                         matches = False
 
-                    if 'source' in criteria and data.get('source') != criteria['source']:
+                    if "source" in criteria and data.get("source") != criteria["source"]:
                         matches = False
 
-                    if 'data_type' in criteria and data.get('data_type') != criteria['data_type']:
+                    if "data_type" in criteria and data.get("data_type") != criteria["data_type"]:
                         matches = False
 
-                    if 'verification_status' in criteria and data.get('verification_status') != criteria['verification_status']:
+                    if (
+                        "verification_status" in criteria
+                        and data.get("verification_status") != criteria["verification_status"]
+                    ):
                         matches = False
 
                     # Time-based criteria
-                    if 'created_after' in criteria:
-                        creation_time = datetime.datetime.fromisoformat(data.get('creation_time', '1970-01-01T00:00:00'))
-                        if creation_time < datetime.datetime.fromisoformat(criteria['created_after']):
+                    if "created_after" in criteria:
+                        creation_time = datetime.datetime.fromisoformat(
+                            data.get("creation_time", "1970-01-01T00:00:00")
+                        )
+                        if creation_time < datetime.datetime.fromisoformat(
+                            criteria["created_after"]
+                        ):
                             matches = False
 
-                    if 'created_before' in criteria:
-                        creation_time = datetime.datetime.fromisoformat(data.get('creation_time', '9999-12-31T23:59:59'))
-                        if creation_time > datetime.datetime.fromisoformat(criteria['created_before']):
+                    if "created_before" in criteria:
+                        creation_time = datetime.datetime.fromisoformat(
+                            data.get("creation_time", "9999-12-31T23:59:59")
+                        )
+                        if creation_time > datetime.datetime.fromisoformat(
+                            criteria["created_before"]
+                        ):
                             matches = False
 
                     # Tag criteria
-                    if 'tags' in criteria and 'tags' in data:
-                        for tag in criteria['tags']:
-                            if tag not in data['tags']:
+                    if "tags" in criteria and "tags" in data:
+                        for tag in criteria["tags"]:
+                            if tag not in data["tags"]:
                                 matches = False
                                 break
 
                     # Parent criteria
-                    if 'parent_id' in criteria:
-                        if 'parent_ids' not in data or criteria['parent_id'] not in data['parent_ids']:
+                    if "parent_id" in criteria:
+                        if (
+                            "parent_ids" not in data
+                            or criteria["parent_id"] not in data["parent_ids"]
+                        ):
                             matches = False
 
                     # Content type criteria
-                    if 'content_type' in criteria and data.get('content_type') != criteria['content_type']:
+                    if (
+                        "content_type" in criteria
+                        and data.get("content_type") != criteria["content_type"]
+                    ):
                         matches = False
 
                     # Tool criteria - more complex as it requires checking transformation history
-                    if 'tool_used' in criteria and 'transformation_history' in data:
+                    if "tool_used" in criteria and "transformation_history" in data:
                         tool_found = False
-                        for step in data['transformation_history']:
-                            if step.get('tool') == criteria['tool_used']:
+                        for step in data["transformation_history"]:
+                            if step.get("tool") == criteria["tool_used"]:
                                 tool_found = True
                                 break
                         if not tool_found:
                             matches = False
 
                     # Access criteria - check who accessed the data
-                    if 'accessed_by' in criteria and 'access_history' in data:
+                    if "accessed_by" in criteria and "access_history" in data:
                         access_found = False
-                        for access in data['access_history']:
-                            if access.get('accessor') == criteria['accessed_by']:
+                        for access in data["access_history"]:
+                            if access.get("accessor") == criteria["accessed_by"]:
                                 access_found = True
                                 break
                         if not access_found:
@@ -2712,7 +2799,7 @@ class SecurityManager:
 
                     # If all criteria matched, reconstruct the provenance object and add to results
                     if matches:
-                        provenance = self._read_provenance_log(data['data_id'])
+                        provenance = self._read_provenance_log(data["data_id"])
                         if provenance:
                             results.append(provenance)
                             count += 1
@@ -2726,7 +2813,7 @@ class SecurityManager:
                 event_type="provenance_search",
                 user=self.current_user or "system",
                 action="search_provenance",
-                details={"criteria": criteria, "results_count": len(results)}
+                details={"criteria": criteria, "results_count": len(results)},
             )
 
             return results
@@ -2735,8 +2822,9 @@ class SecurityManager:
             self.logger.error(f"Error searching provenance: {str(e)}")
             return []
 
-    def get_data_lineage_graph(self, data_id: str, max_depth: int = 3,
-                              direction: str = "both") -> LineageGraphDict:
+    def get_data_lineage_graph(
+        self, data_id: str, max_depth: int = 3, direction: str = "both"
+    ) -> LineageGraphDict:
         """
         Generate a lineage graph for a specific data item.
 
@@ -2760,11 +2848,7 @@ class SecurityManager:
             return {}
 
         # Initialize graph structure
-        graph = {
-            "nodes": [],
-            "edges": [],
-            "root_id": data_id
-        }
+        graph = {"nodes": [], "edges": [], "root_id": data_id}
 
         # Set of processed nodes to avoid cycles
         processed_nodes = set()
@@ -2791,7 +2875,7 @@ class SecurityManager:
                 "source": provenance.source,
                 "creator": provenance.creator,
                 "creation_time": provenance.creation_time,
-                "version": provenance.version
+                "version": provenance.version,
             }
 
             # Add tags if available
@@ -2804,25 +2888,21 @@ class SecurityManager:
             if direction in ["upstream", "both"]:
                 for parent_id in provenance.parent_ids:
                     # Add edge from parent to node
-                    edge = {
-                        "source": parent_id,
-                        "target": node_id,
-                        "type": "parent"
-                    }
+                    edge = {"source": parent_id, "target": node_id, "type": "parent"}
                     graph["edges"].append(edge)
 
                     # Recurse to process parent
                     process_node(parent_id, current_depth + 1, "parent")
 
             # Process downstream (derived) if direction allows
-            if direction in ["downstream", "both"] and hasattr(provenance, "lineage") and provenance.lineage:
+            if (
+                direction in ["downstream", "both"]
+                and hasattr(provenance, "lineage")
+                and provenance.lineage
+            ):
                 for derived_id in provenance.lineage.derived_datasets:
                     # Add edge from node to derived
-                    edge = {
-                        "source": node_id,
-                        "target": derived_id,
-                        "type": "derived"
-                    }
+                    edge = {"source": node_id, "target": derived_id, "type": "derived"}
                     graph["edges"].append(edge)
 
                     # Recurse to process derived
@@ -2842,16 +2922,23 @@ class SecurityManager:
                 "max_depth": max_depth,
                 "direction": direction,
                 "node_count": len(graph["nodes"]),
-                "edge_count": len(graph["edges"])
-            }
+                "edge_count": len(graph["edges"]),
+            },
         )
 
         return graph
 
-    def _log_audit_event(self, event_type: str, user: str, action: str,
-                        resource_id: Optional[str] = None, resource_type: Optional[str] = None,
-                        details: Optional[Dict[str, Any]] = None, source_ip: Optional[str] = None,
-                        success: bool = True) -> None:
+    def _log_audit_event(
+        self,
+        event_type: str,
+        user: str,
+        action: str,
+        resource_id: Optional[str] = None,
+        resource_type: Optional[str] = None,
+        details: Optional[Dict[str, Any]] = None,
+        source_ip: Optional[str] = None,
+        success: bool = True,
+    ) -> None:
         """
         Log an audit event.
 
@@ -2880,7 +2967,7 @@ class SecurityManager:
             status="success" if success else "failure",
             details=details or {},
             source_ip=source_ip,
-            success=success
+            success=success,
         )
 
         # Write to audit log
@@ -2892,14 +2979,21 @@ class SecurityManager:
             metrics.event(
                 name="security_audit_event",
                 data=asdict(event),
-                labels={"event_type": event_type, "user": user, "success": str(success)}
+                labels={"event_type": event_type, "user": user, "success": str(success)},
             )
 
-    def record_transformation_step(self, data_id: str, operation: str, description: str,
-                                  tool: str, parameters: Dict[str, Any],
-                                  inputs: List[str], outputs: Optional[List[str]] = None,
-                                  metrics: Optional[Dict[str, Any]] = None,
-                                  environment: Optional[Dict[str, Any]] = None) -> Optional[str]:
+    def record_transformation_step(
+        self,
+        data_id: str,
+        operation: str,
+        description: str,
+        tool: str,
+        parameters: Dict[str, Any],
+        inputs: List[str],
+        outputs: Optional[List[str]] = None,
+        metrics: Optional[Dict[str, Any]] = None,
+        environment: Optional[Dict[str, Any]] = None,
+    ) -> Optional[str]:
         """
         Record a data transformation step in the provenance information.
 
@@ -2932,7 +3026,9 @@ class SecurityManager:
             # Get existing provenance
             provenance = self.get_provenance(data_id, record_access=False)
             if not provenance:
-                self.logger.warning(f"Cannot record transformation: Provenance not found for data {data_id}")
+                self.logger.warning(
+                    f"Cannot record transformation: Provenance not found for data {data_id}"
+                )
                 return None
 
             # Generate step ID
@@ -2952,7 +3048,7 @@ class SecurityManager:
                 outputs=outputs or [],
                 metrics=metrics or {},
                 environment=environment or {},
-                operator=self.current_user or "system"
+                operator=self.current_user or "system",
             )
 
             # Add to transformation history
@@ -2968,7 +3064,7 @@ class SecurityManager:
                     source_system="internal",
                     source_type="transformation",
                     extraction_method="internal",
-                    extraction_time=datetime.datetime.now().isoformat()
+                    extraction_time=datetime.datetime.now().isoformat(),
                 )
 
             # Add step ID to lineage transformations
@@ -2985,21 +3081,21 @@ class SecurityManager:
                 action=operation,
                 resource_id=data_id,
                 resource_type="data",
-                details={
-                    "step_id": step_id,
-                    "tool": tool,
-                    "inputs": inputs
-                }
+                details={"step_id": step_id, "tool": tool, "inputs": inputs},
             )
 
             self.logger.info(f"Started transformation step {step_id} on data {data_id}")
             return step_id
 
-    def complete_transformation_step(self, data_id: str, step_id: str,
-                                   status: str = "completed",
-                                   error: Optional[str] = None,
-                                   outputs: Optional[List[str]] = None,
-                                   metrics: Optional[Dict[str, Any]] = None) -> bool:
+    def complete_transformation_step(
+        self,
+        data_id: str,
+        step_id: str,
+        status: str = "completed",
+        error: Optional[str] = None,
+        outputs: Optional[List[str]] = None,
+        metrics: Optional[Dict[str, Any]] = None,
+    ) -> bool:
         """
         Mark a transformation step as completed and update its details.
 
@@ -3025,7 +3121,9 @@ class SecurityManager:
             # Get existing provenance
             provenance = self.get_provenance(data_id, record_access=False)
             if not provenance:
-                self.logger.warning(f"Cannot complete transformation: Provenance not found for data {data_id}")
+                self.logger.warning(
+                    f"Cannot complete transformation: Provenance not found for data {data_id}"
+                )
                 return False
 
             # Find the step
@@ -3045,7 +3143,9 @@ class SecurityManager:
                     break
 
             if not step_found:
-                self.logger.warning(f"Step {step_id} not found in transformation history for data {data_id}")
+                self.logger.warning(
+                    f"Step {step_id} not found in transformation history for data {data_id}"
+                )
                 return False
 
             # Update provenance record
@@ -3059,18 +3159,20 @@ class SecurityManager:
                 action="complete_transformation",
                 resource_id=data_id,
                 resource_type="data",
-                details={
-                    "step_id": step_id,
-                    "status": status,
-                    "has_error": error is not None
-                }
+                details={"step_id": step_id, "status": status, "has_error": error is not None},
             )
 
-            self.logger.info(f"Completed transformation step {step_id} on data {data_id} with status {status}")
+            self.logger.info(
+                f"Completed transformation step {step_id} on data {data_id} with status {status}"
+            )
             return True
 
-    def verify_data_provenance(self, data_id: str, verification_method: str = "checksum",
-                            verification_details: Optional[Dict[str, Any]] = None) -> bool:
+    def verify_data_provenance(
+        self,
+        data_id: str,
+        verification_method: str = "checksum",
+        verification_details: Optional[Dict[str, Any]] = None,
+    ) -> bool:
         """
         Verify the integrity and provenance of a data item.
 
@@ -3097,7 +3199,9 @@ class SecurityManager:
             # Get existing provenance
             provenance = self.get_provenance(data_id, record_access=False)
             if not provenance:
-                self.logger.warning(f"Cannot verify provenance: Provenance not found for data {data_id}")
+                self.logger.warning(
+                    f"Cannot verify provenance: Provenance not found for data {data_id}"
+                )
                 return False
 
             verification_success = False
@@ -3105,14 +3209,16 @@ class SecurityManager:
                 "method": verification_method,
                 "timestamp": datetime.datetime.now().isoformat(),
                 "verifier": self.current_user or "system",
-                "details": verification_details or {}
+                "details": verification_details or {},
             }
 
             # Perform verification based on method
             if verification_method == "checksum":
                 # Checksum verification requires the actual data checksum to be provided
                 if not verification_details or "actual_checksum" not in verification_details:
-                    self.logger.error("Checksum verification requires 'actual_checksum' in verification_details")
+                    self.logger.error(
+                        "Checksum verification requires 'actual_checksum' in verification_details"
+                    )
                     verification_result["success"] = False
                     verification_result["error"] = "Missing actual_checksum in verification details"
                 else:
@@ -3135,7 +3241,9 @@ class SecurityManager:
                     parent = self.get_provenance(parent_id, record_access=False)
                     if not parent:
                         all_parents_valid = False
-                        invalid_parents.append({"parent_id": parent_id, "error": "Parent not found"})
+                        invalid_parents.append(
+                            {"parent_id": parent_id, "error": "Parent not found"}
+                        )
 
                 verification_success = all_parents_valid
                 verification_result["success"] = verification_success
@@ -3146,9 +3254,13 @@ class SecurityManager:
             elif verification_method == "external":
                 # External verification service
                 if not verification_details or "service_response" not in verification_details:
-                    self.logger.error("External verification requires 'service_response' in verification_details")
+                    self.logger.error(
+                        "External verification requires 'service_response' in verification_details"
+                    )
                     verification_result["success"] = False
-                    verification_result["error"] = "Missing service_response in verification details"
+                    verification_result["error"] = (
+                        "Missing service_response in verification details"
+                    )
                 else:
                     service_response = verification_details["service_response"]
                     verification_success = service_response.get("verified", False)
@@ -3180,14 +3292,13 @@ class SecurityManager:
                 action="verify_provenance",
                 resource_id=data_id,
                 resource_type="data",
-                details={
-                    "method": verification_method,
-                    "success": verification_success
-                },
-                success=verification_success
+                details={"method": verification_method, "success": verification_success},
+                success=verification_success,
             )
 
-            self.logger.info(f"Verified provenance for data {data_id} using {verification_method}: {verification_success}")
+            self.logger.info(
+                f"Verified provenance for data {data_id} using {verification_method}: {verification_success}"
+            )
             return verification_success
 
     def _write_audit_log(self, event: AuditLogEntry) -> bool:
@@ -3211,7 +3322,7 @@ class SecurityManager:
                 os.makedirs(audit_log_dir, exist_ok=True)
 
             # Write event as JSON
-            with open(audit_log_path, 'a') as f:
+            with open(audit_log_path, "a") as f:
                 f.write(json.dumps(asdict(event)) + "\n")
 
             return True
@@ -3219,8 +3330,9 @@ class SecurityManager:
             self.logger.error(f"Error writing audit log: {str(e)}")
             return False
 
-    def get_audit_logs(self, filters: Optional[Dict[str, Any]] = None,
-                     limit: int = 100, offset: int = 0) -> List[AuditLogEntry]:
+    def get_audit_logs(
+        self, filters: Optional[Dict[str, Any]] = None, limit: int = 100, offset: int = 0
+    ) -> List[AuditLogEntry]:
         """
         Get audit logs, optionally filtered.
 
@@ -3245,7 +3357,7 @@ class SecurityManager:
 
         try:
             logs = []
-            with open(audit_log_path, 'r') as f:
+            with open(audit_log_path, "r") as f:
                 for line in f:
                     try:
                         data = json.loads(line.strip())
@@ -3273,7 +3385,7 @@ class SecurityManager:
                             status=data["status"],
                             details=data["details"],
                             source_ip=data.get("source_ip"),
-                            success=data["success"]
+                            success=data["success"],
                         )
 
                         logs.append(entry)
@@ -3285,7 +3397,7 @@ class SecurityManager:
                         self.logger.error(f"Error parsing audit log entry: {str(e)}")
 
             # Apply offset
-            return logs[offset:offset+limit]
+            return logs[offset : offset + limit]
 
         except Exception as e:
             self.logger.error(f"Error reading audit logs: {str(e)}")
@@ -3293,9 +3405,15 @@ class SecurityManager:
 
     # UCAN-specific methods for capability-based authorization
 
-    def delegate_encryption_capability(self, key_id: str, delegator_did: str, delegatee_did: str,
-                                      action: str, caveats: Optional[Dict[str, Any]] = None,
-                                      ttl: Optional[int] = None) -> Optional[str]:
+    def delegate_encryption_capability(
+        self,
+        key_id: str,
+        delegator_did: str,
+        delegatee_did: str,
+        action: str,
+        caveats: Optional[Dict[str, Any]] = None,
+        ttl: Optional[int] = None,
+    ) -> Optional[str]:
         """
         Delegate a capability for an encryption key to another DID.
 
@@ -3351,12 +3469,16 @@ class SecurityManager:
 
         # Check if delegator has the capability
         if not self._check_key_capability(delegator_did, key_id, action):
-            self.logger.error(f"Delegator {delegator_did} does not have {action} capability for key {key_id}")
+            self.logger.error(
+                f"Delegator {delegator_did} does not have {action} capability for key {key_id}"
+            )
             return None
 
         # Check if delegator has delegation capability
         if not self._check_key_capability(delegator_did, key_id, "delegate"):
-            self.logger.error(f"Delegator {delegator_did} does not have delegate capability for key {key_id}")
+            self.logger.error(
+                f"Delegator {delegator_did} does not have delegate capability for key {key_id}"
+            )
             return None
 
         # Create delegation
@@ -3366,7 +3488,7 @@ class SecurityManager:
             resource=key_id,
             action=action,
             caveats=caveats,
-            ttl=ttl or self.config.default_capability_ttl
+            ttl=ttl or self.config.default_capability_ttl,
         )
 
         if token:
@@ -3381,11 +3503,13 @@ class SecurityManager:
                     "delegator_did": delegator_did,
                     "delegatee_did": delegatee_did,
                     "action": action,
-                    "token_id": token.token_id
-                }
+                    "token_id": token.token_id,
+                },
             )
 
-            self.logger.info(f"Delegated {action} capability for key {key_id} from {delegator_did} to {delegatee_did}")
+            self.logger.info(
+                f"Delegated {action} capability for key {key_id} from {delegator_did} to {delegatee_did}"
+            )
             return token.token_id
 
         return None
@@ -3440,7 +3564,9 @@ class SecurityManager:
 
         # Check if revoker is issuer or audience
         if revoker_did != token.issuer and revoker_did != token.audience:
-            self.logger.error(f"Revoker {revoker_did} is neither issuer nor audience of token {token_id}")
+            self.logger.error(
+                f"Revoker {revoker_did} is neither issuer nor audience of token {token_id}"
+            )
             return False
 
         # Revoke token
@@ -3460,20 +3586,21 @@ class SecurityManager:
                 action="revoke_capability",
                 resource_id=key_id,
                 resource_type="encryption_key",
-                details={
-                    "revoker_did": revoker_did,
-                    "token_id": token_id,
-                    "reason": reason
-                }
+                details={"revoker_did": revoker_did, "token_id": token_id, "reason": reason},
             )
 
             self.logger.info(f"Revoked token {token_id} by {revoker_did} for reason: {reason}")
 
         return revoked
 
-    def generate_provenance_report(self, data_id: str, report_type: str = "detailed",
-                                 format: str = "json", include_lineage: bool = True,
-                                 include_access_history: bool = True) -> ProvenanceReportDict:
+    def generate_provenance_report(
+        self,
+        data_id: str,
+        report_type: str = "detailed",
+        format: str = "json",
+        include_lineage: bool = True,
+        include_access_history: bool = True,
+    ) -> ProvenanceReportDict:
         """
         Generate a comprehensive report of a data item's provenance information.
 
@@ -3525,7 +3652,7 @@ class SecurityManager:
                 "verification_status": provenance.verification_status,
                 "checksum": provenance.checksum,
                 "last_verified": self._get_last_verification_time(provenance),
-            }
+            },
         }
 
         # Add detailed information based on report type
@@ -3536,7 +3663,7 @@ class SecurityManager:
             # Include parent/child relationships
             report["relationships"] = {
                 "parent_ids": provenance.parent_ids,
-                "derived_data": self._get_derived_data_ids(data_id)
+                "derived_data": self._get_derived_data_ids(data_id),
             }
 
             # Include compliance info if available
@@ -3599,13 +3726,21 @@ class SecurityManager:
             report["lineage"] = lineage_info
 
         # Include access history if requested
-        if include_access_history and hasattr(provenance, "access_history") and provenance.access_history:
+        if (
+            include_access_history
+            and hasattr(provenance, "access_history")
+            and provenance.access_history
+        ):
             if report_type in ["summary", "compliance"]:
                 # For summary, just include count and last access
                 report["access_summary"] = {
                     "total_accesses": len(provenance.access_history),
-                    "last_access": provenance.access_history[-1]["timestamp"] if provenance.access_history else None,
-                    "unique_accessors": len(set(entry["user"] for entry in provenance.access_history))
+                    "last_access": provenance.access_history[-1]["timestamp"]
+                    if provenance.access_history
+                    else None,
+                    "unique_accessors": len(
+                        set(entry["user"] for entry in provenance.access_history)
+                    ),
                 }
             else:
                 # For detailed/technical, include full history
@@ -3615,11 +3750,13 @@ class SecurityManager:
                     # For detailed, include simplified access entries
                     simplified_history = []
                     for entry in provenance.access_history:
-                        simplified_history.append({
-                            "user": entry["user"],
-                            "timestamp": entry["timestamp"],
-                            "operation": entry["operation"]
-                        })
+                        simplified_history.append(
+                            {
+                                "user": entry["user"],
+                                "timestamp": entry["timestamp"],
+                                "operation": entry["operation"],
+                            }
+                        )
                     report["access_history"] = simplified_history
 
         # Format the report if needed
@@ -3638,7 +3775,8 @@ class SecurityManager:
         if hasattr(provenance, "access_history") and provenance.access_history:
             # Look for verification operations in access history
             verifications = [
-                entry["timestamp"] for entry in provenance.access_history
+                entry["timestamp"]
+                for entry in provenance.access_history
                 if entry.get("operation") == "verify"
             ]
             if verifications:
@@ -3704,7 +3842,7 @@ class SecurityManager:
         if "transformation_history" in report and report["transformation_history"]:
             text_content.append("\nTRANSFORMATION HISTORY:")
             for i, step in enumerate(report["transformation_history"]):
-                text_content.append(f"\n  Step {i+1}: {step['operation']}")
+                text_content.append(f"\n  Step {i + 1}: {step['operation']}")
                 text_content.append(f"    Description: {step['description']}")
                 text_content.append(f"    Tool: {step['tool']}")
                 text_content.append(f"    Started: {step['start_time']}")
@@ -3716,7 +3854,9 @@ class SecurityManager:
         if "access_history" in report and report["access_history"]:
             text_content.append("\nACCESS HISTORY:")
             for entry in report["access_history"]:
-                text_content.append(f"  {entry['timestamp']} - {entry['user']} - {entry['operation']}")
+                text_content.append(
+                    f"  {entry['timestamp']} - {entry['user']} - {entry['operation']}"
+                )
         elif "access_summary" in report:
             text_content.append("\nACCESS SUMMARY:")
             for key, value in report["access_summary"].items():
@@ -3799,11 +3939,13 @@ class SecurityManager:
         if "transformation_history" in report and report["transformation_history"]:
             html_content.append("<h2>Transformation History</h2>")
             html_content.append("<table>")
-            html_content.append("<tr><th>Step</th><th>Operation</th><th>Description</th><th>Tool</th><th>Started</th><th>Status</th><th>Completed</th></tr>")
+            html_content.append(
+                "<tr><th>Step</th><th>Operation</th><th>Description</th><th>Tool</th><th>Started</th><th>Status</th><th>Completed</th></tr>"
+            )
             for i, step in enumerate(report["transformation_history"]):
                 end_time = step.get("end_time", "")
                 html_content.append(f"<tr>")
-                html_content.append(f"<td>{i+1}</td>")
+                html_content.append(f"<td>{i + 1}</td>")
                 html_content.append(f"<td>{step['operation']}</td>")
                 html_content.append(f"<td>{step['description']}</td>")
                 html_content.append(f"<td>{step['tool']}</td>")
@@ -3902,11 +4044,17 @@ class SecurityManager:
         if "transformation_history" in report and report["transformation_history"]:
             md_content.append("## Transformation History")
             md_content.append("")
-            md_content.append("| Step | Operation | Description | Tool | Started | Status | Completed |")
-            md_content.append("| ---- | --------- | ----------- | ---- | ------- | ------ | --------- |")
+            md_content.append(
+                "| Step | Operation | Description | Tool | Started | Status | Completed |"
+            )
+            md_content.append(
+                "| ---- | --------- | ----------- | ---- | ------- | ------ | --------- |"
+            )
             for i, step in enumerate(report["transformation_history"]):
                 end_time = step.get("end_time", "")
-                md_content.append(f"| {i+1} | {step['operation']} | {step['description']} | {step['tool']} | {step['start_time']} | {step['status']} | {end_time} |")
+                md_content.append(
+                    f"| {i + 1} | {step['operation']} | {step['description']} | {step['tool']} | {step['start_time']} | {step['status']} | {end_time} |"
+                )
             md_content.append("")
 
         # Access history or summary
@@ -3916,7 +4064,9 @@ class SecurityManager:
             md_content.append("| Timestamp | User | Operation |")
             md_content.append("| --------- | ---- | --------- |")
             for entry in report["access_history"]:
-                md_content.append(f"| {entry['timestamp']} | {entry['user']} | {entry['operation']} |")
+                md_content.append(
+                    f"| {entry['timestamp']} | {entry['user']} | {entry['operation']} |"
+                )
             md_content.append("")
         elif "access_summary" in report:
             md_content.append("## Access Summary")
@@ -3931,9 +4081,14 @@ class SecurityManager:
         md_report["markdown_content"] = "\n".join(md_content)
         return md_report
 
-    def generate_lineage_visualization(self, data_id: str, format: str = "dot",
-                                     max_depth: int = 3, direction: str = "both",
-                                     include_attributes: bool = False) -> LineageVisualizationDict:
+    def generate_lineage_visualization(
+        self,
+        data_id: str,
+        format: str = "dot",
+        max_depth: int = 3,
+        direction: str = "both",
+        include_attributes: bool = False,
+    ) -> LineageVisualizationDict:
         """
         Generate a visualization of data lineage for a specific data item.
 
@@ -3970,7 +4125,7 @@ class SecurityManager:
                     "type": prov.data_type,
                     "creator": prov.creator,
                     "creation_time": prov.creation_time,
-                    "label": self._get_node_label(prov)
+                    "label": self._get_node_label(prov),
                 }
 
                 if include_attributes:
@@ -3978,15 +4133,11 @@ class SecurityManager:
                         "size_bytes": prov.size_bytes,
                         "record_count": prov.record_count,
                         "verification_status": prov.verification_status,
-                        "tags": prov.tags if hasattr(prov, "tags") else []
+                        "tags": prov.tags if hasattr(prov, "tags") else [],
                     }
             else:
                 # Basic info if provenance not available
-                nodes_info[node_id] = {
-                    "id": node_id,
-                    "label": node_id,
-                    "type": "unknown"
-                }
+                nodes_info[node_id] = {"id": node_id, "label": node_id, "type": "unknown"}
 
         # Get edge information
         edges_info = []
@@ -3994,7 +4145,7 @@ class SecurityManager:
             edge_info = {
                 "source": edge["source"],
                 "target": edge["target"],
-                "relationship": edge["relationship"]
+                "relationship": edge["relationship"],
             }
 
             if include_attributes and "attributes" in edge:
@@ -4009,7 +4160,7 @@ class SecurityManager:
             "direction": direction,
             "nodes": list(nodes_info.values()),
             "edges": edges_info,
-            "generated_at": datetime.datetime.now().isoformat()
+            "generated_at": datetime.datetime.now().isoformat(),
         }
 
         # Convert to requested format
@@ -4034,7 +4185,9 @@ class SecurityManager:
             return provenance.metadata["title"]
 
         # Create a label based on data type and creation time
-        creation_date = datetime.datetime.fromisoformat(provenance.creation_time).strftime("%Y-%m-%d")
+        creation_date = datetime.datetime.fromisoformat(provenance.creation_time).strftime(
+            "%Y-%m-%d"
+        )
         return f"{provenance.data_type} ({creation_date})"
 
     def _format_lineage_as_dot(self, visualization: Dict[str, Any]) -> FormattedLineageDotDict:
@@ -4043,9 +4196,9 @@ class SecurityManager:
         dot_lines = []
 
         # Start the digraph
-        dot_lines.append(f'digraph DataLineage {{')
-        dot_lines.append('  rankdir=LR;')
-        dot_lines.append('  node [shape=box, style=filled];')
+        dot_lines.append(f"digraph DataLineage {{")
+        dot_lines.append("  rankdir=LR;")
+        dot_lines.append("  node [shape=box, style=filled];")
 
         # Add nodes
         for node in visualization["nodes"]:
@@ -4069,19 +4222,21 @@ class SecurityManager:
             dot_lines.append(f'  "{source}" -> "{target}" [label="{relationship}"];')
 
         # Close the graph
-        dot_lines.append('}')
+        dot_lines.append("}")
 
         # Join all DOT content
         dot_visualization["dot_content"] = "\n".join(dot_lines)
         return dot_visualization
 
-    def _format_lineage_as_mermaid(self, visualization: Dict[str, Any]) -> FormattedLineageMermaidDict:
+    def _format_lineage_as_mermaid(
+        self, visualization: Dict[str, Any]
+    ) -> FormattedLineageMermaidDict:
         """Format lineage visualization as Mermaid flowchart."""
         mermaid_visualization = visualization.copy()
         mermaid_lines = []
 
         # Start the flowchart
-        mermaid_lines.append('graph LR')
+        mermaid_lines.append("graph LR")
 
         # Add nodes
         for node in visualization["nodes"]:
@@ -4128,7 +4283,7 @@ class SecurityManager:
                 "id": node["id"],
                 "label": node["label"],
                 "type": node["type"],
-                "group": self._get_node_group(node["type"])
+                "group": self._get_node_group(node["type"]),
             }
 
             # Add any additional attributes
@@ -4144,7 +4299,7 @@ class SecurityManager:
                 "source": node_index_map[edge["source"]],
                 "target": node_index_map[edge["target"]],
                 "relationship": edge["relationship"],
-                "value": 1  # Default strength
+                "value": 1,  # Default strength
             }
 
             # Add any additional attributes
@@ -4154,10 +4309,7 @@ class SecurityManager:
             d3_links.append(d3_link)
 
         # Add D3 specific formats
-        d3_visualization["d3_data"] = {
-            "nodes": d3_nodes,
-            "links": d3_links
-        }
+        d3_visualization["d3_data"] = {"nodes": d3_nodes, "links": d3_links}
 
         return d3_visualization
 
@@ -4165,11 +4317,11 @@ class SecurityManager:
         """Helper to determine node color based on type for GraphViz."""
         type_colors = {
             "dataset": "#a1d99b",  # Green
-            "model": "#9ecae1",    # Blue
-            "index": "#bcbddc",    # Purple
-            "embedding": "#fdae6b", # Orange
-            "transformation": "#bdbdbd", # Gray
-            "unknown": "#f7f7f7"   # Light gray
+            "model": "#9ecae1",  # Blue
+            "index": "#bcbddc",  # Purple
+            "embedding": "#fdae6b",  # Orange
+            "transformation": "#bdbdbd",  # Gray
+            "unknown": "#f7f7f7",  # Light gray
         }
         return type_colors.get(node_type.lower(), "#f7f7f7")
 
@@ -4181,7 +4333,7 @@ class SecurityManager:
             "index": ":::index",
             "embedding": ":::embedding",
             "transformation": ":::transformation",
-            "unknown": ""
+            "unknown": "",
         }
         return type_styles.get(node_type.lower(), "")
 
@@ -4193,7 +4345,7 @@ class SecurityManager:
             "index": 3,
             "embedding": 4,
             "transformation": 5,
-            "unknown": 0
+            "unknown": 0,
         }
         return type_groups.get(node_type.lower(), 0)
 
@@ -4231,6 +4383,7 @@ def require_authentication(func):
     Returns:
         Callable: Decorated function
     """
+
     @wraps(func)
     def wrapper(*args, **kwargs):
         manager = get_security_manager()
@@ -4254,6 +4407,7 @@ def require_access(resource_id_param: str, access_type: str):
     Returns:
         Callable: Decorator function
     """
+
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -4268,6 +4422,7 @@ def require_access(resource_id_param: str, access_type: str):
             elif args:
                 # Get function signature
                 import inspect
+
                 sig = inspect.signature(func)
                 parameters = list(sig.parameters.keys())
 
@@ -4310,20 +4465,22 @@ def encrypted_context(data_or_file: Union[bytes, str, BinaryIO], key_id: Optiona
     manager = get_security_manager()
 
     # Determine if we have data or a file
-    is_file = hasattr(data_or_file, 'read') or (isinstance(data_or_file, str) and os.path.exists(data_or_file))
+    is_file = hasattr(data_or_file, "read") or (
+        isinstance(data_or_file, str) and os.path.exists(data_or_file)
+    )
     is_already_encrypted = False
 
     try:
         if is_file:
             # Handle file
-            if hasattr(data_or_file, 'read'):
+            if hasattr(data_or_file, "read"):
                 # File-like object
                 original_position = data_or_file.tell()
                 file_data = data_or_file.read()
                 data_or_file.seek(original_position)
             else:
                 # File path
-                with open(data_or_file, 'rb') as f:
+                with open(data_or_file, "rb") as f:
                     file_data = f.read()
 
             # Check if file is already encrypted
@@ -4377,7 +4534,7 @@ if __name__ == "__main__":
         encryption_algorithm="AES-256",
         log_all_access=True,
         track_provenance=True,
-        use_ucan=UCAN_AVAILABLE
+        use_ucan=UCAN_AVAILABLE,
     )
 
     security = initialize_security(config)
@@ -4408,7 +4565,7 @@ if __name__ == "__main__":
                 delegator_did=key.ucan_did,
                 delegatee_did=bob_keypair.did,
                 action="encrypt",
-                caveats={"max_uses": 5}
+                caveats={"max_uses": 5},
             )
 
             if token_id:
@@ -4425,7 +4582,9 @@ if __name__ == "__main__":
                 print(f"Metadata: {metadata}")
 
                 # Revoke Bob's capability
-                revoked = security.revoke_encryption_capability(token_id, key.ucan_did, "No longer needed")
+                revoked = security.revoke_encryption_capability(
+                    token_id, key.ucan_did, "No longer needed"
+                )
                 print(f"Revoked Bob's encrypt capability: {revoked}")
 
                 # Check if capability is revoked
@@ -4457,7 +4616,7 @@ if __name__ == "__main__":
         process_steps=[{"name": "test-step", "timestamp": datetime.datetime.now().isoformat()}],
         parent_ids=[],
         checksum="12345",
-        metadata={"test": "value"}
+        metadata={"test": "value"},
     )
     print(f"Recorded provenance for {provenance.data_id} from {provenance.source}")
 

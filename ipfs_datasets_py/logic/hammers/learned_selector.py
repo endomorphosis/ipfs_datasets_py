@@ -354,7 +354,9 @@ class LearnedModelArtifact:
                     f"LearnedModelArtifact.weights key {key!r} is not a declared "
                     "feature_names entry"
                 )
-            _require_finite_float(value, field_name=f"weights[{key!r}]", owner="LearnedModelArtifact")
+            _require_finite_float(
+                value, field_name=f"weights[{key!r}]", owner="LearnedModelArtifact"
+            )
         _require_finite_float(self.bias, field_name="bias", owner="LearnedModelArtifact")
         if not isinstance(self.description, str):
             raise ModelArtifactError("LearnedModelArtifact.description must be a string")
@@ -654,8 +656,7 @@ class LearnedSelectorConfig:
         if self.enabled:
             if not self.model_path or not isinstance(self.model_path, str):
                 raise LearnedSelectorConfigError(
-                    "LearnedSelectorConfig.model_path must be a non-empty string when "
-                    "enabled=True"
+                    "LearnedSelectorConfig.model_path must be a non-empty string when enabled=True"
                 )
             if (
                 not self.pinned_model_digest
@@ -780,7 +781,9 @@ class LearnedSelectionResult:
                 field_name="feature_version",
                 owner="LearnedSelectionResult",
             )
-        _require_finite_float(self.latency_ms, field_name="latency_ms", owner="LearnedSelectionResult")
+        _require_finite_float(
+            self.latency_ms, field_name="latency_ms", owner="LearnedSelectionResult"
+        )
         if self.latency_ms < 0:
             raise LearnedSelectorError("LearnedSelectionResult.latency_ms must be non-negative")
 

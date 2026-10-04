@@ -54,7 +54,7 @@ from ipfs_datasets_py.knowledge_graphs.extraction import (
     Relationship,
     KnowledgeGraph,
     KnowledgeGraphExtractor,
-    KnowledgeGraphExtractorWithValidation
+    KnowledgeGraphExtractorWithValidation,
 )
 ```
 
@@ -65,7 +65,7 @@ from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import (
     Relationship,
     KnowledgeGraph,
     KnowledgeGraphExtractor,
-    KnowledgeGraphExtractorWithValidation
+    KnowledgeGraphExtractorWithValidation,
 )
 ```
 

@@ -32,9 +32,7 @@ from ..protocols import (
 
 EVM_NAMESPACE = "eip155"
 ETHEREUM_MAINNET_CHAIN_ID = 1
-ETHEREUM_MAINNET_GENESIS_HASH = (
-    "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3"
-)
+ETHEREUM_MAINNET_GENESIS_HASH = "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3"
 
 _ADDRESS_RE = re.compile(r"^0x[0-9a-fA-F]{40}$")
 _HASH_RE = re.compile(r"^0x[0-9a-fA-F]{64}$")
@@ -300,13 +298,10 @@ class EthereumLedgerProvider:
         genesis_hash = normalize_hash(genesis.get("hash"), field="genesis.hash")
         if chain_id != self._network.chain_id:
             raise EthereumIdentityError(
-                f"provider chain id {chain_id} does not match expected "
-                f"{self._network.chain_id}"
+                f"provider chain id {chain_id} does not match expected {self._network.chain_id}"
             )
         if genesis_hash != self._network.genesis_hash:
-            raise EthereumIdentityError(
-                "provider genesis hash does not match configured network"
-            )
+            raise EthereumIdentityError("provider genesis hash does not match configured network")
         self._validated_chain = self.chain
         return self._validated_chain
 
@@ -467,9 +462,7 @@ class EthereumLedgerProvider:
             budget=budget,
         )
         transactions = block.get("transactions")
-        if not isinstance(transactions, Sequence) or isinstance(
-            transactions, (str, bytes)
-        ):
+        if not isinstance(transactions, Sequence) or isinstance(transactions, (str, bytes)):
             raise ProviderError("Ethereum block transactions must be a sequence")
         if len(transactions) > context.limits.max_items:
             raise ResourceLimitError("Ethereum block exceeds max_items")
@@ -480,9 +473,7 @@ class EthereumLedgerProvider:
             if not isinstance(transaction, Mapping):
                 raise ProviderError("Ethereum transaction must be a mapping")
             tx_hash = normalize_hash(transaction.get("hash"), field="transaction.hash")
-            receipts.append(
-                await self.get_receipt(tx_hash, context=context, budget=budget)
-            )
+            receipts.append(await self.get_receipt(tx_hash, context=context, budget=budget))
             if self._include_traces:
                 try:
                     traces[tx_hash] = await self.trace_transaction(

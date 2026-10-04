@@ -251,12 +251,8 @@ def _document(
             "claim:equivalence",
             ProtocolClaimKind.EQUIVALENCE,
             "The two opaque observations are indistinguishable.",
-            left_terms=(
-                ProtocolTerm(sort="sort:message", literal="left-observation"),
-            ),
-            right_terms=(
-                ProtocolTerm(sort="sort:message", literal="right-observation"),
-            ),
+            left_terms=(ProtocolTerm(sort="sort:message", literal="left-observation"),),
+            right_terms=(ProtocolTerm(sort="sort:message", literal="right-observation"),),
             **_mapped(),
         ),
     )
@@ -322,9 +318,7 @@ def test_complete_model_covers_the_protocol_semantic_vocabulary() -> None:
     assert document.channels[0].adversary_access is AdversaryAccess.CONTROL
     assert document.trust_assumptions[0].trusted_key_ids == ("key:session",)
     authentication = next(
-        claim
-        for claim in document.claims
-        if claim.kind is ProtocolClaimKind.AUTHENTICATION
+        claim for claim in document.claims if claim.kind is ProtocolClaimKind.AUTHENTICATION
     )
     assert authentication.correspondence is CorrespondenceKind.INJECTIVE
 
@@ -411,9 +405,7 @@ def test_identity_is_order_independent_and_excludes_observations() -> None:
         ),
     ],
 )
-def test_source_and_threat_model_assumptions_fail_closed(
-    factory: object, error: str
-) -> None:
+def test_source_and_threat_model_assumptions_fail_closed(factory: object, error: str) -> None:
     with pytest.raises(ProtocolValidationError, match=error):
         factory()  # type: ignore[operator]
 
@@ -472,19 +464,13 @@ def test_channel_access_cannot_exceed_the_declared_adversary() -> None:
 @pytest.mark.parametrize(
     "mutate",
     [
-        lambda data: data["messages"][0]["payload"].update(
-            {"sort": "sort:nonce"}
-        ),
+        lambda data: data["messages"][0]["payload"].update({"sort": "sort:nonce"}),
         lambda data: data["messages"][0]["payload"]["arguments"][0].update(
             {"symbol_id": "name:unknown"}
         ),
         lambda data: data["messages"][0]["payload"].update({"arguments": []}),
-        lambda data: data["roles"][0].update(
-            {"parameter_ids": ["variable:responder-peer"]}
-        ),
-        lambda data: data["claims"][0].update(
-            {"reachable_event_ids": ["event:accept"]}
-        ),
+        lambda data: data["roles"][0].update({"parameter_ids": ["variable:responder-peer"]}),
+        lambda data: data["claims"][0].update({"reachable_event_ids": ["event:accept"]}),
     ],
 )
 def test_types_scopes_and_claim_shapes_are_checked(mutate: object) -> None:

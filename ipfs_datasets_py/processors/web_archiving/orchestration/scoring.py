@@ -42,18 +42,34 @@ class ProviderScore:
 
 
 DEFAULT_WEIGHTS_BY_MODE: Dict[OperationMode, ScoringWeights] = {
-    OperationMode.MAX_THROUGHPUT: ScoringWeights(throughput=0.40, success_rate=0.20, latency=0.15, quality=0.15, cost=0.10),
-    OperationMode.BALANCED: ScoringWeights(throughput=0.25, success_rate=0.25, latency=0.20, quality=0.20, cost=0.10),
-    OperationMode.MAX_QUALITY: ScoringWeights(throughput=0.10, success_rate=0.20, latency=0.15, quality=0.45, cost=0.10),
-    OperationMode.LOW_COST: ScoringWeights(throughput=0.15, success_rate=0.20, latency=0.15, quality=0.10, cost=0.40),
+    OperationMode.MAX_THROUGHPUT: ScoringWeights(
+        throughput=0.40, success_rate=0.20, latency=0.15, quality=0.15, cost=0.10
+    ),
+    OperationMode.BALANCED: ScoringWeights(
+        throughput=0.25, success_rate=0.25, latency=0.20, quality=0.20, cost=0.10
+    ),
+    OperationMode.MAX_QUALITY: ScoringWeights(
+        throughput=0.10, success_rate=0.20, latency=0.15, quality=0.45, cost=0.10
+    ),
+    OperationMode.LOW_COST: ScoringWeights(
+        throughput=0.15, success_rate=0.20, latency=0.15, quality=0.10, cost=0.40
+    ),
 }
 
 
 DEFAULT_TARGETS_BY_MODE: Dict[OperationMode, ScoringTargets] = {
-    OperationMode.MAX_THROUGHPUT: ScoringTargets(target_throughput_items_per_sec=3.0, latency_ceiling_ms=2500.0, max_cost_hint=1.0),
-    OperationMode.BALANCED: ScoringTargets(target_throughput_items_per_sec=2.0, latency_ceiling_ms=2000.0, max_cost_hint=1.0),
-    OperationMode.MAX_QUALITY: ScoringTargets(target_throughput_items_per_sec=1.0, latency_ceiling_ms=3000.0, max_cost_hint=1.0),
-    OperationMode.LOW_COST: ScoringTargets(target_throughput_items_per_sec=1.5, latency_ceiling_ms=3000.0, max_cost_hint=1.0),
+    OperationMode.MAX_THROUGHPUT: ScoringTargets(
+        target_throughput_items_per_sec=3.0, latency_ceiling_ms=2500.0, max_cost_hint=1.0
+    ),
+    OperationMode.BALANCED: ScoringTargets(
+        target_throughput_items_per_sec=2.0, latency_ceiling_ms=2000.0, max_cost_hint=1.0
+    ),
+    OperationMode.MAX_QUALITY: ScoringTargets(
+        target_throughput_items_per_sec=1.0, latency_ceiling_ms=3000.0, max_cost_hint=1.0
+    ),
+    OperationMode.LOW_COST: ScoringTargets(
+        target_throughput_items_per_sec=1.5, latency_ceiling_ms=3000.0, max_cost_hint=1.0
+    ),
 }
 
 
@@ -98,7 +114,9 @@ class ProviderScorer:
         targets = self.targets_by_mode[mode]
         snap = self.metrics_registry.snapshot(provider, operation, window_seconds=window)
 
-        throughput_norm = _clamp01(snap["throughput_items_per_sec"] / targets.target_throughput_items_per_sec)
+        throughput_norm = _clamp01(
+            snap["throughput_items_per_sec"] / targets.target_throughput_items_per_sec
+        )
         success_norm = _clamp01(snap["success_rate"])
         latency_norm = _clamp01(1.0 - (snap["avg_latency_ms"] / targets.latency_ceiling_ms))
         quality_norm = _clamp01(snap["avg_quality_score"])

@@ -24,9 +24,7 @@ from hashlib import sha256
 from pathlib import PurePosixPath
 from typing import Any
 
-ABBY_VOICE_BUCKET_AUDIO_INVENTORY_SCHEMA_VERSION = (
-    "abby_voice_bucket_audio_inventory_v1"
-)
+ABBY_VOICE_BUCKET_AUDIO_INVENTORY_SCHEMA_VERSION = "abby_voice_bucket_audio_inventory_v1"
 ABBY_VOICE_BUCKET_AUDIO_INVENTORY_VERSION = "1.0.0"
 
 _HASH20_RE = re.compile(r"^[0-9a-f]{20}$")
@@ -138,11 +136,7 @@ def classify_bucket_audio_object(
     """
 
     path = _normalized_path(path)
-    if (
-        isinstance(size_bytes, bool)
-        or not isinstance(size_bytes, int)
-        or size_bytes < 0
-    ):
+    if isinstance(size_bytes, bool) or not isinstance(size_bytes, int) or size_bytes < 0:
         raise ValueError("size_bytes must be a non-negative integer")
 
     parsed = PurePosixPath(path)
@@ -247,9 +241,7 @@ class NormalizedBucketAudioObject:
         if self.media_extension is not None:
             ext = _required_text(self.media_extension, label="media_extension").casefold()
             object.__setattr__(self, "media_extension", ext)
-        if self.legacy_text_hash is not None and not _HASH20_RE.fullmatch(
-            self.legacy_text_hash
-        ):
+        if self.legacy_text_hash is not None and not _HASH20_RE.fullmatch(self.legacy_text_hash):
             raise ValueError("legacy_text_hash must be 20 lowercase hex characters")
         if self.run_id is not None and _RUN_ID_RE.fullmatch(self.run_id) is None:
             raise ValueError("run_id must be a canonical production run id")
@@ -285,23 +277,20 @@ class NormalizedBucketAudioObject:
             run_id=value.get("run_id"),
             phase=value.get("phase"),
             schema_version=str(
-                value.get("schema_version")
-                or ABBY_VOICE_BUCKET_AUDIO_INVENTORY_SCHEMA_VERSION
+                value.get("schema_version") or ABBY_VOICE_BUCKET_AUDIO_INVENTORY_SCHEMA_VERSION
             ),
         )
 
     @classmethod
-    def from_discovered(
-        cls, value: Mapping[str, Any] | object
-    ) -> NormalizedBucketAudioObject:
+    def from_discovered(cls, value: Mapping[str, Any] | object) -> NormalizedBucketAudioObject:
         path = _mapping_or_attribute(value, "path", "key", "name")
         size = _mapping_or_attribute(value, "size_bytes", "size")
         xet_hash = _mapping_or_attribute(value, "xet_hash")
         path = _normalized_path(path)
         if isinstance(size, bool) or not isinstance(size, int) or size < 0:
             raise ValueError("size_bytes must be a non-negative integer")
-        object_class, media_extension, legacy_hash, run_id, phase = (
-            classify_bucket_audio_object(path=path, size_bytes=size)
+        object_class, media_extension, legacy_hash, run_id, phase = classify_bucket_audio_object(
+            path=path, size_bytes=size
         )
         return cls(
             path=path,
@@ -383,15 +372,7 @@ class AbbyVoiceBucketAudioInventory:
 
     @property
     def production_run_ids(self) -> tuple[str, ...]:
-        return tuple(
-            sorted(
-                {
-                    item.run_id
-                    for item in self.objects
-                    if item.run_id is not None
-                }
-            )
-        )
+        return tuple(sorted({item.run_id for item in self.objects if item.run_id is not None}))
 
     @property
     def response_linkable_objects(self) -> tuple[NormalizedBucketAudioObject, ...]:
@@ -427,19 +408,14 @@ class AbbyVoiceBucketAudioInventory:
         ):
             raise TypeError("inventory objects must be a sequence")
         return cls(
-            objects=tuple(
-                NormalizedBucketAudioObject.from_dict(item)
-                for item in objects_payload
-            ),
+            objects=tuple(NormalizedBucketAudioObject.from_dict(item) for item in objects_payload),
             bucket_id=str(value["bucket_id"]),
             listing_sha256=str(value["listing_sha256"]),
             schema_version=str(
-                value.get("schema_version")
-                or ABBY_VOICE_BUCKET_AUDIO_INVENTORY_SCHEMA_VERSION
+                value.get("schema_version") or ABBY_VOICE_BUCKET_AUDIO_INVENTORY_SCHEMA_VERSION
             ),
             inventory_version=str(
-                value.get("inventory_version")
-                or ABBY_VOICE_BUCKET_AUDIO_INVENTORY_VERSION
+                value.get("inventory_version") or ABBY_VOICE_BUCKET_AUDIO_INVENTORY_VERSION
             ),
             inventory_id=str(value.get("inventory_id") or ""),
         )
@@ -458,9 +434,7 @@ def build_bucket_audio_inventory(
         item = NormalizedBucketAudioObject.from_discovered(value)
         previous = by_path.get(item.path)
         if previous is not None and previous != item:
-            raise ValueError(
-                f"conflicting bucket inventory metadata for path {item.path!r}"
-            )
+            raise ValueError(f"conflicting bucket inventory metadata for path {item.path!r}")
         by_path[item.path] = item
     return AbbyVoiceBucketAudioInventory(
         objects=tuple(by_path.values()),

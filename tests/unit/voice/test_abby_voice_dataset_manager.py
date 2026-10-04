@@ -132,12 +132,15 @@ def test_manager_composes_strict_four_config_bundle_and_artifact_evidence():
         evaluation_support_bytes=b'{"metric":"pending"}\n',
     )
 
-    assert validate_bundle(
-        responses=result.bundle.responses,
-        templates=result.bundle.templates,
-        audio=result.bundle.audio,
-        provenance=result.bundle.provenance,
-    ) == result.bundle
+    assert (
+        validate_bundle(
+            responses=result.bundle.responses,
+            templates=result.bundle.templates,
+            audio=result.bundle.audio,
+            provenance=result.bundle.provenance,
+        )
+        == result.bundle
+    )
     assert set(result.four_config_bundle) == {
         ABBY_VOICE_RESPONSE_V2,
         ABBY_VOICE_TEMPLATE_V2,
@@ -187,8 +190,7 @@ def test_manager_dispositions_use_pinned_identity_for_canonical_provenance_input
     )
 
     expected_ref = (
-        f"{source.snapshot.logical_source}#"
-        f"{ABBY_VOICE_PROVENANCE_V2}/{provenance.provenance_id}"
+        f"{source.snapshot.logical_source}#{ABBY_VOICE_PROVENANCE_V2}/{provenance.provenance_id}"
     )
     refs = {item.source_ref for item in result.dispositions}
     assert expected_ref in refs
@@ -217,9 +219,7 @@ def test_manager_rejects_nonpublishable_canonical_rows():
         )
 
 
-@pytest.mark.parametrize(
-    "payload", (b"", b"\n", b"\xff", b"not-json\n", b"[1,2,3]\n")
-)
+@pytest.mark.parametrize("payload", (b"", b"\n", b"\xff", b"not-json\n", b"[1,2,3]\n"))
 def test_manager_rejects_mislabeled_evaluation_support(payload):
     source, _ = _canonical_response()
 
@@ -292,9 +292,7 @@ def test_fuzzy_and_ambiguous_legacy_candidates_are_review_only_quarantine(
         ("audio/exact.wav", _WAV_SHA[:16]),
     ],
 )
-def test_basename_and_truncated_hash_candidates_are_retained_for_review(
-    path, claimed_hash
-):
+def test_basename_and_truncated_hash_candidates_are_retained_for_review(path, claimed_hash):
     _, row = _canonical_response()
     candidate = LegacyAudioCandidate(
         "candidate-fuzzy-identity",
@@ -426,11 +424,7 @@ def test_empty_normalized_text_and_locale_mismatch_never_link():
     )
 
     assert not result.linked_audio
-    reasons = {
-        item.candidate_id: item.reason
-        for item in result.dispositions
-        if item.candidate_id
-    }
+    reasons = {item.candidate_id: item.reason for item in result.dispositions if item.candidate_id}
     assert reasons["candidate-empty-identity"] is LegacyDispositionReason.TEXT_IDENTITY_MISMATCH
     assert reasons["candidate-locale"] is LegacyDispositionReason.LOCALE_MISMATCH
 
@@ -444,9 +438,7 @@ def test_empty_normalized_text_and_locale_mismatch_never_link():
         ({}, _WAV, False, "decode_failed"),
     ],
 )
-def test_integrity_failures_never_auto_link(
-    object_changes, payload, decode, expected_reason
-):
+def test_integrity_failures_never_auto_link(object_changes, payload, decode, expected_reason):
     _, row = _canonical_response()
     item = _audio_object(**object_changes)
     candidate = LegacyAudioCandidate(

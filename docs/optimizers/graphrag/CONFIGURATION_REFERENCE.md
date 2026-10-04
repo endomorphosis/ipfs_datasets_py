@@ -10,24 +10,20 @@
 ## Quick Setup
 
 ```python
-from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig, OntologyGenerator
+from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
+    ExtractionConfig,
+    OntologyGenerator,
+)
 
 # Default (balanced)
 config = ExtractionConfig()
 
 # Strict (high precision)
-config = ExtractionConfig(
-    confidence_threshold=0.85,
-    max_entities=500,
-    window_size=150
-)
+config = ExtractionConfig(confidence_threshold=0.85, max_entities=500, window_size=150)
 
 # Lenient (high recall)
 config = ExtractionConfig(
-    confidence_threshold=0.40,
-    max_entities=5000,
-    window_size=500,
-    llm_fallback_threshold=0.50
+    confidence_threshold=0.40, max_entities=5000, window_size=500, llm_fallback_threshold=0.50
 )
 
 # Medical domain
@@ -35,7 +31,7 @@ config = ExtractionConfig(
     domain_vocab={
         "Symptom": ["fever", "cough", "dyspnea"],
         "Medication": ["metformin", "lisinopril"],
-        "Test": ["HbA1c", "CBC", "CT"]
+        "Test": ["HbA1c", "CBC", "CT"],
     }
 )
 
@@ -253,23 +249,35 @@ Custom list of terms to exclude from entity text.
 medical_config = ExtractionConfig(
     domain_vocab={...},
     stopwords=[
-        "patient", "hospital", "treatment", "medication", "symptom",
-        "physician", "clinical", "case", "report"
-    ]
+        "patient",
+        "hospital",
+        "treatment",
+        "medication",
+        "symptom",
+        "physician",
+        "clinical",
+        "case",
+        "report",
+    ],
 )
 
 # Legal domain
 legal_config = ExtractionConfig(
     stopwords=[
-        "plaintiff", "defendant", "court", "agreement", "party",
-        "section", "article", "hereby", "whereas"
+        "plaintiff",
+        "defendant",
+        "court",
+        "agreement",
+        "party",
+        "section",
+        "article",
+        "hereby",
+        "whereas",
     ]
 )
 
 # General: remove noise words
-general_config = ExtractionConfig(
-    stopwords=["thing", "something", "etc", "and", "or"]
-)
+general_config = ExtractionConfig(stopwords=["thing", "something", "etc", "and", "or"])
 ```
 
 **Behavior:**
@@ -302,16 +310,11 @@ Obligation          Legal duties, requirements (legal domain)
 **Example:**
 ```python
 # Only people and organizations
-business_config = ExtractionConfig(
-    allowed_entity_types=["Person", "Organization", "Location"]
-)
+business_config = ExtractionConfig(allowed_entity_types=["Person", "Organization", "Location"])
 
 # Legal domain: focus on key entity types
 legal_config = ExtractionConfig(
-    allowed_entity_types=[
-        "Person", "Organization", "Location", 
-        "Date", "Obligation", "Money"
-    ]
+    allowed_entity_types=["Person", "Organization", "Location", "Date", "Obligation", "Money"]
 )
 
 # Financial domain
@@ -340,10 +343,7 @@ Domain-specific vocabulary mapping entity types to curated term lists.
 
 **Format:**
 ```python
-{
-    "EntityType": ["term1", "term2", "term3"],
-    "Another Type": ["concept_a", "concept_b"]
-}
+{"EntityType": ["term1", "term2", "term3"], "Another Type": ["concept_a", "concept_b"]}
 ```
 
 **Examples:**
@@ -355,7 +355,7 @@ medical_vocab = {
     "Medication": ["metformin", "lisinopril", "atorvastatin", "aspirin"],
     "Disease": ["diabetes", "hypertension", "asthma", "CHF", "COPD"],
     "MedicalTest": ["HbA1c", "CBC", "CT scan", "MRI", "echocardiogram"],
-    "Dosage": ["100mg", "5ml", "once daily", "BID"]
+    "Dosage": ["100mg", "5ml", "once daily", "BID"],
 }
 config = ExtractionConfig(domain_vocab=medical_vocab)
 
@@ -364,7 +364,7 @@ legal_vocab = {
     "LegalParty": ["plaintiff", "defendant", "respondent", "claimant"],
     "LegalDuty": ["indemnify", "warranty", "covenant", "obligation"],
     "LegalDocument": ["contract", "agreement", "lease", "deed"],
-    "Damages": ["monetary damages", "injunctive relief", "specific performance"]
+    "Damages": ["monetary damages", "injunctive relief", "specific performance"],
 }
 config = ExtractionConfig(domain_vocab=legal_vocab)
 
@@ -373,7 +373,7 @@ tech_vocab = {
     "Protocol": ["HTTP", "REST", "MQTT", "WebSocket", "gRPC"],
     "Language": ["Python", "JavaScript", "Go", "Rust", "TypeScript"],
     "Framework": ["Django", "FastAPI", "Flask", "Spring Boot"],
-    "Database": ["PostgreSQL", "MongoDB", "Redis", "Elasticsearch"]
+    "Database": ["PostgreSQL", "MongoDB", "Redis", "Elasticsearch"],
 }
 config = ExtractionConfig(domain_vocab=tech_vocab)
 ```
@@ -460,10 +460,7 @@ config = ExtractionConfig(llm_fallback_threshold=0.6)
 config = ExtractionConfig(llm_fallback_threshold=1.0)
 
 # Recovery strategy: rules + LLM if needed
-config = ExtractionConfig(
-    llm_fallback_threshold=0.50,
-    confidence_threshold=0.60
-)
+config = ExtractionConfig(llm_fallback_threshold=0.50, confidence_threshold=0.60)
 ```
 
 **Cost-benefit:**
@@ -488,10 +485,7 @@ Upper bound for entity confidence scores. Scores above this are clamped.
 ```python
 # Conservative: cap all confidences at 0.9
 # (no entity can score 0.95 or 1.0)
-conservative = ExtractionConfig(
-    confidence_threshold=0.5,
-    max_confidence=0.90
-)
+conservative = ExtractionConfig(confidence_threshold=0.5, max_confidence=0.90)
 
 # Very conservative: cap at 0.8
 pessimistic = ExtractionConfig(max_confidence=0.8)
@@ -518,7 +512,7 @@ Whether to extract and include entity properties/attributes.
 # Rich extraction: entities + properties
 rich = ExtractionConfig(include_properties=True)
 result = generator.generate("John Smith, age 45, CEO at Acme Corp")
-# → Entity(text="John Smith", type="Person", 
+# → Entity(text="John Smith", type="Person",
 #         properties={"age": "45", "title": "CEO", "employer": "Acme Corp"})
 
 # Minimal extraction: entities only
@@ -544,7 +538,7 @@ config = ExtractionConfig(
     window_size=150,
     min_entity_length=2,
     max_confidence=0.95,
-    include_properties=True
+    include_properties=True,
 )
 ```
 
@@ -558,12 +552,12 @@ config = ExtractionConfig(
     allowed_entity_types=["Person", "Organization", "Date", "Money", "Obligation"],
     domain_vocab={
         "LegalParty": ["plaintiff", "defendant"],
-        "Obligation": ["shall", "must", "required"]
+        "Obligation": ["shall", "must", "required"],
     },
     min_entity_length=3,
     stopwords=["hereby", "whereas", "aforementioned"],
     llm_fallback_threshold=0.7,
-    max_confidence=0.9
+    max_confidence=0.9,
 )
 ```
 
@@ -578,10 +572,10 @@ config = ExtractionConfig(
     domain_vocab={
         "Symptom": ["fever", "cough", "dyspnea"],
         "Medication": ["metformin", "lisinopril"],
-        "Disease": ["diabetes", "hypertension"]
+        "Disease": ["diabetes", "hypertension"],
     },
     include_properties=True,
-    llm_fallback_threshold=0.6
+    llm_fallback_threshold=0.6,
 )
 ```
 
@@ -594,7 +588,7 @@ config = ExtractionConfig(
     window_size=500,
     min_entity_length=1,
     llm_fallback_threshold=0.50,
-    include_properties=True
+    include_properties=True,
 )
 ```
 
@@ -607,7 +601,7 @@ config = ExtractionConfig(
     window_size=100,
     min_entity_length=2,
     include_properties=False,
-    llm_fallback_threshold=0.0
+    llm_fallback_threshold=0.0,
 )
 ```
 
@@ -628,7 +622,7 @@ Low threshold (0.4) + capped entities (100) → Top 100 least-confident entities
 config = ExtractionConfig(
     window_size=500,
     max_entities=5000,
-    max_relationships=0  # Unlimited!
+    max_relationships=0,  # Unlimited!
 )
 # Potential output: thousands of relationships
 
@@ -636,13 +630,13 @@ config = ExtractionConfig(
 config = ExtractionConfig(
     window_size=150,
     max_entities=1000,
-    max_relationships=500  # Reasonable cap
+    max_relationships=500,  # Reasonable cap
 )
 ```
 
 ### LLM Fallback Latency
 ```python
-#Fast: rules only
+# Fast: rules only
 config = ExtractionConfig(llm_fallback_threshold=0.0)
 # Latency: <100ms per document
 
@@ -678,18 +672,12 @@ config.validate()  # Raises ValueError if any field violates:
 
 ### From Python
 ```python
-config = ExtractionConfig(
-    confidence_threshold=0.75,
-    max_entities=500
-)
+config = ExtractionConfig(confidence_threshold=0.75, max_entities=500)
 ```
 
 ### From Dictionary
 ```python
-config_dict = {
-    "confidence_threshold": 0.75,
-    "max_entities": 500
-}
+config_dict = {"confidence_threshold": 0.75, "max_entities": 500}
 config = ExtractionConfig.from_dict(config_dict)
 ```
 
@@ -714,6 +702,7 @@ window_size: 150
 
 ```python
 import yaml
+
 with open("config.yaml") as f:
     config_dict = yaml.safe_load(f)
 config = ExtractionConfig.from_dict(config_dict)

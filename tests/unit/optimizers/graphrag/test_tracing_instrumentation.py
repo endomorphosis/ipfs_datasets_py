@@ -6,6 +6,7 @@ Run with::
 
     pytest tests/unit/optimizers/graphrag/test_tracing_instrumentation.py -v
 """
+
 from __future__ import annotations
 
 import pytest
@@ -24,7 +25,7 @@ from ipfs_datasets_py.optimizers.graphrag.tracing_instrumentation import (
 
 class TestTracingConfig:
     """Tests for TracingConfig."""
-    
+
     def test_create_default_config(self):
         """Test creating default tracing config."""
         config = TracingConfig()
@@ -34,7 +35,7 @@ class TestTracingConfig:
         assert config.jaeger_port == 6831
         assert config.enable_console_exporter == False
         assert config.enable_jaeger_exporter == True
-    
+
     def test_create_custom_config(self):
         """Test creating custom tracing config."""
         config = TracingConfig(
@@ -53,20 +54,20 @@ class TestTracingConfig:
 
 class TestTracingInstrumentation:
     """Tests for TracingInstrumentation."""
-    
+
     def test_instrumentation_creation(self):
         """Test creating instrumentation without OpenTelemetry."""
         config = TracingConfig(enable_jaeger_exporter=False, enable_console_exporter=False)
         instr = TracingInstrumentation(config)
         assert instr.config == config
-    
+
     def test_setup_tracing_creates_instance(self):
         """Test setup_tracing creates global instance."""
         config = TracingConfig(enable_jaeger_exporter=False, enable_console_exporter=False)
         tracer = setup_tracing(config)
         assert tracer is not None
         assert tracer.config == config
-    
+
     def test_create_span_graceful_degradation(self):
         """Test that create_span handles disabled tracing gracefully."""
         config = TracingConfig(enable_jaeger_exporter=False, enable_console_exporter=False)
@@ -78,12 +79,12 @@ class TestTracingInstrumentation:
 
 class TestGeneratorTracer:
     """Tests for OntologyGeneratorTracer."""
-    
+
     def test_tracer_creation(self):
         """Test creating generator tracer."""
         tracer = OntologyGeneratorTracer()
         assert tracer is not None
-    
+
     def test_tracer_with_instrumentation(self):
         """Test tracer with instrumentation instance."""
         config = TracingConfig(enable_jaeger_exporter=False, enable_console_exporter=False)
@@ -94,7 +95,7 @@ class TestGeneratorTracer:
 
 class TestCriticTracer:
     """Tests for OntologyCriticTracer."""
-    
+
     def test_tracer_creation(self):
         """Test creating critic tracer."""
         tracer = OntologyCriticTracer()
@@ -103,7 +104,7 @@ class TestCriticTracer:
 
 class TestMediatorTracer:
     """Tests for OntologyMediatorTracer."""
-    
+
     def test_tracer_creation(self):
         """Test creating mediator tracer."""
         tracer = OntologyMediatorTracer()
@@ -112,16 +113,16 @@ class TestMediatorTracer:
 
 class TestTracingDecoration:
     """Tests for tracing decorators."""
-    
+
     def test_trace_method_decorator_disabled(self):
         """Test trace_method decorator when tracing is disabled."""
         config = TracingConfig(enable_jaeger_exporter=False, enable_console_exporter=False)
         instr = TracingInstrumentation(config)
-        
+
         @instr.trace_method
         def sample_func(x):
             return x * 2
-        
+
         result = sample_func(5)
         assert result == 10
 
@@ -179,7 +180,7 @@ class TestTracingDecoration:
 
 class TestTracingWorkflow:
     """End-to-end tracing workflow tests."""
-    
+
     def test_setup_and_retrieve_tracer(self):
         """Test setup_tracing workflow."""
         config = TracingConfig(
@@ -188,7 +189,7 @@ class TestTracingWorkflow:
             enable_console_exporter=False,
         )
         tracer = setup_tracing(config)
-        
+
         retrieved_tracer = get_tracer()
         assert retrieved_tracer is tracer
         assert retrieved_tracer.config.service_name == "test-service"

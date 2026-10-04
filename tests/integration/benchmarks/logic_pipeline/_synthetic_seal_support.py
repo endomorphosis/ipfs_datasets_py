@@ -25,9 +25,7 @@ OPAQUE_SYNTHETIC_BLOCK = b"synthetic opaque replacement seal block v2"
 
 def _protocol_cids() -> dict[str, str]:
     return {
-        key: cid_for_dag_json(
-            {"synthetic_protocol": key, "revision": 2}
-        )
+        key: cid_for_dag_json({"synthetic_protocol": key, "revision": 2})
         for key in sorted(REPLACEMENT_HOLDOUT_PROTOCOL_KEYS)
     }
 
@@ -36,9 +34,7 @@ def _seal(
     *,
     opaque_block: bytes = OPAQUE_SYNTHETIC_BLOCK,
     protocol_cids: dict[str, str] | None = None,
-    ledger_path: str | Path = (
-        "/synthetic-independent-custody/replacement-access.jsonl"
-    ),
+    ledger_path: str | Path = ("/synthetic-independent-custody/replacement-access.jsonl"),
 ) -> ReplacementHoldoutSeal:
     protocols = protocol_cids or _protocol_cids()
     sealed_manifest_cid = cid_for_bytes(opaque_block, codec="raw")

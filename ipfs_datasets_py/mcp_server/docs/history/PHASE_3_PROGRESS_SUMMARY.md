@@ -52,11 +52,7 @@ Core routing logic that:
 from ipfs_datasets_py.mcp_server.runtime_router import RuntimeRouter
 
 # Initialize
-router = RuntimeRouter(
-    default_runtime="fastapi",
-    enable_metrics=True,
-    enable_memory_tracking=False
-)
+router = RuntimeRouter(default_runtime="fastapi", enable_metrics=True, enable_memory_tracking=False)
 
 # Start
 await router.startup()
@@ -66,7 +62,7 @@ result = await router.route_tool_call(
     tool_name="workflow_submit",
     tool_func=workflow_submit,
     workflow_id="wf-001",
-    name="Data Processing"
+    name="Data Processing",
 )
 
 # Get metrics
@@ -135,15 +131,15 @@ Comprehensive metrics collection:
         "error_count": 5,
         "avg_latency_ms": 195.3,
         "p95_latency_ms": 285.7,
-        "p99_latency_ms": 342.1
+        "p99_latency_ms": 342.1,
     },
     "trio": {
         "request_count": 500,
         "error_count": 2,
         "avg_latency_ms": 67.8,
         "p95_latency_ms": 98.2,
-        "p99_latency_ms": 112.5
-    }
+        "p99_latency_ms": 112.5,
+    },
 }
 
 # Latency improvement: 65.3% faster for Trio tools!

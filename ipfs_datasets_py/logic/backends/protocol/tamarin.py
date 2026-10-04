@@ -73,9 +73,7 @@ DEFAULT_MAX_SOURCE_BYTES: Final = 1_048_576
 
 _DIGEST = re.compile(r"^[0-9a-f]{64}$")
 _CONTROL = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
-_LEMMA_LINE = re.compile(
-    r"(?im)^\s*(?:lemma|//\s*lemma)\s+([A-Za-z_][A-Za-z0-9_]*)\s*:"
-)
+_LEMMA_LINE = re.compile(r"(?im)^\s*(?:lemma|//\s*lemma)\s+([A-Za-z_][A-Za-z0-9_]*)\s*:")
 _VERIFIED = re.compile(
     r"(?im)^\s*(?:lemma\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*(?:\([^)\n]*\)\s*)?:"
     r"\s*(verified|falsified|analysis incomplete|timeout|partial)\b"
@@ -171,9 +169,7 @@ class SymbolicModelCeiling:
             "equational_theories": sorted(equational_theories),
             "perfect_cryptography": cls.PERFECT_CRYPTOGRAPHY,
             "schema_version": cls.SCHEMA_VERSION,
-            "supported_claim_kinds": sorted(
-                item.value for item in TAMARIN_SUPPORTED_CLAIMS
-            ),
+            "supported_claim_kinds": sorted(item.value for item in TAMARIN_SUPPORTED_CLAIMS),
             "supported_equational_theories": sorted(
                 item.value for item in TAMARIN_SUPPORTED_THEORIES
             ),
@@ -184,12 +180,7 @@ class SymbolicModelCeiling:
 def _text(value: object, field_name: str, *, optional: bool = False) -> str:
     if optional and value == "":
         return ""
-    if (
-        not isinstance(value, str)
-        or not value
-        or value != value.strip()
-        or "\x00" in value
-    ):
+    if not isinstance(value, str) or not value or value != value.strip() or "\x00" in value:
         qualifier = "an empty or " if optional else "a "
         raise TamarinBackendError(
             f"{field_name} must be {qualifier}non-empty trimmed string without NUL bytes"
@@ -291,15 +282,9 @@ class TamarinSourceBinding:
     schema_version: str = TAMARIN_SOURCE_BINDING_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "request_digest", _digest(self.request_digest, "request_digest")
-        )
-        object.__setattr__(
-            self, "source_digest", _digest(self.source_digest, "source_digest")
-        )
-        object.__setattr__(
-            self, "source_format", _text(self.source_format, "source_format")
-        )
+        object.__setattr__(self, "request_digest", _digest(self.request_digest, "request_digest"))
+        object.__setattr__(self, "source_digest", _digest(self.source_digest, "source_digest"))
+        object.__setattr__(self, "source_format", _text(self.source_format, "source_format"))
         if self.schema_version != TAMARIN_SOURCE_BINDING_VERSION:
             raise TamarinBackendError(
                 f"unsupported Tamarin source binding schema: {self.schema_version!r}"
@@ -337,13 +322,9 @@ class ToolDependencyBinding:
     schema_version: str = "tool-dependency-binding/v1"
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "dependency_id", _text(self.dependency_id, "dependency_id")
-        )
+        object.__setattr__(self, "dependency_id", _text(self.dependency_id, "dependency_id"))
         object.__setattr__(self, "name", _text(self.name, "name"))
-        object.__setattr__(
-            self, "version", _text(self.version, "version", optional=True)
-        )
+        object.__setattr__(self, "version", _text(self.version, "version", optional=True))
         if not isinstance(self.required, bool):
             raise TamarinBackendError("required must be a boolean")
 
@@ -370,17 +351,13 @@ class TamarinToolchainBinding:
     def __post_init__(self) -> None:
         object.__setattr__(self, "tool_id", _text(self.tool_id, "tool_id"))
         object.__setattr__(self, "executable", _text(self.executable, "executable"))
-        object.__setattr__(
-            self, "tool_version", _text(self.tool_version, "tool_version")
-        )
+        object.__setattr__(self, "tool_version", _text(self.tool_version, "tool_version"))
         deps = tuple(self.dependencies)
         if any(not isinstance(item, ToolDependencyBinding) for item in deps):
             raise TamarinBackendError("dependencies must be ToolDependencyBinding values")
         object.__setattr__(self, "dependencies", deps)
         if self.schema_version != TAMARIN_TOOLCHAIN_VERSION:
-            raise TamarinBackendError(
-                f"unsupported toolchain schema: {self.schema_version!r}"
-            )
+            raise TamarinBackendError(f"unsupported toolchain schema: {self.schema_version!r}")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -402,7 +379,11 @@ class AttackTraceStep:
     terms: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
-        if isinstance(self.step_index, bool) or not isinstance(self.step_index, int) or self.step_index < 0:
+        if (
+            isinstance(self.step_index, bool)
+            or not isinstance(self.step_index, int)
+            or self.step_index < 0
+        ):
             raise TamarinBackendError("step_index must be a non-negative integer")
         object.__setattr__(self, "action", _text(self.action, "action"))
         object.__setattr__(self, "label", _text(self.label, "label"))
@@ -444,13 +425,9 @@ class NormalizedAttackTrace:
             raise TamarinBackendError("attack trace steps must be densely indexed from 0")
         object.__setattr__(self, "steps", steps)
         object.__setattr__(self, "raw_digest", _digest(self.raw_digest, "raw_digest"))
-        object.__setattr__(
-            self, "trace_format", _text(self.trace_format, "trace_format")
-        )
+        object.__setattr__(self, "trace_format", _text(self.trace_format, "trace_format"))
         if self.schema_version != TAMARIN_ATTACK_TRACE_VERSION:
-            raise TamarinBackendError(
-                f"unsupported attack trace schema: {self.schema_version!r}"
-            )
+            raise TamarinBackendError(f"unsupported attack trace schema: {self.schema_version!r}")
 
     def _identity_payload(self) -> dict[str, Any]:
         return {
@@ -490,22 +467,15 @@ class ClaimOutcome:
     def __post_init__(self) -> None:
         object.__setattr__(self, "claim_id", _text(self.claim_id, "claim_id"))
         object.__setattr__(self, "lemma_name", _text(self.lemma_name, "lemma_name"))
-        object.__setattr__(
-            self, "verdict", _enum(self.verdict, ClaimVerdict, "verdict")
-        )
+        object.__setattr__(self, "verdict", _enum(self.verdict, ClaimVerdict, "verdict"))
         if self.attack_trace is not None and not isinstance(
             self.attack_trace, NormalizedAttackTrace
         ):
             raise TamarinBackendError("attack_trace must be NormalizedAttackTrace")
-        if (
-            self.verdict is ClaimVerdict.FALSIFIED
-            and self.attack_trace is None
-        ):
+        if self.verdict is ClaimVerdict.FALSIFIED and self.attack_trace is None:
             # Allowed at parse time; backend may quarantine if no trace.
             pass
-        object.__setattr__(
-            self, "reason", _text(self.reason, "reason", optional=True)
-        )
+        object.__setattr__(self, "reason", _text(self.reason, "reason", optional=True))
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -529,18 +499,14 @@ class ResultQuarantine:
     schema_version: str = TAMARIN_QUARANTINE_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "reason", _enum(self.reason, QuarantineReason, "reason")
-        )
+        object.__setattr__(self, "reason", _enum(self.reason, QuarantineReason, "reason"))
         object.__setattr__(self, "detail", _text(self.detail, "detail"))
         claims = tuple(_text(item, "claim_ids item") for item in self.claim_ids)
         if len(claims) != len(set(claims)):
             raise TamarinBackendError("claim_ids must not contain duplicates")
         object.__setattr__(self, "claim_ids", claims)
         if self.schema_version != TAMARIN_QUARANTINE_VERSION:
-            raise TamarinBackendError(
-                f"unsupported quarantine schema: {self.schema_version!r}"
-            )
+            raise TamarinBackendError(f"unsupported quarantine schema: {self.schema_version!r}")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -567,16 +533,10 @@ class TamarinCompileResult:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "source", _source_text(self.source))
-        object.__setattr__(
-            self, "source_format", _text(self.source_format, "source_format")
-        )
-        object.__setattr__(
-            self, "source_digest", _digest(self.source_digest, "source_digest")
-        )
+        object.__setattr__(self, "source_format", _text(self.source_format, "source_format"))
+        object.__setattr__(self, "source_digest", _digest(self.source_digest, "source_digest"))
         object.__setattr__(self, "ceiling", _frozen(self.ceiling, "ceiling"))
-        object.__setattr__(
-            self, "claim_lemmas", _frozen(self.claim_lemmas, "claim_lemmas")
-        )
+        object.__setattr__(self, "claim_lemmas", _frozen(self.claim_lemmas, "claim_lemmas"))
         theories = tuple(
             _text(item, "equational_theories item") for item in self.equational_theories
         )
@@ -591,9 +551,7 @@ class TamarinCompileResult:
             _text(self.protocol_document_id, "protocol_document_id", optional=True),
         )
         if self.schema_version != TAMARIN_COMPILER_VERSION:
-            raise TamarinBackendError(
-                f"unsupported compiler schema: {self.schema_version!r}"
-            )
+            raise TamarinBackendError(f"unsupported compiler schema: {self.schema_version!r}")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -624,9 +582,7 @@ class TamarinProtocolReceipt:
     schema_version: str = TAMARIN_RECEIPT_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "request_digest", _digest(self.request_digest, "request_digest")
-        )
+        object.__setattr__(self, "request_digest", _digest(self.request_digest, "request_digest"))
         if not isinstance(self.source_binding, TamarinSourceBinding):
             raise TamarinBackendError("source_binding must be TamarinSourceBinding")
         if self.request_digest != self.source_binding.request_digest:
@@ -634,28 +590,20 @@ class TamarinProtocolReceipt:
         if not isinstance(self.toolchain, TamarinToolchainBinding):
             raise TamarinBackendError("toolchain must be TamarinToolchainBinding")
         object.__setattr__(self, "ceiling", _frozen(self.ceiling, "ceiling"))
-        object.__setattr__(
-            self, "compile_digest", _digest(self.compile_digest, "compile_digest")
-        )
+        object.__setattr__(self, "compile_digest", _digest(self.compile_digest, "compile_digest"))
         outcomes = tuple(self.claim_outcomes)
         if any(not isinstance(item, ClaimOutcome) for item in outcomes):
             raise TamarinBackendError("claim_outcomes must be ClaimOutcome values")
         object.__setattr__(self, "claim_outcomes", outcomes)
-        if self.quarantine is not None and not isinstance(
-            self.quarantine, ResultQuarantine
-        ):
+        if self.quarantine is not None and not isinstance(self.quarantine, ResultQuarantine):
             raise TamarinBackendError("quarantine must be ResultQuarantine")
         if not isinstance(self.accepted, bool):
             raise TamarinBackendError("accepted must be a boolean")
         if self.accepted and self.quarantine is not None:
             raise TamarinBackendError("accepted receipts cannot be quarantined")
-        object.__setattr__(
-            self, "diagnostics", bound_diagnostics(self.diagnostics)
-        )
+        object.__setattr__(self, "diagnostics", bound_diagnostics(self.diagnostics))
         if self.schema_version != TAMARIN_RECEIPT_VERSION:
-            raise TamarinBackendError(
-                f"unsupported receipt schema: {self.schema_version!r}"
-            )
+            raise TamarinBackendError(f"unsupported receipt schema: {self.schema_version!r}")
 
     @property
     def receipt_id(self) -> str:
@@ -668,9 +616,7 @@ class TamarinProtocolReceipt:
             "claim_outcomes": [item.to_dict() for item in self.claim_outcomes],
             "compile_digest": self.compile_digest,
             "diagnostics": list(self.diagnostics),
-            "quarantine": (
-                self.quarantine.to_dict() if self.quarantine is not None else None
-            ),
+            "quarantine": (self.quarantine.to_dict() if self.quarantine is not None else None),
             "request_digest": self.request_digest,
             "schema_version": self.schema_version,
             "source_binding": self.source_binding.to_dict(),
@@ -695,9 +641,7 @@ class TamarinBackendOutcome:
     interface_version: str = TAMARIN_BACKEND_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "request_digest", _digest(self.request_digest, "request_digest")
-        )
+        object.__setattr__(self, "request_digest", _digest(self.request_digest, "request_digest"))
         if not isinstance(self.source_binding, TamarinSourceBinding):
             raise TamarinBackendError("source_binding must be TamarinSourceBinding")
         if not isinstance(self.result, TypedBackendResult):
@@ -711,18 +655,11 @@ class TamarinBackendOutcome:
         if self.request_digest != self.receipt.request_digest:
             raise TamarinBackendError("outcome request does not match receipt")
         if self.interface_version != TAMARIN_BACKEND_VERSION:
-            raise TamarinBackendError(
-                f"unsupported Tamarin interface: {self.interface_version!r}"
-            )
-        if (
-            self.result.status is ResultStatus.SECURE
-            and not self.receipt.accepted
-        ):
+            raise TamarinBackendError(f"unsupported Tamarin interface: {self.interface_version!r}")
+        if self.result.status is ResultStatus.SECURE and not self.receipt.accepted:
             raise TamarinBackendError("SECURE results require an accepted receipt")
         if self.result.authority is not ResultAuthority.PROTOCOL:
-            raise TamarinBackendError(
-                "Tamarin outcomes must carry protocol authority"
-            )
+            raise TamarinBackendError("Tamarin outcomes must carry protocol authority")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -737,9 +674,7 @@ class TamarinBackendOutcome:
 
 def _source_text(value: object) -> str:
     if not isinstance(value, str) or not value.strip() or "\x00" in value:
-        raise TamarinBackendError(
-            "Tamarin source must be non-empty text without NUL bytes"
-        )
+        raise TamarinBackendError("Tamarin source must be non-empty text without NUL bytes")
     if len(value.encode("utf-8")) > DEFAULT_MAX_SOURCE_BYTES:
         raise TamarinBackendError("Tamarin source exceeds the canonical byte bound")
     return value
@@ -760,9 +695,7 @@ def parse_attack_trace(
         label = match.group(1)
         terms_raw = match.group(2) or ""
         terms = tuple(
-            part.strip()
-            for part in terms_raw.split(",")
-            if part.strip() and "\x00" not in part
+            part.strip() for part in terms_raw.split(",") if part.strip() and "\x00" not in part
         )
         steps.append(
             AttackTraceStep(
@@ -824,9 +757,7 @@ def parse_tamarin_claim_outcomes(
         claim_id = inverse.get(lemma_name, lemma_name)
         attack = None
         if verdict is ClaimVerdict.FALSIFIED:
-            attack = parse_attack_trace(
-                combined, claim_id=claim_id, raw_digest=raw_digest
-            )
+            attack = parse_attack_trace(combined, claim_id=claim_id, raw_digest=raw_digest)
         outcomes.append(
             ClaimOutcome(
                 claim_id=claim_id,
@@ -889,25 +820,20 @@ def classify_claim_outcomes(
                     "Tamarin reported both verified and falsified claims; "
                     "the batch is quarantined rather than promoted"
                 ),
-                claim_ids=tuple(
-                    item.claim_id for item in (*verified, *falsified)
-                ),
+                claim_ids=tuple(item.claim_id for item in (*verified, *falsified)),
             ),
             False,
         )
 
     if falsified:
-        missing_trace = [
-            item for item in falsified if item.attack_trace is None
-        ]
+        missing_trace = [item for item in falsified if item.attack_trace is None]
         if missing_trace:
             return (
                 ResultStatus.UNKNOWN,
                 ResultQuarantine(
                     reason=QuarantineReason.MALFORMED_OUTPUT,
                     detail=(
-                        "falsified claims lack a normalizable attack trace; "
-                        "results are quarantined"
+                        "falsified claims lack a normalizable attack trace; results are quarantined"
                     ),
                     claim_ids=tuple(item.claim_id for item in missing_trace),
                 ),
@@ -919,8 +845,7 @@ def classify_claim_outcomes(
                 ResultQuarantine(
                     reason=QuarantineReason.INCONCLUSIVE,
                     detail=(
-                        "attack found for some claims while others remain "
-                        "inconclusive; quarantined"
+                        "attack found for some claims while others remain inconclusive; quarantined"
                     ),
                     claim_ids=tuple(item.claim_id for item in incomplete),
                 ),
@@ -967,9 +892,7 @@ class TamarinCompiler:
         adversary_kind: str = AdversaryKind.DOLEV_YAO.value,
     ) -> dict[str, Any]:
         if protocol is not None:
-            equational_theories = [
-                item.value for item in protocol.equational_theories
-            ]
+            equational_theories = [item.value for item in protocol.equational_theories]
             claim_kinds = [item.kind.value for item in protocol.claims]
             adversary_kind = protocol.adversary.kind.value
         return SymbolicModelCeiling.disclose(
@@ -983,26 +906,18 @@ class TamarinCompiler:
         return kind in TAMARIN_SUPPORTED_CLAIMS
 
     def supports_theory(self, theory: EquationalTheory | str) -> bool:
-        theory = (
-            theory
-            if isinstance(theory, EquationalTheory)
-            else EquationalTheory(theory)
-        )
+        theory = theory if isinstance(theory, EquationalTheory) else EquationalTheory(theory)
         return theory in TAMARIN_SUPPORTED_THEORIES
 
     def compile_source(self, source: str, *, source_format: str = "spthy") -> TamarinCompileResult:
         text = _source_text(source)
-        lemmas = {
-            name: name for name in _LEMMA_LINE.findall(text)
-        }
+        lemmas = {name: name for name in _LEMMA_LINE.findall(text)}
         ceiling = SymbolicModelCeiling.disclose(
             equational_theories=(EquationalTheory.FREE.value,),
             claim_kinds=tuple(lemmas),
         )
         # Extract builtins line if present for equational theory disclosure.
-        builtins_match = re.search(
-            r"(?im)^\s*builtins\s*:\s*([^\n]+)$", text
-        )
+        builtins_match = re.search(r"(?im)^\s*builtins\s*:\s*([^\n]+)$", text)
         theories = [EquationalTheory.FREE.value]
         if builtins_match:
             for token in builtins_match.group(1).split(","):
@@ -1057,9 +972,7 @@ class TamarinCompiler:
             names[event.event_id] = _safe_ident(event.name, prefix="Ev")
 
         builtins = [
-            _THEORY_TO_BUILTIN[theory]
-            for theory in theories
-            if theory in _THEORY_TO_BUILTIN
+            _THEORY_TO_BUILTIN[theory] for theory in theories if theory in _THEORY_TO_BUILTIN
         ]
         theory_name = _safe_ident(
             protocol.metadata.to_dict().get("protocol", "CompiledProtocol")
@@ -1085,7 +998,10 @@ class TamarinCompiler:
 
         # Functions not covered by builtins.
         for function in protocol.functions:
-            if function.theory is EquationalTheory.FREE or function.theory not in _THEORY_TO_BUILTIN:
+            if (
+                function.theory is EquationalTheory.FREE
+                or function.theory not in _THEORY_TO_BUILTIN
+            ):
                 arity = len(function.parameter_sorts)
                 fname = names[function.function_id]
                 lines.append(f"functions: {fname}/{arity}")
@@ -1106,9 +1022,7 @@ class TamarinCompiler:
 
         for event in protocol.events:
             event_name = names[event.event_id]
-            args = ", ".join(
-                _term_to_spthy(term, names) for term in event.parameters
-            ) or "~unit"
+            args = ", ".join(_term_to_spthy(term, names) for term in event.parameters) or "~unit"
             role_name = names.get(event.role_id, "Role")
             lines.append(
                 f"rule Event_{event_name}:\n"
@@ -1147,8 +1061,7 @@ class TamarinCompiler:
     def _claim_formula(self, claim: ProtocolClaim, names: Mapping[str, str]) -> str:
         if claim.kind is ProtocolClaimKind.SECRECY:
             secrets = " & ".join(
-                f"not (Ex #i. K({_term_to_spthy(term, names)}) @ i)"
-                for term in claim.secret_terms
+                f"not (Ex #i. K({_term_to_spthy(term, names)}) @ i)" for term in claim.secret_terms
             )
             return secrets or "All #i. True"
         if claim.kind is ProtocolClaimKind.REACHABILITY:
@@ -1156,7 +1069,7 @@ class TamarinCompiler:
                 f"(Ex #i. {names.get(event_id, _safe_ident(event_id))}() @ i)"
                 for event_id in claim.reachable_event_ids
             )
-            return f"exists-trace\n    \"{events}\"" if events else "exists-trace\n    \"True\""
+            return f'exists-trace\n    "{events}"' if events else 'exists-trace\n    "True"'
         if claim.kind in {
             ProtocolClaimKind.AUTHENTICATION,
             ProtocolClaimKind.CORRESPONDENCE,
@@ -1171,19 +1084,14 @@ class TamarinCompiler:
                     f"(Ex #j. {c_name}(x) @ j & #j < #i) & "
                     f"(All #k. {a_name}(x) @ k ==> #i = #k)"
                 )
-            return (
-                f"All x #i. {a_name}(x) @ i ==> "
-                f"(Ex #j. {c_name}(x) @ j & #j < #i)"
-            )
+            return f"All x #i. {a_name}(x) @ i ==> (Ex #j. {c_name}(x) @ j & #j < #i)"
         raise TamarinBackendError(
             f"claim kind {claim.kind.value} is outside the Tamarin compiler ceiling"
         )
 
 
 def _usage_from_process(process: ToolRunResult) -> ResourceUsage:
-    output_bytes = len(process.stdout.encode("utf-8")) + len(
-        process.stderr.encode("utf-8")
-    )
+    output_bytes = len(process.stdout.encode("utf-8")) + len(process.stderr.encode("utf-8"))
     return ResourceUsage(
         elapsed_ms=max(0, round(process.elapsed_seconds * 1000)),
         output_bytes=output_bytes,
@@ -1326,21 +1234,17 @@ class TamarinBackend:
 
     def _compile_request(self, request: BackendRequest) -> TamarinCompileResult:
         payload = request.payload.to_dict()
-        encoding = str(
-            payload.get("encoding")
-            or payload.get("source_format")
-            or "protocol-ir"
-        ).strip().lower()
+        encoding = (
+            str(payload.get("encoding") or payload.get("source_format") or "protocol-ir")
+            .strip()
+            .lower()
+        )
         if encoding not in self.accepted_source_formats:
             raise TamarinBackendError(
                 f"request encoding {encoding!r} is not a supported Tamarin format"
             )
 
-        raw_protocol = (
-            payload.get("protocol_ir")
-            or payload.get("protocol")
-            or payload.get("ir")
-        )
+        raw_protocol = payload.get("protocol_ir") or payload.get("protocol") or payload.get("ir")
         if isinstance(raw_protocol, Mapping):
             protocol = ProtocolIR.from_dict(raw_protocol)
             return self._compiler.compile_protocol(protocol)
@@ -1356,7 +1260,9 @@ class TamarinBackend:
         if isinstance(source, str) and source.strip():
             return self._compiler.compile_source(
                 source,
-                source_format="spthy" if encoding in {"protocol-ir", "protocol_ir", "protocol"} else encoding,
+                source_format="spthy"
+                if encoding in {"protocol-ir", "protocol_ir", "protocol"}
+                else encoding,
             )
         raise TamarinBackendError(
             "Tamarin request payload requires protocol_ir or spthy/source text"
@@ -1585,13 +1491,9 @@ class TamarinBackend:
 
         diagnostics = bound_diagnostics(
             [
-                *( [process.error] if process.error else [] ),
-                *( [reason] if reason else [] ),
-                *(
-                    [quarantine.detail]
-                    if quarantine is not None
-                    else []
-                ),
+                *([process.error] if process.error else []),
+                *([reason] if reason else []),
+                *([quarantine.detail] if quarantine is not None else []),
             ]
         )
         receipt = TamarinProtocolReceipt(

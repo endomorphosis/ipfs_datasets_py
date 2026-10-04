@@ -33,7 +33,9 @@ if str(_REPO_ROOT) not in sys.path:
 # ===========================================================================
 
 # Read enterprise_api source once at module level (avoids triggering anyio import)
-_ENTERPRISE_API_SRC = Path(_REPO_ROOT, "ipfs_datasets_py", "mcp_server", "enterprise_api.py").read_text()
+_ENTERPRISE_API_SRC = Path(
+    _REPO_ROOT, "ipfs_datasets_py", "mcp_server", "enterprise_api.py"
+).read_text()
 _SERVER_SRC = Path(_REPO_ROOT, "ipfs_datasets_py", "mcp_server", "server.py").read_text()
 
 
@@ -75,11 +77,13 @@ class TestEnterpriseAPIDelegationRoutes:
 # Section 2 — ComplianceChecker.reload()
 # ===========================================================================
 
+
 class TestComplianceCheckerReload:
     """ComplianceChecker.reload(path) hot-reload."""
 
     def _make_checker(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import make_default_compliance_checker
+
         return make_default_compliance_checker()
 
     def test_reload_method_exists(self):
@@ -88,6 +92,7 @@ class TestComplianceCheckerReload:
 
     def test_reload_restores_rules(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import make_default_compliance_checker
+
         with tempfile.TemporaryDirectory() as td:
             path = os.path.join(td, "rules.json")
             orig = make_default_compliance_checker(deny_list={"blocked"})
@@ -97,16 +102,29 @@ class TestComplianceCheckerReload:
             assert "tool_name_convention" in new_checker.list_rules()
 
     def test_reload_clears_existing_rules(self):
-        from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker, ComplianceResult, ComplianceStatus
+        from ipfs_datasets_py.mcp_server.compliance_checker import (
+            ComplianceChecker,
+            ComplianceResult,
+            ComplianceStatus,
+        )
+
         with tempfile.TemporaryDirectory() as td:
             path = os.path.join(td, "rules.json")
             # save with just one custom-ish rule via real checker
             checker_a = ComplianceChecker()
-            checker_a.add_rule("tool_name_convention", lambda _: ComplianceResult(rule_id="tool_name_convention", status=ComplianceStatus.COMPLIANT))
+            checker_a.add_rule(
+                "tool_name_convention",
+                lambda _: ComplianceResult(
+                    rule_id="tool_name_convention", status=ComplianceStatus.COMPLIANT
+                ),
+            )
             checker_a.save(path)
             # Load into checker_b that had extra rule
             checker_b = ComplianceChecker()
-            checker_b.add_rule("old_rule", lambda _: ComplianceResult(rule_id="old_rule", status=ComplianceStatus.COMPLIANT))
+            checker_b.add_rule(
+                "old_rule",
+                lambda _: ComplianceResult(rule_id="old_rule", status=ComplianceStatus.COMPLIANT),
+            )
             checker_b.reload(path)
             # old_rule should be gone after reload
             assert "old_rule" not in checker_b.list_rules()
@@ -118,6 +136,7 @@ class TestComplianceCheckerReload:
 
     def test_reload_restores_deny_list(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import make_default_compliance_checker
+
         with tempfile.TemporaryDirectory() as td:
             path = os.path.join(td, "rules.json")
             orig = make_default_compliance_checker(deny_list={"secret_tool"})
@@ -131,11 +150,13 @@ class TestComplianceCheckerReload:
 # Section 3 — ComplianceChecker encrypted persistence
 # ===========================================================================
 
+
 class TestComplianceCheckerEncryptedPersistence:
     """save_encrypted / load_encrypted round-trip."""
 
     def _make_checker(self, deny_list=None):
         from ipfs_datasets_py.mcp_server.compliance_checker import make_default_compliance_checker
+
         return make_default_compliance_checker(deny_list=deny_list or set())
 
     def test_save_encrypted_method_exists(self):
@@ -156,6 +177,7 @@ class TestComplianceCheckerEncryptedPersistence:
     def test_load_encrypted_round_trip(self):
         pytest.importorskip("cryptography")
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         with tempfile.TemporaryDirectory() as td:
             path = os.path.join(td, "rules.enc")
             checker = self._make_checker(deny_list={"blocked_enc"})
@@ -168,6 +190,7 @@ class TestComplianceCheckerEncryptedPersistence:
     def test_load_encrypted_deny_list_restored(self):
         pytest.importorskip("cryptography")
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         with tempfile.TemporaryDirectory() as td:
             path = os.path.join(td, "rules.enc")
             checker = self._make_checker(deny_list={"enc_blocked"})
@@ -179,6 +202,7 @@ class TestComplianceCheckerEncryptedPersistence:
     def test_load_encrypted_wrong_password_returns_zero(self):
         pytest.importorskip("cryptography")
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         with tempfile.TemporaryDirectory() as td:
             path = os.path.join(td, "rules.enc")
             checker = self._make_checker()
@@ -211,6 +235,7 @@ class TestComplianceCheckerEncryptedPersistence:
     def test_save_encrypted_fallback_without_cryptography(self):
         """Fallback to plain save() when cryptography is absent."""
         import builtins
+
         real_import = builtins.__import__
 
         def patched_import(name, *args, **kwargs):
@@ -223,6 +248,7 @@ class TestComplianceCheckerEncryptedPersistence:
             path = os.path.join(td, "rules_fallback.json")
             with patch("builtins.__import__", side_effect=patched_import):
                 import warnings
+
                 with warnings.catch_warnings(record=True) as w:
                     warnings.simplefilter("always")
                     checker.save_encrypted(path, "pass")
@@ -234,16 +260,19 @@ class TestComplianceCheckerEncryptedPersistence:
 # Section 4 — DelegationEvaluator max_chain_depth
 # ===========================================================================
 
+
 class TestDelegationEvaluatorMaxChainDepth:
     """DelegationEvaluator max_chain_depth config."""
 
     def _make_evaluator(self, max_depth=0):
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationEvaluator
+
         return DelegationEvaluator(max_chain_depth=max_depth)
 
     def _add_chain(self, ev, length):
         """Add a linear chain of *length* delegations; return leaf CID."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import Delegation, Capability
+
         prev_cid = None
         leaf_cid = None
         for i in range(length):
@@ -264,6 +293,7 @@ class TestDelegationEvaluatorMaxChainDepth:
 
     def test_max_chain_depth_default_is_zero(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationEvaluator
+
         ev = DelegationEvaluator()
         assert ev._max_chain_depth == 0
 
@@ -308,17 +338,20 @@ class TestDelegationEvaluatorMaxChainDepth:
 # Section 5 — DelegationManager max_chain_depth integration
 # ===========================================================================
 
+
 class TestDelegationManagerMaxChainDepth:
     """DelegationManager passes max_chain_depth to DelegationEvaluator."""
 
     def test_delegation_manager_accepts_max_chain_depth(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         with tempfile.TemporaryDirectory() as td:
             mgr = DelegationManager(os.path.join(td, "del.json"), max_chain_depth=3)
             assert mgr._max_chain_depth == 3
 
     def test_delegation_manager_evaluator_has_max_depth(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         with tempfile.TemporaryDirectory() as td:
             mgr = DelegationManager(os.path.join(td, "del.json"), max_chain_depth=5)
             ev = mgr.get_evaluator()
@@ -326,6 +359,7 @@ class TestDelegationManagerMaxChainDepth:
 
     def test_get_delegation_manager_accepts_max_chain_depth(self):
         from ipfs_datasets_py.mcp_server import ucan_delegation
+
         # Reset singleton
         old = ucan_delegation._default_delegation_manager
         ucan_delegation._default_delegation_manager = None
@@ -341,8 +375,11 @@ class TestDelegationManagerMaxChainDepth:
 
     def test_can_invoke_rejects_over_depth_chain(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import (
-            DelegationManager, Delegation, Capability,
+            DelegationManager,
+            Delegation,
+            Capability,
         )
+
         with tempfile.TemporaryDirectory() as td:
             mgr = DelegationManager(os.path.join(td, "del.json"), max_chain_depth=2)
             prev = None
@@ -350,9 +387,13 @@ class TestDelegationManagerMaxChainDepth:
             for i in range(4):
                 cid = f"mgr-chain-{i}"
                 d = Delegation(
-                    cid=cid, issuer="did:key:iss", audience="alice",
+                    cid=cid,
+                    issuer="did:key:iss",
+                    audience="alice",
                     capabilities=[Capability("tool", "invoke")],
-                    expiry=None, proof_cid=prev, signature="",
+                    expiry=None,
+                    proof_cid=prev,
+                    signature="",
                 )
                 mgr.add(d)
                 prev = cid
@@ -365,6 +406,7 @@ class TestDelegationManagerMaxChainDepth:
 # ===========================================================================
 # Section 6 — Full server integration test (5 stores)
 # ===========================================================================
+
 
 class TestFullServerIntegration5Stores:
     """Integration test spanning all 5 data stores."""
@@ -388,6 +430,7 @@ class TestFullServerIntegration5Stores:
             make_default_compliance_checker,
             ComplianceChecker,
         )
+
         with tempfile.TemporaryDirectory() as td:
             path = os.path.join(td, "compliance.json")
             orig = make_default_compliance_checker(deny_list={"blocked_tool"})
@@ -399,8 +442,11 @@ class TestFullServerIntegration5Stores:
 
     def test_delegation_manager_save_and_load_round_trip(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import (
-            DelegationManager, Delegation, Capability,
+            DelegationManager,
+            Delegation,
+            Capability,
         )
+
         with tempfile.TemporaryDirectory() as td:
             path = os.path.join(td, "del.json")
             mgr = DelegationManager(path)
@@ -409,7 +455,9 @@ class TestFullServerIntegration5Stores:
                 issuer="did:key:iss",
                 audience="did:key:aud",
                 capabilities=[Capability("mcp://tool/test", "invoke")],
-                expiry=None, proof_cid=None, signature="",
+                expiry=None,
+                proof_cid=None,
+                signature="",
             )
             mgr.add(d)
             mgr.save()
@@ -421,16 +469,22 @@ class TestFullServerIntegration5Stores:
     def test_encrypted_revocation_round_trip(self):
         pytest.importorskip("cryptography")
         from ipfs_datasets_py.mcp_server.ucan_delegation import (
-            DelegationManager, Delegation, Capability,
+            DelegationManager,
+            Delegation,
+            Capability,
         )
+
         with tempfile.TemporaryDirectory() as td:
             path = os.path.join(td, "del.json")
             mgr = DelegationManager(path)
             d = Delegation(
                 cid="cid-revoke-enc",
-                issuer="did:key:iss", audience="did:key:aud",
+                issuer="did:key:iss",
+                audience="did:key:aud",
                 capabilities=[Capability("*", "*")],
-                expiry=None, proof_cid=None, signature="",
+                expiry=None,
+                proof_cid=None,
+                signature="",
             )
             mgr.add(d)
             mgr.revoke("cid-revoke-enc")
@@ -442,6 +496,7 @@ class TestFullServerIntegration5Stores:
 
     def test_interface_repository_accessible(self):
         from ipfs_datasets_py.mcp_server.interface_descriptor import InterfaceRepository
+
         repo = InterfaceRepository()
         assert repo is not None
 
@@ -450,6 +505,7 @@ class TestFullServerIntegration5Stores:
             make_default_compliance_checker,
             ComplianceChecker,
         )
+
         with tempfile.TemporaryDirectory() as td:
             path = os.path.join(td, "rules.json")
             orig = make_default_compliance_checker(deny_list={"tool_x"})
@@ -461,6 +517,7 @@ class TestFullServerIntegration5Stores:
 
     def test_delegation_manager_metrics_dict_keys(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         with tempfile.TemporaryDirectory() as td:
             mgr = DelegationManager(os.path.join(td, "del.json"))
             m = mgr.get_metrics()

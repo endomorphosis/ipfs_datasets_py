@@ -55,23 +55,17 @@ def _mapping(value: Any, label: str) -> Mapping[str, Any]:
     return value
 
 
-def _known_fields(
-    value: Mapping[str, Any], allowed: frozenset[str], label: str
-) -> None:
+def _known_fields(value: Mapping[str, Any], allowed: frozenset[str], label: str) -> None:
     unknown = sorted(set(value) - allowed)
     if unknown:
-        raise CVEfixesSchemaError(
-            f"unknown {label} field(s): {', '.join(unknown)}"
-        )
+        raise CVEfixesSchemaError(f"unknown {label} field(s): {', '.join(unknown)}")
 
 
 def _text(value: Any, label: str) -> str:
     if not isinstance(value, str) or not value:
         raise CVEfixesSchemaError(f"{label} must be a non-empty string")
     if value != value.strip():
-        raise CVEfixesSchemaError(
-            f"{label} must not have surrounding whitespace"
-        )
+        raise CVEfixesSchemaError(f"{label} must not have surrounding whitespace")
     return value
 
 
@@ -82,27 +76,19 @@ def _cid(value: Any, label: str) -> str:
         or not result.startswith("b")
         or any(character not in _CID_ALPHABET for character in result)
     ):
-        raise CVEfixesSchemaError(
-            f"{label} must be an ir_core raw/sha2-256 CIDv1"
-        )
+        raise CVEfixesSchemaError(f"{label} must be an ir_core raw/sha2-256 CIDv1")
     try:
         encoded = result[1:].upper()
         raw = base64.b32decode(encoded + ("=" * ((-len(encoded)) % 8)))
     except (ValueError, base64.binascii.Error) as exc:
-        raise CVEfixesSchemaError(
-            f"{label} must be an ir_core raw/sha2-256 CIDv1"
-        ) from exc
+        raise CVEfixesSchemaError(f"{label} must be an ir_core raw/sha2-256 CIDv1") from exc
     if len(raw) != 36 or not raw.startswith(_IR_CORE_CID_HEADER):
-        raise CVEfixesSchemaError(
-            f"{label} must be an ir_core raw/sha2-256 CIDv1"
-        )
+        raise CVEfixesSchemaError(f"{label} must be an ir_core raw/sha2-256 CIDv1")
     return result
 
 
 def _cid_tuple(value: Any, label: str, *, nonempty: bool = True) -> tuple[str, ...]:
-    if isinstance(value, (str, bytes, bytearray)) or not isinstance(
-        value, Sequence
-    ):
+    if isinstance(value, (str, bytes, bytearray)) or not isinstance(value, Sequence):
         raise CVEfixesSchemaError(f"{label} must be a sequence of CIDs")
     result = tuple(_cid(item, f"{label} item") for item in value)
     if nonempty and not result:
@@ -112,12 +98,8 @@ def _cid_tuple(value: Any, label: str, *, nonempty: bool = True) -> tuple[str, .
     return tuple(sorted(result))
 
 
-def _string_tuple(
-    value: Any, label: str, *, nonempty: bool = False
-) -> tuple[str, ...]:
-    if isinstance(value, (str, bytes, bytearray)) or not isinstance(
-        value, Sequence
-    ):
+def _string_tuple(value: Any, label: str, *, nonempty: bool = False) -> tuple[str, ...]:
+    if isinstance(value, (str, bytes, bytearray)) or not isinstance(value, Sequence):
         raise CVEfixesSchemaError(f"{label} must be a sequence of strings")
     result = tuple(_text(item, f"{label} item") for item in value)
     if nonempty and not result:
@@ -136,11 +118,7 @@ def _frozen_mapping(value: Any, label: str) -> Mapping[str, Any]:
 
 def _authority(value: Any, expected: DerivedAuthority) -> DerivedAuthority:
     try:
-        result = (
-            value
-            if isinstance(value, DerivedAuthority)
-            else DerivedAuthority(value)
-        )
+        result = value if isinstance(value, DerivedAuthority) else DerivedAuthority(value)
     except (TypeError, ValueError) as exc:
         raise CVEfixesSchemaError(
             "authority must be 'non_authoritative' or 'candidate'; "
@@ -156,9 +134,7 @@ def _authority(value: Any, expected: DerivedAuthority) -> DerivedAuthority:
 
 def _schema_version(value: Any, expected: str) -> str:
     if value != expected:
-        raise CVEfixesSchemaError(
-            f"unsupported schema_version {value!r}; expected {expected!r}"
-        )
+        raise CVEfixesSchemaError(f"unsupported schema_version {value!r}; expected {expected!r}")
     return expected
 
 
@@ -176,9 +152,7 @@ def canonical_config_cid(
     ).cid
 
 
-def _decode_json_object(
-    value: str | bytes | bytearray, label: str
-) -> Mapping[str, Any]:
+def _decode_json_object(value: str | bytes | bytearray, label: str) -> Mapping[str, Any]:
     if not isinstance(value, (str, bytes, bytearray)):
         raise CVEfixesSchemaError(f"{label} JSON must be text or bytes")
 
@@ -186,16 +160,12 @@ def _decode_json_object(
         result: dict[str, Any] = {}
         for key, item in items:
             if key in result:
-                raise CVEfixesSchemaError(
-                    f"{label} JSON contains duplicate field {key!r}"
-                )
+                raise CVEfixesSchemaError(f"{label} JSON contains duplicate field {key!r}")
             result[key] = item
         return result
 
     def reject_constant(constant: str) -> None:
-        raise CVEfixesSchemaError(
-            f"{label} JSON contains non-finite number {constant}"
-        )
+        raise CVEfixesSchemaError(f"{label} JSON contains non-finite number {constant}")
 
     try:
         decoded = json.loads(
@@ -223,27 +193,15 @@ class CanonicalDerivedRecord:
     schema_version: str = CVEFIXES_SCHEMA_VERSION
 
     RECORD_TYPE: ClassVar[str] = "derived_record"
-    IDENTITY_DOMAIN: ClassVar[str] = (
-        f"{CVEFIXES_IDENTITY_DOMAIN_PREFIX}/derived-record"
-    )
-    EXPECTED_AUTHORITY: ClassVar[DerivedAuthority] = (
-        DerivedAuthority.NON_AUTHORITATIVE
-    )
+    IDENTITY_DOMAIN: ClassVar[str] = f"{CVEFIXES_IDENTITY_DOMAIN_PREFIX}/derived-record"
+    EXPECTED_AUTHORITY: ClassVar[DerivedAuthority] = DerivedAuthority.NON_AUTHORITATIVE
     SPECIFIC_FIELDS: ClassVar[frozenset[str]] = frozenset()
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "source_cids", _cid_tuple(self.source_cids, "source_cids")
-        )
-        object.__setattr__(
-            self, "parent_cids", _cid_tuple(self.parent_cids, "parent_cids")
-        )
-        object.__setattr__(
-            self, "config_cid", _cid(self.config_cid, "config_cid")
-        )
-        object.__setattr__(
-            self, "payload", _frozen_mapping(self.payload, "payload")
-        )
+        object.__setattr__(self, "source_cids", _cid_tuple(self.source_cids, "source_cids"))
+        object.__setattr__(self, "parent_cids", _cid_tuple(self.parent_cids, "parent_cids"))
+        object.__setattr__(self, "config_cid", _cid(self.config_cid, "config_cid"))
+        object.__setattr__(self, "payload", _frozen_mapping(self.payload, "payload"))
         object.__setattr__(
             self,
             "authority",
@@ -322,16 +280,12 @@ class CanonicalDerivedRecord:
     @classmethod
     def _common_values(cls, value: Mapping[str, Any]) -> dict[str, Any]:
         return {
-            "authority": value.get(
-                "authority", cls.EXPECTED_AUTHORITY.value
-            ),
+            "authority": value.get("authority", cls.EXPECTED_AUTHORITY.value),
             "config_cid": value.get("config_cid", ""),
             "parent_cids": value.get("parent_cids", ()),
             "payload": value.get("payload", {}),
             "record_id": value.get("record_id", ""),
-            "schema_version": value.get(
-                "schema_version", CVEFIXES_SCHEMA_VERSION
-            ),
+            "schema_version": value.get("schema_version", CVEFIXES_SCHEMA_VERSION),
             "source_cids": value.get("source_cids", ()),
         }
 
@@ -356,15 +310,11 @@ class CanonicalDerivedRecord:
             cls.RECORD_TYPE,
         )
         if value.get("record_type") != cls.RECORD_TYPE:
-            raise CVEfixesSchemaError(
-                f"record_type must be {cls.RECORD_TYPE!r}"
-            )
+            raise CVEfixesSchemaError(f"record_type must be {cls.RECORD_TYPE!r}")
         return value
 
     @classmethod
-    def from_json(
-        cls, value: str | bytes | bytearray
-    ) -> "CanonicalDerivedRecord":
+    def from_json(cls, value: str | bytes | bytearray) -> "CanonicalDerivedRecord":
         """Decode strict JSON, rejecting duplicate keys and non-finite values."""
 
         return cls.from_dict(_decode_json_object(value, cls.RECORD_TYPE))
@@ -379,9 +329,7 @@ class SourceRecord(CanonicalDerivedRecord):
     row_key: str
 
     RECORD_TYPE: ClassVar[str] = "source_record"
-    IDENTITY_DOMAIN: ClassVar[str] = (
-        f"{CVEFIXES_IDENTITY_DOMAIN_PREFIX}/source-record"
-    )
+    IDENTITY_DOMAIN: ClassVar[str] = f"{CVEFIXES_IDENTITY_DOMAIN_PREFIX}/source-record"
     SPECIFIC_FIELDS: ClassVar[frozenset[str]] = frozenset(
         {"source_uri", "source_revision", "row_key"}
     )
@@ -418,9 +366,7 @@ class CodeUnit(CanonicalDerivedRecord):
     polarity: str
 
     RECORD_TYPE: ClassVar[str] = "code_unit"
-    IDENTITY_DOMAIN: ClassVar[str] = (
-        f"{CVEFIXES_IDENTITY_DOMAIN_PREFIX}/code-unit"
-    )
+    IDENTITY_DOMAIN: ClassVar[str] = f"{CVEFIXES_IDENTITY_DOMAIN_PREFIX}/code-unit"
     SPECIFIC_FIELDS: ClassVar[frozenset[str]] = frozenset(
         {"unit_kind", "language", "path", "polarity"}
     )
@@ -429,9 +375,7 @@ class CodeUnit(CanonicalDerivedRecord):
         for name in ("unit_kind", "language", "path", "polarity"):
             object.__setattr__(self, name, _text(getattr(self, name), name))
         if self.polarity not in {"vulnerable", "fixed"}:
-            raise CVEfixesSchemaError(
-                "polarity must be 'vulnerable' or 'fixed'"
-            )
+            raise CVEfixesSchemaError("polarity must be 'vulnerable' or 'fixed'")
 
     def _specific_dict(self) -> dict[str, Any]:
         return {
@@ -460,9 +404,7 @@ class GraphNode(CanonicalDerivedRecord):
     node_type: str
 
     RECORD_TYPE: ClassVar[str] = "graph_node"
-    IDENTITY_DOMAIN: ClassVar[str] = (
-        f"{CVEFIXES_IDENTITY_DOMAIN_PREFIX}/graph-node"
-    )
+    IDENTITY_DOMAIN: ClassVar[str] = f"{CVEFIXES_IDENTITY_DOMAIN_PREFIX}/graph-node"
     SPECIFIC_FIELDS: ClassVar[frozenset[str]] = frozenset({"node_type"})
 
     def _validate_specific(self) -> None:
@@ -489,9 +431,7 @@ class GraphEdge(CanonicalDerivedRecord):
     target_node_cid: str
 
     RECORD_TYPE: ClassVar[str] = "graph_edge"
-    IDENTITY_DOMAIN: ClassVar[str] = (
-        f"{CVEFIXES_IDENTITY_DOMAIN_PREFIX}/graph-edge"
-    )
+    IDENTITY_DOMAIN: ClassVar[str] = f"{CVEFIXES_IDENTITY_DOMAIN_PREFIX}/graph-edge"
     SPECIFIC_FIELDS: ClassVar[frozenset[str]] = frozenset(
         {"edge_type", "source_node_cid", "target_node_cid"}
     )
@@ -536,21 +476,15 @@ class PolicyCandidate(CanonicalDerivedRecord):
     authority: DerivedAuthority = DerivedAuthority.CANDIDATE
 
     RECORD_TYPE: ClassVar[str] = "policy_candidate"
-    IDENTITY_DOMAIN: ClassVar[str] = (
-        f"{CVEFIXES_IDENTITY_DOMAIN_PREFIX}/policy-candidate"
-    )
+    IDENTITY_DOMAIN: ClassVar[str] = f"{CVEFIXES_IDENTITY_DOMAIN_PREFIX}/policy-candidate"
     EXPECTED_AUTHORITY: ClassVar[DerivedAuthority] = DerivedAuthority.CANDIDATE
     SPECIFIC_FIELDS: ClassVar[frozenset[str]] = frozenset({"effect", "scope"})
 
     def _validate_specific(self) -> None:
         object.__setattr__(self, "effect", _text(self.effect, "effect"))
         if self.effect not in {"allow", "deny", "require", "audit"}:
-            raise CVEfixesSchemaError(
-                "effect must be allow, deny, require, or audit"
-            )
-        object.__setattr__(
-            self, "scope", _frozen_mapping(self.scope, "scope")
-        )
+            raise CVEfixesSchemaError("effect must be allow, deny, require, or audit")
+        object.__setattr__(self, "scope", _frozen_mapping(self.scope, "scope"))
         if not self.scope:
             raise CVEfixesSchemaError("scope must not be empty")
 
@@ -575,18 +509,12 @@ class FormalView(CanonicalDerivedRecord):
     expression: str
 
     RECORD_TYPE: ClassVar[str] = "formal_view"
-    IDENTITY_DOMAIN: ClassVar[str] = (
-        f"{CVEFIXES_IDENTITY_DOMAIN_PREFIX}/formal-view"
-    )
-    SPECIFIC_FIELDS: ClassVar[frozenset[str]] = frozenset(
-        {"formalism", "expression"}
-    )
+    IDENTITY_DOMAIN: ClassVar[str] = f"{CVEFIXES_IDENTITY_DOMAIN_PREFIX}/formal-view"
+    SPECIFIC_FIELDS: ClassVar[frozenset[str]] = frozenset({"formalism", "expression"})
 
     def _validate_specific(self) -> None:
         object.__setattr__(self, "formalism", _text(self.formalism, "formalism"))
-        object.__setattr__(
-            self, "expression", _text(self.expression, "expression")
-        )
+        object.__setattr__(self, "expression", _text(self.expression, "expression"))
 
     def _specific_dict(self) -> dict[str, Any]:
         return {"expression": self.expression, "formalism": self.formalism}
@@ -609,20 +537,12 @@ class EvaluationRecord(CanonicalDerivedRecord):
     metrics: Mapping[str, Any]
 
     RECORD_TYPE: ClassVar[str] = "evaluation"
-    IDENTITY_DOMAIN: ClassVar[str] = (
-        f"{CVEFIXES_IDENTITY_DOMAIN_PREFIX}/evaluation"
-    )
-    SPECIFIC_FIELDS: ClassVar[frozenset[str]] = frozenset(
-        {"subject_cids", "metrics"}
-    )
+    IDENTITY_DOMAIN: ClassVar[str] = f"{CVEFIXES_IDENTITY_DOMAIN_PREFIX}/evaluation"
+    SPECIFIC_FIELDS: ClassVar[frozenset[str]] = frozenset({"subject_cids", "metrics"})
 
     def _validate_specific(self) -> None:
-        object.__setattr__(
-            self, "subject_cids", _cid_tuple(self.subject_cids, "subject_cids")
-        )
-        object.__setattr__(
-            self, "metrics", _frozen_mapping(self.metrics, "metrics")
-        )
+        object.__setattr__(self, "subject_cids", _cid_tuple(self.subject_cids, "subject_cids"))
+        object.__setattr__(self, "metrics", _frozen_mapping(self.metrics, "metrics"))
         if not self.metrics:
             raise CVEfixesSchemaError("metrics must not be empty")
 
@@ -652,9 +572,7 @@ class ReleaseManifest(CanonicalDerivedRecord):
     shard_cids: tuple[str, ...]
 
     RECORD_TYPE: ClassVar[str] = "release_manifest"
-    IDENTITY_DOMAIN: ClassVar[str] = (
-        f"{CVEFIXES_IDENTITY_DOMAIN_PREFIX}/release-manifest"
-    )
+    IDENTITY_DOMAIN: ClassVar[str] = f"{CVEFIXES_IDENTITY_DOMAIN_PREFIX}/release-manifest"
     SPECIFIC_FIELDS: ClassVar[frozenset[str]] = frozenset(
         {"dataset_id", "profile", "record_cids", "shard_cids"}
     )
@@ -662,12 +580,8 @@ class ReleaseManifest(CanonicalDerivedRecord):
     def _validate_specific(self) -> None:
         object.__setattr__(self, "dataset_id", _text(self.dataset_id, "dataset_id"))
         object.__setattr__(self, "profile", _text(self.profile, "profile"))
-        object.__setattr__(
-            self, "record_cids", _cid_tuple(self.record_cids, "record_cids")
-        )
-        object.__setattr__(
-            self, "shard_cids", _cid_tuple(self.shard_cids, "shard_cids")
-        )
+        object.__setattr__(self, "record_cids", _cid_tuple(self.record_cids, "record_cids"))
+        object.__setattr__(self, "shard_cids", _cid_tuple(self.shard_cids, "shard_cids"))
 
     def _specific_dict(self) -> dict[str, Any]:
         return {
@@ -723,9 +637,7 @@ def record_from_dict(value: Mapping[str, Any]) -> DerivedRecord:
     try:
         decoder = _RECORD_TYPES[record_type]
     except (KeyError, TypeError) as exc:
-        raise CVEfixesSchemaError(
-            f"unknown record_type {record_type!r}"
-        ) from exc
+        raise CVEfixesSchemaError(f"unknown record_type {record_type!r}") from exc
     return decoder.from_dict(value)  # type: ignore[return-value]
 
 
@@ -758,9 +670,7 @@ class DerivedDataset:
         object.__setattr__(self, "records", records)
         computed = self.identity.cid
         if self.dataset_id and self.dataset_id != computed:
-            raise CVEfixesSchemaError(
-                "dataset_id does not match deterministic content"
-            )
+            raise CVEfixesSchemaError("dataset_id does not match deterministic content")
         object.__setattr__(self, "dataset_id", computed)
 
     def deterministic_dict(self) -> dict[str, Any]:
@@ -808,14 +718,9 @@ class DerivedDataset:
         ):
             raise CVEfixesSchemaError("records must be a sequence")
         return cls(
-            records=tuple(
-                record_from_dict(_mapping(item, "record"))
-                for item in raw_records
-            ),
+            records=tuple(record_from_dict(_mapping(item, "record")) for item in raw_records),
             dataset_id=value.get("dataset_id", ""),
-            schema_version=value.get(
-                "schema_version", CVEFIXES_DATASET_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", CVEFIXES_DATASET_SCHEMA_VERSION),
         )
 
     @classmethod

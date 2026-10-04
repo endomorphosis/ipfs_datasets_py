@@ -46,6 +46,7 @@ Use ipfs_datasets_py.processors.file_converter instead.
 This module will be removed in version 3.0.0.
 See: PROCESSORS_REFACTORING_PLAN_2026_02_16.md for migration guide.
 """
+
 import warnings
 
 warnings.warn(
@@ -53,13 +54,14 @@ warnings.warn(
     "Use ipfs_datasets_py.processors.file_converter.FileConverter instead. "
     "This module will be removed in v3.0.0",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 
 # Optional: Re-export from new system for compatibility
 try:
     from ...file_converter import FileConverter
-    __all__ = ['FileConverter']
+
+    __all__ = ["FileConverter"]
 except ImportError:
     pass
 ```
@@ -84,6 +86,7 @@ Use ipfs_datasets_py.processors.file_converter instead.
 This module will be removed in version 3.0.0.
 See: PROCESSORS_REFACTORING_PLAN_2026_02_16.md for migration guide.
 """
+
 import warnings
 
 warnings.warn(
@@ -91,13 +94,14 @@ warnings.warn(
     "Use ipfs_datasets_py.processors.file_converter.FileConverter instead. "
     "This module will be removed in v3.0.0",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 
 # Optional: Re-export from new system for compatibility
 try:
     from ...file_converter import FileConverter
-    __all__ = ['FileConverter']
+
+    __all__ = ["FileConverter"]
 except ImportError:
     pass
 ```
@@ -120,18 +124,20 @@ Add deprecation notice and route to new system:
 # Legacy conversion systems - use file_converter instead
 import warnings
 
+
 def _deprecated_import(old_path: str, new_path: str):
     warnings.warn(
         f"{old_path} is deprecated. Use {new_path} instead. "
         "Deprecated modules will be removed in v3.0.0",
         DeprecationWarning,
-        stacklevel=3
+        stacklevel=3,
     )
+
 
 # Document all deprecated paths
 _DEPRECATED_PATHS = {
     "multimedia.convert_to_txt_based_on_mime_type": "file_converter",
-    "multimedia.omni_converter_mk2": "file_converter"
+    "multimedia.omni_converter_mk2": "file_converter",
 }
 ```
 

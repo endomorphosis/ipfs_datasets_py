@@ -151,8 +151,7 @@ def discover_provekit_binary(
                 return candidate
         tried = ", ".join(str(path) for path in candidates)
         raise ZKPError(
-            f"{var_name} is set, but no executable ProveKit CLI was found. "
-            f"Tried: {tried}"
+            f"{var_name} is set, but no executable ProveKit CLI was found. Tried: {tried}"
         )
 
     package_root = Path(package_dir) if package_dir is not None else Path(__file__).resolve().parent
@@ -439,4 +438,3 @@ def _text(value: Any) -> str:
     if isinstance(value, bytes):
         return value.decode("utf-8", errors="replace")
     return str(value)
-

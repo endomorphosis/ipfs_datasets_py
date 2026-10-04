@@ -27,6 +27,7 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipel
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _ctx(domain: str = "test") -> OntologyGenerationContext:
     return OntologyGenerationContext(data_source="t", data_type="text", domain=domain)
 
@@ -68,6 +69,7 @@ def _make_result(*entities, rels=None) -> EntityExtractionResult:
 # ---------------------------------------------------------------------------
 # OntologyMediator.get_action_summary
 # ---------------------------------------------------------------------------
+
 
 class TestGetActionSummary:
     def test_returns_list(self):
@@ -111,6 +113,7 @@ class TestGetActionSummary:
 # OntologyMediator.preview_recommendations
 # ---------------------------------------------------------------------------
 
+
 class TestPreviewRecommendations:
     def test_returns_list(self):
         med = _mediator()
@@ -137,7 +140,14 @@ class TestPreviewRecommendations:
 
     def test_empty_recommendations(self):
         med = _mediator()
-        score = CriticScore(completeness=0.5, consistency=0.5, clarity=0.5, granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5)
+        score = CriticScore(
+            completeness=0.5,
+            consistency=0.5,
+            clarity=0.5,
+            granularity=0.5,
+            relationship_coherence=0.5,
+            domain_alignment=0.5,
+        )
         result = med.preview_recommendations({}, score, _ctx())
         assert result == []
 
@@ -145,6 +155,7 @@ class TestPreviewRecommendations:
 # ---------------------------------------------------------------------------
 # OntologyPipeline.from_dict
 # ---------------------------------------------------------------------------
+
 
 class TestPipelineFromDict:
     def test_round_trip_domain(self):
@@ -175,6 +186,7 @@ class TestPipelineFromDict:
 # ---------------------------------------------------------------------------
 # OntologyGenerator.deduplicate_entities
 # ---------------------------------------------------------------------------
+
 
 class TestDeduplicateEntities:
     def test_no_duplicates_unchanged(self):
@@ -248,12 +260,20 @@ class TestDeduplicateEntities:
 # OntologyCritic.calibrate_thresholds
 # ---------------------------------------------------------------------------
 
+
 class TestCalibrateThresholds:
     def _scores(self, values):
-        return [CriticScore(
-            completeness=v, consistency=v, clarity=v, granularity=v,
-            relationship_coherence=v, domain_alignment=v
-        ) for v in values]
+        return [
+            CriticScore(
+                completeness=v,
+                consistency=v,
+                clarity=v,
+                granularity=v,
+                relationship_coherence=v,
+                domain_alignment=v,
+            )
+            for v in values
+        ]
 
     def test_returns_dict(self):
         result = _critic().calibrate_thresholds(self._scores([0.5, 0.7, 0.9]))
@@ -261,7 +281,14 @@ class TestCalibrateThresholds:
 
     def test_all_dims_present(self):
         result = _critic().calibrate_thresholds(self._scores([0.5, 0.7]))
-        expected_keys = {"completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment"}
+        expected_keys = {
+            "completeness",
+            "consistency",
+            "clarity",
+            "granularity",
+            "relationship_coherence",
+            "domain_alignment",
+        }
         assert set(result.keys()) == expected_keys
 
     def test_stored_on_instance(self):

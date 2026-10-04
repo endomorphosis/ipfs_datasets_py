@@ -11,6 +11,7 @@ for analyzing obligations, permissions, and prohibitions.
 Note: Refactored from 911 LOC to <600 LOC. Types and utilities extracted to
 separate modules for better maintainability.
 """
+
 from __future__ import annotations
 
 import re
@@ -70,19 +71,25 @@ class DeonticExtractor:
         statements = []
 
         # Extract obligations
-        statements.extend(self._extract_modality_statements(
-            text, document_id, self.patterns.OBLIGATION_PATTERNS, DeonticModality.OBLIGATION
-        ))
+        statements.extend(
+            self._extract_modality_statements(
+                text, document_id, self.patterns.OBLIGATION_PATTERNS, DeonticModality.OBLIGATION
+            )
+        )
 
         # Extract permissions
-        statements.extend(self._extract_modality_statements(
-            text, document_id, self.patterns.PERMISSION_PATTERNS, DeonticModality.PERMISSION
-        ))
+        statements.extend(
+            self._extract_modality_statements(
+                text, document_id, self.patterns.PERMISSION_PATTERNS, DeonticModality.PERMISSION
+            )
+        )
 
         # Extract prohibitions
-        statements.extend(self._extract_modality_statements(
-            text, document_id, self.patterns.PROHIBITION_PATTERNS, DeonticModality.PROHIBITION
-        ))
+        statements.extend(
+            self._extract_modality_statements(
+                text, document_id, self.patterns.PROHIBITION_PATTERNS, DeonticModality.PROHIBITION
+            )
+        )
 
         # Extract conditional statements
         statements.extend(self._extract_conditional_statements(text, document_id))
@@ -93,11 +100,7 @@ class DeonticExtractor:
         return statements
 
     def _extract_modality_statements(
-        self,
-        text: str,
-        document_id: str,
-        patterns: List[str],
-        modality: DeonticModality
+        self, text: str, document_id: str, patterns: List[str], modality: DeonticModality
     ) -> List[DeonticStatement]:
         """Extract statements for a specific deontic modality."""
         statements = []
@@ -121,7 +124,7 @@ class DeonticExtractor:
                             source_document=document_id,
                             source_text=match.group(0),
                             confidence=self._calculate_confidence(match.group(0), modality),
-                            context=self._extract_context(text, match.start(), match.end())
+                            context=self._extract_context(text, match.start(), match.end()),
                         )
                         statements.append(statement)
 
@@ -130,7 +133,9 @@ class DeonticExtractor:
 
         return statements
 
-    def _extract_conditional_statements(self, text: str, document_id: str) -> List[DeonticStatement]:
+    def _extract_conditional_statements(
+        self, text: str, document_id: str
+    ) -> List[DeonticStatement]:
         """Extract conditional deontic statements."""
         statements = []
 
@@ -144,11 +149,11 @@ class DeonticExtractor:
                     action = match.group(4).strip()
 
                     # Determine modality from modal word
-                    if modal_word in ['must', 'shall']:
+                    if modal_word in ["must", "shall"]:
                         modality = DeonticModality.OBLIGATION
-                    elif modal_word in ['may', 'can']:
+                    elif modal_word in ["may", "can"]:
                         modality = DeonticModality.PERMISSION
-                    elif modal_word in ['cannot', 'must not']:
+                    elif modal_word in ["cannot", "must not"]:
                         modality = DeonticModality.PROHIBITION
                     else:
                         continue
@@ -165,7 +170,7 @@ class DeonticExtractor:
                             source_text=match.group(0),
                             confidence=self._calculate_confidence(match.group(0), modality),
                             context=self._extract_context(text, match.start(), match.end()),
-                            conditions=[condition]
+                            conditions=[condition],
                         )
                         statements.append(statement)
 
@@ -188,11 +193,11 @@ class DeonticExtractor:
                     exception = match.group(4).strip()
 
                     # Determine modality from modal word
-                    if modal_word in ['must', 'shall']:
+                    if modal_word in ["must", "shall"]:
                         modality = DeonticModality.OBLIGATION
-                    elif modal_word in ['may', 'can']:
+                    elif modal_word in ["may", "can"]:
                         modality = DeonticModality.PERMISSION
-                    elif modal_word in ['cannot', 'must not']:
+                    elif modal_word in ["cannot", "must not"]:
                         modality = DeonticModality.PROHIBITION
                     else:
                         continue
@@ -209,7 +214,7 @@ class DeonticExtractor:
                             source_text=match.group(0),
                             confidence=self._calculate_confidence(match.group(0), modality),
                             context=self._extract_context(text, match.start(), match.end()),
-                            exceptions=[exception]
+                            exceptions=[exception],
                         )
                         statements.append(statement)
 
@@ -221,7 +226,7 @@ class DeonticExtractor:
     def _is_valid_entity_action(self, entity: str, action: str) -> bool:
         """Check if entity and action are valid (not too generic)."""
         # Filter out overly generic entities
-        generic_entities = {'it', 'this', 'that', 'they', 'one', 'someone', 'anyone'}
+        generic_entities = {"it", "this", "that", "they", "one", "someone", "anyone"}
         if entity.lower() in generic_entities:
             return False
 
@@ -236,11 +241,11 @@ class DeonticExtractor:
         base_confidence = 0.7
 
         # Higher confidence for explicit modal words
-        if any(word in text.lower() for word in ['must', 'shall', 'required', 'mandatory']):
+        if any(word in text.lower() for word in ["must", "shall", "required", "mandatory"]):
             base_confidence += 0.2
 
         # Lower confidence for weaker modal words
-        if any(word in text.lower() for word in ['should', 'ought', 'recommend']):
+        if any(word in text.lower() for word in ["should", "ought", "recommend"]):
             base_confidence -= 0.1
 
         return min(1.0, base_confidence)
@@ -255,7 +260,7 @@ class DeonticExtractor:
         return {
             "surrounding_text": context_text,
             "position": {"start": start, "end": end},
-            "extracted_at": datetime.now().isoformat()
+            "extracted_at": datetime.now().isoformat(),
         }
 
 
@@ -280,8 +285,7 @@ class DeontologicalReasoningEngine(DeonticConflictMixin):
         self.conflict_database = {}
 
     async def analyze_corpus_for_deontic_conflicts(
-        self,
-        documents: List[Dict[str, Any]]
+        self, documents: List[Dict[str, Any]]
     ) -> Dict[str, Any]:
         """Analyze a corpus of documents for deontic conflicts.
 
@@ -314,14 +318,14 @@ class DeontologicalReasoningEngine(DeonticConflictMixin):
             processing_stats = {
                 "documents_processed": 0,
                 "statements_extracted": 0,
-                "extraction_errors": 0
+                "extraction_errors": 0,
             }
 
             # Extract statements from all documents
             for doc in documents:
                 try:
-                    doc_id = doc.get('id', str(len(all_statements)))
-                    content = doc.get('content', '') or doc.get('text', '')
+                    doc_id = doc.get("id", str(len(all_statements)))
+                    content = doc.get("content", "") or doc.get("text", "")
 
                     if content:
                         statements = self.extractor.extract_statements(content, doc_id)
@@ -358,19 +362,18 @@ class DeontologicalReasoningEngine(DeonticConflictMixin):
                 "statements_summary": {
                     "total_statements": len(all_statements),
                     "by_modality": self._count_by_modality(all_statements),
-                    "by_entity": self._count_by_entity(all_statements)
+                    "by_entity": self._count_by_entity(all_statements),
                 },
                 "conflicts_summary": {
                     "total_conflicts": len(conflicts),
                     "by_type": conflict_analysis["by_type"],
-                    "by_severity": conflict_analysis["by_severity"]
+                    "by_severity": conflict_analysis["by_severity"],
                 },
                 "entity_reports": entity_reports,
                 "high_priority_conflicts": [
-                    self._format_conflict_summary(c) for c in conflicts
-                    if c.severity == "high"
+                    self._format_conflict_summary(c) for c in conflicts if c.severity == "high"
                 ][:10],  # Top 10 high priority conflicts
-                "recommendations": self._generate_analysis_recommendations(conflicts)
+                "recommendations": self._generate_analysis_recommendations(conflicts),
             }
 
             logger.info(
@@ -383,7 +386,7 @@ class DeontologicalReasoningEngine(DeonticConflictMixin):
             return {
                 "error": str(e),
                 "analysis_id": f"failed_analysis_{int(datetime.now().timestamp())}",
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
     def _count_by_modality(self, statements: List[DeonticStatement]) -> Dict[str, int]:
@@ -406,7 +409,7 @@ class DeontologicalReasoningEngine(DeonticConflictMixin):
         self,
         entity: Optional[str] = None,
         modality: Optional[DeonticModality] = None,
-        action_keywords: Optional[List[str]] = None
+        action_keywords: Optional[List[str]] = None,
     ) -> List[DeonticStatement]:
         """Query extracted deontic statements by various criteria.
 
@@ -436,7 +439,8 @@ class DeontologicalReasoningEngine(DeonticConflictMixin):
 
         if action_keywords:
             results = [
-                s for s in results
+                s
+                for s in results
                 if any(keyword.lower() in s.action.lower() for keyword in action_keywords)
             ]
 
@@ -446,7 +450,7 @@ class DeontologicalReasoningEngine(DeonticConflictMixin):
         self,
         entity: Optional[str] = None,
         conflict_type: Optional[ConflictType] = None,
-        min_severity: Optional[str] = None
+        min_severity: Optional[str] = None,
     ) -> List[DeonticConflict]:
         """Query detected conflicts by various criteria.
 

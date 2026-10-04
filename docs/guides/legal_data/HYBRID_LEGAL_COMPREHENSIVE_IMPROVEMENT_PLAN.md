@@ -184,15 +184,18 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
+
 class DeonticOp(str, Enum):
     O = "O"
     P = "P"
     F = "F"
 
+
 class FrameKind(str, Enum):
     ACTION = "action"
     EVENT = "event"
     STATE = "state"
+
 
 class TemporalRel(str, Enum):
     BEFORE = "before"
@@ -200,6 +203,7 @@ class TemporalRel(str, Enum):
     WITHIN = "within"
     BY = "by"
     DURING = "during"
+
 
 @dataclass(frozen=True)
 class CanonicalId:
@@ -209,17 +213,20 @@ class CanonicalId:
     def ref(self) -> str:
         return f"{self.namespace}:{self.value}"
 
+
 @dataclass
 class SourceRef:
     id: CanonicalId
     sentence_text: str
     span: Optional[str] = None
 
+
 @dataclass
 class Entity:
     id: CanonicalId
     type_name: str
     attrs: Dict[str, Any] = field(default_factory=dict)
+
 
 @dataclass
 class Frame:
@@ -229,12 +236,14 @@ class Frame:
     roles: Dict[str, str] = field(default_factory=dict)
     attrs: Dict[str, Any] = field(default_factory=dict)
 
+
 @dataclass
 class TemporalExpr:
     kind: str
     start: Optional[str] = None
     end: Optional[str] = None
     duration: Optional[str] = None
+
 
 @dataclass
 class TemporalConstraint:
@@ -243,10 +252,12 @@ class TemporalConstraint:
     expr: TemporalExpr
     anchor_ref: Optional[str] = None
 
+
 @dataclass
 class Atom:
     pred: str
     args: List[str] = field(default_factory=list)
+
 
 @dataclass
 class ConditionNode:
@@ -255,6 +266,7 @@ class ConditionNode:
     children: List["ConditionNode"] = field(default_factory=list)
     var: Optional[str] = None
     var_type: Optional[str] = None
+
 
 @dataclass
 class Norm:
@@ -267,12 +279,14 @@ class Norm:
     priority: int = 0
     source_ref: Optional[str] = None
 
+
 @dataclass
 class Rule:
     id: CanonicalId
     mode: str
     antecedent: ConditionNode
     consequent: Atom
+
 
 @dataclass
 class LegalIR:
@@ -717,8 +731,10 @@ handle_query(query, time_context):
 def check_compliance(query: dict, time_context: dict) -> dict:
     """Return compliance status and proof reference."""
 
+
 def find_violations(state: dict, time_range: tuple[str, str]) -> list[dict]:
     """Return violation records with IR/source links."""
+
 
 def explain_proof(proof_id: str, format: str = "nl") -> dict:
     """Return proof explanation in NL/JSON/trace format."""

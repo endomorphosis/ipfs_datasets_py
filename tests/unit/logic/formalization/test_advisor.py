@@ -344,9 +344,7 @@ def test_checkpoint_compatibility_fails_closed_on_every_dependency() -> None:
 
 
 def test_formula_candidate_is_bounded_typed_and_records_all_identities() -> None:
-    changed = _expression(
-        body={"predicate": "submit", "arguments": ["agent"]}
-    )
+    changed = _expression(body={"predicate": "submit", "arguments": ["agent"]})
     advisor, model = _advisor(
         (
             {
@@ -413,10 +411,7 @@ def test_repair_candidate_changes_only_an_existing_scoped_path() -> None:
     result = advisor.advise(_request())
 
     assert result.candidates[0].changed_formula_ids == ("formula:goal",)
-    assert (
-        result.candidates[0].formulas[0].expression["body"]["predicate"]
-        == "submit"
-    )
+    assert result.candidates[0].formulas[0].expression["body"]["predicate"] == "submit"
 
 
 @pytest.mark.parametrize(
@@ -428,9 +423,7 @@ def test_repair_candidate_changes_only_an_existing_scoped_path() -> None:
         ("/policy/trust_status", "trusted"),
     ),
 )
-def test_protected_semantics_cannot_be_added_or_changed(
-    path: str, replacement: object
-) -> None:
+def test_protected_semantics_cannot_be_added_or_changed(path: str, replacement: object) -> None:
     advisor, _ = _advisor(
         (
             AdvisorCandidate(
@@ -448,17 +441,11 @@ def test_protected_semantics_cannot_be_added_or_changed(
     )
 
     with pytest.raises(AdvisorValidationError, match="cannot alter"):
-        advisor.advise(
-            _request(
-                repair_scope=_scope(allowed_paths=(path,))
-            )
-        )
+        advisor.advise(_request(repair_scope=_scope(allowed_paths=(path,))))
 
 
 def test_candidate_cannot_escape_scope_or_change_formula_grounding() -> None:
-    expression = _expression(
-        body={"predicate": "publish", "arguments": ["model-added"]}
-    )
+    expression = _expression(body={"predicate": "publish", "arguments": ["model-added"]})
     advisor, _ = _advisor(
         (
             AdvisorCandidate(
@@ -483,9 +470,7 @@ def test_candidate_cannot_escape_scope_or_change_formula_grounding() -> None:
         suggestions=(
             FormulaSuggestion(
                 formula_id="formula:goal",
-                expression=_expression(
-                    body={"predicate": "submit", "arguments": ["agent"]}
-                ),
+                expression=_expression(body={"predicate": "submit", "arguments": ["agent"]}),
             ),
         ),
     ).to_dict()
@@ -579,16 +564,12 @@ def test_output_schema_types_and_authority_claims_are_rejected() -> None:
         )
     )
     with pytest.raises(AdvisorValidationError, match="authority"):
-        advisor.advise(
-            _request(repair_scope=_scope(allowed_paths=("/body",)))
-        )
+        advisor.advise(_request(repair_scope=_scope(allowed_paths=("/body",))))
 
 
 def test_request_rejects_stale_or_cross_domain_inputs() -> None:
     with pytest.raises(AdvisorValidationError, match="features do not identify"):
-        _request(
-            features=_features(declaration_digest=f"sha256:{'0' * 64}")
-        )
+        _request(features=_features(declaration_digest=f"sha256:{'0' * 64}"))
     with pytest.raises(FormalizationValidationError, match="incompatible"):
         _request(ontology_identity=f"sha256:{'0' * 64}")
     with pytest.raises(AdvisorValidationError, match="unknown formulas"):

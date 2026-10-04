@@ -7,6 +7,7 @@ Tests cover:
 - list_vector_indexes (inventory)
 - delete_vector_index (cleanup)
 """
+
 import pytest
 import numpy as np
 from unittest.mock import patch, MagicMock

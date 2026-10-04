@@ -75,6 +75,6 @@ def extract_trailing_history_citations(text: str) -> Tuple[str, List[str], List[
         for part in parts:
             parsed.append(parse_history_citation(part))
 
-        cleaned = normalize_space(cleaned[:match.start()])
+        cleaned = normalize_space(cleaned[: match.start()])
 
     return cleaned, raw_blocks, parsed

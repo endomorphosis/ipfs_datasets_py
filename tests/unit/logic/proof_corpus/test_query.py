@@ -119,9 +119,12 @@ def test_index_rebuild_is_deterministic() -> None:
     third = ProofCorpusIndex.from_store(store)
 
     assert first.to_dict() == second.to_dict() == third.to_dict()
-    assert first.to_dict() == ProofCorpusIndex.build(
-        (security, intent, legal)  # order-independent
-    ).to_dict()
+    assert (
+        first.to_dict()
+        == ProofCorpusIndex.build(
+            (security, intent, legal)  # order-independent
+        ).to_dict()
+    )
     assert first.interface == PROOF_CORPUS_INDEX_INTERFACE
     assert first.schema_version == PROOF_CORPUS_INDEX_SCHEMA_VERSION
     assert len(first) == 3
@@ -163,9 +166,7 @@ def test_index_round_trip_save_load(tmp_path: Path) -> None:
     index.save(path)
     loaded = ProofCorpusIndex.load(path)
     assert loaded.to_dict() == index.to_dict()
-    index.assert_matches_envelopes(
-        store.get(cid) for cid in store.cids()
-    )
+    index.assert_matches_envelopes(store.get(cid) for cid in store.cids())
 
 
 def test_index_assert_matches_envelopes_detects_drift() -> None:
@@ -241,9 +242,7 @@ def test_list_by_source_digest_and_source_id() -> None:
     assert len(by_both) == 1
     assert by_both[0].content_cid == security.content_cid
 
-    module_hits = list_by_source(
-        store, source_digest=legal.source_digest, profile=legal.profile
-    )
+    module_hits = list_by_source(store, source_digest=legal.source_digest, profile=legal.profile)
     assert [e.content_cid for e in module_hits] == [legal.content_cid]
 
 
@@ -312,9 +311,7 @@ def test_list_by_obligation_and_constraints() -> None:
     again = list_constraints_for_obligation(store, bare)
     assert [e.content_cid for e in again] == [security.content_cid]
 
-    with_intent = query.list_constraints_for_obligation(
-        intent_oblig, include_intent=True
-    )
+    with_intent = query.list_constraints_for_obligation(intent_oblig, include_intent=True)
     assert len(with_intent) == 1
     assert with_intent[0].family is ProofCorpusFamily.INTENT
 
@@ -326,12 +323,8 @@ def test_composite_query_intersection_is_deterministic() -> None:
     only_legal = query.query(family="legal")
     assert [e.content_cid for e in only_legal] == [legal.content_cid]
 
-    by_profile_and_family = query.query(
-        family="security", profile=security.profile
-    )
-    assert [e.content_cid for e in by_profile_and_family] == [
-        security.content_cid
-    ]
+    by_profile_and_family = query.query(family="security", profile=security.profile)
+    assert [e.content_cid for e in by_profile_and_family] == [security.content_cid]
 
     # Shared profile legal-strict + family filter narrows to one family.
     legal_only = query.query(family="legal", profile=intent.profile)
@@ -371,9 +364,7 @@ def test_rebuild_index_after_put_updates_postings() -> None:
     query = ProofCorpusQuery(store=store)
     assert query.list_all() == ()
 
-    intent = ArtifactEnvelope.from_intent_artifact(
-        _intent_artifact(), profile=_intent_profile()
-    )
+    intent = ArtifactEnvelope.from_intent_artifact(_intent_artifact(), profile=_intent_profile())
     store.put(intent)
     # Auto-index from empty store is stale until rebuild.
     query.rebuild_index()

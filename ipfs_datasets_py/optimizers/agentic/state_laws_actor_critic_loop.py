@@ -89,7 +89,11 @@ class StateLawsActorCriticLoop:
         loop_config: Optional[LoopConfig] = None,
         output_dir: Optional[Path] = None,
     ) -> None:
-        selected = [str(s).upper() for s in (states or list(US_STATES.keys())) if str(s).upper() in US_STATES]
+        selected = [
+            str(s).upper()
+            for s in (states or list(US_STATES.keys()))
+            if str(s).upper() in US_STATES
+        ]
         self.states = selected if selected else list(US_STATES.keys())
         self.loop_config = loop_config or LoopConfig()
 
@@ -222,13 +226,17 @@ class StateLawsActorCriticLoop:
             "target_score": self.loop_config.target_score,
             "best": asdict(self.best_outcome) if self.best_outcome else None,
             "converged": bool(self.best_outcome and self.best_outcome.passed),
-            "history_files": [f"round_{idx + 1:02d}.json" for idx in range(len(self.round_history))],
+            "history_files": [
+                f"round_{idx + 1:02d}.json" for idx in range(len(self.round_history))
+            ],
             "patch_plan_file": final_patch_plan_file,
             "apply_patch_plan_files": apply_patch_plan_files,
             "execution_report_file": execution_report_file,
             "auto_patch_report_file": auto_patch_report_file,
         }
-        (self.run_dir / "final_summary.json").write_text(json.dumps(final_summary, indent=2), encoding="utf-8")
+        (self.run_dir / "final_summary.json").write_text(
+            json.dumps(final_summary, indent=2), encoding="utf-8"
+        )
         return final_summary
 
     def _build_patch_plan(self, outcomes: List[TrialOutcome]) -> List[Dict[str, Any]]:
@@ -294,7 +302,9 @@ class StateLawsActorCriticLoop:
                     file_reasons.setdefault(scraper_file, set()).update(reasons)
 
             for file_path in candidate_files:
-                file_scores[file_path] = float(file_scores.get(file_path, 0.0) or 0.0) + score_deficit
+                file_scores[file_path] = (
+                    float(file_scores.get(file_path, 0.0) or 0.0) + score_deficit
+                )
                 file_reasons.setdefault(file_path, set())
                 if file_path in core_files:
                     file_reasons[file_path].update(global_reasons)
@@ -315,7 +325,9 @@ class StateLawsActorCriticLoop:
 
         return plan
 
-    def _build_apply_patch_tasks(self, patch_plan: List[Dict[str, Any]], *, limit: int = 20) -> List[Dict[str, Any]]:
+    def _build_apply_patch_tasks(
+        self, patch_plan: List[Dict[str, Any]], *, limit: int = 20
+    ) -> List[Dict[str, Any]]:
         tasks: List[Dict[str, Any]] = []
         top_items = list(patch_plan)[: max(1, int(limit or 1))]
 
@@ -474,9 +486,15 @@ class StateLawsActorCriticLoop:
         commands.append(f"git --no-pager diff -- {path}")
         return commands
 
-    def _run_auto_patch(self, execution_report: Dict[str, Any], *, max_tasks: int, dry_run: bool) -> Dict[str, Any]:
+    def _run_auto_patch(
+        self, execution_report: Dict[str, Any], *, max_tasks: int, dry_run: bool
+    ) -> Dict[str, Any]:
         items = list(execution_report.get("items") or [])
-        ready_items = [item for item in items if isinstance(item, dict) and item.get("status") == "ready_for_patch"]
+        ready_items = [
+            item
+            for item in items
+            if isinstance(item, dict) and item.get("status") == "ready_for_patch"
+        ]
         selected = ready_items[: max(1, int(max_tasks or 1))]
 
         attempts: List[Dict[str, Any]] = []
@@ -643,8 +661,16 @@ class StateLawsActorCriticLoop:
 
     def _evaluate_auto_patch_policy(self, rel_path: str) -> Dict[str, Any]:
         path = str(rel_path or "")
-        allow_globs = [str(item).strip() for item in (self.loop_config.auto_patch_allow_globs or []) if str(item).strip()]
-        deny_globs = [str(item).strip() for item in (self.loop_config.auto_patch_deny_globs or []) if str(item).strip()]
+        allow_globs = [
+            str(item).strip()
+            for item in (self.loop_config.auto_patch_allow_globs or [])
+            if str(item).strip()
+        ]
+        deny_globs = [
+            str(item).strip()
+            for item in (self.loop_config.auto_patch_deny_globs or [])
+            if str(item).strip()
+        ]
 
         matched_allow = [pattern for pattern in allow_globs if fnmatch.fnmatch(path, pattern)]
         matched_deny = [pattern for pattern in deny_globs if fnmatch.fnmatch(path, pattern)]
@@ -660,7 +686,9 @@ class StateLawsActorCriticLoop:
         }
 
     @staticmethod
-    def _path_allowed_by_patterns(rel_path: str, *, allow_globs: List[str], deny_globs: List[str]) -> bool:
+    def _path_allowed_by_patterns(
+        rel_path: str, *, allow_globs: List[str], deny_globs: List[str]
+    ) -> bool:
         path = str(rel_path or "")
         allow = [str(item).strip() for item in (allow_globs or []) if str(item).strip()]
         deny = [str(item).strip() for item in (deny_globs or []) if str(item).strip()]
@@ -690,30 +718,46 @@ class StateLawsActorCriticLoop:
         actions: List[str] = []
         if "state_scrapers" in path:
             actions.append("Review state-specific link discovery and archival fallback seeds.")
-            actions.append("Harden anti-bot/challenge rejection and statute-only extraction filters.")
+            actions.append(
+                "Harden anti-bot/challenge rejection and statute-only extraction filters."
+            )
         if path.endswith("state_laws_scraper.py"):
-            actions.append("Tune strict filtering thresholds and retry orchestration for low-coverage states.")
+            actions.append(
+                "Tune strict filtering thresholds and retry orchestration for low-coverage states."
+            )
         if path.endswith("base_scraper.py"):
-            actions.append("Adjust unified fetch fallback order and provider telemetry on no-attempt states.")
+            actions.append(
+                "Adjust unified fetch fallback order and provider telemetry on no-attempt states."
+            )
         if path.endswith("state_laws_verifier.py"):
-            actions.append("Tighten operational thresholds and ensure diagnostics cover observed failure modes.")
+            actions.append(
+                "Tighten operational thresholds and ensure diagnostics cover observed failure modes."
+            )
 
         if "fetch_no_attempt" in reasons:
-            actions.append("Add deterministic source URL seeds for states with zero hydration attempts.")
+            actions.append(
+                "Add deterministic source URL seeds for states with zero hydration attempts."
+            )
         if "coverage_gap" in reasons:
             actions.append("Add fallback index/source discovery to close coverage gaps.")
         if "quality_weak" in reasons:
             actions.append("Improve semantic quality gating to reject scaffold/nav contamination.")
         if "etl_not_ready" in reasons:
-            actions.append("Improve structured extraction completeness for JSON-LD and citation fields.")
+            actions.append(
+                "Improve structured extraction completeness for JSON-LD and citation fields."
+            )
         if states:
             actions.append(f"Prioritize validation for states: {', '.join(states)}.")
 
         if not actions:
-            actions.append("Inspect diagnostics and add targeted scraper/parser hardening for this file.")
+            actions.append(
+                "Inspect diagnostics and add targeted scraper/parser hardening for this file."
+            )
         return actions
 
-    async def _evaluate_round(self, round_index: int, actor_pool: List[ActorPolicyConfig]) -> List[TrialOutcome]:
+    async def _evaluate_round(
+        self, round_index: int, actor_pool: List[ActorPolicyConfig]
+    ) -> List[TrialOutcome]:
         semaphore = asyncio.Semaphore(max(1, int(self.loop_config.actor_concurrency or 1)))
 
         async def _run_one(actor_cfg: ActorPolicyConfig) -> TrialOutcome:
@@ -722,7 +766,9 @@ class StateLawsActorCriticLoop:
 
         return await asyncio.gather(*[_run_one(cfg) for cfg in actor_pool])
 
-    async def _run_actor_trial(self, round_index: int, actor_cfg: ActorPolicyConfig) -> TrialOutcome:
+    async def _run_actor_trial(
+        self, round_index: int, actor_cfg: ActorPolicyConfig
+    ) -> TrialOutcome:
         result = await scrape_state_laws(
             states=list(self.states),
             output_format="json",
@@ -734,13 +780,19 @@ class StateLawsActorCriticLoop:
             per_state_retry_attempts=max(0, int(actor_cfg.per_state_retry_attempts)),
             retry_zero_statute_states=True,
             rate_limit_delay=max(0.0, float(actor_cfg.rate_limit_delay)),
-            max_statutes=(int(self.loop_config.max_statutes) if int(self.loop_config.max_statutes) > 0 else None),
+            max_statutes=(
+                int(self.loop_config.max_statutes)
+                if int(self.loop_config.max_statutes) > 0
+                else None
+            ),
             write_jsonld=True,
             use_state_specific_scrapers=True,
         )
 
         metadata = result.get("metadata") or {}
-        diagnostics = _build_operational_diagnostics(metadata, top_n=int(self.loop_config.top_n_diagnostics or 8))
+        diagnostics = _build_operational_diagnostics(
+            metadata, top_n=int(self.loop_config.top_n_diagnostics or 8)
+        )
         score = self._critic_score(diagnostics)
         passed = self._is_success(diagnostics, score)
         patch_targets = self._recommend_patch_targets(diagnostics)
@@ -808,7 +860,12 @@ class StateLawsActorCriticLoop:
         else:
             quality_score = 1.0
 
-        score = (0.35 * coverage_score) + (0.40 * etl_score) + (0.15 * fetch_score) + (0.10 * quality_score)
+        score = (
+            (0.35 * coverage_score)
+            + (0.40 * etl_score)
+            + (0.15 * fetch_score)
+            + (0.10 * quality_score)
+        )
         if bool(etl.get("ready_for_kg_etl")):
             score += 0.05
 
@@ -991,9 +1048,27 @@ class StateLawsActorCriticLoop:
 
     def _initial_actors(self) -> List[ActorPolicyConfig]:
         seeds = [
-            ActorPolicyConfig(name="baseline_balanced", parallel_workers=6, per_state_retry_attempts=1, rate_limit_delay=1.0, min_full_text_chars=300),
-            ActorPolicyConfig(name="resilience_seed", parallel_workers=4, per_state_retry_attempts=2, rate_limit_delay=1.4, min_full_text_chars=280),
-            ActorPolicyConfig(name="throughput_seed", parallel_workers=10, per_state_retry_attempts=1, rate_limit_delay=0.6, min_full_text_chars=320),
+            ActorPolicyConfig(
+                name="baseline_balanced",
+                parallel_workers=6,
+                per_state_retry_attempts=1,
+                rate_limit_delay=1.0,
+                min_full_text_chars=300,
+            ),
+            ActorPolicyConfig(
+                name="resilience_seed",
+                parallel_workers=4,
+                per_state_retry_attempts=2,
+                rate_limit_delay=1.4,
+                min_full_text_chars=280,
+            ),
+            ActorPolicyConfig(
+                name="throughput_seed",
+                parallel_workers=10,
+                per_state_retry_attempts=1,
+                rate_limit_delay=0.6,
+                min_full_text_chars=320,
+            ),
         ]
         return seeds[: max(1, int(self.loop_config.actors_per_round or 1))]
 
@@ -1039,7 +1114,13 @@ class StateLawsActorCriticLoop:
             slug = "district_of_columbia"
 
         rel = Path("ipfs_datasets_py/processors/legal_scrapers/state_scrapers") / f"{slug}.py"
-        abs_path = Path(__file__).resolve().parents[2] / "processors" / "legal_scrapers" / "state_scrapers" / f"{slug}.py"
+        abs_path = (
+            Path(__file__).resolve().parents[2]
+            / "processors"
+            / "legal_scrapers"
+            / "state_scrapers"
+            / f"{slug}.py"
+        )
         if abs_path.exists():
             return str(rel)
         return None
@@ -1056,11 +1137,21 @@ def _parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
         help="Comma-separated state codes or 'all'.",
     )
     parser.add_argument("--max-rounds", type=int, default=6, help="Maximum actor/critic rounds.")
-    parser.add_argument("--actors-per-round", type=int, default=3, help="How many actor policies per round.")
-    parser.add_argument("--actor-concurrency", type=int, default=2, help="Concurrent actor trials per round.")
-    parser.add_argument("--target-score", type=float, default=0.92, help="Critic score threshold to converge.")
-    parser.add_argument("--max-statutes", type=int, default=0, help="Cap statutes per actor trial (0 = unlimited).")
-    parser.add_argument("--top-n-diagnostics", type=int, default=8, help="Top-N weak states tracked in diagnostics.")
+    parser.add_argument(
+        "--actors-per-round", type=int, default=3, help="How many actor policies per round."
+    )
+    parser.add_argument(
+        "--actor-concurrency", type=int, default=2, help="Concurrent actor trials per round."
+    )
+    parser.add_argument(
+        "--target-score", type=float, default=0.92, help="Critic score threshold to converge."
+    )
+    parser.add_argument(
+        "--max-statutes", type=int, default=0, help="Cap statutes per actor trial (0 = unlimited)."
+    )
+    parser.add_argument(
+        "--top-n-diagnostics", type=int, default=8, help="Top-N weak states tracked in diagnostics."
+    )
     parser.add_argument(
         "--emit-patch-plan",
         action="store_true",
@@ -1173,7 +1264,9 @@ async def _main_async(args: argparse.Namespace) -> int:
             wayback_allow_globs=[str(item) for item in (args.wayback_allow_glob or [])],
             wayback_deny_globs=[str(item) for item in (args.wayback_deny_glob or [])],
         ),
-        output_dir=Path(args.output_dir).expanduser().resolve() if str(args.output_dir).strip() else None,
+        output_dir=Path(args.output_dir).expanduser().resolve()
+        if str(args.output_dir).strip()
+        else None,
     )
 
     final_summary = await loop.run()

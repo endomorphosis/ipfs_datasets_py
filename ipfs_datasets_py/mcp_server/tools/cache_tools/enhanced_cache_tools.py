@@ -7,6 +7,7 @@ lives in ipfs_datasets_py.caching.cache_engine.
 
 MCP standalone functions below delegate all work to MockCacheService.
 """
+
 from __future__ import annotations
 
 import logging
@@ -98,12 +99,26 @@ async def monitor_cache(
         hit_rate = data["metrics"]["hit_rate"]["current"]
         min_thr = alert_thresholds.get("hit_rate_min", 0.7)
         if hit_rate < min_thr:
-            alerts.append({"type": "warning", "metric": "hit_rate", "current_value": hit_rate, "threshold": min_thr})
+            alerts.append(
+                {
+                    "type": "warning",
+                    "metric": "hit_rate",
+                    "current_value": hit_rate,
+                    "threshold": min_thr,
+                }
+            )
     if "memory_usage" in data.get("metrics", {}):
         mem_pct = data["metrics"]["memory_usage"]["utilization_percent"]
         max_thr = alert_thresholds.get("memory_usage_max_percent", 90.0)
         if mem_pct > max_thr:
-            alerts.append({"type": "critical", "metric": "memory_usage", "current_value": mem_pct, "threshold": max_thr})
+            alerts.append(
+                {
+                    "type": "critical",
+                    "metric": "memory_usage",
+                    "current_value": mem_pct,
+                    "threshold": max_thr,
+                }
+            )
 
     data["alerts"] = alerts
     data["alert_count"] = len(alerts)
@@ -118,8 +133,10 @@ async def monitor_cache(
 # Backward-compat shims (thin wrappers that expose the old class interface)
 # ---------------------------------------------------------------------------
 
+
 class EnhancedCacheStatsTool:
     """Backward-compat shim for EnhancedCacheStatsTool."""
+
     name = "enhanced_cache_stats"
 
     async def execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
@@ -128,6 +145,7 @@ class EnhancedCacheStatsTool:
 
 class EnhancedCacheManagementTool:
     """Backward-compat shim for EnhancedCacheManagementTool."""
+
     name = "enhanced_cache_management"
 
     async def execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
@@ -136,6 +154,7 @@ class EnhancedCacheManagementTool:
 
 class EnhancedCacheMonitoringTool:
     """Backward-compat shim for EnhancedCacheMonitoringTool."""
+
     name = "enhanced_cache_monitoring"
 
     async def execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:

@@ -9,11 +9,13 @@ Also covers:
 - cypher/compiler.py line 953 (UnaryOpNode in _compile_expression)
 - extraction/srl.py line 613 (empty-sent continue in build_temporal_graph)
 """
+
 import sys
 import json
 import warnings
 import importlib
 import pytest
+
 np = pytest.importorskip("numpy")
 from unittest.mock import MagicMock, patch, PropertyMock
 
@@ -21,6 +23,7 @@ from unittest.mock import MagicMock, patch, PropertyMock
 # ---------------------------------------------------------------------------
 # Helpers: load ipld.py with mocked deps
 # ---------------------------------------------------------------------------
+
 
 def _load_ipld_module():
     """Load ipfs_datasets_py.knowledge_graphs.ipld with mocked storage deps."""
@@ -79,6 +82,7 @@ IPLDKnowledgeGraph = _IPLD.IPLDKnowledgeGraph
 # Entity tests
 # ---------------------------------------------------------------------------
 
+
 class TestIPLDEntity:
     """GIVEN Entity class in ipld.py WHEN constructed and serialized."""
 
@@ -96,9 +100,14 @@ class TestIPLDEntity:
 
     def test_entity_to_dict(self):
         """GIVEN an Entity WHEN to_dict() called THEN dict has expected keys."""
-        e = Entity(entity_id="e2", entity_type="loc", name="Paris",
-                   properties={"pop": 2_000_000}, confidence=0.9,
-                   source_text="Paris is a city.")
+        e = Entity(
+            entity_id="e2",
+            entity_type="loc",
+            name="Paris",
+            properties={"pop": 2_000_000},
+            confidence=0.9,
+            source_text="Paris is a city.",
+        )
         d = e.to_dict()
         assert d["id"] == "e2"
         assert d["type"] == "loc"
@@ -109,8 +118,15 @@ class TestIPLDEntity:
 
     def test_entity_from_dict_roundtrip(self):
         """GIVEN a dict WHEN from_dict() called THEN Entity matches."""
-        d = {"id": "e3", "type": "event", "name": "Battle",
-             "properties": {"year": 1815}, "confidence": 0.8, "source_text": None, "cid": "Qm123"}
+        d = {
+            "id": "e3",
+            "type": "event",
+            "name": "Battle",
+            "properties": {"year": 1815},
+            "confidence": 0.8,
+            "source_text": None,
+            "cid": "Qm123",
+        }
         e = Entity.from_dict(d)
         assert e.id == "e3"
         assert e.type == "event"
@@ -135,6 +151,7 @@ class TestIPLDEntity:
 # Relationship tests
 # ---------------------------------------------------------------------------
 
+
 class TestIPLDRelationship:
     """GIVEN Relationship class WHEN constructed and serialized."""
 
@@ -156,10 +173,15 @@ class TestIPLDRelationship:
 
     def test_relationship_to_dict(self):
         """GIVEN Relationship WHEN to_dict() THEN dict has expected keys."""
-        r = Relationship(relationship_id="r1", relationship_type="owns",
-                         source="e1", target="e2",
-                         properties={"since": 2020}, confidence=0.95,
-                         source_text="Alice owns Acme.")
+        r = Relationship(
+            relationship_id="r1",
+            relationship_type="owns",
+            source="e1",
+            target="e2",
+            properties={"since": 2020},
+            confidence=0.95,
+            source_text="Alice owns Acme.",
+        )
         d = r.to_dict()
         assert d["id"] == "r1"
         assert d["type"] == "owns"
@@ -170,8 +192,15 @@ class TestIPLDRelationship:
 
     def test_relationship_from_dict_roundtrip(self):
         """GIVEN dict WHEN from_dict() THEN Relationship matches."""
-        d = {"id": "r2", "type": "part_of", "source_id": "e3", "target_id": "e4",
-             "properties": {}, "confidence": 1.0, "source_text": None}
+        d = {
+            "id": "r2",
+            "type": "part_of",
+            "source_id": "e3",
+            "target_id": "e4",
+            "properties": {},
+            "confidence": 1.0,
+            "source_text": None,
+        }
         r = Relationship.from_dict(d)
         assert r.id == "r2"
         assert r.source_id == "e3"
@@ -179,8 +208,9 @@ class TestIPLDRelationship:
 
     def test_relationship_str(self):
         """GIVEN a Relationship WHEN str() THEN contains type and IDs."""
-        r = Relationship(relationship_id="r3", relationship_type="related_to",
-                         source="e5", target="e6")
+        r = Relationship(
+            relationship_id="r3", relationship_type="related_to", source="e5", target="e6"
+        )
         s = str(r)
         assert "related_to" in s
         assert "e5" in s
@@ -189,6 +219,7 @@ class TestIPLDRelationship:
 # ---------------------------------------------------------------------------
 # IPLDKnowledgeGraph tests
 # ---------------------------------------------------------------------------
+
 
 def _make_kg():
     """Create a fresh IPLDKnowledgeGraph with a mock storage backend."""
@@ -257,8 +288,7 @@ class TestIPLDKnowledgeGraphBasic:
         kg, _ = _make_kg()
         e1 = kg.add_entity(entity_id="e1", name="Alice")
         e2 = kg.add_entity(entity_id="e2", name="Bob")
-        r = kg.add_relationship("knows", source=e1, target=e2,
-                                relationship_id="r1", confidence=0.8)
+        r = kg.add_relationship("knows", source=e1, target=e2, relationship_id="r1", confidence=0.8)
         assert r.id == "r1"
         assert "r1" in kg.relationships
         assert kg.relationship_count == 1
@@ -577,8 +607,12 @@ class TestIPLDKnowledgeGraphFromCID:
             "relationship_ids": [],
         }
         entity_data = {
-            "id": "e1", "type": "person", "name": "Alice",
-            "properties": {}, "confidence": 1.0, "source_text": None
+            "id": "e1",
+            "type": "person",
+            "name": "Alice",
+            "properties": {},
+            "confidence": 1.0,
+            "source_text": None,
         }
 
         def mock_get(cid):
@@ -598,8 +632,12 @@ class TestIPLDKnowledgeGraphFromCID:
         mock_storage = MagicMock()
         entity_cids = {"ec1": "QmEntChunk1"}
         entity_data = {
-            "id": "ec1", "type": "org", "name": "Corp",
-            "properties": {}, "confidence": 1.0, "source_text": None
+            "id": "ec1",
+            "type": "org",
+            "name": "Corp",
+            "properties": {},
+            "confidence": 1.0,
+            "source_text": None,
         }
         root_data = {
             "type": "knowledge_graph",
@@ -632,8 +670,9 @@ class TestIPLDKnowledgeGraphExportCAR:
         try:
             _IPLD.HAVE_IPLD_CAR = False
             # Must patch the KG's module attribute
-            with patch.object(sys.modules["ipfs_datasets_py.knowledge_graphs.ipld"],
-                              "HAVE_IPLD_CAR", False):
+            with patch.object(
+                sys.modules["ipfs_datasets_py.knowledge_graphs.ipld"], "HAVE_IPLD_CAR", False
+            ):
                 with pytest.raises(ImportError):
                     kg.export_to_car("/tmp/test_out.car")
         finally:
@@ -641,8 +680,9 @@ class TestIPLDKnowledgeGraphExportCAR:
 
     def test_from_car_no_ipld_car(self):
         """GIVEN HAVE_IPLD_CAR=False WHEN from_car() THEN ImportError."""
-        with patch.object(sys.modules["ipfs_datasets_py.knowledge_graphs.ipld"],
-                          "HAVE_IPLD_CAR", False):
+        with patch.object(
+            sys.modules["ipfs_datasets_py.knowledge_graphs.ipld"], "HAVE_IPLD_CAR", False
+        ):
             with pytest.raises(ImportError):
                 IPLDKnowledgeGraph.from_car("/tmp/nonexistent.car")
 
@@ -694,6 +734,7 @@ class TestIPLDKnowledgeGraphUpdateRootCIDChunking:
 # extraction/_entity_helpers.py line 117
 # ---------------------------------------------------------------------------
 
+
 class TestEntityHelpersStopwordFilter:
     """GIVEN _entity_helpers._rule_based_entity_extraction WHEN stopwords appear as captures."""
 
@@ -703,6 +744,7 @@ class TestEntityHelpersStopwordFilter:
         from ipfs_datasets_py.knowledge_graphs.extraction._entity_helpers import (
             _rule_based_entity_extraction,
         )
+
         # "Dr. Timeline" triggers the Dr./Prof. pattern and captures "Timeline"
         # which is in the stopwords set → line 117 triggers → entity not added
         entities = _rule_based_entity_extraction(
@@ -720,16 +762,18 @@ class TestEntityHelpersStopwordFilter:
         from ipfs_datasets_py.knowledge_graphs.extraction._entity_helpers import (
             _rule_based_entity_extraction,
         )
+
         entities = _rule_based_entity_extraction("machine learning research in 2023")
         # All entities have len >= 2 and name not in stopwords
         for e in entities:
             assert len(e.name) >= 2
-            assert e.name.lower() not in {'the', 'and', 'this', 'that', 'with', 'from', 'timeline'}
+            assert e.name.lower() not in {"the", "and", "this", "that", "with", "from", "timeline"}
 
 
 # ---------------------------------------------------------------------------
 # ontology/reasoning.py line 828 (BFS transitive-closure cycle guard)
 # ---------------------------------------------------------------------------
+
 
 class TestOntologyTransitiveClosureCycleGuard:
     """GIVEN OntologyReasoner with transitive property and diamond-shape KG
@@ -739,7 +783,8 @@ class TestOntologyTransitiveClosureCycleGuard:
         """GIVEN diamond graph A→B, A→C, B→D, C→D with transitive 'part_of'
         WHEN materialize() called THEN D is enqueued twice; second pop hits line 828."""
         from ipfs_datasets_py.knowledge_graphs.ontology.reasoning import (
-            OntologyReasoner, OntologySchema,
+            OntologyReasoner,
+            OntologySchema,
         )
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
         from ipfs_datasets_py.knowledge_graphs.extraction.entities import Entity
@@ -759,18 +804,26 @@ class TestOntologyTransitiveClosureCycleGuard:
         kg.add_entity(ec)
         kg.add_entity(ed)
         # Diamond: A→B, A→C, B→D, C→D (D reachable via both B and C)
-        kg.add_relationship(Relationship(
-            relationship_type="part_of",
-            source_entity=ea, target_entity=eb, confidence=1.0))
-        kg.add_relationship(Relationship(
-            relationship_type="part_of",
-            source_entity=ea, target_entity=ec, confidence=1.0))
-        kg.add_relationship(Relationship(
-            relationship_type="part_of",
-            source_entity=eb, target_entity=ed, confidence=1.0))
-        kg.add_relationship(Relationship(
-            relationship_type="part_of",
-            source_entity=ec, target_entity=ed, confidence=1.0))
+        kg.add_relationship(
+            Relationship(
+                relationship_type="part_of", source_entity=ea, target_entity=eb, confidence=1.0
+            )
+        )
+        kg.add_relationship(
+            Relationship(
+                relationship_type="part_of", source_entity=ea, target_entity=ec, confidence=1.0
+            )
+        )
+        kg.add_relationship(
+            Relationship(
+                relationship_type="part_of", source_entity=eb, target_entity=ed, confidence=1.0
+            )
+        )
+        kg.add_relationship(
+            Relationship(
+                relationship_type="part_of", source_entity=ec, target_entity=ed, confidence=1.0
+            )
+        )
 
         # materialize() runs the BFS — with diamond, D gets queued twice from B and C
         result = reasoner.materialize(kg)
@@ -781,6 +834,7 @@ class TestOntologyTransitiveClosureCycleGuard:
 # ---------------------------------------------------------------------------
 # cypher/compiler.py line 953 (UnaryOpNode in _compile_expression)
 # ---------------------------------------------------------------------------
+
 
 class TestCypherCompilerUnaryOpNode:
     """GIVEN CypherCompiler WHEN expression with NOT unary operator compiled."""
@@ -793,6 +847,7 @@ class TestCypherCompilerUnaryOpNode:
             UnaryOpNode,
             LiteralNode,
         )
+
         compiler = CypherCompiler()
         # Build a UnaryOpNode and call _compile_expression directly
         operand = LiteralNode(value=True, value_type="bool")
@@ -805,6 +860,7 @@ class TestCypherCompilerUnaryOpNode:
 # ---------------------------------------------------------------------------
 # extraction/srl.py line 613 (empty-sent continue in build_temporal_graph)
 # ---------------------------------------------------------------------------
+
 
 class TestSRLBuildTemporalGraphEmptySentence:
     """GIVEN build_temporal_graph with empty sentences in the text
@@ -833,6 +889,7 @@ class TestSRLBuildTemporalGraphEmptySentence:
 # vector_augmented_query traversal, cross_document_reasoning edge cases,
 # traverse with limits, from_cid with missing blocks, from_car
 # ---------------------------------------------------------------------------
+
 
 class TestIPLDAddRelationshipErrors:
     """GIVEN IPLDKnowledgeGraph WHEN add_relationship() with invalid entity IDs."""
@@ -970,9 +1027,7 @@ class TestIPLDCrossDocumentReasoningEdgeCases:
         mock_vs.search = MagicMock(return_value=[doc_result])
         kg = IPLDKnowledgeGraph(storage=mock_storage, vector_store=mock_vs)
         kg.add_entity(entity_id="doc_deep1", entity_type="document", name="Doc1")
-        result = kg.cross_document_reasoning(
-            "deep query", np.array([0.1]), reasoning_depth="deep"
-        )
+        result = kg.cross_document_reasoning("deep query", np.array([0.1]), reasoning_depth="deep")
         assert isinstance(result, dict)
         # The 'deep' branch appended extra reasoning trace lines
 
@@ -1005,8 +1060,7 @@ class TestIPLDTraverseWithLimits:
         kg.add_relationship("chain", source=a, target=b)
         kg.add_relationship("chain", source=b, target=c)
         kg.add_relationship("chain", source=c, target=d)
-        result = kg.traverse_from_entities_with_depths([a], max_depth=10,
-                                                        max_nodes_visited=2)
+        result = kg.traverse_from_entities_with_depths([a], max_depth=10, max_nodes_visited=2)
         assert len(result) <= 2
 
     def test_max_edges_traversed_limits_traversal(self):
@@ -1017,8 +1071,7 @@ class TestIPLDTraverseWithLimits:
         c = kg.add_entity(entity_id="edg_c")
         kg.add_relationship("chain", source=a, target=b)
         kg.add_relationship("chain", source=b, target=c)
-        result = kg.traverse_from_entities_with_depths([a], max_depth=5,
-                                                        max_edges_traversed=1)
+        result = kg.traverse_from_entities_with_depths([a], max_depth=5, max_edges_traversed=1)
         # With max_edges=1, only b might be found before stopping
         assert isinstance(result, list)
 
@@ -1059,8 +1112,12 @@ class TestIPLDFromCIDMissingBlocks:
         """GIVEN relationship_cids with CID not in storage WHEN from_cid() THEN rel skipped (line 1372+)."""
         mock_storage = MagicMock()
         entity_data = {
-            "id": "e_ok", "type": "person", "name": "OK",
-            "properties": {}, "confidence": 1.0, "source_text": None
+            "id": "e_ok",
+            "type": "person",
+            "name": "OK",
+            "properties": {},
+            "confidence": 1.0,
+            "source_text": None,
         }
         root_data = {
             "type": "knowledge_graph",
@@ -1084,12 +1141,31 @@ class TestIPLDFromCIDMissingBlocks:
     def test_from_cid_relationship_loaded(self):
         """GIVEN relationship_cids with valid CID WHEN from_cid() THEN relationship loaded (lines 1380-1392)."""
         mock_storage = MagicMock()
-        entity_a = {"id": "ea", "type": "person", "name": "A",
-                    "properties": {}, "confidence": 1.0, "source_text": None}
-        entity_b = {"id": "eb", "type": "person", "name": "B",
-                    "properties": {}, "confidence": 1.0, "source_text": None}
-        rel_data = {"id": "r1", "type": "knows", "source_id": "ea", "target_id": "eb",
-                    "properties": {}, "confidence": 1.0, "source_text": None}
+        entity_a = {
+            "id": "ea",
+            "type": "person",
+            "name": "A",
+            "properties": {},
+            "confidence": 1.0,
+            "source_text": None,
+        }
+        entity_b = {
+            "id": "eb",
+            "type": "person",
+            "name": "B",
+            "properties": {},
+            "confidence": 1.0,
+            "source_text": None,
+        }
+        rel_data = {
+            "id": "r1",
+            "type": "knows",
+            "source_id": "ea",
+            "target_id": "eb",
+            "properties": {},
+            "confidence": 1.0,
+            "source_text": None,
+        }
         root_data = {
             "type": "knowledge_graph",
             "name": "full_kg",
@@ -1131,6 +1207,7 @@ class TestIPLDFromCARWithRealIPLDCAR:
                         with pytest.raises((ValueError, Exception)):
                             # Need a real file to open - use /tmp
                             import tempfile
+
                             with tempfile.NamedTemporaryFile(suffix=".car", delete=False) as f:
                                 f.write(b"fake car data")
                                 fname = f.name

@@ -23,16 +23,21 @@ from unittest.mock import MagicMock, patch
 # Helpers / shared fixtures
 # ---------------------------------------------------------------------------
 
+
 def _make_agent(identifier="agent_001", name="Test Agent", agent_type="organization"):
     from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import LegalAgent
+
     return LegalAgent(identifier=identifier, name=name, agent_type=agent_type)
 
 
-def _make_formula(proposition="perform_action", operator=None, agent=None,
-                  conditions=None, confidence=1.0):
+def _make_formula(
+    proposition="perform_action", operator=None, agent=None, conditions=None, confidence=1.0
+):
     from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-        DeonticFormula, DeonticOperator,
+        DeonticFormula,
+        DeonticOperator,
     )
+
     if operator is None:
         operator = DeonticOperator.OBLIGATION
     return DeonticFormula(
@@ -46,6 +51,7 @@ def _make_formula(proposition="perform_action", operator=None, agent=None,
 
 def _make_rule_set(name="TestRules", formulas=None):
     from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticRuleSet
+
     return DeonticRuleSet(name=name, formulas=formulas or [_make_formula()])
 
 
@@ -60,11 +66,12 @@ class TestDeonticOperatorEnum:
     def test_all_operators_exist(self):
         """GIVEN DeonticOperator enum WHEN accessing all values THEN 8 operators present."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticOperator
+
         values = {op.value for op in DeonticOperator}
-        assert "O" in values   # obligation
-        assert "P" in values   # permission
-        assert "F" in values   # prohibition
-        assert "R" in values   # right
+        assert "O" in values  # obligation
+        assert "P" in values  # permission
+        assert "F" in values  # prohibition
+        assert "R" in values  # right
 
 
 class TestLegalAgent:
@@ -73,6 +80,7 @@ class TestLegalAgent:
     def test_create_person_agent(self):
         """GIVEN person details WHEN creating LegalAgent THEN hash is set."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import LegalAgent
+
         agent = LegalAgent("p_001", "Jane Doe", "person", {"role": "contractor"})
         assert agent.identifier == "p_001"
         assert agent.agent_type == "person"
@@ -87,6 +95,7 @@ class TestLegalAgent:
     def test_create_government_agent(self):
         """GIVEN government details WHEN creating LegalAgent THEN properties dict stored."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import LegalAgent
+
         a = LegalAgent("gov_001", "City Hall", "government", {"dept": "planning"})
         assert a.properties["dept"] == "planning"
 
@@ -97,6 +106,7 @@ class TestLegalContext:
     def test_create_with_all_fields(self):
         """GIVEN full context data WHEN creating LegalContext THEN all fields stored."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import LegalContext
+
         ctx = LegalContext(
             jurisdiction="California",
             legal_domain="contract",
@@ -111,6 +121,7 @@ class TestLegalContext:
     def test_default_fields_are_none(self):
         """GIVEN empty context WHEN creating LegalContext THEN optional fields default to None."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import LegalContext
+
         ctx = LegalContext()
         assert ctx.jurisdiction is None
         assert ctx.applicable_law is None
@@ -122,8 +133,10 @@ class TestTemporalCondition:
     def test_create_temporal_condition(self):
         """GIVEN temporal operator WHEN creating condition THEN operator stored."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            TemporalCondition, TemporalOperator,
+            TemporalCondition,
+            TemporalOperator,
         )
+
         tc = TemporalCondition(
             operator=TemporalOperator.ALWAYS,
             condition="before_deadline",
@@ -136,8 +149,10 @@ class TestTemporalCondition:
     def test_temporal_condition_with_duration(self):
         """GIVEN duration WHEN creating condition THEN duration field stored."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            TemporalCondition, TemporalOperator,
+            TemporalCondition,
+            TemporalOperator,
         )
+
         tc = TemporalCondition(
             operator=TemporalOperator.EVENTUALLY,
             condition="notify_client",
@@ -159,8 +174,10 @@ class TestDeonticFormula:
     def test_to_fol_string_no_agent(self):
         """GIVEN formula without agent WHEN converting THEN no bracket notation."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticFormula, DeonticOperator,
+            DeonticFormula,
+            DeonticOperator,
         )
+
         f = DeonticFormula(operator=DeonticOperator.PERMISSION, proposition="park_vehicle")
         fol = f.to_fol_string()
         assert "P(" in fol
@@ -183,21 +200,27 @@ class TestDeonticFormula:
     def test_to_fol_string_with_temporal_condition(self):
         """GIVEN formula with temporal condition WHEN converting THEN operator wrapped."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            TemporalCondition, TemporalOperator,
+            TemporalCondition,
+            TemporalOperator,
         )
+
         f = _make_formula("renew_license")
-        f.temporal_conditions.append(TemporalCondition(
-            operator=TemporalOperator.ALWAYS,
-            condition="within_year",
-        ))
+        f.temporal_conditions.append(
+            TemporalCondition(
+                operator=TemporalOperator.ALWAYS,
+                condition="within_year",
+            )
+        )
         fol = f.to_fol_string()
         assert "renew_license" in fol
 
     def test_to_fol_string_with_quantifiers(self):
         """GIVEN formula with quantifiers WHEN converting THEN quantifier notation added."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticFormula, DeonticOperator,
+            DeonticFormula,
+            DeonticOperator,
         )
+
         f = DeonticFormula(
             operator=DeonticOperator.OBLIGATION,
             proposition="comply",
@@ -209,6 +232,7 @@ class TestDeonticFormula:
     def test_to_dict_round_trip(self):
         """GIVEN DeonticFormula WHEN converting to dict and back THEN values match."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticFormula
+
         original = _make_formula("pay_taxes", conditions=["is_employed"])
         d = original.to_dict()
         restored = DeonticFormula.from_dict(d)
@@ -219,8 +243,10 @@ class TestDeonticFormula:
     def test_from_dict_with_agent_and_context(self):
         """GIVEN full formula dict WHEN restoring THEN agent and context are rebuilt."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticFormula, LegalContext,
+            DeonticFormula,
+            LegalContext,
         )
+
         f = _make_formula("notify_authority")
         f.legal_context = LegalContext(jurisdiction="UK", legal_domain="criminal")
         d = f.to_dict()
@@ -232,8 +258,10 @@ class TestDeonticFormula:
     def test_from_dict_with_beneficiary(self):
         """GIVEN formula with beneficiary WHEN converting to dict and back THEN beneficiary is restored."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticFormula, DeonticOperator,
+            DeonticFormula,
+            DeonticOperator,
         )
+
         f = DeonticFormula(
             operator=DeonticOperator.OBLIGATION,
             proposition="provide_service",
@@ -248,17 +276,23 @@ class TestDeonticFormula:
     def test_from_dict_with_temporal_conditions(self):
         """GIVEN formula with temporal conditions WHEN restoring THEN temporal conditions rebuilt."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticFormula, DeonticOperator, TemporalCondition, TemporalOperator,
+            DeonticFormula,
+            DeonticOperator,
+            TemporalCondition,
+            TemporalOperator,
         )
+
         f = DeonticFormula(
             operator=DeonticOperator.OBLIGATION,
             proposition="report_incident",
-            temporal_conditions=[TemporalCondition(
-                operator=TemporalOperator.ALWAYS,
-                condition="within_24h",
-                start_time="2026-01-01",
-                end_time="2026-12-31",
-            )],
+            temporal_conditions=[
+                TemporalCondition(
+                    operator=TemporalOperator.ALWAYS,
+                    condition="within_24h",
+                    start_time="2026-01-01",
+                    end_time="2026-12-31",
+                )
+            ],
         )
         d = f.to_dict()
         restored = DeonticFormula.from_dict(d)
@@ -277,6 +311,7 @@ class TestDeonticRuleSet:
     def test_add_formula(self):
         """GIVEN empty rule set WHEN adding formula THEN count increases."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticRuleSet
+
         rs = DeonticRuleSet(name="Empty", formulas=[])
         rs.add_formula(_make_formula("action_a"))
         assert len(rs.formulas) == 1
@@ -307,6 +342,7 @@ class TestDeonticRuleSet:
     def test_find_formulas_by_operator(self):
         """GIVEN mixed rule set WHEN searching by operator THEN only matching returned."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticOperator
+
         f_obl = _make_formula("act_a", operator=DeonticOperator.OBLIGATION)
         f_prm = _make_formula("act_b", operator=DeonticOperator.PERMISSION)
         rs = _make_rule_set(formulas=[f_obl, f_prm])
@@ -323,6 +359,7 @@ class TestDeonticRuleSet:
     def test_check_consistency_detects_obl_vs_proh(self):
         """GIVEN obligation and prohibition on same proposition/agent WHEN checking THEN conflict found."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticOperator
+
         agent = _make_agent("same_agent")
         f_obl = _make_formula("do_x", operator=DeonticOperator.OBLIGATION, agent=agent)
         f_proh = _make_formula("do_x", operator=DeonticOperator.PROHIBITION, agent=agent)
@@ -334,6 +371,7 @@ class TestDeonticRuleSet:
     def test_check_consistency_detects_perm_vs_proh(self):
         """GIVEN permission and prohibition on same item WHEN checking THEN conflict detected."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticOperator
+
         agent = _make_agent("agent_x")
         f_prm = _make_formula("act_z", operator=DeonticOperator.PERMISSION, agent=agent)
         f_proh = _make_formula("act_z", operator=DeonticOperator.PROHIBITION, agent=agent)
@@ -358,6 +396,7 @@ class TestDeonticLogicValidator:
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
             DeonticLogicValidator,
         )
+
         f = _make_formula("valid_action", confidence=0.8)
         errors = DeonticLogicValidator.validate_formula(f)
         assert errors == []
@@ -365,8 +404,11 @@ class TestDeonticLogicValidator:
     def test_validate_empty_proposition_error(self):
         """GIVEN formula with empty proposition WHEN validating THEN error returned."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticFormula, DeonticOperator, DeonticLogicValidator,
+            DeonticFormula,
+            DeonticOperator,
+            DeonticLogicValidator,
         )
+
         f = DeonticFormula(operator=DeonticOperator.OBLIGATION, proposition="")
         errors = DeonticLogicValidator.validate_formula(f)
         assert any("proposition" in e for e in errors)
@@ -374,20 +416,28 @@ class TestDeonticLogicValidator:
     def test_validate_out_of_range_confidence_error(self):
         """GIVEN formula with confidence > 1 WHEN validating THEN error returned."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticFormula, DeonticOperator, DeonticLogicValidator,
+            DeonticFormula,
+            DeonticOperator,
+            DeonticLogicValidator,
         )
-        f = DeonticFormula(operator=DeonticOperator.PERMISSION, proposition="act",
-                           confidence=1.5)
+
+        f = DeonticFormula(operator=DeonticOperator.PERMISSION, proposition="act", confidence=1.5)
         errors = DeonticLogicValidator.validate_formula(f)
         assert any("Confidence" in e for e in errors)
 
     def test_validate_invalid_quantifier_error(self):
         """GIVEN formula with bad quantifier WHEN validating THEN error returned."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticFormula, DeonticOperator, DeonticLogicValidator,
+            DeonticFormula,
+            DeonticOperator,
+            DeonticLogicValidator,
         )
-        f = DeonticFormula(operator=DeonticOperator.OBLIGATION, proposition="act",
-                           quantifiers=[("INVALID", "x", "Person")])
+
+        f = DeonticFormula(
+            operator=DeonticOperator.OBLIGATION,
+            proposition="act",
+            quantifiers=[("INVALID", "x", "Person")],
+        )
         errors = DeonticLogicValidator.validate_formula(f)
         assert any("quantifier" in e.lower() for e in errors)
 
@@ -396,6 +446,7 @@ class TestDeonticLogicValidator:
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
             DeonticLogicValidator,
         )
+
         rs = _make_rule_set()
         errors = DeonticLogicValidator.validate_rule_set(rs)
         assert errors == []
@@ -403,8 +454,10 @@ class TestDeonticLogicValidator:
     def test_validate_rule_set_empty_name(self):
         """GIVEN rule set with empty name WHEN validating THEN error returned."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticRuleSet, DeonticLogicValidator,
+            DeonticRuleSet,
+            DeonticLogicValidator,
         )
+
         rs = DeonticRuleSet(name="", formulas=[_make_formula("act")])
         errors = DeonticLogicValidator.validate_rule_set(rs)
         assert any("name" in e for e in errors)
@@ -412,8 +465,10 @@ class TestDeonticLogicValidator:
     def test_validate_rule_set_empty_formulas(self):
         """GIVEN rule set with no formulas WHEN validating THEN error returned."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticRuleSet, DeonticLogicValidator,
+            DeonticRuleSet,
+            DeonticLogicValidator,
         )
+
         rs = DeonticRuleSet(name="Empty", formulas=[])
         errors = DeonticLogicValidator.validate_rule_set(rs)
         assert any("formula" in e.lower() for e in errors)
@@ -425,8 +480,10 @@ class TestCreateHelpers:
     def test_create_obligation(self):
         """GIVEN proposition and agent WHEN creating obligation THEN operator is O."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            create_obligation, DeonticOperator,
+            create_obligation,
+            DeonticOperator,
         )
+
         f = create_obligation("pay_rent", _make_agent(), conditions=["monthly"])
         assert f.operator == DeonticOperator.OBLIGATION
         assert f.proposition == "pay_rent"
@@ -435,16 +492,20 @@ class TestCreateHelpers:
     def test_create_permission(self):
         """GIVEN proposition and agent WHEN creating permission THEN operator is P."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            create_permission, DeonticOperator,
+            create_permission,
+            DeonticOperator,
         )
+
         f = create_permission("park_here", _make_agent())
         assert f.operator == DeonticOperator.PERMISSION
 
     def test_create_prohibition(self):
         """GIVEN proposition and agent WHEN creating prohibition THEN operator is F."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            create_prohibition, DeonticOperator,
+            create_prohibition,
+            DeonticOperator,
         )
+
         f = create_prohibition("trespass", _make_agent())
         assert f.operator == DeonticOperator.PROHIBITION
 
@@ -462,6 +523,7 @@ class TestDeonticQueryEngineInit:
         from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import (
             DeonticQueryEngine,
         )
+
         engine = DeonticQueryEngine(enable_rate_limiting=False, enable_validation=False)
         assert engine.rule_set is None
         assert engine.formula_index == {}
@@ -471,8 +533,11 @@ class TestDeonticQueryEngineInit:
         from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import (
             DeonticQueryEngine,
         )
+
         rs = _make_rule_set()
-        engine = DeonticQueryEngine(rule_set=rs, enable_rate_limiting=False, enable_validation=False)
+        engine = DeonticQueryEngine(
+            rule_set=rs, enable_rate_limiting=False, enable_validation=False
+        )
         assert engine.rule_set is not None
         assert len(engine.operator_index) >= 1
 
@@ -481,6 +546,7 @@ class TestDeonticQueryEngineInit:
         from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import (
             DeonticQueryEngine,
         )
+
         engine = DeonticQueryEngine(enable_rate_limiting=False, enable_validation=False)
         engine.load_rule_set(_make_rule_set())
         assert engine.rule_set is not None
@@ -496,8 +562,10 @@ class TestDeonticQueryEngineQueries:
             DeonticQueryEngine,
         )
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticOperator, DeonticRuleSet,
+            DeonticOperator,
+            DeonticRuleSet,
         )
+
         agent_a = _make_agent("agent_alpha", "Alpha Corp")
         agent_b = _make_agent("agent_beta", "Beta LLC")
         formulas = [
@@ -579,6 +647,7 @@ class TestDeonticQueryEngineQueries:
         result = engine_with_rules.search_by_keywords(["report"])
         # search_by_keywords returns a QueryResult, not a list
         from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import QueryResult
+
         assert isinstance(result, QueryResult)
 
     def test_query_by_natural_language_obligation(self, engine_with_rules):
@@ -594,8 +663,10 @@ class TestQueryResultDataclass:
     def test_query_result_to_dict(self):
         """GIVEN QueryResult WHEN converting to dict THEN all keys present."""
         from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import (
-            QueryResult, QueryType,
+            QueryResult,
+            QueryType,
         )
+
         r = QueryResult(query_type=QueryType.OBLIGATIONS)
         d = r.to_dict()
         assert "query_type" in d
@@ -604,6 +675,7 @@ class TestQueryResultDataclass:
     def test_compliance_result_to_dict(self):
         """GIVEN ComplianceResult WHEN converting to dict THEN serializable."""
         from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import ComplianceResult
+
         cr = ComplianceResult(is_compliant=True)
         d = cr.to_dict()
         assert "is_compliant" in d
@@ -613,6 +685,7 @@ class TestQueryResultDataclass:
         """GIVEN LogicConflict WHEN converting to dict THEN description present."""
         from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import LogicConflict
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticOperator
+
         f1 = _make_formula("act", operator=DeonticOperator.OBLIGATION)
         f2 = _make_formula("act", operator=DeonticOperator.PROHIBITION)
         lc = LogicConflict(
@@ -637,8 +710,10 @@ class TestTranslationResult:
     def test_to_dict(self):
         """GIVEN TranslationResult WHEN converting to dict THEN all fields present."""
         from ipfs_datasets_py.logic.integration.converters.logic_translation_core import (
-            TranslationResult, LogicTranslationTarget,
+            TranslationResult,
+            LogicTranslationTarget,
         )
+
         tr = TranslationResult(
             target=LogicTranslationTarget.LEAN,
             translated_formula="theorem T : ...",
@@ -658,6 +733,7 @@ class TestLeanTranslator:
         from ipfs_datasets_py.logic.integration.converters.logic_translation_core import (
             LeanTranslator,
         )
+
         return LeanTranslator()
 
     def test_target_is_lean(self, lean):
@@ -665,6 +741,7 @@ class TestLeanTranslator:
         from ipfs_datasets_py.logic.integration.converters.logic_translation_core import (
             LogicTranslationTarget,
         )
+
         assert lean.target == LogicTranslationTarget.LEAN
 
     def test_translate_obligation_formula(self, lean):
@@ -677,6 +754,7 @@ class TestLeanTranslator:
     def test_translate_permission_formula(self, lean):
         """GIVEN permission formula WHEN translating THEN formula generated."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticOperator
+
         f = _make_formula("access_resource", operator=DeonticOperator.PERMISSION)
         result = lean.translate_deontic_formula(f)
         assert result.success is True
@@ -684,6 +762,7 @@ class TestLeanTranslator:
     def test_translate_prohibition_formula(self, lean):
         """GIVEN prohibition formula WHEN translating THEN formula generated."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticOperator
+
         f = _make_formula("destroy_evidence", operator=DeonticOperator.PROHIBITION)
         result = lean.translate_deontic_formula(f)
         assert result.success is True
@@ -744,6 +823,7 @@ class TestCoqTranslator:
         from ipfs_datasets_py.logic.integration.converters.logic_translation_core import (
             CoqTranslator,
         )
+
         return CoqTranslator()
 
     def test_target_is_coq(self, coq):
@@ -751,6 +831,7 @@ class TestCoqTranslator:
         from ipfs_datasets_py.logic.integration.converters.logic_translation_core import (
             LogicTranslationTarget,
         )
+
         assert coq.target == LogicTranslationTarget.COQ
 
     def test_translate_obligation_formula(self, coq):
@@ -788,10 +869,11 @@ class TestIPFSProofCacheLocalOnly:
     @pytest.fixture
     def cache(self, tmp_path):
         from ipfs_datasets_py.logic.integration.caching.ipfs_proof_cache import IPFSProofCache
+
         return IPFSProofCache(
             max_size=100,
             ttl=3600,
-            enable_ipfs=False,           # No IPFS daemon needed
+            enable_ipfs=False,  # No IPFS daemon needed
         )
 
     @pytest.fixture
@@ -844,7 +926,7 @@ class TestIPFSProofCacheLocalOnly:
     def test_get_stats(self, cache, mock_result):
         """GIVEN cache with activity WHEN getting stats THEN dict with counters returned."""
         cache.put("s1", mock_result)
-        cache.get("s1")    # hit
+        cache.get("s1")  # hit
         cache.get("miss")  # miss
         stats = cache.get_stats()
         assert isinstance(stats, dict)
@@ -880,31 +962,36 @@ class TestDeonticExtractor:
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning import (
             DeonticExtractor,
         )
+
         return DeonticExtractor()
 
     def test_extract_obligation_must(self, extractor):
         """GIVEN sentence with 'must' WHEN extracting THEN obligation statement found."""
-        stmts = extractor.extract_statements(
-            "Citizens must pay taxes each year.", "doc_a"
+        stmts = extractor.extract_statements("Citizens must pay taxes each year.", "doc_a")
+        assert any(
+            s.modality.value in ("obligation", "O", "must") or "OBLIGATION" in str(s.modality)
+            for s in stmts
         )
-        assert any(s.modality.value in ("obligation", "O", "must") or "OBLIGATION" in str(s.modality)
-                   for s in stmts)
 
     def test_extract_permission_may(self, extractor):
         """GIVEN sentence with 'may' WHEN extracting THEN permission statement found."""
         stmts = extractor.extract_statements(
             "The employee may take leave for medical reasons.", "doc_b"
         )
-        assert any("PERMISSION" in str(s.modality) or s.modality.value in ("permission", "P")
-                   for s in stmts)
+        assert any(
+            "PERMISSION" in str(s.modality) or s.modality.value in ("permission", "P")
+            for s in stmts
+        )
 
     def test_extract_prohibition_must_not(self, extractor):
         """GIVEN sentence with 'must not' WHEN extracting THEN prohibition found."""
         stmts = extractor.extract_statements(
             "Companies must not discriminate against employees.", "doc_c"
         )
-        assert any("PROHIBITION" in str(s.modality) or s.modality.value in ("prohibition", "F")
-                   for s in stmts)
+        assert any(
+            "PROHIBITION" in str(s.modality) or s.modality.value in ("prohibition", "F")
+            for s in stmts
+        )
 
     def test_extract_returns_list(self, extractor):
         """GIVEN any text WHEN extracting THEN list returned."""
@@ -942,6 +1029,7 @@ class TestDeontologicalReasoningEngine:
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning import (
             DeontologicalReasoningEngine,
         )
+
         return DeontologicalReasoningEngine()
 
     def test_init_creates_extractor(self, engine):
@@ -955,6 +1043,7 @@ class TestDeontologicalReasoningEngine:
     def test_analyze_corpus_empty_documents(self, engine):
         """GIVEN empty document list WHEN analyzing THEN result dict returned."""
         import asyncio
+
         result = asyncio.run(engine.analyze_corpus_for_deontic_conflicts([]))
         assert isinstance(result, dict)
         assert "processing_stats" in result or "error" in result
@@ -962,6 +1051,7 @@ class TestDeontologicalReasoningEngine:
     def test_analyze_corpus_with_conflict(self, engine):
         """GIVEN documents with conflicting deontic statements WHEN analyzing THEN conflict detected."""
         import asyncio
+
         docs = [
             {
                 "id": "legal_doc_1",
@@ -979,6 +1069,7 @@ class TestDeontologicalReasoningEngine:
     def test_analyze_corpus_multiple_documents(self, engine):
         """GIVEN multiple documents WHEN analyzing THEN all processed."""
         import asyncio
+
         docs = [
             {"id": "d1", "content": "Employers must provide safe working conditions."},
             {"id": "d2", "content": "Employees may unionize without employer interference."},
@@ -1000,8 +1091,10 @@ class TestDeonticStatement:
     def test_create_deontic_statement(self):
         """GIVEN all fields WHEN creating DeonticStatement THEN fields stored."""
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
-            DeonticStatement, DeonticModality,
+            DeonticStatement,
+            DeonticModality,
         )
+
         stmt = DeonticStatement(
             id="stmt_001",
             entity="contractor",
@@ -1021,6 +1114,7 @@ class TestDeonticStatement:
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
             DeonticModality,
         )
+
         modalities = list(DeonticModality)
         names = [m.name for m in modalities]
         assert "OBLIGATION" in names
@@ -1032,6 +1126,7 @@ class TestDeonticStatement:
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
             ConflictType,
         )
+
         conflict_types = list(ConflictType)
         assert len(conflict_types) >= 2
 
@@ -1042,18 +1137,28 @@ class TestDeonticConflict:
     def test_create_conflict(self):
         """GIVEN two opposing statements WHEN creating DeonticConflict THEN fields stored."""
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
-            DeonticStatement, DeonticModality, DeonticConflict, ConflictType,
+            DeonticStatement,
+            DeonticModality,
+            DeonticConflict,
+            ConflictType,
         )
+
         s1 = DeonticStatement(
-            id="s1", entity="employee", action="work_overtime",
+            id="s1",
+            entity="employee",
+            action="work_overtime",
             modality=DeonticModality.OBLIGATION,
-            source_document="d1", source_text="Employees must work overtime.",
+            source_document="d1",
+            source_text="Employees must work overtime.",
             confidence=0.9,
         )
         s2 = DeonticStatement(
-            id="s2", entity="employee", action="work_overtime",
+            id="s2",
+            entity="employee",
+            action="work_overtime",
             modality=DeonticModality.PROHIBITION,
-            source_document="d2", source_text="Employees must not work overtime.",
+            source_document="d2",
+            source_text="Employees must not work overtime.",
             confidence=0.85,
         )
         conflict = DeonticConflict(
@@ -1080,6 +1185,7 @@ class TestDeonticPatterns:
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import (
             DeonticPatterns,
         )
+
         assert len(DeonticPatterns.OBLIGATION_PATTERNS) >= 1
 
     def test_permission_patterns_non_empty(self):
@@ -1087,6 +1193,7 @@ class TestDeonticPatterns:
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import (
             DeonticPatterns,
         )
+
         assert len(DeonticPatterns.PERMISSION_PATTERNS) >= 1
 
     def test_prohibition_patterns_non_empty(self):
@@ -1094,6 +1201,7 @@ class TestDeonticPatterns:
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import (
             DeonticPatterns,
         )
+
         assert len(DeonticPatterns.PROHIBITION_PATTERNS) >= 1
 
     def test_obligation_pattern_matches_must(self):
@@ -1102,10 +1210,10 @@ class TestDeonticPatterns:
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import (
             DeonticPatterns,
         )
+
         text = "The contractor must submit the report by Friday."
         matched = any(
-            re.search(p, text, re.IGNORECASE)
-            for p in DeonticPatterns.OBLIGATION_PATTERNS
+            re.search(p, text, re.IGNORECASE) for p in DeonticPatterns.OBLIGATION_PATTERNS
         )
         assert matched
 
@@ -1115,10 +1223,10 @@ class TestDeonticPatterns:
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import (
             DeonticPatterns,
         )
+
         text = "Employees must not share confidential information."
         matched = any(
-            re.search(p, text, re.IGNORECASE)
-            for p in DeonticPatterns.PROHIBITION_PATTERNS
+            re.search(p, text, re.IGNORECASE) for p in DeonticPatterns.PROHIBITION_PATTERNS
         )
         assert matched
 
@@ -1133,11 +1241,14 @@ class TestDocumentAnalysisDataclass:
 
     def test_create_document_analysis(self):
         """GIVEN empty DocumentAnalysis WHEN creating THEN default fields empty."""
-        pytest.importorskip("ipfs_datasets_py.logic.integration.domain.document_consistency_checker",
-                            reason="Module has broken import — skip")
+        pytest.importorskip(
+            "ipfs_datasets_py.logic.integration.domain.document_consistency_checker",
+            reason="Module has broken import — skip",
+        )
         from ipfs_datasets_py.logic.integration.domain.document_consistency_checker import (
             DocumentAnalysis,
         )
+
         da = DocumentAnalysis(document_id="doc_001")
         assert da.document_id == "doc_001"
         assert da.extracted_formulas == []
@@ -1145,11 +1256,14 @@ class TestDocumentAnalysisDataclass:
 
     def test_create_debug_report(self):
         """GIVEN empty DebugReport WHEN creating THEN zero counts."""
-        pytest.importorskip("ipfs_datasets_py.logic.integration.domain.document_consistency_checker",
-                            reason="Module has broken import — skip")
+        pytest.importorskip(
+            "ipfs_datasets_py.logic.integration.domain.document_consistency_checker",
+            reason="Module has broken import — skip",
+        )
         from ipfs_datasets_py.logic.integration.domain.document_consistency_checker import (
             DebugReport,
         )
+
         dr = DebugReport(document_id="debug_001")
         assert dr.document_id == "debug_001"
         assert dr.total_issues == 0

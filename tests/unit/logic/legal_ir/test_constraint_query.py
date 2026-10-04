@@ -107,9 +107,7 @@ def test_query_requires_jurisdiction_and_as_of() -> None:
     with pytest.raises(LegalConstraintQueryError):
         LegalConstraintQuery(query_id="q", jurisdiction="US-OR", as_of="")
     with pytest.raises(LegalConstraintQueryError):
-        LegalConstraintQuery(
-            query_id="q", jurisdiction="US-OR", as_of="not-a-date"
-        )
+        LegalConstraintQuery(query_id="q", jurisdiction="US-OR", as_of="not-a-date")
 
 
 def test_hard_filter_dimensions_are_documented() -> None:
@@ -148,10 +146,7 @@ def test_selects_applicable_constraint_under_matching_scope() -> None:
     assert result.evidence.status is LegalSelectionDisposition.APPLICABLE
     assert result.evidence.retrieval_rank_used_for_authority is False
     assert result.evidence.shared_applicability is not None
-    assert (
-        result.evidence.shared_applicability.status
-        is ApplicabilityStatus.APPLICABLE
-    )
+    assert result.evidence.shared_applicability.status is ApplicabilityStatus.APPLICABLE
     assert not result.grants_security_authorization
     assert not result.grants_execution_authority
 
@@ -183,40 +178,22 @@ def test_territory_and_subject_matter_mutations_change_applicability() -> None:
 
 
 def test_not_yet_effective_is_excluded() -> None:
-    result = _query(as_of="2019-06-01").select(
-        [_record(effective_from="2020-01-01")]
-    )
+    result = _query(as_of="2019-06-01").select([_record(effective_from="2020-01-01")])
     assert result.selected == ()
-    assert (
-        result.assessments[0].disposition
-        is LegalConstraintDisposition.NOT_YET_EFFECTIVE
-    )
+    assert result.assessments[0].disposition is LegalConstraintDisposition.NOT_YET_EFFECTIVE
 
 
 def test_expired_and_repealed_windows() -> None:
-    expired = _query(as_of="2025-01-01").select(
-        [_record(effective_until="2024-12-31")]
-    )
-    assert (
-        expired.assessments[0].disposition is LegalConstraintDisposition.EXPIRED
-    )
+    expired = _query(as_of="2025-01-01").select([_record(effective_until="2024-12-31")])
+    assert expired.assessments[0].disposition is LegalConstraintDisposition.EXPIRED
 
-    repealed = _query().select(
-        [_record(repealed_by="prov:repealer", repeal_date="2023-01-01")]
-    )
-    assert (
-        repealed.assessments[0].disposition is LegalConstraintDisposition.REPEALED
-    )
+    repealed = _query().select([_record(repealed_by="prov:repealer", repeal_date="2023-01-01")])
+    assert repealed.assessments[0].disposition is LegalConstraintDisposition.REPEALED
 
 
 def test_marked_superseded_on_record() -> None:
-    result = _query().select(
-        [_record(superseded_by="prov:v2", superseded_date="2022-01-01")]
-    )
-    assert (
-        result.assessments[0].disposition
-        is LegalConstraintDisposition.SUPERSEDED
-    )
+    result = _query().select([_record(superseded_by="prov:v2", superseded_date="2022-01-01")])
+    assert result.assessments[0].disposition is LegalConstraintDisposition.SUPERSEDED
 
 
 def test_express_supersession_between_candidates() -> None:
@@ -236,15 +213,11 @@ def test_express_supersession_between_candidates() -> None:
     result = _query().select([old, new])
     assert result.disposition is LegalSelectionDisposition.APPLICABLE
     assert [item.constraint_id for item in result.selected] == ["prov:new"]
-    old_assessment = next(
-        item for item in result.assessments if item.constraint_id == "prov:old"
-    )
+    old_assessment = next(item for item in result.assessments if item.constraint_id == "prov:old")
     assert old_assessment.disposition is LegalConstraintDisposition.SUPERSEDED
     assert "prov:new" in old_assessment.defeated_by
     assert any(item.kind == "supersession" for item in result.contradictions)
-    assert all(
-        item.resolved for item in result.contradictions if item.kind == "supersession"
-    )
+    assert all(item.resolved for item in result.contradictions if item.kind == "supersession")
 
 
 # ---------------------------------------------------------------------------
@@ -272,8 +245,7 @@ def test_threshold_hard_filter() -> None:
     too_high = _query(thresholds={"fee_usd": 40}).select([record])
     assert too_high.disposition is LegalSelectionDisposition.NOT_APPLICABLE
     assert any(
-        code.startswith("threshold_unsatisfied")
-        for code in too_high.assessments[0].reason_codes
+        code.startswith("threshold_unsatisfied") for code in too_high.assessments[0].reason_codes
     )
 
     missing = _query(thresholds={}).select([record])
@@ -291,9 +263,7 @@ def test_unresolved_definition_refs_fail_closed() -> None:
     assert result.disposition is LegalSelectionDisposition.INDETERMINATE
     assert "unresolved_definition_refs" in result.assessments[0].reason_codes
 
-    resolved = _query().select(
-        [record], known_definition_ids=("def:public-body",)
-    )
+    resolved = _query().select([record], known_definition_ids=("def:public-body",))
     assert resolved.disposition is LegalSelectionDisposition.APPLICABLE
 
 
@@ -309,9 +279,7 @@ def test_unresolved_cross_references_fail_closed() -> None:
     )
     both = _query().select([record, via_candidate])
     assert both.disposition is LegalSelectionDisposition.APPLICABLE
-    assert "prov:obligation-publish" in {
-        item.constraint_id for item in both.selected
-    }
+    assert "prov:obligation-publish" in {item.constraint_id for item in both.selected}
 
 
 def test_applicable_exception_defeats_target_without_erasure() -> None:
@@ -352,9 +320,7 @@ def test_unresolved_exception_reference_is_indeterminate() -> None:
 
 
 def test_tainted_premise_requires_review_and_never_applies() -> None:
-    result = _query().select(
-        [_record(premise_taint=LegalPremiseTaintStatus.TAINTED)]
-    )
+    result = _query().select([_record(premise_taint=LegalPremiseTaintStatus.TAINTED)])
     assert result.disposition is LegalSelectionDisposition.REVIEW_REQUIRED
     assert result.abstains
     assert result.assessments[0].disposition is LegalConstraintDisposition.TAINTED
@@ -401,13 +367,9 @@ def test_higher_authority_preempts_lower_on_opposed_modalities() -> None:
     )
     result = _query().select([state, federal])
     assert result.disposition is LegalSelectionDisposition.APPLICABLE
-    assert [item.constraint_id for item in result.selected] == [
-        "prov:federal-prohibition"
-    ]
+    assert [item.constraint_id for item in result.selected] == ["prov:federal-prohibition"]
     loser = next(
-        item
-        for item in result.assessments
-        if item.constraint_id == "prov:state-permission"
+        item for item in result.assessments if item.constraint_id == "prov:state-permission"
     )
     assert loser.disposition is LegalConstraintDisposition.SUPERSEDED
     assert "higher_authority_preempts" in loser.reason_codes
@@ -463,9 +425,7 @@ def test_retrieval_rank_never_selects_authority() -> None:
     assert "retrieval_rank" not in result.evidence.authority_selection_keys
     assert result.evidence.selection_method is PremiseSelectionMethod.HARD_FILTER
     # Advisory rank may appear in assessments but not as selection authority.
-    ranks = {
-        item.constraint_id: item.retrieval_rank for item in result.assessments
-    }
+    ranks = {item.constraint_id: item.retrieval_rank for item in result.assessments}
     assert ranks["prov:weak"] == 0
     assert ranks["prov:strong"] == 500
 
@@ -515,9 +475,7 @@ def test_empty_candidates_yield_coverage_gap_abstain() -> None:
 
 
 def test_jurisdiction_coverage_gap_when_no_candidate_matches() -> None:
-    result = _query(jurisdiction="US-WA").select(
-        [_record(jurisdictions=("US-OR",))]
-    )
+    result = _query(jurisdiction="US-WA").select([_record(jurisdictions=("US-OR",))])
     # Mismatch is not_applicable rather than gap when candidates exist but miss.
     assert result.disposition is LegalSelectionDisposition.NOT_APPLICABLE
 
@@ -584,9 +542,11 @@ def test_function_and_method_entry_points_agree() -> None:
 def test_evidence_roundtrip_json() -> None:
     result = _query().select([_record()])
     raw = result.evidence.to_json()
-    restored = LegalApplicabilityEvidence.from_json(raw) if hasattr(
-        LegalApplicabilityEvidence, "from_json"
-    ) else LegalApplicabilityEvidence.from_dict(json.loads(raw))
+    restored = (
+        LegalApplicabilityEvidence.from_json(raw)
+        if hasattr(LegalApplicabilityEvidence, "from_json")
+        else LegalApplicabilityEvidence.from_dict(json.loads(raw))
+    )
     # from_json may not exist; use from_dict
     restored = LegalApplicabilityEvidence.from_dict(json.loads(raw))
     assert restored.status is result.evidence.status
@@ -628,8 +588,6 @@ def test_query_from_dict_rejects_unknown_interface() -> None:
 
 
 def test_missing_effective_date_is_indeterminate_under_closed_world() -> None:
-    result = _query().select(
-        [_record(effective_from="", enacted_date="")]
-    )
+    result = _query().select([_record(effective_from="", enacted_date="")])
     assert result.disposition is LegalSelectionDisposition.INDETERMINATE
     assert "missing_effective_date" in result.assessments[0].reason_codes

@@ -4,6 +4,7 @@ Cross-Document PDF Analysis Engine
 Canonical engine for cross-document analysis of PDF document corpora.
 Delegates to processors.specialized.graphrag.integration.CrossDocumentReasoner.
 """
+
 from __future__ import annotations
 
 import logging
@@ -16,6 +17,7 @@ try:
         CrossDocumentReasoner,
         GraphRAGIntegration,
     )
+
     _GRAPHRAG_AVAILABLE = True
 except ImportError:
     CrossDocumentReasoner = None  # type: ignore[assignment,misc]
@@ -51,7 +53,14 @@ async def pdf_cross_document_analysis(
         analysis_types = ["entities", "themes", "citations"]
 
     # Input validation
-    valid_analysis_types = ["entities", "themes", "citations", "temporal", "influence", "clustering"]
+    valid_analysis_types = [
+        "entities",
+        "themes",
+        "citations",
+        "temporal",
+        "influence",
+        "clustering",
+    ]
     invalid_types = [t for t in analysis_types if t not in valid_analysis_types]
     if invalid_types:
         return {
@@ -67,7 +76,10 @@ async def pdf_cross_document_analysis(
 
     valid_formats = ["summary", "detailed", "full"]
     if output_format not in valid_formats:
-        return {"status": "error", "message": f"Invalid output_format. Must be one of: {valid_formats}"}
+        return {
+            "status": "error",
+            "message": f"Invalid output_format. Must be one of: {valid_formats}",
+        }
 
     if not _GRAPHRAG_AVAILABLE:
         return {
@@ -85,14 +97,20 @@ async def pdf_cross_document_analysis(
                 try:
                     info = await integrator.get_document_info(doc_id)
                 except AttributeError:
-                    return {"status": "error", "message": "GraphRAGIntegration.get_document_info is not available"}
+                    return {
+                        "status": "error",
+                        "message": "GraphRAGIntegration.get_document_info is not available",
+                    }
                 if info:
                     docs.append(info)
         else:
             try:
                 docs = await integrator.get_all_documents()
             except AttributeError:
-                return {"status": "error", "message": "GraphRAGIntegration.get_all_documents is not available"}
+                return {
+                    "status": "error",
+                    "message": "GraphRAGIntegration.get_all_documents is not available",
+                }
 
         if not docs:
             return {"status": "error", "message": "No documents found for cross-document analysis"}

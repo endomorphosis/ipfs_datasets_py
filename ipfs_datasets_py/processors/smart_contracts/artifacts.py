@@ -128,18 +128,12 @@ class TransportEvidence:
             "final_url_digest",
             _required_text(self.final_url_digest, "final_url_digest"),
         )
-        object.__setattr__(
-            self, "status_code", _non_negative(self.status_code, "status_code")
-        )
-        object.__setattr__(
-            self, "byte_length", _non_negative(self.byte_length, "byte_length")
-        )
+        object.__setattr__(self, "status_code", _non_negative(self.status_code, "status_code"))
+        object.__setattr__(self, "byte_length", _non_negative(self.byte_length, "byte_length"))
         object.__setattr__(
             self, "redirect_count", _non_negative(self.redirect_count, "redirect_count")
         )
-        object.__setattr__(
-            self, "transport", _required_text(self.transport, "transport")
-        )
+        object.__setattr__(self, "transport", _required_text(self.transport, "transport"))
         if self.headers_digest:
             object.__setattr__(
                 self,
@@ -191,9 +185,7 @@ class TransportEvidence:
             transport=str(value.get("transport", "offline_fixture")),
             headers_digest=str(value.get("headers_digest", "")),
             attributes=value.get("attributes", {}),
-            schema_version=str(
-                value.get("schema_version", TRANSPORT_EVIDENCE_SCHEMA_VERSION)
-            ),
+            schema_version=str(value.get("schema_version", TRANSPORT_EVIDENCE_SCHEMA_VERSION)),
         )
 
 
@@ -220,16 +212,10 @@ class StoredArtifact:
         object.__setattr__(
             self,
             "kind",
-            self.kind
-            if isinstance(self.kind, ArtifactKind)
-            else ArtifactKind(str(self.kind)),
+            self.kind if isinstance(self.kind, ArtifactKind) else ArtifactKind(str(self.kind)),
         )
-        object.__setattr__(
-            self, "media_type", _required_text(self.media_type, "media_type")
-        )
-        object.__setattr__(
-            self, "label", self.label.strip() if self.label else ""
-        )
+        object.__setattr__(self, "media_type", _required_text(self.media_type, "media_type"))
+        object.__setattr__(self, "label", self.label.strip() if self.label else "")
         object.__setattr__(
             self,
             "schema_version",
@@ -286,29 +272,19 @@ class ArtifactManifestEntry:
         object.__setattr__(
             self,
             "kind",
-            self.kind
-            if isinstance(self.kind, ArtifactKind)
-            else ArtifactKind(str(self.kind)),
+            self.kind if isinstance(self.kind, ArtifactKind) else ArtifactKind(str(self.kind)),
         )
         digest = _required_text(self.content_digest, "content_digest")
         if not digest.startswith("sha256:"):
             raise InvalidRequestError("content_digest must be a tagged sha256 digest")
         object.__setattr__(self, "content_digest", digest)
-        object.__setattr__(
-            self, "media_type", _required_text(self.media_type, "media_type")
-        )
-        object.__setattr__(
-            self, "byte_length", _non_negative(self.byte_length, "byte_length")
-        )
+        object.__setattr__(self, "media_type", _required_text(self.media_type, "media_type"))
+        object.__setattr__(self, "byte_length", _non_negative(self.byte_length, "byte_length"))
         if self.content_cid:
-            object.__setattr__(
-                self, "content_cid", _required_text(self.content_cid, "content_cid")
-            )
+            object.__setattr__(self, "content_cid", _required_text(self.content_cid, "content_cid"))
         else:
             object.__setattr__(self, "content_cid", "")
-        object.__setattr__(
-            self, "label", self.label.strip() if self.label else ""
-        )
+        object.__setattr__(self, "label", self.label.strip() if self.label else "")
         object.__setattr__(self, "attributes", _freeze_mapping(self.attributes))
 
     def to_dict(self) -> dict[str, Any]:
@@ -317,9 +293,7 @@ class ArtifactManifestEntry:
             "byte_length": self.byte_length,
             "content_cid": self.content_cid,
             "content_digest": self.content_digest,
-            "kind": self.kind.value
-            if isinstance(self.kind, ArtifactKind)
-            else str(self.kind),
+            "kind": self.kind.value if isinstance(self.kind, ArtifactKind) else str(self.kind),
             "label": self.label,
             "media_type": self.media_type,
             "path": self.path,
@@ -381,9 +355,7 @@ class ArtifactManifest:
     MAX_ENTRIES: ClassVar[int] = 4096
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "request_id", _required_text(self.request_id, "request_id")
-        )
+        object.__setattr__(self, "request_id", _required_text(self.request_id, "request_id"))
         if (
             not isinstance(self.observed_at, datetime)
             or self.observed_at.tzinfo is None
@@ -397,9 +369,7 @@ class ArtifactManifest:
         digests: set[str] = set()
         for index, entry in enumerate(entries):
             if not isinstance(entry, ArtifactManifestEntry):
-                raise InvalidRequestError(
-                    f"entries[{index}] must be an ArtifactManifestEntry"
-                )
+                raise InvalidRequestError(f"entries[{index}] must be an ArtifactManifestEntry")
             if entry.path in paths:
                 raise InvalidRequestError(f"duplicate manifest path: {entry.path}")
             paths.add(entry.path)
@@ -408,32 +378,22 @@ class ArtifactManifest:
         evidence = tuple(self.transport_evidence)
         for index, item in enumerate(evidence):
             if not isinstance(item, TransportEvidence):
-                raise InvalidRequestError(
-                    f"transport_evidence[{index}] must be TransportEvidence"
-                )
+                raise InvalidRequestError(f"transport_evidence[{index}] must be TransportEvidence")
         object.__setattr__(self, "transport_evidence", evidence)
-        providers = tuple(
-            _required_text(item, "provider_ids item") for item in self.provider_ids
-        )
+        providers = tuple(_required_text(item, "provider_ids item") for item in self.provider_ids)
         object.__setattr__(self, "provider_ids", providers)
         if self.toolchain_digest:
             text = _required_text(self.toolchain_digest, "toolchain_digest")
             if not text.startswith("sha256:"):
-                raise InvalidRequestError(
-                    "toolchain_digest must be a tagged sha256 digest"
-                )
+                raise InvalidRequestError("toolchain_digest must be a tagged sha256 digest")
             object.__setattr__(self, "toolchain_digest", text)
         else:
             object.__setattr__(self, "toolchain_digest", "")
-        object.__setattr__(
-            self, "code_epoch", self.code_epoch.strip() if self.code_epoch else ""
-        )
+        object.__setattr__(self, "code_epoch", self.code_epoch.strip() if self.code_epoch else "")
         object.__setattr__(
             self,
             "diagnostics",
-            tuple(
-                _required_text(item, "diagnostics item") for item in self.diagnostics
-            ),
+            tuple(_required_text(item, "diagnostics item") for item in self.diagnostics),
         )
         object.__setattr__(self, "attributes", _freeze_mapping(self.attributes))
         object.__setattr__(
@@ -456,9 +416,7 @@ class ArtifactManifest:
             "request_id": self.request_id,
             "schema_version": self.schema_version,
             "toolchain_digest": self.toolchain_digest,
-            "transport_evidence": [
-                item.to_dict() for item in self.transport_evidence
-            ],
+            "transport_evidence": [item.to_dict() for item in self.transport_evidence],
         }
 
     @property
@@ -483,9 +441,7 @@ class ArtifactManifest:
             "request_id": self.request_id,
             "schema_version": self.schema_version,
             "toolchain_digest": self.toolchain_digest,
-            "transport_evidence": [
-                item.to_dict() for item in self.transport_evidence
-            ],
+            "transport_evidence": [item.to_dict() for item in self.transport_evidence],
         }
 
     def to_canonical_json(self) -> str:
@@ -505,13 +461,9 @@ class ArtifactManifest:
             observed_at = observed
         else:
             raise InvalidRequestError("observed_at is required")
-        entries = tuple(
-            ArtifactManifestEntry.from_dict(item)
-            for item in value.get("entries", ())
-        )
+        entries = tuple(ArtifactManifestEntry.from_dict(item) for item in value.get("entries", ()))
         evidence = tuple(
-            TransportEvidence.from_dict(item)
-            for item in value.get("transport_evidence", ())
+            TransportEvidence.from_dict(item) for item in value.get("transport_evidence", ())
         )
         manifest = cls(
             entries=entries,
@@ -523,9 +475,7 @@ class ArtifactManifest:
             code_epoch=str(value.get("code_epoch", "")),
             diagnostics=tuple(value.get("diagnostics", ())),
             attributes=value.get("attributes", {}),
-            schema_version=str(
-                value.get("schema_version", ARTIFACT_MANIFEST_SCHEMA_VERSION)
-            ),
+            schema_version=str(value.get("schema_version", ARTIFACT_MANIFEST_SCHEMA_VERSION)),
         )
         claimed = value.get("manifest_digest")
         if claimed and claimed != manifest.manifest_digest:
@@ -548,10 +498,7 @@ class ArtifactManifest:
         diagnostics: Sequence[str] = (),
         attributes: Mapping[str, Any] | None = None,
     ) -> "ArtifactManifest":
-        entries = tuple(
-            ArtifactManifestEntry.from_stored(item, path=path)
-            for path, item in stored
-        )
+        entries = tuple(ArtifactManifestEntry.from_stored(item, path=path) for path, item in stored)
         return cls(
             entries=entries,
             request_id=request_id,
@@ -571,24 +518,16 @@ class ArtifactManifest:
         """Validate that every entry matches stored bytes; fail closed otherwise."""
 
         if set(artifacts_by_path) != {entry.path for entry in self.entries}:
-            raise ArtifactInconsistentError(
-                "artifact set does not match manifest entry paths"
-            )
+            raise ArtifactInconsistentError("artifact set does not match manifest entry paths")
         for entry in self.entries:
             stored = artifacts_by_path[entry.path]
             stored.verify(entry.content_digest)
             if stored.byte_length != entry.byte_length:
-                raise ArtifactPoisonedError(
-                    f"length mismatch for manifest path {entry.path}"
-                )
+                raise ArtifactPoisonedError(f"length mismatch for manifest path {entry.path}")
             if entry.content_cid and stored.content_cid != entry.content_cid:
-                raise ArtifactPoisonedError(
-                    f"CID mismatch for manifest path {entry.path}"
-                )
+                raise ArtifactPoisonedError(f"CID mismatch for manifest path {entry.path}")
             if stored.kind != entry.kind:
-                raise ArtifactInconsistentError(
-                    f"kind mismatch for manifest path {entry.path}"
-                )
+                raise ArtifactInconsistentError(f"kind mismatch for manifest path {entry.path}")
 
     def artifact_refs(self) -> tuple[ArtifactRef, ...]:
         return tuple(
@@ -744,10 +683,8 @@ def combine_provider_views(
             status=AcquisitionStatus.INCONSISTENT,
             artifacts=tuple(all_refs),
             provenances=tuple(provenances),
-            diagnostics=tuple(diagnostics)
-            + (f"provider disagreement among {provider_list}",),
-            coverage_notes=tuple(coverage)
-            + ("disagreement preserved; no permissive selection",),
+            diagnostics=tuple(diagnostics) + (f"provider disagreement among {provider_list}",),
+            coverage_notes=tuple(coverage) + ("disagreement preserved; no permissive selection",),
         )
 
     # Agreement: merge coverage but use the first successful artifact set.

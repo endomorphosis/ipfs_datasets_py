@@ -93,9 +93,7 @@ def _write_index(
     path = root / complete._INDEX_PATHS[name]
     path.parent.mkdir(parents=True, exist_ok=True)
     columns = (
-        complete._ORIGINAL_ROW_COLUMNS
-        if name == "original_rows"
-        else complete._INDEX_COLUMNS[name]
+        complete._ORIGINAL_ROW_COLUMNS if name == "original_rows" else complete._INDEX_COLUMNS[name]
     )
     ordered = [{column: row[column] for column in columns} for row in rows]
     table = pa.Table.from_pylist(ordered).replace_schema_metadata(metadata)
@@ -137,18 +135,14 @@ def _stage_control_plane(root: Path) -> HuggingFaceSourcePin:
 
     indexes: list[dict[str, object]] = []
     data_by_config = {
-        str(item["config_name"]): item
-        for item in data
-        if item["config_name"] != "original_data"
+        str(item["config_name"]): item for item in data if item["config_name"] != "original_data"
     }
     for name in sorted(set(complete._INDEX_PATHS) - {"original_rows"}):
         family = complete._INDEX_FAMILIES[name]
         target = data_by_config[family]
         row: dict[str, object] = {
             "cid": target["content_id"],
-            "end_document_index": (
-                0 if family in {"bm25_documents", "corpus", "vectors"} else -1
-            ),
+            "end_document_index": (0 if family in {"bm25_documents", "corpus", "vectors"} else -1),
             "first_key": _cid(f"{family}-first"),
             "kind": family,
             "last_key": _cid(f"{family}-last"),
@@ -174,11 +168,7 @@ def _stage_control_plane(root: Path) -> HuggingFaceSourcePin:
         }:
             row.update(
                 adjacency_count=1,
-                direction=(
-                    "incoming"
-                    if name == "graph_incoming_adjacency"
-                    else "outgoing"
-                ),
+                direction=("incoming" if name == "graph_incoming_adjacency" else "outgoing"),
                 first_page_index=0,
                 last_page_index=0,
                 node_count=1,
@@ -191,9 +181,7 @@ def _stage_control_plane(root: Path) -> HuggingFaceSourcePin:
                 chunk_in_cluster=0,
                 cluster_id=0,
                 dimension=2,
-                model_name=(
-                    "fixture/model@" + "a" * 40
-                ),
+                model_name=("fixture/model@" + "a" * 40),
                 shard_centroid=[1.0, 0.0],
             )
         indexes.append(
@@ -201,9 +189,7 @@ def _stage_control_plane(root: Path) -> HuggingFaceSourcePin:
                 root,
                 name,
                 [row],
-                metadata={
-                    b"schema_version": complete.META_SCHEMA_VERSION.encode()
-                },
+                metadata={b"schema_version": complete.META_SCHEMA_VERSION.encode()},
             )
         )
 
@@ -212,17 +198,11 @@ def _stage_control_plane(root: Path) -> HuggingFaceSourcePin:
     admitted = 12_714
     for contract in complete.PINNED_ORIGINAL_SHARDS:
         for shard_row in range(contract.row_count):
-            status = (
-                "admitted"
-                if global_index < admitted
-                else "publication_rejected"
-            )
+            status = "admitted" if global_index < admitted else "publication_rejected"
             identity = complete._STATUS_IDENTITY[status]
             original_rows.append(
                 {
-                    "security_ir_source_cid": _cid(
-                        f"source-row-{global_index}"
-                    ),
+                    "security_ir_source_cid": _cid(f"source-row-{global_index}"),
                     "source_row_index": global_index,
                     "source_status": status,
                     "source_identity_domain": identity[0],
@@ -233,9 +213,7 @@ def _stage_control_plane(root: Path) -> HuggingFaceSourcePin:
                     "relative_path": contract.release_path,
                     "source_dataset_id": complete.PINNED_SOURCE_DATASET_ID,
                     "source_revision": complete.PINNED_SOURCE_REVISION,
-                    "schema_version": (
-                        complete.ORIGINAL_ROW_INDEX_SCHEMA_VERSION
-                    ),
+                    "schema_version": (complete.ORIGINAL_ROW_INDEX_SCHEMA_VERSION),
                 }
             )
             global_index += 1
@@ -246,17 +224,12 @@ def _stage_control_plane(root: Path) -> HuggingFaceSourcePin:
             original_rows,
             metadata={
                 b"primary_key": b"security_ir_source_cid",
-                b"schema_version": (
-                    complete.ORIGINAL_ROW_INDEX_SCHEMA_VERSION.encode()
-                ),
+                b"schema_version": (complete.ORIGINAL_ROW_INDEX_SCHEMA_VERSION.encode()),
             },
         )
     )
 
-    by_config = {
-        str(item.get("config_name", "")): []
-        for item in (*data, *indexes)
-    }
+    by_config = {str(item.get("config_name", "")): [] for item in (*data, *indexes)}
     for item in (*data, *indexes):
         by_config[str(item.get("config_name", ""))].append(item)
     viewer_configs: dict[str, object] = {}
@@ -266,12 +239,8 @@ def _stage_control_plane(root: Path) -> HuggingFaceSourcePin:
             "features": {"fixture": {"dtype": "string"}},
             "splits": {
                 "train": {
-                    "num_bytes": sum(
-                        int(item["byte_length"]) for item in matching
-                    ),
-                    "num_examples": sum(
-                        int(item["row_count"]) for item in matching
-                    ),
+                    "num_bytes": sum(int(item["byte_length"]) for item in matching),
+                    "num_examples": sum(int(item["row_count"]) for item in matching),
                 }
             },
         }
@@ -308,12 +277,8 @@ def _stage_control_plane(root: Path) -> HuggingFaceSourcePin:
         parent_cids=(derived_root,),
         config_cid=_cid("config"),
         payload={
-            "derived_dataset_schema_version": (
-                complete.COMPLETE_BUILD_SCHEMA_VERSION
-            ),
-            "derived_security_ir_profile": (
-                complete.DERIVED_SECURITY_IR_PROFILE
-            ),
+            "derived_dataset_schema_version": (complete.COMPLETE_BUILD_SCHEMA_VERSION),
+            "derived_security_ir_profile": (complete.DERIVED_SECURITY_IR_PROFILE),
             "grants_execution_authority": False,
             "release_root": release_root,
             "release_schema_version": "cvefixes-huggingface-release/v1",
@@ -366,10 +331,7 @@ def _stage_control_plane(root: Path) -> HuggingFaceSourcePin:
         },
         "configs": {
             **complete._DATA_CONFIG_PATTERNS,
-            **{
-                complete._INDEX_CONFIGS[name]: path
-                for name, path in complete._INDEX_PATHS.items()
-            },
+            **{complete._INDEX_CONFIGS[name]: path for name, path in complete._INDEX_PATHS.items()},
         },
         "counts": {
             "admitted_rows": 12_714,
@@ -381,8 +343,7 @@ def _stage_control_plane(root: Path) -> HuggingFaceSourcePin:
             "graph_edges": 1,
             "graph_nodes": 1,
             "original_data_bytes": sum(
-                contract.size_bytes
-                for contract in complete.PINNED_ORIGINAL_SHARDS
+                contract.size_bytes for contract in complete.PINNED_ORIGINAL_SHARDS
             ),
             "original_data_rows": 12_987,
             "original_data_shards": 3,
@@ -397,9 +358,7 @@ def _stage_control_plane(root: Path) -> HuggingFaceSourcePin:
             "graph_root": _cid("graph-root"),
             "node_count": 1,
         },
-        "indexes": {
-            Path(str(item["path"])).stem: _compact(item) for item in indexes
-        },
+        "indexes": {Path(str(item["path"])).stem: _compact(item) for item in indexes},
         "parquet": {
             "compression": {
                 "derived_and_indexes": "zstd",
@@ -473,12 +432,7 @@ def test_complete_loader_verifies_routes_without_opening_data(
 ) -> None:
     root = tmp_path / "source"
     pin = _stage_control_plane(root)
-    raw_sentinel = (
-        root
-        / "data"
-        / "original"
-        / "part-000000.parquet"
-    )
+    raw_sentinel = root / "data" / "original" / "part-000000.parquet"
     raw_sentinel.parent.mkdir(parents=True)
     raw_sentinel.write_bytes(b"must not be opened")
 
@@ -515,9 +469,7 @@ def test_complete_cache_copies_only_control_plane(tmp_path: Path) -> None:
     cache_root = cache.path_for(pin)
     assert not (cache_root / "data").exists()
     assert {
-        path.relative_to(cache_root).as_posix()
-        for path in cache_root.rglob("*")
-        if path.is_file()
+        path.relative_to(cache_root).as_posix() for path in cache_root.rglob("*") if path.is_file()
     } == {
         cache._MARKER,
         "manifest.json",
@@ -534,9 +486,7 @@ def test_pinned_complete_manifest_tampering_fails_closed(
     manifest_path = root / "manifest.json"
     manifest_path.write_bytes(manifest_path.read_bytes() + b"\n")
 
-    with pytest.raises(
-        HuggingFaceSourceIntegrityError, match="manifest digest"
-    ):
+    with pytest.raises(HuggingFaceSourceIntegrityError, match="manifest digest"):
         load_huggingface_complete_release(root, pin)
 
 
@@ -552,10 +502,7 @@ def test_rehashed_route_index_tampering_fails_closed(
     pq.write_table(
         pa.Table.from_pylist(
             [
-                {
-                    column: row[column]
-                    for column in complete._INDEX_COLUMNS["corpus_chunks"]
-                }
+                {column: row[column] for column in complete._INDEX_COLUMNS["corpus_chunks"]}
                 for row in rows
             ]
         ).replace_schema_metadata(table.schema.metadata),
@@ -564,9 +511,7 @@ def test_rehashed_route_index_tampering_fails_closed(
     )
     pin = _rewrite_index_descriptor(root, pin, "corpus_chunks")
 
-    with pytest.raises(
-        HuggingFaceSourceIntegrityError, match="route binding"
-    ):
+    with pytest.raises(HuggingFaceSourceIntegrityError, match="route binding"):
         load_huggingface_complete_release(root, pin)
 
 
@@ -581,22 +526,14 @@ def test_rehashed_original_position_tampering_fails_closed(
     rows[0]["source_shard_row_index"] = 1
     pq.write_table(
         pa.Table.from_pylist(
-            [
-                {
-                    column: row[column]
-                    for column in complete._ORIGINAL_ROW_COLUMNS
-                }
-                for row in rows
-            ]
+            [{column: row[column] for column in complete._ORIGINAL_ROW_COLUMNS} for row in rows]
         ).replace_schema_metadata(table.schema.metadata),
         path,
         compression="zstd",
     )
     pin = _rewrite_index_descriptor(root, pin, "original_rows")
 
-    with pytest.raises(
-        HuggingFaceSourceIntegrityError, match="position binding"
-    ):
+    with pytest.raises(HuggingFaceSourceIntegrityError, match="position binding"):
         load_huggingface_complete_release(root, pin)
 
 

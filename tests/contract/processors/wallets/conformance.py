@@ -154,11 +154,7 @@ def file_sha256(path: Path) -> str:
 
 def _sorted_fixture_files(root: Path | None = None) -> list[Path]:
     base = root or _FIXTURE_ROOT
-    files = [
-        path
-        for path in base.rglob("*")
-        if path.is_file() and path.name != _DIGESTS_NAME
-    ]
+    files = [path for path in base.rglob("*") if path.is_file() and path.name != _DIGESTS_NAME]
     return sorted(files, key=lambda p: p.relative_to(base).as_posix())
 
 
@@ -231,22 +227,12 @@ class FixtureTransport:
         missing = actual_keys - expected_keys
         extra = expected_keys - actual_keys
         if missing:
-            raise AssertionError(
-                f"digests.json missing entries for: {sorted(missing)}"
-            )
+            raise AssertionError(f"digests.json missing entries for: {sorted(missing)}")
         if extra:
-            raise AssertionError(
-                f"digests.json lists missing files: {sorted(extra)}"
-            )
-        mismatches = [
-            key
-            for key, digest in expected.items()
-            if actual.get(key) != digest
-        ]
+            raise AssertionError(f"digests.json lists missing files: {sorted(extra)}")
+        mismatches = [key for key, digest in expected.items() if actual.get(key) != digest]
         if mismatches:
-            raise AssertionError(
-                f"fixture content digests drifted for: {sorted(mismatches)}"
-            )
+            raise AssertionError(f"fixture content digests drifted for: {sorted(mismatches)}")
 
     def assert_manifest_provenance(self, subdir: str | None = None) -> None:
         """Require source, license, and provenance on a fixture manifest."""
@@ -343,9 +329,7 @@ def make_reference_provider_contract() -> ProviderContract:
         chain_namespace="eip155",
         network="ethereum-mainnet",
         chain_id="1",
-        genesis_hash=(
-            "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3"
-        ),
+        genesis_hash=("0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3"),
         fixture_subdir="_shared",
         provider_name="fixture-rpc",
         import_modules=NO_NETWORK_IMPORT_MODULES,
@@ -405,9 +389,7 @@ def _paginate(
 ) -> list[str]:
     """Replay offline pagination pages under finite page budgets."""
 
-    by_cursor: dict[str | None, Mapping[str, Any]] = {
-        page.get("cursor"): page for page in pages
-    }
+    by_cursor: dict[str | None, Mapping[str, Any]] = {page.get("cursor"): page for page in pages}
     cursor: str | None = None
     seen_cursors: set[str | None] = set()
     collected: list[str] = []
@@ -520,9 +502,7 @@ class WalletProcessorConformance:
                 self._completed_shared.add(name)
                 results.append(ConformanceResult(name=name, passed=True))
             except Exception as exc:  # pragma: no cover - surfaced to caller
-                results.append(
-                    ConformanceResult(name=name, passed=False, detail=str(exc))
-                )
+                results.append(ConformanceResult(name=name, passed=False, detail=str(exc)))
                 raise
         missing = self.required_checks - self._completed_shared
         if missing:
@@ -545,9 +525,7 @@ class WalletProcessorConformance:
                 check(self)
                 results.append(ConformanceResult(name=name, passed=True))
             except Exception as exc:  # pragma: no cover
-                results.append(
-                    ConformanceResult(name=name, passed=False, detail=str(exc))
-                )
+                results.append(ConformanceResult(name=name, passed=False, detail=str(exc)))
                 raise
         return results
 
@@ -574,9 +552,7 @@ class WalletProcessorConformance:
             incomplete.run_extra_checks()
         except AssertionError:
             return
-        raise AssertionError(
-            "extra checks must refuse to run before shared suite completes"
-        )
+        raise AssertionError("extra checks must refuse to run before shared suite completes")
 
     # -- shared checks ------------------------------------------------------
 
@@ -640,9 +616,7 @@ class WalletProcessorConformance:
             assert amount.decimals == item["decimals"]
             as_dict = amount.to_dict()
             assert isinstance(as_dict["base_units"], str)
-            assert "." not in as_dict["base_units"] or as_dict[
-                "base_units"
-            ].startswith("-")
+            assert "." not in as_dict["base_units"] or as_dict["base_units"].startswith("-")
             # No binary float coercion path.
             assert not isinstance(as_dict["base_units"], float)
         for item in vectors["invalid"]:
@@ -686,13 +660,9 @@ class WalletProcessorConformance:
                 if isinstance(payload, Mapping):
                     if "native_id" not in payload and "transaction_hash" not in payload:
                         raise NormalizationError("partial payload missing identity")
-                    if "amount" in payload and "base_units" not in (
-                        payload.get("amount") or {}
-                    ):
+                    if "amount" in payload and "base_units" not in (payload.get("amount") or {}):
                         raise NormalizationError("partial amount")
-                    native = payload.get("native_id") or payload.get(
-                        "transaction_hash"
-                    )
+                    native = payload.get("native_id") or payload.get("transaction_hash")
                     return [str(native)]
                 raise NormalizationError("unexpected payload type")
             return _dedupe_native_ids(payload)  # type: ignore[arg-type]
@@ -876,8 +846,7 @@ class WalletProcessorConformance:
 
         shallow = fixture["shallow"]
         local = tuple(
-            HashAnchor(int(item["sequence"]), item["hash"])
-            for item in shallow["local_history"]
+            HashAnchor(int(item["sequence"]), item["hash"]) for item in shallow["local_history"]
         )
         checkpoint = build_checkpoint(
             identity,
@@ -887,10 +856,7 @@ class WalletProcessorConformance:
             prior_history=local[:-1],
         )
         remote = CanonicalHistory.from_pairs(
-            [
-                (int(item["sequence"]), item["hash"])
-                for item in shallow["remote_history"]
-            ]
+            [(int(item["sequence"]), item["hash"]) for item in shallow["remote_history"]]
         )
         policy = DepthFinalityPolicy(
             chain_namespaces=frozenset(
@@ -917,12 +883,8 @@ class WalletProcessorConformance:
         )
         assert decision.kind is ReorgKind.SHALLOW
         assert decision.common_ancestor is not None
-        assert decision.common_ancestor.sequence == int(
-            shallow["expected_ancestor"]["sequence"]
-        )
-        assert decision.common_ancestor.block_hash == shallow["expected_ancestor"][
-            "hash"
-        ]
+        assert decision.common_ancestor.sequence == int(shallow["expected_ancestor"]["sequence"])
+        assert decision.common_ancestor.block_hash == shallow["expected_ancestor"]["hash"]
         orphaned = {a.block_hash for a in decision.orphaned_anchors}
         assert orphaned == set(shallow["expected_orphaned_hashes"])
         rewound = policy.apply_shallow_rewind(checkpoint, decision)
@@ -937,8 +899,7 @@ class WalletProcessorConformance:
             max_reorg_depth=int(deep["max_reorg_depth"]),
         )
         deep_local = tuple(
-            HashAnchor(int(item["sequence"]), item["hash"])
-            for item in deep["local_history"]
+            HashAnchor(int(item["sequence"]), item["hash"]) for item in deep["local_history"]
         )
         deep_ckpt = build_checkpoint(
             identity,
@@ -1036,9 +997,7 @@ class WalletProcessorConformance:
                         base_units=transfer["base_units"],
                         decimals=asset.decimals,
                     ),
-                    source_account=AccountRef(
-                        chain, transfer["from_address"], AccountKind.ADDRESS
-                    ),
+                    source_account=AccountRef(chain, transfer["from_address"], AccountKind.ADDRESS),
                     destination_account=AccountRef(
                         chain, transfer["to_address"], AccountKind.ADDRESS
                     ),
@@ -1094,8 +1053,7 @@ class WalletProcessorConformance:
         missing = [
             name
             for name in self.contract.optional_modules
-            if name not in sys.modules
-            and importlib.util.find_spec(name) is None  # type: ignore[attr-defined]
+            if name not in sys.modules and importlib.util.find_spec(name) is None  # type: ignore[attr-defined]
         ]
         # Re-import kernel after noting absences.
         for module_name in (

@@ -97,15 +97,9 @@ class SoundnessScope:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "scope_id", _identifier(self.scope_id, "scope_id"))
-        object.__setattr__(
-            self, "description", _text(self.description, "description")
-        )
-        object.__setattr__(
-            self, "assumptions", _unique_ids(self.assumptions, "assumptions")
-        )
-        object.__setattr__(
-            self, "exclusions", _unique_ids(self.exclusions, "exclusions")
-        )
+        object.__setattr__(self, "description", _text(self.description, "description"))
+        object.__setattr__(self, "assumptions", _unique_ids(self.assumptions, "assumptions"))
+        object.__setattr__(self, "exclusions", _unique_ids(self.exclusions, "exclusions"))
         if not isinstance(self.model_completeness_required, bool):
             raise FormalizationError("model_completeness_required must be a bool")
         for name in ("max_quantifier_depth", "max_bitwidth"):
@@ -135,9 +129,7 @@ class SoundnessScope:
             description=value.get("description", ""),
             assumptions=tuple(value.get("assumptions", ())),
             exclusions=tuple(value.get("exclusions", ())),
-            model_completeness_required=bool(
-                value.get("model_completeness_required", True)
-            ),
+            model_completeness_required=bool(value.get("model_completeness_required", True)),
             max_quantifier_depth=int(value.get("max_quantifier_depth", 0)),
             max_bitwidth=int(value.get("max_bitwidth", 0)),
             attributes=value.get("attributes", {}),
@@ -166,13 +158,8 @@ class LoweringContract:
     schema_version: str = LOWERING_CONTRACT_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "contract_id", _identifier(self.contract_id, "contract_id")
-        )
-        if (
-            not isinstance(self.source_payload_kinds, tuple)
-            or not self.source_payload_kinds
-        ):
+        object.__setattr__(self, "contract_id", _identifier(self.contract_id, "contract_id"))
+        if not isinstance(self.source_payload_kinds, tuple) or not self.source_payload_kinds:
             kinds = tuple(
                 _enum(ObligationPayloadKind, k, "source_payload_kinds")
                 for k in (self.source_payload_kinds or ())
@@ -191,8 +178,7 @@ class LoweringContract:
             _enum(LogicFamily, self.target_logic_family, "target_logic_family"),
         )
         theories = tuple(
-            _enum(TheoryFragment, t, "supported_theories")
-            for t in (self.supported_theories or ())
+            _enum(TheoryFragment, t, "supported_theories") for t in (self.supported_theories or ())
         )
         if not theories:
             raise FormalizationError("supported_theories must be non-empty")
@@ -205,9 +191,7 @@ class LoweringContract:
                     SoundnessScope.from_dict(self.soundness_scope),
                 )
             else:
-                raise FormalizationError(
-                    "soundness_scope must be SoundnessScope or mapping"
-                )
+                raise FormalizationError("soundness_scope must be SoundnessScope or mapping")
         targets = tuple(
             _enum(FormalTargetKind, t, "formal_target_kinds")
             for t in (self.formal_target_kinds or ())
@@ -224,9 +208,7 @@ class LoweringContract:
             self, "description", _text(self.description, "description", allow_empty=True)
         )
         object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
 
     def accepts(
         self,
@@ -252,8 +234,7 @@ class LoweringContract:
             "contract_id": self.contract_id,
             "description": self.description,
             "formal_target_kinds": [
-                t.value if isinstance(t, FormalTargetKind) else t
-                for t in self.formal_target_kinds
+                t.value if isinstance(t, FormalTargetKind) else t for t in self.formal_target_kinds
             ],
             "produces_executable": self.produces_executable,
             "schema_version": self.schema_version,
@@ -263,8 +244,7 @@ class LoweringContract:
                 for k in self.source_payload_kinds
             ],
             "supported_theories": [
-                t.value if isinstance(t, TheoryFragment) else t
-                for t in self.supported_theories
+                t.value if isinstance(t, TheoryFragment) else t for t in self.supported_theories
             ],
             "target_logic_family": (
                 self.target_logic_family.value
@@ -310,18 +290,12 @@ class LoweredForm:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "form_id", _identifier(self.form_id, "form_id"))
-        object.__setattr__(
-            self, "obligation_id", _identifier(self.obligation_id, "obligation_id")
-        )
+        object.__setattr__(self, "obligation_id", _identifier(self.obligation_id, "obligation_id"))
         object.__setattr__(
             self, "model_digest", _text(self.model_digest, "model_digest", allow_empty=True)
         )
-        object.__setattr__(
-            self, "contract_id", _identifier(self.contract_id, "contract_id")
-        )
-        object.__setattr__(
-            self, "status", _enum(LoweringStatus, self.status, "status")
-        )
+        object.__setattr__(self, "contract_id", _identifier(self.contract_id, "contract_id"))
+        object.__setattr__(self, "status", _enum(LoweringStatus, self.status, "status"))
         object.__setattr__(
             self, "logic_family", _enum(LogicFamily, self.logic_family, "logic_family")
         )
@@ -349,24 +323,18 @@ class LoweredForm:
             object.__setattr__(self, "may_submit", False)
         if self.may_submit and not is_executable_payload(self.payload_kind):
             object.__setattr__(self, "may_submit", False)
-        object.__setattr__(
-            self, "reason", _text(self.reason, "reason", allow_empty=True)
-        )
+        object.__setattr__(self, "reason", _text(self.reason, "reason", allow_empty=True))
         object.__setattr__(
             self, "assumption_ids", _unique_ids(self.assumption_ids, "assumption_ids")
         )
-        object.__setattr__(
-            self, "exclusion_ids", _unique_ids(self.exclusion_ids, "exclusion_ids")
-        )
+        object.__setattr__(self, "exclusion_ids", _unique_ids(self.exclusion_ids, "exclusion_ids"))
         object.__setattr__(
             self,
             "compiler_version",
             _text(self.compiler_version, "compiler_version"),
         )
         object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -394,9 +362,7 @@ class LoweredForm:
             "schema_version": self.schema_version,
             "soundness_scope_id": self.soundness_scope_id,
             "status": (
-                self.status.value
-                if isinstance(self.status, LoweringStatus)
-                else self.status
+                self.status.value if isinstance(self.status, LoweringStatus) else self.status
             ),
             "theory": (
                 self.theory.value if isinstance(self.theory, TheoryFragment) else self.theory
@@ -480,9 +446,7 @@ def _normalize_prop_formula(text: str) -> str:
             for part in parts:
                 lit = _PROP_LITERAL_RE.fullmatch(part)
                 if not lit:
-                    raise FormalizationError(
-                        f"unsupported propositional atom in {op}: {part!r}"
-                    )
+                    raise FormalizationError(f"unsupported propositional atom in {op}: {part!r}")
                 atom = lit.group("atom").lower()
                 if lit.group("neg"):
                     atoms.append(f"(not {atom})")
@@ -498,9 +462,7 @@ def _normalize_prop_formula(text: str) -> str:
     raise FormalizationError(f"unsupported propositional formula: {raw!r}")
 
 
-def _lower_propositional(
-    obligation: FormalObligation, contract: LoweringContract
-) -> LoweredForm:
+def _lower_propositional(obligation: FormalObligation, contract: LoweringContract) -> LoweredForm:
     try:
         body = _normalize_prop_formula(str(obligation.payload))
     except FormalizationError as exc:
@@ -526,15 +488,12 @@ def _lower_propositional(
         soundness_scope_id=contract.soundness_scope.scope_id,
         may_submit=True,
         reason="propositional formula compiled to QF_BOOL SMT-LIB fragment",
-        assumption_ids=obligation.trusted_assumption_ids
-        + contract.soundness_scope.assumptions,
+        assumption_ids=obligation.trusted_assumption_ids + contract.soundness_scope.assumptions,
         exclusion_ids=contract.soundness_scope.exclusions,
     )
 
 
-def _lower_smt_lib(
-    obligation: FormalObligation, contract: LoweringContract
-) -> LoweredForm:
+def _lower_smt_lib(obligation: FormalObligation, contract: LoweringContract) -> LoweredForm:
     body = str(obligation.payload).strip()
     if not body:
         return _refuse(
@@ -563,9 +522,7 @@ def _lower_smt_lib(
     theory = TheoryFragment.QF_BOOL
     if "bitvec" in body.lower() or "(_ bv" in body.lower():
         theory = TheoryFragment.QF_BV
-    elif re.search(r"\bInt\b", body) or re.search(
-        r"\(\s*[+\-*/]\b", body
-    ):
+    elif re.search(r"\bInt\b", body) or re.search(r"\(\s*[+\-*/]\b", body):
         # Arithmetic operators only as SMT-LIB function heads, not hyphens
         # inside identifiers such as check-sat.
         theory = TheoryFragment.QF_LIA
@@ -595,15 +552,12 @@ def _lower_smt_lib(
         soundness_scope_id=contract.soundness_scope.scope_id,
         may_submit=True,
         reason="SMT-LIB fragment accepted under declared soundness scope",
-        assumption_ids=obligation.trusted_assumption_ids
-        + contract.soundness_scope.assumptions,
+        assumption_ids=obligation.trusted_assumption_ids + contract.soundness_scope.assumptions,
         exclusion_ids=contract.soundness_scope.exclusions,
     )
 
 
-def _lower_fol(
-    obligation: FormalObligation, contract: LoweringContract
-) -> LoweredForm:
+def _lower_fol(obligation: FormalObligation, contract: LoweringContract) -> LoweredForm:
     body = str(obligation.payload).strip()
     if not body:
         return _refuse(
@@ -648,8 +602,7 @@ def _lower_fol(
             soundness_scope_id=contract.soundness_scope.scope_id,
             may_submit=True,
             reason="FOL core formula accepted within quantifier bound",
-            assumption_ids=obligation.trusted_assumption_ids
-            + contract.soundness_scope.assumptions,
+            assumption_ids=obligation.trusted_assumption_ids + contract.soundness_scope.assumptions,
             exclusion_ids=contract.soundness_scope.exclusions,
         )
     return _refuse(
@@ -664,15 +617,11 @@ def _lower_fol(
     )
 
 
-def _lower_datalog(
-    obligation: FormalObligation, contract: LoweringContract
-) -> LoweredForm:
+def _lower_datalog(obligation: FormalObligation, contract: LoweringContract) -> LoweredForm:
     payload = obligation.payload
     if isinstance(payload, str):
         rules = [line.strip() for line in payload.splitlines() if line.strip()]
-    elif isinstance(payload, Sequence) and not isinstance(
-        payload, (str, bytes, bytearray)
-    ):
+    elif isinstance(payload, Sequence) and not isinstance(payload, (str, bytes, bytearray)):
         rules = [str(item).strip() for item in payload if str(item).strip()]
     else:
         return _refuse(
@@ -710,12 +659,7 @@ def _lower_datalog(
                 soundness_scope_id=contract.soundness_scope.scope_id,
             )
         is_rule = ":-" in rule or "<-" in rule
-        is_fact = (
-            not is_rule
-            and rule.endswith(".")
-            and "(" in rule
-            and ")" in rule
-        )
+        is_fact = not is_rule and rule.endswith(".") and "(" in rule and ")" in rule
         if not is_rule and not is_fact:
             return _refuse(
                 obligation,
@@ -741,15 +685,12 @@ def _lower_datalog(
         soundness_scope_id=contract.soundness_scope.scope_id,
         may_submit=True,
         reason="positive datalog rules accepted",
-        assumption_ids=obligation.trusted_assumption_ids
-        + contract.soundness_scope.assumptions,
+        assumption_ids=obligation.trusted_assumption_ids + contract.soundness_scope.assumptions,
         exclusion_ids=contract.soundness_scope.exclusions,
     )
 
 
-def _lower_temporal(
-    obligation: FormalObligation, contract: LoweringContract
-) -> LoweredForm:
+def _lower_temporal(obligation: FormalObligation, contract: LoweringContract) -> LoweredForm:
     body = str(obligation.payload).strip()
     if not body:
         return _refuse(
@@ -787,15 +728,12 @@ def _lower_temporal(
         soundness_scope_id=contract.soundness_scope.scope_id,
         may_submit=True,
         reason="bounded LTL fragment accepted",
-        assumption_ids=obligation.trusted_assumption_ids
-        + contract.soundness_scope.assumptions,
+        assumption_ids=obligation.trusted_assumption_ids + contract.soundness_scope.assumptions,
         exclusion_ids=contract.soundness_scope.exclusions,
     )
 
 
-def _lower_opaque_refuse(
-    obligation: FormalObligation, contract: LoweringContract
-) -> LoweredForm:
+def _lower_opaque_refuse(obligation: FormalObligation, contract: LoweringContract) -> LoweredForm:
     return _refuse(
         obligation,
         contract_id=contract.contract_id,
@@ -1011,18 +949,15 @@ class ObligationCompiler:
         except KeyError as exc:
             raise FormalizationError(f"unknown lowering contract: {contract_id!r}") from exc
 
-    def select_contract(
-        self, obligation: FormalObligation
-    ) -> LoweringContract | None:
+    def select_contract(self, obligation: FormalObligation) -> LoweringContract | None:
         """Return the first matching contract, preferring executable ones."""
 
         kind = obligation.payload_kind
         # Opaque / prose / empty always route to the refuse contract when present.
         if kind in NON_EXECUTABLE_PAYLOAD_KINDS:
             for contract in self._contracts:
-                if (
-                    not contract.produces_executable
-                    and contract.accepts(obligation, payload_kind=kind)
+                if not contract.produces_executable and contract.accepts(
+                    obligation, payload_kind=kind
                 ):
                     return contract
         candidates = [
@@ -1052,18 +987,12 @@ class ObligationCompiler:
         missing = tuple(missing_fact_ids)
         if missing or (self._require_complete_model and not model_complete):
             contract = self.select_contract(obligation)
-            scope_id = (
-                contract.soundness_scope.scope_id
-                if contract is not None
-                else "scope.none"
-            )
+            scope_id = contract.soundness_scope.scope_id if contract is not None else "scope.none"
             return _refuse(
                 obligation,
                 contract_id=contract.contract_id if contract else "lowering.none",
                 status=LoweringStatus.INCOMPLETE_MODEL,
-                logic_family=logic_family_for_formal_target(
-                    obligation.formal_target_kind
-                ),
+                logic_family=logic_family_for_formal_target(obligation.formal_target_kind),
                 payload_kind=obligation.payload_kind,
                 reason=(
                     "incomplete model: missing facts "
@@ -1126,9 +1055,7 @@ class ObligationCompiler:
                 obligation,
                 contract_id="lowering.none",
                 status=LoweringStatus.NOT_MODELED,
-                logic_family=logic_family_for_formal_target(
-                    obligation.formal_target_kind
-                ),
+                logic_family=logic_family_for_formal_target(obligation.formal_target_kind),
                 payload_kind=obligation.payload_kind,
                 reason=(
                     f"no lowering contract for payload kind "

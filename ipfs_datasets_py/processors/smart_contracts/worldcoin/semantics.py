@@ -44,9 +44,7 @@ WORLD_ID_PROOF_TYPE: Final[str] = "world_id_proof_of_human"
 WORLD_ID_NULLIFIER_REF_PREFIX: Final[str] = "worldid-nullifier-ref:v1:"
 
 # Official WLD ERC-20 on World Chain mainnet.
-WLD_WORLD_CHAIN_MAINNET_ADDRESS: Final[str] = (
-    "0x2cFc85d8E48F8EAB294be644d9E25C3030863003"
-)
+WLD_WORLD_CHAIN_MAINNET_ADDRESS: Final[str] = "0x2cFc85d8E48F8EAB294be644d9E25C3030863003"
 
 _KNOWN_WORLD_CHAIN: Final[dict[str, dict[str, str]]] = {
     WORLD_CHAIN_MAINNET_CHAIN_ID: {
@@ -214,9 +212,7 @@ def _commitment(value: str, name: str) -> str:
 def _environment(value: str) -> str:
     text = _required_text(value, "environment").lower()
     if text not in _ALLOWED_ENVIRONMENTS:
-        raise InvalidRequestError(
-            "environment must be production, staging, development, or test"
-        )
+        raise InvalidRequestError("environment must be production, staging, development, or test")
     return text
 
 
@@ -284,12 +280,8 @@ class ExternalNullifier:
         object.__setattr__(self, "rp_id", _required_text(self.rp_id, "rp_id"))
         object.__setattr__(self, "action", _required_text(self.action, "action"))
         object.__setattr__(self, "environment", _environment(self.environment))
-        object.__setattr__(
-            self, "app_id", _optional_text(self.app_id, "app_id")
-        )
-        object.__setattr__(
-            self, "protocol_version", _protocol_version(self.protocol_version)
-        )
+        object.__setattr__(self, "app_id", _optional_text(self.app_id, "app_id"))
+        object.__setattr__(self, "protocol_version", _protocol_version(self.protocol_version))
         object.__setattr__(
             self,
             "signal_hash_ref",
@@ -299,22 +291,17 @@ class ExternalNullifier:
         if chain:
             if not is_world_chain_id(chain):
                 raise InvalidRequestError(
-                    "ExternalNullifier chain_id must be World Chain 480 or 4801 "
-                    "when provided"
+                    "ExternalNullifier chain_id must be World Chain 480 or 4801 when provided"
                 )
             anchor = world_chain_anchor(chain)
             object.__setattr__(self, "chain_id", chain)
             network = self.network.strip() if self.network else ""
             if network and network != anchor["network"]:
-                raise InvalidRequestError(
-                    f"network {network!r} does not match World Chain {chain}"
-                )
+                raise InvalidRequestError(f"network {network!r} does not match World Chain {chain}")
             object.__setattr__(self, "network", anchor["network"])
         else:
             object.__setattr__(self, "chain_id", "")
-            object.__setattr__(
-                self, "network", _optional_text(self.network, "network")
-            )
+            object.__setattr__(self, "network", _optional_text(self.network, "network"))
         object.__setattr__(self, "attributes", _freeze_mapping(self.attributes))
         _reject_private_fields(dict(self.attributes))
         object.__setattr__(
@@ -374,17 +361,13 @@ class ReplayDomain:
 
     def __post_init__(self) -> None:
         if not isinstance(self.external_nullifier, ExternalNullifier):
-            raise InvalidRequestError(
-                "external_nullifier must be an ExternalNullifier"
-            )
+            raise InvalidRequestError("external_nullifier must be an ExternalNullifier")
         object.__setattr__(
             self,
             "nullifier_commitment",
             _commitment(self.nullifier_commitment, "nullifier_commitment"),
         )
-        object.__setattr__(
-            self, "binding_id", _optional_text(self.binding_id, "binding_id")
-        )
+        object.__setattr__(self, "binding_id", _optional_text(self.binding_id, "binding_id"))
         if not isinstance(self.used, bool):
             raise InvalidRequestError("used must be a boolean")
         object.__setattr__(self, "attributes", _freeze_mapping(self.attributes))
@@ -441,21 +424,15 @@ class WorldIDVerifierBinding:
     schema_version: str = SEMANTICS_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "verifier_id", _required_text(self.verifier_id, "verifier_id")
-        )
+        object.__setattr__(self, "verifier_id", _required_text(self.verifier_id, "verifier_id"))
         object.__setattr__(
             self,
             "verifier_address",
             normalize_address(self.verifier_address),
         )
-        object.__setattr__(
-            self, "code_epoch", _required_text(self.code_epoch, "code_epoch")
-        )
+        object.__setattr__(self, "code_epoch", _required_text(self.code_epoch, "code_epoch"))
         if not isinstance(self.external_nullifier, ExternalNullifier):
-            raise InvalidRequestError(
-                "external_nullifier must be an ExternalNullifier"
-            )
+            raise InvalidRequestError("external_nullifier must be an ExternalNullifier")
         chain = _required_text(str(self.chain_id), "chain_id")
         if not is_world_chain_id(chain):
             raise InvalidRequestError(
@@ -463,17 +440,13 @@ class WorldIDVerifierBinding:
             )
         anchor = world_chain_anchor(chain)
         object.__setattr__(self, "chain_id", chain)
-        object.__setattr__(
-            self, "network", self.network.strip() or anchor["network"]
-        )
+        object.__setattr__(self, "network", self.network.strip() or anchor["network"])
         object.__setattr__(
             self,
             "genesis_hash",
             self.genesis_hash.strip() or anchor["genesis_hash"],
         )
-        object.__setattr__(
-            self, "protocol_version", _protocol_version(self.protocol_version)
-        )
+        object.__setattr__(self, "protocol_version", _protocol_version(self.protocol_version))
         kind = self.verifier_kind
         if not isinstance(kind, VerifierKind):
             kind = VerifierKind(str(kind))
@@ -481,19 +454,13 @@ class WorldIDVerifierBinding:
         object.__setattr__(
             self,
             "implementation_address",
-            normalize_address(self.implementation_address)
-            if self.implementation_address
-            else "",
+            normalize_address(self.implementation_address) if self.implementation_address else "",
         )
         impl_digest = self.implementation_code_digest.strip()
         if impl_digest and not impl_digest.startswith("sha256:"):
-            raise InvalidRequestError(
-                "implementation_code_digest must be a tagged sha256 digest"
-            )
+            raise InvalidRequestError("implementation_code_digest must be a tagged sha256 digest")
         object.__setattr__(self, "implementation_code_digest", impl_digest)
-        object.__setattr__(
-            self, "proxy_kind", _optional_text(self.proxy_kind, "proxy_kind")
-        )
+        object.__setattr__(self, "proxy_kind", _optional_text(self.proxy_kind, "proxy_kind"))
         if self.block_number is not None:
             if (
                 isinstance(self.block_number, bool)
@@ -502,8 +469,7 @@ class WorldIDVerifierBinding:
             ):
                 raise InvalidRequestError("block_number must be a non-negative integer")
         assumptions = tuple(
-            _required_text(item, "trusted_assumption")
-            for item in self.trusted_assumptions
+            _required_text(item, "trusted_assumption") for item in self.trusted_assumptions
         )
         object.__setattr__(self, "trusted_assumptions", assumptions)
         object.__setattr__(self, "attributes", _freeze_mapping(self.attributes))
@@ -516,13 +482,8 @@ class WorldIDVerifierBinding:
             raise InvalidRequestError(
                 "external_nullifier protocol_version must match verifier protocol_version"
             )
-        if (
-            self.external_nullifier.chain_id
-            and self.external_nullifier.chain_id != self.chain_id
-        ):
-            raise InvalidRequestError(
-                "external_nullifier chain_id must match verifier chain_id"
-            )
+        if self.external_nullifier.chain_id and self.external_nullifier.chain_id != self.chain_id:
+            raise InvalidRequestError("external_nullifier chain_id must match verifier chain_id")
         object.__setattr__(
             self,
             "schema_version",
@@ -587,9 +548,7 @@ class TrustAssumption:
         if not isinstance(surface, TrustSurface):
             surface = TrustSurface(str(surface))
         object.__setattr__(self, "surface", surface)
-        object.__setattr__(
-            self, "statement", _required_text(self.statement, "statement")
-        )
+        object.__setattr__(self, "statement", _required_text(self.statement, "statement"))
         object.__setattr__(
             self,
             "assumption_id",
@@ -767,9 +726,7 @@ class BridgeBinding:
     schema_version: str = SEMANTICS_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "bridge_id", _required_text(self.bridge_id, "bridge_id")
-        )
+        object.__setattr__(self, "bridge_id", _required_text(self.bridge_id, "bridge_id"))
         src = _required_text(str(self.source_chain_id), "source_chain_id")
         dst = _required_text(str(self.destination_chain_id), "destination_chain_id")
         if not (is_world_chain_id(src) or is_world_chain_id(dst)):
@@ -782,31 +739,21 @@ class BridgeBinding:
         if not isinstance(direction, BridgeDirection):
             direction = BridgeDirection(str(direction))
         object.__setattr__(self, "direction", direction)
-        object.__setattr__(
-            self, "asset_symbol", _optional_text(self.asset_symbol, "asset_symbol")
-        )
+        object.__setattr__(self, "asset_symbol", _optional_text(self.asset_symbol, "asset_symbol"))
         amount = self.amount_base_units.strip() if self.amount_base_units else ""
-        if amount and not (
-            amount == "0" or (amount.isdigit() and not amount.startswith("0"))
-        ):
+        if amount and not (amount == "0" or (amount.isdigit() and not amount.startswith("0"))):
             # Allow pure digit strings including leading-zero free positives.
             if not amount.isdigit():
                 raise InvalidRequestError(
                     "amount_base_units must be a non-negative decimal integer string"
                 )
         object.__setattr__(self, "amount_base_units", amount)
-        object.__setattr__(
-            self, "tx_hash_ref", _optional_text(self.tx_hash_ref, "tx_hash_ref")
-        )
-        object.__setattr__(
-            self, "code_epoch", _optional_text(self.code_epoch, "code_epoch")
-        )
+        object.__setattr__(self, "tx_hash_ref", _optional_text(self.tx_hash_ref, "tx_hash_ref"))
+        object.__setattr__(self, "code_epoch", _optional_text(self.code_epoch, "code_epoch"))
         assumptions = tuple(self.trusted_assumptions)
         for index, item in enumerate(assumptions):
             if not isinstance(item, TrustAssumption):
-                raise InvalidRequestError(
-                    f"trusted_assumptions[{index}] must be a TrustAssumption"
-                )
+                raise InvalidRequestError(f"trusted_assumptions[{index}] must be a TrustAssumption")
         if not assumptions:
             # Fail closed: bridge trust must be stated.
             raise InvalidRequestError(
@@ -885,9 +832,7 @@ class ProofConsumerBehavior:
             _required_text(self.verification_status, "verification_status"),
         )
         if not isinstance(self.external_nullifier, ExternalNullifier):
-            raise InvalidRequestError(
-                "external_nullifier must be an ExternalNullifier"
-            )
+            raise InvalidRequestError("external_nullifier must be an ExternalNullifier")
         object.__setattr__(
             self,
             "nullifier_commitment",
@@ -896,13 +841,9 @@ class ProofConsumerBehavior:
         if self.verifier_binding is not None and not isinstance(
             self.verifier_binding, WorldIDVerifierBinding
         ):
-            raise InvalidRequestError(
-                "verifier_binding must be a WorldIDVerifierBinding or None"
-            )
+            raise InvalidRequestError("verifier_binding must be a WorldIDVerifierBinding or None")
         implications = tuple(
-            item
-            if isinstance(item, ProofImplication)
-            else ProofImplication(str(item))
+            item if isinstance(item, ProofImplication) else ProofImplication(str(item))
             for item in self.forbidden_implications
         )
         # Mandatory set: payment, legal identity, contract safety.
@@ -913,8 +854,7 @@ class ProofConsumerBehavior:
         }
         if not mandatory.issubset(set(implications)):
             raise InvalidRequestError(
-                "forbidden_implications must include payment, "
-                "legal_identity, and contract_safety"
+                "forbidden_implications must include payment, legal_identity, and contract_safety"
             )
         object.__setattr__(self, "forbidden_implications", implications)
         status = self.pass_status
@@ -924,9 +864,7 @@ class ProofConsumerBehavior:
         object.__setattr__(
             self,
             "diagnostics",
-            tuple(
-                _required_text(item, "diagnostics item") for item in self.diagnostics
-            ),
+            tuple(_required_text(item, "diagnostics item") for item in self.diagnostics),
         )
         object.__setattr__(self, "attributes", _freeze_mapping(self.attributes))
         object.__setattr__(
@@ -994,15 +932,11 @@ def check_nullifier_replay(
 ) -> SemanticPassStatus:
     """Fail closed when the same nullifier is reused in the same domain."""
 
-    if not isinstance(existing, ReplayDomain) or not isinstance(
-        candidate, ReplayDomain
-    ):
+    if not isinstance(existing, ReplayDomain) or not isinstance(candidate, ReplayDomain):
         raise InvalidRequestError("both arguments must be ReplayDomain")
     if existing.nullifier_commitment != candidate.nullifier_commitment:
         return SemanticPassStatus.PASS
-    if not domains_compatible(
-        existing.external_nullifier, candidate.external_nullifier
-    ):
+    if not domains_compatible(existing.external_nullifier, candidate.external_nullifier):
         # Same nullifier across different domains is a domain-boundary event.
         return SemanticPassStatus.DOMAIN_MISMATCH
     if existing.used or candidate.used:

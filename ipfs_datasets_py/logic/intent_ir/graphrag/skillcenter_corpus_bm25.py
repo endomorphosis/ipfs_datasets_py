@@ -32,15 +32,9 @@ from .skillcenter_corpus import (
 )
 
 
-SKILLCENTER_CORPUS_BM25_SCHEMA_VERSION: Final = (
-    "skillcenter-corpus-bm25/v1"
-)
-SKILLCENTER_CORPUS_BM25_DOCUMENT_SCHEMA_VERSION: Final = (
-    "skillcenter-corpus-bm25-document/v1"
-)
-SKILLCENTER_CORPUS_BM25_TOKENIZER: Final = (
-    "sqlite-fts5-unicode61-remove-diacritics-2/v1"
-)
+SKILLCENTER_CORPUS_BM25_SCHEMA_VERSION: Final = "skillcenter-corpus-bm25/v1"
+SKILLCENTER_CORPUS_BM25_DOCUMENT_SCHEMA_VERSION: Final = "skillcenter-corpus-bm25-document/v1"
+SKILLCENTER_CORPUS_BM25_TOKENIZER: Final = "sqlite-fts5-unicode61-remove-diacritics-2/v1"
 DEFAULT_TITLE_WEIGHT: Final = 2.0
 DEFAULT_BODY_WEIGHT: Final = 1.0
 DEFAULT_MAX_QUERY_TERMS: Final = 64
@@ -66,18 +60,14 @@ class SkillCenterCorpusBM25Config:
         for name in ("title_weight", "body_weight"):
             value = float(getattr(self, name))
             if not math.isfinite(value) or value <= 0:
-                raise SkillCenterCorpusBM25Error(
-                    f"{name} must be finite and positive"
-                )
+                raise SkillCenterCorpusBM25Error(f"{name} must be finite and positive")
             object.__setattr__(self, name, value)
         if (
             isinstance(self.max_query_terms, bool)
             or not isinstance(self.max_query_terms, int)
             or not 1 <= self.max_query_terms <= 1024
         ):
-            raise SkillCenterCorpusBM25Error(
-                "max_query_terms must be between 1 and 1024"
-            )
+            raise SkillCenterCorpusBM25Error("max_query_terms must be between 1 and 1024")
         if self.tokenizer != SKILLCENTER_CORPUS_BM25_TOKENIZER:
             raise SkillCenterCorpusBM25Error("unsupported BM25 tokenizer")
 
@@ -162,9 +152,7 @@ class SkillCenterCorpusBM25Index:
         self.root = root
         self.manifest = dict(manifest)
         self.database_path = database_path
-        self.config = SkillCenterCorpusBM25Config(
-            **dict(manifest["config"])
-        )
+        self.config = SkillCenterCorpusBM25Config(**dict(manifest["config"]))
 
     @classmethod
     def load(
@@ -183,22 +171,16 @@ class SkillCenterCorpusBM25Index:
             or not manifest_path.is_file()
             or manifest_path.stat().st_size > _MAX_MANIFEST_BYTES
         ):
-            raise SkillCenterCorpusBM25Error(
-                "BM25 index must contain a bounded regular manifest"
-            )
+            raise SkillCenterCorpusBM25Error("BM25 index must contain a bounded regular manifest")
         manifest_bytes = manifest_path.read_bytes()
         try:
             manifest = json.loads(manifest_bytes)
         except (UnicodeError, json.JSONDecodeError) as exc:
-            raise SkillCenterCorpusBM25Error(
-                "BM25 manifest is malformed"
-            ) from exc
+            raise SkillCenterCorpusBM25Error("BM25 manifest is malformed") from exc
         if (
             not isinstance(manifest, Mapping)
-            or manifest.get("schema_version")
-            != SKILLCENTER_CORPUS_BM25_SCHEMA_VERSION
-            or manifest.get("primary_key")
-            != SKILLCENTER_CORPUS_PRIMARY_KEY
+            or manifest.get("schema_version") != SKILLCENTER_CORPUS_BM25_SCHEMA_VERSION
+            or manifest.get("primary_key") != SKILLCENTER_CORPUS_PRIMARY_KEY
         ):
             raise SkillCenterCorpusBM25Error("unsupported BM25 manifest")
         database_path = _verify_file_descriptor(
@@ -213,53 +195,33 @@ class SkillCenterCorpusBM25Index:
             tables = {
                 str(row[0])
                 for row in connection.execute(
-                    "SELECT name FROM sqlite_master "
-                    "WHERE type IN ('table', 'view')"
+                    "SELECT name FROM sqlite_master WHERE type IN ('table', 'view')"
                 )
             }
-            if not {
-                "documents",
-                "documents_fts",
-                "documents_vocab",
-            } <= tables:
-                raise SkillCenterCorpusBM25Error(
-                    "BM25 SQLite schema is incomplete"
-                )
+            if (
+                not {
+                    "documents",
+                    "documents_fts",
+                    "documents_vocab",
+                }
+                <= tables
+            ):
+                raise SkillCenterCorpusBM25Error("BM25 SQLite schema is incomplete")
             expected = int(manifest.get("indexed_entries", -1))
-            document_count = int(
-                connection.execute(
-                    "SELECT COUNT(*) FROM documents"
-                ).fetchone()[0]
-            )
-            fts_count = int(
-                connection.execute(
-                    "SELECT COUNT(*) FROM documents_fts"
-                ).fetchone()[0]
-            )
+            document_count = int(connection.execute("SELECT COUNT(*) FROM documents").fetchone()[0])
+            fts_count = int(connection.execute("SELECT COUNT(*) FROM documents_fts").fetchone()[0])
             unique_cids = int(
-                connection.execute(
-                    "SELECT COUNT(DISTINCT entry_cid) FROM documents"
-                ).fetchone()[0]
+                connection.execute("SELECT COUNT(DISTINCT entry_cid) FROM documents").fetchone()[0]
             )
             if {document_count, fts_count, unique_cids} != {expected}:
-                raise SkillCenterCorpusBM25Error(
-                    "BM25 document/CID coverage is inconsistent"
-                )
-            sample = connection.execute(
-                "SELECT title, body FROM documents_fts LIMIT 1"
-            ).fetchone()
+                raise SkillCenterCorpusBM25Error("BM25 document/CID coverage is inconsistent")
+            sample = connection.execute("SELECT title, body FROM documents_fts LIMIT 1").fetchone()
             if sample is not None and sample != (None, None):
-                raise SkillCenterCorpusBM25Error(
-                    "BM25 FTS table must be contentless"
-                )
+                raise SkillCenterCorpusBM25Error("BM25 FTS table must be contentless")
             if verify_integrity:
-                result = connection.execute(
-                    "PRAGMA integrity_check"
-                ).fetchone()
+                result = connection.execute("PRAGMA integrity_check").fetchone()
                 if result is None or result[0] != "ok":
-                    raise SkillCenterCorpusBM25Error(
-                        "BM25 SQLite integrity check failed"
-                    )
+                    raise SkillCenterCorpusBM25Error("BM25 SQLite integrity check failed")
         loaded = cls(
             root=index_root,
             manifest=manifest,
@@ -279,9 +241,7 @@ class SkillCenterCorpusBM25Index:
             primary_key=str(self.manifest["primary_key"]),
             sqlite_cid=str(descriptor["cid"]),
             sqlite_size_bytes=int(descriptor["size_bytes"]),
-            manifest_sha256=hashlib.sha256(
-                (self.root / "manifest.json").read_bytes()
-            ).hexdigest(),
+            manifest_sha256=hashlib.sha256((self.root / "manifest.json").read_bytes()).hexdigest(),
         )
 
     def search(
@@ -322,11 +282,7 @@ class SkillCenterCorpusBM25Index:
         if not terms:
             return ()
         expression = " OR ".join(
-            (
-                "title : " + _quote_fts_term(term)
-                if title_only
-                else _quote_fts_term(term)
-            )
+            ("title : " + _quote_fts_term(term) if title_only else _quote_fts_term(term))
             for term in terms
         )
         clauses = ["documents_fts MATCH ?"]
@@ -344,22 +300,15 @@ class SkillCenterCorpusBM25Index:
         }
         for key, value in sorted((filters or {}).items()):
             if key not in allowed_filters:
-                raise SkillCenterCorpusBM25Error(
-                    f"unsupported BM25 filter: {key}"
-                )
+                raise SkillCenterCorpusBM25Error(f"unsupported BM25 filter: {key}")
             clauses.append(f"d.{key} = ?")
             parameters.append(str(value))
         parameters.append(k)
-        score_sql = (
-            f"-bm25(documents_fts, {self.config.title_weight}, "
-            f"{self.config.body_weight})"
-        )
+        score_sql = f"-bm25(documents_fts, {self.config.title_weight}, {self.config.body_weight})"
         sql = (
             "SELECT d.document_index, d.entry_cid, d.skill_id, d.title, "
             "d.domain, d.profile, d.repository_file, d.source_type, "
-            "d.language, "
-            + score_sql
-            + " AS score FROM documents_fts "
+            "d.language, " + score_sql + " AS score FROM documents_fts "
             "JOIN documents AS d "
             "ON d.document_index = documents_fts.rowid - 1 WHERE "
             + " AND ".join(clauses)
@@ -380,9 +329,7 @@ class SkillCenterCorpusBM25Index:
                 entry_cid=str(row["entry_cid"]),
                 document_index=int(row["document_index"]),
                 score=max(0.0, float(row["score"])),
-                matched_terms=matched.get(
-                    int(row["document_index"]) + 1, ()
-                ),
+                matched_terms=matched.get(int(row["document_index"]) + 1, ()),
                 metadata={
                     "domain": str(row["domain"]),
                     "entry_cid": str(row["entry_cid"]),
@@ -409,8 +356,7 @@ class SkillCenterCorpusBM25Index:
         with closing(sqlite3.connect(uri, uri=True)) as connection:
             connection.row_factory = sqlite3.Row
             row = connection.execute(
-                "SELECT title, domain, profile FROM documents "
-                "WHERE entry_cid = ?",
+                "SELECT title, domain, profile FROM documents WHERE entry_cid = ?",
                 (entry_cid,),
             ).fetchone()
             if row is None:
@@ -432,9 +378,7 @@ class SkillCenterCorpusBM25Index:
         k: int = 8,
         start_after: str = "",
         explain: bool = False,
-    ) -> Iterator[
-        tuple[str, tuple[SkillCenterCorpusBM25Hit, ...]]
-    ]:
+    ) -> Iterator[tuple[str, tuple[SkillCenterCorpusBM25Hit, ...]]]:
         uri = f"{self.database_path.as_uri()}?mode=ro&immutable=1"
         with closing(sqlite3.connect(uri, uri=True)) as connection:
             connection.row_factory = sqlite3.Row
@@ -453,14 +397,17 @@ class SkillCenterCorpusBM25Index:
                         str(row["title"]),
                         self.config,
                     )
-                    yield normalized, self._search_connection(
-                        connection,
-                        terms=terms,
-                        k=k,
-                        exclude_entry_cid=normalized,
-                        filters={"domain": str(row["domain"])},
-                        explain=explain,
-                        title_only=True,
+                    yield (
+                        normalized,
+                        self._search_connection(
+                            connection,
+                            terms=terms,
+                            k=k,
+                            exclude_entry_cid=normalized,
+                            filters={"domain": str(row["domain"])},
+                            explain=explain,
+                            title_only=True,
+                        ),
                     )
                     last_entry_cid = normalized
 
@@ -468,17 +415,10 @@ class SkillCenterCorpusBM25Index:
         corpus = SkillCenterCorpusIndex.load(corpus_dir, verify_rows=False)
         expected_input = _corpus_input(corpus)
         if self.manifest.get("corpus_input") != expected_input:
-            raise SkillCenterCorpusBM25Error(
-                "BM25 index is not bound to this corpus manifest"
-            )
+            raise SkillCenterCorpusBM25Error("BM25 index is not bound to this corpus manifest")
         uri = f"{self.database_path.as_uri()}?mode=ro&immutable=1"
         with closing(sqlite3.connect(uri, uri=True)) as connection:
-            indexed = {
-                str(row[0])
-                for row in connection.execute(
-                    "SELECT entry_cid FROM documents"
-                )
-            }
+            indexed = {str(row[0]) for row in connection.execute("SELECT entry_cid FROM documents")}
         if indexed != corpus.entry_cids:
             raise SkillCenterCorpusBM25Error(
                 "BM25 entry_cid coverage differs from canonical corpus"
@@ -499,9 +439,7 @@ def build_skillcenter_corpus_bm25(
         or not isinstance(batch_size, int)
         or not 1 <= batch_size <= 10_000
     ):
-        raise SkillCenterCorpusBM25Error(
-            "batch_size must be between 1 and 10000"
-        )
+        raise SkillCenterCorpusBM25Error("batch_size must be between 1 and 10000")
     active_config = config or SkillCenterCorpusBM25Config()
     corpus = SkillCenterCorpusIndex.load(corpus_dir, verify_rows=False)
     corpus_input = _corpus_input(corpus)
@@ -511,9 +449,7 @@ def build_skillcenter_corpus_bm25(
         "primary_key": SKILLCENTER_CORPUS_PRIMARY_KEY,
         "schema_version": SKILLCENTER_CORPUS_BM25_SCHEMA_VERSION,
     }
-    build_identity_sha256 = hashlib.sha256(
-        canonical_json_bytes(identity_payload)
-    ).hexdigest()
+    build_identity_sha256 = hashlib.sha256(canonical_json_bytes(identity_payload)).hexdigest()
     output = Path(output_dir).expanduser().resolve()
     output.parent.mkdir(parents=True, exist_ok=True)
     if output.is_symlink():
@@ -524,10 +460,7 @@ def build_skillcenter_corpus_bm25(
                 output,
                 corpus_dir=corpus.root,
             )
-            if (
-                existing.manifest.get("build_identity_sha256")
-                != build_identity_sha256
-            ):
+            if existing.manifest.get("build_identity_sha256") != build_identity_sha256:
                 raise SkillCenterCorpusBM25Error(
                     "existing BM25 index was built from different inputs"
                 )
@@ -668,9 +601,7 @@ def _build_database(
         if metadata_batch:
             _insert_batches(connection, metadata_batch, fts_batch)
         connection.commit()
-        connection.execute(
-            "INSERT INTO documents_fts(documents_fts) VALUES('optimize')"
-        )
+        connection.execute("INSERT INTO documents_fts(documents_fts) VALUES('optimize')")
         connection.commit()
     except Exception:
         connection.rollback()
@@ -780,10 +711,7 @@ def _matched_terms_by_document(
         [*document_ids, *terms],
     ):
         grouped.setdefault(int(document_id), []).append(str(term))
-    return {
-        document_id: tuple(values)
-        for document_id, values in grouped.items()
-    }
+    return {document_id: tuple(values) for document_id, values in grouped.items()}
 
 
 def _corpus_input(corpus: SkillCenterCorpusIndex) -> dict[str, Any]:
@@ -831,9 +759,7 @@ def _verify_file_descriptor(root: Path, value: Any) -> Path:
         or digest.hex() != value.get("sha256")
         or cid_v1_from_digest(digest) != value.get("cid")
     ):
-        raise SkillCenterCorpusBM25Error(
-            "BM25 SQLite artifact identity mismatch"
-        )
+        raise SkillCenterCorpusBM25Error("BM25 SQLite artifact identity mismatch")
     return path
 
 

@@ -167,13 +167,8 @@ def test_rule_gap_report_retains_verified_hammer_guidance_for_codex_projection()
     assert evidence["hammer_guidance_artifacts"][0]["artifact_sha256"]
     assert evidence["hammer_backend_health"]["available_routes"] == ["z3"]
     assert evidence["hammer_proof_status"]["proof_success_rate"] == 1.0
-    assert evidence["hammer_reconstruction_status"]["reconstruction_statuses"] == [
-        "verified"
-    ]
+    assert evidence["hammer_reconstruction_status"]["reconstruction_statuses"] == ["verified"]
     assert evidence["codex_projection"]["projection_source"] == "hammer_verified_guidance"
     assert evidence["codex_projection"]["target_components"] == ["deontic.ir"]
-    assert evidence["codex_projection"]["target_metrics"] == [
-        "compiler_ir_cross_entropy_loss"
-    ]
+    assert evidence["codex_projection"]["target_metrics"] == ["compiler_ir_cross_entropy_loss"]
     assert evidence["codex_projection"]["proof_obligation_ids"] == ["lir-obligation-1"]
-

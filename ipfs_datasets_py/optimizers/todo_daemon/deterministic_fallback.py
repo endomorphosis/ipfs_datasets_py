@@ -37,7 +37,10 @@ def open_task_has_deterministic_fallback(
 ) -> bool:
     """Return whether any open task has a deterministic fallback rule."""
 
-    return any(task.status in open_statuses and task_has_deterministic_fallback(task, rules) for task in tasks)
+    return any(
+        task.status in open_statuses and task_has_deterministic_fallback(task, rules)
+        for task in tasks
+    )
 
 
 def load_deterministic_progress_manifest(
@@ -159,7 +162,8 @@ def build_deterministic_replacement_proposal(
         }
     )
     return Proposal(
-        summary=summary or f"Complete {fallback_kind.replace('_', ' ')} with deterministic fallback.",
+        summary=summary
+        or f"Complete {fallback_kind.replace('_', ' ')} with deterministic fallback.",
         impact=impact,
         files=files,
         validation_commands=[list(command) for command in validation_commands],

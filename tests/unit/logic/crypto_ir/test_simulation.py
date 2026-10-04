@@ -325,9 +325,17 @@ def test_receipt_rejects_proved_analysis_outcome() -> None:
 
 def test_authority_and_monitor_projections() -> None:
     assert authority_for_outcome(SimulationOutcome.SUCCESS) is SimulationAuthority.MONITOR_ONLY
-    assert authority_for_outcome(SimulationOutcome.VIOLATION) is SimulationAuthority.DISPROOF_WITNESS
-    assert monitor_outcome_for_simulation(SimulationOutcome.SUCCESS) is MonitorOutcome.MONITOR_SATISFIED
-    assert monitor_outcome_for_simulation(SimulationOutcome.VIOLATION) is MonitorOutcome.MONITOR_VIOLATED
+    assert (
+        authority_for_outcome(SimulationOutcome.VIOLATION) is SimulationAuthority.DISPROOF_WITNESS
+    )
+    assert (
+        monitor_outcome_for_simulation(SimulationOutcome.SUCCESS)
+        is MonitorOutcome.MONITOR_SATISFIED
+    )
+    assert (
+        monitor_outcome_for_simulation(SimulationOutcome.VIOLATION)
+        is MonitorOutcome.MONITOR_VIOLATED
+    )
     assert analysis_outcome_for_simulation(SimulationOutcome.SUCCESS) is AnalysisOutcome.UNKNOWN
     assert analysis_outcome_for_simulation(SimulationOutcome.VIOLATION) is AnalysisOutcome.DISPROVED
 
@@ -388,9 +396,7 @@ def test_counterexample_replay() -> None:
         obligation_id="obl.no-reentrancy",
     )
     receipt = run_simulation(request, sandbox, receipt_id="receipt.cex.1")
-    cex = build_counterexample_from_receipt(
-        receipt, trace_id="cx.replay.1", request=request
-    )
+    cex = build_counterexample_from_receipt(receipt, trace_id="cx.replay.1", request=request)
     assert cex.replayable
     replayed = replay_counterexample(cex, sandbox=sandbox)
     assert replayed.outcome is SimulationOutcome.VIOLATION
@@ -432,9 +438,7 @@ def test_differential_agreement_on_identical_providers() -> None:
     request = _request(call_input={"op": "noop"})
     left = DeterministicOfflineSandbox(provider_id="offline.a")
     right = DeterministicOfflineSandbox(provider_id="offline.b")
-    left_r, right_r, result = run_differential(
-        request, left, right, result_id="diff.agree.1"
-    )
+    left_r, right_r, result = run_differential(request, left, right, result_id="diff.agree.1")
     assert left_r.outcome is right_r.outcome
     assert result.status is DifferentialStatus.AGREE
     assert not result.disagreement_fields
@@ -466,9 +470,7 @@ def test_differential_disagreement_is_explicit() -> None:
     )
     left = InjectedFixtureSandbox(success_run, provider_id="provider.left")
     right = InjectedFixtureSandbox(violate_run, provider_id="provider.right")
-    _left_r, _right_r, result = run_differential(
-        request, left, right, result_id="diff.disagree.1"
-    )
+    _left_r, _right_r, result = run_differential(request, left, right, result_id="diff.disagree.1")
     assert result.status is DifferentialStatus.DISAGREE
     assert result.is_explicit_disagreement
     assert "outcome" in result.disagreement_fields
@@ -608,9 +610,7 @@ def test_assert_eq_violation_witness() -> None:
     )
     receipt = run_simulation(request, DeterministicOfflineSandbox())
     assert receipt.outcome is SimulationOutcome.VIOLATION
-    cex = build_counterexample_from_receipt(
-        receipt, trace_id="cx.admin", request=request
-    )
+    cex = build_counterexample_from_receipt(receipt, trace_id="cx.admin", request=request)
     assert counterexample_disproves(cex, require_replay=True)
 
 

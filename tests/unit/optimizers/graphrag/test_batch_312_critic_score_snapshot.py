@@ -14,17 +14,71 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
 def _reference_ontology() -> dict:
     return {
         "entities": [
-            {"id": "e1", "text": "Alice", "type": "Person", "confidence": 0.9, "properties": {"role": "engineer"}},
-            {"id": "e2", "text": "Bob", "type": "Person", "confidence": 0.85, "properties": {"role": "manager"}},
-            {"id": "e3", "text": "Acme Corp", "type": "Organization", "confidence": 0.95, "properties": {"industry": "tech"}},
-            {"id": "e4", "text": "London", "type": "Location", "confidence": 0.88, "properties": {"country": "UK"}},
-            {"id": "e5", "text": "Software", "type": "Concept", "confidence": 0.7, "properties": {"domain": "technology"}},
+            {
+                "id": "e1",
+                "text": "Alice",
+                "type": "Person",
+                "confidence": 0.9,
+                "properties": {"role": "engineer"},
+            },
+            {
+                "id": "e2",
+                "text": "Bob",
+                "type": "Person",
+                "confidence": 0.85,
+                "properties": {"role": "manager"},
+            },
+            {
+                "id": "e3",
+                "text": "Acme Corp",
+                "type": "Organization",
+                "confidence": 0.95,
+                "properties": {"industry": "tech"},
+            },
+            {
+                "id": "e4",
+                "text": "London",
+                "type": "Location",
+                "confidence": 0.88,
+                "properties": {"country": "UK"},
+            },
+            {
+                "id": "e5",
+                "text": "Software",
+                "type": "Concept",
+                "confidence": 0.7,
+                "properties": {"domain": "technology"},
+            },
         ],
         "relationships": [
-            {"id": "r1", "source_id": "e1", "target_id": "e3", "type": "worksAt", "confidence": 0.85},
-            {"id": "r2", "source_id": "e2", "target_id": "e3", "type": "manages", "confidence": 0.8},
-            {"id": "r3", "source_id": "e1", "target_id": "e4", "type": "locatedIn", "confidence": 0.7},
-            {"id": "r4", "source_id": "e3", "target_id": "e5", "type": "produces", "confidence": 0.75},
+            {
+                "id": "r1",
+                "source_id": "e1",
+                "target_id": "e3",
+                "type": "worksAt",
+                "confidence": 0.85,
+            },
+            {
+                "id": "r2",
+                "source_id": "e2",
+                "target_id": "e3",
+                "type": "manages",
+                "confidence": 0.8,
+            },
+            {
+                "id": "r3",
+                "source_id": "e1",
+                "target_id": "e4",
+                "type": "locatedIn",
+                "confidence": 0.7,
+            },
+            {
+                "id": "r4",
+                "source_id": "e3",
+                "target_id": "e5",
+                "type": "produces",
+                "confidence": 0.75,
+            },
         ],
     }
 

@@ -134,8 +134,7 @@ def _fixture(tmp_path):
             ("phone", "211"),
         ),
         (
-            "Call five four one, four eight five, one zero one seven, "
-            "extension one zero zero.",
+            "Call five four one, four eight five, one zero one seven, extension one zero zero.",
             ("phone_extension", "100"),
         ),
     ),
@@ -148,10 +147,7 @@ def test_legacy_critical_extractor_covers_cluttered_source_forms(
 
     assert expected_binding in bindings
     assert find_unclassified_legacy_critical_facts(spoken_text, bindings) == ()
-    assert (
-        classify_legacy_critical_facts(spoken_text)
-        is CriticalFactClassification.BOUND
-    )
+    assert classify_legacy_critical_facts(spoken_text) is CriticalFactClassification.BOUND
 
 
 def test_likely_critical_but_unsupported_identifier_fails_closed(tmp_path):
@@ -198,34 +194,26 @@ def test_likely_critical_but_unsupported_identifier_fails_closed(tmp_path):
 
 def test_explicit_unknown_amount_does_not_invent_a_critical_value():
     spoken_text = (
-        "You don't need the exact dollar amount to start. "
-        "The benefit amount is unknown right now."
+        "You don't need the exact dollar amount to start. The benefit amount is unknown right now."
     )
 
     bindings = derive_legacy_critical_slots(spoken_text)
 
     assert bindings == ()
     assert find_unclassified_legacy_critical_facts(spoken_text, bindings) == ()
-    assert (
-        classify_legacy_critical_facts(spoken_text)
-        is CriticalFactClassification.NONE_DETECTED
-    )
+    assert classify_legacy_critical_facts(spoken_text) is CriticalFactClassification.NONE_DETECTED
 
 
 def test_pinned_source_likely_critical_patterns_never_silently_fall_through():
     source_path = (
-        Path(__file__).resolve().parents[4]
-        / "docs"
-        / "pregenerated_text_response_manifest.json"
+        Path(__file__).resolve().parents[4] / "docs" / "pregenerated_text_response_manifest.json"
     )
     if not source_path.is_file():
         pytest.skip("integrated pinned Abby response manifest is unavailable")
     payload = json.loads(source_path.read_text(encoding="utf-8"))
     rows = payload["responses"]
 
-    digit_token = (
-        r"(?:zero|oh|one|two|three|four|five|six|seven|eight|nine|\d)"
-    )
+    digit_token = r"(?:zero|oh|one|two|three|four|five|six|seven|eight|nine|\d)"
     digit_tokens = re.compile(
         rf"(?<![A-Za-z]){digit_token}(?![A-Za-z])",
         re.IGNORECASE,
@@ -375,9 +363,7 @@ def test_completed_asr_and_validation_receipts_admit_only_exactly_bound_audio(
             max_duration_ms=plan.policy.max_duration_ms,
         )
     )
-    spoken_by_sha = {
-        record.raw_sha256: record.spoken_text for record in recovery.records
-    }
+    spoken_by_sha = {record.raw_sha256: record.spoken_text for record in recovery.records}
     results: dict[str, VoiceJobResult] = {}
     transcript_bytes: dict[str, bytes] = {}
     for job in jobs:
@@ -392,17 +378,13 @@ def test_completed_asr_and_validation_receipts_admit_only_exactly_bound_audio(
             )
             receipt = VoiceJobResult.from_payload(payload)
             results[job.task_id] = receipt
-            transcript_bytes[job.task_id] = resolver.resolve(
-                receipt.artifacts[0].to_dict()
-            )
+            transcript_bytes[job.task_id] = resolver.resolve(receipt.artifacts[0].to_dict())
         elif job.task_type == "voice.audio-validate":
             results[job.task_id] = VoiceJobResult.from_payload(
                 execute_voice_audio_validation_job(job, resolver=resolver)
             )
     audio_bytes = {
-        record.raw_sha256: bucket_audio_cache_path(
-            cache_root, record.xet_hash
-        ).read_bytes()
+        record.raw_sha256: bucket_audio_cache_path(cache_root, record.xet_hash).read_bytes()
         for record in recovery.records
     }
 
@@ -417,9 +399,7 @@ def test_completed_asr_and_validation_receipts_admit_only_exactly_bound_audio(
 
     assert admitted.promoted_count == 2
     assert admitted.quarantined_count == 0
-    assert {row.response_id for row in admitted.linked_audio} == set(
-        recovery.target_response_ids
-    )
+    assert {row.response_id for row in admitted.linked_audio} == set(recovery.target_response_ids)
     persisted_quality = json.dumps(admitted.quality_report, sort_keys=True)
     assert "hypothesis_text" not in persisted_quality
     assert "reference_text" not in persisted_quality
@@ -455,15 +435,11 @@ def test_admit_quarantines_missing_receipts_without_aborting_siblings(tmp_path):
             max_duration_ms=plan.policy.max_duration_ms,
         )
     )
-    spoken_by_sha = {
-        record.raw_sha256: record.spoken_text for record in recovery.records
-    }
+    spoken_by_sha = {record.raw_sha256: record.spoken_text for record in recovery.records}
     results: dict[str, VoiceJobResult] = {}
     transcript_bytes: dict[str, bytes] = {}
     first_work_ids = {
-        binding.asr_work_id
-        for binding in plan.bindings
-        if binding.response_id == first.response_id
+        binding.asr_work_id for binding in plan.bindings if binding.response_id == first.response_id
     } | {
         binding.validation_work_id
         for binding in plan.bindings
@@ -484,17 +460,13 @@ def test_admit_quarantines_missing_receipts_without_aborting_siblings(tmp_path):
             )
             receipt = VoiceJobResult.from_payload(payload)
             results[job.task_id] = receipt
-            transcript_bytes[job.task_id] = resolver.resolve(
-                receipt.artifacts[0].to_dict()
-            )
+            transcript_bytes[job.task_id] = resolver.resolve(receipt.artifacts[0].to_dict())
         elif job.task_type == "voice.audio-validate":
             results[job.task_id] = VoiceJobResult.from_payload(
                 execute_voice_audio_validation_job(job, resolver=resolver)
             )
     audio_bytes = {
-        record.raw_sha256: bucket_audio_cache_path(
-            cache_root, record.xet_hash
-        ).read_bytes()
+        record.raw_sha256: bucket_audio_cache_path(cache_root, record.xet_hash).read_bytes()
         for record in recovery.records
     }
 
@@ -510,15 +482,11 @@ def test_admit_quarantines_missing_receipts_without_aborting_siblings(tmp_path):
     assert admitted.promoted_count == 1
     assert {row.response_id for row in admitted.linked_audio} == {first.response_id}
     second_dispositions = [
-        item
-        for item in admitted.dispositions
-        if item.subject_id == second.response_id
+        item for item in admitted.dispositions if item.subject_id == second.response_id
     ]
     assert second_dispositions
     assert all(item.retryable for item in second_dispositions)
-    assert any(
-        item.reason.value == "job_not_completed" for item in second_dispositions
-    )
+    assert any(item.reason.value == "job_not_completed" for item in second_dispositions)
 
 
 def test_revalidation_plan_round_trips_through_from_dict(tmp_path):

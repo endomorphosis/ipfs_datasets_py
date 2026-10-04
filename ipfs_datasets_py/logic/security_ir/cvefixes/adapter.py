@@ -59,9 +59,7 @@ _GENERALIZATION_KEYS: Final = frozenset(
         "scope_mode",
     }
 )
-_GENERALIZATION_VALUES: Final = frozenset(
-    {"generalized", "glob", "pattern", "regex", "wildcard"}
-)
+_GENERALIZATION_VALUES: Final = frozenset({"generalized", "glob", "pattern", "regex", "wildcard"})
 _AUTHORITY_KEYS: Final = frozenset(
     {
         "authoritative",
@@ -157,23 +155,17 @@ def _contains_generalization(value: Any, *, key: str = "") -> bool:
             if normalized_key in _GENERALIZATION_KEYS:
                 if item is True:
                     return True
-                if isinstance(item, str) and (
-                    item.casefold() in _GENERALIZATION_VALUES
-                ):
+                if isinstance(item, str) and (item.casefold() in _GENERALIZATION_VALUES):
                     return True
             if _contains_generalization(item, key=normalized_key):
                 return True
         return False
-    if isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         return any(_contains_generalization(item, key=key) for item in value)
     if isinstance(value, str):
         if _WILDCARD_RE.search(value):
             return True
-        return key in _GENERALIZATION_KEYS and (
-            value.casefold() in _GENERALIZATION_VALUES
-        )
+        return key in _GENERALIZATION_KEYS and (value.casefold() in _GENERALIZATION_VALUES)
     return False
 
 
@@ -196,17 +188,16 @@ def _assert_no_authority_claim(value: Any, *, path: str = "candidate") -> None:
                 raise CVEfixesAdapterError(
                     f"{child_path} cannot claim policy or execution authority"
                 )
-            if normalized == "authority" and isinstance(item, str) and (
-                item.casefold()
-                not in {"candidate", "non_authoritative", "observed_candidate"}
-            ):
-                raise CVEfixesAdapterError(
-                    f"{child_path} cannot broaden candidate authority"
+            if (
+                normalized == "authority"
+                and isinstance(item, str)
+                and (
+                    item.casefold() not in {"candidate", "non_authoritative", "observed_candidate"}
                 )
+            ):
+                raise CVEfixesAdapterError(f"{child_path} cannot broaden candidate authority")
             _assert_no_authority_claim(item, path=child_path)
-    elif isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    elif isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         for index, item in enumerate(value):
             _assert_no_authority_claim(item, path=f"{path}[{index}]")
 
@@ -240,9 +231,7 @@ class CandidateReview:
         if state is CandidateReviewState.REVIEWED_PATTERN and (
             not self.review_id or not self.reviewer_id
         ):
-            raise CVEfixesAdapterError(
-                "reviewed_pattern requires review_id and reviewer_id"
-            )
+            raise CVEfixesAdapterError("reviewed_pattern requires review_id and reviewer_id")
         try:
             attributes = freeze_json_mapping(self.attributes)
         except ProvenanceValidationError as exc:
@@ -275,13 +264,9 @@ class CandidateReview:
             "state",
         }
         if set(value) != expected:
-            raise CVEfixesAdapterError(
-                "candidate review fields are not canonical"
-            )
+            raise CVEfixesAdapterError("candidate review fields are not canonical")
         if value["grants_execution_authority"] is not False:
-            raise CVEfixesAdapterError(
-                "candidate review cannot grant execution authority"
-            )
+            raise CVEfixesAdapterError("candidate review cannot grant execution authority")
         return cls(
             state=value["state"],
             review_id=value["review_id"],
@@ -304,8 +289,7 @@ def _policy_attributes(candidate: PolicyCandidate) -> CVEfixesPolicyAttributes:
         return attributes.require_exact_policy_constraints()
     except (CVEfixesVocabularyError, TypeError, KeyError) as exc:
         raise CVEfixesAdapterError(
-            "candidate scope must contain complete, exact CVEfixes policy "
-            "attributes"
+            "candidate scope must contain complete, exact CVEfixes policy attributes"
         ) from exc
 
 
@@ -320,9 +304,7 @@ def _candidate_prefix(candidate: PolicyCandidate) -> str:
 def _validate_sources(
     candidate: PolicyCandidate, sources: Sequence[SourceRecord]
 ) -> tuple[SourceRecord, ...]:
-    if isinstance(sources, (str, bytes, bytearray)) or not isinstance(
-        sources, Sequence
-    ):
+    if isinstance(sources, (str, bytes, bytearray)) or not isinstance(sources, Sequence):
         raise CVEfixesAdapterError("sources must be a sequence")
     normalized = tuple(sources)
     if not normalized:
@@ -345,9 +327,7 @@ def _validate_sources(
     return tuple(sorted(normalized, key=lambda item: item.cid))
 
 
-def _source_declaration(
-    source: SourceRecord, review: CandidateReview
-) -> SecuritySource:
+def _source_declaration(source: SourceRecord, review: CandidateReview) -> SecuritySource:
     content_sha256 = source.payload.get("content_sha256", "")
     if not isinstance(content_sha256, str):
         raise CVEfixesAdapterError("source content_sha256 must be a string")
@@ -397,9 +377,7 @@ def _state_machine(
     allowed = {"initial_state", "states", "transitions"}
     unknown = sorted(set(raw) - allowed)
     if unknown:
-        raise CVEfixesAdapterError(
-            "unknown state_machine field(s): " + ", ".join(unknown)
-        )
+        raise CVEfixesAdapterError("unknown state_machine field(s): " + ", ".join(unknown))
     transitions_raw = raw.get("transitions", ())
     if isinstance(transitions_raw, (str, bytes, bytearray)) or not isinstance(
         transitions_raw, Sequence
@@ -408,9 +386,7 @@ def _state_machine(
     transitions: list[StateTransition] = []
     for item in transitions_raw:
         if not isinstance(item, Mapping):
-            raise CVEfixesAdapterError(
-                "state_machine transitions must contain mappings"
-            )
+            raise CVEfixesAdapterError("state_machine transitions must contain mappings")
         allowed_transition = {
             "attributes",
             "effect",
@@ -420,9 +396,7 @@ def _state_machine(
             "target_state",
         }
         if set(item) - allowed_transition:
-            raise CVEfixesAdapterError(
-                "state_machine transition contains unknown fields"
-            )
+            raise CVEfixesAdapterError("state_machine transition contains unknown fields")
         transitions.append(StateTransition.from_dict(item))
     return StateMachine(
         state_machine_id=f"state-machine:{_candidate_prefix(candidate)}",
@@ -458,9 +432,7 @@ class CVEfixesAdapterResult:
         normalized_sources = _validate_sources(self.candidate, self.sources)
         object.__setattr__(self, "sources", normalized_sources)
         if self.adapter_version != CVEFIXES_ADAPTER_VERSION:
-            raise CVEfixesAdapterError(
-                f"unsupported adapter version: {self.adapter_version!r}"
-            )
+            raise CVEfixesAdapterError(f"unsupported adapter version: {self.adapter_version!r}")
 
     @property
     def candidate_round_trip(self) -> PolicyCandidate:
@@ -497,9 +469,7 @@ class CVEfixesAdapterResult:
         if set(value) != expected:
             raise CVEfixesAdapterError("adapter result fields are not canonical")
         if value["adapter_version"] != CVEFIXES_ADAPTER_VERSION:
-            raise CVEfixesAdapterError(
-                f"unsupported adapter version: {value['adapter_version']!r}"
-            )
+            raise CVEfixesAdapterError(f"unsupported adapter version: {value['adapter_version']!r}")
         candidate = PolicyCandidate.from_dict(value["candidate"])
         review = CandidateReview.from_dict(value["review"])
         sources_raw = value["sources"]
@@ -522,9 +492,7 @@ class CVEfixesAdapterResult:
         return rebuilt
 
     @classmethod
-    def from_json(
-        cls, value: str | bytes | bytearray
-    ) -> "CVEfixesAdapterResult":
+    def from_json(cls, value: str | bytes | bytearray) -> "CVEfixesAdapterResult":
         return cls.from_dict(_strict_json_object(value))
 
 
@@ -543,24 +511,19 @@ def adapt_cvefixes_candidate(
         raise CVEfixesAdapterError("review state is mandatory")
     normalized_sources = _validate_sources(candidate, sources)
     if candidate.effect != PolicyEffect.DENY.value:
-        raise CVEfixesAdapterError(
-            "only deny candidates can become CVEfixes Security IR policies"
-        )
+        raise CVEfixesAdapterError("only deny candidates can become CVEfixes Security IR policies")
     _assert_no_authority_claim(candidate.scope, path="candidate.scope")
     _assert_no_authority_claim(candidate.payload, path="candidate.payload")
 
     generalized = _contains_generalization(candidate.scope)
     if generalized and not review.explicitly_reviewed:
         raise CVEfixesAdapterError(
-            "wildcard or generalized scopes require explicit reviewed_pattern "
-            "provenance"
+            "wildcard or generalized scopes require explicit reviewed_pattern provenance"
         )
     attributes = _policy_attributes(candidate)
     prefix = _candidate_prefix(candidate)
     source_ids = tuple(_source_id(source) for source in normalized_sources)
-    adapter_attributes = _adapter_attributes(
-        candidate, review, generalized=generalized
-    )
+    adapter_attributes = _adapter_attributes(candidate, review, generalized=generalized)
 
     resource = Resource(
         resource_id=f"resource:{prefix}",
@@ -569,9 +532,7 @@ def adapt_cvefixes_candidate(
         attributes={
             **adapter_attributes,
             "language": (
-                attributes.language.canonical
-                if attributes.language is not None
-                else None
+                attributes.language.canonical if attributes.language is not None else None
             ),
             "scope": attributes.scope.canonical,
         },
@@ -619,9 +580,7 @@ def adapt_cvefixes_candidate(
             "expected_invariant": "forbidden_action_effect_absent",
         },
     )
-    machine = _state_machine(
-        candidate, source_ids, MappingProxyType(adapter_attributes)
-    )
+    machine = _state_machine(candidate, source_ids, MappingProxyType(adapter_attributes))
     resolved_declaration_id = (
         _stable_id(declaration_id, "declaration_id")
         if declaration_id is not None
@@ -634,10 +593,7 @@ def adapt_cvefixes_candidate(
         state_machines=(machine,) if machine is not None else (),
         assumptions=assumptions,
         claims=(claim,),
-        sources=tuple(
-            _source_declaration(source, review)
-            for source in normalized_sources
-        ),
+        sources=tuple(_source_declaration(source, review) for source in normalized_sources),
     )
     return CVEfixesAdapterResult(
         declaration=declaration,

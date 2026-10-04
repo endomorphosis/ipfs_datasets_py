@@ -3,7 +3,14 @@ from __future__ import annotations
 from ipfs_datasets_py.processors.legal_data.reasoner.shadow_mode import build_shadow_mode_audit
 
 
-def _report(*, segment_count: int, semantic_mean: float, orphan_rate: float, rel_artifact_rate: float, records_origin: str) -> dict:
+def _report(
+    *,
+    segment_count: int,
+    semantic_mean: float,
+    orphan_rate: float,
+    rel_artifact_rate: float,
+    records_origin: str,
+) -> dict:
     return {
         "summary": {
             "segment_count": segment_count,
@@ -66,4 +73,6 @@ def test_build_shadow_mode_audit_reports_failures_for_regressions() -> None:
 
     assert audit["summary"]["shadow_ready"] is False
     assert audit["summary"]["failure_count"] >= 1
-    assert any(check["type"] == "segment_count_match" and not check["passed"] for check in audit["checks"])
+    assert any(
+        check["type"] == "segment_count_match" and not check["passed"] for check in audit["checks"]
+    )

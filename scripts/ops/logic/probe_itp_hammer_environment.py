@@ -349,9 +349,7 @@ def _build_coq_surface(root: Path, *, probe_version: bool) -> SurfaceReport:
     if not available:
         reasons = []
         if not executables_ok:
-            reasons.append(
-                "no_coqc_coqtop_or_rocq_executable_found_on_path_or_common_install_dirs"
-            )
+            reasons.append("no_coqc_coqtop_or_rocq_executable_found_on_path_or_common_install_dirs")
         if not modules_ok:
             reasons.append("no_coq_bridge_module_in_repo")
         unavailable_reason = ";".join(reasons)
@@ -482,7 +480,8 @@ def _build_z3_surface(root: Path, *, probe_version: bool) -> SurfaceReport:
                 "untrusted candidates per the HAMMER-001 trust contract until "
                 "independently reconstructed."
             ),
-            evidence=(["z3"] if z3.found else []) + (["z3 (python)"] if python_binding["found"] else []),
+            evidence=(["z3"] if z3.found else [])
+            + (["z3 (python)"] if python_binding["found"] else []),
         ).to_dict(),
         parser_support=CapabilityNote(
             supported=modules_ok,
@@ -542,7 +541,8 @@ def _build_cvc5_surface(root: Path, *, probe_version: bool) -> SurfaceReport:
                 "counterexamples and unsat cores. These remain untrusted "
                 "candidates per the HAMMER-001 trust contract."
             ),
-            evidence=(["cvc5"] if cvc5.found else []) + (["cvc5 (python)"] if python_binding["found"] else []),
+            evidence=(["cvc5"] if cvc5.found else [])
+            + (["cvc5 (python)"] if python_binding["found"] else []),
         ).to_dict(),
         parser_support=CapabilityNote(
             supported=modules_ok,
@@ -821,7 +821,9 @@ def _build_tdfol_surface(root: Path, *, probe_version: bool) -> SurfaceReport:
                 "syntax; tdfol_converter round-trips TDFOL to string "
                 "representations (TPTP, SMT-LIB, etc.)."
             ),
-            evidence=_module_paths([m for m in modules if m.kind == "parser" or m.kind == "converter"]),
+            evidence=_module_paths(
+                [m for m in modules if m.kind == "parser" or m.kind == "converter"]
+            ),
         ).to_dict(),
         available=available,
         unavailable_reason=unavailable_reason,
@@ -877,7 +879,9 @@ def _build_cec_surface(root: Path, *, probe_version: bool) -> SurfaceReport:
                 "Vampire/E attempts (see those surfaces) as untrusted "
                 "candidates."
             ),
-            evidence=_module_paths([m for m in modules if m.kind in ("core", "prover", "prover_manager")]),
+            evidence=_module_paths(
+                [m for m in modules if m.kind in ("core", "prover", "prover_manager")]
+            ),
         ).to_dict(),
         parser_support=CapabilityNote(
             supported=parser_present,
@@ -1035,7 +1039,9 @@ def build_environment_report(
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument(
         "--out",
         type=Path,

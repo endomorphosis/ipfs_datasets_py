@@ -68,9 +68,7 @@ def _target(
 
 
 def _input_sha256(source_text: str) -> str:
-    return hashlib.sha256(
-        canonical_json({"text": source_text}).encode("utf-8")
-    ).hexdigest()
+    return hashlib.sha256(canonical_json({"text": source_text}).encode("utf-8")).hexdigest()
 
 
 def _identity(
@@ -107,11 +105,7 @@ def _record(
     stage = (
         StageName.COMPILER
         if producer_id == "compiler"
-        else (
-            StageName.SYMAI
-            if producer_id == "symai"
-            else StageName.SPACY
-        )
+        else (StageName.SYMAI if producer_id == "symai" else StageName.SPACY)
     )
     identity = _identity(
         target.source_text,
@@ -125,11 +119,7 @@ def _record(
         source=("synthetic_fixture",),
         requested_identity=identity,
         effective_identity=identity,
-        input_sha256=(
-            _input_sha256(target.source_text)
-            if input_sha256 is None
-            else input_sha256
-        ),
+        input_sha256=(_input_sha256(target.source_text) if input_sha256 is None else input_sha256),
         environment_sha256=_ENVIRONMENT_SHA256,
     )
     return StageRecord.create(
@@ -163,18 +153,12 @@ def _projection_payload(
     stage = (
         StageName.COMPILER
         if producer_id == "compiler"
-        else (
-            StageName.SYMAI
-            if producer_id == "symai"
-            else StageName.SPACY
-        )
+        else (StageName.SYMAI if producer_id == "symai" else StageName.SPACY)
     )
     semantics = {
         "logic_family": target.logic_family if correct else "fol",
         "target": target.target if correct else "deny_notice",
-        "semantic_class": (
-            target.semantic_class if correct else "disproved"
-        ),
+        "semantic_class": (target.semantic_class if correct else "disproved"),
         "predicates": (
             (
                 (*target.predicates, "unreviewed_extra_predicate")
@@ -185,11 +169,7 @@ def _projection_payload(
             else ("deny_notice",)
         ),
         "entities": (
-            (
-                (*target.entities, "unreviewed_extra_entity")
-                if extra_terms
-                else target.entities
-            )
+            ((*target.entities, "unreviewed_extra_entity") if extra_terms else target.entities)
             if correct
             else ("other_actor",)
         ),
@@ -243,9 +223,7 @@ def _projection_payload(
     )
     if stage is StageName.COMPILER:
         return {
-            "schema": (
-                "ipfs-datasets.logic-pipeline-benchmark.compiler-output.v2"
-            ),
+            "schema": ("ipfs-datasets.logic-pipeline-benchmark.compiler-output.v2"),
             "semantic_protocol_cid": SEMANTIC_PROTOCOL_V2_CID,
             "source_cid": target.source_cid,
             "modal_ir": modal_ir,
@@ -255,9 +233,7 @@ def _projection_payload(
         }, projection
     if stage is StageName.SPACY:
         return {
-            "schema": (
-                "ipfs-datasets.logic-pipeline-benchmark.spacy-evidence.v2"
-            ),
+            "schema": ("ipfs-datasets.logic-pipeline-benchmark.spacy-evidence.v2"),
             "semantic_protocol_cid": SEMANTIC_PROTOCOL_V2_CID,
             "document": {"source_cid": target.source_cid},
             "modal_ir": modal_ir,
@@ -266,9 +242,7 @@ def _projection_payload(
         }, projection
     raw_output = canonical_json(response)
     return {
-        "schema": (
-            "ipfs-datasets.logic-pipeline-benchmark.symai-evidence.v2"
-        ),
+        "schema": ("ipfs-datasets.logic-pipeline-benchmark.symai-evidence.v2"),
         "semantic_protocol_cid": SEMANTIC_PROTOCOL_V2_CID,
         "source_cid": target.source_cid,
         "raw_output": raw_output,
@@ -321,9 +295,7 @@ def _symai_failure(
     }
     receipt = {**body, "receipt_cid": cid_for_dag_json(body)}
     payload = {
-        "schema": (
-            "ipfs-datasets.logic-pipeline-benchmark.symai-evidence.v2"
-        ),
+        "schema": ("ipfs-datasets.logic-pipeline-benchmark.symai-evidence.v2"),
         "semantic_protocol_cid": SEMANTIC_PROTOCOL_V2_CID,
         "raw_output": None,
         "raw_output_cid": None,
@@ -369,9 +341,7 @@ def test_v2_compares_same_shaped_semantics_and_validates_evidence_cids() -> None
 
     payload = coordinate.stages[0].to_dict()["data"]
     assert isinstance(payload, dict)
-    payload["retained_modal_ir_cid"] = cid_for_dag_json(
-        {"tampered": True}
-    )
+    payload["retained_modal_ir_cid"] = cid_for_dag_json({"tampered": True})
     tampered = SemanticCalibrationCoordinateV2(
         case_id=target.case_id,
         producer_id="compiler",
@@ -409,9 +379,7 @@ def test_compiler_cid_only_projection_validates_every_nested_identity() -> None:
         payload=payload,
     )
 
-    assert validate_semantic_frontend_stage_v2(
-        record, target.source_text
-    ) == projection
+    assert validate_semantic_frontend_stage_v2(record, target.source_text) == projection
     receipt = evaluate_semantic_calibration_coordinate_v2(
         target,
         SemanticCalibrationCoordinateV2(
@@ -432,9 +400,7 @@ def test_compiler_cid_only_projection_validates_every_nested_identity() -> None:
         tampered_retained = dict(retained)
         tampered_retained[field] = invalid
         tampered_payload["modal_ir"] = tampered_retained
-        tampered_payload["retained_modal_ir_cid"] = cid_for_dag_json(
-            tampered_retained
-        )
+        tampered_payload["retained_modal_ir_cid"] = cid_for_dag_json(tampered_retained)
         with pytest.raises(SemanticReassessmentError):
             validate_semantic_frontend_stage_v2(
                 _record(
@@ -479,9 +445,7 @@ def test_unretained_full_compiler_block_is_not_calibration_authority() -> None:
     payload, _projection = _projection_payload(target, "compiler")
     retained_projection = {"formulas": []}
     payload["modal_ir"] = retained_projection
-    payload["retained_modal_ir_cid"] = cid_for_dag_json(
-        retained_projection
-    )
+    payload["retained_modal_ir_cid"] = cid_for_dag_json(retained_projection)
     coordinate = SemanticCalibrationCoordinateV2(
         case_id=target.case_id,
         producer_id="compiler",
@@ -501,35 +465,17 @@ def test_unretained_full_compiler_block_is_not_calibration_authority() -> None:
 
     assert receipt["status"] == "semantic_schema_incompatible"
     assert receipt["quality_millionths"] is None
-    assert (
-        receipt["evidence_verification"][
-            "projection_evidence_cid_recomputed"
-        ]
-        is False
-    )
-    assert (
-        receipt["evidence_verification"][
-            "retained_evidence_cid_recomputed"
-        ]
-        is True
-    )
-    assert (
-        receipt["semantic_evidence_authoritative_for_calibration"]
-        is False
-    )
+    assert receipt["evidence_verification"]["projection_evidence_cid_recomputed"] is False
+    assert receipt["evidence_verification"]["retained_evidence_cid_recomputed"] is True
+    assert receipt["semantic_evidence_authoritative_for_calibration"] is False
     assert receipt["eligible_for_complete_calibration"] is False
 
-    targets = tuple(
-        _target(case_id=f"compiler-sidecar-{index:03d}")
-        for index in range(20)
-    )
+    targets = tuple(_target(case_id=f"compiler-sidecar-{index:03d}") for index in range(20))
     coordinates = []
     for item in targets:
         truncated_payload, _ = _projection_payload(item, "compiler")
         truncated_payload["modal_ir"] = retained_projection
-        truncated_payload["retained_modal_ir_cid"] = cid_for_dag_json(
-            retained_projection
-        )
+        truncated_payload["retained_modal_ir_cid"] = cid_for_dag_json(retained_projection)
         coordinates.append(
             SemanticCalibrationCoordinateV2(
                 case_id=item.case_id,
@@ -716,9 +662,7 @@ def test_unretained_oversized_symai_failure_keeps_cid_and_byte_receipt() -> None
         },
     }
     payload = {
-        "schema": (
-            "ipfs-datasets.logic-pipeline-benchmark.symai-evidence.v2"
-        ),
+        "schema": ("ipfs-datasets.logic-pipeline-benchmark.symai-evidence.v2"),
         "semantic_protocol_cid": SEMANTIC_PROTOCOL_V2_CID,
         "raw_output": None,
         "raw_output_cid": raw_cid,
@@ -739,9 +683,7 @@ def test_unretained_oversized_symai_failure_keeps_cid_and_byte_receipt() -> None
                 producer_id="symai",
                 payload=payload,
                 status=StageStatus.FAILED,
-                failure_code=(
-                    FailureCode.SYMAI_CONTRACT_OR_JSON_FAILURE
-                ),
+                failure_code=(FailureCode.SYMAI_CONTRACT_OR_JSON_FAILURE),
                 failure_detail="oversized synthetic response",
             ),
         ),
@@ -789,10 +731,7 @@ def test_validation_errors_precede_ambiguity() -> None:
 
 
 def test_schema_incompatible_is_null_but_complete_all_wrong_is_zero() -> None:
-    targets = tuple(
-        _target(case_id=f"synthetic-{index:03d}")
-        for index in range(20)
-    )
+    targets = tuple(_target(case_id=f"synthetic-{index:03d}") for index in range(20))
     producers = (
         "compiler",
         "spacy_full_model",
@@ -803,32 +742,16 @@ def test_schema_incompatible_is_null_but_complete_all_wrong_is_zero() -> None:
     undersized_population = evaluate_semantic_calibration_v2(
         targets=(targets[0],),
         coordinates=tuple(
-            _coordinate(targets[0], producer_id, correct=True)
-            for producer_id in producers
+            _coordinate(targets[0], producer_id, correct=True) for producer_id in producers
         ),
     )
-    assert (
-        undersized_population["status"]
-        == "semantic_schema_incompatible"
-    )
+    assert undersized_population["status"] == "semantic_schema_incompatible"
     assert undersized_population["scope"]["expected_case_count"] == 20
     assert undersized_population["scope"]["observed_case_count"] == 1
-    assert (
-        undersized_population["scope"]["expected_coordinate_count"]
-        == 100
-    )
-    assert (
-        undersized_population["coverage"]["case_population_complete"]
-        is False
-    )
-    assert (
-        undersized_population["quality"]["semantic_quality_rate"]
-        is None
-    )
-    assert (
-        undersized_population["absolute_quality_gate"]["passed"]
-        is False
-    )
+    assert undersized_population["scope"]["expected_coordinate_count"] == 100
+    assert undersized_population["coverage"]["case_population_complete"] is False
+    assert undersized_population["quality"]["semantic_quality_rate"] is None
+    assert undersized_population["absolute_quality_gate"]["passed"] is False
 
     missing_report = evaluate_semantic_calibration_v2(
         targets=targets,
@@ -855,10 +778,7 @@ def test_schema_incompatible_is_null_but_complete_all_wrong_is_zero() -> None:
     )
     assert all_wrong["status"] == "synthetic_or_unvalidated_graph"
     assert all_wrong["quality"]["semantic_quality_rate"] is None
-    assert (
-        all_wrong["quality"]["diagnostic_coordinate_quality_rate"]
-        == 0.0
-    )
+    assert all_wrong["quality"]["diagnostic_coordinate_quality_rate"] == 0.0
     assert all_wrong["quality"]["all_wrong_is_measured_zero"] is False
     assert all_wrong["absolute_quality_gate"]["passed"] is False
     assert all_wrong["relative_selection"]["applied"] is False
@@ -873,13 +793,9 @@ def test_schema_incompatible_is_null_but_complete_all_wrong_is_zero() -> None:
             producer_id=coordinate.producer_id,
             stages=coordinate.stages,
             graph_binding=SemanticCalibrationGraphBindingV2(
-                plan_cid=cid_for_dag_json(
-                    {"synthetic_plan": True}
-                ),
+                plan_cid=cid_for_dag_json({"synthetic_plan": True}),
                 plan_sha256="c" * 64,
-                case_result_cid=cid_for_dag_json(
-                    {"synthetic_case_result": True}
-                ),
+                case_result_cid=cid_for_dag_json({"synthetic_case_result": True}),
                 case_result_sha256="d" * 64,
                 run_id=_RUN_ID,
                 variant_id="A0",
@@ -887,21 +803,11 @@ def test_schema_incompatible_is_null_but_complete_all_wrong_is_zero() -> None:
                 cache_mode="cold",
                 environment_sha256=_ENVIRONMENT_SHA256,
                 case_manifest_sha256=_MANIFEST_SHA256,
-                producer_registry_cid=(
-                    SEMANTIC_PRODUCER_REGISTRY_V2_CID
-                ),
-                calibration_route_manifest_cid=(
-                    SEMANTIC_CALIBRATION_ROUTE_MANIFEST_V2_CID
-                ),
-                calibration_metric_spec_cid=(
-                    SEMANTIC_CALIBRATION_METRIC_SPEC_V2_CID
-                ),
-                reviewed_target_source_cid=(
-                    SEMANTIC_REVIEWED_TARGET_SOURCE_V2_CID
-                ),
-                reviewed_target_manifest_cid=cid_for_dag_json(
-                    {"synthetic": True}
-                ),
+                producer_registry_cid=(SEMANTIC_PRODUCER_REGISTRY_V2_CID),
+                calibration_route_manifest_cid=(SEMANTIC_CALIBRATION_ROUTE_MANIFEST_V2_CID),
+                calibration_metric_spec_cid=(SEMANTIC_CALIBRATION_METRIC_SPEC_V2_CID),
+                reviewed_target_source_cid=(SEMANTIC_REVIEWED_TARGET_SOURCE_V2_CID),
+                reviewed_target_manifest_cid=cid_for_dag_json({"synthetic": True}),
                 proof_stages_suppressed=True,
             ),
         )
@@ -912,12 +818,7 @@ def test_schema_incompatible_is_null_but_complete_all_wrong_is_zero() -> None:
         coordinates=forged_bound,
     )
     assert forged_report["status"] == "synthetic_or_unvalidated_graph"
-    assert (
-        forged_report["coverage"][
-            "validated_ablation_graph_coverage_complete"
-        ]
-        is False
-    )
+    assert forged_report["coverage"]["validated_ablation_graph_coverage_complete"] is False
     assert forged_report["quality"]["semantic_quality_rate"] is None
     assert forged_report["absolute_quality_gate"]["passed"] is False
     assert forged_report["relative_selection"]["selected_producer_ids"] == []

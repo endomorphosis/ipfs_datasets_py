@@ -72,6 +72,7 @@ a call to it at the end of `get_alert_conditions()`:
 def _record_delegation_metrics(self) -> None:
     try:
         from .ucan_delegation import get_delegation_manager, record_delegation_metrics
+
         record_delegation_metrics(get_delegation_manager(), self.base_collector)
     except Exception as _exc:
         logger.debug("P2PMetricsCollector delegation metrics unavailable: %s", _exc)

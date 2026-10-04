@@ -122,21 +122,11 @@ SEMANTIC_TARGET_MANIFEST_SCHEMA_V2: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.semantic-target-manifest.v2"
 )
 EXPECTED_SEMANTIC_COORDINATE_COUNT: Final = 240
-_COMPILER_EVIDENCE_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.compiler-output.v1"
-)
-_SPACY_EVIDENCE_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.spacy-evidence.v1"
-)
-_SYMAI_EVIDENCE_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.symai-evidence.v1"
-)
-_SYMAI_POLICY_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.policy-decision.v1"
-)
-_COMPILER_EVIDENCE_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.compiler-output.v2"
-)
+_COMPILER_EVIDENCE_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.compiler-output.v1"
+_SPACY_EVIDENCE_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.spacy-evidence.v1"
+_SYMAI_EVIDENCE_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.symai-evidence.v1"
+_SYMAI_POLICY_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.policy-decision.v1"
+_COMPILER_EVIDENCE_SCHEMA_V2: Final = "ipfs-datasets.logic-pipeline-benchmark.compiler-output.v2"
 _COMPILER_CID_ONLY_MODAL_IR_FIELDS_V2: Final = frozenset(
     {
         "document_id",
@@ -147,12 +137,8 @@ _COMPILER_CID_ONLY_MODAL_IR_FIELDS_V2: Final = frozenset(
         "projection",
     }
 )
-_SPACY_EVIDENCE_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.spacy-evidence.v2"
-)
-_SYMAI_EVIDENCE_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.symai-evidence.v2"
-)
+_SPACY_EVIDENCE_SCHEMA_V2: Final = "ipfs-datasets.logic-pipeline-benchmark.spacy-evidence.v2"
+_SYMAI_EVIDENCE_SCHEMA_V2: Final = "ipfs-datasets.logic-pipeline-benchmark.symai-evidence.v2"
 _SEMANTIC_FIELDS_V2: Final = (
     "logic_family",
     "target",
@@ -160,9 +146,7 @@ _SEMANTIC_FIELDS_V2: Final = (
     "predicates",
     "entities",
 )
-_SEMANTIC_VACUOUS_TERMS_V2: Final = frozenset(
-    {"", "none", "null", "unknown", "unspecified"}
-)
+_SEMANTIC_VACUOUS_TERMS_V2: Final = frozenset({"", "none", "null", "unknown", "unspecified"})
 _SEMANTIC_WILSON_Z_95_V2: Final = 1.959963984540054
 _SEMANTIC_LOGIC_ALIASES_V2: Final[Mapping[str, str]] = {
     "first_order": "fol",
@@ -192,12 +176,8 @@ _LOGIC_ALIASES: Final[Mapping[str, str]] = {
     "lean": "lean4",
     "lean4": "lean4",
 }
-_LOGIC_KEYS: Final = frozenset(
-    {"logic", "logic_type", "logic_family", "formalism", "kind"}
-)
-_TARGET_KEYS: Final = frozenset(
-    {"target", "semantic_target", "conclusion", "result"}
-)
+_LOGIC_KEYS: Final = frozenset({"logic", "logic_type", "logic_family", "formalism", "kind"})
+_TARGET_KEYS: Final = frozenset({"target", "semantic_target", "conclusion", "result"})
 _PREDICATE_KEYS: Final = frozenset(
     {
         "predicate",
@@ -222,9 +202,7 @@ _ENTITY_KEYS: Final = frozenset(
         "objects",
     }
 )
-_CLASS_KEYS: Final = frozenset(
-    {"predicted_class", "classification", "semantic_class", "class"}
-)
+_CLASS_KEYS: Final = frozenset({"predicted_class", "classification", "semantic_class", "class"})
 _FRONTEND_STAGES: Final = (
     StageName.COMPILER,
     StageName.SPACY,
@@ -286,26 +264,16 @@ class SemanticCalibrationTargetV2:
                 "semantic target logic_family and target must be normalized"
             )
         if semantic_class not in SEMANTIC_PROJECTION_CLASSES_V2:
-            raise SemanticReassessmentError(
-                "semantic target class is unsupported"
-            )
+            raise SemanticReassessmentError("semantic target class is unsupported")
         object.__setattr__(self, "logic_family", logic)
         object.__setattr__(self, "target", target)
         object.__setattr__(self, "semantic_class", semantic_class)
         for field in ("predicates", "entities"):
             values = getattr(self, field)
             if not isinstance(values, tuple):
-                raise SemanticReassessmentError(
-                    f"semantic target {field} must be a tuple"
-                )
+                raise SemanticReassessmentError(f"semantic target {field} must be a tuple")
             normalized = tuple(
-                sorted(
-                    {
-                        term
-                        for value in values
-                        if (term := normalize_semantic_term(value))
-                    }
-                )
+                sorted({term for value in values if (term := normalize_semantic_term(value))})
             )
             if len(normalized) > 24:
                 raise SemanticReassessmentError(
@@ -368,9 +336,7 @@ class SemanticCalibrationTargetV2:
             or any(not isinstance(item, str) for item in predicates)
             or any(not isinstance(item, str) for item in entities)
         ):
-            raise SemanticReassessmentError(
-                "semantic calibration target terms must be arrays"
-            )
+            raise SemanticReassessmentError("semantic calibration target terms must be arrays")
         return cls(
             case_id=data["case_id"],
             source_text=data["source_text"],
@@ -382,22 +348,16 @@ class SemanticCalibrationTargetV2:
         )
 
     @classmethod
-    def from_benchmark_case(
-        cls, case: BenchmarkCase
-    ) -> "SemanticCalibrationTargetV2":
+    def from_benchmark_case(cls, case: BenchmarkCase) -> "SemanticCalibrationTargetV2":
         """Project one already-loaded unsealed case into the v2 score shape."""
 
         if not isinstance(case, BenchmarkCase):
-            raise SemanticReassessmentError(
-                "semantic target requires a BenchmarkCase"
-            )
+            raise SemanticReassessmentError("semantic target requires a BenchmarkCase")
         expected_ir = _mapping(case.expected_ir, "case.expected_ir")
         logic = expected_ir.get("logic")
         target = expected_ir.get("target")
         if not isinstance(logic, str) or not isinstance(target, str):
-            raise SemanticReassessmentError(
-                "reviewed expected_ir lacks logic or target"
-            )
+            raise SemanticReassessmentError("reviewed expected_ir lacks logic or target")
         return cls(
             case_id=case.case_id,
             source_text=case.source_text,
@@ -455,13 +415,9 @@ class SemanticCalibrationGraphBindingV2:
         _safe_id(self.run_id, "semantic graph binding run_id")
         _safe_id(self.variant_id, "semantic graph binding variant_id")
         if self.split not in {"pilot", "development"}:
-            raise SemanticReassessmentError(
-                "semantic graph binding must be unsealed"
-            )
+            raise SemanticReassessmentError("semantic graph binding must be unsealed")
         if self.cache_mode not in {"cold", "warm"}:
-            raise SemanticReassessmentError(
-                "semantic graph binding cache mode is invalid"
-            )
+            raise SemanticReassessmentError("semantic graph binding cache mode is invalid")
         if (
             _v2_cid(
                 self.producer_registry_cid,
@@ -470,9 +426,7 @@ class SemanticCalibrationGraphBindingV2:
             )
             != SEMANTIC_PRODUCER_REGISTRY_V2_CID
         ):
-            raise SemanticReassessmentError(
-                "semantic graph binding producer registry drifted"
-            )
+            raise SemanticReassessmentError("semantic graph binding producer registry drifted")
         for field, expected in (
             (
                 "calibration_route_manifest_cid",
@@ -495,24 +449,17 @@ class SemanticCalibrationGraphBindingV2:
                 )
                 != expected
             ):
-                raise SemanticReassessmentError(
-                    f"semantic graph binding {field} drifted"
-                )
+                raise SemanticReassessmentError(f"semantic graph binding {field} drifted")
         _v2_cid(
             self.reviewed_target_manifest_cid,
             "semantic graph binding reviewed_target_manifest_cid",
             codecs=("dag-json",),
         )
         if self.proof_stages_suppressed is not True:
-            raise SemanticReassessmentError(
-                "semantic graph binding did not suppress proof stages"
-            )
+            raise SemanticReassessmentError("semantic graph binding did not suppress proof stages")
 
     def to_dict(self) -> dict[str, object]:
-        return {
-            field: getattr(self, field)
-            for field in self.__dataclass_fields__
-        }
+        return {field: getattr(self, field) for field in self.__dataclass_fields__}
 
 
 @dataclass(frozen=True, slots=True)
@@ -527,9 +474,7 @@ class SemanticCalibrationCoordinateV2:
     def __post_init__(self) -> None:
         _safe_id(self.case_id, "semantic coordinate case_id")
         if self.producer_id not in SEMANTIC_PRODUCER_IDS_V2:
-            raise SemanticReassessmentError(
-                "semantic coordinate producer is not registered"
-            )
+            raise SemanticReassessmentError("semantic coordinate producer is not registered")
         if (
             not isinstance(self.stages, tuple)
             or not self.stages
@@ -538,32 +483,22 @@ class SemanticCalibrationCoordinateV2:
             raise SemanticReassessmentError(
                 "semantic coordinate stages must be a nonempty StageRecord tuple"
             )
-        frontends = [
-            stage.stage
-            for stage in self.stages
-            if stage.stage in _FRONTEND_STAGES
-        ]
+        frontends = [stage.stage for stage in self.stages if stage.stage in _FRONTEND_STAGES]
         if not frontends:
-            raise SemanticReassessmentError(
-                "semantic coordinate contains no front-end stage"
-            )
+            raise SemanticReassessmentError("semantic coordinate contains no front-end stage")
         if len(frontends) != len(set(frontends)):
             raise SemanticReassessmentError(
                 "semantic coordinate contains duplicate front-end stages"
             )
         order = {stage: index for index, stage in enumerate(_FRONTEND_STAGES)}
         if frontends != sorted(frontends, key=order.__getitem__):
-            raise SemanticReassessmentError(
-                "semantic coordinate front-end stages are out of order"
-            )
+            raise SemanticReassessmentError("semantic coordinate front-end stages are out of order")
         if self.graph_binding is not None:
             if not isinstance(
                 self.graph_binding,
                 SemanticCalibrationGraphBindingV2,
             ):
-                raise SemanticReassessmentError(
-                    "semantic coordinate graph binding is invalid"
-                )
+                raise SemanticReassessmentError("semantic coordinate graph binding is invalid")
             binding = self.graph_binding
             if any(
                 (
@@ -572,16 +507,13 @@ class SemanticCalibrationCoordinateV2:
                     or stage.variant_id != binding.variant_id
                     or stage.split.value != binding.split
                     or stage.cache_mode.value != binding.cache_mode
-                    or stage.case_manifest_sha256
-                    != binding.case_manifest_sha256
-                    or stage.provenance.environment_sha256
-                    != binding.environment_sha256
+                    or stage.case_manifest_sha256 != binding.case_manifest_sha256
+                    or stage.provenance.environment_sha256 != binding.environment_sha256
                 )
                 for stage in self.stages
             ):
                 raise SemanticReassessmentError(
-                    "semantic coordinate stages differ from their validated "
-                    "ablation graph binding"
+                    "semantic coordinate stages differ from their validated ablation graph binding"
                 )
 
     @classmethod
@@ -599,22 +531,15 @@ class SemanticCalibrationCoordinateV2:
             )
         try:
             parsed = tuple(
-                stage
-                if isinstance(stage, StageRecord)
-                else StageRecord.from_dict(stage)
+                stage if isinstance(stage, StageRecord) else StageRecord.from_dict(stage)
                 for stage in stages
             )
         except (ProtocolContractError, TypeError, ValueError) as exc:
             raise SemanticReassessmentError(
                 "semantic calibration coordinate stage is invalid"
             ) from exc
-        if (
-            not isinstance(data["case_id"], str)
-            or not isinstance(data["producer_id"], str)
-        ):
-            raise SemanticReassessmentError(
-                "semantic calibration coordinate ids must be strings"
-            )
+        if not isinstance(data["case_id"], str) or not isinstance(data["producer_id"], str):
+            raise SemanticReassessmentError("semantic calibration coordinate ids must be strings")
         return cls(
             case_id=data["case_id"],
             producer_id=data["producer_id"],
@@ -639,17 +564,13 @@ def _plain(value: object) -> object:
         return _plain(value.value)
     if isinstance(value, Mapping):
         return {str(key): _plain(item) for key, item in value.items()}
-    if isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         return [_plain(item) for item in value]
     return value
 
 
 def _sha(value: object) -> str:
-    return hashlib.sha256(
-        canonical_json(_plain(value)).encode("utf-8")
-    ).hexdigest()
+    return hashlib.sha256(canonical_json(_plain(value)).encode("utf-8")).hexdigest()
 
 
 def _sha_bytes(value: bytes) -> str:
@@ -657,9 +578,7 @@ def _sha_bytes(value: bytes) -> str:
 
 
 def _mapping(value: object, field: str) -> Mapping[str, object]:
-    if not isinstance(value, Mapping) or not all(
-        isinstance(key, str) for key in value
-    ):
+    if not isinstance(value, Mapping) or not all(isinstance(key, str) for key in value):
         raise SemanticReassessmentError(f"{field} must be an object")
     return value
 
@@ -684,18 +603,12 @@ def _exact(
 
 def _digest(value: object, field: str) -> str:
     if not isinstance(value, str) or not _SHA256.fullmatch(value):
-        raise SemanticReassessmentError(
-            f"{field} must be a lowercase SHA-256 digest"
-        )
+        raise SemanticReassessmentError(f"{field} must be a lowercase SHA-256 digest")
     return value
 
 
 def _safe_id(value: object, field: str) -> str:
-    if (
-        not isinstance(value, str)
-        or not _SAFE_ID.fullmatch(value)
-        or value in {".", ".."}
-    ):
+    if not isinstance(value, str) or not _SAFE_ID.fullmatch(value) or value in {".", ".."}:
         raise SemanticReassessmentError(f"{field} must be a safe identifier")
     return value
 
@@ -712,25 +625,16 @@ def _strict_pairs(
 
 
 def _reject_nonfinite(token: str) -> object:
-    raise SemanticReassessmentError(
-        f"non-finite JSON number is forbidden: {token}"
-    )
+    raise SemanticReassessmentError(f"non-finite JSON number is forbidden: {token}")
 
 
 def _read_canonical(path: Path, field: str) -> tuple[object, bytes]:
     try:
         file_stat = path.lstat()
-        if (
-            stat.S_ISLNK(file_stat.st_mode)
-            or not stat.S_ISREG(file_stat.st_mode)
-        ):
-            raise SemanticReassessmentError(
-                f"{field} must be a regular non-symlink file"
-            )
+        if stat.S_ISLNK(file_stat.st_mode) or not stat.S_ISREG(file_stat.st_mode):
+            raise SemanticReassessmentError(f"{field} must be a regular non-symlink file")
         if not 0 < file_stat.st_size <= _MAX_ARTIFACT_BYTES:
-            raise SemanticReassessmentError(
-                f"{field} size is outside the safe bound"
-            )
+            raise SemanticReassessmentError(f"{field} size is outside the safe bound")
         raw = path.read_bytes()
         text = raw.decode("utf-8")
     except SemanticReassessmentError:
@@ -738,9 +642,7 @@ def _read_canonical(path: Path, field: str) -> tuple[object, bytes]:
     except (OSError, UnicodeError) as exc:
         raise SemanticReassessmentError(f"cannot read {field}: {path}") from exc
     if not text.endswith("\n"):
-        raise SemanticReassessmentError(
-            f"{field} is not canonical newline JSON"
-        )
+        raise SemanticReassessmentError(f"{field} is not canonical newline JSON")
     try:
         value = json.loads(
             text,
@@ -757,9 +659,7 @@ def _read_canonical(path: Path, field: str) -> tuple[object, bytes]:
 def _write_once(path: Path, value: object) -> bytes:
     raw = (canonical_json(value) + "\n").encode("utf-8")
     if not 0 < len(raw) <= _MAX_ARTIFACT_BYTES:
-        raise SemanticReassessmentError(
-            f"semantic artifact size is outside the safe bound: {path}"
-        )
+        raise SemanticReassessmentError(f"semantic artifact size is outside the safe bound: {path}")
     path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
     try:
         with path.open("xb") as handle:
@@ -782,9 +682,7 @@ def _relative_reference(value: object, field: str) -> PurePosixPath:
     """Parse one canonical, host-independent artifact reference."""
 
     if not isinstance(value, str) or not value or "\\" in value:
-        raise SemanticReassessmentError(
-            f"{field} must be a canonical relative POSIX path"
-        )
+        raise SemanticReassessmentError(f"{field} must be a canonical relative POSIX path")
     path = PurePosixPath(value)
     if (
         path.is_absolute()
@@ -792,9 +690,7 @@ def _relative_reference(value: object, field: str) -> PurePosixPath:
         or any(part in {"", ".", ".."} for part in path.parts)
         or path.as_posix() != value
     ):
-        raise SemanticReassessmentError(
-            f"{field} must be a canonical relative POSIX path"
-        )
+        raise SemanticReassessmentError(f"{field} must be a canonical relative POSIX path")
     return path
 
 
@@ -805,15 +701,11 @@ def _assert_no_symlink_chain(root: Path, target: Path, field: str) -> None:
     logical_target = target.absolute()
     for ancestor in reversed((logical_root, *logical_root.parents)):
         if ancestor.is_symlink():
-            raise SemanticReassessmentError(
-                f"{field} reference root must not use a symlink"
-            )
+            raise SemanticReassessmentError(f"{field} reference root must not use a symlink")
     try:
         relative = logical_target.relative_to(logical_root)
     except ValueError as exc:
-        raise SemanticReassessmentError(
-            f"{field} escaped its run namespace"
-        ) from exc
+        raise SemanticReassessmentError(f"{field} escaped its run namespace") from exc
     current = logical_root
     for part in relative.parts:
         current = current / part
@@ -825,9 +717,9 @@ def _relative(path: Path, index_path: Path) -> str:
     run_root = index_path.parent.parent
     _assert_no_symlink_chain(run_root, path, "semantic artifact")
     try:
-        reference = path.resolve(strict=False).relative_to(
-            run_root.resolve(strict=False)
-        ).as_posix()
+        reference = (
+            path.resolve(strict=False).relative_to(run_root.resolve(strict=False)).as_posix()
+        )
     except ValueError as exc:
         raise SemanticReassessmentError(
             f"semantic artifact is outside its run namespace: {path}"
@@ -841,10 +733,7 @@ def _normalize_term(value: object) -> str:
         return ""
     normalized = unicodedata.normalize("NFKC", value).casefold()
     return "_".join(
-        "".join(
-            character if character.isalnum() else " "
-            for character in normalized
-        ).split()
+        "".join(character if character.isalnum() else " " for character in normalized).split()
     )
 
 
@@ -857,14 +746,8 @@ def _strings(value: object) -> tuple[str, ...]:
     if isinstance(value, str):
         normalized = _normalize_term(value)
         return () if not normalized else (normalized,)
-    if isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
-        return tuple(
-            normalized
-            for item in value
-            if (normalized := _normalize_term(item))
-        )
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+        return tuple(normalized for item in value if (normalized := _normalize_term(item)))
     return ()
 
 
@@ -875,9 +758,7 @@ def _named_values(
     depth: int = 0,
 ) -> tuple[str, ...]:
     if depth > 8:
-        raise SemanticReassessmentError(
-            "semantic candidate exceeds maximum traversal depth"
-        )
+        raise SemanticReassessmentError("semantic candidate exceeds maximum traversal depth")
     result: list[str] = []
     if isinstance(value, Mapping):
         for raw_key, item in value.items():
@@ -886,9 +767,7 @@ def _named_values(
                 result.extend(_strings(item))
             if isinstance(item, (Mapping, list, tuple)):
                 result.extend(_named_values(item, keys, depth=depth + 1))
-    elif isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    elif isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         for item in value:
             if isinstance(item, (Mapping, list, tuple)):
                 result.extend(_named_values(item, keys, depth=depth + 1))
@@ -896,19 +775,14 @@ def _named_values(
 
 
 def _token_terms(tokens: object) -> frozenset[str]:
-    if not isinstance(tokens, Sequence) or isinstance(
-        tokens, (str, bytes, bytearray)
-    ):
+    if not isinstance(tokens, Sequence) or isinstance(tokens, (str, bytes, bytearray)):
         return frozenset()
     primary: list[str] = []
     terms: set[str] = set()
     for raw in tokens:
         if not isinstance(raw, Mapping):
             continue
-        values = [
-            _normalize_term(raw.get(name))
-            for name in ("lower", "text", "lemma")
-        ]
+        values = [_normalize_term(raw.get(name)) for name in ("lower", "text", "lemma")]
         values = [value for value in values if value]
         if not values:
             continue
@@ -916,17 +790,14 @@ def _token_terms(tokens: object) -> frozenset[str]:
         terms.update(values)
     for width in (2, 3):
         terms.update(
-            "_".join(primary[offset : offset + width])
-            for offset in range(len(primary) - width + 1)
+            "_".join(primary[offset : offset + width]) for offset in range(len(primary) - width + 1)
         )
     return frozenset(terms)
 
 
 def _logic_values(values: Sequence[str]) -> frozenset[str]:
     return frozenset(
-        normalized
-        for value in values
-        if (normalized := _LOGIC_ALIASES.get(_normalize_term(value)))
+        normalized for value in values if (normalized := _LOGIC_ALIASES.get(_normalize_term(value)))
     )
 
 
@@ -947,17 +818,11 @@ def _structured_projection(
             raise SemanticReassessmentError(
                 "successful SyMAI semantic payload used an unsupported schema"
             )
-        candidate = _mapping(
-            payload.get("candidate_ir"), "symai.candidate_ir"
-        )
+        candidate = _mapping(payload.get("candidate_ir"), "symai.candidate_ir")
         candidate_digest = _sha(candidate)
         if payload.get("candidate_ir_sha256") != candidate_digest:
-            raise SemanticReassessmentError(
-                "SyMAI candidate digest is missing or mismatched"
-            )
-        predicates.update(
-            _strings(payload.get("normalized_predicates"))
-        )
+            raise SemanticReassessmentError("SyMAI candidate digest is missing or mismatched")
+        predicates.update(_strings(payload.get("normalized_predicates")))
         entities.update(_strings(payload.get("entities")))
         ambiguity_flags = _strings(payload.get("ambiguity_flags"))
         validation_errors = _strings(payload.get("validation_errors"))
@@ -1019,9 +884,7 @@ def _structured_projection(
         "observed_targets": sorted(targets),
         "observed_predicates": sorted(predicates),
         "observed_entities": sorted(entities),
-        "explicit_classes": sorted(
-            value for value in classes if value in EXPECTED_CLASSES
-        ),
+        "explicit_classes": sorted(value for value in classes if value in EXPECTED_CLASSES),
         "ambiguity_flags": sorted(set(ambiguity_flags)),
         "validation_errors": sorted(set(validation_errors)),
     }
@@ -1048,17 +911,11 @@ def validate_normalized_semantic_stage_contract(
     """
 
     if not isinstance(stage, StageRecord):
-        raise SemanticReassessmentError(
-            "semantic contract calibration requires a StageRecord"
-        )
+        raise SemanticReassessmentError("semantic contract calibration requires a StageRecord")
     if stage.stage not in _FRONTEND_STAGES:
-        raise SemanticReassessmentError(
-            "semantic contract calibration requires a front-end stage"
-        )
+        raise SemanticReassessmentError("semantic contract calibration requires a front-end stage")
     if stage.status is not StageStatus.SUCCESS:
-        raise SemanticReassessmentError(
-            "semantic contract calibration requires a successful stage"
-        )
+        raise SemanticReassessmentError("semantic contract calibration requires a successful stage")
     if not _stage_invoked(stage):
         raise SemanticReassessmentError(
             "semantic contract calibration requires a graph-invoked stage"
@@ -1068,11 +925,7 @@ def validate_normalized_semantic_stage_contract(
         f"{stage.stage.value} semantic payload",
     )
     projection = _structured_projection(stage, payload)
-    missing = [
-        field
-        for field in ("observed_logics", "observed_targets")
-        if not projection[field]
-    ]
+    missing = [field for field in ("observed_logics", "observed_targets") if not projection[field]]
     if missing:
         raise SemanticReassessmentError(
             "semantic producer/scorer contract is uncalibrated for "
@@ -1100,17 +953,11 @@ def validate_label_blind_semantic_input_binding(
     """
 
     if not isinstance(stage, StageRecord):
-        raise SemanticReassessmentError(
-            "semantic input binding requires a StageRecord"
-        )
+        raise SemanticReassessmentError("semantic input binding requires a StageRecord")
     if not isinstance(case, BenchmarkCase):
-        raise SemanticReassessmentError(
-            "semantic input binding requires a reviewed BenchmarkCase"
-        )
+        raise SemanticReassessmentError("semantic input binding requires a reviewed BenchmarkCase")
     if stage.stage not in _FRONTEND_STAGES:
-        raise SemanticReassessmentError(
-            "semantic input binding requires a front-end stage"
-        )
+        raise SemanticReassessmentError("semantic input binding requires a front-end stage")
     if stage.status is not StageStatus.SUCCESS or not _stage_invoked(stage):
         raise SemanticReassessmentError(
             "semantic input binding requires a successful graph-invoked stage"
@@ -1143,9 +990,7 @@ def _v2_cid(
     try:
         return validate_cid(value, codecs=codecs)
     except (TypeError, ValueError) as exc:
-        raise SemanticReassessmentError(
-            f"{field} is not a canonical revision-2 CID"
-        ) from exc
+        raise SemanticReassessmentError(f"{field} is not a canonical revision-2 CID") from exc
 
 
 def _contains_forbidden_semantic_key(value: object) -> bool:
@@ -1155,9 +1000,7 @@ def _contains_forbidden_semantic_key(value: object) -> bool:
                 return True
             if _contains_forbidden_semantic_key(item):
                 return True
-    elif isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    elif isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         return any(_contains_forbidden_semantic_key(item) for item in value)
     return False
 
@@ -1176,17 +1019,14 @@ def validate_source_only_semantic_input_v2(
     """
 
     if not isinstance(stage, StageRecord):
-        raise SemanticReassessmentError(
-            "source-only semantic validation requires a StageRecord"
-        )
+        raise SemanticReassessmentError("source-only semantic validation requires a StageRecord")
     if stage.stage not in _FRONTEND_STAGES or not _stage_invoked(stage):
         raise SemanticReassessmentError(
             "source-only semantic validation requires an invoked front-end"
         )
     if stage.adapter_version != "2":
         raise SemanticReassessmentError(
-            f"invoked {stage.stage.value} does not bind semantic adapter "
-            "version 2"
+            f"invoked {stage.stage.value} does not bind semantic adapter version 2"
         )
     if not isinstance(source_text, str) or not source_text.strip():
         raise SemanticReassessmentError(
@@ -1196,20 +1036,15 @@ def validate_source_only_semantic_input_v2(
     expected_source_cid = cid_for_bytes(source_text.encode("utf-8"))
     if stage.provenance.input_sha256 != expected_input_sha256:
         raise SemanticReassessmentError(
-            f"invoked {stage.stage.value} input is not the exact canonical "
-            "source-only envelope"
+            f"invoked {stage.stage.value} input is not the exact canonical source-only envelope"
         )
     for name, identity in (
         ("requested_identity", stage.provenance.requested_identity),
         ("effective_identity", stage.provenance.effective_identity),
     ):
-        if (
-            name == "effective_identity"
-            and identity.get("graph_invoked") is not True
-        ):
+        if name == "effective_identity" and identity.get("graph_invoked") is not True:
             raise SemanticReassessmentError(
-                f"invoked {stage.stage.value} {name} does not bind "
-                "graph_invoked=true"
+                f"invoked {stage.stage.value} {name} does not bind graph_invoked=true"
             )
         if (
             name == "requested_identity"
@@ -1222,8 +1057,7 @@ def validate_source_only_semantic_input_v2(
             )
         if _contains_forbidden_semantic_key(identity):
             raise SemanticReassessmentError(
-                f"invoked {stage.stage.value} {name} contains an evaluator "
-                "or proof field"
+                f"invoked {stage.stage.value} {name} contains an evaluator or proof field"
             )
         protocol_cid = _v2_cid(
             identity.get("semantic_protocol_cid"),
@@ -1241,13 +1075,9 @@ def validate_source_only_semantic_input_v2(
             )
         if source_cid != expected_source_cid:
             raise SemanticReassessmentError(
-                f"invoked {stage.stage.value} source CID is not bound to "
-                "the reviewed source bytes"
+                f"invoked {stage.stage.value} source CID is not bound to the reviewed source bytes"
             )
-        if (
-            "proof_context_cid" not in identity
-            or identity.get("proof_context_cid") is not None
-        ):
+        if "proof_context_cid" not in identity or identity.get("proof_context_cid") is not None:
             raise SemanticReassessmentError(
                 f"invoked {stage.stage.value} does not prove the G200 proof "
                 "boundary remained closed"
@@ -1256,7 +1086,8 @@ def validate_source_only_semantic_input_v2(
         requested_mode = stage.provenance.requested_identity.get("mode")
         effective_mode = stage.provenance.effective_identity.get("mode")
         if (
-            requested_mode not in {
+            requested_mode
+            not in {
                 "full_model",
                 "regex_legal",
                 "blank_model",
@@ -1280,9 +1111,7 @@ def _expected_stage_for_producer_v2(producer_id: str) -> StageName:
         return StageName.SYMAI
     if producer_id.startswith("spacy_"):
         return StageName.SPACY
-    raise SemanticReassessmentError(
-        "semantic calibration producer is not registered"
-    )
+    raise SemanticReassessmentError("semantic calibration producer is not registered")
 
 
 def _validate_stage_producer_identity_v2(
@@ -1317,10 +1146,7 @@ def _validate_compiler_retained_modal_ir_v2(
         "normalized_text_cid",
         "formulas_cid",
     }
-    if not (
-        "projection" in modal_ir
-        or identity_fields.intersection(modal_ir)
-    ):
+    if not ("projection" in modal_ir or identity_fields.intersection(modal_ir)):
         return
     if modal_ir.get("projection") != "cid_only":
         raise SemanticReassessmentError(
@@ -1345,9 +1171,7 @@ def _parse_semantic_projection_v2(
 ) -> SemanticProjection | None:
     """Parse and cross-bind one producer projection and its retained evidence."""
 
-    payload = _mapping(
-        stage.data, f"{stage.stage.value} semantic-v2 payload"
-    )
+    payload = _mapping(stage.data, f"{stage.stage.value} semantic-v2 payload")
     raw_projection = payload.get("semantic_projection")
     if raw_projection is None:
         return None
@@ -1361,14 +1185,10 @@ def _parse_semantic_projection_v2(
             f"{stage.stage.value} semantic projection failed strict parsing"
         ) from exc
     if projection.semantic_protocol_cid != SEMANTIC_PROTOCOL_V2_CID:
-        raise SemanticReassessmentError(
-            f"{stage.stage.value} semantic protocol CID drifted"
-        )
+        raise SemanticReassessmentError(f"{stage.stage.value} semantic protocol CID drifted")
     expected_source_cid = cid_for_bytes(source_text.encode("utf-8"))
     if projection.source_cid != expected_source_cid:
-        raise SemanticReassessmentError(
-            f"{stage.stage.value} projection source CID mismatched"
-        )
+        raise SemanticReassessmentError(f"{stage.stage.value} projection source CID mismatched")
 
     outer_protocol = _v2_cid(
         payload.get("semantic_protocol_cid"),
@@ -1382,13 +1202,9 @@ def _parse_semantic_projection_v2(
 
     if stage.stage is StageName.COMPILER:
         if payload.get("schema") != _COMPILER_EVIDENCE_SCHEMA_V2:
-            raise _SemanticSchemaIncompatible(
-                "compiler did not emit compiler-output.v2"
-            )
+            raise _SemanticSchemaIncompatible("compiler did not emit compiler-output.v2")
         if projection.producer_id != "compiler":
-            raise SemanticReassessmentError(
-                "compiler projection used the wrong producer identity"
-            )
+            raise SemanticReassessmentError("compiler projection used the wrong producer identity")
         modal_ir = _mapping(payload.get("modal_ir"), "compiler.modal_ir")
         _validate_compiler_retained_modal_ir_v2(modal_ir)
         retained_evidence_cid = cid_for_dag_json(_plain(modal_ir))
@@ -1410,14 +1226,10 @@ def _parse_semantic_projection_v2(
                 "compiler full or retained ModalIR CID binding mismatched"
             )
         if payload.get("source_cid") != expected_source_cid:
-            raise SemanticReassessmentError(
-                "compiler outer source CID mismatched"
-            )
+            raise SemanticReassessmentError("compiler outer source CID mismatched")
     elif stage.stage is StageName.SPACY:
         if payload.get("schema") != _SPACY_EVIDENCE_SCHEMA_V2:
-            raise _SemanticSchemaIncompatible(
-                "spaCy did not emit spacy-evidence.v2"
-            )
+            raise _SemanticSchemaIncompatible("spaCy did not emit spacy-evidence.v2")
         expected_producer = {
             "full_model": "spacy_full_model",
             "regex_legal": "spacy_regex_legal",
@@ -1425,14 +1237,11 @@ def _parse_semantic_projection_v2(
         }.get(stage.provenance.effective_identity.get("mode"))
         if projection.producer_id != expected_producer:
             raise SemanticReassessmentError(
-                "spaCy projection producer differs from its exact mode "
-                "identity"
+                "spaCy projection producer differs from its exact mode identity"
             )
         document = _mapping(payload.get("document"), "spacy.document")
         if document.get("source_cid") != expected_source_cid:
-            raise SemanticReassessmentError(
-                "spaCy document source CID mismatched"
-            )
+            raise SemanticReassessmentError("spaCy document source CID mismatched")
         modal_ir = _mapping(payload.get("modal_ir"), "spacy.modal_ir")
         evidence_cid = cid_for_dag_json(_plain(modal_ir))
         if (
@@ -1444,27 +1253,17 @@ def _parse_semantic_projection_v2(
             != evidence_cid
             or projection.evidence_cid != evidence_cid
         ):
-            raise SemanticReassessmentError(
-                "spaCy retained evidence CID mismatched its projection"
-            )
+            raise SemanticReassessmentError("spaCy retained evidence CID mismatched its projection")
     elif stage.stage is StageName.SYMAI:
         if payload.get("schema") != _SYMAI_EVIDENCE_SCHEMA_V2:
-            raise _SemanticSchemaIncompatible(
-                "SyMAI did not emit symai-evidence.v2"
-            )
+            raise _SemanticSchemaIncompatible("SyMAI did not emit symai-evidence.v2")
         if projection.producer_id != "symai":
-            raise SemanticReassessmentError(
-                "SyMAI projection used the wrong producer identity"
-            )
+            raise SemanticReassessmentError("SyMAI projection used the wrong producer identity")
         if payload.get("source_cid") != expected_source_cid:
-            raise SemanticReassessmentError(
-                "SyMAI outer source CID mismatched"
-            )
+            raise SemanticReassessmentError("SyMAI outer source CID mismatched")
         raw_output = payload.get("raw_output")
         if not isinstance(raw_output, str):
-            raise SemanticReassessmentError(
-                "SyMAI retained raw response bytes are unavailable"
-            )
+            raise SemanticReassessmentError("SyMAI retained raw response bytes are unavailable")
         raw_output_cid = cid_for_bytes(raw_output.encode("utf-8"))
         if (
             _v2_cid(
@@ -1474,9 +1273,7 @@ def _parse_semantic_projection_v2(
             )
             != raw_output_cid
         ):
-            raise SemanticReassessmentError(
-                "SyMAI raw response CID mismatched"
-            )
+            raise SemanticReassessmentError("SyMAI raw response CID mismatched")
         response = _mapping(
             _plain(payload.get("validated_response")),
             "symai.validated_response",
@@ -1495,9 +1292,7 @@ def _parse_semantic_projection_v2(
                 "SyMAI validated-response CID mismatched its projection"
             )
         response_semantics = {
-            "logic_family": _normalize_logic_v2(
-                response.get("logic_family")
-            ),
+            "logic_family": _normalize_logic_v2(response.get("logic_family")),
             "target": normalize_semantic_term(response.get("target")),
             "class": normalize_semantic_term(response.get("class")),
             "predicates": sorted(
@@ -1528,9 +1323,7 @@ def _parse_semantic_projection_v2(
             "predicates": list(projection.predicates),
             "entities": list(projection.entities),
         }:
-            raise SemanticReassessmentError(
-                "SyMAI projection differs from its validated response"
-            )
+            raise SemanticReassessmentError("SyMAI projection differs from its validated response")
         response_completeness = _mapping(
             response.get("completeness"),
             "symai.validated_response.completeness",
@@ -1560,8 +1353,7 @@ def _parse_semantic_projection_v2(
             )
         )
         if (
-            set(response_completeness)
-            != set(SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2)
+            set(response_completeness) != set(SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2)
             or any(
                 type(response_completeness[field]) is not bool
                 for field in SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2
@@ -1569,16 +1361,13 @@ def _parse_semantic_projection_v2(
             or dict(response_completeness) != dict(projection.completeness)
             or response_ambiguity != projection.ambiguity_flags
             or response_errors != projection.validation_errors
-            or response.get("confidence_millionths")
-            != projection.confidence_millionths
+            or response.get("confidence_millionths") != projection.confidence_millionths
         ):
             raise SemanticReassessmentError(
                 "SyMAI projection metadata differs from its validated response"
             )
     else:  # pragma: no cover - guarded by caller
-        raise SemanticReassessmentError(
-            "semantic-v2 projection came from a non-front-end stage"
-        )
+        raise SemanticReassessmentError("semantic-v2 projection came from a non-front-end stage")
     return projection
 
 
@@ -1586,9 +1375,7 @@ def _validate_semantic_failure_v2(
     stage: StageRecord,
     source_text: str,
 ) -> str:
-    payload = _mapping(
-        stage.data, f"{stage.stage.value} semantic failure payload"
-    )
+    payload = _mapping(stage.data, f"{stage.stage.value} semantic failure payload")
     raw_receipt = (
         payload
         if payload.get("schema") == SEMANTIC_FAILURE_SCHEMA_V2
@@ -1614,30 +1401,18 @@ def _validate_semantic_failure_v2(
         "semantic failure receipt",
     )
     if receipt.get("schema") != SEMANTIC_FAILURE_SCHEMA_V2:
-        raise SemanticReassessmentError(
-            "semantic failure receipt schema drifted"
-        )
-    body = {
-        key: _plain(value)
-        for key, value in receipt.items()
-        if key != "receipt_cid"
-    }
-    if (
-        _v2_cid(
-            receipt.get("receipt_cid"),
-            "semantic_failure.receipt_cid",
-            codecs=("dag-json",),
-        )
-        != cid_for_dag_json(body)
-    ):
-        raise SemanticReassessmentError(
-            "semantic failure receipt CID mismatched"
-        )
+        raise SemanticReassessmentError("semantic failure receipt schema drifted")
+    body = {key: _plain(value) for key, value in receipt.items() if key != "receipt_cid"}
+    if _v2_cid(
+        receipt.get("receipt_cid"),
+        "semantic_failure.receipt_cid",
+        codecs=("dag-json",),
+    ) != cid_for_dag_json(body):
+        raise SemanticReassessmentError("semantic failure receipt CID mismatched")
     if (
         receipt.get("semantic_protocol_cid") != SEMANTIC_PROTOCOL_V2_CID
         or receipt.get("stage") != stage.stage.value
-        or receipt.get("source_cid")
-        != cid_for_bytes(source_text.encode("utf-8"))
+        or receipt.get("source_cid") != cid_for_bytes(source_text.encode("utf-8"))
     ):
         raise SemanticReassessmentError(
             "semantic failure receipt source or protocol binding mismatched"
@@ -1648,9 +1423,7 @@ def _validate_semantic_failure_v2(
         )
     subcode = receipt.get("failure_subcode")
     if subcode not in SEMANTIC_FAILURE_CODES_V2:
-        raise SemanticReassessmentError(
-            "semantic failure receipt subcode is unsupported"
-        )
+        raise SemanticReassessmentError("semantic failure receipt subcode is unsupported")
     if payload is not receipt and stage.stage is StageName.SYMAI:
         raw_output = payload.get("raw_output")
         raw_output_cid = payload.get("raw_output_cid")
@@ -1674,8 +1447,7 @@ def _validate_semantic_failure_v2(
                 != cid_for_bytes(raw_output.encode("utf-8"))
             ):
                 raise SemanticReassessmentError(
-                    "SyMAI retained failure response does not match its "
-                    "CID/byte receipt"
+                    "SyMAI retained failure response does not match its CID/byte receipt"
                 )
         else:
             if raw_output is not None:
@@ -1685,17 +1457,14 @@ def _validate_semantic_failure_v2(
             if raw_output_cid is None or raw_output_bytes is None:
                 if raw_output_cid is not None or raw_output_bytes is not None:
                     raise SemanticReassessmentError(
-                        "SyMAI failure raw CID and byte count must be null "
-                        "together"
+                        "SyMAI failure raw CID and byte count must be null together"
                     )
             elif (
                 isinstance(raw_output_bytes, bool)
                 or not isinstance(raw_output_bytes, int)
                 or raw_output_bytes <= 0
             ):
-                raise SemanticReassessmentError(
-                    "SyMAI unretained response byte count is invalid"
-                )
+                raise SemanticReassessmentError("SyMAI unretained response byte count is invalid")
             else:
                 _v2_cid(
                     raw_output_cid,
@@ -1744,10 +1513,7 @@ def _projection_field_representation_v2(
 ) -> dict[str, bool]:
     if projection is None:
         return {field: False for field in _SEMANTIC_FIELDS_V2}
-    return {
-        field: bool(projection.completeness[field])
-        for field in _SEMANTIC_FIELDS_V2
-    }
+    return {field: bool(projection.completeness[field]) for field in _SEMANTIC_FIELDS_V2}
 
 
 def _semantic_field_matches_v2(
@@ -1776,17 +1542,13 @@ def _semantic_evidence_verification_v2(
             "retained_evidence_cid_recomputed": False,
             "full_evidence_cid_status": "unavailable",
         }
-    payload = _mapping(
-        stage.data, f"{stage.stage.value} semantic-v2 payload"
-    )
+    payload = _mapping(stage.data, f"{stage.stage.value} semantic-v2 payload")
     if stage.stage is StageName.COMPILER:
         retained_cid = cid_for_dag_json(
             _plain(_mapping(payload.get("modal_ir"), "compiler.modal_ir"))
         )
         full_cid = payload.get("modal_ir_cid")
-        retained_bound = (
-            payload.get("retained_modal_ir_cid") == retained_cid
-        )
+        retained_bound = payload.get("retained_modal_ir_cid") == retained_cid
         full_recomputed = full_cid == retained_cid
         return {
             "projection_cids_recomputed": True,
@@ -1827,52 +1589,25 @@ def _semantic_coordinate_cost_v2(
     selected = tuple(stages)
     invoked = tuple(stage for stage in selected if _stage_invoked(stage))
     body: dict[str, object] = {
-        "schema": (
-            "ipfs-datasets.logic-pipeline-benchmark."
-            "semantic-coordinate-cost.v2"
-        ),
+        "schema": ("ipfs-datasets.logic-pipeline-benchmark.semantic-coordinate-cost.v2"),
         "semantic_protocol_cid": SEMANTIC_PROTOCOL_V2_CID,
         "selected_stage_count": len(selected),
         "invoked_stage_count": len(invoked),
         "selected_stages": [stage.stage.value for stage in selected],
         "invoked_stages": [stage.stage.value for stage in invoked],
-        "wall_time_ms": sum(
-            float(stage.telemetry.wall_time_ms) for stage in invoked
-        ),
-        "cpu_time_ms": sum(
-            float(stage.telemetry.cpu_time_ms) for stage in invoked
-        ),
+        "wall_time_ms": sum(float(stage.telemetry.wall_time_ms) for stage in invoked),
+        "cpu_time_ms": sum(float(stage.telemetry.cpu_time_ms) for stage in invoked),
         "peak_memory_bytes": max(
-            (
-                int(stage.telemetry.peak_memory_bytes)
-                for stage in invoked
-            ),
+            (int(stage.telemetry.peak_memory_bytes) for stage in invoked),
             default=0,
         ),
-        "model_calls": sum(
-            int(stage.telemetry.model_calls) for stage in invoked
-        ),
-        "cache_hits": sum(
-            int(stage.telemetry.cache_hits) for stage in invoked
-        ),
-        "cache_misses": sum(
-            int(stage.telemetry.cache_misses) for stage in invoked
-        ),
-        "retries": sum(
-            int(stage.telemetry.retries) for stage in invoked
-        ),
-        "bytes_in": sum(
-            int(stage.telemetry.bytes_in) for stage in invoked
-        ),
-        "bytes_out": sum(
-            int(stage.telemetry.bytes_out) for stage in invoked
-        ),
-        "resource_lanes": sorted(
-            {
-                stage.telemetry.resource_lane.value
-                for stage in invoked
-            }
-        ),
+        "model_calls": sum(int(stage.telemetry.model_calls) for stage in invoked),
+        "cache_hits": sum(int(stage.telemetry.cache_hits) for stage in invoked),
+        "cache_misses": sum(int(stage.telemetry.cache_misses) for stage in invoked),
+        "retries": sum(int(stage.telemetry.retries) for stage in invoked),
+        "bytes_in": sum(int(stage.telemetry.bytes_in) for stage in invoked),
+        "bytes_out": sum(int(stage.telemetry.bytes_out) for stage in invoked),
+        "resource_lanes": sorted({stage.telemetry.resource_lane.value for stage in invoked}),
     }
     return {**body, "cost_receipt_cid": cid_for_dag_json(body)}
 
@@ -1917,10 +1652,7 @@ def _semantic_coordinate_receipt_v2(
         terminal is not None
         and terminal.stage is StageName.COMPILER
         and projection is not None
-        and evidence_verification.get(
-            "projection_evidence_cid_recomputed"
-        )
-        is not True
+        and evidence_verification.get("projection_evidence_cid_recomputed") is not True
     )
     body: dict[str, object] = {
         "schema": SEMANTIC_VALIDATOR_RECEIPT_SCHEMA_V2,
@@ -1932,27 +1664,19 @@ def _semantic_coordinate_receipt_v2(
         },
         "source_cid": target.source_cid,
         "validated_ablation_graph": (
-            None
-            if coordinate.graph_binding is None
-            else coordinate.graph_binding.to_dict()
+            None if coordinate.graph_binding is None else coordinate.graph_binding.to_dict()
         ),
         "eligible_for_complete_calibration": (
             validated_ablation_graph
             and coordinate.graph_binding is not None
             and evidence_authoritative
         ),
-        "terminal_stage": (
-            None if terminal is None else terminal.stage.value
-        ),
+        "terminal_stage": (None if terminal is None else terminal.stage.value),
         "terminal_stage_cid": (
-            None
-            if terminal is None
-            else cid_for_dag_json(_plain(terminal.to_dict()))
+            None if terminal is None else cid_for_dag_json(_plain(terminal.to_dict()))
         ),
         # Compatibility join to the revision-1 StageRecord envelope.
-        "terminal_stage_sha256": (
-            None if terminal is None else terminal.digest
-        ),
+        "terminal_stage_sha256": (None if terminal is None else terminal.digest),
         "terminal_stage_failed": (
             None if terminal is None else terminal.status is not StageStatus.SUCCESS
         ),
@@ -1963,32 +1687,18 @@ def _semantic_coordinate_receipt_v2(
         "observed_semantics": observed,
         "field_matches": dict(field_matches),
         "field_represented": dict(field_represented),
-        "projection_cid": (
-            None if projection is None else projection.projection_cid
-        ),
+        "projection_cid": (None if projection is None else projection.projection_cid),
         "projection_available": projection is not None,
-        "projection_nonvacuous": _semantic_projection_nonvacuous_v2(
-            projection
-        ),
-        "projection_scoreable": (
-            False if projection is None else projection.scoreable
-        ),
-        "semantic_content_cid": (
-            None if projection is None else projection.semantic_content_cid
-        ),
-        "evidence_cid": (
-            None if projection is None else projection.evidence_cid
-        ),
+        "projection_nonvacuous": _semantic_projection_nonvacuous_v2(projection),
+        "projection_scoreable": (False if projection is None else projection.scoreable),
+        "semantic_content_cid": (None if projection is None else projection.semantic_content_cid),
+        "evidence_cid": (None if projection is None else projection.evidence_cid),
         "evidence_verification": evidence_verification,
-        "semantic_evidence_authoritative_for_calibration": (
-            evidence_authoritative
-        ),
+        "semantic_evidence_authoritative_for_calibration": (evidence_authoritative),
         "cost": _semantic_coordinate_cost_v2(coordinate.stages),
         "failure_subcode": failure_subcode,
         "schema_detail": schema_detail,
-        "validation_error_precedence_applied": (
-            validation_error_precedence_applied
-        ),
+        "validation_error_precedence_applied": (validation_error_precedence_applied),
         "raw_evidence_cid_compared_to_reviewed_ir": False,
         "authoritative_for_proof": False,
         "holdout_accessed": False,
@@ -2015,19 +1725,13 @@ def _evaluate_semantic_calibration_coordinate_v2(
         else SemanticCalibrationCoordinateV2.from_dict(coordinate)
     )
     if measured.case_id != reviewed.case_id:
-        raise SemanticReassessmentError(
-            "semantic coordinate case differs from its reviewed target"
-        )
+        raise SemanticReassessmentError("semantic coordinate case differs from its reviewed target")
     if validated_ablation_graph and measured.graph_binding is None:
         raise SemanticReassessmentError(
             "authoritative semantic calibration coordinate lacks its "
             "internally derived ablation graph binding"
         )
-    frontends = tuple(
-        stage
-        for stage in measured.stages
-        if stage.stage in _FRONTEND_STAGES
-    )
+    frontends = tuple(stage for stage in measured.stages if stage.stage in _FRONTEND_STAGES)
     if any(stage.case_id != reviewed.case_id for stage in frontends):
         raise SemanticReassessmentError(
             "semantic stage case differs from its calibration coordinate"
@@ -2048,9 +1752,7 @@ def _evaluate_semantic_calibration_coordinate_v2(
             status="semantic_schema_incompatible",
             quality_millionths=None,
             field_matches={field: None for field in _SEMANTIC_FIELDS_V2},
-            field_represented={
-                field: False for field in _SEMANTIC_FIELDS_V2
-            },
+            field_represented={field: False for field in _SEMANTIC_FIELDS_V2},
             failure_subcode="semantic_schema_incompatible",
             validation_error_precedence_applied=False,
             validated_ablation_graph=validated_ablation_graph,
@@ -2072,9 +1774,7 @@ def _evaluate_semantic_calibration_coordinate_v2(
             status="semantic_schema_incompatible",
             quality_millionths=None,
             field_matches={field: None for field in _SEMANTIC_FIELDS_V2},
-            field_represented={
-                field: False for field in _SEMANTIC_FIELDS_V2
-            },
+            field_represented={field: False for field in _SEMANTIC_FIELDS_V2},
             failure_subcode="semantic_schema_incompatible",
             validation_error_precedence_applied=False,
             validated_ablation_graph=validated_ablation_graph,
@@ -2093,8 +1793,7 @@ def _evaluate_semantic_calibration_coordinate_v2(
                 )
                 if projection is None:
                     raise _SemanticSchemaIncompatible(
-                        f"successful {stage.stage.value} stage omitted its "
-                        "semantic projection"
+                        f"successful {stage.stage.value} stage omitted its semantic projection"
                     )
                 parsed[stage.stage] = projection
     except _SemanticSchemaIncompatible as exc:
@@ -2106,9 +1805,7 @@ def _evaluate_semantic_calibration_coordinate_v2(
             status="semantic_schema_incompatible",
             quality_millionths=None,
             field_matches={field: None for field in _SEMANTIC_FIELDS_V2},
-            field_represented={
-                field: False for field in _SEMANTIC_FIELDS_V2
-            },
+            field_represented={field: False for field in _SEMANTIC_FIELDS_V2},
             failure_subcode="semantic_schema_incompatible",
             validation_error_precedence_applied=False,
             validated_ablation_graph=validated_ablation_graph,
@@ -2134,12 +1831,8 @@ def _evaluate_semantic_calibration_coordinate_v2(
                 projection=None,
                 status="semantic_schema_incompatible",
                 quality_millionths=None,
-                field_matches={
-                    field: None for field in _SEMANTIC_FIELDS_V2
-                },
-                field_represented={
-                    field: False for field in _SEMANTIC_FIELDS_V2
-                },
+                field_matches={field: None for field in _SEMANTIC_FIELDS_V2},
+                field_represented={field: False for field in _SEMANTIC_FIELDS_V2},
                 failure_subcode="semantic_schema_incompatible",
                 validation_error_precedence_applied=False,
                 validated_ablation_graph=validated_ablation_graph,
@@ -2162,9 +1855,7 @@ def _evaluate_semantic_calibration_coordinate_v2(
             field_matches={field: False for field in _SEMANTIC_FIELDS_V2},
             field_represented=represented,
             failure_subcode=subcode,
-            validation_error_precedence_applied=(
-                subcode == "semantic_validation_failed"
-            ),
+            validation_error_precedence_applied=(subcode == "semantic_validation_failed"),
             validated_ablation_graph=validated_ablation_graph,
         )
 
@@ -2179,10 +1870,7 @@ def _evaluate_semantic_calibration_coordinate_v2(
     )
     if (
         terminal.stage is StageName.COMPILER
-        and evidence_verification.get(
-            "projection_evidence_cid_recomputed"
-        )
-        is not True
+        and evidence_verification.get("projection_evidence_cid_recomputed") is not True
     ):
         return _semantic_coordinate_receipt_v2(
             coordinate=measured,
@@ -2191,12 +1879,8 @@ def _evaluate_semantic_calibration_coordinate_v2(
             projection=projection,
             status="semantic_schema_incompatible",
             quality_millionths=None,
-            field_matches={
-                field: None for field in _SEMANTIC_FIELDS_V2
-            },
-            field_represented=_projection_field_representation_v2(
-                projection
-            ),
+            field_matches={field: None for field in _SEMANTIC_FIELDS_V2},
+            field_represented=_projection_field_representation_v2(projection),
             failure_subcode="semantic_schema_incompatible",
             validation_error_precedence_applied=False,
             validated_ablation_graph=validated_ablation_graph,
@@ -2221,11 +1905,7 @@ def _evaluate_semantic_calibration_coordinate_v2(
         precedence = False
     else:
         correct = all(matches.values())
-        status = (
-            "semantically_correct"
-            if correct
-            else "semantically_incorrect"
-        )
+        status = "semantically_correct" if correct else "semantically_incorrect"
         quality = 1_000_000 if correct else 0
         precedence = False
     return _semantic_coordinate_receipt_v2(
@@ -2238,9 +1918,7 @@ def _evaluate_semantic_calibration_coordinate_v2(
         field_matches=matches,
         field_represented=represented,
         failure_subcode=(
-            None
-            if status in {"semantically_correct", "semantically_incorrect"}
-            else status
+            None if status in {"semantically_correct", "semantically_incorrect"} else status
         ),
         validation_error_precedence_applied=precedence,
         validated_ablation_graph=validated_ablation_graph,
@@ -2290,12 +1968,8 @@ def _wilson_lower_bound_millionths_v2(
 
 def _evaluate_semantic_calibration_v2(
     *,
-    targets: Sequence[
-        SemanticCalibrationTargetV2 | Mapping[str, object]
-    ],
-    coordinates: Sequence[
-        SemanticCalibrationCoordinateV2 | Mapping[str, object]
-    ],
+    targets: Sequence[SemanticCalibrationTargetV2 | Mapping[str, object]],
+    coordinates: Sequence[SemanticCalibrationCoordinateV2 | Mapping[str, object]],
     validated_ablation_graph: bool,
     reviewed_target_manifest: Mapping[str, object] | None,
 ) -> Mapping[str, object]:
@@ -2312,9 +1986,7 @@ def _evaluate_semantic_calibration_v2(
     if isinstance(targets, (str, bytes, bytearray, Mapping)):
         raise SemanticReassessmentError("semantic targets must be a sequence")
     if isinstance(coordinates, (str, bytes, bytearray, Mapping)):
-        raise SemanticReassessmentError(
-            "semantic coordinates must be a sequence"
-        )
+        raise SemanticReassessmentError("semantic coordinates must be a sequence")
     parsed_targets = tuple(
         target
         if isinstance(target, SemanticCalibrationTargetV2)
@@ -2327,25 +1999,19 @@ def _evaluate_semantic_calibration_v2(
         )
     catalog = {target.case_id: target for target in parsed_targets}
     if len(catalog) != len(parsed_targets):
-        raise SemanticReassessmentError(
-            "semantic calibration targets contain duplicate case ids"
-        )
+        raise SemanticReassessmentError("semantic calibration targets contain duplicate case ids")
     parsed_coordinates = tuple(
         coordinate
         if isinstance(coordinate, SemanticCalibrationCoordinateV2)
         else SemanticCalibrationCoordinateV2.from_dict(coordinate)
         for coordinate in coordinates
     )
-    by_key: dict[
-        tuple[str, str], SemanticCalibrationCoordinateV2
-    ] = {}
+    by_key: dict[tuple[str, str], SemanticCalibrationCoordinateV2] = {}
     extras: list[dict[str, str]] = []
     for coordinate in parsed_coordinates:
         key = (coordinate.case_id, coordinate.producer_id)
         if key in by_key:
-            raise SemanticReassessmentError(
-                "semantic calibration contains duplicate coordinates"
-            )
+            raise SemanticReassessmentError("semantic calibration contains duplicate coordinates")
         if coordinate.case_id not in catalog:
             extras.append(
                 {
@@ -2425,10 +2091,7 @@ def _evaluate_semantic_calibration_v2(
         quality = observation.get("quality_millionths")
         if isinstance(quality, int) and not isinstance(quality, bool):
             producer_quality[producer_id].append(quality)
-        if (
-            observation.get("status") == "semantic_schema_incompatible"
-            or quality is None
-        ):
+        if observation.get("status") == "semantic_schema_incompatible" or quality is None:
             incompatible.append(
                 {
                     "case_id": str(coordinate["case_id"]),
@@ -2437,17 +2100,14 @@ def _evaluate_semantic_calibration_v2(
             )
 
     observed_case_count = len(parsed_targets)
-    case_population_complete = (
-        observed_case_count == SEMANTIC_CALIBRATION_CASE_COUNT_V2
-    )
+    case_population_complete = observed_case_count == SEMANTIC_CALIBRATION_CASE_COUNT_V2
     expected_per_field = SEMANTIC_CALIBRATION_CASES_PER_PRODUCER_V2
     coordinate_coverage_complete = bool(
         case_population_complete
         and not missing
         and not extras
         and len(expected) == SEMANTIC_CALIBRATION_COORDINATE_COUNT_V2
-        and len(observations)
-        == SEMANTIC_CALIBRATION_COORDINATE_COUNT_V2
+        and len(observations) == SEMANTIC_CALIBRATION_COORDINATE_COUNT_V2
     )
     field_coverage_complete = all(
         field_counts[producer_id][field] == expected_per_field
@@ -2477,24 +2137,18 @@ def _evaluate_semantic_calibration_v2(
             codecs=("dag-json",),
         )
         manifest_body = {
-            key: _plain(value)
-            for key, value in manifest.items()
-            if key != "target_manifest_cid"
+            key: _plain(value) for key, value in manifest.items() if key != "target_manifest_cid"
         }
         if (
             manifest.get("schema") != SEMANTIC_TARGET_MANIFEST_SCHEMA_V2
             or cid_for_dag_json(manifest_body) != target_manifest_cid
         ):
-            raise SemanticReassessmentError(
-                "reviewed semantic target manifest CID mismatched"
-            )
+            raise SemanticReassessmentError("reviewed semantic target manifest CID mismatched")
     graph_manifest_bound = bool(
         target_manifest_cid is not None
         and all(
             isinstance(observation.get("validated_ablation_graph"), Mapping)
-            and observation["validated_ablation_graph"].get(
-                "reviewed_target_manifest_cid"
-            )
+            and observation["validated_ablation_graph"].get("reviewed_target_manifest_cid")
             == target_manifest_cid
             for observation in observations
         )
@@ -2507,24 +2161,16 @@ def _evaluate_semantic_calibration_v2(
         )
         and graph_manifest_bound
     )
-    schema_compatible = bool(
-        score_shape_complete and graph_coverage_complete
-    )
+    schema_compatible = bool(score_shape_complete and graph_coverage_complete)
     all_quality = [
         quality
         for producer_id in SEMANTIC_PRODUCER_IDS_V2
         for quality in producer_quality[producer_id]
     ]
     coordinate_quality_millionths = (
-        None
-        if not score_shape_complete
-        else sum(all_quality) // len(all_quality)
+        None if not score_shape_complete else sum(all_quality) // len(all_quality)
     )
-    quality_millionths = (
-        None
-        if not schema_compatible
-        else coordinate_quality_millionths
-    )
+    quality_millionths = None if not schema_compatible else coordinate_quality_millionths
     producer_metrics: dict[str, dict[str, object]] = {}
     for producer_id in SEMANTIC_PRODUCER_IDS_V2:
         values = producer_quality[producer_id]
@@ -2533,42 +2179,29 @@ def _evaluate_semantic_calibration_v2(
             len(values) == expected_per_field
             and len(producer_rows) == expected_per_field
             and all(
-                observation.get("status")
-                != "semantic_schema_incompatible"
+                observation.get("status") != "semantic_schema_incompatible"
                 for observation in producer_rows
             )
         )
         producer_graph_complete = bool(
             len(producer_rows) == expected_per_field
             and all(
-                observation.get("eligible_for_complete_calibration")
-                is True
+                observation.get("eligible_for_complete_calibration") is True
                 for observation in producer_rows
             )
         )
         available_count = sum(
-            observation.get("projection_available") is True
-            for observation in producer_rows
+            observation.get("projection_available") is True for observation in producer_rows
         )
         nonvacuous_count = sum(
-            observation.get("projection_nonvacuous") is True
-            for observation in producer_rows
+            observation.get("projection_nonvacuous") is True for observation in producer_rows
         )
         scoreable_count = sum(
-            observation.get("projection_scoreable") is True
-            for observation in producer_rows
+            observation.get("projection_scoreable") is True for observation in producer_rows
         )
         exact_successes = sum(value == 1_000_000 for value in values)
-        diagnostic_value = (
-            None
-            if not measured_complete
-            else sum(values) // len(values)
-        )
-        value = (
-            diagnostic_value
-            if measured_complete and producer_graph_complete
-            else None
-        )
+        diagnostic_value = None if not measured_complete else sum(values) // len(values)
+        value = diagnostic_value if measured_complete and producer_graph_complete else None
         wilson_lower = (
             None
             if not measured_complete
@@ -2585,9 +2218,7 @@ def _evaluate_semantic_calibration_v2(
                     None
                     if not measured_complete
                     else (
-                        field_correct_counts[producer_id][field]
-                        * 1_000_000
-                        // expected_per_field
+                        field_correct_counts[producer_id][field] * 1_000_000 // expected_per_field
                     )
                 ),
             }
@@ -2596,9 +2227,7 @@ def _evaluate_semantic_calibration_v2(
         costs = producer_costs[producer_id]
         cost_totals = {
             field: sum(
-                float(cost[field])
-                if field in {"wall_time_ms", "cpu_time_ms"}
-                else int(cost[field])
+                float(cost[field]) if field in {"wall_time_ms", "cpu_time_ms"} else int(cost[field])
                 for cost in costs
             )
             for field in (
@@ -2627,22 +2256,17 @@ def _evaluate_semantic_calibration_v2(
             "retries_total": cost_totals["retries"],
             "bytes_in_total": cost_totals["bytes_in"],
             "bytes_out_total": cost_totals["bytes_out"],
-            "coordinate_cost_receipt_cids": [
-                cost["cost_receipt_cid"] for cost in costs
-            ],
+            "coordinate_cost_receipt_cids": [cost["cost_receipt_cid"] for cost in costs],
         }
         quality_threshold_passed = bool(
-            value is not None
-            and value >= SEMANTIC_ABSOLUTE_QUALITY_MIN_MILLIONTHS_V2
+            value is not None and value >= SEMANTIC_ABSOLUTE_QUALITY_MIN_MILLIONTHS_V2
         )
         wilson_threshold_passed = bool(
             wilson_lower is not None
-            and wilson_lower
-            > SEMANTIC_WILSON_LOWER_BOUND_MIN_MILLIONTHS_V2
+            and wilson_lower > SEMANTIC_WILSON_LOWER_BOUND_MIN_MILLIONTHS_V2
         )
         availability_passed = (
-            available_count == expected_per_field
-            and nonvacuous_count == expected_per_field
+            available_count == expected_per_field and nonvacuous_count == expected_per_field
         )
         eligible = bool(
             measured_complete
@@ -2655,15 +2279,11 @@ def _evaluate_semantic_calibration_v2(
             "coordinate_count": len(values),
             "expected_coordinate_count": expected_per_field,
             "semantic_quality_millionths": value,
-            "semantic_quality_rate": (
-                None if value is None else value / 1_000_000
-            ),
+            "semantic_quality_rate": (None if value is None else value / 1_000_000),
             "diagnostic_semantic_quality_millionths": diagnostic_value,
             "exact_five_field_success_count": exact_successes,
             "wilson_lower_bound_millionths": wilson_lower,
-            "wilson_confidence_millionths": (
-                SEMANTIC_WILSON_CONFIDENCE_MILLIONTHS_V2
-            ),
+            "wilson_confidence_millionths": (SEMANTIC_WILSON_CONFIDENCE_MILLIONTHS_V2),
             "field_correctness": field_correctness,
             "all_fields_represented": all(
                 field_counts[producer_id][field] == expected_per_field
@@ -2674,81 +2294,51 @@ def _evaluate_semantic_calibration_v2(
                 "projection_nonvacuous_count": nonvacuous_count,
                 "projection_scoreable_count": scoreable_count,
                 "expected_count": expected_per_field,
-                "all_outputs_available_and_nonvacuous": (
-                    availability_passed
-                ),
+                "all_outputs_available_and_nonvacuous": (availability_passed),
             },
             "cost": cost_summary,
             "absolute_eligibility": {
-                "measured_non_schema_incompatible_20_of_20": (
-                    measured_complete
-                ),
+                "measured_non_schema_incompatible_20_of_20": (measured_complete),
                 "validated_graph_20_of_20": producer_graph_complete,
-                "all_outputs_available_and_nonvacuous": (
-                    availability_passed
-                ),
+                "all_outputs_available_and_nonvacuous": (availability_passed),
                 "quality_minimum_passed": quality_threshold_passed,
-                "wilson_lower_bound_strictly_above_minimum": (
-                    wilson_threshold_passed
-                ),
+                "wilson_lower_bound_strictly_above_minimum": (wilson_threshold_passed),
                 "eligible": eligible,
             },
         }
     eligible_producers = sorted(
         producer_id
         for producer_id in SEMANTIC_PRODUCER_IDS_V2
-        if producer_metrics[producer_id]["absolute_eligibility"][
-            "eligible"
-        ]
-        is True
+        if producer_metrics[producer_id]["absolute_eligibility"]["eligible"] is True
     )
     absolute_gate = bool(schema_compatible and eligible_producers)
     selected_producers: list[str] = []
     relative_selection_applied = False
     if absolute_gate:
         identified = {
-            producer_id: int(
-                producer_metrics[producer_id][
-                    "semantic_quality_millionths"
-                ]
-            )
+            producer_id: int(producer_metrics[producer_id]["semantic_quality_millionths"])
             for producer_id in eligible_producers
-            if producer_metrics[producer_id][
-                "semantic_quality_millionths"
-            ]
-            is not None
+            if producer_metrics[producer_id]["semantic_quality_millionths"] is not None
         }
         best = max(identified.values())
         selected_producers = sorted(
-            producer_id
-            for producer_id, value in identified.items()
-            if value == best and value > 0
+            producer_id for producer_id, value in identified.items() if value == best and value > 0
         )
         relative_selection_applied = True
 
     body: dict[str, object] = {
         "schema": SEMANTIC_CALIBRATION_REPORT_SCHEMA_V2,
         "semantic_protocol_cid": SEMANTIC_PROTOCOL_V2_CID,
-        "calibration_route_manifest_cid": (
-            SEMANTIC_CALIBRATION_ROUTE_MANIFEST_V2_CID
-        ),
-        "calibration_metric_spec_cid": (
-            SEMANTIC_CALIBRATION_METRIC_SPEC_V2_CID
-        ),
-        "reviewed_target_source_cid": (
-            SEMANTIC_REVIEWED_TARGET_SOURCE_V2_CID
-        ),
+        "calibration_route_manifest_cid": (SEMANTIC_CALIBRATION_ROUTE_MANIFEST_V2_CID),
+        "calibration_metric_spec_cid": (SEMANTIC_CALIBRATION_METRIC_SPEC_V2_CID),
+        "reviewed_target_source_cid": (SEMANTIC_REVIEWED_TARGET_SOURCE_V2_CID),
         "reviewed_target_manifest": (
-            None
-            if reviewed_target_manifest is None
-            else _plain(reviewed_target_manifest)
+            None if reviewed_target_manifest is None else _plain(reviewed_target_manifest)
         ),
         "reviewed_target_manifest_cid": target_manifest_cid,
         "measurement_attribution": {
             "unit": "integrated_frontend_stage_prefix",
-            "quality": (
-                "terminal_projection_with_required_upstream_dependencies"
-            ),
+            "quality": ("terminal_projection_with_required_upstream_dependencies"),
             "cost": "complete_selected_stage_prefix",
             "standalone_producer_claims_permitted": False,
         },
@@ -2769,27 +2359,21 @@ def _evaluate_semantic_calibration_v2(
             "semantic_fields": list(_SEMANTIC_FIELDS_V2),
             "expected_case_count": SEMANTIC_CALIBRATION_CASE_COUNT_V2,
             "observed_case_count": observed_case_count,
-            "expected_coordinate_count": (
-                SEMANTIC_CALIBRATION_COORDINATE_COUNT_V2
-            ),
+            "expected_coordinate_count": (SEMANTIC_CALIBRATION_COORDINATE_COUNT_V2),
             "observed_coordinate_count": len(observations),
         },
         "coverage": {
             "case_population_complete": case_population_complete,
             "missing_case_count": max(
                 0,
-                SEMANTIC_CALIBRATION_CASE_COUNT_V2
-                - observed_case_count,
+                SEMANTIC_CALIBRATION_CASE_COUNT_V2 - observed_case_count,
             ),
             "extra_case_count": max(
                 0,
-                observed_case_count
-                - SEMANTIC_CALIBRATION_CASE_COUNT_V2,
+                observed_case_count - SEMANTIC_CALIBRATION_CASE_COUNT_V2,
             ),
             "coordinate_coverage_complete": coordinate_coverage_complete,
-            "validated_ablation_graph_coverage_complete": (
-                graph_coverage_complete
-            ),
+            "validated_ablation_graph_coverage_complete": (graph_coverage_complete),
             "field_coverage_complete": field_coverage_complete,
             "quality_coordinate_complete": quality_coordinate_complete,
             "missing_coordinates": missing,
@@ -2803,13 +2387,9 @@ def _evaluate_semantic_calibration_v2(
             "identified": schema_compatible,
             "semantic_quality_millionths": quality_millionths,
             "semantic_quality_rate": (
-                None
-                if quality_millionths is None
-                else quality_millionths / 1_000_000
+                None if quality_millionths is None else quality_millionths / 1_000_000
             ),
-            "diagnostic_coordinate_quality_millionths": (
-                coordinate_quality_millionths
-            ),
+            "diagnostic_coordinate_quality_millionths": (coordinate_quality_millionths),
             "diagnostic_coordinate_quality_rate": (
                 None
                 if coordinate_quality_millionths is None
@@ -2817,26 +2397,18 @@ def _evaluate_semantic_calibration_v2(
             ),
             "all_wrong_is_measured_zero": quality_millionths == 0,
             "schema_incompatible_is_null": not score_shape_complete,
-            "unvalidated_graph_is_null": (
-                score_shape_complete and not graph_coverage_complete
-            ),
+            "unvalidated_graph_is_null": (score_shape_complete and not graph_coverage_complete),
             "producer_metrics": producer_metrics,
         },
         "absolute_quality_gate": {
-            "minimum_millionths": (
-                SEMANTIC_ABSOLUTE_QUALITY_MIN_MILLIONTHS_V2
-            ),
+            "minimum_millionths": (SEMANTIC_ABSOLUTE_QUALITY_MIN_MILLIONTHS_V2),
             "exact_five_field_quality_minimum_millionths": (
                 SEMANTIC_ABSOLUTE_QUALITY_MIN_MILLIONTHS_V2
             ),
-            "required_coordinate_count_per_producer": (
-                SEMANTIC_CALIBRATION_CASES_PER_PRODUCER_V2
-            ),
+            "required_coordinate_count_per_producer": (SEMANTIC_CALIBRATION_CASES_PER_PRODUCER_V2),
             "requires_every_output_available_and_nonvacuous": True,
             "confidence_interval_method": "wilson_score_two_sided",
-            "confidence_millionths": (
-                SEMANTIC_WILSON_CONFIDENCE_MILLIONTHS_V2
-            ),
+            "confidence_millionths": (SEMANTIC_WILSON_CONFIDENCE_MILLIONTHS_V2),
             "wilson_lower_bound_minimum_millionths": (
                 SEMANTIC_WILSON_LOWER_BOUND_MIN_MILLIONTHS_V2
             ),
@@ -2856,10 +2428,7 @@ def _evaluate_semantic_calibration_v2(
             "reason": (
                 "HSSL-G200 cannot authorize an experimental-arm shortlist"
                 if absolute_gate
-                else (
-                    "semantic calibration did not pass complete non-vacuous "
-                    "quality"
-                )
+                else ("semantic calibration did not pass complete non-vacuous quality")
             ),
         },
         "holdout_authorized": False,
@@ -2871,12 +2440,8 @@ def _evaluate_semantic_calibration_v2(
 
 def evaluate_semantic_calibration_v2(
     *,
-    targets: Sequence[
-        SemanticCalibrationTargetV2 | Mapping[str, object]
-    ],
-    coordinates: Sequence[
-        SemanticCalibrationCoordinateV2 | Mapping[str, object]
-    ],
+    targets: Sequence[SemanticCalibrationTargetV2 | Mapping[str, object]],
+    coordinates: Sequence[SemanticCalibrationCoordinateV2 | Mapping[str, object]],
 ) -> Mapping[str, object]:
     """Evaluate synthetic/injected coordinates without graph authority.
 
@@ -2908,10 +2473,7 @@ def _reviewed_split_identity_v2(
     """
 
     ordered = tuple(cases)
-    if (
-        len(ordered) != 10
-        or any(case.split is not split for case in ordered)
-    ):
+    if len(ordered) != 10 or any(case.split is not split for case in ordered):
         raise SemanticReassessmentError(
             f"reviewed {split.value} target population must contain exactly "
             "ten cases in frozen order"
@@ -2924,17 +2486,13 @@ def _reviewed_split_identity_v2(
         "case_sha256s": [case_sha256(case) for case in ordered],
         "source_sha256s": [case.source_sha256 for case in ordered],
         "normalized_source_sha256s": [
-            normalized_source_sha256(case.source_text)
-            for case in ordered
+            normalized_source_sha256(case.source_text) for case in ordered
         ],
     }
-    split_sha256 = hashlib.sha256(
-        canonical_json(payload).encode("utf-8")
-    ).hexdigest()
+    split_sha256 = hashlib.sha256(canonical_json(payload).encode("utf-8")).hexdigest()
     if split_sha256 != FROZEN_SPLIT_SHA256[split]:
         raise SemanticReassessmentError(
-            f"reviewed {split.value} target cases do not match the frozen "
-            "split identity"
+            f"reviewed {split.value} target cases do not match the frozen split identity"
         )
     return {
         **payload,
@@ -2953,12 +2511,11 @@ def _reviewed_semantic_targets_v2(
     tuple[SemanticCalibrationTargetV2, ...],
     Mapping[str, object],
 ]:
-    if isinstance(
-        reviewed_cases, (str, bytes, bytearray, Mapping)
-    ) or any(not isinstance(case, BenchmarkCase) for case in reviewed_cases):
+    if isinstance(reviewed_cases, (str, bytes, bytearray, Mapping)) or any(
+        not isinstance(case, BenchmarkCase) for case in reviewed_cases
+    ):
         raise SemanticReassessmentError(
-            "authoritative semantic calibration requires reviewed "
-            "BenchmarkCase values"
+            "authoritative semantic calibration requires reviewed BenchmarkCase values"
         )
     cases = tuple(reviewed_cases)
     if (
@@ -2982,8 +2539,7 @@ def _reviewed_semantic_targets_v2(
         Split.DEVELOPMENT,
     }:
         raise SemanticReassessmentError(
-            "reviewed semantic target ordering must bind pilot and "
-            "development splits"
+            "reviewed semantic target ordering must bind pilot and development splits"
         )
     by_id = {case.case_id: case for case in cases}
     ordered_splits: dict[Split, tuple[BenchmarkCase, ...]] = {}
@@ -2991,24 +2547,16 @@ def _reviewed_semantic_targets_v2(
     for split in (Split.PILOT, Split.DEVELOPMENT):
         raw_ids = ordered_case_ids_by_split[split]
         if isinstance(raw_ids, (str, bytes, bytearray, Mapping)):
-            raise SemanticReassessmentError(
-                "reviewed semantic split case ids must be a sequence"
-            )
+            raise SemanticReassessmentError("reviewed semantic split case ids must be a sequence")
         case_ids = tuple(raw_ids)
         if (
             len(case_ids) != 10
             or len(set(case_ids)) != len(case_ids)
             or any(not isinstance(case_id, str) for case_id in case_ids)
-            or set(case_ids)
-            != {
-                case.case_id
-                for case in cases
-                if case.split is split
-            }
+            or set(case_ids) != {case.case_id for case in cases if case.split is split}
         ):
             raise SemanticReassessmentError(
-                f"reviewed {split.value} case ordering differs from the "
-                "validated graph population"
+                f"reviewed {split.value} case ordering differs from the validated graph population"
             )
         ordered = tuple(by_id[case_id] for case_id in case_ids)
         ordered_splits[split] = ordered
@@ -3018,14 +2566,9 @@ def _reviewed_semantic_targets_v2(
             case_manifest_sha256=case_manifest_sha256,
         )
     ordered_cases = tuple(
-        case
-        for split in (Split.PILOT, Split.DEVELOPMENT)
-        for case in ordered_splits[split]
+        case for split in (Split.PILOT, Split.DEVELOPMENT) for case in ordered_splits[split]
     )
-    targets = tuple(
-        SemanticCalibrationTargetV2.from_benchmark_case(case)
-        for case in ordered_cases
-    )
+    targets = tuple(SemanticCalibrationTargetV2.from_benchmark_case(case) for case in ordered_cases)
     entries = []
     for case, target in sorted(
         zip(ordered_cases, targets, strict=True),
@@ -3048,9 +2591,7 @@ def _reviewed_semantic_targets_v2(
         "schema": SEMANTIC_TARGET_MANIFEST_SCHEMA_V2,
         "semantic_protocol_cid": SEMANTIC_PROTOCOL_V2_CID,
         "producer_registry_cid": SEMANTIC_PRODUCER_REGISTRY_V2_CID,
-        "reviewed_target_source_cid": (
-            SEMANTIC_REVIEWED_TARGET_SOURCE_V2_CID
-        ),
+        "reviewed_target_source_cid": (SEMANTIC_REVIEWED_TARGET_SOURCE_V2_CID),
         "case_manifest_sha256": case_manifest_sha256,
         "reviewed_split_identities": split_identities,
         "case_count": SEMANTIC_CALIBRATION_CASE_COUNT_V2,
@@ -3090,9 +2631,7 @@ def evaluate_semantic_ablation_calibration_v2(
     )
 
     if isinstance(evidence_sources, (str, bytes, bytearray, Mapping)):
-        raise SemanticReassessmentError(
-            "semantic evidence_sources must be a sequence"
-        )
+        raise SemanticReassessmentError("semantic evidence_sources must be a sequence")
     validated: list[tuple[object, object]] = []
     for source in evidence_sources:
         if (
@@ -3114,24 +2653,18 @@ def evaluate_semantic_ablation_calibration_v2(
                 "semantic ablation evidence failed source validation"
             ) from exc
         if not run.complete:
-            raise SemanticReassessmentError(
-                "semantic ablation evidence is not a complete graph"
-            )
+            raise SemanticReassessmentError("semantic ablation evidence is not a complete graph")
         validated.append((plan, run))
     if not validated:
-        raise SemanticReassessmentError(
-            "semantic calibration requires validated ablation evidence"
-        )
+        raise SemanticReassessmentError("semantic calibration requires validated ablation evidence")
     plans = [pair[0] for pair in validated]
     if (
-        {plan.split for plan in plans}
-        != {Split.PILOT, Split.DEVELOPMENT}
+        {plan.split for plan in plans} != {Split.PILOT, Split.DEVELOPMENT}
         or any(len(plan.case_ids) != 10 for plan in plans)
         or len(plans) != 2
     ):
         raise SemanticReassessmentError(
-            "semantic calibration requires exactly ten pilot and ten "
-            "development cases"
+            "semantic calibration requires exactly ten pilot and ten development cases"
         )
     common = {
         (
@@ -3150,29 +2683,19 @@ def evaluate_semantic_ablation_calibration_v2(
             "run/environment/manifest/registry/matrix identity"
         )
 
-    case_manifest_sha256s = {
-        plan.case_manifest_sha256 for plan in plans
-    }
+    case_manifest_sha256s = {plan.case_manifest_sha256 for plan in plans}
     if len(case_manifest_sha256s) != 1:
-        raise SemanticReassessmentError(
-            "semantic calibration plans disagree on reviewed manifest"
-        )
+        raise SemanticReassessmentError("semantic calibration plans disagree on reviewed manifest")
     reviewed_case_values = tuple(reviewed_cases)
-    ordered_case_ids_by_split = {
-        plan.split: plan.case_ids for plan in plans
-    }
+    ordered_case_ids_by_split = {plan.split: plan.case_ids for plan in plans}
     parsed_targets, target_manifest = _reviewed_semantic_targets_v2(
         reviewed_case_values,
         case_manifest_sha256=next(iter(case_manifest_sha256s)),
         ordered_case_ids_by_split=ordered_case_ids_by_split,
     )
     catalog = {target.case_id: target for target in parsed_targets}
-    reviewed_by_id = {
-        case.case_id: case for case in reviewed_case_values
-    }
-    planned_case_ids = {
-        case_id for plan in plans for case_id in plan.case_ids
-    }
+    reviewed_by_id = {case.case_id: case for case in reviewed_case_values}
+    planned_case_ids = {case_id for plan in plans for case_id in plan.case_ids}
     if (
         len(parsed_targets) != SEMANTIC_CALIBRATION_CASE_COUNT_V2
         or len(catalog) != len(parsed_targets)
@@ -3188,9 +2711,7 @@ def evaluate_semantic_ablation_calibration_v2(
             "pilot/development population"
         )
 
-    graph_index: dict[
-        tuple[str, str, str], tuple[object, object, object]
-    ] = {}
+    graph_index: dict[tuple[str, str, str], tuple[object, object, object]] = {}
     for plan, run in validated:
         for job, result in zip(plan.jobs, run.results, strict=True):
             key = (
@@ -3205,18 +2726,11 @@ def evaluate_semantic_ablation_calibration_v2(
             graph_index[key] = (plan, job, result)
 
     route_manifest = semantic_calibration_route_manifest_v2()
-    if (
-        cid_for_dag_json(route_manifest)
-        != SEMANTIC_CALIBRATION_ROUTE_MANIFEST_V2_CID
-    ):
-        raise SemanticReassessmentError(
-            "semantic calibration route manifest CID drifted"
-        )
+    if cid_for_dag_json(route_manifest) != SEMANTIC_CALIBRATION_ROUTE_MANIFEST_V2_CID:
+        raise SemanticReassessmentError("semantic calibration route manifest CID drifted")
     raw_routes = route_manifest.get("routes")
     if not isinstance(raw_routes, list):
-        raise SemanticReassessmentError(
-            "semantic calibration route manifest routes are invalid"
-        )
+        raise SemanticReassessmentError("semantic calibration route manifest routes are invalid")
     routes: dict[str, Mapping[str, object]] = {}
     for raw_route in raw_routes:
         route = _mapping(raw_route, "semantic calibration route")
@@ -3231,10 +2745,7 @@ def evaluate_semantic_ablation_calibration_v2(
             "semantic calibration route",
         )
         producer_id = route.get("producer_id")
-        if (
-            not isinstance(producer_id, str)
-            or producer_id in routes
-        ):
+        if not isinstance(producer_id, str) or producer_id in routes:
             raise SemanticReassessmentError(
                 "semantic calibration route producer identity is invalid"
             )
@@ -3242,27 +2753,17 @@ def evaluate_semantic_ablation_calibration_v2(
     if (
         set(routes) != set(SEMANTIC_PRODUCER_IDS_V2)
         or route_manifest.get("cache_mode") != "cold"
-        or route_manifest.get("coordinate_count")
-        != SEMANTIC_CALIBRATION_COORDINATE_COUNT_V2
-        or route_manifest.get("cases_per_producer")
-        != SEMANTIC_CALIBRATION_CASES_PER_PRODUCER_V2
-        or route_manifest.get("post_hoc_route_or_cache_selection")
-        is not False
-        or route_manifest.get("measurement_unit")
-        != "integrated_frontend_stage_prefix"
+        or route_manifest.get("coordinate_count") != SEMANTIC_CALIBRATION_COORDINATE_COUNT_V2
+        or route_manifest.get("cases_per_producer") != SEMANTIC_CALIBRATION_CASES_PER_PRODUCER_V2
+        or route_manifest.get("post_hoc_route_or_cache_selection") is not False
+        or route_manifest.get("measurement_unit") != "integrated_frontend_stage_prefix"
         or route_manifest.get("quality_attribution")
         != "terminal_projection_with_required_upstream_dependencies"
-        or route_manifest.get("cost_attribution")
-        != "complete_selected_stage_prefix"
-        or route_manifest.get("standalone_producer_claims_permitted")
-        is not False
+        or route_manifest.get("cost_attribution") != "complete_selected_stage_prefix"
+        or route_manifest.get("standalone_producer_claims_permitted") is not False
     ):
-        raise SemanticReassessmentError(
-            "semantic calibration route manifest policy drifted"
-        )
-    required_variants = {
-        str(route["variant_id"]) for route in routes.values()
-    }
+        raise SemanticReassessmentError("semantic calibration route manifest policy drifted")
+    required_variants = {str(route["variant_id"]) for route in routes.values()}
     if any(
         not required_variants.issubset(plan.variant_ids)
         or "cold" not in {mode.value for mode in plan.cache_modes}
@@ -3274,14 +2775,11 @@ def evaluate_semantic_ablation_calibration_v2(
         )
 
     expected_selectors = {
-        (case_id, producer_id)
-        for case_id in catalog
-        for producer_id in SEMANTIC_PRODUCER_IDS_V2
+        (case_id, producer_id) for case_id in catalog for producer_id in SEMANTIC_PRODUCER_IDS_V2
     }
     if len(expected_selectors) != SEMANTIC_CALIBRATION_COORDINATE_COUNT_V2:
         raise SemanticReassessmentError(
-            "semantic calibration scope is not the complete frozen "
-            "100-coordinate producer grid"
+            "semantic calibration scope is not the complete frozen 100-coordinate producer grid"
         )
 
     coordinates: list[SemanticCalibrationCoordinateV2] = []
@@ -3295,8 +2793,7 @@ def evaluate_semantic_ablation_calibration_v2(
         graph = graph_index.get(graph_key)
         if graph is None:
             raise SemanticReassessmentError(
-                "preregistered semantic coordinate did not resolve in a "
-                "validated ablation graph"
+                "preregistered semantic coordinate did not resolve in a validated ablation graph"
             )
         plan, job, result = graph
         raw_prefix = route.get("stage_prefix")
@@ -3305,19 +2802,14 @@ def evaluate_semantic_ablation_calibration_v2(
             or not raw_prefix
             or any(not isinstance(value, str) for value in raw_prefix)
         ):
-            raise SemanticReassessmentError(
-                "preregistered semantic route stage prefix is invalid"
-            )
+            raise SemanticReassessmentError("preregistered semantic route stage prefix is invalid")
         prefix = tuple(raw_prefix)
         selected_stages = tuple(result.stages[: len(prefix)])
-        if (
-            tuple(stage.stage.value for stage in selected_stages) != prefix
-            or selected_stages[-1].stage.value
-            != route.get("selected_stage")
-        ):
+        if tuple(stage.stage.value for stage in selected_stages) != prefix or selected_stages[
+            -1
+        ].stage.value != route.get("selected_stage"):
             raise SemanticReassessmentError(
-                "validated result does not contain the exact preregistered "
-                "semantic stage prefix"
+                "validated result does not contain the exact preregistered semantic stage prefix"
             )
         target = catalog[case_id]
         if (
@@ -3326,19 +2818,14 @@ def evaluate_semantic_ablation_calibration_v2(
             or job.case.input_data.get("text") != target.source_text
         ):
             raise SemanticReassessmentError(
-                "semantic target source differs from its validated scheduled "
-                "source-only input"
+                "semantic target source differs from its validated scheduled source-only input"
             )
         proof_stages = {
             StageName.HAMMER,
             StageName.LEANSTRAL,
             StageName.KERNEL,
         }
-        if any(
-            _stage_invoked(stage)
-            for stage in result.stages
-            if stage.stage in proof_stages
-        ):
+        if any(_stage_invoked(stage) for stage in result.stages if stage.stage in proof_stages):
             raise SemanticReassessmentError(
                 "semantic calibration graph invoked a proof stage before G210"
             )
@@ -3350,9 +2837,7 @@ def evaluate_semantic_ablation_calibration_v2(
                 graph_binding=SemanticCalibrationGraphBindingV2(
                     plan_cid=cid_for_dag_json(_plain(plan.to_dict())),
                     plan_sha256=plan.digest,
-                    case_result_cid=cid_for_dag_json(
-                        _plain(result.to_dict())
-                    ),
+                    case_result_cid=cid_for_dag_json(_plain(result.to_dict())),
                     case_result_sha256=result.digest,
                     run_id=result.run_id,
                     variant_id=result.variant_id,
@@ -3360,21 +2845,11 @@ def evaluate_semantic_ablation_calibration_v2(
                     cache_mode=result.cache_mode.value,
                     environment_sha256=plan.environment_sha256,
                     case_manifest_sha256=result.case_manifest_sha256,
-                    producer_registry_cid=(
-                        SEMANTIC_PRODUCER_REGISTRY_V2_CID
-                    ),
-                    calibration_route_manifest_cid=(
-                        SEMANTIC_CALIBRATION_ROUTE_MANIFEST_V2_CID
-                    ),
-                    calibration_metric_spec_cid=(
-                        SEMANTIC_CALIBRATION_METRIC_SPEC_V2_CID
-                    ),
-                    reviewed_target_source_cid=(
-                        SEMANTIC_REVIEWED_TARGET_SOURCE_V2_CID
-                    ),
-                    reviewed_target_manifest_cid=str(
-                        target_manifest["target_manifest_cid"]
-                    ),
+                    producer_registry_cid=(SEMANTIC_PRODUCER_REGISTRY_V2_CID),
+                    calibration_route_manifest_cid=(SEMANTIC_CALIBRATION_ROUTE_MANIFEST_V2_CID),
+                    calibration_metric_spec_cid=(SEMANTIC_CALIBRATION_METRIC_SPEC_V2_CID),
+                    reviewed_target_source_cid=(SEMANTIC_REVIEWED_TARGET_SOURCE_V2_CID),
+                    reviewed_target_manifest_cid=str(target_manifest["target_manifest_cid"]),
                     proof_stages_suppressed=True,
                 ),
             )
@@ -3400,9 +2875,7 @@ def _validate_frontend_stage_payloads(result: CaseResultRecord) -> None:
             )
         if stage.status is not StageStatus.SUCCESS:
             continue
-        payload = _mapping(
-            stage.data, f"{stage.stage.value} stage data"
-        )
+        payload = _mapping(stage.data, f"{stage.stage.value} stage data")
         if not invoked:
             if not (
                 stage.stage is StageName.SYMAI
@@ -3413,8 +2886,7 @@ def _validate_frontend_stage_payloads(result: CaseResultRecord) -> None:
                 and bool(str(payload["reason"]).strip())
             ):
                 raise SemanticReassessmentError(
-                    "non-invoked front-end stage lacks a typed suppression "
-                    "receipt"
+                    "non-invoked front-end stage lacks a typed suppression receipt"
                 )
             continue
         _structured_projection(stage, payload)
@@ -3441,9 +2913,7 @@ def _semantic_stage_state(
                 continue
             return stage, terminal_failure is not None, terminal_failure
         if stage.status in {StageStatus.FAILED, StageStatus.SKIPPED}:
-            terminal_failure = (
-                f"{name.value} stage did not produce successful semantic output"
-            )
+            terminal_failure = f"{name.value} stage did not produce successful semantic output"
             continue
         if stage.status is StageStatus.UNAVAILABLE:
             terminal_failure = f"{name.value} semantic capability was unavailable"
@@ -3495,8 +2965,7 @@ def _predicted_class(
         return "unsupported"
     targets = projection["observed_targets"]
     if isinstance(targets, list) and any(
-        target in {"counterexample", "false", "negated"}
-        for target in targets
+        target in {"counterexample", "false", "negated"} for target in targets
     ):
         return "disproved"
     if any(
@@ -3534,9 +3003,7 @@ def _ground_truth_binding(case: BenchmarkCase) -> dict[str, object]:
         "required_predicates": list(case.required_predicates),
         "required_entities": list(case.required_entities),
         "proof_obligation": (
-            None
-            if case.proof_obligation is None
-            else dict(case.proof_obligation)
+            None if case.proof_obligation is None else dict(case.proof_obligation)
         ),
         "review_sha256": _sha(case.review.to_dict()),
     }
@@ -3554,11 +3021,7 @@ def _validate_result(
     run_id: str,
 ) -> CaseResultRecord:
     try:
-        result = (
-            value
-            if isinstance(value, CaseResultRecord)
-            else CaseResultRecord.from_dict(value)
-        )
+        result = value if isinstance(value, CaseResultRecord) else CaseResultRecord.from_dict(value)
         # Reparse even typed values so the caller cannot rely on mutable nested
         # containers that differ from the canonical wire representation.
         result = CaseResultRecord.from_dict(result.to_dict())
@@ -3569,31 +3032,19 @@ def _validate_result(
         TypeError,
         ValueError,
     ) as exc:
-        raise SemanticReassessmentError(
-            "case result failed strict source validation"
-        ) from exc
+        raise SemanticReassessmentError("case result failed strict source validation") from exc
     if result.run_id != run_id:
-        raise SemanticReassessmentError(
-            "case result run id differs from semantic reassessment"
-        )
+        raise SemanticReassessmentError("case result run id differs from semantic reassessment")
     if result.protocol_sha256 != DEFAULT_PROTOCOL_SHA256:
         raise SemanticReassessmentError("case result protocol identity drifted")
     if result.case_manifest_sha256 != FROZEN_CORPUS_MANIFEST_SHA256:
-        raise SemanticReassessmentError(
-            "case result corpus manifest identity drifted"
-        )
+        raise SemanticReassessmentError("case result corpus manifest identity drifted")
     if result.variant_id not in FRONTEND_VARIANT_IDS:
-        raise SemanticReassessmentError(
-            "case result is outside the front-end variant scope"
-        )
+        raise SemanticReassessmentError("case result is outside the front-end variant scope")
     if result.split.value not in SPLITS:
-        raise SemanticReassessmentError(
-            "case result is outside the unsealed split scope"
-        )
+        raise SemanticReassessmentError("case result is outside the unsealed split scope")
     if result.cache_mode.value not in CACHE_MODES:
-        raise SemanticReassessmentError(
-            "case result cache mode is outside the frozen scope"
-        )
+        raise SemanticReassessmentError("case result cache mode is outside the frozen scope")
     return result
 
 
@@ -3608,9 +3059,7 @@ def _catalog(
             manifest_path=manifest_path,
         )
     except CorpusContractError as exc:
-        raise SemanticReassessmentError(
-            "unsealed reviewed corpus failed validation"
-        ) from exc
+        raise SemanticReassessmentError("unsealed reviewed corpus failed validation") from exc
     if (
         manifest.case_count != 30
         or len(cases) != 20
@@ -3621,15 +3070,11 @@ def _catalog(
         )
     catalog = {case.case_id: case for case in cases}
     by_split = {
-        split: tuple(
-            case.case_id for case in cases if case.split.value == split
-        )
+        split: tuple(case.case_id for case in cases if case.split.value == split)
         for split in SPLITS
     }
     if any(len(by_split[split]) != 10 for split in SPLITS):
-        raise SemanticReassessmentError(
-            "unsealed semantic case membership is incomplete"
-        )
+        raise SemanticReassessmentError("unsealed semantic case membership is incomplete")
     return catalog, by_split
 
 
@@ -3656,9 +3101,7 @@ def _evaluate_coordinate(
         OutcomeStatus.UNAVAILABLE: "unavailable",
         OutcomeStatus.INFRASTRUCTURE_FAILURE: "infrastructure_failure",
     }.get(result.status)
-    selected_stage, semantic_failed, semantic_failure = _semantic_stage_state(
-        result
-    )
+    selected_stage, semantic_failed, semantic_failure = _semantic_stage_state(result)
     signature, signature_stage = _frontend_signature(result)
     ground_truth = _ground_truth_binding(case)
     projection: dict[str, object] | None = None
@@ -3673,11 +3116,7 @@ def _evaluate_coordinate(
         status = missing_status
         missing_reason = (
             result.failure_detail
-            or (
-                None
-                if result.failure_code is None
-                else result.failure_code.value
-            )
+            or (None if result.failure_code is None else result.failure_code.value)
             or "front-end result is unavailable"
         )
         signature = None
@@ -3696,16 +3135,13 @@ def _evaluate_coordinate(
             )
         if signature_stage.digest != selected_stage.digest:
             raise SemanticReassessmentError(
-                "semantic signature is not bound to the selected successful "
-                "front-end stage"
+                "semantic signature is not bound to the selected successful front-end stage"
             )
         validate_label_blind_semantic_input_binding(
             selected_stage,
             case,
         )
-        projection = validate_normalized_semantic_stage_contract(
-            selected_stage
-        )
+        projection = validate_normalized_semantic_stage_contract(selected_stage)
         predicted = _predicted_class(
             projection,
             semantic_stage_failed=semantic_failed,
@@ -3718,12 +3154,8 @@ def _evaluate_coordinate(
         observed_targets = set(projection["observed_targets"])
         observed_predicates = set(projection["observed_predicates"])
         observed_entities = set(projection["observed_entities"])
-        required_predicates = {
-            _normalize_term(value) for value in case.required_predicates
-        }
-        required_entities = {
-            _normalize_term(value) for value in case.required_entities
-        }
+        required_predicates = {_normalize_term(value) for value in case.required_predicates}
+        required_entities = {_normalize_term(value) for value in case.required_entities}
         missing_predicates = sorted(required_predicates - observed_predicates)
         missing_entities = sorted(required_entities - observed_entities)
         logic_match = expected_logic in observed_logics
@@ -3738,20 +3170,14 @@ def _evaluate_coordinate(
             and classification_match
         )
         ambiguity_correct = (
-            classification_match
-            if case.expected_class.value == "ambiguous"
-            else None
+            classification_match if case.expected_class.value == "ambiguous" else None
         )
         fail_closed_correct = (
             classification_match
             if case.expected_class.value in {"disproved", "unsupported"}
             else None
         )
-        status = (
-            "semantically_correct"
-            if exact_match or equivalent
-            else "semantically_incorrect"
-        )
+        status = "semantically_correct" if exact_match or equivalent else "semantically_incorrect"
         projection = {
             **projection,
             "expected_logic": expected_logic,
@@ -3784,18 +3210,10 @@ def _evaluate_coordinate(
         "case_result_sha256": result.digest,
         "front_end_stage_bindings": _stage_bindings(result),
         "semantic_source": {
-            "selected_stage": (
-                None if selected_stage is None else selected_stage.stage.value
-            ),
-            "selected_stage_sha256": (
-                None if selected_stage is None else selected_stage.digest
-            ),
-            "signature_stage": (
-                None if signature_stage is None else signature_stage.stage.value
-            ),
-            "signature_stage_sha256": (
-                None if signature_stage is None else signature_stage.digest
-            ),
+            "selected_stage": (None if selected_stage is None else selected_stage.stage.value),
+            "selected_stage_sha256": (None if selected_stage is None else selected_stage.digest),
+            "signature_stage": (None if signature_stage is None else signature_stage.stage.value),
+            "signature_stage_sha256": (None if signature_stage is None else signature_stage.digest),
             "semantic_signature_sha256": signature,
             "terminal_semantic_stage_failed": semantic_failed,
             "failure_detail": semantic_failure,
@@ -3841,21 +3259,11 @@ def _evaluate_coordinate(
     by_stage = {stage.stage: stage for stage in stages}
     spacy_stage = by_stage.get(StageName.SPACY)
     symai_stage = by_stage.get(StageName.SYMAI)
-    symai_setup = (
-        None
-        if symai_stage is None
-        else extract_symai_cache_setup_telemetry(symai_stage)
-    )
-    setup_model_calls = (
-        0 if symai_setup is None else symai_setup.model_calls
-    )
-    setup_wall_time_ms = (
-        0.0 if symai_setup is None else symai_setup.wall_time_ms
-    )
+    symai_setup = None if symai_stage is None else extract_symai_cache_setup_telemetry(symai_stage)
+    setup_model_calls = 0 if symai_setup is None else symai_setup.model_calls
+    setup_wall_time_ms = 0.0 if symai_setup is None else symai_setup.wall_time_ms
     observation = {
-        "schema": (
-            "ipfs-datasets.logic-pipeline-benchmark.frontend-observation.v1"
-        ),
+        "schema": ("ipfs-datasets.logic-pipeline-benchmark.frontend-observation.v1"),
         "case_id": result.case_id,
         "split": result.split.value,
         "stratum": case.stratum,
@@ -3874,27 +3282,17 @@ def _evaluate_coordinate(
         "predicted_class": predicted,
         "ambiguity_classification_correct": ambiguity_correct,
         "fail_closed_classification_correct": fail_closed_correct,
-        "spacy_invoked": (
-            False if spacy_stage is None else _stage_invoked(spacy_stage)
-        ),
-        "symai_invoked": (
-            False if symai_stage is None else _stage_invoked(symai_stage)
-        ),
+        "spacy_invoked": (False if spacy_stage is None else _stage_invoked(spacy_stage)),
+        "symai_invoked": (False if symai_stage is None else _stage_invoked(symai_stage)),
         "symai_model_calls": sum(
-            stage.telemetry.model_calls
-            for stage in stages
-            if stage.stage is StageName.SYMAI
+            stage.telemetry.model_calls for stage in stages if stage.stage is StageName.SYMAI
         )
         + setup_model_calls,
         "total_wall_time_ms": round(
-            sum(stage.telemetry.wall_time_ms for stage in stages)
-            + setup_wall_time_ms,
+            sum(stage.telemetry.wall_time_ms for stage in stages) + setup_wall_time_ms,
             6,
         ),
-        "model_calls": (
-            sum(stage.telemetry.model_calls for stage in stages)
-            + setup_model_calls
-        ),
+        "model_calls": (sum(stage.telemetry.model_calls for stage in stages) + setup_model_calls),
         "missing_reason": missing_reason,
     }
     return receipt, observation
@@ -3912,25 +3310,17 @@ def evaluate_frontend_case_results(
     """Evaluate exactly 240 unsealed front-end coordinates in canonical order."""
 
     _safe_id(run_id, "run_id")
-    matrix_digest = _digest(
-        matrix_artifact_sha256, "matrix_artifact_sha256"
-    )
+    matrix_digest = _digest(matrix_artifact_sha256, "matrix_artifact_sha256")
     if isinstance(case_results, (str, bytes, bytearray, Mapping)):
-        raise SemanticReassessmentError(
-            "case_results must be a sequence of case results"
-        )
+        raise SemanticReassessmentError("case_results must be a sequence of case results")
     catalog, by_split = _catalog(
         corpus_path=corpus_path,
         manifest_path=manifest_path,
     )
     try:
-        results = [
-            _validate_result(value, run_id=run_id) for value in case_results
-        ]
+        results = [_validate_result(value, run_id=run_id) for value in case_results]
     except TypeError as exc:
-        raise SemanticReassessmentError(
-            "case_results must be a sequence of case results"
-        ) from exc
+        raise SemanticReassessmentError("case_results must be a sequence of case results") from exc
     coordinates = [
         (
             result.split.value,
@@ -3942,9 +3332,7 @@ def evaluate_frontend_case_results(
     ]
     expected = _expected_coordinates(by_split)
     if len(coordinates) != len(set(coordinates)):
-        raise SemanticReassessmentError(
-            "semantic reassessment contains duplicate coordinates"
-        )
+        raise SemanticReassessmentError("semantic reassessment contains duplicate coordinates")
     if set(coordinates) != set(expected):
         raise SemanticReassessmentError(
             "semantic reassessment is not the complete 240-coordinate set; "
@@ -3958,9 +3346,7 @@ def evaluate_frontend_case_results(
         result = by_coordinate[coordinate]
         case = catalog[result.case_id]
         if result.split is not case.split:
-            raise SemanticReassessmentError(
-                "case result split differs from reviewed corpus"
-            )
+            raise SemanticReassessmentError("case result split differs from reviewed corpus")
         receipt, observation = _evaluate_coordinate(
             result,
             case,
@@ -4016,12 +3402,8 @@ def _matrix_binding(value: Mapping[str, object]) -> dict[str, object]:
         )
     return {
         "path": path,
-        "bytes_sha256": _digest(
-            data["bytes_sha256"], "matrix_binding.bytes_sha256"
-        ),
-        "artifact_sha256": _digest(
-            data["artifact_sha256"], "matrix_binding.artifact_sha256"
-        ),
+        "bytes_sha256": _digest(data["bytes_sha256"], "matrix_binding.bytes_sha256"),
+        "artifact_sha256": _digest(data["artifact_sha256"], "matrix_binding.artifact_sha256"),
     }
 
 
@@ -4039,12 +3421,8 @@ def _build_index(
 ) -> dict[str, object]:
     refs = []
     status_counts: dict[str, int] = {}
-    for ordinal, (receipt, raw) in enumerate(
-        zip(receipts, receipt_raw, strict=True)
-    ):
-        coordinate = dict(
-            _mapping(receipt["coordinate"], "receipt.coordinate")
-        )
+    for ordinal, (receipt, raw) in enumerate(zip(receipts, receipt_raw, strict=True)):
+        coordinate = dict(_mapping(receipt["coordinate"], "receipt.coordinate"))
         evaluation = _mapping(receipt["evaluation"], "receipt.evaluation")
         status = str(evaluation["status"])
         status_counts[status] = status_counts.get(status, 0) + 1
@@ -4068,9 +3446,7 @@ def _build_index(
         "protocol_sha256": DEFAULT_PROTOCOL_SHA256,
         "variant_registry_sha256": VARIANT_REGISTRY_SHA256,
         "corpus_manifest_sha256": FROZEN_CORPUS_MANIFEST_SHA256,
-        "split_sha256": {
-            split: FROZEN_SPLIT_SHA256[Split(split)] for split in SPLITS
-        },
+        "split_sha256": {split: FROZEN_SPLIT_SHA256[Split(split)] for split in SPLITS},
         "matrix": dict(matrix_binding),
         "scope": {
             "splits": list(SPLITS),
@@ -4096,9 +3472,7 @@ def _build_index(
         },
     }
     if len(receipts) != EXPECTED_SEMANTIC_COORDINATE_COUNT:
-        raise SemanticReassessmentError(
-            "semantic receipt index is incomplete"
-        )
+        raise SemanticReassessmentError("semantic receipt index is incomplete")
     return {**without_digest, "artifact_sha256": _sha(without_digest)}
 
 
@@ -4132,9 +3506,7 @@ def build_semantic_reassessment(
         corpus_path=corpus_path,
         manifest_path=manifest_path,
     )
-    receipt_directory = _rooted(
-        repository, layout.frontend_receipt_directory
-    )
+    receipt_directory = _rooted(repository, layout.frontend_receipt_directory)
     index_path = _rooted(repository, layout.frontend_receipt_index)
     report_path = _rooted(repository, layout.frontend_report)
     targets = [receipt_directory, index_path, report_path]
@@ -4155,9 +3527,7 @@ def build_semantic_reassessment(
     except ReassessmentNamespaceError as exc:
         raise SemanticReassessmentError(str(exc)) from exc
     if any(path.exists() for path in targets):
-        raise SemanticReassessmentError(
-            "semantic reassessment output namespace already exists"
-        )
+        raise SemanticReassessmentError("semantic reassessment output namespace already exists")
 
     receipt_raw = [
         _write_once(_receipt_path(receipt_directory, receipt), receipt)
@@ -4218,9 +3588,7 @@ def validate_semantic_reassessment(
         corpus_path=corpus_path,
         manifest_path=manifest_path,
     )
-    receipt_directory = _rooted(
-        repository, layout.frontend_receipt_directory
-    )
+    receipt_directory = _rooted(repository, layout.frontend_receipt_directory)
     index_path = _rooted(repository, layout.frontend_receipt_index)
     report_path = _rooted(repository, layout.frontend_report)
     run_root = _rooted(repository, layout.run_paths.run_root)
@@ -4238,23 +3606,15 @@ def validate_semantic_reassessment(
             "semantic validator receipt",
         )
         if value != expected:
-            raise SemanticReassessmentError(
-                "semantic validator receipt changed"
-            )
+            raise SemanticReassessmentError("semantic validator receipt changed")
         receipt_raw.append(raw)
-    report_value, report_raw = _read_canonical(
-        report_path, "front-end semantic report"
-    )
+    report_value, report_raw = _read_canonical(report_path, "front-end semantic report")
     try:
         report = load_frontend_report(report_path)
     except FrontendReportError as exc:
-        raise SemanticReassessmentError(
-            "front-end semantic report failed validation"
-        ) from exc
+        raise SemanticReassessmentError("front-end semantic report failed validation") from exc
     if report_value != report or report != evidence.report:
-        raise SemanticReassessmentError(
-            "front-end semantic report changed"
-        )
+        raise SemanticReassessmentError("front-end semantic report changed")
     expected_index = _build_index(
         run_id=run_id,
         matrix_binding=binding,
@@ -4266,13 +3626,9 @@ def validate_semantic_reassessment(
         receipts=evidence.receipts,
         index_path=index_path,
     )
-    index_value, _raw = _read_canonical(
-        index_path, "semantic receipt index"
-    )
+    index_value, _raw = _read_canonical(index_path, "semantic receipt index")
     if index_value != expected_index:
-        raise SemanticReassessmentError(
-            "semantic receipt index changed"
-        )
+        raise SemanticReassessmentError("semantic receipt index changed")
     return expected_index
 
 
@@ -4283,9 +3639,7 @@ def _safe_matrix_result_path(
     relative_path: object,
 ) -> Path:
     if not isinstance(relative_path, str):
-        raise SemanticReassessmentError(
-            "matrix result path must be a string"
-        )
+        raise SemanticReassessmentError("matrix result path must be a string")
     pure = PurePosixPath(relative_path)
     if (
         pure.is_absolute()
@@ -4294,9 +3648,7 @@ def _safe_matrix_result_path(
         or "\\" in relative_path
         or not relative_path.startswith("matrix/")
     ):
-        raise SemanticReassessmentError(
-            "matrix result path escaped its namespace"
-        )
+        raise SemanticReassessmentError("matrix result path escaped its namespace")
     result_root = index_path.parent
     candidate = result_root.joinpath(*pure.parts)
     _assert_no_symlink_chain(
@@ -4338,9 +3690,7 @@ def _load_matrix_frontend_results(
             try:
                 result = CaseResultRecord.from_dict(record.get("case_result"))
             except (TypeError, ValueError) as exc:
-                raise SemanticReassessmentError(
-                    "matrix case result failed validation"
-                ) from exc
+                raise SemanticReassessmentError("matrix case result failed validation") from exc
             if (
                 _sha_bytes(raw) != ref.get("bytes_sha256")
                 or result.digest != ref.get("case_result_sha256")
@@ -4349,9 +3699,7 @@ def _load_matrix_frontend_results(
                 or result.cache_mode.value != ref.get("cache_mode")
                 or result.split.value != split.get("split")
             ):
-                raise SemanticReassessmentError(
-                    "matrix result differs from its validated index"
-                )
+                raise SemanticReassessmentError("matrix result differs from its validated index")
             coordinate = (
                 result.split.value,
                 result.cache_mode.value,
@@ -4359,15 +3707,11 @@ def _load_matrix_frontend_results(
                 result.case_id,
             )
             if coordinate in seen:
-                raise SemanticReassessmentError(
-                    "matrix contains duplicate front-end coordinates"
-                )
+                raise SemanticReassessmentError("matrix contains duplicate front-end coordinates")
             seen.add(coordinate)
             results.append(result)
     if len(results) != EXPECTED_SEMANTIC_COORDINATE_COUNT:
-        raise SemanticReassessmentError(
-            "validated matrix front-end subset is incomplete"
-        )
+        raise SemanticReassessmentError("validated matrix front-end subset is incomplete")
     return tuple(results)
 
 
@@ -4414,9 +3758,7 @@ def _validated_matrix_inputs(
             benchmark_root=benchmark_root,
         )
     except ValueError as exc:
-        raise SemanticReassessmentError(
-            "semantic reassessment run_id is invalid"
-        ) from exc
+        raise SemanticReassessmentError("semantic reassessment run_id is invalid") from exc
     baseline = _rooted(repository, layout.baseline_manifest)
     receipts = _rooted(repository, layout.receipt_directory)
     matrix_root = _rooted(repository, layout.matrix_root)
@@ -4424,9 +3766,7 @@ def _validated_matrix_inputs(
     matrix_index = _rooted(repository, layout.matrix_index)
     run_root = _rooted(repository, layout.run_paths.run_root)
     _assert_no_symlink_chain(run_root, matrix_index, "matrix index")
-    matrix_value, matrix_raw = _read_canonical(
-        matrix_index, "matrix index"
-    )
+    matrix_value, matrix_raw = _read_canonical(matrix_index, "matrix index")
     matrix_header = _mapping(matrix_value, "matrix index")
     if matrix_header.get("schema") == MATRIX_INDEX_SCHEMA:
         raise SemanticReassessmentError(
@@ -4461,9 +3801,7 @@ def _validated_matrix_inputs(
             "semantic reassessment matrix prerequisite is invalid"
         ) from exc
     if matrix_value != matrix:
-        raise SemanticReassessmentError(
-            "validated matrix differs from its index"
-        )
+        raise SemanticReassessmentError("validated matrix differs from its index")
     results = _load_matrix_frontend_results(
         repository=repository,
         index_path=matrix_index,

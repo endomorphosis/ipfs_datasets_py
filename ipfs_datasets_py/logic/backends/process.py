@@ -147,9 +147,7 @@ class ToolRunLimits:
             if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
                 raise ToolProcessError(f"{name} must be a positive integer")
         if self.max_workspace_bytes < self.max_input_bytes:
-            raise ToolProcessError(
-                "max_workspace_bytes must be at least max_input_bytes"
-            )
+            raise ToolProcessError("max_workspace_bytes must be at least max_input_bytes")
 
 
 @dataclass(frozen=True, slots=True)
@@ -165,9 +163,7 @@ class ToolRunRequest:
     runtime: ToolRuntime = ToolRuntime.NATIVE
     limits: ToolRunLimits = field(default_factory=ToolRunLimits)
     stdin: bytes | str | None = field(default=None, repr=False)
-    input_files: Mapping[str, bytes | str] = field(
-        default_factory=dict, repr=False
-    )
+    input_files: Mapping[str, bytes | str] = field(default_factory=dict, repr=False)
     output_paths: tuple[str, ...] = ()
     environment: Mapping[str, str] = field(default_factory=dict, repr=False)
     secrets: tuple[str, ...] = field(default=(), repr=False)
@@ -178,9 +174,7 @@ class ToolRunRequest:
         object.__setattr__(self, "argv", tuple(self.argv))
         try:
             runtime = (
-                self.runtime
-                if isinstance(self.runtime, ToolRuntime)
-                else ToolRuntime(self.runtime)
+                self.runtime if isinstance(self.runtime, ToolRuntime) else ToolRuntime(self.runtime)
             )
         except (TypeError, ValueError) as error:
             raise ToolProcessError(f"unsupported tool runtime: {self.runtime!r}") from error
@@ -191,12 +185,8 @@ class ToolRunRequest:
             raise ToolProcessError("input_files must be a mapping")
         if not isinstance(self.environment, Mapping):
             raise ToolProcessError("environment must be a mapping")
-        object.__setattr__(
-            self, "input_files", MappingProxyType(dict(self.input_files))
-        )
-        object.__setattr__(
-            self, "environment", MappingProxyType(dict(self.environment))
-        )
+        object.__setattr__(self, "input_files", MappingProxyType(dict(self.input_files)))
+        object.__setattr__(self, "environment", MappingProxyType(dict(self.environment)))
         object.__setattr__(self, "output_paths", tuple(self.output_paths))
         object.__setattr__(self, "secrets", tuple(self.secrets))
 
@@ -413,9 +403,7 @@ def _resource_preexec(limits: ToolRunLimits) -> Callable[[], None] | None:
             cpu_limit = max(1, int(math.ceil(limits.cpu_seconds)))
             resource.setrlimit(resource.RLIMIT_CPU, (cpu_limit, cpu_limit))
         if limits.memory_bytes is not None:
-            resource.setrlimit(
-                resource.RLIMIT_AS, (limits.memory_bytes, limits.memory_bytes)
-            )
+            resource.setrlimit(resource.RLIMIT_AS, (limits.memory_bytes, limits.memory_bytes))
 
     return apply_limits
 
@@ -574,11 +562,7 @@ class SubprocessExecutor:
             list(invocation.argv),
             cwd=str(invocation.cwd),
             env=dict(invocation.environment),
-            stdin=(
-                subprocess.PIPE
-                if invocation.stdin is not None
-                else subprocess.DEVNULL
-            ),
+            stdin=(subprocess.PIPE if invocation.stdin is not None else subprocess.DEVNULL),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             shell=False,
@@ -636,9 +620,7 @@ class SubprocessExecutor:
             time.sleep(self._poll_interval_seconds)
 
         try:
-            returncode = process.wait(
-                timeout=max(0.1, invocation.limits.termination_grace_seconds)
-            )
+            returncode = process.wait(timeout=max(0.1, invocation.limits.termination_grace_seconds))
         except subprocess.TimeoutExpired:  # pragma: no cover - hostile OS boundary.
             tree_terminated = _terminate_process_tree(
                 process,
@@ -648,9 +630,7 @@ class SubprocessExecutor:
 
         if _living_group_descendants(process.pid, process.pid):
             tree_terminated = (
-                _terminate_remaining_group(
-                    process.pid, invocation.limits.termination_grace_seconds
-                )
+                _terminate_remaining_group(process.pid, invocation.limits.termination_grace_seconds)
                 or tree_terminated
             )
         for reader in readers:
@@ -688,9 +668,7 @@ def _validate_workspace_path(path: str, limits: ToolRunLimits) -> PurePosixPath:
         raise ToolProcessError("workspace paths must use portable POSIX separators")
     value = PurePosixPath(path)
     if value.is_absolute() or value == PurePosixPath(".") or ".." in value.parts:
-        raise ToolProcessError(
-            f"workspace path must be relative and traversal-free: {path!r}"
-        )
+        raise ToolProcessError(f"workspace path must be relative and traversal-free: {path!r}")
     return value
 
 
@@ -770,9 +748,7 @@ def tool_limits_from_milliseconds(
     return ToolRunLimits(
         timeout_seconds=max(timeout_ms / 1000.0, 0.001),
         termination_grace_seconds=termination_grace_seconds,
-        cpu_seconds=(
-            max(timeout_ms / 1000.0, 0.001) if cpu_seconds is None else cpu_seconds
-        ),
+        cpu_seconds=(max(timeout_ms / 1000.0, 0.001) if cpu_seconds is None else cpu_seconds),
         memory_bytes=max_memory_bytes,
         max_output_bytes=output_bound,
         max_input_bytes=input_bound,
@@ -846,9 +822,7 @@ def run_bounded_stdin_tool(
     if resolved_limits is None:
         resolved_limits = tool_limits_from_milliseconds(
             timeout_ms if timeout_ms is not None else 30_000,
-            max_output_bytes=(
-                max_output_bytes if max_output_bytes is not None else 1_048_576
-            ),
+            max_output_bytes=(max_output_bytes if max_output_bytes is not None else 1_048_576),
             max_memory_bytes=max_memory_bytes,
             max_input_bytes=len(_bytes(stdin, "stdin")) + 1,
         )
@@ -934,14 +908,10 @@ class BoundedToolRunner:
         if not isinstance(executable, str) or not executable or "\x00" in executable:
             raise ToolProcessError("executable must be a non-empty string without NUL")
         try:
-            resolved_runtime = (
-                runtime if isinstance(runtime, ToolRuntime) else ToolRuntime(runtime)
-            )
+            resolved_runtime = runtime if isinstance(runtime, ToolRuntime) else ToolRuntime(runtime)
         except (TypeError, ValueError) as error:
             raise ToolProcessError(f"unsupported tool runtime: {runtime!r}") from error
-        candidate = shutil.which(
-            executable, path=search_path or self._base_environment.get("PATH")
-        )
+        candidate = shutil.which(executable, path=search_path or self._base_environment.get("PATH"))
         if candidate is None:
             return ToolProbe(
                 runtime=resolved_runtime,
@@ -951,8 +921,7 @@ class BoundedToolRunner:
             )
         resolved = Path(candidate).resolve()
         if self._executable_roots and not any(
-            resolved == root or root in resolved.parents
-            for root in self._executable_roots
+            resolved == root or root in resolved.parents for root in self._executable_roots
         ):
             return ToolProbe(
                 runtime=resolved_runtime,
@@ -974,9 +943,7 @@ class BoundedToolRunner:
         runtime: ToolRuntime = ToolRuntime.NATIVE,
         search_path: str | None = None,
     ) -> bool:
-        return self.probe(
-            executable, runtime=runtime, search_path=search_path
-        ).available
+        return self.probe(executable, runtime=runtime, search_path=search_path).available
 
     def run(
         self,
@@ -1068,11 +1035,7 @@ class BoundedToolRunner:
                 environment=MappingProxyType(
                     self._environment(request.environment, workspace, request.limits)
                 ),
-                stdin=(
-                    None
-                    if request.stdin is None
-                    else _bytes(request.stdin, "stdin")
-                ),
+                stdin=(None if request.stdin is None else _bytes(request.stdin, "stdin")),
                 limits=request.limits,
             )
             try:
@@ -1085,9 +1048,7 @@ class BoundedToolRunner:
                     error=f"executor failure: {type(error).__name__}: {error}",
                 )
             outputs, files_truncated = self._read_outputs(workspace, request)
-            _, workspace_exceeded = _workspace_size(
-                workspace, request.limits.max_workspace_bytes
-            )
+            _, workspace_exceeded = _workspace_size(workspace, request.limits.max_workspace_bytes)
             if files_truncated or workspace_exceeded:
                 raw = replace(
                     raw,
@@ -1107,9 +1068,7 @@ class BoundedToolRunner:
             temporary.cleanup()
         return result
 
-    def _execute(
-        self, invocation: ProcessInvocation, cancellation: Any | None
-    ) -> RawProcessResult:
+    def _execute(self, invocation: ProcessInvocation, cancellation: Any | None) -> RawProcessResult:
         execute = getattr(self._executor, "execute", None)
         raw = (
             execute(invocation, cancellation)
@@ -1124,32 +1083,22 @@ class BoundedToolRunner:
     def _validate_request(request: ToolRunRequest) -> None:
         limits = request.limits
         if not request.argv or len(request.argv) > limits.max_arguments:
-            raise ToolProcessError(
-                f"argv must contain 1..{limits.max_arguments} arguments"
-            )
+            raise ToolProcessError(f"argv must contain 1..{limits.max_arguments} arguments")
         argument_bytes = 0
         for argument in request.argv:
-            if (
-                not isinstance(argument, str)
-                or not argument
-                or "\x00" in argument
-            ):
-                raise ToolProcessError(
-                    "argv entries must be non-empty strings without NUL"
-                )
+            if not isinstance(argument, str) or not argument or "\x00" in argument:
+                raise ToolProcessError("argv entries must be non-empty strings without NUL")
             argument_bytes += len(argument.encode("utf-8"))
         if argument_bytes > limits.max_argument_bytes:
-            raise ToolProcessError(
-                f"argv exceeds {limits.max_argument_bytes} encoded bytes"
-            )
-        if request.stdin is not None and len(_bytes(request.stdin, "stdin")) > limits.max_input_bytes:
+            raise ToolProcessError(f"argv exceeds {limits.max_argument_bytes} encoded bytes")
+        if (
+            request.stdin is not None
+            and len(_bytes(request.stdin, "stdin")) > limits.max_input_bytes
+        ):
             raise ToolProcessError("stdin exceeds max_input_bytes")
         if len(request.output_paths) > limits.max_output_files:
             raise ToolProcessError("too many declared output paths")
-        paths = [
-            _validate_workspace_path(path, limits)
-            for path in request.output_paths
-        ]
+        paths = [_validate_workspace_path(path, limits) for path in request.output_paths]
         if len(paths) != len(set(paths)):
             raise ToolProcessError("declared output paths must be unique")
         input_total = 0
@@ -1164,8 +1113,7 @@ class BoundedToolRunner:
             raise ToolProcessError("input files exceed max_input_bytes")
         if (
             request.stdin is not None
-            and input_total + len(_bytes(request.stdin, "stdin"))
-            > limits.max_input_bytes
+            and input_total + len(_bytes(request.stdin, "stdin")) > limits.max_input_bytes
         ):
             raise ToolProcessError("combined stdin and input files exceed max_input_bytes")
         for name, value in request.environment.items():
@@ -1177,9 +1125,7 @@ class BoundedToolRunner:
                 or not isinstance(value, str)
                 or "\x00" in value
             ):
-                raise ToolProcessError(
-                    "environment keys and values must be valid NUL-free strings"
-                )
+                raise ToolProcessError("environment keys and values must be valid NUL-free strings")
         for secret in request.secrets:
             if not isinstance(secret, str) or not secret:
                 raise ToolProcessError("secrets must be non-empty strings")
@@ -1197,18 +1143,14 @@ class BoundedToolRunner:
                 ) from error
 
     @staticmethod
-    def _expand_workspace_argument(
-        argument: str, workspace: Path, limits: ToolRunLimits
-    ) -> str:
+    def _expand_workspace_argument(argument: str, workspace: Path, limits: ToolRunLimits) -> str:
         if WORKSPACE_PLACEHOLDER not in argument:
             return argument
         if argument == WORKSPACE_PLACEHOLDER:
             return str(workspace)
         prefix = f"{WORKSPACE_PLACEHOLDER}/"
         if not argument.startswith(prefix):
-            raise ToolProcessError(
-                "{workspace} may only be an argument or an argument prefix"
-            )
+            raise ToolProcessError("{workspace} may only be an argument or an argument prefix")
         relative = _validate_workspace_path(argument[len(prefix) :], limits)
         return str(workspace.joinpath(*relative.parts))
 
@@ -1248,15 +1190,11 @@ class BoundedToolRunner:
         return tuple(sorted(values, key=len, reverse=True))
 
     @staticmethod
-    def _read_outputs(
-        workspace: Path, request: ToolRunRequest
-    ) -> tuple[dict[str, bytes], bool]:
+    def _read_outputs(workspace: Path, request: ToolRunRequest) -> tuple[dict[str, bytes], bool]:
         outputs: dict[str, bytes] = {}
         truncated = False
         for relative in request.output_paths:
-            path = workspace.joinpath(
-                *_validate_workspace_path(relative, request.limits).parts
-            )
+            path = workspace.joinpath(*_validate_workspace_path(relative, request.limits).parts)
             try:
                 info = path.lstat()
             except FileNotFoundError:

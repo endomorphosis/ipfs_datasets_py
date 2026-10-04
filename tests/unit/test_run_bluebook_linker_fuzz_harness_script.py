@@ -13,7 +13,9 @@ def _load_script_module():
         / "legal_data"
         / "run_bluebook_linker_fuzz_harness.py"
     )
-    spec = importlib.util.spec_from_file_location("run_bluebook_linker_fuzz_harness_under_test", module_path)
+    spec = importlib.util.spec_from_file_location(
+        "run_bluebook_linker_fuzz_harness_under_test", module_path
+    )
     assert spec and spec.loader
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -57,7 +59,9 @@ class _FakeFuzzRun:
         return {"summary": dict(self.summary), "output_path": self.output_path}
 
 
-def test_run_bluebook_linker_fuzz_harness_script_maps_fast_recovery_flags(tmp_path: Path, monkeypatch) -> None:
+def test_run_bluebook_linker_fuzz_harness_script_maps_fast_recovery_flags(
+    tmp_path: Path, monkeypatch
+) -> None:
     module = _load_script_module()
     candidate_path = tmp_path / "candidates.json"
     candidate_path.write_text(json.dumps(["Minn. Stat. § 518.17"]), encoding="utf-8")
@@ -65,11 +69,15 @@ def test_run_bluebook_linker_fuzz_harness_script_maps_fast_recovery_flags(tmp_pa
 
     async def _fake_run_bluebook_linker_fuzz_harness(**kwargs):
         captured.update(kwargs)
-        captured["skip_live_search_env_during_run"] = module.os.environ.get("LEGAL_SOURCE_RECOVERY_SKIP_LIVE_SEARCH")
+        captured["skip_live_search_env_during_run"] = module.os.environ.get(
+            "LEGAL_SOURCE_RECOVERY_SKIP_LIVE_SEARCH"
+        )
         return _FakeFuzzRun()
 
     monkeypatch.delenv("LEGAL_SOURCE_RECOVERY_SKIP_LIVE_SEARCH", raising=False)
-    monkeypatch.setattr(module, "run_bluebook_linker_fuzz_harness", _fake_run_bluebook_linker_fuzz_harness)
+    monkeypatch.setattr(
+        module, "run_bluebook_linker_fuzz_harness", _fake_run_bluebook_linker_fuzz_harness
+    )
 
     exit_code = module.main(
         [
@@ -100,18 +108,25 @@ def test_run_bluebook_linker_fuzz_harness_script_maps_fast_recovery_flags(tmp_pa
     assert captured["recovery_archive_top_k"] == 0
     assert captured["min_actionable_failures"] == 1
     assert captured["output_dir"] == tmp_path / "artifacts"
-    assert captured["llm_generate_func"]("", provider=None, model_name=None) == '["Minn. Stat. \\u00a7 518.17"]'
+    assert (
+        captured["llm_generate_func"]("", provider=None, model_name=None)
+        == '["Minn. Stat. \\u00a7 518.17"]'
+    )
     assert captured["skip_live_search_env_during_run"] == "1"
     assert "LEGAL_SOURCE_RECOVERY_SKIP_LIVE_SEARCH" not in module.os.environ
 
 
-def test_run_bluebook_linker_fuzz_harness_script_prints_summary(tmp_path: Path, monkeypatch, capsys) -> None:
+def test_run_bluebook_linker_fuzz_harness_script_prints_summary(
+    tmp_path: Path, monkeypatch, capsys
+) -> None:
     module = _load_script_module()
 
     async def _fake_run_bluebook_linker_fuzz_harness(**kwargs):
         return _FakeFuzzRun()
 
-    monkeypatch.setattr(module, "run_bluebook_linker_fuzz_harness", _fake_run_bluebook_linker_fuzz_harness)
+    monkeypatch.setattr(
+        module, "run_bluebook_linker_fuzz_harness", _fake_run_bluebook_linker_fuzz_harness
+    )
 
     exit_code = module.main(["--samples", "1", "--output-dir", str(tmp_path / "artifacts")])
 
@@ -132,7 +147,9 @@ def test_run_bluebook_linker_fuzz_harness_script_prints_summary(tmp_path: Path, 
     assert "Patch backlog: /tmp/fuzz-backlog.json" in output
 
 
-def test_run_bluebook_linker_fuzz_harness_script_reads_candidates_from_stdin(tmp_path: Path, monkeypatch) -> None:
+def test_run_bluebook_linker_fuzz_harness_script_reads_candidates_from_stdin(
+    tmp_path: Path, monkeypatch
+) -> None:
     module = _load_script_module()
     captured = {}
 
@@ -140,8 +157,12 @@ def test_run_bluebook_linker_fuzz_harness_script_reads_candidates_from_stdin(tmp
         captured.update(kwargs)
         return _FakeFuzzRun()
 
-    monkeypatch.setattr(module, "run_bluebook_linker_fuzz_harness", _fake_run_bluebook_linker_fuzz_harness)
-    monkeypatch.setattr(module.sys, "stdin", type("_FakeStdin", (), {"read": lambda self: '["ORS 801.545"]'})())
+    monkeypatch.setattr(
+        module, "run_bluebook_linker_fuzz_harness", _fake_run_bluebook_linker_fuzz_harness
+    )
+    monkeypatch.setattr(
+        module.sys, "stdin", type("_FakeStdin", (), {"read": lambda self: '["ORS 801.545"]'})()
+    )
 
     exit_code = module.main(
         [
@@ -165,7 +186,9 @@ def test_run_bluebook_linker_fuzz_harness_script_reads_candidates_from_stdin(tmp
     assert captured["llm_generate_func"]("", provider=None, model_name=None) == '["ORS 801.545"]'
 
 
-def test_run_bluebook_linker_fuzz_harness_script_clamps_numeric_bounds(tmp_path: Path, monkeypatch) -> None:
+def test_run_bluebook_linker_fuzz_harness_script_clamps_numeric_bounds(
+    tmp_path: Path, monkeypatch
+) -> None:
     module = _load_script_module()
     captured = {}
 
@@ -173,7 +196,9 @@ def test_run_bluebook_linker_fuzz_harness_script_clamps_numeric_bounds(tmp_path:
         captured.update(kwargs)
         return _FakeFuzzRun()
 
-    monkeypatch.setattr(module, "run_bluebook_linker_fuzz_harness", _fake_run_bluebook_linker_fuzz_harness)
+    monkeypatch.setattr(
+        module, "run_bluebook_linker_fuzz_harness", _fake_run_bluebook_linker_fuzz_harness
+    )
 
     exit_code = module.main(
         [

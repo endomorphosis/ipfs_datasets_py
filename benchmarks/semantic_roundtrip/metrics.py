@@ -49,9 +49,7 @@ class RoundTripLosses:
                 or not math.isfinite(float(value))
                 or not 0.0 <= float(value) <= 1.0
             ):
-                raise ContractError(
-                    f"{field} must be a finite number from zero to one"
-                )
+                raise ContractError(f"{field} must be a finite number from zero to one")
             object.__setattr__(self, field, float(value))
 
     @property
@@ -92,24 +90,14 @@ def rule_similarity(
 ) -> float:
     """Return the frozen weighted structural similarity for two rules."""
 
-    left_rule = (
-        left if isinstance(left, CanonicalRule) else CanonicalRule.from_dict(left)
-    )
-    right_rule = (
-        right
-        if isinstance(right, CanonicalRule)
-        else CanonicalRule.from_dict(right)
-    )
+    left_rule = left if isinstance(left, CanonicalRule) else CanonicalRule.from_dict(left)
+    right_rule = right if isinstance(right, CanonicalRule) else CanonicalRule.from_dict(right)
     score = 0.0
     for field, weight in RULE_WEIGHTS.items():
         if field in LIST_FIELDS:
-            part = _set_score(
-                getattr(left_rule, field), getattr(right_rule, field)
-            )
+            part = _set_score(getattr(left_rule, field), getattr(right_rule, field))
         else:
-            part = float(
-                getattr(left_rule, field) == getattr(right_rule, field)
-            )
+            part = float(getattr(left_rule, field) == getattr(right_rule, field))
         score += weight * part
     return round(score, 9)
 
@@ -137,34 +125,22 @@ def maximum_weight_assignment(
 
     def finite_weight(value: object, row: int, column: int) -> float:
         if isinstance(value, bool):
-            raise ContractError(
-                f"assignment weight [{row}][{column}] must be finite"
-            )
+            raise ContractError(f"assignment weight [{row}][{column}] must be finite")
         try:
             converted = float(value)
         except (TypeError, ValueError, OverflowError) as exc:
-            raise ContractError(
-                f"assignment weight [{row}][{column}] must be finite"
-            ) from exc
+            raise ContractError(f"assignment weight [{row}][{column}] must be finite") from exc
         if not math.isfinite(converted):
-            raise ContractError(
-                f"assignment weight [{row}][{column}] must be finite"
-            )
+            raise ContractError(f"assignment weight [{row}][{column}] must be finite")
         return converted
 
     validated = [
-        [
-            finite_weight(value, row_index, column_index)
-            for column_index, value in enumerate(row)
-        ]
+        [finite_weight(value, row_index, column_index) for column_index, value in enumerate(row)]
         for row_index, row in enumerate(weights)
     ]
     transposed = row_count > column_count
     matrix = (
-        [
-            [validated[row][column] for row in range(row_count)]
-            for column in range(column_count)
-        ]
+        [[validated[row][column] for row in range(row_count)] for column in range(column_count)]
         if transposed
         else validated
     )
@@ -221,11 +197,7 @@ def maximum_weight_assignment(
             continue
         row_index = matched_row[column] - 1
         column_index = column - 1
-        assignment.append(
-            (column_index, row_index)
-            if transposed
-            else (row_index, column_index)
-        )
+        assignment.append((column_index, row_index) if transposed else (row_index, column_index))
     return sorted(assignment)
 
 
@@ -238,17 +210,14 @@ def compare_semantic_ir(
     left = list(_coerce_ir(reference).rules)
     right = list(_coerce_ir(candidate).rules)
     weights = [
-        [rule_similarity(left_rule, right_rule) for right_rule in right]
-        for left_rule in left
+        [rule_similarity(left_rule, right_rule) for right_rule in right] for left_rule in left
     ]
     pairs = [
         (weights[left_index][right_index], left_index, right_index)
         for left_index, right_index in maximum_weight_assignment(weights)
     ]
     matches: list[dict[str, object]] = []
-    for score, left_index, right_index in sorted(
-        pairs, key=lambda item: (item[1], item[2])
-    ):
+    for score, left_index, right_index in sorted(pairs, key=lambda item: (item[1], item[2])):
         left_rule = left[left_index]
         right_rule = right[right_index]
         matches.append(
@@ -257,25 +226,15 @@ def compare_semantic_ir(
                 "candidate_index": right_index,
                 "score": score,
                 "exact": left_rule == right_rule,
-                "modality_preserved": (
-                    left_rule.modality == right_rule.modality
-                ),
-                "condition_preserved": (
-                    set(left_rule.conditions) == set(right_rule.conditions)
-                ),
-                "exception_preserved": (
-                    set(left_rule.exceptions) == set(right_rule.exceptions)
-                ),
-                "temporal_preserved": (
-                    set(left_rule.temporal) == set(right_rule.temporal)
-                ),
+                "modality_preserved": (left_rule.modality == right_rule.modality),
+                "condition_preserved": (set(left_rule.conditions) == set(right_rule.conditions)),
+                "exception_preserved": (set(left_rule.exceptions) == set(right_rule.exceptions)),
+                "temporal_preserved": (set(left_rule.temporal) == set(right_rule.temporal)),
             }
         )
 
     denominator = max(len(left), len(right), 1)
-    semantic_score = (
-        sum(float(item["score"]) for item in matches) / denominator
-    )
+    semantic_score = sum(float(item["score"]) for item in matches) / denominator
     exact_count = sum(bool(item["exact"]) for item in matches)
     exact_precision = exact_count / len(right) if right else 0.0
     exact_recall = exact_count / len(left) if left else 0.0
@@ -302,12 +261,7 @@ def compare_semantic_ir(
             field: round(
                 (
                     sum(
-                        bool(
-                            item[
-                                f"{field[:-1] if field.endswith('s') else field}"
-                                "_preserved"
-                            ]
-                        )
+                        bool(item[f"{field[:-1] if field.endswith('s') else field}_preserved"])
                         for item in matches
                     )
                     / len(matches)
@@ -344,12 +298,7 @@ def round_trip_losses(
     is fail-closed and receives one for all three losses.
     """
 
-    if (
-        failed
-        or l1 is None
-        or l2 is None
-        or not isinstance(reconstruction, str)
-    ):
+    if failed or l1 is None or l2 is None or not isinstance(reconstruction, str):
         return RoundTripLosses(1.0, 1.0, 1.0)
     try:
         first = _coerce_ir(l1)
@@ -401,9 +350,7 @@ def make_round_trip_result(
         elif second.is_empty:
             inferred_reason = FailureReason.EMPTY_L2
     failed = inferred_reason is not None
-    losses = round_trip_losses(
-        gold_ir, first, reconstruction, second, failed=failed
-    )
+    losses = round_trip_losses(gold_ir, first, reconstruction, second, failed=failed)
     status = ComponentStatus.FAILED if failed else ComponentStatus.SUCCESS
     return RoundTripResult(
         status=status,

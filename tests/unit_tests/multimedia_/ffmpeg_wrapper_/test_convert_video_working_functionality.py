@@ -1,4 +1,5 @@
 import anyio
+
 #!/usr/bin/env python3
 """
 Strategic tests for working FFmpeg convert_video functionality.
@@ -26,10 +27,10 @@ class TestFFmpegWrapperWorkingFunctionality:
         """
         # Test the working FFmpegWrapper.__init__ method
         import os
-        
+
         assert wrapper is not None
-        assert hasattr(wrapper, 'default_output_dir')
-        assert hasattr(wrapper, 'enable_logging')
+        assert hasattr(wrapper, "default_output_dir")
+        assert hasattr(wrapper, "enable_logging")
         assert wrapper.default_output_dir == os.getcwd()
         assert isinstance(wrapper.enable_logging, bool)
 
@@ -43,10 +44,10 @@ class TestFFmpegWrapperWorkingFunctionality:
         result1 = wrapper.is_available()
         result2 = wrapper.is_available()
         result3 = wrapper.is_available()
-        
+
         # All results should be boolean and consistent
         assert isinstance(result1, bool)
-        assert isinstance(result2, bool)  
+        assert isinstance(result2, bool)
         assert isinstance(result3, bool)
         assert result1 == result2 == result3
 
@@ -62,16 +63,16 @@ class TestFFmpegWrapperWorkingFunctionality:
             input_path="test_input.mp4",
             output_path="test_output.avi",
             video_codec="libx264",
-            audio_codec="aac"
+            audio_codec="aac",
         )
-        
+
         # Should return a dictionary with status information
         assert isinstance(result, dict)
         assert "status" in result
-        
+
         # Status should be either 'success' or 'error'
         assert result["status"] in ["success", "error"]
-        
+
         # If success, should have conversion metadata
         if result["status"] == "success":
             assert "input_path" in result
@@ -88,10 +89,9 @@ class TestFFmpegWrapperWorkingFunctionality:
         """
         # Test convert_video error handling
         result = await wrapper.convert_video(
-            input_path="nonexistent_file.mp4",
-            output_path="output.avi"
+            input_path="nonexistent_file.mp4", output_path="output.avi"
         )
-        
+
         # Should return error response
         assert isinstance(result, dict)
         assert result["status"] == "error"
@@ -112,13 +112,13 @@ class TestFFmpegWrapperWorkingFunctionality:
             audio_codec="libmp3lame",
             video_bitrate="2000k",
             audio_bitrate="128k",
-            resolution="1280x720"
+            resolution="1280x720",
         )
-        
+
         # Should handle parameters appropriately
         assert isinstance(result, dict)
         assert "status" in result
-        
+
         # If successful, should reflect parameter processing
         if result["status"] == "success":
             assert "video_codec" in result or "conversion_details" in result

@@ -25,7 +25,10 @@ from ipfs_datasets_py.optimizers.todo_daemon.legal_parser import (
     check_legal_parser_health,
     legal_parser_launch_env,
 )
-from ipfs_datasets_py.optimizers.todo_daemon.logic_port import build_logic_port_spec, logic_port_launch_env
+from ipfs_datasets_py.optimizers.todo_daemon.logic_port import (
+    build_logic_port_spec,
+    logic_port_launch_env,
+)
 from ipfs_datasets_py.optimizers.todo_daemon.plans import (
     PlanTask,
     extract_plan_tasks as extract_generic_plan_tasks,
@@ -162,7 +165,10 @@ def test_logic_port_lifecycle_spec_is_reusable_and_keeps_defaults(tmp_path, monk
     launch_env = logic_port_launch_env()
 
     assert spec.name == "logic-port"
-    assert spec.runner == ("bash", "ipfs_datasets_py/scripts/ops/legal_data/run_logic_port_daemon.sh")
+    assert spec.runner == (
+        "bash",
+        "ipfs_datasets_py/scripts/ops/legal_data/run_logic_port_daemon.sh",
+    )
     assert spec.task_board_path == Path("docs/IPFS_DATASETS_LOGIC_TYPESCRIPT_PORT_PLAN.md")
     assert spec.tmux_session_name == "logic-port-daemon"
     assert "ipfs_datasets_py.optimizers.logic_port_daemon" in spec.daemon_process_match_all
@@ -193,10 +199,15 @@ def test_legal_parser_lifecycle_spec_is_reusable_and_keeps_defaults(tmp_path, mo
     assert spec.schema == "ipfs_datasets_py.legal_parser_daemon"
     assert spec.runner == ("bash", "scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh")
     assert spec.status_path == Path("artifacts/legal_parser_optimizer_daemon/current_status.json")
-    assert spec.progress_path == Path("artifacts/legal_parser_optimizer_daemon/progress_summary.json")
+    assert spec.progress_path == Path(
+        "artifacts/legal_parser_optimizer_daemon/progress_summary.json"
+    )
     assert spec.tmux_session_name == "legal-parser-daemon"
     assert spec.worktree_root == Path(".daemon/legal-parser-worktrees")
-    assert "ipfs_datasets_py.optimizers.todo_daemon.legal_parser_daemon" in spec.daemon_process_match_all
+    assert (
+        "ipfs_datasets_py.optimizers.todo_daemon.legal_parser_daemon"
+        in spec.daemon_process_match_all
+    )
     assert launch_env["MODEL_NAME"] == "gpt-5.5"
     assert launch_env["PROVIDER"] == "codex"
     assert launch_env["IPFS_DATASETS_PY_LLM_PROVIDER"] == "codex_cli"
@@ -343,7 +354,9 @@ def test_cli_defaults_to_worktree_transport(monkeypatch):
 
 def test_supervisor_uses_worktree_transport_by_default():
     repo_root = Path(__file__).resolve().parents[3]
-    script = (repo_root / "scripts/ops/legal_data/run_logic_port_daemon.sh").read_text(encoding="utf-8")
+    script = (repo_root / "scripts/ops/legal_data/run_logic_port_daemon.sh").read_text(
+        encoding="utf-8"
+    )
 
     assert 'PROPOSAL_TRANSPORT="${PROPOSAL_TRANSPORT:-worktree}"' in script
     assert 'WORKTREE_EDIT_TIMEOUT_SECONDS="${WORKTREE_EDIT_TIMEOUT_SECONDS:-300}"' in script
@@ -364,25 +377,41 @@ def test_supervisor_uses_worktree_transport_by_default():
     assert '--worktree-root "$WORKTREE_ROOT"' in script
     assert '--worktree-repair-attempts "$WORKTREE_REPAIR_ATTEMPTS"' in script
     assert '--codex-bin "$CODEX_BIN"' in script
-    assert 'SUPERVISOR_AGENTIC_STARTUP_FAILURE_MAINTENANCE="${SUPERVISOR_AGENTIC_STARTUP_FAILURE_MAINTENANCE:-1}"' in script
+    assert (
+        'SUPERVISOR_AGENTIC_STARTUP_FAILURE_MAINTENANCE="${SUPERVISOR_AGENTIC_STARTUP_FAILURE_MAINTENANCE:-1}"'
+        in script
+    )
     assert "startup_failure_maintenance_reason()" in script
     assert "startup_stale_failure:" in script
     assert "supervisor invoking startup failure maintenance" in script
-    assert 'write_supervisor_status "agentic_maintenance_started" "$maintenance_id" "$maintenance_log" "$rc"' in script
+    assert (
+        'write_supervisor_status "agentic_maintenance_started" "$maintenance_id" "$maintenance_log" "$rc"'
+        in script
+    )
 
 
 def test_ensure_passes_startup_failure_maintenance_to_supervisor():
     repo_root = Path(__file__).resolve().parents[3]
-    script = (repo_root / "scripts/ops/legal_data/ensure_logic_port_daemon.sh").read_text(encoding="utf-8")
+    script = (repo_root / "scripts/ops/legal_data/ensure_logic_port_daemon.sh").read_text(
+        encoding="utf-8"
+    )
 
-    assert 'SUPERVISOR_AGENTIC_STARTUP_FAILURE_MAINTENANCE="${SUPERVISOR_AGENTIC_STARTUP_FAILURE_MAINTENANCE:-1}"' in script
-    assert 'SUPERVISOR_AGENTIC_STARTUP_FAILURE_MAINTENANCE="$SUPERVISOR_AGENTIC_STARTUP_FAILURE_MAINTENANCE"' in script
+    assert (
+        'SUPERVISOR_AGENTIC_STARTUP_FAILURE_MAINTENANCE="${SUPERVISOR_AGENTIC_STARTUP_FAILURE_MAINTENANCE:-1}"'
+        in script
+    )
+    assert (
+        'SUPERVISOR_AGENTIC_STARTUP_FAILURE_MAINTENANCE="$SUPERVISOR_AGENTIC_STARTUP_FAILURE_MAINTENANCE"'
+        in script
+    )
     assert '"agentic_startup_failure_maintenance": startup_failure_maintenance' in script
 
 
 def test_check_script_reports_worktree_transport_health_fields():
     repo_root = Path(__file__).resolve().parents[3]
-    script = (repo_root / "scripts/ops/legal_data/check_logic_port_daemon.sh").read_text(encoding="utf-8")
+    script = (repo_root / "scripts/ops/legal_data/check_logic_port_daemon.sh").read_text(
+        encoding="utf-8"
+    )
 
     assert '"proposal_transport": status.get("proposal_transport")' in script
     assert '"worktree_edit_timeout_seconds": status.get("worktree_edit_timeout_seconds")' in script
@@ -467,7 +496,9 @@ def test_parse_llm_patch_response_from_codex_event_stream():
     artifact = parse_llm_patch_response(response)
 
     assert artifact.summary == "Event JSON"
-    assert artifact.files == [{"path": "src/lib/logic/event.ts", "content": "export const value = 1;\n"}]
+    assert artifact.files == [
+        {"path": "src/lib/logic/event.ts", "content": "export const value = 1;\n"}
+    ]
     assert artifact.errors == []
 
 
@@ -530,7 +561,9 @@ def test_worktree_transport_generates_file_edits_from_isolated_worktree(tmp_path
 
     def fake_run_command(command, *, cwd, timeout_seconds, stdin=None):
         command = tuple(command)
-        calls.append({"command": command, "cwd": Path(cwd), "timeout": timeout_seconds, "stdin": stdin})
+        calls.append(
+            {"command": command, "cwd": Path(cwd), "timeout": timeout_seconds, "stdin": stdin}
+        )
         if command[:3] == ("git", "worktree", "prune"):
             return logic_port_daemon.CommandResult(command, 0, "", "")
         if command[:3] == ("git", "worktree", "list"):
@@ -540,7 +573,9 @@ def test_worktree_transport_generates_file_edits_from_isolated_worktree(tmp_path
             return logic_port_daemon.CommandResult(command, 0, "", "")
         if command[0] == "codex-test":
             (Path(cwd) / target_path).parent.mkdir(parents=True, exist_ok=True)
-            (Path(cwd) / target_path).write_text("export const worktreeFeature = true;\n", encoding="utf-8")
+            (Path(cwd) / target_path).write_text(
+                "export const worktreeFeature = true;\n", encoding="utf-8"
+            )
             (Path(cwd) / ".logic_port_worktree_proposal.json").write_text(
                 json.dumps(
                     {
@@ -653,14 +688,18 @@ def test_worktree_validation_failure_repairs_in_temporary_worktree(tmp_path, mon
             "",
         ]
     )
-    repaired_diff = base_diff.replace("+export const repaired = 'bad';", "+export const repaired = true;")
+    repaired_diff = base_diff.replace(
+        "+export const repaired = 'bad';", "+export const repaired = true;"
+    )
     command_calls = []
     diff_calls = {"count": 0}
 
     def fake_run_command(command, *, cwd, timeout_seconds, stdin=None):
         command = tuple(command)
         cwd = Path(cwd)
-        command_calls.append({"command": command, "cwd": cwd, "stdin": stdin, "timeout": timeout_seconds})
+        command_calls.append(
+            {"command": command, "cwd": cwd, "stdin": stdin, "timeout": timeout_seconds}
+        )
         if command[:3] == ("git", "status", "--porcelain") and cwd == tmp_path:
             return logic_port_daemon.CommandResult(command, 0, "", "")
         if command[:3] == ("git", "worktree", "prune"):
@@ -722,7 +761,9 @@ def test_worktree_validation_failure_repairs_in_temporary_worktree(tmp_path, mon
     optimizer = LogicPortDaemonOptimizer(config)
     monkeypatch.setattr(optimizer, "_typescript_replacement_preflight_errors", lambda edits: [])
     states = []
-    monkeypatch.setattr(optimizer, "_write_status", lambda state, **details: states.append((state, details)))
+    monkeypatch.setattr(
+        optimizer, "_write_status", lambda state, **details: states.append((state, details))
+    )
     apply_calls = {"count": 0}
 
     def fake_apply_file_edits(edits):
@@ -730,7 +771,11 @@ def test_worktree_validation_failure_repairs_in_temporary_worktree(tmp_path, mon
         if apply_calls["count"] == 1:
             return (
                 False,
-                [logic_port_daemon.CommandResult(("npm", "run", "validate:logic-port"), 1, "", "expected repaired to be true")],
+                [
+                    logic_port_daemon.CommandResult(
+                        ("npm", "run", "validate:logic-port"), 1, "", "expected repaired to be true"
+                    )
+                ],
                 [target_path],
             )
         assert edits == [{"path": target_path, "content": "export const repaired = true;\n"}]
@@ -787,7 +832,9 @@ def test_cleanup_stale_worktrees_sweeps_cycle_and_repair_worktrees(tmp_path, mon
         return logic_port_daemon.CommandResult(command, 0, "", "")
 
     monkeypatch.setattr(logic_port_daemon, "run_command", fake_run_command)
-    monkeypatch.setattr(logic_port_daemon, "_pid_looks_like_logic_port_owner", lambda *args, **kwargs: False)
+    monkeypatch.setattr(
+        logic_port_daemon, "_pid_looks_like_logic_port_owner", lambda *args, **kwargs: False
+    )
     config = LogicPortDaemonConfig(
         repo_root=tmp_path,
         worktree_root=worktree_root,
@@ -797,7 +844,10 @@ def test_cleanup_stale_worktrees_sweeps_cycle_and_repair_worktrees(tmp_path, mon
     result = LogicPortDaemonOptimizer(config).cleanup_stale_worktrees()
 
     removed_paths = {Path(item["path"]).name for item in result["removed"]}
-    assert {"cycle_01_20260101T000000000000Z_12345", "repair_01_20260101T000000000000Z_12345"} <= removed_paths
+    assert {
+        "cycle_01_20260101T000000000000Z_12345",
+        "repair_01_20260101T000000000000Z_12345",
+    } <= removed_paths
     assert ("git", "worktree", "remove", "--force", str(cycle.resolve())) in calls
     assert ("git", "worktree", "remove", "--force", str(repair.resolve())) in calls
 
@@ -902,7 +952,7 @@ export function scan(input: string): string {
 
     assert "const ORDERED_SYMBOLS: Array<string> = Object.keys(SYMBOL_REPLACEMENTS);" in repaired
     assert "const parts: Array<string> = [];" in repaired
-    assert "while (firstParen < input.length && input[firstParen] !== \"(\")" in repaired
+    assert 'while (firstParen < input.length && input[firstParen] !== "(")' in repaired
 
 
 def test_repair_common_typescript_text_damage_recovers_integer_upper_bounds():
@@ -972,17 +1022,28 @@ export function validateArity(arity: number): void {
 
     findings = logic_port_daemon._obvious_typescript_text_damage(damaged)
 
-    assert any("missing comparison operator before a string literal" in finding for finding in findings)
-    assert any("missing comparison operator before a dotted bound" in finding for finding in findings)
+    assert any(
+        "missing comparison operator before a string literal" in finding for finding in findings
+    )
+    assert any(
+        "missing comparison operator before a dotted bound" in finding for finding in findings
+    )
     assert any("bare TypeScript generic alias" in finding for finding in findings)
-    assert any("missing comparison operator before an uppercase bound" in finding for finding in findings)
+    assert any(
+        "missing comparison operator before an uppercase bound" in finding for finding in findings
+    )
 
 
-def test_router_transport_escalates_to_worktree_after_repeated_preflight_failures(tmp_path, monkeypatch):
+def test_router_transport_escalates_to_worktree_after_repeated_preflight_failures(
+    tmp_path, monkeypatch
+):
     task_label = "Task checkbox-484: Port temporal deontic RAG store."
     task_board = tmp_path / "TASKS.md"
     result_log = tmp_path / "results.jsonl"
-    task_board.write_text("### Task checkbox-484: Port temporal deontic RAG store.\n\nStatus: needed\n", encoding="utf-8")
+    task_board.write_text(
+        "### Task checkbox-484: Port temporal deontic RAG store.\n\nStatus: needed\n",
+        encoding="utf-8",
+    )
     with result_log.open("w", encoding="utf-8") as handle:
         for _ in range(3):
             handle.write(
@@ -1208,7 +1269,9 @@ def test_capability_cleanup_dependency_ignores_test_only_markers(tmp_path):
     python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
     logic_dir.mkdir(parents=True)
     python_logic_dir.mkdir(parents=True)
-    (logic_dir / "runtimeCapabilities.ts").write_text("export const ready = true;\n", encoding="utf-8")
+    (logic_dir / "runtimeCapabilities.ts").write_text(
+        "export const ready = true;\n", encoding="utf-8"
+    )
     (logic_dir / "runtimeCapabilities.test.ts").write_text(
         "expect('nlpUnavailable mlUnavailable').toBeTruthy();\n",
         encoding="utf-8",
@@ -1233,7 +1296,10 @@ def test_capability_cleanup_dependency_ignores_test_only_markers(tmp_path):
     selected = LogicPortDaemonOptimizer(config)._current_plan_task()
 
     assert selected is not None
-    assert selected.title == "Remove `nlpUnavailable` and `mlUnavailable` capability flags once browser-native parity is implemented."
+    assert (
+        selected.title
+        == "Remove `nlpUnavailable` and `mlUnavailable` capability flags once browser-native parity is implemented."
+    )
 
 
 def test_revisit_blocked_tasks_can_select_fewest_failures(tmp_path):
@@ -1266,7 +1332,9 @@ def test_revisit_blocked_tasks_can_select_fewest_failures(tmp_path):
         },
     }
     log_path.parent.mkdir(parents=True)
-    log_path.write_text(json.dumps({"pid": 1, "results": [*hard_rows, easy_row]}) + "\n", encoding="utf-8")
+    log_path.write_text(
+        json.dumps({"pid": 1, "results": [*hard_rows, easy_row]}) + "\n", encoding="utf-8"
+    )
     config = LogicPortDaemonConfig(
         repo_root=tmp_path,
         plan_docs=(plan,),
@@ -1372,10 +1440,18 @@ def test_dry_run_daemon_calls_codex_53_and_does_not_apply_patch(tmp_path):
     assert router.calls[0]["kwargs"]["timeout"] == 300
     assert router.calls[0]["kwargs"]["trace"] is True
     assert router.calls[0]["kwargs"]["trace_dir"].endswith("ipfs_datasets_py/.daemon/codex-runs")
-    assert "DETERMINISTIC" not in router.calls[0]["prompt"] or "Port deterministic parser IR" in router.calls[0]["prompt"]
-    assert "Do not add Node-only, Rust FFI, filesystem, subprocess, RPC, or server fallbacks" in router.calls[0]["prompt"]
+    assert (
+        "DETERMINISTIC" not in router.calls[0]["prompt"]
+        or "Port deterministic parser IR" in router.calls[0]["prompt"]
+    )
+    assert (
+        "Do not add Node-only, Rust FFI, filesystem, subprocess, RPC, or server fallbacks"
+        in router.calls[0]["prompt"]
+    )
     assert 'For tasks phrased "where feasible"' in router.calls[0]["prompt"]
-    assert "Do not run exploratory shell commands in the Codex subprocess" in router.calls[0]["prompt"]
+    assert (
+        "Do not run exploratory shell commands in the Codex subprocess" in router.calls[0]["prompt"]
+    )
     assert result["valid"] is True
     assert result["artifact"]["has_patch"] is True
     assert not (tmp_path / "new-file.txt").exists()
@@ -1538,7 +1614,10 @@ def test_balanced_slice_mode_keeps_recovery_from_tiny_scaffolds(tmp_path):
 
     prompt = router.calls[0]["prompt"]
     assert "Slice mode requested by daemon: balanced" in prompt
-    assert "balanced slice mode should still land a useful vertical slice rather than a tiny scaffold" in prompt
+    assert (
+        "balanced slice mode should still land a useful vertical slice rather than a tiny scaffold"
+        in prompt
+    )
     assert "smallest compileable TypeScript contract" not in prompt
     assert "usually 1-3 related implementation/test files" in prompt
 
@@ -1648,7 +1727,9 @@ def test_preflight_repair_recovers_malformed_typescript_files(tmp_path, monkeypa
         "impact": "Adds a malformed replacement that needs preflight repair.",
         "tasks": ["Task checkbox-1: Port CEC ZKP integration"],
         "patch": "",
-        "files": [{"path": "src/lib/logic/cecZkpIntegration.ts", "content": "export const bad = ;\n"}],
+        "files": [
+            {"path": "src/lib/logic/cecZkpIntegration.ts", "content": "export const bad = ;\n"}
+        ],
     }
     fixed = {
         "summary": "Fixed generic",
@@ -1880,12 +1961,17 @@ def test_daemon_updates_markdown_task_board_after_round(tmp_path):
         task_board_doc=plan,
     )
 
-    LogicPortDaemonOptimizer(config, llm_router=FakeRouter(json.dumps({"summary": "No safe change", "patch": ""}))).run_daemon()
+    LogicPortDaemonOptimizer(
+        config, llm_router=FakeRouter(json.dumps({"summary": "No safe change", "patch": ""}))
+    ).run_daemon()
 
     updated = plan.read_text(encoding="utf-8")
     assert "## Daemon Task Board" in updated
     assert "Current target: `Task 0.1: Add Parser Snapshot Fixtures`" in updated
-    assert "- [!] `Task 0.1: Add Parser Snapshot Fixtures` - latest daemon round failed validation or preflight" in updated
+    assert (
+        "- [!] `Task 0.1: Add Parser Snapshot Fixtures` - latest daemon round failed validation or preflight"
+        in updated
+    )
     assert "- [x] `Task 2.1: Add IR-To-Deontic Exporter` - complete" in updated
 
 
@@ -1900,7 +1986,9 @@ def test_daemon_marks_valid_checkbox_task_complete_and_reports_changed_files(tmp
     python_logic_dir.mkdir(parents=True)
     target = docs_dir / "fixture.md"
     target.write_text("old\n", encoding="utf-8")
-    plan.write_text("- [ ] Record accepted work docs\n- [ ] Implement next feature\n", encoding="utf-8")
+    plan.write_text(
+        "- [ ] Record accepted work docs\n- [ ] Implement next feature\n", encoding="utf-8"
+    )
     status.write_text("| ZKP | partial |\n", encoding="utf-8")
 
     response = json.dumps(
@@ -1921,7 +2009,9 @@ def test_daemon_marks_valid_checkbox_task_complete_and_reports_changed_files(tmp
         task_board_doc=plan,
     )
 
-    result = LogicPortDaemonOptimizer(config, llm_router=FakeRouter(response)).run_once(session_id="changed-files")
+    result = LogicPortDaemonOptimizer(config, llm_router=FakeRouter(response)).run_once(
+        session_id="changed-files"
+    )
     LogicPortDaemonOptimizer(config)._update_task_board([result])
 
     updated = plan.read_text(encoding="utf-8")
@@ -1961,7 +2051,9 @@ def test_preflight_rejects_non_runtime_only_change_for_implementation_task(tmp_p
         task_board_doc=plan,
     )
 
-    result = LogicPortDaemonOptimizer(config, llm_router=FakeRouter(response)).run_once(session_id="implementation-guard")
+    result = LogicPortDaemonOptimizer(config, llm_router=FakeRouter(response)).run_once(
+        session_id="implementation-guard"
+    )
 
     assert result["valid"] is False
     assert result["artifact"]["changed_files"] == []
@@ -1983,7 +2075,9 @@ def test_preflight_rejects_fixture_without_test_update(tmp_path):
     response = json.dumps(
         {
             "summary": "Fixture without test",
-            "files": [{"path": "src/lib/logic/parity/python-parity-fixtures.json", "content": "[]\n"}],
+            "files": [
+                {"path": "src/lib/logic/parity/python-parity-fixtures.json", "content": "[]\n"}
+            ],
         }
     )
     config = LogicPortDaemonConfig(
@@ -1998,7 +2092,9 @@ def test_preflight_rejects_fixture_without_test_update(tmp_path):
         task_board_doc=plan,
     )
 
-    result = LogicPortDaemonOptimizer(config, llm_router=FakeRouter(response)).run_once(session_id="fixture-guard")
+    result = LogicPortDaemonOptimizer(config, llm_router=FakeRouter(response)).run_once(
+        session_id="fixture-guard"
+    )
 
     assert result["valid"] is False
     assert not (parity_dir / "python-parity-fixtures.json").exists()
@@ -2039,7 +2135,9 @@ def test_accepted_work_log_records_valid_changed_files(tmp_path):
         accepted_work_artifact_dir=tmp_path / "artifacts",
     )
 
-    result = LogicPortDaemonOptimizer(config, llm_router=FakeRouter(response)).run_once(session_id="accepted-log")
+    result = LogicPortDaemonOptimizer(config, llm_router=FakeRouter(response)).run_once(
+        session_id="accepted-log"
+    )
     LogicPortDaemonOptimizer(config)._append_accepted_work_log([result])
 
     accepted = log_path.read_text(encoding="utf-8")
@@ -2070,10 +2168,21 @@ def test_auto_commit_after_valid_round_commits_daemon_scope(tmp_path):
     feature.write_text("export const feature = 'old';\n", encoding="utf-8")
 
     subprocess.run(["git", "init"], cwd=tmp_path, check=True, capture_output=True, text=True)
-    subprocess.run(["git", "checkout", "-b", "main"], cwd=tmp_path, check=True, capture_output=True, text=True)
+    subprocess.run(
+        ["git", "checkout", "-b", "main"], cwd=tmp_path, check=True, capture_output=True, text=True
+    )
     subprocess.run(["git", "add", "."], cwd=tmp_path, check=True, capture_output=True, text=True)
     subprocess.run(
-        ["git", "-c", "user.name=Test", "-c", "user.email=test@example.invalid", "commit", "-m", "init"],
+        [
+            "git",
+            "-c",
+            "user.name=Test",
+            "-c",
+            "user.email=test@example.invalid",
+            "commit",
+            "-m",
+            "init",
+        ],
         cwd=tmp_path,
         check=True,
         capture_output=True,
@@ -2084,7 +2193,9 @@ def test_auto_commit_after_valid_round_commits_daemon_scope(tmp_path):
         {
             "summary": "Runtime feature",
             "impact": "Feature is imported by the logic runtime.",
-            "files": [{"path": "src/lib/logic/feature.ts", "content": "export const feature = 'new';\n"}],
+            "files": [
+                {"path": "src/lib/logic/feature.ts", "content": "export const feature = 'new';\n"}
+            ],
         }
     )
     config = LogicPortDaemonConfig(
@@ -2108,7 +2219,15 @@ def test_auto_commit_after_valid_round_commits_daemon_scope(tmp_path):
     assert results[-1]["valid"] is True
     assert results[-1]["artifact"]["auto_commit"]["committed"] is True
     status_result = subprocess.run(
-        ["git", "status", "--porcelain", "--", "src/lib/logic", "docs/port-plan.md", "docs/accepted.md"],
+        [
+            "git",
+            "status",
+            "--porcelain",
+            "--",
+            "src/lib/logic",
+            "docs/port-plan.md",
+            "docs/accepted.md",
+        ],
         cwd=tmp_path,
         check=True,
         capture_output=True,
@@ -2140,10 +2259,21 @@ def test_startup_dirty_auto_commit_commits_existing_daemon_scope(tmp_path):
     feature.write_text("export const feature = 'old';\n", encoding="utf-8")
 
     subprocess.run(["git", "init"], cwd=tmp_path, check=True, capture_output=True, text=True)
-    subprocess.run(["git", "checkout", "-b", "main"], cwd=tmp_path, check=True, capture_output=True, text=True)
+    subprocess.run(
+        ["git", "checkout", "-b", "main"], cwd=tmp_path, check=True, capture_output=True, text=True
+    )
     subprocess.run(["git", "add", "."], cwd=tmp_path, check=True, capture_output=True, text=True)
     subprocess.run(
-        ["git", "-c", "user.name=Test", "-c", "user.email=test@example.invalid", "commit", "-m", "init"],
+        [
+            "git",
+            "-c",
+            "user.name=Test",
+            "-c",
+            "user.email=test@example.invalid",
+            "commit",
+            "-m",
+            "init",
+        ],
         cwd=tmp_path,
         check=True,
         capture_output=True,
@@ -2170,7 +2300,15 @@ def test_startup_dirty_auto_commit_commits_existing_daemon_scope(tmp_path):
     LogicPortDaemonOptimizer(config)._auto_commit_startup_dirty_scope()
 
     status_result = subprocess.run(
-        ["git", "status", "--porcelain", "--", "src/lib/logic", "docs/port-plan.md", "docs/accepted.md"],
+        [
+            "git",
+            "status",
+            "--porcelain",
+            "--",
+            "src/lib/logic",
+            "docs/port-plan.md",
+            "docs/accepted.md",
+        ],
         cwd=tmp_path,
         check=True,
         capture_output=True,
@@ -2219,7 +2357,9 @@ def test_file_edit_mode_rejects_noop_file_replacements(tmp_path):
         task_board_doc=plan,
     )
 
-    result = LogicPortDaemonOptimizer(config, llm_router=FakeRouter(response)).run_once(session_id="noop")
+    result = LogicPortDaemonOptimizer(config, llm_router=FakeRouter(response)).run_once(
+        session_id="noop"
+    )
 
     assert result["valid"] is False
     assert result["artifact"]["changed_files"] == []
@@ -2251,7 +2391,9 @@ def test_malformed_patch_falls_back_to_complete_file_replacements(tmp_path):
             "summary": "Repair as file replacement",
             "impact": "Runtime feature is updated by a complete file replacement.",
             "patch": "",
-            "files": [{"path": "src/lib/logic/feature.ts", "content": "export const value = 'new';\n"}],
+            "files": [
+                {"path": "src/lib/logic/feature.ts", "content": "export const value = 'new';\n"}
+            ],
         }
     )
     router = SequencedRouter(
@@ -2280,7 +2422,10 @@ def test_malformed_patch_falls_back_to_complete_file_replacements(tmp_path):
     assert result["artifact"]["files"] == ["src/lib/logic/feature.ts"]
     assert result["artifact"]["changed_files"] == ["src/lib/logic/feature.ts"]
     assert len(router.calls) == 3
-    assert "runtime TypeScript changes must use JSON `files` complete replacements" in router.calls[1]["prompt"]
+    assert (
+        "runtime TypeScript changes must use JSON `files` complete replacements"
+        in router.calls[1]["prompt"]
+    )
 
 
 def test_status_file_records_liveness_and_latest_artifact(tmp_path):
@@ -2422,7 +2567,9 @@ def test_daemon_retries_empty_or_non_json_proposals_as_file_replacements(tmp_pat
         proposal_attempts=3,
     )
 
-    result = LogicPortDaemonOptimizer(config, llm_router=router).run_once(session_id="proposal-retry")
+    result = LogicPortDaemonOptimizer(config, llm_router=router).run_once(
+        session_id="proposal-retry"
+    )
 
     assert result["valid"] is True
     assert target.read_text(encoding="utf-8") == "new\n"
@@ -2456,7 +2603,12 @@ def test_runtime_typescript_patch_is_retried_as_file_replacement(tmp_path):
                 {
                     "summary": "File runtime feature",
                     "patch": "",
-                    "files": [{"path": "src/lib/logic/feature.ts", "content": "export const value = 'file';\n"}],
+                    "files": [
+                        {
+                            "path": "src/lib/logic/feature.ts",
+                            "content": "export const value = 'file';\n",
+                        }
+                    ],
                 }
             ),
         ]
@@ -2474,12 +2626,17 @@ def test_runtime_typescript_patch_is_retried_as_file_replacement(tmp_path):
         proposal_attempts=2,
     )
 
-    result = LogicPortDaemonOptimizer(config, llm_router=router).run_once(session_id="runtime-patch-retry")
+    result = LogicPortDaemonOptimizer(config, llm_router=router).run_once(
+        session_id="runtime-patch-retry"
+    )
 
     assert result["valid"] is True
     assert target.read_text(encoding="utf-8") == 'export const value = "file";\n'
     assert len(router.calls) == 2
-    assert "runtime TypeScript changes must use JSON `files` complete replacements" in router.calls[1]["prompt"]
+    assert (
+        "runtime TypeScript changes must use JSON `files` complete replacements"
+        in router.calls[1]["prompt"]
+    )
 
 
 def test_empty_proposal_gets_failure_kind_for_task_blocking(tmp_path):
@@ -2505,9 +2662,9 @@ def test_empty_proposal_gets_failure_kind_for_task_blocking(tmp_path):
         proposal_attempts=1,
     )
 
-    result = LogicPortDaemonOptimizer(config, llm_router=FakeRouter(json.dumps({"summary": "empty", "patch": "", "files": []}))).run_once(
-        session_id="empty-proposal"
-    )
+    result = LogicPortDaemonOptimizer(
+        config, llm_router=FakeRouter(json.dumps({"summary": "empty", "patch": "", "files": []}))
+    ).run_once(session_id="empty-proposal")
 
     assert result["valid"] is False
     assert result["artifact"]["failure_kind"] == "empty_proposal"
@@ -2523,8 +2680,12 @@ def test_prompt_includes_relevant_file_contents_and_recent_failures(tmp_path):
     python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
     cec_dir.mkdir(parents=True)
     python_logic_dir.mkdir(parents=True)
-    (cec_dir / "problemParser.ts").write_text("export const currentProblemParser = true;\n", encoding="utf-8")
-    (cec_dir / "problemParser.test.ts").write_text("describe('problem parser', () => {});\n", encoding="utf-8")
+    (cec_dir / "problemParser.ts").write_text(
+        "export const currentProblemParser = true;\n", encoding="utf-8"
+    )
+    (cec_dir / "problemParser.test.ts").write_text(
+        "describe('problem parser', () => {});\n", encoding="utf-8"
+    )
     plan.write_text("- [ ] Port CEC problem parser\n", encoding="utf-8")
     status.write_text("| cec | partial |\n", encoding="utf-8")
     previous = {
@@ -2546,8 +2707,22 @@ def test_prompt_includes_relevant_file_contents_and_recent_failures(tmp_path):
     }
     log_path.parent.mkdir(parents=True)
     log_path.write_text(json.dumps({"pid": 1, "results": [previous]}) + "\n", encoding="utf-8")
-    subprocess.run(("git", "init"), cwd=tmp_path, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    subprocess.run(("git", "add", "."), cwd=tmp_path, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    subprocess.run(
+        ("git", "init"),
+        cwd=tmp_path,
+        check=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    subprocess.run(
+        ("git", "add", "."),
+        cwd=tmp_path,
+        check=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
     response = json.dumps({"summary": "empty", "patch": "", "files": []})
     router = FakeRouter(response)
     config = LogicPortDaemonConfig(
@@ -2623,7 +2798,9 @@ def test_file_edit_validation_failure_gets_repaired_before_round_fails(tmp_path)
         validation_repair_attempts=1,
     )
 
-    result = LogicPortDaemonOptimizer(config, llm_router=router).run_once(session_id="validation-repair")
+    result = LogicPortDaemonOptimizer(config, llm_router=router).run_once(
+        session_id="validation-repair"
+    )
 
     assert result["valid"] is True
     assert target.read_text(encoding="utf-8") == "good;\n"
@@ -2958,7 +3135,9 @@ def test_supervised_blocks_stale_failed_task_before_llm_call(tmp_path):
         max_task_total_failure_rounds=2,
     )
 
-    blocked = LogicPortDaemonOptimizer(config, llm_router=FailingRouter())._block_current_task_if_stale_failed()
+    blocked = LogicPortDaemonOptimizer(
+        config, llm_router=FailingRouter()
+    )._block_current_task_if_stale_failed()
 
     updated = plan.read_text(encoding="utf-8")
     status_payload = json.loads(status_path.read_text(encoding="utf-8"))
@@ -3008,7 +3187,9 @@ def test_supervised_blocks_stale_task_after_same_kind_failures_before_llm_call(t
         max_task_total_failure_rounds=6,
     )
 
-    blocked = LogicPortDaemonOptimizer(config, llm_router=FailingRouter())._block_current_task_if_stale_failed()
+    blocked = LogicPortDaemonOptimizer(
+        config, llm_router=FailingRouter()
+    )._block_current_task_if_stale_failed()
 
     updated = plan.read_text(encoding="utf-8")
     status_payload = json.loads(status_path.read_text(encoding="utf-8"))
@@ -3284,7 +3465,9 @@ def test_plan_replenishment_adds_missing_python_logic_tasks(tmp_path):
     python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
     logic_dir.mkdir(parents=True)
     python_logic_dir.mkdir(parents=True)
-    (python_logic_dir / "unported_feature.py").write_text("class UnportedFeature: pass\n", encoding="utf-8")
+    (python_logic_dir / "unported_feature.py").write_text(
+        "class UnportedFeature: pass\n", encoding="utf-8"
+    )
     plan.write_text("- [x] Existing complete task\n", encoding="utf-8")
     status.write_text("| runtime | partial |\n", encoding="utf-8")
     config = LogicPortDaemonConfig(
@@ -3306,7 +3489,10 @@ def test_plan_replenishment_adds_missing_python_logic_tasks(tmp_path):
     ]
     assert "## Daemon-Discovered Implementation Gaps" in updated
     assert "- [ ] Port remaining Python logic module `logic/unported_feature.py`" in updated
-    assert "Current target: `Task checkbox-2: Port remaining Python logic module 'logic/unported_feature.py' to browser-native TypeScript/WASM, including focused validation tests and no server or Python runtime dependency.`" in updated
+    assert (
+        "Current target: `Task checkbox-2: Port remaining Python logic module 'logic/unported_feature.py' to browser-native TypeScript/WASM, including focused validation tests and no server or Python runtime dependency.`"
+        in updated
+    )
 
 
 def test_plan_replenishment_reviews_original_goal_when_inventory_gaps_are_exhausted(tmp_path):
@@ -3385,7 +3571,9 @@ def test_supervised_replenishes_empty_plan_and_keeps_running(tmp_path):
     assert target.read_text(encoding="utf-8") == "new\n"
 
 
-def test_generate_retries_file_replacement_after_typescript_replacement_preflight(tmp_path, monkeypatch):
+def test_generate_retries_file_replacement_after_typescript_replacement_preflight(
+    tmp_path, monkeypatch
+):
     plan = tmp_path / "port-plan.md"
     status = tmp_path / "status.md"
     logic_dir = tmp_path / "src" / "lib" / "logic"
@@ -3402,14 +3590,21 @@ def test_generate_retries_file_replacement_after_typescript_replacement_prefligh
                 {
                     "summary": "bad syntax",
                     "patch": "",
-                    "files": [{"path": "src/lib/logic/feature.ts", "content": "export const value = ;\n"}],
+                    "files": [
+                        {"path": "src/lib/logic/feature.ts", "content": "export const value = ;\n"}
+                    ],
                 }
             ),
             json.dumps(
                 {
                     "summary": "fixed syntax",
                     "patch": "",
-                    "files": [{"path": "src/lib/logic/feature.ts", "content": "export const value = 'new';\n"}],
+                    "files": [
+                        {
+                            "path": "src/lib/logic/feature.ts",
+                            "content": "export const value = 'new';\n",
+                        }
+                    ],
                 }
             ),
         ]
@@ -3424,7 +3619,11 @@ def test_generate_retries_file_replacement_after_typescript_replacement_prefligh
             ]
         return []
 
-    monkeypatch.setattr(logic_port_daemon.LogicPortDaemonOptimizer, "_typescript_replacement_preflight_errors", fake_syntax_preflight)
+    monkeypatch.setattr(
+        logic_port_daemon.LogicPortDaemonOptimizer,
+        "_typescript_replacement_preflight_errors",
+        fake_syntax_preflight,
+    )
     config = LogicPortDaemonConfig(
         repo_root=tmp_path,
         plan_docs=(plan,),
@@ -3437,7 +3636,9 @@ def test_generate_retries_file_replacement_after_typescript_replacement_prefligh
         proposal_attempts=2,
     )
 
-    result = LogicPortDaemonOptimizer(config, llm_router=router).run_once(session_id="syntax-preflight")
+    result = LogicPortDaemonOptimizer(config, llm_router=router).run_once(
+        session_id="syntax-preflight"
+    )
 
     assert result["valid"] is True
     assert len(router.calls) == 2
@@ -3485,7 +3686,9 @@ def test_exhausted_preflight_attempts_do_not_apply_bad_replacement(tmp_path, mon
             {
                 "summary": "bad syntax",
                 "patch": "",
-                "files": [{"path": "src/lib/logic/feature.ts", "content": "export const value = ;\n"}],
+                "files": [
+                    {"path": "src/lib/logic/feature.ts", "content": "export const value = ;\n"}
+                ],
             }
         )
     )
@@ -3493,7 +3696,9 @@ def test_exhausted_preflight_attempts_do_not_apply_bad_replacement(tmp_path, mon
     monkeypatch.setattr(
         logic_port_daemon.LogicPortDaemonOptimizer,
         "_typescript_replacement_preflight_errors",
-        lambda self, edits: ["Rejected proposal because TypeScript replacement preflight found parser or generic/type-quality errors before touching the worktree."],
+        lambda self, edits: [
+            "Rejected proposal because TypeScript replacement preflight found parser or generic/type-quality errors before touching the worktree."
+        ],
     )
     config = LogicPortDaemonConfig(
         repo_root=tmp_path,
@@ -3507,7 +3712,9 @@ def test_exhausted_preflight_attempts_do_not_apply_bad_replacement(tmp_path, mon
         proposal_attempts=1,
     )
 
-    result = LogicPortDaemonOptimizer(config, llm_router=router).run_once(session_id="preflight-exhausted")
+    result = LogicPortDaemonOptimizer(config, llm_router=router).run_once(
+        session_id="preflight-exhausted"
+    )
 
     assert result["artifact"]["failure_kind"] == "preflight"
     assert result["artifact"]["validation_results"] == []
@@ -3546,7 +3753,9 @@ def test_file_edit_mode_applies_allowed_files_and_rolls_back_on_validation_failu
         validation_commands=(("python3", "-c", "import sys; sys.exit(1)"),),
     )
 
-    result = LogicPortDaemonOptimizer(config, llm_router=FakeRouter(response)).run_once(session_id="file-edit")
+    result = LogicPortDaemonOptimizer(config, llm_router=FakeRouter(response)).run_once(
+        session_id="file-edit"
+    )
 
     assert result["valid"] is False
     assert target.read_text(encoding="utf-8") == "old\n"
@@ -3585,7 +3794,9 @@ def test_file_edit_mode_rejects_vitest_imports_before_writing(tmp_path):
         validation_commands=tuple(),
     )
 
-    result = LogicPortDaemonOptimizer(config, llm_router=FakeRouter(response)).run_once(session_id="bad-test-harness")
+    result = LogicPortDaemonOptimizer(config, llm_router=FakeRouter(response)).run_once(
+        session_id="bad-test-harness"
+    )
 
     assert result["valid"] is False
     assert not (logic_dir / "example.test.ts").exists()
@@ -3622,12 +3833,15 @@ def test_patch_mode_rolls_back_when_validation_fails(tmp_path):
         validation_commands=(("python3", "-c", "import sys; sys.exit(1)"),),
     )
 
-    result = LogicPortDaemonOptimizer(config, llm_router=FakeRouter(response)).run_once(session_id="patch-rollback")
+    result = LogicPortDaemonOptimizer(config, llm_router=FakeRouter(response)).run_once(
+        session_id="patch-rollback"
+    )
 
     assert result["valid"] is False
     assert result["artifact"]["applied"] is False
     assert not (tmp_path / "generated.txt").exists()
     assert "Patch failed validation and was rolled back." in result["artifact"]["errors"]
+
 
 def test_revisit_blocked_fewest_failures_rotates_equal_failure_tasks(tmp_path):
     plan = tmp_path / "port-plan.md"
@@ -3675,6 +3889,7 @@ def test_revisit_blocked_fewest_failures_rotates_equal_failure_tasks(tmp_path):
 
     assert selected is not None
     assert selected.title == "First blocked task"
+
 
 def test_revisit_blocked_skips_tasks_after_failure_budget(tmp_path):
     plan = tmp_path / "port-plan.md"
@@ -3726,7 +3941,9 @@ def test_revisit_blocked_skips_tasks_after_same_kind_failure_budget(tmp_path):
     python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
     logic_dir.mkdir(parents=True)
     python_logic_dir.mkdir(parents=True)
-    plan.write_text("- [!] Repeated bad TypeScript task\n- [!] Fresh blocked task\n", encoding="utf-8")
+    plan.write_text(
+        "- [!] Repeated bad TypeScript task\n- [!] Fresh blocked task\n", encoding="utf-8"
+    )
     status.write_text("| runtime | partial |\n", encoding="utf-8")
     rows = [
         {
@@ -3736,7 +3953,9 @@ def test_revisit_blocked_skips_tasks_after_same_kind_failure_budget(tmp_path):
                 "summary": f"failed {index}",
                 "failure_kind": "preflight",
                 "changed_files": [],
-                "errors": ["src/lib/logic/example.ts(1,8): error TS2314: Generic type 'Record' requires 2 type argument(s)."],
+                "errors": [
+                    "src/lib/logic/example.ts(1,8): error TS2314: Generic type 'Record' requires 2 type argument(s)."
+                ],
             },
         }
         for index in range(3)
@@ -3785,7 +4004,12 @@ def test_task_failure_counts_normalize_markdown_backticks():
 
     assert logic_port_daemon._recent_total_failure_count(rows, task_label) == 1
     assert logic_port_daemon._recent_failure_count(rows, task_label, "preflight") == 1
-    assert logic_port_daemon._current_task_failure_counts(rows, task_label)["by_kind_since_success"]["preflight"] == 1
+    assert (
+        logic_port_daemon._current_task_failure_counts(rows, task_label)["by_kind_since_success"][
+            "preflight"
+        ]
+        == 1
+    )
 
 
 def test_revisit_blocked_stops_when_all_blocked_tasks_exhaust_failure_budget(tmp_path):
@@ -3829,8 +4053,11 @@ def test_revisit_blocked_stops_when_all_blocked_tasks_exhaust_failure_budget(tmp
     result = optimizer._no_eligible_task_result()
     assert result is not None
     assert result["artifact"]["failure_kind"] == "no_eligible_tasks"
-    backlog = optimizer._blocked_task_backlog(optimizer._current_plan_tasks(), logic_port_daemon._read_daemon_results(log_path))
+    backlog = optimizer._blocked_task_backlog(
+        optimizer._current_plan_tasks(), logic_port_daemon._read_daemon_results(log_path)
+    )
     assert backlog[0]["failure_budget_exhausted"] is True
+
 
 def test_progress_summary_classifies_typescript_quality_failures(tmp_path):
     plan = tmp_path / "port-plan.md"
@@ -3877,15 +4104,22 @@ def test_progress_summary_classifies_typescript_quality_failures(tmp_path):
         task_board_doc=plan,
     )
 
-    LogicPortDaemonOptimizer(config)._write_progress_summary(cycle_results=[latest], completed_cycles=1)
+    LogicPortDaemonOptimizer(config)._write_progress_summary(
+        cycle_results=[latest], completed_cycles=1
+    )
 
     progress = json.loads(progress_path.read_text(encoding="utf-8"))
     assert progress["failure_kind_counts"]["typescript_quality"] == 1
     assert progress["latest_round"]["failure_kind"] == "typescript_quality"
-    assert progress["current_task_failure_counts"]["by_kind_since_success"]["typescript_quality"] == 1
+    assert (
+        progress["current_task_failure_counts"]["by_kind_since_success"]["typescript_quality"] == 1
+    )
     assert progress["typescript_quality_failures"]["consecutive"] == 1
     assert progress["typescript_quality_failures"]["top_signature_count"] == 1
-    assert "TS2314:Generic type '<symbol>' requires 2 type argument(s)." in progress["typescript_quality_failures"]["top_signature"]
+    assert (
+        "TS2314:Generic type '<symbol>' requires 2 type argument(s)."
+        in progress["typescript_quality_failures"]["top_signature"]
+    )
     assert progress["rollback_quality_failures"]["total"] == 1
     assert progress["rollback_quality_failures"]["consecutive"] == 1
     assert progress["rollback_quality_failures"]["by_kind"]["typescript_quality"] == 1

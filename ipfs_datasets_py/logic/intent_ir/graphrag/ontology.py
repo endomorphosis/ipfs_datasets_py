@@ -147,25 +147,18 @@ class CorpusOntology:
             CorpusEdgeType.SAME_PRIMARY_SOURCE,
             CorpusEdgeType.DUPLICATE_OF,
         }:
-            valid = (
-                source in {CorpusNodeType.SOURCE_DOCUMENT, CorpusNodeType.SKILL}
-                and target in {CorpusNodeType.SOURCE_DOCUMENT, CorpusNodeType.SKILL}
-            )
+            valid = source in {CorpusNodeType.SOURCE_DOCUMENT, CorpusNodeType.SKILL} and target in {
+                CorpusNodeType.SOURCE_DOCUMENT,
+                CorpusNodeType.SKILL,
+            }
         elif edge is CorpusEdgeType.MENTIONS:
-            valid = (
-                source in _EVIDENCE_SOURCES
-                and target
-                in {
-                    CorpusNodeType.TOOL_MENTION,
-                    CorpusNodeType.ENTITY_MENTION,
-                    CorpusNodeType.AUTHOR_PUBLISHER,
-                }
-            )
+            valid = source in _EVIDENCE_SOURCES and target in {
+                CorpusNodeType.TOOL_MENTION,
+                CorpusNodeType.ENTITY_MENTION,
+                CorpusNodeType.AUTHOR_PUBLISHER,
+            }
         elif edge is CorpusEdgeType.HAS_LICENSE:
-            valid = (
-                source in _EVIDENCE_SOURCES
-                and target is CorpusNodeType.LICENSE
-            )
+            valid = source in _EVIDENCE_SOURCES and target is CorpusNodeType.LICENSE
         elif edge is CorpusEdgeType.HAS_DOMAIN:
             valid = (
                 source
@@ -179,14 +172,10 @@ class CorpusOntology:
                 and target is CorpusNodeType.DOMAIN
             )
         elif edge is CorpusEdgeType.CITES:
-            valid = (
-                source in _EVIDENCE_SOURCES
-                and target
-                in {
-                    CorpusNodeType.SOURCE_DOCUMENT,
-                    CorpusNodeType.REPOSITORY,
-                }
-            )
+            valid = source in _EVIDENCE_SOURCES and target in {
+                CorpusNodeType.SOURCE_DOCUMENT,
+                CorpusNodeType.REPOSITORY,
+            }
         elif edge is CorpusEdgeType.NEIGHBOR_OF:
             valid = source is target and source in {
                 CorpusNodeType.SOURCE_DOCUMENT,
@@ -196,8 +185,7 @@ class CorpusOntology:
             }
         if not valid:
             raise CorpusGraphValidationError(
-                f"{edge.value} does not permit "
-                f"{source.value} -> {target.value}"
+                f"{edge.value} does not permit {source.value} -> {target.value}"
             )
 
     def to_dict(self) -> dict[str, Any]:
@@ -224,22 +212,16 @@ class AddressedArtifact:
     def __post_init__(self) -> None:
         _require_text(self.cid, "artifact cid")
         _validate_digest(self.digest, "artifact digest")
-        expected_cid = cid_v1_from_digest(
-            bytes.fromhex(self.digest.removeprefix("sha256:"))
-        )
+        expected_cid = cid_v1_from_digest(bytes.fromhex(self.digest.removeprefix("sha256:")))
         if self.cid != expected_cid:
-            raise CorpusGraphValidationError(
-                "artifact cid does not match its fixed-profile digest"
-            )
+            raise CorpusGraphValidationError("artifact cid does not match its fixed-profile digest")
         _require_text(self.media_type, "artifact media_type")
         if (
             isinstance(self.size_bytes, bool)
             or not isinstance(self.size_bytes, int)
             or self.size_bytes < 0
         ):
-            raise CorpusGraphValidationError(
-                "artifact size_bytes must be a non-negative integer"
-            )
+            raise CorpusGraphValidationError("artifact size_bytes must be a non-negative integer")
 
     @classmethod
     def from_bytes(
@@ -408,19 +390,13 @@ class IntentCorpusGraph(Mapping[str, Any]):
         if not self.source_digests:
             raise CorpusGraphValidationError("source_digests must not be empty")
         if tuple(sorted(set(self.source_digests))) != self.source_digests:
-            raise CorpusGraphValidationError(
-                "source_digests must be unique and canonically sorted"
-            )
+            raise CorpusGraphValidationError("source_digests must be unique and canonically sorted")
         for digest in self.source_digests:
             _validate_digest(digest, "source digest")
         if any(not isinstance(node, CorpusGraphNode) for node in self.nodes):
-            raise CorpusGraphValidationError(
-                "nodes must contain only CorpusGraphNode values"
-            )
+            raise CorpusGraphValidationError("nodes must contain only CorpusGraphNode values")
         if any(not isinstance(edge, CorpusGraphEdge) for edge in self.edges):
-            raise CorpusGraphValidationError(
-                "edges must contain only CorpusGraphEdge values"
-            )
+            raise CorpusGraphValidationError("edges must contain only CorpusGraphEdge values")
         if any(
             not isinstance(item, AddressedArtifact)
             for item in (*self.source_bodies, *self.embeddings)
@@ -463,35 +439,20 @@ class IntentCorpusGraph(Mapping[str, Any]):
             raise CorpusGraphValidationError(
                 "graph_digest does not match canonical structural projection"
             )
-        if tuple(sorted(self.source_bodies, key=lambda item: item.digest)) != (
-            self.source_bodies
-        ):
-            raise CorpusGraphValidationError(
-                "source_bodies must be sorted by digest"
-            )
-        if tuple(sorted(self.embeddings, key=lambda item: item.digest)) != (
-            self.embeddings
-        ):
+        if tuple(sorted(self.source_bodies, key=lambda item: item.digest)) != (self.source_bodies):
+            raise CorpusGraphValidationError("source_bodies must be sorted by digest")
+        if tuple(sorted(self.embeddings, key=lambda item: item.digest)) != (self.embeddings):
             raise CorpusGraphValidationError("embeddings must be sorted by digest")
         for label, artifacts in (
             ("source_bodies", self.source_bodies),
             ("embeddings", self.embeddings),
         ):
             if len({item.digest for item in artifacts}) != len(artifacts):
-                raise CorpusGraphValidationError(
-                    f"{label} contains a duplicate digest"
-                )
+                raise CorpusGraphValidationError(f"{label} contains a duplicate digest")
             if len({item.cid for item in artifacts}) != len(artifacts):
-                raise CorpusGraphValidationError(
-                    f"{label} contains a duplicate cid"
-                )
-        if any(
-            item.digest not in self.source_digests
-            for item in self.source_bodies
-        ):
-            raise CorpusGraphValidationError(
-                "source body digest is not declared in source_digests"
-            )
+                raise CorpusGraphValidationError(f"{label} contains a duplicate cid")
+        if any(item.digest not in self.source_digests for item in self.source_bodies):
+            raise CorpusGraphValidationError("source body digest is not declared in source_digests")
         body_cids = {item.cid for item in self.source_bodies}
         embedding_cids = {item.cid for item in self.embeddings}
         if body_cids & embedding_cids:
@@ -601,15 +562,8 @@ def _enum_value(enum_type: type[Enum], value: Any, label: str) -> Any:
 
 
 def _require_text(value: Any, label: str) -> str:
-    if (
-        not isinstance(value, str)
-        or not value
-        or value.strip() != value
-        or "\x00" in value
-    ):
-        raise CorpusGraphValidationError(
-            f"{label} must be non-empty normalized text"
-        )
+    if not isinstance(value, str) or not value or value.strip() != value or "\x00" in value:
+        raise CorpusGraphValidationError(f"{label} must be non-empty normalized text")
     return value
 
 
@@ -620,9 +574,7 @@ def _validate_id(value: Any, label: str) -> None:
 
 def _validate_digest(value: Any, label: str) -> None:
     if not isinstance(value, str) or not _DIGEST_RE.fullmatch(value):
-        raise CorpusGraphValidationError(
-            f"{label} must be a lowercase sha256:<hex> digest"
-        )
+        raise CorpusGraphValidationError(f"{label} must be a lowercase sha256:<hex> digest")
 
 
 def _freeze(value: Any) -> Any:
@@ -699,8 +651,7 @@ def _assert_bounded_strings(value: Any) -> None:
     if isinstance(value, str):
         if len(value) > MAX_GRAPH_PROPERTY_STRING_CHARS:
             raise CorpusGraphValidationError(
-                "graph property string exceeds "
-                f"{MAX_GRAPH_PROPERTY_STRING_CHARS} characters"
+                f"graph property string exceeds {MAX_GRAPH_PROPERTY_STRING_CHARS} characters"
             )
         return
     if isinstance(value, Mapping):

@@ -46,14 +46,11 @@ if result.success:
 
 # Scrape with specific method
 from ipfs_datasets_py import ScraperMethod
+
 result = scrape_url("https://example.com", method=ScraperMethod.PLAYWRIGHT)
 
 # Scrape multiple URLs
-results = scrape_urls([
-    "https://example.com",
-    "https://example.org",
-    "https://example.net"
-])
+results = scrape_urls(["https://example.com", "https://example.org", "https://example.net"])
 
 for result in results:
     if result.success:
@@ -69,7 +66,7 @@ config = ScraperConfig(
     fallback_enabled=True,
     playwright_headless=True,
     rate_limit_delay=2.0,
-    max_retries=3
+    max_retries=3,
 )
 
 scraper = UnifiedWebScraper(config)
@@ -78,10 +75,12 @@ result = scraper.scrape_sync("https://example.com")
 # Async usage
 import asyncio
 
+
 async def scrape_async():
     scraper = UnifiedWebScraper()
     result = await scraper.scrape("https://example.com")
     return result
+
 
 result = asyncio.run(scrape_async())
 ```
@@ -130,7 +129,7 @@ The unified scraper is exposed through the MCP server for AI assistant integrati
 from ipfs_datasets_py.mcp_server.tools.web_scraping_tools import (
     scrape_url_tool,
     scrape_multiple_urls_tool,
-    check_scraper_methods_tool
+    check_scraper_methods_tool,
 )
 
 # Scrape a URL
@@ -140,20 +139,18 @@ result = await scrape_url_tool(
     timeout=30,
     extract_links=True,
     extract_text=True,
-    fallback_enabled=True
+    fallback_enabled=True,
 )
 
 # Scrape multiple URLs
 result = await scrape_multiple_urls_tool(
-    urls=["https://example.com", "https://example.org"],
-    max_concurrent=5,
-    fallback_enabled=True
+    urls=["https://example.com", "https://example.org"], max_concurrent=5, fallback_enabled=True
 )
 
 # Check available methods
 result = await check_scraper_methods_tool()
-print(result['available_methods'])
-print(result['fallback_sequence'])
+print(result["available_methods"])
+print(result["fallback_sequence"])
 ```
 
 ## Scraping Methods
@@ -221,31 +218,27 @@ from ipfs_datasets_py import ScraperConfig, ScraperMethod
 
 config = ScraperConfig(
     # Timeout and retry settings
-    timeout=30,                    # Request timeout in seconds
-    max_retries=3,                 # Max retry attempts
-    retry_delay=1.0,               # Delay between retries
-    
+    timeout=30,  # Request timeout in seconds
+    max_retries=3,  # Max retry attempts
+    retry_delay=1.0,  # Delay between retries
     # Content extraction
-    extract_links=True,            # Extract links from pages
-    extract_text=True,             # Extract text content
-    
+    extract_links=True,  # Extract links from pages
+    extract_text=True,  # Extract text content
     # Network settings
-    follow_redirects=True,         # Follow HTTP redirects
-    verify_ssl=True,               # Verify SSL certificates
-    rate_limit_delay=1.0,          # Delay between requests
-    user_agent="Custom-Agent/1.0", # Custom user agent
-    
+    follow_redirects=True,  # Follow HTTP redirects
+    verify_ssl=True,  # Verify SSL certificates
+    rate_limit_delay=1.0,  # Delay between requests
+    user_agent="Custom-Agent/1.0",  # Custom user agent
     # Playwright settings
-    playwright_headless=True,      # Run browser in headless mode
-    playwright_wait_for="networkidle", # Wait condition
-    
+    playwright_headless=True,  # Run browser in headless mode
+    playwright_wait_for="networkidle",  # Wait condition
     # Fallback settings
-    fallback_enabled=True,         # Enable automatic fallback
-    preferred_methods=[            # Custom method order
+    fallback_enabled=True,  # Enable automatic fallback
+    preferred_methods=[  # Custom method order
         ScraperMethod.PLAYWRIGHT,
         ScraperMethod.BEAUTIFULSOUP,
-        ScraperMethod.WAYBACK_MACHINE
-    ]
+        ScraperMethod.WAYBACK_MACHINE,
+    ],
 )
 ```
 
@@ -256,18 +249,18 @@ All scraping methods return a `ScraperResult` object:
 ```python
 @dataclass
 class ScraperResult:
-    url: str                        # Original URL
-    content: str                    # Extracted text content
-    html: str                       # Raw HTML content
-    title: str                      # Page title
-    text: str                       # Clean text (same as content)
-    links: List[Dict[str, str]]     # Extracted links
-    metadata: Dict[str, Any]        # Additional metadata
-    method_used: ScraperMethod      # Method that succeeded
-    success: bool                   # Whether scraping succeeded
-    errors: List[str]               # Error messages if failed
-    timestamp: str                  # ISO timestamp
-    extraction_time: float          # Time taken in seconds
+    url: str  # Original URL
+    content: str  # Extracted text content
+    html: str  # Raw HTML content
+    title: str  # Page title
+    text: str  # Clean text (same as content)
+    links: List[Dict[str, str]]  # Extracted links
+    metadata: Dict[str, Any]  # Additional metadata
+    method_used: ScraperMethod  # Method that succeeded
+    success: bool  # Whether scraping succeeded
+    errors: List[str]  # Error messages if failed
+    timestamp: str  # ISO timestamp
+    extraction_time: float  # Time taken in seconds
 ```
 
 ## Error Handling
@@ -304,7 +297,7 @@ from bs4 import BeautifulSoup
 import requests
 
 response = requests.get("https://example.com")
-soup = BeautifulSoup(response.content, 'html.parser')
+soup = BeautifulSoup(response.content, "html.parser")
 text = soup.get_text()
 ```
 
@@ -324,15 +317,16 @@ text = result.text
 async def scrape_tool(url: str) -> Dict:
     import requests
     from bs4 import BeautifulSoup
-    
+
     response = requests.get(url)
-    soup = BeautifulSoup(response.content, 'html.parser')
+    soup = BeautifulSoup(response.content, "html.parser")
     return {"text": soup.get_text()}
 ```
 
 **After (unified scraper in MCP tool):**
 ```python
 from ipfs_datasets_py.mcp_server.tools.web_scraping_tools import scrape_url_tool
+
 
 async def scrape_tool(url: str) -> Dict:
     return await scrape_url_tool(url)

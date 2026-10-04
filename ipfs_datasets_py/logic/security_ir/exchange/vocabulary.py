@@ -19,21 +19,15 @@ from ..model import SecurityExtension
 EXCHANGE_VOCABULARY: Final = "security.crypto-exchange"
 EXCHANGE_VOCABULARY_NAMESPACE: Final = EXCHANGE_VOCABULARY
 EXCHANGE_VOCABULARY_VERSION: Final = "v1"
-EXCHANGE_VOCABULARY_SCHEMA_VERSION: Final = (
-    f"{EXCHANGE_VOCABULARY}/{EXCHANGE_VOCABULARY_VERSION}"
-)
+EXCHANGE_VOCABULARY_SCHEMA_VERSION: Final = f"{EXCHANGE_VOCABULARY}/{EXCHANGE_VOCABULARY_VERSION}"
 EXCHANGE_SCHEMA_VERSION: Final = EXCHANGE_VOCABULARY_SCHEMA_VERSION
 EXCHANGE_EXTENSION_ID: Final = "extension:security.crypto-exchange:v1"
 
 EXCHANGE_DOMAINS: Final = frozenset(
     {"audit", "capabilities", "deposits", "hsm", "ledger", "withdrawals"}
 )
-EXCHANGE_RESOURCE_KINDS: Final = frozenset(
-    {"account", "entity", "wallet"}
-)
-EXCHANGE_WALLET_STATUSES: Final = frozenset(
-    {"active", "disabled", "frozen", "retired", "rotating"}
-)
+EXCHANGE_RESOURCE_KINDS: Final = frozenset({"account", "entity", "wallet"})
+EXCHANGE_WALLET_STATUSES: Final = frozenset({"active", "disabled", "frozen", "retired", "rotating"})
 EXCHANGE_EVENT_TYPES: Final = frozenset(
     {
         "audit_logged",
@@ -228,33 +222,23 @@ def parse_exchange_term(value: str, *, category: str) -> str:
 
 
 def _records(value: Any, field_name: str) -> tuple[Mapping[str, Any], ...]:
-    if isinstance(value, (str, bytes, bytearray)) or not isinstance(
-        value, Sequence
-    ):
+    if isinstance(value, (str, bytes, bytearray)) or not isinstance(value, Sequence):
         raise ExchangeVocabularyError(f"{field_name} must be a sequence")
     records = tuple(value)
     for index, record in enumerate(records):
         if not isinstance(record, Mapping):
-            raise ExchangeVocabularyError(
-                f"{field_name}[{index}] must be a mapping"
-            )
+            raise ExchangeVocabularyError(f"{field_name}[{index}] must be a mapping")
     return records
 
 
-def _unique_record_ids(
-    records: Sequence[Mapping[str, Any]], field_name: str
-) -> None:
+def _unique_record_ids(records: Sequence[Mapping[str, Any]], field_name: str) -> None:
     seen: set[str] = set()
     for index, record in enumerate(records):
         record_id = record.get("id")
         if not isinstance(record_id, str) or not record_id:
-            raise ExchangeVocabularyError(
-                f"{field_name}[{index}].id must be a non-empty string"
-            )
+            raise ExchangeVocabularyError(f"{field_name}[{index}].id must be a non-empty string")
         if record_id in seen:
-            raise ExchangeVocabularyError(
-                f"{field_name} contains duplicate id {record_id!r}"
-            )
+            raise ExchangeVocabularyError(f"{field_name} contains duplicate id {record_id!r}")
         seen.add(record_id)
 
 
@@ -264,17 +248,11 @@ def validate_exchange_extension(
     """Validate the exchange extension's namespace, version, and payload."""
 
     if not isinstance(extension, SecurityExtension):
-        raise ExchangeVocabularyError(
-            "exchange extension must be a SecurityExtension"
-        )
+        raise ExchangeVocabularyError("exchange extension must be a SecurityExtension")
     if extension.extension_id != EXCHANGE_EXTENSION_ID:
-        raise ExchangeVocabularyError(
-            f"exchange extension id must be {EXCHANGE_EXTENSION_ID!r}"
-        )
+        raise ExchangeVocabularyError(f"exchange extension id must be {EXCHANGE_EXTENSION_ID!r}")
     if extension.vocabulary != EXCHANGE_VOCABULARY:
-        raise ExchangeVocabularyError(
-            f"exchange vocabulary must be {EXCHANGE_VOCABULARY!r}"
-        )
+        raise ExchangeVocabularyError(f"exchange vocabulary must be {EXCHANGE_VOCABULARY!r}")
     if extension.version != EXCHANGE_VOCABULARY_VERSION:
         raise ExchangeVocabularyError(
             f"unsupported exchange vocabulary version: {extension.version!r}"
@@ -289,13 +267,9 @@ def validate_exchange_extension(
     unknown = sorted(set(payload) - allowed)
     missing = sorted(allowed - set(payload))
     if unknown:
-        raise ExchangeVocabularyError(
-            f"unknown exchange extension field(s): {', '.join(unknown)}"
-        )
+        raise ExchangeVocabularyError(f"unknown exchange extension field(s): {', '.join(unknown)}")
     if missing:
-        raise ExchangeVocabularyError(
-            f"missing exchange extension field(s): {', '.join(missing)}"
-        )
+        raise ExchangeVocabularyError(f"missing exchange extension field(s): {', '.join(missing)}")
     if payload["schema_version"] != EXCHANGE_VOCABULARY_SCHEMA_VERSION:
         raise ExchangeVocabularyError(
             "exchange extension schema_version does not match its vocabulary"
@@ -320,23 +294,18 @@ def validate_exchange_extension(
                 f"events[{index}] uses unknown exchange event {event_name!r}"
             )
     targets = payload["prover_targets"]
-    if isinstance(targets, (str, bytes, bytearray)) or not isinstance(
-        targets, Sequence
-    ):
+    if isinstance(targets, (str, bytes, bytearray)) or not isinstance(targets, Sequence):
         raise ExchangeVocabularyError("prover_targets must be a sequence")
     if not targets:
         raise ExchangeVocabularyError("prover_targets must not be empty")
     if any(not isinstance(target, str) or not target for target in targets):
-        raise ExchangeVocabularyError(
-            "prover_targets must contain non-empty strings"
-        )
+        raise ExchangeVocabularyError("prover_targets must contain non-empty strings")
     if len(targets) != len(set(targets)):
         raise ExchangeVocabularyError("prover_targets must be unique")
     unsupported_targets = sorted(set(targets) - EXCHANGE_PROVER_TARGETS)
     if unsupported_targets:
         raise ExchangeVocabularyError(
-            "unsupported exchange prover target(s): "
-            + ", ".join(unsupported_targets)
+            "unsupported exchange prover target(s): " + ", ".join(unsupported_targets)
         )
     if not isinstance(payload["metadata"], Mapping):
         raise ExchangeVocabularyError("metadata must be a mapping")

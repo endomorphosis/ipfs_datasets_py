@@ -12,9 +12,7 @@ from ipfs_datasets_py.logic.security_ir import artifact_migration as migration
 
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
-INVENTORY_PATH = (
-    REPO_ROOT / "docs/security_verification/security_ir_artifact_inventory.json"
-)
+INVENTORY_PATH = REPO_ROOT / "docs/security_verification/security_ir_artifact_inventory.json"
 MANIFEST_PATH = REPO_ROOT / migration.DEFAULT_MANIFEST_PATH
 
 
@@ -37,9 +35,7 @@ def _inventory_digest(records: list[dict]) -> str:
 
 
 def _rebind_manifest(manifest: dict) -> None:
-    digest = hashlib.sha256(
-        canonical_json_bytes(manifest["deterministic_fields"])
-    ).hexdigest()
+    digest = hashlib.sha256(canonical_json_bytes(manifest["deterministic_fields"])).hexdigest()
     manifest["manifest_sha256"] = digest
     manifest["manifest_id"] = f"security-artifact-migration:sha256:{digest}"
 
@@ -50,15 +46,11 @@ def test_checked_in_manifest_is_complete_and_deterministic() -> None:
     second = migration.build_migration_manifest(deepcopy(inventory))
 
     assert first == second == _manifest()
-    assert migration.render_migration_manifest(first) == MANIFEST_PATH.read_text(
-        encoding="utf-8"
-    )
+    assert migration.render_migration_manifest(first) == MANIFEST_PATH.read_text(encoding="utf-8")
     assert first["schema_version"] == "SecurityArtifactMigration@1"
     deterministic = first["deterministic_fields"]
     assert deterministic["artifact_count"] == inventory["artifact_count"] == 269
-    assert deterministic["source_inventory"]["inventory_sha256"] == (
-        inventory["inventory_sha256"]
-    )
+    assert deterministic["source_inventory"]["inventory_sha256"] == (inventory["inventory_sha256"])
     assert deterministic["authority_decisions_made"] == 0
     assert deterministic["class_counts"] == {
         "archive": 24,
@@ -72,9 +64,7 @@ def test_checked_in_manifest_is_complete_and_deterministic() -> None:
     paths = [record["legacy"]["path"] for record in deterministic["records"]]
     assert paths == sorted(paths, key=lambda value: value.encode("utf-8"))
     assert len(paths) == len(set(paths))
-    assert len(
-        {record["record_id"] for record in deterministic["records"]}
-    ) == len(paths)
+    assert len({record["record_id"] for record in deterministic["records"]}) == len(paths)
     assert migration.DEFAULT_MANIFEST_PATH not in paths
 
 
@@ -106,8 +96,7 @@ def test_every_legacy_hash_id_and_inventory_record_is_preserved() -> None:
 
 def test_classes_and_safety_flags_do_not_select_ambiguous_authority() -> None:
     records = {
-        item["legacy"]["path"]: item
-        for item in _manifest()["deterministic_fields"]["records"]
+        item["legacy"]["path"]: item for item in _manifest()["deterministic_fields"]["records"]
     }
     expected = {
         "security_ir_artifacts/assurance-baseline.md": "golden",
@@ -121,9 +110,7 @@ def test_classes_and_safety_flags_do_not_select_ambiguous_authority() -> None:
         assert record["target"]["artifact_class"] == artifact_class
         assert record["target"]["authority_selected"] is False
 
-    ambiguous = records[
-        "security_ir_artifacts/corpora/xaman-app/native-boundary-coverage-new.json"
-    ]
+    ambiguous = records["security_ir_artifacts/corpora/xaman-app/native-boundary-coverage-new.json"]
     assert ambiguous["flags"] == {
         "ambiguous": True,
         "transient": False,
@@ -133,9 +120,7 @@ def test_classes_and_safety_flags_do_not_select_ambiguous_authority() -> None:
     assert ambiguous["target"]["disposition"] == "retain_pending_review"
     assert ambiguous["target"]["authority_selected"] is False
 
-    transient = records[
-        "security_ir_artifacts/corpora/xaman-app/proof-kernel/XamanReceipt.vo"
-    ]
+    transient = records["security_ir_artifacts/corpora/xaman-app/proof-kernel/XamanReceipt.vo"]
     assert transient["flags"]["transient"] is True
     assert transient["target"]["disposition"] == "retain_regenerable_output"
 
@@ -173,17 +158,13 @@ def test_builder_rejects_noncanonical_or_unsafe_inventory_metadata() -> None:
 
     authoritative = deepcopy(inventory)
     authoritative["artifacts"][0]["authority_selected"] = True
-    authoritative["inventory_sha256"] = _inventory_digest(
-        authoritative["artifacts"]
-    )
+    authoritative["inventory_sha256"] = _inventory_digest(authoritative["artifacts"])
     with pytest.raises(migration.ArtifactMigrationError, match="must not select"):
         migration.build_migration_manifest(authoritative)
 
     coerced_boolean = deepcopy(inventory)
     coerced_boolean["artifacts"][0]["is_temporary"] = 0
-    coerced_boolean["inventory_sha256"] = _inventory_digest(
-        coerced_boolean["artifacts"]
-    )
+    coerced_boolean["inventory_sha256"] = _inventory_digest(coerced_boolean["artifacts"])
     with pytest.raises(migration.ArtifactMigrationError, match="must be a boolean"):
         migration.build_migration_manifest(coerced_boolean)
 
@@ -199,9 +180,7 @@ def test_deterministic_and_observational_fields_are_separate() -> None:
     assert changed_observation["manifest_sha256"] == manifest["manifest_sha256"]
 
     changed_deterministic = deepcopy(manifest)
-    changed_deterministic["deterministic_fields"]["records"][0]["legacy"][
-        "size_bytes"
-    ] += 1
+    changed_deterministic["deterministic_fields"]["records"][0]["legacy"]["size_bytes"] += 1
     with pytest.raises(migration.ArtifactMigrationError, match="manifest_sha256"):
         migration.validate_migration_manifest(changed_deterministic)
 
@@ -280,9 +259,7 @@ def test_integrity_audit_detects_missing_changed_and_inventory_drift(
         "scope": "filesystem files",
     }
     manifest = migration.build_migration_manifest(inventory)
-    assert migration.audit_migration_integrity(
-        manifest, tmp_path, inventory=inventory
-    ).valid
+    assert migration.audit_migration_integrity(manifest, tmp_path, inventory=inventory).valid
 
     path.write_bytes(b"tampered")
     changed = migration.audit_migration_integrity(manifest, tmp_path)
@@ -298,8 +275,6 @@ def test_integrity_audit_detects_missing_changed_and_inventory_drift(
 
     drifted_inventory = deepcopy(inventory)
     drifted_inventory["artifacts"][0]["recommendations"] = ["different"]
-    drifted = migration.audit_migration_integrity(
-        manifest, tmp_path, inventory=drifted_inventory
-    )
+    drifted = migration.audit_migration_integrity(manifest, tmp_path, inventory=drifted_inventory)
     assert not drifted.valid
     assert any("source inventory" in issue or "reversed" in issue for issue in drifted.issues)

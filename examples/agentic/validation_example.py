@@ -16,7 +16,7 @@ def main():
     print("=" * 60)
     print("Code Validation Example")
     print("=" * 60)
-    
+
     # Sample code to validate
     code_to_validate = '''
 """Sample module for validation."""
@@ -69,7 +69,7 @@ class DataProcessor:
         self._cache[key] = result
         return result
 '''
-    
+
     # Test different validation levels
     levels = [
         ValidationLevel.BASIC,
@@ -77,15 +77,15 @@ class DataProcessor:
         ValidationLevel.STRICT,
         ValidationLevel.PARANOID,
     ]
-    
+
     for level in levels:
         print(f"\n{'=' * 60}")
         print(f"Validation Level: {level.value.upper()}")
         print(f"{'=' * 60}")
-        
+
         # Create validator
         validator = OptimizationValidator(level=level, parallel=True)
-        
+
         # Run validation
         print("Running validation...")
         result = validator.validate_sync(
@@ -93,43 +93,43 @@ class DataProcessor:
             target_files=[],
             context={},
         )
-        
+
         # Display results
         print(f"\nResult: {'✅ PASSED' if result.passed else '❌ FAILED'}")
         print(f"Execution time: {result.execution_time:.2f}s")
-        
+
         # Show details based on level
         if result.syntax:
             print(f"\nSyntax: {'✅' if result.syntax.get('passed') else '❌'}")
-            if result.syntax.get('node_count'):
+            if result.syntax.get("node_count"):
                 print(f"  AST nodes: {result.syntax['node_count']}")
-        
+
         if result.types:
             print(f"Types: {'✅' if result.types.get('passed') else '❌'}")
-            if not result.types.get('mypy_available'):
+            if not result.types.get("mypy_available"):
                 print("  (mypy not available)")
-        
+
         if result.style:
             print(f"Style: {'✅' if result.style.get('passed') else '❌'}")
-            if result.style.get('score'):
+            if result.style.get("score"):
                 print(f"  Score: {result.style['score']:.1f}%")
-        
+
         if result.security:
             print(f"Security: {'✅' if result.security.get('passed') else '❌'}")
-            issues = result.security.get('issues_found', [])
+            issues = result.security.get("issues_found", [])
             if issues:
                 print(f"  Issues: {len(issues)}")
-        
+
         if result.errors:
             print(f"\nErrors: {len(result.errors)}")
             for error in result.errors[:3]:
                 print(f"  - {error}")
-        
+
         if result.warnings:
             print(f"\nWarnings: {len(result.warnings)}")
             for warning in result.warnings[:3]:
                 print(f"  - {warning}")
-    
+
     print(f"\n{'=' * 60}")
     print("Validation Levels Comparison")
     print(f"{'=' * 60}")
@@ -155,10 +155,11 @@ PARANOID: Maximum validation
   - Style enforcement
   - Use for security-sensitive code
 """)
-    
+
     return 0
 
 
 if __name__ == "__main__":
     import sys
+
     sys.exit(main())

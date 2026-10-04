@@ -25,45 +25,28 @@ from benchmarks.logic_pipeline.content_addressing import (
 
 
 CANONICAL_DECISION_INTERFACE: Final = "CanonicalCompilerDecision@1"
-CANONICAL_DECISION_SCHEMA: Final = (
-    "ipfs-datasets.semantic-roundtrip-canonical-compiler-decision.v1"
-)
+CANONICAL_DECISION_SCHEMA: Final = "ipfs-datasets.semantic-roundtrip-canonical-compiler-decision.v1"
 PARITY_POLICY_INTERFACE: Final = "CanonicalRoundTripParityPolicy@1"
-PARITY_POLICY_SCHEMA: Final = (
-    "ipfs-datasets.semantic-roundtrip-canonical-parity-policy.v1"
-)
+PARITY_POLICY_SCHEMA: Final = "ipfs-datasets.semantic-roundtrip-canonical-parity-policy.v1"
 # Distinct from the production orchestrator result interface
 # (``CanonicalSemanticRoundTrip@1`` / stage-completion receipt).
 PARITY_REPORT_INTERFACE: Final = "CanonicalSemanticRoundTripParityReport@1"
-PARITY_REPORT_SCHEMA: Final = (
-    "ipfs-datasets.semantic-roundtrip-canonical-parity-report.v1"
-)
+PARITY_REPORT_SCHEMA: Final = "ipfs-datasets.semantic-roundtrip-canonical-parity-report.v1"
 
 CANONICAL_ARTIFACT_PATHS: Final = {
     # SRT-014 is preserved as no-eligible negative evidence in the policy
     # lineage.  The selectable replacement run is the composition report that
     # may authorize a selected or bounded-tie SRT-019 decision.
     "composition_report": (
-        "docs/performance_snapshots/"
-        "2026-07-27_semantic_roundtrip_composition_replacement.json"
+        "docs/performance_snapshots/2026-07-27_semantic_roundtrip_composition_replacement.json"
     ),
-    "specification": (
-        "docs/architecture/semantic_roundtrip_canonical_compiler.md"
-    ),
-    "parity_policy": (
-        "docs/benchmarks/semantic_roundtrip_canonical_parity_policy.json"
-    ),
-    "ir_schema": (
-        "ipfs_datasets_py/logic/legal_ir/schemas/"
-        "canonical_roundtrip_ir.schema.json"
-    ),
+    "specification": ("docs/architecture/semantic_roundtrip_canonical_compiler.md"),
+    "parity_policy": ("docs/benchmarks/semantic_roundtrip_canonical_parity_policy.json"),
+    "ir_schema": ("ipfs_datasets_py/logic/legal_ir/schemas/canonical_roundtrip_ir.schema.json"),
     "compiler": "ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
     "decompiler": "ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
     "roundtrip": "ipfs_datasets_py/logic/legal_ir/canonical_roundtrip.py",
-    "parity_report": (
-        "docs/performance_snapshots/"
-        "2026-07-26_canonical_semantic_roundtrip.json"
-    ),
+    "parity_report": ("docs/performance_snapshots/2026-07-26_canonical_semantic_roundtrip.json"),
 }
 
 REQUESTED_TOOL_IDS: Final = (
@@ -94,9 +77,7 @@ class CanonicalDecisionValidationError(ValueError):
 
 
 def _mapping(value: object, path: str) -> Mapping[str, Any]:
-    if not isinstance(value, Mapping) or not all(
-        isinstance(key, str) for key in value
-    ):
+    if not isinstance(value, Mapping) or not all(isinstance(key, str) for key in value):
         raise CanonicalDecisionValidationError(f"{path} must be an object")
     return value
 
@@ -114,8 +95,7 @@ def _exact(
 ) -> None:
     if set(value) != fields:
         raise CanonicalDecisionValidationError(
-            f"{path} fields changed; expected {sorted(fields)}, "
-            f"got {sorted(value)}"
+            f"{path} fields changed; expected {sorted(fields)}, got {sorted(value)}"
         )
 
 
@@ -126,9 +106,7 @@ def _require(condition: object, message: str) -> None:
 
 def _string(value: object, path: str) -> str:
     if not isinstance(value, str) or not value.strip():
-        raise CanonicalDecisionValidationError(
-            f"{path} must be a nonempty string"
-        )
+        raise CanonicalDecisionValidationError(f"{path} must be a nonempty string")
     return value
 
 
@@ -138,9 +116,7 @@ def _number(value: object, path: str) -> float:
         or isinstance(value, bool)
         or not math.isfinite(float(value))
     ):
-        raise CanonicalDecisionValidationError(
-            f"{path} must be a finite number"
-        )
+        raise CanonicalDecisionValidationError(f"{path} must be a finite number")
     return float(value)
 
 
@@ -157,9 +133,7 @@ def _canonical_cid(
     try:
         return validate_cid(value, codecs=codecs)
     except (TypeError, ValueError) as exc:
-        raise CanonicalDecisionValidationError(
-            f"{path} is not a canonical CID: {exc}"
-        ) from exc
+        raise CanonicalDecisionValidationError(f"{path} is not a canonical CID: {exc}") from exc
 
 
 def _reject_duplicate_pairs(
@@ -168,9 +142,7 @@ def _reject_duplicate_pairs(
     result: dict[str, object] = {}
     for key, value in pairs:
         if key in result:
-            raise CanonicalDecisionValidationError(
-                f"duplicate JSON key {key!r}"
-            )
+            raise CanonicalDecisionValidationError(f"duplicate JSON key {key!r}")
         result[key] = value
     return result
 
@@ -180,18 +152,14 @@ def _load_json(path: Path, description: str) -> tuple[object, bytes]:
         raw = path.read_bytes()
         text = raw.decode("utf-8")
     except (OSError, UnicodeError) as exc:
-        raise CanonicalDecisionValidationError(
-            f"cannot read {description}: {path}"
-        ) from exc
+        raise CanonicalDecisionValidationError(f"cannot read {description}: {path}") from exc
     try:
         return (
             json.loads(text, object_pairs_hook=_reject_duplicate_pairs),
             raw,
         )
     except (json.JSONDecodeError, CanonicalDecisionValidationError) as exc:
-        raise CanonicalDecisionValidationError(
-            f"{description} is not strict JSON: {exc}"
-        ) from exc
+        raise CanonicalDecisionValidationError(f"{description} is not strict JSON: {exc}") from exc
 
 
 def _repository_file(
@@ -201,15 +169,11 @@ def _repository_file(
 ) -> Path:
     candidate = Path(relative_path)
     if candidate.is_absolute() or ".." in candidate.parts:
-        raise CanonicalDecisionValidationError(
-            f"{path} must be a repository-relative path"
-        )
+        raise CanonicalDecisionValidationError(f"{path} must be a repository-relative path")
     root = repo_root.resolve()
     resolved = (root / candidate).resolve()
     if not resolved.is_relative_to(root) or not resolved.is_file():
-        raise CanonicalDecisionValidationError(
-            f"{path} does not identify a repository file"
-        )
+        raise CanonicalDecisionValidationError(f"{path} does not identify a repository file")
     return resolved
 
 
@@ -315,8 +279,7 @@ def validate_parity_policy(
         "parity policy.comparison must be canonical_minus_selected",
     )
     _require(
-        policy.get("decision_rule")
-        == "upper_confidence_bound_lte_noninferiority_margin",
+        policy.get("decision_rule") == "upper_confidence_bound_lte_noninferiority_margin",
         "parity policy.decision_rule changed",
     )
     confidence = _number(
@@ -328,20 +291,16 @@ def validate_parity_policy(
         "parity policy.confidence_level must be in (0, 1)",
     )
     _require(
-        policy.get("bootstrap_method")
-        == "seeded_percentile_case_cluster_bootstrap",
+        policy.get("bootstrap_method") == "seeded_percentile_case_cluster_bootstrap",
         "parity policy.bootstrap_method changed",
     )
     samples = policy.get("bootstrap_samples")
     _require(
-        isinstance(samples, int)
-        and not isinstance(samples, bool)
-        and samples >= 10_000,
+        isinstance(samples, int) and not isinstance(samples, bool) and samples >= 10_000,
         "parity policy.bootstrap_samples must be at least 10000",
     )
     _require(
-        policy.get("resampling_unit")
-        == "case_after_within_case_repeat_aggregation",
+        policy.get("resampling_unit") == "case_after_within_case_repeat_aggregation",
         "parity policy.resampling_unit changed",
     )
     margin = _number(
@@ -537,8 +496,7 @@ def validate_parity_report(
             f"{path}.canonical_minus_selected",
         )
         _require(
-            0.0 <= canonical_loss <= 1.0
-            and 0.0 <= selected_loss <= 1.0,
+            0.0 <= canonical_loss <= 1.0 and 0.0 <= selected_loss <= 1.0,
             f"{path} losses must be in [0, 1]",
         )
         expected_case = _mapping(
@@ -575,8 +533,7 @@ def validate_parity_report(
         )
         deltas[case_id] = delta
     _require(
-        observed_ids == expected_case_ids
-        and len(observed_ids) == len(set(observed_ids)),
+        observed_ids == expected_case_ids and len(observed_ids) == len(set(observed_ids)),
         "parity report cases must preserve the frozen SRT-014 case order",
     )
 
@@ -649,8 +606,7 @@ def validate_parity_report(
         "parity report.comparison.uncertainty",
     )
     _require(
-        uncertainty.get("method")
-        == parity_policy["document"]["bootstrap_method"],
+        uncertainty.get("method") == parity_policy["document"]["bootstrap_method"],
         "parity report uncertainty.method differs from the frozen policy",
     )
     _require(
@@ -664,13 +620,11 @@ def validate_parity_report(
         "parity report confidence level differs from the frozen policy",
     )
     _require(
-        uncertainty.get("bootstrap_samples")
-        == parity_policy["bootstrap_samples"],
+        uncertainty.get("bootstrap_samples") == parity_policy["bootstrap_samples"],
         "parity report bootstrap count differs from the frozen policy",
     )
     _require(
-        uncertainty.get("resampling_unit")
-        == parity_policy["document"]["resampling_unit"],
+        uncertainty.get("resampling_unit") == parity_policy["document"]["resampling_unit"],
         "parity report resampling unit differs from the frozen policy",
     )
     low = _number(uncertainty.get("low"), "parity report uncertainty.low")
@@ -775,8 +729,7 @@ def _validate_stage_accounting(
             f"{path}.component is not a requested tool",
         )
         _require(
-            stage.get("role")
-            in {"constructor", "realizer", "validator", "advisor"},
+            stage.get("role") in {"constructor", "realizer", "validator", "advisor"},
             f"{path}.role is unsupported",
         )
         if optional:
@@ -809,8 +762,7 @@ def _validate_tool_accounting(value: object) -> None:
         "$.tool_accounting.scored_tool_ids",
     )
     _require(
-        all(isinstance(item, str) for item in scored)
-        and len(scored) == len(set(scored)),
+        all(isinstance(item, str) for item in scored) and len(scored) == len(set(scored)),
         "$.tool_accounting.scored_tool_ids must be unique strings",
     )
     classified: list[str] = list(scored)
@@ -823,10 +775,8 @@ def _validate_tool_accounting(value: object) -> None:
             classified.append(_string(row.get("tool_id"), f"{path}.tool_id"))
             _string(row.get("reason"), f"{path}.reason")
     _require(
-        set(classified) == set(REQUESTED_TOOL_IDS)
-        and len(classified) == len(set(classified)),
-        "every requested tool must be classified exactly once as scored, "
-        "unavailable, or unscored",
+        set(classified) == set(REQUESTED_TOOL_IDS) and len(classified) == len(set(classified)),
+        "every requested tool must be classified exactly once as scored, unavailable, or unscored",
     )
 
 
@@ -1017,9 +967,7 @@ def validate_canonical_decision(
     _require(
         not binding_errors,
         "artifact bindings are invalid: "
-        + "; ".join(
-            f"{name}: {error}" for name, error in sorted(binding_errors.items())
-        ),
+        + "; ".join(f"{name}: {error}" for name, error in sorted(binding_errors.items())),
     )
 
     composition: dict[str, Any] | None = None
@@ -1066,7 +1014,8 @@ def validate_canonical_decision(
             "$.selected_composition.selection_basis",
         )
         _require(
-            selection_basis in {
+            selection_basis
+            in {
                 "srt014_unique_winner",
                 "srt015_bounded_tie_policy",
             },
@@ -1112,8 +1061,7 @@ def validate_canonical_decision(
                 "selected reconstruction metric changed",
             )
             _require(
-                loss.get("aggregation")
-                == "per_case_first_macro_mean",
+                loss.get("aggregation") == "per_case_first_macro_mean",
                 "selected reconstruction aggregation changed",
             )
             aggregate = _mapping(
@@ -1212,14 +1160,11 @@ def validate_canonical_decision(
         and required_selected_bindings <= set(bound)
         and selected_summary is not None
     )
-    parity_passed = bool(
-        parity_result is not None and parity_result["within_tolerance"]
-    )
+    parity_passed = bool(parity_result is not None and parity_result["within_tolerance"])
     if status == "selected":
         if composition_error:
             raise CanonicalDecisionValidationError(
-                "selected decision composition evidence is invalid: "
-                + composition_error
+                "selected decision composition evidence is invalid: " + composition_error
             )
         if policy_error:
             raise CanonicalDecisionValidationError(
@@ -1253,8 +1198,7 @@ def validate_canonical_decision(
     )
     if parity_result is not None and policy is not None:
         _require(
-            parity_summary.get("status")
-            == ("passed" if parity_passed else "failed"),
+            parity_summary.get("status") == ("passed" if parity_passed else "failed"),
             "$.parity.status is inconsistent",
         )
         _require(
@@ -1305,9 +1249,7 @@ def validate_canonical_decision(
             and parity_summary.get("observed_upper_bound") is None,
             "unvalidated parity evidence cannot publish a report CID or bound",
         )
-        expected_margin = (
-            policy["noninferiority_margin"] if policy is not None else None
-        )
+        expected_margin = policy["noninferiority_margin"] if policy is not None else None
         supplied_margin = parity_summary.get("noninferiority_margin")
         _require(
             (
@@ -1321,8 +1263,7 @@ def validate_canonical_decision(
                     float(expected_margin),
                 )
             ),
-            "$.parity.noninferiority_margin must match the validated policy "
-            "or be null",
+            "$.parity.noninferiority_margin must match the validated policy or be null",
         )
 
     _validate_tool_accounting(decision_document.get("tool_accounting"))
@@ -1334,8 +1275,7 @@ def validate_canonical_decision(
             _canonical_cid(cid, f"$.lineage.{field}[{index}]")
     if parity_result is not None:
         _require(
-            lineage.get("configuration_cids")
-            == parity_result["configuration_cids"],
+            lineage.get("configuration_cids") == parity_result["configuration_cids"],
             "$.lineage.configuration_cids differ from SRT-018",
         )
         _require(
@@ -1350,8 +1290,7 @@ def validate_canonical_decision(
             for name in ("ir_schema", "compiler", "decompiler", "roundtrip")
         }
         _require(
-            parity_result["implementation_raw_cids"]
-            == expected_implementation_cids,
+            parity_result["implementation_raw_cids"] == expected_implementation_cids,
             "SRT-018 implementation CIDs differ from the SRT-019 bindings",
         )
     _validate_commands(decision_document.get("reproduction"))
@@ -1362,8 +1301,7 @@ def validate_canonical_decision(
             "selected decision requires complete evidence and passing parity",
         )
         _require(
-            selected_composition is not None
-            and isinstance(selected_arm_id, str),
+            selected_composition is not None and isinstance(selected_arm_id, str),
             "selected decision requires a selected composition",
         )
         _require(

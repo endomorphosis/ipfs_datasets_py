@@ -60,16 +60,14 @@ from .leanstral_theorems import generate_legal_semantics_theorem_registry
 LEANSTRAL_PROJECTED_VALIDATION_SCHEMA_VERSION = "legal-ir-leanstral-projected-validation-v1"
 LEANSTRAL_MUTATION_FIXTURE_SCHEMA_VERSION = "legal-ir-leanstral-mutations-v1"
 DEFAULT_LEANSTRAL_MUTATION_FIXTURE = (
-    Path(__file__).resolve().parents[3]
-    / "tests/fixtures/logic/modal/leanstral_mutations.json"
+    Path(__file__).resolve().parents[3] / "tests/fixtures/logic/modal/leanstral_mutations.json"
 )
 DEFAULT_LEANSTRAL_HOLDOUT_MANIFEST = (
     Path(__file__).resolve().parents[3]
     / "tests/fixtures/logic/modal/leanstral_canary_manifest.json"
 )
 DEFAULT_LEANSTRAL_REPLAY_FIXTURE = (
-    Path(__file__).resolve().parents[3]
-    / "tests/fixtures/legal_ir/hammer_failure_replay.jsonl"
+    Path(__file__).resolve().parents[3] / "tests/fixtures/legal_ir/hammer_failure_replay.jsonl"
 )
 
 Command = Sequence[str] | str
@@ -212,9 +210,7 @@ class LeanstralProjectedChangeValidation:
             "changed_paths": list(self.changed_paths),
             "checks": [check.to_dict() for check in self.checks],
             "disposable_worktree_removed": self.disposable_worktree_removed,
-            "patch_validation": self.patch_validation.to_dict()
-            if self.patch_validation
-            else None,
+            "patch_validation": self.patch_validation.to_dict() if self.patch_validation else None,
             "reason_details": [reason.to_dict() for reason in self.reason_details],
             "reasons": list(self.reasons),
             "schema_version": self.schema_version,
@@ -366,20 +362,29 @@ class LeanstralProjectedChangeValidator:
         check_jobs: List[tuple[str, Callable[[], LeanstralValidationCheck]]] = []
         if config.run_syntax_check:
             check_jobs.append(("syntax", lambda: _syntax_check(worktree, changed_paths)))
-        commands = tuple(validation_commands) if validation_commands is not None else tuple(config.validation_commands)
+        commands = (
+            tuple(validation_commands)
+            if validation_commands is not None
+            else tuple(config.validation_commands)
+        )
         if (
             not commands
             and validation_plan.boundary is ValidationBoundary.CANDIDATE
             and validation_plan.focused_tests
         ):
-            commands = (
-                [sys.executable, "-m", "pytest", *validation_plan.focused_tests, "-q"],
-            )
-        check_jobs.append(("focused_tests", lambda: _focused_tests_check(worktree, commands, config)))
+            commands = ([sys.executable, "-m", "pytest", *validation_plan.focused_tests, "-q"],)
+        check_jobs.append(
+            ("focused_tests", lambda: _focused_tests_check(worktree, commands, config))
+        )
 
         deterministic_samples = tuple(samples) or (_sample_from_task(task),)
         if config.run_deterministic_round_trip:
-            check_jobs.append(("deterministic_round_trip", lambda: _deterministic_round_trip_check(deterministic_samples, config)))
+            check_jobs.append(
+                (
+                    "deterministic_round_trip",
+                    lambda: _deterministic_round_trip_check(deterministic_samples, config),
+                )
+            )
         if config.run_theorem_check:
             check_jobs.append(("theorem", lambda: _theorem_check(deterministic_samples)))
         if config.run_graph_check:
@@ -387,7 +392,9 @@ class LeanstralProjectedChangeValidator:
         if config.run_provenance_check:
             check_jobs.append(("provenance", lambda: _provenance_check(deterministic_samples)))
         if config.run_anti_copy_check:
-            check_jobs.append(("anti_copy", lambda: _anti_copy_check(deterministic_samples, config)))
+            check_jobs.append(
+                ("anti_copy", lambda: _anti_copy_check(deterministic_samples, config))
+            )
         selected_mutations: Sequence[str] = (
             validation_plan.mutation_cases
             if validation_plan.boundary is ValidationBoundary.CANDIDATE
@@ -395,23 +402,32 @@ class LeanstralProjectedChangeValidator:
         )
         selected_replays: Sequence[str] = validation_plan.replay_samples
         if config.run_mutation_check:
-            check_jobs.append(("mutation", lambda: _mutation_check(task, config, selected_case_ids=selected_mutations)))
+            check_jobs.append(
+                (
+                    "mutation",
+                    lambda: _mutation_check(task, config, selected_case_ids=selected_mutations),
+                )
+            )
         if config.run_replay_check:
-            check_jobs.append(("replay", lambda: _replay_check(config, selected_case_ids=selected_replays)))
+            check_jobs.append(
+                ("replay", lambda: _replay_check(config, selected_case_ids=selected_replays))
+            )
         if config.run_holdout_check and (
             validation_plan.boundary is not ValidationBoundary.CANDIDATE
             or config.run_candidate_holdout_check
         ):
-            check_jobs.append((
-                "frozen_holdout",
-                lambda: _holdout_check(
-                    worktree,
-                    config,
-                    evaluator=self.holdout_metric_evaluator,
-                    baseline_records=baseline_holdout_records,
-                    candidate_records=candidate_holdout_records,
-                ),
-            ))
+            check_jobs.append(
+                (
+                    "frozen_holdout",
+                    lambda: _holdout_check(
+                        worktree,
+                        config,
+                        evaluator=self.holdout_metric_evaluator,
+                        baseline_records=baseline_holdout_records,
+                        candidate_records=candidate_holdout_records,
+                    ),
+                )
+            )
         checks = _run_independent_checks(
             check_jobs,
             max_workers=config.max_concurrent_checks,
@@ -573,14 +589,18 @@ def _isolated_worktree(
         timeout=60.0,
     )
     if process.returncode == 0:
-        return _Worktree(path=path, repo_root=repo_root, kind="git-worktree", keep=config.keep_worktree)
+        return _Worktree(
+            path=path, repo_root=repo_root, kind="git-worktree", keep=config.keep_worktree
+        )
 
     shutil.copytree(
         repo_root,
         path,
         ignore=shutil.ignore_patterns(".git", "__pycache__", ".pytest_cache", "*.pyc"),
     )
-    subprocess.run(["git", "init", "-q", str(path)], capture_output=True, check=False, text=True, timeout=30.0)
+    subprocess.run(
+        ["git", "init", "-q", str(path)], capture_output=True, check=False, text=True, timeout=30.0
+    )
     return _Worktree(path=path, repo_root=repo_root, kind="copytree", keep=config.keep_worktree)
 
 
@@ -957,7 +977,11 @@ def _mutation_check(
     selected_case_ids: Sequence[str] = (),
 ) -> LeanstralValidationCheck:
     start = time.monotonic()
-    path = Path(config.mutation_fixture_path).expanduser() if config.mutation_fixture_path else DEFAULT_LEANSTRAL_MUTATION_FIXTURE
+    path = (
+        Path(config.mutation_fixture_path).expanduser()
+        if config.mutation_fixture_path
+        else DEFAULT_LEANSTRAL_MUTATION_FIXTURE
+    )
     reasons: List[LeanstralValidationReason] = []
     try:
         fixture = _load_mutation_fixture(path)
@@ -969,7 +993,9 @@ def _mutation_check(
             details={"error": str(exc), "path": str(path)},
             elapsed=time.monotonic() - start,
         )
-    required = tuple(str(value) for value in (task.compiler_change_spec or {}).get("mutation_cases", ()))
+    required = tuple(
+        str(value) for value in (task.compiler_change_spec or {}).get("mutation_cases", ())
+    )
     if selected_case_ids:
         required = tuple(dict.fromkeys((*required, *(str(value) for value in selected_case_ids))))
     by_id = {str(item["mutation_id"]): item for item in fixture}
@@ -1058,7 +1084,9 @@ def _replay_check(
                 details={"missing_replay_cases": list(missing)},
             )
         )
-    chosen = [cases[item] for item in requested if item in cases] if requested else list(cases.values())
+    chosen = (
+        [cases[item] for item in requested if item in cases] if requested else list(cases.values())
+    )
     replayed: List[Dict[str, Any]] = []
     for case in chosen:
         artifacts = case.get("hammer_guidance_artifacts") or ()
@@ -1111,7 +1139,11 @@ def _holdout_check(
     candidate_records: Sequence[IntrospectionMetricRecord | Mapping[str, Any]],
 ) -> LeanstralValidationCheck:
     start = time.monotonic()
-    path = Path(config.holdout_manifest_path).expanduser() if config.holdout_manifest_path else DEFAULT_LEANSTRAL_HOLDOUT_MANIFEST
+    path = (
+        Path(config.holdout_manifest_path).expanduser()
+        if config.holdout_manifest_path
+        else DEFAULT_LEANSTRAL_HOLDOUT_MANIFEST
+    )
     reasons: List[LeanstralValidationReason] = []
     try:
         manifest = load_leanstral_canary_manifest(path)
@@ -1183,15 +1215,69 @@ def _record_metric_comparisons(
 ) -> Sequence[LeanstralMetricComparison]:
     comparisons: List[LeanstralMetricComparison] = []
     lower_better = (
-        ("compiler_ir.cross_entropy_loss", baseline.compiler_ir.cross_entropy_loss, candidate.compiler_ir.cross_entropy_loss, cross_entropy_deadband, "holdout_cross_entropy_regression"),
-        ("compiler_ir.cross_entropy_excess_loss", baseline.compiler_ir.cross_entropy_excess_loss, candidate.compiler_ir.cross_entropy_excess_loss, cross_entropy_deadband, "holdout_cross_entropy_regression"),
-        ("compiler_ir.cosine_loss", baseline.compiler_ir.cosine_loss, candidate.compiler_ir.cosine_loss, cosine_deadband, "holdout_cosine_regression"),
-        ("source_to_decoded.embedding_cosine_loss", baseline.source_to_decoded.embedding_cosine_loss, candidate.source_to_decoded.embedding_cosine_loss, cosine_deadband, "holdout_cosine_regression"),
-        ("source_to_decoded.token_loss", baseline.source_to_decoded.token_loss, candidate.source_to_decoded.token_loss, cross_entropy_deadband, "holdout_token_regression"),
-        ("anti_copy.source_copy_loss", baseline.anti_copy.source_copy_loss, candidate.anti_copy.source_copy_loss, anti_copy_deadband, "holdout_anti_copy_regression"),
-        ("anti_copy.source_span_copy_ratio", baseline.anti_copy.source_span_copy_ratio, candidate.anti_copy.source_span_copy_ratio, anti_copy_deadband, "holdout_anti_copy_regression"),
-        ("anti_copy.anti_copy_penalty", baseline.anti_copy.anti_copy_penalty, candidate.anti_copy.anti_copy_penalty, anti_copy_deadband, "holdout_anti_copy_regression"),
-        ("validity.failure_ratio", baseline.validity.failure_ratio, candidate.validity.failure_ratio, cross_entropy_deadband, "holdout_validity_regression"),
+        (
+            "compiler_ir.cross_entropy_loss",
+            baseline.compiler_ir.cross_entropy_loss,
+            candidate.compiler_ir.cross_entropy_loss,
+            cross_entropy_deadband,
+            "holdout_cross_entropy_regression",
+        ),
+        (
+            "compiler_ir.cross_entropy_excess_loss",
+            baseline.compiler_ir.cross_entropy_excess_loss,
+            candidate.compiler_ir.cross_entropy_excess_loss,
+            cross_entropy_deadband,
+            "holdout_cross_entropy_regression",
+        ),
+        (
+            "compiler_ir.cosine_loss",
+            baseline.compiler_ir.cosine_loss,
+            candidate.compiler_ir.cosine_loss,
+            cosine_deadband,
+            "holdout_cosine_regression",
+        ),
+        (
+            "source_to_decoded.embedding_cosine_loss",
+            baseline.source_to_decoded.embedding_cosine_loss,
+            candidate.source_to_decoded.embedding_cosine_loss,
+            cosine_deadband,
+            "holdout_cosine_regression",
+        ),
+        (
+            "source_to_decoded.token_loss",
+            baseline.source_to_decoded.token_loss,
+            candidate.source_to_decoded.token_loss,
+            cross_entropy_deadband,
+            "holdout_token_regression",
+        ),
+        (
+            "anti_copy.source_copy_loss",
+            baseline.anti_copy.source_copy_loss,
+            candidate.anti_copy.source_copy_loss,
+            anti_copy_deadband,
+            "holdout_anti_copy_regression",
+        ),
+        (
+            "anti_copy.source_span_copy_ratio",
+            baseline.anti_copy.source_span_copy_ratio,
+            candidate.anti_copy.source_span_copy_ratio,
+            anti_copy_deadband,
+            "holdout_anti_copy_regression",
+        ),
+        (
+            "anti_copy.anti_copy_penalty",
+            baseline.anti_copy.anti_copy_penalty,
+            candidate.anti_copy.anti_copy_penalty,
+            anti_copy_deadband,
+            "holdout_anti_copy_regression",
+        ),
+        (
+            "validity.failure_ratio",
+            baseline.validity.failure_ratio,
+            candidate.validity.failure_ratio,
+            cross_entropy_deadband,
+            "holdout_validity_regression",
+        ),
     )
     for metric, base, cand, deadband, reason_code in lower_better:
         accepted = float(cand) <= float(base) + float(deadband)
@@ -1208,9 +1294,27 @@ def _record_metric_comparisons(
             )
         )
     higher_better = (
-        ("compiler_ir.cosine_similarity", baseline.compiler_ir.cosine_similarity, candidate.compiler_ir.cosine_similarity, cosine_deadband, "holdout_cosine_regression"),
-        ("source_to_decoded.embedding_cosine_similarity", baseline.source_to_decoded.embedding_cosine_similarity, candidate.source_to_decoded.embedding_cosine_similarity, cosine_deadband, "holdout_cosine_regression"),
-        ("source_to_decoded.token_similarity", baseline.source_to_decoded.token_similarity, candidate.source_to_decoded.token_similarity, cosine_deadband, "holdout_token_regression"),
+        (
+            "compiler_ir.cosine_similarity",
+            baseline.compiler_ir.cosine_similarity,
+            candidate.compiler_ir.cosine_similarity,
+            cosine_deadband,
+            "holdout_cosine_regression",
+        ),
+        (
+            "source_to_decoded.embedding_cosine_similarity",
+            baseline.source_to_decoded.embedding_cosine_similarity,
+            candidate.source_to_decoded.embedding_cosine_similarity,
+            cosine_deadband,
+            "holdout_cosine_regression",
+        ),
+        (
+            "source_to_decoded.token_similarity",
+            baseline.source_to_decoded.token_similarity,
+            candidate.source_to_decoded.token_similarity,
+            cosine_deadband,
+            "holdout_token_regression",
+        ),
     )
     for metric, base, cand, deadband, reason_code in higher_better:
         accepted = float(cand) + float(deadband) >= float(base)
@@ -1227,9 +1331,21 @@ def _record_metric_comparisons(
             )
         )
     bools = (
-        ("validity.structural_valid", baseline.validity.structural_valid, candidate.validity.structural_valid),
-        ("validity.modal_ir_valid", baseline.validity.modal_ir_valid, candidate.validity.modal_ir_valid),
-        ("validity.prover_compiles", baseline.validity.prover_compiles, candidate.validity.prover_compiles),
+        (
+            "validity.structural_valid",
+            baseline.validity.structural_valid,
+            candidate.validity.structural_valid,
+        ),
+        (
+            "validity.modal_ir_valid",
+            baseline.validity.modal_ir_valid,
+            candidate.validity.modal_ir_valid,
+        ),
+        (
+            "validity.prover_compiles",
+            baseline.validity.prover_compiles,
+            candidate.validity.prover_compiles,
+        ),
         ("validity.proofs_valid", baseline.validity.proofs_valid, candidate.validity.proofs_valid),
     )
     for metric, base, cand in bools:
@@ -1345,16 +1461,16 @@ def _higher_metric(
 
 def _run_command(worktree: Path, command: Command, *, timeout_seconds: float) -> Dict[str, Any]:
     env = dict(os.environ)
-    env["PYTHONPATH"] = str(worktree) + (os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else "")
+    env["PYTHONPATH"] = str(worktree) + (
+        os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else ""
+    )
     argv = ["bash", "-lc", command] if isinstance(command, str) else list(command)
     process = get_process_supervisor().run(
         argv,
         cwd=str(worktree),
         env=env,
         kind=ProcessKind.TRANSLATOR,
-        limits=ProcessLimits(
-            wall_time_seconds=max(1.0, float(timeout_seconds))
-        ),
+        limits=ProcessLimits(wall_time_seconds=max(1.0, float(timeout_seconds))),
     )
     output = ((process.stdout or "") + (process.stderr or "")).strip()
     if process.timed_out:
@@ -1494,7 +1610,10 @@ def _check_from_python_patch_validation(
             code=reason,
             check="allowed_path",
             message="Projected Python patch failed admission before worktree validation.",
-            details={"changed_paths": list(validation.changed_paths), "git_output": validation.git_output},
+            details={
+                "changed_paths": list(validation.changed_paths),
+                "git_output": validation.git_output,
+            },
         )
         for reason in validation.reasons
         if reason != "not_requested" or validation.requested
@@ -1544,7 +1663,9 @@ def _run_independent_checks(
     if len(set(order)) != len(order):
         raise ValueError("projected validation check names must be unique")
 
-    def execute(name: str, callback: Callable[[], LeanstralValidationCheck]) -> LeanstralValidationCheck:
+    def execute(
+        name: str, callback: Callable[[], LeanstralValidationCheck]
+    ) -> LeanstralValidationCheck:
         transient_failures = 0
         started = time.monotonic()
         for attempt in range(1, int(max_transient_retries) + 2):
@@ -1607,10 +1728,7 @@ def _run_independent_checks(
         max_workers=min(int(max_workers), len(jobs)),
         thread_name_prefix="leanstral-validation",
     ) as executor:
-        futures = {
-            executor.submit(execute, name, callback): name
-            for name, callback in jobs
-        }
+        futures = {executor.submit(execute, name, callback): name for name, callback in jobs}
         for future in as_completed(futures):
             name = futures[future]
             try:
@@ -1801,7 +1919,10 @@ def _hash_json(value: Any) -> str:
 
 def _jsonable(value: Any) -> Any:
     if isinstance(value, Mapping):
-        return {str(key): _jsonable(item) for key, item in sorted(value.items(), key=lambda pair: str(pair[0]))}
+        return {
+            str(key): _jsonable(item)
+            for key, item in sorted(value.items(), key=lambda pair: str(pair[0]))
+        }
     if isinstance(value, (list, tuple)):
         return [_jsonable(item) for item in value]
     if isinstance(value, Path):

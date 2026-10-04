@@ -99,7 +99,15 @@ def test_legal_norm_ir_recovers_textual_modalities_from_legacy_rows() -> None:
         ({**base, "deontic_operator": "shall", "norm_type": ""}, "O"),
         ({**base, "modality": "permission", "norm_type": ""}, "P"),
         ({**base, "norm_type": "violation"}, "F"),
-        ({**base, "deontic_operator": "", "norm_type": "", "text": "The agency shall not disclose records."}, "F"),
+        (
+            {
+                **base,
+                "deontic_operator": "",
+                "norm_type": "",
+                "text": "The agency shall not disclose records.",
+            },
+            "F",
+        ),
     ]
 
     for row, expected in rows:
@@ -126,9 +134,9 @@ def test_legal_norm_ir_roundtrip_from_typed_dict_preserves_quality_and_slot_reco
 
 
 def test_legal_norm_ir_recovers_modal_slots_from_prompt_context_detail_rows() -> None:
-    parsed = extract_normative_elements(
-        "The Director is authorized and directed to adopt rules."
-    )[0]
+    parsed = extract_normative_elements("The Director is authorized and directed to adopt rules.")[
+        0
+    ]
     detail = {
         "schema_version": parsed["schema_version"],
         "source_id": f"{parsed['source_id']}:detail",
@@ -244,10 +252,10 @@ def test_legal_norm_ir_recovers_clipped_passive_contribution_actor() -> None:
     assert provenance["slot_grounding"][0]["value"] == "Secretary of Defense"
 
 
-def test_legal_norm_ir_decoder_validation_gate_distinguishes_cross_reference_warning_classes() -> None:
-    cross_reference_only = extract_normative_elements(
-        "This section applies to food carts."
-    )[0]
+def test_legal_norm_ir_decoder_validation_gate_distinguishes_cross_reference_warning_classes() -> (
+    None
+):
+    cross_reference_only = extract_normative_elements("This section applies to food carts.")[0]
     unresolved_exception = extract_normative_elements(
         "The Secretary shall publish the notice except as provided in section 552."
     )[0]
@@ -408,8 +416,7 @@ def test_legal_norm_ir_recovers_unlawful_for_actor_action_and_modality() -> None
 
 def test_legal_norm_ir_recovers_source_text_conditions_for_reduced_rows() -> None:
     source_text = (
-        "The Secretary may waive the requirement if such application is "
-        "otherwise approvable."
+        "The Secretary may waive the requirement if such application is otherwise approvable."
     )
     element = {
         "schema_version": "legal_norm_ir-v1",
@@ -489,8 +496,7 @@ def test_legal_norm_ir_recovers_source_text_unless_as_exception_for_reduced_rows
 
 def test_deontic_bridge_view_metadata_prefers_deontic_family_for_conditional_norms() -> None:
     source_text = (
-        "The Secretary shall approve the application if the applicant satisfies "
-        "the requirements."
+        "The Secretary shall approve the application if the applicant satisfies the requirements."
     )
     norm = LegalNormIR.from_parser_element(
         {

@@ -93,6 +93,7 @@ subprocess.run(user_input, shell=True)  # Arbitrary code execution!
 
 # ✅ SECURE
 import shlex
+
 subprocess.run(shlex.split(user_input), shell=False, timeout=30)
 ```
 
@@ -133,6 +134,7 @@ error_reporter.report_error(context=safe_context)
 # ❌ THREAD-UNSAFE GLOBAL STATE
 _global_manager = None
 
+
 def get_global_manager():
     global _global_manager
     if _global_manager is None:
@@ -147,12 +149,13 @@ class ServerContext:
     def __init__(self):
         self.tool_manager = ToolManager()
         self.metadata_registry = MetadataRegistry()
-    
+
     def __enter__(self):
         return self
-    
+
     def __exit__(self, *args):
         self.tool_manager.cleanup()
+
 
 # Usage
 with ServerContext() as ctx:

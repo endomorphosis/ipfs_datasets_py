@@ -35,12 +35,7 @@ from ipfs_datasets_py.processors.wallets.errors import InvalidRequestError
 from ipfs_datasets_py.processors.wallets.registry import ProcessorFamilySpec
 
 
-WALLETS_ROOT = (
-    Path(__file__).resolve().parents[4]
-    / "ipfs_datasets_py"
-    / "processors"
-    / "wallets"
-)
+WALLETS_ROOT = Path(__file__).resolve().parents[4] / "ipfs_datasets_py" / "processors" / "wallets"
 REGISTRY_PATH = WALLETS_ROOT / "registry.py"
 ADAPTER_PATH = WALLETS_ROOT / "adapters" / "processor_protocol.py"
 INIT_PATH = WALLETS_ROOT / "__init__.py"
@@ -70,10 +65,7 @@ def _reset_registry() -> None:
     chain_modules = {
         name: module
         for name, module in sys.modules.items()
-        if any(
-            name == prefix or name.startswith(prefix + ".")
-            for prefix in CHAIN_MODULE_PREFIXES
-        )
+        if any(name == prefix or name.startswith(prefix + ".") for prefix in CHAIN_MODULE_PREFIXES)
     }
     reset_default_registry()
     try:
@@ -157,6 +149,7 @@ def test_registry_module_import_does_not_load_chains() -> None:
     loaded = _loaded_chain_modules()
     assert loaded == [], f"registry import loaded chain modules: {loaded}"
 
+
 # ---------------------------------------------------------------------------
 # Lazy loading + factories
 # ---------------------------------------------------------------------------
@@ -225,22 +218,16 @@ def test_ambiguous_generic_mainnet_fails() -> None:
 
 def test_disambiguated_network_resolution() -> None:
     registry = WalletProcessorRegistry()
-    assert (
-        registry.resolve_family_for_network(network="bitcoin-mainnet") == "bitcoin"
-    )
-    assert (
-        registry.resolve_family_for_network(network="world-chain-mainnet")
-        == "world-chain"
-    )
-    assert (
-        registry.resolve_family_for_network(family="world-chain", network="480")
-        == "world-chain"
-    )
+    assert registry.resolve_family_for_network(network="bitcoin-mainnet") == "bitcoin"
+    assert registry.resolve_family_for_network(network="world-chain-mainnet") == "world-chain"
+    assert registry.resolve_family_for_network(family="world-chain", network="480") == "world-chain"
     assert registry.resolve_family_for_network(network="480") == "world-chain"
     # Shared xrpl network names remain fail-closed without an explicit family.
     with pytest.raises(AmbiguousNetworkError):
         registry.resolve_family_for_network(network="xrpl-mainnet")
     assert registry.resolve_family_for_network(family="xrpl") == "xrpl"
+
+
 # ---------------------------------------------------------------------------
 # Explicit capabilities
 # ---------------------------------------------------------------------------
@@ -340,7 +327,9 @@ def test_no_subprocess_auto_install_in_registry_ast() -> None:
 def test_xaman_composes_xrpl() -> None:
     proc = get_wallet_processor("xaman", network="xrpl-mainnet")
     caps = proc.capabilities
-    assert caps.metadata.get("composed_xrpl") is True or caps.metadata.get("settlement_via") == "xrpl"
+    assert (
+        caps.metadata.get("composed_xrpl") is True or caps.metadata.get("settlement_via") == "xrpl"
+    )
     assert getattr(proc, "xrpl_processor", None) is not None or hasattr(proc, "_xrpl")
     # Settlement processor is an XRPL wallet processor instance.
     xrpl = getattr(proc, "xrpl_processor", None) or getattr(proc, "_xrpl")
@@ -523,6 +512,7 @@ def test_registry_does_not_register_into_generic_registries() -> None:
     assert "can_process" not in method_names
     assert "register" not in method_names
 
+
 # ---------------------------------------------------------------------------
 # Extra coverage: family catalogue, ethereum facade, solana facade
 # ---------------------------------------------------------------------------
@@ -547,7 +537,10 @@ def test_ethereum_facade_normalize_helpers() -> None:
     proc = get_wallet_processor("ethereum", network="ethereum-mainnet")
     assert hasattr(proc, "normalize_transaction")
     assert hasattr(proc, "capabilities")
-    assert proc.capabilities.supports(Capability.TOKEN_TRANSFERS) or Capability.TOKEN_TRANSFERS in proc.capabilities.features
+    assert (
+        proc.capabilities.supports(Capability.TOKEN_TRANSFERS)
+        or Capability.TOKEN_TRANSFERS in proc.capabilities.features
+    )
 
 
 def test_solana_facade_capabilities() -> None:

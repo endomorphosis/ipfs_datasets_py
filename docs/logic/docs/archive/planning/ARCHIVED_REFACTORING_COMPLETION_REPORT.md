@@ -175,6 +175,7 @@ Created **6 comprehensive production guides**:
 # File: fol/utils/fol_parser.py
 from functools import lru_cache
 
+
 @lru_cache(maxsize=1000)
 def parse_formula(text: str):
     """Parse formula with automatic AST caching."""
@@ -194,21 +195,26 @@ def parse_formula(text: str):
 @dataclass(slots=True)
 class Predicate:
     """PHASE 7 OPTIMIZATION: Using __slots__ for 30-40% memory reduction."""
+
     name: str
     arity: int
     category: PredicateCategory = PredicateCategory.UNKNOWN
     # ...
 
+
 @dataclass(slots=True)
 class FOLFormula:
     """PHASE 7 OPTIMIZATION: Using __slots__ for 30-40% memory reduction."""
+
     formula_string: str
     predicates: List[Predicate] = field(default_factory=list)
     # ...
 
+
 @dataclass(slots=True)
 class FOLConversionResult:
     """PHASE 7 OPTIMIZATION: Using __slots__ for 30-40% memory reduction."""
+
     # ...
 ```
 

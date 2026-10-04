@@ -88,73 +88,51 @@ from .variants import get_causal_proof_variant_profile
 
 
 G240_EXECUTION_REQUEST_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "source-runtime-execution-request.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.source-runtime-execution-request.v2"
 )
 G240_SYNTHETIC_TEST_EXECUTION_REQUEST_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "synthetic-test-runtime-execution-request.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.synthetic-test-runtime-execution-request.v2"
 )
 G240_LIVE_ADAPTER_FACTORY_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "live-runtime-adapter-factory.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.live-runtime-adapter-factory.v2"
 )
 G240_SYNTHETIC_ADAPTER_FACTORY_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "synthetic-inert-adapter-factory.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.synthetic-inert-adapter-factory.v2"
 )
 G240_LIVE_ADAPTER_FACTORY_ID_V2: Final = "hssl-live-runtime-v2"
-G240_SYNTHETIC_ADAPTER_FACTORY_ID_V2: Final = (
-    "hssl-synthetic-inert-runtime-v2"
-)
+G240_SYNTHETIC_ADAPTER_FACTORY_ID_V2: Final = "hssl-synthetic-inert-runtime-v2"
 G240_EXECUTION_REQUEST_FILE_V2: Final = "execution-request.json"
 G240_RUNTIME_PREFLIGHT_FILE_V2: Final = "runtime-import-preflight.json"
-G240_TRACKED_SOURCE_EXECUTOR_MODULE_V2: Final = (
-    "benchmarks.logic_pipeline.source_bootstrap"
-)
-G240_TRACKED_SOURCE_EXECUTOR_COMMAND_V2: Final = (
-    G240_TRACKED_SOURCE_BOOTSTRAP_COMMAND_V2
-)
-_G240_SYNTHETIC_TEST_ENVIRONMENT_KEY_V2: Final = (
-    "HSSL_G240_TEST_ONLY_SYNTHETIC_REQUEST_CID"
-)
+G240_TRACKED_SOURCE_EXECUTOR_MODULE_V2: Final = "benchmarks.logic_pipeline.source_bootstrap"
+G240_TRACKED_SOURCE_EXECUTOR_COMMAND_V2: Final = G240_TRACKED_SOURCE_BOOTSTRAP_COMMAND_V2
+_G240_SYNTHETIC_TEST_ENVIRONMENT_KEY_V2: Final = "HSSL_G240_TEST_ONLY_SYNTHETIC_REQUEST_CID"
 
 
 class _G240SyntheticTestCapabilityV2:
     """In-process capability used only by synthetic subprocess tests."""
 
 
-_G240_SYNTHETIC_TEST_CAPABILITY_V2: Final = (
-    _G240SyntheticTestCapabilityV2()
-)
+_G240_SYNTHETIC_TEST_CAPABILITY_V2: Final = _G240SyntheticTestCapabilityV2()
 
 
 class _G240BootstrapStage2CapabilityV2:
     """In-process authority issued only by the tracked stage-one bootstrap."""
 
 
-_G240_BOOTSTRAP_STAGE2_CAPABILITY_V2: Final = (
-    _G240BootstrapStage2CapabilityV2()
-)
+_G240_BOOTSTRAP_STAGE2_CAPABILITY_V2: Final = _G240BootstrapStage2CapabilityV2()
 
 _EXECUTION_MODES: Final = frozenset({"source", "replay"})
-_FRONTEND_STAGES: Final = frozenset(
-    {StageName.COMPILER, StageName.SPACY, StageName.SYMAI}
-)
+_FRONTEND_STAGES: Final = frozenset({StageName.COMPILER, StageName.SPACY, StageName.SYMAI})
 _SAFE_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}\Z")
-_PYTHON_MODULE = re.compile(
-    r"[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*\Z"
-)
+_PYTHON_MODULE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*\Z")
 _HEX_COMMIT = re.compile(r"(?:[0-9a-f]{40}|[0-9a-f]{64})\Z")
 _SHA256 = re.compile(r"[0-9a-f]{64}\Z")
 _MAX_REQUEST_BYTES: Final = 64 * 1024 * 1024
 _G240_RUNTIME_PREFLIGHT_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "runtime-import-preflight.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.runtime-import-preflight.v2"
 )
 _G240_PHYSICAL_CACHE_ENTRY_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "physical-stage-cache-entry.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.physical-stage-cache-entry.v2"
 )
 _G240_CACHE_ENTRY_PREFIX: Final = "entry-"
 _G240_CACHE_ENTRY_SUFFIX: Final = ".json"
@@ -169,18 +147,11 @@ class _G240DiskCache(MutableMapping[str, object]):
     """Canonical CID-addressed cache rooted in one physical stage namespace."""
 
     def __init__(self, root: Path) -> None:
-        self._root = _private_real_directory(
-            Path(root), "G240 physical stage cache"
-        )
+        self._root = _private_real_directory(Path(root), "G240 physical stage cache")
 
     @staticmethod
     def _key(value: object) -> str:
-        if (
-            not isinstance(value, str)
-            or not value
-            or len(value) > 512
-            or "\0" in value
-        ):
+        if not isinstance(value, str) or not value or len(value) > 512 or "\0" in value:
             raise G240SourceExecutorError(
                 "G240 physical cache key must be a bounded nonempty string"
             )
@@ -193,11 +164,7 @@ class _G240DiskCache(MutableMapping[str, object]):
                 "cache_key": self._key(key),
             }
         )
-        return (
-            self._root
-            / f"{_G240_CACHE_ENTRY_PREFIX}{address}"
-            f"{_G240_CACHE_ENTRY_SUFFIX}"
-        )
+        return self._root / f"{_G240_CACHE_ENTRY_PREFIX}{address}{_G240_CACHE_ENTRY_SUFFIX}"
 
     def _read_entry(self, path: Path) -> tuple[str, object]:
         try:
@@ -205,9 +172,7 @@ class _G240DiskCache(MutableMapping[str, object]):
             resolved = path.resolve(strict=True)
             payload = path.read_bytes()
         except OSError as exc:
-            raise G240SourceExecutorError(
-                "cannot read G240 physical cache entry"
-            ) from exc
+            raise G240SourceExecutorError("cannot read G240 physical cache entry") from exc
         if (
             stat.S_ISLNK(metadata.st_mode)
             or not stat.S_ISREG(metadata.st_mode)
@@ -216,9 +181,7 @@ class _G240DiskCache(MutableMapping[str, object]):
             or not payload
             or len(payload) > _MAX_CACHE_ENTRY_BYTES
         ):
-            raise G240SourceExecutorError(
-                "G240 physical cache entry is not a bounded private file"
-            )
+            raise G240SourceExecutorError("G240 physical cache entry is not a bounded private file")
         try:
             text_value = payload.decode("utf-8")
             decoded = json.loads(
@@ -234,19 +197,14 @@ class _G240DiskCache(MutableMapping[str, object]):
         except (UnicodeError, json.JSONDecodeError, ValueError) as exc:
             if isinstance(exc, G240SourceExecutorError):
                 raise
-            raise G240SourceExecutorError(
-                "G240 physical cache entry is not strict JSON"
-            ) from exc
+            raise G240SourceExecutorError("G240 physical cache entry is not strict JSON") from exc
         key = self._key(entry["cache_key"])
         if (
             entry["schema"] != _G240_PHYSICAL_CACHE_ENTRY_SCHEMA_V2
             or path != self._entry_path(key)
-            or payload
-            != canonical_dag_json_bytes(_plain(entry)) + b"\n"
+            or payload != canonical_dag_json_bytes(_plain(entry)) + b"\n"
         ):
-            raise G240SourceExecutorError(
-                "G240 physical cache entry differs from its CID address"
-            )
+            raise G240SourceExecutorError("G240 physical cache entry differs from its CID address")
         return key, entry["value"]
 
     def __getitem__(self, key: str) -> object:
@@ -255,9 +213,7 @@ class _G240DiskCache(MutableMapping[str, object]):
             raise KeyError(key)
         observed_key, value = self._read_entry(path)
         if observed_key != key:
-            raise G240SourceExecutorError(
-                "G240 physical cache lookup returned a foreign key"
-            )
+            raise G240SourceExecutorError("G240 physical cache lookup returned a foreign key")
         return value
 
     def __setitem__(self, key: str, value: object) -> None:
@@ -270,18 +226,11 @@ class _G240DiskCache(MutableMapping[str, object]):
         path = self._entry_path(safe_key)
         payload = canonical_dag_json_bytes(entry) + b"\n"
         if len(payload) > _MAX_CACHE_ENTRY_BYTES:
-            raise G240SourceExecutorError(
-                "G240 physical cache entry exceeds its size bound"
-            )
+            raise G240SourceExecutorError("G240 physical cache entry exceeds its size bound")
         if path.exists():
             observed_key, observed_value = self._read_entry(path)
-            if (
-                observed_key != safe_key
-                or _plain(observed_value) != entry["value"]
-            ):
-                raise G240SourceExecutorError(
-                    "G240 physical cache entry cannot be overwritten"
-                )
+            if observed_key != safe_key or _plain(observed_value) != entry["value"]:
+                raise G240SourceExecutorError("G240 physical cache entry cannot be overwritten")
             return
         flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
         if hasattr(os, "O_NOFOLLOW"):
@@ -303,22 +252,15 @@ class _G240DiskCache(MutableMapping[str, object]):
             raise KeyError(key)
         observed_key, _value = self._read_entry(path)
         if observed_key != key:
-            raise G240SourceExecutorError(
-                "G240 physical cache deletion resolved a foreign key"
-            )
+            raise G240SourceExecutorError("G240 physical cache deletion resolved a foreign key")
         try:
             path.unlink()
         except OSError as exc:
-            raise G240SourceExecutorError(
-                "cannot invalidate G240 physical cache entry"
-            ) from exc
+            raise G240SourceExecutorError("cannot invalidate G240 physical cache entry") from exc
 
     def __iter__(self) -> Iterator[str]:
         for path in sorted(
-            self._root.glob(
-                f"{_G240_CACHE_ENTRY_PREFIX}*"
-                f"{_G240_CACHE_ENTRY_SUFFIX}"
-            )
+            self._root.glob(f"{_G240_CACHE_ENTRY_PREFIX}*{_G240_CACHE_ENTRY_SUFFIX}")
         ):
             key, _value = self._read_entry(path)
             yield key
@@ -332,30 +274,20 @@ def _plain(value: object) -> object:
         return value.value
     if isinstance(value, Mapping):
         if not all(isinstance(key, str) for key in value):
-            raise G240SourceExecutorError(
-                "G240 executor DAG-JSON objects require string keys"
-            )
+            raise G240SourceExecutorError("G240 executor DAG-JSON objects require string keys")
         return {str(key): _plain(member) for key, member in value.items()}
     if isinstance(value, (tuple, list)):
         return [_plain(member) for member in value]
     if value is None or type(value) in {str, bool, int, float}:
         if isinstance(value, float) and not math.isfinite(value):
-            raise G240SourceExecutorError(
-                "G240 executor JSON numbers must be finite"
-            )
+            raise G240SourceExecutorError("G240 executor JSON numbers must be finite")
         return value
-    raise G240SourceExecutorError(
-        f"G240 executor value is not DAG-JSON: {type(value).__name__}"
-    )
+    raise G240SourceExecutorError(f"G240 executor value is not DAG-JSON: {type(value).__name__}")
 
 
 def _mapping(value: object, field: str) -> Mapping[str, object]:
-    if not isinstance(value, Mapping) or not all(
-        isinstance(key, str) for key in value
-    ):
-        raise G240SourceExecutorError(
-            f"{field} must be an object with string keys"
-        )
+    if not isinstance(value, Mapping) or not all(isinstance(key, str) for key in value):
+        raise G240SourceExecutorError(f"{field} must be an object with string keys")
     return value
 
 
@@ -376,36 +308,24 @@ def _cid(value: object, field: str, *, codec: str = "dag-json") -> str:
     try:
         return validate_cid(value, codecs=(codec,))
     except (TypeError, ValueError) as exc:
-        raise G240SourceExecutorError(
-            f"{field} must be a canonical {codec} CID"
-        ) from exc
+        raise G240SourceExecutorError(f"{field} must be a canonical {codec} CID") from exc
 
 
 def _safe_id(value: object, field: str) -> str:
-    if (
-        not isinstance(value, str)
-        or not _SAFE_ID.fullmatch(value)
-        or value in {".", ".."}
-    ):
-        raise G240SourceExecutorError(
-            f"{field} must be a safe nonempty identifier"
-        )
+    if not isinstance(value, str) or not _SAFE_ID.fullmatch(value) or value in {".", ".."}:
+        raise G240SourceExecutorError(f"{field} must be a safe nonempty identifier")
     return value
 
 
 def _sha256(value: object, field: str) -> str:
     if not isinstance(value, str) or not _SHA256.fullmatch(value):
-        raise G240SourceExecutorError(
-            f"{field} must be a lowercase SHA-256 digest"
-        )
+        raise G240SourceExecutorError(f"{field} must be a lowercase SHA-256 digest")
     return value
 
 
 def _commit(value: object, field: str) -> str:
     if not isinstance(value, str) or not _HEX_COMMIT.fullmatch(value):
-        raise G240SourceExecutorError(
-            f"{field} must be a full lowercase Git object ID"
-        )
+        raise G240SourceExecutorError(f"{field} must be a full lowercase Git object ID")
     return value
 
 
@@ -421,9 +341,7 @@ def _bounded_seconds(
         or not math.isfinite(float(value))
         or not 0 < float(value) <= maximum
     ):
-        raise G240SourceExecutorError(
-            f"{field} must be finite, positive, and at most {maximum:g}"
-        )
+        raise G240SourceExecutorError(f"{field} must be finite, positive, and at most {maximum:g}")
     return float(value)
 
 
@@ -445,9 +363,7 @@ def _reject_duplicate_pairs(
     result: dict[str, object] = {}
     for key, value in pairs:
         if key in result:
-            raise G240SourceExecutorError(
-                f"duplicate JSON key in G240 executor input: {key}"
-            )
+            raise G240SourceExecutorError(f"duplicate JSON key in G240 executor input: {key}")
         result[key] = value
     return result
 
@@ -459,31 +375,21 @@ def _runtime_environment_artifacts(
     artifacts: dict[str, Mapping[str, str]] = {}
     for label in sorted(raw):
         safe_label = _safe_id(label, "runtime environment artifact label")
-        descriptor = _mapping(
-            raw[label], f"runtime_environment_artifacts.{safe_label}"
-        )
+        descriptor = _mapping(raw[label], f"runtime_environment_artifacts.{safe_label}")
         _exact(
             descriptor,
             {"path", "payload_cid"},
             f"runtime_environment_artifacts.{safe_label}",
         )
         path_value = descriptor["path"]
-        if (
-            not isinstance(path_value, str)
-            or not Path(path_value).is_absolute()
-        ):
-            raise G240SourceExecutorError(
-                "runtime environment artifact paths must be absolute"
-            )
+        if not isinstance(path_value, str) or not Path(path_value).is_absolute():
+            raise G240SourceExecutorError("runtime environment artifact paths must be absolute")
         artifacts[safe_label] = MappingProxyType(
             {
                 "path": path_value,
                 "payload_cid": _cid(
                     descriptor["payload_cid"],
-                    (
-                        "runtime_environment_artifacts."
-                        f"{safe_label}.payload_cid"
-                    ),
+                    (f"runtime_environment_artifacts.{safe_label}.payload_cid"),
                     codec="raw",
                 ),
             }
@@ -510,13 +416,9 @@ def _validate_live_factory_configuration(
         "live adapter factory configuration",
     )
     if value["schema"] != G240_LIVE_ADAPTER_FACTORY_SCHEMA_V2:
-        raise G240SourceExecutorError(
-            "unsupported live adapter factory schema"
-        )
+        raise G240SourceExecutorError("unsupported live adapter factory schema")
     try:
-        inventory = CapabilityInventory.from_dict(
-            value["capability_inventory"]
-        )
+        inventory = CapabilityInventory.from_dict(value["capability_inventory"])
     except (TypeError, ValueError) as exc:
         raise G240SourceExecutorError(
             "live adapter capability inventory failed typed replay"
@@ -550,8 +452,7 @@ def _validate_live_factory_configuration(
         or not 0 < tokens <= LEANSTRAL_MEASURED_MAX_NEW_TOKENS
     ):
         raise G240SourceExecutorError(
-            "leanstral_max_new_tokens must be from 1 to "
-            f"{LEANSTRAL_MEASURED_MAX_NEW_TOKENS}"
+            f"leanstral_max_new_tokens must be from 1 to {LEANSTRAL_MEASURED_MAX_NEW_TOKENS}"
         )
     return MappingProxyType(
         {
@@ -577,9 +478,7 @@ def _validate_synthetic_factory_configuration(
         value["schema"] != G240_SYNTHETIC_ADAPTER_FACTORY_SCHEMA_V2
         or value["behavior"] != "inert-proof-backends"
     ):
-        raise G240SourceExecutorError(
-            "unsupported synthetic adapter factory configuration"
-        )
+        raise G240SourceExecutorError("unsupported synthetic adapter factory configuration")
     return MappingProxyType(
         {
             "schema": value["schema"],
@@ -604,9 +503,7 @@ def _validate_adapter_configuration(
         )
     if factory_id == G240_SYNTHETIC_ADAPTER_FACTORY_ID_V2:
         return _validate_synthetic_factory_configuration(config)
-    raise G240SourceExecutorError(
-        "adapter_factory_id is absent from the closed G240 registry"
-    )
+    raise G240SourceExecutorError("adapter_factory_id is absent from the closed G240 registry")
 
 
 @dataclass(frozen=True, slots=True)
@@ -632,9 +529,7 @@ class G240ExecutionRequestV2:
     environment_sha256: str
     interpreter_identity_cid: str | None
     git_executable_cid: str | None
-    runtime_environment_artifacts: Mapping[
-        str, Mapping[str, str]
-    ]
+    runtime_environment_artifacts: Mapping[str, Mapping[str, str]]
     semantic_result: Mapping[str, object] | None
     semantic_result_cid: str | None
     compiler_exposure: Mapping[str, object] | None
@@ -657,16 +552,10 @@ class G240ExecutionRequestV2:
             G240_EXECUTION_REQUEST_SCHEMA_V2,
             G240_SYNTHETIC_TEST_EXECUTION_REQUEST_SCHEMA_V2,
         }:
-            raise G240SourceExecutorError(
-                "unsupported G240 execution request schema"
-            )
+            raise G240SourceExecutorError("unsupported G240 execution request schema")
         if self.execution_mode not in _EXECUTION_MODES:
-            raise G240SourceExecutorError(
-                "G240 execution mode must be source or replay"
-            )
-        execution_run_id = _safe_id(
-            self.execution_run_id, "execution_run_id"
-        )
+            raise G240SourceExecutorError("G240 execution mode must be source or replay")
+        execution_run_id = _safe_id(self.execution_run_id, "execution_run_id")
         source_run_id = _safe_id(self.source_run_id, "source_run_id")
         source_commit = _commit(self.source_commit, "source_commit")
         object.__setattr__(self, "execution_run_id", execution_run_id)
@@ -685,9 +574,7 @@ class G240ExecutionRequestV2:
             "proof_context_cid",
             "adapter_configuration_cid",
         ):
-            object.__setattr__(
-                self, field, _cid(getattr(self, field), field)
-            )
+            object.__setattr__(self, field, _cid(getattr(self, field), field))
         if self.interpreter_identity_cid is not None:
             object.__setattr__(
                 self,
@@ -712,16 +599,10 @@ class G240ExecutionRequestV2:
             "source_cid",
             _cid(self.source_cid, "source_cid", codec="raw"),
         )
-        environment_sha256 = _sha256(
-            self.environment_sha256, "environment_sha256"
-        )
-        object.__setattr__(
-            self, "environment_sha256", environment_sha256
-        )
+        environment_sha256 = _sha256(self.environment_sha256, "environment_sha256")
+        object.__setattr__(self, "environment_sha256", environment_sha256)
         if type(self.holdout_permitted) is not bool or self.holdout_permitted:
-            raise G240SourceExecutorError(
-                "G240 source/replay execution may not authorize holdout"
-            )
+            raise G240SourceExecutorError("G240 source/replay execution may not authorize holdout")
         if self.execution_mode == "source":
             if (
                 execution_run_id != source_run_id
@@ -734,9 +615,7 @@ class G240ExecutionRequestV2:
                 )
         else:
             if execution_run_id == source_run_id:
-                raise G240SourceExecutorError(
-                    "replay execution requires a fresh run id"
-                )
+                raise G240SourceExecutorError("replay execution requires a fresh run id")
             object.__setattr__(
                 self,
                 "source_execution_request_cid",
@@ -768,38 +647,24 @@ class G240ExecutionRequestV2:
             or plan.environment_sha256 != environment_sha256
             or plan.split is Split.HOLDOUT
         ):
-            raise G240SourceExecutorError(
-                "G240 request plan/job/source/environment join changed"
-            )
+            raise G240SourceExecutorError("G240 request plan/job/source/environment join changed")
         source_text = self.source_text
         if (
             not isinstance(source_text, str)
             or not source_text.strip()
             or not isinstance(job.input_data, Mapping)
             or job.input_data.get("text") != source_text
-            or cid_for_bytes(source_text.encode("utf-8"))
-            != self.source_cid
+            or cid_for_bytes(source_text.encode("utf-8")) != self.source_cid
         ):
-            raise G240SourceExecutorError(
-                "G240 request source bytes differ from the scheduled job"
-            )
-        factory_id = _safe_id(
-            self.adapter_factory_id, "adapter_factory_id"
-        )
-        synthetic_test_request = (
-            self.schema
-            == G240_SYNTHETIC_TEST_EXECUTION_REQUEST_SCHEMA_V2
-        )
-        if synthetic_test_request != (
-            factory_id == G240_SYNTHETIC_ADAPTER_FACTORY_ID_V2
-        ):
+            raise G240SourceExecutorError("G240 request source bytes differ from the scheduled job")
+        factory_id = _safe_id(self.adapter_factory_id, "adapter_factory_id")
+        synthetic_test_request = self.schema == G240_SYNTHETIC_TEST_EXECUTION_REQUEST_SCHEMA_V2
+        if synthetic_test_request != (factory_id == G240_SYNTHETIC_ADAPTER_FACTORY_ID_V2):
             raise G240SourceExecutorError(
                 "synthetic adapters require the distinct test-only request "
                 "schema and live adapters forbid it"
             )
-        artifacts = _runtime_environment_artifacts(
-            self.runtime_environment_artifacts
-        )
+        artifacts = _runtime_environment_artifacts(self.runtime_environment_artifacts)
         if synthetic_test_request:
             if (
                 self.interpreter_identity_cid is not None
@@ -807,8 +672,7 @@ class G240ExecutionRequestV2:
                 or artifacts
             ):
                 raise G240SourceExecutorError(
-                    "synthetic requests may not claim a production runtime "
-                    "environment"
+                    "synthetic requests may not claim a production runtime environment"
                 )
         elif (
             self.interpreter_identity_cid is None
@@ -829,10 +693,7 @@ class G240ExecutionRequestV2:
         # production replay is post-outcome and therefore binds exact expected
         # source-executed frontend/exposure values.  Synthetic fixtures live
         # only in their distinct test request schema.
-        frontend_expected = (
-            self.execution_mode == "replay"
-            or synthetic_test_request
-        )
+        frontend_expected = self.execution_mode == "replay" or synthetic_test_request
         if expected_frontend_present != frontend_expected:
             raise G240SourceExecutorError(
                 "production source requests must omit precomputed frontend "
@@ -866,55 +727,37 @@ class G240ExecutionRequestV2:
             if (
                 semantic_result.run_id != execution_run_id
                 or semantic_result.case_id != job.case_id
-                or semantic_result.case_manifest_sha256
-                != plan.case_manifest_sha256
+                or semantic_result.case_manifest_sha256 != plan.case_manifest_sha256
                 or semantic_result.variant_id != job.variant_id
                 or semantic_result.split is not plan.split
                 or semantic_result.cache_mode is not job.cache_mode
                 or _semantic_result_cid(semantic_result) != semantic_cid
                 or not semantic_result.stages
-                or any(
-                    stage.stage not in _FRONTEND_STAGES
-                    for stage in semantic_result.stages
-                )
-                or {
-                    stage.provenance.environment_sha256
-                    for stage in semantic_result.stages
-                }
+                or any(stage.stage not in _FRONTEND_STAGES for stage in semantic_result.stages)
+                or {stage.provenance.environment_sha256 for stage in semantic_result.stages}
                 != {environment_sha256}
             ):
                 raise G240SourceExecutorError(
-                    "expected semantic result differs from the exact "
-                    "execution coordinate"
+                    "expected semantic result differs from the exact execution coordinate"
                 )
             compiler_record = next(
-                (
-                    stage
-                    for stage in semantic_result.stages
-                    if stage.stage is StageName.COMPILER
-                ),
+                (stage for stage in semantic_result.stages if stage.stage is StageName.COMPILER),
                 None,
             )
             if (
                 compiler_record is None
                 or compiler_exposure.receipt_cid != exposure_cid
                 or compiler_exposure.source_cid != self.source_cid
-                or compiler_exposure.compiler_record.run_id
-                != execution_run_id
-                or compiler_exposure.compiler_record.case_id
-                != semantic_result.case_id
-                or compiler_exposure.compiler_record.cache_mode
-                is not semantic_result.cache_mode
-                or compiler_exposure.compiler_record.split
-                is not semantic_result.split
+                or compiler_exposure.compiler_record.run_id != execution_run_id
+                or compiler_exposure.compiler_record.case_id != semantic_result.case_id
+                or compiler_exposure.compiler_record.cache_mode is not semantic_result.cache_mode
+                or compiler_exposure.compiler_record.split is not semantic_result.split
                 or (
-                    compiler_exposure.compiler_record
-                    .case_manifest_sha256
+                    compiler_exposure.compiler_record.case_manifest_sha256
                     != semantic_result.case_manifest_sha256
                 )
                 or (
-                    compiler_exposure.compiler_record.provenance
-                    .environment_sha256
+                    compiler_exposure.compiler_record.provenance.environment_sha256
                     != compiler_record.provenance.environment_sha256
                 )
                 or (
@@ -926,73 +769,43 @@ class G240ExecutionRequestV2:
                     "shared A0 compiler exposure differs from the exact "
                     "semantic case/cache/source coordinate"
                 )
-            object.__setattr__(
-                self, "semantic_result_cid", semantic_cid
-            )
-            object.__setattr__(
-                self, "compiler_exposure_cid", exposure_cid
-            )
+            object.__setattr__(self, "semantic_result_cid", semantic_cid)
+            object.__setattr__(self, "compiler_exposure_cid", exposure_cid)
         proof_context = _mapping(self.proof_context, "proof_context")
         if cid_for_dag_json(_plain(proof_context)) != self.proof_context_cid:
-            raise G240SourceExecutorError(
-                "reviewed proof-context CID changed"
-            )
+            raise G240SourceExecutorError("reviewed proof-context CID changed")
         config = _validate_adapter_configuration(
             factory_id,
             self.adapter_configuration,
             source_run_id=source_run_id,
             environment_sha256=environment_sha256,
         )
-        if (
-            cid_for_dag_json(_plain(config))
-            != self.adapter_configuration_cid
-        ):
-            raise G240SourceExecutorError(
-                "adapter factory configuration CID changed"
-            )
-        cache_values = _mapping(
-            self.cache_namespace_cids, "cache_namespace_cids"
-        )
+        if cid_for_dag_json(_plain(config)) != self.adapter_configuration_cid:
+            raise G240SourceExecutorError("adapter factory configuration CID changed")
+        cache_values = _mapping(self.cache_namespace_cids, "cache_namespace_cids")
         caches = {
-            _safe_id(stage, "cache stage"): _cid(
-                value, f"cache_namespace_cids.{stage}"
-            )
+            _safe_id(stage, "cache stage"): _cid(value, f"cache_namespace_cids.{stage}")
             for stage, value in cache_values.items()
         }
         expected_stages = {
             stage.value
-            for stage in get_causal_proof_variant_profile(
-                job.variant_id
-            ).effective_stages
+            for stage in get_causal_proof_variant_profile(job.variant_id).effective_stages
         }
         if set(caches) != expected_stages:
             raise G240SourceExecutorError(
-                "G240 request cache namespace population differs from the "
-                "runtime route"
+                "G240 request cache namespace population differs from the runtime route"
             )
-        object.__setattr__(
-            self, "plan", MappingProxyType(plan.to_dict())
-        )
-        object.__setattr__(
-            self, "job", MappingProxyType(job.to_dict())
-        )
+        object.__setattr__(self, "plan", MappingProxyType(plan.to_dict()))
+        object.__setattr__(self, "job", MappingProxyType(job.to_dict()))
         object.__setattr__(
             self,
             "semantic_result",
-            (
-                None
-                if semantic_result is None
-                else MappingProxyType(semantic_result.to_dict())
-            ),
+            (None if semantic_result is None else MappingProxyType(semantic_result.to_dict())),
         )
         object.__setattr__(
             self,
             "compiler_exposure",
-            (
-                None
-                if compiler_exposure is None
-                else MappingProxyType(compiler_exposure.to_dict())
-            ),
+            (None if compiler_exposure is None else MappingProxyType(compiler_exposure.to_dict())),
         )
         object.__setattr__(
             self,
@@ -1000,9 +813,7 @@ class G240ExecutionRequestV2:
             MappingProxyType(dict(_plain(proof_context))),
         )
         object.__setattr__(self, "adapter_factory_id", factory_id)
-        object.__setattr__(
-            self, "adapter_configuration", config
-        )
+        object.__setattr__(self, "adapter_configuration", config)
         object.__setattr__(
             self,
             "cache_namespace_cids",
@@ -1017,9 +828,7 @@ class G240ExecutionRequestV2:
         if self.request_cid is None:
             object.__setattr__(self, "request_cid", expected_request)
         elif _cid(self.request_cid, "request_cid") != expected_request:
-            raise G240SourceExecutorError(
-                "G240 execution request CID changed"
-            )
+            raise G240SourceExecutorError("G240 execution request CID changed")
 
     @property
     def typed_plan(self) -> AblationPlan:
@@ -1041,12 +850,9 @@ class G240ExecutionRequestV2:
     def typed_compiler_exposure(self) -> CompilerReferenceExposureV2:
         if self.compiler_exposure is None:
             raise G240SourceExecutorError(
-                "production source request has no precomputed compiler "
-                "exposure"
+                "production source request has no precomputed compiler exposure"
             )
-        return CompilerReferenceExposureV2.from_dict(
-            self.compiler_exposure
-        )
+        return CompilerReferenceExposureV2.from_dict(self.compiler_exposure)
 
     def identity_payload(self) -> dict[str, object]:
         return {
@@ -1084,9 +890,7 @@ class G240ExecutionRequestV2:
         compiler_exposure: CompilerReferenceExposureV2 | None = None,
         interpreter_identity_cid: str | None = None,
         git_executable_cid: str | None = None,
-        runtime_environment_artifacts: (
-            Mapping[str, Mapping[str, str]] | None
-        ) = None,
+        runtime_environment_artifacts: (Mapping[str, Mapping[str, str]] | None) = None,
         source_execution_request_cid: str | None = None,
         source_runtime_evidence_cid: str | None = None,
         _test_only_synthetic_capability: object | None = None,
@@ -1095,55 +899,36 @@ class G240ExecutionRequestV2:
             raise G240SourceExecutorError(
                 "G240 execution request requires a typed namespace coordinate"
             )
-        synthetic = (
-            adapter_factory_id
-            == G240_SYNTHETIC_ADAPTER_FACTORY_ID_V2
-        )
+        synthetic = adapter_factory_id == G240_SYNTHETIC_ADAPTER_FACTORY_ID_V2
+        if synthetic and _test_only_synthetic_capability is not _G240_SYNTHETIC_TEST_CAPABILITY_V2:
+            raise G240SourceExecutorError(
+                "synthetic request creation requires the private test-only capability"
+            )
+        if not synthetic and _test_only_synthetic_capability is not None:
+            raise G240SourceExecutorError("test-only capability cannot create a live request")
         if (
-            synthetic
-            and _test_only_synthetic_capability
-            is not _G240_SYNTHETIC_TEST_CAPABILITY_V2
+            execution_mode == "source"
+            and not synthetic
+            and (semantic_result is not None or compiler_exposure is not None)
         ):
             raise G240SourceExecutorError(
-                "synthetic request creation requires the private test-only "
-                "capability"
+                "production source requests must not precompute frontend outcomes"
             )
-        if (
-            not synthetic
-            and _test_only_synthetic_capability is not None
-        ):
-            raise G240SourceExecutorError(
-                "test-only capability cannot create a live request"
-            )
-        if execution_mode == "source" and not synthetic and (
-            semantic_result is not None or compiler_exposure is not None
-        ):
-            raise G240SourceExecutorError(
-                "production source requests must not precompute frontend "
-                "outcomes"
-            )
-        if (
-            (execution_mode == "replay" or synthetic)
-            and (
-                not isinstance(semantic_result, CaseResultRecord)
-                or not isinstance(
-                    compiler_exposure,
-                    CompilerReferenceExposureV2,
-                )
+        if (execution_mode == "replay" or synthetic) and (
+            not isinstance(semantic_result, CaseResultRecord)
+            or not isinstance(
+                compiler_exposure,
+                CompilerReferenceExposureV2,
             )
         ):
-            raise G240SourceExecutorError(
-                "replay/test requests require exact frontend outcomes"
-            )
+            raise G240SourceExecutorError("replay/test requests require exact frontend outcomes")
         return cls(
             execution_mode=execution_mode,
             execution_run_id=execution_run_id,
             source_run_id=source_run_id,
             source_commit=source_commit,
             policy_cid=policy_cid,
-            runtime_orchestration_policy_cid=(
-                runtime_orchestration_policy_cid
-            ),
+            runtime_orchestration_policy_cid=(runtime_orchestration_policy_cid),
             plan=plan.to_dict(),
             plan_cid=_plan_cid(plan),
             job=job.to_dict(),
@@ -1152,52 +937,30 @@ class G240ExecutionRequestV2:
             process_namespace_cid=coordinate.process_namespace_cid,
             state_namespace_cid=coordinate.state_namespace_cid,
             output_namespace_cid=coordinate.output_namespace_cid,
-            cache_namespace_cids=dict(
-                coordinate.cache_namespace_cids
-            ),
+            cache_namespace_cids=dict(coordinate.cache_namespace_cids),
             environment_cid=environment_cid,
             environment_sha256=environment_sha256,
             interpreter_identity_cid=interpreter_identity_cid,
             git_executable_cid=git_executable_cid,
             runtime_environment_artifacts=(
-                {}
-                if runtime_environment_artifacts is None
-                else runtime_environment_artifacts
+                {} if runtime_environment_artifacts is None else runtime_environment_artifacts
             ),
-            semantic_result=(
-                None
-                if semantic_result is None
-                else semantic_result.to_dict()
-            ),
+            semantic_result=(None if semantic_result is None else semantic_result.to_dict()),
             semantic_result_cid=(
-                None
-                if semantic_result is None
-                else _semantic_result_cid(semantic_result)
+                None if semantic_result is None else _semantic_result_cid(semantic_result)
             ),
-            compiler_exposure=(
-                None
-                if compiler_exposure is None
-                else compiler_exposure.to_dict()
-            ),
+            compiler_exposure=(None if compiler_exposure is None else compiler_exposure.to_dict()),
             compiler_exposure_cid=(
-                None
-                if compiler_exposure is None
-                else compiler_exposure.receipt_cid
+                None if compiler_exposure is None else compiler_exposure.receipt_cid
             ),
             source_text=source_text,
             source_cid=cid_for_bytes(source_text.encode("utf-8")),
             proof_context=dict(proof_context),
-            proof_context_cid=cid_for_dag_json(
-                _plain(proof_context)
-            ),
+            proof_context_cid=cid_for_dag_json(_plain(proof_context)),
             adapter_factory_id=adapter_factory_id,
             adapter_configuration=dict(adapter_configuration),
-            adapter_configuration_cid=cid_for_dag_json(
-                _plain(adapter_configuration)
-            ),
-            source_execution_request_cid=(
-                source_execution_request_cid
-            ),
+            adapter_configuration_cid=cid_for_dag_json(_plain(adapter_configuration)),
+            source_execution_request_cid=(source_execution_request_cid),
             source_runtime_evidence_cid=source_runtime_evidence_cid,
             holdout_permitted=False,
             schema=(
@@ -1227,23 +990,12 @@ class G240ExecutionRequestV2:
             raise G240SourceExecutorError(
                 "a replay request must derive from a source execution request"
             )
-        synthetic = (
-            source.schema
-            == G240_SYNTHETIC_TEST_EXECUTION_REQUEST_SCHEMA_V2
-        )
-        if (
-            synthetic
-            and _test_only_synthetic_capability
-            is not _G240_SYNTHETIC_TEST_CAPABILITY_V2
-        ):
+        synthetic = source.schema == G240_SYNTHETIC_TEST_EXECUTION_REQUEST_SCHEMA_V2
+        if synthetic and _test_only_synthetic_capability is not _G240_SYNTHETIC_TEST_CAPABILITY_V2:
             raise G240SourceExecutorError(
-                "synthetic replay request requires the private test-only "
-                "capability"
+                "synthetic replay request requires the private test-only capability"
             )
-        if (
-            not synthetic
-            and _test_only_synthetic_capability is not None
-        ):
+        if not synthetic and _test_only_synthetic_capability is not None:
             raise G240SourceExecutorError(
                 "test-only capability cannot create a live replay request"
             )
@@ -1255,10 +1007,7 @@ class G240ExecutionRequestV2:
         for stage in source_runtime.semantic_frontend:
             provenance = replace(
                 stage.provenance,
-                upstream_stage_digests=tuple(
-                    previous.digest
-                    for previous in replay_frontend
-                ),
+                upstream_stage_digests=tuple(previous.digest for previous in replay_frontend),
             )
             replay_frontend.append(
                 replace(
@@ -1267,17 +1016,13 @@ class G240ExecutionRequestV2:
                     provenance=provenance,
                 )
             )
-        semantic_result = CaseResultRecord.from_stages(
-            tuple(replay_frontend)
-        )
-        compiler_exposure = (
-            CompilerReferenceExposureV2.from_compiler_record(
-                replace(
-                    source_runtime.compiler_exposure.compiler_record,
-                    run_id=replay_run_id,
-                ),
-                source_text=source_runtime.source_text,
-            )
+        semantic_result = CaseResultRecord.from_stages(tuple(replay_frontend))
+        compiler_exposure = CompilerReferenceExposureV2.from_compiler_record(
+            replace(
+                source_runtime.compiler_exposure.compiler_record,
+                run_id=replay_run_id,
+            ),
+            source_text=source_runtime.source_text,
         )
         return cls(
             execution_mode="replay",
@@ -1285,9 +1030,7 @@ class G240ExecutionRequestV2:
             source_run_id=source.source_run_id,
             source_commit=source.source_commit,
             policy_cid=source.policy_cid,
-            runtime_orchestration_policy_cid=(
-                source.runtime_orchestration_policy_cid
-            ),
+            runtime_orchestration_policy_cid=(source.runtime_orchestration_policy_cid),
             plan=source.plan,
             plan_cid=source.plan_cid,
             job=source.job,
@@ -1301,9 +1044,7 @@ class G240ExecutionRequestV2:
             environment_sha256=source.environment_sha256,
             interpreter_identity_cid=source.interpreter_identity_cid,
             git_executable_cid=source.git_executable_cid,
-            runtime_environment_artifacts=(
-                source.runtime_environment_artifacts
-            ),
+            runtime_environment_artifacts=(source.runtime_environment_artifacts),
             semantic_result=semantic_result.to_dict(),
             semantic_result_cid=_semantic_result_cid(semantic_result),
             compiler_exposure=compiler_exposure.to_dict(),
@@ -1345,9 +1086,7 @@ class G240ExecutionRequestV2:
                 "semantic_result": (
                     None
                     if data["semantic_result"] is None
-                    else _mapping(
-                        data["semantic_result"], "semantic_result"
-                    )
+                    else _mapping(data["semantic_result"], "semantic_result")
                 ),
                 "compiler_exposure": (
                     None
@@ -1357,9 +1096,7 @@ class G240ExecutionRequestV2:
                         "compiler_exposure",
                     )
                 ),
-                "proof_context": _mapping(
-                    data["proof_context"], "proof_context"
-                ),
+                "proof_context": _mapping(data["proof_context"], "proof_context"),
                 "adapter_configuration": _mapping(
                     data["adapter_configuration"],
                     "adapter_configuration",
@@ -1373,16 +1110,12 @@ def build_g240_live_adapter_configuration_v2(
     *,
     kernel_timeout_seconds: float = 30.0,
     leanstral_timeout_seconds: float = 120.0,
-    leanstral_max_new_tokens: int = (
-        LEANSTRAL_MEASURED_MAX_NEW_TOKENS
-    ),
+    leanstral_max_new_tokens: int = (LEANSTRAL_MEASURED_MAX_NEW_TOKENS),
 ) -> Mapping[str, object]:
     """Freeze the only production adapter factory's complete configuration."""
 
     if not isinstance(inventory, CapabilityInventory):
-        raise G240SourceExecutorError(
-            "live adapter configuration requires CapabilityInventory"
-        )
+        raise G240SourceExecutorError("live adapter configuration requires CapabilityInventory")
     value = {
         "schema": G240_LIVE_ADAPTER_FACTORY_SCHEMA_V2,
         "capability_inventory": inventory.to_dict(),
@@ -1398,8 +1131,7 @@ def build_g240_live_adapter_configuration_v2(
     )
 
 
-def build_g240_synthetic_adapter_configuration_v2(
-) -> Mapping[str, object]:
+def build_g240_synthetic_adapter_configuration_v2() -> Mapping[str, object]:
     """Return the fixed inert adapter set used only by synthetic tests."""
 
     return _validate_synthetic_factory_configuration(
@@ -1415,9 +1147,7 @@ class _G240AdapterBundleV2:
     """Private split between source-executed frontends and proof adapters."""
 
     proof_adapters: Mapping[StageName, StageAdapter]
-    frontend_routes: (
-        Mapping[str, Mapping[StageName, StageAdapter]] | None
-    )
+    frontend_routes: Mapping[str, Mapping[StageName, StageAdapter]] | None
 
 
 AdapterFactory = Callable[
@@ -1435,16 +1165,12 @@ def _live_adapter_factory(
         source_run_id=request.source_run_id,
         environment_sha256=request.environment_sha256,
     )
-    inventory = CapabilityInventory.from_dict(
-        config["capability_inventory"]
-    )
+    inventory = CapabilityInventory.from_dict(config["capability_inventory"])
     cache_paths = _environment_mapping("HSSL_G240_CACHE_ROOTS_JSON")
     stage_caches: dict[StageName, MutableMapping[str, object]] = {}
     symai_cache_path = cache_paths.get(StageName.SYMAI.value)
     if symai_cache_path is not None:
-        stage_caches[StageName.SYMAI] = _G240DiskCache(
-            Path(symai_cache_path)
-        )
+        stage_caches[StageName.SYMAI] = _G240DiskCache(Path(symai_cache_path))
     runtime = build_live_runtime(
         inventory,
         # ``_execute_job(..., semantic_protocol_cid=...)`` validates the
@@ -1453,28 +1179,18 @@ def _live_adapter_factory(
         # and selected candidate are invoked below.
         variant_ids=request.typed_plan.variant_ids,
         state_directory=state_directory,
-        kernel_timeout_seconds=float(
-            config["kernel_timeout_seconds"]
-        ),
-        leanstral_timeout_seconds=float(
-            config["leanstral_timeout_seconds"]
-        ),
-        leanstral_max_new_tokens=int(
-            config["leanstral_max_new_tokens"]
-        ),
+        kernel_timeout_seconds=float(config["kernel_timeout_seconds"]),
+        leanstral_timeout_seconds=float(config["leanstral_timeout_seconds"]),
+        leanstral_max_new_tokens=int(config["leanstral_max_new_tokens"]),
         semantic_protocol_cid=SEMANTIC_PROTOCOL_V2_CID,
         causal_proof_protocol_cid=CAUSAL_PROOF_PROTOCOL_V2_CID,
         stage_caches=stage_caches,
     )
     route = runtime.adapters[request.typed_job.variant_id]
-    profile = get_causal_proof_variant_profile(
-        request.typed_job.variant_id
-    )
+    profile = get_causal_proof_variant_profile(request.typed_job.variant_id)
     proof_stages = (*profile.optional_order, StageName.KERNEL)
     return _G240AdapterBundleV2(
-        proof_adapters=MappingProxyType(
-            {stage: route[stage] for stage in proof_stages}
-        ),
+        proof_adapters=MappingProxyType({stage: route[stage] for stage in proof_stages}),
         frontend_routes=runtime.adapters,
     )
 
@@ -1483,12 +1199,8 @@ def _synthetic_adapter_factory(
     request: G240ExecutionRequestV2,
     _state_directory: Path,
 ) -> _G240AdapterBundleV2:
-    _validate_synthetic_factory_configuration(
-        request.adapter_configuration
-    )
-    profile = get_causal_proof_variant_profile(
-        request.typed_job.variant_id
-    )
+    _validate_synthetic_factory_configuration(request.adapter_configuration)
+    profile = get_causal_proof_variant_profile(request.typed_job.variant_id)
     stages = (*profile.optional_order, StageName.KERNEL)
     kernel = NativeKernelRunner(
         "/bin/true",
@@ -1508,10 +1220,7 @@ def _synthetic_adapter_factory(
             output = StageOutput(
                 data={"safe_failure_class": "timed_out"},
                 status=StageStatus.FAILED,
-                failure_code=(
-                    FailureCode
-                    .LEANSTRAL_TIMEOUT_SCHEMA_OR_FORBIDDEN_CONSTRUCT
-                ),
+                failure_code=(FailureCode.LEANSTRAL_TIMEOUT_SCHEMA_OR_FORBIDDEN_CONSTRUCT),
                 failure_detail="synthetic model timeout",
             )
         return StageAdapter(
@@ -1566,12 +1275,9 @@ def _source_execute_frontend_v2(
     )
     if len(reference_jobs) != 1:
         raise G240SourceExecutorError(
-            "production frontend execution requires one exact paired A0 "
-            "reference job"
+            "production frontend execution requires one exact paired A0 reference job"
         )
-    scheduler = ResourceScheduler(
-        ResourcePolicy.from_resource_limits(execution_plan.limits)
-    )
+    scheduler = ResourceScheduler(ResourcePolicy.from_resource_limits(execution_plan.limits))
     reference_result = _execute_job(
         execution_plan,
         reference_jobs[0],
@@ -1591,42 +1297,28 @@ def _source_execute_frontend_v2(
         )
     )
     semantic_result = CaseResultRecord.from_stages(
-        tuple(
-            stage
-            for stage in candidate_result.stages
-            if stage.stage in _FRONTEND_STAGES
-        )
+        tuple(stage for stage in candidate_result.stages if stage.stage in _FRONTEND_STAGES)
     )
     compiler_records = tuple(
-        stage
-        for stage in reference_result.stages
-        if stage.stage is StageName.COMPILER
+        stage for stage in reference_result.stages if stage.stage is StageName.COMPILER
     )
     if len(compiler_records) != 1:
-        raise G240SourceExecutorError(
-            "source-executed A0 reference lacks one compiler record"
-        )
+        raise G240SourceExecutorError("source-executed A0 reference lacks one compiler record")
     try:
         exposure = CompilerReferenceExposureV2.from_compiler_record(
             compiler_records[0],
             source_text=request.source_text,
         )
     except (TypeError, ValueError) as exc:
-        raise G240SourceExecutorError(
-            "source-executed A0 compiler exposure is invalid"
-        ) from exc
+        raise G240SourceExecutorError("source-executed A0 compiler exposure is invalid") from exc
     return semantic_result, exposure
 
 
-_ADAPTER_FACTORIES: Final[Mapping[str, AdapterFactory]] = (
-    MappingProxyType(
-        {
-            G240_LIVE_ADAPTER_FACTORY_ID_V2: _live_adapter_factory,
-            G240_SYNTHETIC_ADAPTER_FACTORY_ID_V2: (
-                _synthetic_adapter_factory
-            ),
-        }
-    )
+_ADAPTER_FACTORIES: Final[Mapping[str, AdapterFactory]] = MappingProxyType(
+    {
+        G240_LIVE_ADAPTER_FACTORY_ID_V2: _live_adapter_factory,
+        G240_SYNTHETIC_ADAPTER_FACTORY_ID_V2: (_synthetic_adapter_factory),
+    }
 )
 
 
@@ -1642,9 +1334,7 @@ def validate_g240_execution_request_v2(
             else G240ExecutionRequestV2.from_dict(value)
         )
     except (TypeError, ValueError) as exc:
-        raise G240SourceExecutorError(
-            "G240 execution request failed typed replay"
-        ) from exc
+        raise G240SourceExecutorError("G240 execution request failed typed replay") from exc
     return G240ExecutionRequestV2.from_dict(request.to_dict())
 
 
@@ -1659,8 +1349,7 @@ def validate_g240_production_execution_request_v2(
         or request.adapter_factory_id != G240_LIVE_ADAPTER_FACTORY_ID_V2
     ):
         raise G240SourceExecutorError(
-            "G240 production validation rejects test-only synthetic "
-            "execution"
+            "G240 production validation rejects test-only synthetic execution"
         )
     return request
 
@@ -1680,11 +1369,7 @@ def _g240_replay_stage_semantic_projection_v2(
 
     provenance = stage.provenance
     source = provenance.source
-    if (
-        len(source) != 4
-        or source[1] != "ablation_plan"
-        or source[2] != expected_plan_digest
-    ):
+    if len(source) != 4 or source[1] != "ablation_plan" or source[2] != expected_plan_digest:
         raise G240SourceExecutorError(
             "G240 replay stage has an unsupported provenance source route"
         )
@@ -1722,11 +1407,7 @@ def _g240_replay_stage_semantic_projection_v2(
         },
         "data": stable_data,
         "output_sha256": stable_output_sha256,
-        "failure_code": (
-            None
-            if stage.failure_code is None
-            else stage.failure_code.value
-        ),
+        "failure_code": (None if stage.failure_code is None else stage.failure_code.value),
         "failure_detail": stage.failure_detail,
         "kernel_accepted": stage.kernel_accepted,
         "kernel_receipt_sha256": stage.kernel_receipt_sha256,
@@ -1757,13 +1438,10 @@ def _g240_symai_route_projection_v2(
             and stage.data.get("schema") == SYMAI_EVIDENCE_SCHEMA_V2
         ):
             raise G240SourceExecutorError(
-                "G240 successful SyMAI semantic evidence lacks stable "
-                "backend provenance"
+                "G240 successful SyMAI semantic evidence lacks stable backend provenance"
             )
         return None
-    provenance = _mapping(
-        raw_provenance, "SyMAI replay backend provenance"
-    )
+    provenance = _mapping(raw_provenance, "SyMAI replay backend provenance")
     metadata = _mapping(
         provenance.get("router_metadata"),
         "SyMAI replay router metadata",
@@ -1799,9 +1477,7 @@ def _g240_symai_route_projection_v2(
         "router_metadata": stable_router_metadata,
         "dry_run": provenance.get("dry_run"),
         "starts_model_server": provenance.get("starts_model_server"),
-        "reuses_existing_model_service": provenance.get(
-            "reuses_existing_model_service"
-        ),
+        "reuses_existing_model_service": provenance.get("reuses_existing_model_service"),
     }
     for field in (
         "engine",
@@ -1811,22 +1487,15 @@ def _g240_symai_route_projection_v2(
         "requested_model",
         "effective_model",
     ):
-        if (
-            not isinstance(projection[field], str)
-            or not str(projection[field]).strip()
-        ):
-            raise G240SourceExecutorError(
-                f"G240 SyMAI replay route lacks stable {field}"
-            )
+        if not isinstance(projection[field], str) or not str(projection[field]).strip():
+            raise G240SourceExecutorError(f"G240 SyMAI replay route lacks stable {field}")
     for field in (
         "dry_run",
         "starts_model_server",
         "reuses_existing_model_service",
     ):
         if type(projection[field]) is not bool:
-            raise G240SourceExecutorError(
-                f"G240 SyMAI replay route lacks stable {field}"
-            )
+            raise G240SourceExecutorError(f"G240 SyMAI replay route lacks stable {field}")
     if projection["dry_run"] is False:
         for field in (
             "resolved_provider",
@@ -1834,13 +1503,8 @@ def _g240_symai_route_projection_v2(
             "service_endpoint",
             "routing_backend",
         ):
-            if (
-                not isinstance(projection[field], str)
-                or not str(projection[field]).strip()
-            ):
-                raise G240SourceExecutorError(
-                    f"G240 SyMAI replay route lacks stable {field}"
-                )
+            if not isinstance(projection[field], str) or not str(projection[field]).strip():
+                raise G240SourceExecutorError(f"G240 SyMAI replay route lacks stable {field}")
     return MappingProxyType(_plain(projection))  # type: ignore[arg-type]
 
 
@@ -1855,15 +1519,11 @@ def _g240_replay_compiler_semantic_projection_v2(
     projection = {
         "schema": exposure.schema,
         "semantic_protocol_cid": exposure.semantic_protocol_cid,
-        "causal_proof_protocol_cid": (
-            exposure.causal_proof_protocol_cid
-        ),
+        "causal_proof_protocol_cid": (exposure.causal_proof_protocol_cid),
         "source_cid": exposure.source_cid,
         "case_id": exposure.compiler_record.case_id,
         "cache_mode": exposure.compiler_record.cache_mode.value,
-        "environment_sha256": (
-            exposure.compiler_record.provenance.environment_sha256
-        ),
+        "environment_sha256": (exposure.compiler_record.provenance.environment_sha256),
         "compiler_invoked": data["compiler_invoked"],
         "candidate_state": data["candidate_state"],
         "compiler_record": _g240_replay_stage_semantic_projection_v2(
@@ -1872,9 +1532,7 @@ def _g240_replay_compiler_semantic_projection_v2(
         ),
         "compiler_artifact": data["compiler_artifact"],
         "compiler_artifact_cid": data["compiler_artifact_cid"],
-        "compiler_artifact_sha256": data[
-            "compiler_artifact_sha256"
-        ],
+        "compiler_artifact_sha256": data["compiler_artifact_sha256"],
         "compiler_candidate": data["compiler_candidate"],
     }
     return MappingProxyType(_plain(projection))  # type: ignore[arg-type]
@@ -1914,49 +1572,41 @@ def validate_g240_runtime_for_execution_request_v2(
     )
     if (
         restored_request.execution_mode == "replay"
-        and restored_request.schema
-        == G240_SYNTHETIC_TEST_EXECUTION_REQUEST_SCHEMA_V2
+        and restored_request.schema == G240_SYNTHETIC_TEST_EXECUTION_REQUEST_SCHEMA_V2
     ):
         expected_frontend_changed = (
-            runtime.compiler_exposure
-            != restored_request.typed_compiler_exposure
+            runtime.compiler_exposure != restored_request.typed_compiler_exposure
             or tuple(runtime.semantic_frontend)
             != tuple(restored_request.typed_semantic_result.stages)
         )
     elif restored_request.execution_mode == "replay":
-        expected_frontend_changed = (
-            _g240_replay_compiler_semantic_projection_v2(
-                runtime.compiler_exposure,
+        expected_frontend_changed = _g240_replay_compiler_semantic_projection_v2(
+            runtime.compiler_exposure,
+            expected_plan_digest=execution_plan.digest,
+        ) != _g240_replay_compiler_semantic_projection_v2(
+            restored_request.typed_compiler_exposure,
+            expected_plan_digest=source_plan.digest,
+        ) or tuple(
+            _g240_replay_stage_semantic_projection_v2(
+                stage,
                 expected_plan_digest=execution_plan.digest,
             )
-            != _g240_replay_compiler_semantic_projection_v2(
-                restored_request.typed_compiler_exposure,
+            for stage in runtime.semantic_frontend
+        ) != tuple(
+            _g240_replay_stage_semantic_projection_v2(
+                stage,
                 expected_plan_digest=source_plan.digest,
             )
-            or tuple(
-                _g240_replay_stage_semantic_projection_v2(
-                    stage,
-                    expected_plan_digest=execution_plan.digest,
-                )
-                for stage in runtime.semantic_frontend
-            )
-            != tuple(
-                _g240_replay_stage_semantic_projection_v2(
-                    stage,
-                    expected_plan_digest=source_plan.digest,
-                )
-                for stage in restored_request.typed_semantic_result.stages
-            )
+            for stage in restored_request.typed_semantic_result.stages
         )
     else:
         expected_frontend_changed = (
-            restored_request.schema
-            == G240_SYNTHETIC_TEST_EXECUTION_REQUEST_SCHEMA_V2
+            restored_request.schema == G240_SYNTHETIC_TEST_EXECUTION_REQUEST_SCHEMA_V2
             and (
-            runtime.compiler_exposure.compiler_record
-            != restored_request.typed_compiler_exposure.compiler_record
-            or tuple(runtime.semantic_frontend)
-            != tuple(restored_request.typed_semantic_result.stages)
+                runtime.compiler_exposure.compiler_record
+                != restored_request.typed_compiler_exposure.compiler_record
+                or tuple(runtime.semantic_frontend)
+                != tuple(restored_request.typed_semantic_result.stages)
             )
         )
     mismatches = tuple(
@@ -1964,8 +1614,7 @@ def validate_g240_runtime_for_execution_request_v2(
         for name, changed in (
             (
                 "run_id",
-                result.run_id
-                != restored_request.execution_run_id,
+                result.run_id != restored_request.execution_run_id,
             ),
             (
                 "case_id",
@@ -1973,13 +1622,11 @@ def validate_g240_runtime_for_execution_request_v2(
             ),
             (
                 "case_manifest",
-                result.case_manifest_sha256
-                != restored_request.typed_plan.case_manifest_sha256,
+                result.case_manifest_sha256 != restored_request.typed_plan.case_manifest_sha256,
             ),
             (
                 "variant",
-                result.variant_id
-                != restored_request.typed_job.variant_id,
+                result.variant_id != restored_request.typed_job.variant_id,
             ),
             (
                 "split",
@@ -1987,8 +1634,7 @@ def validate_g240_runtime_for_execution_request_v2(
             ),
             (
                 "cache_mode",
-                result.cache_mode
-                is not restored_request.typed_job.cache_mode,
+                result.cache_mode is not restored_request.typed_job.cache_mode,
             ),
             (
                 "source",
@@ -1996,22 +1642,19 @@ def validate_g240_runtime_for_execution_request_v2(
             ),
             (
                 "proof_context",
-                runtime.proof_context_cid
-                != restored_request.proof_context_cid,
+                runtime.proof_context_cid != restored_request.proof_context_cid,
             ),
             ("semantic_frontend", expected_frontend_changed),
             (
                 "environment",
-                stage_environments
-                != {restored_request.environment_sha256},
+                stage_environments != {restored_request.environment_sha256},
             ),
         )
         if changed
     )
     if mismatches:
         raise G240SourceExecutorError(
-            "G240 runtime evidence differs from its pre-execution request: "
-            + ", ".join(mismatches)
+            "G240 runtime evidence differs from its pre-execution request: " + ", ".join(mismatches)
         )
     return runtime
 
@@ -2021,17 +1664,13 @@ def _private_real_directory(path: Path, field: str) -> Path:
         resolved = path.resolve(strict=True)
         metadata = path.lstat()
     except OSError as exc:
-        raise G240SourceExecutorError(
-            f"cannot inspect {field}"
-        ) from exc
+        raise G240SourceExecutorError(f"cannot inspect {field}") from exc
     if (
         stat.S_ISLNK(metadata.st_mode)
         or not stat.S_ISDIR(metadata.st_mode)
         or stat.S_IMODE(metadata.st_mode) & 0o077
     ):
-        raise G240SourceExecutorError(
-            f"{field} must be a private real directory"
-        )
+        raise G240SourceExecutorError(f"{field} must be a private real directory")
     return resolved
 
 
@@ -2046,9 +1685,7 @@ def _private_regular_file(
         resolved = path.resolve(strict=True)
         raw = path.read_bytes()
     except OSError as exc:
-        raise G240SourceExecutorError(
-            f"cannot read {field}"
-        ) from exc
+        raise G240SourceExecutorError(f"cannot read {field}") from exc
     if (
         stat.S_ISLNK(metadata.st_mode)
         or not stat.S_ISREG(metadata.st_mode)
@@ -2057,9 +1694,7 @@ def _private_regular_file(
         or not raw
         or len(raw) > _MAX_REQUEST_BYTES
     ):
-        raise G240SourceExecutorError(
-            f"{field} is not a bounded private regular file"
-        )
+        raise G240SourceExecutorError(f"{field} is not a bounded private regular file")
     return raw
 
 
@@ -2083,26 +1718,20 @@ def _canonical_request_from_path(
     except (UnicodeError, json.JSONDecodeError, TypeError, ValueError) as exc:
         if isinstance(exc, G240SourceExecutorError):
             raise
-        raise G240SourceExecutorError(
-            "G240 execution request is not strict JSON"
-        ) from exc
+        raise G240SourceExecutorError("G240 execution request is not strict JSON") from exc
     if (
         not text.endswith("\n")
         or text.endswith("\n\n")
         or raw != canonical_dag_json_bytes(request.to_dict()) + b"\n"
     ):
-        raise G240SourceExecutorError(
-            "G240 execution request is not canonical newline DAG-JSON"
-        )
+        raise G240SourceExecutorError("G240 execution request is not canonical newline DAG-JSON")
     return request, raw
 
 
 def _environment_value(name: str) -> str:
     value = os.environ.get(name)
     if not isinstance(value, str) or not value or "\0" in value:
-        raise G240SourceExecutorError(
-            f"required G240 environment value is absent: {name}"
-        )
+        raise G240SourceExecutorError(f"required G240 environment value is absent: {name}")
     return value
 
 
@@ -2114,25 +1743,17 @@ def _environment_mapping(name: str) -> Mapping[str, str]:
             object_pairs_hook=_reject_duplicate_pairs,
         )
     except (json.JSONDecodeError, ValueError) as exc:
-        raise G240SourceExecutorError(
-            f"{name} is not strict JSON"
-        ) from exc
+        raise G240SourceExecutorError(f"{name} is not strict JSON") from exc
     mapping = _mapping(decoded, name)
     if any(
-        not isinstance(key, str)
-        or not isinstance(member, str)
-        or not key
-        or not member
+        not isinstance(key, str) or not isinstance(member, str) or not key or not member
         for key, member in mapping.items()
     ):
-        raise G240SourceExecutorError(
-            f"{name} must map nonempty strings to nonempty strings"
-        )
+        raise G240SourceExecutorError(f"{name} must map nonempty strings to nonempty strings")
     return MappingProxyType(dict(mapping))  # type: ignore[arg-type]
 
 
-def _bootstrap_receipt_from_environment(
-) -> G240BootstrapConfinementReceiptV2:
+def _bootstrap_receipt_from_environment() -> G240BootstrapConfinementReceiptV2:
     raw = _environment_value("HSSL_G240_BOOTSTRAP_RECEIPT_JSON")
     try:
         value = json.loads(
@@ -2149,59 +1770,33 @@ def _bootstrap_receipt_from_environment(
         raise G240SourceExecutorError(
             "G240 executor lacks a valid stage-one bootstrap receipt"
         ) from exc
-    if (
-        raw.encode("utf-8")
-        != canonical_dag_json_bytes(receipt.to_dict())
-    ):
-        raise G240SourceExecutorError(
-            "G240 stage-one bootstrap receipt is not canonical DAG-JSON"
-        )
-    source_commit = _environment_value(
-        "HSSL_G240_BOOTSTRAP_SOURCE_COMMIT"
-    )
+    if raw.encode("utf-8") != canonical_dag_json_bytes(receipt.to_dict()):
+        raise G240SourceExecutorError("G240 stage-one bootstrap receipt is not canonical DAG-JSON")
+    source_commit = _environment_value("HSSL_G240_BOOTSTRAP_SOURCE_COMMIT")
     try:
-        expected_source_observation = (
-            g240_bootstrap_git_observation_cid(
-                _commit(source_commit, "bootstrap source commit"),
-                role="source",
-            )
+        expected_source_observation = g240_bootstrap_git_observation_cid(
+            _commit(source_commit, "bootstrap source commit"),
+            role="source",
         )
     except (G240BootstrapContractError, TypeError, ValueError) as exc:
-        raise G240SourceExecutorError(
-            "G240 bootstrap source observation is invalid"
-        ) from exc
-    if (
-        receipt.source_commit_observation_cid
-        != expected_source_observation
-    ):
-        raise G240SourceExecutorError(
-            "G240 bootstrap source observation changed before stage two"
-        )
-    package_path = os.environ.get(
-        "HSSL_G240_SOURCE_BOUND_IPFS_ACCELERATE_PACKAGE_PATH"
-    )
-    gitlink_commit = os.environ.get(
-        "HSSL_G240_SOURCE_BOUND_IPFS_ACCELERATE_GITLINK_COMMIT"
-    )
+        raise G240SourceExecutorError("G240 bootstrap source observation is invalid") from exc
+    if receipt.source_commit_observation_cid != expected_source_observation:
+        raise G240SourceExecutorError("G240 bootstrap source observation changed before stage two")
+    package_path = os.environ.get("HSSL_G240_SOURCE_BOUND_IPFS_ACCELERATE_PACKAGE_PATH")
+    gitlink_commit = os.environ.get("HSSL_G240_SOURCE_BOUND_IPFS_ACCELERATE_GITLINK_COMMIT")
     if (package_path is None) != (gitlink_commit is None):
-        raise G240SourceExecutorError(
-            "G240 bootstrap source-bound Git observation is partial"
-        )
+        raise G240SourceExecutorError("G240 bootstrap source-bound Git observation is partial")
     if gitlink_commit is None:
         if receipt.source_bound_gitlink_observation_cid is not None:
-            raise G240SourceExecutorError(
-                "G240 bootstrap omitted its source-bound Git authority"
-            )
+            raise G240SourceExecutorError("G240 bootstrap omitted its source-bound Git authority")
     else:
         try:
-            expected_gitlink_observation = (
-                g240_bootstrap_git_observation_cid(
-                    _commit(
-                        gitlink_commit,
-                        "bootstrap source-bound gitlink commit",
-                    ),
-                    role="ipfs-accelerate-gitlink",
-                )
+            expected_gitlink_observation = g240_bootstrap_git_observation_cid(
+                _commit(
+                    gitlink_commit,
+                    "bootstrap source-bound gitlink commit",
+                ),
+                role="ipfs-accelerate-gitlink",
             )
         except (
             G240BootstrapContractError,
@@ -2212,14 +1807,11 @@ def _bootstrap_receipt_from_environment(
                 "G240 bootstrap source-bound Git observation is invalid"
             ) from exc
         if (
-            receipt.source_bound_gitlink_observation_cid
-            != expected_gitlink_observation
+            receipt.source_bound_gitlink_observation_cid != expected_gitlink_observation
             or not isinstance(package_path, str)
             or not Path(package_path).is_absolute()
         ):
-            raise G240SourceExecutorError(
-                "G240 bootstrap source-bound Git observation changed"
-            )
+            raise G240SourceExecutorError("G240 bootstrap source-bound Git observation changed")
     return receipt
 
 
@@ -2234,9 +1826,7 @@ def _authenticated_regular_payload(
         resolved = path.resolve(strict=True)
         payload = path.read_bytes()
     except OSError as exc:
-        raise G240SourceExecutorError(
-            f"cannot authenticate {field}"
-        ) from exc
+        raise G240SourceExecutorError(f"cannot authenticate {field}") from exc
     if (
         not path.is_absolute()
         or stat.S_ISLNK(metadata.st_mode)
@@ -2246,9 +1836,7 @@ def _authenticated_regular_payload(
         or not payload
         or cid_for_bytes(payload) != expected_cid
     ):
-        raise G240SourceExecutorError(
-            f"{field} differs from its pinned raw CID"
-        )
+        raise G240SourceExecutorError(f"{field} differs from its pinned raw CID")
     return payload
 
 
@@ -2265,13 +1853,10 @@ def _required_runtime_imports(
         "ipfs_datasets_py.logic.modal.codec",
     }
     if CapabilityKind.SPACY_PIPELINE in available:
-        requested_model = inventory.by_kind[
-            CapabilityKind.SPACY_PIPELINE
-        ].identity.get("requested_model")
-        if (
-            not isinstance(requested_model, str)
-            or not _PYTHON_MODULE.fullmatch(requested_model)
-        ):
+        requested_model = inventory.by_kind[CapabilityKind.SPACY_PIPELINE].identity.get(
+            "requested_model"
+        )
+        if not isinstance(requested_model, str) or not _PYTHON_MODULE.fullmatch(requested_model):
             raise G240SourceExecutorError(
                 "available spaCy pipeline lacks an importable model identity"
             )
@@ -2279,10 +1864,7 @@ def _required_runtime_imports(
             {
                 "spacy",
                 requested_model,
-                (
-                    "ipfs_datasets_py.optimizers.logic_theorem_optimizer."
-                    "spacy_modal_codec"
-                ),
+                ("ipfs_datasets_py.optimizers.logic_theorem_optimizer.spacy_modal_codec"),
             }
         )
     if {
@@ -2330,9 +1912,7 @@ def _runtime_import_preflight(
             {
                 "schema": _G240_RUNTIME_PREFLIGHT_SCHEMA_V2,
                 "request_cid": request.request_cid,
-                "bootstrap_confinement_receipt": (
-                    bootstrap_receipt.to_dict()
-                ),
+                "bootstrap_confinement_receipt": (bootstrap_receipt.to_dict()),
                 "landlock_policy_cid": None,
                 "landlock_receipt_cid": None,
                 "interpreter_identity_cid": None,
@@ -2344,9 +1924,7 @@ def _runtime_import_preflight(
                 "synthetic_test_only": True,
             }
         )
-    for label, descriptor in (
-        request.runtime_environment_artifacts.items()
-    ):
+    for label, descriptor in request.runtime_environment_artifacts.items():
         _authenticated_regular_payload(
             Path(descriptor["path"]),
             expected_cid=descriptor["payload_cid"],
@@ -2358,26 +1936,19 @@ def _runtime_import_preflight(
         raise G240SourceExecutorError(
             "production runtime preflight lacks applied Landlock evidence"
         )
-    inventory = CapabilityInventory.from_dict(
-        request.adapter_configuration["capability_inventory"]
-    )
+    inventory = CapabilityInventory.from_dict(request.adapter_configuration["capability_inventory"])
     symai_configuration_cid: str | None = None
     symai_configuration_relative_path: str | None = None
     symai_model = _symai_runtime_model(inventory)
     if symai_model is not None:
         symai_configuration_relative_path = (
-            f"{inventory.run_id}/symai-runtime/"
-            ".symai/symai.config.json"
+            f"{inventory.run_id}/symai-runtime/.symai/symai.config.json"
         )
         try:
-            symai_configuration_cid = (
-                prepare_symai_runtime_configuration(
-                    state_directory
-                    / inventory.run_id
-                    / "symai-runtime",
-                    model=symai_model,
-                    import_package=True,
-                )
+            symai_configuration_cid = prepare_symai_runtime_configuration(
+                state_directory / inventory.run_id / "symai-runtime",
+                model=symai_model,
+                import_package=True,
             )
         except (Exception, SystemExit) as exc:
             raise G240SourceExecutorError(
@@ -2385,18 +1956,10 @@ def _runtime_import_preflight(
             ) from exc
     imports: dict[str, Mapping[str, object]] = {}
     imported_modules: dict[str, object] = {}
-    if (
-        inventory.by_kind[CapabilityKind.LEANSTRAL_SERVICE].status
-        is CapabilityStatus.AVAILABLE
-    ):
-        module_name = (
-            "ipfs_accelerate_py.agent_supervisor."
-            "leanstral_proof_provider"
-        )
+    if inventory.by_kind[CapabilityKind.LEANSTRAL_SERVICE].status is CapabilityStatus.AVAILABLE:
+        module_name = "ipfs_accelerate_py.agent_supervisor.leanstral_proof_provider"
         try:
-            imported_modules[module_name] = (
-                import_source_bound_ipfs_accelerate(module_name)
-            )
+            imported_modules[module_name] = import_source_bound_ipfs_accelerate(module_name)
         except (Exception, SystemExit) as exc:
             raise G240SourceExecutorError(
                 "required source-bound Leanstral provider import failed"
@@ -2417,9 +1980,7 @@ def _runtime_import_preflight(
             raw_path = getattr(module, "__file__", None)
             version = getattr(module, "__version__", None)
         except (Exception, SystemExit) as exc:
-            raise G240SourceExecutorError(
-                f"required runtime import failed: {module_name}"
-            ) from exc
+            raise G240SourceExecutorError(f"required runtime import failed: {module_name}") from exc
         if not isinstance(raw_path, str):
             raise G240SourceExecutorError(
                 f"required runtime import lacks source bytes: {module_name}"
@@ -2432,42 +1993,28 @@ def _runtime_import_preflight(
                 f"cannot authenticate runtime import: {module_name}"
             ) from exc
         if not payload:
-            raise G240SourceExecutorError(
-                f"runtime import is empty: {module_name}"
-            )
+            raise G240SourceExecutorError(f"runtime import is empty: {module_name}")
         imports[module_name] = MappingProxyType(
             {
                 "module_file_cid": cid_for_bytes(payload),
-                "version": (
-                    None
-                    if version is None
-                    else str(version)[:128]
-                ),
+                "version": (None if version is None else str(version)[:128]),
             }
         )
     return MappingProxyType(
         {
             "schema": _G240_RUNTIME_PREFLIGHT_SCHEMA_V2,
             "request_cid": request.request_cid,
-            "bootstrap_confinement_receipt": (
-                bootstrap_receipt.to_dict()
-            ),
+            "bootstrap_confinement_receipt": (bootstrap_receipt.to_dict()),
             "landlock_policy_cid": landlock_policy.policy_cid,
             "landlock_receipt_cid": landlock_receipt.receipt_cid,
-            "interpreter_identity_cid": (
-                request.interpreter_identity_cid
-            ),
+            "interpreter_identity_cid": (request.interpreter_identity_cid),
             "git_executable_cid": request.git_executable_cid,
             "runtime_environment_artifact_cids": {
                 label: descriptor["payload_cid"]
-                for label, descriptor in (
-                    request.runtime_environment_artifacts.items()
-                )
+                for label, descriptor in (request.runtime_environment_artifacts.items())
             },
             "symai_configuration_cid": symai_configuration_cid,
-            "symai_configuration_relative_path": (
-                symai_configuration_relative_path
-            ),
+            "symai_configuration_relative_path": (symai_configuration_relative_path),
             "imports": imports,
             "synthetic_test_only": False,
         }
@@ -2482,24 +2029,18 @@ def _write_exclusive_canonical_evidence(
 ) -> None:
     resolved = path.resolve(strict=False)
     if not resolved.is_relative_to(output_directory) or path.exists():
-        raise G240SourceExecutorError(
-            "G240 evidence path escaped or already exists"
-        )
+        raise G240SourceExecutorError("G240 evidence path escaped or already exists")
     flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
     if hasattr(os, "O_NOFOLLOW"):
         flags |= os.O_NOFOLLOW
     try:
         descriptor = os.open(path, flags, 0o600)
         with os.fdopen(descriptor, "wb") as stream:
-            stream.write(
-                canonical_dag_json_bytes(runtime.to_dict()) + b"\n"
-            )
+            stream.write(canonical_dag_json_bytes(runtime.to_dict()) + b"\n")
             stream.flush()
             os.fsync(stream.fileno())
     except OSError as exc:
-        raise G240SourceExecutorError(
-            "cannot exclusively write G240 runtime evidence"
-        ) from exc
+        raise G240SourceExecutorError("cannot exclusively write G240 runtime evidence") from exc
 
 
 def _write_exclusive_canonical_value(
@@ -2512,9 +2053,7 @@ def _write_exclusive_canonical_value(
     resolved = path.resolve(strict=False)
     payload = canonical_dag_json_bytes(_plain(value)) + b"\n"
     if not resolved.is_relative_to(parent) or path.exists():
-        raise G240SourceExecutorError(
-            f"{field} path escaped or already exists"
-        )
+        raise G240SourceExecutorError(f"{field} path escaped or already exists")
     flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
     if hasattr(os, "O_NOFOLLOW"):
         flags |= os.O_NOFOLLOW
@@ -2525,9 +2064,7 @@ def _write_exclusive_canonical_value(
             stream.flush()
             os.fsync(stream.fileno())
     except OSError as exc:
-        raise G240SourceExecutorError(
-            f"cannot exclusively write {field}"
-        ) from exc
+        raise G240SourceExecutorError(f"cannot exclusively write {field}") from exc
     return payload
 
 
@@ -2550,9 +2087,7 @@ def execute_g240_request_from_environment_v2(
         Path(_environment_value("HSSL_G240_OUTPUT_DIR")),
         "G240 output directory",
     )
-    request_path = Path(
-        _environment_value("HSSL_G240_EXECUTION_REQUEST_PATH")
-    )
+    request_path = Path(_environment_value("HSSL_G240_EXECUTION_REQUEST_PATH"))
     evidence_path = Path(_environment_value("HSSL_G240_EVIDENCE_PATH"))
     request, _request_payload = _canonical_request_from_path(
         request_path,
@@ -2568,32 +2103,22 @@ def execute_g240_request_from_environment_v2(
         codec="raw",
     )
     cache_paths = _environment_mapping("HSSL_G240_CACHE_ROOTS_JSON")
-    cache_cids = _environment_mapping(
-        "HSSL_G240_CACHE_NAMESPACE_CIDS_JSON"
-    )
+    cache_cids = _environment_mapping("HSSL_G240_CACHE_NAMESPACE_CIDS_JSON")
     for stage, path_value in cache_paths.items():
-        _private_real_directory(
-            Path(path_value), f"G240 {stage} cache directory"
-        )
+        _private_real_directory(Path(path_value), f"G240 {stage} cache directory")
     environment_joins = {
         "HSSL_G240_RUN_ID": request.execution_run_id,
         "HSSL_G240_PLAN_CID": request.plan_cid,
         "HSSL_G240_JOB_ID": request.typed_job.job_id,
         "HSSL_G240_COORDINATE_CID": request.coordinate_cid,
-        "HSSL_G240_PROCESS_NAMESPACE_CID": (
-            request.process_namespace_cid
-        ),
+        "HSSL_G240_PROCESS_NAMESPACE_CID": (request.process_namespace_cid),
         "HSSL_G240_STATE_NAMESPACE_CID": request.state_namespace_cid,
-        "HSSL_G240_OUTPUT_NAMESPACE_CID": (
-            request.output_namespace_cid
-        ),
+        "HSSL_G240_OUTPUT_NAMESPACE_CID": (request.output_namespace_cid),
         "HSSL_G240_ENVIRONMENT_CID": request.environment_cid,
         "HSSL_G240_ENVIRONMENT_SHA256": request.environment_sha256,
     }
     mismatches = sorted(
-        name
-        for name, expected in environment_joins.items()
-        if _environment_value(name) != expected
+        name for name, expected in environment_joins.items() if _environment_value(name) != expected
     )
     if (
         mismatches
@@ -2601,17 +2126,12 @@ def execute_g240_request_from_environment_v2(
         or dict(cache_cids) != dict(request.cache_namespace_cids)
         or set(cache_paths) != set(request.cache_namespace_cids)
         or (
-            request.adapter_factory_id
-            == G240_LIVE_ADAPTER_FACTORY_ID_V2
+            request.adapter_factory_id == G240_LIVE_ADAPTER_FACTORY_ID_V2
             and request.git_executable_cid != git_executable_cid
         )
-        or _environment_value("HSSL_G240_BOOTSTRAP_SOURCE_COMMIT")
-        != request.source_commit
+        or _environment_value("HSSL_G240_BOOTSTRAP_SOURCE_COMMIT") != request.source_commit
         or bootstrap_receipt.synthetic_test_only
-        is not (
-            request.adapter_factory_id
-            == G240_SYNTHETIC_ADAPTER_FACTORY_ID_V2
-        )
+        is not (request.adapter_factory_id == G240_SYNTHETIC_ADAPTER_FACTORY_ID_V2)
     ):
         raise G240SourceExecutorError(
             "G240 launch environment differs from its pre-frozen request"
@@ -2619,16 +2139,9 @@ def execute_g240_request_from_environment_v2(
         )
     factory = _ADAPTER_FACTORIES.get(request.adapter_factory_id)
     if factory is None:  # pragma: no cover - request constructor guards this
-        raise G240SourceExecutorError(
-            "G240 adapter factory is not registered"
-        )
+        raise G240SourceExecutorError("G240 adapter factory is not registered")
     if request.adapter_factory_id == G240_SYNTHETIC_ADAPTER_FACTORY_ID_V2:
-        if (
-            os.environ.get(
-                _G240_SYNTHETIC_TEST_ENVIRONMENT_KEY_V2
-            )
-            != request.request_cid
-        ):
+        if os.environ.get(_G240_SYNTHETIC_TEST_ENVIRONMENT_KEY_V2) != request.request_cid:
             raise G240SourceExecutorError(
                 "synthetic G240 adapters require the explicit private "
                 "test-only execution capability"
@@ -2660,9 +2173,7 @@ def execute_g240_request_from_environment_v2(
         compiler_exposure,
         bundle.proof_adapters,
     )
-    runtime = validate_g240_runtime_for_execution_request_v2(
-        runtime, request
-    )
+    runtime = validate_g240_runtime_for_execution_request_v2(runtime, request)
     _write_exclusive_canonical_evidence(
         evidence_path,
         runtime,
@@ -2679,12 +2190,8 @@ def main(*, _bootstrap_capability: object | None = None) -> int:
             "G240 source executor must be entered by the tracked bootstrap"
         )
     if len(sys.argv) != 1:
-        raise G240SourceExecutorError(
-            "G240 source executor accepts no command-line arguments"
-        )
-    execute_g240_request_from_environment_v2(
-        _bootstrap_capability=_bootstrap_capability
-    )
+        raise G240SourceExecutorError("G240 source executor accepts no command-line arguments")
+    execute_g240_request_from_environment_v2(_bootstrap_capability=_bootstrap_capability)
     return 0
 
 

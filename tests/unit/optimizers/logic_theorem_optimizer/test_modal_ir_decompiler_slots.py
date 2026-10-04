@@ -486,9 +486,7 @@ def test_modal_slots_emit_title_section_span_signature_slots_for_todo_cluster_se
             "citation_title_section_primary_number_span_prefix_three_digits": [
                 values["prefix_three_digits"]
             ],
-            "citation_title_section_primary_number_span_has_zero_digit": [
-                values["has_zero_digit"]
-            ],
+            "citation_title_section_primary_number_span_has_zero_digit": [values["has_zero_digit"]],
             "citation_title_section_terminal_number_span": [values["span"]],
             "citation_title_section_terminal_number_span_digit_count_bucket": [
                 values["digit_bucket"]
@@ -591,20 +589,15 @@ def test_modal_ir_decompiler_emits_legal_action_semantic_atoms_for_packet_000122
     slot_map = decoded_modal_phrase_slot_text_map(decoded)
     triples = modal_ir_to_flogic_triples(document)
     triple_pairs = {
-        (str(triple.get("predicate", "")), str(triple.get("object", "")))
-        for triple in triples
+        (str(triple.get("predicate", "")), str(triple.get("object", ""))) for triple in triples
     }
 
-    assert "public_health_surveillance" in slot_map[
-        "typed-decompiler-source-semantic-atom"
-    ]
+    assert "public_health_surveillance" in slot_map["typed-decompiler-source-semantic-atom"]
     assert "seaman_discharge" in slot_map["typed-decompiler-source-semantic-atom"]
-    assert "wage_account_discharge" in slot_map[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "deontic->conditional_normative" in slot_map[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert "wage_account_discharge" in slot_map["typed-decompiler-source-semantic-atom"]
+    assert (
+        "deontic->conditional_normative" in slot_map["typed-decompiler-target-reconstruction-pair"]
+    )
     assert "frame->temporal" in slot_map["typed-decompiler-target-reconstruction-pair"]
     assert ("typed_decompiler_semantic_atom", "seaman_discharge") in triple_pairs
     assert (
@@ -659,24 +652,17 @@ def test_modal_ir_decompiler_emits_scope_frame_reconstruction_for_deadlines() ->
     ]
 
     assert any(
-        "temporal deadline" in value
-        and "within 3 years" in value
-        and "october 24" in value
+        "temporal deadline" in value and "within 3 years" in value and "october 24" in value
         for value in slot_map["typed_ir_scope_frame_reconstruction"]
     )
     assert any(
-        "temporal deadline" in value
-        and "within 3" in value
-        and "october 24 1992" in value
+        "temporal deadline" in value and "within 3" in value and "october 24 1992" in value
         for value in triple_values
     )
 
 
 def test_modal_ir_decompiler_emits_scope_frame_reconstruction_for_conditions() -> None:
-    text = (
-        "Subject to section 1491, the Secretary may guarantee loans for Indian "
-        "organizations."
-    )
+    text = "Subject to section 1491, the Secretary may guarantee loans for Indian organizations."
     document = ModalIRDocument(
         document_id="packet-000571-conditional",
         source="25 U.S.C. 1495",
@@ -718,23 +704,16 @@ def test_modal_ir_decompiler_emits_scope_frame_reconstruction_for_conditions() -
     ]
 
     assert any(
-        "conditioned legal scope" in value
-        and "subject to section" in value
-        and "1491" in value
+        "conditioned legal scope" in value and "subject to section" in value and "1491" in value
         for value in slot_map["typed_ir_scope_frame_reconstruction"]
     )
     assert any(
-        "conditioned legal scope" in value
-        and "section 1491" in value
-        for value in triple_values
+        "conditioned legal scope" in value and "section 1491" in value for value in triple_values
     )
 
 
 def test_modal_ir_decompiler_emits_scope_frame_reconstruction_for_frame_scope() -> None:
-    text = (
-        "In the case of a contested election, the committee shall preserve "
-        "election records."
-    )
+    text = "In the case of a contested election, the committee shall preserve election records."
     document = ModalIRDocument(
         document_id="packet-000571-frame",
         source="2 U.S.C. 61-1",
@@ -776,15 +755,11 @@ def test_modal_ir_decompiler_emits_scope_frame_reconstruction_for_frame_scope() 
     ]
 
     assert any(
-        "legal frame source reconstruction" in value
-        and "scope" in value
-        and "contested" in value
+        "legal frame source reconstruction" in value and "scope" in value and "contested" in value
         for value in slot_map["typed_ir_scope_frame_reconstruction"]
     )
     assert any(
-        "legal frame source reconstruction" in value
-        and "scope" in value
-        and "contested" in value
+        "legal frame source reconstruction" in value and "scope" in value and "contested" in value
         for value in triple_values
     )
 
@@ -930,25 +905,17 @@ def test_modal_slots_emit_primary_terminal_number_distance_profiles() -> None:
 
     for (title, section), (distance_profile, token_suffix) in expected_by_section.items():
         expected = {
-            "citation_section_primary_terminal_number_distance_profile": [
-                distance_profile
-            ],
+            "citation_section_primary_terminal_number_distance_profile": [distance_profile],
             "citation_section_primary_terminal_number_distance_profile_token_suffix": [
                 token_suffix
             ],
-            "citation_section_primary_terminal_number_span_digit_count_bucket": [
-                "1_digit"
-            ],
+            "citation_section_primary_terminal_number_span_digit_count_bucket": ["1_digit"],
             "citation_section_primary_terminal_number_span_magnitude_bucket": ["lt_1k"],
-            "source_id_section_primary_terminal_number_distance_profile": [
-                distance_profile
-            ],
+            "source_id_section_primary_terminal_number_distance_profile": [distance_profile],
             "source_id_section_primary_terminal_number_distance_profile_token_suffix": [
                 token_suffix
             ],
-            "source_id_section_primary_terminal_number_span_digit_count_bucket": [
-                "1_digit"
-            ],
+            "source_id_section_primary_terminal_number_span_digit_count_bucket": ["1_digit"],
             "source_id_section_primary_terminal_number_span_magnitude_bucket": ["lt_1k"],
         }
         for predicate in predicates:
@@ -1143,12 +1110,10 @@ def test_modal_decompiler_refines_condition_scope_bridge_slots() -> None:
     slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
     assert "o_to_o" in slot_texts["condition_scope_refined_modal_operator_pair_key"]
-    assert "not_later_than:deadline" in slot_texts[
-        "condition_scope_refined_temporal_bridge_context"
-    ]
-    assert "condition:not_later_than:deadline" in slot_texts[
-        "refined_temporal_bridge_context"
-    ]
+    assert (
+        "not_later_than:deadline" in slot_texts["condition_scope_refined_temporal_bridge_context"]
+    )
+    assert "condition:not_later_than:deadline" in slot_texts["refined_temporal_bridge_context"]
 
 
 def test_modal_decompiler_refines_only_after_condition_as_deontic_temporal_scope() -> None:
@@ -1185,24 +1150,12 @@ def test_modal_decompiler_refines_only_after_condition_as_deontic_temporal_scope
     assert slot_texts["condition_prefix_key"] == ["only_after"]
     assert slot_texts["condition_prefix_temporal_relation"] == ["after"]
     assert "temporal:X:only_after" in slot_texts["condition_modal_bridge_signature"]
-    assert "temporal:X:only_after" in slot_texts[
-        "condition_scope_refined_modal_bridge_signature"
-    ]
-    assert "deontic->temporal" in slot_texts[
-        "condition_scope_refined_temporal_bridge_family_pair"
-    ]
-    assert "deontic_temporal" in slot_texts[
-        "condition_scope_refined_temporal_bridge_family_pair"
-    ]
-    assert "o_to_f" in slot_texts[
-        "condition_scope_refined_temporal_bridge_operator_pair_key"
-    ]
-    assert "only_after:after" in slot_texts[
-        "condition_scope_refined_temporal_bridge_context"
-    ]
-    assert "condition:only_after:after" in slot_texts[
-        "refined_temporal_bridge_context"
-    ]
+    assert "temporal:X:only_after" in slot_texts["condition_scope_refined_modal_bridge_signature"]
+    assert "deontic->temporal" in slot_texts["condition_scope_refined_temporal_bridge_family_pair"]
+    assert "deontic_temporal" in slot_texts["condition_scope_refined_temporal_bridge_family_pair"]
+    assert "o_to_f" in slot_texts["condition_scope_refined_temporal_bridge_operator_pair_key"]
+    assert "only_after:after" in slot_texts["condition_scope_refined_temporal_bridge_context"]
+    assert "condition:only_after:after" in slot_texts["refined_temporal_bridge_context"]
 
 
 def test_modal_decompiler_preserves_temporal_deadline_anchor_slots() -> None:
@@ -1249,16 +1202,11 @@ def test_modal_decompiler_preserves_temporal_deadline_anchor_slots() -> None:
     assert slot_texts["typed_ir_temporal_deadline_anchor_signature"] == [
         "within|deadline|90_days|december_23_2011"
     ]
-    assert "temporal->temporal:within" in slot_texts[
-        "typed_ir_temporal_deadline_anchor_pair"
-    ]
-    assert "within->shall:conditioned+temporal" in slot_texts[
-        "discourse_flow_cue_transition"
-    ]
+    assert "temporal->temporal:within" in slot_texts["typed_ir_temporal_deadline_anchor_pair"]
+    assert "within->shall:conditioned+temporal" in slot_texts["discourse_flow_cue_transition"]
     assert (
         "temporal||slot:typed-ir-temporal-deadline-anchor:within:deadline||"
-        "TDFOL.prover"
-        in slot_texts["family_semantic_slot_legal_ir_view_prototype"]
+        "TDFOL.prover" in slot_texts["family_semantic_slot_legal_ir_view_prototype"]
     )
     assert any(
         "90 days" in value and "december 23 2011" in value
@@ -1312,8 +1260,7 @@ def test_modal_decompiler_emits_condition_role_slot_pair_prototypes() -> None:
         in legal_ir_slots
     )
     assert (
-        "temporal||slot-pair:conditions:0|predicate-role:action:file||deontic.ir"
-        in legal_ir_slots
+        "temporal||slot-pair:conditions:0|predicate-role:action:file||deontic.ir" in legal_ir_slots
     )
 
 
@@ -1359,15 +1306,15 @@ def test_modal_decompiler_projects_condition_scope_typed_roles_to_triples() -> N
     assert "subject" in slot_texts["condition_scope_typed_decompiler_role"]
     assert "secretary" in slot_texts["condition_scope_typed_decompiler_subject"]
     assert "establish" in slot_texts["condition_scope_typed_decompiler_action"]
-    assert "national_organic_program" in slot_texts[
-        "condition_scope_typed_decompiler_object"
-    ]
-    assert "deontic:subject+action+object" in slot_texts[
-        "condition_scope_typed_decompiler_family_role_signature"
-    ]
-    assert "deontic->deontic:subject+action+object" in slot_texts[
-        "condition_scope_typed_decompiler_family_pair_bridge"
-    ]
+    assert "national_organic_program" in slot_texts["condition_scope_typed_decompiler_object"]
+    assert (
+        "deontic:subject+action+object"
+        in slot_texts["condition_scope_typed_decompiler_family_role_signature"]
+    )
+    assert (
+        "deontic->deontic:subject+action+object"
+        in slot_texts["condition_scope_typed_decompiler_family_pair_bridge"]
+    )
 
     assert triple_values["condition_scope_typed_decompiler_role"] == [
         "subject",
@@ -1376,15 +1323,15 @@ def test_modal_decompiler_projects_condition_scope_typed_roles_to_triples() -> N
     ]
     assert triple_values["condition_scope_typed_decompiler_subject"] == ["secretary"]
     assert triple_values["condition_scope_typed_decompiler_action"] == ["establish"]
-    assert triple_values["condition_scope_typed_decompiler_object"] == [
-        "national_organic_program"
-    ]
-    assert "deontic:subject+action+object" in triple_values[
-        "condition_scope_typed_decompiler_family_role_signature"
-    ]
-    assert "deontic->deontic:subject+action+object" in triple_values[
-        "condition_scope_typed_decompiler_family_pair_bridge"
-    ]
+    assert triple_values["condition_scope_typed_decompiler_object"] == ["national_organic_program"]
+    assert (
+        "deontic:subject+action+object"
+        in triple_values["condition_scope_typed_decompiler_family_role_signature"]
+    )
+    assert (
+        "deontic->deontic:subject+action+object"
+        in triple_values["condition_scope_typed_decompiler_family_pair_bridge"]
+    )
 
 
 def test_modal_decompiler_refines_deontic_exception_negative_scope_slots() -> None:
@@ -1416,9 +1363,10 @@ def test_modal_decompiler_refines_deontic_exception_negative_scope_slots() -> No
     slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
     assert "o_to_o" in slot_texts["exception_scope_refined_modal_operator_pair_key"]
-    assert "obligation:negative_scope:excepted" in slot_texts[
-        "compiler_contract_force_polarity_exception"
-    ]
+    assert (
+        "obligation:negative_scope:excepted"
+        in slot_texts["compiler_contract_force_polarity_exception"]
+    )
     assert "mandatory:excepted" in slot_texts["normative_polarity_scope"]
     assert "negative_scope:excepted" in slot_texts["normative_polarity_scope"]
 
@@ -1457,18 +1405,19 @@ def test_modal_decompiler_refines_uscode_heading_fallback_typed_ir_slots() -> No
 
     slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
-    assert "uscode_section_heading_fallback" in slot_texts[
-        "typed_ir_refined_modal_cue"
-    ]
-    assert "frame->conditional_normative:uscode_section_heading_fallback" in slot_texts[
-        "typed_ir_refined_modal_pair_cue"
-    ]
-    assert "frame->deontic:uscode_section_heading_fallback" in slot_texts[
-        "typed_ir_refined_modal_pair_cue"
-    ]
-    assert "frame->temporal:uscode_section_heading_fallback" in slot_texts[
-        "typed_ir_refined_modal_pair_cue"
-    ]
+    assert "uscode_section_heading_fallback" in slot_texts["typed_ir_refined_modal_cue"]
+    assert (
+        "frame->conditional_normative:uscode_section_heading_fallback"
+        in slot_texts["typed_ir_refined_modal_pair_cue"]
+    )
+    assert (
+        "frame->deontic:uscode_section_heading_fallback"
+        in slot_texts["typed_ir_refined_modal_pair_cue"]
+    )
+    assert (
+        "frame->temporal:uscode_section_heading_fallback"
+        in slot_texts["typed_ir_refined_modal_pair_cue"]
+    )
 
 
 def test_modal_decompiler_refines_frame_status_heading_typed_ir_slots() -> None:
@@ -1498,12 +1447,8 @@ def test_modal_decompiler_refines_frame_status_heading_typed_ir_slots() -> None:
     slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
     assert "renumbered" in slot_texts["typed_ir_refined_modal_cue"]
-    assert "frame->deontic:renumbered" in slot_texts[
-        "typed_ir_refined_modal_pair_cue"
-    ]
-    assert "frame->temporal:renumbered" in slot_texts[
-        "typed_ir_refined_modal_pair_cue"
-    ]
+    assert "frame->deontic:renumbered" in slot_texts["typed_ir_refined_modal_pair_cue"]
+    assert "frame->temporal:renumbered" in slot_texts["typed_ir_refined_modal_pair_cue"]
     assert "frame_to_o" in slot_texts["typed_ir_refined_modal_operator_pair_key"]
 
 
@@ -1540,15 +1485,14 @@ def test_modal_decompiler_uses_status_atoms_as_target_reconstruction_cues() -> N
     slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
     assert "transferred" in slot_texts["typed-decompiler-target-semantic-atom"]
-    assert "transferred:frame->temporal" in slot_texts[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
-    assert "frame->temporal:transferred" in slot_texts[
-        "typed-decompiler-target-reconstruction-cue"
-    ]
-    assert "frame->conditional_normative:transferred" in slot_texts[
-        "typed-decompiler-target-reconstruction-cue"
-    ]
+    assert (
+        "transferred:frame->temporal" in slot_texts["typed-decompiler-target-semantic-family-pair"]
+    )
+    assert "frame->temporal:transferred" in slot_texts["typed-decompiler-target-reconstruction-cue"]
+    assert (
+        "frame->conditional_normative:transferred"
+        in slot_texts["typed-decompiler-target-reconstruction-cue"]
+    )
 
 
 def test_modal_decompiler_uses_omitted_status_atom_for_deontic_reconstruction_cue() -> None:
@@ -1583,15 +1527,12 @@ def test_modal_decompiler_uses_omitted_status_atom_for_deontic_reconstruction_cu
     slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
     assert "omitted" in slot_texts["typed-decompiler-target-semantic-atom"]
-    assert "omitted:frame->deontic" in slot_texts[
-        "typed-decompiler-target-semantic-family-pair"
-    ]
-    assert "frame->deontic:omitted" in slot_texts[
-        "typed-decompiler-target-reconstruction-cue"
-    ]
-    assert "frame->conditional_normative:omitted" in slot_texts[
-        "typed-decompiler-target-reconstruction-cue"
-    ]
+    assert "omitted:frame->deontic" in slot_texts["typed-decompiler-target-semantic-family-pair"]
+    assert "frame->deontic:omitted" in slot_texts["typed-decompiler-target-reconstruction-cue"]
+    assert (
+        "frame->conditional_normative:omitted"
+        in slot_texts["typed-decompiler-target-reconstruction-cue"]
+    )
 
 
 def test_modal_decompiler_refines_frame_statutory_deontic_temporal_slots() -> None:
@@ -1628,12 +1569,8 @@ def test_modal_decompiler_refines_frame_statutory_deontic_temporal_slots() -> No
     assert "authority" in slot_texts["typed_ir_refined_modal_cue"]
     assert "section" in slot_texts["typed_ir_refined_modal_cue"]
     assert "frame->deontic:shall" in slot_texts["typed_ir_refined_modal_pair_cue"]
-    assert "frame->deontic:authority" in slot_texts[
-        "typed_ir_refined_modal_pair_cue"
-    ]
-    assert "frame->temporal:section" in slot_texts[
-        "typed_ir_refined_modal_pair_cue"
-    ]
+    assert "frame->deontic:authority" in slot_texts["typed_ir_refined_modal_pair_cue"]
+    assert "frame->temporal:section" in slot_texts["typed_ir_refined_modal_pair_cue"]
 
 
 def test_modal_decompiler_adds_bounded_source_semantic_summary_for_long_uscode_spans() -> None:
@@ -1792,12 +1729,10 @@ def test_modal_decompiler_guided_text_emits_source_clause_topology() -> None:
     topology_texts = slot_texts["typed_ir_source_clause_topology_reconstruction"]
     assert any("source clause topology" in text for text in topology_texts)
     assert any(
-        "condition+subject+action+object+temporal+semantic" in text
-        for text in topology_texts
+        "condition+subject+action+object+temporal+semantic" in text for text in topology_texts
     )
     assert any(
-        "frame source reconstructs temporal deadline period" in text
-        for text in topology_texts
+        "frame source reconstructs temporal deadline period" in text for text in topology_texts
     )
     assert any("event calculus native legal events" in text for text in topology_texts)
     assert "source clause topology" in decoded.text
@@ -1845,14 +1780,10 @@ def test_modal_decompiler_refines_packet_003430_frame_target_pairs() -> None:
     }.issubset(family_pairs)
     assert "Frame->O" in slot_texts["typed_decompiler_operator_pair"]
     assert "Frame->B" in slot_texts["typed_decompiler_operator_pair"]
-    assert (
-        "frame->doxastic||deontic.ir"
-        in slot_texts["typed_decompiler_family_pair_view_contract"]
-    )
+    assert "frame->doxastic||deontic.ir" in slot_texts["typed_decompiler_family_pair_view_contract"]
     assert (
         "doxastic||slot:typed-decompiler-view-contract:"
-        "frame:frame_doxastic||deontic.ir"
-        in legal_ir_slots
+        "frame:frame_doxastic||deontic.ir" in legal_ir_slots
     )
 
 
@@ -1889,10 +1820,7 @@ def test_modal_decompiler_refines_frame_epistemic_nominal_cues() -> None:
 
     assert "frame->epistemic" in slot_texts["typed_decompiler_family_pair"]
     assert "Frame->K" in slot_texts["refined_modal_operator_pair"]
-    assert (
-        "frame->epistemic:determination"
-        in slot_texts["refined_modal_pair_cue"]
-    )
+    assert "frame->epistemic:determination" in slot_texts["refined_modal_pair_cue"]
 
 
 def test_modal_decompiler_refines_effective_date_temporal_typed_ir_slots() -> None:
@@ -1925,19 +1853,16 @@ def test_modal_decompiler_refines_effective_date_temporal_typed_ir_slots() -> No
     slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
     assert "effective_date" in slot_texts["typed_ir_refined_modal_cue"]
-    assert "temporal->conditional_normative:effective_date" in slot_texts[
-        "typed_ir_refined_modal_pair_cue"
-    ]
-    assert "temporal->frame:effective_date" in slot_texts[
-        "typed_ir_refined_modal_pair_cue"
-    ]
+    assert (
+        "temporal->conditional_normative:effective_date"
+        in slot_texts["typed_ir_refined_modal_pair_cue"]
+    )
+    assert "temporal->frame:effective_date" in slot_texts["typed_ir_refined_modal_pair_cue"]
     assert "f_to_o_pipe" in slot_texts["typed_ir_refined_modal_operator_pair_key"]
 
 
 def test_modal_decompiler_emits_family_pair_semantic_reconstruction_text() -> None:
-    frame_text = (
-        "The authority under this section shall apply after the effective date."
-    )
+    frame_text = "The authority under this section shall apply after the effective date."
     frame_document = ModalIRDocument(
         document_id="packet-002444-frame-semantic-reconstruction",
         source="us_code",
@@ -1963,9 +1888,7 @@ def test_modal_decompiler_emits_family_pair_semantic_reconstruction_text() -> No
             )
         ],
     )
-    temporal_text = (
-        "On and after January 1, 2025, this section shall remain effective."
-    )
+    temporal_text = "On and after January 1, 2025, this section shall remain effective."
     temporal_document = ModalIRDocument(
         document_id="packet-002444-temporal-semantic-reconstruction",
         source="us_code",
@@ -1991,20 +1914,12 @@ def test_modal_decompiler_emits_family_pair_semantic_reconstruction_text() -> No
         ],
     )
 
-    frame_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(frame_document)
-    )
-    temporal_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(temporal_document)
-    )
+    frame_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(frame_document))
+    temporal_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(temporal_document))
 
-    frame_reconstructions = set(
-        frame_slots["typed_ir_family_pair_semantic_reconstruction"]
-    )
+    frame_reconstructions = set(frame_slots["typed_ir_family_pair_semantic_reconstruction"])
     assert any(
-        value.startswith(
-            "legal frame source reconstructs obligation permission prohibition"
-        )
+        value.startswith("legal frame source reconstructs obligation permission prohibition")
         and "authority" in value
         and "effective date" in value
         for value in frame_reconstructions
@@ -2019,18 +1934,14 @@ def test_modal_decompiler_emits_family_pair_semantic_reconstruction_text() -> No
         "frame->temporal",
     }.issubset(set(frame_slots["typed_ir_cross_family_semantic_support"]))
 
-    temporal_reconstructions = set(
-        temporal_slots["typed_ir_family_pair_semantic_reconstruction"]
-    )
+    temporal_reconstructions = set(temporal_slots["typed_ir_family_pair_semantic_reconstruction"])
     assert any(
         value.startswith("temporal deadline period source reconstruction")
         and "on and after" in value.lower()
         and "january 1 2025" in value.lower()
         for value in temporal_reconstructions
     )
-    assert "temporal->temporal" in temporal_slots[
-        "typed_ir_cross_family_semantic_support"
-    ]
+    assert "temporal->temporal" in temporal_slots["typed_ir_cross_family_semantic_support"]
 
 
 def test_modal_decompiler_emits_domain_atoms_for_appropriation_and_research_sections() -> None:
@@ -2125,7 +2036,7 @@ def test_modal_decompiler_adds_compact_uscode_semantic_support_for_packet_004087
             "us-code-42-1752.-packet-004087-appropriation",
             "42 U.S.C. 1752.",
             (
-                "§1752. Authorization of appropriations; \"Secretary\" defined "
+                '§1752. Authorization of appropriations; "Secretary" defined '
                 "For each fiscal year, there is authorized to be appropriated, "
                 "out of money in the Treasury not otherwise appropriated, such "
                 "sums as may be necessary to enable the Secretary of Agriculture "
@@ -2138,13 +2049,13 @@ def test_modal_decompiler_adds_compact_uscode_semantic_support_for_packet_004087
             "us-code-50-1514.-packet-004087-definition",
             "50 U.S.C. 1514.",
             (
-                "§1514. \"United States\" defined Unless otherwise indicated, "
+                '§1514. "United States" defined Unless otherwise indicated, '
                 "as used in this section [50 U.S.C. 1512, 1513-1515, 1517] "
-                "the term \"United States\" means the several States, the "
+                'the term "United States" means the several States, the '
                 "District of Columbia, and the territories and possessions of "
                 "the United States."
             ),
-            "\"United States\" defined Unless otherwise indicated",
+            '"United States" defined Unless otherwise indicated',
             "conditional_normative||slot:source-semantic-token:unless||deontic.ir",
         ),
     ]
@@ -2202,16 +2113,10 @@ def test_modal_decompiler_emits_frame_self_operator_transition_slots() -> None:
     slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
     legal_ir_slots = set(slot_texts["family_semantic_slot_legal_ir_view_prototype"])
     transition_signature = "frame:frame_bm25:frame->frame:frame:frame"
-    ordered_edge = (
-        f"{transition_signature}:clause:a0:c1:e1->"
-        f"{transition_signature}:clause:a0:c1:e1"
-    )
+    ordered_edge = f"{transition_signature}:clause:a0:c1:e1->{transition_signature}:clause:a0:c1:e1"
 
     assert "frame->frame" in slot_texts["typed_decompiler_family_pair"]
-    assert (
-        transition_signature
-        in slot_texts["typed_decompiler_operator_transition_signature"]
-    )
+    assert transition_signature in slot_texts["typed_decompiler_operator_transition_signature"]
     assert ordered_edge in slot_texts["typed_decompiler_canonical_ir_ordered_edge"]
     assert (
         f"frame->frame:{transition_signature}"
@@ -2219,8 +2124,7 @@ def test_modal_decompiler_emits_frame_self_operator_transition_slots() -> None:
     )
     assert (
         "frame||slot:operator-transition:"
-        f"{transition_signature}||modal.frame_logic"
-        in legal_ir_slots
+        f"{transition_signature}||modal.frame_logic" in legal_ir_slots
     )
     assert (
         "frame||slot-pair:canonical-ir-ordered-edge:"
@@ -2274,14 +2178,12 @@ def test_modal_decompiler_promotes_residual_fallback_as_target_reconstruction_cu
     assert residual_pair_cue in slot_texts["typed_decompiler_target_reconstruction_cue"]
     assert (
         "deontic||slot:typed-decompiler-target-reconstruction-cue:"
-        f"{residual_pair_cue}||deontic.ir"
-        in legal_ir_slots
+        f"{residual_pair_cue}||deontic.ir" in legal_ir_slots
     )
     assert (
         "deontic||slot-pair:semantic-reconstruction-cue:"
         "uscode_residual_span_coverage_v1|typed-decompiler-family-pair:"
-        "frame->deontic||deontic.ir"
-        in legal_ir_slots
+        "frame->deontic||deontic.ir" in legal_ir_slots
     )
 
 
@@ -2329,9 +2231,7 @@ def test_modal_decompiler_surfaces_epistemic_frame_pair_cues_for_statutory_scope
     assert {
         "epistemic->frame:section",
         "epistemic->frame:shall",
-    }.issubset(
-        set(slot_texts["modal_source_span_typed_decompiler_family_pair_cue"])
-    )
+    }.issubset(set(slot_texts["modal_source_span_typed_decompiler_family_pair_cue"]))
 
 
 def test_modal_decompiler_reconstructs_heading_semantics_as_legal_ir_view_slots() -> None:
@@ -2381,20 +2281,17 @@ def test_modal_decompiler_reconstructs_heading_semantics_as_legal_ir_view_slots(
     )
     assert (
         "deontic||slot:source-semantic-atom:"
-        "state_court_civil_jurisdiction||knowledge_graphs.neo4j_compat"
-        in legal_ir_slots
+        "state_court_civil_jurisdiction||knowledge_graphs.neo4j_compat" in legal_ir_slots
     )
     assert (
         "deontic||slot:source-semantic-atom:"
-        "state_court_civil_jurisdiction||CEC.native"
-        in legal_ir_slots
+        "state_court_civil_jurisdiction||CEC.native" in legal_ir_slots
     )
 
 
 def test_modal_decompiler_reconstructs_office_seal_as_cec_view_slot() -> None:
     source_text = (
-        "Sec. 2322 - Seal. The Plant Variety Protection Office shall have an "
-        "official seal."
+        "Sec. 2322 - Seal. The Plant Variety Protection Office shall have an official seal."
     )
     document = ModalIRDocument(
         document_id="packet-000153-office-seal-semantics",
@@ -2431,14 +2328,10 @@ def test_modal_decompiler_reconstructs_office_seal_as_cec_view_slot() -> None:
         "official_seal",
         "plant_variety_protection_office",
     }.issubset(set(slot_texts["typed-decompiler-source-semantic-atom"]))
-    assert (
-        "deontic||slot:source-semantic-atom:official_seal||CEC.native"
-        in legal_ir_slots
-    )
+    assert "deontic||slot:source-semantic-atom:official_seal||CEC.native" in legal_ir_slots
     assert (
         "deontic||slot:source-semantic-atom:"
-        "plant_variety_protection_office||knowledge_graphs.neo4j_compat"
-        in legal_ir_slots
+        "plant_variety_protection_office||knowledge_graphs.neo4j_compat" in legal_ir_slots
     )
 
 
@@ -2478,25 +2371,19 @@ def test_modal_decompiler_reconstructs_foreign_relations_exchange_program_atoms(
     slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
     legal_ir_slots = set(slot_texts["family_semantic_slot_legal_ir_view_prototype"])
 
-    assert "foreign_relations_exchange_program" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
+    assert (
+        "foreign_relations_exchange_program" in slot_texts["typed-decompiler-source-semantic-atom"]
+    )
     assert "exchange_program" in slot_texts["typed-decompiler-source-semantic-atom"]
-    assert "frame->deontic" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
-    assert "frame->temporal" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert "frame->deontic" in slot_texts["typed-decompiler-target-reconstruction-pair"]
+    assert "frame->temporal" in slot_texts["typed-decompiler-target-reconstruction-pair"]
     assert (
         "frame||slot:source-semantic-atom:"
-        "foreign_relations_exchange_program||CEC.native"
-        in legal_ir_slots
+        "foreign_relations_exchange_program||CEC.native" in legal_ir_slots
     )
     assert (
         "frame||slot:source-semantic-atom:"
-        "foreign_relations_exchange_program||knowledge_graphs.neo4j_compat"
-        in legal_ir_slots
+        "foreign_relations_exchange_program||knowledge_graphs.neo4j_compat" in legal_ir_slots
     )
 
 
@@ -2537,27 +2424,22 @@ def test_modal_decompiler_reconstructs_repealed_biological_product_history_atoms
     legal_ir_slots = set(slot_texts["family_semantic_slot_legal_ir_view_prototype"])
 
     assert "repealed" in slot_texts["typed-decompiler-source-semantic-atom"]
-    assert "biological_product_regulation" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "biological_product_interstate_traffic" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
-    assert "frame->conditional_normative" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
-    assert "frame->temporal" in slot_texts[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert "biological_product_regulation" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert (
+        "biological_product_interstate_traffic"
+        in slot_texts["typed-decompiler-source-semantic-atom"]
+    )
+    assert (
+        "frame->conditional_normative" in slot_texts["typed-decompiler-target-reconstruction-pair"]
+    )
+    assert "frame->temporal" in slot_texts["typed-decompiler-target-reconstruction-pair"]
     assert (
         "frame||slot:source-semantic-atom:"
-        "biological_product_regulation||deontic.ir"
-        in legal_ir_slots
+        "biological_product_regulation||deontic.ir" in legal_ir_slots
     )
     assert (
         "frame||slot:source-semantic-atom:"
-        "biological_product_interstate_traffic||CEC.native"
-        in legal_ir_slots
+        "biological_product_interstate_traffic||CEC.native" in legal_ir_slots
     )
 
 
@@ -2642,12 +2524,8 @@ def test_modal_decompiler_emits_directional_temporal_deontic_reconstruction_pair
 
     slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
-    assert "temporal->deontic" in set(
-        slot_texts["typed-decompiler-target-reconstruction-pair"]
-    )
-    assert "deontic" in set(
-        slot_texts["typed-decompiler-target-reconstruction-family"]
-    )
+    assert "temporal->deontic" in set(slot_texts["typed-decompiler-target-reconstruction-pair"])
+    assert "deontic" in set(slot_texts["typed-decompiler-target-reconstruction-family"])
     assert "conditioned+temporal:temporal->deontic" in set(
         slot_texts["typed-decompiler-target-reconstruction-scope"]
     )
@@ -2745,9 +2623,7 @@ def test_modal_decompiler_reconstructs_land_title_frame_semantics() -> None:
     slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
     legal_ir_slots = set(slot_texts["family_semantic_slot_legal_ir_view_prototype"])
 
-    assert "land_title_authority" in slot_texts[
-        "typed-decompiler-source-semantic-atom"
-    ]
+    assert "land_title_authority" in slot_texts["typed-decompiler-source-semantic-atom"]
     assert {
         "frame->conditional_normative",
         "frame->deontic",
@@ -2763,17 +2639,11 @@ def test_modal_decompiler_reconstructs_land_title_frame_semantics() -> None:
         "deontic.ir",
         "knowledge_graphs.neo4j_compat",
     }:
-        assert (
-            f"frame||slot:source-semantic-atom:land_title_authority||{view}"
-            in legal_ir_slots
-        )
+        assert f"frame||slot:source-semantic-atom:land_title_authority||{view}" in legal_ir_slots
 
 
 def test_modal_decompiler_reconstructs_repealed_range_status_semantics() -> None:
-    source_text = (
-        "Secs. 262 to 297 - Repealed. Dec. 17, 1943, ch. 344, §1, "
-        "57 Stat. 600."
-    )
+    source_text = "Secs. 262 to 297 - Repealed. Dec. 17, 1943, ch. 344, §1, 57 Stat. 600."
     document = ModalIRDocument(
         document_id="packet-001018-repealed-range",
         source="us_code",
@@ -2805,9 +2675,7 @@ def test_modal_decompiler_reconstructs_repealed_range_status_semantics() -> None
     slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
     assert "repealed" in set(slot_texts["typed-decompiler-source-semantic-atom"])
-    assert "deontic->temporal" in set(
-        slot_texts["typed-decompiler-target-reconstruction-pair"]
-    )
+    assert "deontic->temporal" in set(slot_texts["typed-decompiler-target-reconstruction-pair"])
     assert "deontic->conditional_normative" in set(
         slot_texts["typed-decompiler-target-reconstruction-pair"]
     )
@@ -2849,13 +2717,10 @@ def test_modal_decompiler_anchors_frame_epistemic_residuals_to_knowledge_graph_v
 
     slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
 
-    assert "frame->epistemic" in set(
-        slot_texts["typed-decompiler-target-reconstruction-pair"]
-    )
+    assert "frame->epistemic" in set(slot_texts["typed-decompiler-target-reconstruction-pair"])
     assert "knowledge_graphs.neo4j_compat" in set(slot_texts["legal_ir_view_prototype"])
-    assert (
-        "frame->epistemic||knowledge_graphs.neo4j_compat"
-        in set(slot_texts["typed-decompiler-target-reconstruction-view"])
+    assert "frame->epistemic||knowledge_graphs.neo4j_compat" in set(
+        slot_texts["typed-decompiler-target-reconstruction-view"]
     )
 
 
@@ -2896,17 +2761,12 @@ def test_modal_decompiler_binds_frame_force_slots_to_deontic_conditional_views()
 
     slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
     family_pairs = set(slot_texts["typed-decompiler-target-reconstruction-pair"])
-    force_views = set(
-        slot_texts["typed-decompiler-source-predicate-force-view-family-pair"]
-    )
+    force_views = set(slot_texts["typed-decompiler-source-predicate-force-view-family-pair"])
     legal_ir_slots = set(slot_texts["family_semantic_slot_legal_ir_view_prototype"])
 
-    assert {"frame->deontic", "frame->conditional_normative"}.issubset(
-        family_pairs
-    )
+    assert {"frame->deontic", "frame->conditional_normative"}.issubset(family_pairs)
     assert any(
-        value.endswith("||deontic.ir||frame->deontic")
-        and "obligation:mandatory" in value
+        value.endswith("||deontic.ir||frame->deontic") and "obligation:mandatory" in value
         for value in force_views
     )
     assert any(
@@ -2920,6 +2780,8 @@ def test_modal_decompiler_binds_frame_force_slots_to_deontic_conditional_views()
         in legal_ir_slots
     )
     assert "conditional_normative" in set(slot_texts["family_exception_present"])
+
+
 def _packet_000447_document(
     *,
     source_id: str,
@@ -3032,9 +2894,7 @@ def test_modal_decompiler_reconstructs_packet_000447_frame_deontic_samples() -> 
     assert "national_seashore_recreation_area" in set(
         seashore_slots["typed-decompiler-source-semantic-atom"]
     )
-    assert "frame->deontic" in set(
-        seashore_slots["typed-decompiler-target-reconstruction-pair"]
-    )
+    assert "frame->deontic" in set(seashore_slots["typed-decompiler-target-reconstruction-pair"])
     assert "legal frame reconstructs deontic duty" in set(
         seashore_slots["typed_ir_family_pair_semantic_bridge"]
     )
@@ -3046,15 +2906,11 @@ def test_modal_decompiler_reconstructs_packet_000447_frame_deontic_samples() -> 
     assert "naval_officer_management_assignment" in set(
         repealed_slots["typed-decompiler-source-semantic-atom"]
     )
-    assert "frame->frame" in set(
-        repealed_slots["typed-decompiler-target-reconstruction-pair"]
-    )
+    assert "frame->frame" in set(repealed_slots["typed-decompiler-target-reconstruction-pair"])
     assert "legal frame preserves ontology frame" in set(
         repealed_slots["typed_ir_family_pair_semantic_bridge"]
     )
-    assert "knowledge_graphs.neo4j_compat" in set(
-        repealed_slots["legal_ir_view_prototype"]
-    )
+    assert "knowledge_graphs.neo4j_compat" in set(repealed_slots["legal_ir_view_prototype"])
 
     assert "air_transportation_service_duty" in set(
         air_slots["typed-decompiler-source-semantic-atom"]
@@ -3073,9 +2929,7 @@ def test_modal_decompiler_reconstructs_packet_000447_frame_deontic_samples() -> 
     assert "workforce_performance_reporting" in set(
         workforce_slots["typed-decompiler-source-semantic-atom"]
     )
-    assert "frame->deontic" in set(
-        workforce_slots["typed-decompiler-target-reconstruction-pair"]
-    )
+    assert "frame->deontic" in set(workforce_slots["typed-decompiler-target-reconstruction-pair"])
 
 
 def _packet_000184_guided_document(
@@ -3197,13 +3051,9 @@ def test_modal_decompiler_reconstructs_packet_000184_semantic_slots() -> None:
         target_view="deontic.ir",
     )
 
-    transfer_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(transfer)
-    )
+    transfer_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(transfer))
     oaths_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(oaths))
-    students_slots = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(students)
-    )
+    students_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(students))
     crisis_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(crisis))
     muster_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(muster))
 
@@ -3224,9 +3074,7 @@ def test_modal_decompiler_reconstructs_packet_000184_semantic_slots() -> None:
     assert {"frame->deontic", "frame->temporal"}.issubset(
         set(oaths_slots["typed-decompiler-target-reconstruction-pair"])
     )
-    assert "knowledge_graphs.neo4j_compat" in set(
-        oaths_slots["legal_ir_view_prototype"]
-    )
+    assert "knowledge_graphs.neo4j_compat" in set(oaths_slots["legal_ir_view_prototype"])
 
     assert {
         "student_assignment_transportation",
@@ -3240,16 +3088,12 @@ def test_modal_decompiler_reconstructs_packet_000184_semantic_slots() -> None:
         "crisis_counseling_assistance",
         "disaster_mental_health_service",
     }.issubset(set(crisis_slots["typed-decompiler-source-semantic-atom"]))
-    assert "temporal->deontic" in set(
-        crisis_slots["typed-decompiler-target-reconstruction-pair"]
-    )
+    assert "temporal->deontic" in set(crisis_slots["typed-decompiler-target-reconstruction-pair"])
     assert "deontic.ir" in set(crisis_slots["legal_ir_view_prototype"])
 
     assert {
         "ready_reserve_muster_duty",
         "reserve_muster_authority",
     }.issubset(set(muster_slots["typed-decompiler-source-semantic-atom"]))
-    assert "deontic->deontic" in set(
-        muster_slots["typed-decompiler-target-reconstruction-pair"]
-    )
+    assert "deontic->deontic" in set(muster_slots["typed-decompiler-target-reconstruction-pair"])
     assert "TDFOL.prover" in set(muster_slots["legal_ir_view_prototype"])

@@ -107,9 +107,7 @@ def _case_result(
                     peak_memory_bytes=64,
                     input_items=1,
                     output_items=1,
-                    model_calls=int(
-                        stage_name in {StageName.SYMAI, StageName.LEANSTRAL}
-                    ),
+                    model_calls=int(stage_name in {StageName.SYMAI, StageName.LEANSTRAL}),
                     retries=retries.get(stage_name.value, 0),
                     resource_lane=LANES[stage_name],
                 ),
@@ -134,9 +132,7 @@ def _component_cost(
 ) -> metrics.EfficiencyComponentCost:
     model = int(component in {"leanstral", "symai"})
     solver = int(component == "hammer")
-    accelerator = 0.25 if component == "leanstral" else (
-        0.5 if component == "symai" else 0.0
-    )
+    accelerator = 0.25 if component == "leanstral" else (0.5 if component == "symai" else 0.0)
     return metrics.EfficiencyComponentCost(
         component_id=component,
         model_calls=model,
@@ -167,19 +163,13 @@ def _observation(
         "A4": ("hammer", "leanstral", "spacy", "symai"),
     }[variant_id]
     retries = {} if retry_component is None else {retry_component: 1}
-    result = _case_result(
-        case_id, variant_id, verified=verified, retries=retries
-    )
+    result = _case_result(case_id, variant_id, verified=verified, retries=retries)
     costs = tuple(
         _component_cost(
             component,
             useful=int(component in useful),
             retries=retries.get(component, 0),
-            failed=int(
-                variant_id == "A4"
-                and case_id == "case-3"
-                and component == "symai"
-            ),
+            failed=int(variant_id == "A4" and case_id == "case-3" and component == "symai"),
         )
         for component in active
     )
@@ -217,9 +207,7 @@ def _matrix() -> list[metrics.EfficiencyObservation]:
                     verified=verified,
                     useful=frozenset(useful),
                     retry_component=(
-                        "leanstral"
-                        if case_id == "case-2" and variant_id in {"A3", "A4"}
-                        else None
+                        "leanstral" if case_id == "case-2" and variant_id in {"A3", "A4"} else None
                     ),
                 )
             )
@@ -247,12 +235,8 @@ def test_objective_marker_and_default_preflight_are_explicit_missingness() -> No
 
 
 def test_marginal_cumulative_value_resource_ratios_and_failures() -> None:
-    value = report.build_efficiency_report(
-        metrics.DEFAULT_EFFICIENCY_ESCALATIONS, _matrix()
-    )
-    rows = {
-        row["variant_id"]: row for row in value["analysis"]["escalations"]
-    }
+    value = report.build_efficiency_report(metrics.DEFAULT_EFFICIENCY_ESCALATIONS, _matrix())
+    rows = {row["variant_id"]: row for row in value["analysis"]["escalations"]}
 
     a2 = rows["A2"]["marginal"]
     assert a2["pair"]["gross_verified_gain_count"] == 1
@@ -267,9 +251,7 @@ def test_marginal_cumulative_value_resource_ratios_and_failures() -> None:
     assert a3["incremental_cost"]["model_calls"] == 3
     assert a3["incremental_cost"]["accelerator_minutes"] == pytest.approx(0.75)
     assert a3["incremental_cost"]["retries"] == 1
-    assert a3["value_per_cost"]["retries"][
-        "gross_verified_gains_per_unit"
-    ] == 1
+    assert a3["value_per_cost"]["retries"]["gross_verified_gains_per_unit"] == 1
 
     a4 = rows["A4"]
     assert a4["marginal"]["pair"]["gross_verified_gain_count"] == 0
@@ -285,14 +267,8 @@ def test_marginal_cumulative_value_resource_ratios_and_failures() -> None:
 
 
 def test_zero_and_missing_denominators_are_null_with_reasons() -> None:
-    value = report.build_efficiency_report(
-        metrics.DEFAULT_EFFICIENCY_ESCALATIONS, _matrix()
-    )
-    a2 = next(
-        row
-        for row in value["analysis"]["escalations"]
-        if row["variant_id"] == "A2"
-    )
+    value = report.build_efficiency_report(metrics.DEFAULT_EFFICIENCY_ESCALATIONS, _matrix())
+    a2 = next(row for row in value["analysis"]["escalations"] if row["variant_id"] == "A2")
     retry_ratio = a2["marginal"]["value_per_cost"]["retries"]
     assert retry_ratio == {
         "denominator": 0,
@@ -304,7 +280,11 @@ def test_zero_and_missing_denominators_are_null_with_reasons() -> None:
     records = _matrix()
     target = records[4]  # A1/A2/A3/A4 then case-2 A1
     assert target.case_result.variant_id == "A1"
-    a3 = next(item for item in records if item.case_result.case_id == "case-2" and item.case_result.variant_id == "A3")
+    a3 = next(
+        item
+        for item in records
+        if item.case_result.case_id == "case-2" and item.case_result.variant_id == "A3"
+    )
     costs = list(a3.resource_receipt.component_costs)
     index = next(i for i, item in enumerate(costs) if item.component_id == "leanstral")
     costs[index] = metrics.EfficiencyComponentCost(
@@ -325,17 +305,9 @@ def test_zero_and_missing_denominators_are_null_with_reasons() -> None:
         measurement_sha256=a3.resource_receipt.measurement_sha256,
         component_costs=tuple(costs),
     )
-    records[records.index(a3)] = metrics.EfficiencyObservation(
-        a3.case_result, replacement_receipt
-    )
-    missing = report.build_efficiency_report(
-        metrics.DEFAULT_EFFICIENCY_ESCALATIONS, records
-    )
-    a3_row = next(
-        row
-        for row in missing["analysis"]["escalations"]
-        if row["variant_id"] == "A3"
-    )
+    records[records.index(a3)] = metrics.EfficiencyObservation(a3.case_result, replacement_receipt)
+    missing = report.build_efficiency_report(metrics.DEFAULT_EFFICIENCY_ESCALATIONS, records)
+    a3_row = next(row for row in missing["analysis"]["escalations"] if row["variant_id"] == "A3")
     ratio = a3_row["marginal"]["value_per_cost"]["accelerator_minutes"]
     assert ratio["denominator"] is None
     assert ratio["undefined_reason"] == "accelerator_minutes_measurement_missing"
@@ -344,9 +316,7 @@ def test_zero_and_missing_denominators_are_null_with_reasons() -> None:
 def test_receipts_matrix_analysis_and_safety_fail_closed() -> None:
     records = _matrix()
     with pytest.raises(metrics.MetricsContractError, match="matrix"):
-        metrics.analyze_delegation_efficiency(
-            metrics.DEFAULT_EFFICIENCY_ESCALATIONS, records[:-1]
-        )
+        metrics.analyze_delegation_efficiency(metrics.DEFAULT_EFFICIENCY_ESCALATIONS, records[:-1])
 
     payload = records[0].to_dict()
     payload["resource_receipt"]["case_result_sha256"] = "f" * 64
@@ -358,14 +328,8 @@ def test_receipts_matrix_analysis_and_safety_fail_closed() -> None:
     records[1] = metrics.EfficiencyObservation(
         unsafe.case_result, unsafe.resource_receipt, invalid_control=True
     )
-    value = report.build_efficiency_report(
-        metrics.DEFAULT_EFFICIENCY_ESCALATIONS, records
-    )
-    a2 = next(
-        point
-        for point in value["analysis"]["pareto_points"]
-        if point["variant_id"] == "A2"
-    )
+    value = report.build_efficiency_report(metrics.DEFAULT_EFFICIENCY_ESCALATIONS, records)
+    a2 = next(point for point in value["analysis"]["pareto_points"] if point["variant_id"] == "A2")
     assert a2["eligible"] is False
     assert a2["ineligibility_reasons"] == ["safety_violation"]
     assert "safety_score" not in a2
@@ -374,8 +338,7 @@ def test_receipts_matrix_analysis_and_safety_fail_closed() -> None:
     unavailable = next(
         item
         for item in records
-        if item.case_result.case_id == "case-2"
-        and item.case_result.variant_id == "A2"
+        if item.case_result.case_id == "case-2" and item.case_result.variant_id == "A2"
     )
     unavailable_result = replace(
         unavailable.case_result,
@@ -390,13 +353,9 @@ def test_receipts_matrix_analysis_and_safety_fail_closed() -> None:
     records[records.index(unavailable)] = metrics.EfficiencyObservation(
         unavailable_result, unavailable_receipt
     )
-    missing = report.build_efficiency_report(
-        metrics.DEFAULT_EFFICIENCY_ESCALATIONS, records
-    )
+    missing = report.build_efficiency_report(metrics.DEFAULT_EFFICIENCY_ESCALATIONS, records)
     a2_missing = next(
-        point
-        for point in missing["analysis"]["pareto_points"]
-        if point["variant_id"] == "A2"
+        point for point in missing["analysis"]["pareto_points"] if point["variant_id"] == "A2"
     )
     assert a2_missing["eligible"] is False
     assert "incomplete_case_evidence" in a2_missing["ineligibility_reasons"]
@@ -407,9 +366,7 @@ def test_report_recomputation_canonical_loader_and_cli(tmp_path: Path) -> None:
         metrics.DEFAULT_EFFICIENCY_ESCALATIONS, reversed(_matrix())
     )
     tampered = copy.deepcopy(value)
-    tampered["analysis"]["escalations"][1]["marginal"]["pair"][
-        "gross_verified_gain_count"
-    ] = 99
+    tampered["analysis"]["escalations"][1]["marginal"]["pair"]["gross_verified_gain_count"] = 99
     _redigest(tampered)
     with pytest.raises(report.EfficiencyReportError, match="differs"):
         report.validate_efficiency_report(tampered)

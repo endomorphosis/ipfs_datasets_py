@@ -418,9 +418,7 @@ async def async_main(argv: Optional[Sequence[str]] = None) -> int:
             reference_examples=reference_examples,
             records=records,
             verifier_config=LeanstralVerifierConfig(
-                allow_partial_source_span_evidence=(
-                    not args.require_complete_source_span_evidence
-                ),
+                allow_partial_source_span_evidence=(not args.require_complete_source_span_evidence),
                 canonical_recompile_backend=args.canonical_recompile_backend,
                 lean_executable=args.lean_executable or None,
                 lean_max_formulas=max(0, args.lean_max_formulas),
@@ -916,9 +914,7 @@ def verify_worker_audit_outputs(
             if hasattr(hammer_verification, "to_dict")
             else dict(hammer_verification)
         )
-        cached_hammer_payload = compact_hammer_verification_for_cache(
-            hammer_payload
-        )
+        cached_hammer_payload = compact_hammer_verification_for_cache(hammer_payload)
         worker.runner.cache.put(
             item.request,
             response,
@@ -1110,8 +1106,7 @@ def _iter_reference_example_mappings(value: Any):
 
 def _write_jsonl_atomic(path: Path, records: Sequence[Mapping[str, Any]]) -> None:
     text = "".join(
-        json.dumps(record, ensure_ascii=True, sort_keys=True) + "\n"
-        for record in records
+        json.dumps(record, ensure_ascii=True, sort_keys=True) + "\n" for record in records
     )
     _write_text_atomic(path, text)
 
@@ -1132,9 +1127,7 @@ def publish_verified_rule_gap_report(path: Path, report: Any) -> Dict[str, Any]:
     if destination.is_file():
         try:
             existing = json.loads(destination.read_text(encoding="utf-8"))
-            existing_accepted_count = int(
-                existing.get("accepted_supporting_audit_count", 0) or 0
-            )
+            existing_accepted_count = int(existing.get("accepted_supporting_audit_count", 0) or 0)
         except (OSError, json.JSONDecodeError, TypeError, ValueError):
             existing_accepted_count = 0
     if accepted_count <= 0 or gap_count <= 0:

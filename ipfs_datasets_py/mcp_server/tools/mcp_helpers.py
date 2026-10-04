@@ -32,7 +32,9 @@ def mcp_error_response(message: str, *, error_type: str = "error", **extra: Any)
     return mcp_text_response(payload)
 
 
-def parse_json_object(request_json: Any) -> Tuple[Optional[Dict[str, Any]], Optional[Dict[str, Any]]]:
+def parse_json_object(
+    request_json: Any,
+) -> Tuple[Optional[Dict[str, Any]], Optional[Dict[str, Any]]]:
     """Parse a JSON string expected to be an object.
 
     Returns (data, error_response). Exactly one will be non-None.

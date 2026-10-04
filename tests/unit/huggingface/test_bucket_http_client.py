@@ -150,7 +150,9 @@ def test_http_listing_is_paginated_stable_and_explicitly_unverified() -> None:
     assert HuggingFaceBucketListing.from_json(listing.to_json()) == listing
     assert len(listing.listing_sha256) == 64
     assert len(opener.calls) == 2
-    assert opener.calls[0][0].full_url.endswith("/api/buckets/Publicus/abby-voice/tree/runs%2Faudio?recursive=true")
+    assert opener.calls[0][0].full_url.endswith(
+        "/api/buckets/Publicus/abby-voice/tree/runs%2Faudio?recursive=true"
+    )
     assert opener.calls[1][0].full_url == f"https://huggingface.co{next_url}"
     assert opener.calls[0][0].get_header("Authorization") == "Bearer secret"
 
@@ -180,15 +182,11 @@ def test_http_listing_enforces_page_cap_before_an_extra_request(
         [
             _Response(
                 b"[]",
-                headers={
-                    "Link": '<?recursive=true&cursor=one>; rel="next"'
-                },
+                headers={"Link": '<?recursive=true&cursor=one>; rel="next"'},
             ),
             _Response(
                 b"[]",
-                headers={
-                    "Link": '<?recursive=true&cursor=two>; rel="next"'
-                },
+                headers={"Link": '<?recursive=true&cursor=two>; rel="next"'},
             ),
         ]
     )
@@ -377,26 +375,20 @@ def test_download_xet_binding_requires_exact_header_or_decoded_path_segment(
         )
 
     assert not (tmp_path / "suffix.mp3").exists()
-    assert (
-        client.download_bucket_file(
-            bucket_id="Publicus/abby-voice",
-            path="runs/audio/abby.mp3",
-            destination=tmp_path / "decoded-segment.mp3",
-            expected_xet_hash=_XET_A,
-            expected_size_bytes=len(payload),
-        )
-        == len(payload)
-    )
-    assert (
-        client.download_bucket_file(
-            bucket_id="Publicus/abby-voice",
-            path="runs/audio/abby.mp3",
-            destination=tmp_path / "header.mp3",
-            expected_xet_hash=_XET_A,
-            expected_size_bytes=len(payload),
-        )
-        == len(payload)
-    )
+    assert client.download_bucket_file(
+        bucket_id="Publicus/abby-voice",
+        path="runs/audio/abby.mp3",
+        destination=tmp_path / "decoded-segment.mp3",
+        expected_xet_hash=_XET_A,
+        expected_size_bytes=len(payload),
+    ) == len(payload)
+    assert client.download_bucket_file(
+        bucket_id="Publicus/abby-voice",
+        path="runs/audio/abby.mp3",
+        destination=tmp_path / "header.mp3",
+        expected_xet_hash=_XET_A,
+        expected_size_bytes=len(payload),
+    ) == len(payload)
 
 
 def test_safe_redirect_drops_authorization_only_across_origins() -> None:

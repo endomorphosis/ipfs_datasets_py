@@ -202,9 +202,7 @@ def asset_manifests_for_chain(
     if str(chain.chain_id) == WLD_WORLD_CHAIN_MAINNET_CHAIN_ID:
         manifests["wld"] = build_mainnet_wld_manifest(chain)
     elif str(chain.chain_id) == "4801" and sepolia_wld_contract is not None:
-        manifests["wld"] = build_sepolia_wld_manifest(
-            chain, contract_address=sepolia_wld_contract
-        )
+        manifests["wld"] = build_sepolia_wld_manifest(chain, contract_address=sepolia_wld_contract)
     return manifests
 
 

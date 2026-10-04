@@ -188,15 +188,21 @@ def test_refresh_state_laws_corpus_uses_shared_hf_token_resolver(tmp_path, monke
 
     def _fake_publish_parquet_dir(**kwargs):
         observed["publish_token"] = kwargs.get("token")
-        return {"upload_commit": "https://huggingface.co/datasets/justicedao/ipfs_state_laws/commit/keyring"}
+        return {
+            "upload_commit": "https://huggingface.co/datasets/justicedao/ipfs_state_laws/commit/keyring"
+        }
 
-    monkeypatch.setattr(refresh_state_laws_corpus, "_resolve_hf_token", lambda token=None: "keyring-refresh-token")
+    monkeypatch.setattr(
+        refresh_state_laws_corpus, "_resolve_hf_token", lambda token=None: "keyring-refresh-token"
+    )
     monkeypatch.setattr(
         refresh_state_laws_corpus,
         "build_state_laws_parquet_artifacts",
         _fake_build_state_laws_parquet_artifacts,
     )
-    monkeypatch.setattr(refresh_state_laws_corpus, "_publish_parquet_dir", _fake_publish_parquet_dir)
+    monkeypatch.setattr(
+        refresh_state_laws_corpus, "_publish_parquet_dir", _fake_publish_parquet_dir
+    )
 
     args = argparse.Namespace(
         states="MN",
@@ -246,7 +252,14 @@ def test_refresh_state_laws_corpus_sets_full_corpus_env_for_uncapped_scrape(tmp_
 
     def _fake_audit(*, states):
         observed["audit_states"] = list(states)
-        return {"status": "pass", "states_checked": len(states), "missing_states": [], "error_count": 0, "warning_count": 0, "findings": []}
+        return {
+            "status": "pass",
+            "states_checked": len(states),
+            "missing_states": [],
+            "error_count": 0,
+            "warning_count": 0,
+            "findings": [],
+        }
 
     monkeypatch.delenv("STATE_SCRAPER_FULL_CORPUS", raising=False)
     monkeypatch.setattr(refresh_state_laws_corpus, "scrape_state_laws", _fake_scrape_state_laws)
@@ -300,7 +313,9 @@ def test_refresh_state_laws_corpus_sets_full_corpus_env_for_uncapped_scrape(tmp_
     assert __import__("os").environ.get("STATE_SCRAPER_FULL_CORPUS") is None
 
 
-def test_refresh_state_laws_corpus_blocks_uncapped_scrape_when_guard_audit_fails(tmp_path, monkeypatch):
+def test_refresh_state_laws_corpus_blocks_uncapped_scrape_when_guard_audit_fails(
+    tmp_path, monkeypatch
+):
     observed = {"scrape_called": False, "build_called": False}
 
     async def _fake_scrape_state_laws(**kwargs):
@@ -322,7 +337,9 @@ def test_refresh_state_laws_corpus_blocks_uncapped_scrape_when_guard_audit_fails
         }
 
     monkeypatch.setattr(refresh_state_laws_corpus, "scrape_state_laws", _fake_scrape_state_laws)
-    monkeypatch.setattr(refresh_state_laws_corpus, "build_state_laws_parquet_artifacts", _fake_build)
+    monkeypatch.setattr(
+        refresh_state_laws_corpus, "build_state_laws_parquet_artifacts", _fake_build
+    )
     monkeypatch.setattr(refresh_state_laws_corpus, "_run_full_corpus_guard_audit", _fake_audit)
 
     args = argparse.Namespace(
@@ -495,7 +512,11 @@ def test_refresh_state_laws_corpus_persists_completed_states_registry(tmp_path, 
                 "statute_data": {"state_name": "Wisconsin", "statutes": [{"id": "WI-1"}]},
             }
         )
-        return {"status": "success", "data": [], "metadata": {"coverage_summary": {"coverage_gap_states": []}}}
+        return {
+            "status": "success",
+            "data": [],
+            "metadata": {"coverage_summary": {"coverage_gap_states": []}},
+        }
 
     monkeypatch.setattr(refresh_state_laws_corpus, "scrape_state_laws", _fake_scrape_state_laws)
     monkeypatch.setattr(
@@ -552,7 +573,9 @@ def test_refresh_state_laws_corpus_persists_completed_states_registry(tmp_path, 
     assert int(wi_entry.get("statutes_count") or 0) == 1
 
 
-def test_refresh_state_laws_corpus_promotes_timeout_without_remaining_work_to_success(tmp_path, monkeypatch):
+def test_refresh_state_laws_corpus_promotes_timeout_without_remaining_work_to_success(
+    tmp_path, monkeypatch
+):
     registry_path = tmp_path / "state_laws_completed_states.json"
 
     async def _fake_scrape_state_laws(**kwargs):
@@ -576,7 +599,11 @@ def test_refresh_state_laws_corpus_promotes_timeout_without_remaining_work_to_su
                 "statute_data": {"state_name": "Rhode Island", "statutes": [{"id": "RI-1"}]},
             }
         )
-        return {"status": "success", "data": [], "metadata": {"coverage_summary": {"coverage_gap_states": []}}}
+        return {
+            "status": "success",
+            "data": [],
+            "metadata": {"coverage_summary": {"coverage_gap_states": []}},
+        }
 
     monkeypatch.setattr(refresh_state_laws_corpus, "scrape_state_laws", _fake_scrape_state_laws)
     monkeypatch.setattr(
@@ -641,7 +668,9 @@ def test_refresh_state_laws_corpus_promotes_timeout_without_remaining_work_to_su
     assert ri_registry.get("timeout_classification") == "timeout_with_no_detectable_remaining_work"
 
 
-def test_refresh_state_laws_corpus_does_not_promote_timeout_success_for_bounded_probe(tmp_path, monkeypatch):
+def test_refresh_state_laws_corpus_does_not_promote_timeout_success_for_bounded_probe(
+    tmp_path, monkeypatch
+):
     registry_path = tmp_path / "state_laws_completed_states.json"
 
     async def _fake_scrape_state_laws(**kwargs):
@@ -665,7 +694,11 @@ def test_refresh_state_laws_corpus_does_not_promote_timeout_success_for_bounded_
                 "statute_data": {"state_name": "Mississippi", "statutes": [{"id": "MS-1"}]},
             }
         )
-        return {"status": "success", "data": [], "metadata": {"coverage_summary": {"coverage_gap_states": []}}}
+        return {
+            "status": "success",
+            "data": [],
+            "metadata": {"coverage_summary": {"coverage_gap_states": []}},
+        }
 
     monkeypatch.setattr(refresh_state_laws_corpus, "scrape_state_laws", _fake_scrape_state_laws)
     monkeypatch.setattr(
@@ -790,7 +823,9 @@ def test_refresh_state_laws_corpus_dry_run_zero_statutes_not_skipped_by_default(
     assert result["plan"]["skipped_completed_states"] == ["MN"]
 
 
-def test_refresh_state_laws_corpus_dry_run_zero_statutes_skipped_when_enabled(tmp_path, monkeypatch):
+def test_refresh_state_laws_corpus_dry_run_zero_statutes_skipped_when_enabled(
+    tmp_path, monkeypatch
+):
     registry_path = tmp_path / "state_laws_completed_states.json"
     registry_path.write_text(
         json.dumps(

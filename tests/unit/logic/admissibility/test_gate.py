@@ -41,9 +41,7 @@ from ipfs_datasets_py.logic.proof_corpus.schemas import ArtifactEnvelope
 from ipfs_datasets_py.logic.proof_corpus.store import ProofCorpusStore
 
 
-FIXTURE_ROOT = (
-    Path(__file__).resolve().parents[3] / "fixtures" / "intent_ir" / "admissibility"
-)
+FIXTURE_ROOT = Path(__file__).resolve().parents[3] / "fixtures" / "intent_ir" / "admissibility"
 
 
 def _load_json(path: Path) -> dict[str, Any]:
@@ -95,9 +93,7 @@ def _put_intent(
     *,
     profile: str = "legal-strict",
 ) -> ArtifactEnvelope:
-    return store.put(
-        ArtifactEnvelope.from_intent_artifact(artifact, profile=profile)
-    )
+    return store.put(ArtifactEnvelope.from_intent_artifact(artifact, profile=profile))
 
 
 def _put_constraint(
@@ -120,14 +116,10 @@ def _put_constraint(
 def _fixed_allow_store() -> tuple[ProofCorpusStore, ArtifactEnvelope]:
     """Store snapshot that should allow under legal-strict."""
 
-    intent_raw = _load_json(
-        FIXTURE_ROOT / "formal_artifacts" / "benign_skill.json"
-    )
+    intent_raw = _load_json(FIXTURE_ROOT / "formal_artifacts" / "benign_skill.json")
     intent = FormalizationArtifact.from_dict(intent_raw)
     legal = _constraint_from_intent(intent_raw, domain="legal", role="grant")
-    security = _constraint_from_intent(
-        intent_raw, domain="security", role="grant"
-    )
+    security = _constraint_from_intent(intent_raw, domain="security", role="grant")
     store = ProofCorpusStore()
     intent_env = _put_intent(store, intent)
     _put_constraint(store, legal, family="legal")
@@ -136,16 +128,10 @@ def _fixed_allow_store() -> tuple[ProofCorpusStore, ArtifactEnvelope]:
 
 
 def _fixed_legal_reject_store() -> tuple[ProofCorpusStore, ArtifactEnvelope]:
-    intent_raw = _load_json(
-        FIXTURE_ROOT / "formal_artifacts" / "legally_risky_effect.json"
-    )
+    intent_raw = _load_json(FIXTURE_ROOT / "formal_artifacts" / "legally_risky_effect.json")
     intent = FormalizationArtifact.from_dict(intent_raw)
-    legal = _constraint_from_intent(
-        intent_raw, domain="legal", role="prohibition"
-    )
-    security = _constraint_from_intent(
-        intent_raw, domain="security", role="grant"
-    )
+    legal = _constraint_from_intent(intent_raw, domain="legal", role="prohibition")
+    security = _constraint_from_intent(intent_raw, domain="security", role="grant")
     store = ProofCorpusStore()
     intent_env = _put_intent(store, intent)
     _put_constraint(store, legal, family="legal")
@@ -154,16 +140,10 @@ def _fixed_legal_reject_store() -> tuple[ProofCorpusStore, ArtifactEnvelope]:
 
 
 def _fixed_security_reject_store() -> tuple[ProofCorpusStore, ArtifactEnvelope]:
-    intent_raw = _load_json(
-        FIXTURE_ROOT
-        / "formal_artifacts"
-        / "security_sensitive_resource.json"
-    )
+    intent_raw = _load_json(FIXTURE_ROOT / "formal_artifacts" / "security_sensitive_resource.json")
     intent = FormalizationArtifact.from_dict(intent_raw)
     legal = _constraint_from_intent(intent_raw, domain="legal", role="grant")
-    security = _constraint_from_intent(
-        intent_raw, domain="security", role="prohibition"
-    )
+    security = _constraint_from_intent(intent_raw, domain="security", role="prohibition")
     store = ProofCorpusStore()
     intent_env = _put_intent(store, intent)
     _put_constraint(store, legal, family="legal")
@@ -206,9 +186,7 @@ def test_outcome_allow_obligations_supported() -> None:
 
     assert decision.status is AdmissibilityStatus.ALLOW
     assert decision.is_allow is True
-    assert AdmissibilityReasonCode.OBLIGATIONS_SUPPORTED.value in (
-        decision.reason_codes
-    )
+    assert AdmissibilityReasonCode.OBLIGATIONS_SUPPORTED.value in (decision.reason_codes)
     assert decision.profile_id == "legal-strict"
     assert decision.config_digest == get_profile("legal-strict").config_digest()
     assert decision.intent_cid == intent_env.content_cid
@@ -221,16 +199,11 @@ def test_outcome_allow_obligations_supported() -> None:
 
 def test_outcome_legal_hard_constraint_reject() -> None:
     store, intent_env = _fixed_legal_reject_store()
-    decision = evaluate_admissibility(
-        store, intent_env.content_cid, "legal-strict"
-    )
+    decision = evaluate_admissibility(store, intent_env.content_cid, "legal-strict")
 
     assert decision.status is AdmissibilityStatus.REJECT
     assert decision.is_reject is True
-    assert (
-        AdmissibilityReasonCode.LEGAL_HARD_CONSTRAINT.value
-        in decision.reason_codes
-    )
+    assert AdmissibilityReasonCode.LEGAL_HARD_CONSTRAINT.value in decision.reason_codes
     assert decision.intent_cid == intent_env.content_cid
     assert decision.constraint_cids  # legal forbid bound
 
@@ -241,10 +214,7 @@ def test_outcome_security_hard_constraint_reject() -> None:
     decision = gate.evaluate(intent_env.content_cid, profile="legal-strict")
 
     assert decision.status is AdmissibilityStatus.REJECT
-    assert (
-        AdmissibilityReasonCode.SECURITY_HARD_CONSTRAINT.value
-        in decision.reason_codes
-    )
+    assert AdmissibilityReasonCode.SECURITY_HARD_CONSTRAINT.value in decision.reason_codes
     assert decision.intent_cid == intent_env.content_cid
 
 
@@ -278,9 +248,7 @@ def test_decision_is_deterministic_for_fixed_store_snapshot() -> None:
 
     first = gate.evaluate(intent_env.content_cid, "legal-strict")
     second = gate.evaluate(intent_env.content_cid, "legal-strict")
-    third = evaluate_admissibility(
-        store, intent_env.content_cid, "legal-strict"
-    )
+    third = evaluate_admissibility(store, intent_env.content_cid, "legal-strict")
 
     assert first.to_dict() == second.to_dict() == third.to_dict()
     assert first.store_snapshot_digest == snapshot
@@ -292,9 +260,7 @@ def test_decision_is_deterministic_for_fixed_store_snapshot() -> None:
 
 def test_decision_deterministic_across_query_rebuild() -> None:
     store, intent_env = _fixed_legal_reject_store()
-    gate = IntentAdmissibilityGate(
-        store=store, query=ProofCorpusQuery(store=store)
-    )
+    gate = IntentAdmissibilityGate(store=store, query=ProofCorpusQuery(store=store))
     gate.rebuild_index()
     a = gate.evaluate(intent_env.content_cid, "legal-strict")
     gate.rebuild_index()
@@ -312,9 +278,7 @@ def test_invalid_profile_fails_closed_as_reject() -> None:
     gate = IntentAdmissibilityGate(store=store)
     decision = gate.evaluate(intent_env.content_cid, "not-a-real-profile")
     assert decision.status is AdmissibilityStatus.REJECT
-    assert decision.reason_codes == (
-        AdmissibilityReasonCode.INVALID_PROFILE.value,
-    )
+    assert decision.reason_codes == (AdmissibilityReasonCode.INVALID_PROFILE.value,)
     assert decision.profile_id == ""
     assert decision.is_allow is False
 
@@ -355,18 +319,14 @@ def test_zkp_required_missing_proof_abstains() -> None:
 
 
 def test_classify_constraint_polarity_grant_and_forbid() -> None:
-    intent_raw = _load_json(
-        FIXTURE_ROOT / "formal_artifacts" / "benign_skill.json"
-    )
+    intent_raw = _load_json(FIXTURE_ROOT / "formal_artifacts" / "benign_skill.json")
     grant = ArtifactEnvelope.build(
         _constraint_from_intent(intent_raw, domain="legal", role="grant"),
         profile="legal-strict",
         family="legal",
     )
     forbid = ArtifactEnvelope.build(
-        _constraint_from_intent(
-            intent_raw, domain="security", role="prohibition"
-        ),
+        _constraint_from_intent(intent_raw, domain="security", role="prohibition"),
         profile="legal-strict",
         family="security",
     )
@@ -380,27 +340,16 @@ def test_evaluate_accepts_formalization_artifact_directly() -> None:
     decision = evaluate_admissibility(store, intent, "legal-strict")
     assert decision.status is AdmissibilityStatus.ALLOW
     assert decision.intent_cid  # envelope content cid derived from artifact
-    assert (
-        AdmissibilityReasonCode.OBLIGATIONS_SUPPORTED.value
-        in decision.reason_codes
-    )
+    assert AdmissibilityReasonCode.OBLIGATIONS_SUPPORTED.value in decision.reason_codes
 
 
 def test_contradiction_when_grant_and_forbid_share_obligation() -> None:
-    intent_raw = _load_json(
-        FIXTURE_ROOT / "formal_artifacts" / "benign_skill.json"
-    )
+    intent_raw = _load_json(FIXTURE_ROOT / "formal_artifacts" / "benign_skill.json")
     intent = FormalizationArtifact.from_dict(intent_raw)
-    legal_grant = _constraint_from_intent(
-        intent_raw, domain="legal", role="grant"
-    )
-    legal_forbid = _constraint_from_intent(
-        intent_raw, domain="legal", role="prohibition"
-    )
+    legal_grant = _constraint_from_intent(intent_raw, domain="legal", role="grant")
+    legal_forbid = _constraint_from_intent(intent_raw, domain="legal", role="prohibition")
     # Distinct security grant so family requirements can still be considered.
-    security = _constraint_from_intent(
-        intent_raw, domain="security", role="grant"
-    )
+    security = _constraint_from_intent(intent_raw, domain="security", role="grant")
     # Differentiate two legal envelopes: mutate metadata role already differs
     # so digests differ.
     store = ProofCorpusStore()
@@ -426,9 +375,7 @@ def test_contradiction_when_grant_and_forbid_share_obligation() -> None:
     _put_constraint(store, legal_forbid, family="legal")
     _put_constraint(store, security, family="security")
 
-    decision = evaluate_admissibility(
-        store, intent_env.content_cid, "legal-strict"
-    )
+    decision = evaluate_admissibility(store, intent_env.content_cid, "legal-strict")
     assert decision.status is AdmissibilityStatus.REJECT
     codes = set(decision.reason_codes)
     assert (

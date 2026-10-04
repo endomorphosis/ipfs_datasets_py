@@ -48,17 +48,10 @@ CAPABILITY_MATRIX_PATH = (
     / "software_verification"
     / "capability_matrix.json"
 )
-ROLLOUT_DOC_PATH = (
-    DATASETS_ROOT / "docs" / "logic" / "software_verification_rollout.md"
-)
-PROVER_MATRIX_DOC_PATH = (
-    DATASETS_ROOT / "docs" / "security_verification" / "prover_matrix.md"
-)
+ROLLOUT_DOC_PATH = DATASETS_ROOT / "docs" / "logic" / "software_verification_rollout.md"
+PROVER_MATRIX_DOC_PATH = DATASETS_ROOT / "docs" / "security_verification" / "prover_matrix.md"
 CAPABILITY_DOC_PATH = (
-    DATASETS_ROOT
-    / "docs"
-    / "logic"
-    / "software_verification_capability_inventory.md"
+    DATASETS_ROOT / "docs" / "logic" / "software_verification_capability_inventory.md"
 )
 COMPLETION_RECEIPT_PATH = (
     SUPERPROJECT_ROOT
@@ -154,9 +147,7 @@ def _canonical_json(value: Any) -> str:
 
 
 def _load_capability_matrix() -> dict[str, Any]:
-    assert CAPABILITY_MATRIX_PATH.is_file(), (
-        f"missing capability matrix: {CAPABILITY_MATRIX_PATH}"
-    )
+    assert CAPABILITY_MATRIX_PATH.is_file(), f"missing capability matrix: {CAPABILITY_MATRIX_PATH}"
     payload = json.loads(CAPABILITY_MATRIX_PATH.read_text(encoding="utf-8"))
     assert isinstance(payload, dict)
     assert payload.get("schema_version") == "logic-capability-matrix/v1"
@@ -232,9 +223,7 @@ def _stage_for_pair(
         return "canary"
 
     smoke = any(_evidence_smoke_present(row) for row in candidates)
-    translation = any(
-        row.get("states", {}).get("translation_conformant") for row in candidates
-    )
+    translation = any(row.get("states", {}).get("translation_conformant") for row in candidates)
     authority = any(row.get("states", {}).get("authoritative_for") for row in candidates)
 
     if not candidates and not definition_has_fixture:
@@ -256,9 +245,7 @@ def _build_release_matrix(
 ) -> dict[str, Any]:
     capability_rows = _capability_provider_rows(capability_matrix)
     claims = load_documentation_claims(PROVER_MATRIX_DOC_PATH)
-    claims_by_label = Counter(
-        claim.prover_text.casefold() for claim in claims
-    )
+    claims_by_label = Counter(claim.prover_text.casefold() for claim in claims)
 
     definitions = []
     for definition in DEFAULT_PROVER_DEFINITIONS:
@@ -269,9 +256,7 @@ def _build_release_matrix(
                 "family": definition.family,
                 "has_fixture": definition.fixture is not None,
                 "documentation_labels": list(definition.documentation_labels),
-                "maximum_authoritative_for": list(
-                    definition.maximum_authoritative_for
-                ),
+                "maximum_authoritative_for": list(definition.maximum_authoritative_for),
             }
         )
 
@@ -279,9 +264,7 @@ def _build_release_matrix(
     for property_kind in PROPERTY_VOCABULARY:
         families = PROPERTY_PROVIDER_FAMILIES.get(property_kind, ())
         for family in families:
-            family_defs = [
-                item for item in definitions if item["family"] == family
-            ]
+            family_defs = [item for item in definitions if item["family"] == family]
             if not family_defs:
                 family_defs = [
                     {
@@ -307,12 +290,8 @@ def _build_release_matrix(
                         "prover_id": definition["prover_id"],
                         "stage": stage,
                         "has_self_test_fixture": bool(definition["has_fixture"]),
-                        "maximum_authoritative_for": definition[
-                            "maximum_authoritative_for"
-                        ],
-                        "documentation_labels": definition[
-                            "documentation_labels"
-                        ],
+                        "maximum_authoritative_for": definition["maximum_authoritative_for"],
+                        "documentation_labels": definition["documentation_labels"],
                     }
                 )
 
@@ -320,12 +299,8 @@ def _build_release_matrix(
         "schema_version": MATRIX_SCHEMA,
         "interface": INTERFACE,
         "objective": "LFV-G083",
-        "capability_matrix_identity": _sha256_bytes(
-            CAPABILITY_MATRIX_PATH.read_bytes()
-        ),
-        "prover_matrix_doc_identity": _sha256_bytes(
-            PROVER_MATRIX_DOC_PATH.read_bytes()
-        ),
+        "capability_matrix_identity": _sha256_bytes(CAPABILITY_MATRIX_PATH.read_bytes()),
+        "prover_matrix_doc_identity": _sha256_bytes(PROVER_MATRIX_DOC_PATH.read_bytes()),
         "property_vocabulary": list(PROPERTY_VOCABULARY),
         "prover_ids": sorted(EXPECTED_PROVER_IDS),
         "documentation_claim_count": len(claims),
@@ -402,9 +377,7 @@ def _resource_distribution(
     return {
         "fields": list(RESOURCE_FIELDS),
         "per_stage_bounds": per_stage_bounds,
-        "stage_pair_counts": {
-            stage: int(stage_counts.get(stage, 0)) for stage in ROLLOUT_STAGES
-        },
+        "stage_pair_counts": {stage: int(stage_counts.get(stage, 0)) for stage in ROLLOUT_STAGES},
         "cache": {
             "cold_identity_mode": "miss_on_any_bound_identity_change",
             "warm_identity_mode": "exact_receipt_authority_inherit_only",
@@ -508,7 +481,9 @@ def test_benchmark_reports_semantic_and_resource_distributions_without_timing_ga
     for stage in ROLLOUT_STAGES:
         bounds = resources["per_stage_bounds"][stage]
         assert set(bounds) == set(RESOURCE_FIELDS)
-        assert all(isinstance(bounds[field], int) and bounds[field] >= 0 for field in RESOURCE_FIELDS)
+        assert all(
+            isinstance(bounds[field], int) and bounds[field] >= 0 for field in RESOURCE_FIELDS
+        )
 
     assert resources["cache"]["authority_increase_on_hit"] is False
     for gate in HARD_ZERO_GATES:
@@ -522,9 +497,9 @@ def test_prover_documentation_reconciles_with_executable_definitions() -> None:
 
     claim_text = " ".join(claim.prover_text for claim in claims).casefold()
     for definition in DEFAULT_PROVER_DEFINITIONS:
-        assert any(
-            label.casefold() in claim_text for label in definition.documentation_labels
-        ), f"missing documentation labels for {definition.prover_id}"
+        assert any(label.casefold() in claim_text for label in definition.documentation_labels), (
+            f"missing documentation labels for {definition.prover_id}"
+        )
 
     # Documentation must not invent prover ids outside the executable set when
     # stating runtime maturity; prose may describe soundness, but claims stay labels.

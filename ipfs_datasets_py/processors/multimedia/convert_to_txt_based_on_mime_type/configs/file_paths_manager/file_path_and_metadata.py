@@ -1,4 +1,3 @@
-
 from datetime import datetime
 from functools import cached_property
 from pathlib import Path
@@ -15,7 +14,7 @@ from external_interface.file_paths_manager.supported_mime_types import (
     SupportedAudioTypes,
     SupportedImageTypes,
     SupportedTextTypes,
-    SupportedVideoTypes
+    SupportedVideoTypes,
 )
 
 from pydantic_models.file_paths_manager.file_path import FilePath
@@ -55,6 +54,7 @@ class FilePathAndMetadata(BaseModel):
             }
         }
     """
+
     max_program_memory: ClassVar[int] = None
     file_path: FilePath
     cid: str = None
@@ -64,8 +64,8 @@ class FilePathAndMetadata(BaseModel):
         cls.max_program_memory = value
 
     def __init__(self, **data):
-        if 'max_program_memory' in data:
-            self.__class__.max_program_memory = data.pop('max_program_memory')
+        if "max_program_memory" in data:
+            self.__class__.max_program_memory = data.pop("max_program_memory")
         super().__init__(**data)
         self.cid = get_cid(self.file_path)
 
@@ -75,7 +75,9 @@ class FilePathAndMetadata(BaseModel):
         file_size = value.file_path.stat().st_size
         max_file_size = cls.max_program_memory
         if file_size > max_file_size:
-            raise ValueError(f"File size ({file_size} bytes) exceeds {max_file_size} bytes of memory allocated to the program.")
+            raise ValueError(
+                f"File size ({file_size} bytes) exceeds {max_file_size} bytes of memory allocated to the program."
+            )
         return value.file_path
 
     @computed_field(return_type=str)
@@ -115,7 +117,7 @@ class FilePathAndMetadata(BaseModel):
     @cached_property
     def checksum(self) -> str:
         return md5_checksum(self.file_path)
-    
+
     @computed_field(return_type=datetime)
     @cached_property
     def created_timestamp(self) -> datetime:

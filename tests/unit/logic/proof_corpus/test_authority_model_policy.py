@@ -163,12 +163,8 @@ def _production_policy(**overrides: Any) -> ProofTrustPolicy:
         "solver_allowlist": ("solver-z3",),
         "compiler_allowlist": ("compiler-canonical-v1",),
         "security_profile_allowlist": ("legal-strict", "zkp-required"),
-        "attestation_kind_allowlist": (
-            AttestationKind.DIRECT_PROOF_VERIFICATION.value,
-        ),
-        "authoritative_attestation_kinds": (
-            AttestationKind.DIRECT_PROOF_VERIFICATION.value,
-        ),
+        "attestation_kind_allowlist": (AttestationKind.DIRECT_PROOF_VERIFICATION.value,),
+        "authoritative_attestation_kinds": (AttestationKind.DIRECT_PROOF_VERIFICATION.value,),
         "required_result_authority": AuthorityKind.THEOREM_PROOF,
         "minimum_security_profile": "legal-strict",
         "accept_simulated": False,
@@ -376,9 +372,7 @@ def test_evidence_kinds_are_non_substitutable_closed_set() -> None:
         (AttestationKind.SIMULATION, False),
     ],
 )
-def test_attestation_kind_theorem_authority(
-    kind: AttestationKind, authoritative: bool
-) -> None:
+def test_attestation_kind_theorem_authority(kind: AttestationKind, authoritative: bool) -> None:
     assert attestation_kind_is_theorem_authoritative(kind) is authoritative
 
 
@@ -419,9 +413,7 @@ def test_verifier_execution_does_not_silently_become_direct() -> None:
     assert envelope.claims_verifier_execution
     assert not envelope.claims_direct_verification
     assert not envelope.is_theorem_authoritative()
-    assert not attestation_kind_is_theorem_authoritative(
-        AttestationKind.VERIFIER_EXECUTION
-    )
+    assert not attestation_kind_is_theorem_authoritative(AttestationKind.VERIFIER_EXECUTION)
 
 
 # ---------------------------------------------------------------------------
@@ -445,9 +437,7 @@ def test_trust_policy_declares_roots_allowlists_minimums_budgets_and_rules() -> 
     assert payload["budget"]["timeout_ms"] == 5_000
     assert payload["world_mode"] == WorldMode.CLOSED.value
     assert payload["conflict_rule"] == ConflictRule.FAIL_CLOSED.value
-    assert set(payload["non_substitutable_evidence"]) == set(
-        NON_SUBSTITUTABLE_EVIDENCE_KINDS
-    )
+    assert set(payload["non_substitutable_evidence"]) == set(NON_SUBSTITUTABLE_EVIDENCE_KINDS)
     assert policy.policy_digest().startswith("sha256:")
 
 
@@ -457,9 +447,7 @@ def test_trust_policy_accepts_honest_direct_verification() -> None:
     result = policy.evaluate(envelope, at_time="2026-06-01T00:00:00Z")
     assert result.status is TrustEvaluationStatus.ACCEPT
     assert result.accepted
-    assert result.accepted_attestation_kind == (
-        AttestationKind.DIRECT_PROOF_VERIFICATION.value
-    )
+    assert result.accepted_attestation_kind == (AttestationKind.DIRECT_PROOF_VERIFICATION.value)
     assert not result.reasons
 
 
@@ -514,19 +502,13 @@ def test_trust_policy_cannot_authorise_membership_or_simulation() -> None:
             )
         )
     with pytest.raises(ProofTrustPolicyError, match="non-substitutable|simulation"):
-        _production_policy(
-            authoritative_attestation_kinds=(
-                AttestationKind.SIMULATION.value,
-            )
-        )
+        _production_policy(authoritative_attestation_kinds=(AttestationKind.SIMULATION.value,))
 
 
 def test_trust_policy_requires_direct_verification_in_authoritative_set() -> None:
     with pytest.raises(ProofTrustPolicyError, match="direct-proof-verification"):
         _production_policy(
-            authoritative_attestation_kinds=(
-                AttestationKind.VERIFIER_EXECUTION.value,
-            )
+            authoritative_attestation_kinds=(AttestationKind.VERIFIER_EXECUTION.value,)
         )
 
 
@@ -643,10 +625,7 @@ def test_default_production_trust_policy_is_fail_closed() -> None:
     assert policy.accept_simulated is False
     assert policy.world_mode is WorldMode.CLOSED
     assert policy.conflict_rule is ConflictRule.FAIL_CLOSED
-    assert (
-        AttestationKind.DIRECT_PROOF_VERIFICATION.value
-        in policy.authoritative_attestation_kinds
-    )
+    assert AttestationKind.DIRECT_PROOF_VERIFICATION.value in policy.authoritative_attestation_kinds
     honest = _honest_envelope()
     # Default policy requires circuit/vk/public inputs — honest has them.
     # No jurisdiction/tenant allowlists, so broader acceptance on scope.
@@ -732,22 +711,14 @@ def test_authority_separation_receipt() -> None:
     )
 
     policy = _production_policy(
-        attestation_kind_allowlist=tuple(
-            kind.value for kind in AttestationKind
-        ),
+        attestation_kind_allowlist=tuple(kind.value for kind in AttestationKind),
     )
 
     receipt = {
         "direct": policy.evaluate(direct, at_time="2026-06-01T00:00:00Z").to_dict(),
-        "membership": policy.evaluate(
-            membership, at_time="2026-06-01T00:00:00Z"
-        ).to_dict(),
-        "simulation": policy.evaluate(
-            simulation, at_time="2026-06-01T00:00:00Z"
-        ).to_dict(),
-        "verifier_execution": policy.evaluate(
-            verifier, at_time="2026-06-01T00:00:00Z"
-        ).to_dict(),
+        "membership": policy.evaluate(membership, at_time="2026-06-01T00:00:00Z").to_dict(),
+        "simulation": policy.evaluate(simulation, at_time="2026-06-01T00:00:00Z").to_dict(),
+        "verifier_execution": policy.evaluate(verifier, at_time="2026-06-01T00:00:00Z").to_dict(),
         "non_substitutable": sorted(non_substitutable_evidence_kinds()),
         "theorem_authoritative": {
             "direct": direct.is_theorem_authoritative(),

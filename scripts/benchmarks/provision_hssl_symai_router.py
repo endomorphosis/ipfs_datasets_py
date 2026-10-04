@@ -35,22 +35,12 @@ _REPOSITORY_ROOT_TEXT = str(REPOSITORY_ROOT)
 if _REPOSITORY_ROOT_TEXT not in sys.path:
     sys.path.insert(0, _REPOSITORY_ROOT_TEXT)
 DEFAULT_LOCK_PATH = (
-    REPOSITORY_ROOT
-    / "benchmarks"
-    / "logic_pipeline"
-    / "runtime_env"
-    / "symai-router.lock"
+    REPOSITORY_ROOT / "benchmarks" / "logic_pipeline" / "runtime_env" / "symai-router.lock"
 )
 DEFAULT_LEANSTRAL_LOCK_PATH = (
-    REPOSITORY_ROOT
-    / "benchmarks"
-    / "logic_pipeline"
-    / "runtime_env"
-    / "leanstral.lock"
+    REPOSITORY_ROOT / "benchmarks" / "logic_pipeline" / "runtime_env" / "leanstral.lock"
 )
-SMOKE_TEXT = (
-    "Every runtime identity receipt names exactly one configured provider and model."
-)
+SMOKE_TEXT = "Every runtime identity receipt names exactly one configured provider and model."
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 _SAFE_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 _SECRET_NAME_RE = re.compile(r"(?:API[_-]?KEY|TOKEN|PASSWORD|CREDENTIAL)", re.I)
@@ -153,11 +143,7 @@ def _string(value: object, field: str) -> str:
 
 def _positive_int(value: object, field: str, *, allow_zero: bool = False) -> int:
     minimum = 0 if allow_zero else 1
-    if (
-        not isinstance(value, int)
-        or isinstance(value, bool)
-        or value < minimum
-    ):
+    if not isinstance(value, int) or isinstance(value, bool) or value < minimum:
         raise ProvisioningError(f"invalid_{field}")
     return value
 
@@ -220,11 +206,7 @@ def load_lock(path: Path | str = DEFAULT_LOCK_PATH) -> SymaiRouterLock:
     engine = _string(router["engine"], "engine")
     if (
         router_module != "ipfs_datasets_py.llm_router"
-        or engine
-        != (
-            "ipfs_datasets_py.utils.symai_ipfs_engine."
-            "IPFSSyMAINeurosymbolicEngine"
-        )
+        or engine != ("ipfs_datasets_py.utils.symai_ipfs_engine.IPFSSyMAINeurosymbolicEngine")
         or Path(router_source).is_absolute()
         or ".." in Path(router_source).parts
     ):
@@ -234,9 +216,7 @@ def load_lock(path: Path | str = DEFAULT_LOCK_PATH) -> SymaiRouterLock:
     _exact_keys(identity, {"model", "provider", "symai_config_model"}, "identity")
     provider = _string(identity["provider"], "provider")
     model = _string(identity["model"], "model")
-    symai_config_model = _string(
-        identity["symai_config_model"], "symai_config_model"
-    )
+    symai_config_model = _string(identity["symai_config_model"], "symai_config_model")
     if not _SAFE_ID_RE.fullmatch(provider) or not _SAFE_ID_RE.fullmatch(model):
         raise ProvisioningError("unsafe_provider_or_model")
     if _normalized_provider(provider) in _RECURSIVE_PROVIDERS:
@@ -265,10 +245,7 @@ def load_lock(path: Path | str = DEFAULT_LOCK_PATH) -> SymaiRouterLock:
     if (
         not isinstance(environment, list)
         or not environment
-        or not all(
-            isinstance(item, str) and _SAFE_ID_RE.fullmatch(item)
-            for item in environment
-        )
+        or not all(isinstance(item, str) and _SAFE_ID_RE.fullmatch(item) for item in environment)
         or len(set(environment)) != len(environment)
         or environment != sorted(environment)
         or credentials["receipt"] != "presence-and-contextual-sha256-only"
@@ -289,13 +266,9 @@ def load_lock(path: Path | str = DEFAULT_LOCK_PATH) -> SymaiRouterLock:
         "smoke",
     )
     max_calls = _positive_int(smoke["max_calls"], "max_calls")
-    max_retries = _positive_int(
-        smoke["max_retries"], "max_retries", allow_zero=True
-    )
+    max_retries = _positive_int(smoke["max_retries"], "max_retries", allow_zero=True)
     max_input_bytes = _positive_int(smoke["max_input_bytes"], "max_input_bytes")
-    max_output_bytes = _positive_int(
-        smoke["max_output_bytes"], "max_output_bytes"
-    )
+    max_output_bytes = _positive_int(smoke["max_output_bytes"], "max_output_bytes")
     timeout_seconds = _positive_int(smoke["timeout_seconds"], "timeout_seconds")
     if (
         max_calls != 1
@@ -401,9 +374,7 @@ def pinned_environment(
             "IPFS_DATASETS_PY_USE_CODEX_FOR_SYMAI": "0",
             "IPFS_DATASETS_PY_DISABLE_CODEX_FOR_SYMAI": "1",
             "IPFS_DATASETS_PY_SYMAI_BACKEND": lock.provider,
-            "IPFS_DATASETS_PY_SYMAI_NEUROSYMBOLIC_MODEL": (
-                lock.symai_config_model
-            ),
+            "IPFS_DATASETS_PY_SYMAI_NEUROSYMBOLIC_MODEL": (lock.symai_config_model),
             "IPFS_DATASETS_PY_ROUTER_RESPONSE_CACHE": "0",
             "IPFS_DATASETS_PY_SYMAI_ROUTER_CACHE": "0",
             "NEUROSYMBOLIC_ENGINE_MODEL": lock.symai_config_model,
@@ -467,8 +438,10 @@ def configure_symai(
         if not _SECRET_NAME_RE.search(str(key)):
             continue
         allowed = (
-            key == "NEUROSYMBOLIC_ENGINE_API_KEY" and value == "ipfs"
-        ) or value == "" or value is None
+            (key == "NEUROSYMBOLIC_ENGINE_API_KEY" and value == "ipfs")
+            or value == ""
+            or value is None
+        )
         if not allowed:
             raise ProvisioningError("symai_configuration_contains_secret")
     try:
@@ -519,9 +492,7 @@ def _credential_receipts(
         item: dict[str, object] = {"present": present}
         if present:
             item["sha256"] = hashlib.sha256(
-                (
-                    f"{EVIDENCE_ID}\0credential-receipt\0{name}\0{value}"
-                ).encode("utf-8")
+                (f"{EVIDENCE_ID}\0credential-receipt\0{name}\0{value}").encode("utf-8")
             ).hexdigest()
         receipts[name] = item
     return receipts
@@ -629,15 +600,9 @@ def probe_runtime(
             "requested_provider": lock.provider,
             "requested_model": lock.model,
             "configured": configured_identity,
-            "effective_provider": (
-                smoke.get("effective_provider") if smoke is not None else None
-            ),
-            "effective_model": (
-                smoke.get("effective_model") if smoke is not None else None
-            ),
-            "smoke_verified": bool(
-                smoke is not None and smoke.get("identity_verified") is True
-            ),
+            "effective_provider": (smoke.get("effective_provider") if smoke is not None else None),
+            "effective_model": (smoke.get("effective_model") if smoke is not None else None),
+            "smoke_verified": bool(smoke is not None and smoke.get("identity_verified") is True),
         },
         "configuration": {
             "noninteractive": True,
@@ -649,9 +614,7 @@ def probe_runtime(
         "smoke": dict(smoke) if smoke is not None else None,
         "errors": errors,
     }
-    receipt["receipt_sha256"] = hashlib.sha256(
-        _canonical_json(receipt).encode("utf-8")
-    ).hexdigest()
+    receipt["receipt_sha256"] = hashlib.sha256(_canonical_json(receipt).encode("utf-8")).hexdigest()
     return receipt
 
 
@@ -693,14 +656,10 @@ def run_structured_smoke(
         raise ProvisioningError("smoke_input_bound_exceeded")
     try:
         leanstral_lock = _mapping(
-            _strict_json(
-                DEFAULT_LEANSTRAL_LOCK_PATH.read_text(encoding="utf-8")
-            ),
+            _strict_json(DEFAULT_LEANSTRAL_LOCK_PATH.read_text(encoding="utf-8")),
             "leanstral_lock",
         )
-        resolved_identity = _mapping(
-            leanstral_lock["identity"], "leanstral_identity"
-        )
+        resolved_identity = _mapping(leanstral_lock["identity"], "leanstral_identity")
     except (OSError, KeyError, UnicodeError, ProvisioningError) as exc:
         raise ProvisioningError("smoke_resolved_identity_missing") from exc
     config = adapters.SymaiAdapterConfig(
@@ -724,9 +683,7 @@ def run_structured_smoke(
     request = adapters.StageRequest(
         run_id="hssl-symai-router-runtime-smoke",
         case_id="non-corpus-runtime-identity",
-        case_manifest_sha256=hashlib.sha256(
-            b"HSSL-BENCH-032/non-corpus-smoke"
-        ).hexdigest(),
+        case_manifest_sha256=hashlib.sha256(b"HSSL-BENCH-032/non-corpus-smoke").hexdigest(),
         variant_id="A4",
         split=contracts.Split.PILOT,
         cache_mode=contracts.CacheMode.COLD,
@@ -779,10 +736,7 @@ def run_structured_smoke(
     ):
         raise ProvisioningError("smoke_routing_policy_mismatch")
     raw_output = record.data.get("raw_output")
-    if (
-        not isinstance(raw_output, str)
-        or len(raw_output.encode("utf-8")) > lock.max_output_bytes
-    ):
+    if not isinstance(raw_output, str) or len(raw_output.encode("utf-8")) > lock.max_output_bytes:
         raise ProvisioningError("smoke_output_bound_exceeded")
     return {
         "input_kind": "authored-non-corpus",

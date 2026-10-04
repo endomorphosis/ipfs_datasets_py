@@ -4,7 +4,9 @@ import json
 from typing import Any, Dict, List, Union
 
 
-def format_fol(formula: str, output_format: str = "symbolic", include_metadata: bool = True) -> Dict[str, Any]:
+def format_fol(
+    formula: str, output_format: str = "symbolic", include_metadata: bool = True
+) -> Dict[str, Any]:
     result: Dict[str, Any] = {"fol_formula": formula, "format": output_format}
 
     if output_format == "prolog":
@@ -26,7 +28,11 @@ def format_deontic(
     output_format: str = "symbolic",
     include_metadata: bool = True,
 ) -> Dict[str, Any]:
-    result: Dict[str, Any] = {"deontic_formula": formula, "norm_type": norm_type, "format": output_format}
+    result: Dict[str, Any] = {
+        "deontic_formula": formula,
+        "norm_type": norm_type,
+        "format": output_format,
+    }
 
     if output_format == "defeasible":
         result["defeasible_form"] = convert_to_defeasible_format(formula, norm_type)
@@ -103,12 +109,21 @@ def convert_to_defeasible_format(deontic_formula: str, norm_type: str) -> str:
 def parse_fol_to_json(fol_formula: str) -> Dict[str, Any]:
     import re
 
-    structure: Dict[str, Any] = {"quantifiers": [], "predicates": [], "variables": [], "operators": []}
+    structure: Dict[str, Any] = {
+        "quantifiers": [],
+        "predicates": [],
+        "variables": [],
+        "operators": [],
+    }
 
     quantifiers = re.findall(r"([∀∃])([a-z])", fol_formula)
     for symbol, var in quantifiers:
         structure["quantifiers"].append(
-            {"type": "universal" if symbol == "∀" else "existential", "variable": var, "symbol": symbol}
+            {
+                "type": "universal" if symbol == "∀" else "existential",
+                "variable": var,
+                "symbol": symbol,
+            }
         )
 
     predicates = re.findall(r"([A-Z][a-zA-Z]*)\(([^)]+)\)", fol_formula)

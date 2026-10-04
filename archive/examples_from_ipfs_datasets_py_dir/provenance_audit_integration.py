@@ -20,8 +20,9 @@ import datetime
 from typing import Dict, List, Any, Optional
 
 # Set up logging
-logging.basicConfig(level=logging.INFO,
-                  format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 # Add parent directory to path to allow imports
@@ -30,17 +31,25 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 try:
     # Import audit system
     from ipfs_datasets_py.audit.audit_logger import (
-        AuditLogger, AuditEvent, AuditLevel, AuditCategory
+        AuditLogger,
+        AuditEvent,
+        AuditLevel,
+        AuditCategory,
     )
     from ipfs_datasets_py.audit.handlers import FileAuditHandler, ConsoleAuditHandler
     from ipfs_datasets_py.audit.integration import (
-        AuditProvenanceIntegrator, AuditContextManager, audit_function
+        AuditProvenanceIntegrator,
+        AuditContextManager,
+        audit_function,
     )
 
     # Import provenance system
     from ipfs_datasets_py.data_provenance_enhanced import (
-        EnhancedProvenanceManager, ProvenanceCryptoVerifier,
-        SourceRecord, TransformationRecord, VerificationRecord
+        EnhancedProvenanceManager,
+        ProvenanceCryptoVerifier,
+        SourceRecord,
+        TransformationRecord,
+        VerificationRecord,
     )
 
     IMPORTS_SUCCESSFUL = True
@@ -54,25 +63,17 @@ def setup_audit_system():
     audit_logger = AuditLogger.get_instance()
 
     # Add console handler
-    console_handler = ConsoleAuditHandler(
-        name="console",
-        min_level=AuditLevel.INFO
-    )
+    console_handler = ConsoleAuditHandler(name="console", min_level=AuditLevel.INFO)
     audit_logger.add_handler(console_handler)
 
     # Add file handler
     file_handler = FileAuditHandler(
-        name="file",
-        filename="audit_log.jsonl",
-        min_level=AuditLevel.DEBUG
+        name="file", filename="audit_log.jsonl", min_level=AuditLevel.DEBUG
     )
     audit_logger.add_handler(file_handler)
 
     # Configure audit logger
-    audit_logger.configure({
-        "default_user": "example_user",
-        "min_level": AuditLevel.DEBUG
-    })
+    audit_logger.configure({"default_user": "example_user", "min_level": AuditLevel.DEBUG})
 
     return audit_logger
 
@@ -86,7 +87,7 @@ def setup_provenance_system(audit_logger=None):
         default_agent_id="example_script",
         tracking_level="detailed",
         audit_logger=audit_logger,
-        enable_crypto_verification=True
+        enable_crypto_verification=True,
     )
 
     return provenance_manager
@@ -96,8 +97,7 @@ def initialize_integration(audit_logger, provenance_manager):
     """Initialize the bidirectional integration between systems."""
     # Create integrator
     integrator = AuditProvenanceIntegrator(
-        audit_logger=audit_logger,
-        provenance_manager=provenance_manager
+        audit_logger=audit_logger, provenance_manager=provenance_manager
     )
 
     # Set up automatic provenance record creation from audit events
@@ -118,8 +118,8 @@ def initialize_integration(audit_logger, provenance_manager):
     details_extractor=lambda input_dataset_id, output_dataset_id, **kwargs: {
         "input_dataset": input_dataset_id,
         "transformation": "tokenization",
-        "parameters": {"model": "bert-base-uncased"}
-    }
+        "parameters": {"model": "bert-base-uncased"},
+    },
 )
 def tokenize_dataset(input_dataset_id, output_dataset_id, **kwargs):
     """
@@ -156,7 +156,7 @@ def demonstrate_provenance_audit_integration():
         source_type="huggingface",
         source_uri="huggingface:wikipedia/20220301.en",
         format="parquet",
-        description="Wikipedia dataset from HuggingFace"
+        description="Wikipedia dataset from HuggingFace",
     )
 
     # Generate audit event from the provenance record
@@ -177,9 +177,9 @@ def demonstrate_provenance_audit_integration():
         details={
             "input_dataset": source_dataset_id,
             "transformation_type": "filtering",
-            "parameters": {"min_length": 100, "max_samples": 10000}
+            "parameters": {"min_length": 100, "max_samples": 10000},
         },
-        audit_logger=audit_logger
+        audit_logger=audit_logger,
     ):
         # Perform the transformation (just simulation)
         # In a real scenario, this would be actual data processing
@@ -192,14 +192,13 @@ def demonstrate_provenance_audit_integration():
             transformation_type="filtering",
             parameters={"min_length": 100, "max_samples": 10000},
             tool="ipfs_datasets",
-            description="Filter Wikipedia dataset to keep only long articles"
+            description="Filter Wikipedia dataset to keep only long articles",
         )
 
     # Step 3: Use the decorated function for automatic audit logging
     logger.info("Step 3: Using decorated function for audit logging")
     result = tokenize_dataset(
-        input_dataset_id=processed_dataset_id,
-        output_dataset_id=f"tokenized-{uuid.uuid4()}"
+        input_dataset_id=processed_dataset_id, output_dataset_id=f"tokenized-{uuid.uuid4()}"
     )
 
     # Step 4: Verify provenance record signatures
@@ -231,7 +230,7 @@ def demonstrate_provenance_audit_integration():
             show_timestamps=True,
             highlight_critical_path=True,
             include_metrics=True,
-            file_path=img_path
+            file_path=img_path,
         )
         logger.info(f"Visualization saved to {img_path}")
     except Exception as e:
@@ -242,7 +241,7 @@ def demonstrate_provenance_audit_integration():
         "source_record_id": source_record_id,
         "transform_record_id": transform_record_id,
         "verification_results": verification_results,
-        "metrics": metrics
+        "metrics": metrics,
     }
 
 
@@ -250,5 +249,7 @@ if __name__ == "__main__":
     result = demonstrate_provenance_audit_integration()
     if result:
         print("\nDemonstration completed successfully")
-        print(f"Number of records with valid signatures: "
-              f"{sum(1 for v in result['verification_results'].values() if v)}")
+        print(
+            f"Number of records with valid signatures: "
+            f"{sum(1 for v in result['verification_results'].values() if v)}"
+        )

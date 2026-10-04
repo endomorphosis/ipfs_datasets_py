@@ -77,6 +77,8 @@ warnings.filterwarnings(
     message=r"datetime\.datetime\.utcnow\(\) is deprecated.*",
     category=DeprecationWarning,
 )
+
+
 def _build_live_audit_api() -> UnifiedWebArchivingAPI:
     """Use the same live-aware routing as targeted weak-state recovery."""
     live_cfg = ScraperConfig(
@@ -100,7 +102,9 @@ def _build_live_audit_api() -> UnifiedWebArchivingAPI:
 
 
 def parse_args() -> argparse.Namespace:
-    p = argparse.ArgumentParser(description="Audit state admin-rule corpus gaps with agentic web archiving")
+    p = argparse.ArgumentParser(
+        description="Audit state admin-rule corpus gaps with agentic web archiving"
+    )
     p.add_argument(
         "--aggregate-jsonl",
         default=(
@@ -111,10 +115,14 @@ def parse_args() -> argparse.Namespace:
     )
     p.add_argument(
         "--local-jsonld-dir",
-        default=str(Path.home() / ".ipfs_datasets" / "state_admin_rules" / "state_admin_rules_jsonld"),
+        default=str(
+            Path.home() / ".ipfs_datasets" / "state_admin_rules" / "state_admin_rules_jsonld"
+        ),
         help="Canonical local admin JSON-LD directory",
     )
-    p.add_argument("--states", nargs="*", default=list(US_50_STATE_CODES), help="State codes to audit")
+    p.add_argument(
+        "--states", nargs="*", default=list(US_50_STATE_CODES), help="State codes to audit"
+    )
     p.add_argument("--max-seeds-per-state", type=int, default=4)
     p.add_argument("--max-pages", type=int, default=6)
     p.add_argument("--max-hops", type=int, default=1)
@@ -244,7 +252,9 @@ def _document_html(doc: Dict[str, Any]) -> str:
     return str(doc.get("html") or "")
 
 
-def _looks_like_blocked_page(*, title: str, text: str, html: str, error_messages: Iterable[str]) -> bool:
+def _looks_like_blocked_page(
+    *, title: str, text: str, html: str, error_messages: Iterable[str]
+) -> bool:
     title_text = str(title or "").strip()
     body_text = str(text or "")
     body_html = str(html or "")
@@ -263,7 +273,9 @@ def _looks_like_login_gate(*, title: str, text: str, html: str) -> bool:
     hay = "\n".join([title_text, body_text[:2500], str(html or "")[:2500]])
     if not _LOGIN_GATE_RE.search(hay):
         return False
-    return len(body_text.strip()) < 1200 or bool(re.search(r"^(sign in|log in|account)", title_text, re.IGNORECASE))
+    return len(body_text.strip()) < 1200 or bool(
+        re.search(r"^(sign in|log in|account)", title_text, re.IGNORECASE)
+    )
 
 
 def _is_confident_substantive_page(*, text: str, title: str, url: str) -> bool:
@@ -310,7 +322,9 @@ def _page_row(*, state_code: str, page: Dict[str, Any], corpus_urls: set[str]) -
     rule_body = _has_rule_body_signals(text=text, title=title, url=url)
     landing_like = _looks_like_non_rule_admin_page(text=text, title=title, url=url)
     blocked_from_errors, blocked_messages = _classify_error_messages(error_messages)
-    blocked_from_page = _looks_like_blocked_page(title=title, text=text, html=html, error_messages=error_messages)
+    blocked_from_page = _looks_like_blocked_page(
+        title=title, text=text, html=html, error_messages=error_messages
+    )
     login_gate = _looks_like_login_gate(title=title, text=text, html=html)
     blocked = blocked_from_errors or blocked_from_page or login_gate
     return {
@@ -354,7 +368,9 @@ def _corpus_summary(state_code: str, rows: List[Dict[str, Any]]) -> Dict[str, An
     }
 
 
-def _prioritize_seeds(state_code: str, corpus_rows: List[Dict[str, Any]], max_seeds: int) -> List[str]:
+def _prioritize_seeds(
+    state_code: str, corpus_rows: List[Dict[str, Any]], max_seeds: int
+) -> List[str]:
     ordered: List[str] = []
     seen = set()
     for url in _STATE_ADMIN_SOURCE_MAP.get(state_code, []):
@@ -401,17 +417,30 @@ def _audit_state(
         max_pages=max_pages,
     )
     results = probe.get("results") or []
-    page_rows = [_page_row(state_code=state_code, page=page, corpus_urls=corpus["corpus_urls"]) for page in results if isinstance(page, dict)]
+    page_rows = [
+        _page_row(state_code=state_code, page=page, corpus_urls=corpus["corpus_urls"])
+        for page in results
+        if isinstance(page, dict)
+    ]
 
     success_count = sum(1 for row in page_rows if row["success"])
     usable_success_count = sum(1 for row in page_rows if row["usable_success"])
-    substantive_hits = [row for row in page_rows if row["substantive_admin"] and row["rule_body_signals"]]
-    landing_candidate_hits = [row for row in page_rows if row["substantive_admin"] and not row["rule_body_signals"]]
+    substantive_hits = [
+        row for row in page_rows if row["substantive_admin"] and row["rule_body_signals"]
+    ]
+    landing_candidate_hits = [
+        row for row in page_rows if row["substantive_admin"] and not row["rule_body_signals"]
+    ]
     blocked_count = sum(1 for row in page_rows if row["blocked_or_transport_error"])
-    new_substantive_urls = [row["url"] for row in substantive_hits if row["url"] and not row["in_existing_corpus"]]
-    new_landing_candidate_urls = [row["url"] for row in landing_candidate_hits if row["url"] and not row["in_existing_corpus"]]
+    new_substantive_urls = [
+        row["url"] for row in substantive_hits if row["url"] and not row["in_existing_corpus"]
+    ]
+    new_landing_candidate_urls = [
+        row["url"] for row in landing_candidate_hits if row["url"] and not row["in_existing_corpus"]
+    ]
     thin_successes = [
-        row for row in page_rows
+        row
+        for row in page_rows
         if row["usable_success"] and row["text_len"] < 160 and not row["substantive_admin"]
     ]
 
@@ -477,16 +506,30 @@ def _build_markdown(summary: Dict[str, Any], state_rows: List[Dict[str, Any]]) -
     lines.append("")
     lines.append("## Summary")
     lines.append("")
-    lines.append(f"- States with substantive corpus signal: **{summary['states_with_corpus_substantive']}**")
-    lines.append(f"- States where probe found substantive pages: **{summary['states_with_probe_substantive']}**")
-    lines.append(f"- States where probe found new substantive URLs outside corpus: **{summary['states_with_new_substantive_urls']}**")
-    lines.append(f"- States where probe found only landing-page candidates: **{summary['states_with_landing_candidates']}**")
-    lines.append(f"- States blocked mainly by transport/access failures: **{summary['states_blocked_or_transport']}**")
-    lines.append(f"- States fetchable but still non-substantive: **{summary['states_fetchable_but_non_substantive']}**")
+    lines.append(
+        f"- States with substantive corpus signal: **{summary['states_with_corpus_substantive']}**"
+    )
+    lines.append(
+        f"- States where probe found substantive pages: **{summary['states_with_probe_substantive']}**"
+    )
+    lines.append(
+        f"- States where probe found new substantive URLs outside corpus: **{summary['states_with_new_substantive_urls']}**"
+    )
+    lines.append(
+        f"- States where probe found only landing-page candidates: **{summary['states_with_landing_candidates']}**"
+    )
+    lines.append(
+        f"- States blocked mainly by transport/access failures: **{summary['states_blocked_or_transport']}**"
+    )
+    lines.append(
+        f"- States fetchable but still non-substantive: **{summary['states_fetchable_but_non_substantive']}**"
+    )
     lines.append("")
     lines.append("## Per-State")
     lines.append("")
-    lines.append("| State | Corpus Rows | Corpus Substantive | Probe Success | Usable Success | Probe Substantive | Probe Landing Candidates | New Substantive URLs | Gap Category |")
+    lines.append(
+        "| State | Corpus Rows | Corpus Substantive | Probe Success | Usable Success | Probe Substantive | Probe Landing Candidates | New Substantive URLs | Gap Category |"
+    )
     lines.append("|---|---:|---:|---:|---:|---:|---:|---:|---|")
     for row in state_rows:
         lines.append(
@@ -506,26 +549,42 @@ def _build_markdown(summary: Dict[str, Any], state_rows: List[Dict[str, Any]]) -
         lines.append(f"### {row['state_code']}")
         lines.append("")
         lines.append(f"- Gap category: `{row['gap_category']}`")
-        lines.append(f"- Seed URLs: {', '.join('`' + url + '`' for url in row['seed_urls'][:4]) or 'None'}")
+        lines.append(
+            f"- Seed URLs: {', '.join('`' + url + '`' for url in row['seed_urls'][:4]) or 'None'}"
+        )
         if row["new_substantive_urls"]:
-            lines.append(f"- New substantive URLs: {', '.join('`' + url + '`' for url in row['new_substantive_urls'][:5])}")
+            lines.append(
+                f"- New substantive URLs: {', '.join('`' + url + '`' for url in row['new_substantive_urls'][:5])}"
+            )
         if row["best_landing_candidate_urls"]:
-            lines.append(f"- Landing-page candidates: {', '.join('`' + url + '`' for url in row['best_landing_candidate_urls'][:5])}")
+            lines.append(
+                f"- Landing-page candidates: {', '.join('`' + url + '`' for url in row['best_landing_candidate_urls'][:5])}"
+            )
         if row["blocked_examples"]:
-            lines.append(f"- Blocked examples: {', '.join('`' + msg[:120] + '`' for msg in row['blocked_examples'][:3])}")
+            lines.append(
+                f"- Blocked examples: {', '.join('`' + msg[:120] + '`' for msg in row['blocked_examples'][:3])}"
+            )
         lines.append("")
     return "\n".join(lines).strip() + "\n"
 
 
 def main() -> int:
     args = parse_args()
-    states = [str(s).upper().strip() for s in args.states if str(s).upper().strip() in set(US_50_STATE_CODES)]
+    states = [
+        str(s).upper().strip()
+        for s in args.states
+        if str(s).upper().strip() in set(US_50_STATE_CODES)
+    ]
     aggregate_path = _resolve_input_path(args.aggregate_jsonl)
     local_jsonld_dir = _resolve_input_path(args.local_jsonld_dir)
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-    out_dir = _resolve_input_path(args.output_dir) if args.output_dir else (
-        Path.cwd() / "artifacts/state_admin_rules" / f"webarch_gap_audit_{timestamp}"
-    ).resolve()
+    out_dir = (
+        _resolve_input_path(args.output_dir)
+        if args.output_dir
+        else (
+            Path.cwd() / "artifacts/state_admin_rules" / f"webarch_gap_audit_{timestamp}"
+        ).resolve()
+    )
     out_dir.mkdir(parents=True, exist_ok=True)
 
     by_state = _load_aggregate_by_state(aggregate_path)
@@ -566,12 +625,26 @@ def main() -> int:
         "max_seeds_per_state": int(args.max_seeds_per_state),
         "max_pages": int(args.max_pages),
         "max_hops": int(args.max_hops),
-        "states_with_corpus_substantive": sum(1 for row in state_rows if row["corpus_substantive_rows"] > 0),
-        "states_with_probe_substantive": sum(1 for row in state_rows if row["probe_substantive_hits"] > 0),
-        "states_with_new_substantive_urls": sum(1 for row in state_rows if row["new_substantive_urls"]),
-        "states_with_landing_candidates": sum(1 for row in state_rows if row["probe_landing_candidate_hits"] > 0 and row["probe_substantive_hits"] == 0),
-        "states_blocked_or_transport": sum(1 for row in state_rows if row["gap_category"] == "blocked_or_transport_failures"),
-        "states_fetchable_but_non_substantive": sum(1 for row in state_rows if row["gap_category"] == "fetchable_but_non_substantive"),
+        "states_with_corpus_substantive": sum(
+            1 for row in state_rows if row["corpus_substantive_rows"] > 0
+        ),
+        "states_with_probe_substantive": sum(
+            1 for row in state_rows if row["probe_substantive_hits"] > 0
+        ),
+        "states_with_new_substantive_urls": sum(
+            1 for row in state_rows if row["new_substantive_urls"]
+        ),
+        "states_with_landing_candidates": sum(
+            1
+            for row in state_rows
+            if row["probe_landing_candidate_hits"] > 0 and row["probe_substantive_hits"] == 0
+        ),
+        "states_blocked_or_transport": sum(
+            1 for row in state_rows if row["gap_category"] == "blocked_or_transport_failures"
+        ),
+        "states_fetchable_but_non_substantive": sum(
+            1 for row in state_rows if row["gap_category"] == "fetchable_but_non_substantive"
+        ),
     }
 
     (out_dir / "summary.json").write_text(

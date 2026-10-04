@@ -25,7 +25,9 @@ from datasets import load_dataset
 from huggingface_hub import hf_hub_url, list_repo_files
 
 from ipfs_datasets_py.processors.legal_scrapers import legal_dataset_api
-from ipfs_datasets_py.processors.legal_scrapers.canonical_legal_corpora import get_canonical_legal_corpus
+from ipfs_datasets_py.processors.legal_scrapers.canonical_legal_corpora import (
+    get_canonical_legal_corpus,
+)
 
 
 _STATE_LAWS_CORPUS = get_canonical_legal_corpus("state_laws")
@@ -232,9 +234,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--top-k", type=int, default=5)
     parser.add_argument("--collection-prefix", default="state_hf_smoke")
     parser.add_argument("--venv-dir", default=".venv")
-    parser.add_argument("--auto-setup-venv", action="store_true", help="Install deps in tool venv before run")
-    parser.add_argument("--enrich-with-cases", action="store_true", help="Use case/statute enrichment mode")
-    parser.add_argument("--cleanup-faiss", action="store_true", help="Delete generated FAISS files after each state")
+    parser.add_argument(
+        "--auto-setup-venv", action="store_true", help="Install deps in tool venv before run"
+    )
+    parser.add_argument(
+        "--enrich-with-cases", action="store_true", help="Use case/statute enrichment mode"
+    )
+    parser.add_argument(
+        "--cleanup-faiss", action="store_true", help="Delete generated FAISS files after each state"
+    )
     parser.add_argument(
         "--skip-missing",
         action="store_true",

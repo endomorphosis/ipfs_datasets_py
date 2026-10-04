@@ -55,17 +55,13 @@ CVEFIXES_COLUMN_TYPES: Final[tuple[tuple[str, str], ...]] = (
     ("fixed_code", "string"),
     ("security_keywords", "list<string>"),
 )
-CVEFIXES_COLUMNS: Final[tuple[str, ...]] = tuple(
-    name for name, _ in CVEFIXES_COLUMN_TYPES
-)
+CVEFIXES_COLUMNS: Final[tuple[str, ...]] = tuple(name for name, _ in CVEFIXES_COLUMN_TYPES)
 
 _SHA1_RE = re.compile(r"^[0-9a-f]{40}$")
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 _CVE_ID_RE = re.compile(r"^CVE-[0-9]{4}-[0-9]{4,}$")
 _GIT_HASH_RE = re.compile(r"^[0-9a-f]{40}$")
-_REVIEWED_REPOSITORY_HOSTS: Final = frozenset(
-    {"bitbucket.org", "github.com", "gitlab.com"}
-)
+_REVIEWED_REPOSITORY_HOSTS: Final = frozenset({"bitbucket.org", "github.com", "gitlab.com"})
 _ALLOWED_DESCRIPTION_AST_NODES: Final = (
     ast.Expression,
     ast.List,
@@ -106,10 +102,7 @@ class SourceShard:
             or ".." in Path(self.path).parts
         ):
             raise SourceSnapshotError("shard path must be a safe data/*.parquet path")
-        if (
-            not isinstance(self.sha256, str)
-            or not _SHA256_RE.fullmatch(self.sha256)
-        ):
+        if not isinstance(self.sha256, str) or not _SHA256_RE.fullmatch(self.sha256):
             raise SourceSnapshotError("shard sha256 must be lowercase hexadecimal")
         if type(self.size_bytes) is not int or self.size_bytes <= 0:
             raise SourceSnapshotError("shard size_bytes must be a positive integer")
@@ -203,13 +196,8 @@ class SourceSnapshotObservation:
                 )
             columns.append((name, column_type))
         raw_shards = value["shards"]
-        if (
-            isinstance(raw_shards, (str, bytes, bytearray))
-            or not isinstance(raw_shards, Sequence)
-        ):
-            raise SourceSnapshotVerificationError(
-                "source observation shards must be a sequence"
-            )
+        if isinstance(raw_shards, (str, bytes, bytearray)) or not isinstance(raw_shards, Sequence):
+            raise SourceSnapshotVerificationError("source observation shards must be a sequence")
         return cls(
             dataset_id=value["dataset_id"],
             revision=value["revision"],
@@ -218,8 +206,7 @@ class SourceSnapshotObservation:
             row_count=value["row_count"],
             columns=tuple(columns),
             shards=tuple(
-                SourceShard.from_dict(_require_mapping(item, "source shard"))
-                for item in raw_shards
+                SourceShard.from_dict(_require_mapping(item, "source shard")) for item in raw_shards
             ),
         )
 
@@ -237,9 +224,7 @@ class SourceSnapshotObservation:
                 "revision must be an immutable lowercase commit hash"
             )
         if type(self.row_count) is not int or self.row_count < 0:
-            raise SourceSnapshotVerificationError(
-                "row_count must be a non-negative integer"
-            )
+            raise SourceSnapshotVerificationError("row_count must be a non-negative integer")
 
 
 @dataclass(frozen=True, slots=True)
@@ -467,9 +452,7 @@ class CVEfixesSourceRow:
         return {
             "commit_date": self.commit_date,
             "commit_message": self.commit_message,
-            "cve_description": [
-                description.to_dict() for description in self.cve_description
-            ],
+            "cve_description": [description.to_dict() for description in self.cve_description],
             "cve_id": self.cve_id,
             "cvss2_base_score": self.cvss2_base_score,
             "cvss3_base_score": self.cvss3_base_score,
@@ -510,14 +493,8 @@ class CVEfixesRowAdapter:
         if not isinstance(row, Mapping):
             raise CVEfixesRowError("source row must be a mapping")
         _require_exact_keys(row, set(CVEFIXES_COLUMNS), "source row", CVEfixesRowError)
-        if (
-            type(row_index) is not int
-            or row_index < 0
-            or row_index >= CVEFIXES_ROW_COUNT
-        ):
-            raise CVEfixesRowError(
-                f"row_index must be between 0 and {CVEFIXES_ROW_COUNT - 1}"
-            )
+        if type(row_index) is not int or row_index < 0 or row_index >= CVEFIXES_ROW_COUNT:
+            raise CVEfixesRowError(f"row_index must be between 0 and {CVEFIXES_ROW_COUNT - 1}")
 
         cve_id = _required_text(row["cve_id"], "cve_id", 64)
         if not _CVE_ID_RE.fullmatch(cve_id):
@@ -536,14 +513,10 @@ class CVEfixesRowAdapter:
             or parsed_repo.query
             or parsed_repo.fragment
         ):
-            raise CVEfixesRowError(
-                "repo_url must identify a reviewed HTTPS source repository"
-            )
+            raise CVEfixesRowError("repo_url must identify a reviewed HTTPS source repository")
 
         metadata_fields = {
-            name: _optional_text(
-                row[name], name, self._bounds.max_metadata_chars
-            )
+            name: _optional_text(row[name], name, self._bounds.max_metadata_chars)
             for name in (
                 "published_date",
                 "severity",
@@ -578,9 +551,7 @@ class CVEfixesRowAdapter:
             max_items=self._bounds.max_security_keywords,
             max_item_chars=self._bounds.max_keyword_chars,
         )
-        descriptions = _parse_descriptions(
-            row["cve_description"], bounds=self._bounds
-        )
+        descriptions = _parse_descriptions(row["cve_description"], bounds=self._bounds)
         text_size = (
             len(cve_id)
             + len(commit_hash)
@@ -589,9 +560,7 @@ class CVEfixesRowAdapter:
             + sum(len(value or "") for value in body_fields.values())
             + sum(len(value) for value in file_paths)
             + sum(len(value) for value in security_keywords)
-            + sum(
-                len(value.language) + len(value.value) for value in descriptions
-            )
+            + sum(len(value.language) + len(value.value) for value in descriptions)
         )
         if text_size > self._bounds.max_total_text_chars:
             raise CVEfixesRowError("source row exceeds max_total_text_chars")
@@ -602,15 +571,9 @@ class CVEfixesRowAdapter:
             hash=commit_hash,
             repo_url=repo_url,
             cve_description=descriptions,
-            cvss2_base_score=_optional_score(
-                row["cvss2_base_score"], "cvss2_base_score"
-            ),
-            cvss3_base_score=_optional_score(
-                row["cvss3_base_score"], "cvss3_base_score"
-            ),
-            repo_total_files=_optional_nonnegative_int(
-                row["repo_total_files"], "repo_total_files"
-            ),
+            cvss2_base_score=_optional_score(row["cvss2_base_score"], "cvss2_base_score"),
+            cvss3_base_score=_optional_score(row["cvss3_base_score"], "cvss3_base_score"),
+            repo_total_files=_optional_nonnegative_int(row["repo_total_files"], "repo_total_files"),
             repo_total_commits=_optional_nonnegative_int(
                 row["repo_total_commits"], "repo_total_commits"
             ),
@@ -657,9 +620,7 @@ def _parse_descriptions(
         if len(nodes) > bounds.max_description_ast_nodes or any(
             not isinstance(node, _ALLOWED_DESCRIPTION_AST_NODES) for node in nodes
         ):
-            raise CVEfixesRowError(
-                "cve_description contains unsupported literal syntax"
-            )
+            raise CVEfixesRowError("cve_description contains unsupported literal syntax")
         try:
             parsed = ast.literal_eval(tree)
         except (ValueError, TypeError, SyntaxError, MemoryError, RecursionError) as exc:
@@ -671,9 +632,7 @@ def _parse_descriptions(
     descriptions: list[CVEfixesDescription] = []
     for index, item in enumerate(parsed):
         if not isinstance(item, Mapping) or set(item) != {"lang", "value"}:
-            raise CVEfixesRowError(
-                f"cve_description[{index}] must contain exactly lang and value"
-            )
+            raise CVEfixesRowError(f"cve_description[{index}] must contain exactly lang and value")
         language = _required_text(item["lang"], f"cve_description[{index}].lang", 32)
         text = _required_text(
             item["value"],
@@ -766,9 +725,7 @@ def _require_exact_keys(
         if missing:
             details.append("missing=" + ",".join(str(item) for item in missing))
         if unexpected:
-            details.append(
-                "unexpected=" + ",".join(str(item) for item in unexpected)
-            )
+            details.append("unexpected=" + ",".join(str(item) for item in unexpected))
         raise error_type(f"{label} schema drift: {'; '.join(details)}")
 
 
@@ -780,9 +737,7 @@ def _require_mapping(value: Any, label: str) -> Mapping[str, Any]:
 
 # A read-only view is useful to consumers that need name-based type lookup
 # without exposing mutable shared state.
-CVEFIXES_COLUMN_TYPE_MAP: Final[Mapping[str, str]] = MappingProxyType(
-    dict(CVEFIXES_COLUMN_TYPES)
-)
+CVEFIXES_COLUMN_TYPE_MAP: Final[Mapping[str, str]] = MappingProxyType(dict(CVEFIXES_COLUMN_TYPES))
 
 
 __all__ = [

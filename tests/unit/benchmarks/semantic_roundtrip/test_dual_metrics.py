@@ -135,9 +135,7 @@ def test_unavailable_backend_fails_closed_to_structural_only() -> None:
     l1, reconstruction, l2 = _identical_l1_l2()
     backend = UnavailableEmbeddingBackend(identity="offline-ae")
 
-    metrics = compute_dual_metrics(
-        gold, l1, reconstruction, l2, embedding_backend=backend
-    )
+    metrics = compute_dual_metrics(gold, l1, reconstruction, l2, embedding_backend=backend)
 
     assert metrics.embedding_backend_present is True
     assert metrics.embedding_backend_id == "offline-ae"
@@ -151,13 +149,9 @@ def test_unavailable_backend_fails_closed_to_structural_only() -> None:
 def test_available_flag_false_does_not_invent_scores() -> None:
     gold = _gold()
     l1, reconstruction, l2 = _identical_l1_l2()
-    backend = _constant_backend(
-        EmbeddingPairMetrics(0.1, 0.9), available=False
-    )
+    backend = _constant_backend(EmbeddingPairMetrics(0.1, 0.9), available=False)
 
-    metrics = compute_dual_metrics(
-        gold, l1, reconstruction, l2, embedding_backend=backend
-    )
+    metrics = compute_dual_metrics(gold, l1, reconstruction, l2, embedding_backend=backend)
 
     assert metrics.metric_mode is DualMetricMode.STRUCTURAL_ONLY
     assert metrics.cross_entropy_forward is None
@@ -171,9 +165,7 @@ def test_backend_present_attaches_ce_and_cosine_on_every_leg() -> None:
     backend = _constant_backend(pair, identity="fixture-embed@1")
     structural = round_trip_losses(gold, l1, reconstruction, l2)
 
-    metrics = compute_dual_metrics(
-        gold, l1, reconstruction, l2, embedding_backend=backend
-    )
+    metrics = compute_dual_metrics(gold, l1, reconstruction, l2, embedding_backend=backend)
     payload = metrics.to_dict()
 
     assert metrics.metric_mode is DualMetricMode.DUAL
@@ -211,9 +203,7 @@ def test_partial_backend_scores_fail_closed_without_partial_ce() -> None:
         return None
 
     backend = CallableEmbeddingBackend(identity="partial@1", scorer=scorer)
-    metrics = compute_dual_metrics(
-        gold, l1, reconstruction, l2, embedding_backend=backend
-    )
+    metrics = compute_dual_metrics(gold, l1, reconstruction, l2, embedding_backend=backend)
 
     assert metrics.metric_mode is DualMetricMode.STRUCTURAL_ONLY
     assert metrics.embedding_backend_present is True
@@ -226,15 +216,11 @@ def test_backend_exception_fails_closed() -> None:
     gold = _gold()
     l1, reconstruction, l2 = _identical_l1_l2()
 
-    def boom(
-        _reference: CanonicalRuleIR, _candidate: CanonicalRuleIR
-    ) -> EmbeddingPairMetrics:
+    def boom(_reference: CanonicalRuleIR, _candidate: CanonicalRuleIR) -> EmbeddingPairMetrics:
         raise RuntimeError("embedding service down")
 
     backend = CallableEmbeddingBackend(identity="explode@1", scorer=boom)
-    metrics = compute_dual_metrics(
-        gold, l1, reconstruction, l2, embedding_backend=backend
-    )
+    metrics = compute_dual_metrics(gold, l1, reconstruction, l2, embedding_backend=backend)
 
     assert metrics.metric_mode is DualMetricMode.STRUCTURAL_ONLY
     assert metrics.cross_entropy_end_to_end is None
@@ -291,9 +277,7 @@ def test_attach_structural_only_row_keeps_null_ce_cosine() -> None:
     gold = _gold()
     l1, reconstruction, l2 = _identical_l1_l2()
     metrics = compute_dual_metrics(gold, l1, reconstruction, l2)
-    attached = attach_dual_metrics_to_residual_row(
-        {"case_id": "corp_policy_1"}, metrics
-    )
+    attached = attach_dual_metrics_to_residual_row({"case_id": "corp_policy_1"}, metrics)
     dual = attached[RESIDUAL_ROW_DUAL_METRICS_FIELD]
     assert dual["metric_mode"] == METRIC_MODE_STRUCTURAL_ONLY
     assert dual["cross_entropy_forward"] is None
@@ -378,9 +362,7 @@ def test_record_rejects_promotion_primary_rewrite() -> None:
 
 
 def test_record_rejects_ce_cosine_promotion_authority() -> None:
-    with pytest.raises(
-        ContractError, match="ce_cosine_may_substitute_for_promotion"
-    ):
+    with pytest.raises(ContractError, match="ce_cosine_may_substitute_for_promotion"):
         DualRoundTripMetrics(
             structural_forward=0.0,
             structural_cycle=0.0,

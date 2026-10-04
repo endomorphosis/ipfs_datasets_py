@@ -42,9 +42,9 @@ except (ImportError, AttributeError):
         # If neither server is available, provide placeholder
         def start_server(*args, **kwargs):
             raise ImportError(
-                "MCP server dependencies not installed. "
-                "Install with: pip install anyio mcp flask"
+                "MCP server dependencies not installed. Install with: pip install anyio mcp flask"
             )
+
     start_stdio_server = None
     IPFSDatasetsMCPServer = None
 
@@ -56,6 +56,7 @@ except (ImportError, AttributeError):
 
 # These don't depend on modelcontextprotocol
 from .configs import Configs, configs, load_config_from_yaml
+
 try:
     from .simple_server import SimpleIPFSDatasetsMCPServer
 except (ImportError, AttributeError):

@@ -22,14 +22,18 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import pytest
 
 try:
-    from ipfs_datasets_py.mcp_server.tools.audit_tools.generate_audit_report import generate_audit_report
+    from ipfs_datasets_py.mcp_server.tools.audit_tools.generate_audit_report import (
+        generate_audit_report,
+    )
     from ipfs_datasets_py.mcp_server.tools.audit_tools.record_audit_event import record_audit_event
+
     AUDIT_TOOLS_AVAILABLE = True
 except ImportError as e:
     print(f"Error importing Audit tools: {e}")
     AUDIT_TOOLS_AVAILABLE = False
     generate_audit_report = None
     record_audit_event = None
+
 
 # Function to analyze the function signature
 def analyze_function_signature(func):
@@ -43,11 +47,7 @@ def analyze_function_signature(func):
             if "ForwardRef" in param_type:
                 param_type = param_type.split("'")[1]
         default = param.default if param.default != inspect.Parameter.empty else None
-        params.append({
-            'name': name,
-            'type': param_type,
-            'default': default
-        })
+        params.append({"name": name, "type": param_type, "default": default})
     return_type = sig.return_annotation
     if return_type != inspect.Signature.empty:
         return_type = str(return_type).replace("typing.", "").replace("'", "")
@@ -56,6 +56,7 @@ def analyze_function_signature(func):
     else:
         return_type = "Any"
     return params, return_type
+
 
 # Create a test class for generate_audit_report
 def generate_audit_report_test():
@@ -181,6 +182,7 @@ class TestGenerateAuditReport:
         print(f"Error generating test for generate_audit_report: {e}")
         return None
 
+
 # Create a test class for record_audit_event
 def generate_record_audit_event_test():
     try:
@@ -284,6 +286,7 @@ class TestRecordAuditEvent:
         print(f"Error generating test for record_audit_event: {e}")
         return None
 
+
 # Generate the test file
 def generate_test_file():
     generate_audit_report_test_content = generate_audit_report_test()
@@ -322,11 +325,13 @@ import pytest
 
     print(f"Generated test file: {test_file_path}")
 
+
 # Main function
 def main():
     print("Generating tests for Audit tools...")
     generate_test_file()
     print("Done!")
+
 
 if __name__ == "__main__":
     main()

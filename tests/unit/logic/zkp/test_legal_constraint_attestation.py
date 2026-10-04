@@ -102,12 +102,7 @@ def test_honest_prove_verify_succeeds() -> None:
     assert attestation.public_inputs["profile"] == statement.profile
     assert attestation.public_inputs["circuit_ref"] == LEGAL_CONSTRAINT_CIRCUIT_REF
     assert verify_legal_constraint_attestation(attestation) is True
-    assert (
-        verify_legal_constraint_attestation(
-            attestation, expected_statement=statement
-        )
-        is True
-    )
+    assert verify_legal_constraint_attestation(attestation, expected_statement=statement) is True
 
 
 def test_prove_and_verify_convenience() -> None:
@@ -146,9 +141,7 @@ def test_verify_fails_on_tampered_constraint_digest() -> None:
     )
     assert verify_legal_constraint_attestation(tampered) is False
     assert (
-        verify_legal_constraint_attestation(
-            attestation, expected_statement=tampered_statement
-        )
+        verify_legal_constraint_attestation(attestation, expected_statement=tampered_statement)
         is False
     )
 
@@ -229,12 +222,7 @@ def test_verify_fails_when_expected_statement_mismatches() -> None:
     other, _, _ = _honest_pair(profile="security-lite")
     with pytest.warns(UserWarning, match="SIMULATED"):
         attestation = prove_legal_constraint_attestation(statement, witness)
-    assert (
-        verify_legal_constraint_attestation(
-            attestation, expected_statement=other
-        )
-        is False
-    )
+    assert verify_legal_constraint_attestation(attestation, expected_statement=other) is False
 
 
 def test_simulated_backend_is_labeled() -> None:
@@ -253,17 +241,13 @@ def test_simulated_backend_is_labeled() -> None:
 def test_production_backend_unavailable_fails_closed() -> None:
     statement, witness, _ = _honest_pair()
     with pytest.raises(LegalConstraintZKPError, match="not available"):
-        prove_legal_constraint_attestation(
-            statement, witness, backend="groth16"
-        )
+        prove_legal_constraint_attestation(statement, witness, backend="groth16")
 
 
 def test_unknown_backend_fails_closed() -> None:
     statement, witness, _ = _honest_pair()
     with pytest.raises(LegalConstraintZKPError, match="unsupported"):
-        prove_legal_constraint_attestation(
-            statement, witness, backend="not-a-backend"
-        )
+        prove_legal_constraint_attestation(statement, witness, backend="not-a-backend")
 
 
 def test_zkp_required_profile_rejects_simulated() -> None:

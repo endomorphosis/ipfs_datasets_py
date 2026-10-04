@@ -48,9 +48,7 @@ def _row(position: int) -> dict[str, object]:
         "partition": "train",
         "shard_key": f"CVE-2026-{position:04d}",
         "kind": "code_unit",
-        "authority": (
-            "candidate" if position % 2 else "non_authoritative"
-        ),
+        "authority": ("candidate" if position % 2 else "non_authoritative"),
         "source_cids": [_cid(f"source-{position}")],
         "cwes": ["CWE-20"],
         "languages": ["c", "python"],
@@ -107,17 +105,16 @@ def test_builds_exact_publisher_compatible_corpus_and_meta_index(
         "corpus": "data/corpus/*.parquet",
         "corpus_chunk_index": "indexes/corpus_chunks.parquet",
     }
-    assert summary.indexes == {
-        "corpus_chunks": summary.corpus_index.to_dict()
-    }
+    assert summary.indexes == {"corpus_chunks": summary.corpus_index.to_dict()}
     assert summary.corpus_index.config_name == "corpus_chunk_index"
     assert [item.config_name for item in summary.data_shards] == [
         "corpus",
         "corpus",
     ]
-    assert {
-        item["config_name"] for item in summary.artifact_inventory
-    } == {"corpus", "corpus_chunk_index"}
+    assert {item["config_name"] for item in summary.artifact_inventory} == {
+        "corpus",
+        "corpus_chunk_index",
+    }
     assert summary.to_manifest_fragment()["counts"] == summary.counts
 
     index = pq.read_table(tmp_path / "indexes/corpus_chunks.parquet")
@@ -154,16 +151,12 @@ def test_builds_exact_publisher_compatible_corpus_and_meta_index(
         assert pa.types.is_int32(table.schema.field("document_index").type)
         assert pa.types.is_large_string(table.schema.field("text").type)
         assert pa.types.is_list(table.schema.field("source_cids").type)
-        assert pa.types.is_boolean(
-            table.schema.field("grants_execution_authority").type
-        )
+        assert pa.types.is_boolean(table.schema.field("grants_execution_authority").type)
         parquet = pq.ParquetFile(path)
         assert {
             parquet.metadata.row_group(group).column(column).compression
             for group in range(parquet.num_row_groups)
-            for column in range(
-                parquet.metadata.row_group(group).num_columns
-            )
+            for column in range(parquet.metadata.row_group(group).num_columns)
         } == {"ZSTD"}
         observed_documents.extend(table["document_index"].to_pylist())
         observed_entries.extend(table["entry_cid"].to_pylist())
@@ -181,15 +174,9 @@ def test_read_and_verify_helpers_return_complete_immutable_rows(
         tmp_path,
         config=_config(),
     )
-    verified = validate_cvefixes_hf_corpus_layout(
-        tmp_path, config=_config()
-    )
-    rows = read_cvefixes_hf_corpus_layout(
-        tmp_path, config=_config()
-    )
-    index = read_cvefixes_hf_corpus_index(
-        tmp_path, config=_config()
-    )
+    verified = validate_cvefixes_hf_corpus_layout(tmp_path, config=_config())
+    rows = read_cvefixes_hf_corpus_layout(tmp_path, config=_config())
+    index = read_cvefixes_hf_corpus_index(tmp_path, config=_config())
 
     assert verified.counts == built.counts
     assert [row["document_index"] for row in rows] == [0, 1, 2]
@@ -250,31 +237,21 @@ def test_corpus_layout_is_byte_deterministic(tmp_path: Path) -> None:
         ),
     ],
 )
-def test_unsafe_or_noncanonical_rows_fail_closed(
-    tmp_path: Path, mutate, error, match: str
-) -> None:
+def test_unsafe_or_noncanonical_rows_fail_closed(tmp_path: Path, mutate, error, match: str) -> None:
     row = _row(0)
     mutate(row)
     with pytest.raises(error, match=match):
-        build_cvefixes_hf_corpus_layout(
-            [row], tmp_path, config=_config()
-        )
+        build_cvefixes_hf_corpus_layout([row], tmp_path, config=_config())
 
 
 def test_dense_indices_and_unique_entry_cids_are_required(
     tmp_path: Path,
 ) -> None:
-    with pytest.raises(
-        CVEfixesHFCorpusLayoutError, match="dense from zero"
-    ):
-        build_cvefixes_hf_corpus_layout(
-            [_row(0), _row(2)], tmp_path / "gap", config=_config()
-        )
+    with pytest.raises(CVEfixesHFCorpusLayoutError, match="dense from zero"):
+        build_cvefixes_hf_corpus_layout([_row(0), _row(2)], tmp_path / "gap", config=_config())
     duplicate = _row(1)
     duplicate["entry_cid"] = _row(0)["entry_cid"]
-    with pytest.raises(
-        CVEfixesHFCorpusLayoutError, match="duplicate entry CIDs"
-    ):
+    with pytest.raises(CVEfixesHFCorpusLayoutError, match="duplicate entry CIDs"):
         build_cvefixes_hf_corpus_layout(
             [_row(0), duplicate],
             tmp_path / "duplicate",
@@ -289,9 +266,7 @@ def test_text_is_bounded_by_characters_and_utf8_bytes(
     text = "é" * 8
     row["text"] = text
     row["text_sha256"] = hashlib.sha256(text.encode()).hexdigest()
-    with pytest.raises(
-        CVEfixesHFCorpusLimitError, match="UTF-8 byte limit"
-    ):
+    with pytest.raises(CVEfixesHFCorpusLimitError, match="UTF-8 byte limit"):
         build_cvefixes_hf_corpus_layout(
             [row],
             tmp_path,
@@ -314,12 +289,8 @@ def test_validation_rejects_tampering_and_unindexed_files(
     content = bytearray(shard.read_bytes())
     content[-1] ^= 1
     shard.write_bytes(content)
-    with pytest.raises(
-        CVEfixesHFCorpusIntegrityError, match="descriptor differs"
-    ):
-        validate_cvefixes_hf_corpus_layout(
-            tmp_path, config=_config()
-        )
+    with pytest.raises(CVEfixesHFCorpusIntegrityError, match="descriptor differs"):
+        validate_cvefixes_hf_corpus_layout(tmp_path, config=_config())
 
     # Rebuild the valid family, then prove that unindexed material is rejected.
     build_cvefixes_hf_corpus_layout(
@@ -334,9 +305,7 @@ def test_validation_rejects_tampering_and_unindexed_files(
         CVEfixesHFCorpusIntegrityError,
         match="does not cover data shards exactly",
     ):
-        validate_cvefixes_hf_corpus_layout(
-            tmp_path, config=_config()
-        )
+        validate_cvefixes_hf_corpus_layout(tmp_path, config=_config())
 
 
 def test_failed_rebuild_preserves_existing_layout_and_other_families(
@@ -355,9 +324,7 @@ def test_failed_rebuild_preserves_existing_layout_and_other_families(
     invalid["text_sha256"] = "f" * 64
 
     with pytest.raises(CVEfixesHFCorpusIntegrityError):
-        build_cvefixes_hf_corpus_layout(
-            [invalid], tmp_path, config=_config()
-        )
+        build_cvefixes_hf_corpus_layout([invalid], tmp_path, config=_config())
 
     assert _artifact_bytes(tmp_path) == before
     assert unrelated.read_bytes() == b"owned by vector layout"

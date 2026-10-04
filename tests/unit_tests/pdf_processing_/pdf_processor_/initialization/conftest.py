@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 import logging
@@ -19,11 +18,13 @@ from ipfs_datasets_py.ipld import IPLDStorage
 
 from ipfs_datasets_py.audit import AuditLogger
 from ipfs_datasets_py.monitoring import MonitoringSystem
+
 try:
     from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMOptimizer
 except Exception:
     LLMOptimizer = object
 from ipfs_datasets_py.monitoring import MonitoringConfig, MetricsConfig
+
 try:
     from ipfs_datasets_py.pdf_processing.ocr_engine import MultiEngineOCR
 except Exception:
@@ -46,21 +47,20 @@ except Exception:
     GraphRAGIntegrator = object
 
 
-
 @pytest.fixture
 def test_constants():
     """Provide common test constants following example template pattern."""
     return {
-        'PDF_PROCESSOR_CLASS': PDFProcessor,
-        'NONE_VALUE': None,
-        'NONE_TYPE': type(None),
-        'IPLD_STORAGE_CLASS': IPLDStorage,
-        'MONITORING_SYSTEM_CLASS': MonitoringSystem,
-        'AUDIT_LOGGER_CLASS': AuditLogger,
-        'LOGGER_CLASS': logging.Logger,
-        'DICT_CLASS': dict,
-        'TEST_KEY': 'test_key',
-        'TEST_VALUE': 'test_value',
+        "PDF_PROCESSOR_CLASS": PDFProcessor,
+        "NONE_VALUE": None,
+        "NONE_TYPE": type(None),
+        "IPLD_STORAGE_CLASS": IPLDStorage,
+        "MONITORING_SYSTEM_CLASS": MonitoringSystem,
+        "AUDIT_LOGGER_CLASS": AuditLogger,
+        "LOGGER_CLASS": logging.Logger,
+        "DICT_CLASS": dict,
+        "TEST_KEY": "test_key",
+        "TEST_VALUE": "test_value",
     }
 
 
@@ -96,7 +96,7 @@ def mock_logger():
 @pytest.fixture
 def real_logger():
     """Logger that saves to a log file in 'logs' folder in the current working directory."""
-    
+
     # Create logs directory if it doesn't exist
     logs_dir = Path.cwd() / "logs"
     logs_dir.mkdir(exist_ok=True)
@@ -115,7 +115,9 @@ def real_logger():
     file_handler.setLevel(logging.DEBUG)
 
     # Create formatter
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s')
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s"
+    )
     file_handler.setFormatter(formatter)
 
     # Add handler to logger
@@ -136,7 +138,7 @@ def default_pdf_processor_parameters(default_logger):
         "storage": None,
         "enable_monitoring": False,
         "enable_audit": True,
-        "logger": default_logger
+        "logger": default_logger,
     }
 
 
@@ -160,9 +162,11 @@ def pdf_process_with_debug_logger(real_logger):
 
 def _make_processor(**kwargs):
     """Factory function to create PDFProcessor fixtures with custom parameters."""
+
     @pytest.fixture
     def _processor():
         return PDFProcessor(**kwargs)
+
     return _processor
 
 
@@ -171,7 +175,9 @@ pdf_processor_with_monitoring_disabled = _make_processor(enable_monitoring=False
 pdf_processor_with_audit_enabled = _make_processor(enable_audit=True)
 pdf_processor_with_audit_disabled = _make_processor(enable_audit=False)
 pdf_processor_with_all_options_enabled = _make_processor(enable_monitoring=True, enable_audit=True)
-pdf_processor_with_all_options_disabled = _make_processor(enable_monitoring=False, enable_audit=False)
+pdf_processor_with_all_options_disabled = _make_processor(
+    enable_monitoring=False, enable_audit=False
+)
 
 
 @pytest.fixture
@@ -184,7 +190,7 @@ def processors(
     pdf_processor_with_audit_enabled,
     pdf_processor_with_audit_disabled,
     pdf_processor_with_all_options_enabled,
-    pdf_processor_with_all_options_disabled
+    pdf_processor_with_all_options_disabled,
 ):
     return {
         "default": default_pdf_processor,
@@ -195,5 +201,5 @@ def processors(
         "audit_enabled": pdf_processor_with_audit_enabled,
         "audit_disabled": pdf_processor_with_audit_disabled,
         "all_options_enabled": pdf_processor_with_all_options_enabled,
-        "all_options_disabled": pdf_processor_with_all_options_disabled
+        "all_options_disabled": pdf_processor_with_all_options_disabled,
     }

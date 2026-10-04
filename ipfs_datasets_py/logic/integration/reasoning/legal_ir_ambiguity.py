@@ -188,8 +188,18 @@ class LegalIRCompetingParse:
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> "LegalIRCompetingParse":
         return cls(
-            parse_id=str(data.get("parse_id") or data.get("interpretation_id") or data.get("candidate_id") or ""),
-            target_view=str(data.get("target_view") or data.get("target_component") or data.get("legal_ir_view") or ""),
+            parse_id=str(
+                data.get("parse_id")
+                or data.get("interpretation_id")
+                or data.get("candidate_id")
+                or ""
+            ),
+            target_view=str(
+                data.get("target_view")
+                or data.get("target_component")
+                or data.get("legal_ir_view")
+                or ""
+            ),
             parse_kind=str(data.get("parse_kind") or data.get("kind") or "interpretation"),
             confidence=_bounded_confidence(data.get("confidence")),
             supported=bool(data.get("supported", True)),
@@ -340,7 +350,9 @@ class LegalIRAmbiguity:
 
     @property
     def route(self) -> LegalIRAmbiguityRoute:
-        if self.high_impact and (self.unresolved or self.requires_review or self.has_unsupported_interpretation):
+        if self.high_impact and (
+            self.unresolved or self.requires_review or self.has_unsupported_interpretation
+        ):
             return LegalIRAmbiguityRoute.HAMMER_LEANSTRAL_AUDIT
         if self.requires_review:
             return LegalIRAmbiguityRoute.OPERATOR_DIAGNOSTIC
@@ -404,7 +416,9 @@ class LegalIRAmbiguity:
             authority_ids=tuple(_strings(data.get("authority_ids", ()))),
             law_version_ids=tuple(_strings(data.get("law_version_ids", ()))),
             citation_ids=tuple(_strings(data.get("citation_ids", ()))),
-            learned_label=str(data.get("learned_label") or data.get("arbitrary_learned_label") or ""),
+            learned_label=str(
+                data.get("learned_label") or data.get("arbitrary_learned_label") or ""
+            ),
             metadata=dict(data.get("metadata") or {}),
         )
 
@@ -631,7 +645,9 @@ def build_legal_ir_ambiguity_report(
 
 
 def validate_legal_ir_ambiguities(
-    ambiguities: Sequence[LegalIRAmbiguity | Mapping[str, Any]] | LegalIRAmbiguityReport | Mapping[str, Any],
+    ambiguities: Sequence[LegalIRAmbiguity | Mapping[str, Any]]
+    | LegalIRAmbiguityReport
+    | Mapping[str, Any],
     *,
     ambiguity_report_id: str = "",
     metadata: Mapping[str, Any] | None = None,
@@ -694,7 +710,10 @@ def validate_legal_ir_ambiguities(
                     severity="warning",
                 )
             )
-        if ambiguity.ambiguity_kind is LegalIRAmbiguityKind.COMPETING_PARSE and len(ambiguity.competing_parses) < 2:
+        if (
+            ambiguity.ambiguity_kind is LegalIRAmbiguityKind.COMPETING_PARSE
+            and len(ambiguity.competing_parses) < 2
+        ):
             diagnostics.append(
                 _diagnostic(
                     LegalIRAmbiguityDiagnosticType.COMPETING_PARSE_REQUIRED,
@@ -745,7 +764,11 @@ def validate_legal_ir_ambiguities(
                     ),
                 )
             )
-        if ambiguity.high_impact and (ambiguity.unresolved or ambiguity.requires_review or ambiguity.has_unsupported_interpretation):
+        if ambiguity.high_impact and (
+            ambiguity.unresolved
+            or ambiguity.requires_review
+            or ambiguity.has_unsupported_interpretation
+        ):
             diagnostics.append(
                 _diagnostic(
                     LegalIRAmbiguityDiagnosticType.HIGH_IMPACT_AMBIGUITY,
@@ -800,7 +823,9 @@ def validate_legal_ir_ambiguities(
 
 
 def legal_ir_ambiguity_allowed_for_use(
-    ambiguities: Sequence[LegalIRAmbiguity | Mapping[str, Any]] | LegalIRAmbiguityReport | Mapping[str, Any],
+    ambiguities: Sequence[LegalIRAmbiguity | Mapping[str, Any]]
+    | LegalIRAmbiguityReport
+    | Mapping[str, Any],
     *,
     artifact_use: LegalIRAmbiguityUse | str = LegalIRAmbiguityUse.PROOF_TARGET,
 ) -> bool:
@@ -816,7 +841,9 @@ def legal_ir_ambiguity_allowed_for_use(
 
 
 def assert_legal_ir_ambiguity_resolved(
-    ambiguities: Sequence[LegalIRAmbiguity | Mapping[str, Any]] | LegalIRAmbiguityReport | Mapping[str, Any],
+    ambiguities: Sequence[LegalIRAmbiguity | Mapping[str, Any]]
+    | LegalIRAmbiguityReport
+    | Mapping[str, Any],
     *,
     artifact_use: LegalIRAmbiguityUse | str = LegalIRAmbiguityUse.PROOF_TARGET,
 ) -> LegalIRAmbiguityReport:
@@ -824,13 +851,17 @@ def assert_legal_ir_ambiguity_resolved(
 
     report = _report(ambiguities)
     if not legal_ir_ambiguity_allowed_for_use(report, artifact_use=artifact_use):
-        codes = ",".join(item.code for item in report.diagnostics) or "legal_ir_ambiguity_unresolved"
+        codes = (
+            ",".join(item.code for item in report.diagnostics) or "legal_ir_ambiguity_unresolved"
+        )
         raise ValueError(f"LegalIR ambiguity is not safe for {str(artifact_use)}: {codes}")
     return report
 
 
 def route_legal_ir_ambiguity(
-    ambiguities: Sequence[LegalIRAmbiguity | Mapping[str, Any]] | LegalIRAmbiguityReport | Mapping[str, Any],
+    ambiguities: Sequence[LegalIRAmbiguity | Mapping[str, Any]]
+    | LegalIRAmbiguityReport
+    | Mapping[str, Any],
 ) -> dict[str, Any]:
     """Return deterministic Leanstral/operator routing for ambiguity records."""
 
@@ -869,7 +900,9 @@ def route_legal_ir_ambiguity(
     }
 
 
-def ambiguity_guidance_observation(ambiguity: LegalIRAmbiguity | Mapping[str, Any]) -> dict[str, Any]:
+def ambiguity_guidance_observation(
+    ambiguity: LegalIRAmbiguity | Mapping[str, Any],
+) -> dict[str, Any]:
     """Project ambiguity into a learned-guidance uncertainty observation."""
 
     item = _ambiguity(ambiguity)
@@ -972,7 +1005,9 @@ def _ambiguity(value: LegalIRAmbiguity | Mapping[str, Any]) -> LegalIRAmbiguity:
     return LegalIRAmbiguity.from_dict(_mapping(value))
 
 
-def _source_span(value: LegalIRAmbiguitySourceSpan | Mapping[str, Any]) -> LegalIRAmbiguitySourceSpan:
+def _source_span(
+    value: LegalIRAmbiguitySourceSpan | Mapping[str, Any],
+) -> LegalIRAmbiguitySourceSpan:
     if isinstance(value, LegalIRAmbiguitySourceSpan):
         return value
     return LegalIRAmbiguitySourceSpan.from_dict(_mapping(value))

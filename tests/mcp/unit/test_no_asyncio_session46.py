@@ -69,8 +69,7 @@ def test_mcp_root_exists():
 def test_at_least_one_py_file_scanned():
     """Make sure the scanner actually visits files (guards against misconfigured path)."""
     py_files = [
-        p for p in MCP_ROOT.rglob("*.py")
-        if "__pycache__" not in str(p) and "/test_" not in str(p)
+        p for p in MCP_ROOT.rglob("*.py") if "__pycache__" not in str(p) and "/test_" not in str(p)
     ]
     assert len(py_files) >= 10, (
         f"Expected to scan at least 10 production .py files, found {len(py_files)}"
@@ -98,6 +97,4 @@ def test_anyio_present_in_mcp_server():
                 if (node.module or "").startswith("anyio"):
                     anyio_files.append(str(py_file))
                     break
-    assert len(anyio_files) >= 1, (
-        "Expected at least one production mcp_server file to import anyio"
-    )
+    assert len(anyio_files) >= 1, "Expected at least one production mcp_server file to import anyio"

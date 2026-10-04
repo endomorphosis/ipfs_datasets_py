@@ -113,9 +113,7 @@ def _selection_sources() -> dict[str, object]:
             "net_verified_gain_count": 0,
             "baseline_only_verified_count": 0,
             "net_verified_delta": 0.0,
-            "comparison_cid": _cid(
-                f"efficacy-{candidate}-{split}-{cache}"
-            ),
+            "comparison_cid": _cid(f"efficacy-{candidate}-{split}-{cache}"),
         }
         for candidate in candidates
         for split in ("pilot", "development")
@@ -143,12 +141,8 @@ def _selection_sources() -> dict[str, object]:
         {
             "variant_id": variant_id,
             "metrics": {
-                "wall_time_ms": (
-                    70.0 if variant_id == "A1" else 100.0
-                ),
-                "model_calls": (
-                    7.0 if variant_id == "A1" else 10.0
-                ),
+                "wall_time_ms": (70.0 if variant_id == "A1" else 100.0),
+                "model_calls": (7.0 if variant_id == "A1" else 10.0),
             },
         }
         for variant_id in ("A0", *candidates)
@@ -159,9 +153,7 @@ def _selection_sources() -> dict[str, object]:
             "eligible": True,
             "safety_feasible": True,
             "on_frontier": variant_id in {"A0", "A1"},
-            "dominated_by": (
-                [] if variant_id in {"A0", "A1"} else ["A1"]
-            ),
+            "dominated_by": ([] if variant_id in {"A0", "A1"} else ["A1"]),
         }
         for variant_id in ("A0", *candidates)
     ]
@@ -213,10 +205,7 @@ def _seal(
         b"opaque synthetic manifest identity",
         codec="raw",
     )
-    protocols = {
-        key: _cid(f"protocol-{key}")
-        for key in REPLACEMENT_HOLDOUT_PROTOCOL_KEYS
-    }
+    protocols = {key: _cid(f"protocol-{key}") for key in REPLACEMENT_HOLDOUT_PROTOCOL_KEYS}
     identity = {
         "schema": REPLACEMENT_HOLDOUT_SEAL_SCHEMA,
         "sealed_manifest_cid": manifest_cid,
@@ -226,9 +215,7 @@ def _seal(
         "access_ledger_authority_cid": (
             _cid("access-ledger-authority")
             if access_ledger_path is None
-            else replacement_holdout_ledger_authority_cid(
-                manifest_cid, access_ledger_path
-            )
+            else replacement_holdout_ledger_authority_cid(manifest_cid, access_ledger_path)
         ),
     }
     return ReplacementHoldoutSeal(
@@ -277,9 +264,7 @@ def _proposal(
         "sealed_manifest_cid": seal.sealed_manifest_cid,
         "protocol_cids": {
             key: seal.protocol_cids[key]
-            for key in sorted(
-                REPLACEMENT_HOLDOUT_AUTHORIZED_PROTOCOL_KEYS
-            )
+            for key in sorted(REPLACEMENT_HOLDOUT_AUTHORIZED_PROTOCOL_KEYS)
         },
         "source_commit": source_commit,
         "authorized_variant_ids": variants,
@@ -300,24 +285,18 @@ def _proposal(
 
 
 def test_shortlist_is_derived_from_all_gate_sources_without_truncation() -> None:
-    selection = derive_g232_shortlist_from_validated_gates_v1(
-        **_selection_sources()
-    )
+    selection = derive_g232_shortlist_from_validated_gates_v1(**_selection_sources())
 
     assert selection["selected_candidate_ids"] == ("A1",)
     assert selection["authorized_variant_ids"] == ("A0", "A1")
     assert selection["ranking_permitted"] is False
     assert selection["truncation_permitted"] is False
     assert selection["holdout_accessed"] is False
-    assert len(selection["candidate_evidence"]) == len(
-        G231_EVALUATED_CANDIDATE_IDS
-    )
+    assert len(selection["candidate_evidence"]) == len(G231_EVALUATED_CANDIDATE_IDS)
 
 
 def test_one_to_four_arbitrary_arms_do_not_substitute_for_source_replay() -> None:
-    selection = derive_g232_shortlist_from_validated_gates_v1(
-        **_selection_sources()
-    )
+    selection = derive_g232_shortlist_from_validated_gates_v1(**_selection_sources())
     decision = _pilot_decision(selection)
     seal = _seal()
     exact = _proposal(decision, seal, ["A0", "A1"])
@@ -348,11 +327,7 @@ def test_one_to_four_arbitrary_arms_do_not_substitute_for_source_replay() -> Non
 
 
 def test_tampered_selection_or_pilot_identity_fails_closed() -> None:
-    selection = dict(
-        derive_g232_shortlist_from_validated_gates_v1(
-            **_selection_sources()
-        )
-    )
+    selection = dict(derive_g232_shortlist_from_validated_gates_v1(**_selection_sources()))
     decision = _pilot_decision(selection)
     exact = _proposal(decision, _seal(), ["A0", "A1"])
     selection["selected_candidate_ids"] = ["A2"]
@@ -368,10 +343,7 @@ def test_tampered_selection_or_pilot_identity_fails_closed() -> None:
 
 
 def _upstream_authorities() -> dict[str, str]:
-    return {
-        role: _cid(f"upstream-{role}")
-        for role in G241_UPSTREAM_AUTHORITY_ROLES
-    }
+    return {role: _cid(f"upstream-{role}") for role in G241_UPSTREAM_AUTHORITY_ROLES}
 
 
 def _source_index(
@@ -380,9 +352,7 @@ def _source_index(
     access_ledger_authority_cid: str | None = None,
 ) -> G241SourceDecisionIndexV1:
     source_commit = (
-        SOURCE_COMMIT
-        if current is None
-        else str(current.outer_commit)  # type: ignore[attr-defined]
+        SOURCE_COMMIT if current is None else str(current.outer_commit)  # type: ignore[attr-defined]
     )
     return G241SourceDecisionIndexV1(
         source_commit=source_commit,
@@ -395,9 +365,7 @@ def _source_index(
             )
         ),
         recursive_gitlinks_cid=(
-            _cid("gitlinks")
-            if current is None
-            else current.g240_recursive_gitlinks_cid  # type: ignore[attr-defined]
+            _cid("gitlinks") if current is None else current.g240_recursive_gitlinks_cid  # type: ignore[attr-defined]
         ),
         run_plan_cid=_cid("run-plan"),
         capability_inventory_cid=_cid("capabilities"),
@@ -407,41 +375,25 @@ def _source_index(
             "cache_policy": _cid("cache-policy"),
             "runtime_identity_policy": _cid("runtime-policy"),
             "execution_identities": _cid("execution-identities"),
-            "runtime_orchestration_policy": _cid(
-                "runtime-orchestration-policy"
-            ),
-            "runtime_namespace_policy_pilot": _cid(
-                "runtime-namespace-policy-pilot"
-            ),
-            "runtime_namespace_policy_development": _cid(
-                "runtime-namespace-policy-development"
-            ),
-            "runtime_namespace_evidence_pilot": _cid(
-                "runtime-namespace-evidence-pilot"
-            ),
+            "runtime_orchestration_policy": _cid("runtime-orchestration-policy"),
+            "runtime_namespace_policy_pilot": _cid("runtime-namespace-policy-pilot"),
+            "runtime_namespace_policy_development": _cid("runtime-namespace-policy-development"),
+            "runtime_namespace_evidence_pilot": _cid("runtime-namespace-evidence-pilot"),
             "runtime_namespace_evidence_development": _cid(
                 "runtime-namespace-evidence-development"
             ),
-            "source_orchestration_evidence_pilot": _cid(
-                "source-orchestration-evidence-pilot"
-            ),
+            "source_orchestration_evidence_pilot": _cid("source-orchestration-evidence-pilot"),
             "source_orchestration_evidence_development": _cid(
                 "source-orchestration-evidence-development"
             ),
         },
         upstream_authority_cids=_upstream_authorities(),
-        parent_artifact_cids={
-            key: _cid(f"parent-{key}") for key in G241_PARENT_KEYS
-        },
+        parent_artifact_cids={key: _cid(f"parent-{key}") for key in G241_PARENT_KEYS},
         g211_batch_receipt_cids=(_cid("pilot-batch"), _cid("dev-batch")),
-        g212_runtime_evidence_cids=tuple(
-            sorted((_cid("runtime-a"), _cid("runtime-b")))
-        ),
+        g212_runtime_evidence_cids=tuple(sorted((_cid("runtime-a"), _cid("runtime-b")))),
         shortlist_selection_cid=_cid("selection"),
         g232_pilot_decision_cid=_cid("decision"),
-        access_ledger_authority_cid=(
-            access_ledger_authority_cid or _cid("access")
-        ),
+        access_ledger_authority_cid=(access_ledger_authority_cid or _cid("access")),
     )
 
 
@@ -470,9 +422,7 @@ def test_source_index_requires_exact_parent_and_receipt_graphs() -> None:
 
 
 def test_source_replay_content_is_explicitly_non_authorizing() -> None:
-    selection = derive_g232_shortlist_from_validated_gates_v1(
-        **_selection_sources()
-    )
+    selection = derive_g232_shortlist_from_validated_gates_v1(**_selection_sources())
     decision = _pilot_decision(selection)
     seal = _seal()
     proposal = _proposal(decision, seal, ["A0", "A1"])
@@ -483,23 +433,20 @@ def test_source_replay_content_is_explicitly_non_authorizing() -> None:
         pilot_decision=decision,
         authorization=proposal,
         external_artifact_cids={
-            key: _cid(f"arbitrary-{key}")
-            for key in G241_EXTERNAL_ARTIFACT_KEYS
+            key: _cid(f"arbitrary-{key}") for key in G241_EXTERNAL_ARTIFACT_KEYS
         },
         parent_ledger_cid=_cid("arbitrary-parent-ledger"),
     )
 
     assert not hasattr(evidence, "release_authorized")
-    assert "source_replay" not in inspect.signature(
-        load_and_validate_g241_release_receipt_v1
-    ).parameters
+    assert (
+        "source_replay"
+        not in inspect.signature(load_and_validate_g241_release_receipt_v1).parameters
+    )
 
 
 def _request(**overrides: object) -> G241CustodianReleaseRequestV1:
-    artifacts = {
-        key: _cid(f"request-artifact-{key}")
-        for key in G241_EXTERNAL_ARTIFACT_KEYS
-    }
+    artifacts = {key: _cid(f"request-artifact-{key}") for key in G241_EXTERNAL_ARTIFACT_KEYS}
     artifact_set_cid = cid_for_dag_json(
         {
             "schema": G241_EXTERNAL_ARTIFACT_SET_SCHEMA_V1,
@@ -540,9 +487,7 @@ def _request(**overrides: object) -> G241CustodianReleaseRequestV1:
         "g239_authority_cid": _cid("authority"),
         "g239_operational_receipt_cid": _cid("operational-receipt"),
         "g239_validator_claim_cid": _cid("validator-claim"),
-        "g239_validator_attestation_cid": _cid(
-            "validator-attestation"
-        ),
+        "g239_validator_attestation_cid": _cid("validator-attestation"),
         "g239_validator_key_id": _cid("validator-key"),
         "g239_observed_at": "2026-07-25T00:00:00+00:00",
         "g239_evaluated_at": "2026-07-25T00:01:00+00:00",
@@ -555,9 +500,7 @@ def _request(**overrides: object) -> G241CustodianReleaseRequestV1:
         "access_ledger_file_identity_cid": access_file_identity,
         "access_ledger_head_cid": access_head,
         "access_ledger_event_count": 0,
-        "release_ledger_file_identity_cid": _cid(
-            "release-file-identity"
-        ),
+        "release_ledger_file_identity_cid": _cid("release-file-identity"),
         "ledger_sequence": 0,
         "previous_ledger_receipt_cid": _cid("genesis"),
     }
@@ -577,9 +520,7 @@ def test_request_is_non_authorizing_and_rejects_ledger_activity_or_overlap() -> 
 
 
 def test_public_authorizers_expose_no_clock_or_activity_override() -> None:
-    parameters = inspect.signature(
-        release.authorize_g241_custodian_release_v1
-    ).parameters
+    parameters = inspect.signature(release.authorize_g241_custodian_release_v1).parameters
     assert "now" not in parameters
     assert "clock" not in parameters
     assert "pre_release_activity" not in parameters
@@ -629,8 +570,7 @@ def test_pinned_git_drops_ambient_injection_and_disables_fsmonitor(
     marker = tmp_path / "fsmonitor-ran"
     hook = tmp_path / "malicious-fsmonitor"
     hook.write_text(
-        "#!/bin/sh\n"
-        f"printf invoked >> {marker}\n",
+        f"#!/bin/sh\nprintf invoked >> {marker}\n",
         encoding="utf-8",
     )
     hook.chmod(0o700)
@@ -642,9 +582,7 @@ def test_pinned_git_drops_ambient_injection_and_disables_fsmonitor(
     fake_git_marker = tmp_path / "path-git-ran"
     fake_git = fake_bin / "git"
     fake_git.write_text(
-        "#!/bin/sh\n"
-        f"printf invoked >> {fake_git_marker}\n"
-        "exit 77\n",
+        f"#!/bin/sh\nprintf invoked >> {fake_git_marker}\nexit 77\n",
         encoding="utf-8",
     )
     fake_git.chmod(0o700)
@@ -657,9 +595,7 @@ def test_pinned_git_drops_ambient_injection_and_disables_fsmonitor(
         "GIT_CONFIG_KEY_0": "core.fsmonitor",
         "GIT_CONFIG_VALUE_0": str(hook),
         "GIT_OBJECT_DIRECTORY": str(tmp_path / "foreign-objects"),
-        "GIT_ALTERNATE_OBJECT_DIRECTORIES": str(
-            tmp_path / "foreign-alternates"
-        ),
+        "GIT_ALTERNATE_OBJECT_DIRECTORIES": str(tmp_path / "foreign-alternates"),
         "PYTHONPATH": str(tmp_path / "foreign-python"),
         "LD_LIBRARY_PATH": str(tmp_path / "foreign-libraries"),
         "LD_PRELOAD": str(tmp_path / "foreign-preload.so"),
@@ -670,9 +606,7 @@ def test_pinned_git_drops_ambient_injection_and_disables_fsmonitor(
     original_run = subprocess.run
     observed: list[tuple[list[str], dict[str, str], str]] = []
 
-    def guarded_run(
-        arguments: list[str], **kwargs: object
-    ) -> subprocess.CompletedProcess[object]:
+    def guarded_run(arguments: list[str], **kwargs: object) -> subprocess.CompletedProcess[object]:
         environment = kwargs.get("env")
         executable = kwargs.get("executable")
         assert isinstance(environment, dict)
@@ -815,10 +749,7 @@ def test_first_secure_file_creation_fsyncs_file_and_parent(
 
 
 def test_external_projection_requires_exact_artifacts_and_authorities() -> None:
-    artifacts = {
-        key: _cid(f"artifact-{key}")
-        for key in G241_EXTERNAL_ARTIFACT_KEYS
-    }
+    artifacts = {key: _cid(f"artifact-{key}") for key in G241_EXTERNAL_ARTIFACT_KEYS}
     values = {
         "authority_cid": _cid("authority"),
         "requirement_cid": _cid("requirement"),
@@ -847,13 +778,9 @@ def test_external_projection_requires_exact_artifacts_and_authorities() -> None:
     incomplete = dict(values["artifact_cids"])
     incomplete.pop("g232_pilot_decision")
     with pytest.raises(CustodianReleaseError, match="exactly cover"):
-        G241G239ExternalProjectionV1(
-            **{**values, "artifact_cids": incomplete}
-        )
+        G241G239ExternalProjectionV1(**{**values, "artifact_cids": incomplete})
     with pytest.raises(CustodianReleaseError, match="independent"):
-        G241G239ExternalProjectionV1(
-            **{**values, "validator_id": values["producer_id"]}
-        )
+        G241G239ExternalProjectionV1(**{**values, "validator_id": values["producer_id"]})
 
 
 def _trust_root(
@@ -875,17 +802,13 @@ def _trust_root(
         public_key_base64=public_key_base64,
     )
     monotonic_store_id = _cid("external-monotonic-store")
-    monotonic_store_policy_cid = _cid(
-        "external-monotonic-store-policy"
-    )
+    monotonic_store_policy_cid = _cid("external-monotonic-store-policy")
     ledger_genesis_cid = _cid("genesis")
     return (
         G241CustodianTrustRootV1(
             g239_authority_cid=authority_cid,
             git_executable_path=str(GIT_EXECUTABLE),
-            git_executable_cid=release.g241_git_executable_cid_v1(
-                GIT_EXECUTABLE
-            ),
+            git_executable_cid=release.g241_git_executable_cid_v1(GIT_EXECUTABLE),
             monotonic_store_id=monotonic_store_id,
             monotonic_store_policy_cid=monotonic_store_policy_cid,
             release_ledger_authority_cid=(
@@ -893,9 +816,7 @@ def _trust_root(
                     ledger_path=ledger_path,
                     ledger_genesis_cid=ledger_genesis_cid,
                     monotonic_store_id=monotonic_store_id,
-                    monotonic_store_policy_cid=(
-                        monotonic_store_policy_cid
-                    ),
+                    monotonic_store_policy_cid=(monotonic_store_policy_cid),
                 )
             ),
             validator_id=validator_id,
@@ -1007,9 +928,7 @@ def _operational_fixture(tmp_path: Path) -> dict[str, object]:
         expected_git_executable_cid=git_cid,
     )
     seal = _seal(access_path)
-    selection = derive_g232_shortlist_from_validated_gates_v1(
-        **_selection_sources()
-    )
+    selection = derive_g232_shortlist_from_validated_gates_v1(**_selection_sources())
     decision = _pilot_decision(selection)
     authorization = _proposal(
         decision,
@@ -1019,23 +938,12 @@ def _operational_fixture(tmp_path: Path) -> dict[str, object]:
     )
     source_index = _source_index(
         current,
-        access_ledger_authority_cid=(
-            seal.access_ledger_authority_cid
-        ),
+        access_ledger_authority_cid=(seal.access_ledger_authority_cid),
     )
-    artifacts = {
-        key: _cid(f"operational-{key}")
-        for key in G241_EXTERNAL_ARTIFACT_KEYS
-    }
-    artifacts["g220_replacement_holdout_seal"] = (
-        seal.seal_contract_cid
-    )
-    artifacts["g232_authorization_proposal"] = (
-        authorization.authorization_cid
-    )
-    artifacts["g232_pilot_decision"] = (
-        authorization.pilot_artifact_cid
-    )
+    artifacts = {key: _cid(f"operational-{key}") for key in G241_EXTERNAL_ARTIFACT_KEYS}
+    artifacts["g220_replacement_holdout_seal"] = seal.seal_contract_cid
+    artifacts["g232_authorization_proposal"] = authorization.authorization_cid
+    artifacts["g232_pilot_decision"] = authorization.pilot_artifact_cid
     parent_ledger_cid = _cid("operational-parent-ledger")
     replay_evidence = G241SourceReplayResultV1(
         source_index=source_index,
@@ -1063,8 +971,7 @@ def _operational_fixture(tmp_path: Path) -> dict[str, object]:
         "source_identity_cid": current.source_identity_cid,
     }
     required_ids = sorted(
-        release.g241_artifact_slot_cid(key)
-        for key in G241_EXTERNAL_ARTIFACT_KEYS
+        release.g241_artifact_slot_cid(key) for key in G241_EXTERNAL_ARTIFACT_KEYS
     )
     requirement_body = {
         "schema": release.G239_EXTERNAL_REQUIREMENT_SCHEMA,
@@ -1146,9 +1053,7 @@ def _operational_fixture(tmp_path: Path) -> dict[str, object]:
         "artifact_set_cid": artifact_set_cid,
         "observed_at": observed_at,
     }
-    signature = private_key.sign(
-        canonical_dag_json_bytes(signed_payload)
-    )
+    signature = private_key.sign(canonical_dag_json_bytes(signed_payload))
     attestation_body = {
         "schema": G241_VALIDATOR_ATTESTATION_SCHEMA_V1,
         "signed_payload": signed_payload,
@@ -1172,9 +1077,7 @@ def _operational_fixture(tmp_path: Path) -> dict[str, object]:
         authority_path=authority_path,
         trusted_authority_cid=str(authority["authority_cid"]),
         validator_attestation_path=attestation_path,
-        trusted_validator_attestation_cid=str(
-            attestation["attestation_cid"]
-        ),
+        trusted_validator_attestation_cid=str(attestation["attestation_cid"]),
         custodian_trust_root=trust_root,
         source_replay=replay_evidence,
         repo_root=repo,
@@ -1183,17 +1086,13 @@ def _operational_fixture(tmp_path: Path) -> dict[str, object]:
     )
     access_descriptor = os.open(access_path, os.O_RDWR)
     try:
-        access_head, access_count = (
-            release._empty_access_ledger_snapshot(
-                access_descriptor,
-                seal=seal,
-            )
+        access_head, access_count = release._empty_access_ledger_snapshot(
+            access_descriptor,
+            seal=seal,
         )
-        access_file_identity_cid = (
-            release._ledger_file_identity_cid(
-                access_descriptor,
-                ledger_role="replacement-access",
-            )
+        access_file_identity_cid = release._ledger_file_identity_cid(
+            access_descriptor,
+            ledger_role="replacement-access",
         )
     finally:
         os.close(access_descriptor)
@@ -1215,22 +1114,16 @@ def _operational_fixture(tmp_path: Path) -> dict[str, object]:
         parent_ledger_cid=parent_ledger_cid,
         artifact_cids=artifacts,
         artifact_set_cid=artifact_set_cid,
-        upstream_authority_cids=(
-            source_index.upstream_authority_cids
-        ),
+        upstream_authority_cids=(source_index.upstream_authority_cids),
         g232_authorization_cid=authorization.authorization_cid,
         seal_contract_cid=seal.seal_contract_cid,
         sealed_manifest_cid=seal.sealed_manifest_cid,
         authorized_variant_ids=authorization.authorized_variant_ids,
         g239_evaluation_cid=str(projection.evaluation_cid),
         g239_authority_cid=projection.authority_cid,
-        g239_operational_receipt_cid=(
-            projection.operational_receipt_cid
-        ),
+        g239_operational_receipt_cid=(projection.operational_receipt_cid),
         g239_validator_claim_cid=projection.validator_claim_cid,
-        g239_validator_attestation_cid=(
-            projection.validator_attestation_cid
-        ),
+        g239_validator_attestation_cid=(projection.validator_attestation_cid),
         g239_validator_key_id=projection.validator_key_id,
         g239_observed_at=projection.observed_at,
         g239_evaluated_at=projection.evaluated_at,
@@ -1239,29 +1132,19 @@ def _operational_fixture(tmp_path: Path) -> dict[str, object]:
         custodian_id=trust_root.custodian_id,
         executor_id=trust_root.executor_id,
         trust_root_cid=str(trust_root.trust_root_cid),
-        access_ledger_authority_cid=(
-            seal.access_ledger_authority_cid
-        ),
-        access_ledger_file_identity_cid=(
-            access_file_identity_cid
-        ),
+        access_ledger_authority_cid=(seal.access_ledger_authority_cid),
+        access_ledger_file_identity_cid=(access_file_identity_cid),
         access_ledger_head_cid=access_head,
         access_ledger_event_count=access_count,
-        release_ledger_file_identity_cid=(
-            release_file_identity_cid
-        ),
+        release_ledger_file_identity_cid=(release_file_identity_cid),
         ledger_sequence=0,
         previous_ledger_receipt_cid=trust_root.ledger_genesis_cid,
     )
-    receipt = (
-        G241ExternallyGovernedCustodianReleaseReceiptV1._from_request(
-            request=request,
-            recorded_at=observed,
-        )
+    receipt = G241ExternallyGovernedCustodianReleaseReceiptV1._from_request(
+        request=request,
+        recorded_at=observed,
     )
-    ledger_path.write_bytes(
-        canonical_dag_json_bytes(receipt.to_dict()) + b"\n"
-    )
+    ledger_path.write_bytes(canonical_dag_json_bytes(receipt.to_dict()) + b"\n")
     ledger_path.chmod(0o600)
     return {
         "repo": repo,
@@ -1286,9 +1169,7 @@ def _consume_fixture(
     fixture: dict[str, object],
 ) -> G241ExternallyGovernedCustodianReleaseReceiptV1:
     receipt = fixture["receipt"]
-    assert isinstance(
-        receipt, G241ExternallyGovernedCustodianReleaseReceiptV1
-    )
+    assert isinstance(receipt, G241ExternallyGovernedCustodianReleaseReceiptV1)
     authority = fixture["authority"]
     attestation = fixture["attestation"]
     trust_root = fixture["trust_root"]
@@ -1306,13 +1187,9 @@ def _consume_fixture(
         validator_attestation_path=fixture[  # type: ignore[arg-type]
             "attestation_path"
         ],
-        trusted_validator_attestation_cid=str(
-            attestation["attestation_cid"]
-        ),
+        trusted_validator_attestation_cid=str(attestation["attestation_cid"]),
         custodian_trust_root_path=fixture["trust_path"],  # type: ignore[arg-type]
-        trusted_custodian_trust_root_cid=str(
-            trust_root.trust_root_cid
-        ),
+        trusted_custodian_trust_root_cid=str(trust_root.trust_root_cid),
         repo_root=fixture["repo"],  # type: ignore[arg-type]
     )
 
@@ -1326,8 +1203,11 @@ def test_durable_g241_consumer_validates_real_signed_temp_evidence(
 
     assert loaded.receipt_cid == fixture["receipt"].receipt_cid  # type: ignore[union-attr]
     assert loaded.access_ledger_event_count == 0
-    assert loaded.g239_validator_attestation_cid == (
-        fixture["attestation"]["attestation_cid"]  # type: ignore[index]
+    assert (
+        loaded.g239_validator_attestation_cid
+        == (
+            fixture["attestation"]["attestation_cid"]  # type: ignore[index]
+        )
     )
 
 
@@ -1369,9 +1249,7 @@ def _g241_consumer_arguments(
     trust_root = fixture["trust_root"]
     authority = fixture["authority"]
     attestation = fixture["attestation"]
-    assert isinstance(
-        receipt, G241ExternallyGovernedCustodianReleaseReceiptV1
-    )
+    assert isinstance(receipt, G241ExternallyGovernedCustodianReleaseReceiptV1)
     assert isinstance(trust_root, G241CustodianTrustRootV1)
     assert isinstance(authority, dict)
     assert isinstance(attestation, dict)
@@ -1384,13 +1262,9 @@ def _g241_consumer_arguments(
         "authority_path": fixture["authority_path"],
         "trusted_authority_cid": str(authority["authority_cid"]),
         "validator_attestation_path": fixture["attestation_path"],
-        "trusted_validator_attestation_cid": str(
-            attestation["attestation_cid"]
-        ),
+        "trusted_validator_attestation_cid": str(attestation["attestation_cid"]),
         "custodian_trust_root_path": fixture["trust_path"],
-        "trusted_custodian_trust_root_cid": str(
-            trust_root.trust_root_cid
-        ),
+        "trusted_custodian_trust_root_cid": str(trust_root.trust_root_cid),
         "repo_root": fixture["repo"],
         "purpose": "evaluation",
         "executor_id": trust_root.executor_id,
@@ -1409,21 +1283,11 @@ def _g241_loader_arguments(
         "g241_release_receipt_cid": consumer["receipt_cid"],
         "g241_release_ledger_path": consumer["ledger_path"],
         "g241_authority_path": consumer["authority_path"],
-        "trusted_g241_authority_cid": consumer[
-            "trusted_authority_cid"
-        ],
-        "g241_validator_attestation_path": consumer[
-            "validator_attestation_path"
-        ],
-        "trusted_g241_validator_attestation_cid": consumer[
-            "trusted_validator_attestation_cid"
-        ],
-        "g241_custodian_trust_root_path": consumer[
-            "custodian_trust_root_path"
-        ],
-        "trusted_g241_custodian_trust_root_cid": consumer[
-            "trusted_custodian_trust_root_cid"
-        ],
+        "trusted_g241_authority_cid": consumer["trusted_authority_cid"],
+        "g241_validator_attestation_path": consumer["validator_attestation_path"],
+        "trusted_g241_validator_attestation_cid": consumer["trusted_validator_attestation_cid"],
+        "g241_custodian_trust_root_path": consumer["custodian_trust_root_path"],
+        "trusted_g241_custodian_trust_root_cid": consumer["trusted_custodian_trust_root_cid"],
         "repo_root": consumer["repo_root"],
         "sealed_manifest_path": sealed_path,
         "tuning_worktree": consumer["repo_root"],
@@ -1441,9 +1305,7 @@ def test_signed_g241_receipt_drives_single_use_holdout_loader(
     trust_root = fixture["trust_root"]
     authority = fixture["authority"]
     attestation = fixture["attestation"]
-    assert isinstance(
-        receipt, G241ExternallyGovernedCustodianReleaseReceiptV1
-    )
+    assert isinstance(receipt, G241ExternallyGovernedCustodianReleaseReceiptV1)
     assert isinstance(trust_root, G241CustodianTrustRootV1)
     assert isinstance(authority, dict)
     assert isinstance(attestation, dict)
@@ -1460,19 +1322,11 @@ def test_signed_g241_receipt_drives_single_use_holdout_loader(
         "g241_release_receipt_cid": str(receipt.receipt_cid),
         "g241_release_ledger_path": fixture["ledger_path"],
         "g241_authority_path": fixture["authority_path"],
-        "trusted_g241_authority_cid": str(
-            authority["authority_cid"]
-        ),
-        "g241_validator_attestation_path": fixture[
-            "attestation_path"
-        ],
-        "trusted_g241_validator_attestation_cid": str(
-            attestation["attestation_cid"]
-        ),
+        "trusted_g241_authority_cid": str(authority["authority_cid"]),
+        "g241_validator_attestation_path": fixture["attestation_path"],
+        "trusted_g241_validator_attestation_cid": str(attestation["attestation_cid"]),
         "g241_custodian_trust_root_path": fixture["trust_path"],
-        "trusted_g241_custodian_trust_root_cid": str(
-            trust_root.trust_root_cid
-        ),
+        "trusted_g241_custodian_trust_root_cid": str(trust_root.trust_root_cid),
         "repo_root": fixture["repo"],
         "sealed_manifest_path": sealed_path,
         "tuning_worktree": fixture["repo"],
@@ -1497,9 +1351,7 @@ def test_signed_g241_receipt_drives_single_use_holdout_loader(
         "access_granted",
         "manifest_released",
     ]
-    assert {
-        item.g241_release_receipt_cid for item in records
-    } == {receipt.receipt_cid}
+    assert {item.g241_release_receipt_cid for item in records} == {receipt.receipt_cid}
     assert custodian.calls == 1
 
     with pytest.raises(HoldoutExecutionError, match="premature"):
@@ -1519,9 +1371,7 @@ def test_custodian_object_is_untouched_until_grant_and_tombstone_are_durable(
     trust_root = fixture["trust_root"]
     access_path = fixture["access_path"]
     ledger_path = fixture["ledger_path"]
-    assert isinstance(
-        receipt, G241ExternallyGovernedCustodianReleaseReceiptV1
-    )
+    assert isinstance(receipt, G241ExternallyGovernedCustodianReleaseReceiptV1)
     assert isinstance(trust_root, G241CustodianTrustRootV1)
     assert isinstance(access_path, Path)
     assert isinstance(ledger_path, Path)
@@ -1538,16 +1388,10 @@ def test_custodian_object_is_untouched_until_grant_and_tombstone_are_durable(
         @property
         def custodian_id(self) -> str:
             access_records = [
-                json.loads(line)
-                for line in access_path.read_text(
-                    encoding="utf-8"
-                ).splitlines()
+                json.loads(line) for line in access_path.read_text(encoding="utf-8").splitlines()
             ]
             release_records = [
-                json.loads(line)
-                for line in ledger_path.read_text(
-                    encoding="utf-8"
-                ).splitlines()
+                json.loads(line) for line in ledger_path.read_text(encoding="utf-8").splitlines()
             ]
             assert access_records[-1]["receipt"]["event"] == "access_granted"
             assert (
@@ -1590,9 +1434,7 @@ def test_consumption_tombstone_blocks_reuse_after_same_inode_access_rollback(
     trust_root = fixture["trust_root"]
     access_path = fixture["access_path"]
     ledger_path = fixture["ledger_path"]
-    assert isinstance(
-        receipt, G241ExternallyGovernedCustodianReleaseReceiptV1
-    )
+    assert isinstance(receipt, G241ExternallyGovernedCustodianReleaseReceiptV1)
     assert isinstance(trust_root, G241CustodianTrustRootV1)
     assert isinstance(access_path, Path)
     assert isinstance(ledger_path, Path)
@@ -1622,22 +1464,11 @@ def test_consumption_tombstone_blocks_reuse_after_same_inode_access_rollback(
     )
     assert len(release_records) == 2
     tombstone = release_records[-1]
-    assert isinstance(
-        tombstone, release.G241ReleaseConsumptionTombstoneV1
-    )
+    assert isinstance(tombstone, release.G241ReleaseConsumptionTombstoneV1)
     assert tombstone.release_receipt_cid == receipt.receipt_cid
-    assert (
-        tombstone.access_grant_receipt_cid
-        == payload.grant_receipt.receipt_cid
-    )
-    assert (
-        tombstone.access_ledger_file_identity_cid
-        == receipt.access_ledger_file_identity_cid
-    )
-    assert (
-        tombstone.monotonic_store_policy_cid
-        == trust_root.monotonic_store_policy_cid
-    )
+    assert tombstone.access_grant_receipt_cid == payload.grant_receipt.receipt_cid
+    assert tombstone.access_ledger_file_identity_cid == receipt.access_ledger_file_identity_cid
+    assert tombstone.monotonic_store_policy_cid == trust_root.monotonic_store_policy_cid
     assert tombstone.previous_receipt_cid == receipt.receipt_cid
 
     before = access_path.stat()
@@ -1659,9 +1490,7 @@ def test_consumption_tombstone_blocks_reuse_after_same_inode_access_rollback(
         ledger_path.read_bytes(),
         genesis_cid=trust_root.ledger_genesis_cid,
     )
-    assert isinstance(
-        durable[-1], release.G241ReleaseConsumptionTombstoneV1
-    )
+    assert isinstance(durable[-1], release.G241ReleaseConsumptionTombstoneV1)
     assert durable[-1].tombstone_cid == tombstone.tombstone_cid
 
 
@@ -1672,9 +1501,7 @@ def test_access_ledger_blocks_reuse_after_same_inode_tombstone_truncation(
     receipt = fixture["receipt"]
     trust_root = fixture["trust_root"]
     ledger_path = fixture["ledger_path"]
-    assert isinstance(
-        receipt, G241ExternallyGovernedCustodianReleaseReceiptV1
-    )
+    assert isinstance(receipt, G241ExternallyGovernedCustodianReleaseReceiptV1)
     assert isinstance(trust_root, G241CustodianTrustRootV1)
     assert isinstance(ledger_path, Path)
     sealed_bytes = b"opaque synthetic manifest identity"
@@ -1726,13 +1553,8 @@ def test_locked_g241_transaction_records_failure_before_unlock(
             records = release._parse_access_ledger(
                 fixture["access_path"].read_bytes()  # type: ignore[union-attr]
             )
-            assert [item.event for item in records] == [
-                "access_granted"
-            ]
-            assert (
-                records[0].receipt_cid
-                == transaction.grant_receipt.receipt_cid
-            )
+            assert [item.event for item in records] == ["access_granted"]
+            assert records[0].receipt_cid == transaction.grant_receipt.receipt_cid
             raise RuntimeError("synthetic custody failure")
 
     records = load_replacement_holdout_access_receipts(
@@ -1751,9 +1573,7 @@ def test_concurrent_g241_loaders_allow_only_one_custodian_call(
     fixture = _operational_fixture(tmp_path)
     receipt = fixture["receipt"]
     trust_root = fixture["trust_root"]
-    assert isinstance(
-        receipt, G241ExternallyGovernedCustodianReleaseReceiptV1
-    )
+    assert isinstance(receipt, G241ExternallyGovernedCustodianReleaseReceiptV1)
     assert isinstance(trust_root, G241CustodianTrustRootV1)
     sealed_bytes = b"opaque synthetic manifest identity"
     sealed_path = tmp_path / "external" / "sealed.bin"
@@ -1816,9 +1636,7 @@ def test_concurrent_g241_loaders_allow_only_one_custodian_call(
         during_custody = release._parse_access_ledger(
             fixture["access_path"].read_bytes()  # type: ignore[union-attr]
         )
-        assert [item.event for item in during_custody] == [
-            "access_granted"
-        ]
+        assert [item.event for item in during_custody] == ["access_granted"]
         trust_root = fixture["trust_root"]
         assert isinstance(trust_root, G241CustodianTrustRootV1)
         release_records = release._ledger_records(
@@ -1829,10 +1647,7 @@ def test_concurrent_g241_loaders_allow_only_one_custodian_call(
             release_records[-1],
             release.G241ReleaseConsumptionTombstoneV1,
         )
-        assert (
-            release_records[-1].access_grant_receipt_cid
-            == during_custody[0].receipt_cid
-        )
+        assert release_records[-1].access_grant_receipt_cid == during_custody[0].receipt_cid
 
         second = pool.submit(invoke_second_loader)
         assert second_started.wait(timeout=5)
@@ -1864,9 +1679,7 @@ def test_noncooperating_source_change_cannot_record_manifest_success(
     receipt = fixture["receipt"]
     trust_root = fixture["trust_root"]
     repo = fixture["repo"]
-    assert isinstance(
-        receipt, G241ExternallyGovernedCustodianReleaseReceiptV1
-    )
+    assert isinstance(receipt, G241ExternallyGovernedCustodianReleaseReceiptV1)
     assert isinstance(trust_root, G241CustodianTrustRootV1)
     assert isinstance(repo, Path)
     sealed_bytes = b"opaque synthetic manifest identity"
@@ -1968,18 +1781,10 @@ def test_g239_rejects_tampered_validator_signature(
 ) -> None:
     fixture = _operational_fixture(tmp_path)
     attestation = dict(fixture["attestation"])  # type: ignore[arg-type]
-    signature = bytearray(
-        base64.b64decode(str(attestation["signature_base64"]))
-    )
+    signature = bytearray(base64.b64decode(str(attestation["signature_base64"])))
     signature[0] ^= 1
-    attestation["signature_base64"] = base64.b64encode(
-        bytes(signature)
-    ).decode("ascii")
-    body = {
-        key: value
-        for key, value in attestation.items()
-        if key != "attestation_cid"
-    }
+    attestation["signature_base64"] = base64.b64encode(bytes(signature)).decode("ascii")
+    body = {key: value for key, value in attestation.items() if key != "attestation_cid"}
     attestation["attestation_cid"] = cid_for_dag_json(body)
     _write_external_json(
         fixture["attestation_path"],  # type: ignore[arg-type]
@@ -1997,9 +1802,7 @@ def test_g239_rejects_tampered_validator_signature(
             validator_attestation_path=fixture[  # type: ignore[arg-type]
                 "attestation_path"
             ],
-            trusted_validator_attestation_cid=str(
-                attestation["attestation_cid"]
-            ),
+            trusted_validator_attestation_cid=str(attestation["attestation_cid"]),
             custodian_trust_root=trust_root,
             source_replay=fixture["replay_evidence"],
             repo_root=fixture["repo"],  # type: ignore[arg-type]
@@ -2012,24 +1815,12 @@ def test_g239_rejects_authority_artifact_substitution(
     tmp_path: Path,
 ) -> None:
     fixture = _operational_fixture(tmp_path)
-    authority = json.loads(
-        json.dumps(fixture["authority"])
-    )
+    authority = json.loads(json.dumps(fixture["authority"]))
     operational = authority["receipts"][0]
-    operational["artifacts"][0]["artifact_cid"] = _cid(
-        "substituted-artifact"
-    )
-    operational_body = {
-        key: value
-        for key, value in operational.items()
-        if key != "receipt_cid"
-    }
+    operational["artifacts"][0]["artifact_cid"] = _cid("substituted-artifact")
+    operational_body = {key: value for key, value in operational.items() if key != "receipt_cid"}
     operational["receipt_cid"] = cid_for_dag_json(operational_body)
-    authority_body = {
-        key: value
-        for key, value in authority.items()
-        if key != "authority_cid"
-    }
+    authority_body = {key: value for key, value in authority.items() if key != "authority_cid"}
     authority["authority_cid"] = cid_for_dag_json(authority_body)
     _write_external_json(
         fixture["authority_path"],  # type: ignore[arg-type]
@@ -2050,9 +1841,7 @@ def test_g239_rejects_authority_artifact_substitution(
             validator_attestation_path=fixture[  # type: ignore[arg-type]
                 "attestation_path"
             ],
-            trusted_validator_attestation_cid=str(
-                attestation["attestation_cid"]
-            ),
+            trusted_validator_attestation_cid=str(attestation["attestation_cid"]),
             custodian_trust_root=trust_root,
             source_replay=fixture["replay_evidence"],
             repo_root=fixture["repo"],  # type: ignore[arg-type]
@@ -2122,9 +1911,7 @@ def test_release_ledger_rejects_nonmonotonic_clock(
     fixture = _operational_fixture(tmp_path)
     first = fixture["receipt"]
     trust_root = fixture["trust_root"]
-    assert isinstance(
-        first, G241ExternallyGovernedCustodianReleaseReceiptV1
-    )
+    assert isinstance(first, G241ExternallyGovernedCustodianReleaseReceiptV1)
     assert isinstance(trust_root, G241CustodianTrustRootV1)
     second_request = replace(
         first.as_request(),
@@ -2132,11 +1919,9 @@ def test_release_ledger_rejects_nonmonotonic_clock(
         previous_ledger_receipt_cid=first.receipt_cid,
         request_cid=None,
     )
-    second = (
-        G241ExternallyGovernedCustodianReleaseReceiptV1._from_request(
-            request=second_request,
-            recorded_at=fixture["observed"],  # type: ignore[arg-type]
-        )
+    second = G241ExternallyGovernedCustodianReleaseReceiptV1._from_request(
+        request=second_request,
+        recorded_at=fixture["observed"],  # type: ignore[arg-type]
     )
     raw = (
         canonical_dag_json_bytes(first.to_dict())

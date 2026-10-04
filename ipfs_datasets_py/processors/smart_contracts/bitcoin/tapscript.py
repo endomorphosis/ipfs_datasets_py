@@ -183,26 +183,18 @@ class TapscriptLeaf:
         object.__setattr__(
             self,
             "script_digest",
-            _optional_digest(self.script_digest, "script_digest")
-            if self.script_digest
-            else "",
+            _optional_digest(self.script_digest, "script_digest") if self.script_digest else "",
         )
         hex_text = self.script_hex.strip().lower() if self.script_hex else ""
         if hex_text.startswith("0x"):
             hex_text = hex_text[2:]
         object.__setattr__(self, "script_hex", hex_text)
         if hex_text and not self.script_digest:
-            object.__setattr__(
-                self, "script_digest", bytes_digest(bytes.fromhex(hex_text))
-            )
+            object.__setattr__(self, "script_digest", bytes_digest(bytes.fromhex(hex_text)))
         if self.leaf_hash:
-            object.__setattr__(
-                self, "leaf_hash", _optional_digest(self.leaf_hash, "leaf_hash")
-            )
+            object.__setattr__(self, "leaf_hash", _optional_digest(self.leaf_hash, "leaf_hash"))
         elif hex_text:
-            raw = tapleaf_hash(
-                bytes.fromhex(hex_text), leaf_version=self.leaf_version
-            )
+            raw = tapleaf_hash(bytes.fromhex(hex_text), leaf_version=self.leaf_version)
             object.__setattr__(self, "leaf_hash", f"sha256:{raw.hex()}")
         avail = (
             self.availability
@@ -285,9 +277,7 @@ class ControlBlock:
         nodes = tuple(n.strip().lower() for n in self.merkle_nodes)
         for index, node in enumerate(nodes):
             if len(node) != 64 or any(c not in "0123456789abcdef" for c in node):
-                raise InvalidRequestError(
-                    f"merkle_nodes[{index}] must be 32-byte hex"
-                )
+                raise InvalidRequestError(f"merkle_nodes[{index}] must be 32-byte hex")
         object.__setattr__(self, "merkle_nodes", nodes)
         object.__setattr__(self, "depth", _non_negative(self.depth, "depth"))
         object.__setattr__(self, "complete", _bool(self.complete, "complete"))
@@ -376,17 +366,13 @@ class TaprootCommitment:
         leaves = tuple(self.revealed_leaves)
         for index, leaf in enumerate(leaves):
             if not isinstance(leaf, TapscriptLeaf):
-                raise InvalidRequestError(
-                    f"revealed_leaves[{index}] must be a TapscriptLeaf"
-                )
+                raise InvalidRequestError(f"revealed_leaves[{index}] must be a TapscriptLeaf")
         object.__setattr__(self, "revealed_leaves", leaves)
         hidden = tuple(
             _required_text(item, "hidden_branches item") for item in self.hidden_branches
         )
         object.__setattr__(self, "hidden_branches", hidden)
-        if self.control_block is not None and not isinstance(
-            self.control_block, ControlBlock
-        ):
+        if self.control_block is not None and not isinstance(self.control_block, ControlBlock):
             raise InvalidRequestError("control_block must be a ControlBlock or None")
         object.__setattr__(
             self,
@@ -410,9 +396,7 @@ class TaprootCommitment:
         return {
             "attributes": thaw_json(self.attributes),
             "commitment_complete": self.commitment_complete,
-            "control_block": self.control_block.to_dict()
-            if self.control_block
-            else None,
+            "control_block": self.control_block.to_dict() if self.control_block else None,
             "hidden_branches": list(self.hidden_branches),
             "internal_key_hex": self.internal_key_hex,
             "merkle_root_hex": self.merkle_root_hex,
@@ -546,23 +530,16 @@ def bind_taproot_commitment(
                 current = tapbranch_hash(current, node)
             merkle_root = current
 
-    path = (
-        spend_path
-        if isinstance(spend_path, SpendPathKind)
-        else SpendPathKind(str(spend_path))
-    )
+    path = spend_path if isinstance(spend_path, SpendPathKind) else SpendPathKind(str(spend_path))
     if path is SpendPathKind.UNKNOWN:
         if control_block is not None:
             path = SpendPathKind.SCRIPT_PATH
         elif not leaves and not hidden:
             path = SpendPathKind.KEY_PATH
 
-    complete = (
-        not hidden
-        and (
-            path is SpendPathKind.KEY_PATH
-            or (control_block is not None and control_block.complete and bool(leaves))
-        )
+    complete = not hidden and (
+        path is SpendPathKind.KEY_PATH
+        or (control_block is not None and control_block.complete and bool(leaves))
     )
 
     return TaprootCommitment(

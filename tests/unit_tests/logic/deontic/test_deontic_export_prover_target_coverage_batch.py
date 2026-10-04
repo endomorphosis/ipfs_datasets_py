@@ -18,9 +18,7 @@ def test_batch_prover_target_coverage_records_preserve_ir_order_and_source_ids()
 
     records = build_prover_syntax_target_coverage_records_from_irs(norms)
 
-    assert [record["source_id"] for record in records] == [
-        norm.source_id for norm in norms
-    ]
+    assert [record["source_id"] for record in records] == [norm.source_id for norm in norms]
     assert [record["target_logic"] for record in records] == [
         "local_prover_syntax",
         "local_prover_syntax",
@@ -31,9 +29,7 @@ def test_batch_prover_target_coverage_records_preserve_ir_order_and_source_ids()
     ]
 
     for record in records:
-        assert record["prover_syntax_summary_id"].startswith(
-            "prover-syntax-coverage:"
-        )
+        assert record["prover_syntax_summary_id"].startswith("prover-syntax-coverage:")
         assert record["record_count"] >= 1
         assert set(record["coverage_summary"]["required_targets"]) == set(
             LOCAL_PROVER_SYNTAX_TARGETS
@@ -46,9 +42,7 @@ def test_batch_prover_target_coverage_records_preserve_ir_order_and_source_ids()
             LOCAL_PROVER_SYNTAX_TARGETS
         )
         assert record["quality_gate_summary"]["quality_gate_complete_rate"] == 1.0
-        assert record["coverage_summary"]["quality_gate_summary"] == record[
-            "quality_gate_summary"
-        ]
+        assert record["coverage_summary"]["quality_gate_summary"] == record["quality_gate_summary"]
         if not record["formal_syntax_valid"]:
             assert record["requires_validation"] is True
             assert record["coverage_blockers"]

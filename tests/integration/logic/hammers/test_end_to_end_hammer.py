@@ -157,9 +157,10 @@ class TestDeterministicGoldenCases:
         assert result_a.to_dict() == result_b.to_dict()
 
     def test_timeout_and_unsupported_are_byte_stable(self, golden_manifest):
-        assert gh.build_timeout_case(golden_manifest).to_dict() == gh.build_timeout_case(
-            gh.load_golden_corpus_manifest()
-        ).to_dict()
+        assert (
+            gh.build_timeout_case(golden_manifest).to_dict()
+            == gh.build_timeout_case(gh.load_golden_corpus_manifest()).to_dict()
+        )
         assert (
             gh.build_unsupported_translation_case(golden_manifest).to_dict()
             == gh.build_unsupported_translation_case(gh.load_golden_corpus_manifest()).to_dict()
@@ -213,7 +214,11 @@ class TestVerifiedLeanGoldenCase:
         result_a, evidence_a = gh.build_verified_lean_case(golden_manifest)
         result_b, evidence_b = gh.build_verified_lean_case(gh.load_golden_corpus_manifest())
         assert result_a.status == result_b.status == HammerResultStatus.VERIFIED
-        assert result_a.reconstruction.kernel_accepted == result_b.reconstruction.kernel_accepted is True
+        assert (
+            result_a.reconstruction.kernel_accepted
+            == result_b.reconstruction.kernel_accepted
+            is True
+        )
         assert result_a.reconstruction.failure_reason == result_b.reconstruction.failure_reason
         assert evidence_a.checked_source == evidence_b.checked_source
         assert result_a.corpus_revision == result_b.corpus_revision

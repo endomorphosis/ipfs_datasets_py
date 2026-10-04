@@ -43,9 +43,7 @@ _AUDIO_BASENAME_RE = re.compile(
     r"^abby-tts-(?P<text_hash>[0-9a-f]{20})\.(?P<ext>mp3|wav)$",
     re.IGNORECASE,
 )
-_RUN_ID_RE = re.compile(
-    r"^abby-full-preprocess-[0-9]{8}T[0-9]{6}Z$"
-)
+_RUN_ID_RE = re.compile(r"^abby-full-preprocess-[0-9]{8}T[0-9]{6}Z$")
 _PRODUCTION_RUN_RE = re.compile(
     r"(?:^|/)runs/(?P<run_id>abby-full-preprocess-"
     r"(?P<timestamp>[0-9]{8}T[0-9]{6}Z))(?:/|$)"
@@ -72,9 +70,7 @@ def _strict_mapping(
     if actual != expected:
         missing = sorted(expected - actual)
         unknown = sorted(actual - expected)
-        raise ValueError(
-            f"{label} has missing fields {missing!r} and unknown fields {unknown!r}"
-        )
+        raise ValueError(f"{label} has missing fields {missing!r} and unknown fields {unknown!r}")
     return value
 
 
@@ -140,16 +136,12 @@ def _ordered_source_rows(
     if isinstance(manifest, Mapping):
         rows: Any = manifest.get("responses")
         if rows is None and all(
-            key not in manifest
-            for key in ("templates", "audio", "audios", "provenance")
+            key not in manifest for key in ("templates", "audio", "audios", "provenance")
         ):
             rows = (manifest,)
     else:
         rows = manifest
-    if (
-        isinstance(rows, str | bytes | bytearray | Mapping)
-        or not isinstance(rows, Sequence)
-    ):
+    if isinstance(rows, str | bytes | bytearray | Mapping) or not isinstance(rows, Sequence):
         raise ValueError("source manifest must contain a response sequence")
     if not all(isinstance(row, Mapping) for row in rows):
         raise ValueError("source manifest responses must be mappings")
@@ -200,9 +192,7 @@ def _source_response_identity(
     ).strip()
     spoken_text = normalize_indextts_spoken_text(raw_text)
     routes = _sorted_strings(_first(record, "route_labels", "routes"))
-    intent = (
-        str(record.get("intent") or (routes[0] if routes else "")).strip() or None
-    )
+    intent = str(record.get("intent") or (routes[0] if routes else "")).strip() or None
     locale = str(record.get("locale") or default_locale)
     return display_text, spoken_text, locale, intent
 
@@ -218,7 +208,10 @@ def _object_preference(item: BucketAudioDiscoveryObject) -> tuple[int, int, int,
     production_rank = 0 if run_match is not None else 1
     phase4_rank = (
         0
-        if any(part == "phase4" or part.startswith("phase4-") for part in PurePosixPath(item.path).parts)
+        if any(
+            part == "phase4" or part.startswith("phase4-")
+            for part in PurePosixPath(item.path).parts
+        )
         else 1
     )
     suffix = PurePosixPath(item.path).suffix.casefold()
@@ -302,12 +295,8 @@ class BucketAudioDiscoveryObject:
         )
 
     @classmethod
-    def from_json(
-        cls, value: str | bytes | bytearray
-    ) -> BucketAudioDiscoveryObject:
-        return cls.from_dict(
-            _json_mapping(value, label="bucket audio discovery object")
-        )
+    def from_json(cls, value: str | bytes | bytearray) -> BucketAudioDiscoveryObject:
+        return cls.from_dict(_json_mapping(value, label="bucket audio discovery object"))
 
 
 @dataclass(frozen=True, slots=True)
@@ -344,16 +333,12 @@ class SourceResponseAlias:
         if record_sha256(record) != self.source_record_sha256:
             raise ValueError("source_record_sha256 does not match source_record_json")
         if _legacy_text_hash(record.get("text")) != self.legacy_text_hash:
-            raise ValueError(
-                "legacy_text_hash does not reproduce the source record text"
-            )
+            raise ValueError("legacy_text_hash does not reproduce the source record text")
         spoken_text = normalize_indextts_spoken_text(
             str(record.get("text") or record.get("spoken_text") or "").strip()
         )
         if sha256(spoken_text.encode("utf-8")).hexdigest() != self.canonical_text_sha256:
-            raise ValueError(
-                "canonical_text_sha256 does not reproduce the source record text"
-            )
+            raise ValueError("canonical_text_sha256 does not reproduce the source record text")
 
     @property
     def source_record(self) -> dict[str, Any]:
@@ -422,9 +407,7 @@ class SourceAliasExclusion:
         object.__setattr__(self, "reason", SourceAliasExclusionReason(self.reason))
         if self.response_id is not None:
             _required_text(self.response_id, label="response_id")
-        if self.legacy_text_hash is not None and not _HASH20_RE.fullmatch(
-            self.legacy_text_hash
-        ):
+        if self.legacy_text_hash is not None and not _HASH20_RE.fullmatch(self.legacy_text_hash):
             raise ValueError("legacy_text_hash must be exactly 20 lowercase hexadecimal characters")
 
     def to_dict(self) -> dict[str, Any]:
@@ -534,8 +517,7 @@ class BucketAudioSelection:
             legacy_text_hash=value["legacy_text_hash"],
             selected=BucketAudioDiscoveryObject.from_dict(value["selected"]),
             alternatives=tuple(
-                BucketAudioDiscoveryObject.from_dict(item)
-                for item in raw_alternatives
+                BucketAudioDiscoveryObject.from_dict(item) for item in raw_alternatives
             ),
         )
 
@@ -598,9 +580,7 @@ class AbbyVoiceBucketAudioPlan:
         for selection in selections:
             alias = alias_by_response[selection.response_id]
             if selection.legacy_text_hash != alias.legacy_text_hash:
-                raise ValueError(
-                    "selection legacy_text_hash does not match its response alias"
-                )
+                raise ValueError("selection legacy_text_hash does not match its response alias")
         if set(alias_ids) & set(unmapped):
             raise ValueError("aliased and unmapped response IDs must be disjoint")
         if len(alias_ids) + len(unmapped) != self.accepted_response_count:
@@ -620,12 +600,9 @@ class AbbyVoiceBucketAudioPlan:
             raise ValueError("listing_sha256 must be a full lowercase SHA-256")
         allowed_runs = tuple(sorted(set(self.allowed_run_ids)))
         if len(allowed_runs) != len(self.allowed_run_ids) or any(
-            not isinstance(item, str) or _RUN_ID_RE.fullmatch(item) is None
-            for item in allowed_runs
+            not isinstance(item, str) or _RUN_ID_RE.fullmatch(item) is None for item in allowed_runs
         ):
-            raise ValueError(
-                "allowed_run_ids must contain unique canonical production run IDs"
-            )
+            raise ValueError("allowed_run_ids must contain unique canonical production run IDs")
         if self.schema_version != ABBY_VOICE_BUCKET_AUDIO_PLAN_SCHEMA_VERSION:
             raise ValueError("unsupported bucket audio plan schema")
         if self.planner_version != ABBY_VOICE_BUCKET_AUDIO_PLAN_VERSION:
@@ -755,12 +732,10 @@ class AbbyVoiceBucketAudioPlan:
         )
         if (
             not isinstance(selection_policy, Mapping)
-            or set(selection_policy)
-            != {"allowed_run_ids", "unlisted_runs_are_eligible"}
+            or set(selection_policy) != {"allowed_run_ids", "unlisted_runs_are_eligible"}
             or not isinstance(selection_policy["allowed_run_ids"], list)
             or not isinstance(unlisted_runs_are_eligible, bool)
-            or unlisted_runs_are_eligible
-            != (not bool(selection_policy["allowed_run_ids"]))
+            or unlisted_runs_are_eligible != (not bool(selection_policy["allowed_run_ids"]))
         ):
             raise ValueError("bucket audio plan selection policy is unsupported")
         if not all(isinstance(item, Mapping) for item in value["aliases"]):
@@ -770,17 +745,11 @@ class AbbyVoiceBucketAudioPlan:
         if not all(isinstance(item, Mapping) for item in value["selections"]):
             raise ValueError("bucket audio plan selections must contain mappings")
         result = cls(
-            aliases=tuple(
-                SourceResponseAlias.from_dict(item) for item in value["aliases"]
-            ),
-            selections=tuple(
-                BucketAudioSelection.from_dict(item) for item in value["selections"]
-            ),
+            aliases=tuple(SourceResponseAlias.from_dict(item) for item in value["aliases"]),
+            selections=tuple(BucketAudioSelection.from_dict(item) for item in value["selections"]),
             missing_response_ids=tuple(value["missing_response_ids"]),
             unmapped_response_ids=tuple(value["unmapped_response_ids"]),
-            exclusions=tuple(
-                SourceAliasExclusion.from_dict(item) for item in value["exclusions"]
-            ),
+            exclusions=tuple(SourceAliasExclusion.from_dict(item) for item in value["exclusions"]),
             accepted_response_count=value["accepted_response_count"],
             discovered_object_count=value["discovered_object_count"],
             ignored_object_count=value["ignored_object_count"],
@@ -800,12 +769,8 @@ class AbbyVoiceBucketAudioPlan:
         return result
 
     @classmethod
-    def from_json(
-        cls, value: str | bytes | bytearray
-    ) -> AbbyVoiceBucketAudioPlan:
-        return cls.from_dict(
-            _json_mapping(value, label="Abby voice bucket audio plan")
-        )
+    def from_json(cls, value: str | bytes | bytearray) -> AbbyVoiceBucketAudioPlan:
+        return cls.from_dict(_json_mapping(value, label="Abby voice bucket audio plan"))
 
 
 def _quarantined_digests(
@@ -881,12 +846,9 @@ def plan_abby_voice_bucket_audio(
         raise ValueError("listing_sha256 must be a full lowercase SHA-256")
     allowed_runs = tuple(sorted(set(allowed_run_ids)))
     if any(
-        not isinstance(item, str) or _RUN_ID_RE.fullmatch(item) is None
-        for item in allowed_runs
+        not isinstance(item, str) or _RUN_ID_RE.fullmatch(item) is None for item in allowed_runs
     ):
-        raise ValueError(
-            "allowed_run_ids must contain canonical production run IDs"
-        )
+        raise ValueError("allowed_run_ids must contain canonical production run IDs")
     accepted_by_id: dict[str, AbbyVoiceResponse] = {}
     for response in accepted_responses:
         if not isinstance(response, AbbyVoiceResponse):
@@ -913,15 +875,15 @@ def plan_abby_voice_bucket_audio(
         digest = record_sha256(record)
         source_ref = _source_ref(source_uri, digest)
         raw_hash = record.get("textHash")
-        legacy_hash = raw_hash if isinstance(raw_hash, str) and _HASH20_RE.fullmatch(raw_hash) else None
+        legacy_hash = (
+            raw_hash if isinstance(raw_hash, str) and _HASH20_RE.fullmatch(raw_hash) else None
+        )
         response_id: str | None = None
         try:
             display_text, spoken_text, locale, intent = _source_response_identity(
                 record, default_locale=default_locale
             )
-            response_id = stable_response_id(
-                display_text, spoken_text, locale, intent
-            )
+            response_id = stable_response_id(display_text, spoken_text, locale, intent)
         except (TypeError, ValueError):
             exclusions.append(
                 SourceAliasExclusion(
@@ -1035,8 +997,7 @@ def plan_abby_voice_bucket_audio(
             and (
                 not allowed_runs
                 or (
-                    (run_match := _PRODUCTION_RUN_RE.search(item.path))
-                    is not None
+                    (run_match := _PRODUCTION_RUN_RE.search(item.path)) is not None
                     and run_match.group("run_id") in allowed_runs
                 )
             )

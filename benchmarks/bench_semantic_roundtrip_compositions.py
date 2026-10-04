@@ -39,13 +39,9 @@ from benchmarks.semantic_roundtrip.canonical_decision import (  # noqa: E402
 )
 
 
-DEFAULT_FIXTURE = (
-    REPO_ROOT / "tests/fixtures/semantic_roundtrip/pilot_cases.json"
-)
+DEFAULT_FIXTURE = REPO_ROOT / "tests/fixtures/semantic_roundtrip/pilot_cases.json"
 REPORT_INTERFACE = "SemanticRoundTripCompositionDecision@1"
-REPORT_SCHEMA_VERSION = (
-    "ipfs-datasets.semantic-roundtrip-composition-pilot.v1"
-)
+REPORT_SCHEMA_VERSION = "ipfs-datasets.semantic-roundtrip-composition-pilot.v1"
 
 
 class ReportValidationError(ValueError):
@@ -79,13 +75,9 @@ def _fixture_identity(
         raw = fixture_path.read_bytes()
         fixture = json.loads(raw)
     except OSError as exc:
-        raise ReportValidationError(
-            f"cannot read pilot fixture {fixture_path}: {exc}"
-        ) from exc
+        raise ReportValidationError(f"cannot read pilot fixture {fixture_path}: {exc}") from exc
     except json.JSONDecodeError as exc:
-        raise ReportValidationError(
-            f"pilot fixture is not valid JSON: {exc}"
-        ) from exc
+        raise ReportValidationError(f"pilot fixture is not valid JSON: {exc}") from exc
     rows = _list(fixture, "pilot fixture")
     case_ids: list[str] = []
     for index, row in enumerate(rows):
@@ -116,9 +108,7 @@ def _record_key(
         f"{path}.case_id must be a nonempty string",
     )
     _require(
-        isinstance(repeat_index, int)
-        and not isinstance(repeat_index, bool)
-        and repeat_index >= 0,
+        isinstance(repeat_index, int) and not isinstance(repeat_index, bool) and repeat_index >= 0,
         f"{path}.repeat_index must be a nonnegative integer",
     )
     _require(
@@ -147,8 +137,7 @@ def _record_key(
     if status == "failed":
         _require(
             all(
-                float(losses[name]) == 1.0
-                for name in ("forward", "cycle", "end_to_end", "primary")
+                float(losses[name]) == 1.0 for name in ("forward", "cycle", "end_to_end", "primary")
             ),
             f"{path} terminal failure losses must all equal one",
         )
@@ -208,23 +197,16 @@ def _validate_arm_summaries(
     expected_ids = set(deterministic_ids) | set(model_ids)
     _require(
         set(summaries) == expected_ids,
-        "$.statistics.arm_summaries must cover exactly every "
-        "preregistered arm",
+        "$.statistics.arm_summaries must cover exactly every preregistered arm",
     )
-    records_by_arm: dict[str, list[Mapping[str, Any]]] = {
-        arm_id: [] for arm_id in expected_ids
-    }
+    records_by_arm: dict[str, list[Mapping[str, Any]]] = {arm_id: [] for arm_id in expected_ids}
     for record in records:
-        records_by_arm[str(record.get("arm_id", record.get("cell_id")))].append(
-            record
-        )
+        records_by_arm[str(record.get("arm_id", record.get("cell_id")))].append(record)
     recomputed: dict[str, dict[str, object]] = {}
     for arm_id in sorted(expected_ids):
         path = f"$.statistics.arm_summaries[{arm_id!r}]"
         summary = _mapping(summaries[arm_id], path)
-        repeat_count = (
-            1 if arm_id in deterministic_ids else minimum_model_repeats
-        )
+        repeat_count = 1 if arm_id in deterministic_ids else minimum_model_repeats
         scheduled = len(case_ids) * repeat_count
         _require(
             summary.get("scheduled_coordinate_count") == scheduled,
@@ -258,11 +240,7 @@ def _validate_arm_summaries(
             case_path = f"{path}.per_case[{case_id!r}]"
             case_summary = _mapping(per_case[case_id], case_path)
             case_records = sorted(
-                (
-                    record
-                    for record in arm_records
-                    if record.get("case_id") == case_id
-                ),
+                (record for record in arm_records if record.get("case_id") == case_id),
                 key=lambda record: int(record.get("repeat_index", -1)),
             )
             _require(
@@ -275,10 +253,8 @@ def _validate_arm_summaries(
                 f"{case_path}.scheduled_repeat_count must be {repeat_count}",
             )
             _require(
-                case_summary.get("observed_terminal_repeat_count")
-                == repeat_count,
-                f"{case_path}.observed_terminal_repeat_count must be "
-                f"{repeat_count}",
+                case_summary.get("observed_terminal_repeat_count") == repeat_count,
+                f"{case_path}.observed_terminal_repeat_count must be {repeat_count}",
             )
             case_losses = _mapping(
                 case_summary.get("losses"),
@@ -318,10 +294,8 @@ def _validate_arm_summaries(
                 for record in case_records
             )
             _require(
-                case_summary.get("all_repeats_selection_eligible")
-                is all_repeats_eligible,
-                f"{case_path}.all_repeats_selection_eligible differs "
-                "from records",
+                case_summary.get("all_repeats_selection_eligible") is all_repeats_eligible,
+                f"{case_path}.all_repeats_selection_eligible differs from records",
             )
             case_means[case_id] = computed_losses
             case_eligibility[case_id] = all_repeats_eligible
@@ -334,10 +308,7 @@ def _validate_arm_summaries(
                 f"{path}.aggregate.{loss_name}",
             )
             computed = round(
-                math.fsum(
-                    case_means[case_id][loss_name] for case_id in case_ids
-                )
-                / len(case_ids),
+                math.fsum(case_means[case_id][loss_name] for case_id in case_ids) / len(case_ids),
                 12,
             )
             _require(
@@ -355,13 +326,11 @@ def _validate_arm_summaries(
             for field in ("method", "low", "high"):
                 _require(
                     uncertainty.get(field) is not None,
-                    f"{path}.aggregate.{loss_name}.uncertainty.{field} "
-                    "must be reported",
+                    f"{path}.aggregate.{loss_name}.uncertainty.{field} must be reported",
                 )
         all_cases_eligible = all(case_eligibility.values())
         _require(
-            summary.get("all_cases_selection_eligible")
-            is all_cases_eligible,
+            summary.get("all_cases_selection_eligible") is all_cases_eligible,
             f"{path}.all_cases_selection_eligible differs from records",
         )
         recomputed[arm_id] = {
@@ -380,9 +349,7 @@ def _validate_selection(
     """Recompute the complete selection decision from terminal records."""
 
     eligible = [
-        arm_id
-        for arm_id in arm_ids
-        if recomputed_summaries[arm_id]["selection_eligible"] is True
+        arm_id for arm_id in arm_ids if recomputed_summaries[arm_id]["selection_eligible"] is True
     ]
     ranked = sorted(
         eligible,
@@ -466,17 +433,13 @@ def _validate_selection(
         "$.selection.production_promotion_allowed must be false",
     )
     _require(
-        selection.get("selection_metric")
-        == "lowest per-case-first macro mean end-to-end loss",
+        selection.get("selection_metric") == "lowest per-case-first macro mean end-to-end loss",
         "$.selection.selection_metric differs from the frozen protocol",
     )
     reasons = _list(selection.get("reasons"), "$.selection.reasons")
     _require(
         bool(reasons)
-        and all(
-            isinstance(reason, str) and bool(reason.strip())
-            for reason in reasons
-        ),
+        and all(isinstance(reason, str) and bool(reason.strip()) for reason in reasons),
         "$.selection.reasons must contain explicit nonblank reasons",
     )
 
@@ -533,9 +496,7 @@ def validate_composition_report(
     try:
         validate_cid(report_cid, codecs=("dag-json",))
     except (TypeError, ValueError) as exc:
-        raise ReportValidationError(
-            f"$.report_cid is not a canonical DAG-JSON CID: {exc}"
-        ) from exc
+        raise ReportValidationError(f"$.report_cid is not a canonical DAG-JSON CID: {exc}") from exc
     cid_payload = dict(report)
     del cid_payload["report_cid"]
     _require(
@@ -599,9 +560,7 @@ def validate_composition_report(
         preregistration.get("deterministic_repeats") == 1,
         "$.preregistration.deterministic_repeats must be one",
     )
-    minimum_model_repeats = preregistration.get(
-        "minimum_uncached_model_repeats"
-    )
+    minimum_model_repeats = preregistration.get("minimum_uncached_model_repeats")
     _require(
         isinstance(minimum_model_repeats, int)
         and not isinstance(minimum_model_repeats, bool)
@@ -618,8 +577,7 @@ def validate_composition_report(
         validate_cid(supplied_schedule_cid, codecs=("dag-json",))
     except (TypeError, ValueError) as exc:
         raise ReportValidationError(
-            "$.preregistration.model_schedule_cid is invalid: "
-            f"{exc}"
+            f"$.preregistration.model_schedule_cid is invalid: {exc}"
         ) from exc
     _require(
         cid_for_dag_json(schedule_payload) == supplied_schedule_cid,
@@ -635,8 +593,7 @@ def validate_composition_report(
     )
     schedule_arms = schedule.get("model_arm_ids", schedule.get("arm_ids"))
     _require(
-        set(_list(schedule_arms, "model schedule arm IDs"))
-        == set(model_ids),
+        set(_list(schedule_arms, "model schedule arm IDs")) == set(model_ids),
         "model schedule arms must equal the preregistered model-backed arms",
     )
     blocks = _list(
@@ -669,8 +626,7 @@ def validate_composition_report(
         )
         arm_order = _list(block.get("arm_order"), f"{path}.arm_order")
         _require(
-            len(arm_order) == len(model_ids)
-            and set(arm_order) == set(model_ids),
+            len(arm_order) == len(model_ids) and set(arm_order) == set(model_ids),
             f"{path}.arm_order must contain every model arm exactly once",
         )
         coordinates = _list(
@@ -718,9 +674,7 @@ def validate_composition_report(
     )
 
     execution = _mapping(report.get("execution"), "$.execution")
-    expected_deterministic_count = (
-        len(fixture_case_ids) * len(deterministic_ids)
-    )
+    expected_deterministic_count = len(fixture_case_ids) * len(deterministic_ids)
     expected_model_count = len(scheduled_model)
     expected_total = expected_deterministic_count + expected_model_count
     _require(
@@ -732,8 +686,7 @@ def validate_composition_report(
         "$.execution.scheduled_coordinate_count is inconsistent",
     )
     _require(
-        execution.get("observed_terminal_coordinate_count")
-        == expected_total,
+        execution.get("observed_terminal_coordinate_count") == expected_total,
         "all scheduled coordinates must have terminal observations",
     )
     _require(
@@ -770,16 +723,12 @@ def validate_composition_report(
         record = _mapping(raw_record, path)
         key = _record_key(record, path=path)
         _require(
-            key[0] in fixture_case_ids
-            and key[1] == 0
-            and key[2] in deterministic_ids,
+            key[0] in fixture_case_ids and key[1] == 0 and key[2] in deterministic_ids,
             f"{path} is not a preregistered deterministic coordinate",
         )
         deterministic_keys.append(key)
     expected_deterministic_keys = {
-        (case_id, 0, arm_id)
-        for case_id in fixture_case_ids
-        for arm_id in deterministic_ids
+        (case_id, 0, arm_id) for case_id in fixture_case_ids for arm_id in deterministic_ids
     }
     _require(
         set(deterministic_keys) == expected_deterministic_keys
@@ -888,13 +837,9 @@ def validate_report_file(
     try:
         value = json.loads(report_path.read_bytes())
     except OSError as exc:
-        raise ReportValidationError(
-            f"cannot read report {report_path}: {exc}"
-        ) from exc
+        raise ReportValidationError(f"cannot read report {report_path}: {exc}") from exc
     except json.JSONDecodeError as exc:
-        raise ReportValidationError(
-            f"report is not valid JSON: {exc}"
-        ) from exc
+        raise ReportValidationError(f"report is not valid JSON: {exc}") from exc
     return validate_composition_report(value, fixture_path=fixture_path)
 
 

@@ -165,21 +165,17 @@ Batch 327 is test-focused infrastructure only (test helpers are self-contained).
 ```python
 from optimizers.tests.test_batch_327_parity_tests import ParityTestHarness
 
+
 def test_refactoring_safe():
     harness = ParityTestHarness()
-    
+
     test_cases = [
         {"x": 1, "y": 2},
         {"x": 10, "y": 20},
     ]
-    
-    results = harness.test_refactored(
-        original_func,
-        refactored_func,
-        "my_function",
-        test_cases
-    )
-    
+
+    results = harness.test_refactored(original_func, refactored_func, "my_function", test_cases)
+
     assert all(r.passed for r in results), "Refactor changed behavior!"
 ```
 
@@ -200,10 +196,7 @@ harness = ParityTestHarness()
 # Test multiple functions
 for func_pair in function_pairs:
     results = harness.test_refactored(
-        func_pair.original,
-        func_pair.refactored,
-        func_pair.name,
-        test_cases
+        func_pair.original, func_pair.refactored, func_pair.name, test_cases
     )
 
 summary = harness.get_results_summary()

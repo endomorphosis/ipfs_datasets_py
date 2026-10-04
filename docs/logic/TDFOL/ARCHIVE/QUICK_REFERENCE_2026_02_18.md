@@ -285,17 +285,22 @@ pytest tests/unit_tests/logic/TDFOL/ --benchmark-only
 ```python
 # NEW: ipfs_datasets_py/logic/TDFOL/exceptions.py
 
+
 class TDFOLError(Exception):
     """Base exception for all TDFOL errors."""
+
     pass
+
 
 class ParseError(TDFOLError):
     """Raised when parsing fails."""
+
     def __init__(self, message: str, position: int, line: int, column: int):
         self.position = position
         self.line = line
         self.column = column
         super().__init__(f"{message} at line {line}, column {column}")
+
 
 # Usage in tdfol_parser.py:
 raise ParseError("Unexpected token", pos, line, col)
@@ -306,27 +311,30 @@ raise ParseError("Unexpected token", pos, line, col)
 ```python
 # NEW: Generic helper in tdfol_prover.py
 
+
 def _traverse_formula(
     formula: Formula,
     predicate: Callable[[Formula], bool],
     depth: int = 0,
-    max_depth: Optional[int] = None
+    max_depth: Optional[int] = None,
 ) -> bool:
     """Generic formula tree traversal."""
     if max_depth is not None and depth > max_depth:
         return False
-    
+
     if predicate(formula):
         return True
-    
+
     if isinstance(formula, UnaryFormula):
         return _traverse_formula(formula.formula, predicate, depth + 1, max_depth)
     elif isinstance(formula, BinaryFormula):
-        return (_traverse_formula(formula.left, predicate, depth + 1, max_depth) or
-                _traverse_formula(formula.right, predicate, depth + 1, max_depth))
+        return _traverse_formula(
+            formula.left, predicate, depth + 1, max_depth
+        ) or _traverse_formula(formula.right, predicate, depth + 1, max_depth)
     # ... (handle all types)
-    
+
     return False
+
 
 # REFACTORED: Use generic helper
 def _has_deontic_operators(self, formula: Formula) -> bool:
@@ -338,14 +346,15 @@ def _has_deontic_operators(self, formula: Formula) -> bool:
 ```python
 # NEW: ipfs_datasets_py/logic/TDFOL/tdfol_optimization.py
 
+
 class IndexedKnowledgeBase(TDFOLKnowledgeBase):
     """Knowledge base with indexes for O(log n) lookup."""
-    
+
     def __init__(self):
         super().__init__()
         self._predicate_index: Dict[str, Set[Formula]] = {}
         self._operator_index: Dict[LogicOperator, Set[Formula]] = {}
-    
+
     def get_formulas_with_predicate(self, name: str) -> Set[Formula]:
         """O(1) lookup by predicate name."""
         return self._predicate_index.get(name, set())
@@ -403,15 +412,15 @@ def prove(
     goal: Formula,
     max_iterations: int = 100,
     timeout: float = 60.0,
-    strategy: ProofStrategy = ProofStrategy.AUTO
+    strategy: ProofStrategy = ProofStrategy.AUTO,
 ) -> ProofResult:
     """
     Prove a goal formula using TDFOL inference rules.
-    
+
     This method attempts to prove the goal using the specified strategy.
     It will try multiple approaches: direct lookup, forward chaining,
     backward chaining, and modal tableaux.
-    
+
     Parameters
     ----------
     goal : Formula
@@ -422,19 +431,19 @@ def prove(
         Timeout in seconds (default: 60.0)
     strategy : ProofStrategy, optional
         Proof search strategy (default: AUTO)
-    
+
     Returns
     -------
     ProofResult
         Result containing proof status, method, steps, and timing
-    
+
     Raises
     ------
     ProofTimeoutError
         If proof exceeds timeout
     ProofError
         If proof fails due to internal error
-    
+
     Examples
     --------
     >>> kb = TDFOLKnowledgeBase()
@@ -443,14 +452,14 @@ def prove(
     >>> prover = TDFOLProver(kb)
     >>> result = prover.prove(parse_tdfol("Q"))
     >>> assert result.is_proved()
-    
+
     Notes
     -----
     The AUTO strategy automatically selects the best approach based on:
     - Formula structure (depth, operator types)
     - Knowledge base size
     - Previous proof statistics
-    
+
     See Also
     --------
     prove_parallel : Parallel proof search
@@ -528,6 +537,7 @@ except (ValueError, KeyError) as e:
 def parse_formula(text):
     return do_parsing(text)
 
+
 # GOOD:
 def parse_formula(text: str) -> Formula:
     """Parse TDFOL formula from string."""
@@ -538,14 +548,17 @@ def parse_formula(text: str) -> Formula:
 ```python
 # BAD: 3 nearly identical methods
 def _has_deontic(formula):
-    if isinstance(formula, DeonticFormula): return True
+    if isinstance(formula, DeonticFormula):
+        return True
     if isinstance(formula, BinaryFormula):
         return _has_deontic(formula.left) or _has_deontic(formula.right)
     # ... repeat for all types
 
+
 # GOOD: Generic helper
 def _traverse_formula(formula, predicate):
-    if predicate(formula): return True
+    if predicate(formula):
+        return True
     # ... generic traversal logic
 ```
 

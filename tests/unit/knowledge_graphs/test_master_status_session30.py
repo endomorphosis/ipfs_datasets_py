@@ -11,6 +11,7 @@ Targets (estimated gains based on coverage report):
 
 All tests follow the GIVEN-WHEN-THEN pattern.
 """
+
 from __future__ import annotations
 
 import sys
@@ -24,6 +25,7 @@ import pytest
 # Helpers shared across test classes
 # ---------------------------------------------------------------------------
 
+
 def _make_requests_mock(json_payload: dict, status_code: int = 200):
     """Return a mock that behaves like a requests.Response."""
     resp = MagicMock()
@@ -36,6 +38,7 @@ def _make_requests_mock(json_payload: dict, status_code: int = 200):
 # 1.  extraction/_wikipedia_helpers.py  (9% → ~70%, ~61pp)
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 class TestWikipediaHelpers:
     """Tests for WikipediaExtractionMixin via KnowledgeGraphExtractor."""
 
@@ -44,6 +47,7 @@ class TestWikipediaHelpers:
         from ipfs_datasets_py.knowledge_graphs.extraction.extractor import (
             KnowledgeGraphExtractor,
         )
+
         return KnowledgeGraphExtractor(use_tracer=False)
 
     # ------------------------------------------------------------------
@@ -74,13 +78,7 @@ class TestWikipediaHelpers:
 
     def test_extract_from_wikipedia_page_not_found_raises_value_error(self, extractor):
         """GIVEN missing Wikipedia page WHEN extract_from_wikipedia THEN ValueError raised."""
-        wiki_response = {
-            "query": {
-                "pages": {
-                    "-1": {}
-                }
-            }
-        }
+        wiki_response = {"query": {"pages": {"-1": {}}}}
         with patch(
             "ipfs_datasets_py.knowledge_graphs.extraction._wikipedia_helpers.requests.get",
             return_value=_make_requests_mock(wiki_response),
@@ -91,11 +89,13 @@ class TestWikipediaHelpers:
     def test_extract_from_wikipedia_network_error(self, extractor):
         """GIVEN network error WHEN extract_from_wikipedia THEN EntityExtractionError raised."""
         import requests as _requests
+
         with patch(
             "ipfs_datasets_py.knowledge_graphs.extraction._wikipedia_helpers.requests.get",
             side_effect=_requests.RequestException("connection refused"),
         ):
             from ipfs_datasets_py.knowledge_graphs.exceptions import EntityExtractionError
+
             with pytest.raises(EntityExtractionError):
                 extractor.extract_from_wikipedia("Some Page")
 
@@ -104,19 +104,14 @@ class TestWikipediaHelpers:
         from ipfs_datasets_py.knowledge_graphs.extraction.extractor import (
             KnowledgeGraphExtractor,
         )
+
         extractor = KnowledgeGraphExtractor(use_tracer=True)
         mock_tracer = MagicMock()
         mock_tracer.trace_extraction.return_value = "trace-001"
         extractor.tracer = mock_tracer
 
         page_content = "Python is a programming language."
-        wiki_response = {
-            "query": {
-                "pages": {
-                    "42": {"extract": page_content}
-                }
-            }
-        }
+        wiki_response = {"query": {"pages": {"42": {"extract": page_content}}}}
         with patch(
             "ipfs_datasets_py.knowledge_graphs.extraction._wikipedia_helpers.requests.get",
             return_value=_make_requests_mock(wiki_response),
@@ -133,6 +128,7 @@ class TestWikipediaHelpers:
         from ipfs_datasets_py.knowledge_graphs.extraction.extractor import (
             KnowledgeGraphExtractor,
         )
+
         extractor = KnowledgeGraphExtractor(use_tracer=True)
         mock_tracer = MagicMock()
         mock_tracer.trace_extraction.return_value = "trace-002"
@@ -153,9 +149,7 @@ class TestWikipediaHelpers:
     def test_extract_from_wikipedia_adds_sourced_from_rels(self, extractor):
         """GIVEN successful extraction WHEN extract_from_wikipedia THEN sourced_from rels added."""
         page_content = "Alice and Bob met at a conference."
-        wiki_response = {
-            "query": {"pages": {"1": {"extract": page_content}}}
-        }
+        wiki_response = {"query": {"pages": {"1": {"extract": page_content}}}}
         with patch(
             "ipfs_datasets_py.knowledge_graphs.extraction._wikipedia_helpers.requests.get",
             return_value=_make_requests_mock(wiki_response),
@@ -193,11 +187,7 @@ class TestWikipediaHelpers:
 
         kg = KnowledgeGraph(name="test_kg")  # Empty KG
         wikidata_search_response = {"search": [{"id": "Q1"}]}
-        wikidata_statements_response = {
-            "results": {
-                "bindings": []
-            }
-        }
+        wikidata_statements_response = {"results": {"bindings": []}}
 
         responses = [
             _make_requests_mock(wikidata_search_response),
@@ -323,6 +313,7 @@ class TestWikipediaHelpers:
     def test_get_wikidata_id_request_exception_returns_none(self, extractor):
         """GIVEN request fails WHEN _get_wikidata_id THEN None returned (logged)."""
         import requests as _requests
+
         with patch(
             "ipfs_datasets_py.knowledge_graphs.extraction._wikipedia_helpers.requests.get",
             side_effect=_requests.RequestException("timeout"),
@@ -355,13 +346,17 @@ class TestWikipediaHelpers:
                         "valueLabel": {"value": "human"},
                     },
                     {
-                        "property": {"value": "http://wikidata.org/prop/P31"},  # instance of — skipped
+                        "property": {
+                            "value": "http://wikidata.org/prop/P31"
+                        },  # instance of — skipped
                         "propertyLabel": {"value": "instance of"},
                         "value": {"value": "human"},
                         "valueLabel": {"value": "human"},
                     },
                     {
-                        "property": {"value": "http://wikidata.org/prop/P279"},  # subclass of — skipped
+                        "property": {
+                            "value": "http://wikidata.org/prop/P279"
+                        },  # subclass of — skipped
                         "propertyLabel": {"value": "subclass of"},
                         "value": {"value": "entity"},
                         "valueLabel": {"value": "entity"},
@@ -389,6 +384,7 @@ class TestWikipediaHelpers:
     def test_get_wikidata_statements_network_error_returns_empty(self, extractor):
         """GIVEN network error WHEN _get_wikidata_statements THEN empty list returned."""
         import requests as _requests
+
         with patch(
             "ipfs_datasets_py.knowledge_graphs.extraction._wikipedia_helpers.requests.get",
             side_effect=_requests.Timeout("timed out"),
@@ -399,6 +395,7 @@ class TestWikipediaHelpers:
     def test_get_wikidata_statements_unexpected_error_raises_validation_error(self, extractor):
         """GIVEN malformed SPARQL response WHEN _get_wikidata_statements THEN ValidationError raised."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import ValidationError
+
         malformed_response = {"results": {"bindings": "not-a-list"}}  # TypeError when iterating
         with patch(
             "ipfs_datasets_py.knowledge_graphs.extraction._wikipedia_helpers.requests.get",
@@ -412,6 +409,7 @@ class TestWikipediaHelpers:
 # 2.  core/types.py  (85% → 100%)
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 class TestCoreTypesProtocols:
     """Cover Protocol method bodies (ellipsis statements) by calling them directly."""
 
@@ -420,10 +418,17 @@ class TestCoreTypesProtocols:
         from ipfs_datasets_py.knowledge_graphs.core.types import StorageBackend
 
         class ConcreteStorage(StorageBackend):
-            def store(self, data, pin=None, codec="dag-json"): return "cid"
-            def retrieve(self, cid): return b"bytes"
-            def retrieve_json(self, cid): return {}
-            def store_json(self, data): return "cid"
+            def store(self, data, pin=None, codec="dag-json"):
+                return "cid"
+
+            def retrieve(self, cid):
+                return b"bytes"
+
+            def retrieve_json(self, cid):
+                return {}
+
+            def store_json(self, data):
+                return "cid"
 
         cs = ConcreteStorage()
         # Call Protocol method as unbound to exercise the '...' stub body (line 127).
@@ -437,10 +442,17 @@ class TestCoreTypesProtocols:
         from ipfs_datasets_py.knowledge_graphs.core.types import StorageBackend
 
         class Stub(StorageBackend):
-            def store(self, d, pin=None, codec="dag-json"): return "c"
-            def retrieve(self, c): return b"b"
-            def retrieve_json(self, c): return {}
-            def store_json(self, d): return "c"
+            def store(self, d, pin=None, codec="dag-json"):
+                return "c"
+
+            def retrieve(self, c):
+                return b"b"
+
+            def retrieve_json(self, c):
+                return {}
+
+            def store_json(self, d):
+                return "c"
 
         result = StorageBackend.retrieve(Stub(), "cid")
         assert result is None
@@ -450,10 +462,17 @@ class TestCoreTypesProtocols:
         from ipfs_datasets_py.knowledge_graphs.core.types import StorageBackend
 
         class Stub(StorageBackend):
-            def store(self, d, pin=None, codec="dag-json"): return "c"
-            def retrieve(self, c): return b"b"
-            def retrieve_json(self, c): return {}
-            def store_json(self, d): return "c"
+            def store(self, d, pin=None, codec="dag-json"):
+                return "c"
+
+            def retrieve(self, c):
+                return b"b"
+
+            def retrieve_json(self, c):
+                return {}
+
+            def store_json(self, d):
+                return "c"
 
         result = StorageBackend.retrieve_json(Stub(), "cid")
         assert result is None
@@ -463,10 +482,17 @@ class TestCoreTypesProtocols:
         from ipfs_datasets_py.knowledge_graphs.core.types import StorageBackend
 
         class Stub(StorageBackend):
-            def store(self, d, pin=None, codec="dag-json"): return "c"
-            def retrieve(self, c): return b"b"
-            def retrieve_json(self, c): return {}
-            def store_json(self, d): return "c"
+            def store(self, d, pin=None, codec="dag-json"):
+                return "c"
+
+            def retrieve(self, c):
+                return b"b"
+
+            def retrieve_json(self, c):
+                return {}
+
+            def store_json(self, d):
+                return "c"
 
         result = StorageBackend.store_json(Stub(), {})
         assert result is None
@@ -476,10 +502,17 @@ class TestCoreTypesProtocols:
         from ipfs_datasets_py.knowledge_graphs.core.types import GraphEngineProtocol
 
         class Stub(GraphEngineProtocol):
-            def create_node(self, labels=None, properties=None): return object()
-            def get_node(self, node_id): return None
-            def find_nodes(self, labels=None, properties=None, limit=None): return []
-            def create_relationship(self, rel_type, start_node, end_node, properties=None): return object()
+            def create_node(self, labels=None, properties=None):
+                return object()
+
+            def get_node(self, node_id):
+                return None
+
+            def find_nodes(self, labels=None, properties=None, limit=None):
+                return []
+
+            def create_relationship(self, rel_type, start_node, end_node, properties=None):
+                return object()
 
         result = GraphEngineProtocol.create_node(Stub(), [], {})
         assert result is None
@@ -489,10 +522,17 @@ class TestCoreTypesProtocols:
         from ipfs_datasets_py.knowledge_graphs.core.types import GraphEngineProtocol
 
         class Stub(GraphEngineProtocol):
-            def create_node(self, labels=None, properties=None): return object()
-            def get_node(self, node_id): return None
-            def find_nodes(self, labels=None, properties=None, limit=None): return []
-            def create_relationship(self, rel_type, start_node, end_node, properties=None): return object()
+            def create_node(self, labels=None, properties=None):
+                return object()
+
+            def get_node(self, node_id):
+                return None
+
+            def find_nodes(self, labels=None, properties=None, limit=None):
+                return []
+
+            def create_relationship(self, rel_type, start_node, end_node, properties=None):
+                return object()
 
         result = GraphEngineProtocol.get_node(Stub(), "node-1")
         assert result is None
@@ -502,10 +542,17 @@ class TestCoreTypesProtocols:
         from ipfs_datasets_py.knowledge_graphs.core.types import GraphEngineProtocol
 
         class Stub(GraphEngineProtocol):
-            def create_node(self, labels=None, properties=None): return object()
-            def get_node(self, node_id): return None
-            def find_nodes(self, labels=None, properties=None, limit=None): return []
-            def create_relationship(self, rel_type, start_node, end_node, properties=None): return object()
+            def create_node(self, labels=None, properties=None):
+                return object()
+
+            def get_node(self, node_id):
+                return None
+
+            def find_nodes(self, labels=None, properties=None, limit=None):
+                return []
+
+            def create_relationship(self, rel_type, start_node, end_node, properties=None):
+                return object()
 
         result = GraphEngineProtocol.find_nodes(Stub(), labels=["Person"])
         assert result is None
@@ -515,10 +562,17 @@ class TestCoreTypesProtocols:
         from ipfs_datasets_py.knowledge_graphs.core.types import GraphEngineProtocol
 
         class Stub(GraphEngineProtocol):
-            def create_node(self, labels=None, properties=None): return object()
-            def get_node(self, node_id): return None
-            def find_nodes(self, labels=None, properties=None, limit=None): return []
-            def create_relationship(self, rel_type, start_node, end_node, properties=None): return object()
+            def create_node(self, labels=None, properties=None):
+                return object()
+
+            def get_node(self, node_id):
+                return None
+
+            def find_nodes(self, labels=None, properties=None, limit=None):
+                return []
+
+            def create_relationship(self, rel_type, start_node, end_node, properties=None):
+                return object()
 
         result = GraphEngineProtocol.create_relationship(Stub(), "KNOWS", "a", "b")
         assert result is None
@@ -528,16 +582,20 @@ class TestCoreTypesProtocols:
 # 3.  neo4j_compat/driver.py  (86% → ~99%)
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 class TestIPFSDriverExtended:
     """Extended driver tests to cover verify_connectivity success/failure and HAVE_DEPS=False."""
 
     @pytest.fixture
     def driver(self):
-        with patch("ipfs_datasets_py.knowledge_graphs.neo4j_compat.driver.RouterDeps") as rd, \
-             patch("ipfs_datasets_py.knowledge_graphs.neo4j_compat.driver.IPLDBackend") as be:
+        with (
+            patch("ipfs_datasets_py.knowledge_graphs.neo4j_compat.driver.RouterDeps") as rd,
+            patch("ipfs_datasets_py.knowledge_graphs.neo4j_compat.driver.IPLDBackend") as be,
+        ):
             rd.return_value = MagicMock()
             be.return_value = MagicMock()
             from ipfs_datasets_py.knowledge_graphs.neo4j_compat.driver import IPFSDriver
+
             d = IPFSDriver("ipfs://localhost:5001", auth=("user", "token"))
             yield d
 
@@ -556,6 +614,7 @@ class TestIPFSDriverExtended:
     def test_verify_connectivity_storage_error_propagates(self, driver):
         """GIVEN StorageError from backend WHEN verify_connectivity THEN StorageError raised."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import StorageError
+
         driver.backend._get_backend.side_effect = StorageError("IPFS not reachable")
         with pytest.raises(StorageError):
             driver.verify_connectivity()
@@ -563,6 +622,7 @@ class TestIPFSDriverExtended:
     def test_verify_connectivity_runtime_error_raises_ipld_storage_error(self, driver):
         """GIVEN RuntimeError from backend WHEN verify_connectivity THEN IPLDStorageError raised."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import IPLDStorageError
+
         driver.backend._get_backend.side_effect = RuntimeError("backend init failed")
         with pytest.raises(IPLDStorageError, match="Connectivity check failed"):
             driver.verify_connectivity()
@@ -570,6 +630,7 @@ class TestIPFSDriverExtended:
     def test_verify_connectivity_connection_error_raises_ipld_storage_error(self, driver):
         """GIVEN ConnectionError from backend WHEN verify_connectivity THEN IPLDStorageError raised."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import IPLDStorageError
+
         driver.backend._get_backend.side_effect = ConnectionError("connection refused")
         with pytest.raises(IPLDStorageError):
             driver.verify_connectivity()
@@ -578,6 +639,7 @@ class TestIPFSDriverExtended:
         """GIVEN HAVE_DEPS=False WHEN IPFSDriver created THEN ImportError raised."""
         import ipfs_datasets_py.knowledge_graphs.neo4j_compat.driver as mod
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.driver import IPFSDriver
+
         original = mod.HAVE_DEPS
         try:
             mod.HAVE_DEPS = False
@@ -591,6 +653,7 @@ class TestIPFSDriverExtended:
 # 4.  storage/ipld_backend.py  (89% → ~95%)
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 class TestIPLDBackendExtended:
     """Test remaining uncovered paths in IPLDBackend."""
 
@@ -598,7 +661,10 @@ class TestIPLDBackendExtended:
     def backend(self):
         """Create an IPLDBackend with a mocked IPFS backend."""
         from ipfs_datasets_py.knowledge_graphs.storage.ipld_backend import IPLDBackend
-        with patch("ipfs_datasets_py.knowledge_graphs.storage.ipld_backend.get_ipfs_backend") as mock_get:
+
+        with patch(
+            "ipfs_datasets_py.knowledge_graphs.storage.ipld_backend.get_ipfs_backend"
+        ) as mock_get:
             mock_ipfs = MagicMock()
             mock_get.return_value = mock_ipfs
             b = IPLDBackend()
@@ -608,6 +674,7 @@ class TestIPLDBackendExtended:
     def test_store_reraises_serialization_error(self, backend):
         """GIVEN existing SerializationError in block_put WHEN store THEN re-raised unchanged."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import SerializationError
+
         b, mock_ipfs = backend
         mock_ipfs.block_put.side_effect = SerializationError("already serialization error")
         with pytest.raises(SerializationError):
@@ -616,6 +683,7 @@ class TestIPLDBackendExtended:
     def test_store_reraises_ipld_storage_error(self, backend):
         """GIVEN existing IPLDStorageError in block_put WHEN store THEN re-raised unchanged."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import IPLDStorageError
+
         b, mock_ipfs = backend
         mock_ipfs.block_put.side_effect = IPLDStorageError("already ipld error")
         with pytest.raises(IPLDStorageError):
@@ -624,6 +692,7 @@ class TestIPLDBackendExtended:
     def test_retrieve_reraises_ipld_storage_error(self, backend):
         """GIVEN existing IPLDStorageError in retrieve WHEN bubbles up THEN re-raised unchanged."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import IPLDStorageError
+
         b, mock_ipfs = backend
         mock_ipfs.block_get.side_effect = IPLDStorageError("block get failed")
         with pytest.raises(IPLDStorageError):
@@ -632,6 +701,7 @@ class TestIPLDBackendExtended:
     def test_retrieve_cat_connection_error_raises_ipld_storage_error(self, backend):
         """GIVEN cat() fails with ConnectionError WHEN retrieve THEN IPLDStorageError raised."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import IPLDStorageError
+
         b, mock_ipfs = backend
         mock_ipfs.block_get.side_effect = AttributeError("no block_get")
         mock_ipfs.cat.side_effect = ConnectionError("connection refused")
@@ -641,6 +711,7 @@ class TestIPLDBackendExtended:
     def test_retrieve_cat_generic_exception_raises_ipld_storage_error(self, backend):
         """GIVEN cat() fails with generic exception WHEN retrieve THEN IPLDStorageError raised."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import IPLDStorageError
+
         b, mock_ipfs = backend
         mock_ipfs.block_get.side_effect = AttributeError("no block_get")
         mock_ipfs.cat.side_effect = RuntimeError("unknown cat error")
@@ -650,6 +721,7 @@ class TestIPLDBackendExtended:
     def test_retrieve_outer_connection_error_raises_ipld_storage_error(self, backend):
         """GIVEN block_get fails with ConnectionError WHEN retrieve THEN IPLDStorageError raised."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import IPLDStorageError
+
         b, mock_ipfs = backend
         mock_ipfs.block_get.side_effect = ConnectionError("daemon down")
         with pytest.raises(IPLDStorageError, match="connection failed"):
@@ -658,6 +730,7 @@ class TestIPLDBackendExtended:
     def test_retrieve_outer_generic_exception_raises_ipld_storage_error(self, backend):
         """GIVEN block_get fails with generic exception WHEN retrieve THEN IPLDStorageError raised."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import IPLDStorageError
+
         b, mock_ipfs = backend
         mock_ipfs.block_get.side_effect = Exception("totally unexpected")
         with pytest.raises(IPLDStorageError):
@@ -678,13 +751,18 @@ class TestIPLDBackendExtended:
 
     def test_create_backend_function(self):
         """GIVEN create_backend called WHEN no deps THEN IPLDBackend returned."""
-        from ipfs_datasets_py.knowledge_graphs.storage.ipld_backend import create_backend, IPLDBackend
+        from ipfs_datasets_py.knowledge_graphs.storage.ipld_backend import (
+            create_backend,
+            IPLDBackend,
+        )
+
         b = create_backend()
         assert isinstance(b, IPLDBackend)
 
     def test_have_router_false_path(self):
         """GIVEN HAVE_ROUTER=False at import THEN RouterDeps is None sentinel."""
         import ipfs_datasets_py.knowledge_graphs.storage.ipld_backend as mod
+
         # Check that the module-level guard executed
         assert hasattr(mod, "HAVE_ROUTER")
 
@@ -693,12 +771,14 @@ class TestIPLDBackendExtended:
 # 5.  knowledge_graphs/__init__.py  (88% → 100%)
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 class TestKnowledgeGraphsInit:
     """Cover __getattr__ success and __dir__ in the package __init__.py."""
 
     def test_getattr_success_returns_deprecated_export(self):
         """GIVEN valid deprecated name WHEN __getattr__ called THEN class returned with DeprecationWarning."""
         import ipfs_datasets_py.knowledge_graphs as pkg
+
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             GD = pkg.__getattr__("GraphDatabase")
@@ -709,12 +789,14 @@ class TestKnowledgeGraphsInit:
     def test_getattr_missing_name_raises_attribute_error(self):
         """GIVEN unknown name WHEN __getattr__ called THEN AttributeError raised."""
         import ipfs_datasets_py.knowledge_graphs as pkg
+
         with pytest.raises(AttributeError, match="has no attribute"):
             pkg.__getattr__("NonExistentSymbol12345")
 
     def test_dir_includes_deprecated_exports(self):
         """GIVEN __dir__ called WHEN invoked THEN deprecated names included in listing."""
         import ipfs_datasets_py.knowledge_graphs as pkg
+
         listing = pkg.__dir__()
         assert "GraphDatabase" in listing
         assert "IPFSDriver" in listing
@@ -726,6 +808,7 @@ class TestKnowledgeGraphsInit:
 # ═══════════════════════════════════════════════════════════════════════════
 # 6.  extraction/extractor.py  (70% → ~74%)  — remaining neural paths
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 class TestExtractorNeuralPaths:
     """Cover remaining neural/classification paths in KnowledgeGraphExtractor."""
@@ -794,9 +877,7 @@ class TestExtractorNeuralPaths:
 
         entity_a = Entity(entity_type="person", name="Alice")
         # No exception raised — just logged
-        rels = extractor.extract_relationships(
-            text="Alice is here.", entities=[entity_a]
-        )
+        rels = extractor.extract_relationships(text="Alice is here.", entities=[entity_a])
         assert isinstance(rels, list)
 
     def test_extract_knowledge_graph_low_structure_temperature_filters_rels(self):
@@ -819,12 +900,14 @@ class TestExtractorNeuralPaths:
 # 7.  core/graph_engine.py  (95% → ~98%)  — traverse_pattern multi-hop
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 class TestGraphEngineTraversal:
     """Cover traverse_pattern multi-hop and find_paths cycle prevention."""
 
     @pytest.fixture
     def engine(self):
         from ipfs_datasets_py.knowledge_graphs.core.graph_engine import GraphEngine
+
         return GraphEngine()
 
     def test_traverse_pattern_multi_hop_with_label_filter(self, engine):
@@ -907,14 +990,17 @@ class TestGraphEngineTraversal:
 # 8.  migration/formats.py — remaining CAR and formats paths
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 class TestFormatsExtended:
     """Additional formats.py coverage for CAR load fallback and Pajek comment skip."""
 
     def test_builtin_load_car_fallback_to_ipld_car(self, tmp_path):
         """GIVEN libipld not available but ipld_car available WHEN _builtin_load_car THEN falls through."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import (
-            GraphData, NodeData,
+            GraphData,
+            NodeData,
         )
+
         # Create a fake CAR file path
         fake_car = tmp_path / "test.car"
         fake_car.write_bytes(b"\x00" * 16)  # Dummy bytes
@@ -923,14 +1009,17 @@ class TestFormatsExtended:
         with patch.dict(sys.modules, {"libipld": None, "ipld_car": None, "dag_cbor": None}):
             # Neither libipld nor ipld_car is available → raises ImportError
             from ipfs_datasets_py.knowledge_graphs.migration.formats import _builtin_load_car
+
             with pytest.raises(ImportError, match="CAR format requires"):
                 _builtin_load_car(str(fake_car))
 
     def test_builtin_save_car_libipld_missing_raises_import_error(self, tmp_path):
         """GIVEN libipld not installed WHEN _builtin_save_car THEN ImportError with helpful message."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import (
-            _builtin_save_car, GraphData,
+            _builtin_save_car,
+            GraphData,
         )
+
         car_path = str(tmp_path / "test.car")
         gd = GraphData(nodes=[], relationships=[])
 
@@ -941,8 +1030,10 @@ class TestFormatsExtended:
     def test_builtin_save_car_ipld_car_missing_raises_import_error(self, tmp_path):
         """GIVEN libipld present but ipld_car missing WHEN _builtin_save_car THEN ImportError."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import (
-            _builtin_save_car, GraphData,
+            _builtin_save_car,
+            GraphData,
         )
+
         car_path = str(tmp_path / "test.car")
         gd = GraphData(nodes=[], relationships=[])
 
@@ -962,12 +1053,14 @@ class TestFormatsExtended:
 
         with patch.dict(sys.modules, {"libipld": mock_libipld, "ipld_car": None}):
             from ipfs_datasets_py.knowledge_graphs.migration.formats import _builtin_load_car
+
             with pytest.raises(ImportError, match="CAR format requires"):
                 _builtin_load_car(str(fake_car))
 
     def test_pajek_load_skips_comment_lines(self, tmp_path):
         """GIVEN Pajek file with comment lines WHEN _load_from_pajek THEN comments skipped gracefully."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
+
         pajek_content = """\
 % This is a comment
 *Vertices 2
@@ -989,6 +1082,7 @@ class TestFormatsExtended:
 # 9.  reasoning/cross_document.py  (96%)  — remaining import + LLM paths
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 class TestCrossDocumentExtended:
     """Cover remaining cross_document.py lines."""
 
@@ -997,6 +1091,7 @@ class TestCrossDocumentExtended:
         from ipfs_datasets_py.knowledge_graphs.reasoning.cross_document import (
             _MissingUnifiedGraphRAGQueryOptimizer,
         )
+
         sentinel = _MissingUnifiedGraphRAGQueryOptimizer()
         with pytest.raises(ImportError):
             _ = sentinel.some_method  # Access any attribute → ImportError via __getattr__
@@ -1006,6 +1101,7 @@ class TestCrossDocumentExtended:
         from ipfs_datasets_py.knowledge_graphs.reasoning.cross_document import (
             CrossDocumentReasoner,
         )
+
         mock_optimizer = MagicMock()
         reasoner = CrossDocumentReasoner(query_optimizer=mock_optimizer)
         assert reasoner.query_optimizer is mock_optimizer
@@ -1013,5 +1109,6 @@ class TestCrossDocumentExtended:
     def test_cross_document_reasoner_example_usage_callable(self):
         """GIVEN _example_usage WHEN called THEN no exception raised."""
         from ipfs_datasets_py.knowledge_graphs.reasoning.cross_document import _example_usage
+
         # Should be callable without crashing
         assert callable(_example_usage)

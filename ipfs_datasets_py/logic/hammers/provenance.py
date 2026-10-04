@@ -369,9 +369,7 @@ class NormalizedEvidence:
         if not isinstance(self.verdict, SolverVerdict):
             raise ValueError("NormalizedEvidence.verdict must be a SolverVerdict")
         if not isinstance(self.recommended_status, HammerResultStatus):
-            raise ValueError(
-                "NormalizedEvidence.recommended_status must be a HammerResultStatus"
-            )
+            raise ValueError("NormalizedEvidence.recommended_status must be a HammerResultStatus")
 
         # --- The core trust-boundary invariant -----------------------------
         if self.recommended_status not in ALLOWED_RECOMMENDED_STATUSES:
@@ -386,9 +384,7 @@ class NormalizedEvidence:
         if not isinstance(self.premise_ids, list) or not all(
             isinstance(p, str) and p.strip() for p in self.premise_ids
         ):
-            raise ValueError(
-                "NormalizedEvidence.premise_ids must be a list of non-empty strings"
-            )
+            raise ValueError("NormalizedEvidence.premise_ids must be a list of non-empty strings")
         if not isinstance(self.translation_ids, list) or not all(
             isinstance(t, str) and t.strip() for t in self.translation_ids
         ):
@@ -406,9 +402,7 @@ class NormalizedEvidence:
         ):
             raise ValueError("NormalizedEvidence.proof_steps must contain ProofStep")
         if self.unsat_core is not None and not isinstance(self.unsat_core, NormalizedUnsatCore):
-            raise ValueError(
-                "NormalizedEvidence.unsat_core must be a NormalizedUnsatCore or None"
-            )
+            raise ValueError("NormalizedEvidence.unsat_core must be a NormalizedUnsatCore or None")
         if self.model is not None and not isinstance(self.model, NormalizedModel):
             raise ValueError("NormalizedEvidence.model must be a NormalizedModel or None")
 
@@ -467,13 +461,9 @@ class NormalizedEvidence:
         ]
         data["proof_steps"] = [ProofStep.from_dict(s) for s in data.get("proof_steps", [])]
         data["unsat_core"] = (
-            NormalizedUnsatCore.from_dict(data["unsat_core"])
-            if data.get("unsat_core")
-            else None
+            NormalizedUnsatCore.from_dict(data["unsat_core"]) if data.get("unsat_core") else None
         )
-        data["model"] = (
-            NormalizedModel.from_dict(data["model"]) if data.get("model") else None
-        )
+        data["model"] = NormalizedModel.from_dict(data["model"]) if data.get("model") else None
         return cls(**data)
 
 
@@ -582,9 +572,7 @@ def _parse_tstp_annotation(
         if len(inner) > 2:
             plist = inner[2].strip()
             if plist.startswith("[") and plist.endswith("]"):
-                parent_ids = [
-                    p.strip() for p in _split_top_level(plist[1:-1]) if p.strip()
-                ]
+                parent_ids = [p.strip() for p in _split_top_level(plist[1:-1]) if p.strip()]
         return rule, parent_ids, None
 
     introduced_match = re.match(r"^introduced\s*\(", annotation)
@@ -630,16 +618,12 @@ def parse_tstp_proof(text: str) -> Tuple[List[ProofStep], Optional[str]]:
         open_paren = match.end() - 1
         end_paren = _find_matching_paren(text, open_paren)
         if end_paren is None:
-            return [], (
-                f"unbalanced parentheses in TSTP statement starting at offset {start}"
-            )
+            return [], (f"unbalanced parentheses in TSTP statement starting at offset {start}")
         j = end_paren + 1
         while j < n and text[j].isspace():
             j += 1
         if j >= n or text[j] != ".":
-            return [], (
-                f"missing terminating '.' for TSTP statement starting at offset {start}"
-            )
+            return [], (f"missing terminating '.' for TSTP statement starting at offset {start}")
 
         inner = text[open_paren + 1 : end_paren]
         parts = _split_top_level(inner)
@@ -840,9 +824,7 @@ def parse_smtlib_model(text: str) -> Tuple[Optional[NormalizedModel], Optional[s
                 return NormalizedModel(bindings=bindings), None
             continue
         if all(isinstance(e, list) and len(e) == 2 and isinstance(e[0], str) for e in expr):
-            bindings = [
-                ModelBinding(symbol=str(e[0]), value=_render_sexpr(e[1])) for e in expr
-            ]
+            bindings = [ModelBinding(symbol=str(e[0]), value=_render_sexpr(e[1])) for e in expr]
             return NormalizedModel(bindings=bindings), None
     return None, None
 
@@ -1137,9 +1119,7 @@ def normalize_solver_evidence(
         list(translation_ids) if translation_ids is not None else [attempt.translation_id]
     )
     raw_trace_digest = (
-        compute_content_digest({"stdout": stdout, "stderr": stderr})
-        if (stdout or stderr)
-        else None
+        compute_content_digest({"stdout": stdout, "stderr": stderr}) if (stdout or stderr) else None
     )
     fmt = _TARGET_FORMAT.get(attempt.target, "")
 

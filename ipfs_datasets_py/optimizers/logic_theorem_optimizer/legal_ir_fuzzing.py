@@ -34,12 +34,8 @@ from .modal_autoencoder import build_decompiler_structural_learning_target
 from .modal_ir import ModalIRDocument
 
 
-LEGAL_IR_FUZZING_SCHEMA_VERSION: Final = (
-    "legal-ir-metamorphic-differential-fuzzing-v1"
-)
-LEGAL_IR_TRUSTED_NEGATIVE_SCHEMA_VERSION: Final = (
-    "legal-ir-fuzzing-trusted-negative-v1"
-)
+LEGAL_IR_FUZZING_SCHEMA_VERSION: Final = "legal-ir-metamorphic-differential-fuzzing-v1"
+LEGAL_IR_TRUSTED_NEGATIVE_SCHEMA_VERSION: Final = "legal-ir-fuzzing-trusted-negative-v1"
 
 SEMANTICS_PRESERVING: Final = "semantics_preserving"
 SEMANTICS_CHANGING: Final = "semantics_changing"
@@ -383,15 +379,12 @@ class LegalIRFuzzingReport:
 
     @property
     def failed_mutation_ids(self) -> tuple[str, ...]:
-        return tuple(
-            result.mutation.mutation_id for result in self.results if not result.passed
-        )
+        return tuple(result.mutation.mutation_id for result in self.results if not result.passed)
 
     @property
     def coverage_by_target(self) -> Mapping[str, Mapping[str, int]]:
         coverage: dict[str, dict[str, int]] = {
-            target: {SEMANTICS_PRESERVING: 0, SEMANTICS_CHANGING: 0}
-            for target in FUZZING_TARGETS
+            target: {SEMANTICS_PRESERVING: 0, SEMANTICS_CHANGING: 0} for target in FUZZING_TARGETS
         }
         for result in self.results:
             coverage[result.mutation.target][result.mutation.relation] += 1
@@ -457,9 +450,7 @@ class LegalIRFuzzer:
             if mutation.target in self.config.targets
         )
         trusted = tuple(
-            result.counterexample
-            for result in results
-            if result.counterexample is not None
+            result.counterexample for result in results if result.counterexample is not None
         )
         return LegalIRFuzzingReport(
             sample_id=resolved_sample_id,
@@ -567,13 +558,10 @@ class LegalIRFuzzer:
             decompiler_similarity=decompiler_similarity,
             grammar_rejections=grammar_rejections,
         )
-        verified = (
-            (invariant_holds and mutation.relation == SEMANTICS_PRESERVING)
-            or (
-                mutation.relation == SEMANTICS_CHANGING
-                and expected_change_detected
-                and differential_consistent
-            )
+        verified = (invariant_holds and mutation.relation == SEMANTICS_PRESERVING) or (
+            mutation.relation == SEMANTICS_CHANGING
+            and expected_change_detected
+            and differential_consistent
         )
         counterexample = None
         if self._should_store_counterexample(mutation, verified, expected_change_detected):
@@ -806,9 +794,7 @@ class LegalIRFuzzer:
             rules[0] = first
             changing["rules"] = rules
         else:
-            changing["rules"] = [
-                {"modality": "permission", "subject": "agency", "action": "waive"}
-            ]
+            changing["rules"] = [{"modality": "permission", "subject": "agency", "action": "waive"}]
         source_copy = copy.deepcopy(dict(learned_ir))
         source_copy["source_text"] = "SOURCE_TEXT"
         return (
@@ -958,9 +944,7 @@ class LegalIRFuzzer:
             "compiler_vs_learned_guidance": compiler_learned.to_dict(),
             "hammer_obligation_delta": hammer_delta.to_dict(),
             "mutated_round_trip": mutated_round_trip.to_dict(),
-            "proof_obligation_delta": hammer_delta.raw_deltas.get(
-                PROOF_OBLIGATION_DELTA, 0.0
-            ),
+            "proof_obligation_delta": hammer_delta.raw_deltas.get(PROOF_OBLIGATION_DELTA, 0.0),
             "round_trip_structural_delta": round(
                 mutated_round_trip.scores.get(STRUCTURAL_EQUIVALENCE, 0.0)
                 - baseline_round_trip.scores.get(STRUCTURAL_EQUIVALENCE, 0.0),
@@ -1196,13 +1180,17 @@ def _negative_predicate_for_mutation(
         mutated_bundle = fuzzer._bundle_for_mutation(
             baseline,
             candidate_mutation,
-            sample_id=str(_as_mapping(baseline.deterministic_ir).get("document_id") or "lir-fuzz-sample"),
-            citation=str(_as_mapping(baseline.deterministic_ir).get("metadata", {}).get("citation") or ""),
+            sample_id=str(
+                _as_mapping(baseline.deterministic_ir).get("document_id") or "lir-fuzz-sample"
+            ),
+            citation=str(
+                _as_mapping(baseline.deterministic_ir).get("metadata", {}).get("citation") or ""
+            ),
         )
-        return (
-            _jaccard(_bundle_summary(baseline), _bundle_summary(mutated_bundle))
-            < semantic_threshold
-            or bool(fuzzer._grammar_rejections(candidate_mutation, mutated_bundle))
+        return _jaccard(
+            _bundle_summary(baseline), _bundle_summary(mutated_bundle)
+        ) < semantic_threshold or bool(
+            fuzzer._grammar_rejections(candidate_mutation, mutated_bundle)
         )
 
     return predicate
@@ -1248,12 +1236,8 @@ def _learned_ir_from_document(document: Mapping[str, Any]) -> dict[str, Any]:
             {
                 "action": _norm(predicate.get("name") or "predicate"),
                 "arguments": [_norm(item) for item in arguments],
-                "conditions": [
-                    _norm(item) for item in _sequence(formula_map.get("conditions"))
-                ],
-                "exceptions": [
-                    _norm(item) for item in _sequence(formula_map.get("exceptions"))
-                ],
+                "conditions": [_norm(item) for item in _sequence(formula_map.get("conditions"))],
+                "exceptions": [_norm(item) for item in _sequence(formula_map.get("exceptions"))],
                 "formula_id": str(formula_map.get("formula_id") or ""),
                 "modality": modality,
                 "subject": _norm(predicate.get("role") or "legal_actor"),
@@ -1286,10 +1270,19 @@ def _decompiler_plan_from_target(target: Mapping[str, Any]) -> dict[str, Any]:
 def _bundle_summary(bundle: LegalIRSurfaceBundle) -> frozenset[str]:
     return frozenset(
         {
-            *(f"compiler:{item}" for item in _semantic_tokens_for_document(bundle.deterministic_ir)),
+            *(
+                f"compiler:{item}"
+                for item in _semantic_tokens_for_document(bundle.deterministic_ir)
+            ),
             *(f"learned:{item}" for item in _semantic_tokens_for_learned_ir(bundle.learned_ir)),
-            *(f"obligation:{item}" for item in _semantic_tokens_for_obligations(bundle.obligations)),
-            *(f"decompiler:{item}" for item in _semantic_tokens_for_decompiler(bundle.decompiler_output)),
+            *(
+                f"obligation:{item}"
+                for item in _semantic_tokens_for_obligations(bundle.obligations)
+            ),
+            *(
+                f"decompiler:{item}"
+                for item in _semantic_tokens_for_decompiler(bundle.decompiler_output)
+            ),
         }
     )
 
@@ -1398,7 +1391,9 @@ def _semantic_tokens_for_decompiler(decompiler: Any) -> frozenset[str]:
     return frozenset(tokens)
 
 
-def _mutate_first_formula(document: dict[str, Any], mutator: Callable[[dict[str, Any]], None]) -> None:
+def _mutate_first_formula(
+    document: dict[str, Any], mutator: Callable[[dict[str, Any]], None]
+) -> None:
     formulas = _sequence(document.get("formulas"))
     if formulas and isinstance(formulas[0], Mapping):
         first = copy.deepcopy(dict(formulas[0]))
@@ -1456,10 +1451,7 @@ def _sanitize_counterexample(value: Any, *, source_text: str) -> Any:
             if (
                 normalized_source
                 and len(normalized.split()) >= 6
-                and (
-                    normalized in normalized_source
-                    or normalized_source in normalized
-                )
+                and (normalized in normalized_source or normalized_source in normalized)
             ):
                 return {
                     "redacted": True,

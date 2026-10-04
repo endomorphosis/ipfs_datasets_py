@@ -88,10 +88,7 @@ from ...utils.cache import CacheBackend, CacheEntry, GitHubCache
 from ...utils.github import RateLimiter
 
 # 2. Issue deprecation warning
-warnings.warn(
-    "Use unified utils modules instead",
-    DeprecationWarning
-)
+warnings.warn("Use unified utils modules instead", DeprecationWarning)
 
 # 3. Create backward compatibility aliases
 GitHubAPICache = GitHubCache

@@ -105,12 +105,7 @@ class NativeProverStatus(StrEnum):
 def _text(value: object, field_name: str, *, optional: bool = False) -> str:
     if optional and value == "":
         return ""
-    if (
-        not isinstance(value, str)
-        or not value
-        or value != value.strip()
-        or "\x00" in value
-    ):
+    if not isinstance(value, str) or not value or value != value.strip() or "\x00" in value:
         qualifier = "an empty or " if optional else "a "
         raise ATPAdapterError(
             f"{field_name} must be {qualifier}non-empty trimmed string without NUL bytes"
@@ -148,14 +143,8 @@ def _content_digest(content: str) -> str:
 
 
 def _artifact_content(value: object, field_name: str) -> str:
-    if (
-        not isinstance(value, str)
-        or not value.strip()
-        or "\x00" in value
-    ):
-        raise ATPAdapterError(
-            f"{field_name} must be non-empty text without NUL bytes"
-        )
+    if not isinstance(value, str) or not value.strip() or "\x00" in value:
+        raise ATPAdapterError(f"{field_name} must be non-empty text without NUL bytes")
     return value
 
 
@@ -169,33 +158,21 @@ class ATPSourceBinding:
     schema_version: str = ATP_SOURCE_BINDING_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "request_digest", _digest(self.request_digest, "request_digest")
-        )
-        object.__setattr__(
-            self, "source_digest", _digest(self.source_digest, "source_digest")
-        )
-        object.__setattr__(
-            self, "source_format", _text(self.source_format, "source_format")
-        )
+        object.__setattr__(self, "request_digest", _digest(self.request_digest, "request_digest"))
+        object.__setattr__(self, "source_digest", _digest(self.source_digest, "source_digest"))
+        object.__setattr__(self, "source_format", _text(self.source_format, "source_format"))
         if self.schema_version != ATP_SOURCE_BINDING_VERSION:
-            raise ATPAdapterError(
-                f"unsupported ATP source binding schema: {self.schema_version!r}"
-            )
+            raise ATPAdapterError(f"unsupported ATP source binding schema: {self.schema_version!r}")
 
     @classmethod
-    def bind(
-        cls, request: BackendRequest, source: str, source_format: str
-    ) -> ATPSourceBinding:
+    def bind(cls, request: BackendRequest, source: str, source_format: str) -> ATPSourceBinding:
         if not isinstance(request, BackendRequest):
             raise ATPAdapterError("request must be a BackendRequest")
         normalized = _text(source, "source")
         normalized_format = _text(source_format, "source_format").lower()
         return cls(
             request_digest=request.digest,
-            source_digest=stable_digest(
-                {"source": normalized, "source_format": normalized_format}
-            ),
+            source_digest=stable_digest({"source": normalized, "source_format": normalized_format}),
             source_format=normalized_format,
         )
 
@@ -222,30 +199,18 @@ class ATPProofObject:
     schema_version: str = ATP_PROOF_OBJECT_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "request_digest", _digest(self.request_digest, "request_digest")
-        )
-        object.__setattr__(
-            self, "source_digest", _digest(self.source_digest, "source_digest")
-        )
-        object.__setattr__(
-            self, "proof_format", _text(self.proof_format, "proof_format")
-        )
-        object.__setattr__(
-            self, "content", _artifact_content(self.content, "content")
-        )
+        object.__setattr__(self, "request_digest", _digest(self.request_digest, "request_digest"))
+        object.__setattr__(self, "source_digest", _digest(self.source_digest, "source_digest"))
+        object.__setattr__(self, "proof_format", _text(self.proof_format, "proof_format"))
+        object.__setattr__(self, "content", _artifact_content(self.content, "content"))
         if not isinstance(self.verified, bool):
             raise ATPAdapterError("verified must be a boolean")
-        object.__setattr__(
-            self, "checker_id", _text(self.checker_id, "checker_id", optional=True)
-        )
+        object.__setattr__(self, "checker_id", _text(self.checker_id, "checker_id", optional=True))
         if self.verified and not self.checker_id:
             raise ATPAdapterError("verified proof objects require checker_id")
         object.__setattr__(self, "metadata", _frozen(self.metadata, "metadata"))
         if self.schema_version != ATP_PROOF_OBJECT_VERSION:
-            raise ATPAdapterError(
-                f"unsupported ATP proof object schema: {self.schema_version!r}"
-            )
+            raise ATPAdapterError(f"unsupported ATP proof object schema: {self.schema_version!r}")
 
     @property
     def content_digest(self) -> str:
@@ -286,15 +251,9 @@ class ATPCountermodel:
     schema_version: str = ATP_COUNTERMODEL_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "request_digest", _digest(self.request_digest, "request_digest")
-        )
-        object.__setattr__(
-            self, "source_digest", _digest(self.source_digest, "source_digest")
-        )
-        object.__setattr__(
-            self, "model_format", _text(self.model_format, "model_format")
-        )
+        object.__setattr__(self, "request_digest", _digest(self.request_digest, "request_digest"))
+        object.__setattr__(self, "source_digest", _digest(self.source_digest, "source_digest"))
+        object.__setattr__(self, "model_format", _text(self.model_format, "model_format"))
         object.__setattr__(self, "model", _frozen(self.model, "model"))
         if not isinstance(self.validated, bool):
             raise ATPAdapterError("validated must be a boolean")
@@ -306,9 +265,7 @@ class ATPCountermodel:
         if self.validated and not self.validator_id:
             raise ATPAdapterError("validated countermodels require validator_id")
         if self.schema_version != ATP_COUNTERMODEL_VERSION:
-            raise ATPAdapterError(
-                f"unsupported ATP countermodel schema: {self.schema_version!r}"
-            )
+            raise ATPAdapterError(f"unsupported ATP countermodel schema: {self.schema_version!r}")
 
     @property
     def model_digest(self) -> str:
@@ -370,12 +327,8 @@ class NativeProverResult:
     schema_version: str = LEGACY_PROVER_RESULT_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "request_digest", _digest(self.request_digest, "request_digest")
-        )
-        object.__setattr__(
-            self, "source_digest", _digest(self.source_digest, "source_digest")
-        )
+        object.__setattr__(self, "request_digest", _digest(self.request_digest, "request_digest"))
+        object.__setattr__(self, "source_digest", _digest(self.source_digest, "source_digest"))
         try:
             status = (
                 self.status
@@ -399,22 +352,13 @@ class NativeProverResult:
             value = getattr(self, field_name)
             if isinstance(value, bool) or not isinstance(value, int) or value < 0:
                 raise ATPAdapterError(f"{field_name} must be a non-negative integer")
-        object.__setattr__(
-            self, "diagnostics", _strings(self.diagnostics, "diagnostics")
-        )
-        if self.proof_object is not None and not isinstance(
-            self.proof_object, ATPProofObject
-        ):
+        object.__setattr__(self, "diagnostics", _strings(self.diagnostics, "diagnostics"))
+        if self.proof_object is not None and not isinstance(self.proof_object, ATPProofObject):
             raise ATPAdapterError("proof_object must be an ATPProofObject")
-        if self.countermodel is not None and not isinstance(
-            self.countermodel, ATPCountermodel
-        ):
+        if self.countermodel is not None and not isinstance(self.countermodel, ATPCountermodel):
             raise ATPAdapterError("countermodel must be an ATPCountermodel")
         object.__setattr__(self, "metadata", _frozen(self.metadata, "metadata"))
-        artifact_bytes = sum(
-            len(value.encode("utf-8"))
-            for value in self.diagnostics
-        )
+        artifact_bytes = sum(len(value.encode("utf-8")) for value in self.diagnostics)
         if self.proof_object is not None:
             artifact_bytes += len(self.proof_object.content.encode("utf-8"))
         if self.countermodel is not None:
@@ -434,9 +378,7 @@ class NativeProverResult:
                 sort_keys=True,
             ).encode("utf-8")
         )
-        object.__setattr__(
-            self, "output_bytes", max(self.output_bytes, artifact_bytes)
-        )
+        object.__setattr__(self, "output_bytes", max(self.output_bytes, artifact_bytes))
         if self.schema_version != LEGACY_PROVER_RESULT_VERSION:
             raise ATPAdapterError(
                 f"unsupported native prover result schema: {self.schema_version!r}"
@@ -465,16 +407,10 @@ class LegacyCompatibilityReceipt:
     schema_version: str = LEGACY_COMPATIBILITY_RECEIPT_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "request_digest", _digest(self.request_digest, "request_digest")
-        )
-        object.__setattr__(
-            self, "source_digest", _digest(self.source_digest, "source_digest")
-        )
+        object.__setattr__(self, "request_digest", _digest(self.request_digest, "request_digest"))
+        object.__setattr__(self, "source_digest", _digest(self.source_digest, "source_digest"))
         object.__setattr__(self, "backend_id", _text(self.backend_id, "backend_id"))
-        object.__setattr__(
-            self, "backend_version", _text(self.backend_version, "backend_version")
-        )
+        object.__setattr__(self, "backend_version", _text(self.backend_version, "backend_version"))
         object.__setattr__(
             self,
             "native_result_type",
@@ -541,9 +477,7 @@ class ATPAdapterOutcome:
     interface_version: str = ATP_COMPATIBILITY_BACKENDS_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "request_digest", _digest(self.request_digest, "request_digest")
-        )
+        object.__setattr__(self, "request_digest", _digest(self.request_digest, "request_digest"))
         if not isinstance(self.source_binding, ATPSourceBinding):
             raise ATPAdapterError("source_binding must be an ATPSourceBinding")
         if not isinstance(self.result, TypedBackendResult):
@@ -588,12 +522,8 @@ class ATPAdapterOutcome:
         }
 
 
-ProofReconstructor = Callable[
-    [ATPSourceBinding, ToolRunResult, SZSStatus], ATPProofObject | None
-]
-CountermodelParser = Callable[
-    [ATPSourceBinding, ToolRunResult, SZSStatus], ATPCountermodel | None
-]
+ProofReconstructor = Callable[[ATPSourceBinding, ToolRunResult, SZSStatus], ATPProofObject | None]
+CountermodelParser = Callable[[ATPSourceBinding, ToolRunResult, SZSStatus], ATPCountermodel | None]
 NativeProverRunner = Callable[[NativeProverInvocation], NativeProverResult]
 
 
@@ -629,9 +559,7 @@ def _source_from_request(
         raise ATPAdapterError("request must be a BackendRequest")
     payload = request.payload.to_dict()
     source = payload.get("tptp") if "tptp" in payload else payload.get("source")
-    source_format = payload.get(
-        "encoding", "tptp" if "tptp" in payload else request.logic_family
-    )
+    source_format = payload.get("encoding", "tptp" if "tptp" in payload else request.logic_family)
     if not isinstance(source_format, str):
         raise ATPAdapterError("request encoding must be a string")
     normalized_format = source_format.strip().lower()
@@ -667,15 +595,12 @@ def _validate_request(
         )
     if not capabilities.supports(request.logic_family, request.query_kind):
         raise ATPAdapterError(
-            f"{backend_id} does not support {request.logic_family}/"
-            f"{request.query_kind.value}"
+            f"{backend_id} does not support {request.logic_family}/{request.query_kind.value}"
         )
 
 
 def _usage_from_process(process: ToolRunResult) -> ResourceUsage:
-    output_bytes = len(process.stdout.encode("utf-8")) + len(
-        process.stderr.encode("utf-8")
-    )
+    output_bytes = len(process.stdout.encode("utf-8")) + len(process.stderr.encode("utf-8"))
     return ResourceUsage(
         elapsed_ms=max(0, round(process.elapsed_seconds * 1000)),
         output_bytes=output_bytes,
@@ -777,9 +702,7 @@ def _build_result(
         if status is ResultStatus.PROVED and not verified_proof:
             raise ATPAdapterError("proved theorem results require a verified proof object")
         if status is ResultStatus.DISPROVED and not validated_model:
-            raise ATPAdapterError(
-                "disproved theorem results require a validated countermodel"
-            )
+            raise ATPAdapterError("disproved theorem results require a validated countermodel")
         return TheoremResult(
             authority=ResultAuthority.THEOREM,
             translation_ceiling=(
@@ -798,13 +721,9 @@ def _build_result(
         )
     if request.query_kind is QueryKind.SATISFIABILITY:
         if status is ResultStatus.UNSATISFIABLE and not verified_proof:
-            raise ATPAdapterError(
-                "unsatisfiable results require a verified proof object"
-            )
+            raise ATPAdapterError("unsatisfiable results require a verified proof object")
         if status is ResultStatus.SATISFIABLE and not validated_model:
-            raise ATPAdapterError(
-                "satisfiable results require a validated model"
-            )
+            raise ATPAdapterError("satisfiable results require a validated model")
         return SatisfiabilityResult(
             authority=ResultAuthority.SATISFIABILITY,
             translation_ceiling=(
@@ -905,9 +824,7 @@ class TPTPBackend:
             aliases=self.aliases,
             capabilities=self.capabilities,
         )
-        source, binding = _source_from_request(
-            request, self.accepted_source_formats
-        )
+        source, binding = _source_from_request(request, self.accepted_source_formats)
         process = self._runner.run(
             self._tool_request(source, request.bounds), cancellation=cancellation
         )
@@ -952,9 +869,7 @@ class TPTPBackend:
                 result=result,
             )
 
-        combined_output = "\n".join(
-            part for part in (process.stdout, process.stderr) if part
-        )
+        combined_output = "\n".join(part for part in (process.stdout, process.stderr) if part)
         try:
             szs_status = parse_szs_status(combined_output)
         except MalformedATPOutput as error:
@@ -987,15 +902,11 @@ class TPTPBackend:
             }
             else None
         )
-        if (
-            proof_object is None
-            and szs_status
-            in {
-                SZSStatus.THEOREM,
-                SZSStatus.UNSATISFIABLE,
-                SZSStatus.CONTRADICTORY_AXIOMS,
-            }
-        ):
+        if proof_object is None and szs_status in {
+            SZSStatus.THEOREM,
+            SZSStatus.UNSATISFIABLE,
+            SZSStatus.CONTRADICTORY_AXIOMS,
+        }:
             # Preserve the bounded ATP evidence for later reconstruction while
             # keeping its authority explicitly unverified.
             proof_object = ATPProofObject(
@@ -1011,18 +922,13 @@ class TPTPBackend:
         countermodel = (
             self._countermodel_parser(binding, process, szs_status)
             if self._countermodel_parser is not None
-            and szs_status
-            in {SZSStatus.SATISFIABLE, SZSStatus.COUNTER_SATISFIABLE}
+            and szs_status in {SZSStatus.SATISFIABLE, SZSStatus.COUNTER_SATISFIABLE}
             else None
         )
         if proof_object is not None and not isinstance(proof_object, ATPProofObject):
-            raise ATPAdapterError(
-                "proof_reconstructor must return ATPProofObject or None"
-            )
+            raise ATPAdapterError("proof_reconstructor must return ATPProofObject or None")
         if countermodel is not None and not isinstance(countermodel, ATPCountermodel):
-            raise ATPAdapterError(
-                "countermodel_parser must return ATPCountermodel or None"
-            )
+            raise ATPAdapterError("countermodel_parser must return ATPCountermodel or None")
 
         positive_proof = szs_status in {
             SZSStatus.THEOREM,
@@ -1048,8 +954,7 @@ class TPTPBackend:
                 else ResultStatus.DISPROVED
                 if positive_model
                 else ResultStatus.TIMEOUT
-                if szs_status
-                in {SZSStatus.TIMEOUT, SZSStatus.RESOURCE_OUT}
+                if szs_status in {SZSStatus.TIMEOUT, SZSStatus.RESOURCE_OUT}
                 else ResultStatus.UNKNOWN
             )
         else:
@@ -1059,8 +964,7 @@ class TPTPBackend:
                 else ResultStatus.SATISFIABLE
                 if positive_model
                 else ResultStatus.TIMEOUT
-                if szs_status
-                in {SZSStatus.TIMEOUT, SZSStatus.RESOURCE_OUT}
+                if szs_status in {SZSStatus.TIMEOUT, SZSStatus.RESOURCE_OUT}
                 else ResultStatus.UNKNOWN
             )
 
@@ -1074,9 +978,7 @@ class TPTPBackend:
             proof_object=proof_object,
             countermodel=countermodel,
             reason=(
-                "ATP evidence requires reconstruction or model validation"
-                if candidate_kind
-                else ""
+                "ATP evidence requires reconstruction or model validation" if candidate_kind else ""
             ),
             process=process,
             szs_status=szs_status,
@@ -1170,9 +1072,7 @@ class NativeLegacyBackend:
         backend_version: str,
         source_format: str,
         runner: NativeProverRunner,
-        reviewed_outcomes: Sequence[NativeProverStatus | str] = tuple(
-            NativeProverStatus
-        ),
+        reviewed_outcomes: Sequence[NativeProverStatus | str] = tuple(NativeProverStatus),
     ) -> None:
         self.backend_id = _text(backend_id, "backend_id")
         self.backend_version = _text(backend_version, "backend_version")
@@ -1182,9 +1082,7 @@ class NativeLegacyBackend:
         self._native_runner = runner
         try:
             normalized_reviewed = tuple(
-                item
-                if isinstance(item, NativeProverStatus)
-                else NativeProverStatus(item)
+                item if isinstance(item, NativeProverStatus) else NativeProverStatus(item)
                 for item in reviewed_outcomes
             )
         except (TypeError, ValueError) as error:
@@ -1213,9 +1111,7 @@ class NativeLegacyBackend:
             aliases=self.aliases,
             capabilities=self.capabilities,
         )
-        source, binding = _source_from_request(
-            request, frozenset({self.source_format})
-        )
+        source, binding = _source_from_request(request, frozenset({self.source_format}))
         native = self._native_runner(
             NativeProverInvocation(
                 request=request,
@@ -1230,13 +1126,9 @@ class NativeLegacyBackend:
             )
         if not native.is_bound_to(binding):
             raise ATPAdapterError("native result is not bound to this request/source")
-        if native.proof_object is not None and not native.proof_object.is_bound_to(
-            binding
-        ):
+        if native.proof_object is not None and not native.proof_object.is_bound_to(binding):
             raise ATPAdapterError("native proof object is not bound to this source")
-        if native.countermodel is not None and not native.countermodel.is_bound_to(
-            binding
-        ):
+        if native.countermodel is not None and not native.countermodel.is_bound_to(binding):
             raise ATPAdapterError("native countermodel is not bound to this source")
 
         usage = ResourceUsage(
@@ -1249,9 +1141,7 @@ class NativeLegacyBackend:
         candidate_kind = ""
         if exceeded:
             canonical_status = (
-                ResultStatus.TIMEOUT
-                if "timeout_ms" in exceeded
-                else ResultStatus.ERROR
+                ResultStatus.TIMEOUT if "timeout_ms" in exceeded else ResultStatus.ERROR
             )
         elif native.status not in self._reviewed_outcomes and native.status in {
             NativeProverStatus.PROVED,
@@ -1264,17 +1154,13 @@ class NativeLegacyBackend:
         elif native.status in {
             NativeProverStatus.PROVED,
             NativeProverStatus.UNSATISFIABLE,
-        } and (
-            native.proof_object is None or not native.proof_object.verified
-        ):
+        } and (native.proof_object is None or not native.proof_object.verified):
             canonical_status = ResultStatus.CANDIDATE
             candidate_kind = "unverified_native_proof"
         elif native.status in {
             NativeProverStatus.DISPROVED,
             NativeProverStatus.SATISFIABLE,
-        } and (
-            native.countermodel is None or not native.countermodel.validated
-        ):
+        } and (native.countermodel is None or not native.countermodel.validated):
             canonical_status = ResultStatus.CANDIDATE
             candidate_kind = "unvalidated_native_model"
         elif request.query_kind is QueryKind.THEOREM_PROOF:
@@ -1302,9 +1188,7 @@ class NativeLegacyBackend:
 
         diagnostics = tuple(native.diagnostics)
         if exceeded:
-            diagnostics += (
-                "native result exceeded canonical bounds: " + ", ".join(exceeded),
-            )
+            diagnostics += ("native result exceeded canonical bounds: " + ", ".join(exceeded),)
         reason = "; ".join(diagnostics)
         result = _build_result(
             request=request,
@@ -1357,9 +1241,7 @@ class DCECBackend(NativeLegacyBackend):
         runner: NativeProverRunner,
         *,
         backend_version: str = "unknown",
-        reviewed_outcomes: Sequence[NativeProverStatus | str] = tuple(
-            NativeProverStatus
-        ),
+        reviewed_outcomes: Sequence[NativeProverStatus | str] = tuple(NativeProverStatus),
     ) -> None:
         super().__init__(
             backend_id="dcec",
@@ -1380,9 +1262,7 @@ class TDFOLBackend(NativeLegacyBackend):
         runner: NativeProverRunner,
         *,
         backend_version: str = "unknown",
-        reviewed_outcomes: Sequence[NativeProverStatus | str] = tuple(
-            NativeProverStatus
-        ),
+        reviewed_outcomes: Sequence[NativeProverStatus | str] = tuple(NativeProverStatus),
     ) -> None:
         super().__init__(
             backend_id="tdfol",

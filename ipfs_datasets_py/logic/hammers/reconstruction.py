@@ -258,9 +258,7 @@ class ReconstructionEvidence:
         )
         if not isinstance(self.itp, ITPKind):
             raise ValueError("ReconstructionEvidence.itp must be an ITPKind")
-        if not isinstance(self.command, list) or not all(
-            isinstance(c, str) for c in self.command
-        ):
+        if not isinstance(self.command, list) or not all(isinstance(c, str) for c in self.command):
             raise ValueError("ReconstructionEvidence.command must be a list of strings")
         _require_nonempty_str(
             self.checked_source, field_name="checked_source", owner="ReconstructionEvidence"
@@ -681,7 +679,9 @@ def reconstruct_candidate(
     ``get_reconstructor(request.itp).reconstruct(request=request, ...)``.
     """
 
-    reconstructor = get_reconstructor(request.itp, timeout=timeout or DEFAULT_RECONSTRUCTION_TIMEOUT_SECONDS)
+    reconstructor = get_reconstructor(
+        request.itp, timeout=timeout or DEFAULT_RECONSTRUCTION_TIMEOUT_SECONDS
+    )
     return reconstructor.reconstruct(
         request=request,
         candidate=candidate,

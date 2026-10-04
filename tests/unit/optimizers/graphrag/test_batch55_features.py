@@ -6,6 +6,7 @@ Covers:
 - EntityExtractionResult.to_dataframe()
 - Integration test: full pipeline on multi-paragraph text
 """
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock, call
@@ -17,12 +18,14 @@ import pytest
 # OntologyCritic.evaluate_batch() with progress_callback
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestEvaluateBatchProgressCallback:
     """evaluate_batch() should invoke progress_callback(index, total, score)."""
 
     @pytest.fixture
     def critic(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
         OntologyCritic.clear_shared_cache()
         return OntologyCritic(use_llm=False)
 
@@ -60,25 +63,32 @@ class TestEvaluateBatchProgressCallback:
 
     def test_callback_receives_correct_index(self, critic, ontology_builder):
         indices = []
+
         def cb(idx, total, score):
             indices.append(idx)
+
         ontologies = [ontology_builder(str(i)) for i in range(4)]
         critic.evaluate_batch(ontologies, self._ctx(), progress_callback=cb)
         assert indices == [0, 1, 2, 3]
 
     def test_callback_receives_total(self, critic, ontology_builder):
         totals = []
+
         def cb(idx, total, score):
             totals.append(total)
+
         ontologies = [ontology_builder(str(i)) for i in range(2)]
         critic.evaluate_batch(ontologies, self._ctx(), progress_callback=cb)
         assert totals == [2, 2]
 
     def test_callback_receives_critic_score(self, critic, ontology_builder):
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+
         scores_received = []
+
         def cb(idx, total, score):
             scores_received.append(score)
+
         critic.evaluate_batch([ontology_builder("x")], self._ctx(), progress_callback=cb)
         assert all(isinstance(s, CriticScore) for s in scores_received)
 
@@ -92,6 +102,7 @@ class TestEvaluateBatchProgressCallback:
     def test_crashing_callback_does_not_abort_batch(self, critic, ontology_builder):
         def bad_cb(idx, total, score):
             raise RuntimeError("oops")
+
         ontologies = [ontology_builder(str(i)) for i in range(3)]
         result = critic.evaluate_batch(ontologies, self._ctx(), progress_callback=bad_cb)
         # Batch should still complete all 3 evaluations
@@ -108,18 +119,19 @@ class TestEvaluateBatchProgressCallback:
 # OntologyGenerator.extract_entities_streaming()
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestExtractEntitiesStreaming:
     """extract_entities_streaming() should yield Entity objects one by one."""
 
     @pytest.fixture
     def gen_ctx(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
-            OntologyGenerator, OntologyGenerationContext,
+            OntologyGenerator,
+            OntologyGenerationContext,
         )
+
         gen = OntologyGenerator()
-        ctx = OntologyGenerationContext(
-            data_source="test", data_type="text", domain="general"
-        )
+        ctx = OntologyGenerationContext(data_source="test", data_type="text", domain="general")
         return gen, ctx
 
     def test_returns_iterator(self, gen_ctx):
@@ -129,6 +141,7 @@ class TestExtractEntitiesStreaming:
 
     def test_yields_entity_objects(self, gen_ctx):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
         gen, ctx = gen_ctx
         entities = list(gen.extract_entities_streaming("Alice met Bob in London.", ctx))
         assert all(isinstance(e, Entity) for e in entities)
@@ -151,22 +164,24 @@ class TestExtractEntitiesStreaming:
 # EntityExtractionResult.to_dataframe()
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestEntityExtractionResultToDataframe:
     """to_dataframe() should convert entities to a pandas DataFrame."""
 
     @pytest.fixture
     def result(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
-            OntologyGenerator, OntologyGenerationContext,
+            OntologyGenerator,
+            OntologyGenerationContext,
         )
+
         gen = OntologyGenerator()
-        ctx = OntologyGenerationContext(
-            data_source="test", data_type="text", domain="general"
-        )
+        ctx = OntologyGenerationContext(data_source="test", data_type="text", domain="general")
         return gen.extract_entities("Alice met Bob in London.", ctx)
 
     def test_to_dataframe_import_error_without_pandas(self, result, monkeypatch):
         import sys
+
         monkeypatch.setitem(sys.modules, "pandas", None)  # force ImportError
         with pytest.raises((ImportError, TypeError)):
             result.to_dataframe()
@@ -177,6 +192,7 @@ class TestEntityExtractionResultToDataframe:
     )
     def test_to_dataframe_returns_dataframe(self, result):
         import pandas as pd
+
         df = result.to_dataframe()
         assert isinstance(df, pd.DataFrame)
 
@@ -204,6 +220,7 @@ class TestEntityExtractionResultToDataframe:
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
             EntityExtractionResult,
         )
+
         result = EntityExtractionResult(entities=[], relationships=[], confidence=0.0)
         df = result.to_dataframe()
         assert len(df) == 0
@@ -212,6 +229,7 @@ class TestEntityExtractionResultToDataframe:
 # ──────────────────────────────────────────────────────────────────────────────
 # Integration test: full pipeline
 # ──────────────────────────────────────────────────────────────────────────────
+
 
 class TestFullPipelineIntegration:
     """Full pipeline: generator → critic → mediator on real multi-paragraph text."""
@@ -231,7 +249,8 @@ class TestFullPipelineIntegration:
 
     def _setup(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
-            OntologyGenerator, OntologyGenerationContext,
+            OntologyGenerator,
+            OntologyGenerationContext,
         )
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
         from ipfs_datasets_py.optimizers.graphrag.ontology_mediator import OntologyMediator
@@ -262,8 +281,13 @@ class TestFullPipelineIntegration:
         result = gen.extract_entities(self.MULTI_PARA_TEXT, ctx)
         ontology = {
             "entities": [
-                {"id": e.id, "text": e.text, "type": e.type,
-                 "confidence": e.confidence, "properties": {}}
+                {
+                    "id": e.id,
+                    "text": e.text,
+                    "type": e.type,
+                    "confidence": e.confidence,
+                    "properties": {},
+                }
                 for e in result.entities
             ],
             "relationships": [],

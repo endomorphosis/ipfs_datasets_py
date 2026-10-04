@@ -51,6 +51,7 @@ def _stub_mcp():
 
     class FakeServer:
         """Minimal stub for mcp.server.Server."""
+
         def __init__(self, name, version="0.1.0"):
             self.name = name
             self.version = version
@@ -255,6 +256,7 @@ class TestIPFSDatasetsMCPServerInit:
 
     def test_custom_config(self):
         from ipfs_datasets_py.mcp_server.configs import Configs
+
         cfg = Configs()
         srv = self._make_server(server_configs=cfg)
         assert srv.configs is cfg
@@ -409,6 +411,7 @@ class TestWrapToolWithErrorReporting:
 
         wrapped = srv._wrap_tool_with_error_reporting("my_tool", my_tool)
         import inspect
+
         assert not inspect.iscoroutinefunction(wrapped)
         assert wrapped(x=5) == 10
 
@@ -420,6 +423,7 @@ class TestWrapToolWithErrorReporting:
 
         wrapped = srv._wrap_tool_with_error_reporting("async_tool", my_async_tool)
         import inspect
+
         assert inspect.iscoroutinefunction(wrapped)
 
     def test_sync_tool_exception_re_raised(self):
@@ -558,9 +562,7 @@ class TestStartFunctions:
 
     def test_start_stdio_server_sets_ipfs_kit_url(self):
         """When ipfs_kit_mcp_url provided, configs is updated."""
-        with patch(
-            "ipfs_datasets_py.mcp_server.server.IPFSDatasetsMCPServer"
-        ) as MockSrv:
+        with patch("ipfs_datasets_py.mcp_server.server.IPFSDatasetsMCPServer") as MockSrv:
             with patch(
                 "ipfs_datasets_py.mcp_server.server.anyio.run",
                 side_effect=KeyboardInterrupt(),
@@ -569,9 +571,7 @@ class TestStartFunctions:
         # No assertion needed; we just confirm it doesn't raise
 
     def test_start_server_sets_ipfs_kit_url(self):
-        with patch(
-            "ipfs_datasets_py.mcp_server.server.IPFSDatasetsMCPServer"
-        ) as MockSrv:
+        with patch("ipfs_datasets_py.mcp_server.server.IPFSDatasetsMCPServer") as MockSrv:
             with patch(
                 "ipfs_datasets_py.mcp_server.server.anyio.run",
                 side_effect=KeyboardInterrupt(),
@@ -581,9 +581,7 @@ class TestStartFunctions:
     def test_start_server_startup_error(self):
         from ipfs_datasets_py.mcp_server.exceptions import ServerStartupError
 
-        with patch(
-            "ipfs_datasets_py.mcp_server.server.IPFSDatasetsMCPServer"
-        ):
+        with patch("ipfs_datasets_py.mcp_server.server.IPFSDatasetsMCPServer"):
             with patch(
                 "ipfs_datasets_py.mcp_server.server.anyio.run",
                 side_effect=ServerStartupError("fail"),
@@ -879,9 +877,7 @@ class TestServerContext:
         # Override instance method before __enter__ so mock manager is installed
         mock_tool_manager = MagicMock()
         mock_tool_manager.categories = {}
-        ctx._initialize_tool_manager = lambda: setattr(
-            ctx, "_tool_manager", mock_tool_manager
-        )
+        ctx._initialize_tool_manager = lambda: setattr(ctx, "_tool_manager", mock_tool_manager)
         return ctx, mock_tool_manager
 
     def test_context_manager_enter_exit(self):

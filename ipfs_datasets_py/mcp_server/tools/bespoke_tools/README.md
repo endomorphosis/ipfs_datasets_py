@@ -35,7 +35,7 @@ print(stats["hit_rate"], stats["memory_usage_mb"])
 from ipfs_datasets_py.mcp_server.tools.bespoke_tools import system_health
 
 health = await system_health()
-print(health["status"])           # "healthy" | "degraded" | "critical"
+print(health["status"])  # "healthy" | "degraded" | "critical"
 print(health["cpu_percent"])
 print(health["memory_percent"])
 ```

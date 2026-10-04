@@ -102,6 +102,7 @@ def __enter__/__exit__:
 # Now imports from utils
 from ipfs_datasets_py.utils.github import APICounter
 
+
 # Keeps workflow-specific merge_metrics() function
 def merge_metrics(metrics_files, output_file):
     """Aggregate metrics from multiple workflow runs."""
@@ -117,10 +118,11 @@ def merge_metrics(metrics_files, output_file):
 # Now imports from utils
 from ipfs_datasets_py.utils.cli_tools import Copilot
 
+
 class CopilotWorkflowHelper:
     def __init__(self):
         self.copilot = Copilot(enable_cache=True)  # Uses utils
-    
+
     def analyze_workflow(self, workflow_file):
         """Workflow-specific functionality kept here."""
         return self.copilot.explain(content)  # Delegates to utils
@@ -188,11 +190,13 @@ Example:
 ```python
 # Old approach (still works, with deprecation warning)
 from ipfs_datasets_py.optimizers.agentic.github_api_unified import UnifiedGitHubAPICache
+
 cache = UnifiedGitHubAPICache()
 
 # New recommended approach
 from ipfs_datasets_py.utils.cache import GitHubCache
 from ipfs_datasets_py.utils.github import APICounter
+
 cache = GitHubCache()
 counter = APICounter()
 ```
@@ -290,14 +294,18 @@ class GitHubAPICounter:
     def __init__(self): ...
     def count_api_call(self): ...
     def run_gh_command(self): ...
+
     # 500+ lines
 
-# In optimizers/agentic/github_api_unified.py  
+
+# In optimizers/agentic/github_api_unified.py
 class UnifiedGitHubAPICache:
     def __init__(self): ...
     def count_api_call(self): ...  # Duplicate!
     def run_gh_command(self): ...  # Duplicate!
+
     # 400+ lines
+
 
 # If you wanted to use this elsewhere: Copy-paste again!
 ```
@@ -310,7 +318,9 @@ class APICounter:
     def __init__(self): ...
     def count_api_call(self): ...
     def run_gh_command(self): ...
+
     # ~330 lines, SINGLE implementation
+
 
 # In .github/scripts/github_api_counter_refactored.py
 from ipfs_datasets_py.utils.github import APICounter  # Import, don't duplicate
@@ -319,10 +329,14 @@ from ipfs_datasets_py.utils.github import APICounter  # Import, don't duplicate
 
 # In optimizers/agentic/github_api_unified.py
 from ...utils.github import APICounter  # Import, don't duplicate
+
+
 class UnifiedGitHubAPICache:
     def __init__(self):
         self._api_counter = APICounter()  # Delegate
+
     # ~200 lines
+
 
 # In any future code:
 from ipfs_datasets_py.utils.github import APICounter  # Just import!

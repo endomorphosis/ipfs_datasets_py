@@ -94,6 +94,7 @@ from ipfs_datasets_py.mcp_server.exceptions import (  # noqa: E402
 # 1.  __main__.py — main() entry point
 # ===========================================================================
 
+
 class TestMain:
     """Tests for ipfs_datasets_py.mcp_server.__main__.main()."""
 
@@ -107,6 +108,7 @@ class TestMain:
     def test_main_stdio_mode_default(self):
         """Default (no --http) calls start_stdio_server."""
         import ipfs_datasets_py.mcp_server as mcp_pkg
+
         with patch.object(sys, "argv", ["__main__"]):
             with patch.object(mcp_pkg, "start_stdio_server", MagicMock()) as mock_stdio:
                 with patch.object(mcp_pkg, "start_server", MagicMock()):
@@ -117,7 +119,10 @@ class TestMain:
     def test_main_http_mode(self):
         """--http flag calls start_server with host/port."""
         import ipfs_datasets_py.mcp_server as mcp_pkg
-        with patch.object(sys, "argv", ["__main__", "--http", "--port", "9999", "--host", "0.0.0.0"]):
+
+        with patch.object(
+            sys, "argv", ["__main__", "--http", "--port", "9999", "--host", "0.0.0.0"]
+        ):
             with patch.object(mcp_pkg, "start_stdio_server", MagicMock(), create=True):
                 with patch.object(mcp_pkg, "start_server", MagicMock()) as mock_server:
                     with patch.object(mcp_pkg, "configs", MagicMock(), create=True):
@@ -127,9 +132,11 @@ class TestMain:
     def test_main_keyboard_interrupt(self, capsys):
         """KeyboardInterrupt is caught and a message is printed."""
         import ipfs_datasets_py.mcp_server as mcp_pkg
+
         with patch.object(sys, "argv", ["__main__"]):
-            with patch.object(mcp_pkg, "start_stdio_server",
-                              MagicMock(side_effect=KeyboardInterrupt), create=True):
+            with patch.object(
+                mcp_pkg, "start_stdio_server", MagicMock(side_effect=KeyboardInterrupt), create=True
+            ):
                 with patch.object(mcp_pkg, "start_server", MagicMock(), create=True):
                     with patch.object(mcp_pkg, "configs", MagicMock(), create=True):
                         main_mod.main()  # should NOT raise
@@ -139,9 +146,14 @@ class TestMain:
     def test_main_import_error_exits(self, capsys):
         """ImportError exits with code 1."""
         import ipfs_datasets_py.mcp_server as mcp_pkg
+
         with patch.object(sys, "argv", ["__main__"]):
-            with patch.object(mcp_pkg, "start_stdio_server",
-                              MagicMock(side_effect=ImportError("missing")), create=True):
+            with patch.object(
+                mcp_pkg,
+                "start_stdio_server",
+                MagicMock(side_effect=ImportError("missing")),
+                create=True,
+            ):
                 with patch.object(mcp_pkg, "start_server", MagicMock(), create=True):
                     with patch.object(mcp_pkg, "configs", MagicMock(), create=True):
                         with pytest.raises(SystemExit) as exc:
@@ -151,10 +163,13 @@ class TestMain:
     def test_main_server_startup_error_exits(self, capsys):
         """ServerStartupError exits with code 1."""
         import ipfs_datasets_py.mcp_server as mcp_pkg
+
         with patch.object(sys, "argv", ["__main__"]):
             with patch.object(
-                mcp_pkg, "start_stdio_server",
-                MagicMock(side_effect=ServerStartupError("startup_fail")), create=True
+                mcp_pkg,
+                "start_stdio_server",
+                MagicMock(side_effect=ServerStartupError("startup_fail")),
+                create=True,
             ):
                 with patch.object(mcp_pkg, "start_server", MagicMock(), create=True):
                     with patch.object(mcp_pkg, "configs", MagicMock(), create=True):
@@ -165,10 +180,13 @@ class TestMain:
     def test_main_configuration_error_exits(self, capsys):
         """ConfigurationError exits with code 1."""
         import ipfs_datasets_py.mcp_server as mcp_pkg
+
         with patch.object(sys, "argv", ["__main__"]):
             with patch.object(
-                mcp_pkg, "start_stdio_server",
-                MagicMock(side_effect=ConfigurationError("bad_config")), create=True
+                mcp_pkg,
+                "start_stdio_server",
+                MagicMock(side_effect=ConfigurationError("bad_config")),
+                create=True,
             ):
                 with patch.object(mcp_pkg, "start_server", MagicMock(), create=True):
                     with patch.object(mcp_pkg, "configs", MagicMock(), create=True):
@@ -179,10 +197,13 @@ class TestMain:
     def test_main_generic_exception_exits(self, capsys):
         """Generic Exception exits with code 1."""
         import ipfs_datasets_py.mcp_server as mcp_pkg
+
         with patch.object(sys, "argv", ["__main__"]):
             with patch.object(
-                mcp_pkg, "start_stdio_server",
-                MagicMock(side_effect=RuntimeError("unexpected")), create=True
+                mcp_pkg,
+                "start_stdio_server",
+                MagicMock(side_effect=RuntimeError("unexpected")),
+                create=True,
             ):
                 with patch.object(mcp_pkg, "start_server", MagicMock(), create=True):
                     with patch.object(mcp_pkg, "configs", MagicMock(), create=True):
@@ -193,6 +214,7 @@ class TestMain:
     def test_main_debug_flag_sets_logging(self):
         """--debug flag triggers basicConfig(level=DEBUG) call."""
         import ipfs_datasets_py.mcp_server as mcp_pkg
+
         with patch.object(sys, "argv", ["__main__", "--debug"]):
             with patch.object(mcp_pkg, "start_stdio_server", MagicMock(), create=True):
                 with patch.object(mcp_pkg, "start_server", MagicMock(), create=True):
@@ -205,10 +227,13 @@ class TestMain:
         """--http with ImportError from start_server prints migration guidance and exits."""
         import ipfs_datasets_py.mcp_server as mcp_pkg
         import warnings
+
         with patch.object(sys, "argv", ["__main__", "--http"]):
             with patch.object(
-                mcp_pkg, "start_server",
-                MagicMock(side_effect=ImportError("no server")), create=True
+                mcp_pkg,
+                "start_server",
+                MagicMock(side_effect=ImportError("no server")),
+                create=True,
             ):
                 with patch.object(mcp_pkg, "start_stdio_server", MagicMock(), create=True):
                     with patch.object(mcp_pkg, "configs", MagicMock(), create=True):
@@ -224,6 +249,7 @@ class TestMain:
 # ===========================================================================
 # 2.  investigation_mcp_client.py — InvestigationMCPClient
 # ===========================================================================
+
 
 class TestInvestigationMCPClientError:
     """InvestigationMCPClientError construction and attributes."""
@@ -277,6 +303,7 @@ class TestInvestigationMCPClientConnect:
 
     def test_connect_idempotent(self):
         """A second call to connect() does nothing if session exists."""
+
         async def run():
             c = InvestigationMCPClient()
             await c.connect()
@@ -289,6 +316,7 @@ class TestInvestigationMCPClientConnect:
 
     def test_disconnect_no_session(self):
         """disconnect() when session is None should not raise."""
+
         async def run():
             c = InvestigationMCPClient()
             await c.disconnect()  # no-op
@@ -311,6 +339,7 @@ class TestInvestigationMCPClientCallTool:
     def _make_mock_response(self, status=200, json_data=None, text="error body"):
         """Build a mock aiohttp response async context manager."""
         import aiohttp
+
         mock_resp = AsyncMock()
         mock_resp.status = status
         mock_resp.json = AsyncMock(return_value=json_data or {"result": "ok"})
@@ -323,6 +352,7 @@ class TestInvestigationMCPClientCallTool:
     def test_call_tool_success(self):
         async def run():
             import aiohttp
+
             c = InvestigationMCPClient()
             await c.connect()
             mock_cm, _ = self._make_mock_response(200, {"result": "answer", "isError": False})
@@ -365,6 +395,7 @@ class TestInvestigationMCPClientCallTool:
     def test_call_tool_aiohttp_client_error(self):
         async def run():
             import aiohttp
+
             c = InvestigationMCPClient()
             await c.connect()
             mock_cm = MagicMock()
@@ -394,6 +425,7 @@ class TestInvestigationMCPClientCallTool:
     def test_call_tool_json_decode_error(self):
         async def run():
             import aiohttp
+
             c = InvestigationMCPClient()
             await c.connect()
             mock_resp = AsyncMock()
@@ -426,6 +458,7 @@ class TestInvestigationMCPClientCallTool:
 
     def test_call_tool_auto_connect_if_no_session(self):
         """If session is None, call_tool should auto-call connect() first."""
+
         async def run():
             c = InvestigationMCPClient()
             assert c.session is None
@@ -437,6 +470,7 @@ class TestInvestigationMCPClientCallTool:
             class _MockCM:
                 async def __aenter__(self_cm):
                     return mock_resp
+
                 async def __aexit__(self_cm, *_):
                     return False
 
@@ -509,6 +543,7 @@ class TestCreateInvestigationMCPClient:
 # ===========================================================================
 # 3.  simple_server.py — SimpleCallResult + SimpleIPFSDatasetsMCPServer
 # ===========================================================================
+
 
 class TestSimpleCallResult:
     """SimpleCallResult.to_dict() paths."""
@@ -632,6 +667,7 @@ class TestSimpleIPFSDatasetsMCPServer:
     def test_register_tools_from_subdir_populates(self):
         """_register_tools_from_subdir delegates to import_tools_from_directory."""
         from pathlib import Path
+
         with patch(
             "ipfs_datasets_py.mcp_server.simple_server.import_tools_from_directory",
             return_value={"fake_tool": lambda: "result"},
@@ -643,6 +679,7 @@ class TestSimpleIPFSDatasetsMCPServer:
 # ===========================================================================
 # 4.  standalone_server.py — MinimalMCPServer + MinimalMCPDashboard
 # ===========================================================================
+
 
 class TestMinimalMCPServer:
     """MinimalMCPServer Flask routes."""
@@ -689,17 +726,13 @@ class TestMinimalMCPServer:
         assert "hello" in data["result"]
 
     def test_execute_status_tool(self):
-        r = self.client.post(
-            "/execute", json={"tool_name": "status", "parameters": {}}
-        )
+        r = self.client.post("/execute", json={"tool_name": "status", "parameters": {}})
         assert r.status_code == 200
         data = r.get_json()
         assert data["success"] is True
 
     def test_execute_unknown_tool(self):
-        r = self.client.post(
-            "/execute", json={"tool_name": "not_real", "parameters": {}}
-        )
+        r = self.client.post("/execute", json={"tool_name": "not_real", "parameters": {}})
         assert r.status_code == 400
         data = r.get_json()
         assert data["success"] is False
@@ -767,6 +800,7 @@ class TestMinimalMCPDashboard:
     def test_api_execute_generic_exception(self):
         """Generic exception in /api/execute (connection refused) → 500."""
         import requests as req_mod
+
         with patch.object(req_mod, "post", side_effect=RuntimeError("conn refused")):
             r = self.client.post("/api/execute", json={"tool_name": "echo"})
         assert r.status_code == 500
@@ -801,6 +835,7 @@ class TestStandaloneMain:
 # ===========================================================================
 # 5.  temporal_deontic_mcp_server.py — TemporalDeonticMCPServer
 # ===========================================================================
+
 
 class TestTemporalDeonticMCPServerInit:
     """TemporalDeonticMCPServer.__init__ and state."""
@@ -892,8 +927,10 @@ class TestTemporalDeonticMCPServerCallToolDirect:
         async def run():
             t = TemporalDeonticMCPServer()
             mock_tool = MagicMock()
+
             async def async_execute(params):
                 return {"success": True, "data": "result"}
+
             mock_tool.execute = async_execute
             t.tools["my_tool"] = mock_tool
             result = await t.call_tool_direct("my_tool", {"a": 1})
@@ -905,8 +942,10 @@ class TestTemporalDeonticMCPServerCallToolDirect:
         async def run():
             t = TemporalDeonticMCPServer()
             mock_tool = MagicMock()
+
             async def raise_exec_error(params):
                 raise ToolExecutionError("bad_tool", RuntimeError("exec failed"))
+
             mock_tool.execute = raise_exec_error
             t.tools["bad_tool"] = mock_tool
             result = await t.call_tool_direct("bad_tool", {})
@@ -919,8 +958,10 @@ class TestTemporalDeonticMCPServerCallToolDirect:
         async def run():
             t = TemporalDeonticMCPServer()
             mock_tool = MagicMock()
+
             async def raise_type_error(params):
                 raise TypeError("bad type")
+
             mock_tool.execute = raise_type_error
             t.tools["type_err_tool"] = mock_tool
             result = await t.call_tool_direct("type_err_tool", {})
@@ -933,8 +974,10 @@ class TestTemporalDeonticMCPServerCallToolDirect:
         async def run():
             t = TemporalDeonticMCPServer()
             mock_tool = MagicMock()
+
             async def raise_generic(params):
                 raise RuntimeError("unexpected")
+
             mock_tool.execute = raise_generic
             t.tools["buggy_tool"] = mock_tool
             result = await t.call_tool_direct("buggy_tool", {})
@@ -945,11 +988,14 @@ class TestTemporalDeonticMCPServerCallToolDirect:
 
     def test_tool_not_found_error_is_reraised(self):
         """ToolNotFoundError is explicitly re-raised."""
+
         async def run():
             t = TemporalDeonticMCPServer()
             mock_tool = MagicMock()
+
             async def raise_not_found(params):
                 raise ToolNotFoundError("missing_tool")
+
             mock_tool.execute = raise_not_found
             t.tools["not_found_tool"] = mock_tool
             with pytest.raises(ToolNotFoundError):
@@ -983,9 +1029,7 @@ class TestTemporalDeonticMCPServerMain:
         """ServerStartupError is caught and logged."""
         with patch.object(tdm_mod, "MCP_AVAILABLE", True):
             mock_server = MagicMock()
-            mock_server.start_stdio = AsyncMock(
-                side_effect=ServerStartupError("startup fail")
-            )
+            mock_server.start_stdio = AsyncMock(side_effect=ServerStartupError("startup fail"))
             with patch(
                 "ipfs_datasets_py.mcp_server.temporal_deontic_mcp_server.TemporalDeonticMCPServer",
                 return_value=mock_server,
@@ -998,6 +1042,7 @@ class TestTemporalDeonticMCPServerMain:
 # Smoke test: module-level singleton in temporal_deontic_mcp_server
 # ===========================================================================
 
+
 class TestTemporalDeonticSingleton:
     """Module-level singleton is a TemporalDeonticMCPServer instance."""
 
@@ -1005,12 +1050,14 @@ class TestTemporalDeonticSingleton:
         from ipfs_datasets_py.mcp_server.temporal_deontic_mcp_server import (
             temporal_deontic_mcp_server,
         )
+
         assert isinstance(temporal_deontic_mcp_server, TemporalDeonticMCPServer)
 
 
 # ===========================================================================
 # 6.  simple_server.py — run() / register_tools() / start_simple_server()
 # ===========================================================================
+
 
 class TestSimpleIPFSDatasetsMCPServerRun:
     """SimpleIPFSDatasetsMCPServer.run() and register_tools()."""
@@ -1043,9 +1090,11 @@ class TestSimpleIPFSDatasetsMCPServerRun:
     def test_register_tools_catches_import_error(self):
         """ImportError from _register_tools_from_subdir is caught for IPFS tools only."""
         server = SimpleIPFSDatasetsMCPServer()
+
         def raise_on_ipfs_tools(path):
             if str(path).endswith("ipfs_tools"):
                 raise ImportError("ipfs not available")
+
         with patch.object(server, "_register_tools_from_subdir", side_effect=raise_on_ipfs_tools):
             # Should not raise — ImportError for ipfs_tools is caught
             server.register_tools()
@@ -1066,6 +1115,7 @@ class TestStartSimpleServer:
                 return_value=MagicMock(host="127.0.0.1", port=8000),
             ):
                 from ipfs_datasets_py.mcp_server.simple_server import start_simple_server
+
                 start_simple_server()
         mock_server.register_tools.assert_called_once()
         mock_server.run.assert_called_once()
@@ -1074,6 +1124,7 @@ class TestStartSimpleServer:
 # ===========================================================================
 # 7.  standalone_server.py — main() default both-together path
 # ===========================================================================
+
 
 class TestStandaloneMainDefaultPath:
     """standalone_server.main() default: both server + dashboard."""
@@ -1108,6 +1159,7 @@ class TestStandaloneMainDefaultPath:
 # 8.  temporal_deontic_mcp_server.py — setup_server() body coverage
 # ===========================================================================
 
+
 class TestTemporalDeonticSetupServerBody:
     """
     Call setup_server() with a mock MCP Server that captures decorated handlers.
@@ -1122,6 +1174,7 @@ class TestTemporalDeonticSetupServerBody:
             def decorator(fn):
                 handlers[event_name] = fn
                 return fn
+
             return decorator
 
         mock_server = MagicMock()
@@ -1200,8 +1253,10 @@ class TestTemporalDeonticSetupServerBody:
         MockServer = MagicMock(return_value=mock_server)
 
         mock_tool = MagicMock()
+
         async def async_execute(args):
             return {"status": "ok", "value": 42}
+
         mock_tool.execute = async_execute
         mock_tool.get_schema.return_value = {"description": "t", "input_schema": {}}
 
@@ -1221,8 +1276,10 @@ class TestTemporalDeonticSetupServerBody:
         MockServer = MagicMock(return_value=mock_server)
 
         mock_tool = MagicMock()
+
         async def failing_execute(args):
             raise RuntimeError("tool crashed")
+
         mock_tool.execute = failing_execute
         mock_tool.get_schema.return_value = {"description": "t", "input_schema": {}}
 
@@ -1298,6 +1355,7 @@ class TestTemporalDeonticSetupServerBody:
         class _MockStdio:
             async def __aenter__(self_cm):
                 return (mock_read, mock_write)
+
             async def __aexit__(self_cm, *_):
                 return False
 

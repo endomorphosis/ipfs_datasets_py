@@ -59,6 +59,7 @@ class TestGraphEventClasses:
 
     def test_event_type_values(self):
         from ipfs_datasets_py.knowledge_graphs.extraction import GraphEventType
+
         expected = {
             "entity_added",
             "entity_removed",
@@ -70,6 +71,7 @@ class TestGraphEventClasses:
 
     def test_graph_event_fields(self):
         from ipfs_datasets_py.knowledge_graphs.extraction import GraphEvent, GraphEventType
+
         t = time.time()
         ev = GraphEvent(event_type=GraphEventType.ENTITY_ADDED, timestamp=t, entity_id="e1")
         assert ev.event_type == GraphEventType.ENTITY_ADDED
@@ -80,6 +82,7 @@ class TestGraphEventClasses:
 
     def test_graph_event_type_is_string_enum(self):
         from ipfs_datasets_py.knowledge_graphs.extraction import GraphEventType
+
         # str-subclassing enum: value == str comparison
         assert GraphEventType.ENTITY_ADDED == "entity_added"
 
@@ -94,6 +97,7 @@ class TestSubscribeUnsubscribe:
 
     def _kg(self):
         from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraph
+
         return KnowledgeGraph("sub_test")
 
     def test_subscribe_returns_int(self):
@@ -143,6 +147,7 @@ class TestEventFiring:
 
     def _setup(self):
         from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraph
+
         kg = KnowledgeGraph("event_test")
         events = []
         kg.subscribe(events.append)
@@ -150,6 +155,7 @@ class TestEventFiring:
 
     def test_add_entity_fires_entity_added(self):
         from ipfs_datasets_py.knowledge_graphs.extraction import GraphEventType
+
         kg, events = self._setup()
         e = kg.add_entity("person", "Alice")
         assert len(events) == 1
@@ -171,6 +177,7 @@ class TestEventFiring:
 
     def test_add_relationship_fires_relationship_added(self):
         from ipfs_datasets_py.knowledge_graphs.extraction import GraphEventType
+
         kg, events = self._setup()
         e1 = kg.add_entity("person", "Alice")
         e2 = kg.add_entity("person", "Bob")
@@ -182,8 +189,10 @@ class TestEventFiring:
 
     def test_apply_diff_fires_entity_removed(self):
         from ipfs_datasets_py.knowledge_graphs.extraction import (
-            GraphEventType, KnowledgeGraph,
+            GraphEventType,
+            KnowledgeGraph,
         )
+
         kg1 = KnowledgeGraph("orig")
         kg1.add_entity("person", "Alice")
         kg2 = KnowledgeGraph("updated")  # empty — Alice was removed
@@ -198,8 +207,10 @@ class TestEventFiring:
 
     def test_apply_diff_fires_entity_added(self):
         from ipfs_datasets_py.knowledge_graphs.extraction import (
-            GraphEventType, KnowledgeGraph,
+            GraphEventType,
+            KnowledgeGraph,
         )
+
         kg1 = KnowledgeGraph("orig")
         kg2 = KnowledgeGraph("updated")
         kg2.add_entity("person", "Charlie")
@@ -214,8 +225,10 @@ class TestEventFiring:
     def test_apply_diff_fires_entity_modified(self):
         """Entities with the same fingerprint but changed properties fire ENTITY_MODIFIED."""
         from ipfs_datasets_py.knowledge_graphs.extraction import (
-            GraphEventType, KnowledgeGraph,
+            GraphEventType,
+            KnowledgeGraph,
         )
+
         # Build two independent graphs with same entity fingerprint but different props
         kg1 = KnowledgeGraph("orig")
         kg1.add_entity("person", "Alice", properties={"age": 30})
@@ -248,6 +261,7 @@ class TestSnapshotAPI:
 
     def _kg(self):
         from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraph
+
         kg = KnowledgeGraph("snap_test")
         kg.add_entity("person", "Alice")
         kg.add_entity("person", "Bob")
@@ -266,6 +280,7 @@ class TestSnapshotAPI:
 
     def test_list_snapshots_empty(self):
         from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraph
+
         kg = KnowledgeGraph("empty")
         assert kg.list_snapshots() == []
 
@@ -308,6 +323,7 @@ class TestSnapshotAPI:
 
     def test_restore_reverts_removals_via_diff(self):
         from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraph
+
         kg = KnowledgeGraph("rev_test")
         kg.add_entity("person", "Alice")
         kg.add_entity("person", "Bob")
@@ -323,6 +339,7 @@ class TestSnapshotAPI:
 
     def test_snapshot_relationships_preserved(self):
         from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraph
+
         kg = KnowledgeGraph("rel_snap")
         e1 = kg.add_entity("person", "Alice")
         e2 = kg.add_entity("person", "Bob")
@@ -389,5 +406,3 @@ class TestVersionAgreement:
     def test_roadmap_current_version(self):
         text = _read(_DOCS_KG / "ROADMAP.md")
         assert "3.22.25" in text
-
-

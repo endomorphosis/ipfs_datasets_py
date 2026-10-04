@@ -146,11 +146,7 @@ def _json_value(value: Any) -> Any:
         return _json_value(value.to_dict())
     if hasattr(value, "__dict__"):
         return _json_value(
-            {
-                key: item
-                for key, item in vars(value).items()
-                if not str(key).startswith("_")
-            }
+            {key: item for key, item in vars(value).items() if not str(key).startswith("_")}
         )
     raise InvalidEvaluationArtifactError(
         f"artifact value of type {type(value).__name__} is not JSON-compatible"
@@ -369,9 +365,7 @@ class EvaluationResultLineage:
 
         return cls(
             state_hash=state_hash,
-            samples_hash=stable_digest(
-                [sample_content_hash(sample) for sample in samples]
-            ),
+            samples_hash=stable_digest([sample_content_hash(sample) for sample in samples]),
             evaluator_hash=configuration_digest(evaluator_configuration),
             metric_schema=metric_schema,
         )
@@ -558,12 +552,8 @@ class LegalIREvaluationResultCache:
                 "hit_rate": round(hits / lookups, 9) if lookups else 0.0,
                 "writes": int(self._stats.get("writes", 0)),
                 "evictions": int(self._stats.get("evictions", 0)),
-                "lineage_rejections": int(
-                    self._stats.get("lineage_rejections", 0)
-                ),
-                "integrity_rejections": int(
-                    self._stats.get("integrity_rejections", 0)
-                ),
+                "lineage_rejections": int(self._stats.get("lineage_rejections", 0)),
+                "integrity_rejections": int(self._stats.get("integrity_rejections", 0)),
                 "saved_wall_time_seconds": round(
                     int(self._stats.get("saved_wall_time_milliseconds", 0)) / 1000.0,
                     3,
@@ -590,9 +580,7 @@ class LegalIREvaluationCache:
         self.cache_dir = Path(cache_dir)
         self.memory_entries = max(0, int(memory_entries))
         self.max_entry_bytes = max(1024, int(max_entry_bytes))
-        self.max_age_seconds = (
-            None if max_age_seconds is None else max(0.0, float(max_age_seconds))
-        )
+        self.max_age_seconds = None if max_age_seconds is None else max(0.0, float(max_age_seconds))
         self._lock = threading.RLock()
         self._memory: OrderedDict[str, LegalIREvaluationArtifact] = OrderedDict()
         self._flights: dict[str, Future[LegalIREvaluationArtifact]] = {}
@@ -822,9 +810,7 @@ class LegalIREvaluationCache:
         with self._lock:
             self._memory.clear()
 
-    def _read_disk(
-        self, key: LegalIREvaluationCacheKey
-    ) -> Optional[LegalIREvaluationArtifact]:
+    def _read_disk(self, key: LegalIREvaluationCacheKey) -> Optional[LegalIREvaluationArtifact]:
         path = self.entry_path(key)
         try:
             size = path.stat().st_size

@@ -4,11 +4,13 @@ Test stubs for enhanced_graphrag_integration module.
 Feature: Enhanced GraphRAG Integration
   Enhanced integration for GraphRAG system
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def a_failed_integration_attempt():
@@ -83,6 +85,7 @@ def updates_to_data_sources():
 
 
 # Test scenarios
+
 
 def test_integrate_multiple_data_sources():
     """
@@ -174,6 +177,7 @@ def test_rollback_failed_integrations():
 
 
 # Step definitions
+
 
 # Given steps
 @given("a failed integration attempt")

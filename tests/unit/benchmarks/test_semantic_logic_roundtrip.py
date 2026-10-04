@@ -10,13 +10,9 @@ import pytest
 
 
 MODULE_PATH = (
-    Path(__file__).resolve().parents[3]
-    / "benchmarks"
-    / "bench_semantic_logic_roundtrip.py"
+    Path(__file__).resolve().parents[3] / "benchmarks" / "bench_semantic_logic_roundtrip.py"
 )
-SPEC = importlib.util.spec_from_file_location(
-    "bench_semantic_logic_roundtrip", MODULE_PATH
-)
+SPEC = importlib.util.spec_from_file_location("bench_semantic_logic_roundtrip", MODULE_PATH)
 assert SPEC is not None and SPEC.loader is not None
 benchmark = importlib.util.module_from_spec(SPEC)
 sys.modules[SPEC.name] = benchmark
@@ -87,21 +83,16 @@ def test_compare_penalizes_consistently_wrong_round_trip() -> None:
 
 
 def test_maximum_weight_rule_matching_avoids_greedy_local_optimum() -> None:
-    assignment = benchmark._maximum_weight_assignment(
-        [[0.90, 0.80], [0.85, 0.0]]
-    )
+    assignment = benchmark._maximum_weight_assignment([[0.90, 0.80], [0.85, 0.0]])
 
     assert assignment == [(0, 1), (1, 0)]
     assert sum(
-        [[0.90, 0.80], [0.85, 0.0]][row][column]
-        for row, column in assignment
+        [[0.90, 0.80], [0.85, 0.0]][row][column] for row, column in assignment
     ) == pytest.approx(1.65)
 
 
 def test_empty_ir_identity_is_explicitly_vacuous() -> None:
-    comparison = benchmark.compare_semantic_ir(
-        {"rules": []}, {"rules": []}
-    )
+    comparison = benchmark.compare_semantic_ir({"rules": []}, {"rules": []})
 
     assert comparison["exact_ir"] is True
     assert comparison["nonvacuous"] is False
@@ -133,18 +124,14 @@ def test_aggregation_separates_execution_and_roundtrip_coverage() -> None:
     }
     failed = {"status": "failed", "timing": {"total_seconds": 0.5}}
 
-    aggregate = benchmark._aggregate_standard_arm(
-        [complete, forward_only, failed]
-    )
+    aggregate = benchmark._aggregate_standard_arm([complete, forward_only, failed])
 
     assert aggregate["success_count"] == 2
     assert aggregate["forward_semantic_coverage_count"] == 2
     assert aggregate["full_roundtrip_coverage_count"] == 1
     assert aggregate["mean_forward_semantic_score"] == pytest.approx(2 / 3)
     assert aggregate["mean_cycle_semantic_score"] == pytest.approx(1 / 3)
-    assert (
-        aggregate["conditional_mean_forward_semantic_score"] == 1.0
-    )
+    assert aggregate["conditional_mean_forward_semantic_score"] == 1.0
 
 
 def test_validator_failure_is_persisted_on_arm(
@@ -189,9 +176,7 @@ def test_source_copy_metric_detects_exact_copy() -> None:
         "within thirty calendar days after approval."
     )
     exact = benchmark.source_copy_metrics(source, source)
-    unrelated = benchmark.source_copy_metrics(
-        source, "A court may review a final order."
-    )
+    unrelated = benchmark.source_copy_metrics(source, "A court may review a final order.")
 
     assert exact["exact_normalized_copy"] is True
     assert exact["copy_risk"] is True
@@ -229,25 +214,17 @@ def test_leanstral_encode_token_budget_never_reads_gold_ir() -> None:
             )
 
     visible_case = GoldReadTrap(
-        {
-            key: deepcopy(value)
-            for key, value in _case().items()
-            if key != "gold_ir"
-        }
+        {key: deepcopy(value) for key, value in _case().items() if key != "gold_ir"}
     )
     client = RecordingClient()
 
-    result = benchmark._leanstral_encode(
-        client, visible_case, str(visible_case["source_text"])
-    )
+    result = benchmark._leanstral_encode(client, visible_case, str(visible_case["source_text"]))
 
     assert result.value == _case()["gold_ir"]
     assert client.max_tokens == [
         benchmark._semantic_encode_max_tokens(
             str(visible_case["source_text"]),
-            benchmark._semantic_schema_for_case(
-                visible_case, str(visible_case["source_text"])
-            ),
+            benchmark._semantic_schema_for_case(visible_case, str(visible_case["source_text"])),
         )
     ]
 
@@ -258,12 +235,8 @@ def test_leanstral_encode_budget_is_invariant_to_gold_rule_count() -> None:
     case_with_many_gold_rules = deepcopy(case_with_one_rule)
     case_with_many_gold_rules["gold_ir"]["rules"] *= 12
 
-    first_schema = benchmark._semantic_schema_for_case(
-        case_with_one_rule, source
-    )
-    second_schema = benchmark._semantic_schema_for_case(
-        case_with_many_gold_rules, source
-    )
+    first_schema = benchmark._semantic_schema_for_case(case_with_one_rule, source)
+    second_schema = benchmark._semantic_schema_for_case(case_with_many_gold_rules, source)
 
     assert benchmark._semantic_encode_max_tokens(
         source, first_schema
@@ -273,19 +246,12 @@ def test_leanstral_encode_budget_is_invariant_to_gold_rule_count() -> None:
 def test_symai_reverse_is_source_withheld_strict_and_secret_safe() -> None:
     captured: dict[str, object] = {}
 
-    def invoke(
-        prompt: str, response_format: object
-    ) -> tuple[str, dict[str, object]]:
+    def invoke(prompt: str, response_format: object) -> tuple[str, dict[str, object]]:
         captured["prompt"] = prompt
         captured["response_format"] = response_format
         return (
             json.dumps(
-                {
-                    "text": (
-                        "The agency shall file the notice unless there is "
-                        "an emergency."
-                    )
-                }
+                {"text": ("The agency shall file the notice unless there is an emergency.")}
             ),
             {
                 "effective_provider_name": "ipfs_accelerate_py",
@@ -296,9 +262,7 @@ def test_symai_reverse_is_source_withheld_strict_and_secret_safe() -> None:
         )
 
     case = _case()
-    result = benchmark._symai_realize(
-        case, case["gold_ir"], invoke=invoke
-    )
+    result = benchmark._symai_realize(case, case["gold_ir"], invoke=invoke)
 
     assert case["source_text"] not in str(captured["prompt"])
     assert '"actor":"agency"' in str(captured["prompt"])
@@ -308,16 +272,11 @@ def test_symai_reverse_is_source_withheld_strict_and_secret_safe() -> None:
     assert result.value.startswith("The agency shall file")
     assert result.metadata["source_withheld"] is True
     assert "api_key" not in result.metadata["router_metadata"]
-    assert (
-        result.metadata["router_metadata"]["resolved_provider_name"]
-        == "leanstral_local"
-    )
+    assert result.metadata["router_metadata"]["resolved_provider_name"] == "leanstral_local"
 
 
 def test_symai_reverse_rejects_nonexact_realization_contract() -> None:
-    def invoke(
-        prompt: str, response_format: object
-    ) -> tuple[str, dict[str, object]]:
+    def invoke(prompt: str, response_format: object) -> tuple[str, dict[str, object]]:
         del prompt, response_format
         return (
             '{"text":"The agency shall file.","explanation":"extra"}',
@@ -329,9 +288,7 @@ def test_symai_reverse_rejects_nonexact_realization_contract() -> None:
         benchmark.BenchmarkError,
         match="exactly one text string",
     ):
-        benchmark._symai_realize(
-            case, case["gold_ir"], invoke=invoke
-        )
+        benchmark._symai_realize(case, case["gold_ir"], invoke=invoke)
 
 
 def test_symai_oracle_reverse_labels_mixed_recompiler(
@@ -377,9 +334,7 @@ def test_symai_oracle_reverse_labels_mixed_recompiler(
     )
 
     assert result["status"] == "success"
-    assert result["translator"] == (
-        "symai_reverse_plus_leanstral_recompile"
-    )
+    assert result["translator"] == ("symai_reverse_plus_leanstral_recompile")
     assert result["oracle_l1"] is True
     assert result["pure_symai_roundtrip"] is False
     assert result["cycle_l1_vs_l2"]["semantic_score"] == 1.0

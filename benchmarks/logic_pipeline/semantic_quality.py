@@ -76,36 +76,25 @@ from .variants import VARIANT_REGISTRY, VARIANT_REGISTRY_SHA256
 
 
 G201_SEMANTIC_EVIDENCE_INDEX_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "g201-semantic-evidence-index.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.g201-semantic-evidence-index.v2"
 )
 G201_SEMANTIC_SOURCE_COORDINATE_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "g201-semantic-source-coordinate.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.g201-semantic-source-coordinate.v2"
 )
 G201_SEMANTIC_PREFLIGHT_PLAN_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "g201-semantic-preflight-plan.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.g201-semantic-preflight-plan.v2"
 )
 G235_RUNTIME_SEMANTIC_OBSERVATION_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "g235-runtime-semantic-observation.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.g235-runtime-semantic-observation.v2"
 )
 G235_SEMANTIC_QUALITY_GATE_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "g235-semantic-quality-gate.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.g235-semantic-quality-gate.v2"
 )
 
 _SHA256 = re.compile(r"[0-9a-f]{64}\Z")
-_REQUIRED_CALIBRATION_VARIANTS: Final = frozenset(
-    {"A0", "A1", "A5", "A7", "A8"}
-)
-_FRONTEND_STAGES: Final = frozenset(
-    {StageName.COMPILER, StageName.SPACY, StageName.SYMAI}
-)
-_PROOF_STAGES: Final = frozenset(
-    {StageName.HAMMER, StageName.LEANSTRAL, StageName.KERNEL}
-)
+_REQUIRED_CALIBRATION_VARIANTS: Final = frozenset({"A0", "A1", "A5", "A7", "A8"})
+_FRONTEND_STAGES: Final = frozenset({StageName.COMPILER, StageName.SPACY, StageName.SYMAI})
+_PROOF_STAGES: Final = frozenset({StageName.HAMMER, StageName.LEANSTRAL, StageName.KERNEL})
 _SEMANTIC_FIELDS: Final = (
     "logic_family",
     "target",
@@ -133,9 +122,7 @@ def _plain(value: object) -> object:
         return _plain(value.value)
     if isinstance(value, Mapping):
         return {str(key): _plain(item) for key, item in value.items()}
-    if isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         return [_plain(item) for item in value]
     return value
 
@@ -144,27 +131,16 @@ def _freeze(value: object) -> object:
     if isinstance(value, Mapping):
         if not all(isinstance(key, str) for key in value):
             raise SemanticQualityError("DAG-JSON object keys must be strings")
-        return MappingProxyType(
-            {
-                str(key): _freeze(item)
-                for key, item in sorted(value.items())
-            }
-        )
-    if isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+        return MappingProxyType({str(key): _freeze(item) for key, item in sorted(value.items())})
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         return tuple(_freeze(item) for item in value)
     if value is None or type(value) in {str, bool, int, float}:
         return value
-    raise SemanticQualityError(
-        f"unsupported DAG-JSON value: {type(value).__name__}"
-    )
+    raise SemanticQualityError(f"unsupported DAG-JSON value: {type(value).__name__}")
 
 
 def _mapping(value: object, field_name: str) -> Mapping[str, object]:
-    if not isinstance(value, Mapping) or not all(
-        isinstance(key, str) for key in value
-    ):
+    if not isinstance(value, Mapping) or not all(isinstance(key, str) for key in value):
         raise SemanticQualityError(f"{field_name} must be an object")
     return value
 
@@ -190,9 +166,7 @@ def _exact(
 
 def _sha256(value: object, field_name: str) -> str:
     if not isinstance(value, str) or not _SHA256.fullmatch(value):
-        raise SemanticQualityError(
-            f"{field_name} must be a lowercase SHA-256 digest"
-        )
+        raise SemanticQualityError(f"{field_name} must be a lowercase SHA-256 digest")
     return value
 
 
@@ -205,9 +179,7 @@ def _cid(
     try:
         return validate_cid(value, codecs=codecs)
     except (TypeError, ValueError) as exc:
-        raise SemanticQualityError(
-            f"{field_name} must be a canonical CID"
-        ) from exc
+        raise SemanticQualityError(f"{field_name} must be a canonical CID") from exc
 
 
 def _protocol_identities() -> dict[str, str]:
@@ -218,15 +190,9 @@ def _protocol_identities() -> dict[str, str]:
         "response_schema_cid": SEMANTIC_RESPONSE_SCHEMA_V2_CID,
         "prompt_cid": SEMANTIC_PROMPT_V2_CID,
         "producer_registry_cid": SEMANTIC_PRODUCER_REGISTRY_V2_CID,
-        "calibration_route_manifest_cid": (
-            SEMANTIC_CALIBRATION_ROUTE_MANIFEST_V2_CID
-        ),
-        "calibration_metric_spec_cid": (
-            SEMANTIC_CALIBRATION_METRIC_SPEC_V2_CID
-        ),
-        "reviewed_target_source_cid": (
-            SEMANTIC_REVIEWED_TARGET_SOURCE_V2_CID
-        ),
+        "calibration_route_manifest_cid": (SEMANTIC_CALIBRATION_ROUTE_MANIFEST_V2_CID),
+        "calibration_metric_spec_cid": (SEMANTIC_CALIBRATION_METRIC_SPEC_V2_CID),
+        "reviewed_target_source_cid": (SEMANTIC_REVIEWED_TARGET_SOURCE_V2_CID),
     }
 
 
@@ -250,25 +216,15 @@ def _target_manifest(
         "target_manifest_cid",
     }
     _exact(manifest, expected_fields, "reviewed target manifest")
-    body = {
-        key: _plain(item)
-        for key, item in manifest.items()
-        if key != "target_manifest_cid"
-    }
+    body = {key: _plain(item) for key, item in manifest.items() if key != "target_manifest_cid"}
     if (
         manifest.get("schema") != SEMANTIC_TARGET_MANIFEST_SCHEMA_V2
-        or manifest.get("semantic_protocol_cid")
-        != SEMANTIC_PROTOCOL_V2_CID
-        or manifest.get("producer_registry_cid")
-        != SEMANTIC_PRODUCER_REGISTRY_V2_CID
-        or manifest.get("reviewed_target_source_cid")
-        != SEMANTIC_REVIEWED_TARGET_SOURCE_V2_CID
-        or manifest.get("case_count")
-        != SEMANTIC_CALIBRATION_CASE_COUNT_V2
-        or manifest.get("splits")
-        != {"pilot": 10, "development": 10, "holdout": 0}
-        or manifest.get("ground_truth_phase")
-        != "post_execution_reviewed_validation"
+        or manifest.get("semantic_protocol_cid") != SEMANTIC_PROTOCOL_V2_CID
+        or manifest.get("producer_registry_cid") != SEMANTIC_PRODUCER_REGISTRY_V2_CID
+        or manifest.get("reviewed_target_source_cid") != SEMANTIC_REVIEWED_TARGET_SOURCE_V2_CID
+        or manifest.get("case_count") != SEMANTIC_CALIBRATION_CASE_COUNT_V2
+        or manifest.get("splits") != {"pilot": 10, "development": 10, "holdout": 0}
+        or manifest.get("ground_truth_phase") != "post_execution_reviewed_validation"
         or manifest.get("holdout_accessed") is not False
         or _cid(
             manifest.get("target_manifest_cid"),
@@ -276,27 +232,20 @@ def _target_manifest(
         )
         != cid_for_dag_json(body)
     ):
-        raise SemanticQualityError(
-            "reviewed target manifest identity or frozen policy drifted"
-        )
+        raise SemanticQualityError("reviewed target manifest identity or frozen policy drifted")
     case_manifest_sha256 = _sha256(
         manifest.get("case_manifest_sha256"),
         "reviewed target case_manifest_sha256",
     )
 
-    if (
-        len(targets) != SEMANTIC_CALIBRATION_CASE_COUNT_V2
-        or len({target.case_id for target in targets}) != len(targets)
-    ):
-        raise SemanticQualityError(
-            "G201 requires exactly twenty distinct semantic targets"
-        )
+    if len(targets) != SEMANTIC_CALIBRATION_CASE_COUNT_V2 or len(
+        {target.case_id for target in targets}
+    ) != len(targets):
+        raise SemanticQualityError("G201 requires exactly twenty distinct semantic targets")
     catalog = {target.case_id: target for target in targets}
     entries = _array(manifest.get("cases"), "reviewed target cases")
     if len(entries) != SEMANTIC_CALIBRATION_CASE_COUNT_V2:
-        raise SemanticQualityError(
-            "reviewed target manifest does not contain twenty cases"
-        )
+        raise SemanticQualityError("reviewed target manifest does not contain twenty cases")
     parsed_entries: dict[str, Mapping[str, object]] = {}
     entry_order: list[str] = []
     entry_fields = {
@@ -319,18 +268,13 @@ def _target_manifest(
             or case_id not in catalog
             or split not in {"pilot", "development"}
         ):
-            raise SemanticQualityError(
-                "reviewed target case identity or split is invalid"
-            )
+            raise SemanticQualityError("reviewed target case identity or split is invalid")
         target = catalog[case_id]
         if (
             entry.get("source_cid") != target.source_cid
-            or _plain(entry.get("expected_semantics"))
-            != target.semantic_fields()
+            or _plain(entry.get("expected_semantics")) != target.semantic_fields()
         ):
-            raise SemanticQualityError(
-                "reviewed target fields differ from their source target"
-            )
+            raise SemanticQualityError("reviewed target fields differ from their source target")
         _cid(entry.get("reviewed_case_cid"), "reviewed_case_cid")
         _cid(
             entry.get("review_attestation_cid"),
@@ -349,9 +293,7 @@ def _target_manifest(
         "reviewed split identities",
     )
     if set(split_identities) != {"pilot", "development"}:
-        raise SemanticQualityError(
-            "reviewed target manifest must bind pilot and development"
-        )
+        raise SemanticQualityError("reviewed target manifest must bind pilot and development")
     assigned: set[str] = set()
     split_identity_fields = {
         "schema",
@@ -375,20 +317,15 @@ def _target_manifest(
             f"reviewed {split} split identity",
         )
         case_ids = _array(identity.get("case_ids"), f"{split}.case_ids")
-        case_sha256s = _array(
-            identity.get("case_sha256s"), f"{split}.case_sha256s"
-        )
-        source_sha256s = _array(
-            identity.get("source_sha256s"), f"{split}.source_sha256s"
-        )
+        case_sha256s = _array(identity.get("case_sha256s"), f"{split}.case_sha256s")
+        source_sha256s = _array(identity.get("source_sha256s"), f"{split}.source_sha256s")
         normalized_sha256s = _array(
             identity.get("normalized_source_sha256s"),
             f"{split}.normalized_source_sha256s",
         )
         if (
             identity.get("schema") != SPLIT_MANIFEST_SCHEMA
-            or identity.get("corpus_manifest_sha256")
-            != case_manifest_sha256
+            or identity.get("corpus_manifest_sha256") != case_manifest_sha256
             or identity.get("split") != split
             or len(case_ids)
             != len(case_sha256s)
@@ -403,81 +340,56 @@ def _target_manifest(
                 for case_id in case_ids
             )
         ):
-            raise SemanticQualityError(
-                f"reviewed {split} split population is invalid"
-            )
+            raise SemanticQualityError(f"reviewed {split} split population is invalid")
         for index, case_id in enumerate(case_ids):
             target = catalog[str(case_id)]
             entry = parsed_entries[str(case_id)]
-            expected_source_sha256 = hashlib.sha256(
-                target.source_text.encode("utf-8")
-            ).hexdigest()
+            expected_source_sha256 = hashlib.sha256(target.source_text.encode("utf-8")).hexdigest()
             if (
                 case_sha256s[index] != entry.get("reviewed_case_sha256")
                 or source_sha256s[index] != expected_source_sha256
-                or normalized_sha256s[index]
-                != normalized_source_sha256(target.source_text)
+                or normalized_sha256s[index] != normalized_source_sha256(target.source_text)
             ):
-                raise SemanticQualityError(
-                    f"reviewed {split} split source identity changed"
-                )
+                raise SemanticQualityError(f"reviewed {split} split source identity changed")
         split_body = {
             key: _plain(item)
             for key, item in identity.items()
             if key not in {"split_manifest_cid", "split_sha256"}
         }
-        split_sha256 = hashlib.sha256(
-            canonical_json(split_body).encode("utf-8")
-        ).hexdigest()
+        split_sha256 = hashlib.sha256(canonical_json(split_body).encode("utf-8")).hexdigest()
         if (
             _cid(
                 identity.get("split_manifest_cid"),
                 f"{split}.split_manifest_cid",
             )
             != cid_for_dag_json(split_body)
-            or _sha256(
-                identity.get("split_sha256"), f"{split}.split_sha256"
-            )
-            != split_sha256
+            or _sha256(identity.get("split_sha256"), f"{split}.split_sha256") != split_sha256
         ):
-            raise SemanticQualityError(
-                f"reviewed {split} split identity did not recompute"
-            )
+            raise SemanticQualityError(f"reviewed {split} split identity did not recompute")
         assigned.update(str(case_id) for case_id in case_ids)
     if assigned != set(catalog):
-        raise SemanticQualityError(
-            "reviewed split identities do not cover the target population"
-        )
+        raise SemanticQualityError("reviewed split identities do not cover the target population")
     return _freeze(_plain(manifest))  # type: ignore[return-value]
 
 
 def _routes() -> dict[str, Mapping[str, object]]:
     manifest = semantic_calibration_route_manifest_v2()
-    if (
-        cid_for_dag_json(manifest)
-        != SEMANTIC_CALIBRATION_ROUTE_MANIFEST_V2_CID
-    ):
-        raise SemanticQualityError(
-            "semantic calibration route manifest CID drifted"
-        )
+    if cid_for_dag_json(manifest) != SEMANTIC_CALIBRATION_ROUTE_MANIFEST_V2_CID:
+        raise SemanticQualityError("semantic calibration route manifest CID drifted")
     routes = {
         str(route["producer_id"]): route
         for route in _array(manifest.get("routes"), "semantic routes")
         if isinstance(route, Mapping)
     }
     if set(routes) != set(SEMANTIC_PRODUCER_IDS_V2):
-        raise SemanticQualityError(
-            "semantic calibration routes do not cover every producer"
-        )
+        raise SemanticQualityError("semantic calibration routes do not cover every producer")
     return routes
 
 
 def build_g201_semantic_preflight_plan_v2(
     *,
     target_manifest: Mapping[str, object],
-    targets: Sequence[
-        SemanticCalibrationTargetV2 | Mapping[str, object]
-    ],
+    targets: Sequence[SemanticCalibrationTargetV2 | Mapping[str, object]],
     plans: Sequence[AblationPlan],
 ) -> Mapping[str, object]:
     """Address only the reviewed targets and source-only G201 schedules.
@@ -503,10 +415,7 @@ def build_g201_semantic_preflight_plan_v2(
         )
         parsed_plans = tuple(
             sorted(
-                (
-                    AblationPlan.from_dict(_plain(item.to_dict()))
-                    for item in plans
-                ),
+                (AblationPlan.from_dict(_plain(item.to_dict())) for item in plans),
                 key=lambda item: item.split.value,
             )
         )
@@ -517,22 +426,18 @@ def build_g201_semantic_preflight_plan_v2(
         ValueError,
         KeyError,
     ) as exc:
-        raise SemanticQualityError(
-            "G201 preflight sources failed strict parsing"
-        ) from exc
+        raise SemanticQualityError("G201 preflight sources failed strict parsing") from exc
     manifest = _target_manifest(target_manifest, parsed_targets)
     catalog = {target.case_id: target for target in parsed_targets}
     if (
         len(parsed_targets) != SEMANTIC_CALIBRATION_CASE_COUNT_V2
         or len(catalog) != len(parsed_targets)
         or len(parsed_plans) != 2
-        or {plan.split for plan in parsed_plans}
-        != {Split.PILOT, Split.DEVELOPMENT}
+        or {plan.split for plan in parsed_plans} != {Split.PILOT, Split.DEVELOPMENT}
         or any(len(plan.case_ids) != 10 for plan in parsed_plans)
     ):
         raise SemanticQualityError(
-            "G201 preflight requires the exact twenty-target, two-plan "
-            "pilot/development population"
+            "G201 preflight requires the exact twenty-target, two-plan pilot/development population"
         )
     shared = {
         (
@@ -548,23 +453,17 @@ def build_g201_semantic_preflight_plan_v2(
     if (
         len(shared) != 1
         or any(plan.environment_sha256 is None for plan in parsed_plans)
+        or any(plan.registry_sha256 != VARIANT_REGISTRY_SHA256 for plan in parsed_plans)
         or any(
-            plan.registry_sha256 != VARIANT_REGISTRY_SHA256
-            for plan in parsed_plans
-        )
-        or any(
-            frozenset(plan.variant_ids)
-            != _REQUIRED_CALIBRATION_VARIANTS
+            frozenset(plan.variant_ids) != _REQUIRED_CALIBRATION_VARIANTS
             or tuple(plan.cache_modes) != (CacheMode.COLD,)
             or plan.holdout_access_log_id is not None
-            or plan.case_manifest_sha256
-            != manifest.get("case_manifest_sha256")
+            or plan.case_manifest_sha256 != manifest.get("case_manifest_sha256")
             for plan in parsed_plans
         )
     ):
         raise SemanticQualityError(
-            "G201 preflight plans do not share the frozen "
-            "source/environment/calibration matrix"
+            "G201 preflight plans do not share the frozen source/environment/calibration matrix"
         )
     split_identities = _mapping(
         manifest.get("reviewed_split_identities"),
@@ -580,9 +479,7 @@ def build_g201_semantic_preflight_plan_v2(
             split_identities[split],
             f"{split} split identity",
         )
-        if tuple(
-            _array(identity.get("case_ids"), f"{split}.case_ids")
-        ) != plan.case_ids:
+        if tuple(_array(identity.get("case_ids"), f"{split}.case_ids")) != plan.case_ids:
             raise SemanticQualityError(
                 f"G201 {split} preflight order differs from reviewed targets"
             )
@@ -595,26 +492,18 @@ def build_g201_semantic_preflight_plan_v2(
                 or job.input_data.get("text") != target.source_text
             ):
                 raise SemanticQualityError(
-                    "G201 preflight producer job is not the exact "
-                    "label-blind source envelope"
+                    "G201 preflight producer job is not the exact label-blind source envelope"
                 )
         planned_case_ids.update(plan.case_ids)
         plan_cids[split] = cid_for_dag_json(_plain(plan.to_dict()))
         split_case_ids[split] = list(plan.case_ids)
         job_count += len(plan.jobs)
-    if (
-        planned_case_ids != set(catalog)
-        or job_count != SEMANTIC_CALIBRATION_COORDINATE_COUNT_V2
-    ):
+    if planned_case_ids != set(catalog) or job_count != SEMANTIC_CALIBRATION_COORDINATE_COUNT_V2:
         raise SemanticQualityError(
-            "G201 preflight schedules do not cover the exact 100-coordinate "
-            "target population"
+            "G201 preflight schedules do not cover the exact 100-coordinate target population"
         )
     target_set_body = {
-        "schema": (
-            "ipfs-datasets.logic-pipeline-benchmark."
-            "g201-reviewed-target-set.v2"
-        ),
+        "schema": ("ipfs-datasets.logic-pipeline-benchmark.g201-reviewed-target-set.v2"),
         "target_manifest_cid": manifest["target_manifest_cid"],
         "targets": [
             {
@@ -627,18 +516,9 @@ def build_g201_semantic_preflight_plan_v2(
         "holdout_included": False,
     }
     plan_set_body = {
-        "schema": (
-            "ipfs-datasets.logic-pipeline-benchmark."
-            "g201-source-only-plan-set.v2"
-        ),
-        "plan_cids": {
-            split: plan_cids[split]
-            for split in ("pilot", "development")
-        },
-        "split_case_ids": {
-            split: split_case_ids[split]
-            for split in ("pilot", "development")
-        },
+        "schema": ("ipfs-datasets.logic-pipeline-benchmark.g201-source-only-plan-set.v2"),
+        "plan_cids": {split: plan_cids[split] for split in ("pilot", "development")},
+        "split_case_ids": {split: split_case_ids[split] for split in ("pilot", "development")},
         "coordinate_count": job_count,
         "holdout_included": False,
     }
@@ -696,29 +576,17 @@ def _symai_cache_binding(
 ) -> Mapping[str, object]:
     payload = _mapping(stage.data, "SyMAI semantic payload")
     cache = _mapping(payload.get("cache"), "SyMAI cache receipt")
-    provenance = _mapping(
-        payload.get("backend_provenance"), "SyMAI backend provenance"
-    )
-    semantic_context = _mapping(
-        payload.get("semantic_context"), "SyMAI semantic context"
-    )
+    provenance = _mapping(payload.get("backend_provenance"), "SyMAI backend provenance")
+    semantic_context = _mapping(payload.get("semantic_context"), "SyMAI semantic context")
     context_cid_value = semantic_context.get("context_cid")
     context_cid = (
-        None
-        if context_cid_value is None
-        else _cid(context_cid_value, "SyMAI semantic context CID")
+        None if context_cid_value is None else _cid(context_cid_value, "SyMAI semantic context CID")
     )
     if (
-        semantic_context.get("source_cid")
-        != cid_for_bytes(source_text.encode("utf-8"))
-        or stage.provenance.effective_identity.get(
-            "semantic_context_cid"
-        )
-        != context_cid
+        semantic_context.get("source_cid") != cid_for_bytes(source_text.encode("utf-8"))
+        or stage.provenance.effective_identity.get("semantic_context_cid") != context_cid
     ):
-        raise SemanticQualityError(
-            "SyMAI semantic context is not bound to the source bytes"
-        )
+        raise SemanticQualityError("SyMAI semantic context is not bound to the source bytes")
     raw_metadata = provenance.get("router_metadata", {})
     metadata = _mapping(raw_metadata, "SyMAI router metadata")
     inner_keys = (
@@ -731,9 +599,7 @@ def _symai_cache_binding(
     if any(item is not None for item in inner) and not all(
         isinstance(item, str) and item for item in inner
     ):
-        raise SemanticQualityError(
-            "SyMAI inner-route cache identity is incomplete"
-        )
+        raise SemanticQualityError("SyMAI inner-route cache identity is incomplete")
     provider = provenance.get("requested_provider")
     model = provenance.get("requested_model")
     effective_provider = provenance.get("effective_provider")
@@ -745,35 +611,21 @@ def _symai_cache_binding(
         or not isinstance(effective_provider, str)
         or not isinstance(effective_model, str)
         or type(dry_run) is not bool
-        or stage.provenance.effective_identity.get("requested_provider")
-        != provider
-        or stage.provenance.effective_identity.get("requested_model")
-        != model
-        or stage.provenance.effective_identity.get("effective_provider")
-        != effective_provider
-        or stage.provenance.effective_identity.get("effective_model")
-        != effective_model
+        or stage.provenance.effective_identity.get("requested_provider") != provider
+        or stage.provenance.effective_identity.get("requested_model") != model
+        or stage.provenance.effective_identity.get("effective_provider") != effective_provider
+        or stage.provenance.effective_identity.get("effective_model") != effective_model
     ):
-        raise SemanticQualityError(
-            "SyMAI provider/model identities are invalid or inconsistent"
-        )
+        raise SemanticQualityError("SyMAI provider/model identities are invalid or inconsistent")
     try:
         config = SymaiAdapterConfig(
             provider=provider,
             model=model,
             dry_run=dry_run,
-            expected_inner_provider=(
-                None if inner[0] is None else str(inner[0])
-            ),
-            expected_inner_model=(
-                None if inner[1] is None else str(inner[1])
-            ),
-            expected_inner_endpoint=(
-                None if inner[2] is None else str(inner[2])
-            ),
-            expected_inner_backend=(
-                None if inner[3] is None else str(inner[3])
-            ),
+            expected_inner_provider=(None if inner[0] is None else str(inner[0])),
+            expected_inner_model=(None if inner[1] is None else str(inner[1])),
+            expected_inner_endpoint=(None if inner[2] is None else str(inner[2])),
+            expected_inner_backend=(None if inner[3] is None else str(inner[3])),
             semantic_protocol_cid=SEMANTIC_PROTOCOL_V2_CID,
         )
         request = StageRequest(
@@ -784,14 +636,10 @@ def _symai_cache_binding(
             split=stage.split,
             cache_mode=stage.cache_mode,
             input_data={"text": source_text},
-            requested_identity=_plain(
-                stage.provenance.requested_identity
-            ),  # type: ignore[arg-type]
+            requested_identity=_plain(stage.provenance.requested_identity),  # type: ignore[arg-type]
             environment_sha256=stage.provenance.environment_sha256,
             source=stage.provenance.source,
-            upstream_stage_digests=(
-                stage.provenance.upstream_stage_digests
-            ),
+            upstream_stage_digests=(stage.provenance.upstream_stage_digests),
             semantic_protocol_cid=SEMANTIC_PROTOCOL_V2_CID,
         )
         namespace = _symai_cache_namespace(request)
@@ -802,15 +650,12 @@ def _symai_cache_binding(
             {"context_cid": context_cid},
         )
     except (ProtocolContractError, TypeError, ValueError) as exc:
-        raise SemanticQualityError(
-            "SyMAI cache-key source reconstruction failed"
-        ) from exc
+        raise SemanticQualityError("SyMAI cache-key source reconstruction failed") from exc
     if (
         cache.get("namespace") != namespace
         or cache.get("key") != key
         or cache.get("mode") != stage.cache_mode.value
-        or stage.provenance.effective_identity.get("cache_namespace")
-        != namespace
+        or stage.provenance.effective_identity.get("cache_namespace") != namespace
         or stage.provenance.effective_identity.get("cache_key") != key
     ):
         raise SemanticQualityError(
@@ -824,12 +669,8 @@ def _symai_cache_binding(
         "semantic_context_cid": context_cid,
         "semantic_protocol_cid": SEMANTIC_PROTOCOL_V2_CID,
         "semantic_prompt_cid": SEMANTIC_PROMPT_V2_CID,
-        "semantic_response_schema_cid": (
-            SEMANTIC_RESPONSE_SCHEMA_V2_CID
-        ),
-        "semantic_producer_registry_cid": (
-            SEMANTIC_PRODUCER_REGISTRY_V2_CID
-        ),
+        "semantic_response_schema_cid": (SEMANTIC_RESPONSE_SCHEMA_V2_CID),
+        "semantic_producer_registry_cid": (SEMANTIC_PRODUCER_REGISTRY_V2_CID),
         "provider": provider,
         "model": model,
         "inner_route": {
@@ -870,36 +711,24 @@ def _label_blind_receipts(
     for stage in stages:
         if stage.stage not in _FRONTEND_STAGES or not _stage_invoked(stage):
             continue
-        validated = validate_source_only_semantic_input_v2(
-            stage, source_text
-        )
+        validated = validate_source_only_semantic_input_v2(stage, source_text)
         body: dict[str, object] = {
             "stage": stage.stage.value,
             "stage_cid": cid_for_dag_json(_plain(stage.to_dict())),
-            "requested_identity_cid": cid_for_dag_json(
-                _plain(stage.provenance.requested_identity)
-            ),
-            "effective_identity_cid": cid_for_dag_json(
-                _plain(stage.provenance.effective_identity)
-            ),
+            "requested_identity_cid": cid_for_dag_json(_plain(stage.provenance.requested_identity)),
+            "effective_identity_cid": cid_for_dag_json(_plain(stage.provenance.effective_identity)),
             "environment_sha256": stage.provenance.environment_sha256,
             "input_envelope_cid": cid_for_dag_json({"text": source_text}),
             "input_sha256": validated["input_sha256"],
             "source_cid": validated["source_cid"],
-            "semantic_protocol_cid": validated[
-                "semantic_protocol_cid"
-            ],
+            "semantic_protocol_cid": validated["semantic_protocol_cid"],
             "proof_context_cid": None,
             "reviewed_answers_absent": True,
             "cache_binding": None,
         }
         if stage.stage is StageName.SYMAI:
-            body["cache_binding"] = _symai_cache_binding(
-                stage, source_text
-            )
-        receipts.append(
-            {**body, "receipt_cid": cid_for_dag_json(body)}
-        )
+            body["cache_binding"] = _symai_cache_binding(stage, source_text)
+        receipts.append({**body, "receipt_cid": cid_for_dag_json(body)})
     return receipts
 
 
@@ -914,13 +743,10 @@ def _derive_g201(
     routes = _routes()
     if (
         len(plans) != 2
-        or {plan.split for plan in plans}
-        != {Split.PILOT, Split.DEVELOPMENT}
+        or {plan.split for plan in plans} != {Split.PILOT, Split.DEVELOPMENT}
         or any(len(plan.case_ids) != 10 for plan in plans)
     ):
-        raise SemanticQualityError(
-            "G201 requires exact ten-case pilot and development plans"
-        )
+        raise SemanticQualityError("G201 requires exact ten-case pilot and development plans")
     shared = {
         (
             plan.run_id,
@@ -937,45 +763,31 @@ def _derive_g201(
         or any(plan.environment_sha256 is None for plan in plans)
         or any(plan.registry_sha256 != VARIANT_REGISTRY_SHA256 for plan in plans)
         or any(
-            frozenset(plan.variant_ids)
-            != _REQUIRED_CALIBRATION_VARIANTS
+            frozenset(plan.variant_ids) != _REQUIRED_CALIBRATION_VARIANTS
             or tuple(plan.cache_modes) != (CacheMode.COLD,)
             or plan.holdout_access_log_id is not None
             for plan in plans
         )
         or any(
-            plan.case_manifest_sha256
-            != target_manifest.get("case_manifest_sha256")
+            plan.case_manifest_sha256 != target_manifest.get("case_manifest_sha256")
             for plan in plans
         )
     ):
-        raise SemanticQualityError(
-            "G201 plans do not share the frozen source/environment/matrix"
-        )
+        raise SemanticQualityError("G201 plans do not share the frozen source/environment/matrix")
     split_identities = _mapping(
         target_manifest.get("reviewed_split_identities"),
         "reviewed split identities",
     )
     plan_by_split = {plan.split.value: plan for plan in plans}
     for split, plan in plan_by_split.items():
-        identity = _mapping(
-            split_identities[split], f"{split} split identity"
-        )
+        identity = _mapping(split_identities[split], f"{split} split identity")
         if tuple(_array(identity.get("case_ids"), "case_ids")) != plan.case_ids:
-            raise SemanticQualityError(
-                f"G201 {split} plan order differs from reviewed targets"
-            )
-    all_plan_case_ids = {
-        case_id for plan in plans for case_id in plan.case_ids
-    }
+            raise SemanticQualityError(f"G201 {split} plan order differs from reviewed targets")
+    all_plan_case_ids = {case_id for plan in plans for case_id in plan.case_ids}
     if all_plan_case_ids != set(catalog):
-        raise SemanticQualityError(
-            "G201 plans differ from the reviewed target population"
-        )
+        raise SemanticQualityError("G201 plans differ from the reviewed target population")
 
-    jobs: dict[
-        tuple[str, str, str, str], tuple[AblationPlan, object]
-    ] = {}
+    jobs: dict[tuple[str, str, str, str], tuple[AblationPlan, object]] = {}
     for plan in plans:
         for job in plan.jobs:
             coordinate = _plan_coordinate(
@@ -985,9 +797,7 @@ def _derive_g201(
                 job.cache_mode.value,
             )
             if coordinate in jobs:
-                raise SemanticQualityError(
-                    "G201 plans contain duplicate source coordinates"
-                )
+                raise SemanticQualityError("G201 plans contain duplicate source coordinates")
             target = catalog.get(job.case_id)
             if (
                 target is None
@@ -996,29 +806,20 @@ def _derive_g201(
                 or job.input_data.get("text") != target.source_text
             ):
                 raise SemanticQualityError(
-                    "G201 producer job is not the exact label-blind source "
-                    "envelope"
+                    "G201 producer job is not the exact label-blind source envelope"
                 )
             jobs[coordinate] = (plan, job)
     if len(jobs) != SEMANTIC_CALIBRATION_COORDINATE_COUNT_V2:
-        raise SemanticQualityError(
-            "G201 plans do not form the exact 100-coordinate matrix"
-        )
+        raise SemanticQualityError("G201 plans do not form the exact 100-coordinate matrix")
 
-    result_index: dict[
-        tuple[str, str, str, str], CaseResultRecord
-    ] = {}
+    result_index: dict[tuple[str, str, str, str], CaseResultRecord] = {}
     for result in results:
         coordinate = _result_coordinate(result)
         if coordinate in result_index:
-            raise SemanticQualityError(
-                "G201 contains duplicate source result coordinates"
-            )
+            raise SemanticQualityError("G201 contains duplicate source result coordinates")
         result_index[coordinate] = result
     if set(result_index) != set(jobs):
-        raise SemanticQualityError(
-            "G201 source results do not cover the exact planned matrix"
-        )
+        raise SemanticQualityError("G201 source results do not cover the exact planned matrix")
 
     source_coordinates: list[dict[str, object]] = []
     calibration_coordinates: list[SemanticCalibrationCoordinateV2] = []
@@ -1029,11 +830,7 @@ def _derive_g201(
             route = routes[producer_id]
             variant_id = str(route["variant_id"])
             coordinate_key = (
-                next(
-                    plan.split.value
-                    for plan in plans
-                    if case_id in plan.case_ids
-                ),
+                next(plan.split.value for plan in plans if case_id in plan.case_ids),
                 case_id,
                 variant_id,
                 "cold",
@@ -1043,29 +840,20 @@ def _derive_g201(
             if (
                 result.run_id != plan.run_id
                 or result.protocol_sha256 != plan.protocol_sha256
-                or result.case_manifest_sha256
-                != plan.case_manifest_sha256
+                or result.case_manifest_sha256 != plan.case_manifest_sha256
                 or result.split is not plan.split
                 or result.variant_id != job.variant_id
                 or result.cache_mode is not job.cache_mode
                 or result.case_id != job.case_id
                 or any(
-                    stage.provenance.environment_sha256
-                    != plan.environment_sha256
+                    stage.provenance.environment_sha256 != plan.environment_sha256
                     for stage in result.stages
                 )
             ):
-                raise SemanticQualityError(
-                    "G201 result identity differs from its scheduled source"
-                )
+                raise SemanticQualityError("G201 result identity differs from its scheduled source")
             definition = VARIANT_REGISTRY[variant_id]
-            if any(
-                stage.stage not in definition.stages
-                for stage in result.stages
-            ):
-                raise SemanticQualityError(
-                    "G201 result contains a stage outside its frozen route"
-                )
+            if any(stage.stage not in definition.stages for stage in result.stages):
+                raise SemanticQualityError("G201 result contains a stage outside its frozen route")
             prefix = tuple(str(item) for item in route["stage_prefix"])
             selected = tuple(result.stages[: len(prefix)])
             if (
@@ -1073,45 +861,29 @@ def _derive_g201(
                 or selected[-1].stage.value != route["selected_stage"]
                 or any(not _stage_invoked(stage) for stage in selected)
             ):
-                raise SemanticQualityError(
-                    "G201 result lacks the exact invoked calibration prefix"
-                )
+                raise SemanticQualityError("G201 result lacks the exact invoked calibration prefix")
             expected_upstream: tuple[str, ...] = ()
             for stage in selected:
-                if (
-                    stage.provenance.upstream_stage_digests
-                    != expected_upstream
-                ):
+                if stage.provenance.upstream_stage_digests != expected_upstream:
                     raise SemanticQualityError(
                         "G201 selected stage prefix has a broken digest chain"
                     )
                 requested = definition.requested_identity(stage.stage)
                 if any(
-                    stage.provenance.requested_identity.get(key)
-                    != _plain(value)
+                    stage.provenance.requested_identity.get(key) != _plain(value)
                     for key, value in requested.items()
                 ):
-                    raise SemanticQualityError(
-                        "G201 requested route identity drifted"
-                    )
+                    raise SemanticQualityError("G201 requested route identity drifted")
                 expected_upstream = (*expected_upstream, stage.digest)
             if any(
-                _stage_invoked(stage)
-                for stage in result.stages
-                if stage.stage in _PROOF_STAGES
+                _stage_invoked(stage) for stage in result.stages if stage.stage in _PROOF_STAGES
             ):
-                raise SemanticQualityError(
-                    "G201 semantic calibration invoked a proof stage"
-                )
-            label_blind = _label_blind_receipts(
-                result.stages, target.source_text
-            )
+                raise SemanticQualityError("G201 semantic calibration invoked a proof stage")
+            label_blind = _label_blind_receipts(result.stages, target.source_text)
             binding = SemanticCalibrationGraphBindingV2(
                 plan_cid=cid_for_dag_json(_plain(plan.to_dict())),
                 plan_sha256=plan.digest,
-                case_result_cid=cid_for_dag_json(
-                    _plain(result.to_dict())
-                ),
+                case_result_cid=cid_for_dag_json(_plain(result.to_dict())),
                 case_result_sha256=result.digest,
                 run_id=result.run_id,
                 variant_id=result.variant_id,
@@ -1120,15 +892,9 @@ def _derive_g201(
                 environment_sha256=str(plan.environment_sha256),
                 case_manifest_sha256=result.case_manifest_sha256,
                 producer_registry_cid=SEMANTIC_PRODUCER_REGISTRY_V2_CID,
-                calibration_route_manifest_cid=(
-                    SEMANTIC_CALIBRATION_ROUTE_MANIFEST_V2_CID
-                ),
-                calibration_metric_spec_cid=(
-                    SEMANTIC_CALIBRATION_METRIC_SPEC_V2_CID
-                ),
-                reviewed_target_source_cid=(
-                    SEMANTIC_REVIEWED_TARGET_SOURCE_V2_CID
-                ),
+                calibration_route_manifest_cid=(SEMANTIC_CALIBRATION_ROUTE_MANIFEST_V2_CID),
+                calibration_metric_spec_cid=(SEMANTIC_CALIBRATION_METRIC_SPEC_V2_CID),
+                reviewed_target_source_cid=(SEMANTIC_REVIEWED_TARGET_SOURCE_V2_CID),
                 reviewed_target_manifest_cid=target_manifest_cid,
                 proof_stages_suppressed=True,
             )
@@ -1151,9 +917,7 @@ def _derive_g201(
                 "split": result.split.value,
                 "cache_mode": result.cache_mode.value,
                 "variant_id": variant_id,
-                "variant_profile_cid": cid_for_dag_json(
-                    _plain(definition.to_dict())
-                ),
+                "variant_profile_cid": cid_for_dag_json(_plain(definition.to_dict())),
                 "protocol_identities": _protocol_identities(),
                 "target_manifest_cid": target_manifest_cid,
                 "target_source_cid": target.source_cid,
@@ -1162,10 +926,7 @@ def _derive_g201(
                 "coordinate": {
                     "case_id": semantic_coordinate.case_id,
                     "producer_id": semantic_coordinate.producer_id,
-                    "stages": [
-                        _plain(stage.to_dict())
-                        for stage in semantic_coordinate.stages
-                    ],
+                    "stages": [_plain(stage.to_dict()) for stage in semantic_coordinate.stages],
                     "graph_binding": binding.to_dict(),
                 },
                 "label_blind_input_receipts": label_blind,
@@ -1179,13 +940,8 @@ def _derive_g201(
                     "coordinate_cid": cid_for_dag_json(source_body),
                 }
             )
-    if (
-        len(source_coordinates)
-        != SEMANTIC_CALIBRATION_COORDINATE_COUNT_V2
-    ):
-        raise SemanticQualityError(
-            "G201 did not derive every semantic calibration coordinate"
-        )
+    if len(source_coordinates) != SEMANTIC_CALIBRATION_COORDINATE_COUNT_V2:
+        raise SemanticQualityError("G201 did not derive every semantic calibration coordinate")
     report = _evaluate_semantic_calibration_v2(
         targets=targets,
         coordinates=calibration_coordinates,
@@ -1196,28 +952,17 @@ def _derive_g201(
     if (
         report.get("status") != "complete"
         or coverage.get("coordinate_coverage_complete") is not True
-        or coverage.get("validated_ablation_graph_coverage_complete")
-        is not True
+        or coverage.get("validated_ablation_graph_coverage_complete") is not True
         or coverage.get("field_coverage_complete") is not True
         or coverage.get("quality_coordinate_complete") is not True
     ):
-        raise SemanticQualityError(
-            "G201 source evidence did not produce a complete calibration"
-        )
+        raise SemanticQualityError("G201 source evidence did not produce a complete calibration")
     return {
         "protocol_identities": _protocol_identities(),
-        "plan_cids": [
-            cid_for_dag_json(_plain(plan.to_dict()))
-            for plan in plans
-        ],
-        "case_result_cids": [
-            cid_for_dag_json(_plain(result.to_dict()))
-            for result in results
-        ],
+        "plan_cids": [cid_for_dag_json(_plain(plan.to_dict())) for plan in plans],
+        "case_result_cids": [cid_for_dag_json(_plain(result.to_dict())) for result in results],
         "source_coordinates": source_coordinates,
-        "source_coordinate_cids": [
-            str(item["coordinate_cid"]) for item in source_coordinates
-        ],
+        "source_coordinate_cids": [str(item["coordinate_cid"]) for item in source_coordinates],
         "calibration_report": _plain(report),
         "calibration_report_cid": str(report["artifact_cid"]),
         "source_recomputed": True,
@@ -1236,15 +981,11 @@ class G201SemanticEvidenceIndexV2:
     plans: tuple[AblationPlan, ...]
     results: tuple[CaseResultRecord, ...]
     schema: str = G201_SEMANTIC_EVIDENCE_INDEX_SCHEMA_V2
-    _derived: Mapping[str, object] = field(
-        init=False, repr=False, compare=False
-    )
+    _derived: Mapping[str, object] = field(init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
         if self.schema != G201_SEMANTIC_EVIDENCE_INDEX_SCHEMA_V2:
-            raise SemanticQualityError(
-                "unsupported G201 semantic evidence index schema"
-            )
+            raise SemanticQualityError("unsupported G201 semantic evidence index schema")
         try:
             targets = tuple(
                 item
@@ -1356,26 +1097,18 @@ class G201SemanticEvidenceIndexV2:
         _exact(data, expected, "G201 semantic evidence index")
         result = cls(
             schema=data["schema"],  # type: ignore[arg-type]
-            target_manifest=_mapping(
-                data["target_manifest"], "target_manifest"
-            ),
+            target_manifest=_mapping(data["target_manifest"], "target_manifest"),
             targets=tuple(
                 SemanticCalibrationTargetV2.from_dict(item)
                 for item in _array(data["targets"], "targets")
             ),
-            plans=tuple(
-                AblationPlan.from_dict(item)
-                for item in _array(data["plans"], "plans")
-            ),
+            plans=tuple(AblationPlan.from_dict(item) for item in _array(data["plans"], "plans")),
             results=tuple(
-                CaseResultRecord.from_dict(item)
-                for item in _array(data["results"], "results")
+                CaseResultRecord.from_dict(item) for item in _array(data["results"], "results")
             ),
         )
         if _plain(data) != result.to_dict():
-            raise SemanticQualityError(
-                "G201 semantic evidence index did not source-recompute"
-            )
+            raise SemanticQualityError("G201 semantic evidence index did not source-recompute")
         return result
 
 
@@ -1420,23 +1153,17 @@ def validate_g201_semantic_evidence_index_v2(
         ValueError,
         KeyError,
     ) as exc:
-        raise SemanticQualityError(
-            "G201 semantic evidence index failed source replay"
-        ) from exc
+        raise SemanticQualityError("G201 semantic evidence index failed source replay") from exc
 
 
 def _runtime_producer(
     stages: Sequence[StageRecord],
 ) -> tuple[str, tuple[StageRecord, ...]]:
     frontends = tuple(
-        stage
-        for stage in stages
-        if stage.stage in _FRONTEND_STAGES and _stage_invoked(stage)
+        stage for stage in stages if stage.stage in _FRONTEND_STAGES and _stage_invoked(stage)
     )
     if not frontends:
-        raise SemanticQualityError(
-            "runtime coordinate contains no invoked semantic frontend"
-        )
+        raise SemanticQualityError("runtime coordinate contains no invoked semantic frontend")
     terminal = frontends[-1]
     if terminal.stage is StageName.COMPILER:
         producer_id = "compiler"
@@ -1449,19 +1176,11 @@ def _runtime_producer(
             "blank_model": "spacy_blank_model",
         }.get(terminal.provenance.effective_identity.get("mode"), "")
     if producer_id not in SEMANTIC_PRODUCER_IDS_V2:
-        raise SemanticQualityError(
-            "runtime frontend producer identity is not registered"
-        )
+        raise SemanticQualityError("runtime frontend producer identity is not registered")
     terminal_index = tuple(stages).index(terminal)
     prefix = tuple(stages[: terminal_index + 1])
-    if any(
-        stage.stage in _FRONTEND_STAGES
-        and not _stage_invoked(stage)
-        for stage in prefix
-    ):
-        raise SemanticQualityError(
-            "runtime semantic prefix contains a suppressed frontend"
-        )
+    if any(stage.stage in _FRONTEND_STAGES and not _stage_invoked(stage) for stage in prefix):
+        raise SemanticQualityError("runtime semantic prefix contains a suppressed frontend")
     return producer_id, prefix
 
 
@@ -1476,11 +1195,7 @@ def _runtime_observation(
     expected_cache_mode: str,
 ) -> Mapping[str, object]:
     target = next(
-        (
-            item
-            for item in index.targets
-            if item.case_id == expected_case_id
-        ),
+        (item for item in index.targets if item.case_id == expected_case_id),
         None,
     )
     manifest_entry = next(
@@ -1490,22 +1205,15 @@ def _runtime_observation(
                 index.target_manifest.get("cases"),
                 "reviewed target cases",
             )
-            if isinstance(item, Mapping)
-            and item.get("case_id") == expected_case_id
+            if isinstance(item, Mapping) and item.get("case_id") == expected_case_id
         ),
         None,
     )
-    environments = {
-        plan.environment_sha256 for plan in index.plans
-    }
+    environments = {plan.environment_sha256 for plan in index.plans}
     if len(environments) != 1 or None in environments:
-        raise SemanticQualityError(
-            "G201 index does not expose one exact environment identity"
-        )
+        raise SemanticQualityError("G201 index does not expose one exact environment identity")
     expected_environment = next(iter(environments))
-    expected_manifest_sha256 = index.target_manifest.get(
-        "case_manifest_sha256"
-    )
+    expected_manifest_sha256 = index.target_manifest.get("case_manifest_sha256")
     failures: list[str] = []
     semantic_receipt: Mapping[str, object] | None = None
     label_blind: list[Mapping[str, object]] = []
@@ -1525,9 +1233,7 @@ def _runtime_observation(
         raw_result = getattr(evidence, "case_result", None)
         if isinstance(raw_result, CaseResultRecord):
             result = raw_result
-            case_result_cid = cid_for_dag_json(
-                _plain(result.to_dict())
-            )
+            case_result_cid = cid_for_dag_json(_plain(result.to_dict()))
         else:
             failures.append("runtime_case_result_missing")
     if result is not None and target is not None:
@@ -1540,12 +1246,8 @@ def _runtime_observation(
             or result.cache_mode.value != expected_cache_mode
             or result.case_manifest_sha256 != expected_manifest_sha256
             or source_text != target.source_text
-            or getattr(compiler_exposure, "source_cid", None)
-            != target.source_cid
-            or {
-                stage.provenance.environment_sha256
-                for stage in result.stages
-            }
+            or getattr(compiler_exposure, "source_cid", None) != target.source_cid
+            or {stage.provenance.environment_sha256 for stage in result.stages}
             != {expected_environment}
         ):
             failures.append("runtime_source_or_coordinate_identity_mismatch")
@@ -1553,37 +1255,24 @@ def _runtime_observation(
             try:
                 producer_id, prefix = _runtime_producer(result.stages)
                 definition = VARIANT_REGISTRY[expected_variant_id]
-                if (
-                    any(
-                        stage.stage in _FRONTEND_STAGES
-                        and stage.stage not in definition.stages
-                        for stage in result.stages
-                    )
-                    or any(
-                        stage.provenance.requested_identity.get(key)
-                        != _plain(value)
-                        for stage in prefix
-                        for key, value in definition.requested_identity(
-                            stage.stage
-                        ).items()
-                    )
+                if any(
+                    stage.stage in _FRONTEND_STAGES and stage.stage not in definition.stages
+                    for stage in result.stages
+                ) or any(
+                    stage.provenance.requested_identity.get(key) != _plain(value)
+                    for stage in prefix
+                    for key, value in definition.requested_identity(stage.stage).items()
                 ):
-                    raise SemanticQualityError(
-                        "runtime semantic route identity drifted"
-                    )
-                label_blind = _label_blind_receipts(
-                    prefix, target.source_text
-                )
-                semantic_receipt = (
-                    _evaluate_semantic_calibration_coordinate_v2(
-                        target,
-                        SemanticCalibrationCoordinateV2(
-                            case_id=target.case_id,
-                            producer_id=producer_id,
-                            stages=prefix,
-                        ),
-                        validated_ablation_graph=False,
-                    )
+                    raise SemanticQualityError("runtime semantic route identity drifted")
+                label_blind = _label_blind_receipts(prefix, target.source_text)
+                semantic_receipt = _evaluate_semantic_calibration_coordinate_v2(
+                    target,
+                    SemanticCalibrationCoordinateV2(
+                        case_id=target.case_id,
+                        producer_id=producer_id,
+                        stages=prefix,
+                    ),
+                    validated_ablation_graph=False,
                 )
             except (
                 SemanticQualityError,
@@ -1595,8 +1284,7 @@ def _runtime_observation(
             ):
                 failures.append("runtime_semantic_source_replay_failed")
     measured = bool(
-        semantic_receipt is not None
-        and semantic_receipt.get("quality_millionths") is not None
+        semantic_receipt is not None and semantic_receipt.get("quality_millionths") is not None
     )
     if semantic_receipt is not None:
         if semantic_receipt.get("projection_available") is not True:
@@ -1613,43 +1301,28 @@ def _runtime_observation(
         "case_id": expected_case_id,
         "variant_id": expected_variant_id,
         "cache_mode": expected_cache_mode,
-        "variant_profile_cid": cid_for_dag_json(
-            _plain(definition.to_dict())
-        ),
+        "variant_profile_cid": cid_for_dag_json(_plain(definition.to_dict())),
         "source_cid": source_cid,
         "runtime_receipt_cid": runtime_receipt_cid,
         "case_result_cid": case_result_cid,
         "producer_id": producer_id,
         "label_blind_input_receipts": label_blind,
         "reviewed_answers_in_producer_inputs_or_cache_keys": False,
-        "semantic_receipt": (
-            None if semantic_receipt is None else _plain(semantic_receipt)
-        ),
+        "semantic_receipt": (None if semantic_receipt is None else _plain(semantic_receipt)),
         "quality_millionths": (
-            None
-            if semantic_receipt is None
-            else semantic_receipt.get("quality_millionths")
+            None if semantic_receipt is None else semantic_receipt.get("quality_millionths")
         ),
         "projection_nonvacuous": (
-            None
-            if semantic_receipt is None
-            else semantic_receipt.get("projection_nonvacuous")
+            None if semantic_receipt is None else semantic_receipt.get("projection_nonvacuous")
         ),
         "validation_error_precedence_applied": (
             None
             if semantic_receipt is None
-            else semantic_receipt.get(
-                "validation_error_precedence_applied"
-            )
+            else semantic_receipt.get("validation_error_precedence_applied")
         ),
         "validation_error_precedence_verified": (
             semantic_receipt is not None
-            and type(
-                semantic_receipt.get(
-                    "validation_error_precedence_applied"
-                )
-            )
-            is bool
+            and type(semantic_receipt.get("validation_error_precedence_applied")) is bool
         ),
         "measured": measured,
         "failure_codes": sorted(set(failures)),
@@ -1662,51 +1335,32 @@ def _arm_metrics(
     variant_id: str,
     observations: Sequence[Mapping[str, object]],
 ) -> Mapping[str, object]:
-    rows = [
-        row for row in observations if row["variant_id"] == variant_id
-    ]
+    rows = [row for row in observations if row["variant_id"] == variant_id]
     measured = [row for row in rows if row["measured"] is True]
     values = [
-        int(row["quality_millionths"])
-        for row in measured
-        if row["quality_millionths"] is not None
+        int(row["quality_millionths"]) for row in measured if row["quality_millionths"] is not None
     ]
     complete = len(rows) == len(measured) == len(values)
-    quality_millionths = (
-        None if not complete else sum(values) // len(values)
-    )
+    quality_millionths = None if not complete else sum(values) // len(values)
     body: dict[str, object] = {
         "variant_id": variant_id,
-        "variant_profile_cid": cid_for_dag_json(
-            _plain(VARIANT_REGISTRY[variant_id].to_dict())
-        ),
+        "variant_profile_cid": cid_for_dag_json(_plain(VARIANT_REGISTRY[variant_id].to_dict())),
         "scheduled_coordinate_count": len(rows),
         "measured_coordinate_count": len(measured),
         "missing_coordinate_count": len(rows) - len(measured),
         "semantic_quality_millionths": quality_millionths,
-        "semantic_quality_rate": (
-            None
-            if not complete
-            else int(quality_millionths) / 1_000_000
-        ),
-        "absolute_quality_minimum_millionths": (
-            SEMANTIC_ABSOLUTE_QUALITY_MIN_MILLIONTHS_V2
-        ),
+        "semantic_quality_rate": (None if not complete else int(quality_millionths) / 1_000_000),
+        "absolute_quality_minimum_millionths": (SEMANTIC_ABSOLUTE_QUALITY_MIN_MILLIONTHS_V2),
         "absolute_quality_passed": bool(
             quality_millionths is not None
-            and quality_millionths
-            >= SEMANTIC_ABSOLUTE_QUALITY_MIN_MILLIONTHS_V2
+            and quality_millionths >= SEMANTIC_ABSOLUTE_QUALITY_MIN_MILLIONTHS_V2
         ),
-        "nonvacuous_coordinate_count": sum(
-            row["projection_nonvacuous"] is True for row in rows
-        ),
+        "nonvacuous_coordinate_count": sum(row["projection_nonvacuous"] is True for row in rows),
         "validation_error_precedence_verified_count": sum(
-            row["validation_error_precedence_verified"] is True
-            for row in rows
+            row["validation_error_precedence_verified"] is True for row in rows
         ),
         "validation_error_precedence_applied_count": sum(
-            row["validation_error_precedence_applied"] is True
-            for row in rows
+            row["validation_error_precedence_applied"] is True for row in rows
         ),
         "complete": complete,
     }
@@ -1722,15 +1376,11 @@ def build_g235_semantic_quality_gate_v2(
 
     source_index = validate_g201_semantic_evidence_index_v2(index)
     if not isinstance(matrix, G210RuntimeReceiptMatrixV2):
-        raise SemanticQualityError(
-            "G235 requires a G210RuntimeReceiptMatrixV2"
-        )
+        raise SemanticQualityError("G235 requires a G210RuntimeReceiptMatrixV2")
     try:
         matrix = G210RuntimeReceiptMatrixV2.from_dict(matrix.to_dict())
     except (RevisedPilotAuthorizationError, TypeError, ValueError) as exc:
-        raise SemanticQualityError(
-            "G235 runtime matrix failed source replay"
-        ) from exc
+        raise SemanticQualityError("G235 runtime matrix failed source replay") from exc
     candidates = tuple(candidate_variant_ids)
     if (
         not candidates
@@ -1745,15 +1395,9 @@ def build_g235_semantic_quality_gate_v2(
             for item in candidates
         )
     ):
-        raise SemanticQualityError(
-            "G235 candidates must be distinct frozen primary A0-paired arms"
-        )
+        raise SemanticQualityError("G235 candidates must be distinct frozen primary A0-paired arms")
     candidate_set = set(candidates)
-    candidates = tuple(
-        variant_id
-        for variant_id in G210_VARIANT_IDS
-        if variant_id in candidate_set
-    )
+    candidates = tuple(variant_id for variant_id in G210_VARIANT_IDS if variant_id in candidate_set)
     selected = ("A0", *candidates)
     evidence_by_coordinate = {
         (
@@ -1769,9 +1413,7 @@ def build_g235_semantic_quality_gate_v2(
         for rescue_case in manifest.cases:
             split = rescue_case.split.value
             if split not in G210_SPLITS:
-                raise SemanticQualityError(
-                    "G235 runtime matrix contains a non-selection split"
-                )
+                raise SemanticQualityError("G235 runtime matrix contains a non-selection split")
             for variant_id in selected:
                 for cache_mode in G210_CACHE_MODES:
                     expected_coordinates.append(
@@ -1794,10 +1436,7 @@ def build_g235_semantic_quality_gate_v2(
         )
         for coordinate in sorted(expected_coordinates)
     ]
-    metrics = [
-        _arm_metrics(variant_id, observations)
-        for variant_id in selected
-    ]
+    metrics = [_arm_metrics(variant_id, observations) for variant_id in selected]
     failures: list[str] = []
     if not source_index.absolute_quality_passed:
         failures.append("g201_absolute_quality_condition_failed")
@@ -1814,19 +1453,15 @@ def build_g235_semantic_quality_gate_v2(
     if any(metric["complete"] is not True for metric in metrics):
         failures.append("runtime_semantic_measurement_incomplete")
     if any(
-        metric["nonvacuous_coordinate_count"]
-        != metric["scheduled_coordinate_count"]
+        metric["nonvacuous_coordinate_count"] != metric["scheduled_coordinate_count"]
         for metric in metrics
     ):
         failures.append("runtime_semantic_nonvacuity_failed")
     if any(
-        metric["validation_error_precedence_verified_count"]
-        != metric["scheduled_coordinate_count"]
+        metric["validation_error_precedence_verified_count"] != metric["scheduled_coordinate_count"]
         for metric in metrics
     ):
-        failures.append(
-            "runtime_validation_error_precedence_coverage_incomplete"
-        )
+        failures.append("runtime_validation_error_precedence_coverage_incomplete")
     if any(metric["absolute_quality_passed"] is not True for metric in metrics):
         failures.append("runtime_arm_absolute_quality_failed")
     incomplete_codes = {
@@ -1844,9 +1479,7 @@ def build_g235_semantic_quality_gate_v2(
         "schema": G235_SEMANTIC_QUALITY_GATE_SCHEMA_V2,
         "gate_id": "semantic_quality",
         "g201_index_cid": source_index.index_cid,
-        "g201_calibration_report_cid": source_index.calibration_report[
-            "artifact_cid"
-        ],
+        "g201_calibration_report_cid": source_index.calibration_report["artifact_cid"],
         "g210_runtime_matrix_cid": matrix.runtime_matrix_cid,
         "protocol_identities": _protocol_identities(),
         "candidate_variant_ids": list(candidates),
@@ -1873,9 +1506,7 @@ def build_g235_semantic_quality_gate_v2(
         "holdout_accessed": False,
         "production_promotion_authorized": False,
     }
-    return _freeze(
-        {**body, "receipt_cid": cid_for_dag_json(body)}
-    )  # type: ignore[return-value]
+    return _freeze({**body, "receipt_cid": cid_for_dag_json(body)})  # type: ignore[return-value]
 
 
 def validate_g235_semantic_quality_gate_v2(
@@ -1922,13 +1553,9 @@ def validate_g235_semantic_quality_gate_v2(
             "G235 candidate_variant_ids",
         )
     )
-    rebuilt = build_g235_semantic_quality_gate_v2(
-        index, matrix, candidates
-    )
+    rebuilt = build_g235_semantic_quality_gate_v2(index, matrix, candidates)
     if _plain(data) != _plain(rebuilt):
-        raise SemanticQualityError(
-            "G235 semantic quality gate did not source-recompute"
-        )
+        raise SemanticQualityError("G235 semantic quality gate did not source-recompute")
     return rebuilt
 
 

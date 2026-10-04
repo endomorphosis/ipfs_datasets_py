@@ -43,8 +43,7 @@ def _adaptive_explicit_ambiguity_from_source(
         and ambiguity.ambiguity_type != "adaptive_family_margin_low"
         and ambiguity.metadata.get("predicted_family") == predicted_family
         and ambiguity.metadata.get("target_family") == target_family
-        and ambiguity.metadata.get("adaptive_predicted_family_source")
-        == predicted_family_source
+        and ambiguity.metadata.get("adaptive_predicted_family_source") == predicted_family_source
     ]
     return matches[0] if matches else None
 
@@ -149,9 +148,7 @@ def test_packet_002449_pairs_are_explicit_compiler_ambiguity_policy_entries() ->
 def test_packet_002449_epistemic_self_margin_surfaces_explicit_ambiguity(
     monkeypatch,
 ) -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="regex")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="regex"))
     family_margin = 0.082930274255
     ranking = _ranking_for_margin(
         predicted_family=ModalLogicFamily.EPISTEMIC.value,
@@ -187,10 +184,7 @@ def test_packet_002449_epistemic_self_margin_surfaces_explicit_ambiguity(
     assert ambiguity.metadata.get("is_compiler_ambiguity_bundle_pair") is True
     assert ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
     assert ambiguity.metadata.get("adaptive_policy_pair") == "epistemic->epistemic"
-    assert (
-        abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin)
-        <= 1e-12
-    )
+    assert abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin) <= 1e-12
 
 
 def test_packet_001623_pairs_are_explicit_compiler_ambiguity_policy_entries() -> None:
@@ -209,15 +203,9 @@ def test_packet_001623_pairs_are_explicit_compiler_ambiguity_policy_entries() ->
     assert set(COMPILER_AMBIGUITY_PACKET_001623_FAMILY_PAIRS) == expected_pairs
     for predicted_family, target_family in expected_pairs:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -236,9 +224,7 @@ def test_packet_001623_pairs_are_explicit_compiler_ambiguity_policy_entries() ->
 def test_frame_policy_ambiguity_canonicalizes_namespaced_family_tokens(
     monkeypatch,
 ) -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="regex")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="regex"))
     monkeypatch.setattr(
         modal_compiler_module,
         "ranked_modal_families",
@@ -294,9 +280,7 @@ def test_frame_policy_ambiguity_canonicalizes_namespaced_family_tokens(
 def test_deontic_policy_ambiguity_uses_family_evidence_without_signal(
     monkeypatch,
 ) -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="regex")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="regex"))
     monkeypatch.setattr(
         modal_compiler_module,
         "modal_ambiguity_signals",
@@ -334,9 +318,7 @@ def test_deontic_policy_ambiguity_uses_family_evidence_without_signal(
 def test_temporal_deontic_policy_ambiguity_uses_family_evidence_without_signal(
     monkeypatch,
 ) -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="regex")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="regex"))
     monkeypatch.setattr(
         modal_compiler_module,
         "modal_ambiguity_signals",
@@ -457,9 +439,7 @@ def test_compiler_exposes_explicit_ambiguity_for_packet_004467_and_004398_adapti
     expected_type: str,
     expected_severity: str,
 ) -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="regex")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="regex"))
     monkeypatch.setattr(
         modal_compiler_module,
         "ranked_modal_families",
@@ -495,22 +475,15 @@ def test_compiler_exposes_explicit_ambiguity_for_packet_004467_and_004398_adapti
     assert ambiguity.metadata.get("is_compiler_ambiguity_bundle_pair") is True
     assert ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
     assert ambiguity.metadata.get("explicit_ambiguity_type") == expected_type
-    assert (
-        abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin)
-        <= 1e-12
-    )
+    assert abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin) <= 1e-12
     assert abs(float(ambiguity.metadata.get("priority", 0.0)) - priority) <= 1e-12
-    assert abs(float(ambiguity.metadata.get("adaptive_priority", 0.0)) - priority) <= (
-        1e-12
-    )
+    assert abs(float(ambiguity.metadata.get("adaptive_priority", 0.0)) - priority) <= (1e-12)
 
 
 def test_compiler_refined_pair_margin_buffer_surfaces_near_threshold_conditional_self_ambiguity(
     monkeypatch,
 ) -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="regex")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="regex"))
     monkeypatch.setattr(
         modal_compiler_module,
         "ranked_modal_families",
@@ -547,14 +520,8 @@ def test_compiler_refined_pair_margin_buffer_surfaces_near_threshold_conditional
         == "adaptive_conditional_normative_conditional_normative_contested_margin_low"
     )
     assert ambiguity.severity == "review"
-    assert (
-        abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin)
-        <= 1e-12
-    )
-    assert (
-        float(ambiguity.metadata.get("adaptive_family_margin_threshold", 0.0))
-        == 0.15
-    )
+    assert abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin) <= 1e-12
+    assert float(ambiguity.metadata.get("adaptive_family_margin_threshold", 0.0)) == 0.15
     assert (
         float(
             ambiguity.metadata.get(
@@ -570,9 +537,7 @@ def test_compiler_refined_pair_margin_buffer_surfaces_near_threshold_conditional
 def test_compiler_exposes_frame_policy_conditional_normative_scope_ambiguity(
     monkeypatch,
 ) -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="regex")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="regex"))
     ranking = _ranking_for_margin(
         predicted_family=ModalLogicFamily.FRAME.value,
         target_family=ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
@@ -597,8 +562,7 @@ def test_compiler_exposes_frame_policy_conditional_normative_scope_ambiguity(
         (
             candidate
             for candidate in result.ambiguities
-            if candidate.ambiguity_type
-            == "frame_conditional_normative_family_outvoted"
+            if candidate.ambiguity_type == "frame_conditional_normative_family_outvoted"
         ),
         None,
     )
@@ -612,12 +576,9 @@ def test_compiler_exposes_frame_policy_conditional_normative_scope_ambiguity(
     assert ambiguity.metadata.get("is_compiler_ambiguity_bundle_pair") is True
     assert ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
     assert (
-        ambiguity.metadata.get("compiler_ambiguity_policy_pair")
-        == "frame->conditional_normative"
+        ambiguity.metadata.get("compiler_ambiguity_policy_pair") == "frame->conditional_normative"
     )
-    assert ambiguity.metadata.get("target_family") == (
-        ModalLogicFamily.CONDITIONAL_NORMATIVE.value
-    )
+    assert ambiguity.metadata.get("target_family") == (ModalLogicFamily.CONDITIONAL_NORMATIVE.value)
 
 
 @pytest.mark.parametrize(
@@ -661,9 +622,7 @@ def test_compiler_exposes_explicit_ambiguity_for_packet_000258_adaptive_margins(
     expected_type: str,
     expected_severity: str,
 ) -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="regex")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="regex"))
     monkeypatch.setattr(
         modal_compiler_module,
         "ranked_modal_families",
@@ -699,14 +658,9 @@ def test_compiler_exposes_explicit_ambiguity_for_packet_000258_adaptive_margins(
     assert ambiguity.metadata.get("is_compiler_ambiguity_bundle_pair") is True
     assert ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
     assert ambiguity.metadata.get("explicit_ambiguity_type") == expected_type
-    assert (
-        abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin)
-        <= 1e-12
-    )
+    assert abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin) <= 1e-12
     assert abs(float(ambiguity.metadata.get("priority", 0.0)) - priority) <= 1e-12
-    assert abs(float(ambiguity.metadata.get("adaptive_priority", 0.0)) - priority) <= (
-        1e-12
-    )
+    assert abs(float(ambiguity.metadata.get("adaptive_priority", 0.0)) - priority) <= (1e-12)
 
 
 @pytest.mark.parametrize(
@@ -759,9 +713,7 @@ def test_compiler_exposes_explicit_ambiguity_for_packet_002568_adaptive_margins(
     expected_type: str,
     expected_severity: str,
 ) -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="regex")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="regex"))
     monkeypatch.setattr(
         modal_compiler_module,
         "ranked_modal_families",
@@ -797,14 +749,9 @@ def test_compiler_exposes_explicit_ambiguity_for_packet_002568_adaptive_margins(
     assert ambiguity.metadata.get("is_compiler_ambiguity_bundle_pair") is True
     assert ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
     assert ambiguity.metadata.get("explicit_ambiguity_type") == expected_type
-    assert (
-        abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin)
-        <= 1e-12
-    )
+    assert abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin) <= 1e-12
     assert abs(float(ambiguity.metadata.get("priority", 0.0)) - priority) <= 1e-12
-    assert abs(float(ambiguity.metadata.get("adaptive_priority", 0.0)) - priority) <= (
-        1e-12
-    )
+    assert abs(float(ambiguity.metadata.get("adaptive_priority", 0.0)) - priority) <= (1e-12)
 
 
 @pytest.mark.parametrize(
@@ -866,9 +813,7 @@ def test_compiler_exposes_explicit_ambiguity_for_packet_008598_adaptive_margins(
     expected_type: str,
     expected_severity: str,
 ) -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="regex")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="regex"))
     monkeypatch.setattr(
         modal_compiler_module,
         "ranked_modal_families",
@@ -904,14 +849,9 @@ def test_compiler_exposes_explicit_ambiguity_for_packet_008598_adaptive_margins(
     assert ambiguity.metadata.get("is_compiler_ambiguity_bundle_pair") is True
     assert ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
     assert ambiguity.metadata.get("explicit_ambiguity_type") == expected_type
-    assert (
-        abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin)
-        <= 1e-12
-    )
+    assert abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin) <= 1e-12
     assert abs(float(ambiguity.metadata.get("priority", 0.0)) - priority) <= 1e-12
-    assert abs(float(ambiguity.metadata.get("adaptive_priority", 0.0)) - priority) <= (
-        1e-12
-    )
+    assert abs(float(ambiguity.metadata.get("adaptive_priority", 0.0)) - priority) <= (1e-12)
 
 
 @pytest.mark.parametrize(
@@ -959,9 +899,7 @@ def test_compiler_exposes_packet_001314_policy_pair_adaptive_ambiguity(
     priority: float,
     expected_type: str,
 ) -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="regex")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="regex"))
     monkeypatch.setattr(
         modal_compiler_module,
         "ranked_modal_families",
@@ -998,14 +936,9 @@ def test_compiler_exposes_packet_001314_policy_pair_adaptive_ambiguity(
     assert ambiguity.metadata.get("is_compiler_ambiguity_bundle_pair") is True
     assert ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
     assert ambiguity.metadata.get("explicit_ambiguity_type") == expected_type
-    assert (
-        abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin)
-        <= 1e-12
-    )
+    assert abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin) <= 1e-12
     assert abs(float(ambiguity.metadata.get("priority", 0.0)) - priority) <= 1e-12
-    assert abs(float(ambiguity.metadata.get("adaptive_priority", 0.0)) - priority) <= (
-        1e-12
-    )
+    assert abs(float(ambiguity.metadata.get("adaptive_priority", 0.0)) - priority) <= (1e-12)
 
 
 @pytest.mark.parametrize(
@@ -1049,9 +982,7 @@ def test_compiler_exposes_packet_000661_deontic_adaptive_ambiguity(
     expected_type: str,
     expected_severity: str,
 ) -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="regex")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="regex"))
     monkeypatch.setattr(
         modal_compiler_module,
         "ranked_modal_families",
@@ -1088,11 +1019,6 @@ def test_compiler_exposes_packet_000661_deontic_adaptive_ambiguity(
     assert ambiguity.metadata.get("is_compiler_ambiguity_bundle_pair") is True
     assert ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
     assert ambiguity.metadata.get("explicit_ambiguity_type") == expected_type
-    assert (
-        abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin)
-        <= 1e-12
-    )
+    assert abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin) <= 1e-12
     assert abs(float(ambiguity.metadata.get("priority", 0.0)) - priority) <= 1e-12
-    assert abs(float(ambiguity.metadata.get("adaptive_priority", 0.0)) - priority) <= (
-        1e-12
-    )
+    assert abs(float(ambiguity.metadata.get("adaptive_priority", 0.0)) - priority) <= (1e-12)

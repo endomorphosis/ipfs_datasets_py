@@ -124,9 +124,7 @@ def test_network_account_payload_identity_bound(load_xaman_fixture, op_context) 
             with pytest.raises(NormalizationError):
                 processor.normalize_payloads([case["document"]], context=op_context)
             continue
-        payload = processor.normalize_payloads(
-            [case["document"]], context=op_context
-        )[0]
+        payload = processor.normalize_payloads([case["document"]], context=op_context)[0]
         assert payload.network.value == case["expect"]["network"]
         assert payload.account == case["expect"]["account"]
         assert payload.payload_uuid == case["expect"]["payload_uuid"]
@@ -140,12 +138,8 @@ def test_redaction_and_size_policy(load_xaman_fixture, op_context) -> None:
             redact_instruction=bool(privacy_cfg.get("redact_instruction", False)),
             max_instruction_bytes=int(privacy_cfg.get("max_instruction_bytes", 1024)),
         )
-        processor = XamanWalletProcessor(
-            network=XRPLNetwork.TESTNET, privacy=privacy
-        )
-        payload = processor.normalize_payloads(
-            [case["document"]], context=op_context
-        )[0]
+        processor = XamanWalletProcessor(network=XRPLNetwork.TESTNET, privacy=privacy)
+        payload = processor.normalize_payloads([case["document"]], context=op_context)[0]
         expect = case.get("expect") or {}
         if "custom_instruction" in expect:
             assert payload.custom_instruction == expect["custom_instruction"]
@@ -154,8 +148,7 @@ def test_redaction_and_size_policy(load_xaman_fixture, op_context) -> None:
         if expect.get("custom_instruction_truncated"):
             assert payload.custom_instruction_truncated is True
             assert (
-                len(payload.custom_instruction.encode("utf-8"))
-                <= expect["max_instruction_bytes"]
+                len(payload.custom_instruction.encode("utf-8")) <= expect["max_instruction_bytes"]
             )
         if expect.get("secret_keys_absent_from_summary"):
             summary_text = str(payload.request_summary).lower()
@@ -175,9 +168,7 @@ def test_account_activity_correlation(load_xaman_fixture, op_context) -> None:
     life = load_xaman_fixture("payload_lifecycle_states.json")
     submitted = next(c for c in life["payloads"] if c["id"] == "submitted")
     processor = XamanWalletProcessor(network=XRPLNetwork.TESTNET)
-    payload = processor.normalize_payloads(
-        [submitted["document"]], context=op_context
-    )[0]
+    payload = processor.normalize_payloads([submitted["document"]], context=op_context)[0]
     corr = processor.correlate_activity(
         payload,
         account="rhzFipyh5UsycxUjaPzR1RkTJZp9VybKAz",

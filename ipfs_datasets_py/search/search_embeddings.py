@@ -7,9 +7,19 @@ import os
 def _should_enable_ipfs_kit() -> bool:
     if str(os.getenv("IPFS_KIT_DISABLE", "")).strip().lower() in {"1", "true", "yes", "on"}:
         return False
-    if str(os.getenv("IPFS_DATASETS_PY_BENCHMARK", "")).strip().lower() in {"1", "true", "yes", "on"}:
+    if str(os.getenv("IPFS_DATASETS_PY_BENCHMARK", "")).strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }:
         return False
-    return str(os.getenv("IPFS_DATASETS_PY_ENABLE_IPFS_KIT", "")).strip().lower() in {"1", "true", "yes", "on"}
+    return str(os.getenv("IPFS_DATASETS_PY_ENABLE_IPFS_KIT", "")).strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
 
 
 def _lazy_load_ipfs_kit_module():
@@ -17,6 +27,7 @@ def _lazy_load_ipfs_kit_module():
         return None
     try:
         from ipfs_kit_py.ipfs_kit import ipfs_kit as ipfs_kit_module
+
         return ipfs_kit_module
     except Exception:
         return None
@@ -48,13 +59,15 @@ def _use_embedding_adapter() -> bool:
         "on",
     }
 
+
 # Try to import accelerate integration for distributed inference
 try:
     from ipfs_datasets_py.ml.accelerate_integration import (
         AccelerateManager,
         is_accelerate_available,
-        get_accelerate_status
+        get_accelerate_status,
     )
+
     HAVE_ACCELERATE = True
 except ImportError:
     HAVE_ACCELERATE = False
@@ -62,14 +75,15 @@ except ImportError:
     is_accelerate_available = lambda: False
     get_accelerate_status = lambda: {"available": False}
 
+
 class search_embeddings:
     """
     Advanced Semantic Search Engine for IPFS-Distributed Datasets
 
     The search_embeddings class provides comprehensive functionality for performing
     semantic search operations across distributed datasets stored on IPFS. It integrates
-    multiple vector database backends (Qdrant, FAISS) with embedding generation 
-    capabilities to enable efficient similarity search, semantic retrieval, and 
+    multiple vector database backends (Qdrant, FAISS) with embedding generation
+    capabilities to enable efficient similarity search, semantic retrieval, and
     cross-dataset querying in decentralized environments.
 
     This class serves as the core search component for the IPFS datasets ecosystem,
@@ -85,7 +99,7 @@ class search_embeddings:
             - 'memory_limits' (Dict): Memory usage constraints and optimization settings
         metadata (Dict[str, Any]): Operational metadata including:
             - 'search_config' (Dict): Default search parameters and thresholds
-            - 'dataset_mappings' (Dict): Dataset-to-embedding model associations  
+            - 'dataset_mappings' (Dict): Dataset-to-embedding model associations
             - 'performance_settings' (Dict): Performance tuning parameters
             - 'logging_config' (Dict): Logging and monitoring configuration
             - 'join_strategies' (Dict): Cross-dataset joining methodologies
@@ -117,7 +131,7 @@ class search_embeddings:
         search(collection: str, query: str, n: int = 5) -> List[Dict[str, Any]]:
             Perform semantic search across specified collection with ranking and filtering.
             Returns relevant documents with similarity scores and metadata.
-        test_low_memory(collections: List[str], datasets: List[str], 
+        test_low_memory(collections: List[str], datasets: List[str],
                        column: Optional[str] = None, query: Optional[str] = None) -> Dict[str, Any]:
             Execute memory-optimized search testing across multiple collections with
             resource-constrained configurations and batch processing strategies.
@@ -158,19 +172,19 @@ class search_embeddings:
                 'performance_settings': {'batch_size': 1000, 'memory_limit': '8GB'}
             }
         )
-        
+
         # Generate embeddings for query
         query_embedding = await search_engine.generate_embeddings(
             "machine learning algorithms for text processing"
         )
-        
+
         # Perform semantic search
         results = await search_engine.search(
             collection="technical_papers",
             query="natural language processing techniques",
             n=10
         )
-        
+
         # Execute memory-optimized search testing
         test_results = await search_engine.test_low_memory(
             collections=["papers", "articles"],
@@ -187,6 +201,7 @@ class search_embeddings:
         - Search performance scales with dataset size and embedding dimensionality
         - Automatic fallback mechanisms ensure service availability across backend failures
     """
+
     def __init__(self, resources, metadata):
         """
         Initialize the semantic search engine with resource and metadata configurations.
@@ -266,7 +281,7 @@ class search_embeddings:
         if len(list(metadata.keys())) > 0:
             for key in metadata.keys():
                 setattr(self, key, metadata[key])
-        
+
         # Instantiate ipfs_kit (opt-in; disabled in benchmarks by default)
         self.ipfs_kit = None
         if ipfs_kit_module is None:
@@ -277,12 +292,12 @@ class search_embeddings:
                 self.ipfs_kit = ipfs_kit_module(resources=resources, metadata=metadata)
             except Exception:
                 self.ipfs_kit = None
-        
+
         # self.qdrant_kit_py = qdrant_kit_py(resources=resources, metadata=metadata) # Commented out for now
         # self.embedding_engine = IPFSEmbeddings(resources=resources, metadata=metadata)  # Commented out for now
         # Removed calls to self.ipfs_kit.add_endpoint as the method does not exist.
         # Endpoint management might be handled differently now or is not needed here.
-        
+
         self.join_column = None
         self.qdrant_found = False
         qdrant_port_cmd = "nc -zv localhost 6333"
@@ -296,6 +311,7 @@ class search_embeddings:
                 print("Qdrant failed to start, fallback to faiss")
         else:
             self.qdrant_found = True
+
     def rm_cache(self):
         homedir = os.path.expanduser("~")
         cache_dir = homedir + "/.cache/huggingface/datasets/"
@@ -321,13 +337,13 @@ class search_embeddings:
         selected_endpoint = self.ipfs_kit.choose_endpoint(model)
         embeddings = await self.ipfs_kit.index_knn(selected_endpoint, model)
         return embeddings
-    
+
     # def search_embeddings(self, embeddings):
     #     scores, samples = self.qdrant_kit_py.knn_index.get_nearest_examples(
     #        "embeddings", embeddings, k=5
     #     )
-    #     return scores, samples 
-        
+    #     return scores, samples
+
     async def search(self, collection, query, n=5):
         query_embeddings = await self.generate_embeddings(query)
         if self.qdrant_found == True:
@@ -344,19 +360,16 @@ class search_embeddings:
         if len(datasets) == 0:
             datasets = ["laion/German-ConcatX-Abstract", "laion/German-ConcatX-M3"]
         if len(collections) == 0:
-            collections = [ x for x in datasets if "/" in x]
-            collections = [ x.split("/")[1] for x in collections]
+            collections = [x for x in datasets if "/" in x]
+            collections = [x.split("/")[1] for x in collections]
         start_qdrant = self.qdrant_kit_py.start_qdrant()
         if start_qdrant == True:
             print("Qdrant started")
-            datasets_pairs = ["",""]
-            search_results = {
-                "collections": collections,
-                "results": []
-            }
+            datasets_pairs = ["", ""]
+            search_results = {"collections": collections, "results": []}
             for i in range(len(datasets)):
                 if i % 2 == 0:
-                    datasets_pairs.append(datasets[i-1], datasets[i])
+                    datasets_pairs.append(datasets[i - 1], datasets[i])
                 await self.qdrant_kit_py.load_qdrant(datasets_pairs[0], datasets_pairs[1])
                 await self.qdrant_kit_py.ingest_qdrant(column)
             for collection in collections:
@@ -368,14 +381,11 @@ class search_embeddings:
             start_faiss = self.ipfs_kit.start_faiss(collection, query)
             if start_faiss == True:
                 print("Faiss started")
-                datasets_pairs = ["",""]
-                search_results = {
-                    "collections": collections,
-                    "results": []
-                }
+                datasets_pairs = ["", ""]
+                search_results = {"collections": collections, "results": []}
                 for i in range(len(datasets)):
                     if i % 2 == 0:
-                        datasets_pairs.append(datasets[i-1], datasets[i])
+                        datasets_pairs.append(datasets[i - 1], datasets[i])
                     await self.ipfs_kit.load_faiss(datasets_pairs[0], datasets_pairs[1])
                     await self.ipfs_kit.ingest_faiss(column)
                 for collection in collections:
@@ -386,7 +396,7 @@ class search_embeddings:
             else:
                 print("Faiss failed to start")
                 return None
-    
+
     async def load_qdrant_iter(self, dataset, knn_index, dataset_split=None, knn_index_split=None):
         # await self.qdrant_kit_py.load_qdrant_iter(dataset, knn_index, dataset_split, knn_index_split) # Commented out for now
         print("load_qdrant_iter called - Qdrant integration pending")
@@ -396,14 +406,14 @@ class search_embeddings:
         # await self.qdrant_kit_py.ingest_qdrant_iter(columns) # Commented out for now
         print("ingest_qdrant_iter called - Qdrant integration pending")
         return None
-    
+
     async def test_high_memory(self):
         # start = self.qdrant_kit_py.start_qdrant() # Commented out for now
         # load_qdrant = await self.qdrant_kit_py.load_qdrant("laion/Wikipedia-X-Concat", "laion/Wikipedia-M3", "enwiki_concat", "enwiki_embed") # Commented out for now
         results = await self.search("Wikipedia-X-Concat", "Machine Learning")
         return results
 
-    async def test(self,memory="low"):
+    async def test(self, memory="low"):
         if memory == "low":
             return await self.test_low_memory()
         elif memory == "high":
@@ -423,16 +433,16 @@ class search_embeddings:
         search_results = await self.search(collection, query)
         print(search_results)
         return None
-        
+
     async def start_faiss(self, collection, query):
         return self.ipfs_kit.start_faiss(collection, query)
-    
+
     async def load_faiss(self, dataset, knn_index):
         return self.ipfs_kit.load_faiss(dataset, knn_index)
-    
+
     async def ingest_faiss(self, column):
         return self.ipfs_kit.ingest_faiss(column)
-    
+
     async def search_faiss(self, collection, query_embeddings, n=5):
         return self.ipfs_kit.search_faiss(collection, query_embeddings, n)
 
@@ -453,7 +463,7 @@ if __name__ == "__main__":
             "step_size": 256,
             "method": "fixed",
             "embed_model": "thenlper/gte-small",
-            "tokenizer": None
+            "tokenizer": None,
         },
         "dst_path": "/storage/teraflopai/tmp",
     }
@@ -480,10 +490,14 @@ if __name__ == "__main__":
         ],
         "openvino_endpoints": [],
         "tei_endpoints": [
-            ["Alibaba-NLP/gte-Qwen2-1.5B-instruct", "http://62.146.169.111:8080/embed-medium", 32768],
+            [
+                "Alibaba-NLP/gte-Qwen2-1.5B-instruct",
+                "http://62.146.169.111:8080/embed-medium",
+                32768,
+            ],
             ["thenlper/gte-small", "http://62.146.169.111:8080/embed-tiny", 512],
             ["Alibaba-NLP/gte-large-en-v1.5", "http://62.146.169.111:8081/embed-small", 8192],
-        ]
+        ],
     }
     search_embeddings_instance = search_embeddings(resources, metadata)
     anyio.run(search_embeddings_instance.test())

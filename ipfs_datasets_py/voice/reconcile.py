@@ -491,9 +491,7 @@ class AudioDisposition:
             artifact_sha256=payload["artifact_sha256"],
             policy_identity=payload["policy_identity"],
             retryable=payload["retryable"],
-            gates=tuple(
-                QualityGateResult.from_dict(item) for item in payload["gates"]
-            ),
+            gates=tuple(QualityGateResult.from_dict(item) for item in payload["gates"]),
             detail=payload["detail"],
         )
         if result.to_dict() != dict(payload):
@@ -516,13 +514,9 @@ class AudioReconciliationResult:
     def __post_init__(self) -> None:
         if not all(isinstance(row, AbbyVoiceAudio) for row in self.linked_audio):
             raise TypeError("linked_audio must contain AbbyVoiceAudio rows")
-        if not all(
-            isinstance(row, AbbyVoiceProvenance) for row in self.provenance
-        ):
+        if not all(isinstance(row, AbbyVoiceProvenance) for row in self.provenance):
             raise TypeError("provenance must contain AbbyVoiceProvenance rows")
-        if not all(
-            isinstance(item, AudioDisposition) for item in self.dispositions
-        ):
+        if not all(isinstance(item, AudioDisposition) for item in self.dispositions):
             raise TypeError("dispositions must contain AudioDisposition rows")
         if not isinstance(self.quality_report, Mapping):
             raise TypeError("quality_report must be a mapping")
@@ -552,13 +546,9 @@ class AudioReconciliationResult:
         if not all(isinstance(key, str) for key in quality_report):
             raise TypeError("quality_report keys must be strings")
         try:
-            canonical_quality_report = json.loads(
-                _canonical_bytes(quality_report)
-            )
+            canonical_quality_report = json.loads(_canonical_bytes(quality_report))
         except (TypeError, ValueError) as exc:
-            raise ValueError(
-                "quality_report must contain canonical JSON values"
-            ) from exc
+            raise ValueError("quality_report must contain canonical JSON values") from exc
         if canonical_quality_report != quality_report:
             raise ValueError("quality_report must contain canonical JSON values")
         object.__setattr__(self, "linked_audio", linked)
@@ -573,7 +563,9 @@ class AudioReconciliationResult:
             "quality_report": quality_report,
             "schema_version": self.schema_version,
         }
-        computed = f"abby-voice-audio-reconcile:sha256:{sha256(_canonical_bytes(identity)).hexdigest()}"
+        computed = (
+            f"abby-voice-audio-reconcile:sha256:{sha256(_canonical_bytes(identity)).hexdigest()}"
+        )
         if self.reconciliation_id and self.reconciliation_id != computed:
             raise ValueError("reconciliation_id does not match deterministic content")
         object.__setattr__(self, "reconciliation_id", computed)
@@ -584,7 +576,9 @@ class AudioReconciliationResult:
 
     @property
     def quarantined_count(self) -> int:
-        return sum(1 for item in self.dispositions if item.status == AudioDispositionStatus.QUARANTINED)
+        return sum(
+            1 for item in self.dispositions if item.status == AudioDispositionStatus.QUARANTINED
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -601,9 +595,7 @@ class AudioReconciliationResult:
         return _canonical_bytes(self.to_dict())
 
     @classmethod
-    def from_dict(
-        cls, payload: Mapping[str, Any]
-    ) -> AudioReconciliationResult:
+    def from_dict(cls, payload: Mapping[str, Any]) -> AudioReconciliationResult:
         """Strictly deserialize and re-verify a reconciliation identity."""
 
         payload = _strict_deserialization_mapping(
@@ -625,23 +617,14 @@ class AudioReconciliationResult:
             if not isinstance(payload[field_name], list) or not all(
                 isinstance(item, Mapping) for item in payload[field_name]
             ):
-                raise TypeError(
-                    f"audio reconciliation {field_name} must be a list of mappings"
-                )
+                raise TypeError(f"audio reconciliation {field_name} must be a list of mappings")
         if not isinstance(payload["quality_report"], Mapping):
             raise TypeError("audio reconciliation quality_report must be a mapping")
         result = cls(
-            linked_audio=tuple(
-                AbbyVoiceAudio.from_dict(item)
-                for item in payload["linked_audio"]
-            ),
-            provenance=tuple(
-                AbbyVoiceProvenance.from_dict(item)
-                for item in payload["provenance"]
-            ),
+            linked_audio=tuple(AbbyVoiceAudio.from_dict(item) for item in payload["linked_audio"]),
+            provenance=tuple(AbbyVoiceProvenance.from_dict(item) for item in payload["provenance"]),
             dispositions=tuple(
-                AudioDisposition.from_dict(item)
-                for item in payload["dispositions"]
+                AudioDisposition.from_dict(item) for item in payload["dispositions"]
             ),
             quality_report=payload["quality_report"],
             policy_identity=payload["policy_identity"],
@@ -653,9 +636,7 @@ class AudioReconciliationResult:
         return result
 
     @classmethod
-    def from_json(
-        cls, value: str | bytes | bytearray
-    ) -> AudioReconciliationResult:
+    def from_json(cls, value: str | bytes | bytearray) -> AudioReconciliationResult:
         """Deserialize a strict aggregate JSON reconciliation document."""
 
         return cls.from_dict(
@@ -812,7 +793,11 @@ def _bind_identity(
             detail="task_id does not match the expected workset task identity",
             metrics={"expected_task_id": expected_task_id, "task_id": task_id},
         )
-    if subject.work_item_id and lineage.get("work_item_id") and lineage["work_item_id"] != subject.work_item_id:
+    if (
+        subject.work_item_id
+        and lineage.get("work_item_id")
+        and lineage["work_item_id"] != subject.work_item_id
+    ):
         return QualityGateResult(
             gate=AudioQualityGate.POLICY,
             passed=False,
@@ -823,7 +808,11 @@ def _bind_identity(
                 "work_item_id": str(lineage.get("work_item_id") or ""),
             },
         )
-    if subject.subject_id and lineage.get("subject_id") and lineage["subject_id"] != subject.subject_id:
+    if (
+        subject.subject_id
+        and lineage.get("subject_id")
+        and lineage["subject_id"] != subject.subject_id
+    ):
         return QualityGateResult(
             gate=AudioQualityGate.POLICY,
             passed=False,
@@ -845,7 +834,11 @@ def _bind_identity(
             reason=AudioQualityReason.STALE_POLICY,
             detail="subject schema version disagrees with the bound subject",
         )
-    if subject.workset_id and lineage.get("workset_id") and lineage["workset_id"] != subject.workset_id:
+    if (
+        subject.workset_id
+        and lineage.get("workset_id")
+        and lineage["workset_id"] != subject.workset_id
+    ):
         return QualityGateResult(
             gate=AudioQualityGate.POLICY,
             passed=False,
@@ -876,7 +869,12 @@ def _bind_identity(
             detail="publication / source release identity disagrees",
         )
     lineage_policy = str(lineage.get("policy_id") or "")
-    if lineage_policy and lineage_policy not in {subject.policy_id, policy.policy_id, policy.identity, expected_policy_identity}:
+    if lineage_policy and lineage_policy not in {
+        subject.policy_id,
+        policy.policy_id,
+        policy.identity,
+        expected_policy_identity,
+    }:
         return QualityGateResult(
             gate=AudioQualityGate.POLICY,
             passed=False,
@@ -958,7 +956,10 @@ def reconcile_voice_job_result(
                     passed=False,
                     reason=AudioQualityReason.STALE_POLICY,
                     detail="expected_policy_id is stale",
-                    metrics={"expected_policy_id": expected_policy_id, "policy_identity": policy_identity},
+                    metrics={
+                        "expected_policy_id": expected_policy_id,
+                        "policy_identity": policy_identity,
+                    },
                 ),
             ),
         )
@@ -997,8 +998,12 @@ def reconcile_voice_job_result(
 
     lineage = _lineage_from_result(payload)
     task_id = str(payload.get("task_id") or lineage.get("task_id") or "")
-    work_item_id = str(lineage.get("work_item_id") or (bound_subject.work_item_id if bound_subject else "") or "")
-    source_ref = _source_ref(task_id, bound_subject.subject_id if bound_subject else str(lineage.get("subject_id") or ""))
+    work_item_id = str(
+        lineage.get("work_item_id") or (bound_subject.work_item_id if bound_subject else "") or ""
+    )
+    source_ref = _source_ref(
+        task_id, bound_subject.subject_id if bound_subject else str(lineage.get("subject_id") or "")
+    )
     source_sha256 = sha256(_canonical_bytes(payload)).hexdigest()
     status = str(payload.get("status") or "")
     gates: list[QualityGateResult] = []
@@ -1245,8 +1250,7 @@ def reconcile_voice_job_result(
             passed=False,
             reason=AudioQualityReason.DECODE_FAILED,
             detail=(
-                "non-WAV promotion requires metrics from a completed "
-                "voice.audio-validate receipt"
+                "non-WAV promotion requires metrics from a completed voice.audio-validate receipt"
             ),
         )
         disposition = _disposition_from_quality(
@@ -1361,7 +1365,9 @@ def reconcile_voice_job_result(
         transformation_name=TRANSFORMATION_NAME,
         transformation_version=AUDIO_RECONCILIATION_VERSION,
         source_uri=source_uri,
-        source_revision=bound_subject.source_manifest_id or bound_subject.source_release_id or task_id,
+        source_revision=bound_subject.source_manifest_id
+        or bound_subject.source_release_id
+        or task_id,
         source_sha256=content_sha,
         locale=bound_subject.locale,
         license_id=bound_subject.license_id,
@@ -1382,9 +1388,15 @@ def reconcile_voice_job_result(
         segment_kind=bound_subject.segment_kind,
         mime_type=str(acoustic_metrics.get("detected_media_type") or media_type),
         codec=_codec_from_media(str(acoustic_metrics.get("detected_media_type") or media_type)),
-        byte_length=int(size_bytes) if isinstance(size_bytes, int) else (len(payload_bytes) if payload_bytes else None),
-        duration_ms=float(acoustic_metrics["duration_ms"]) if "duration_ms" in acoustic_metrics else None,
-        sample_rate_hz=int(acoustic_metrics["sample_rate_hz"]) if "sample_rate_hz" in acoustic_metrics else None,
+        byte_length=int(size_bytes)
+        if isinstance(size_bytes, int)
+        else (len(payload_bytes) if payload_bytes else None),
+        duration_ms=float(acoustic_metrics["duration_ms"])
+        if "duration_ms" in acoustic_metrics
+        else None,
+        sample_rate_hz=int(acoustic_metrics["sample_rate_hz"])
+        if "sample_rate_hz" in acoustic_metrics
+        else None,
         channels=int(acoustic_metrics["channels"]) if "channels" in acoustic_metrics else None,
         provider=provider or str(provider_receipt.get("provider") or "") or None,
         model=model or str(provider_receipt.get("model") or "") or None,

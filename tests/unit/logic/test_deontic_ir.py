@@ -52,6 +52,7 @@ def test_modal_clause_inferred_modality_keeps_source_span_grounded():
     assert provenance["ungrounded_slots"] == []
     assert provenance["grounded_slots"] == ["actor", "modality", "action"]
 
+
 def test_subject_to_obligation_maps_to_conditional_normative_family():
     text = (
         "46 U.S.C. 53507. Nontaxation of deposits. Subject to subsection (b), "
@@ -94,8 +95,7 @@ def test_subject_to_obligation_maps_to_conditional_normative_family():
         targets=("frame_logic", "deontic_fol"),
     )
     assert {
-        record["target_components"]["semantic_formula_family"]
-        for record in prover_records
+        record["target_components"]["semantic_formula_family"] for record in prover_records
     } == {"conditional_normative"}
 
     capability = build_deterministic_parser_capability_profile_record(norm)
@@ -158,9 +158,7 @@ def test_editorial_renumbered_and_transferred_notes_expose_lifecycle_targets():
     ]
 
     renumbered = next(norm for norm in norms if norm.action.startswith("renumbered"))
-    transferred = next(
-        norm for norm in norms if norm.action.startswith("transferred to section")
-    )
+    transferred = next(norm for norm in norms if norm.action.startswith("transferred to section"))
 
     assert renumbered.norm_type == "instrument_lifecycle"
     assert renumbered.recipient.startswith("section 441")

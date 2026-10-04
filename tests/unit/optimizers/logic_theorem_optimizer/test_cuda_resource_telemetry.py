@@ -132,7 +132,9 @@ def _scheduler_config(
     )
 
 
-def test_pytorch_cuda_detection_survives_nvml_unavailability(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_pytorch_cuda_detection_survives_nvml_unavailability(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setitem(sys.modules, "torch", types.SimpleNamespace(cuda=_Cuda()))
     monkeypatch.setitem(sys.modules, "pynvml", None)
     monkeypatch.setattr("shutil.which", lambda name: None)

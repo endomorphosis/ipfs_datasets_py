@@ -24,6 +24,7 @@ from unittest.mock import MagicMock, patch
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 
 import sys
+
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
@@ -107,7 +108,9 @@ class TestFilePolicyStoreReload(unittest.TestCase):
         store = FilePolicyStore(path, reg)
         count = store.reload()
         self.assertEqual(count, 0)
-        self.assertEqual(reg.list_names(), [], "registry should be empty after reload from missing file")
+        self.assertEqual(
+            reg.list_names(), [], "registry should be empty after reload from missing file"
+        )
 
     def test_reload_multiple_policies(self):
         path = _tmp_path()
@@ -375,6 +378,7 @@ class TestPubSubBusPublishAsync(unittest.TestCase):
 
     def _run(self, coro):
         import asyncio
+
         return asyncio.run(coro)
 
     def test_publish_async_notifies_sync_handler(self):
@@ -409,11 +413,13 @@ class TestPubSubBusPublishAsync(unittest.TestCase):
         with patch.dict("sys.modules", {"anyio": None}):
             # Force ImportError path: delete anyio from sys.modules cache
             import sys
+
             anyio_backup = sys.modules.pop("anyio", None)
             try:
                 with warnings.catch_warnings(record=True):
                     warnings.simplefilter("always")
                     from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PubSubBus as _B
+
                     b2 = _B()
                     b2.subscribe(PubSubEventType.SCHEDULING_SIGNAL, lambda t, p: received.append(p))
             finally:
@@ -421,10 +427,12 @@ class TestPubSubBusPublishAsync(unittest.TestCase):
                     sys.modules["anyio"] = anyio_backup
         # We just verify the method exists and is awaitable
         import inspect
+
         self.assertTrue(inspect.iscoroutinefunction(bus.publish_async))
 
     def test_publish_async_is_coroutine_function(self):
         import inspect
+
         bus = PubSubBus()
         self.assertTrue(inspect.iscoroutinefunction(bus.publish_async))
 
@@ -440,7 +448,11 @@ class TestPubSubBusPublishAsync(unittest.TestCase):
         bus = PubSubBus()
         payloads = []
         bus.subscribe(PubSubEventType.RECEIPT_DISSEMINATE, lambda t, p: payloads.append(p))
-        self._run(bus.publish_async(PubSubEventType.RECEIPT_DISSEMINATE, {"type": "revocation", "count": 3}))
+        self._run(
+            bus.publish_async(
+                PubSubEventType.RECEIPT_DISSEMINATE, {"type": "revocation", "count": 3}
+            )
+        )
         self.assertTrue(any(p.get("count") == 3 for p in payloads))
 
 
@@ -452,6 +464,7 @@ class TestE2ESession64(unittest.TestCase):
 
     def _run(self, coro):
         import asyncio
+
         return asyncio.run(coro)
 
     def test_file_policy_store_reload_preserves_saved_policies(self):
@@ -471,6 +484,7 @@ class TestE2ESession64(unittest.TestCase):
 
     def test_delegation_manager_merge_then_can_invoke(self):
         import time
+
         mgr1 = DelegationManager()
         d1 = Delegation(
             cid="root-cid",
@@ -500,10 +514,12 @@ class TestE2ESession64(unittest.TestCase):
         bus = PubSubBus()
         events = []
         bus.subscribe(PubSubEventType.RECEIPT_DISSEMINATE, lambda t, p: events.append(p))
-        n = self._run(bus.publish_async(
-            PubSubEventType.RECEIPT_DISSEMINATE,
-            {"type": "revocation", "root_cid": "cid-X", "count": 2},
-        ))
+        n = self._run(
+            bus.publish_async(
+                PubSubEventType.RECEIPT_DISSEMINATE,
+                {"type": "revocation", "root_cid": "cid-X", "count": 2},
+            )
+        )
         count = n.notified if hasattr(n, "notified") else n
         self.assertGreaterEqual(count, 1)
         matching = [e for e in events if e.get("type") == "revocation"]
@@ -515,6 +531,7 @@ class TestE2ESession64(unittest.TestCase):
             make_default_compliance_checker,
             ComplianceStatus,
         )
+
         base = make_default_compliance_checker()
         extra = ComplianceChecker(deny_list={"dangerous_tool"})
         base.merge(extra)
@@ -523,16 +540,20 @@ class TestE2ESession64(unittest.TestCase):
     def test_all_new_exports_importable(self):
         """Regression: all new public symbols can be imported."""
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import FilePolicyStore
+
         self.assertTrue(hasattr(FilePolicyStore, "reload"))
 
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         self.assertTrue(hasattr(DelegationManager, "merge"))
 
         from ipfs_datasets_py.mcp_server.compliance_checker import _COMPLIANCE_RULE_VERSION
+
         self.assertIsInstance(_COMPLIANCE_RULE_VERSION, str)
 
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PubSubBus
         import inspect
+
         self.assertTrue(inspect.iscoroutinefunction(PubSubBus.publish_async))
 
 

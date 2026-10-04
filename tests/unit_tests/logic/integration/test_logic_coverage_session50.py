@@ -31,6 +31,7 @@ from typing import Any, Dict
 
 # ─── helpers ──────────────────────────────────────────────────────────────────
 
+
 def _silence():
     """Redirect stdout so print()-heavy demo functions don't pollute test output."""
     buf = io.StringIO()
@@ -46,6 +47,7 @@ def _restore():
 # Section 1 — interactive_fol_types
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestStatementRecord(unittest.TestCase):
     """GIVEN StatementRecord dataclass WHEN instantiated THEN fields are set."""
 
@@ -53,6 +55,7 @@ class TestStatementRecord(unittest.TestCase):
         from ipfs_datasets_py.logic.integration.interactive.interactive_fol_types import (
             StatementRecord,
         )
+
         self.StatementRecord = StatementRecord
 
     def test_minimal_creation(self):
@@ -96,6 +99,7 @@ class TestSessionMetadata(unittest.TestCase):
         from ipfs_datasets_py.logic.integration.interactive.interactive_fol_types import (
             SessionMetadata,
         )
+
         now = datetime.now()
         m = SessionMetadata(
             session_id="sess-abc",
@@ -118,6 +122,7 @@ class TestSessionMetadata(unittest.TestCase):
         from ipfs_datasets_py.logic.integration.interactive.interactive_fol_types import (
             SessionMetadata,
         )
+
         now = datetime.now()
         m = SessionMetadata(
             session_id="x",
@@ -137,6 +142,7 @@ class TestSessionMetadata(unittest.TestCase):
 # Section 2 — interactive_fol_utils
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestCreateInteractiveSession(unittest.TestCase):
     """GIVEN create_interactive_session factory WHEN called THEN returns constructor."""
 
@@ -144,10 +150,12 @@ class TestCreateInteractiveSession(unittest.TestCase):
         from ipfs_datasets_py.logic.integration.interactive.interactive_fol_utils import (
             create_interactive_session,
         )
+
         c = create_interactive_session()
         from ipfs_datasets_py.logic.integration.interactive.interactive_fol_constructor import (
             InteractiveFOLConstructor,
         )
+
         self.assertIsInstance(c, InteractiveFOLConstructor)
         self.assertEqual(c.domain, "general")
 
@@ -155,6 +163,7 @@ class TestCreateInteractiveSession(unittest.TestCase):
         from ipfs_datasets_py.logic.integration.interactive.interactive_fol_utils import (
             create_interactive_session,
         )
+
         c = create_interactive_session(
             domain="legal",
             confidence_threshold=0.8,
@@ -172,6 +181,7 @@ class TestDemoInteractiveSession(unittest.TestCase):
         from ipfs_datasets_py.logic.integration.interactive.interactive_fol_utils import (
             demo_interactive_session,
         )
+
         buf = _silence()
         try:
             result = demo_interactive_session()
@@ -180,6 +190,7 @@ class TestDemoInteractiveSession(unittest.TestCase):
         from ipfs_datasets_py.logic.integration.interactive.interactive_fol_constructor import (
             InteractiveFOLConstructor,
         )
+
         self.assertIsInstance(result, InteractiveFOLConstructor)
         output = buf.getvalue()
         self.assertIn("Interactive FOL Constructor Demo", output)
@@ -189,11 +200,13 @@ class TestDemoInteractiveSession(unittest.TestCase):
 # Section 3 — InteractiveFOLConstructor
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class _ConstructorBase(unittest.TestCase):
     def setUp(self):
         from ipfs_datasets_py.logic.integration.interactive.interactive_fol_constructor import (
             InteractiveFOLConstructor,
         )
+
         self.Constructor = InteractiveFOLConstructor
 
     def _mk(self, **kw):
@@ -449,6 +462,7 @@ class TestConvertFOLFormat(_ConstructorBase):
 # Section 4 — SymbolicFOLBridge
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestLogicalComponentsDataclass(unittest.TestCase):
     """GIVEN LogicalComponents WHEN created THEN fields accessible."""
 
@@ -456,6 +470,7 @@ class TestLogicalComponentsDataclass(unittest.TestCase):
         from ipfs_datasets_py.logic.integration.bridges.symbolic_fol_bridge import (
             LogicalComponents,
         )
+
         lc = LogicalComponents(
             quantifiers=["all"],
             predicates=["is"],
@@ -477,6 +492,7 @@ class TestFOLConversionResultDataclass(unittest.TestCase):
             FOLConversionResult,
             LogicalComponents,
         )
+
         lc = LogicalComponents([], [], [], [], 0.5, "test")
         r = FOLConversionResult(
             fol_formula="Test(x)",
@@ -493,6 +509,7 @@ class TestFOLConversionResultDataclass(unittest.TestCase):
             FOLConversionResult,
             LogicalComponents,
         )
+
         lc = LogicalComponents([], [], [], [], 0.0, "")
         r = FOLConversionResult(
             fol_formula="",
@@ -512,6 +529,7 @@ class TestSymbolicFOLBridgeInit(unittest.TestCase):
         from ipfs_datasets_py.logic.integration.bridges.symbolic_fol_bridge import (
             SymbolicFOLBridge,
         )
+
         self.Bridge = SymbolicFOLBridge
 
     def test_defaults(self):
@@ -545,6 +563,7 @@ class TestSymbolicFOLBridgeInit(unittest.TestCase):
             FOLConversionResult,
             LogicalComponents,
         )
+
         lc = LogicalComponents([], [], [], [], 0.5, "x")
         b._cache["key"] = FOLConversionResult("f", lc, 0.5, [])
         self.assertEqual(len(b._cache), 1)
@@ -559,6 +578,7 @@ class TestCreateSemanticSymbol(unittest.TestCase):
         from ipfs_datasets_py.logic.integration.bridges.symbolic_fol_bridge import (
             SymbolicFOLBridge,
         )
+
         self.bridge = SymbolicFOLBridge()
 
     def test_empty_text_raises(self):
@@ -582,6 +602,7 @@ class TestExtractLogicalComponents(unittest.TestCase):
         from ipfs_datasets_py.logic.integration.bridges.symbolic_fol_bridge import (
             SymbolicFOLBridge,
         )
+
         self.bridge = SymbolicFOLBridge()
 
     def test_all_text(self):
@@ -590,6 +611,7 @@ class TestExtractLogicalComponents(unittest.TestCase):
         from ipfs_datasets_py.logic.integration.bridges.symbolic_fol_bridge import (
             LogicalComponents,
         )
+
         self.assertIsInstance(lc, LogicalComponents)
         self.assertGreaterEqual(lc.confidence, 0.0)
 
@@ -612,6 +634,7 @@ class TestParseCommaList(unittest.TestCase):
         from ipfs_datasets_py.logic.integration.bridges.symbolic_fol_bridge import (
             SymbolicFOLBridge,
         )
+
         self.bridge = SymbolicFOLBridge()
 
     def test_none_text(self):
@@ -639,6 +662,7 @@ class TestFallbackExtraction(unittest.TestCase):
         from ipfs_datasets_py.logic.integration.bridges.symbolic_fol_bridge import (
             SymbolicFOLBridge,
         )
+
         self.bridge = SymbolicFOLBridge()
 
     def test_all_quantifier(self):
@@ -665,6 +689,7 @@ class TestSemanticToFOL(unittest.TestCase):
         from ipfs_datasets_py.logic.integration.bridges.symbolic_fol_bridge import (
             SymbolicFOLBridge,
         )
+
         self.bridge = SymbolicFOLBridge()
 
     def test_returns_result(self):
@@ -673,6 +698,7 @@ class TestSemanticToFOL(unittest.TestCase):
         from ipfs_datasets_py.logic.integration.bridges.symbolic_fol_bridge import (
             FOLConversionResult,
         )
+
         self.assertIsInstance(result, FOLConversionResult)
         self.assertIsNotNone(result.fol_formula)
 
@@ -686,6 +712,7 @@ class TestSemanticToFOL(unittest.TestCase):
         from ipfs_datasets_py.logic.integration.bridges.symbolic_fol_bridge import (
             SymbolicFOLBridge,
         )
+
         b = SymbolicFOLBridge(enable_caching=False)
         sym = b.create_semantic_symbol("All cats are animals")
         r = b.semantic_to_fol(sym)
@@ -700,6 +727,7 @@ class TestPatternMatchToFOL(unittest.TestCase):
             SymbolicFOLBridge,
             LogicalComponents,
         )
+
         self.bridge = SymbolicFOLBridge()
         self.LC = LogicalComponents
 
@@ -746,6 +774,7 @@ class TestFormatConversions(unittest.TestCase):
         from ipfs_datasets_py.logic.integration.bridges.symbolic_fol_bridge import (
             SymbolicFOLBridge,
         )
+
         self.bridge = SymbolicFOLBridge()
 
     def test_to_prolog(self):
@@ -769,6 +798,7 @@ class TestValidateFOLFormula(unittest.TestCase):
         from ipfs_datasets_py.logic.integration.bridges.symbolic_fol_bridge import (
             SymbolicFOLBridge,
         )
+
         self.bridge = SymbolicFOLBridge()
 
     def test_empty_formula(self):
@@ -806,6 +836,7 @@ class TestGetCacheKey(unittest.TestCase):
         from ipfs_datasets_py.logic.integration.bridges.symbolic_fol_bridge import (
             SymbolicFOLBridge,
         )
+
         self.bridge = SymbolicFOLBridge()
 
     def test_same_inputs_same_key(self):
@@ -831,6 +862,7 @@ class TestFallbackConversion(unittest.TestCase):
         from ipfs_datasets_py.logic.integration.bridges.symbolic_fol_bridge import (
             SymbolicFOLBridge,
         )
+
         self.bridge = SymbolicFOLBridge()
 
     def test_returns_result(self):
@@ -838,6 +870,7 @@ class TestFallbackConversion(unittest.TestCase):
         from ipfs_datasets_py.logic.integration.bridges.symbolic_fol_bridge import (
             FOLConversionResult,
         )
+
         self.assertIsInstance(r, FOLConversionResult)
         self.assertTrue(r.fallback_used)
 
@@ -850,36 +883,43 @@ class TestFallbackConversion(unittest.TestCase):
 # Section 5 — integration __init__.py
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestIntegrationInitLazyExports(unittest.TestCase):
     """GIVEN integration __init__ WHEN accessing lazy exports THEN returns correct objects."""
 
     def test_deontic_formula_lazy(self):
         import ipfs_datasets_py.logic.integration as pkg
+
         DeonticFormula = pkg.DeonticFormula
         self.assertIsNotNone(DeonticFormula)
 
     def test_deontic_operator_lazy(self):
         import ipfs_datasets_py.logic.integration as pkg
+
         DeonticOperator = pkg.DeonticOperator
         self.assertIsNotNone(DeonticOperator)
 
     def test_logic_verifier_lazy(self):
         import ipfs_datasets_py.logic.integration as pkg
+
         LogicVerifier = pkg.LogicVerifier
         self.assertIsNotNone(LogicVerifier)
 
     def test_symbolic_fol_bridge_lazy(self):
         import ipfs_datasets_py.logic.integration as pkg
+
         Bridge = pkg.SymbolicFOLBridge
         self.assertIsNotNone(Bridge)
 
     def test_unknown_attr_raises(self):
         import ipfs_datasets_py.logic.integration as pkg
+
         with self.assertRaises(AttributeError):
             _ = pkg.NonExistentAttribute12345
 
     def test_dir_includes_lazy_exports(self):
         import ipfs_datasets_py.logic.integration as pkg
+
         d = dir(pkg)
         self.assertIn("DeonticFormula", d)
         self.assertIn("LogicVerifier", d)
@@ -891,8 +931,10 @@ class TestEnableSymbolicAI(unittest.TestCase):
 
     def test_returns_false_without_symai(self):
         import ipfs_datasets_py.logic.integration as pkg
+
         # Ensure symai is not available
         import sys
+
         old = sys.modules.pop("symai", None)
         try:
             # Reset state so we can re-test
@@ -905,6 +947,7 @@ class TestEnableSymbolicAI(unittest.TestCase):
 
     def test_idempotent_when_already_enabled(self):
         import ipfs_datasets_py.logic.integration as pkg
+
         # If already marked as available (shouldn't be without symai), should return True
         old_val = pkg.SYMBOLIC_AI_AVAILABLE
         pkg.SYMBOLIC_AI_AVAILABLE = True
@@ -920,11 +963,13 @@ class TestAvailabilityExports(unittest.TestCase):
 
     def test_tdfol_cec_available_is_bool(self):
         import ipfs_datasets_py.logic.integration as pkg
+
         val = pkg.TDFOL_CEC_AVAILABLE
         self.assertIsInstance(val, bool)
 
     def test_neurosymbolic_api_available_is_bool(self):
         import ipfs_datasets_py.logic.integration as pkg
+
         val = pkg.NEUROSYMBOLIC_API_AVAILABLE
         self.assertIsInstance(val, bool)
 
@@ -932,6 +977,7 @@ class TestAvailabilityExports(unittest.TestCase):
 # ═══════════════════════════════════════════════════════════════════════════════
 # Section 6 — demos/demo_temporal_deontic_rag.py
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestCreateSampleTheoremCorpus(unittest.TestCase):
     """GIVEN create_sample_theorem_corpus WHEN called THEN returns populated RAG store."""
@@ -942,6 +988,7 @@ class TestCreateSampleTheoremCorpus(unittest.TestCase):
             from ipfs_datasets_py.logic.integration.demos.demo_temporal_deontic_rag import (
                 create_sample_theorem_corpus,
             )
+
             self.corpus = create_sample_theorem_corpus()
         finally:
             _restore()
@@ -950,6 +997,7 @@ class TestCreateSampleTheoremCorpus(unittest.TestCase):
         from ipfs_datasets_py.logic.integration.domain.temporal_deontic_rag_store import (
             TemporalDeonticRAGStore,
         )
+
         self.assertIsInstance(self.corpus, TemporalDeonticRAGStore)
 
     def test_has_theorems(self):
@@ -968,6 +1016,7 @@ class TestDemoDocumentConsistencyChecking(unittest.TestCase):
         from ipfs_datasets_py.logic.integration.demos.demo_temporal_deontic_rag import (
             demo_document_consistency_checking,
         )
+
         buf = _silence()
         try:
             demo_document_consistency_checking()
@@ -984,6 +1033,7 @@ class TestDemoBatchProcessing(unittest.TestCase):
         from ipfs_datasets_py.logic.integration.demos.demo_temporal_deontic_rag import (
             demo_batch_processing,
         )
+
         buf = _silence()
         try:
             demo_batch_processing()
@@ -1000,6 +1050,7 @@ class TestDemoRAGRetrieval(unittest.TestCase):
         from ipfs_datasets_py.logic.integration.demos.demo_temporal_deontic_rag import (
             demo_rag_retrieval,
         )
+
         buf = _silence()
         try:
             demo_rag_retrieval()
@@ -1019,10 +1070,18 @@ class TestPrintDebugReport(unittest.TestCase):
         from ipfs_datasets_py.logic.integration.domain.document_consistency_checker import (
             DebugReport,
         )
+
         report = DebugReport(
             document_id="test_doc",
             total_issues=1,
-            issues=[{"severity": "warning", "category": "conflict", "message": "Test conflict", "suggestion": "Review this"}],
+            issues=[
+                {
+                    "severity": "warning",
+                    "category": "conflict",
+                    "message": "Test conflict",
+                    "suggestion": "Review this",
+                }
+            ],
             summary="Test summary",
             fix_suggestions=["Fix suggestion 1"],
         )

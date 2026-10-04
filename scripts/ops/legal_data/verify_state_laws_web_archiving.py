@@ -25,11 +25,56 @@ from ipfs_datasets_py.processors.web_archiving.contracts import OperationMode, U
 from ipfs_datasets_py.processors.web_archiving.unified_api import UnifiedWebArchivingAPI
 
 ALL_STATES: List[str] = [
-    "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
-    "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
-    "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
-    "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
-    "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY",
+    "AL",
+    "AK",
+    "AZ",
+    "AR",
+    "CA",
+    "CO",
+    "CT",
+    "DE",
+    "FL",
+    "GA",
+    "HI",
+    "ID",
+    "IL",
+    "IN",
+    "IA",
+    "KS",
+    "KY",
+    "LA",
+    "ME",
+    "MD",
+    "MA",
+    "MI",
+    "MN",
+    "MS",
+    "MO",
+    "MT",
+    "NE",
+    "NV",
+    "NH",
+    "NJ",
+    "NM",
+    "NY",
+    "NC",
+    "ND",
+    "OH",
+    "OK",
+    "OR",
+    "PA",
+    "RI",
+    "SC",
+    "SD",
+    "TN",
+    "TX",
+    "UT",
+    "VT",
+    "VA",
+    "WA",
+    "WV",
+    "WI",
+    "WY",
     "DC",
 ]
 
@@ -39,11 +84,7 @@ URL_FIELDS: Tuple[str, ...] = ("sourceUrl", "url", "sameAs")
 def is_synthetic_row(row: Dict[str, object]) -> bool:
     text = str(row.get("text") or "").lower()
     identifier = str(row.get("identifier") or "").lower()
-    return (
-        "generated-filler" in text
-        or "example.invalid" in text
-        or "-fill-" in identifier
-    )
+    return "generated-filler" in text or "example.invalid" in text or "-fill-" in identifier
 
 
 def _repair_wayback_replay_segments(url: str) -> str:
@@ -85,7 +126,9 @@ class StateVerificationResult:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Verify state-law URL retrievability via unified web archiving")
+    parser = argparse.ArgumentParser(
+        description="Verify state-law URL retrievability via unified web archiving"
+    )
     parser.add_argument(
         "--jsonld-dir",
         default=str(Path.home() / ".ipfs_datasets/state_laws/state_laws_jsonld"),
@@ -189,7 +232,7 @@ def _norm_url(value: object) -> str:
     url = _repair_wayback_replay_segments(url)
     # Wayback replay is more reliably reachable over plain HTTP in this environment.
     if url.startswith("https://web.archive.org/"):
-        url = "http://" + url[len("https://"):]
+        url = "http://" + url[len("https://") :]
     return url
 
 
@@ -228,9 +271,9 @@ def build_wayback_candidates(url: str) -> List[str]:
 
     if "web.archive.org/web/" in url:
         if url.startswith("http://web.archive.org/"):
-            return _ordered_unique([url, "https://" + url[len("http://"):]])
+            return _ordered_unique([url, "https://" + url[len("http://") :]])
         if url.startswith("https://web.archive.org/"):
-            return _ordered_unique(["http://" + url[len("https://"):], url])
+            return _ordered_unique(["http://" + url[len("https://") :], url])
         return _ordered_unique([url])
 
     # Prefer explicit replay URLs over wildcard listing pages.
@@ -246,7 +289,9 @@ def build_wayback_candidates(url: str) -> List[str]:
     )
 
 
-def run_fetch(api: UnifiedWebArchivingAPI, url: str, timeout_seconds: int, mode: OperationMode, domain: str) -> Tuple[bool, str, str, float]:
+def run_fetch(
+    api: UnifiedWebArchivingAPI, url: str, timeout_seconds: int, mode: OperationMode, domain: str
+) -> Tuple[bool, str, str, float]:
     request = UnifiedFetchRequest(
         url=url,
         timeout_seconds=timeout_seconds,
@@ -261,7 +306,9 @@ def run_fetch(api: UnifiedWebArchivingAPI, url: str, timeout_seconds: int, mode:
             provider = str(response.trace.provider_selected)
         return True, "", provider, float(response.quality_score or 0.0)
 
-    error_messages = [str(err.message) for err in (response.errors or []) if getattr(err, "message", "")]
+    error_messages = [
+        str(err.message) for err in (response.errors or []) if getattr(err, "message", "")
+    ]
     error = "; ".join(error_messages) if error_messages else "no_document_text"
     return False, error, "", float(response.quality_score or 0.0)
 
@@ -325,7 +372,9 @@ def verify_state(
     if use_archive_fallback:
         for url in candidate_urls:
             for archive_url in build_wayback_candidates(url):
-                ok, err, provider, score = run_fetch(api, archive_url, timeout_seconds, mode, domain)
+                ok, err, provider, score = run_fetch(
+                    api, archive_url, timeout_seconds, mode, domain
+                )
                 if ok:
                     return StateVerificationResult(
                         state=state,
@@ -433,7 +482,9 @@ def main() -> int:
     if args.output_json:
         output_path = Path(args.output_json).expanduser().resolve()
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        output_path.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        output_path.write_text(
+            json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
         print(f"wrote_report: {output_path}")
 
     return 0 if int(summary["states_failed"]) == 0 else 1

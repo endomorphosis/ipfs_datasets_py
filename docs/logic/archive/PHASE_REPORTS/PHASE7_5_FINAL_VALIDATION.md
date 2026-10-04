@@ -298,6 +298,7 @@ For users migrating from old API to new unified converters:
 ```python
 # Old async functions (still work, deprecated)
 from ipfs_datasets_py.logic.fol import convert_text_to_fol
+
 result = await convert_text_to_fol("All humans are mortal")
 ```
 
@@ -308,10 +309,10 @@ result = await convert_text_to_fol("All humans are mortal")
 from ipfs_datasets_py.logic.fol import FOLConverter
 
 converter = FOLConverter(
-    use_cache=True,      # Enable caching
-    use_ml=True,         # ML confidence
-    use_nlp=True,        # NLP extraction
-    enable_monitoring=True
+    use_cache=True,  # Enable caching
+    use_ml=True,  # ML confidence
+    use_nlp=True,  # NLP extraction
+    enable_monitoring=True,
 )
 
 # Synchronous

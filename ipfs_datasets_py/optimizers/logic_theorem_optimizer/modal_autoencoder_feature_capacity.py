@@ -34,21 +34,13 @@ from .modal_autoencoder import (
 )
 
 
-MODAL_AUTOENCODER_FEATURE_CAPACITY_SCHEMA_VERSION = (
-    "modal-autoencoder-feature-capacity-v1"
-)
-MODAL_AUTOENCODER_FEATURE_EVIDENCE_SCHEMA_VERSION = (
-    "modal-autoencoder-feature-capacity-evidence-v1"
-)
-MODAL_AUTOENCODER_FEATURE_CAPACITY_POLICY_VERSION = (
-    "modal-autoencoder-feature-capacity-policy-v1"
-)
+MODAL_AUTOENCODER_FEATURE_CAPACITY_SCHEMA_VERSION = "modal-autoencoder-feature-capacity-v1"
+MODAL_AUTOENCODER_FEATURE_EVIDENCE_SCHEMA_VERSION = "modal-autoencoder-feature-capacity-evidence-v1"
+MODAL_AUTOENCODER_FEATURE_CAPACITY_POLICY_VERSION = "modal-autoencoder-feature-capacity-policy-v1"
 
 ACCEPTED_STATE_V2 = "accepted_state_v2"
 EVIDENCE_AWARE_SPARSE_TAIL_V1 = "evidence_aware_sparse_tail_v1"
-SUPPORTED_CAPACITY_MODES = frozenset(
-    {ACCEPTED_STATE_V2, EVIDENCE_AWARE_SPARSE_TAIL_V1}
-)
+SUPPORTED_CAPACITY_MODES = frozenset({ACCEPTED_STATE_V2, EVIDENCE_AWARE_SPARSE_TAIL_V1})
 
 
 class FeatureCapacityError(ValueError):
@@ -102,9 +94,7 @@ MODAL_AUTOENCODER_CAPACITY_GROUP_FAMILIES: Mapping[str, str] = {
     "feature": FeatureCapacityFamily.EMBEDDINGS.value,
     "family": FeatureCapacityFamily.EMBEDDINGS.value,
     "family_semantic_slot": FeatureCapacityFamily.PROJECTION_FACTORS.value,
-    "family_semantic_slot_legal_ir_view": (
-        FeatureCapacityFamily.PROJECTION_FACTORS.value
-    ),
+    "family_semantic_slot_legal_ir_view": (FeatureCapacityFamily.PROJECTION_FACTORS.value),
     "family_legal_ir_view": FeatureCapacityFamily.PER_VIEW_LOGITS.value,
     "semantic_slot": FeatureCapacityFamily.RELATION_ENTITY_HEADS.value,
     "legal_ir_view": FeatureCapacityFamily.GLOBAL_LOGITS.value,
@@ -155,9 +145,7 @@ def _stable_digest(value: Any) -> str:
     try:
         encoded = _canonical_json(value)
     except (TypeError, ValueError) as exc:
-        raise FeatureCapacityError(
-            "capacity keys must have a canonical JSON encoding"
-        ) from exc
+        raise FeatureCapacityError("capacity keys must have a canonical JSON encoding") from exc
     return "sha256:" + hashlib.sha256(encoded).hexdigest()
 
 
@@ -171,9 +159,7 @@ def _bounded(value: float) -> float:
 def _copy_value(value: Any) -> Any:
     if isinstance(value, Mapping):
         return {key: _copy_value(item) for key, item in value.items()}
-    if isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         return [_copy_value(item) for item in value]
     return value
 
@@ -199,9 +185,7 @@ def _key_is_source_like(value: Any) -> bool:
 def _key_is_protected(value: Any) -> bool:
     text = _key_text(value).strip().lower()
     return (
-        text in {"__global__", "global", "bias"}
-        or text.endswith(":bias")
-        or text.endswith("|bias")
+        text in {"__global__", "global", "bias"} or text.endswith(":bias") or text.endswith("|bias")
     )
 
 
@@ -240,14 +224,10 @@ class FeatureCapacityEvidence:
         ):
             raw_value = getattr(self, name)
             if isinstance(raw_value, bool):
-                raise UnsafeCapacityEvidenceError(
-                    f"{name} must be numeric, not boolean"
-                )
+                raise UnsafeCapacityEvidenceError(f"{name} must be numeric, not boolean")
             value = float(raw_value)
             if not math.isfinite(value):
-                raise UnsafeCapacityEvidenceError(
-                    f"{name} must be finite"
-                )
+                raise UnsafeCapacityEvidenceError(f"{name} must be finite")
         for name in (
             "contains_source_text",
             "source_text_memorization",
@@ -256,25 +236,13 @@ class FeatureCapacityEvidence:
             "unsigned_guidance",
         ):
             if not isinstance(getattr(self, name), bool):
-                raise UnsafeCapacityEvidenceError(
-                    f"{name} must be boolean"
-                )
-        if self.guidance_signed is not None and not isinstance(
-            self.guidance_signed, bool
-        ):
-            raise UnsafeCapacityEvidenceError(
-                "guidance_signed must be true, false, or null"
-            )
+                raise UnsafeCapacityEvidenceError(f"{name} must be boolean")
+        if self.guidance_signed is not None and not isinstance(self.guidance_signed, bool):
+            raise UnsafeCapacityEvidenceError("guidance_signed must be true, false, or null")
         if self.evidence_id and not str(self.evidence_id).strip():
-            raise UnsafeCapacityEvidenceError(
-                "evidence_id must be empty or non-blank"
-            )
-        if self.semantic_family and not _REPORT_FAMILY.fullmatch(
-            str(self.semantic_family)
-        ):
-            raise UnsafeCapacityEvidenceError(
-                "semantic_family must be a bounded identifier"
-            )
+            raise UnsafeCapacityEvidenceError("evidence_id must be empty or non-blank")
+        if self.semantic_family and not _REPORT_FAMILY.fullmatch(str(self.semantic_family)):
+            raise UnsafeCapacityEvidenceError("semantic_family must be a bounded identifier")
 
     @property
     def exclusion_reason(self) -> str:
@@ -295,9 +263,7 @@ class FeatureCapacityEvidence:
         reconstruction = _bounded(self.trusted_reconstruction_impact)
         return {
             "activation_frequency": _bounded(self.activation_frequency),
-            "held_out_loss_contribution": _bounded(
-                self.held_out_loss_contribution
-            ),
+            "held_out_loss_contribution": _bounded(self.held_out_loss_contribution),
             "migration_confidence": _bounded(self.migration_confidence),
             "recency": _bounded(self.recency),
             # Proof and reconstruction are complementary trusted pathways.
@@ -306,9 +272,7 @@ class FeatureCapacityEvidence:
         }
 
     @classmethod
-    def from_mapping(
-        cls, value: Mapping[str, Any]
-    ) -> "FeatureCapacityEvidence":
+    def from_mapping(cls, value: Mapping[str, Any]) -> "FeatureCapacityEvidence":
         """Parse a strict JSON-compatible evidence packet."""
 
         aliases = {
@@ -328,19 +292,13 @@ class FeatureCapacityEvidence:
         for raw_name, item in value.items():
             if str(raw_name) == "schema_version":
                 if item != MODAL_AUTOENCODER_FEATURE_EVIDENCE_SCHEMA_VERSION:
-                    raise UnsafeCapacityEvidenceError(
-                        "unsupported capacity evidence schema"
-                    )
+                    raise UnsafeCapacityEvidenceError("unsupported capacity evidence schema")
                 continue
             name = aliases.get(str(raw_name), str(raw_name))
             if name not in allowed:
-                raise UnsafeCapacityEvidenceError(
-                    f"unknown evidence field: {raw_name}"
-                )
+                raise UnsafeCapacityEvidenceError(f"unknown evidence field: {raw_name}")
             if name in normalized:
-                raise UnsafeCapacityEvidenceError(
-                    f"duplicate evidence field: {name}"
-                )
+                raise UnsafeCapacityEvidenceError(f"duplicate evidence field: {name}")
             normalized[name] = item
         return cls(**normalized)
 
@@ -350,22 +308,16 @@ class FeatureCapacityEvidence:
             "contains_source_text": bool(self.contains_source_text),
             "evidence_id": str(self.evidence_id),
             "guidance_signed": self.guidance_signed,
-            "held_out_loss_contribution": float(
-                self.held_out_loss_contribution
-            ),
+            "held_out_loss_contribution": float(self.held_out_loss_contribution),
             "migration_confidence": float(self.migration_confidence),
             "proof_rejected": bool(self.proof_rejected),
             "recency": float(self.recency),
             "rejected_proof_output": bool(self.rejected_proof_output),
             "schema_version": MODAL_AUTOENCODER_FEATURE_EVIDENCE_SCHEMA_VERSION,
             "semantic_family": str(self.semantic_family),
-            "source_text_memorization": bool(
-                self.source_text_memorization
-            ),
+            "source_text_memorization": bool(self.source_text_memorization),
             "trusted_proof_impact": float(self.trusted_proof_impact),
-            "trusted_reconstruction_impact": float(
-                self.trusted_reconstruction_impact
-            ),
+            "trusted_reconstruction_impact": float(self.trusted_reconstruction_impact),
             "unsigned_guidance": bool(self.unsigned_guidance),
         }
 
@@ -382,14 +334,10 @@ def _normalized_budgets(
     for raw_group, raw_budget in (overrides or {}).items():
         group = _capacity_group_name(raw_group)
         if group not in KNOWN_CAPACITY_GROUPS:
-            raise UnknownCapacityGroupError(
-                f"unknown capacity group: {group!r}"
-            )
+            raise UnknownCapacityGroupError(f"unknown capacity group: {group!r}")
         budget = int(raw_budget)
         if budget < 0:
-            raise FeatureCapacityError(
-                f"capacity for {group!r} must be non-negative"
-            )
+            raise FeatureCapacityError(f"capacity for {group!r} must be non-negative")
         budgets[group] = budget
     return budgets
 
@@ -410,37 +358,20 @@ class FeatureCapacityPolicy:
 
     def __post_init__(self) -> None:
         if self.mode not in SUPPORTED_CAPACITY_MODES:
-            raise FeatureCapacityError(
-                f"unsupported capacity mode: {self.mode!r}"
-            )
+            raise FeatureCapacityError(f"unsupported capacity mode: {self.mode!r}")
         budgets = _normalized_budgets(self.group_budgets)
         object.__setattr__(self, "group_budgets", budgets)
-        unknown_weights = set(self.evidence_weights) - set(
-            DEFAULT_EVIDENCE_WEIGHTS
-        )
+        unknown_weights = set(self.evidence_weights) - set(DEFAULT_EVIDENCE_WEIGHTS)
         if unknown_weights:
             raise FeatureCapacityError(
-                "unknown evidence weights: "
-                + ", ".join(sorted(unknown_weights))
+                "unknown evidence weights: " + ", ".join(sorted(unknown_weights))
             )
         weights = dict(DEFAULT_EVIDENCE_WEIGHTS)
-        weights.update(
-            {
-                str(name): float(value)
-                for name, value in self.evidence_weights.items()
-            }
-        )
-        if any(
-            not math.isfinite(value) or value < 0.0
-            for value in weights.values()
-        ):
-            raise FeatureCapacityError(
-                "evidence weights must be finite and non-negative"
-            )
+        weights.update({str(name): float(value) for name, value in self.evidence_weights.items()})
+        if any(not math.isfinite(value) or value < 0.0 for value in weights.values()):
+            raise FeatureCapacityError("evidence weights must be finite and non-negative")
         if sum(weights.values()) <= 0.0:
-            raise FeatureCapacityError(
-                "at least one evidence weight must be positive"
-            )
+            raise FeatureCapacityError("at least one evidence weight must be positive")
         object.__setattr__(self, "evidence_weights", weights)
         if self.mode == ACCEPTED_STATE_V2 and not self.preserve_accepted_keys:
             object.__setattr__(self, "preserve_accepted_keys", True)
@@ -464,31 +395,23 @@ class FeatureCapacityPolicy:
         return cls(
             mode=EVIDENCE_AWARE_SPARSE_TAIL_V1,
             group_budgets=(
-                dict(DEFAULT_FEATURE_CAPACITY_BUDGETS)
-                if group_budgets is None
-                else group_budgets
+                dict(DEFAULT_FEATURE_CAPACITY_BUDGETS) if group_budgets is None else group_budgets
             ),
             evidence_weights=(
-                dict(DEFAULT_EVIDENCE_WEIGHTS)
-                if evidence_weights is None
-                else evidence_weights
+                dict(DEFAULT_EVIDENCE_WEIGHTS) if evidence_weights is None else evidence_weights
             ),
             require_positive_evidence=require_positive_evidence,
             preserve_accepted_keys=preserve_accepted_keys,
         )
 
-    def capacity_family_for(
-        self, group: str | FeatureCapacityFamily
-    ) -> str:
+    def capacity_family_for(self, group: str | FeatureCapacityFamily) -> str:
         name = _capacity_group_name(group)
         if name in (family.value for family in FeatureCapacityFamily):
             return name
         try:
             return MODAL_AUTOENCODER_CAPACITY_GROUP_FAMILIES[name]
         except KeyError as exc:
-            raise UnknownCapacityGroupError(
-                f"unknown capacity group: {name!r}"
-            ) from exc
+            raise UnknownCapacityGroupError(f"unknown capacity group: {name!r}") from exc
 
     def budget_for(self, group: str | FeatureCapacityFamily) -> int:
         family = self.capacity_family_for(group)
@@ -500,35 +423,27 @@ class FeatureCapacityPolicy:
             )
         )
 
-    def score(
-        self, evidence: FeatureCapacityEvidence
-    ) -> tuple[float, Dict[str, float]]:
+    def score(self, evidence: FeatureCapacityEvidence) -> tuple[float, Dict[str, float]]:
         components = evidence.components()
         denominator = sum(self.evidence_weights.values())
-        score = sum(
-            components[name] * self.evidence_weights[name]
-            for name in sorted(components)
-        ) / denominator
+        score = (
+            sum(components[name] * self.evidence_weights[name] for name in sorted(components))
+            / denominator
+        )
         return score, components
 
     def to_dict(self) -> Dict[str, Any]:
         return {
             "evidence_weights": {
-                name: float(value)
-                for name, value in sorted(self.evidence_weights.items())
+                name: float(value) for name, value in sorted(self.evidence_weights.items())
             },
             "group_budgets": {
-                name: int(value)
-                for name, value in sorted(self.group_budgets.items())
+                name: int(value) for name, value in sorted(self.group_budgets.items())
             },
             "mode": self.mode,
             "preserve_accepted_keys": bool(self.preserve_accepted_keys),
-            "require_positive_evidence": bool(
-                self.require_positive_evidence
-            ),
-            "schema_version": (
-                MODAL_AUTOENCODER_FEATURE_CAPACITY_POLICY_VERSION
-            ),
+            "require_positive_evidence": bool(self.require_positive_evidence),
+            "schema_version": (MODAL_AUTOENCODER_FEATURE_CAPACITY_POLICY_VERSION),
         }
 
 
@@ -588,9 +503,7 @@ def select_sparse_tail(
     group: str | FeatureCapacityFamily,
     candidate_keys: Iterable[Any],
     *,
-    evidence: Mapping[
-        Any, FeatureCapacityEvidence | Mapping[str, Any]
-    ] | None = None,
+    evidence: Mapping[Any, FeatureCapacityEvidence | Mapping[str, Any]] | None = None,
     accepted_keys: Iterable[Any] = (),
     policy: FeatureCapacityPolicy | None = None,
 ) -> CapacityDecision:
@@ -611,15 +524,11 @@ def select_sparse_tail(
     for key in candidates:
         _stable_digest(key)
     if not accepted <= candidates:
-        raise FeatureCapacityError(
-            "accepted keys must be a subset of candidate keys"
-        )
+        raise FeatureCapacityError("accepted keys must be a subset of candidate keys")
     evidence_map = dict(evidence or {})
     unknown_evidence_keys = set(evidence_map) - candidates
     if unknown_evidence_keys:
-        raise FeatureCapacityError(
-            "evidence contains keys outside the candidate set"
-        )
+        raise FeatureCapacityError("evidence contains keys outside the candidate set")
 
     if effective_policy.mode == ACCEPTED_STATE_V2:
         retained = set(accepted)
@@ -637,20 +546,14 @@ def select_sparse_tail(
                 "budget_enforced": False,
                 "candidate_count": len(candidates),
                 "evicted_count": len(evicted),
-                "evicted_key_digests": [
-                    _stable_digest(key) for key in ordered_evicted
-                ],
+                "evicted_key_digests": [_stable_digest(key) for key in ordered_evicted],
                 "exclusions": {},
                 "family": family,
                 "group": group_name,
                 "mode": effective_policy.mode,
                 "retained_count": len(retained),
-                "retained_key_digests": [
-                    _stable_digest(key) for key in ordered_retained
-                ],
-                "schema_version": (
-                    MODAL_AUTOENCODER_FEATURE_CAPACITY_SCHEMA_VERSION
-                ),
+                "retained_key_digests": [_stable_digest(key) for key in ordered_retained],
+                "schema_version": (MODAL_AUTOENCODER_FEATURE_CAPACITY_SCHEMA_VERSION),
                 "tie_break": "canonical_key_lexical_v1",
                 "tie_break_count": 0,
                 "zero_risk_baseline": True,
@@ -688,11 +591,7 @@ def select_sparse_tail(
         rows.append((key, score, components, is_accepted, reason))
 
     eligible = [row for row in rows if not row[4]]
-    pinned = [
-        row
-        for row in eligible
-        if row[3] and effective_policy.preserve_accepted_keys
-    ]
+    pinned = [row for row in eligible if row[3] and effective_policy.preserve_accepted_keys]
     if len(pinned) > budget:
         raise FeatureCapacityError(
             f"capacity group {group_name!r} has {len(pinned)} pinned accepted "
@@ -716,21 +615,13 @@ def select_sparse_tail(
     row_by_key = {row[0]: row for row in rows}
     for key in retained:
         report_family = (
-            str(
-                _evidence_for(
-                    key, evidence_map, accepted=key in accepted
-                ).semantic_family
-            ).strip()
+            str(_evidence_for(key, evidence_map, accepted=key in accepted).semantic_family).strip()
             or family
         )
         semantic_families[report_family]["retained_count"] += 1
     for key in evicted:
         report_family = (
-            str(
-                _evidence_for(
-                    key, evidence_map, accepted=key in accepted
-                ).semantic_family
-            ).strip()
+            str(_evidence_for(key, evidence_map, accepted=key in accepted).semantic_family).strip()
             or family
         )
         semantic_families[report_family]["evicted_count"] += 1
@@ -743,19 +634,13 @@ def select_sparse_tail(
     ranked_unpinned = ordinary
     available = max(0, budget - len(pinned))
     if 0 < available < len(ranked_unpinned):
-        boundary_tie = (
-            ranked_unpinned[available - 1][1]
-            == ranked_unpinned[available][1]
-        )
+        boundary_tie = ranked_unpinned[available - 1][1] == ranked_unpinned[available][1]
 
     ordered_retained = tuple(sorted(retained, key=_key_text))
     ordered_evicted = tuple(sorted(evicted, key=_key_text))
     retained_component_totals = {
         component: round(
-            math.fsum(
-                row_by_key[key][2][component]
-                for key in sorted(retained, key=_key_text)
-            ),
+            math.fsum(row_by_key[key][2][component] for key in sorted(retained, key=_key_text)),
             15,
         )
         for component in sorted(DEFAULT_EVIDENCE_WEIGHTS)
@@ -772,9 +657,7 @@ def select_sparse_tail(
             "budget_enforced": True,
             "candidate_count": len(candidates),
             "evicted_count": len(evicted),
-            "evicted_key_digests": [
-                _stable_digest(key) for key in ordered_evicted
-            ],
+            "evicted_key_digests": [_stable_digest(key) for key in ordered_evicted],
             "exclusions": dict(sorted(exclusions.items())),
             "family": family,
             "family_reports": {
@@ -786,12 +669,8 @@ def select_sparse_tail(
             "pinned_accepted_count": len(pinned),
             "retained_component_totals": retained_component_totals,
             "retained_count": len(retained),
-            "retained_key_digests": [
-                _stable_digest(key) for key in ordered_retained
-            ],
-            "schema_version": (
-                MODAL_AUTOENCODER_FEATURE_CAPACITY_SCHEMA_VERSION
-            ),
+            "retained_key_digests": [_stable_digest(key) for key in ordered_retained],
+            "schema_version": (MODAL_AUTOENCODER_FEATURE_CAPACITY_SCHEMA_VERSION),
             "tie_break": "accepted_global_then_score_then_canonical_key_v1",
             "tie_break_count": tie_break_count,
             "zero_risk_baseline": False,
@@ -817,9 +696,7 @@ class FeatureCapacityResult:
 CapacitySelectionResult = FeatureCapacityResult
 
 
-def _state_group_keys(
-    state: ModalAutoencoderTrainingState, fields: Sequence[str]
-) -> set[Any]:
+def _state_group_keys(state: ModalAutoencoderTrainingState, fields: Sequence[str]) -> set[Any]:
     keys: set[Any] = set()
     for field_name in fields:
         keys.update(getattr(state, field_name))
@@ -833,7 +710,8 @@ def apply_modal_autoencoder_feature_capacity(
     evidence_by_group: Mapping[
         str,
         Mapping[Any, FeatureCapacityEvidence | Mapping[str, Any]],
-    ] | None = None,
+    ]
+    | None = None,
     accepted_state: ModalAutoencoderTrainingState | None = None,
     inplace: bool = False,
 ) -> FeatureCapacityResult:
@@ -847,13 +725,10 @@ def apply_modal_autoencoder_feature_capacity(
 
     effective_policy = policy or DEFAULT_EVIDENCE_AWARE_CAPACITY_POLICY
     evidence_groups = dict(evidence_by_group or {})
-    unknown_groups = set(evidence_groups) - set(
-        MODAL_AUTOENCODER_GENERALIZABLE_CAPACITY_GROUPS
-    )
+    unknown_groups = set(evidence_groups) - set(MODAL_AUTOENCODER_GENERALIZABLE_CAPACITY_GROUPS)
     if unknown_groups:
         raise UnknownCapacityGroupError(
-            "unknown capacity evidence groups: "
-            + ", ".join(sorted(unknown_groups))
+            "unknown capacity evidence groups: " + ", ".join(sorted(unknown_groups))
         )
     output = state if inplace else state.copy()
     baseline = accepted_state or state
@@ -862,9 +737,7 @@ def apply_modal_autoencoder_feature_capacity(
     compacted_fields: set[str] = set()
     before_entry_count = output.generalizable_entry_count()
 
-    for group, fields in sorted(
-        MODAL_AUTOENCODER_GENERALIZABLE_CAPACITY_GROUPS.items()
-    ):
+    for group, fields in sorted(MODAL_AUTOENCODER_GENERALIZABLE_CAPACITY_GROUPS.items()):
         candidates = _state_group_keys(output, fields)
         accepted = _state_group_keys(baseline, fields) & candidates
         decision = select_sparse_tail(
@@ -911,8 +784,7 @@ def apply_modal_autoencoder_feature_capacity(
         "compacted_fields": sorted(compacted_fields),
         "dropped_entry_count": before_entry_count - after_entry_count,
         "family_reports": {
-            name: dict(sorted(values.items()))
-            for name, values in sorted(family_reports.items())
+            name: dict(sorted(values.items())) for name, values in sorted(family_reports.items())
         },
         "groups": group_reports,
         "policy": effective_policy.to_dict(),
@@ -921,9 +793,7 @@ def apply_modal_autoencoder_feature_capacity(
     return FeatureCapacityResult(state=output, report=report)
 
 
-compact_modal_autoencoder_feature_capacity = (
-    apply_modal_autoencoder_feature_capacity
-)
+compact_modal_autoencoder_feature_capacity = apply_modal_autoencoder_feature_capacity
 select_feature_capacity = apply_modal_autoencoder_feature_capacity
 
 
@@ -935,9 +805,7 @@ def validate_capacity_groups(
     values = tuple(sorted({_capacity_group_name(group) for group in groups}))
     unknown = set(values) - KNOWN_CAPACITY_GROUPS
     if unknown:
-        raise UnknownCapacityGroupError(
-            "unknown capacity groups: " + ", ".join(sorted(unknown))
-        )
+        raise UnknownCapacityGroupError("unknown capacity groups: " + ", ".join(sorted(unknown)))
     return values
 
 

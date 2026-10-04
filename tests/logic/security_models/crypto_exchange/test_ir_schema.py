@@ -51,15 +51,15 @@ def _base_payload() -> dict:
 
 
 def test_security_model_ir_has_typed_collections_with_defaults():
-    model = SecurityModelIR(schema_version='security-model-ir/v1', model_id='t1')
+    model = SecurityModelIR(schema_version="security-model-ir/v1", model_id="t1")
     for field_name in (
-        'claims',
-        'proof_obligations',
-        'disproof_vectors',
-        'runtime_traces',
-        'solver_results',
-        'assumptions',
-        'events',
+        "claims",
+        "proof_obligations",
+        "disproof_vectors",
+        "runtime_traces",
+        "solver_results",
+        "assumptions",
+        "events",
     ):
         assert hasattr(model, field_name)
     assert model.claims == []
@@ -83,15 +83,15 @@ def test_to_dict_from_dict_round_trip_preserves_new_collections():
 
 def test_from_untrusted_dict_strict_requires_all_typed_fields():
     payload = _base_payload()
-    del payload['claims']
-    with pytest.raises(ValueError, match='claims'):
+    del payload["claims"]
+    with pytest.raises(ValueError, match="claims"):
         SecurityModelIR.from_untrusted_dict(payload, strict=True)
 
 
 def test_from_untrusted_dict_strict_rejects_unknown_top_level_field():
     payload = _base_payload()
-    payload['not_a_real_field'] = []
-    with pytest.raises(ValueError, match='Unknown top-level'):
+    payload["not_a_real_field"] = []
+    with pytest.raises(ValueError, match="Unknown top-level"):
         SecurityModelIR.from_untrusted_dict(payload, strict=True)
 
 
@@ -107,7 +107,7 @@ def test_validate_ir_accepts_full_production_fixture():
 def test_validate_ir_accepts_full_xaman_fixture():
     model = validate_ir(example_xaman_wallet_security_model())
     assert model.claims
-    assert {claim['domain'] for claim in model.claims} <= XAMAN_SECURITY_DOMAINS
+    assert {claim["domain"] for claim in model.claims} <= XAMAN_SECURITY_DOMAINS
 
 
 # ---------------------------------------------------------------------------
@@ -124,8 +124,8 @@ def test_domain_constants_are_nonempty_and_related():
 def test_claim_domains_helper_maps_ids_to_domains():
     model = example_minimal_exchange_model()
     mapping = claim_domains(model)
-    assert mapping['claim:no_unauthorized_withdrawal'] == 'withdrawals'
-    assert mapping['claim:global_asset_conservation'] == 'ledger'
+    assert mapping["claim:no_unauthorized_withdrawal"] == "withdrawals"
+    assert mapping["claim:global_asset_conservation"] == "ledger"
 
 
 # ---------------------------------------------------------------------------
@@ -135,28 +135,28 @@ def test_claim_domains_helper_maps_ids_to_domains():
 
 def test_claim_with_unknown_domain_is_rejected():
     payload = _base_payload()
-    payload['claims'] = [
+    payload["claims"] = [
         {
-            'id': 'claim:bogus',
-            'description': 'A claim about a domain that does not exist.',
-            'domain': 'not_a_real_domain',
+            "id": "claim:bogus",
+            "description": "A claim about a domain that does not exist.",
+            "domain": "not_a_real_domain",
         }
     ]
-    payload['proof_obligations'] = []
-    payload['disproof_vectors'] = []
-    payload['solver_results'] = []
-    with pytest.raises(ValueError, match='unknown security domain'):
+    payload["proof_obligations"] = []
+    payload["disproof_vectors"] = []
+    payload["solver_results"] = []
+    with pytest.raises(ValueError, match="unknown security domain"):
         validate_ir(payload)
 
 
 def test_claim_with_unknown_domain_allowed_when_marked_custom():
     payload = _base_payload()
-    payload['claims'].append(
+    payload["claims"].append(
         {
-            'id': 'claim:custom_domain_example',
-            'description': 'A reviewed custom-domain claim outside the known vocabulary.',
-            'domain': 'custom_domain',
-            'custom': True,
+            "id": "claim:custom_domain_example",
+            "description": "A reviewed custom-domain claim outside the known vocabulary.",
+            "domain": "custom_domain",
+            "custom": True,
         }
     )
     validate_ir(payload)  # should not raise
@@ -164,25 +164,25 @@ def test_claim_with_unknown_domain_allowed_when_marked_custom():
 
 def test_claim_with_invalid_severity_is_rejected():
     payload = _base_payload()
-    payload['claims'][0] = dict(payload['claims'][0], severity='catastrophic')
-    with pytest.raises(ValueError, match='severity'):
+    payload["claims"][0] = dict(payload["claims"][0], severity="catastrophic")
+    with pytest.raises(ValueError, match="severity"):
         validate_ir(payload)
 
 
 def test_duplicate_claim_ids_are_rejected():
     payload = _base_payload()
-    payload['claims'].append(dict(payload['claims'][0]))
-    with pytest.raises(ValueError, match='Duplicate claim'):
+    payload["claims"].append(dict(payload["claims"][0]))
+    with pytest.raises(ValueError, match="Duplicate claim"):
         validate_ir(payload)
 
 
 def test_claim_evidence_refs_are_validated():
     payload = _base_payload()
-    payload['claims'][0] = dict(
-        payload['claims'][0],
-        evidence_refs=[{'kind': 'not_a_kind', 'path': 'x', 'review_status': 'heuristic'}],
+    payload["claims"][0] = dict(
+        payload["claims"][0],
+        evidence_refs=[{"kind": "not_a_kind", "path": "x", "review_status": "heuristic"}],
     )
-    with pytest.raises(ValueError, match='Unsupported evidence ref kind'):
+    with pytest.raises(ValueError, match="Unsupported evidence ref kind"):
         validate_ir(payload)
 
 
@@ -193,34 +193,34 @@ def test_claim_evidence_refs_are_validated():
 
 def test_proof_obligation_references_unknown_claim():
     payload = _base_payload()
-    payload['proof_obligations'].append(
+    payload["proof_obligations"].append(
         {
-            'id': 'obligation:bogus',
-            'claim_id': 'claim:does_not_exist',
-            'prover': 'z3',
-            'status': 'PROVED',
+            "id": "obligation:bogus",
+            "claim_id": "claim:does_not_exist",
+            "prover": "z3",
+            "status": "PROVED",
         }
     )
-    with pytest.raises(ValueError, match='references unknown claim'):
+    with pytest.raises(ValueError, match="references unknown claim"):
         validate_ir(payload)
 
 
 def test_proof_obligation_rejects_unsupported_status():
     payload = _base_payload()
-    payload['proof_obligations'][0] = dict(payload['proof_obligations'][0], status='MAYBE')
-    with pytest.raises(ValueError, match='unsupported status'):
+    payload["proof_obligations"][0] = dict(payload["proof_obligations"][0], status="MAYBE")
+    with pytest.raises(ValueError, match="unsupported status"):
         validate_ir(payload)
 
 
 def test_proof_obligation_rejects_unsupported_prover():
     payload = _base_payload()
-    payload['proof_obligations'][0] = dict(payload['proof_obligations'][0], prover='magic8ball')
-    with pytest.raises(ValueError, match='unsupported prover'):
+    payload["proof_obligations"][0] = dict(payload["proof_obligations"][0], prover="magic8ball")
+    with pytest.raises(ValueError, match="unsupported prover"):
         validate_ir(payload)
 
 
 def test_proof_obligation_statuses_match_module_constant():
-    assert PROOF_OBLIGATION_STATUSES == frozenset({'PROVED', 'DISPROVED', 'UNKNOWN', 'NOT_MODELED'})
+    assert PROOF_OBLIGATION_STATUSES == frozenset({"PROVED", "DISPROVED", "UNKNOWN", "NOT_MODELED"})
 
 
 # ---------------------------------------------------------------------------
@@ -230,27 +230,27 @@ def test_proof_obligation_statuses_match_module_constant():
 
 def test_disproof_vector_references_unknown_claim():
     payload = _base_payload()
-    payload['disproof_vectors'].append(
+    payload["disproof_vectors"].append(
         {
-            'id': 'disproof:bogus',
-            'claim_id': 'claim:does_not_exist',
-            'tactic': 'invert_precondition',
-            'status': 'SURVIVED',
+            "id": "disproof:bogus",
+            "claim_id": "claim:does_not_exist",
+            "tactic": "invert_precondition",
+            "status": "SURVIVED",
         }
     )
-    with pytest.raises(ValueError, match='references unknown claim'):
+    with pytest.raises(ValueError, match="references unknown claim"):
         validate_ir(payload)
 
 
 def test_disproof_vector_rejects_unsupported_status():
     payload = _base_payload()
-    payload['disproof_vectors'][0] = dict(payload['disproof_vectors'][0], status='MAYBE')
-    with pytest.raises(ValueError, match='unsupported status'):
+    payload["disproof_vectors"][0] = dict(payload["disproof_vectors"][0], status="MAYBE")
+    with pytest.raises(ValueError, match="unsupported status"):
         validate_ir(payload)
 
 
 def test_disproof_vector_statuses_include_disproved_survived_unknown():
-    assert DISPROOF_VECTOR_STATUSES == frozenset({'DISPROVED', 'SURVIVED', 'UNKNOWN'})
+    assert DISPROOF_VECTOR_STATUSES == frozenset({"DISPROVED", "SURVIVED", "UNKNOWN"})
 
 
 # ---------------------------------------------------------------------------
@@ -260,27 +260,27 @@ def test_disproof_vector_statuses_include_disproved_survived_unknown():
 
 def test_solver_result_references_unknown_claim():
     payload = _base_payload()
-    payload['solver_results'].append(
+    payload["solver_results"].append(
         {
-            'id': 'solver:bogus',
-            'claim_id': 'claim:does_not_exist',
-            'solver_name': 'z3',
-            'result': 'unsat',
+            "id": "solver:bogus",
+            "claim_id": "claim:does_not_exist",
+            "solver_name": "z3",
+            "result": "unsat",
         }
     )
-    with pytest.raises(ValueError, match='references unknown claim'):
+    with pytest.raises(ValueError, match="references unknown claim"):
         validate_ir(payload)
 
 
 def test_solver_result_rejects_unsupported_result_value():
     payload = _base_payload()
-    payload['solver_results'][0] = dict(payload['solver_results'][0], result='definitely-maybe')
-    with pytest.raises(ValueError, match='unsupported result value'):
+    payload["solver_results"][0] = dict(payload["solver_results"][0], result="definitely-maybe")
+    with pytest.raises(ValueError, match="unsupported result value"):
         validate_ir(payload)
 
 
 def test_solver_result_values_are_lowercase_solver_vocabulary():
-    assert SOLVER_RESULT_VALUES >= {'sat', 'unsat', 'unknown'}
+    assert SOLVER_RESULT_VALUES >= {"sat", "unsat", "unknown"}
 
 
 # ---------------------------------------------------------------------------
@@ -290,28 +290,28 @@ def test_solver_result_values_are_lowercase_solver_vocabulary():
 
 def test_runtime_trace_references_unknown_event():
     payload = _base_payload()
-    payload['runtime_traces'].append(
+    payload["runtime_traces"].append(
         {
-            'id': 'trace:bogus',
-            'description': 'References an event that was never modeled.',
-            'events': ['event:does_not_exist'],
+            "id": "trace:bogus",
+            "description": "References an event that was never modeled.",
+            "events": ["event:does_not_exist"],
         }
     )
-    with pytest.raises(ValueError, match='references unknown event id'):
+    with pytest.raises(ValueError, match="references unknown event id"):
         validate_ir(payload)
 
 
 def test_runtime_trace_rejects_unknown_domain():
     payload = _base_payload()
-    payload['runtime_traces'][0] = dict(payload['runtime_traces'][0], domain='not_a_real_domain')
-    with pytest.raises(ValueError, match='unknown security domain'):
+    payload["runtime_traces"][0] = dict(payload["runtime_traces"][0], domain="not_a_real_domain")
+    with pytest.raises(ValueError, match="unknown security domain"):
         validate_ir(payload)
 
 
 def test_runtime_trace_requires_description():
     payload = _base_payload()
-    payload['runtime_traces'].append({'id': 'trace:no_description', 'description': ''})
-    with pytest.raises(ValueError, match='non-empty description'):
+    payload["runtime_traces"].append({"id": "trace:no_description", "description": ""})
+    with pytest.raises(ValueError, match="non-empty description"):
         validate_ir(payload)
 
 
@@ -322,33 +322,39 @@ def test_runtime_trace_requires_description():
 
 def test_check_domain_coverage_reports_missing_domains():
     payload = _base_payload()
-    payload['claims'] = [claim for claim in payload['claims'] if claim['domain'] != 'audit']
-    payload['proof_obligations'] = [
-        obligation for obligation in payload['proof_obligations'] if 'audit' not in obligation['claim_id']
+    payload["claims"] = [claim for claim in payload["claims"] if claim["domain"] != "audit"]
+    payload["proof_obligations"] = [
+        obligation
+        for obligation in payload["proof_obligations"]
+        if "audit" not in obligation["claim_id"]
     ]
-    payload['solver_results'] = [
-        result for result in payload['solver_results'] if 'audit' not in result['claim_id']
+    payload["solver_results"] = [
+        result for result in payload["solver_results"] if "audit" not in result["claim_id"]
     ]
-    payload['runtime_traces'] = [
-        trace for trace in payload['runtime_traces'] if trace.get('domain') != 'audit'
+    payload["runtime_traces"] = [
+        trace for trace in payload["runtime_traces"] if trace.get("domain") != "audit"
     ]
     missing = check_domain_coverage(payload, required_domains=PRODUCTION_SECURITY_DOMAINS)
-    assert missing == ['audit']
+    assert missing == ["audit"]
 
 
 def test_validate_domain_coverage_raises_when_domain_missing():
     payload = _base_payload()
-    payload['claims'] = [claim for claim in payload['claims'] if claim['domain'] != 'hsm']
-    payload['proof_obligations'] = [
-        obligation for obligation in payload['proof_obligations'] if 'wallet_freeze' not in obligation['claim_id']
+    payload["claims"] = [claim for claim in payload["claims"] if claim["domain"] != "hsm"]
+    payload["proof_obligations"] = [
+        obligation
+        for obligation in payload["proof_obligations"]
+        if "wallet_freeze" not in obligation["claim_id"]
     ]
-    payload['solver_results'] = [
-        result for result in payload['solver_results'] if 'wallet_freeze' not in result['claim_id']
+    payload["solver_results"] = [
+        result for result in payload["solver_results"] if "wallet_freeze" not in result["claim_id"]
     ]
-    payload['disproof_vectors'] = [
-        vector for vector in payload['disproof_vectors'] if 'wallet_freeze' not in vector['claim_id']
+    payload["disproof_vectors"] = [
+        vector
+        for vector in payload["disproof_vectors"]
+        if "wallet_freeze" not in vector["claim_id"]
     ]
-    with pytest.raises(ValueError, match='hsm'):
+    with pytest.raises(ValueError, match="hsm"):
         validate_domain_coverage(payload, required_domains=PRODUCTION_SECURITY_DOMAINS)
 
 
@@ -363,9 +369,9 @@ def test_domain_coverage_report_lists_claim_ids_per_domain():
     report = domain_coverage_report(
         example_minimal_exchange_model(), required_domains=PRODUCTION_SECURITY_DOMAINS
     )
-    assert report['fully_covered'] is True
-    assert report['missing_domains'] == []
-    assert report['domains']['withdrawals']['claim_ids'] == ['claim:no_unauthorized_withdrawal']
+    assert report["fully_covered"] is True
+    assert report["missing_domains"] == []
+    assert report["domains"]["withdrawals"]["claim_ids"] == ["claim:no_unauthorized_withdrawal"]
 
 
 # ---------------------------------------------------------------------------
@@ -384,7 +390,7 @@ def test_canonicalize_ir_returns_utf8_bytes():
     model = example_minimal_exchange_model()
     payload = canonicalize_ir(model)
     assert isinstance(payload, bytes)
-    payload.decode('utf-8')
+    payload.decode("utf-8")
 
 
 def test_calculate_model_cid_is_stable_and_content_addressed():
@@ -398,15 +404,21 @@ def test_calculate_model_cid_is_stable_and_content_addressed():
 def test_calculate_model_cid_changes_when_content_changes():
     model = example_minimal_exchange_model()
     mutated_dict = model.to_dict()
-    mutated_dict['claims'][0] = dict(mutated_dict['claims'][0], description='A materially different claim description.')
+    mutated_dict["claims"][0] = dict(
+        mutated_dict["claims"][0], description="A materially different claim description."
+    )
     mutated = SecurityModelIR.from_dict(mutated_dict)
     assert calculate_model_cid(model) != calculate_model_cid(mutated)
 
 
 def test_canonicalize_domain_coverage_report_is_deterministic_json():
     model = example_minimal_exchange_model()
-    first = canonicalize_domain_coverage_report_json(model, required_domains=PRODUCTION_SECURITY_DOMAINS)
-    second = canonicalize_domain_coverage_report_json(model, required_domains=PRODUCTION_SECURITY_DOMAINS)
+    first = canonicalize_domain_coverage_report_json(
+        model, required_domains=PRODUCTION_SECURITY_DOMAINS
+    )
+    second = canonicalize_domain_coverage_report_json(
+        model, required_domains=PRODUCTION_SECURITY_DOMAINS
+    )
     assert first == second
     assert '"fully_covered":true' in first
 
@@ -425,13 +437,13 @@ def test_canonicalize_domain_coverage_report_fail_closed_raises_for_incomplete_m
 
 
 def test_allowed_prover_targets_include_z3_and_documented_future_provers():
-    assert 'z3' in ALLOWED_PROVER_TARGETS
-    for prover in ('tla', 'tamarin', 'proverif', 'lean', 'coq', 'cvc5'):
+    assert "z3" in ALLOWED_PROVER_TARGETS
+    for prover in ("tla", "tamarin", "proverif", "lean", "coq", "cvc5"):
         assert prover in ALLOWED_PROVER_TARGETS
 
 
 def test_evidence_ref_helper_produces_required_fields():
-    ref = make_evidence_ref(kind='source_code', path='src/x.py', review_status='heuristic')
-    assert ref['kind'] == 'source_code'
-    assert ref['path'] == 'src/x.py'
-    assert ref['review_status'] == 'heuristic'
+    ref = make_evidence_ref(kind="source_code", path="src/x.py", review_status="heuristic")
+    assert ref["kind"] == "source_code"
+    assert ref["path"] == "src/x.py"
+    assert ref["review_status"] == "heuristic"

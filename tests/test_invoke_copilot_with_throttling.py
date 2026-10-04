@@ -29,9 +29,9 @@ def test_help_output():
         ["python3", "scripts/invoke_copilot_with_throttling.py", "--help"],
         capture_output=True,
         text=True,
-        cwd=project_root
+        cwd=project_root,
     )
-    
+
     assert result.returncode == 0, "Help command failed"
     assert "usage:" in result.stdout.lower(), "Help output missing usage"
     assert "--pr" in result.stdout, "Help missing --pr option"
@@ -49,13 +49,12 @@ def test_dry_run_mode():
         capture_output=True,
         text=True,
         cwd=project_root,
-        timeout=60
+        timeout=60,
     )
-    
+
     # Script should handle everything gracefully in dry-run
     output = result.stdout + result.stderr
-    assert "dry run" in output.lower() or "DRY RUN" in output, \
-        "Dry run mode not recognized"
+    assert "dry run" in output.lower() or "DRY RUN" in output, "Dry run mode not recognized"
     print("✅ Dry-run mode works")
 
 
@@ -64,15 +63,15 @@ def test_script_imports():
     sys.path.insert(0, str(project_root / "scripts"))
     try:
         import invoke_copilot_with_throttling
-        
+
         # Check for main class
-        assert hasattr(invoke_copilot_with_throttling, "ThrottledCopilotInvoker"), \
+        assert hasattr(invoke_copilot_with_throttling, "ThrottledCopilotInvoker"), (
             "ThrottledCopilotInvoker class not found"
-        
+        )
+
         # Check for main function
-        assert hasattr(invoke_copilot_with_throttling, "main"), \
-            "main function not found"
-        
+        assert hasattr(invoke_copilot_with_throttling, "main"), "main function not found"
+
         print("✅ Script imports correctly and has expected components")
     except ImportError as e:
         print(f"❌ Failed to import script: {e}")
@@ -84,14 +83,11 @@ def test_throttled_invoker_instantiation():
     sys.path.insert(0, str(project_root / "scripts"))
     try:
         from invoke_copilot_with_throttling import ThrottledCopilotInvoker
-        
+
         # Test dry-run mode
         try:
             invoker = ThrottledCopilotInvoker(
-                dry_run=True,
-                batch_size=3,
-                max_concurrent=3,
-                check_interval=30
+                dry_run=True, batch_size=3, max_concurrent=3, check_interval=30
             )
             assert invoker.dry_run is True, "Dry run mode not set"
             assert invoker.batch_size == 3, "Batch size not set correctly"
@@ -101,7 +97,7 @@ def test_throttled_invoker_instantiation():
         except SystemExit:
             # Expected if gh CLI is not authenticated
             print("✅ ThrottledCopilotInvoker instantiates correctly (gh CLI check works)")
-        
+
     except Exception as e:
         print(f"⚠️  Could not test instantiation: {e}")
         print("   This is expected if gh CLI is not installed/authenticated")
@@ -112,21 +108,19 @@ def test_batch_size_configuration():
     sys.path.insert(0, str(project_root / "scripts"))
     try:
         from invoke_copilot_with_throttling import ThrottledCopilotInvoker
-        
+
         try:
             # Test different batch sizes
             for batch_size in [1, 3, 5, 10]:
-                invoker = ThrottledCopilotInvoker(
-                    dry_run=True,
-                    batch_size=batch_size
-                )
-                assert invoker.batch_size == batch_size, \
+                invoker = ThrottledCopilotInvoker(dry_run=True, batch_size=batch_size)
+                assert invoker.batch_size == batch_size, (
                     f"Batch size {batch_size} not set correctly"
-            
+                )
+
             print("✅ Batch size configuration works")
         except SystemExit:
             print("✅ Batch size configuration works (gh CLI check works)")
-        
+
     except Exception as e:
         print(f"⚠️  Could not test batch size: {e}")
 
@@ -136,21 +130,19 @@ def test_max_concurrent_configuration():
     sys.path.insert(0, str(project_root / "scripts"))
     try:
         from invoke_copilot_with_throttling import ThrottledCopilotInvoker
-        
+
         try:
             # Test different max concurrent values
             for max_concurrent in [1, 3, 5, 10]:
-                invoker = ThrottledCopilotInvoker(
-                    dry_run=True,
-                    max_concurrent=max_concurrent
-                )
-                assert invoker.max_concurrent == max_concurrent, \
+                invoker = ThrottledCopilotInvoker(dry_run=True, max_concurrent=max_concurrent)
+                assert invoker.max_concurrent == max_concurrent, (
                     f"Max concurrent {max_concurrent} not set correctly"
-            
+                )
+
             print("✅ Max concurrent configuration works")
         except SystemExit:
             print("✅ Max concurrent configuration works (gh CLI check works)")
-        
+
     except Exception as e:
         print(f"⚠️  Could not test max concurrent: {e}")
 
@@ -160,13 +152,13 @@ def test_copilot_cli_integration():
     sys.path.insert(0, str(project_root))
     try:
         from ipfs_datasets_py.utils.copilot_cli import CopilotCLI
-        
+
         cli = CopilotCLI()
         status = cli.get_status()
-        
+
         assert isinstance(status, dict), "Status should be a dictionary"
-        assert 'github_cli_available' in status, "Status should include github_cli_available"
-        
+        assert "github_cli_available" in status, "Status should include github_cli_available"
+
         print("✅ CopilotCLI integration works")
     except ImportError as e:
         print(f"⚠️  CopilotCLI not available: {e}")
@@ -178,22 +170,23 @@ def test_throttling_logic():
     sys.path.insert(0, str(project_root / "scripts"))
     try:
         from invoke_copilot_with_throttling import ThrottledCopilotInvoker
-        
+
         try:
             invoker = ThrottledCopilotInvoker(dry_run=True, batch_size=3)
-            
+
             # Check that required methods exist
-            assert hasattr(invoker, 'wait_for_agent_slots'), \
-                "wait_for_agent_slots method not found"
-            assert hasattr(invoker, 'count_active_copilot_agents'), \
+            assert hasattr(invoker, "wait_for_agent_slots"), "wait_for_agent_slots method not found"
+            assert hasattr(invoker, "count_active_copilot_agents"), (
                 "count_active_copilot_agents method not found"
-            assert hasattr(invoker, 'process_prs_with_throttling'), \
+            )
+            assert hasattr(invoker, "process_prs_with_throttling"), (
                 "process_prs_with_throttling method not found"
-            
+            )
+
             print("✅ Throttling logic methods are present")
         except SystemExit:
             print("✅ Throttling logic methods are present (gh CLI check works)")
-        
+
     except Exception as e:
         print(f"⚠️  Could not test throttling logic: {e}")
 
@@ -201,7 +194,7 @@ def test_throttling_logic():
 def main():
     """Run all tests."""
     print("🧪 Testing invoke_copilot_with_throttling.py script\n")
-    
+
     tests = [
         test_script_exists,
         test_help_output,
@@ -213,7 +206,7 @@ def main():
         test_copilot_cli_integration,
         test_throttling_logic,
     ]
-    
+
     failed = 0
     for test in tests:
         try:
@@ -225,10 +218,10 @@ def main():
         except Exception as e:
             print(f"❌ ERROR: {e}")
             failed += 1
-    
-    print(f"\n{'='*60}")
+
+    print(f"\n{'=' * 60}")
     print(f"Tests: {len(tests) - failed}/{len(tests)} passed")
-    
+
     if failed > 0:
         print(f"❌ {failed} test(s) failed")
         sys.exit(1)

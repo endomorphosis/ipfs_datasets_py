@@ -10,9 +10,7 @@ import pytest
 from ipfs_datasets_py.processors.wallets.protocols import OperationContext, RequestLimits
 from ipfs_datasets_py.processors.wallets.xrpl import XRPLNetwork, XRPLWalletProcessor
 
-FIXTURE_ROOT = (
-    Path(__file__).resolve().parents[4] / "fixtures" / "wallets" / "xrpl"
-)
+FIXTURE_ROOT = Path(__file__).resolve().parents[4] / "fixtures" / "wallets" / "xrpl"
 
 
 @pytest.fixture

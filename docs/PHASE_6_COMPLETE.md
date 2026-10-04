@@ -105,13 +105,13 @@ from ipfs_datasets_py.core_operations import KnowledgeGraphManager
 # Parse arguments
 subcommand = args[1]
 kwargs = parse_tool_args(args[2:])
-driver_url = kwargs.pop('driver_url', "ipfs://localhost:5001")
+driver_url = kwargs.pop("driver_url", "ipfs://localhost:5001")
 
 # Create manager
 manager = KnowledgeGraphManager(driver_url=driver_url)
 
 # Execute command
-if subcommand == 'add-entity':
+if subcommand == "add-entity":
     result = anyio.run(manager.add_entity, entity_id, entity_type, properties)
     print_result(result, "json" if json_output else "pretty")
 ```

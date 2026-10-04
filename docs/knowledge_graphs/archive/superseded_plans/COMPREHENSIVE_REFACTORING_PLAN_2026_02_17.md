@@ -135,7 +135,7 @@ The knowledge_graphs module is organized into **14 specialized subdirectories**:
 ```python
 # Current code:
 def convert_format(graph, format):
-    if format in ['graphml', 'gexf', 'pajek']:
+    if format in ["graphml", "gexf", "pajek"]:
         raise NotImplementedError(f"Format {format} not yet implemented")
 ```
 

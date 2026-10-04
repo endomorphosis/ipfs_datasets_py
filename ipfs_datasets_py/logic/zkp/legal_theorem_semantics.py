@@ -52,9 +52,7 @@ class HornAxiom:
 def _parse_atom(atom: str, *, label: str) -> str:
     atom = atom.strip()
     if not atom or not _ATOM_RE.match(atom):
-        raise LegalTheoremSyntaxError(
-            f"{label} must be an atom matching [A-Za-z][A-Za-z0-9_]*"
-        )
+        raise LegalTheoremSyntaxError(f"{label} must be an atom matching [A-Za-z][A-Za-z0-9_]*")
     return atom
 
 

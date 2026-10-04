@@ -95,21 +95,15 @@ def test_normalize_covers_all_objects_including_unmapped_linkable():
     assert summary["response_linkable_count"] == 3
     assert summary["preferred_selection_count"] == 1
     assert summary["unmapped_linkable_count"] == 1
-    assert summary["mapping_status_counts"][
-        BucketAudioMappingStatus.SELECTED_FOR_RESPONSE.value
-    ] == 1
-    assert summary["mapping_status_counts"][
-        BucketAudioMappingStatus.ALTERNATE_FOR_RESPONSE.value
-    ] == 1
-    assert summary["mapping_status_counts"][
-        BucketAudioMappingStatus.UNMAPPED_LINKABLE.value
-    ] == 1
-    assert summary["mapping_status_counts"][
-        BucketAudioMappingStatus.NON_RESPONSE_AUDIO.value
-    ] == 1
-    assert summary["mapping_status_counts"][
-        BucketAudioMappingStatus.METADATA_ONLY.value
-    ] == 1
+    assert (
+        summary["mapping_status_counts"][BucketAudioMappingStatus.SELECTED_FOR_RESPONSE.value] == 1
+    )
+    assert (
+        summary["mapping_status_counts"][BucketAudioMappingStatus.ALTERNATE_FOR_RESPONSE.value] == 1
+    )
+    assert summary["mapping_status_counts"][BucketAudioMappingStatus.UNMAPPED_LINKABLE.value] == 1
+    assert summary["mapping_status_counts"][BucketAudioMappingStatus.NON_RESPONSE_AUDIO.value] == 1
+    assert summary["mapping_status_counts"][BucketAudioMappingStatus.METADATA_ONLY.value] == 1
 
     by_path = {item.path: item for item in bundle.entries}
     preferred = by_path[
@@ -129,8 +123,7 @@ def test_normalize_covers_all_objects_including_unmapped_linkable():
     assert alternate.mapping_status is BucketAudioMappingStatus.ALTERNATE_FOR_RESPONSE
 
     unmapped = by_path[
-        f"runs/abby-full-preprocess-20260622T152102Z/phase4/audio/"
-        f"abby-tts-{other['textHash']}.mp3"
+        f"runs/abby-full-preprocess-20260622T152102Z/phase4/audio/abby-tts-{other['textHash']}.mp3"
     ]
     assert unmapped.response_id is None
     assert unmapped.mapping_status is BucketAudioMappingStatus.UNMAPPED_LINKABLE

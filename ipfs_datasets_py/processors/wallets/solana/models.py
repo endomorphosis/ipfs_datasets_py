@@ -142,8 +142,7 @@ class AddressLookupTable:
             object.__setattr__(self, field_name, indexes)
         for field_name in ("writable_addresses", "readonly_addresses"):
             addresses = tuple(
-                normalize_pubkey(item, field_name=field_name)
-                for item in getattr(self, field_name)
+                normalize_pubkey(item, field_name=field_name) for item in getattr(self, field_name)
             )
             object.__setattr__(self, field_name, addresses)
         if len(self.writable_indexes) != len(self.writable_addresses):
@@ -216,18 +215,12 @@ def resolve_message_account_keys(
             parse_non_negative_int(value, field_name="lookup readonly index")
             for value in (declaration.get("readonlyIndexes") or ())
         )
-        table_writable = writable[
-            writable_offset : writable_offset + len(writable_indexes)
-        ]
-        table_readonly = readonly[
-            readonly_offset : readonly_offset + len(readonly_indexes)
-        ]
+        table_writable = writable[writable_offset : writable_offset + len(writable_indexes)]
+        table_readonly = readonly[readonly_offset : readonly_offset + len(readonly_indexes)]
         if len(table_writable) != len(writable_indexes) or len(table_readonly) != len(
             readonly_indexes
         ):
-            raise NormalizationError(
-                f"lookup table {table_index} has unresolved address indexes"
-            )
+            raise NormalizationError(f"lookup table {table_index} has unresolved address indexes")
         tables.append(
             AddressLookupTable(
                 account_key=declaration.get("accountKey"),
@@ -297,9 +290,7 @@ class SolanaTransactionBundle:
         object.__setattr__(
             self,
             "transaction_index",
-            parse_non_negative_int(
-                self.transaction_index, field_name="transaction index"
-            ),
+            parse_non_negative_int(self.transaction_index, field_name="transaction index"),
         )
 
 

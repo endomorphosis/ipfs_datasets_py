@@ -44,8 +44,7 @@ class XRPLResponseBackend(Protocol):
         params: Mapping[str, Any] | None,
         *,
         context: OperationContext,
-    ) -> Any:
-        ...
+    ) -> Any: ...
 
 
 def _marker_key(marker: Any) -> str:
@@ -132,9 +131,7 @@ class JsonRpcHttpBackend:
         request = HttpRequest(
             method="POST",
             url=self.base_url,
-            max_response_bytes=min(
-                self.max_response_bytes, context.limits.max_response_bytes
-            ),
+            max_response_bytes=min(self.max_response_bytes, context.limits.max_response_bytes),
             headers={"accept": "application/json", "content-type": "application/json"},
             body=body,
         )
@@ -166,9 +163,9 @@ def _fixture_key(method: str, params: Mapping[str, Any] | None) -> str:
     }
     # Normalize marker for keying.
     if marker is not None:
-        parts["params"]["marker"] = json.loads(_marker_key(marker)) if not isinstance(
-            marker, str
-        ) else marker
+        parts["params"]["marker"] = (
+            json.loads(_marker_key(marker)) if not isinstance(marker, str) else marker
+        )
     return json.dumps(parts, sort_keys=True, separators=(",", ":"), allow_nan=False)
 
 
@@ -312,9 +309,7 @@ class XRPLLedgerProvider:
     def ingest_wallet(self, request: BoundedRequest) -> AsyncIterator[RecordBatch]:
         return self._ingest_wallet(request)
 
-    async def _ingest_wallet(
-        self, request: BoundedRequest
-    ) -> AsyncIterator[RecordBatch]:
+    async def _ingest_wallet(self, request: BoundedRequest) -> AsyncIterator[RecordBatch]:
         """Stream ``account_tx`` pages using marker pagination without gaps/dupes."""
 
         request.context.check_active()
@@ -342,7 +337,9 @@ class XRPLLedgerProvider:
                 "account": account,
                 "ledger_index_min": ledger_min,
                 "ledger_index_max": ledger_max,
-                "limit": min(self.page_size, request.context.limits.max_items - items or self.page_size),
+                "limit": min(
+                    self.page_size, request.context.limits.max_items - items or self.page_size
+                ),
                 "forward": bool(request.options.get("forward", False)),
             }
             if self.require_validated:
@@ -385,9 +382,7 @@ class XRPLLedgerProvider:
                     )
                 seen_hashes.add(tx.hash)
                 records.append(tx)
-                raw_bytes += len(
-                    json.dumps(entry, separators=(",", ":"), sort_keys=True).encode()
-                )
+                raw_bytes += len(json.dumps(entry, separators=(",", ":"), sort_keys=True).encode())
                 items += 1
                 if items >= request.context.limits.max_items:
                     batch = RecordBatch(
@@ -401,9 +396,7 @@ class XRPLLedgerProvider:
 
             pages += 1
             next_marker = result.get("marker")
-            next_cursor = (
-                _marker_key(next_marker) if next_marker is not None else None
-            )
+            next_cursor = _marker_key(next_marker) if next_marker is not None else None
             batch = RecordBatch(
                 records=tuple(records),
                 next_cursor=next_cursor,
@@ -420,18 +413,14 @@ class XRPLLedgerProvider:
     def ingest_ledger(self, request: BoundedRequest) -> AsyncIterator[RecordBatch]:
         return self._ingest_ledger(request)
 
-    async def _ingest_ledger(
-        self, request: BoundedRequest
-    ) -> AsyncIterator[RecordBatch]:
+    async def _ingest_ledger(self, request: BoundedRequest) -> AsyncIterator[RecordBatch]:
         """Ingest validated ledgers in an inclusive index range with hash anchors."""
 
         request.context.check_active()
         start = request.start_position
         end = request.end_position
         if start is None or end is None:
-            raise InvalidRequestError(
-                "ledger ingestion requires start_position and end_position"
-            )
+            raise InvalidRequestError("ledger ingestion requires start_position and end_position")
         if start > end:
             raise InvalidRequestError("start_position must not exceed end_position")
 
@@ -440,9 +429,7 @@ class XRPLLedgerProvider:
             try:
                 cursor_index = int(request.cursor)
             except ValueError as exc:
-                raise InvalidRequestError(
-                    "ledger cursor must be an integer ledger index"
-                ) from exc
+                raise InvalidRequestError("ledger cursor must be an integer ledger index") from exc
 
         pages = 0
         items = 0
@@ -474,8 +461,7 @@ class XRPLLedgerProvider:
             if prev_hash is not None and parent_hash is not None:
                 if str(parent_hash).upper() != prev_hash:
                     raise ProviderError(
-                        f"ledger hash continuity broken at index {index}: "
-                        f"parent_hash mismatch"
+                        f"ledger hash continuity broken at index {index}: parent_hash mismatch"
                     )
             prev_hash = ledger_hash or prev_hash
 
@@ -512,9 +498,7 @@ class XRPLLedgerProvider:
                     validated_hint=True,
                 )
                 records.append(tx)
-                raw_bytes += len(
-                    json.dumps(entry, separators=(",", ":"), sort_keys=True).encode()
-                )
+                raw_bytes += len(json.dumps(entry, separators=(",", ":"), sort_keys=True).encode())
                 items += 1
                 if items >= request.context.limits.max_items:
                     batch = RecordBatch(
@@ -565,9 +549,9 @@ def fixture_backend_from_account_tx(
 
     responses: MutableMapping[str, Any] = {}
     if ledger_head is not None:
-        responses[
-            _fixture_key("ledger", {"ledger_index": "validated", "transactions": False})
-        ] = ledger_head
+        responses[_fixture_key("ledger", {"ledger_index": "validated", "transactions": False})] = (
+            ledger_head
+        )
 
     if ledgers:
         for idx, ledger_result in ledgers.items():

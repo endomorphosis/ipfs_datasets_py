@@ -458,9 +458,7 @@ def test_module_level_run_helper_matches_class() -> None:
         z3_stdout="unsat\n",
         cvc5_stdout="unsat\n",
     )
-    via_class = pipeline.run(
-        FIXED_INCR, path="helper_class.py", contracts=_incr_contracts()
-    )
+    via_class = pipeline.run(FIXED_INCR, path="helper_class.py", contracts=_incr_contracts())
     via_helper = run_source_to_verification_pipeline(
         FIXED_INCR,
         path="helper_fn.py",

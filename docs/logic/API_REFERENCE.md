@@ -51,7 +51,7 @@ Dictionary with structure:
             "confidence": float,
             "predicates_used": List[str],
             "quantifiers": List[str],
-            "operators": List[str]
+            "operators": List[str],
         }
     ],
     "summary": {
@@ -61,19 +61,15 @@ Dictionary with structure:
         "average_confidence": float,
         "unique_predicates": List[str],
         "quantifier_distribution": Dict[str, int],
-        "operator_distribution": Dict[str, int]
+        "operator_distribution": Dict[str, int],
     },
-    "metadata": {...}
+    "metadata": {...},
 }
 ```
 
 **Example:**
 ```python
-result = await convert_text_to_fol(
-    "All humans are mortal",
-    confidence_threshold=0.7,
-    use_nlp=True
-)
+result = await convert_text_to_fol("All humans are mortal", confidence_threshold=0.7, use_nlp=True)
 ```
 
 ---
@@ -102,16 +98,13 @@ def extract_predicates_nlp(
     "verbs": List[str],
     "adjectives": List[str],
     "relations": List[str],
-    "entities": List[str]  # Only with spaCy
+    "entities": List[str],  # Only with spaCy
 }
 ```
 
 **Example:**
 ```python
-predicates = extract_predicates_nlp(
-    "The quick brown fox jumps",
-    use_spacy=True
-)
+predicates = extract_predicates_nlp("The quick brown fox jumps", use_spacy=True)
 ```
 
 ---
@@ -139,7 +132,7 @@ def extract_semantic_roles(
         "agent": Optional[str],
         "patient": Optional[str],
         "location": Optional[str],
-        "time": Optional[str]
+        "time": Optional[str],
     }
 ]
 ```
@@ -174,7 +167,7 @@ def detect_normative_conflicts(
       "temporal_constraint": Optional[Dict],
       "condition": Optional[str],
       "authority_level": Optional[str],
-      "created_at": Optional[str]
+      "created_at": Optional[str],
   }
   ```
 
@@ -187,7 +180,7 @@ def detect_normative_conflicts(
         "norm1_index": int,
         "norm2_index": int,
         "description": str,
-        "resolution_strategies": List[str]
+        "resolution_strategies": List[str],
     }
 ]
 ```
@@ -208,7 +201,7 @@ def detect_normative_conflicts(
 ```python
 norms = [
     {"type": DeonticOperator.OBLIGATION, "action": "attend", "subject": "employee"},
-    {"type": DeonticOperator.PROHIBITION, "action": "attend", "subject": "employee"}
+    {"type": DeonticOperator.PROHIBITION, "action": "attend", "subject": "employee"},
 ]
 conflicts = detect_normative_conflicts(norms)
 ```
@@ -351,7 +344,7 @@ def get_statistics(self) -> Dict[str, Any]
     "evictions": int,
     "expirations": int,
     "total_puts": int,
-    "ipfs_backed": bool
+    "ipfs_backed": bool,
 }
 ```
 
@@ -442,10 +435,7 @@ Process large batch in memory-efficient chunks.
 **Example:**
 ```python
 processor = ChunkedBatchProcessor(chunk_size=100)
-result = await processor.process_large_batch(
-    items=large_dataset,
-    process_func=convert_text_to_fol
-)
+result = await processor.process_large_batch(items=large_dataset, process_func=convert_text_to_fol)
 ```
 
 ---
@@ -516,7 +506,7 @@ result = await benchmark.benchmark_async(
     name="FOL Conversion",
     func=convert_text_to_fol,
     text_input="All humans are mortal",
-    iterations=100
+    iterations=100,
 )
 print(result.summary())
 ```
@@ -571,12 +561,7 @@ Train model on labeled data.
 
 **Returns:**
 ```python
-{
-    "train_accuracy": float,
-    "val_accuracy": float,
-    "n_train": int,
-    "n_val": int
-}
+{"train_accuracy": float, "val_accuracy": float, "n_train": int, "n_val": int}
 ```
 
 #### `save_model()` / `load_model()`
@@ -610,7 +595,7 @@ confidence = scorer.predict_confidence(
     fol_formula="∀x(Human(x) → Mortal(x))",
     predicates={"nouns": ["humans"], "verbs": ["are"]},
     quantifiers=["∀"],
-    operators=["→"]
+    operators=["→"],
 )
 
 # Save
@@ -654,6 +639,7 @@ class DeonticOperator(Enum):
     OBLIGATION = "O"
     PERMISSION = "P"
     PROHIBITION = "F"
+
 
 class ProofStatus(Enum):
     PROVEN = "proven"

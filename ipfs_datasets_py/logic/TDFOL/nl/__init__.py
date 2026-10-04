@@ -46,28 +46,23 @@ __all__ = [
     "NLPreprocessor",
     "ProcessedDocument",
     "Entity",
-    
     # Pattern Matching
     "PatternMatcher",
     "PatternMatch",
     "Pattern",
     "PatternType",
-    
     # Formula Generation
     "FormulaGenerator",
     "GeneratedFormula",
-    
     # Context Resolution
     "ContextResolver",
     "Context",
-    
     # Unified API
     "NLParser",
     "ParseOptions",
     "ParseResult",
     "parse_natural_language",
     "parse_natural_language_batch",
-    
     # LLM Converter (from llm.py)
     "LLMParseResult",
     "LLMResponseCache",
@@ -76,7 +71,6 @@ __all__ = [
     "build_validation_prompt",
     "build_error_correction_prompt",
     "get_operator_hints_for_text",
-    
     # Utilities (from utils.py)
     "create_cache_cid",
     "validate_cid",
@@ -95,28 +89,23 @@ _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
     "NLPreprocessor": (".tdfol_nl_preprocessor", "NLPreprocessor"),
     "ProcessedDocument": (".tdfol_nl_preprocessor", "ProcessedDocument"),
     "Entity": (".tdfol_nl_preprocessor", "Entity"),
-    
     # Pattern Matching
     "PatternMatcher": (".tdfol_nl_patterns", "PatternMatcher"),
     "PatternMatch": (".tdfol_nl_patterns", "PatternMatch"),
     "Pattern": (".tdfol_nl_patterns", "Pattern"),
     "PatternType": (".tdfol_nl_patterns", "PatternType"),
-    
     # Formula Generation
     "FormulaGenerator": (".tdfol_nl_generator", "FormulaGenerator"),
     "GeneratedFormula": (".tdfol_nl_generator", "GeneratedFormula"),
-    
     # Context Resolution
     "ContextResolver": (".tdfol_nl_context", "ContextResolver"),
     "Context": (".tdfol_nl_context", "Context"),
-    
     # Unified API
     "NLParser": (".tdfol_nl_api", "NLParser"),
     "ParseOptions": (".tdfol_nl_api", "ParseOptions"),
     "ParseResult": (".tdfol_nl_api", "ParseResult"),
     "parse_natural_language": (".tdfol_nl_api", "parse_natural_language"),
     "parse_natural_language_batch": (".tdfol_nl_api", "parse_natural_language_batch"),
-    
     # LLM Converter (from llm.py)
     "LLMParseResult": (".llm", "LLMParseResult"),
     "LLMResponseCache": (".llm", "LLMResponseCache"),
@@ -125,7 +114,6 @@ _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
     "build_validation_prompt": (".llm", "build_validation_prompt"),
     "build_error_correction_prompt": (".llm", "build_error_correction_prompt"),
     "get_operator_hints_for_text": (".llm", "get_operator_hints_for_text"),
-    
     # Utilities (from utils.py)
     "create_cache_cid": (".utils", "create_cache_cid"),
     "validate_cid": (".utils", "validate_cid"),

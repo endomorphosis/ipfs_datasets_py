@@ -39,7 +39,9 @@ The feature is included in the main package. No additional installation required
 ### Basic Usage
 
 ```python
-from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.patent_scraper import search_patents_by_keyword
+from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.patent_scraper import (
+    search_patents_by_keyword,
+)
 
 # Search for patents
 patents = search_patents_by_keyword(["artificial intelligence"], limit=100)
@@ -132,7 +134,7 @@ Available for AI assistant integration:
 ```python
 from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.patent_scraper import (
     USPTOPatentScraper,
-    PatentSearchCriteria
+    PatentSearchCriteria,
 )
 
 scraper = USPTOPatentScraper(rate_limit_delay=1.0)
@@ -140,7 +142,7 @@ criteria = PatentSearchCriteria(
     keywords=["machine learning", "neural network"],
     date_from="2020-01-01",
     cpc_classification=["G06F"],
-    limit=500
+    limit=500,
 )
 
 patents = scraper.search_patents(criteria)
@@ -152,7 +154,7 @@ patents = scraper.search_patents(criteria)
 from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.patent_scraper import (
     USPTOPatentScraper,
     PatentDatasetBuilder,
-    PatentSearchCriteria
+    PatentSearchCriteria,
 )
 from pathlib import Path
 
@@ -161,9 +163,7 @@ builder = PatentDatasetBuilder(scraper)
 
 criteria = PatentSearchCriteria(keywords=["blockchain"], limit=1000)
 result = builder.build_dataset(
-    criteria=criteria,
-    output_format="json",
-    output_path=Path("/data/patents/blockchain.json")
+    criteria=criteria, output_format="json", output_path=Path("/data/patents/blockchain.json")
 )
 ```
 

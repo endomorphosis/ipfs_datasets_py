@@ -149,9 +149,7 @@ class ProgramDataEpoch:
         object.__setattr__(
             self,
             "binary_digest",
-            _optional_digest(self.binary_digest, "binary_digest")
-            if self.binary_digest
-            else "",
+            _optional_digest(self.binary_digest, "binary_digest") if self.binary_digest else "",
         )
         loader = (
             self.loader_version
@@ -170,25 +168,19 @@ class ProgramDataEpoch:
                 "deployment_slot",
                 _non_negative(self.deployment_slot, "deployment_slot"),
             )
-        object.__setattr__(
-            self, "code_epoch", self.code_epoch.strip() if self.code_epoch else ""
-        )
+        object.__setattr__(self, "code_epoch", self.code_epoch.strip() if self.code_epoch else "")
         if self.program_data_address:
             object.__setattr__(
                 self,
                 "program_data_address",
-                normalize_pubkey(
-                    self.program_data_address, field="program_data_address"
-                ),
+                normalize_pubkey(self.program_data_address, field="program_data_address"),
             )
         else:
             object.__setattr__(self, "program_data_address", "")
         if self.upgrade_authority is not None and not isinstance(
             self.upgrade_authority, UpgradeAuthority
         ):
-            raise InvalidRequestError(
-                "upgrade_authority must be an UpgradeAuthority or None"
-            )
+            raise InvalidRequestError("upgrade_authority must be an UpgradeAuthority or None")
         object.__setattr__(
             self,
             "idl_digest",
@@ -201,20 +193,14 @@ class ProgramDataEpoch:
             if self.build_manifest_digest
             else "",
         )
-        object.__setattr__(
-            self, "compiler", self.compiler.strip() if self.compiler else ""
-        )
+        object.__setattr__(self, "compiler", self.compiler.strip() if self.compiler else "")
         object.__setattr__(
             self,
             "compiler_version",
             self.compiler_version.strip() if self.compiler_version else "",
         )
-        object.__setattr__(
-            self, "compiler_flags", _freeze_mapping(self.compiler_flags)
-        )
-        object.__setattr__(
-            self, "network", self.network.strip() if self.network else ""
-        )
+        object.__setattr__(self, "compiler_flags", _freeze_mapping(self.compiler_flags))
+        object.__setattr__(self, "network", self.network.strip() if self.network else "")
         object.__setattr__(
             self, "genesis_hash", self.genesis_hash.strip() if self.genesis_hash else ""
         )
@@ -281,9 +267,7 @@ class ProgramDataEpoch:
             raise InvalidRequestError("fixture must be a SolanaProgramFixture")
         binary_digest = fixture.sbf_elf_digest
         if not binary_digest:
-            raise InvalidRequestError(
-                "fixture must provide SBF ELF for a program-data epoch"
-            )
+            raise InvalidRequestError("fixture must provide SBF ELF for a program-data epoch")
         code_epoch = fixture.code_epoch
         if not code_epoch:
             code_epoch = f"sbf:{binary_digest}"
@@ -330,9 +314,7 @@ class SolanaNormalizationResult:
         if not isinstance(self.program_epoch, ProgramDataEpoch):
             raise InvalidRequestError("program_epoch must be a ProgramDataEpoch")
         if not isinstance(self.program_relation, ProgramAccountRelation):
-            raise InvalidRequestError(
-                "program_relation must be a ProgramAccountRelation"
-            )
+            raise InvalidRequestError("program_relation must be a ProgramAccountRelation")
         if not isinstance(self.upgrade_authority, UpgradeAuthority):
             raise InvalidRequestError("upgrade_authority must be an UpgradeAuthority")
         if not isinstance(self.cpi_graph, CPIGraph):
@@ -361,9 +343,7 @@ class SolanaNormalizationResult:
         object.__setattr__(
             self,
             "diagnostics",
-            tuple(
-                _required_text(item, "diagnostics item") for item in self.diagnostics
-            ),
+            tuple(_required_text(item, "diagnostics item") for item in self.diagnostics),
         )
         object.__setattr__(self, "attributes", _freeze_mapping(self.attributes))
         # Invariant: incomplete coverage never passes.
@@ -465,9 +445,7 @@ class SolanaProgramFrontend:
         elf = normalize_elf_bytes(sbf_elf)
         if len(elf) > self._max_elf_bytes:
             raise ResourceLimitError("SBF ELF exceeds max_elf_bytes")
-        check_magic = (
-            self._require_elf_magic if require_elf_magic is None else require_elf_magic
-        )
+        check_magic = self._require_elf_magic if require_elf_magic is None else require_elf_magic
         if check_magic:
             assert_elf_magic(elf)
 
@@ -524,8 +502,7 @@ class SolanaProgramFrontend:
             raise InvalidRequestError("source_manifest must be a SourceManifest")
 
         has_declared = bool(
-            source_manifest.runtime_bytecode_digest
-            or source_manifest.creation_bytecode_digest
+            source_manifest.runtime_bytecode_digest or source_manifest.creation_bytecode_digest
         )
         if not has_declared:
             return SourceEquivalenceStatus.NOT_DECLARED
@@ -624,9 +601,7 @@ class SolanaProgramFrontend:
         elf = normalize_elf_bytes(sbf_elf)
         if len(elf) > self._max_elf_bytes:
             raise ResourceLimitError("SBF ELF exceeds max_elf_bytes")
-        check_magic = (
-            self._require_elf_magic if require_elf_magic is None else require_elf_magic
-        )
+        check_magic = self._require_elf_magic if require_elf_magic is None else require_elf_magic
         if check_magic:
             assert_elf_magic(elf)
 
@@ -683,18 +658,12 @@ class SolanaProgramFrontend:
         if source_manifest is None:
             source_status = SourceEquivalenceStatus.INDEPENDENT_RUNTIME
             analysis_mode = AnalysisMode.RUNTIME_ONLY
-            diagnostics.append(
-                "no source manifest; analyzing deployed SBF independently"
-            )
+            diagnostics.append("no source manifest; analyzing deployed SBF independently")
         else:
-            source_status = self.reproduce_sbf_equivalence(
-                source_manifest, sbf_elf=elf
-            )
+            source_status = self.reproduce_sbf_equivalence(source_manifest, sbf_elf=elf)
             if source_status is SourceEquivalenceStatus.REPRODUCED:
                 analysis_mode = AnalysisMode.SOURCE_AND_RUNTIME
-                diagnostics.append(
-                    "source/deployed SBF equivalence reproduced by digest match"
-                )
+                diagnostics.append("source/deployed SBF equivalence reproduced by digest match")
             elif source_status is SourceEquivalenceStatus.MISMATCH:
                 analysis_mode = AnalysisMode.RUNTIME_ONLY
                 source_status = SourceEquivalenceStatus.INDEPENDENT_RUNTIME
@@ -704,14 +673,10 @@ class SolanaProgramFrontend:
             elif source_status is SourceEquivalenceStatus.NOT_DECLARED:
                 analysis_mode = AnalysisMode.SOURCE_EVIDENCE_ONLY
                 source_status = SourceEquivalenceStatus.EVIDENCE_ONLY
-                diagnostics.append(
-                    "source present without declared SBF digests; evidence only"
-                )
+                diagnostics.append("source present without declared SBF digests; evidence only")
             else:
                 analysis_mode = AnalysisMode.RUNTIME_ONLY
-                diagnostics.append(
-                    "source binding unavailable; analyzing SBF independently"
-                )
+                diagnostics.append("source binding unavailable; analyzing SBF independently")
 
         # IDL/build correspondence notes.
         if epoch.idl_digest:
@@ -719,16 +684,12 @@ class SolanaProgramFrontend:
         else:
             diagnostics.append("IDL not bound; interface correspondence unbound")
         if epoch.build_manifest_digest:
-            diagnostics.append(
-                f"build manifest bound by digest {epoch.build_manifest_digest}"
-            )
+            diagnostics.append(f"build manifest bound by digest {epoch.build_manifest_digest}")
 
         if authority.state is UpgradeAuthorityState.UNKNOWN:
             diagnostics.append("upgrade authority unknown; immutability not assumed")
         if authority.state is UpgradeAuthorityState.AUTHORITY_SET:
-            diagnostics.append(
-                f"program upgradeable under authority {authority.authority_pubkey}"
-            )
+            diagnostics.append(f"program upgradeable under authority {authority.authority_pubkey}")
         if authority.state is UpgradeAuthorityState.IMMUTABLE:
             diagnostics.append("upgrade authority revoked; program immutable")
 

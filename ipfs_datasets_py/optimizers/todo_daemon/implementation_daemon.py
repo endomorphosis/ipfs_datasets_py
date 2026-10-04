@@ -101,11 +101,13 @@ def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-def _copilot_fallback_command(*, codex: str | None, copilot: str, workspace_path: Path) -> list[str]:
-        return [
-                "bash",
-                "-lc",
-                """
+def _copilot_fallback_command(
+    *, codex: str | None, copilot: str, workspace_path: Path
+) -> list[str]:
+    return [
+        "bash",
+        "-lc",
+        """
 prompt_file=$(mktemp)
 trap 'rm -f "$prompt_file"' EXIT
 cat > "$prompt_file"
@@ -122,11 +124,11 @@ if [[ -n "$codex_bin" ]]; then
 fi
 exec "$copilot_bin" --silent --allow-all-tools --allow-all-paths --no-ask-user --autopilot --prompt "$(cat "$prompt_file")"
 """,
-                "bash",
-                codex or "",
-                copilot,
-                str(workspace_path),
-        ]
+        "bash",
+        codex or "",
+        copilot,
+        str(workspace_path),
+    ]
 
 
 def split_csv(value: str) -> list[str]:
@@ -328,21 +330,31 @@ class PortalTaskState:
             active_branch=str(payload.get("active_branch") or ""),
             implementation_in_progress=bool(payload.get("implementation_in_progress")),
             recommended_task_id=str(payload.get("recommended_task_id") or ""),
-            recommended_actions=[str(item) for item in payload.get("recommended_actions", []) or []],
-            eligible_ready_task_ids=[str(item) for item in payload.get("eligible_ready_task_ids", []) or []],
+            recommended_actions=[
+                str(item) for item in payload.get("recommended_actions", []) or []
+            ],
+            eligible_ready_task_ids=[
+                str(item) for item in payload.get("eligible_ready_task_ids", []) or []
+            ],
             eligible_ready_count=int(payload.get("eligible_ready_count") or 0),
-            selectable_ready_task_ids=[str(item) for item in payload.get("selectable_ready_task_ids", []) or []],
+            selectable_ready_task_ids=[
+                str(item) for item in payload.get("selectable_ready_task_ids", []) or []
+            ],
             selectable_ready_count=int(payload.get("selectable_ready_count") or 0),
             strict_deprioritized_ready_task_ids=[
                 str(item) for item in payload.get("strict_deprioritized_ready_task_ids", []) or []
             ],
-            strict_deprioritized_ready_count=int(payload.get("strict_deprioritized_ready_count") or 0),
+            strict_deprioritized_ready_count=int(
+                payload.get("strict_deprioritized_ready_count") or 0
+            ),
             selection_idle_reason=str(payload.get("selection_idle_reason") or ""),
             completed_task_ids=[str(item) for item in payload.get("completed_task_ids", []) or []],
             ready_task_ids=[str(item) for item in payload.get("ready_task_ids", []) or []],
             waiting_task_ids=[str(item) for item in payload.get("waiting_task_ids", []) or []],
             blocked_task_ids=[str(item) for item in payload.get("blocked_task_ids", []) or []],
-            task_statuses={str(key): str(value) for key, value in (payload.get("task_statuses") or {}).items()},
+            task_statuses={
+                str(key): str(value) for key, value in (payload.get("task_statuses") or {}).items()
+            },
             task_artifacts={
                 str(key): [str(item) for item in value]
                 for key, value in (payload.get("task_artifacts") or {}).items()
@@ -360,14 +372,18 @@ class PortalTaskState:
             },
             last_implementation_task_id=str(payload.get("last_implementation_task_id") or ""),
             last_implementation_started_at=str(payload.get("last_implementation_started_at") or ""),
-            last_implementation_finished_at=str(payload.get("last_implementation_finished_at") or ""),
+            last_implementation_finished_at=str(
+                payload.get("last_implementation_finished_at") or ""
+            ),
             last_implementation_returncode=(
                 int(payload["last_implementation_returncode"])
                 if payload.get("last_implementation_returncode") is not None
                 else None
             ),
             last_implementation_log_path=str(payload.get("last_implementation_log_path") or ""),
-            last_implementation_worktree_path=str(payload.get("last_implementation_worktree_path") or ""),
+            last_implementation_worktree_path=str(
+                payload.get("last_implementation_worktree_path") or ""
+            ),
             last_implementation_branch=str(payload.get("last_implementation_branch") or ""),
             last_implementation_commit=str(payload.get("last_implementation_commit") or ""),
             last_merge_started_at=str(payload.get("last_merge_started_at") or ""),
@@ -419,7 +435,11 @@ def parse_task_file(path: Path, task_header_prefix: str = TASK_HEADER_PREFIX) ->
                 track=str(metadata.get("track", "ops")).strip().lower(),
                 depends_on=split_csv(metadata.get("depends on", "")),
                 outputs=split_csv(metadata.get("outputs", "")),
-                validation=[item.strip() for item in metadata.get("validation", "").split(";") if item.strip()],
+                validation=[
+                    item.strip()
+                    for item in metadata.get("validation", "").split(";")
+                    if item.strip()
+                ],
                 acceptance=str(metadata.get("acceptance", "")).strip(),
                 source_line=current_line,
             )
@@ -480,9 +500,13 @@ class PortalImplementationDaemon:
         self.implement = implement
         self.implementation_command = implementation_command
         self.implementation_timeout = implementation_timeout
-        self.implementation_log_dir = implementation_log_dir or self.state_path.parent / "implementation_logs"
+        self.implementation_log_dir = (
+            implementation_log_dir or self.state_path.parent / "implementation_logs"
+        )
         self.use_ephemeral_worktree = use_ephemeral_worktree
-        self.worktree_root = worktree_root or Path(tempfile.gettempdir()) / "211-ai-implementation-worktrees"
+        self.worktree_root = (
+            worktree_root or Path(tempfile.gettempdir()) / "211-ai-implementation-worktrees"
+        )
         self.allowed_tracks = normalize_scope_items(allowed_tracks)
         self.allowed_task_ids = normalize_scope_items(allowed_task_ids)
 
@@ -525,7 +549,9 @@ class PortalImplementationDaemon:
             family_offset = 1000 + (self._stable_slot(family_key, 40) * 100)
         task_slot = self._stable_slot(task.task_id, 10) * IMPLEMENTATION_PLAYWRIGHT_ATTEMPT_SLOTS
         attempt_slot = max(attempt - 1, 0) % IMPLEMENTATION_PLAYWRIGHT_ATTEMPT_SLOTS
-        return str(self._implementation_playwright_port_base() + family_offset + task_slot + attempt_slot)
+        return str(
+            self._implementation_playwright_port_base() + family_offset + task_slot + attempt_slot
+        )
 
     def _build_implementation_environment(self, task: PortalTask, attempt: int) -> dict[str, str]:
         env = os.environ.copy()
@@ -537,7 +563,10 @@ class PortalImplementationDaemon:
     def _task_in_scope(self, task: PortalTask) -> bool:
         if not self.allowed_tracks and not self.allowed_task_ids:
             return True
-        return task.track.lower() in self.allowed_tracks or task.task_id.lower() in self.allowed_task_ids
+        return (
+            task.track.lower() in self.allowed_tracks
+            or task.task_id.lower() in self.allowed_task_ids
+        )
 
     def load_strategy(self) -> dict[str, Any]:
         defaults = {
@@ -553,12 +582,18 @@ class PortalImplementationDaemon:
             return defaults
         payload = load_json_dict(self.strategy_path)
         if payload is None:
-            logger.warning("Strategy file is missing or invalid JSON; using defaults: %s", self.strategy_path)
+            logger.warning(
+                "Strategy file is missing or invalid JSON; using defaults: %s", self.strategy_path
+            )
             return defaults.copy()
         merged = {**defaults, **payload}
-        merged["focus_tracks"] = [str(item).lower() for item in merged.get("focus_tracks", DEFAULT_TRACKS)]
+        merged["focus_tracks"] = [
+            str(item).lower() for item in merged.get("focus_tracks", DEFAULT_TRACKS)
+        ]
         merged["blocked_tasks"] = [str(item) for item in merged.get("blocked_tasks", [])]
-        merged["deprioritized_tasks"] = [str(item) for item in merged.get("deprioritized_tasks", [])]
+        merged["deprioritized_tasks"] = [
+            str(item) for item in merged.get("deprioritized_tasks", [])
+        ]
         return merged
 
     def run_once(self) -> dict[str, Any]:
@@ -572,7 +607,9 @@ class PortalImplementationDaemon:
                 scope_detail.append(f"tracks={','.join(self.allowed_tracks)}")
             if self.allowed_task_ids:
                 scope_detail.append(f"task_ids={','.join(self.allowed_task_ids)}")
-            raise RuntimeError(f"No in-scope tasks found in {self.todo_path}: {'; '.join(scope_detail)}")
+            raise RuntimeError(
+                f"No in-scope tasks found in {self.todo_path}: {'; '.join(scope_detail)}"
+            )
         scoped_task_ids = {task.task_id for task in scoped_tasks}
         previous = PortalTaskState.load(self.state_path)
         strategy = self.load_strategy()
@@ -581,7 +618,9 @@ class PortalImplementationDaemon:
         strategy_blocked_task_ids = {str(task_id) for task_id in strategy.get("blocked_tasks", [])}
         merge_skip_task_ids = status_completed_task_ids | strategy_blocked_task_ids
         merge_reconciliation = self._reconcile_failed_merges(skip_task_ids=merge_skip_task_ids)
-        unresolved_merge_failures = self._unresolved_merge_failures_by_task(skip_task_ids=merge_skip_task_ids)
+        unresolved_merge_failures = self._unresolved_merge_failures_by_task(
+            skip_task_ids=merge_skip_task_ids
+        )
         recent_outcomes = self._latest_implementation_finished_by_task()
         successfully_merged_task_ids = self._successfully_merged_task_ids()
         live_inflight_implementation = self._find_live_inflight_implementation()
@@ -605,7 +644,9 @@ class PortalImplementationDaemon:
                 and len(existing_outputs) == len(task.outputs)
                 and not unresolved_merge_failure
             )
-            merged_complete = task.task_id in successfully_merged_task_ids and not unresolved_merge_failure
+            merged_complete = (
+                task.task_id in successfully_merged_task_ids and not unresolved_merge_failure
+            )
             if task.status == "completed" or artifact_complete or merged_complete:
                 completed_set.add(task.task_id)
 
@@ -639,15 +680,23 @@ class PortalImplementationDaemon:
             state.last_progress_at = now
         state.completed_task_ids = sorted(scoped_completed_set)
         state.completed_count = len(state.completed_task_ids)
-        state.ready_task_ids = [task.task_id for task in scoped_tasks if resolved_statuses[task.task_id] == "ready"]
-        state.waiting_task_ids = [task.task_id for task in scoped_tasks if resolved_statuses[task.task_id] == "waiting"]
-        state.blocked_task_ids = [task.task_id for task in scoped_tasks if resolved_statuses[task.task_id] == "blocked"]
+        state.ready_task_ids = [
+            task.task_id for task in scoped_tasks if resolved_statuses[task.task_id] == "ready"
+        ]
+        state.waiting_task_ids = [
+            task.task_id for task in scoped_tasks if resolved_statuses[task.task_id] == "waiting"
+        ]
+        state.blocked_task_ids = [
+            task.task_id for task in scoped_tasks if resolved_statuses[task.task_id] == "blocked"
+        ]
         state.eligible_ready_task_ids = list(state.ready_task_ids)
         state.eligible_ready_count = len(state.eligible_ready_task_ids)
         state.selectable_ready_task_ids = list(state.ready_task_ids)
         state.selectable_ready_count = len(state.selectable_ready_task_ids)
         state.strict_deprioritized_ready_task_ids = [
-            task_id for task_id in state.ready_task_ids if task_id in strategy.get("deprioritized_tasks", [])
+            task_id
+            for task_id in state.ready_task_ids
+            if task_id in strategy.get("deprioritized_tasks", [])
         ]
         state.strict_deprioritized_ready_count = len(state.strict_deprioritized_ready_task_ids)
         state.selection_idle_reason = "" if state.selectable_ready_task_ids else "no_ready_tasks"
@@ -655,9 +704,13 @@ class PortalImplementationDaemon:
         state.waiting_count = len(state.waiting_task_ids)
         state.blocked_count = len(state.blocked_task_ids)
         state.task_count = len(scoped_tasks)
-        state.task_statuses = {task.task_id: resolved_statuses[task.task_id] for task in scoped_tasks}
+        state.task_statuses = {
+            task.task_id: resolved_statuses[task.task_id] for task in scoped_tasks
+        }
         state.task_artifacts = {task.task_id: task_artifacts[task.task_id] for task in scoped_tasks}
-        state.task_validation = {task.task_id: task.validation for task in scoped_tasks if task.validation}
+        state.task_validation = {
+            task.task_id: task.validation for task in scoped_tasks if task.validation
+        }
         state.strategy_generation = int(strategy.get("generation", 0))
         state.implementation_attempts = previous.implementation_attempts
         state.active_attempt = previous.active_attempt
@@ -726,7 +779,11 @@ class PortalImplementationDaemon:
         for task_id in newly_completed:
             self._record_event("task_completed", {"task_id": task_id})
         implementation_result: dict[str, Any] | None = None
-        if self.implement and selected is not None and resolved_statuses.get(selected.task_id) == "ready":
+        if (
+            self.implement
+            and selected is not None
+            and resolved_statuses.get(selected.task_id) == "ready"
+        ):
             unresolved_for_selected = unresolved_merge_failures.get(selected.task_id)
             if unresolved_for_selected is not None:
                 implementation_result = {
@@ -734,7 +791,9 @@ class PortalImplementationDaemon:
                     "reason": "unresolved_merge_failure",
                     "task_id": selected.task_id,
                     "branch": str(unresolved_for_selected.get("branch") or ""),
-                    "implementation_commit": str(unresolved_for_selected.get("implementation_commit") or ""),
+                    "implementation_commit": str(
+                        unresolved_for_selected.get("implementation_commit") or ""
+                    ),
                 }
                 self._record_event("implementation_skipped", implementation_result)
             elif self._task_has_recent_no_change_outcome(selected.task_id, recent_outcomes):
@@ -742,7 +801,9 @@ class PortalImplementationDaemon:
                     "skipped": True,
                     "reason": "recent_no_change",
                     "task_id": selected.task_id,
-                    "last_attempt": int((recent_outcomes.get(selected.task_id) or {}).get("attempt") or 0),
+                    "last_attempt": int(
+                        (recent_outcomes.get(selected.task_id) or {}).get("attempt") or 0
+                    ),
                 }
                 self._record_event("implementation_skipped", implementation_result)
             else:
@@ -940,7 +1001,12 @@ class PortalImplementationDaemon:
         try:
             lines = todo_path.read_text(encoding="utf-8").splitlines(keepends=True)
         except OSError as exc:
-            result = {"updated": False, "task_id": task_id, "reason": "read_failed", "error": str(exc)}
+            result = {
+                "updated": False,
+                "task_id": task_id,
+                "reason": "read_failed",
+                "error": str(exc),
+            }
             self._record_event("todo_status_update_failed", result)
             return result
 
@@ -977,7 +1043,12 @@ class PortalImplementationDaemon:
                 tmp_path.unlink()
             except OSError:
                 pass
-            result = {"updated": False, "task_id": task_id, "reason": "write_failed", "error": str(exc)}
+            result = {
+                "updated": False,
+                "task_id": task_id,
+                "reason": "write_failed",
+                "error": str(exc),
+            }
             self._record_event("todo_status_update_failed", result)
             return result
 
@@ -992,7 +1063,9 @@ class PortalImplementationDaemon:
         self._record_event("todo_status_updated", result)
         return result
 
-    def _commit_generated_file_update(self, path: Path, *, task_id: str, subject: str) -> dict[str, Any]:
+    def _commit_generated_file_update(
+        self, path: Path, *, task_id: str, subject: str
+    ) -> dict[str, Any]:
         """Commit a daemon-owned generated file and any parent gitlink updates."""
 
         repo = self._git_toplevel_for_path(path.parent)
@@ -1000,7 +1073,12 @@ class PortalImplementationDaemon:
             return {"committed": False, "reason": "not_in_git_repo", "path": str(path)}
         relative = self._relative_to_repo(repo, path)
         if not relative:
-            return {"committed": False, "reason": "path_outside_repo", "path": str(path), "repo": str(repo)}
+            return {
+                "committed": False,
+                "reason": "path_outside_repo",
+                "path": str(path),
+                "repo": str(repo),
+            }
 
         result = self._commit_specific_path(repo, relative, subject=subject)
         parent_results: list[dict[str, Any]] = []
@@ -1010,7 +1088,9 @@ class PortalImplementationDaemon:
             result["parent_gitlink_commits"] = parent_results
         return result
 
-    def _commit_parent_gitlink_updates(self, child_repo: Path, *, task_id: str) -> list[dict[str, Any]]:
+    def _commit_parent_gitlink_updates(
+        self, child_repo: Path, *, task_id: str
+    ) -> list[dict[str, Any]]:
         results: list[dict[str, Any]] = []
         current = child_repo.resolve()
         repo_root = self.repo_root.resolve()
@@ -1032,7 +1112,12 @@ class PortalImplementationDaemon:
 
     def _commit_specific_path(self, repo: Path, relative: str, *, subject: str) -> dict[str, Any]:
         if not self._repo_relative_path_safe(relative):
-            return {"committed": False, "reason": "unsafe_path", "repo": str(repo), "path": relative}
+            return {
+                "committed": False,
+                "reason": "unsafe_path",
+                "repo": str(repo),
+                "path": relative,
+            }
         unmerged = self._unmerged_worktree_paths(repo)
         if unmerged and relative not in unmerged:
             return {
@@ -1070,7 +1155,12 @@ class PortalImplementationDaemon:
             check=False,
         )
         if staged.returncode == 0:
-            return {"committed": False, "reason": "no_staged_changes", "repo": str(repo), "path": relative}
+            return {
+                "committed": False,
+                "reason": "no_staged_changes",
+                "repo": str(repo),
+                "path": relative,
+            }
         commit = subprocess.run(
             [
                 "git",
@@ -1241,7 +1331,7 @@ class PortalImplementationDaemon:
                     env=environment,
                     timeout=self.implementation_timeout,
                     check=False,
-            )
+                )
             returncode = completed.returncode
             if returncode == 0:
                 self._mark_active_phase(
@@ -1251,7 +1341,9 @@ class PortalImplementationDaemon:
                     worktree_path=worktree_path,
                     branch_name=branch_name,
                 )
-                self._prepare_worktree_for_validation(worktree_path, task=task, branch_name=branch_name)
+                self._prepare_worktree_for_validation(
+                    worktree_path, task=task, branch_name=branch_name
+                )
                 validation_result = self._run_validation_commands(
                     worktree_path,
                     task,
@@ -1276,7 +1368,9 @@ class PortalImplementationDaemon:
                             baseline_ref=baseline_ref,
                         )
                         if merge_result.get("merged"):
-                            cleanup_result = self._cleanup_merged_worktree(worktree_path, branch_name)
+                            cleanup_result = self._cleanup_merged_worktree(
+                                worktree_path, branch_name
+                            )
                         else:
                             returncode = int(merge_result.get("returncode") or 1)
                     elif commit_result.get("reason") == "no_changes":
@@ -1290,7 +1384,9 @@ class PortalImplementationDaemon:
                         attempt,
                         validation_result,
                     )
-                    cleanup_result = dict(failed_preservation_result.get("cleanup_result") or cleanup_result)
+                    cleanup_result = dict(
+                        failed_preservation_result.get("cleanup_result") or cleanup_result
+                    )
         except subprocess.TimeoutExpired:
             returncode = 124
             self._record_event(
@@ -1309,7 +1405,9 @@ class PortalImplementationDaemon:
         state.last_implementation_commit = implementation_commit
         state.last_merge_started_at = str(merge_result.get("started_at") or "")
         state.last_merge_finished_at = str(merge_result.get("finished_at") or "")
-        state.last_merge_branch = branch_name if merge_result.get("merged") or merge_result.get("attempted") else ""
+        state.last_merge_branch = (
+            branch_name if merge_result.get("merged") or merge_result.get("attempted") else ""
+        )
         state.last_merge_commit = str(merge_result.get("merge_commit") or "")
         state.last_merge_returncode = (
             int(merge_result["returncode"]) if merge_result.get("returncode") is not None else None
@@ -1379,7 +1477,9 @@ class PortalImplementationDaemon:
         state.last_implementation_finished_at = ""
         state.last_implementation_returncode = None
         state.last_implementation_log_path = str(log_path)
-        state.last_implementation_worktree_path = str(worktree_path) if worktree_path is not None else ""
+        state.last_implementation_worktree_path = (
+            str(worktree_path) if worktree_path is not None else ""
+        )
         state.last_implementation_branch = branch_name
         state.last_implementation_commit = ""
         state.heartbeat_at = started_at
@@ -1435,9 +1535,13 @@ class PortalImplementationDaemon:
         self._seed_untracked_worktree_context(worktree_path, task=task, overwrite_existing=True)
         return baseline_ref
 
-    def _initialize_worktree_submodules(self, worktree_path: Path, *, branch_name: str = "") -> None:
+    def _initialize_worktree_submodules(
+        self, worktree_path: Path, *, branch_name: str = ""
+    ) -> None:
         for relative in WORKTREE_SUBMODULE_PATHS:
-            if self._create_local_submodule_worktree(worktree_path, relative, branch_name=branch_name):
+            if self._create_local_submodule_worktree(
+                worktree_path, relative, branch_name=branch_name
+            ):
                 target = worktree_path / relative
                 if self._is_git_worktree(target):
                     self._initialize_nested_worktree_submodules(
@@ -1447,7 +1551,10 @@ class PortalImplementationDaemon:
                     )
                 continue
             if self._worktree_declares_submodule(worktree_path, relative):
-                self._run_git(["submodule", "update", "--init", "--recursive", "--", relative], cwd=worktree_path)
+                self._run_git(
+                    ["submodule", "update", "--init", "--recursive", "--", relative],
+                    cwd=worktree_path,
+                )
                 target = worktree_path / relative
                 if self._is_git_worktree(target):
                     self._initialize_nested_worktree_submodules(
@@ -1514,7 +1621,9 @@ class PortalImplementationDaemon:
             if self._git_ref_exists_in_repo(source, submodule_branch):
                 self._run_git(["worktree", "add", str(target), submodule_branch], cwd=source)
                 return True
-            self._run_git(["worktree", "add", "-b", submodule_branch, str(target), base_ref], cwd=source)
+            self._run_git(
+                ["worktree", "add", "-b", submodule_branch, str(target), base_ref], cwd=source
+            )
             return True
         self._run_git(["worktree", "add", "--detach", str(target), base_ref], cwd=source)
         return True
@@ -1695,14 +1804,19 @@ class PortalImplementationDaemon:
             return False
         if any(self._path_matches_prefix(relative, prefix) for prefix in WORKTREE_SUBMODULE_PATHS):
             return False
-        return any(self._path_matches_prefix(relative, prefix) for prefix in UNTRACKED_WORKTREE_CONTEXT_PREFIXES)
+        return any(
+            self._path_matches_prefix(relative, prefix)
+            for prefix in UNTRACKED_WORKTREE_CONTEXT_PREFIXES
+        )
 
     @staticmethod
     def _path_matches_prefix(relative: str, prefix: str) -> bool:
         normalized = prefix.rstrip("/")
         return relative == normalized or relative.startswith(f"{normalized}/")
 
-    def _commit_worktree_changes(self, worktree_path: Path, task: PortalTask, attempt: int) -> dict[str, Any]:
+    def _commit_worktree_changes(
+        self, worktree_path: Path, task: PortalTask, attempt: int
+    ) -> dict[str, Any]:
         submodule_results = self._commit_worktree_submodule_changes(worktree_path, task, attempt)
         self._restore_ephemeral_worktree_paths_for_commit(worktree_path)
         self._restore_uncommitted_submodule_pointers(worktree_path, submodule_results)
@@ -1765,7 +1879,11 @@ class PortalImplementationDaemon:
             status = self._run_git(["status", "--porcelain"], cwd=target).stdout.strip()
             staged_status = self._staged_worktree_status(target)
             if not staged_status:
-                result: dict[str, Any] = {"path": relative, "committed": False, "reason": "no_changes"}
+                result: dict[str, Any] = {
+                    "path": relative,
+                    "committed": False,
+                    "reason": "no_changes",
+                }
                 if status:
                     result["status"] = status
                 if nested_results:
@@ -1849,7 +1967,12 @@ class PortalImplementationDaemon:
                 cwd=target,
             )
             commit_ref = self._run_git(["rev-parse", "HEAD"], cwd=target).stdout.strip()
-            result = {"path": full_relative, "committed": True, "commit": commit_ref, "status": status}
+            result = {
+                "path": full_relative,
+                "committed": True,
+                "commit": commit_ref,
+                "status": status,
+            }
             if nested_results:
                 result["nested_submodule_results"] = nested_results
             results.append(result)
@@ -1864,7 +1987,9 @@ class PortalImplementationDaemon:
             if result.get("committed", False):
                 continue
             relative = str(result.get("path") or "")
-            if relative not in WORKTREE_SUBMODULE_PATHS or not self._repo_relative_path_safe(relative):
+            if relative not in WORKTREE_SUBMODULE_PATHS or not self._repo_relative_path_safe(
+                relative
+            ):
                 continue
             subprocess.run(
                 ["git", "restore", "--source=HEAD", "--staged", "--worktree", "--", relative],
@@ -1888,7 +2013,9 @@ class PortalImplementationDaemon:
         implementation_commit = str(commit_result.get("commit", ""))
         if implementation_commit:
             rescue_branch = self._failed_validation_rescue_branch_name(branch_name)
-            self._run_git(["branch", "-f", rescue_branch, implementation_commit], cwd=self.repo_root)
+            self._run_git(
+                ["branch", "-f", rescue_branch, implementation_commit], cwd=self.repo_root
+            )
         cleanup_result = self._cleanup_merged_worktree(worktree_path, branch_name)
         result = {
             "task_id": task.task_id,
@@ -1924,13 +2051,17 @@ class PortalImplementationDaemon:
             if self._path_is_generated_worktree_artifact(relative):
                 self._restore_or_remove_generated_path_for_commit(worktree_path, relative)
 
-    def _restore_or_remove_generated_path_for_commit(self, worktree_path: Path, relative: str) -> None:
+    def _restore_or_remove_generated_path_for_commit(
+        self, worktree_path: Path, relative: str
+    ) -> None:
         if not self._repo_relative_path_safe(relative):
             return
         target = worktree_path / relative
         if relative in WORKTREE_SUBMODULE_PATHS and target.is_symlink():
             target.unlink()
-        if self._path_tracked_in_head(worktree_path, relative) or self._path_tracked_in_repo(worktree_path, relative):
+        if self._path_tracked_in_head(worktree_path, relative) or self._path_tracked_in_repo(
+            worktree_path, relative
+        ):
             restore = subprocess.run(
                 ["git", "restore", "--source=HEAD", "--staged", "--worktree", "--", relative],
                 cwd=worktree_path,
@@ -1961,7 +2092,9 @@ class PortalImplementationDaemon:
             return True
         if normalized.endswith(GENERATED_WORKTREE_SUFFIXES):
             return True
-        return any(self._path_matches_prefix(normalized, prefix) for prefix in EPHEMERAL_WORKTREE_PATHS)
+        return any(
+            self._path_matches_prefix(normalized, prefix) for prefix in EPHEMERAL_WORKTREE_PATHS
+        )
 
     def _staged_worktree_paths(self, cwd: Path) -> list[str]:
         result = subprocess.run(
@@ -2007,7 +2140,10 @@ class PortalImplementationDaemon:
         )
         if result.returncode != 0:
             return False
-        return any(line == relative or line.startswith(f"{relative.rstrip('/')}/") for line in result.stdout.splitlines())
+        return any(
+            line == relative or line.startswith(f"{relative.rstrip('/')}/")
+            for line in result.stdout.splitlines()
+        )
 
     def _run_validation_commands(
         self,
@@ -2105,7 +2241,9 @@ class PortalImplementationDaemon:
 
     @staticmethod
     def _safe_ref_path_fragment(ref: str) -> str:
-        safe = "".join(character if character.isalnum() or character in "-._" else "-" for character in ref)
+        safe = "".join(
+            character if character.isalnum() or character in "-._" else "-" for character in ref
+        )
         return safe.strip("-") or "main"
 
     def _git_worktree_entries(self) -> list[dict[str, str]]:
@@ -2179,7 +2317,9 @@ class PortalImplementationDaemon:
                         "worktree_path": str(checked_out_path),
                         "dirty_paths": dirty_paths,
                     }
-                self._run_git(["worktree", "remove", "--force", str(checked_out_path)], cwd=self.repo_root)
+                self._run_git(
+                    ["worktree", "remove", "--force", str(checked_out_path)], cwd=self.repo_root
+                )
                 continue
             return {
                 "available": False,
@@ -2200,7 +2340,9 @@ class PortalImplementationDaemon:
             "target_branch": target_branch,
         }
 
-    def _cleanup_main_merge_workspace(self, workspace_path: Path, *, ephemeral: bool) -> dict[str, Any]:
+    def _cleanup_main_merge_workspace(
+        self, workspace_path: Path, *, ephemeral: bool
+    ) -> dict[str, Any]:
         if not ephemeral:
             return {"cleaned": True, "removed": False, "worktree_path": str(workspace_path)}
         if not workspace_path.exists():
@@ -2290,7 +2432,9 @@ class PortalImplementationDaemon:
                     "merge_commit": "",
                     "stdout": "",
                     "stderr": "",
-                    "reason": str(workspace_result.get("reason") or "main_merge_workspace_unavailable"),
+                    "reason": str(
+                        workspace_result.get("reason") or "main_merge_workspace_unavailable"
+                    ),
                     "dirty_paths": workspace_result.get("dirty_paths", []),
                     "main_worktree_path": str(workspace_result.get("worktree_path") or ""),
                     "identical_untracked_paths": [],
@@ -2301,8 +2445,12 @@ class PortalImplementationDaemon:
 
             merge_workspace = Path(str(workspace_result["path"]))
             merge_workspace_ephemeral = bool(workspace_result.get("ephemeral", False))
-            resolved_add_add_conflicts = self._resolve_generated_add_add_conflicts(cwd=merge_workspace)
-            identical_untracked_paths = self._identical_untracked_merge_paths(branch_name, cwd=merge_workspace)
+            resolved_add_add_conflicts = self._resolve_generated_add_add_conflicts(
+                cwd=merge_workspace
+            )
+            identical_untracked_paths = self._identical_untracked_merge_paths(
+                branch_name, cwd=merge_workspace
+            )
             dirty_overlap = self._dirty_merge_conflict_paths(
                 branch_name,
                 cwd=merge_workspace,
@@ -2331,7 +2479,9 @@ class PortalImplementationDaemon:
                 self._record_event("merge_finished", result)
                 return result
 
-            removed_untracked = self._remove_untracked_paths_for_merge(identical_untracked_paths, cwd=merge_workspace)
+            removed_untracked = self._remove_untracked_paths_for_merge(
+                identical_untracked_paths, cwd=merge_workspace
+            )
             self._record_event(
                 "merge_started",
                 {
@@ -2375,11 +2525,15 @@ class PortalImplementationDaemon:
                 else:
                     merge_abort_result = self._abort_failed_merge(merge_workspace)
             if merge_returncode == 0:
-                merge_commit = self._run_git(["rev-parse", "HEAD"], cwd=merge_workspace).stdout.strip()
+                merge_commit = self._run_git(
+                    ["rev-parse", "HEAD"], cwd=merge_workspace
+                ).stdout.strip()
                 submodule_merge_results = self._merge_submodule_branches_to_main(branch_name)
             elif removed_untracked:
                 self._restore_removed_untracked_paths(removed_untracked, cwd=merge_workspace)
-            failed_submodules = [item for item in submodule_merge_results if not item.get("merged", False)]
+            failed_submodules = [
+                item for item in submodule_merge_results if not item.get("merged", False)
+            ]
             effective_returncode = merge_returncode
             effective_merged = merge_returncode == 0 and not failed_submodules
             result = {
@@ -2416,7 +2570,9 @@ class PortalImplementationDaemon:
                     ephemeral=merge_workspace_ephemeral,
                 )
                 if not merge_workspace_cleanup.get("cleaned", False):
-                    self._record_event("main_merge_worktree_cleanup_failed", merge_workspace_cleanup)
+                    self._record_event(
+                        "main_merge_worktree_cleanup_failed", merge_workspace_cleanup
+                    )
             try:
                 if merge_lock.exists():
                     merge_lock.unlink()
@@ -2473,7 +2629,13 @@ class PortalImplementationDaemon:
                 )
                 continue
             update = subprocess.run(
-                ["git", "update-index", "--add", "--cacheinfo", f"160000,{selected_commit},{relative}"],
+                [
+                    "git",
+                    "update-index",
+                    "--add",
+                    "--cacheinfo",
+                    f"160000,{selected_commit},{relative}",
+                ],
                 cwd=workspace,
                 text=True,
                 capture_output=True,
@@ -2612,9 +2774,15 @@ class PortalImplementationDaemon:
         parent_relative: str,
     ) -> list[dict[str, Any]]:
         results: list[dict[str, Any]] = []
-        relatives = WORKTREE_SUBMODULE_PATHS if not parent_relative else tuple(self._declared_submodule_paths(repo_path))
+        relatives = (
+            WORKTREE_SUBMODULE_PATHS
+            if not parent_relative
+            else tuple(self._declared_submodule_paths(repo_path))
+        )
         for relative in relatives:
-            full_relative = f"{parent_relative.rstrip('/')}/{relative}" if parent_relative else relative
+            full_relative = (
+                f"{parent_relative.rstrip('/')}/{relative}" if parent_relative else relative
+            )
             source = (self.repo_root / full_relative).resolve()
             submodule_branch = self._submodule_worktree_branch_name(branch_name, full_relative)
             if not self._is_git_worktree(source):
@@ -2700,7 +2868,14 @@ class PortalImplementationDaemon:
 
     def _submodule_default_branch(self, relative: str, source: Path) -> str:
         result = subprocess.run(
-            ["git", "config", "--file", str(self.repo_root / ".gitmodules"), "--get-regexp", r"^submodule\..*\.path$"],
+            [
+                "git",
+                "config",
+                "--file",
+                str(self.repo_root / ".gitmodules"),
+                "--get-regexp",
+                r"^submodule\..*\.path$",
+            ],
             cwd=self.repo_root,
             text=True,
             capture_output=True,
@@ -2713,7 +2888,14 @@ class PortalImplementationDaemon:
                     continue
                 module_key = key.rsplit(".", 1)[0]
                 branch = subprocess.run(
-                    ["git", "config", "--file", str(self.repo_root / ".gitmodules"), "--get", f"{module_key}.branch"],
+                    [
+                        "git",
+                        "config",
+                        "--file",
+                        str(self.repo_root / ".gitmodules"),
+                        "--get",
+                        f"{module_key}.branch",
+                    ],
                     cwd=self.repo_root,
                     text=True,
                     capture_output=True,
@@ -2734,7 +2916,9 @@ class PortalImplementationDaemon:
         )
         return result.returncode == 0
 
-    def _cleanup_merged_worktree(self, worktree_path: Path | None, branch_name: str) -> dict[str, Any]:
+    def _cleanup_merged_worktree(
+        self, worktree_path: Path | None, branch_name: str
+    ) -> dict[str, Any]:
         started_at = utc_now()
         removed_worktree = False
         deleted_branch = False
@@ -2744,7 +2928,9 @@ class PortalImplementationDaemon:
             if worktree_path is not None:
                 submodule_cleanup = self._cleanup_worktree_submodules(worktree_path, branch_name)
             if worktree_path is not None and worktree_path.exists():
-                self._run_git(["worktree", "remove", "--force", str(worktree_path)], cwd=self.repo_root)
+                self._run_git(
+                    ["worktree", "remove", "--force", str(worktree_path)], cwd=self.repo_root
+                )
                 removed_worktree = True
             if self._git_ref_exists(branch_name):
                 self._run_git(["branch", "-D", branch_name], cwd=self.repo_root)
@@ -2788,9 +2974,15 @@ class PortalImplementationDaemon:
         parent_relative: str = "",
     ) -> list[dict[str, Any]]:
         results: list[dict[str, Any]] = []
-        relatives = WORKTREE_SUBMODULE_PATHS if not parent_relative else tuple(self._declared_submodule_paths(worktree_path))
+        relatives = (
+            WORKTREE_SUBMODULE_PATHS
+            if not parent_relative
+            else tuple(self._declared_submodule_paths(worktree_path))
+        )
         for relative in relatives:
-            full_relative = f"{parent_relative.rstrip('/')}/{relative}" if parent_relative else relative
+            full_relative = (
+                f"{parent_relative.rstrip('/')}/{relative}" if parent_relative else relative
+            )
             source = (self.repo_root / full_relative).resolve()
             target = worktree_path / relative
             submodule_branch = self._submodule_worktree_branch_name(branch_name, full_relative)
@@ -2818,9 +3010,9 @@ class PortalImplementationDaemon:
                 else:
                     errors.append((remove.stderr or remove.stdout).strip())
             default_branch = self._submodule_default_branch(relative, source)
-            if self._git_ref_exists_in_repo(source, submodule_branch) and self._git_ref_is_ancestor_in_repo(
-                source, submodule_branch, default_branch
-            ):
+            if self._git_ref_exists_in_repo(
+                source, submodule_branch
+            ) and self._git_ref_is_ancestor_in_repo(source, submodule_branch, default_branch):
                 delete = subprocess.run(
                     ["git", "branch", "-D", submodule_branch],
                     cwd=source,
@@ -2862,7 +3054,9 @@ class PortalImplementationDaemon:
             overlap -= ignore_paths
         return sorted(overlap)
 
-    def _resolve_generated_add_add_conflicts(self, *, cwd: Path | None = None) -> list[dict[str, Any]]:
+    def _resolve_generated_add_add_conflicts(
+        self, *, cwd: Path | None = None
+    ) -> list[dict[str, Any]]:
         workspace = cwd or self.repo_root
         results: list[dict[str, Any]] = []
         for relative in self._unmerged_add_add_paths(workspace):
@@ -2894,7 +3088,9 @@ class PortalImplementationDaemon:
                 {
                     "path": relative,
                     "resolved": add.returncode == 0,
-                    "reason": "selected_equivalent_generated_content" if add.returncode == 0 else "git_add_failed",
+                    "reason": "selected_equivalent_generated_content"
+                    if add.returncode == 0
+                    else "git_add_failed",
                     "returncode": add.returncode,
                     "stdout": add.stdout[-4000:],
                     "stderr": add.stderr[-4000:],
@@ -2932,7 +3128,10 @@ class PortalImplementationDaemon:
         if not self._repo_relative_path_safe(relative):
             return False
         normalized = relative.strip("/")
-        return any(self._path_matches_prefix(normalized, prefix) for prefix in GENERATED_ADD_ADD_CONFLICT_PREFIXES)
+        return any(
+            self._path_matches_prefix(normalized, prefix)
+            for prefix in GENERATED_ADD_ADD_CONFLICT_PREFIXES
+        )
 
     def _conflict_stage_blob(self, cwd: Path, relative: str, *, stage: int) -> bytes | None:
         result = subprocess.run(
@@ -2957,7 +3156,9 @@ class PortalImplementationDaemon:
             return ours
         return None
 
-    def _identical_untracked_merge_paths(self, branch_name: str, *, cwd: Path | None = None) -> list[str]:
+    def _identical_untracked_merge_paths(
+        self, branch_name: str, *, cwd: Path | None = None
+    ) -> list[str]:
         workspace = cwd or self.repo_root
         branch_paths = self._branch_changed_paths(branch_name)
         if not branch_paths:
@@ -2992,7 +3193,9 @@ class PortalImplementationDaemon:
                 identical.append(relative)
         return identical
 
-    def _remove_untracked_paths_for_merge(self, paths: list[str], *, cwd: Path | None = None) -> dict[str, bytes]:
+    def _remove_untracked_paths_for_merge(
+        self, paths: list[str], *, cwd: Path | None = None
+    ) -> dict[str, bytes]:
         workspace = cwd or self.repo_root
         removed: dict[str, bytes] = {}
         for relative in paths:
@@ -3005,7 +3208,9 @@ class PortalImplementationDaemon:
             source.unlink()
         return removed
 
-    def _restore_removed_untracked_paths(self, removed: dict[str, bytes], *, cwd: Path | None = None) -> None:
+    def _restore_removed_untracked_paths(
+        self, removed: dict[str, bytes], *, cwd: Path | None = None
+    ) -> None:
         workspace = cwd or self.repo_root
         for relative, content in removed.items():
             if not self._repo_relative_path_safe(relative):
@@ -3073,7 +3278,9 @@ class PortalImplementationDaemon:
             return result.stdout.strip()
         return target_branch
 
-    def _reconcile_failed_merges(self, *, skip_task_ids: set[str] | None = None) -> list[dict[str, Any]]:
+    def _reconcile_failed_merges(
+        self, *, skip_task_ids: set[str] | None = None
+    ) -> list[dict[str, Any]]:
         results: list[dict[str, Any]] = []
         target_branch = self._main_branch_name()
         for event in self._failed_merge_candidates(skip_task_ids=skip_task_ids):
@@ -3086,7 +3293,9 @@ class PortalImplementationDaemon:
             if not task_id or not implementation_commit:
                 continue
             if self._git_ref_is_ancestor(implementation_commit, target_branch):
-                cleanup_result = self._cleanup_merged_worktree(worktree_path, branch) if branch else {}
+                cleanup_result = (
+                    self._cleanup_merged_worktree(worktree_path, branch) if branch else {}
+                )
                 result = {
                     "task_id": task_id,
                     "attempt": attempt,
@@ -3143,7 +3352,9 @@ class PortalImplementationDaemon:
             results.append(result)
         return results
 
-    def _failed_merge_candidates(self, *, skip_task_ids: set[str] | None = None) -> list[dict[str, Any]]:
+    def _failed_merge_candidates(
+        self, *, skip_task_ids: set[str] | None = None
+    ) -> list[dict[str, Any]]:
         skip_task_ids = skip_task_ids or set()
         candidates: dict[tuple[str, str], dict[str, Any]] = {}
         reconciled_commits: set[str] = set()
@@ -3172,7 +3383,11 @@ class PortalImplementationDaemon:
             ):
                 continue
             validation = event.get("validation_result") or {}
-            if isinstance(validation, dict) and validation.get("attempted") and not validation.get("passed", False):
+            if (
+                isinstance(validation, dict)
+                and validation.get("attempted")
+                and not validation.get("passed", False)
+            ):
                 continue
             merge_result = event.get("merge_result") or {}
             if not isinstance(merge_result, dict):
@@ -3185,9 +3400,14 @@ class PortalImplementationDaemon:
         unresolved: list[dict[str, Any]] = []
         for event in candidates.values():
             implementation_commit = str(event.get("implementation_commit") or "")
-            if implementation_commit in reconciled_commits or implementation_commit in abandoned_commits:
+            if (
+                implementation_commit in reconciled_commits
+                or implementation_commit in abandoned_commits
+            ):
                 continue
-            if implementation_commit and not self._git_ref_is_ancestor(implementation_commit, target_branch):
+            if implementation_commit and not self._git_ref_is_ancestor(
+                implementation_commit, target_branch
+            ):
                 unresolved.append(event)
                 continue
             cleanup = event.get("cleanup_result") or {}
@@ -3195,7 +3415,9 @@ class PortalImplementationDaemon:
                 unresolved.append(event)
         return unresolved
 
-    def _unresolved_merge_failures_by_task(self, *, skip_task_ids: set[str] | None = None) -> dict[str, dict[str, Any]]:
+    def _unresolved_merge_failures_by_task(
+        self, *, skip_task_ids: set[str] | None = None
+    ) -> dict[str, dict[str, Any]]:
         skip_task_ids = skip_task_ids or set()
         failures: dict[str, dict[str, Any]] = {}
         target_branch = self._main_branch_name()
@@ -3204,7 +3426,11 @@ class PortalImplementationDaemon:
             if task_id in skip_task_ids:
                 continue
             implementation_commit = str(event.get("implementation_commit") or "")
-            if task_id and implementation_commit and not self._git_ref_is_ancestor(implementation_commit, target_branch):
+            if (
+                task_id
+                and implementation_commit
+                and not self._git_ref_is_ancestor(implementation_commit, target_branch)
+            ):
                 failures[task_id] = event
         return failures
 
@@ -3217,7 +3443,9 @@ class PortalImplementationDaemon:
             return False
         if previous.last_merge_commit:
             return False
-        return not self._git_ref_is_ancestor(previous.last_implementation_commit, self._main_branch_name())
+        return not self._git_ref_is_ancestor(
+            previous.last_implementation_commit, self._main_branch_name()
+        )
 
     def _git_ref_is_ancestor(self, ancestor: str, descendant: str) -> bool:
         result = subprocess.run(
@@ -3244,7 +3472,9 @@ class PortalImplementationDaemon:
     def _implementation_lock_path(self) -> Path:
         return self.state_path.parent / "implementation.lock"
 
-    def _build_implementation_lock_metadata(self, task: PortalTask, attempt: int, started_at: str) -> dict[str, Any]:
+    def _build_implementation_lock_metadata(
+        self, task: PortalTask, attempt: int, started_at: str
+    ) -> dict[str, Any]:
         return {
             "kind": "implementation",
             "pid": os.getpid(),
@@ -3329,7 +3559,9 @@ class PortalImplementationDaemon:
         finally:
             os.close(lock_fd)
 
-    def _clear_stale_lock(self, lock_path: Path, *, lock_kind: str, metadata: dict[str, Any] | None) -> bool:
+    def _clear_stale_lock(
+        self, lock_path: Path, *, lock_kind: str, metadata: dict[str, Any] | None
+    ) -> bool:
         try:
             lock_path.unlink()
         except FileNotFoundError:
@@ -3399,7 +3631,9 @@ class PortalImplementationDaemon:
                     continue
             else:
                 continue
-            if implementation_commit and not self._git_ref_is_ancestor(implementation_commit, target_branch):
+            if implementation_commit and not self._git_ref_is_ancestor(
+                implementation_commit, target_branch
+            ):
                 continue
             task_ids.add(task_id)
         return task_ids
@@ -3467,14 +3701,18 @@ class PortalImplementationDaemon:
         return [line.strip() for line in result.stdout.splitlines() if line.strip()]
 
     def _repo_merge_lock_path(self) -> Path:
-        git_common_dir = self._run_git(["rev-parse", "--git-common-dir"], cwd=self.repo_root).stdout.strip()
+        git_common_dir = self._run_git(
+            ["rev-parse", "--git-common-dir"], cwd=self.repo_root
+        ).stdout.strip()
         path = Path(git_common_dir)
         if not path.is_absolute():
             path = self.repo_root / path
         return path / "implementation-main-merge.lock"
 
     def _run_git(self, args: list[str], *, cwd: Path) -> subprocess.CompletedProcess[str]:
-        result = subprocess.run(["git", *args], cwd=cwd, text=True, capture_output=True, check=False)
+        result = subprocess.run(
+            ["git", *args], cwd=cwd, text=True, capture_output=True, check=False
+        )
         if result.returncode != 0:
             raise RuntimeError(f"git {' '.join(args)} failed: {result.stderr.strip()}")
         return result
@@ -3488,7 +3726,9 @@ class PortalImplementationDaemon:
         codex = shutil.which("codex")
         copilot = shutil.which("copilot")
         if copilot:
-            return _copilot_fallback_command(codex=codex, copilot=copilot, workspace_path=workspace_path)
+            return _copilot_fallback_command(
+                codex=codex, copilot=copilot, workspace_path=workspace_path
+            )
         if codex:
             return [
                 codex,
@@ -3605,7 +3845,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=0,
         help="Maximum backlog passes before exiting; 0 disables the limit",
     )
-    parser.add_argument("--interval", type=float, default=300.0, help="Seconds between backlog passes")
+    parser.add_argument(
+        "--interval", type=float, default=300.0, help="Seconds between backlog passes"
+    )
     parser.add_argument(
         "--todo-path",
         type=Path,
@@ -3640,13 +3882,19 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=[],
         help="Comma-separated task IDs this daemon may select; repeatable. Defaults to all task IDs.",
     )
-    parser.add_argument("--implement", action="store_true", help="Invoke an autonomous implementation agent for the ready task")
+    parser.add_argument(
+        "--implement",
+        action="store_true",
+        help="Invoke an autonomous implementation agent for the ready task",
+    )
     parser.add_argument(
         "--implementation-command",
         default="",
         help="Command used for implementation. Defaults to codex exec with local Copilot CLI fallback when available.",
     )
-    parser.add_argument("--implementation-timeout", type=float, default=DEFAULT_IMPLEMENTATION_TIMEOUT_SECONDS)
+    parser.add_argument(
+        "--implementation-timeout", type=float, default=DEFAULT_IMPLEMENTATION_TIMEOUT_SECONDS
+    )
     parser.add_argument(
         "--no-ephemeral-worktree",
         action="store_true",
@@ -3698,7 +3946,9 @@ def main(argv: list[str] | None = None) -> None:
         result = daemon.run_once()
         passes += 1
         logger.info("Portal implementation daemon pass complete: %s", result)
-        if args.until_complete and int(result.get("completed_count") or 0) >= int(result.get("task_count") or 0):
+        if args.until_complete and int(result.get("completed_count") or 0) >= int(
+            result.get("task_count") or 0
+        ):
             logger.info("Portal implementation daemon backlog complete after %s pass(es)", passes)
             break
         if args.once:

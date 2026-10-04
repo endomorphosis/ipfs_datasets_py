@@ -12,7 +12,7 @@ Components:
 
 from .ucan import *
 
-__all__ = ['ucan']
+__all__ = ["ucan"]
 
 # Auth engine (moved from mcp_server/tools)
 try:

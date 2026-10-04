@@ -9,6 +9,7 @@ from typing import Any, Dict, List, Optional, TypedDict
 
 class ExtractionMetadata(TypedDict, total=False):
     """Metadata about an extraction round."""
+
     entities_found: int
     relationships_found: int
     extraction_time_ms: float
@@ -18,6 +19,7 @@ class ExtractionMetadata(TypedDict, total=False):
 
 class CriticFeedback(TypedDict, total=False):
     """Feedback from the critic on an ontology."""
+
     completeness: float
     consistency: float
     clarity: float
@@ -30,6 +32,7 @@ class CriticFeedback(TypedDict, total=False):
 
 class OptimizationRound(TypedDict, total=False):
     """Single cycle of the optimization loop."""
+
     iteration: int
     initial_score: float
     optimized_score: float
@@ -43,6 +46,7 @@ class OptimizationRound(TypedDict, total=False):
 
 class OntologyOptimizationHistory(TypedDict, total=False):
     """Historical data from ontology optimization."""
+
     total_rounds: int
     initial_score: float
     final_score: float
@@ -56,6 +60,7 @@ class OntologyOptimizationHistory(TypedDict, total=False):
 
 class ValidationResult(TypedDict, total=False):
     """Result of ontology validation."""
+
     is_valid: bool
     errors: List[str]
     warnings: List[str]
@@ -66,6 +71,7 @@ class ValidationResult(TypedDict, total=False):
 
 class OntologyDiffSummary(TypedDict, total=False):
     """Summary of changes between two ontologies."""
+
     entities_added: int
     entities_removed: int
     entities_modified: int
@@ -79,6 +85,7 @@ class OntologyDiffSummary(TypedDict, total=False):
 
 class RefinementRecommendation(TypedDict, total=False):
     """Recommendation for further refinement."""
+
     action: str  # e.g., "split_entity", "merge_entities", "add_relationships"
     target_entities: List[str]
     rationale: str
@@ -89,6 +96,7 @@ class RefinementRecommendation(TypedDict, total=False):
 
 class MediatorState(TypedDict, total=False):
     """State of the ontology mediator."""
+
     current_ontology: Dict[str, Any]
     undo_stack_depth: int
     stash_stack_depth: int
@@ -99,6 +107,7 @@ class MediatorState(TypedDict, total=False):
 
 class LearningCycleResult(TypedDict, total=False):
     """Result of a learning adaptation cycle."""
+
     feedback_count: int
     feedback_records: List[Dict[str, Any]]
     updates_applied: int
@@ -110,6 +119,7 @@ class LearningCycleResult(TypedDict, total=False):
 
 class EmbeddingDeduplicationResult(TypedDict, total=False):
     """Result of semantic deduplication."""
+
     original_entity_count: int
     deduplicated_entity_count: int
     merge_groups: List[List[str]]
@@ -120,6 +130,7 @@ class EmbeddingDeduplicationResult(TypedDict, total=False):
 
 class PipelineMetrics(TypedDict, total=False):
     """Metrics for an ontology generation pipeline run."""
+
     phase: str
     total_input_tokens: int
     entity_extraction_time_ms: float

@@ -156,9 +156,7 @@ def test_compiler_preserves_packet_003462_compiler_ambiguity_policy_evidence_mar
     )
 
     for case in cases:
-        compiler = DeterministicModalCompiler(
-            config=ModalCompilerConfig(parser_backend="spacy")
-        )
+        compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
         predicted_family = str(case["predicted_family"])
         target_family = str(case["target_family"])
         expected_margin = float(case["family_margin"])
@@ -197,23 +195,10 @@ def test_compiler_preserves_packet_003462_compiler_ambiguity_policy_evidence_mar
         assert ambiguity.metadata.get("is_priority_policy_pair") is True
         assert ambiguity.metadata.get("is_compiler_required_policy_pair") is True
         assert (
-            abs(
-                float(ambiguity.metadata.get("family_margin_raw", 0.0))
-                - expected_margin
-            )
-            <= 1e-12
+            abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - expected_margin) <= 1e-12
         )
+        assert abs(float(ambiguity.metadata.get("priority", 0.0)) - expected_priority) <= 1e-12
         assert (
-            abs(
-                float(ambiguity.metadata.get("priority", 0.0))
-                - expected_priority
-            )
-            <= 1e-12
-        )
-        assert (
-            abs(
-                float(ambiguity.metadata.get("adaptive_priority", 0.0))
-                - expected_priority
-            )
+            abs(float(ambiguity.metadata.get("adaptive_priority", 0.0)) - expected_priority)
             <= 1e-12
         )

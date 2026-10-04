@@ -53,13 +53,19 @@ class LegalSample:
         if not self.embedding_vector:
             raise LegalSampleValidationError("LegalSample.embedding_vector must not be empty")
         if not all(isinstance(value, (float, int)) for value in self.embedding_vector):
-            raise LegalSampleValidationError("LegalSample.embedding_vector must contain only numbers")
+            raise LegalSampleValidationError(
+                "LegalSample.embedding_vector must contain only numbers"
+            )
         if self.modal_ir.normalized_text != self.normalized_text:
-            raise LegalSampleValidationError("LegalSample.modal_ir.normalized_text must match normalized_text")
+            raise LegalSampleValidationError(
+                "LegalSample.modal_ir.normalized_text must match normalized_text"
+            )
         if self.selected_frame and self.selected_frame not in {
             str(candidate.get("frame_id")) for candidate in self.frame_candidates
         }:
-            raise LegalSampleValidationError("LegalSample.selected_frame must be one of frame_candidates")
+            raise LegalSampleValidationError(
+                "LegalSample.selected_frame must be one of frame_candidates"
+            )
 
     def to_dict(self) -> Dict[str, Any]:
         """Return stable JSON-ready sample data."""
@@ -109,7 +115,9 @@ def build_us_code_sample(
         citation=resolved_citation,
     )
     selector = frame_selector or BM25FrameSelector(DEFAULT_LEGAL_FRAME_FIXTURE)
-    frames = [selection.to_dict() for selection in selector.rank(normalized_text, top_k=top_k_frames)]
+    frames = [
+        selection.to_dict() for selection in selector.rank(normalized_text, top_k=top_k_frames)
+    ]
     selected_frame = str(frames[0]["frame_id"]) if frames else None
     sample = LegalSample(
         sample_id=sample_id,
@@ -120,7 +128,9 @@ def build_us_code_sample(
         text=text,
         normalized_text=normalized_text,
         embedding_model=embedding_model,
-        embedding_vector=list(embedding_vector) if embedding_vector is not None else stable_mock_embedding(normalized_text),
+        embedding_vector=list(embedding_vector)
+        if embedding_vector is not None
+        else stable_mock_embedding(normalized_text),
         modal_ir=modal_ir,
         frame_candidates=frames,
         selected_frame=selected_frame,

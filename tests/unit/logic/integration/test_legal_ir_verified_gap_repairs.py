@@ -49,16 +49,12 @@ def test_verified_gap_repairs_cover_core_legal_ir_views_without_source_copy() ->
     assert by_family["prohibition_guidance"].target_component == "deontic.ir"
     assert by_family["prohibition_guidance"].typed_semantics["deontic_operator"] == "F"
     assert by_family["temporal_deadline"].target_component == "TDFOL.prover"
-    assert "file" in by_family["cec_lifecycle_events"].typed_semantics[
-        "lifecycle_events"
-    ]
+    assert "file" in by_family["cec_lifecycle_events"].typed_semantics["lifecycle_events"]
     assert by_family["knowledge_graph_role_edges"].target_component == (
         "knowledge_graphs.neo4j_compat"
     )
     assert by_family["knowledge_graph_role_edges"].typed_semantics["actor"] == "agency"
-    assert by_family["external_prover_routing"].proof_obligation_ids == [
-        "obl-external"
-    ]
+    assert by_family["external_prover_routing"].proof_obligation_ids == ["obl-external"]
     for repair in repairs:
         payload = repair.to_dict()
         assert payload["schema_version"] == LEGAL_IR_VERIFIED_GAP_REPAIR_SCHEMA_VERSION

@@ -4,8 +4,12 @@ import os
 
 # Make sure the input file and documentation file exist.
 cwd = os.getcwd()
-assert os.path.exists(f'{cwd}/utils/filesystem.py'), "utils/filesystem.py does not exist at the specified directory."
-assert os.path.exists(f'{cwd}/utils/filesystem_stubs.md'), "Documentation for utils/filesystem.py does not exist at the specified directory."
+assert os.path.exists(f"{cwd}/utils/filesystem.py"), (
+    "utils/filesystem.py does not exist at the specified directory."
+)
+assert os.path.exists(f"{cwd}/utils/filesystem_stubs.md"), (
+    "Documentation for utils/filesystem.py does not exist at the specified directory."
+)
 
 from utils.filesystem import FileSystem, FileContent, FileInfo
 
@@ -33,7 +37,7 @@ class TestFileSystemFileExists(unittest.TestCase):
                     os.unlink(temp_file)
             except OSError:
                 pass
-        
+
         # Clean up temporary directories
         for temp_dir in self.temp_dirs:
             try:
@@ -46,7 +50,7 @@ class TestFileSystemFileExists(unittest.TestCase):
         """Helper method to create temporary files."""
         fd, temp_path = tempfile.mkstemp()
         try:
-            os.write(fd, content.encode('utf-8'))
+            os.write(fd, content.encode("utf-8"))
         finally:
             os.close(fd)
         self.temp_files.append(temp_path)
@@ -62,9 +66,9 @@ class TestFileSystemFileExists(unittest.TestCase):
             - Return value == True
         """
         existing_file = self._create_temp_file()
-        
+
         result = FileSystem.file_exists(existing_file)
-        
+
         self.assertTrue(result)
 
     def test_file_exists_with_nonexistent_file(self):
@@ -77,9 +81,9 @@ class TestFileSystemFileExists(unittest.TestCase):
             - Return value == False
         """
         nonexistent_file = "/definitely/does/not/exist.txt"
-        
+
         result = FileSystem.file_exists(nonexistent_file)
-        
+
         self.assertFalse(result)
 
     def test_file_exists_with_directory_path(self):
@@ -93,9 +97,9 @@ class TestFileSystemFileExists(unittest.TestCase):
         """
         directory_path = tempfile.mkdtemp()
         self.temp_dirs.append(directory_path)
-        
+
         result = FileSystem.file_exists(directory_path)
-        
+
         self.assertFalse(result)
 
     def test_file_exists_with_relative_path(self):
@@ -112,14 +116,14 @@ class TestFileSystemFileExists(unittest.TestCase):
         # Create file in current directory
         temp_file = self._create_temp_file()
         relative_path = "./" + os.path.basename(temp_file)
-        
+
         # Create the file at relative path
-        with open(relative_path, 'w') as f:
+        with open(relative_path, "w") as f:
             f.write("test content")
         self.temp_files.append(relative_path)
-        
+
         result = FileSystem.file_exists(relative_path)
-        
+
         self.assertTrue(result)
 
     def test_file_exists_with_absolute_path(self):
@@ -134,9 +138,9 @@ class TestFileSystemFileExists(unittest.TestCase):
         """
         temp_file = self._create_temp_file()
         absolute_path = os.path.abspath(temp_file)
-        
+
         result = FileSystem.file_exists(absolute_path)
-        
+
         self.assertTrue(result)
 
     def test_file_exists_with_empty_string_path(self):
@@ -150,9 +154,9 @@ class TestFileSystemFileExists(unittest.TestCase):
             - No exceptions raised
         """
         empty_string_path = ""
-        
+
         result = FileSystem.file_exists(empty_string_path)
-        
+
         self.assertFalse(result)
 
     def test_file_exists_with_none_path(self):
@@ -164,7 +168,7 @@ class TestFileSystemFileExists(unittest.TestCase):
         THEN expect TypeError to be raised
         """
         none_path = None
-        
+
         with self.assertRaises(TypeError):
             FileSystem.file_exists(none_path)
 
@@ -181,14 +185,14 @@ class TestFileSystemFileExists(unittest.TestCase):
         # Create a directory and file
         temp_dir = tempfile.mkdtemp()
         self.temp_dirs.append(temp_dir)
-        
+
         temp_file_path = os.path.join(temp_dir, "test_file.txt")
-        with open(temp_file_path, 'w') as f:
+        with open(temp_file_path, "w") as f:
             f.write("test content")
-        
+
         # Remove execute permissions from directory
         os.chmod(temp_dir, 0o600)  # read/write but no execute
-        
+
         try:
             result = FileSystem.file_exists(temp_file_path)
             # Should return False since we can't access the file
@@ -210,14 +214,14 @@ class TestFileSystemFileExists(unittest.TestCase):
         """
         # Create target file
         target_file = self._create_temp_file()
-        
+
         # Create symlink
         symlink_path = target_file + "_symlink"
         os.symlink(target_file, symlink_path)
         self.temp_files.append(symlink_path)
-        
+
         result = FileSystem.file_exists(symlink_path)
-        
+
         self.assertTrue(result)
 
     def test_file_exists_with_symlink_to_nonexistent_file(self):
@@ -235,9 +239,9 @@ class TestFileSystemFileExists(unittest.TestCase):
         symlink_path = tempfile.mktemp() + "_broken_symlink"
         os.symlink(nonexistent_target, symlink_path)
         self.temp_files.append(symlink_path)
-        
+
         result = FileSystem.file_exists(symlink_path)
-        
+
         self.assertFalse(result)
 
 
@@ -258,7 +262,7 @@ class TestFileSystemCreateDirectory(unittest.TestCase):
                     os.unlink(temp_file)
             except OSError:
                 pass
-        
+
         # Clean up temporary directories (in reverse order for nested dirs)
         for temp_dir in reversed(self.temp_dirs):
             try:
@@ -284,16 +288,16 @@ class TestFileSystemCreateDirectory(unittest.TestCase):
         """
         new_directory = os.path.join(tempfile.gettempdir(), "test_new_dir_" + str(os.getpid()))
         self.temp_dirs.append(new_directory)
-        
+
         # Ensure directory doesn't exist
         self.assertFalse(os.path.exists(new_directory))
-        
+
         result = FileSystem.create_directory(new_directory)
-        
+
         self.assertTrue(result)
         self.assertTrue(os.path.exists(new_directory))
         self.assertTrue(os.path.isdir(new_directory))
-        
+
         # Check permissions (may vary by system)
         stat_info = os.stat(new_directory)
         mode = stat.S_IMODE(stat_info.st_mode)
@@ -315,16 +319,16 @@ class TestFileSystemCreateDirectory(unittest.TestCase):
         """
         existing_directory = tempfile.mkdtemp()
         self.temp_dirs.append(existing_directory)
-        
+
         # Verify directory exists
         self.assertTrue(os.path.exists(existing_directory))
         original_stat = os.stat(existing_directory)
-        
+
         result = FileSystem.create_directory(existing_directory)
-        
+
         self.assertTrue(result)
         self.assertTrue(os.path.exists(existing_directory))
-        
+
         # Verify directory remains unchanged
         current_stat = os.stat(existing_directory)
         self.assertEqual(original_stat.st_mtime, current_stat.st_mtime)
@@ -343,16 +347,16 @@ class TestFileSystemCreateDirectory(unittest.TestCase):
         """
         parent_dir = tempfile.mkdtemp()
         self.temp_dirs.append(parent_dir)
-        
+
         nested_directory = os.path.join(parent_dir, "new_subdir")
         self.temp_dirs.append(nested_directory)
-        
+
         # Ensure parent exists but nested doesn't
         self.assertTrue(os.path.exists(parent_dir))
         self.assertFalse(os.path.exists(nested_directory))
-        
+
         result = FileSystem.create_directory(nested_directory)
-        
+
         self.assertTrue(result)
         self.assertTrue(os.path.exists(nested_directory))
         self.assertTrue(os.path.isdir(nested_directory))
@@ -370,12 +374,12 @@ class TestFileSystemCreateDirectory(unittest.TestCase):
         temp_base = tempfile.gettempdir()
         missing_path = os.path.join(temp_base, "missing_" + str(os.getpid()))
         nested_path = os.path.join(missing_path, "path", "new_dir")
-        
+
         # Ensure the path doesn't exist
         self.assertFalse(os.path.exists(missing_path))
-        
+
         result = FileSystem.create_directory(nested_path)
-        
+
         self.assertFalse(result)
 
     def test_create_directory_nested_path_parents_missing_no_nested_directory_created(self):
@@ -391,12 +395,12 @@ class TestFileSystemCreateDirectory(unittest.TestCase):
         temp_base = tempfile.gettempdir()
         missing_path = os.path.join(temp_base, "missing_" + str(os.getpid()))
         nested_path = os.path.join(missing_path, "path", "new_dir")
-        
+
         # Ensure the path doesn't exist
         self.assertFalse(os.path.exists(missing_path))
-        
+
         FileSystem.create_directory(nested_path)
-        
+
         self.assertFalse(os.path.exists(nested_path))
 
     def test_create_directory_nested_path_parents_missing_no_parent_directory_created(self):
@@ -412,12 +416,12 @@ class TestFileSystemCreateDirectory(unittest.TestCase):
         temp_base = tempfile.gettempdir()
         missing_path = os.path.join(temp_base, "missing_" + str(os.getpid()))
         nested_path = os.path.join(missing_path, "path", "new_dir")
-        
+
         # Ensure the path doesn't exist
         self.assertFalse(os.path.exists(missing_path))
-        
+
         FileSystem.create_directory(nested_path)
-        
+
         self.assertFalse(os.path.exists(missing_path))
 
     def test_create_directory_permission_denied(self):
@@ -434,15 +438,15 @@ class TestFileSystemCreateDirectory(unittest.TestCase):
         # Create a parent directory and restrict its permissions
         parent_dir = tempfile.mkdtemp()
         self.temp_dirs.append(parent_dir)
-        
+
         # Remove write permissions
         os.chmod(parent_dir, 0o555)  # read and execute only
-        
+
         restricted_path = os.path.join(parent_dir, "restricted_dir")
-        
+
         try:
             result = FileSystem.create_directory(restricted_path)
-            
+
             self.assertFalse(result)
             self.assertFalse(os.path.exists(restricted_path))
         finally:
@@ -464,24 +468,24 @@ class TestFileSystemCreateDirectory(unittest.TestCase):
         fd, file_path = tempfile.mkstemp()
         os.close(fd)
         self.temp_files.append(file_path)
-        
+
         # Write some content to verify file remains unchanged
-        with open(file_path, 'w') as f:
+        with open(file_path, "w") as f:
             f.write("test content")
-        
+
         original_stat = os.stat(file_path)
-        
+
         result = FileSystem.create_directory(file_path)
-        
+
         self.assertFalse(result)
         self.assertTrue(os.path.isfile(file_path))
         self.assertFalse(os.path.isdir(file_path))
-        
+
         # Verify file content unchanged
-        with open(file_path, 'r') as f:
+        with open(file_path, "r") as f:
             content = f.read()
         self.assertEqual(content, "test content")
-        
+
         current_stat = os.stat(file_path)
         self.assertEqual(original_stat.st_size, current_stat.st_size)
 
@@ -496,9 +500,9 @@ class TestFileSystemCreateDirectory(unittest.TestCase):
             - No directory created
         """
         empty_string_path = ""
-        
+
         result = FileSystem.create_directory(empty_string_path)
-        
+
         self.assertFalse(result)
 
     def test_create_directory_none_path(self):
@@ -510,7 +514,7 @@ class TestFileSystemCreateDirectory(unittest.TestCase):
         THEN expect TypeError to be raised
         """
         none_path = None
-        
+
         with self.assertRaises(TypeError):
             FileSystem.create_directory(none_path)
 
@@ -526,12 +530,12 @@ class TestFileSystemCreateDirectory(unittest.TestCase):
         """
         relative_path = "./new_test_dir_" + str(os.getpid())
         self.temp_dirs.append(relative_path)
-        
+
         # Ensure directory doesn't exist
         self.assertFalse(os.path.exists(relative_path))
-        
+
         result = FileSystem.create_directory(relative_path)
-        
+
         self.assertTrue(result)
         self.assertTrue(os.path.exists(relative_path))
         self.assertTrue(os.path.isdir(relative_path))
@@ -549,16 +553,15 @@ class TestFileSystemCreateDirectory(unittest.TestCase):
         absolute_path = os.path.join(tempfile.gettempdir(), "abs_test_dir_" + str(os.getpid()))
         absolute_path = os.path.abspath(absolute_path)
         self.temp_dirs.append(absolute_path)
-        
+
         # Ensure directory doesn't exist
         self.assertFalse(os.path.exists(absolute_path))
-        
+
         result = FileSystem.create_directory(absolute_path)
-        
+
         self.assertTrue(result)
         self.assertTrue(os.path.exists(absolute_path))
         self.assertTrue(os.path.isdir(absolute_path))
-
 
 
 class TestFileSystemReadFile(unittest.TestCase):
@@ -580,7 +583,7 @@ class TestFileSystemReadFile(unittest.TestCase):
                     os.unlink(temp_file)
             except OSError:
                 pass
-        
+
         # Clean up temporary directories
         for temp_dir in self.temp_dirs:
             try:
@@ -596,7 +599,7 @@ class TestFileSystemReadFile(unittest.TestCase):
             if mode == "wb":
                 os.write(fd, content)
             else:
-                os.write(fd, content.encode('utf-8'))
+                os.write(fd, content.encode("utf-8"))
         finally:
             os.close(fd)
         self.temp_files.append(temp_path)
@@ -618,11 +621,11 @@ class TestFileSystemReadFile(unittest.TestCase):
         """
         test_content = "Hello, World! Testing file read."
         temp_file = self._create_temp_file(test_content)
-        
+
         file_content = FileSystem.read_file(temp_file)
-        
+
         self.assertIsInstance(file_content, FileContent)
-        self.assertEqual(file_content.as_binary, test_content.encode('utf-8'))
+        self.assertEqual(file_content.as_binary, test_content.encode("utf-8"))
         self.assertTrue(file_content.mime_type.startswith("text/"))
 
     def test_read_file_existing_binary_file(self):
@@ -637,11 +640,11 @@ class TestFileSystemReadFile(unittest.TestCase):
             - raw_content contains binary data matching original
             - MIME type detected as binary type
         """
-        binary_content = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR'  # PNG header
+        binary_content = b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR"  # PNG header
         temp_file = self._create_temp_file(binary_content, mode="wb", suffix=".png")
-        
+
         file_content = FileSystem.read_file(temp_file)
-        
+
         self.assertIsInstance(file_content, FileContent)
         self.assertEqual(file_content.as_binary, binary_content)
         self.assertEqual(file_content.mime_type, "image/png")
@@ -661,11 +664,11 @@ class TestFileSystemReadFile(unittest.TestCase):
         """
         test_content = "Hello, World! Testing text mode."
         temp_file = self._create_temp_file(test_content)
-        
+
         file_content = FileSystem.read_file(temp_file, mode="r")
-        
+
         self.assertIsInstance(file_content, FileContent)
-        self.assertEqual(file_content.as_binary, test_content.encode('utf-8'))
+        self.assertEqual(file_content.as_binary, test_content.encode("utf-8"))
 
     def test_read_file_nonexistent_file(self):
         """
@@ -676,7 +679,7 @@ class TestFileSystemReadFile(unittest.TestCase):
         THEN expect FileNotFoundError to be raised
         """
         nonexistent_file = "/path/that/does/not/exist.txt"
-        
+
         with self.assertRaises(FileNotFoundError):
             FileSystem.read_file(nonexistent_file)
 
@@ -689,10 +692,10 @@ class TestFileSystemReadFile(unittest.TestCase):
         THEN expect PermissionError to be raised
         """
         temp_file = self._create_temp_file("test content")
-        
+
         # Remove read permissions
         os.chmod(temp_file, 0o000)
-        
+
         with self.assertRaises(PermissionError):
             FileSystem.read_file(temp_file)
 
@@ -706,7 +709,7 @@ class TestFileSystemReadFile(unittest.TestCase):
         """
         directory_path = tempfile.mkdtemp()
         self.temp_dirs.append(directory_path)
-        
+
         with self.assertRaises(IsADirectoryError):
             FileSystem.read_file(directory_path)
 
@@ -722,9 +725,9 @@ class TestFileSystemReadFile(unittest.TestCase):
             - size attribute == 0
         """
         temp_file = self._create_temp_file("")
-        
+
         file_content = FileSystem.read_file(temp_file)
-        
+
         self.assertIsInstance(file_content, FileContent)
         self.assertEqual(file_content.as_binary, b"")
         self.assertEqual(file_content.size, 0)
@@ -743,13 +746,13 @@ class TestFileSystemReadFile(unittest.TestCase):
         # Create 10MB of data
         large_content = "x" * (10 * 1024 * 1024)  # 10MB
         temp_file = self._create_temp_file(large_content)
-        
+
         file_content = FileSystem.read_file(temp_file)
-        
+
         self.assertIsInstance(file_content, FileContent)
         self.assertEqual(file_content.size, 10 * 1024 * 1024)
         self.assertEqual(len(file_content.as_binary), 10 * 1024 * 1024)
-        self.assertEqual(file_content.as_binary, large_content.encode('utf-8'))
+        self.assertEqual(file_content.as_binary, large_content.encode("utf-8"))
 
     def test_read_file_invalid_mode(self):
         """
@@ -762,7 +765,7 @@ class TestFileSystemReadFile(unittest.TestCase):
         THEN expect ValueError to be raised
         """
         temp_file = self._create_temp_file("test content")
-        
+
         with self.assertRaises(ValueError):
             FileSystem.read_file(temp_file, mode="invalid")
 
@@ -780,16 +783,16 @@ class TestFileSystemReadFile(unittest.TestCase):
         test_content = "Relative path test content"
         temp_file = self._create_temp_file(test_content)
         relative_path = "./" + os.path.basename(temp_file)
-        
+
         # Create file at relative path
-        with open(relative_path, 'w') as f:
+        with open(relative_path, "w") as f:
             f.write(test_content)
         self.temp_files.append(relative_path)
-        
+
         file_content = FileSystem.read_file(relative_path)
-        
+
         self.assertIsInstance(file_content, FileContent)
-        self.assertEqual(file_content.as_binary, test_content.encode('utf-8'))
+        self.assertEqual(file_content.as_binary, test_content.encode("utf-8"))
 
     def test_read_file_absolute_path(self):
         """
@@ -804,12 +807,11 @@ class TestFileSystemReadFile(unittest.TestCase):
         test_content = "Absolute path test content"
         temp_file = self._create_temp_file(test_content)
         absolute_path = os.path.abspath(temp_file)
-        
-        file_content = FileSystem.read_file(absolute_path)
-        
-        self.assertIsInstance(file_content, FileContent)
-        self.assertEqual(file_content.as_binary, test_content.encode('utf-8'))
 
+        file_content = FileSystem.read_file(absolute_path)
+
+        self.assertIsInstance(file_content, FileContent)
+        self.assertEqual(file_content.as_binary, test_content.encode("utf-8"))
 
 
 class TestFileSystemWriteFile(unittest.TestCase):
@@ -831,7 +833,7 @@ class TestFileSystemWriteFile(unittest.TestCase):
                     os.unlink(temp_file)
             except OSError:
                 pass
-        
+
         # Clean up temporary directories
         for temp_dir in self.temp_dirs:
             try:
@@ -866,17 +868,17 @@ class TestFileSystemWriteFile(unittest.TestCase):
         """
         new_file = self._create_temp_file_path()
         binary_content = b"binary test data"
-        
+
         # Ensure file doesn't exist
         self.assertFalse(os.path.exists(new_file))
-        
+
         result = FileSystem.write_file(new_file, binary_content)
-        
+
         self.assertTrue(result)
         self.assertTrue(os.path.exists(new_file))
-        
+
         # Verify content
-        with open(new_file, 'rb') as f:
+        with open(new_file, "rb") as f:
             written_content = f.read()
         self.assertEqual(written_content, binary_content)
 
@@ -896,19 +898,19 @@ class TestFileSystemWriteFile(unittest.TestCase):
         """
         new_file = self._create_temp_file_path()
         string_content = "text content"
-        
+
         # Ensure file doesn't exist
         self.assertFalse(os.path.exists(new_file))
-        
+
         result = FileSystem.write_file(new_file, string_content)
-        
+
         self.assertTrue(result)
         self.assertTrue(os.path.exists(new_file))
-        
+
         # Verify content (string should be encoded to bytes)
-        with open(new_file, 'rb') as f:
+        with open(new_file, "rb") as f:
             written_content = f.read()
-        self.assertEqual(written_content, string_content.encode('utf-8'))
+        self.assertEqual(written_content, string_content.encode("utf-8"))
 
     def test_write_file_existing_file_overwrite(self):
         """
@@ -926,19 +928,19 @@ class TestFileSystemWriteFile(unittest.TestCase):
         """
         fd, existing_file = tempfile.mkstemp()
         self.temp_files.append(existing_file)
-        
+
         # Write initial content
         os.write(fd, b"original content")
         os.close(fd)
-        
+
         binary_content = b"new binary test data"
-        
+
         result = FileSystem.write_file(existing_file, binary_content)
-        
+
         self.assertTrue(result)
-        
+
         # Verify content was overwritten
-        with open(existing_file, 'rb') as f:
+        with open(existing_file, "rb") as f:
             written_content = f.read()
         self.assertEqual(written_content, binary_content)
 
@@ -958,14 +960,14 @@ class TestFileSystemWriteFile(unittest.TestCase):
         """
         new_file = self._create_temp_file_path()
         string_content = "text content with unicode: café 世界"
-        
+
         result = FileSystem.write_file(new_file, string_content, mode="w")
-        
+
         self.assertTrue(result)
         self.assertTrue(os.path.exists(new_file))
-        
+
         # Verify content
-        with open(new_file, 'r', encoding='utf-8') as f:
+        with open(new_file, "r", encoding="utf-8") as f:
             written_content = f.read()
         self.assertEqual(written_content, string_content)
 
@@ -982,12 +984,12 @@ class TestFileSystemWriteFile(unittest.TestCase):
         # Create directory with restricted permissions
         temp_dir = tempfile.mkdtemp()
         self.temp_dirs.append(temp_dir)
-        
+
         os.chmod(temp_dir, 0o555)  # read and execute only, no write
-        
+
         permission_denied_path = os.path.join(temp_dir, "test_file.txt")
         binary_content = b"binary test data"
-        
+
         with self.assertRaises(PermissionError):
             FileSystem.write_file(permission_denied_path, binary_content)
 
@@ -1003,9 +1005,9 @@ class TestFileSystemWriteFile(unittest.TestCase):
         """
         directory_as_file_path = tempfile.mkdtemp()
         self.temp_dirs.append(directory_as_file_path)
-        
+
         binary_content = b"binary test data"
-        
+
         with self.assertRaises(IsADirectoryError):
             FileSystem.write_file(directory_as_file_path, binary_content)
 
@@ -1022,15 +1024,17 @@ class TestFileSystemWriteFile(unittest.TestCase):
             - No file created
         """
         temp_base = tempfile.gettempdir()
-        parent_directory_missing = os.path.join(temp_base, "nonexistent_dir_" + str(os.getpid()), "test_file.txt")
+        parent_directory_missing = os.path.join(
+            temp_base, "nonexistent_dir_" + str(os.getpid()), "test_file.txt"
+        )
         binary_content = b"binary test data"
-        
+
         # Ensure parent directory doesn't exist
         self.assertFalse(os.path.exists(os.path.dirname(parent_directory_missing)))
-        
+
         with self.assertRaises(FileNotFoundError):
             FileSystem.write_file(parent_directory_missing, binary_content)
-        
+
         # Verify no file was created
         self.assertFalse(os.path.exists(parent_directory_missing))
 
@@ -1049,17 +1053,17 @@ class TestFileSystemWriteFile(unittest.TestCase):
         """
         new_file = self._create_temp_file_path()
         empty_content = b""
-        
+
         result = FileSystem.write_file(new_file, empty_content)
-        
+
         self.assertTrue(result)
         self.assertTrue(os.path.exists(new_file))
-        
+
         # Verify file is empty
         stat_info = os.stat(new_file)
         self.assertEqual(stat_info.st_size, 0)
-        
-        with open(new_file, 'rb') as f:
+
+        with open(new_file, "rb") as f:
             content = f.read()
         self.assertEqual(content, b"")
 
@@ -1078,17 +1082,17 @@ class TestFileSystemWriteFile(unittest.TestCase):
         """
         new_file = self._create_temp_file_path()
         large_content = b"x" * (10 * 1024 * 1024 + 1024)  # >10MB
-        
+
         result = FileSystem.write_file(new_file, large_content)
-        
+
         self.assertTrue(result)
         self.assertTrue(os.path.exists(new_file))
-        
+
         # Verify all content written
         stat_info = os.stat(new_file)
         self.assertEqual(stat_info.st_size, len(large_content))
-        
-        with open(new_file, 'rb') as f:
+
+        with open(new_file, "rb") as f:
             written_content = f.read()
         self.assertEqual(written_content, large_content)
 
@@ -1105,7 +1109,7 @@ class TestFileSystemWriteFile(unittest.TestCase):
         """
         new_file = self._create_temp_file_path()
         binary_content = b"binary test data"
-        
+
         with self.assertRaises(ValueError):
             FileSystem.write_file(new_file, binary_content, mode="invalid")
 
@@ -1124,14 +1128,14 @@ class TestFileSystemWriteFile(unittest.TestCase):
         relative_path = "./test_write_file_" + str(os.getpid()) + ".txt"
         self.temp_files.append(relative_path)
         binary_content = b"binary test data"
-        
+
         result = FileSystem.write_file(relative_path, binary_content)
-        
+
         self.assertTrue(result)
         self.assertTrue(os.path.exists(relative_path))
-        
+
         # Verify content
-        with open(relative_path, 'rb') as f:
+        with open(relative_path, "rb") as f:
             written_content = f.read()
         self.assertEqual(written_content, binary_content)
 
@@ -1149,14 +1153,14 @@ class TestFileSystemWriteFile(unittest.TestCase):
         """
         absolute_path = os.path.abspath(self._create_temp_file_path())
         binary_content = b"binary test data"
-        
+
         result = FileSystem.write_file(absolute_path, binary_content)
-        
+
         self.assertTrue(result)
         self.assertTrue(os.path.exists(absolute_path))
-        
+
         # Verify content
-        with open(absolute_path, 'rb') as f:
+        with open(absolute_path, "rb") as f:
             written_content = f.read()
         self.assertEqual(written_content, binary_content)
 
@@ -1180,7 +1184,7 @@ class TestFileSystemGetFileInfo(unittest.TestCase):
                     os.unlink(temp_file)
             except OSError:
                 pass
-        
+
         # Clean up temporary directories
         for temp_dir in self.temp_dirs:
             try:
@@ -1196,7 +1200,7 @@ class TestFileSystemGetFileInfo(unittest.TestCase):
             if mode == "wb":
                 os.write(fd, content)
             else:
-                os.write(fd, content.encode('utf-8'))
+                os.write(fd, content.encode("utf-8"))
         finally:
             os.close(fd)
         self.temp_files.append(temp_path)
@@ -1216,18 +1220,18 @@ class TestFileSystemGetFileInfo(unittest.TestCase):
         """
         test_content = "Hello, World! Test file content."
         temp_file = self._create_temp_file(test_content, suffix=".txt")
-        
+
         file_info = FileSystem.get_file_info(temp_file)
-        
+
         self.assertIsInstance(file_info, FileInfo)
         self.assertEqual(file_info.path, Path(temp_file))
-        self.assertEqual(file_info.size, len(test_content.encode('utf-8')))
-        
+        self.assertEqual(file_info.size, len(test_content.encode("utf-8")))
+
         # Check timestamp within 1 second
         now = datetime.now()
         time_diff = abs((now - file_info.modified_time).total_seconds())
         self.assertLessEqual(time_diff, 1)
-        
+
         self.assertTrue(file_info.mime_type.startswith("text/"))
         self.assertEqual(file_info.extension, "txt")
         self.assertTrue(file_info.is_readable)
@@ -1244,11 +1248,11 @@ class TestFileSystemGetFileInfo(unittest.TestCase):
             - MIME type identified as binary type
             - All other attributes populated per file properties
         """
-        binary_content = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR'
+        binary_content = b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR"
         temp_file = self._create_temp_file(binary_content, suffix=".png", mode="wb")
-        
+
         file_info = FileSystem.get_file_info(temp_file)
-        
+
         self.assertIsInstance(file_info, FileInfo)
         self.assertEqual(file_info.mime_type, "image/png")
         self.assertEqual(file_info.path, Path(temp_file))
@@ -1264,7 +1268,7 @@ class TestFileSystemGetFileInfo(unittest.TestCase):
         THEN expect FileNotFoundError to be raised
         """
         nonexistent_file = "/path/that/does/not/exist.txt"
-        
+
         with self.assertRaises(FileNotFoundError):
             FileSystem.get_file_info(nonexistent_file)
 
@@ -1278,7 +1282,7 @@ class TestFileSystemGetFileInfo(unittest.TestCase):
         """
         directory_path = tempfile.mkdtemp()
         self.temp_dirs.append(directory_path)
-        
+
         with self.assertRaises(ValueError):
             FileSystem.get_file_info(directory_path)
 
@@ -1294,9 +1298,9 @@ class TestFileSystemGetFileInfo(unittest.TestCase):
             - Other attributes populated per normal rules
         """
         temp_file = self._create_temp_file("")
-        
+
         file_info = FileSystem.get_file_info(temp_file)
-        
+
         self.assertIsInstance(file_info, FileInfo)
         self.assertEqual(file_info.size, 0)
         self.assertIsInstance(file_info.modified_time, datetime)
@@ -1317,14 +1321,14 @@ class TestFileSystemGetFileInfo(unittest.TestCase):
         fd, temp_path = tempfile.mkstemp(suffix="")
         os.close(fd)
         os.unlink(temp_path)
-        
+
         no_extension_path = temp_path + "_README"
-        with open(no_extension_path, 'w') as f:
+        with open(no_extension_path, "w") as f:
             f.write("# README\nThis is a readme file.")
         self.temp_files.append(no_extension_path)
-        
+
         file_info = FileSystem.get_file_info(no_extension_path)
-        
+
         self.assertIsInstance(file_info, FileInfo)
         self.assertEqual(file_info.extension, "")
         self.assertEqual(file_info.mime_type, "text/plain")
@@ -1341,19 +1345,19 @@ class TestFileSystemGetFileInfo(unittest.TestCase):
             - No permission errors raised during info gathering
         """
         temp_file = self._create_temp_file("test content")
-        
+
         # Set specific permissions: read-only for owner, no access for others
         os.chmod(temp_file, 0o400)
-        
+
         file_info = FileSystem.get_file_info(temp_file)
-        
+
         self.assertIsInstance(file_info, FileInfo)
         self.assertTrue(file_info.is_readable)  # Owner can read
         self.assertFalse(file_info.is_writable)  # Owner cannot write
-        
+
         # Test no permissions
         os.chmod(temp_file, 0o000)
-        
+
         file_info = FileSystem.get_file_info(temp_file)
         self.assertFalse(file_info.is_readable)
         self.assertFalse(file_info.is_writable)
@@ -1372,16 +1376,16 @@ class TestFileSystemGetFileInfo(unittest.TestCase):
         """
         temp_file = self._create_temp_file("test content")
         relative_path = "./" + os.path.basename(temp_file)
-        
+
         # Create file at relative path
-        with open(relative_path, 'w') as f:
+        with open(relative_path, "w") as f:
             f.write("test content")
         self.temp_files.append(relative_path)
-        
+
         file_info = FileSystem.get_file_info(relative_path)
-        
+
         self.assertIsInstance(file_info, FileInfo)
-        self.assertIn(relative_path.strip('.'), str(file_info.path))
+        self.assertIn(relative_path.strip("."), str(file_info.path))
 
     def test_get_file_info_absolute_path(self):
         """
@@ -1395,9 +1399,9 @@ class TestFileSystemGetFileInfo(unittest.TestCase):
         """
         temp_file = self._create_temp_file("test content")
         absolute_path = os.path.abspath(temp_file)
-        
+
         file_info = FileSystem.get_file_info(absolute_path)
-        
+
         self.assertIsInstance(file_info, FileInfo)
         self.assertEqual(file_info.path, Path(absolute_path))
 
@@ -1414,18 +1418,18 @@ class TestFileSystemGetFileInfo(unittest.TestCase):
         """
         # Create target file
         target_file = self._create_temp_file("symlink target content")
-        
+
         # Create symlink
         symlink_path = target_file + "_symlink"
         os.symlink(target_file, symlink_path)
         self.temp_files.append(symlink_path)
-        
+
         file_info = FileSystem.get_file_info(symlink_path)
-        
+
         self.assertIsInstance(file_info, FileInfo)
         self.assertEqual(file_info.path, Path(symlink_path))
         # Size should match target file
-        self.assertEqual(file_info.size, len("symlink target content".encode('utf-8')))
+        self.assertEqual(file_info.size, len("symlink target content".encode("utf-8")))
 
     def test_get_file_info_recently_modified_file(self):
         """
@@ -1439,16 +1443,16 @@ class TestFileSystemGetFileInfo(unittest.TestCase):
             - Timestamp within 1-second precision of actual modification time
         """
         temp_file = self._create_temp_file("initial content")
-        
+
         # Modify the file
         modification_time = datetime.now()
-        with open(temp_file, 'a') as f:
+        with open(temp_file, "a") as f:
             f.write(" additional content")
-        
+
         file_info = FileSystem.get_file_info(temp_file)
-        
+
         self.assertIsInstance(file_info, FileInfo)
-        
+
         # Check that modification time is recent (within 1 second)
         time_diff = abs((modification_time - file_info.modified_time).total_seconds())
         self.assertLessEqual(time_diff, 1)
@@ -1473,7 +1477,7 @@ class TestFileSystemListFiles(unittest.TestCase):
                     os.unlink(temp_file)
             except OSError:
                 pass
-        
+
         # Clean up temporary directories (in reverse order for nested dirs)
         for temp_dir in reversed(self.temp_dirs):
             try:
@@ -1488,7 +1492,7 @@ class TestFileSystemListFiles(unittest.TestCase):
         """Helper method to create a test directory with various file types."""
         test_dir = tempfile.mkdtemp()
         self.temp_dirs.append(test_dir)
-        
+
         # Create various files
         files_to_create = [
             ("test.txt", "text content"),
@@ -1497,22 +1501,22 @@ class TestFileSystemListFiles(unittest.TestCase):
             ("README", "readme content"),  # No extension
             ("Makefile", "makefile content"),  # No extension
             ("Test.TXT", "uppercase extension"),
-            ("file.Txt", "mixed case extension")
+            ("file.Txt", "mixed case extension"),
         ]
-        
+
         created_files = []
         for filename, content in files_to_create:
             file_path = os.path.join(test_dir, filename)
-            with open(file_path, 'w') as f:
+            with open(file_path, "w") as f:
                 f.write(content)
             self.temp_files.append(file_path)
             created_files.append(file_path)
-        
+
         # Create a subdirectory (should be excluded from file listings)
         subdir = os.path.join(test_dir, "subdir")
         os.makedirs(subdir)
         self.temp_dirs.append(subdir)
-        
+
         return test_dir, created_files
 
     def test_list_files_existing_directory_default_pattern_returns_list(self):
@@ -1527,9 +1531,9 @@ class TestFileSystemListFiles(unittest.TestCase):
             - Return type == list
         """
         test_dir, created_files = self._create_test_directory_with_files()
-        
+
         result = FileSystem.list_files(test_dir)
-        
+
         self.assertIsInstance(result, list)
 
     def test_list_files_existing_directory_default_pattern_returns_string_paths(self):
@@ -1563,11 +1567,11 @@ class TestFileSystemListFiles(unittest.TestCase):
             - Count matches files with extensions (excludes files without extensions)
         """
         test_dir, created_files = self._create_test_directory_with_files()
-        
+
         result = FileSystem.list_files(test_dir)
-        
+
         # Should include files with extensions
-        expected_files = [f for f in created_files if '.' in os.path.basename(f)]
+        expected_files = [f for f in created_files if "." in os.path.basename(f)]
         self.assertEqual(len(result), len(expected_files))
 
     def test_list_files_existing_directory_default_pattern_includes_txt_file(self):
@@ -1582,9 +1586,9 @@ class TestFileSystemListFiles(unittest.TestCase):
             - test.txt included in results
         """
         test_dir, created_files = self._create_test_directory_with_files()
-        
+
         result = FileSystem.list_files(test_dir)
-        
+
         result_basenames = [os.path.basename(f) for f in result]
         self.assertIn("test.txt", result_basenames)
 
@@ -1600,9 +1604,9 @@ class TestFileSystemListFiles(unittest.TestCase):
             - script.py included in results
         """
         test_dir, created_files = self._create_test_directory_with_files()
-        
+
         result = FileSystem.list_files(test_dir)
-        
+
         result_basenames = [os.path.basename(f) for f in result]
         self.assertIn("script.py", result_basenames)
 
@@ -1618,9 +1622,9 @@ class TestFileSystemListFiles(unittest.TestCase):
             - image.jpg included in results
         """
         test_dir, created_files = self._create_test_directory_with_files()
-        
+
         result = FileSystem.list_files(test_dir)
-        
+
         result_basenames = [os.path.basename(f) for f in result]
         self.assertIn("image.jpg", result_basenames)
 
@@ -1636,9 +1640,9 @@ class TestFileSystemListFiles(unittest.TestCase):
             - Test.TXT included in results
         """
         test_dir, created_files = self._create_test_directory_with_files()
-        
+
         result = FileSystem.list_files(test_dir)
-        
+
         result_basenames = [os.path.basename(f) for f in result]
         self.assertIn("Test.TXT", result_basenames)
 
@@ -1654,9 +1658,9 @@ class TestFileSystemListFiles(unittest.TestCase):
             - file.Txt included in results
         """
         test_dir, created_files = self._create_test_directory_with_files()
-        
+
         result = FileSystem.list_files(test_dir)
-        
+
         result_basenames = [os.path.basename(f) for f in result]
         self.assertIn("file.Txt", result_basenames)
 
@@ -1672,9 +1676,9 @@ class TestFileSystemListFiles(unittest.TestCase):
             - README excluded from results
         """
         test_dir, created_files = self._create_test_directory_with_files()
-        
+
         result = FileSystem.list_files(test_dir)
-        
+
         result_basenames = [os.path.basename(f) for f in result]
         self.assertNotIn("README", result_basenames)
 
@@ -1690,9 +1694,9 @@ class TestFileSystemListFiles(unittest.TestCase):
             - Makefile excluded from results
         """
         test_dir, created_files = self._create_test_directory_with_files()
-        
+
         result = FileSystem.list_files(test_dir)
-        
+
         result_basenames = [os.path.basename(f) for f in result]
         self.assertNotIn("Makefile", result_basenames)
 
@@ -1727,15 +1731,14 @@ class TestFileSystemListFiles(unittest.TestCase):
             - Files without extensions included in results
         """
         test_dir, created_files = self._create_test_directory_with_files()
-        
+
         result = FileSystem.list_files(test_dir, pattern="*")
-        
+
         result_basenames = [os.path.basename(f) for f in result]
-        
+
         # Files without extensions should be included
         for file_without_ext in ["README", "Makefile"]:
             self.assertIn(file_without_ext, result_basenames)
-
 
     def test_list_files_specific_extension_pattern_includes_matching_files(self):
         """
@@ -1750,13 +1753,13 @@ class TestFileSystemListFiles(unittest.TestCase):
             - Case-insensitive matching (both .txt and .TXT match)
         """
         test_dir, created_files = self._create_test_directory_with_files()
-        
+
         result = FileSystem.list_files(test_dir, pattern="*.txt")
-        
+
         self.assertIsInstance(result, list)
-        
+
         result_basenames = [os.path.basename(f) for f in result]
-        
+
         # Should include .txt files (case-insensitive)
         expected_txt_files = ["test.txt", "Test.TXT", "file.Txt"]
         for txt_file in expected_txt_files:
@@ -1775,11 +1778,11 @@ class TestFileSystemListFiles(unittest.TestCase):
             - Files without extensions excluded
         """
         test_dir, created_files = self._create_test_directory_with_files()
-        
+
         result = FileSystem.list_files(test_dir, pattern="*.txt")
-        
+
         result_basenames = [os.path.basename(f) for f in result]
-        
+
         # Should exclude non-.txt files
         excluded_files = ["script.py", "image.jpg", "README", "Makefile"]
         for excluded_file in excluded_files:
@@ -1799,9 +1802,9 @@ class TestFileSystemListFiles(unittest.TestCase):
         """
         empty_directory = tempfile.mkdtemp()
         self.temp_dirs.append(empty_directory)
-        
+
         result = FileSystem.list_files(empty_directory)
-        
+
         self.assertIsInstance(result, list)
         self.assertEqual(result, [])
 
@@ -1814,7 +1817,7 @@ class TestFileSystemListFiles(unittest.TestCase):
         THEN expect FileNotFoundError to be raised
         """
         nonexistent_directory = "/path/that/does/not/exist"
-        
+
         with self.assertRaises(FileNotFoundError):
             FileSystem.list_files(nonexistent_directory)
 
@@ -1830,10 +1833,10 @@ class TestFileSystemListFiles(unittest.TestCase):
         fd, file_path_instead = tempfile.mkstemp()
         os.close(fd)
         self.temp_files.append(file_path_instead)
-        
-        with open(file_path_instead, 'w') as f:
+
+        with open(file_path_instead, "w") as f:
             f.write("test content")
-        
+
         with self.assertRaises(NotADirectoryError):
             FileSystem.list_files(file_path_instead)
 
@@ -1847,16 +1850,16 @@ class TestFileSystemListFiles(unittest.TestCase):
         """
         permission_denied_directory = tempfile.mkdtemp()
         self.temp_dirs.append(permission_denied_directory)
-        
+
         # Create some files first
         test_file = os.path.join(permission_denied_directory, "test.txt")
-        with open(test_file, 'w') as f:
+        with open(test_file, "w") as f:
             f.write("test content")
         self.temp_files.append(test_file)
-        
+
         # Remove read permissions
         os.chmod(permission_denied_directory, 0o000)
-        
+
         with self.assertRaises(PermissionError):
             FileSystem.list_files(permission_denied_directory)
 
@@ -1875,32 +1878,32 @@ class TestFileSystemListFiles(unittest.TestCase):
         """
         test_dir = tempfile.mkdtemp()
         self.temp_dirs.append(test_dir)
-        
+
         # Create files with various patterns
         files_to_create = [
             "test_module.py",  # Should match
             "test_helper.py",  # Should match
-            "test.py",         # Should NOT match (no underscore)
-            "my_test_file.py", # Should NOT match (doesn't start with test_)
-            "test_script.txt", # Should NOT match (wrong extension)
-            "test_data.py"     # Should match
+            "test.py",  # Should NOT match (no underscore)
+            "my_test_file.py",  # Should NOT match (doesn't start with test_)
+            "test_script.txt",  # Should NOT match (wrong extension)
+            "test_data.py",  # Should match
         ]
-        
+
         for filename in files_to_create:
             file_path = os.path.join(test_dir, filename)
-            with open(file_path, 'w') as f:
+            with open(file_path, "w") as f:
                 f.write("content")
             self.temp_files.append(file_path)
-        
+
         result = FileSystem.list_files(test_dir, pattern="test_*.py")
-        
+
         result_basenames = [os.path.basename(f) for f in result]
-        
+
         # Should match
         self.assertIn("test_module.py", result_basenames)
         self.assertIn("test_helper.py", result_basenames)
         self.assertIn("test_data.py", result_basenames)
-        
+
         # Should not match
         self.assertNotIn("test.py", result_basenames)
         self.assertNotIn("my_test_file.py", result_basenames)
@@ -1921,15 +1924,15 @@ class TestFileSystemListFiles(unittest.TestCase):
         relative_directory = "./test_list_files_" + str(os.getpid())
         os.makedirs(relative_directory)
         self.temp_dirs.append(relative_directory)
-        
+
         # Create test file
         test_file = os.path.join(relative_directory, "test.txt")
-        with open(test_file, 'w') as f:
+        with open(test_file, "w") as f:
             f.write("test content")
         self.temp_files.append(test_file)
-        
+
         result = FileSystem.list_files(relative_directory)
-        
+
         self.assertIsInstance(result, list)
         self.assertEqual(len(result), 1)
         result_basenames = [os.path.basename(f) for f in result]
@@ -1948,15 +1951,15 @@ class TestFileSystemListFiles(unittest.TestCase):
         test_dir = tempfile.mkdtemp()
         absolute_directory = os.path.abspath(test_dir)
         self.temp_dirs.append(absolute_directory)
-        
+
         # Create test file
         test_file = os.path.join(absolute_directory, "test.txt")
-        with open(test_file, 'w') as f:
+        with open(test_file, "w") as f:
             f.write("test content")
         self.temp_files.append(test_file)
-        
+
         result = FileSystem.list_files(absolute_directory)
-        
+
         self.assertIsInstance(result, list)
         self.assertEqual(len(result), 1)
         result_basenames = [os.path.basename(f) for f in result]
@@ -1977,37 +1980,32 @@ class TestFileSystemListFiles(unittest.TestCase):
         """
         test_dir = tempfile.mkdtemp()
         self.temp_dirs.append(test_dir)
-        
+
         # Create regular and hidden files
-        files_to_create = [
-            "regular.txt",
-            ".hidden_file",
-            ".hidden_config",
-            "another.py"
-        ]
-        
+        files_to_create = ["regular.txt", ".hidden_file", ".hidden_config", "another.py"]
+
         for filename in files_to_create:
             file_path = os.path.join(test_dir, filename)
-            with open(file_path, 'w') as f:
+            with open(file_path, "w") as f:
                 f.write("content")
             self.temp_files.append(file_path)
-        
+
         # Test pattern for hidden files
         result_hidden = FileSystem.list_files(test_dir, pattern=".*")
         result_hidden_basenames = [os.path.basename(f) for f in result_hidden]
-        
+
         # Should include hidden files
         self.assertIn(".hidden_file", result_hidden_basenames)
         self.assertIn(".hidden_config", result_hidden_basenames)
-        
+
         # Test default pattern (should exclude hidden files)
         result_regular = FileSystem.list_files(test_dir, pattern="*.*")
         result_regular_basenames = [os.path.basename(f) for f in result_regular]
-        
+
         # Should include regular files
         self.assertIn("regular.txt", result_regular_basenames)
         self.assertIn("another.py", result_regular_basenames)
-        
+
         # Should exclude hidden files with default pattern
         self.assertNotIn(".hidden_file", result_regular_basenames)
         self.assertNotIn(".hidden_config", result_regular_basenames)
@@ -2028,42 +2026,43 @@ class TestFileSystemListFiles(unittest.TestCase):
         """
         test_dir = tempfile.mkdtemp()
         self.temp_dirs.append(test_dir)
-        
+
         # Create files with different case extensions
         files_to_create = [
             "file.TXT",
-            "file.txt", 
+            "file.txt",
             "file.Txt",
-            "other.py"  # Should not match txt patterns
+            "other.py",  # Should not match txt patterns
         ]
-        
+
         for filename in files_to_create:
             file_path = os.path.join(test_dir, filename)
-            with open(file_path, 'w') as f:
+            with open(file_path, "w") as f:
                 f.write("content")
             self.temp_files.append(file_path)
-        
+
         # Test uppercase pattern
         result_upper = FileSystem.list_files(test_dir, pattern="*.TXT")
         result_upper_basenames = [os.path.basename(f) for f in result_upper]
-        
+
         # Test lowercase pattern
         result_lower = FileSystem.list_files(test_dir, pattern="*.txt")
         result_lower_basenames = [os.path.basename(f) for f in result_lower]
-        
+
         # Both patterns should match all txt files (case-insensitive)
         expected_txt_files = ["file.TXT", "file.txt", "file.Txt"]
-        
+
         for txt_file in expected_txt_files:
             self.assertIn(txt_file, result_upper_basenames)
             self.assertIn(txt_file, result_lower_basenames)
-        
+
         # Should not match non-txt files
         self.assertNotIn("other.py", result_upper_basenames)
         self.assertNotIn("other.py", result_lower_basenames)
-        
+
         # Results should be identical
         self.assertEqual(set(result_upper_basenames), set(result_lower_basenames))
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

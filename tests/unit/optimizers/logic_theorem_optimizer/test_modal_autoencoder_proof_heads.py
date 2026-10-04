@@ -66,8 +66,7 @@ def _record(
         "evidence_ids": (f"evidence-{suffix}",),
         "receipt_ids": (f"receipt-{suffix}",),
         "partition_key": f"sample-{suffix}",
-        "partition_policy": partition_policy
-        or ProofFeedbackPartitionPolicy(holdout_fraction=0.0),
+        "partition_policy": partition_policy or ProofFeedbackPartitionPolicy(holdout_fraction=0.0),
         "versions": versions or _versions(),
     }
     values.update(overrides)
@@ -160,9 +159,10 @@ def test_trusted_version_matched_feedback_trains_every_head_and_reports_family_m
         "failure:missing_exception_scope"
         in prediction["heads"]["minimal_failing_contract"]["probabilities"]
     )
-    assert set(
-        prediction["heads"]["reconstruction_success"]["probabilities"]
-    ) == {"failure", "not_attempted"}
+    assert set(prediction["heads"]["reconstruction_success"]["probabilities"]) == {
+        "failure",
+        "not_attempted",
+    }
 
 
 def test_untrusted_stale_holdout_invalid_and_duplicate_feedback_never_train() -> None:
@@ -259,9 +259,7 @@ def test_head_vocabulary_is_bounded_under_many_trusted_labels() -> None:
 
     assert report["applied_count"] == 12
     assert report["dropped_label_count"] > 0
-    assert len(
-        prediction["heads"]["obligation_family"]["probabilities"]
-    ) <= 3
+    assert len(prediction["heads"]["obligation_family"]["probabilities"]) <= 3
     assert all(
         len(logits) <= 3
         for contexts in autoencoder.state.proof_auxiliary_head_logits.values()

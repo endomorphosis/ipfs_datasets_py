@@ -49,9 +49,7 @@ def _policy(
     labels = (
         SecurityLabel("label:user", "user_id", SecurityLevel.LOW, ObservationKind.INPUT),
         SecurityLabel("label:secret", "secret", SecurityLevel.HIGH, ObservationKind.INPUT),
-        SecurityLabel(
-            "label:status", "status", SecurityLevel.LOW, ObservationKind.OUTPUT
-        ),
+        SecurityLabel("label:status", "status", SecurityLevel.LOW, ObservationKind.OUTPUT),
         SecurityLabel(
             "label:token",
             "public_token",
@@ -194,9 +192,7 @@ def test_trace_cardinality_and_quantifier_order_are_canonical() -> None:
             formula_id="formula:bad-index",
             kind=HyperpropertyKind.GENERAL,
             variables=(TraceVariable("var:pi1", "pi1"),),
-            quantifier_prefix=(
-                QuantifierBinding("bind:x", TraceQuantifier.EXISTS, "var:pi1", 2),
-            ),
+            quantifier_prefix=(QuantifierBinding("bind:x", TraceQuantifier.EXISTS, "var:pi1", 2),),
             matrix_statement="exists pi1. true",
         )
 
@@ -307,9 +303,7 @@ def test_relational_pre_and_postconditions_bind_trace_variables() -> None:
             formula_id="formula:bad-rel",
             kind=HyperpropertyKind.RELATIONAL,
             variables=(TraceVariable("var:pi1", "pi1"),),
-            quantifier_prefix=(
-                QuantifierBinding("bind:0", TraceQuantifier.FORALL, "var:pi1", 0),
-            ),
+            quantifier_prefix=(QuantifierBinding("bind:0", TraceQuantifier.FORALL, "var:pi1", 0),),
             matrix_statement="true",
             preconditions=(
                 RelationalCondition(
@@ -409,10 +403,7 @@ def test_clean_sample_holds_but_never_authorizes_universal_proof() -> None:
 
 def test_bound_hit_and_missing_high_variation_are_inconclusive() -> None:
     document = _document(max_traces=1, max_pairs=1)
-    many = tuple(
-        _trace(f"trace:{index}", secret=f"s{index}", status="ok")
-        for index in range(4)
-    )
+    many = tuple(_trace(f"trace:{index}", secret=f"s{index}", status="ok") for index in range(4))
     bound_result = document.evaluate_bounded_noninterference(many)
     assert bound_result.verdict is HyperpropertyVerdict.INCONCLUSIVE
     assert bound_result.bound_hit or bound_result.explored_traces == 1
@@ -508,9 +499,7 @@ def test_noninterference_formula_rejects_wrong_cardinality_or_exists() -> None:
             formula_id="formula:one",
             kind=HyperpropertyKind.NONINTERFERENCE,
             variables=(TraceVariable("var:pi1", "pi1"),),
-            quantifier_prefix=(
-                QuantifierBinding("bind:0", TraceQuantifier.FORALL, "var:pi1", 0),
-            ),
+            quantifier_prefix=(QuantifierBinding("bind:0", TraceQuantifier.FORALL, "var:pi1", 0),),
             matrix_statement="true",
             information_flow_policy_id="policy:ni-v1",
         )

@@ -11,12 +11,12 @@ from ipfs_datasets_py.processors.file_converter import FileConverter
 converter = FileConverter()
 
 # Convert a file
-result = await converter.convert('document.pdf')
+result = await converter.convert("document.pdf")
 print(result.text)
 print(result.metadata)
 
 # Or use synchronously
-result = converter.convert_sync('document.pdf')
+result = converter.convert_sync("document.pdf")
 ```
 
 ## Backends
@@ -32,7 +32,7 @@ Automatically selects the best available backend in this order:
 
 ### MarkItDown (Phase 1 - External)
 ```python
-converter = FileConverter(backend='markitdown')
+converter = FileConverter(backend="markitdown")
 ```
 - **Best for:** Fast conversion, web URLs, async operations
 - **Formats:** 20+ including PDF, DOCX, XLSX, HTML, images
@@ -40,7 +40,7 @@ converter = FileConverter(backend='markitdown')
 
 ### Omni (Phase 1 - External)
 ```python
-converter = FileConverter(backend='omni')
+converter = FileConverter(backend="omni")
 ```
 - **Best for:** Rich metadata, batch processing, training data
 - **Formats:** 25 formats across text, image, audio, video, application
@@ -48,7 +48,7 @@ converter = FileConverter(backend='omni')
 
 ### Native (Phase 2+ - Internal)
 ```python
-converter = FileConverter(backend='native')
+converter = FileConverter(backend="native")
 ```
 - **Best for:** No external dependencies
 - **Formats:** Currently txt, md, json, csv, html, xml (expanding)
@@ -59,7 +59,7 @@ converter = FileConverter(backend='native')
 ### Basic Conversion
 ```python
 converter = FileConverter()
-result = await converter.convert('research.pdf')
+result = await converter.convert("research.pdf")
 
 if result.success:
     print(f"Converted {len(result.text)} characters")
@@ -73,7 +73,7 @@ else:
 from pathlib import Path
 
 converter = FileConverter()
-files = list(Path('documents/').rglob('*.pdf'))
+files = list(Path("documents/").rglob("*.pdf"))
 
 results = await converter.convert_batch(files, max_concurrent=5)
 successful = [r for r in results if r.success]
@@ -89,14 +89,14 @@ converter = FileConverter()
 graph = GraphRAG()
 
 # Convert and add to knowledge graph
-result = await converter.convert('paper.pdf')
+result = await converter.convert("paper.pdf")
 if result.success:
     await graph.add_document(result.text, metadata=result.metadata)
 ```
 
 ### Check Supported Formats
 ```python
-converter = FileConverter(backend='markitdown')
+converter = FileConverter(backend="markitdown")
 formats = converter.get_supported_formats()
 print(f"Supports: {', '.join(formats)}")
 
@@ -177,11 +177,11 @@ class FileConverter:
 ```python
 @dataclass
 class ConversionResult:
-    text: str              # Extracted text content
-    metadata: dict         # Additional metadata
-    backend: str           # Backend that performed conversion
-    success: bool          # Whether conversion succeeded
-    error: Optional[str]   # Error message if failed
+    text: str  # Extracted text content
+    metadata: dict  # Additional metadata
+    backend: str  # Backend that performed conversion
+    success: bool  # Whether conversion succeeded
+    error: Optional[str]  # Error message if failed
 ```
 
 ## Related Documentation

@@ -12,15 +12,16 @@ Modules:
     application_handler: Handlers for application formats (PDF, JSON, ZIP, etc.).
     audio_handler: Handlers for audio formats (MP3, WAV, OGG, etc.).
     video_handler: Handlers for video formats (MP4, WEBM, AVI, etc.).
-    
+
 Implementation Status:
     - Base Handler Interface: ✅ Complete
     - Text Handlers: ✅ Complete
     - Image Handlers: ✅ Complete
-    - Application Handlers: ✅ Complete 
+    - Application Handlers: ✅ Complete
     - Audio Handlers: ✅ Complete
     - Video Handlers: ✅ Complete
 """
+
 from .content_extractor_factory import make_content_extractor
 from ._content_extractor import ContentExtractor
 from ._content import Content
@@ -28,7 +29,7 @@ from ._content import Content
 extractor = make_content_extractor()
 
 __all__ = [
-    'make_content_extractor',
-    'ContentExtractor',
-    'ContentExtractor',
+    "make_content_extractor",
+    "ContentExtractor",
+    "ContentExtractor",
 ]

@@ -12,7 +12,7 @@ codebase across all proof systems.
 Migration:
     # Old (still works but deprecated)
     from ipfs_datasets_py.logic.TDFOL.tdfol_proof_cache import TDFOLProofCache
-    
+
     # New (recommended)
     from ipfs_datasets_py.logic.common.proof_cache import ProofCache as TDFOLProofCache
 """
@@ -46,11 +46,12 @@ class TDFOLProofResult:
     proof_steps: list
     proof_time: float
 
+
 def get_global_proof_cache() -> ProofCache:
     """Get or create the global TDFOL proof cache.
-    
+
     **DEPRECATED:** Use get_global_cache() from common.proof_cache instead.
-    
+
     Returns:
         Global ProofCache instance
     """
@@ -59,7 +60,7 @@ def get_global_proof_cache() -> ProofCache:
         "Import from ipfs_datasets_py.logic.common.proof_cache instead. "
         "This shim will be removed in a future version.",
         DeprecationWarning,
-        stacklevel=2
+        stacklevel=2,
     )
 
     return get_global_cache(maxsize=1000, ttl=3600)
@@ -76,9 +77,9 @@ def clear_global_proof_cache() -> None:
 
 
 __all__ = [
-    'TDFOLProofCache',
-    'CachedProofEntry',
-    'get_global_proof_cache',
-    'clear_global_proof_cache',
-    'TDFOLProofResult',
+    "TDFOLProofCache",
+    "CachedProofEntry",
+    "get_global_proof_cache",
+    "clear_global_proof_cache",
+    "TDFOLProofResult",
 ]

@@ -28,9 +28,7 @@ SNAPSHOT = REPOSITORY_ROOT / publication.DEFAULT_REPORTS_SNAPSHOT
 
 @pytest.fixture(scope="module")
 def replay_index() -> dict[str, object]:
-    return publication.load_replay_index(
-        REPLAY, repository_root=REPOSITORY_ROOT
-    )
+    return publication.load_replay_index(REPLAY, repository_root=REPOSITORY_ROOT)
 
 
 @pytest.fixture(scope="module")
@@ -67,8 +65,7 @@ def test_replay_population_is_exactly_the_sealed_holdout_population(
     replay_index: dict[str, object],
 ) -> None:
     holdout_path = (
-        REPOSITORY_ROOT
-        / "workspace/benchmarks/hammer-symai-spacy-leanstral/"
+        REPOSITORY_ROOT / "workspace/benchmarks/hammer-symai-spacy-leanstral/"
         "reassessment-v2/results/holdout-evaluation-v2.json"
     )
     holdout = json.loads(holdout_path.read_text(encoding="utf-8"))
@@ -76,9 +73,7 @@ def test_replay_population_is_exactly_the_sealed_holdout_population(
     selection = replay_index["selection"]
     execution = replay_index["execution"]
 
-    assert source["bytes_sha256"] == hashlib.sha256(
-        holdout_path.read_bytes()
-    ).hexdigest()
+    assert source["bytes_sha256"] == hashlib.sha256(holdout_path.read_bytes()).hexdigest()
     assert source["semantic_sha256"] == holdout["artifact_sha256"]
     assert source["source_validated"] is True
     assert selection["kernel_verified_success_result_sha256s"] == []
@@ -147,8 +142,7 @@ def test_statistics_recompute_all_pilot_development_pairs(
     assert len(analyses) == 48
     assert sum(len(item["observations"]) for item in requests) == 480
     assert {
-        (item["spec"]["candidate_variant_id"], item["spec"]["domain"])
-        for item in requests
+        (item["spec"]["candidate_variant_id"], item["spec"]["domain"]) for item in requests
     } == {(f"A{index}", "quality") for index in range(1, 13)}
     assert {item["split"] for item in analyses} == {"pilot", "development"}
     assert {item["cache_mode"] for item in analyses} == {"cold", "warm"}
@@ -156,8 +150,7 @@ def test_statistics_recompute_all_pilot_development_pairs(
     assert all(item["missing_count"] == 0 for item in analyses)
     assert pareto["frontier_candidate_ids"] == []
     assert all(
-        item["ineligible_reason"].startswith("safety_infeasible:")
-        for item in pareto["candidates"]
+        item["ineligible_reason"].startswith("safety_infeasible:") for item in pareto["candidates"]
     )
 
 
@@ -168,12 +161,8 @@ def test_snapshot_covers_every_decision_domain_with_typed_holdout_nulls(
     reports = results["reports"]
     domains = reports["domains"]
 
-    assert reports["required_domains"] == list(
-        publication.REQUIRED_DECISION_DOMAINS
-    )
-    assert [item["domain"] for item in domains] == list(
-        publication.REQUIRED_DECISION_DOMAINS
-    )
+    assert reports["required_domains"] == list(publication.REQUIRED_DECISION_DOMAINS)
+    assert [item["domain"] for item in domains] == list(publication.REQUIRED_DECISION_DOMAINS)
     assert reports["structurally_complete"] is True
     assert reports["all_applicable_values_non_null"] is True
     assert reports["holdout_pair_count"] == 0
@@ -185,9 +174,7 @@ def test_snapshot_covers_every_decision_domain_with_typed_holdout_nulls(
     for domain in domains:
         assert domain["structurally_complete"] is True
         assert domain["pilot_development_source_bound"] is True
-        assert domain["holdout_status"] == (
-            "not_applicable_before_authorization"
-        )
+        assert domain["holdout_status"] == ("not_applicable_before_authorization")
         assert domain["holdout_values"] is None
         assert domain["holdout_reason"]
 
@@ -203,18 +190,13 @@ def test_artifacts_are_canonical_and_snapshot_is_cross_bound(
         assert raw == (canonical_json(value) + "\n").encode("utf-8")
 
     artifacts = snapshot["results"]["artifacts"]
-    assert artifacts["replay"]["bytes_sha256"] == hashlib.sha256(
-        REPLAY.read_bytes()
-    ).hexdigest()
-    assert artifacts["replay"]["semantic_sha256"] == replay_index[
-        "artifact_sha256"
-    ]
-    assert artifacts["statistics"]["bytes_sha256"] == hashlib.sha256(
-        STATISTICS.read_bytes()
-    ).hexdigest()
-    assert artifacts["statistics"]["semantic_sha256"] == statistics_report[
-        "artifact_sha256"
-    ]
+    assert artifacts["replay"]["bytes_sha256"] == hashlib.sha256(REPLAY.read_bytes()).hexdigest()
+    assert artifacts["replay"]["semantic_sha256"] == replay_index["artifact_sha256"]
+    assert (
+        artifacts["statistics"]["bytes_sha256"]
+        == hashlib.sha256(STATISTICS.read_bytes()).hexdigest()
+    )
+    assert artifacts["statistics"]["semantic_sha256"] == statistics_report["artifact_sha256"]
     decision = snapshot["results"]["decision"]
     assert decision["status"] == "blocked"
     assert decision["holdout_untouched"] is True
@@ -230,9 +212,7 @@ def test_tampered_replay_and_statistics_fail_closed(
     replay_tamper = copy.deepcopy(replay_index)
     replay_tamper["execution"]["replay_claimed"] = True
     with pytest.raises(publication.ReassessmentReportsError):
-        publication.validate_replay_index(
-            replay_tamper, repository_root=REPOSITORY_ROOT
-        )
+        publication.validate_replay_index(replay_tamper, repository_root=REPOSITORY_ROOT)
 
     statistics_tamper = copy.deepcopy(statistics_report)
     statistics_tamper["analyses"][0]["scheduled_count"] = 9
@@ -267,8 +247,6 @@ def test_exact_statistics_cli_validates_the_complete_publication() -> None:
     assert summary["missing_pair_count"] == 0
     assert summary["frontier_candidate_ids"] == []
     assert summary["source_graph_validated"] is True
-    assert summary["replay_status"] == (
-        "not_applicable_before_authorized_holdout"
-    )
+    assert summary["replay_status"] == ("not_applicable_before_authorized_holdout")
     assert summary["replay_claimed"] is False
     assert summary["reports_structurally_complete"] is True

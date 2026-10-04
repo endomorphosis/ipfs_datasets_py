@@ -136,10 +136,7 @@ class ProviderEndpoint:
         return endpoint_fingerprint(self.url).partition(":")[2]
 
     def __repr__(self) -> str:
-        return (
-            f"ProviderEndpoint(name={self.name!r}, "
-            f"endpoint_id={self.endpoint_id!r})"
-        )
+        return f"ProviderEndpoint(name={self.name!r}, endpoint_id={self.endpoint_id!r})"
 
     def to_dict(self) -> dict[str, str]:
         return {"name": self.name, "endpoint_id": self.endpoint_id}
@@ -155,9 +152,7 @@ class ProviderAuth:
 
     def __post_init__(self) -> None:
         if not isinstance(self.secret_reference, SecretReference):
-            raise InvalidRequestError(
-                "provider authentication requires a SecretReference"
-            )
+            raise InvalidRequestError("provider authentication requires a SecretReference")
         if not _HEADER_NAME_RE.fullmatch(self.header_name):
             raise InvalidRequestError("provider authentication header is invalid")
         if "\r" in self.prefix or "\n" in self.prefix or len(self.prefix) > 64:
@@ -216,21 +211,15 @@ class TransportLimits:
         object.__setattr__(
             self,
             "request_timeout_seconds",
-            _positive_finite(
-                self.request_timeout_seconds, "request_timeout_seconds"
-            ),
+            _positive_finite(self.request_timeout_seconds, "request_timeout_seconds"),
         )
         object.__setattr__(
             self,
             "operation_timeout_seconds",
-            _positive_finite(
-                self.operation_timeout_seconds, "operation_timeout_seconds"
-            ),
+            _positive_finite(self.operation_timeout_seconds, "operation_timeout_seconds"),
         )
         if self.operation_timeout_seconds < self.request_timeout_seconds:
-            raise InvalidRequestError(
-                "operation_timeout_seconds must cover at least one request"
-            )
+            raise InvalidRequestError("operation_timeout_seconds must cover at least one request")
 
 
 @dataclass(frozen=True, slots=True)
@@ -355,16 +344,13 @@ class HttpTransport:
             "authentication": self._auth.to_dict() if self._auth else None,
             "capabilities": sorted(capability.value for capability in self.capabilities),
             "limits": {
-                name: getattr(self._limits, name)
-                for name in self._limits.__dataclass_fields__
+                name: getattr(self._limits, name) for name in self._limits.__dataclass_fields__
             },
             "retry": {
                 "max_attempts": self._retry_policy.max_attempts,
                 "base_delay_seconds": self._retry_policy.base_delay_seconds,
                 "max_delay_seconds": self._retry_policy.max_delay_seconds,
-                "max_retry_after_seconds": (
-                    self._retry_policy.max_retry_after_seconds
-                ),
+                "max_retry_after_seconds": (self._retry_policy.max_retry_after_seconds),
             },
         }
 
@@ -459,9 +445,7 @@ class HttpTransport:
                     remaining if remaining is not None else self._limits.request_timeout_seconds,
                 )
                 if timeout <= 0:
-                    raise DeadlineExceededError(
-                        "provider DNS resolution exceeded its deadline"
-                    )
+                    raise DeadlineExceededError("provider DNS resolution exceeded its deadline")
                 try:
                     addresses = await asyncio.wait_for(
                         self._resolver.resolve(hostname, port),
@@ -471,9 +455,7 @@ class HttpTransport:
                     raise
                 except TimeoutError:
                     raise TransientProviderError(
-                        safe_exception_text(
-                            "provider DNS resolution timed out", endpoint=url
-                        )
+                        safe_exception_text("provider DNS resolution timed out", endpoint=url)
                     ) from None
                 except Exception:
                     raise TransientProviderError(
@@ -488,17 +470,12 @@ class HttpTransport:
         context: OperationContext,
     ) -> MappingProxyType[str, str]:
         headers: dict[str, str] = dict(request.headers)
-        configured_auth_name = (
-            self._auth.header_name.lower() if self._auth is not None else None
-        )
+        configured_auth_name = self._auth.header_name.lower() if self._auth is not None else None
         if any(
-            key.lower() in _CREDENTIAL_HEADER_NAMES
-            or key.lower() == configured_auth_name
+            key.lower() in _CREDENTIAL_HEADER_NAMES or key.lower() == configured_auth_name
             for key in headers
         ):
-            raise InvalidRequestError(
-                "provider credential headers require a SecretReference"
-            )
+            raise InvalidRequestError("provider credential headers require a SecretReference")
         if self._auth is None:
             return MappingProxyType(headers)
         assert self._secret_resolver is not None
@@ -516,9 +493,7 @@ class HttpTransport:
             raise SecretResolutionError(
                 "provider authentication secret contains invalid characters"
             )
-        headers[self._auth.header_name] = SecretHeaderValue(
-            f"{self._auth.prefix}{decoded}"
-        )
+        headers[self._auth.header_name] = SecretHeaderValue(f"{self._auth.prefix}{decoded}")
         return MappingProxyType(headers)
 
     async def request(
@@ -532,9 +507,7 @@ class HttpTransport:
         bounded = self._bounded_context(context)
         bounded.check_active(now=self._wall_clock)
         if request.max_response_bytes > bounded.limits.max_response_bytes:
-            raise ResourceLimitError(
-                "request max_response_bytes exceeds the transport budget"
-            )
+            raise ResourceLimitError("request max_response_bytes exceeds the transport budget")
         if request.body is not None and len(request.body) > self._limits.max_request_bytes:
             raise ResourceLimitError("request body exceeds max_request_bytes")
         await self._validate_endpoint(request.url, context=bounded)
@@ -572,15 +545,11 @@ class HttpTransport:
                 raise
             except TimeoutError:
                 last_error = TransientProviderError(
-                    safe_exception_text(
-                        "provider request timed out", endpoint=request.url
-                    )
+                    safe_exception_text("provider request timed out", endpoint=request.url)
                 )
             except (ConnectionError, OSError):
                 last_error = TransientProviderError(
-                    safe_exception_text(
-                        "provider connection failed", endpoint=request.url
-                    )
+                    safe_exception_text("provider connection failed", endpoint=request.url)
                 )
             except ThrottledProviderError as exc:
                 retry_after = (
@@ -592,28 +561,20 @@ class HttpTransport:
                     )
                 )
                 last_error = ThrottledProviderError(
-                    safe_exception_text(
-                        "provider throttled the request", endpoint=request.url
-                    ),
+                    safe_exception_text("provider throttled the request", endpoint=request.url),
                     retry_after=retry_after,
                 )
             except TransientProviderError:
                 last_error = TransientProviderError(
-                    safe_exception_text(
-                        "provider request failed transiently", endpoint=request.url
-                    )
+                    safe_exception_text("provider request failed transiently", endpoint=request.url)
                 )
             except ProviderError:
                 raise PermanentProviderError(
-                    safe_exception_text(
-                        "provider delegate failed", endpoint=request.url
-                    )
+                    safe_exception_text("provider delegate failed", endpoint=request.url)
                 ) from None
             except Exception:
                 raise PermanentProviderError(
-                    safe_exception_text(
-                        "provider delegate failed", endpoint=request.url
-                    )
+                    safe_exception_text("provider delegate failed", endpoint=request.url)
                 ) from None
             else:
                 if not isinstance(response, HttpResponse):
@@ -653,9 +614,7 @@ class HttpTransport:
                 )
                 if error_type is ThrottledProviderError:
                     last_error = ThrottledProviderError(
-                        safe_exception_text(
-                            "provider throttled the request", endpoint=request.url
-                        ),
+                        safe_exception_text("provider throttled the request", endpoint=request.url),
                         retry_after=retry_after,
                     )
                 else:
@@ -701,18 +660,14 @@ class HttpTransport:
         )
         if content_type not in {_JSON_CONTENT_TYPE, "application/json-rpc"}:
             raise PermanentProviderError(
-                safe_exception_text(
-                    "provider response is not JSON", endpoint=request.url
-                )
+                safe_exception_text("provider response is not JSON", endpoint=request.url)
             )
         try:
             text = response.body.decode("utf-8")
             return json.loads(text)
         except (UnicodeDecodeError, json.JSONDecodeError):
             raise PermanentProviderError(
-                safe_exception_text(
-                    "provider returned malformed JSON", endpoint=request.url
-                )
+                safe_exception_text("provider returned malformed JSON", endpoint=request.url)
             ) from None
 
     async def json_rpc(
@@ -748,9 +703,7 @@ class HttpTransport:
                 separators=(",", ":"),
             ).encode("utf-8")
         except (TypeError, ValueError):
-            raise InvalidRequestError(
-                "JSON-RPC params are not serializable"
-            ) from None
+            raise InvalidRequestError("JSON-RPC params are not serializable") from None
         request = HttpRequest(
             "POST",
             url,
@@ -770,9 +723,7 @@ class HttpTransport:
             or ("result" in payload) == ("error" in payload)
         ):
             raise PermanentProviderError(
-                safe_exception_text(
-                    "provider returned an invalid JSON-RPC envelope", endpoint=url
-                )
+                safe_exception_text("provider returned an invalid JSON-RPC envelope", endpoint=url)
             )
         if "error" in payload:
             raise PermanentProviderError(
@@ -810,9 +761,7 @@ class HttpTransport:
                 raise
             except Exception:
                 raise PermanentProviderError(
-                    safe_exception_text(
-                        "provider page could not be parsed", endpoint=request.url
-                    )
+                    safe_exception_text("provider page could not be parsed", endpoint=request.url)
                 ) from None
             if not isinstance(page, JsonPage):
                 raise PermanentProviderError(
@@ -833,13 +782,9 @@ class HttpTransport:
             try:
                 request = request_for_cursor(page.next_cursor)
             except Exception:
-                raise InvalidRequestError(
-                    "pagination request factory rejected a cursor"
-                ) from None
+                raise InvalidRequestError("pagination request factory rejected a cursor") from None
             if not isinstance(request, HttpRequest):
-                raise InvalidRequestError(
-                    "pagination request factory must return HttpRequest"
-                )
+                raise InvalidRequestError("pagination request factory must return HttpRequest")
         raise ResourceLimitError("provider pagination exceeded max_pages")
 
 

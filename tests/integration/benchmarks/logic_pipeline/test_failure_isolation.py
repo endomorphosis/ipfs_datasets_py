@@ -54,9 +54,7 @@ SOURCE_COMMIT = "1" * 40
 
 
 def _scoped_run_id(base: str, tmp_path: Path) -> str:
-    scope = hashlib.sha256(
-        str(tmp_path.resolve()).encode("utf-8")
-    ).hexdigest()[:12]
+    scope = hashlib.sha256(str(tmp_path.resolve()).encode("utf-8")).hexdigest()[:12]
     return f"{base}-{scope}"
 
 
@@ -136,20 +134,14 @@ def _accepted_kernel_output(
     receipt_extra: dict[str, object] | None = None,
 ) -> StageOutput:
     candidate = next(
-        artifact
-        for artifact in request.upstream_artifacts
-        if artifact.stage is StageName.COMPILER
+        artifact for artifact in request.upstream_artifacts if artifact.stage is StageName.COMPILER
     )
     attempt_body = {
         "attempt_index": 0,
         "candidate_source": StageName.COMPILER.value,
         "candidate_artifact_sha256": candidate.digest,
-        "source_sha256": hashlib.sha256(
-            b"replay proof source"
-        ).hexdigest(),
-        "command_sha256": hashlib.sha256(
-            b"lean Main.lean"
-        ).hexdigest(),
+        "source_sha256": hashlib.sha256(b"replay proof source").hexdigest(),
+        "command_sha256": hashlib.sha256(b"lean Main.lean").hexdigest(),
         "stdout_sha256": hashlib.sha256(process_stdout).hexdigest(),
         "stderr_sha256": hashlib.sha256(b"").hexdigest(),
         "returncode": 0,
@@ -163,9 +155,7 @@ def _accepted_kernel_output(
     }
     attempt = {
         **attempt_body,
-        "attempt_sha256": hashlib.sha256(
-            canonical_json(attempt_body).encode("utf-8")
-        ).hexdigest(),
+        "attempt_sha256": hashlib.sha256(canonical_json(attempt_body).encode("utf-8")).hexdigest(),
     }
     receipt = {
         "schema": NATIVE_KERNEL_RECEIPT_SCHEMA,
@@ -181,18 +171,12 @@ def _accepted_kernel_output(
         "independent": True,
         "accepted": True,
         "active_process_count": 0,
-        "compiled_obligation_sha256": hashlib.sha256(
-            b"compiled obligation"
-        ).hexdigest(),
-        "obligation_sha256": hashlib.sha256(
-            b"obligation"
-        ).hexdigest(),
+        "compiled_obligation_sha256": hashlib.sha256(b"compiled obligation").hexdigest(),
+        "obligation_sha256": hashlib.sha256(b"obligation").hexdigest(),
         "candidate_source": attempt["candidate_source"],
         "candidate_artifact_sha256": candidate.digest,
         "source_sha256": attempt["source_sha256"],
-        "semantic_context_sha256": hashlib.sha256(
-            b"semantic context"
-        ).hexdigest(),
+        "semantic_context_sha256": hashlib.sha256(b"semantic context").hexdigest(),
         "semantic_artifact_sha256s": [candidate.digest],
         "command_sha256": attempt["command_sha256"],
         "stdout_sha256": attempt["stdout_sha256"],
@@ -219,9 +203,7 @@ def _accepted_kernel_output(
         },
         **({} if receipt_extra is None else receipt_extra),
     }
-    receipt_sha256 = hashlib.sha256(
-        canonical_json(receipt).encode("utf-8")
-    ).hexdigest()
+    receipt_sha256 = hashlib.sha256(canonical_json(receipt).encode("utf-8")).hexdigest()
     return StageOutput(
         data={**receipt, "receipt_sha256": receipt_sha256},
         effective_identity=effective_identity,
@@ -254,6 +236,7 @@ def _run_replay_pair(
     ):
         result = {}
         for stage in (StageName.COMPILER, StageName.SPACY, StageName.KERNEL):
+
             def handler(request, current_stage=stage):
                 data = {
                     "normalized": request.case_id,
@@ -268,9 +251,7 @@ def _run_replay_pair(
                         request,
                         effective_identity=identity,
                         process_stdout=(
-                            b"accepted with drift"
-                            if proof_execution_drift
-                            else b"accepted"
+                            b"accepted with drift" if proof_execution_drift else b"accepted"
                         ),
                     )
                 return StageOutput(
@@ -404,15 +385,9 @@ def _warm_to_cold_replay_pair(
             else "MustFileAnnualReport"
         )
         provider = (
-            "different_provider"
-            if selected_drift == "symai_provider"
-            else "ipfs_accelerate_py"
+            "different_provider" if selected_drift == "symai_provider" else "ipfs_accelerate_py"
         )
-        model = (
-            "DifferentLeanstralModel"
-            if selected_drift == "symai_model"
-            else "Leanstral-119B"
-        )
+        model = "DifferentLeanstralModel" if selected_drift == "symai_model" else "Leanstral-119B"
         engine = _ReplaySymaiEngine(
             proposition=proposition,
             provider=provider,
@@ -445,50 +420,27 @@ def _warm_to_cold_replay_pair(
             return StageOutput(
                 status=StageStatus.FAILED,
                 effective_identity=dict(request.requested_identity),
-                failure_code=(
-                    FailureCode.SOLVER_TIMEOUT_ERROR_OR_INCONCLUSIVE
-                ),
-                failure_detail=(
-                    "bounded replay fixture fallback to Leanstral"
-                ),
+                failure_code=(FailureCode.SOLVER_TIMEOUT_ERROR_OR_INCONCLUSIVE),
+                failure_detail=("bounded replay fixture fallback to Leanstral"),
             )
 
         def leanstral(request):
-            prompt = (
-                "different prompt"
-                if selected_drift == "lean_prompt"
-                else "frozen prompt"
-            )
+            prompt = "different prompt" if selected_drift == "lean_prompt" else "frozen prompt"
             lean_model = (
-                "DifferentLeanstralModel"
-                if selected_drift == "lean_model"
-                else "Leanstral-119B"
+                "DifferentLeanstralModel" if selected_drift == "lean_model" else "Leanstral-119B"
             )
             source = (
                 "different Lean source"
                 if selected_drift == "lean_source"
                 else "theorem replay : True := by trivial"
             )
-            proof = (
-                "different proof"
-                if selected_drift == "lean_proof"
-                else "by trivial"
-            )
+            proof = "different proof" if selected_drift == "lean_proof" else "by trivial"
             data = {
-                "schema": (
-                    "ipfs-datasets.logic-pipeline-benchmark."
-                    "replay-lean-proof.v1"
-                ),
-                "prompt_sha256": hashlib.sha256(
-                    prompt.encode("utf-8")
-                ).hexdigest(),
+                "schema": ("ipfs-datasets.logic-pipeline-benchmark.replay-lean-proof.v1"),
+                "prompt_sha256": hashlib.sha256(prompt.encode("utf-8")).hexdigest(),
                 "model": lean_model,
-                "source_sha256": hashlib.sha256(
-                    source.encode("utf-8")
-                ).hexdigest(),
-                "proof_sha256": hashlib.sha256(
-                    proof.encode("utf-8")
-                ).hexdigest(),
+                "source_sha256": hashlib.sha256(source.encode("utf-8")).hexdigest(),
+                "proof_sha256": hashlib.sha256(proof.encode("utf-8")).hexdigest(),
                 "proof_text": proof,
                 "proof_success": True,
             }
@@ -533,9 +485,7 @@ def _warm_to_cold_replay_pair(
             ),
             StageName.SYMAI: symai,
             StageName.HAMMER: StageAdapter(StageName.HAMMER, hammer),
-            StageName.LEANSTRAL: StageAdapter(
-                StageName.LEANSTRAL, leanstral
-            ),
+            StageName.LEANSTRAL: StageAdapter(StageName.LEANSTRAL, leanstral),
             StageName.KERNEL: StageAdapter(StageName.KERNEL, kernel),
         }
 
@@ -577,40 +527,20 @@ def _direct_leanstral_output(
     *,
     drift: str | None = None,
 ) -> StageOutput:
-    proof_text = (
-        "exact different_proof"
-        if drift == "proof"
-        else "exact trivial"
-    )
-    model = (
-        "DifferentLeanstralModel"
-        if drift == "model"
-        else "Leanstral-119B"
-    )
-    prompt = (
-        "different frozen prompt"
-        if drift == "prompt"
-        else "frozen direct Leanstral prompt"
-    )
-    prompt_sha256 = hashlib.sha256(
-        prompt.encode("utf-8")
-    ).hexdigest()
+    proof_text = "exact different_proof" if drift == "proof" else "exact trivial"
+    model = "DifferentLeanstralModel" if drift == "model" else "Leanstral-119B"
+    prompt = "different frozen prompt" if drift == "prompt" else "frozen direct Leanstral prompt"
+    prompt_sha256 = hashlib.sha256(prompt.encode("utf-8")).hexdigest()
     theorem_id = (
-        "different_normalized_theorem"
-        if drift == "normalized_content"
-        else "replay_theorem"
+        "different_normalized_theorem" if drift == "normalized_content" else "replay_theorem"
     )
-    request_id = "leanstral-" + hashlib.sha256(
-        (
-            f"{request.run_id}:{request.case_id}:"
-            f"{request.input_sha256}:0"
-        ).encode("utf-8")
-    ).hexdigest()[:48]
-    timeout_ms = (
-        119_000
-        if request.cache_mode is CacheMode.WARM
-        else 117_000
+    request_id = (
+        "leanstral-"
+        + hashlib.sha256(
+            (f"{request.run_id}:{request.case_id}:{request.input_sha256}:0").encode("utf-8")
+        ).hexdigest()[:48]
     )
+    timeout_ms = 119_000 if request.cache_mode is CacheMode.WARM else 117_000
     proposal = {
         "schema": logic_adapters.LEANSTRAL_PROOF_OUTPUT_SCHEMA,
         "theorem_id": theorem_id,
@@ -624,15 +554,9 @@ def _direct_leanstral_output(
         indent=4 if drift == "raw_content" else 2,
         sort_keys=True,
     ).encode("utf-8")
-    canonical_source_digest = "sha256:" + hashlib.sha256(
-        b"frozen canonical source"
-    ).hexdigest()
-    theorem_equivalence_key = hashlib.sha256(
-        b"frozen theorem equivalence"
-    ).hexdigest()
-    context_capsule_id = hashlib.sha256(
-        b"frozen context capsule"
-    ).hexdigest()
+    canonical_source_digest = "sha256:" + hashlib.sha256(b"frozen canonical source").hexdigest()
+    theorem_equivalence_key = hashlib.sha256(b"frozen theorem equivalence").hexdigest()
+    context_capsule_id = hashlib.sha256(b"frozen context capsule").hexdigest()
     boundary = {
         "schema": logic_adapters.LEANSTRAL_GENERATION_BOUNDARY_SCHEMA,
         "endpoint": "http://127.0.0.1:8080/v1",
@@ -645,31 +569,23 @@ def _direct_leanstral_output(
             logic_adapters._leanstral_completion_payload_bytes(
                 prompt,
                 model=model,
-                max_tokens=(
-                    logic_adapters.LEANSTRAL_MEASURED_MAX_NEW_TOKENS
-                ),
+                max_tokens=(logic_adapters.LEANSTRAL_MEASURED_MAX_NEW_TOKENS),
                 theorem_id=theorem_id,
             )
         ).hexdigest(),
         "response_envelope_sha256": hashlib.sha256(
             f"response-envelope:{request.run_id}".encode("utf-8")
         ).hexdigest(),
-        "raw_model_content_sha256": hashlib.sha256(
-            raw_content
-        ).hexdigest(),
+        "raw_model_content_sha256": hashlib.sha256(raw_content).hexdigest(),
         "raw_model_content_bytes": len(raw_content),
-        "normalized_proposal_sha256": hashlib.sha256(
-            normalized_proposal
-        ).hexdigest(),
+        "normalized_proposal_sha256": hashlib.sha256(normalized_proposal).hexdigest(),
         "normalized_proposal_bytes": len(normalized_proposal),
         "normalization": "none",
     }
     boundary["receipt_sha256"] = hashlib.sha256(
         canonical_json(boundary).encode("utf-8")
     ).hexdigest()
-    output_sha256 = hashlib.sha256(
-        proof_text.encode("utf-8")
-    ).hexdigest()
+    output_sha256 = hashlib.sha256(proof_text.encode("utf-8")).hexdigest()
     draft = {
         "schema_version": logic_adapters.LEANSTRAL_DRAFT_SCHEMA,
         "artifact_kind": "llm_output",
@@ -677,9 +593,7 @@ def _direct_leanstral_output(
         "draft_text": proof_text,
         "proof_text": proof_text,
         "request_id": request_id,
-        "benchmark_request_id": (
-            f"{request.run_id}:{request.case_id}"
-        ),
+        "benchmark_request_id": (f"{request.run_id}:{request.case_id}"),
         "llm_provider": "leanstral_local",
         "model": model,
         "obligation_ids": ["replay-obligation"],
@@ -689,9 +603,7 @@ def _direct_leanstral_output(
         "theorem_equivalence_key": theorem_equivalence_key,
         "context_capsule_id": context_capsule_id,
         "proposal_kind": "proof",
-        "proposal_schema": (
-            logic_adapters.LEANSTRAL_PROOF_OUTPUT_SCHEMA
-        ),
+        "proposal_schema": (logic_adapters.LEANSTRAL_PROOF_OUTPUT_SCHEMA),
         "resource_class": "model",
         "output_sha256": output_sha256,
         "assurance": "unverified",
@@ -700,9 +612,7 @@ def _direct_leanstral_output(
         "kernel_checked": False,
         "repair_attempt": 0,
         "timeout_ms": timeout_ms,
-        "token_budget": (
-            logic_adapters.LEANSTRAL_MEASURED_MAX_NEW_TOKENS
-        ),
+        "token_budget": (logic_adapters.LEANSTRAL_MEASURED_MAX_NEW_TOKENS),
         "metadata": {
             "structured_output": True,
             "fixed_theorem_identity_digest": hashlib.sha256(
@@ -735,9 +645,10 @@ def _direct_leanstral_output(
             "output_sha256",
         )
     }
-    draft["artifact_id"] = "leanstral-draft-" + hashlib.sha256(
-        canonical_json(stable_artifact_identity).encode("utf-8")
-    ).hexdigest()
+    draft["artifact_id"] = (
+        "leanstral-draft-"
+        + hashlib.sha256(canonical_json(stable_artifact_identity).encode("utf-8")).hexdigest()
+    )
     evidence = {
         "schema": logic_adapters.LEANSTRAL_EVIDENCE_SCHEMA,
         "obligation_id": "replay-obligation",
@@ -756,9 +667,7 @@ def _direct_leanstral_output(
             "kernel_check": "kernel",
         },
     }
-    evidence_id = hashlib.sha256(
-        canonical_json(evidence).encode("utf-8")
-    ).hexdigest()
+    evidence_id = hashlib.sha256(canonical_json(evidence).encode("utf-8")).hexdigest()
     return StageOutput(
         data={"evidence_id": evidence_id, **evidence},
         effective_identity={
@@ -768,9 +677,7 @@ def _direct_leanstral_output(
             "obligation_id": "replay-obligation",
             "repair_attempt": 0,
             "resource_class": "model",
-            "generation_boundary_sha256": boundary[
-                "receipt_sha256"
-            ],
+            "generation_boundary_sha256": boundary["receipt_sha256"],
         },
     )
 
@@ -811,12 +718,8 @@ def _direct_leanstral_replay_pair(
             return StageOutput(
                 status=StageStatus.FAILED,
                 effective_identity=dict(request.requested_identity),
-                failure_code=(
-                    FailureCode.SOLVER_TIMEOUT_ERROR_OR_INCONCLUSIVE
-                ),
-                failure_detail=(
-                    "bounded direct replay fallback to Leanstral"
-                ),
+                failure_code=(FailureCode.SOLVER_TIMEOUT_ERROR_OR_INCONCLUSIVE),
+                failure_detail=("bounded direct replay fallback to Leanstral"),
             )
 
         def kernel(request):
@@ -889,32 +792,24 @@ def _replace_warm_symai_prime(
         identity = dict(stage.provenance.effective_identity)
         if stage.stage is StageName.SYMAI:
             assert isinstance(data, dict)
-            receipt = dict(
-                data[cache_measurement.SYMAI_CACHE_PRIME_FIELD]
-            )
+            receipt = dict(data[cache_measurement.SYMAI_CACHE_PRIME_FIELD])
             if cross_bound:
                 receipt["case_id"] = "copied-cross-bound-case"
                 receipt["receipt_sha256"] = hashlib.sha256(
                     canonical_json(
-                        {
-                            key: value
-                            for key, value in receipt.items()
-                            if key != "receipt_sha256"
-                        }
+                        {key: value for key, value in receipt.items() if key != "receipt_sha256"}
                     ).encode("utf-8")
                 ).hexdigest()
-                identity[
-                    cache_measurement.SYMAI_CACHE_PRIME_DIGEST_FIELD
-                ] = receipt["receipt_sha256"]
+                identity[cache_measurement.SYMAI_CACHE_PRIME_DIGEST_FIELD] = receipt[
+                    "receipt_sha256"
+                ]
             else:
                 receipt["prime_semantic_output_sha256"] = "f" * 64
             data[cache_measurement.SYMAI_CACHE_PRIME_FIELD] = receipt
         provenance = replace(
             stage.provenance,
             effective_identity=identity,
-            upstream_stage_digests=tuple(
-                item.digest for item in rebuilt
-            ),
+            upstream_stage_digests=tuple(item.digest for item in rebuilt),
         )
         rebuilt.append(
             StageRecord.create(
@@ -1003,9 +898,7 @@ def test_injected_failures_are_classified_bounded_and_local(
         assert len(run.results) == 1
         assert run.result_paths[0].is_file()
         expected_stop = (
-            kinds[case_id][1]
-            if case_id in {"cache-corruption", "backend-drift"}
-            else None
+            kinds[case_id][1] if case_id in {"cache-corruption", "backend-drift"} else None
         )
         assert run.stop_failure_code is expected_stop
         assert run.complete is (expected_stop is None)
@@ -1120,16 +1013,10 @@ def test_immediate_stop_is_persisted_and_resume_cannot_skip_it(
     )
 
     assert run.complete is False
-    assert (
-        run.stop_failure_code
-        is FailureCode.RECEIPT_OR_PROVENANCE_FAILURE
-    )
+    assert run.stop_failure_code is FailureCode.RECEIPT_OR_PROVENANCE_FAILURE
     assert calls == [trigger_case]
     assert len(run.results) == 1
-    assert (
-        run.results[0].failure_code
-        is FailureCode.RECEIPT_OR_PROVENANCE_FAILURE
-    )
+    assert run.results[0].failure_code is FailureCode.RECEIPT_OR_PROVENANCE_FAILURE
     assert run.result_paths[0].is_file()
     assert all(not path.exists() for path in run.result_paths[1:])
     with pytest.raises(
@@ -1155,10 +1042,7 @@ def test_immediate_stop_is_persisted_and_resume_cannot_skip_it(
     )
 
     assert resumed.complete is False
-    assert (
-        resumed.stop_failure_code
-        is FailureCode.RECEIPT_OR_PROVENANCE_FAILURE
-    )
+    assert resumed.stop_failure_code is FailureCode.RECEIPT_OR_PROVENANCE_FAILURE
     assert resumed.executed_job_ids == ()
     assert resumed.resumed_job_ids == (plan.jobs[0].job_id,)
     assert len(resumed.results) == 1
@@ -1192,10 +1076,7 @@ def test_complete_persisted_sequence_cannot_bypass_a_protocol_stop(
     contract = next(
         item
         for item in plan.run_contracts
-        if (
-            item.requested_variant_id == job.variant_id
-            and item.cache_mode is job.cache_mode
-        )
+        if (item.requested_variant_id == job.variant_id and item.cache_mode is job.cache_mode)
     )
     fatal = ablation._failure(
         plan,
@@ -1204,10 +1085,7 @@ def test_complete_persisted_sequence_cannot_bypass_a_protocol_stop(
         "restamped fatal persisted result",
     )
     run.result_paths[trigger_index].write_text(
-        canonical_json(
-            ablation._envelope(plan, job, contract, fatal)
-        )
-        + "\n",
+        canonical_json(ablation._envelope(plan, job, contract, fatal)) + "\n",
         encoding="utf-8",
     )
 
@@ -1232,17 +1110,10 @@ def test_complete_persisted_sequence_cannot_bypass_a_protocol_stop(
         output_root=output_root,
         resume=True,
     )
-    expected_count = (
-        len(plan.jobs)
-        if trigger_index == -1
-        else trigger_index + 1
-    )
+    expected_count = len(plan.jobs) if trigger_index == -1 else trigger_index + 1
     assert len(resumed.results) == expected_count
     assert resumed.complete is False
-    assert (
-        resumed.stop_failure_code
-        is FailureCode.RECEIPT_OR_PROVENANCE_FAILURE
-    )
+    assert resumed.stop_failure_code is FailureCode.RECEIPT_OR_PROVENANCE_FAILURE
     assert resumed_calls == []
 
 
@@ -1319,16 +1190,12 @@ def test_global_infrastructure_streak_stops_across_variants(
     )
 
     assert run.complete is False
-    assert (
-        run.stop_failure_code
-        is FailureCode.BENCHMARK_INFRASTRUCTURE_FAILURE
-    )
+    assert run.stop_failure_code is FailureCode.BENCHMARK_INFRASTRUCTURE_FAILURE
     assert len(run.results) == 3
     assert len(calls) == 3
     assert len({variant for _, variant in calls}) == 3
     assert all(
-        result.failure_code
-        is FailureCode.BENCHMARK_INFRASTRUCTURE_FAILURE
+        result.failure_code is FailureCode.BENCHMARK_INFRASTRUCTURE_FAILURE
         for result in run.results
     )
     assert all(not path.exists() for path in run.result_paths[3:])
@@ -1356,8 +1223,7 @@ def test_timeout_and_explicit_cancellation_kill_the_process_group() -> None:
     child_pid = int(timed_out.stdout.strip())
     assert child_pid != timed_out.pid
     assert not Path(f"/proc/{child_pid}").exists() or (
-        Path(f"/proc/{child_pid}/stat").read_text(encoding="utf-8").split()[2]
-        == "Z"
+        Path(f"/proc/{child_pid}/stat").read_text(encoding="utf-8").split()[2] == "Z"
     )
 
     class CancelSoon:
@@ -1398,17 +1264,14 @@ def test_normally_exiting_parent_cannot_hide_an_orphaned_child() -> None:
     assert result.orphaned_child_count == 1
     child_pid = int(result.stdout.strip())
     assert not Path(f"/proc/{child_pid}").exists() or (
-        Path(f"/proc/{child_pid}/stat").read_text(encoding="utf-8").split()[2]
-        == "Z"
+        Path(f"/proc/{child_pid}/stat").read_text(encoding="utf-8").split()[2] == "Z"
     )
 
 
 def test_successful_receipt_replays_in_fresh_worktree_and_cold_cache(
     tmp_path: Path,
 ) -> None:
-    original, replayed, original_contract, replay_contract, worktree = (
-        _run_replay_pair(tmp_path)
-    )
+    original, replayed, original_contract, replay_contract, worktree = _run_replay_pair(tmp_path)
 
     replay = report.validate_replay(
         original,
@@ -1425,10 +1288,7 @@ def test_successful_receipt_replays_in_fresh_worktree_and_cold_cache(
     assert replayed.status is OutcomeStatus.VERIFIED
     assert original.kernel_receipt_sha256 is not None
     assert replayed.kernel_receipt_sha256 is not None
-    assert (
-        original.kernel_receipt_sha256
-        != replayed.kernel_receipt_sha256
-    )
+    assert original.kernel_receipt_sha256 != replayed.kernel_receipt_sha256
     assert validate_native_kernel_stage_receipt(original.stages[-1])
     assert validate_native_kernel_stage_receipt(replayed.stages[-1])
     assert (
@@ -1449,16 +1309,8 @@ def test_warm_accepted_result_replays_in_mandatory_cold_namespace(
     pair = _warm_to_cold_replay_pair(tmp_path)
     original, replayed = pair[:2]
     original_contract, replay_contract = pair[2:4]
-    original_symai = next(
-        stage
-        for stage in original.stages
-        if stage.stage is StageName.SYMAI
-    )
-    replay_symai = next(
-        stage
-        for stage in replayed.stages
-        if stage.stage is StageName.SYMAI
-    )
+    original_symai = next(stage for stage in original.stages if stage.stage is StageName.SYMAI)
+    replay_symai = next(stage for stage in replayed.stages if stage.stage is StageName.SYMAI)
 
     assert original.status is OutcomeStatus.VERIFIED
     assert replayed.status is OutcomeStatus.VERIFIED
@@ -1472,14 +1324,12 @@ def test_warm_accepted_result_replays_in_mandatory_cold_namespace(
     assert replay_symai.provenance.effective_identity["cache_hit"] is False
     assert "cache_prime" in original_symai.data
     assert "cache_prime" not in replay_symai.data
-    assert (
-        cache_measurement.symai_semantic_payload(original_symai)
-        == cache_measurement.symai_semantic_payload(replay_symai)
-    )
-    assert (
-        cache_measurement.symai_backend_identity(original_symai)
-        == cache_measurement.symai_backend_identity(replay_symai)
-    )
+    assert cache_measurement.symai_semantic_payload(
+        original_symai
+    ) == cache_measurement.symai_semantic_payload(replay_symai)
+    assert cache_measurement.symai_backend_identity(
+        original_symai
+    ) == cache_measurement.symai_backend_identity(replay_symai)
 
     replay = report.validate_replay(
         original,
@@ -1498,67 +1348,31 @@ def test_direct_v2_leanstral_generation_replays_only_operational_bindings(
 ) -> None:
     pair = _direct_leanstral_replay_pair(tmp_path)
     original, replayed = pair[:2]
-    original_lean = next(
-        stage
-        for stage in original.stages
-        if stage.stage is StageName.LEANSTRAL
-    )
-    replay_lean = next(
-        stage
-        for stage in replayed.stages
-        if stage.stage is StageName.LEANSTRAL
-    )
+    original_lean = next(stage for stage in original.stages if stage.stage is StageName.LEANSTRAL)
+    replay_lean = next(stage for stage in replayed.stages if stage.stage is StageName.LEANSTRAL)
     original_evidence = original_lean.to_dict()["data"]
     replay_evidence = replay_lean.to_dict()["data"]
     original_draft = original_evidence["draft"]
     replay_draft = replay_evidence["draft"]
-    original_boundary = original_draft["metadata"][
-        "benchmark_generation_boundary"
-    ]
-    replay_boundary = replay_draft["metadata"][
-        "benchmark_generation_boundary"
-    ]
+    original_boundary = original_draft["metadata"]["benchmark_generation_boundary"]
+    replay_boundary = replay_draft["metadata"]["benchmark_generation_boundary"]
 
     assert original.status is OutcomeStatus.VERIFIED
     assert replayed.status is OutcomeStatus.VERIFIED
-    assert (
-        original_evidence["schema"]
-        == logic_adapters.LEANSTRAL_EVIDENCE_SCHEMA
-    )
-    assert (
-        original_boundary["schema"]
-        == logic_adapters.LEANSTRAL_GENERATION_BOUNDARY_SCHEMA
-    )
+    assert original_evidence["schema"] == logic_adapters.LEANSTRAL_EVIDENCE_SCHEMA
+    assert original_boundary["schema"] == logic_adapters.LEANSTRAL_GENERATION_BOUNDARY_SCHEMA
     assert original_draft["request_id"] != replay_draft["request_id"]
-    assert (
-        original_draft["benchmark_request_id"]
-        != replay_draft["benchmark_request_id"]
-    )
+    assert original_draft["benchmark_request_id"] != replay_draft["benchmark_request_id"]
     assert original_draft["timeout_ms"] != replay_draft["timeout_ms"]
-    assert (
-        original_boundary["request_payload_sha256"]
-        == replay_boundary["request_payload_sha256"]
-    )
+    assert original_boundary["request_payload_sha256"] == replay_boundary["request_payload_sha256"]
     for dependent_digest in (
         "response_envelope_sha256",
         "receipt_sha256",
     ):
-        assert (
-            original_boundary[dependent_digest]
-            != replay_boundary[dependent_digest]
-        )
-    assert (
-        original_evidence["evidence_id"]
-        != replay_evidence["evidence_id"]
-    )
-    assert (
-        original_lean.output_sha256
-        != replay_lean.output_sha256
-    )
-    assert (
-        original.kernel_receipt_sha256
-        != replayed.kernel_receipt_sha256
-    )
+        assert original_boundary[dependent_digest] != replay_boundary[dependent_digest]
+    assert original_evidence["evidence_id"] != replay_evidence["evidence_id"]
+    assert original_lean.output_sha256 != replay_lean.output_sha256
+    assert original.kernel_receipt_sha256 != replayed.kernel_receipt_sha256
 
     stable_original = json.loads(canonical_json(original_evidence))
     stable_replay = json.loads(canonical_json(replay_evidence))
@@ -1576,8 +1390,7 @@ def test_direct_v2_leanstral_generation_replays_only_operational_bindings(
     assert original_draft["model"] == replay_draft["model"]
     assert original_draft["proof_text"] == replay_draft["proof_text"]
     assert (
-        original_boundary["raw_model_content_sha256"]
-        == replay_boundary["raw_model_content_sha256"]
+        original_boundary["raw_model_content_sha256"] == replay_boundary["raw_model_content_sha256"]
     )
     assert (
         original_boundary["normalized_proposal_sha256"]
@@ -1635,14 +1448,8 @@ def test_valid_warm_symai_prime_replays_to_cold_after_receipt_validation(
     tmp_path: Path,
 ) -> None:
     pair = _warm_to_cold_replay_pair(tmp_path)
-    original_symai = next(
-        stage
-        for stage in pair[0].stages
-        if stage.stage is StageName.SYMAI
-    )
-    receipt = cache_measurement.validate_symai_warm_cache_measurement(
-        original_symai
-    )
+    original_symai = next(stage for stage in pair[0].stages if stage.stage is StageName.SYMAI)
+    receipt = cache_measurement.validate_symai_warm_cache_measurement(original_symai)
 
     assert receipt.run_id == pair[0].run_id
     assert receipt.case_id == pair[0].case_id
@@ -1674,20 +1481,12 @@ def test_invalid_warm_symai_prime_fails_before_semantic_projection(
         pair[0],
         cross_bound=cross_bound,
     )
-    invalid_symai = next(
-        stage
-        for stage in invalid.stages
-        if stage.stage is StageName.SYMAI
-    )
+    invalid_symai = next(stage for stage in invalid.stages if stage.stage is StageName.SYMAI)
     with pytest.raises(ProtocolContractError):
-        cache_measurement.validate_symai_warm_cache_measurement(
-            invalid_symai
-        )
+        cache_measurement.validate_symai_warm_cache_measurement(invalid_symai)
 
     def projection_must_not_run(_value: object) -> object:
-        raise AssertionError(
-            "SyMAI semantic projection ran before prime validation"
-        )
+        raise AssertionError("SyMAI semantic projection ran before prime validation")
 
     monkeypatch.setattr(
         report,
@@ -1803,9 +1602,7 @@ def test_warm_to_cold_replay_rejects_lean_or_kernel_execution_drift(
 def test_corrupt_stale_and_backend_drifted_receipts_fail_closed(
     tmp_path: Path,
 ) -> None:
-    original, replayed, original_contract, replay_contract, worktree = (
-        _run_replay_pair(tmp_path)
-    )
+    original, replayed, original_contract, replay_contract, worktree = _run_replay_pair(tmp_path)
     corrupted = replayed.to_dict()
     corrupted["stages"][0]["data"]["stable"] = False
     with pytest.raises(ProtocolContractError, match="output_sha256"):
@@ -1845,12 +1642,8 @@ def test_corrupt_stale_and_backend_drifted_receipts_fail_closed(
         tmp_path / "proof-drift",
         replay_proof_execution_drift=True,
     )
-    assert validate_native_kernel_stage_receipt(
-        proof_drift_pair[0].stages[-1]
-    )
-    assert validate_native_kernel_stage_receipt(
-        proof_drift_pair[1].stages[-1]
-    )
+    assert validate_native_kernel_stage_receipt(proof_drift_pair[0].stages[-1])
+    assert validate_native_kernel_stage_receipt(proof_drift_pair[1].stages[-1])
     with pytest.raises(
         report.RobustnessValidationError,
         match="proof execution drift",

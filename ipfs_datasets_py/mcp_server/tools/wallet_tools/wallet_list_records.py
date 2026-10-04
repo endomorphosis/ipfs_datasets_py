@@ -27,4 +27,3 @@ async def wallet_list_records(
         return {"status": "success", "wallet_id": wallet_id, "records": records}
     except Exception as exc:
         return {"status": "error", "message": f"wallet_list_records failed: {exc}"}
-

@@ -190,6 +190,7 @@ grep -r "from.*lineage" ipfs_datasets_py/knowledge_graphs/lineage/
 # Instead of top-level import
 def my_function():
     from ipfs_datasets_py.knowledge_graphs.lineage import EnhancedLineageTracker
+
     return EnhancedLineageTracker()
 ```
 
@@ -218,16 +219,16 @@ python scripts/migration/migrate_lineage_imports.py .
 **2. Suppress warnings temporarily** (not recommended):
 ```python
 import warnings
+
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 ```
 
 **3. Suppress specific warnings:**
 ```python
 import warnings
+
 warnings.filterwarnings(
-    "ignore",
-    message="cross_document_lineage module is deprecated",
-    category=DeprecationWarning
+    "ignore", message="cross_document_lineage module is deprecated", category=DeprecationWarning
 )
 ```
 
@@ -256,8 +257,9 @@ python scripts/migration/migrate_lineage_imports.py --validate /path/to/app/
 **2. Configure logging** to filter warnings:
 ```python
 import logging
+
 logging.captureWarnings(True)
-warnings_logger = logging.getLogger('py.warnings')
+warnings_logger = logging.getLogger("py.warnings")
 warnings_logger.setLevel(logging.ERROR)
 ```
 
@@ -318,12 +320,13 @@ ERROR: test_module.py - ModuleNotFoundError: No module named 'cross_document_lin
 Update mock paths in tests:
 ```python
 # Old
-@patch('module.cross_document_lineage.EnhancedLineageTracker')
+@patch("module.cross_document_lineage.EnhancedLineageTracker")
 def test_something(mock_tracker):
     pass
 
+
 # New
-@patch('module.lineage.EnhancedLineageTracker')
+@patch("module.lineage.EnhancedLineageTracker")
 def test_something(mock_tracker):
     pass
 ```
@@ -449,6 +452,7 @@ python -X importtime your_app.py 2>&1 | grep lineage
 **3. Profile imports:**
 ```python
 import importtime
+
 with importtime.time_imports():
     from ipfs_datasets_py.knowledge_graphs.lineage import EnhancedLineageTracker
 ```
@@ -467,6 +471,7 @@ python scripts/migration/migrate_lineage_imports.py --verbose --dry-run .
 **In your code:**
 ```python
 import logging
+
 logging.basicConfig(level=logging.DEBUG)
 
 from ipfs_datasets_py.knowledge_graphs.lineage import EnhancedLineageTracker

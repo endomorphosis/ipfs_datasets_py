@@ -13,6 +13,7 @@ Reusable by:
         scrape_with_fallbacks,
     )
 """
+
 from __future__ import annotations
 
 import logging
@@ -45,14 +46,15 @@ def _parse_jurisdiction_hint(jurisdiction: str) -> Tuple[Optional[str], Optional
     place = re.sub(r"\b[A-Z]{2}\b", "", place).strip(" ,")
     return place or None, state_code
 
+
 class MunicipalScraperFallbacks:
     """
     Manages fallback scraping strategies for municipal code websites.
-    
+
     This class coordinates multiple scraping methods to ensure reliable
     data collection even when primary sources fail or are unavailable.
     """
-    
+
     def __init__(self):
         """Initialize fallback scraper with default configuration."""
         self.supported_methods = [
@@ -61,34 +63,30 @@ class MunicipalScraperFallbacks:
             "archive_is",
             "autoscraper",
             "ipwb",
-            "playwright"
+            "playwright",
         ]
-        
+
         self.method_descriptions = {
             "common_crawl": "Query Common Crawl archives for historical municipal website data",
             "wayback_machine": "Retrieve archived snapshots from Internet Archive's Wayback Machine",
             "archive_is": "Access webpage archives from Archive.is service",
             "autoscraper": "Use AutoScraper for pattern-based data extraction",
             "ipwb": "Query InterPlanetary Wayback for decentralized web archives",
-            "playwright": "Direct browser automation as final fallback"
+            "playwright": "Direct browser automation as final fallback",
         }
-    
+
     async def scrape_with_fallbacks(
-        self,
-        url: str,
-        jurisdiction: str,
-        fallback_methods: List[str],
-        **kwargs
+        self, url: str, jurisdiction: str, fallback_methods: List[str], **kwargs
     ) -> Dict[str, Any]:
         """
         Attempt to scrape municipal codes using fallback methods.
-        
+
         Args:
             url: Target URL to scrape
             jurisdiction: Jurisdiction name (e.g., "Seattle, WA")
             fallback_methods: List of methods to try in order
             **kwargs: Additional parameters for specific scrapers
-            
+
         Returns:
             Dictionary with scraping results and metadata
         """
@@ -98,17 +96,17 @@ class MunicipalScraperFallbacks:
             "attempts": [],
             "success": False,
             "data": None,
-            "metadata": {}
+            "metadata": {},
         }
-        
+
         for method in fallback_methods:
             if method not in self.supported_methods:
                 logger.warning(f"Unknown fallback method: {method}")
                 continue
-            
+
             try:
                 logger.info(f"Attempting {method} for {jurisdiction}")
-                
+
                 if method == "common_crawl":
                     result = await self._scrape_common_crawl(url, jurisdiction, **kwargs)
                 elif method == "wayback_machine":
@@ -121,14 +119,16 @@ class MunicipalScraperFallbacks:
                     result = await self._scrape_ipwb(url, jurisdiction, **kwargs)
                 elif method == "playwright":
                     result = await self._scrape_playwright(url, jurisdiction, **kwargs)
-                
-                results["attempts"].append({
-                    "method": method,
-                    "success": result.get("success", False),
-                    "timestamp": datetime.now().isoformat(),
-                    "message": result.get("message", "")
-                })
-                
+
+                results["attempts"].append(
+                    {
+                        "method": method,
+                        "success": result.get("success", False),
+                        "timestamp": datetime.now().isoformat(),
+                        "message": result.get("message", ""),
+                    }
+                )
+
                 if result.get("success"):
                     results["success"] = True
                     results["data"] = result.get("data")
@@ -136,36 +136,33 @@ class MunicipalScraperFallbacks:
                     results["metadata"]["successful_method"] = method
                     logger.info(f"Successfully scraped {jurisdiction} using {method}")
                     break
-                    
+
             except Exception as e:
                 logger.error(f"Error with {method} for {jurisdiction}: {e}")
-                results["attempts"].append({
-                    "method": method,
-                    "success": False,
-                    "timestamp": datetime.now().isoformat(),
-                    "error": str(e)
-                })
-        
+                results["attempts"].append(
+                    {
+                        "method": method,
+                        "success": False,
+                        "timestamp": datetime.now().isoformat(),
+                        "error": str(e),
+                    }
+                )
+
         return results
-    
-    async def _scrape_common_crawl(
-        self,
-        url: str,
-        jurisdiction: str,
-        **kwargs
-    ) -> Dict[str, Any]:
+
+    async def _scrape_common_crawl(self, url: str, jurisdiction: str, **kwargs) -> Dict[str, Any]:
         """
         Scrape municipal codes from Common Crawl archives.
-        
+
         Common Crawl provides petabyte-scale web crawl data. This method
         queries the Common Crawl Index to find archived versions of municipal
         code websites and extracts the legal text.
-        
+
         Args:
             url: Target URL
             jurisdiction: Jurisdiction name
             **kwargs: Additional parameters
-            
+
         Returns:
             Scraping result dictionary
         """
@@ -176,7 +173,9 @@ class MunicipalScraperFallbacks:
         state_code = (kwargs.get("state_code") or state_code or "").upper() or None
         gnis = kwargs.get("gnis")
         max_results = int(kwargs.get("max_results") or kwargs.get("common_crawl_max_results") or 25)
-        max_pages = int(kwargs.get("max_pages") or kwargs.get("common_crawl_max_pages") or min(max_results, 10))
+        max_pages = int(
+            kwargs.get("max_pages") or kwargs.get("common_crawl_max_pages") or min(max_results, 10)
+        )
         url_terms = kwargs.get("url_terms")
         if url_terms is None:
             url_terms = ["code", "ordinance", "charter", "municipal"]
@@ -207,7 +206,9 @@ class MunicipalScraperFallbacks:
                     if not record_url:
                         continue
                     current = deduped.get(record_url)
-                    if current is None or str(record.get("timestamp") or "") > str(current.get("timestamp") or ""):
+                    if current is None or str(record.get("timestamp") or "") > str(
+                        current.get("timestamp") or ""
+                    ):
                         deduped[record_url] = record
                 records = sorted(
                     deduped.values(),
@@ -252,7 +253,9 @@ class MunicipalScraperFallbacks:
         if ccapi is None:
             try:
                 try:
-                    from ..web_archiving.common_crawl_integration import _ensure_common_crawl_import_path
+                    from ..web_archiving.common_crawl_integration import (
+                        _ensure_common_crawl_import_path,
+                    )
 
                     _ensure_common_crawl_import_path()
                 except Exception:
@@ -284,7 +287,12 @@ class MunicipalScraperFallbacks:
             off = record.get("warc_offset")
             ln = record.get("warc_length")
             if not wf or off is None or ln is None:
-                errors.append({"url": page_url, "error": "Common Crawl pointer missing warc_filename/offset/length"})
+                errors.append(
+                    {
+                        "url": page_url,
+                        "error": "Common Crawl pointer missing warc_filename/offset/length",
+                    }
+                )
                 continue
 
             try:
@@ -299,7 +307,14 @@ class MunicipalScraperFallbacks:
                     cache_mode=cache_mode,
                 )
                 if not getattr(fetch, "ok", False) or not getattr(fetch, "raw_base64", None):
-                    errors.append({"url": page_url, "error": str(getattr(fetch, "error", None) or "fetch_warc_record failed")})
+                    errors.append(
+                        {
+                            "url": page_url,
+                            "error": str(
+                                getattr(fetch, "error", None) or "fetch_warc_record failed"
+                            ),
+                        }
+                    )
                     continue
 
                 import base64
@@ -312,7 +327,9 @@ class MunicipalScraperFallbacks:
                     include_body_base64=True,
                 )
                 body_mime = str(getattr(http, "body_mime", "") or "")
-                is_html = bool(getattr(http, "body_is_html", False)) or body_mime.lower().startswith("text/html")
+                is_html = bool(
+                    getattr(http, "body_is_html", False)
+                ) or body_mime.lower().startswith("text/html")
                 html = str(getattr(http, "body_text_preview", "") or "") if is_html else ""
                 text = ""
                 title = ""
@@ -351,7 +368,12 @@ class MunicipalScraperFallbacks:
                         reader = PdfReader(BytesIO(pdf_bytes))
                         body_text = "\n".join((page.extract_text() or "") for page in reader.pages)
                     except Exception as exc:
-                        errors.append({"url": page_url, "error": f"PDF text extraction failed: {type(exc).__name__}: {exc}"})
+                        errors.append(
+                            {
+                                "url": page_url,
+                                "error": f"PDF text extraction failed: {type(exc).__name__}: {exc}",
+                            }
+                        )
                     if not body_text.strip() and pdf_bytes:
                         try:
                             import subprocess
@@ -366,11 +388,18 @@ class MunicipalScraperFallbacks:
                                     timeout=30,
                                     check=False,
                                 )
-                            fallback_text = completed.stdout.decode("utf-8", errors="ignore").strip()
+                            fallback_text = completed.stdout.decode(
+                                "utf-8", errors="ignore"
+                            ).strip()
                             if fallback_text:
                                 body_text = fallback_text
                         except Exception as exc:
-                            errors.append({"url": page_url, "error": f"pdftotext fallback failed: {type(exc).__name__}: {exc}"})
+                            errors.append(
+                                {
+                                    "url": page_url,
+                                    "error": f"pdftotext fallback failed: {type(exc).__name__}: {exc}",
+                                }
+                            )
 
                 if html or text or body_base64:
                     pages.append(
@@ -395,7 +424,12 @@ class MunicipalScraperFallbacks:
                         }
                     )
                 else:
-                    errors.append({"url": page_url, "error": str(getattr(http, "error", None) or "empty extracted body")})
+                    errors.append(
+                        {
+                            "url": page_url,
+                            "error": str(getattr(http, "error", None) or "empty extracted body"),
+                        }
+                    )
             except Exception as exc:
                 errors.append({"url": page_url, "error": f"{type(exc).__name__}: {exc}"})
 
@@ -430,39 +464,36 @@ class MunicipalScraperFallbacks:
                 "state_code": state_code,
                 "candidate_records": records[: min(len(records), 25)],
                 "errors": errors,
-            }
+            },
         }
-    
+
     async def _scrape_wayback_machine(
-        self,
-        url: str,
-        jurisdiction: str,
-        **kwargs
+        self, url: str, jurisdiction: str, **kwargs
     ) -> Dict[str, Any]:
         """
         Scrape municipal codes from Internet Archive's Wayback Machine.
-        
+
         The Wayback Machine archives billions of web pages. This method
         queries the Wayback Machine API to find archived snapshots of
         municipal code websites.
-        
+
         Args:
             url: Target URL
             jurisdiction: Jurisdiction name
             **kwargs: Additional parameters
-            
+
         Returns:
             Scraping result dictionary
         """
         logger.info(f"Querying Wayback Machine for {url}")
-        
+
         # Placeholder implementation
         # TODO: Implement Wayback Machine API integration
         # - Use Wayback Machine Availability API
         # - Find latest/best snapshot of the municipal code page
         # - Retrieve archived HTML content
         # - Extract legal text and metadata
-        
+
         return {
             "success": False,
             "message": "Wayback Machine integration not yet implemented",
@@ -470,40 +501,35 @@ class MunicipalScraperFallbacks:
             "metadata": {
                 "method": "wayback_machine",
                 "url": url,
-                "note": "Will use Wayback Machine API (https://archive.org/wayback/available)"
-            }
+                "note": "Will use Wayback Machine API (https://archive.org/wayback/available)",
+            },
         }
-    
-    async def _scrape_archive_is(
-        self,
-        url: str,
-        jurisdiction: str,
-        **kwargs
-    ) -> Dict[str, Any]:
+
+    async def _scrape_archive_is(self, url: str, jurisdiction: str, **kwargs) -> Dict[str, Any]:
         """
         Scrape municipal codes from Archive.is.
-        
+
         Archive.is provides on-demand webpage archiving. This method
         checks for existing archives or creates new ones of municipal
         code websites.
-        
+
         Args:
             url: Target URL
             jurisdiction: Jurisdiction name
             **kwargs: Additional parameters
-            
+
         Returns:
             Scraping result dictionary
         """
         logger.info(f"Querying Archive.is for {url}")
-        
+
         # Placeholder implementation
         # TODO: Implement Archive.is integration
         # - Check for existing archives via Archive.is search
         # - If not found, submit URL for archiving
         # - Retrieve archived content
         # - Extract legal text
-        
+
         return {
             "success": False,
             "message": "Archive.is integration not yet implemented",
@@ -511,39 +537,34 @@ class MunicipalScraperFallbacks:
             "metadata": {
                 "method": "archive_is",
                 "url": url,
-                "note": "Will check Archive.is archives and create new ones if needed"
-            }
+                "note": "Will check Archive.is archives and create new ones if needed",
+            },
         }
-    
-    async def _scrape_autoscraper(
-        self,
-        url: str,
-        jurisdiction: str,
-        **kwargs
-    ) -> Dict[str, Any]:
+
+    async def _scrape_autoscraper(self, url: str, jurisdiction: str, **kwargs) -> Dict[str, Any]:
         """
         Scrape municipal codes using AutoScraper.
-        
+
         AutoScraper uses machine learning to automatically identify and
         extract structured data from web pages based on example patterns.
-        
+
         Args:
             url: Target URL
             jurisdiction: Jurisdiction name
             **kwargs: Additional parameters
-            
+
         Returns:
             Scraping result dictionary
         """
         logger.info(f"Using AutoScraper for {url}")
-        
+
         # Placeholder implementation
         # TODO: Implement AutoScraper integration
         # - Initialize AutoScraper with example patterns
         # - Train on sample municipal code pages
         # - Apply learned patterns to extract legal text
         # - Structure extracted data
-        
+
         return {
             "success": False,
             "message": "AutoScraper integration not yet implemented",
@@ -551,39 +572,34 @@ class MunicipalScraperFallbacks:
             "metadata": {
                 "method": "autoscraper",
                 "url": url,
-                "note": "Will use AutoScraper for pattern-based extraction"
-            }
+                "note": "Will use AutoScraper for pattern-based extraction",
+            },
         }
-    
-    async def _scrape_ipwb(
-        self,
-        url: str,
-        jurisdiction: str,
-        **kwargs
-    ) -> Dict[str, Any]:
+
+    async def _scrape_ipwb(self, url: str, jurisdiction: str, **kwargs) -> Dict[str, Any]:
         """
         Scrape municipal codes from InterPlanetary Wayback (IPWB).
-        
+
         IPWB is a decentralized web archive system built on IPFS. This method
         queries IPWB for archived versions of municipal code websites.
-        
+
         Args:
             url: Target URL
             jurisdiction: Jurisdiction name
             **kwargs: Additional parameters
-            
+
         Returns:
             Scraping result dictionary
         """
         logger.info(f"Querying IPWB for {url}")
-        
+
         # Placeholder implementation
         # TODO: Implement IPWB integration
         # - Connect to IPWB service
         # - Query for archived versions of the URL
         # - Retrieve content from IPFS
         # - Extract legal text
-        
+
         return {
             "success": False,
             "message": "IPWB integration not yet implemented",
@@ -591,32 +607,27 @@ class MunicipalScraperFallbacks:
             "metadata": {
                 "method": "ipwb",
                 "url": url,
-                "note": "Will query InterPlanetary Wayback for decentralized archives"
-            }
+                "note": "Will query InterPlanetary Wayback for decentralized archives",
+            },
         }
-    
-    async def _scrape_playwright(
-        self,
-        url: str,
-        jurisdiction: str,
-        **kwargs
-    ) -> Dict[str, Any]:
+
+    async def _scrape_playwright(self, url: str, jurisdiction: str, **kwargs) -> Dict[str, Any]:
         """
         Scrape municipal codes using Playwright browser automation.
-        
+
         Playwright provides reliable cross-browser automation. This is
         used as a final fallback when archive-based methods fail.
-        
+
         Args:
             url: Target URL
             jurisdiction: Jurisdiction name
             **kwargs: Additional parameters
-            
+
         Returns:
             Scraping result dictionary
         """
         logger.info(f"Using Playwright for {url}")
-        
+
         # Placeholder implementation
         # TODO: Implement Playwright fallback
         # - Launch headless browser
@@ -624,7 +635,7 @@ class MunicipalScraperFallbacks:
         # - Wait for dynamic content to load
         # - Extract legal text from rendered HTML
         # - Handle JavaScript-heavy sites
-        
+
         return {
             "success": False,
             "message": "Playwright fallback not yet implemented",
@@ -632,34 +643,34 @@ class MunicipalScraperFallbacks:
             "metadata": {
                 "method": "playwright",
                 "url": url,
-                "note": "Will use Playwright for direct browser automation"
-            }
+                "note": "Will use Playwright for direct browser automation",
+            },
         }
-    
+
     def get_method_info(self, method: str) -> Dict[str, Any]:
         """
         Get information about a specific fallback method.
-        
+
         Args:
             method: Method name
-            
+
         Returns:
             Dictionary with method information
         """
         if method not in self.supported_methods:
             return {"error": f"Unknown method: {method}"}
-        
+
         return {
             "method": method,
             "description": self.method_descriptions.get(method, ""),
             "supported": True,
-            "implementation_status": "planned"
+            "implementation_status": "planned",
         }
-    
+
     def list_methods(self) -> List[Dict[str, Any]]:
         """
         List all supported fallback methods.
-        
+
         Returns:
             List of method information dictionaries
         """

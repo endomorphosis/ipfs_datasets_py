@@ -29,9 +29,7 @@ from typing import Any, ClassVar, Final
 
 
 EVALUATION_SCHEMA_VERSION: Final = "cvefixes-leakage-safe-evaluation/v1"
-EVALUATION_CONFIG_SCHEMA_VERSION: Final = (
-    "cvefixes-leakage-safe-evaluation-config/v1"
-)
+EVALUATION_CONFIG_SCHEMA_VERSION: Final = "cvefixes-leakage-safe-evaluation-config/v1"
 _TOKEN_RE = re.compile(r"[A-Za-z0-9_]+")
 _SHA256_RE = re.compile(r"[0-9a-f]{64}")
 
@@ -84,9 +82,7 @@ def _probability(value: Any, label: str) -> float:
         raise EvaluationError(f"{label} must be a probability")
     result = float(value)
     if not math.isfinite(result) or not 0.0 <= result <= 1.0:
-        raise EvaluationError(
-            f"{label} probability must be finite and between zero and one"
-        )
+        raise EvaluationError(f"{label} probability must be finite and between zero and one")
     return result
 
 
@@ -105,8 +101,7 @@ def _body_sketch(body: str, *, width: int = 5) -> frozenset[str]:
     if len(tokens) < width:
         return frozenset({" ".join(tokens)})
     return frozenset(
-        " ".join(tokens[index : index + width])
-        for index in range(len(tokens) - width + 1)
+        " ".join(tokens[index : index + width]) for index in range(len(tokens) - width + 1)
     )
 
 
@@ -158,9 +153,7 @@ class EvaluationExample:
         object.__setattr__(self, "label", expected_label)
 
         if not isinstance(self.body_text, str) or not self.body_text:
-            raise EvaluationError(
-                "body_text is required to enforce near-duplicate isolation"
-            )
+            raise EvaluationError("body_text is required to enforce near-duplicate isolation")
         if body_sha256(self.body_text) != digest:
             raise EvaluationError("body_text does not match body_hash")
 
@@ -173,9 +166,7 @@ class EvaluationExample:
             if clean_key in normalized:
                 raise EvaluationError(f"duplicate stratum key: {clean_key}")
             normalized[clean_key] = clean_value
-        object.__setattr__(
-            self, "strata", MappingProxyType(dict(sorted(normalized.items())))
-        )
+        object.__setattr__(self, "strata", MappingProxyType(dict(sorted(normalized.items()))))
 
     @property
     def expected_label(self) -> bool:
@@ -207,9 +198,7 @@ class SplitConfig:
             raise EvaluationError("all split ratios must be greater than zero")
         if not math.isclose(sum(ratios), 1.0, abs_tol=1e-12):
             raise EvaluationError("split ratios must sum to one")
-        threshold = _probability(
-            self.near_duplicate_threshold, "near_duplicate_threshold"
-        )
+        threshold = _probability(self.near_duplicate_threshold, "near_duplicate_threshold")
         if threshold <= 0.0:
             raise EvaluationError("near_duplicate_threshold must be greater than zero")
         _clean_text(self.seed, "seed", maximum=1024)
@@ -240,11 +229,7 @@ class LeakageFinding:
 
     def __post_init__(self) -> None:
         try:
-            kind = (
-                self.kind
-                if isinstance(self.kind, LeakageKind)
-                else LeakageKind(self.kind)
-            )
+            kind = self.kind if isinstance(self.kind, LeakageKind) else LeakageKind(self.kind)
             left_split = (
                 self.left_split
                 if isinstance(self.left_split, EvaluationSplit)
@@ -280,9 +265,7 @@ class LeakageSafeSplits:
         if not isinstance(self.config, SplitConfig):
             raise EvaluationError("config must be SplitConfig")
         for name in ("train", "validation", "test"):
-            values = tuple(
-                sorted(getattr(self, name), key=lambda item: item.example_id)
-            )
+            values = tuple(sorted(getattr(self, name), key=lambda item: item.example_id))
             if any(not isinstance(item, EvaluationExample) for item in values):
                 raise EvaluationError(f"{name} must contain EvaluationExample values")
             object.__setattr__(self, name, values)
@@ -375,11 +358,7 @@ def audit_split_leakage(
         if near_duplicate_threshold is None
         else _probability(near_duplicate_threshold, "near_duplicate_threshold")
     )
-    located = tuple(
-        (split, example)
-        for split, values in splits.items()
-        for example in values
-    )
+    located = tuple((split, example) for split, values in splits.items() for example in values)
     findings: list[LeakageFinding] = []
     seen: dict[tuple[str, str], tuple[EvaluationSplit, EvaluationExample]] = {}
     for split, example in located:
@@ -439,8 +418,7 @@ def build_leakage_safe_splits(
         raise EvaluationError("at least one evaluation example is required")
     if len(values) > config.max_examples:
         raise EvaluationError(
-            f"evaluation contains {len(values)} examples; "
-            f"limit is {config.max_examples}"
+            f"evaluation contains {len(values)} examples; limit is {config.max_examples}"
         )
     if any(not isinstance(item, EvaluationExample) for item in values):
         raise EvaluationError("examples must contain EvaluationExample values")
@@ -456,29 +434,22 @@ def build_leakage_safe_splits(
                 union.union(index, exact_owner[key])
             else:
                 exact_owner[key] = index
-    for left, right, _ in _near_duplicate_pairs(
-        values, config.near_duplicate_threshold
-    ):
+    for left, right, _ in _near_duplicate_pairs(values, config.near_duplicate_threshold):
         union.union(left, right)
 
     grouped: dict[int, list[EvaluationExample]] = {}
     for index, example in enumerate(values):
         grouped.setdefault(union.find(index), []).append(example)
     components = tuple(
-        tuple(sorted(group, key=lambda item: item.example_id))
-        for group in grouped.values()
+        tuple(sorted(group, key=lambda item: item.example_id)) for group in grouped.values()
     )
 
     def component_digest(component: tuple[EvaluationExample, ...]) -> str:
         material = "\0".join(item.example_id for item in component)
         return hashlib.sha256(f"{config.seed}\0{material}".encode()).hexdigest()
 
-    ordered = sorted(
-        components, key=lambda group: (-len(group), component_digest(group))
-    )
-    targets = {
-        split: len(values) * ratio for split, ratio in config.ratios.items()
-    }
+    ordered = sorted(components, key=lambda group: (-len(group), component_digest(group)))
+    targets = {split: len(values) * ratio for split, ratio in config.ratios.items()}
     assigned: dict[EvaluationSplit, list[EvaluationExample]] = {
         split: [] for split in EvaluationSplit
     }
@@ -575,10 +546,7 @@ class BinaryMetrics:
         if self.vulnerable_positives + self.fixed_negatives != self.sample_count:
             raise EvaluationError("metric class counts do not equal sample_count")
         if (
-            self.true_positives
-            + self.false_positives
-            + self.true_negatives
-            + self.false_negatives
+            self.true_positives + self.false_positives + self.true_negatives + self.false_negatives
             != self.sample_count
         ):
             raise EvaluationError("metric confusion counts do not equal sample_count")
@@ -595,10 +563,7 @@ class BinaryMetrics:
             _probability(getattr(self, name), name)
 
     def to_dict(self) -> dict[str, int | float]:
-        return {
-            name: getattr(self, name)
-            for name in self.__dataclass_fields__
-        }
+        return {name: getattr(self, name) for name in self.__dataclass_fields__}
 
 
 @dataclass(frozen=True, slots=True)
@@ -622,13 +587,9 @@ class MetricsReport:
         if any(not isinstance(item, CalibrationBin) for item in bins):
             raise EvaluationError("calibration_bins are invalid")
         if sum(item.count for item in bins) != self.overall.sample_count:
-            raise EvaluationError(
-                "calibration bin counts must equal the metric sample count"
-            )
+            raise EvaluationError("calibration bin counts must equal the metric sample count")
         object.__setattr__(self, "calibration_bins", bins)
-        _probability(
-            self.expected_calibration_error, "expected_calibration_error"
-        )
+        _probability(self.expected_calibration_error, "expected_calibration_error")
         object.__setattr__(
             self,
             "by_stratum",
@@ -637,14 +598,9 @@ class MetricsReport:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "by_stratum": {
-                key: value.to_dict() for key, value in self.by_stratum.items()
-            },
+            "by_stratum": {key: value.to_dict() for key, value in self.by_stratum.items()},
             "calibration_bins": [
-                {
-                    name: getattr(item, name)
-                    for name in item.__dataclass_fields__
-                }
+                {name: getattr(item, name) for name in item.__dataclass_fields__}
                 for item in self.calibration_bins
             ],
             "expected_calibration_error": self.expected_calibration_error,
@@ -699,11 +655,7 @@ def _binary_metrics(
     specificity = tn / negatives if negatives else 0.0
     precision = tp / (tp + fp) if tp + fp else 0.0
     accuracy = (tp + tn) / len(bound) if bound else 0.0
-    f1 = (
-        2.0 * precision * recall / (precision + recall)
-        if precision + recall
-        else 0.0
-    )
+    f1 = 2.0 * precision * recall / (precision + recall) if precision + recall else 0.0
     return BinaryMetrics(
         sample_count=len(bound),
         vulnerable_positives=positives,
@@ -754,15 +706,12 @@ def evaluate_predictions(
         members = [
             (example, score)
             for example, score in bound
-            if lower <= score < upper
-            or (index == calibration_bin_count - 1 and score == 1.0)
+            if lower <= score < upper or (index == calibration_bin_count - 1 and score == 1.0)
         ]
         if not members:
             continue
         mean_score = sum(score for _, score in members) / len(members)
-        positive_rate = sum(
-            int(example.expected_label) for example, _ in members
-        ) / len(members)
+        positive_rate = sum(int(example.expected_label) for example, _ in members) / len(members)
         error = abs(mean_score - positive_rate)
         weighted_error += error * len(members)
         bins.append(
@@ -778,10 +727,7 @@ def evaluate_predictions(
     return MetricsReport(
         threshold=threshold,
         overall=_binary_metrics(bound, threshold),
-        by_stratum={
-            key: _binary_metrics(values, threshold)
-            for key, values in groups.items()
-        },
+        by_stratum={key: _binary_metrics(values, threshold) for key, values in groups.items()},
         calibration_bins=tuple(bins),
         expected_calibration_error=weighted_error / len(bound),
     )
@@ -973,20 +919,13 @@ def run_adversarial_injection_tests(
                 )
             )
             continue
-        expected = (
-            case.expected_polarity is EvaluationPolarity.VULNERABLE_POSITIVE
-        )
-        labels_correct = (
-            (clean_score >= threshold) is expected
-            and (injected_score >= threshold) is expected
-        )
+        expected = case.expected_polarity is EvaluationPolarity.VULNERABLE_POSITIVE
+        labels_correct = (clean_score >= threshold) is expected and (
+            injected_score >= threshold
+        ) is expected
         stable = abs(clean_score - injected_score) <= case.max_score_delta
         passed = labels_correct and stable
-        reason = (
-            "passed"
-            if passed
-            else "classification_changed_or_score_delta_exceeded"
-        )
+        reason = "passed" if passed else "classification_changed_or_score_delta_exceeded"
         results.append(
             AdversarialInjectionResult(
                 case_id=case.case_id,
@@ -1043,9 +982,7 @@ class PromotionGate:
             raise EvaluationError("promotion gate observed value must be finite")
         if not isinstance(self.observed, (bool, int, float)):
             raise EvaluationError("promotion gate observed value must be scalar")
-        _clean_text(
-            self.requirement, "promotion gate requirement", maximum=1024
-        )
+        _clean_text(self.requirement, "promotion gate requirement", maximum=1024)
 
 
 @dataclass(frozen=True, slots=True)
@@ -1087,18 +1024,12 @@ class PromotionReview:
             raise EvaluationError("candidate_cids must be CIDv1 strings")
         object.__setattr__(self, "candidate_cids", candidate_cids)
         all_passed = all(item.passed for item in gates)
-        if decision is PromotionDecision.PROMOTE and (
-            not all_passed or not self.review_approved
-        ):
-            raise EvaluationError(
-                "failed or unreviewed gates cannot promote candidates"
-            )
+        if decision is PromotionDecision.PROMOTE and (not all_passed or not self.review_approved):
+            raise EvaluationError("failed or unreviewed gates cannot promote candidates")
         if decision is PromotionDecision.REVIEW_REQUIRED and (
             not all_passed or self.review_approved
         ):
-            raise EvaluationError(
-                "review_required is only valid for passing, unreviewed gates"
-            )
+            raise EvaluationError("review_required is only valid for passing, unreviewed gates")
         if decision is PromotionDecision.REJECT and all_passed:
             raise EvaluationError("passing gates must proceed to review or promotion")
 
@@ -1154,16 +1085,12 @@ def decide_promotion(
         raise EvaluationError("leakage_findings are invalid")
     if not math.isclose(test_metrics.threshold, threshold.threshold, abs_tol=1e-12):
         raise EvaluationError("test metrics must use the measured threshold")
-    if not math.isclose(
-        adversarial_report.threshold, threshold.threshold, abs_tol=1e-12
-    ):
+    if not math.isclose(adversarial_report.threshold, threshold.threshold, abs_tol=1e-12):
         raise EvaluationError("adversarial tests must use the measured threshold")
 
     measured = test_metrics.overall
     gates = (
-        PromotionGate(
-            "leakage_free", not leakage, len(leakage), "equals 0"
-        ),
+        PromotionGate("leakage_free", not leakage, len(leakage), "equals 0"),
         PromotionGate(
             "validation_sample_count",
             threshold.validation_sample_count >= policy.min_validation_samples,
@@ -1184,8 +1111,7 @@ def decide_promotion(
         ),
         PromotionGate(
             "fixed_negative_accuracy",
-            measured.fixed_negative_accuracy
-            >= policy.min_fixed_negative_accuracy,
+            measured.fixed_negative_accuracy >= policy.min_fixed_negative_accuracy,
             measured.fixed_negative_accuracy,
             f">= {policy.min_fixed_negative_accuracy}",
         ),
@@ -1203,8 +1129,7 @@ def decide_promotion(
         ),
         PromotionGate(
             "expected_calibration_error",
-            test_metrics.expected_calibration_error
-            <= policy.max_expected_calibration_error,
+            test_metrics.expected_calibration_error <= policy.max_expected_calibration_error,
             test_metrics.expected_calibration_error,
             f"<= {policy.max_expected_calibration_error}",
         ),
@@ -1220,11 +1145,7 @@ def decide_promotion(
     decision = (
         PromotionDecision.PROMOTE
         if all_passed and review_approved
-        else (
-            PromotionDecision.REVIEW_REQUIRED
-            if all_passed
-            else PromotionDecision.REJECT
-        )
+        else (PromotionDecision.REVIEW_REQUIRED if all_passed else PromotionDecision.REJECT)
     )
     return PromotionReview(
         decision=decision,

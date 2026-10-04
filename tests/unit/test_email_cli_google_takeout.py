@@ -10,12 +10,7 @@ import zipfile
 def _load_email_cli_module():
     import importlib.util
 
-    module_path = (
-        Path(__file__).resolve().parents[2]
-        / "ipfs_datasets_py"
-        / "cli"
-        / "email_cli.py"
-    )
+    module_path = Path(__file__).resolve().parents[2] / "ipfs_datasets_py" / "cli" / "email_cli.py"
     spec = importlib.util.spec_from_file_location("email_cli_takeout_under_test", module_path)
     assert spec and spec.loader
     module = importlib.util.module_from_spec(spec)
@@ -43,7 +38,9 @@ def test_google_voice_takeout_url_from_product_id() -> None:
     payload = json.loads(output.getvalue())
     assert payload["status"] == "success"
     assert payload["product_ids"] == ["voice"]
-    assert payload["takeout_url"].startswith("https://takeout.google.com/settings/takeout/custom/voice")
+    assert payload["takeout_url"].startswith(
+        "https://takeout.google.com/settings/takeout/custom/voice"
+    )
 
 
 def test_google_voice_takeout_url_from_saved_page_source(tmp_path: Path) -> None:
@@ -98,11 +95,15 @@ def test_google_voice_takeout_capture_command_with_mock(tmp_path: Path, monkeypa
 
     import sys
 
-    helper_module = sys.modules.get("ipfs_datasets_py.processors.multimedia.google_takeout_automation")
+    helper_module = sys.modules.get(
+        "ipfs_datasets_py.processors.multimedia.google_takeout_automation"
+    )
     if helper_module is None:
         import importlib
 
-        helper_module = importlib.import_module("ipfs_datasets_py.processors.multimedia.google_takeout_automation")
+        helper_module = importlib.import_module(
+            "ipfs_datasets_py.processors.multimedia.google_takeout_automation"
+        )
     monkeypatch.setattr(helper_module, "open_takeout_and_capture_download", _fake_capture)
 
     try:
@@ -168,11 +169,15 @@ def test_google_voice_takeout_email_command_with_mock(tmp_path: Path, monkeypatc
 
     import sys
 
-    helper_module = sys.modules.get("ipfs_datasets_py.processors.multimedia.google_takeout_automation")
+    helper_module = sys.modules.get(
+        "ipfs_datasets_py.processors.multimedia.google_takeout_automation"
+    )
     if helper_module is None:
         import importlib
 
-        helper_module = importlib.import_module("ipfs_datasets_py.processors.multimedia.google_takeout_automation")
+        helper_module = importlib.import_module(
+            "ipfs_datasets_py.processors.multimedia.google_takeout_automation"
+        )
     monkeypatch.setattr(helper_module, "poll_email_for_takeout_link", _fake_email)
 
     try:
@@ -198,7 +203,9 @@ def test_google_voice_takeout_email_command_with_mock(tmp_path: Path, monkeypatc
     assert captured["account_hint"] == "user@gmail.com"
 
 
-def test_google_voice_takeout_email_command_reports_requested_stage(tmp_path: Path, monkeypatch) -> None:
+def test_google_voice_takeout_email_command_reports_requested_stage(
+    tmp_path: Path, monkeypatch
+) -> None:
     module = _load_email_cli_module()
     output_path = tmp_path / "takeout-requested.json"
 
@@ -216,11 +223,15 @@ def test_google_voice_takeout_email_command_reports_requested_stage(tmp_path: Pa
 
     import sys
 
-    helper_module = sys.modules.get("ipfs_datasets_py.processors.multimedia.google_takeout_automation")
+    helper_module = sys.modules.get(
+        "ipfs_datasets_py.processors.multimedia.google_takeout_automation"
+    )
     if helper_module is None:
         import importlib
 
-        helper_module = importlib.import_module("ipfs_datasets_py.processors.multimedia.google_takeout_automation")
+        helper_module = importlib.import_module(
+            "ipfs_datasets_py.processors.multimedia.google_takeout_automation"
+        )
     monkeypatch.setattr(helper_module, "poll_email_for_takeout_link", _fake_email)
 
     try:
@@ -258,11 +269,15 @@ def test_google_voice_takeout_drive_command_with_mock(tmp_path: Path, monkeypatc
 
     import sys
 
-    helper_module = sys.modules.get("ipfs_datasets_py.processors.multimedia.google_takeout_automation")
+    helper_module = sys.modules.get(
+        "ipfs_datasets_py.processors.multimedia.google_takeout_automation"
+    )
     if helper_module is None:
         import importlib
 
-        helper_module = importlib.import_module("ipfs_datasets_py.processors.multimedia.google_takeout_automation")
+        helper_module = importlib.import_module(
+            "ipfs_datasets_py.processors.multimedia.google_takeout_automation"
+        )
     monkeypatch.setattr(helper_module, "poll_drive_and_optionally_download", _fake_drive)
 
     try:
@@ -290,7 +305,9 @@ def test_google_voice_takeout_drive_command_with_mock(tmp_path: Path, monkeypatc
     assert captured["modified_after"] == "2026-04-04T00:00:00Z"
 
 
-def test_google_voice_takeout_drive_folder_artifact_is_supported(tmp_path: Path, monkeypatch) -> None:
+def test_google_voice_takeout_drive_folder_artifact_is_supported(
+    tmp_path: Path, monkeypatch
+) -> None:
     module = _load_email_cli_module()
     output_path = tmp_path / "drive-folder.json"
 
@@ -305,11 +322,15 @@ def test_google_voice_takeout_drive_folder_artifact_is_supported(tmp_path: Path,
 
     import sys
 
-    helper_module = sys.modules.get("ipfs_datasets_py.processors.multimedia.google_takeout_automation")
+    helper_module = sys.modules.get(
+        "ipfs_datasets_py.processors.multimedia.google_takeout_automation"
+    )
     if helper_module is None:
         import importlib
 
-        helper_module = importlib.import_module("ipfs_datasets_py.processors.multimedia.google_takeout_automation")
+        helper_module = importlib.import_module(
+            "ipfs_datasets_py.processors.multimedia.google_takeout_automation"
+        )
     monkeypatch.setattr(helper_module, "poll_drive_and_optionally_download", _fake_drive)
 
     try:
@@ -574,11 +595,15 @@ def test_google_voice_takeout_case_report_writes_markdown_and_html(tmp_path: Pat
     except SystemExit as exc:
         assert exc.code == 0
 
-    assert "# Google Voice Takeout Case Report: case-report-001" in markdown_path.read_text(encoding="utf-8")
+    assert "# Google Voice Takeout Case Report: case-report-001" in markdown_path.read_text(
+        encoding="utf-8"
+    )
     assert "<html" in html_path.read_text(encoding="utf-8").lower()
 
 
-def test_google_voice_takeout_case_bundle_collects_manifest_history_and_reports(tmp_path: Path) -> None:
+def test_google_voice_takeout_case_bundle_collects_manifest_history_and_reports(
+    tmp_path: Path,
+) -> None:
     module = _load_email_cli_module()
     downloads_dir = tmp_path / "downloads"
     downloads_dir.mkdir()

@@ -74,12 +74,8 @@ DEFAULT_MAX_SOURCE_BYTES: Final = 1_048_576
 
 _DIGEST = re.compile(r"^[0-9a-f]{64}$")
 _CONTROL = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
-_QUERY_LINE = re.compile(
-    r"(?im)^\s*query\s+(.+?)\s*\.\s*$"
-)
-_RESULT_LINE = re.compile(
-    r"(?im)^\s*RESULT\s+(.+?)\s+is\s+(true|false|cannot be proved)\s*\.?\s*$"
-)
+_QUERY_LINE = re.compile(r"(?im)^\s*query\s+(.+?)\s*\.\s*$")
+_RESULT_LINE = re.compile(r"(?im)^\s*RESULT\s+(.+?)\s+is\s+(true|false|cannot be proved)\s*\.?\s*$")
 _ATTACK_STEP = re.compile(
     r"(?im)^\s*(?:->|=>|\*)?\s*(?:out|in|event|new|let|phase)\s*"
     r"\(?([A-Za-z_][A-Za-z0-9_']*)\)?(?:\s*\((.*?)\))?"
@@ -162,9 +158,7 @@ class SymbolicModelCeiling:
             "equational_theories": sorted(equational_theories),
             "perfect_cryptography": cls.PERFECT_CRYPTOGRAPHY,
             "schema_version": cls.SCHEMA_VERSION,
-            "supported_claim_kinds": sorted(
-                item.value for item in PROVERIF_SUPPORTED_CLAIMS
-            ),
+            "supported_claim_kinds": sorted(item.value for item in PROVERIF_SUPPORTED_CLAIMS),
             "supported_equational_theories": sorted(
                 item.value for item in PROVERIF_SUPPORTED_THEORIES
             ),
@@ -175,12 +169,7 @@ class SymbolicModelCeiling:
 def _text(value: object, field_name: str, *, optional: bool = False) -> str:
     if optional and value == "":
         return ""
-    if (
-        not isinstance(value, str)
-        or not value
-        or value != value.strip()
-        or "\x00" in value
-    ):
+    if not isinstance(value, str) or not value or value != value.strip() or "\x00" in value:
         qualifier = "an empty or " if optional else "a "
         raise ProVerifBackendError(
             f"{field_name} must be {qualifier}non-empty trimmed string without NUL bytes"
@@ -282,15 +271,9 @@ class ProVerifSourceBinding:
     schema_version: str = PROVERIF_SOURCE_BINDING_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "request_digest", _digest(self.request_digest, "request_digest")
-        )
-        object.__setattr__(
-            self, "source_digest", _digest(self.source_digest, "source_digest")
-        )
-        object.__setattr__(
-            self, "source_format", _text(self.source_format, "source_format")
-        )
+        object.__setattr__(self, "request_digest", _digest(self.request_digest, "request_digest"))
+        object.__setattr__(self, "source_digest", _digest(self.source_digest, "source_digest"))
+        object.__setattr__(self, "source_format", _text(self.source_format, "source_format"))
         if self.schema_version != PROVERIF_SOURCE_BINDING_VERSION:
             raise ProVerifBackendError(
                 f"unsupported ProVerif source binding schema: {self.schema_version!r}"
@@ -330,13 +313,9 @@ class ToolDependencyBinding:
     schema_version: str = "tool-dependency-binding/v1"
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "dependency_id", _text(self.dependency_id, "dependency_id")
-        )
+        object.__setattr__(self, "dependency_id", _text(self.dependency_id, "dependency_id"))
         object.__setattr__(self, "name", _text(self.name, "name"))
-        object.__setattr__(
-            self, "version", _text(self.version, "version", optional=True)
-        )
+        object.__setattr__(self, "version", _text(self.version, "version", optional=True))
         if not isinstance(self.required, bool):
             raise ProVerifBackendError("required must be a boolean")
 
@@ -363,19 +342,13 @@ class ProVerifToolchainBinding:
     def __post_init__(self) -> None:
         object.__setattr__(self, "tool_id", _text(self.tool_id, "tool_id"))
         object.__setattr__(self, "executable", _text(self.executable, "executable"))
-        object.__setattr__(
-            self, "tool_version", _text(self.tool_version, "tool_version")
-        )
+        object.__setattr__(self, "tool_version", _text(self.tool_version, "tool_version"))
         deps = tuple(self.dependencies)
         if any(not isinstance(item, ToolDependencyBinding) for item in deps):
-            raise ProVerifBackendError(
-                "dependencies must be ToolDependencyBinding values"
-            )
+            raise ProVerifBackendError("dependencies must be ToolDependencyBinding values")
         object.__setattr__(self, "dependencies", deps)
         if self.schema_version != PROVERIF_TOOLCHAIN_VERSION:
-            raise ProVerifBackendError(
-                f"unsupported toolchain schema: {self.schema_version!r}"
-            )
+            raise ProVerifBackendError(f"unsupported toolchain schema: {self.schema_version!r}")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -440,18 +413,12 @@ class NormalizedAttackTrace:
             raise ProVerifBackendError("attack traces require at least one step")
         indices = [item.step_index for item in steps]
         if indices != list(range(len(steps))):
-            raise ProVerifBackendError(
-                "attack trace steps must be densely indexed from 0"
-            )
+            raise ProVerifBackendError("attack trace steps must be densely indexed from 0")
         object.__setattr__(self, "steps", steps)
         object.__setattr__(self, "raw_digest", _digest(self.raw_digest, "raw_digest"))
-        object.__setattr__(
-            self, "trace_format", _text(self.trace_format, "trace_format")
-        )
+        object.__setattr__(self, "trace_format", _text(self.trace_format, "trace_format"))
         if self.schema_version != PROVERIF_ATTACK_TRACE_VERSION:
-            raise ProVerifBackendError(
-                f"unsupported attack trace schema: {self.schema_version!r}"
-            )
+            raise ProVerifBackendError(f"unsupported attack trace schema: {self.schema_version!r}")
 
     def _identity_payload(self) -> dict[str, Any]:
         return {
@@ -489,16 +456,12 @@ class ClaimOutcome:
     def __post_init__(self) -> None:
         object.__setattr__(self, "claim_id", _text(self.claim_id, "claim_id"))
         object.__setattr__(self, "query_text", _text(self.query_text, "query_text"))
-        object.__setattr__(
-            self, "verdict", _enum(self.verdict, ClaimVerdict, "verdict")
-        )
+        object.__setattr__(self, "verdict", _enum(self.verdict, ClaimVerdict, "verdict"))
         if self.attack_trace is not None and not isinstance(
             self.attack_trace, NormalizedAttackTrace
         ):
             raise ProVerifBackendError("attack_trace must be NormalizedAttackTrace")
-        object.__setattr__(
-            self, "reason", _text(self.reason, "reason", optional=True)
-        )
+        object.__setattr__(self, "reason", _text(self.reason, "reason", optional=True))
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -522,18 +485,14 @@ class ResultQuarantine:
     schema_version: str = PROVERIF_QUARANTINE_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "reason", _enum(self.reason, QuarantineReason, "reason")
-        )
+        object.__setattr__(self, "reason", _enum(self.reason, QuarantineReason, "reason"))
         object.__setattr__(self, "detail", _text(self.detail, "detail"))
         claims = tuple(_text(item, "claim_ids item") for item in self.claim_ids)
         if len(claims) != len(set(claims)):
             raise ProVerifBackendError("claim_ids must not contain duplicates")
         object.__setattr__(self, "claim_ids", claims)
         if self.schema_version != PROVERIF_QUARANTINE_VERSION:
-            raise ProVerifBackendError(
-                f"unsupported quarantine schema: {self.schema_version!r}"
-            )
+            raise ProVerifBackendError(f"unsupported quarantine schema: {self.schema_version!r}")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -560,16 +519,10 @@ class ProVerifCompileResult:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "source", _source_text(self.source))
-        object.__setattr__(
-            self, "source_format", _text(self.source_format, "source_format")
-        )
-        object.__setattr__(
-            self, "source_digest", _digest(self.source_digest, "source_digest")
-        )
+        object.__setattr__(self, "source_format", _text(self.source_format, "source_format"))
+        object.__setattr__(self, "source_digest", _digest(self.source_digest, "source_digest"))
         object.__setattr__(self, "ceiling", _frozen(self.ceiling, "ceiling"))
-        object.__setattr__(
-            self, "claim_queries", _frozen(self.claim_queries, "claim_queries")
-        )
+        object.__setattr__(self, "claim_queries", _frozen(self.claim_queries, "claim_queries"))
         theories = tuple(
             _text(item, "equational_theories item") for item in self.equational_theories
         )
@@ -584,9 +537,7 @@ class ProVerifCompileResult:
             _text(self.protocol_document_id, "protocol_document_id", optional=True),
         )
         if self.schema_version != PROVERIF_COMPILER_VERSION:
-            raise ProVerifBackendError(
-                f"unsupported compiler schema: {self.schema_version!r}"
-            )
+            raise ProVerifBackendError(f"unsupported compiler schema: {self.schema_version!r}")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -617,9 +568,7 @@ class ProVerifProtocolReceipt:
     schema_version: str = PROVERIF_RECEIPT_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "request_digest", _digest(self.request_digest, "request_digest")
-        )
+        object.__setattr__(self, "request_digest", _digest(self.request_digest, "request_digest"))
         if not isinstance(self.source_binding, ProVerifSourceBinding):
             raise ProVerifBackendError("source_binding must be ProVerifSourceBinding")
         if self.request_digest != self.source_binding.request_digest:
@@ -627,28 +576,20 @@ class ProVerifProtocolReceipt:
         if not isinstance(self.toolchain, ProVerifToolchainBinding):
             raise ProVerifBackendError("toolchain must be ProVerifToolchainBinding")
         object.__setattr__(self, "ceiling", _frozen(self.ceiling, "ceiling"))
-        object.__setattr__(
-            self, "compile_digest", _digest(self.compile_digest, "compile_digest")
-        )
+        object.__setattr__(self, "compile_digest", _digest(self.compile_digest, "compile_digest"))
         outcomes = tuple(self.claim_outcomes)
         if any(not isinstance(item, ClaimOutcome) for item in outcomes):
             raise ProVerifBackendError("claim_outcomes must be ClaimOutcome values")
         object.__setattr__(self, "claim_outcomes", outcomes)
-        if self.quarantine is not None and not isinstance(
-            self.quarantine, ResultQuarantine
-        ):
+        if self.quarantine is not None and not isinstance(self.quarantine, ResultQuarantine):
             raise ProVerifBackendError("quarantine must be ResultQuarantine")
         if not isinstance(self.accepted, bool):
             raise ProVerifBackendError("accepted must be a boolean")
         if self.accepted and self.quarantine is not None:
             raise ProVerifBackendError("accepted receipts cannot be quarantined")
-        object.__setattr__(
-            self, "diagnostics", bound_diagnostics(self.diagnostics)
-        )
+        object.__setattr__(self, "diagnostics", bound_diagnostics(self.diagnostics))
         if self.schema_version != PROVERIF_RECEIPT_VERSION:
-            raise ProVerifBackendError(
-                f"unsupported receipt schema: {self.schema_version!r}"
-            )
+            raise ProVerifBackendError(f"unsupported receipt schema: {self.schema_version!r}")
 
     @property
     def receipt_id(self) -> str:
@@ -661,9 +602,7 @@ class ProVerifProtocolReceipt:
             "claim_outcomes": [item.to_dict() for item in self.claim_outcomes],
             "compile_digest": self.compile_digest,
             "diagnostics": list(self.diagnostics),
-            "quarantine": (
-                self.quarantine.to_dict() if self.quarantine is not None else None
-            ),
+            "quarantine": (self.quarantine.to_dict() if self.quarantine is not None else None),
             "request_digest": self.request_digest,
             "schema_version": self.schema_version,
             "source_binding": self.source_binding.to_dict(),
@@ -688,9 +627,7 @@ class ProVerifBackendOutcome:
     interface_version: str = PROVERIF_BACKEND_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "request_digest", _digest(self.request_digest, "request_digest")
-        )
+        object.__setattr__(self, "request_digest", _digest(self.request_digest, "request_digest"))
         if not isinstance(self.source_binding, ProVerifSourceBinding):
             raise ProVerifBackendError("source_binding must be ProVerifSourceBinding")
         if not isinstance(self.result, TypedBackendResult):
@@ -707,15 +644,10 @@ class ProVerifBackendOutcome:
             raise ProVerifBackendError(
                 f"unsupported ProVerif interface: {self.interface_version!r}"
             )
-        if (
-            self.result.status is ResultStatus.SECURE
-            and not self.receipt.accepted
-        ):
+        if self.result.status is ResultStatus.SECURE and not self.receipt.accepted:
             raise ProVerifBackendError("SECURE results require an accepted receipt")
         if self.result.authority is not ResultAuthority.PROTOCOL:
-            raise ProVerifBackendError(
-                "ProVerif outcomes must carry protocol authority"
-            )
+            raise ProVerifBackendError("ProVerif outcomes must carry protocol authority")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -730,9 +662,7 @@ class ProVerifBackendOutcome:
 
 def _source_text(value: object) -> str:
     if not isinstance(value, str) or not value.strip() or "\x00" in value:
-        raise ProVerifBackendError(
-            "ProVerif source must be non-empty text without NUL bytes"
-        )
+        raise ProVerifBackendError("ProVerif source must be non-empty text without NUL bytes")
     if len(value.encode("utf-8")) > DEFAULT_MAX_SOURCE_BYTES:
         raise ProVerifBackendError("ProVerif source exceeds the canonical byte bound")
     return value
@@ -753,9 +683,7 @@ def parse_attack_trace(
         label = match.group(1) or "step"
         terms_raw = match.group(2) or ""
         terms = tuple(
-            part.strip()
-            for part in terms_raw.split(",")
-            if part.strip() and "\x00" not in part
+            part.strip() for part in terms_raw.split(",") if part.strip() and "\x00" not in part
         )
         steps.append(
             AttackTraceStep(
@@ -811,10 +739,7 @@ def parse_proverif_claim_outcomes(
             verdict = ClaimVerdict.CANNOT_PROVE
         results.append((query, verdict))
 
-    inverse = {
-        _normalize_query_key(query): claim_id
-        for claim_id, query in claim_queries.items()
-    }
+    inverse = {_normalize_query_key(query): claim_id for claim_id, query in claim_queries.items()}
     outcomes: list[ClaimOutcome] = []
     seen_claims: set[str] = set()
 
@@ -822,9 +747,7 @@ def parse_proverif_claim_outcomes(
         claim_id = inverse.get(_normalize_query_key(query), query)
         attack = None
         if verdict is ClaimVerdict.FALSE:
-            attack = parse_attack_trace(
-                combined, claim_id=claim_id, raw_digest=raw_digest
-            )
+            attack = parse_attack_trace(combined, claim_id=claim_id, raw_digest=raw_digest)
         outcomes.append(
             ClaimOutcome(
                 claim_id=claim_id,
@@ -899,8 +822,7 @@ def classify_claim_outcomes(
                 ResultQuarantine(
                     reason=QuarantineReason.MALFORMED_OUTPUT,
                     detail=(
-                        "false claims lack a normalizable attack trace; "
-                        "results are quarantined"
+                        "false claims lack a normalizable attack trace; results are quarantined"
                     ),
                     claim_ids=tuple(item.claim_id for item in missing_trace),
                 ),
@@ -912,8 +834,7 @@ def classify_claim_outcomes(
                 ResultQuarantine(
                     reason=QuarantineReason.INCONCLUSIVE,
                     detail=(
-                        "attack found for some claims while others remain "
-                        "inconclusive; quarantined"
+                        "attack found for some claims while others remain inconclusive; quarantined"
                     ),
                     claim_ids=tuple(item.claim_id for item in incomplete),
                 ),
@@ -960,9 +881,7 @@ class ProVerifCompiler:
         adversary_kind: str = AdversaryKind.DOLEV_YAO.value,
     ) -> dict[str, Any]:
         if protocol is not None:
-            equational_theories = [
-                item.value for item in protocol.equational_theories
-            ]
+            equational_theories = [item.value for item in protocol.equational_theories]
             claim_kinds = [item.kind.value for item in protocol.claims]
             adversary_kind = protocol.adversary.kind.value
         return SymbolicModelCeiling.disclose(
@@ -976,16 +895,10 @@ class ProVerifCompiler:
         return kind in PROVERIF_SUPPORTED_CLAIMS
 
     def supports_theory(self, theory: EquationalTheory | str) -> bool:
-        theory = (
-            theory
-            if isinstance(theory, EquationalTheory)
-            else EquationalTheory(theory)
-        )
+        theory = theory if isinstance(theory, EquationalTheory) else EquationalTheory(theory)
         return theory in PROVERIF_SUPPORTED_THEORIES
 
-    def compile_source(
-        self, source: str, *, source_format: str = "pv"
-    ) -> ProVerifCompileResult:
+    def compile_source(self, source: str, *, source_format: str = "pv") -> ProVerifCompileResult:
         text = _source_text(source)
         queries = {
             f"query:{index}": match.group(1).strip()
@@ -1153,9 +1066,7 @@ class ProVerifCompiler:
             process_parts.append(f"new {names[fresh.name_id]}: bitstring")
         for event in protocol.events:
             event_name = names[event.event_id]
-            args = ", ".join(
-                _term_to_pv(term, names) for term in event.parameters
-            ) or "empty"
+            args = ", ".join(_term_to_pv(term, names) for term in event.parameters) or "empty"
             if args == "empty":
                 process_parts.append(f"new empty: bitstring; event {event_name}(empty)")
             else:
@@ -1181,8 +1092,7 @@ class ProVerifCompiler:
     def _claim_query(self, claim: ProtocolClaim, names: Mapping[str, str]) -> str:
         if claim.kind is ProtocolClaimKind.SECRECY:
             secrets = " & ".join(
-                f"attacker({_term_to_pv(term, names)})"
-                for term in claim.secret_terms
+                f"attacker({_term_to_pv(term, names)})" for term in claim.secret_terms
             )
             # Secrecy is phrased as the attacker query that should be false.
             return secrets or "attacker(dummy)"
@@ -1201,9 +1111,7 @@ class ProVerifCompiler:
             a_name = names.get(antecedent, _safe_ident(antecedent))
             c_name = names.get(consequent, _safe_ident(consequent))
             inj = "inj-" if claim.correspondence.value == "injective" else ""
-            return (
-                f"{inj}event({a_name}(x)) ==> {inj}event({c_name}(x))"
-            )
+            return f"{inj}event({a_name}(x)) ==> {inj}event({c_name}(x))"
         if claim.kind is ProtocolClaimKind.EQUIVALENCE:
             left = _term_to_pv(claim.left_terms[0], names)
             right = _term_to_pv(claim.right_terms[0], names)
@@ -1214,9 +1122,7 @@ class ProVerifCompiler:
 
 
 def _usage_from_process(process: ToolRunResult) -> ResourceUsage:
-    output_bytes = len(process.stdout.encode("utf-8")) + len(
-        process.stderr.encode("utf-8")
-    )
+    output_bytes = len(process.stdout.encode("utf-8")) + len(process.stderr.encode("utf-8"))
     return ResourceUsage(
         elapsed_ms=max(0, round(process.elapsed_seconds * 1000)),
         output_bytes=output_bytes,
@@ -1358,21 +1264,17 @@ class ProVerifBackend:
 
     def _compile_request(self, request: BackendRequest) -> ProVerifCompileResult:
         payload = request.payload.to_dict()
-        encoding = str(
-            payload.get("encoding")
-            or payload.get("source_format")
-            or "protocol-ir"
-        ).strip().lower()
+        encoding = (
+            str(payload.get("encoding") or payload.get("source_format") or "protocol-ir")
+            .strip()
+            .lower()
+        )
         if encoding not in self.accepted_source_formats:
             raise ProVerifBackendError(
                 f"request encoding {encoding!r} is not a supported ProVerif format"
             )
 
-        raw_protocol = (
-            payload.get("protocol_ir")
-            or payload.get("protocol")
-            or payload.get("ir")
-        )
+        raw_protocol = payload.get("protocol_ir") or payload.get("protocol") or payload.get("ir")
         if isinstance(raw_protocol, Mapping):
             protocol = ProtocolIR.from_dict(raw_protocol)
             return self._compiler.compile_protocol(protocol)
@@ -1389,9 +1291,7 @@ class ProVerifBackend:
             return self._compiler.compile_source(
                 source,
                 source_format=(
-                    "pv"
-                    if encoding in {"protocol-ir", "protocol_ir", "protocol"}
-                    else encoding
+                    "pv" if encoding in {"protocol-ir", "protocol_ir", "protocol"} else encoding
                 ),
             )
         raise ProVerifBackendError(

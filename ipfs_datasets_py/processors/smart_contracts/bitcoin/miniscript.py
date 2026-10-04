@@ -142,9 +142,7 @@ class PolicyNode:
 
     def __post_init__(self) -> None:
         kind = (
-            self.kind
-            if isinstance(self.kind, PolicyNodeKind)
-            else PolicyNodeKind(str(self.kind))
+            self.kind if isinstance(self.kind, PolicyNodeKind) else PolicyNodeKind(str(self.kind))
         )
         object.__setattr__(self, "kind", kind)
         object.__setattr__(
@@ -231,14 +229,10 @@ class MiniscriptPolicy:
     schema_version: str = MINISCRIPT_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "expression", _required_text(self.expression, "expression")
-        )
+        object.__setattr__(self, "expression", _required_text(self.expression, "expression"))
         if not isinstance(self.root, PolicyNode):
             raise InvalidRequestError("root must be a PolicyNode")
-        object.__setattr__(
-            self, "canonical", _required_text(self.canonical, "canonical")
-        )
+        object.__setattr__(self, "canonical", _required_text(self.canonical, "canonical"))
         object.__setattr__(
             self,
             "policy_digest",
@@ -248,20 +242,14 @@ class MiniscriptPolicy:
         )
         keys = tuple(_required_text(k, "keys item") for k in self.keys)
         object.__setattr__(self, "keys", keys)
-        thresholds = tuple(
-            (int(k), int(n)) for k, n in self.thresholds
-        )
+        thresholds = tuple((int(k), int(n)) for k, n in self.thresholds)
         for index, (k, n) in enumerate(thresholds):
             if k < 0 or n < 0 or k > n:
-                raise InvalidRequestError(
-                    f"thresholds[{index}] must satisfy 0 <= k <= n"
-                )
+                raise InvalidRequestError(f"thresholds[{index}] must satisfy 0 <= k <= n")
         object.__setattr__(self, "thresholds", thresholds)
         object.__setattr__(self, "has_timelock", _bool(self.has_timelock, "has_timelock"))
         object.__setattr__(self, "has_hashlock", _bool(self.has_hashlock, "has_hashlock"))
-        object.__setattr__(
-            self, "fully_parsed", _bool(self.fully_parsed, "fully_parsed")
-        )
+        object.__setattr__(self, "fully_parsed", _bool(self.fully_parsed, "fully_parsed"))
         object.__setattr__(self, "attributes", _freeze_mapping(self.attributes))
         object.__setattr__(
             self,
@@ -319,9 +307,7 @@ class OutputDescriptor:
     schema_version: str = MINISCRIPT_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "descriptor", _required_text(self.descriptor, "descriptor")
-        )
+        object.__setattr__(self, "descriptor", _required_text(self.descriptor, "descriptor"))
         dtype = (
             self.descriptor_type
             if isinstance(self.descriptor_type, DescriptorType)
@@ -329,15 +315,11 @@ class OutputDescriptor:
         )
         object.__setattr__(self, "descriptor_type", dtype)
         object.__setattr__(self, "body", self.body.strip() if self.body else "")
-        object.__setattr__(
-            self, "checksum", self.checksum.strip() if self.checksum else ""
-        )
+        object.__setattr__(self, "checksum", self.checksum.strip() if self.checksum else "")
         object.__setattr__(
             self, "checksum_present", _bool(self.checksum_present, "checksum_present")
         )
-        if self.miniscript is not None and not isinstance(
-            self.miniscript, MiniscriptPolicy
-        ):
+        if self.miniscript is not None and not isinstance(self.miniscript, MiniscriptPolicy):
             raise InvalidRequestError("miniscript must be a MiniscriptPolicy or None")
         object.__setattr__(self, "multipath", _bool(self.multipath, "multipath"))
         object.__setattr__(self, "attributes", _freeze_mapping(self.attributes))
@@ -416,9 +398,7 @@ def _parse_policy_expr(
         return PolicyNode(kind=wrap_map[expr[0]], children=(inner,))
 
     if expr in {"0", "1"}:
-        return PolicyNode(
-            kind=PolicyNodeKind.FALSE if expr == "0" else PolicyNodeKind.TRUE
-        )
+        return PolicyNode(kind=PolicyNodeKind.FALSE if expr == "0" else PolicyNodeKind.TRUE)
 
     # function(args)
     open_idx = expr.find("(")
@@ -451,24 +431,17 @@ def _parse_policy_expr(
         if len(args) < 2:
             return PolicyNode(kind=PolicyNodeKind.UNKNOWN, args=tuple(args))
         children = tuple(
-            _parse_policy_expr(a, max_nodes=max_nodes, counter=counter)
-            for a in args[1:]
+            _parse_policy_expr(a, max_nodes=max_nodes, counter=counter) for a in args[1:]
         )
         return PolicyNode(kind=PolicyNodeKind.THRESH, args=(args[0],), children=children)
     if name in {"and", "and_v", "and_b", "and_n"}:
-        children = tuple(
-            _parse_policy_expr(a, max_nodes=max_nodes, counter=counter) for a in args
-        )
+        children = tuple(_parse_policy_expr(a, max_nodes=max_nodes, counter=counter) for a in args)
         return PolicyNode(kind=PolicyNodeKind.AND, children=children)
     if name in {"or", "or_b", "or_c", "or_d", "or_i"}:
-        children = tuple(
-            _parse_policy_expr(a, max_nodes=max_nodes, counter=counter) for a in args
-        )
+        children = tuple(_parse_policy_expr(a, max_nodes=max_nodes, counter=counter) for a in args)
         return PolicyNode(kind=PolicyNodeKind.OR, children=children)
     if name in {"andor"}:
-        children = tuple(
-            _parse_policy_expr(a, max_nodes=max_nodes, counter=counter) for a in args
-        )
+        children = tuple(_parse_policy_expr(a, max_nodes=max_nodes, counter=counter) for a in args)
         return PolicyNode(kind=PolicyNodeKind.ANDOR, children=children)
     if name == "older":
         if len(args) != 1:
@@ -479,21 +452,13 @@ def _parse_policy_expr(
             return PolicyNode(kind=PolicyNodeKind.UNKNOWN, args=tuple(args))
         return PolicyNode(kind=PolicyNodeKind.AFTER, args=(args[0],))
     if name == "sha256":
-        return PolicyNode(
-            kind=PolicyNodeKind.SHA256, args=(args[0],) if args else ()
-        )
+        return PolicyNode(kind=PolicyNodeKind.SHA256, args=(args[0],) if args else ())
     if name == "hash256":
-        return PolicyNode(
-            kind=PolicyNodeKind.HASH256, args=(args[0],) if args else ()
-        )
+        return PolicyNode(kind=PolicyNodeKind.HASH256, args=(args[0],) if args else ())
     if name == "ripemd160":
-        return PolicyNode(
-            kind=PolicyNodeKind.RIPEMD160, args=(args[0],) if args else ()
-        )
+        return PolicyNode(kind=PolicyNodeKind.RIPEMD160, args=(args[0],) if args else ())
     if name == "hash160":
-        return PolicyNode(
-            kind=PolicyNodeKind.HASH160, args=(args[0],) if args else ()
-        )
+        return PolicyNode(kind=PolicyNodeKind.HASH160, args=(args[0],) if args else ())
     return PolicyNode(kind=PolicyNodeKind.UNKNOWN, args=(name, *args))
 
 
@@ -692,9 +657,7 @@ def parse_descriptor(
             elif head in {"multi", "sortedmulti"}:
                 miniscript = parse_miniscript(f"multi({inner})")
             elif head in {"pk", "pkh", "wpkh"}:
-                miniscript = parse_miniscript(
-                    f"pk({inner})" if head != "pkh" else f"pkh({inner})"
-                )
+                miniscript = parse_miniscript(f"pk({inner})" if head != "pkh" else f"pkh({inner})")
         except (InvalidRequestError, ResourceLimitError):
             miniscript = None
 

@@ -171,9 +171,7 @@ def test_outcome_severity_orders_fail_closed() -> None:
 
 def test_combiner_prefers_deny_over_allow() -> None:
     combiner = PolicyCombiner.default()
-    outcome, factors = combiner.combine(
-        (_fresh_allow_factor(), _direct_deny_factor())
-    )
+    outcome, factors = combiner.combine((_fresh_allow_factor(), _direct_deny_factor()))
     assert outcome is SanctionsPolicyOutcome.DENY
     assert len(factors) == 2
 
@@ -206,12 +204,8 @@ def test_combiner_prefers_error_over_review() -> None:
 def test_combiner_assert_no_downgrade_refuses_permissive_replacement() -> None:
     combiner = PolicyCombiner.default()
     with pytest.raises(DecisionError, match="permissive downgrade"):
-        combiner.assert_no_downgrade(
-            SanctionsPolicyOutcome.DENY, SanctionsPolicyOutcome.ALLOW
-        )
-    combiner.assert_no_downgrade(
-        SanctionsPolicyOutcome.ALLOW, SanctionsPolicyOutcome.DENY
-    )
+        combiner.assert_no_downgrade(SanctionsPolicyOutcome.DENY, SanctionsPolicyOutcome.ALLOW)
+    combiner.assert_no_downgrade(SanctionsPolicyOutcome.ALLOW, SanctionsPolicyOutcome.DENY)
 
 
 def test_combiner_rules_digest_stable() -> None:
@@ -518,10 +512,15 @@ def test_explain_decision_covers_outcome_and_boundary() -> None:
     assert "DENY" in explanation.human_summary or "deny" in explanation.human_summary
     assert decision.decision_id in explanation.machine_summary
     assert explanation.boundary.scope_summary
-    assert any("designate" in c.lower() or "designation" in c.lower() for c in explanation.boundary.non_claims)
+    assert any(
+        "designate" in c.lower() or "designation" in c.lower()
+        for c in explanation.boundary.non_claims
+    )
     assert "list_revision" in explanation.boundary.substitution_invalidates
     assert explanation.boundary.bound_fields["list_snapshot_id"] == "snapshot:2026-07-15"
-    assert explanation.boundary.bound_fields["binding_digest"] == decision.evidentiary_boundary_digest
+    assert (
+        explanation.boundary.bound_fields["binding_digest"] == decision.evidentiary_boundary_digest
+    )
 
 
 def test_explain_allow_does_not_block_when_allow() -> None:

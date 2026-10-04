@@ -64,9 +64,7 @@ BACKEND_PROBE_SCHEMA_VERSION: Final = "authorization-backend-probe/v1"
 PORTFOLIO_ATTEMPT_SCHEMA_VERSION: Final = "authorization-portfolio-attempt/v1"
 PORTFOLIO_RUN_SCHEMA_VERSION: Final = "authorization-portfolio-run/v1"
 TRANSLATION_RECORD_SCHEMA_VERSION: Final = "authorization-translation-record/v1"
-RECONSTRUCTION_RECORD_SCHEMA_VERSION: Final = (
-    "authorization-reconstruction-record/v1"
-)
+RECONSTRUCTION_RECORD_SCHEMA_VERSION: Final = "authorization-reconstruction-record/v1"
 
 # Well-known backend executables that may be PATH-probed without install.
 DEFAULT_BACKEND_EXECUTABLES: Final[Mapping[str, str]] = {
@@ -142,22 +140,16 @@ def _mapping(value: Any, name: str) -> Mapping[str, Any]:
     return value
 
 
-def _reject_unknown(
-    value: Mapping[str, Any], allowed: frozenset[str], record_name: str
-) -> None:
+def _reject_unknown(value: Mapping[str, Any], allowed: frozenset[str], record_name: str) -> None:
     unknown = sorted(set(value) - allowed)
     if unknown:
-        raise PortfolioError(
-            f"unknown {record_name} field(s): {', '.join(unknown)}"
-        )
+        raise PortfolioError(f"unknown {record_name} field(s): {', '.join(unknown)}")
 
 
 def _unique_sorted(values: Any, name: str) -> tuple[str, ...]:
     if values is None:
         return ()
-    if isinstance(values, (str, bytes, bytearray)) or not isinstance(
-        values, Sequence
-    ):
+    if isinstance(values, (str, bytes, bytearray)) or not isinstance(values, Sequence):
         raise PortfolioError(f"{name} must be a sequence of strings")
     items = tuple(_text(item, f"{name} item") for item in values)
     if len(items) != len(set(items)):
@@ -192,9 +184,7 @@ class BackendProbeResult:
     schema_version: str = BACKEND_PROBE_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "backend_id", _text(self.backend_id, "backend_id")
-        )
+        object.__setattr__(self, "backend_id", _text(self.backend_id, "backend_id"))
         object.__setattr__(
             self,
             "availability",
@@ -207,12 +197,8 @@ class BackendProbeResult:
         )
         if not isinstance(self.version, str):
             raise PortfolioError("version must be a string")
-        if self.capabilities is not None and not isinstance(
-            self.capabilities, BackendCapabilities
-        ):
-            raise PortfolioError(
-                "capabilities must be BackendCapabilities or None"
-            )
+        if self.capabilities is not None and not isinstance(self.capabilities, BackendCapabilities):
+            raise PortfolioError("capabilities must be BackendCapabilities or None")
         object.__setattr__(
             self,
             "logic_families",
@@ -238,9 +224,7 @@ class BackendProbeResult:
         object.__setattr__(
             self,
             "metadata",
-            self.metadata
-            if isinstance(self.metadata, FrozenMap)
-            else FrozenMap(self.metadata),
+            self.metadata if isinstance(self.metadata, FrozenMap) else FrozenMap(self.metadata),
         )
         object.__setattr__(
             self,
@@ -248,9 +232,7 @@ class BackendProbeResult:
             _text(self.schema_version, "schema_version"),
         )
         if self.schema_version != BACKEND_PROBE_SCHEMA_VERSION:
-            raise PortfolioError(
-                f"unsupported backend probe schema: {self.schema_version!r}"
-            )
+            raise PortfolioError(f"unsupported backend probe schema: {self.schema_version!r}")
 
     @property
     def available(self) -> bool:
@@ -264,11 +246,7 @@ class BackendProbeResult:
         return {
             "availability": self.availability.value,
             "backend_id": self.backend_id,
-            "capabilities": (
-                None
-                if self.capabilities is None
-                else self.capabilities.to_dict()
-            ),
+            "capabilities": (None if self.capabilities is None else self.capabilities.to_dict()),
             "diagnostics": list(self.diagnostics),
             "executable_path": self.executable_path,
             "logic_families": list(self.logic_families),
@@ -317,14 +295,10 @@ class BackendProbeResult:
             capabilities=capabilities,
             logic_families=tuple(value.get("logic_families", ())),
             query_kinds=tuple(value.get("query_kinds", ())),
-            probed_without_install=bool(
-                value.get("probed_without_install", True)
-            ),
+            probed_without_install=bool(value.get("probed_without_install", True)),
             diagnostics=tuple(value.get("diagnostics", ())),
             metadata=FrozenMap(value.get("metadata", {})),
-            schema_version=value.get(
-                "schema_version", BACKEND_PROBE_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", BACKEND_PROBE_SCHEMA_VERSION),
         )
 
 
@@ -344,9 +318,7 @@ def probe_backend(
     """
 
     backend_id = _text(backend_id, "backend_id")
-    exe_name = executable_name or DEFAULT_BACKEND_EXECUTABLES.get(
-        backend_id, backend_id
-    )
+    exe_name = executable_name or DEFAULT_BACKEND_EXECUTABLES.get(backend_id, backend_id)
     which_fn = which or shutil.which
     diagnostics: list[str] = ["auth.portfolio.probe_without_install"]
     path = which_fn(exe_name)
@@ -358,13 +330,9 @@ def probe_backend(
             executable_path="",
             version="",
             capabilities=capabilities,
-            logic_families=(
-                tuple(capabilities.logic_families) if capabilities else ()
-            ),
+            logic_families=(tuple(capabilities.logic_families) if capabilities else ()),
             query_kinds=(
-                tuple(item.value for item in capabilities.query_kinds)
-                if capabilities
-                else ()
+                tuple(item.value for item in capabilities.query_kinds) if capabilities else ()
             ),
             probed_without_install=True,
             diagnostics=tuple(diagnostics),
@@ -375,9 +343,7 @@ def probe_backend(
         try:
             version = str(version_probe(path) or "")
         except Exception as exc:  # noqa: BLE001 — probe must not raise out
-            diagnostics.append(
-                f"auth.portfolio.version_probe_failed:{type(exc).__name__}"
-            )
+            diagnostics.append(f"auth.portfolio.version_probe_failed:{type(exc).__name__}")
             version = ""
 
     return BackendProbeResult(
@@ -386,13 +352,9 @@ def probe_backend(
         executable_path=path,
         version=version,
         capabilities=capabilities,
-        logic_families=(
-            tuple(capabilities.logic_families) if capabilities else ()
-        ),
+        logic_families=(tuple(capabilities.logic_families) if capabilities else ()),
         query_kinds=(
-            tuple(item.value for item in capabilities.query_kinds)
-            if capabilities
-            else ()
+            tuple(item.value for item in capabilities.query_kinds) if capabilities else ()
         ),
         probed_without_install=True,
         diagnostics=tuple(diagnostics),
@@ -454,9 +416,7 @@ class PortfolioTranslationRecord:
             _text(self.target_logic_family, "target_logic_family"),
         )
         if self.source_logic_family == self.target_logic_family:
-            raise PortfolioError(
-                "translation must change logic family"
-            )
+            raise PortfolioError("translation must change logic family")
         if not isinstance(self.lossy, bool):
             raise PortfolioError("lossy must be a bool")
         object.__setattr__(
@@ -476,9 +436,7 @@ class PortfolioTranslationRecord:
         }
 
     @classmethod
-    def from_dict(
-        cls, value: Mapping[str, Any]
-    ) -> "PortfolioTranslationRecord":
+    def from_dict(cls, value: Mapping[str, Any]) -> "PortfolioTranslationRecord":
         value = _mapping(value, "translation record")
         return cls(
             translation_id=value.get("translation_id", ""),
@@ -486,9 +444,7 @@ class PortfolioTranslationRecord:
             target_logic_family=value.get("target_logic_family", ""),
             lossy=bool(value.get("lossy", False)),
             translator_id=value.get("translator_id", ""),
-            schema_version=value.get(
-                "schema_version", TRANSLATION_RECORD_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", TRANSLATION_RECORD_SCHEMA_VERSION),
         )
 
 
@@ -508,9 +464,7 @@ class PortfolioReconstructionRecord:
             "reconstruction_id",
             _text(self.reconstruction_id, "reconstruction_id"),
         )
-        object.__setattr__(
-            self, "logic_family", _text(self.logic_family, "logic_family")
-        )
+        object.__setattr__(self, "logic_family", _text(self.logic_family, "logic_family"))
         if not isinstance(self.faithful, bool):
             raise PortfolioError("faithful must be a bool")
         object.__setattr__(
@@ -529,18 +483,14 @@ class PortfolioReconstructionRecord:
         }
 
     @classmethod
-    def from_dict(
-        cls, value: Mapping[str, Any]
-    ) -> "PortfolioReconstructionRecord":
+    def from_dict(cls, value: Mapping[str, Any]) -> "PortfolioReconstructionRecord":
         value = _mapping(value, "reconstruction record")
         return cls(
             reconstruction_id=value.get("reconstruction_id", ""),
             logic_family=value.get("logic_family", ""),
             faithful=bool(value.get("faithful", True)),
             reconstructor_id=value.get("reconstructor_id", ""),
-            schema_version=value.get(
-                "schema_version", RECONSTRUCTION_RECORD_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", RECONSTRUCTION_RECORD_SCHEMA_VERSION),
         )
 
 
@@ -566,19 +516,11 @@ class PortfolioAttemptRecord:
     schema_version: str = PORTFOLIO_ATTEMPT_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "attempt_id", _text(self.attempt_id, "attempt_id")
-        )
+        object.__setattr__(self, "attempt_id", _text(self.attempt_id, "attempt_id"))
         object.__setattr__(self, "job_id", _text(self.job_id, "job_id"))
-        object.__setattr__(
-            self, "backend_id", _text(self.backend_id, "backend_id")
-        )
-        object.__setattr__(
-            self, "status", _enum(self.status, AttemptStatus, "status")
-        )
-        object.__setattr__(
-            self, "verdict", _enum(self.verdict, JobVerdict, "verdict")
-        )
+        object.__setattr__(self, "backend_id", _text(self.backend_id, "backend_id"))
+        object.__setattr__(self, "status", _enum(self.status, AttemptStatus, "status"))
+        object.__setattr__(self, "verdict", _enum(self.verdict, JobVerdict, "verdict"))
         object.__setattr__(
             self,
             "authority_path",
@@ -600,9 +542,7 @@ class PortfolioAttemptRecord:
         translations = tuple(
             item
             if isinstance(item, PortfolioTranslationRecord)
-            else PortfolioTranslationRecord.from_dict(
-                _mapping(item, "translation")
-            )
+            else PortfolioTranslationRecord.from_dict(_mapping(item, "translation"))
             for item in (self.translations or ())
         )
         object.__setattr__(
@@ -613,32 +553,19 @@ class PortfolioAttemptRecord:
         reconstructions = tuple(
             item
             if isinstance(item, PortfolioReconstructionRecord)
-            else PortfolioReconstructionRecord.from_dict(
-                _mapping(item, "reconstruction")
-            )
+            else PortfolioReconstructionRecord.from_dict(_mapping(item, "reconstruction"))
             for item in (self.reconstructions or ())
         )
         object.__setattr__(
             self,
             "reconstructions",
-            tuple(
-                sorted(
-                    reconstructions, key=lambda item: item.reconstruction_id
-                )
-            ),
+            tuple(sorted(reconstructions, key=lambda item: item.reconstruction_id)),
         )
-        if self.probe is not None and not isinstance(
-            self.probe, BackendProbeResult
-        ):
+        if self.probe is not None and not isinstance(self.probe, BackendProbeResult):
             raise PortfolioError("probe must be BackendProbeResult or None")
         # Unavailable backends cannot claim success.
-        if (
-            self.status is AttemptStatus.UNAVAILABLE
-            and self.verdict is JobVerdict.PROVED
-        ):
-            raise PortfolioError(
-                "unavailable backends never become successful attempts"
-            )
+        if self.status is AttemptStatus.UNAVAILABLE and self.verdict is JobVerdict.PROVED:
+            raise PortfolioError("unavailable backends never become successful attempts")
         if self.status is AttemptStatus.TIMED_OUT and not self.timed_out:
             object.__setattr__(self, "timed_out", True)
         if self.timed_out and self.verdict is JobVerdict.PROVED:
@@ -653,9 +580,7 @@ class PortfolioAttemptRecord:
         object.__setattr__(
             self,
             "metadata",
-            self.metadata
-            if isinstance(self.metadata, FrozenMap)
-            else FrozenMap(self.metadata),
+            self.metadata if isinstance(self.metadata, FrozenMap) else FrozenMap(self.metadata),
         )
         object.__setattr__(
             self,
@@ -663,9 +588,7 @@ class PortfolioAttemptRecord:
             _text(self.schema_version, "schema_version"),
         )
         if self.schema_version != PORTFOLIO_ATTEMPT_SCHEMA_VERSION:
-            raise PortfolioError(
-                f"unsupported portfolio attempt schema: {self.schema_version!r}"
-            )
+            raise PortfolioError(f"unsupported portfolio attempt schema: {self.schema_version!r}")
 
     @property
     def digest(self) -> str:
@@ -683,9 +606,7 @@ class PortfolioAttemptRecord:
             "metadata": self.metadata.to_dict(),
             "probe": None if self.probe is None else self.probe.to_dict(),
             "reason": self.reason,
-            "reconstructions": [
-                item.to_dict() for item in self.reconstructions
-            ],
+            "reconstructions": [item.to_dict() for item in self.reconstructions],
             "schema_version": self.schema_version,
             "status": self.status.value,
             "timed_out": self.timed_out,
@@ -720,9 +641,7 @@ class PortfolioAttemptRecord:
             diagnostics=tuple(value.get("diagnostics", ())),
             reason=value.get("reason", ""),
             metadata=FrozenMap(value.get("metadata", {})),
-            schema_version=value.get(
-                "schema_version", PORTFOLIO_ATTEMPT_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", PORTFOLIO_ATTEMPT_SCHEMA_VERSION),
         )
 
 
@@ -824,9 +743,7 @@ def select_job_result(
             (
                 item
                 if isinstance(item, PortfolioAttemptRecord)
-                else PortfolioAttemptRecord.from_dict(
-                    _mapping(item, "attempt")
-                )
+                else PortfolioAttemptRecord.from_dict(_mapping(item, "attempt"))
                 for item in attempts
             ),
             key=lambda item: (item.backend_id, item.attempt_id, item.digest),
@@ -853,8 +770,7 @@ def select_job_result(
     missing = sorted(set(required) - present)
     if missing:
         diagnostics.extend(
-            f"auth.portfolio.required_backend_missing:{backend_id}"
-            for backend_id in missing
+            f"auth.portfolio.required_backend_missing:{backend_id}" for backend_id in missing
         )
 
     # Group by backend — duplicates fail closed.
@@ -865,15 +781,11 @@ def select_job_result(
         if len(values) > 1:
             digests = {item.digest for item in values}
             if len(digests) > 1:
-                diagnostics.append(
-                    f"auth.portfolio.ambiguous_backend_output:{backend_id}"
-                )
+                diagnostics.append(f"auth.portfolio.ambiguous_backend_output:{backend_id}")
 
     # Deny overrides: any deny/disproof wins regardless of order.
     deny_attempts = [
-        item
-        for item in job_attempts
-        if item.verdict in {JobVerdict.DENIED, JobVerdict.DISPROVED}
+        item for item in job_attempts if item.verdict in {JobVerdict.DENIED, JobVerdict.DISPROVED}
     ]
     if deny_attempts:
         chosen = min(deny_attempts, key=lambda item: item.digest)
@@ -890,9 +802,7 @@ def select_job_result(
         )
 
     # Contradictory: mixed proved with non-proved authoritative outcomes.
-    proved = [
-        item for item in job_attempts if item.verdict is JobVerdict.PROVED
-    ]
+    proved = [item for item in job_attempts if item.verdict is JobVerdict.PROVED]
     blocking = [
         item
         for item in job_attempts
@@ -923,16 +833,13 @@ def select_job_result(
             JobVerdict.REVIEW,
         }
         for item in job_attempts
-        if item.backend_id
-        in (required if required else {a.backend_id for a in job_attempts})
+        if item.backend_id in (required if required else {a.backend_id for a in job_attempts})
         and item not in proved
     ):
         # Required backends disagree on success.
         if required:
             required_verdicts = {
-                item.verdict
-                for item in job_attempts
-                if item.backend_id in required
+                item.verdict for item in job_attempts if item.backend_id in required
             }
             if len(required_verdicts) > 1 and JobVerdict.PROVED in required_verdicts:
                 diagnostics.append("auth.portfolio.solver_disagreement")
@@ -990,9 +897,7 @@ def select_job_result(
             JobVerdict.REVIEW,
         }:
             verdict = JobVerdict.UNKNOWN
-        diagnostics.append(
-            f"auth.portfolio.non_proved_selection:{verdict.value}"
-        )
+        diagnostics.append(f"auth.portfolio.non_proved_selection:{verdict.value}")
         return ProofJobResult(
             job_id=job.job_id,
             kind=job.kind,
@@ -1024,12 +929,10 @@ def select_job_result(
             ResultStatus.UNKNOWN,
             authority_kind=(
                 AuthorityKind.SATISFIABILITY
-                if chosen.authority_path
-                in {"sat_only", "satisfiability"}
+                if chosen.authority_path in {"sat_only", "satisfiability"}
                 else AuthorityKind.THEOREM_PROOF
             ),
-            simulated=chosen.authority_path
-            in {"simulation", "simulated"},
+            simulated=chosen.authority_path in {"simulation", "simulated"},
         )
         if chosen.authority_path in NON_ALLOWING_AUTHORITY_PATHS:
             path_to_verdict = {
@@ -1049,9 +952,7 @@ def select_job_result(
                 "unavailable": JobVerdict.UNAVAILABLE,
                 "contradictory": JobVerdict.CONTRADICTORY,
             }
-            verdict = path_to_verdict.get(
-                chosen.authority_path, JobVerdict.UNKNOWN
-            )
+            verdict = path_to_verdict.get(chosen.authority_path, JobVerdict.UNKNOWN)
         return ProofJobResult(
             job_id=job.job_id,
             kind=job.kind,
@@ -1065,9 +966,7 @@ def select_job_result(
 
     if required:
         required_proved = {
-            item.backend_id
-            for item in theorem_proved
-            if item.backend_id in required
+            item.backend_id for item in theorem_proved if item.backend_id in required
         }
         if required_proved != set(required):
             diagnostics.append("auth.portfolio.required_backends_not_all_proved")
@@ -1106,9 +1005,7 @@ def select_portfolio_results(
 
     ordered_attempts = tuple(attempts)
     results = [
-        select_job_result(
-            ordered_attempts, job, required_backends=required_backends
-        )
+        select_job_result(ordered_attempts, job, required_backends=required_backends)
         for job in bundle.jobs
     ]
     return tuple(sorted(results, key=lambda item: item.job_id))
@@ -1148,9 +1045,7 @@ class PortfolioRunResult:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "run_id", _text(self.run_id, "run_id"))
-        object.__setattr__(
-            self, "bundle_digest", _text(self.bundle_digest, "bundle_digest")
-        )
+        object.__setattr__(self, "bundle_digest", _text(self.bundle_digest, "bundle_digest"))
         object.__setattr__(
             self,
             "probes",
@@ -1171,9 +1066,7 @@ class PortfolioRunResult:
             "job_results",
             tuple(sorted(self.job_results, key=lambda item: item.job_id)),
         )
-        object.__setattr__(
-            self, "assumptions", _unique_sorted(self.assumptions, "assumptions")
-        )
+        object.__setattr__(self, "assumptions", _unique_sorted(self.assumptions, "assumptions"))
         object.__setattr__(
             self,
             "timeouts",
@@ -1185,13 +1078,9 @@ class PortfolioRunResult:
             _unique_sorted(self.diagnostics, "diagnostics"),
         )
         if self.interface != AUTHORIZATION_PORTFOLIO_INTERFACE:
-            raise PortfolioError(
-                f"unsupported portfolio interface: {self.interface!r}"
-            )
+            raise PortfolioError(f"unsupported portfolio interface: {self.interface!r}")
         if self.schema_version != PORTFOLIO_RUN_SCHEMA_VERSION:
-            raise PortfolioError(
-                f"unsupported portfolio run schema: {self.schema_version!r}"
-            )
+            raise PortfolioError(f"unsupported portfolio run schema: {self.schema_version!r}")
 
     @property
     def digest(self) -> str:
@@ -1202,16 +1091,12 @@ class PortfolioRunResult:
             "assumptions": list(self.assumptions),
             "attempts": [item.to_dict() for item in self.attempts],
             "bundle_digest": self.bundle_digest,
-            "decision": (
-                None if self.decision is None else self.decision.to_dict()
-            ),
+            "decision": (None if self.decision is None else self.decision.to_dict()),
             "diagnostics": list(self.diagnostics),
             "interface": self.interface,
             "job_results": [item.to_dict() for item in self.job_results],
             "probes": [item.to_dict() for item in self.probes],
-            "reconstructions": [
-                item.to_dict() for item in self.reconstructions
-            ],
+            "reconstructions": [item.to_dict() for item in self.reconstructions],
             "run_id": self.run_id,
             "schema_version": self.schema_version,
             "timeouts": list(self.timeouts),
@@ -1230,9 +1115,7 @@ class AuthorizationPortfolio:
 
     backend_ids: tuple[str, ...] = ("z3", "cvc5")
     required_backends: tuple[str, ...] = ()
-    capabilities_by_backend: Mapping[str, BackendCapabilities] = field(
-        default_factory=dict
-    )
+    capabilities_by_backend: Mapping[str, BackendCapabilities] = field(default_factory=dict)
     decision_policy: AuthorizationDecisionPolicy | None = None
     interface: str = AUTHORIZATION_PORTFOLIO_INTERFACE
     schema_version: str = AUTHORIZATION_PORTFOLIO_SCHEMA_VERSION
@@ -1251,9 +1134,7 @@ class AuthorizationPortfolio:
             _unique_sorted(self.required_backends, "required_backends"),
         )
         if set(self.required_backends) - set(self.backend_ids):
-            raise PortfolioError(
-                "required_backends must be a subset of backend_ids"
-            )
+            raise PortfolioError("required_backends must be a subset of backend_ids")
         caps = self.capabilities_by_backend or {}
         if not isinstance(caps, Mapping):
             raise PortfolioError("capabilities_by_backend must be a mapping")
@@ -1265,17 +1146,11 @@ class AuthorizationPortfolio:
         if self.decision_policy is not None and not isinstance(
             self.decision_policy, AuthorizationDecisionPolicy
         ):
-            raise PortfolioError(
-                "decision_policy must be AuthorizationDecisionPolicy or None"
-            )
+            raise PortfolioError("decision_policy must be AuthorizationDecisionPolicy or None")
         if self.interface != AUTHORIZATION_PORTFOLIO_INTERFACE:
-            raise PortfolioError(
-                f"unsupported portfolio interface: {self.interface!r}"
-            )
+            raise PortfolioError(f"unsupported portfolio interface: {self.interface!r}")
         if self.schema_version != AUTHORIZATION_PORTFOLIO_SCHEMA_VERSION:
-            raise PortfolioError(
-                f"unsupported portfolio schema: {self.schema_version!r}"
-            )
+            raise PortfolioError(f"unsupported portfolio schema: {self.schema_version!r}")
 
     def probe(
         self,
@@ -1327,9 +1202,7 @@ class AuthorizationPortfolio:
             attempts.extend(
                 item
                 if isinstance(item, PortfolioAttemptRecord)
-                else PortfolioAttemptRecord.from_dict(
-                    _mapping(item, "attempt")
-                )
+                else PortfolioAttemptRecord.from_dict(_mapping(item, "attempt"))
                 for item in precomputed_attempts
             )
         elif solver is not None:
@@ -1339,18 +1212,14 @@ class AuthorizationPortfolio:
                     if not probe.available:
                         attempts.append(
                             PortfolioAttemptRecord(
-                                attempt_id=(
-                                    f"attempt:{job.job_id}:{backend_id}:unavailable"
-                                ),
+                                attempt_id=(f"attempt:{job.job_id}:{backend_id}:unavailable"),
                                 job_id=job.job_id,
                                 backend_id=backend_id,
                                 status=AttemptStatus.UNAVAILABLE,
                                 verdict=JobVerdict.UNAVAILABLE,
                                 authority_path="unavailable",
                                 probe=probe,
-                                diagnostics=(
-                                    "auth.portfolio.backend_unavailable",
-                                ),
+                                diagnostics=("auth.portfolio.backend_unavailable",),
                                 reason=f"backend {backend_id} unavailable",
                             )
                         )
@@ -1361,18 +1230,14 @@ class AuthorizationPortfolio:
                     ):
                         attempts.append(
                             PortfolioAttemptRecord(
-                                attempt_id=(
-                                    f"attempt:{job.job_id}:{backend_id}:unsupported"
-                                ),
+                                attempt_id=(f"attempt:{job.job_id}:{backend_id}:unsupported"),
                                 job_id=job.job_id,
                                 backend_id=backend_id,
                                 status=AttemptStatus.FAILED,
                                 verdict=JobVerdict.UNSUPPORTED,
                                 authority_path="unsupported",
                                 probe=probe,
-                                diagnostics=(
-                                    "auth.portfolio.capability_mismatch",
-                                ),
+                                diagnostics=("auth.portfolio.capability_mismatch",),
                                 reason=(
                                     f"backend {backend_id} does not support "
                                     f"{job.logic_family}/{job.query_kind.value}"
@@ -1386,30 +1251,21 @@ class AuthorizationPortfolio:
                     except Exception as exc:  # noqa: BLE001 — fail closed
                         attempts.append(
                             PortfolioAttemptRecord(
-                                attempt_id=(
-                                    f"attempt:{job.job_id}:{backend_id}:error"
-                                ),
+                                attempt_id=(f"attempt:{job.job_id}:{backend_id}:error"),
                                 job_id=job.job_id,
                                 backend_id=backend_id,
                                 status=AttemptStatus.FAILED,
                                 verdict=JobVerdict.ERROR,
                                 authority_path="unknown",
                                 probe=probe,
-                                elapsed_ms=int(
-                                    (time.monotonic() - started) * 1000
-                                ),
-                                diagnostics=(
-                                    f"auth.portfolio.solver_error:"
-                                    f"{type(exc).__name__}",
-                                ),
+                                elapsed_ms=int((time.monotonic() - started) * 1000),
+                                diagnostics=(f"auth.portfolio.solver_error:{type(exc).__name__}",),
                                 reason=str(exc) or type(exc).__name__,
                             )
                         )
                         continue
                     if not isinstance(attempt, PortfolioAttemptRecord):
-                        raise PortfolioError(
-                            "solver must return PortfolioAttemptRecord"
-                        )
+                        raise PortfolioError("solver must return PortfolioAttemptRecord")
                     attempts.append(attempt)
         else:
             # No solver and no precomputed attempts: record unavailable.
@@ -1419,9 +1275,7 @@ class AuthorizationPortfolio:
                     probe = probe_by_id[backend_id]
                     attempts.append(
                         PortfolioAttemptRecord(
-                            attempt_id=(
-                                f"attempt:{job.job_id}:{backend_id}:noop"
-                            ),
+                            attempt_id=(f"attempt:{job.job_id}:{backend_id}:noop"),
                             job_id=job.job_id,
                             backend_id=backend_id,
                             status=AttemptStatus.UNAVAILABLE,
@@ -1451,12 +1305,11 @@ class AuthorizationPortfolio:
             policy = self.decision_policy or AuthorizationDecisionPolicy.for_profile(
                 bundle.profile_id
             )
-            decision = evaluate_authorization_decision(
-                bundle, job_results, policy=policy
-            )
+            decision = evaluate_authorization_decision(bundle, job_results, policy=policy)
 
         resolved_run_id = run_id or (
-            "run:" + stable_digest(
+            "run:"
+            + stable_digest(
                 {
                     "bundle": bundle.digest,
                     "attempts": sorted(item.digest for item in attempts),
@@ -1471,14 +1324,8 @@ class AuthorizationPortfolio:
             job_results=job_results,
             decision=decision,
             assumptions=tuple(sorted(set(assumptions))),
-            translations=tuple(
-                sorted(translations, key=lambda item: item.translation_id)
-            ),
-            reconstructions=tuple(
-                sorted(
-                    reconstructions, key=lambda item: item.reconstruction_id
-                )
-            ),
+            translations=tuple(sorted(translations, key=lambda item: item.translation_id)),
+            reconstructions=tuple(sorted(reconstructions, key=lambda item: item.reconstruction_id)),
             timeouts=tuple(sorted(set(timeouts))),
             diagnostics=tuple(sorted(set(diagnostics))),
         )

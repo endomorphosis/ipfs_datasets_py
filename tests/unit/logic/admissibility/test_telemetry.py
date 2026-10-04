@@ -83,10 +83,7 @@ def test_interface_identities_are_pinned() -> None:
     assert AUTHORIZATION_TELEMETRY_INTERFACE == "AuthorizationTelemetry@1"
     assert AUTHORIZATION_TELEMETRY_SCHEMA_VERSION == "authorization-telemetry/v1"
     assert AUTHORIZATION_ROLLOUT_POLICY_INTERFACE == "AuthorizationRolloutPolicy@1"
-    assert (
-        AUTHORIZATION_ROLLOUT_POLICY_SCHEMA_VERSION
-        == "authorization-rollout-policy/v1"
-    )
+    assert AUTHORIZATION_ROLLOUT_POLICY_SCHEMA_VERSION == "authorization-rollout-policy/v1"
     assert ROLLOUT_CONFIG_SCHEMA == "intent-authorization-rollout/v1"
 
 
@@ -99,9 +96,7 @@ def test_rollout_stage_ladder_is_ordered_and_complete() -> None:
         "allow-token-canary",
         "enforce",
     )
-    assert tuple(stage.value for stage in ROLLOUT_STAGE_ORDER) == (
-        ROLLOUT_STAGE_WIRE_VALUES
-    )
+    assert tuple(stage.value for stage in ROLLOUT_STAGE_ORDER) == (ROLLOUT_STAGE_WIRE_VALUES)
     for index, stage in enumerate(ROLLOUT_STAGE_ORDER):
         assert stage_index(stage) == index
         assert parse_rollout_stage(stage.value) is stage
@@ -144,9 +139,7 @@ def test_redact_accepts_bounded_enum_labels() -> None:
             "policy": TelemetryPolicyProfile.LEGAL_STRICT,
             "authority": TelemetryProofAuthority.NATIVE,
         },
-        allowed_keys=frozenset(
-            {"source", "outcome", "policy", "authority"}
-        ),
+        allowed_keys=frozenset({"source", "outcome", "policy", "authority"}),
     )
     assert labels == {
         "authority": "native",
@@ -233,15 +226,8 @@ def test_record_decision_with_latency() -> None:
         "policy": "legal-strict",
         "authority": "zkp",
     }
-    assert (
-        telemetry.counter_value(
-            TelemetryMetricName.DECISION_COUNT.value, labels
-        )
-        == 1
-    )
-    stats = telemetry.latency_stats(
-        TelemetryMetricName.DECISION_LATENCY_MS.value, labels
-    )
+    assert telemetry.counter_value(TelemetryMetricName.DECISION_COUNT.value, labels) == 1
+    stats = telemetry.latency_stats(TelemetryMetricName.DECISION_LATENCY_MS.value, labels)
     assert stats["count"] == 1.0
     assert stats["sum_ms"] == 12.5
     assert stats["max_ms"] == 12.5
@@ -250,12 +236,8 @@ def test_record_decision_with_latency() -> None:
 
 def test_record_candidate_filter_and_cache_classes() -> None:
     telemetry = AuthorizationTelemetry()
-    telemetry.record_candidate_count(
-        filter_class=TelemetryFilterClass.APPLICABILITY, count=3
-    )
-    telemetry.record_candidate_count(
-        filter_class=TelemetryFilterClass.VERIFICATION, count=1
-    )
+    telemetry.record_candidate_count(filter_class=TelemetryFilterClass.APPLICABILITY, count=3)
+    telemetry.record_candidate_count(filter_class=TelemetryFilterClass.VERIFICATION, count=1)
     telemetry.record_cache(cache_class=TelemetryCacheClass.HIT)
     telemetry.record_cache(cache_class=TelemetryCacheClass.MISS, count=2)
     telemetry.record_cache(cache_class=TelemetryCacheClass.STALE)
@@ -275,21 +257,13 @@ def test_record_candidate_filter_and_cache_classes() -> None:
         == 1
     )
     assert (
-        telemetry.counter_value(
-            TelemetryMetricName.CACHE_COUNT.value, {"cache_class": "hit"}
-        )
-        == 1
+        telemetry.counter_value(TelemetryMetricName.CACHE_COUNT.value, {"cache_class": "hit"}) == 1
     )
     assert (
-        telemetry.counter_value(
-            TelemetryMetricName.CACHE_COUNT.value, {"cache_class": "miss"}
-        )
-        == 2
+        telemetry.counter_value(TelemetryMetricName.CACHE_COUNT.value, {"cache_class": "miss"}) == 2
     )
     assert (
-        telemetry.counter_value(
-            TelemetryMetricName.CACHE_COUNT.value, {"cache_class": "stale"}
-        )
+        telemetry.counter_value(TelemetryMetricName.CACHE_COUNT.value, {"cache_class": "stale"})
         == 1
     )
 
@@ -438,9 +412,7 @@ def test_unknown_enum_values_fail_closed() -> None:
 
 
 def test_repo_rollout_config_defaults_off_audit() -> None:
-    assert ROLLOUT_CONFIG_PATH.is_file(), (
-        f"expected rollout config at {ROLLOUT_CONFIG_PATH}"
-    )
+    assert ROLLOUT_CONFIG_PATH.is_file(), f"expected rollout config at {ROLLOUT_CONFIG_PATH}"
     raw = json.loads(ROLLOUT_CONFIG_PATH.read_text(encoding="utf-8"))
     assert raw["schema"] == ROLLOUT_CONFIG_SCHEMA
     assert raw["stage"] == "off"
@@ -522,10 +494,7 @@ def test_adjacent_promotion_through_ladder() -> None:
     with pytest.raises(RolloutPolicyError, match="approval"):
         policy.transition_to("deny-canary")
 
-    assert (
-        policy.transition_to("deny-canary", approvals=[_approval()])
-        is RolloutStage.DENY_CANARY
-    )
+    assert policy.transition_to("deny-canary", approvals=[_approval()]) is RolloutStage.DENY_CANARY
     assert policy.receipt_consumption_enabled is False
 
     # allow-token-canary requires reversible effect allowlist + approvals.
@@ -633,9 +602,7 @@ def test_immediate_disable_receipt_consumption() -> None:
     )
     assert policy.receipt_consumption_enabled is True
 
-    result = policy.immediate_disable_receipt_consumption(
-        demote_to=RolloutStage.SHADOW
-    )
+    result = policy.immediate_disable_receipt_consumption(demote_to=RolloutStage.SHADOW)
     assert result["receipt_consumption_enabled"] is False
     assert result["previous_receipt_consumption_enabled"] is True
     assert result["stage"] == "shadow"

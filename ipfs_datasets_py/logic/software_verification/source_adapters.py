@@ -465,7 +465,11 @@ class _PythonLowering:
                 expr_id,
                 ExpressionKind.LITERAL,
                 type_ref,
-                attributes={"value": value if isinstance(value, (str, int, float, bool)) or value is None else str(value)},
+                attributes={
+                    "value": value
+                    if isinstance(value, (str, int, float, bool)) or value is None
+                    else str(value)
+                },
                 **_mapped(self.source_ref.ref_id, span_id),
             )
         )
@@ -666,24 +670,18 @@ class _PythonLowering:
         for stmt in statements:
             span_id = self._span_for(stmt, label=f"{function}.stmt")
             if isinstance(stmt, ast.Pass):
-                command_ids.append(
-                    self._command(CommandKind.SKIP, span_id=span_id)
-                )
+                command_ids.append(self._command(CommandKind.SKIP, span_id=span_id))
                 continue
             if isinstance(stmt, ast.Return):
                 if stmt.value is None:
-                    command_ids.append(
-                        self._command(CommandKind.RETURN, span_id=span_id)
-                    )
+                    command_ids.append(self._command(CommandKind.RETURN, span_id=span_id))
                     continue
                 expr_id = self.lower_expression(
                     stmt.value, function=function, locals_map=locals_map
                 )
                 if expr_id is None:
                     complete = False
-                    command_ids.append(
-                        self._command(CommandKind.RETURN, span_id=span_id)
-                    )
+                    command_ids.append(self._command(CommandKind.RETURN, span_id=span_id))
                     continue
                 command_ids.append(
                     self._command(
@@ -694,8 +692,10 @@ class _PythonLowering:
                     )
                 )
                 continue
-            if isinstance(stmt, ast.Assign) and len(stmt.targets) == 1 and isinstance(
-                stmt.targets[0], ast.Name
+            if (
+                isinstance(stmt, ast.Assign)
+                and len(stmt.targets) == 1
+                and isinstance(stmt.targets[0], ast.Name)
             ):
                 expr_id = self.lower_expression(
                     stmt.value, function=function, locals_map=locals_map
@@ -753,9 +753,7 @@ class _PythonLowering:
                 )
                 continue
             if isinstance(stmt, ast.If):
-                cond = self.lower_expression(
-                    stmt.test, function=function, locals_map=locals_map
-                )
+                cond = self.lower_expression(stmt.test, function=function, locals_map=locals_map)
                 if cond is None:
                     complete = False
                     continue
@@ -873,9 +871,7 @@ class _PythonLowering:
             function_decl_id=decl_id,
         )
         if not command_ids:
-            command_ids = [
-                self._command(CommandKind.SKIP, span_id=span_id)
-            ]
+            command_ids = [self._command(CommandKind.SKIP, span_id=span_id)]
 
         # v1 uses a single straight-line CFG.  Branch metadata (if any) is retained
         # on SKIP fence commands so later revisions can expand structured edges
@@ -1213,9 +1209,7 @@ def _build_software_verification_ir(
             source_ref_id=source_ref.ref_id,
             span_ids=span_ids,
         )
-        backend_requests = _backend_requests_for_program(
-            program, source_ref_id=source_ref.ref_id
-        )
+        backend_requests = _backend_requests_for_program(program, source_ref_id=source_ref.ref_id)
     meta = dict(source_ref.metadata) if isinstance(source_ref.metadata, Mapping) else {}
     byte_length = meta.get("byte_length", 1)
     try:
@@ -1482,14 +1476,10 @@ def _adapt_ecmascript(
         params: list[str] = []
         for pname in param_names:
             sid = _safe_id("symbol", name, pname, "parameter")
-            symbols.append(
-                ProgramSymbol(sid, pname, "any", SymbolKind.PARAMETER, **mapped)
-            )
+            symbols.append(ProgramSymbol(sid, pname, "any", SymbolKind.PARAMETER, **mapped))
             params.append(sid)
         result_sid = _safe_id("symbol", name, "result", "result")
-        symbols.append(
-            ProgramSymbol(result_sid, "result", "any", SymbolKind.RESULT, **mapped)
-        )
+        symbols.append(ProgramSymbol(result_sid, "result", "any", SymbolKind.RESULT, **mapped))
         # Body is treated as opaque with a single return when present.
         body_start = match.end()
         body_slice = source[body_start : body_start + 4000]
@@ -1671,7 +1661,11 @@ def adapt_source_to_software_verification(
 
     if not isinstance(source, str):
         raise SourceAdapterError("source must be text")
-    if not isinstance(max_source_bytes, int) or isinstance(max_source_bytes, bool) or max_source_bytes < 1:
+    if (
+        not isinstance(max_source_bytes, int)
+        or isinstance(max_source_bytes, bool)
+        or max_source_bytes < 1
+    ):
         raise SourceAdapterError("max_source_bytes must be a positive integer")
     byte_count = len(source.encode("utf-8", errors="surrogatepass"))
     adapt_program_source, detect_program_language = _load_program_ast_adapter()
@@ -1713,8 +1707,7 @@ def adapt_source_to_software_verification(
                 Diagnostic(
                     code=DiagnosticCode.UNSUPPORTED_FEATURE,
                     message=(
-                        f"source contains {byte_count} bytes; adapter limit is "
-                        f"{max_source_bytes}"
+                        f"source contains {byte_count} bytes; adapter limit is {max_source_bytes}"
                     ),
                     severity=DiagnosticSeverity.ERROR,
                     location=DiagnosticLocation(metadata={"observed_bytes": byte_count}),
@@ -1726,9 +1719,7 @@ def adapt_source_to_software_verification(
         result = _adapt_python(source, path=path, evidence=evidence)
         return result
     if detected in {"javascript", "jsx", "typescript", "tsx"}:
-        return _adapt_ecmascript(
-            source, path=path, language=detected, evidence=evidence
-        )
+        return _adapt_ecmascript(source, path=path, language=detected, evidence=evidence)
     return SourceAdapterResult(
         status=SourceAdapterStatus.UNSUPPORTED,
         language=detected or "unknown",
@@ -1740,9 +1731,7 @@ def adapt_source_to_software_verification(
                 code=DiagnosticCode.UNSUPPORTED_FEATURE,
                 message=f"no source software-verification adapter for language {detected!r}",
                 severity=DiagnosticSeverity.ERROR,
-                location=DiagnosticLocation(
-                    metadata={"language": detected, "path": path}
-                ),
+                location=DiagnosticLocation(metadata={"language": detected, "path": path}),
             ),
         ),
     )

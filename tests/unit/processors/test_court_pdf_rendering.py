@@ -22,7 +22,12 @@ from ipfs_datasets_py.processors.legal_data import (
 
 def test_render_text_lines_pdf_creates_multi_page_pdf(tmp_path: Path):
     pdf_path = tmp_path / "text_render.pdf"
-    render_text_lines_pdf(pdf_path, "Test Render", [f"Line {index}" for index in range(120)], footer_label="Test Footer")
+    render_text_lines_pdf(
+        pdf_path,
+        "Test Render",
+        [f"Line {index}" for index in range(120)],
+        footer_label="Test Footer",
+    )
     reader = PdfReader(str(pdf_path))
     assert len(reader.pages) >= 2
 
@@ -159,7 +164,7 @@ def test_build_state_court_filing_packet_from_manifest(tmp_path: Path):
                     "caption_left_html": "Plaintiff v. Defendant",
                     "filed_date": "April 12, 2026",
                     "signature_doc_keywords": ["motion"],
-                    "declaration_doc_keywords": ["declaration"]
+                    "declaration_doc_keywords": ["declaration"],
                 },
             }
         ),

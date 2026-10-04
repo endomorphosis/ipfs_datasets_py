@@ -4,11 +4,13 @@ Test stubs for news_analysis_dashboard module.
 Feature: News Analysis Dashboard
   Dashboard for news content analysis
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def multiple_news_articles():
@@ -65,6 +67,7 @@ def the_same_story_from_different_sources():
 
 
 # Test scenarios
+
 
 def test_display_news_trends():
     """
@@ -155,6 +158,7 @@ def test_generate_news_summary():
 
 
 # Step definitions
+
 
 # Given steps
 @given("multiple news articles")
@@ -311,4 +315,3 @@ def trending_topics_are_displayed():
     """Step: Then trending topics are displayed"""
     # TODO: Implement step
     pass
-

@@ -197,8 +197,7 @@ def test_quantifier_bundles_differ_across_non_collapsible_classes() -> None:
     """Classes may share some quantifiers but not the full material identity."""
 
     bundles = {
-        prop: quantifiers_for_property_class(prop)
-        for prop in NON_COLLAPSIBLE_PROPERTY_CLASSES
+        prop: quantifiers_for_property_class(prop) for prop in NON_COLLAPSIBLE_PROPERTY_CLASSES
     }
     # Existential vs universal must differ on path quantifier.
     assert QuantifierKind.EXISTS in bundles[PropertyClass.EXISTENTIAL_REACHABILITY]
@@ -281,9 +280,7 @@ def test_gate_does_not_silently_select(gate: GoalAmbiguityGate) -> None:
     assert report.selected_interpretation_id == ""
     assert report.admitted is False
     assert report.interpretation_set.selected_id == ""
-    assert all(
-        not item.selected for item in report.interpretation_set.interpretations
-    )
+    assert all(not item.selected for item in report.interpretation_set.interpretations)
 
 
 def test_require_selection_or_raise_blocks_progress(
@@ -303,11 +300,7 @@ def test_explicit_select_resolves_ambiguity(gate: GoalAmbiguityGate) -> None:
     assert resolved.selected_interpretation_id == chosen_id
     assert resolved.interpretation_set.ambiguity_status is AmbiguityStatus.RESOLVED
     assert resolved.interpretation_set.selected_id == chosen_id
-    selected = [
-        item
-        for item in resolved.interpretation_set.interpretations
-        if item.selected
-    ]
+    selected = [item for item in resolved.interpretation_set.interpretations if item.selected]
     assert len(selected) == 1
     assert selected[0].interpretation_id == chosen_id
     # Gate no longer blocks.
@@ -534,9 +527,7 @@ def test_non_ambiguous_prompt_single_candidate(gate: GoalAmbiguityGate) -> None:
         goal_id="goal:ctl",
     )
     # Controlled-language-looking text is not in the ambiguous corpus patterns.
-    assert not is_ambiguous_prompt(
-        "PROPERTY existential_reachability QUANTIFIER exists"
-    )
+    assert not is_ambiguous_prompt("PROPERTY existential_reachability QUANTIFIER exists")
     assert report.interpretation_set.material_count == 1
     assert report.status in {
         GateStatus.CANDIDATES_PRESENT,
@@ -550,14 +541,18 @@ def test_controlled_english_includes_property_class() -> None:
         text = controlled_english_for(prop, target_state={"phase": "ready"})
         assert text
         # Visibly names the class or its distinctive wording.
-        assert prop.value.replace("_", " ") in text or {
-            PropertyClass.EXISTENTIAL_REACHABILITY: "existential",
-            PropertyClass.UNIVERSAL_REACHABILITY: "universal",
-            PropertyClass.INEVITABILITY: "inevitable",
-            PropertyClass.INVARIANCE: "invariant",
-            PropertyClass.TERMINATION: "terminat",
-            PropertyClass.REFINEMENT: "refin",
-        }[prop].lower() in text.lower()
+        assert (
+            prop.value.replace("_", " ") in text
+            or {
+                PropertyClass.EXISTENTIAL_REACHABILITY: "existential",
+                PropertyClass.UNIVERSAL_REACHABILITY: "universal",
+                PropertyClass.INEVITABILITY: "inevitable",
+                PropertyClass.INVARIANCE: "invariant",
+                PropertyClass.TERMINATION: "terminat",
+                PropertyClass.REFINEMENT: "refin",
+            }[prop].lower()
+            in text.lower()
+        )
 
 
 def test_build_interpretation_set_requires_members() -> None:

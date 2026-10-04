@@ -21,8 +21,7 @@ def test_decompiler_round_trip_obligations_preserve_structure_not_source_text() 
         title="5",
         section="552",
         text=(
-            "The agency shall provide notice unless an exception applies before "
-            "the final order."
+            "The agency shall provide notice unless an exception applies before the final order."
         ),
     )
 

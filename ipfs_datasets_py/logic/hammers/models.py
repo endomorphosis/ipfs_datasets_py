@@ -285,31 +285,21 @@ class HammerPolicy:
         if not isinstance(self.allowed_solvers, list) or not all(
             isinstance(name, str) and name.strip() for name in self.allowed_solvers
         ):
-            raise ValueError(
-                "HammerPolicy.allowed_solvers must be a list of non-empty strings"
-            )
+            raise ValueError("HammerPolicy.allowed_solvers must be a list of non-empty strings")
         if len(set(self.allowed_solvers)) != len(self.allowed_solvers):
             raise ValueError("HammerPolicy.allowed_solvers must not contain duplicates")
         if not isinstance(self.allow_learned_premise_selector, bool):
-            raise ValueError(
-                "HammerPolicy.allow_learned_premise_selector must be a boolean"
-            )
+            raise ValueError("HammerPolicy.allow_learned_premise_selector must be a boolean")
         if not isinstance(self.allow_llm_premise_ranking, bool):
             raise ValueError("HammerPolicy.allow_llm_premise_ranking must be a boolean")
         if self.max_premises <= 0:
             raise ValueError("HammerPolicy.max_premises must be positive")
         if not isinstance(self.allow_native_automation_fallback, bool):
-            raise ValueError(
-                "HammerPolicy.allow_native_automation_fallback must be a boolean"
-            )
+            raise ValueError("HammerPolicy.allow_native_automation_fallback must be a boolean")
         if not isinstance(self.allow_llm_decomposition_hints, bool):
-            raise ValueError(
-                "HammerPolicy.allow_llm_decomposition_hints must be a boolean"
-            )
+            raise ValueError("HammerPolicy.allow_llm_decomposition_hints must be a boolean")
         if self.max_decomposition_subgoals <= 0:
-            raise ValueError(
-                "HammerPolicy.max_decomposition_subgoals must be positive"
-            )
+            raise ValueError("HammerPolicy.max_decomposition_subgoals must be positive")
 
     def permits_solver(self, solver_name: str) -> bool:
         """Return whether ``solver_name`` is on the allow-list."""
@@ -386,19 +376,13 @@ class EnvironmentLockRecord:
             owner="EnvironmentLockRecord",
         )
         if not isinstance(self.solver_versions, dict) or not all(
-            isinstance(k, str) and isinstance(v, str)
-            for k, v in self.solver_versions.items()
+            isinstance(k, str) and isinstance(v, str) for k, v in self.solver_versions.items()
         ):
-            raise ValueError(
-                "EnvironmentLockRecord.solver_versions must map str -> str"
-            )
+            raise ValueError("EnvironmentLockRecord.solver_versions must map str -> str")
         if not isinstance(self.executable_paths, dict) or not all(
-            isinstance(k, str) and isinstance(v, str)
-            for k, v in self.executable_paths.items()
+            isinstance(k, str) and isinstance(v, str) for k, v in self.executable_paths.items()
         ):
-            raise ValueError(
-                "EnvironmentLockRecord.executable_paths must map str -> str"
-            )
+            raise ValueError("EnvironmentLockRecord.executable_paths must map str -> str")
 
     def to_dict(self) -> Dict[str, Any]:
         data = asdict(self)
@@ -610,9 +594,7 @@ class TranslationRecord:
         _require_nonempty_str(
             self.translation_id, field_name="translation_id", owner="TranslationRecord"
         )
-        _require_nonempty_str(
-            self.request_id, field_name="request_id", owner="TranslationRecord"
-        )
+        _require_nonempty_str(self.request_id, field_name="request_id", owner="TranslationRecord")
         if not isinstance(self.target, TranslationTarget):
             raise ValueError("TranslationRecord.target must be a TranslationTarget")
         if not isinstance(self.status, TranslationStatus):
@@ -625,9 +607,7 @@ class TranslationRecord:
         if not isinstance(self.obligations, list) or not all(
             isinstance(o, str) and o.strip() for o in self.obligations
         ):
-            raise ValueError(
-                "TranslationRecord.obligations must be a list of non-empty strings"
-            )
+            raise ValueError("TranslationRecord.obligations must be a list of non-empty strings")
 
         if self.status is TranslationStatus.SUPPORTED:
             _require_nonempty_str(
@@ -637,8 +617,7 @@ class TranslationRecord:
             )
             if self.unsupported_reason is not None:
                 raise ValueError(
-                    "TranslationRecord.unsupported_reason must be None when "
-                    "status is SUPPORTED"
+                    "TranslationRecord.unsupported_reason must be None when status is SUPPORTED"
                 )
         elif self.status is TranslationStatus.PARTIAL:
             _require_nonempty_str(
@@ -733,12 +712,8 @@ class SolverAttemptRecord:
 
     def validate(self) -> None:
         _require_schema_version(self.schema_version, owner="SolverAttemptRecord")
-        _require_nonempty_str(
-            self.attempt_id, field_name="attempt_id", owner="SolverAttemptRecord"
-        )
-        _require_nonempty_str(
-            self.request_id, field_name="request_id", owner="SolverAttemptRecord"
-        )
+        _require_nonempty_str(self.attempt_id, field_name="attempt_id", owner="SolverAttemptRecord")
+        _require_nonempty_str(self.request_id, field_name="request_id", owner="SolverAttemptRecord")
         _require_nonempty_str(
             self.translation_id, field_name="translation_id", owner="SolverAttemptRecord"
         )
@@ -752,9 +727,7 @@ class SolverAttemptRecord:
         if not isinstance(self.verdict, SolverVerdict):
             raise ValueError("SolverAttemptRecord.verdict must be a SolverVerdict")
         if self.wall_time_seconds is not None and self.wall_time_seconds < 0:
-            raise ValueError(
-                "SolverAttemptRecord.wall_time_seconds must be non-negative"
-            )
+            raise ValueError("SolverAttemptRecord.wall_time_seconds must be non-negative")
         if not isinstance(self.network_used, bool):
             raise ValueError("SolverAttemptRecord.network_used must be a boolean")
         if (
@@ -762,9 +735,7 @@ class SolverAttemptRecord:
             and self.started_at is not None
             and self.finished_at < self.started_at
         ):
-            raise ValueError(
-                "SolverAttemptRecord.finished_at must not precede started_at"
-            )
+            raise ValueError("SolverAttemptRecord.finished_at must not precede started_at")
         # A timed-out attempt reporting a conclusive verdict is self-contradictory.
         if self.verdict is SolverVerdict.TIMEOUT and self.wall_time_seconds is not None:
             if self.wall_time_seconds < self.timeout_seconds - 1e-9:
@@ -849,9 +820,7 @@ class ProofCandidateRecord:
         if not isinstance(self.premise_ids, list) or not all(
             isinstance(p, str) and p.strip() for p in self.premise_ids
         ):
-            raise ValueError(
-                "ProofCandidateRecord.premise_ids must be a list of non-empty strings"
-            )
+            raise ValueError("ProofCandidateRecord.premise_ids must be a list of non-empty strings")
         if self.certificate_format is not None and self.certificate is None:
             raise ValueError(
                 "ProofCandidateRecord.certificate_format requires certificate to be set"
@@ -941,15 +910,12 @@ class ReconstructionRecord:
             and self.started_at is not None
             and self.finished_at < self.started_at
         ):
-            raise ValueError(
-                "ReconstructionRecord.finished_at must not precede started_at"
-            )
+            raise ValueError("ReconstructionRecord.finished_at must not precede started_at")
 
         if self.kernel_accepted:
             if self.failure_reason is not None:
                 raise ValueError(
-                    "ReconstructionRecord.failure_reason must be None when "
-                    "kernel_accepted is True"
+                    "ReconstructionRecord.failure_reason must be None when kernel_accepted is True"
                 )
         else:
             _require_nonempty_str(
@@ -1069,9 +1035,7 @@ class HammerResult:
 
         if self.environment_lock is not None:
             if not isinstance(self.environment_lock, EnvironmentLockRecord):
-                raise ValueError(
-                    "HammerResult.environment_lock must be an EnvironmentLockRecord"
-                )
+                raise ValueError("HammerResult.environment_lock must be an EnvironmentLockRecord")
             self.environment_lock.validate()
 
         for premise in self.premises:
@@ -1082,9 +1046,7 @@ class HammerResult:
 
         for translation in self.translations:
             if not isinstance(translation, TranslationRecord):
-                raise ValueError(
-                    "HammerResult.translations must contain TranslationRecord"
-                )
+                raise ValueError("HammerResult.translations must contain TranslationRecord")
             translation.validate()
         _validate_unique_ids(
             self.translations, attr="translation_id", owner="HammerResult.translations"
@@ -1092,9 +1054,7 @@ class HammerResult:
 
         for attempt in self.solver_attempts:
             if not isinstance(attempt, SolverAttemptRecord):
-                raise ValueError(
-                    "HammerResult.solver_attempts must contain SolverAttemptRecord"
-                )
+                raise ValueError("HammerResult.solver_attempts must contain SolverAttemptRecord")
             attempt.validate()
         _validate_unique_ids(
             self.solver_attempts, attr="attempt_id", owner="HammerResult.solver_attempts"
@@ -1102,16 +1062,12 @@ class HammerResult:
 
         if self.proof_candidate is not None:
             if not isinstance(self.proof_candidate, ProofCandidateRecord):
-                raise ValueError(
-                    "HammerResult.proof_candidate must be a ProofCandidateRecord"
-                )
+                raise ValueError("HammerResult.proof_candidate must be a ProofCandidateRecord")
             self.proof_candidate.validate()
 
         if self.reconstruction is not None:
             if not isinstance(self.reconstruction, ReconstructionRecord):
-                raise ValueError(
-                    "HammerResult.reconstruction must be a ReconstructionRecord"
-                )
+                raise ValueError("HammerResult.reconstruction must be a ReconstructionRecord")
             self.reconstruction.validate()
 
         if (
@@ -1141,22 +1097,17 @@ class HammerResult:
                 )
             if not self.reconstruction.kernel_accepted:
                 raise ValueError(
-                    "HammerResult.status is VERIFIED but "
-                    "reconstruction.kernel_accepted is False"
+                    "HammerResult.status is VERIFIED but reconstruction.kernel_accepted is False"
                 )
             if self.proof_candidate is None:
-                raise ValueError(
-                    "HammerResult.status is VERIFIED but proof_candidate is None"
-                )
+                raise ValueError("HammerResult.status is VERIFIED but proof_candidate is None")
             if self.reconstruction.candidate_id != self.proof_candidate.candidate_id:
                 raise ValueError(
                     "HammerResult.reconstruction.candidate_id must match "
                     "proof_candidate.candidate_id when status is VERIFIED"
                 )
             if self.environment_lock is None:
-                raise ValueError(
-                    "HammerResult.status is VERIFIED but environment_lock is None"
-                )
+                raise ValueError("HammerResult.status is VERIFIED but environment_lock is None")
             if self.reconstruction.environment_lock_id != self.environment_lock.lock_id:
                 raise ValueError(
                     "HammerResult.reconstruction.environment_lock_id must match "
@@ -1172,21 +1123,16 @@ class HammerResult:
 
         if status is HammerResultStatus.CANDIDATE:
             if self.proof_candidate is None:
-                raise ValueError(
-                    "HammerResult.status is CANDIDATE but proof_candidate is None"
-                )
+                raise ValueError("HammerResult.status is CANDIDATE but proof_candidate is None")
 
         elif status in (HammerResultStatus.COUNTEREXAMPLE, HammerResultStatus.TIMEOUT):
             if not self.solver_attempts:
                 raise ValueError(
-                    f"HammerResult.status is {status.value!r} but "
-                    "solver_attempts is empty"
+                    f"HammerResult.status is {status.value!r} but solver_attempts is empty"
                 )
 
         elif status is HammerResultStatus.UNSUPPORTED_TRANSLATION:
-            if not any(
-                t.status is TranslationStatus.UNSUPPORTED for t in self.translations
-            ):
+            if not any(t.status is TranslationStatus.UNSUPPORTED for t in self.translations):
                 raise ValueError(
                     "HammerResult.status is UNSUPPORTED_TRANSLATION but no "
                     "translation record has status UNSUPPORTED"
@@ -1230,12 +1176,8 @@ class HammerResult:
             "premises": [p.to_dict() for p in self.premises],
             "translations": [t.to_dict() for t in self.translations],
             "solver_attempts": [a.to_dict() for a in self.solver_attempts],
-            "proof_candidate": (
-                self.proof_candidate.to_dict() if self.proof_candidate else None
-            ),
-            "reconstruction": (
-                self.reconstruction.to_dict() if self.reconstruction else None
-            ),
+            "proof_candidate": (self.proof_candidate.to_dict() if self.proof_candidate else None),
+            "reconstruction": (self.reconstruction.to_dict() if self.reconstruction else None),
             "created_at": _isoformat(self.created_at),
             "completed_at": _isoformat(self.completed_at),
             "notes": list(self.notes),
@@ -1250,9 +1192,7 @@ class HammerResult:
         data["request"] = HammerRequest.from_dict(data["request"])
         data["status"] = HammerResultStatus(data["status"])
         if data.get("environment_lock"):
-            data["environment_lock"] = EnvironmentLockRecord.from_dict(
-                data["environment_lock"]
-            )
+            data["environment_lock"] = EnvironmentLockRecord.from_dict(data["environment_lock"])
         else:
             data["environment_lock"] = None
         data["premises"] = [PremiseRecord.from_dict(p) for p in data.get("premises", [])]
@@ -1263,15 +1203,11 @@ class HammerResult:
             SolverAttemptRecord.from_dict(a) for a in data.get("solver_attempts", [])
         ]
         if data.get("proof_candidate"):
-            data["proof_candidate"] = ProofCandidateRecord.from_dict(
-                data["proof_candidate"]
-            )
+            data["proof_candidate"] = ProofCandidateRecord.from_dict(data["proof_candidate"])
         else:
             data["proof_candidate"] = None
         if data.get("reconstruction"):
-            data["reconstruction"] = ReconstructionRecord.from_dict(
-                data["reconstruction"]
-            )
+            data["reconstruction"] = ReconstructionRecord.from_dict(data["reconstruction"])
         else:
             data["reconstruction"] = None
         if "created_at" in data:

@@ -41,11 +41,7 @@ class DictEmbeddingProvider:
 
     def get_embeddings(self, node_ids):
         self.calls.append(tuple(node_ids))
-        return {
-            node_id: self.vectors[node_id]
-            for node_id in node_ids
-            if node_id in self.vectors
-        }
+        return {node_id: self.vectors[node_id] for node_id in node_ids if node_id in self.vectors}
 
 
 def test_semantic_beam_selects_the_branch_that_progresses_toward_query():
@@ -142,10 +138,7 @@ def test_hard_node_edge_degree_and_backend_budgets_are_enforced():
         }
     )
     embeddings = DictEmbeddingProvider(
-        {
-            node_id: [1.0, 0.0]
-            for node_id in ("seed", "a", "b", "c", "d", "a1", "b1")
-        }
+        {node_id: [1.0, 0.0] for node_id in ("seed", "a", "b", "c", "d", "a1", "b1")}
     )
 
     result = EmbeddingGuidedTraversal(
@@ -297,9 +290,7 @@ def test_hybrid_search_cache_separates_semantic_configs_and_supplied_vectors():
     second = SemanticTraversalConfig(beam_width=2)
 
     assert repr(first) != repr(second)
-    assert engine._embedding_fingerprint([1.0, 0.0]) != (
-        engine._embedding_fingerprint([0.0, 1.0])
-    )
+    assert engine._embedding_fingerprint([1.0, 0.0]) != (engine._embedding_fingerprint([0.0, 1.0]))
 
 
 def test_hybrid_expand_graph_rejects_unknown_strategy_and_missing_query_vector():

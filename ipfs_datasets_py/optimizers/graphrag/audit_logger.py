@@ -12,9 +12,9 @@ Usage:
     >>> from ipfs_datasets_py.optimizers.graphrag.audit_logger import (
     ...     AuditLogger, AuditEvent
     ... )
-    >>> 
+    >>>
     >>> logger = AuditLogger(output_dir="./audit_logs")
-    >>> 
+    >>>
     >>> # Log refinement decision
     >>> logger.log_refinement_decision(
     ...     round_num=1,
@@ -23,7 +23,7 @@ Usage:
     ...     strategy={"action": "merge_duplicates", "priority": "high"},
     ...     context=context
     ... )
-    >>> 
+    >>>
     >>> # Export audit trail
     >>> logger.export_json("audit_trail.json")
 
@@ -47,7 +47,7 @@ from ipfs_datasets_py.optimizers.common.path_validator import (
 
 class EventType(str, Enum):
     """Types of auditable events in the refinement process."""
-    
+
     REFINEMENT_CYCLE_START = "refinement_cycle_start"
     REFINEMENT_CYCLE_END = "refinement_cycle_end"
     STRATEGY_DECISION = "strategy_decision"
@@ -64,16 +64,18 @@ class EventType(str, Enum):
 # TypedDict Definitions for Return Types
 # ============================================================================
 
+
 class RoundSummaryDict(TypedDict, total=False):
     """
     Summary of audit events for a specific refinement round.
-    
+
     Fields:
         round_num: The refinement round number
         event_count: Total number of events in this round
         events_by_type: Dictionary mapping event type to count of events
         events: List of all events in this round as dictionaries
     """
+
     round_num: int
     event_count: int
     events_by_type: Dict[str, int]
@@ -83,15 +85,16 @@ class RoundSummaryDict(TypedDict, total=False):
 class ScoreEvolutionEntryDict(TypedDict, total=False):
     """
     Single entry in score evolution history.
-    
+
     Tracks how scores changed across refinement rounds.
-    
+
     Fields:
         round: Round number where score update occurred
         timestamp: ISO 8601 timestamp of score update
         score: Dictionary with overall, completeness, consistency, clarity scores
         delta: Dictionary with score deltas for each metric
     """
+
     round: int
     timestamp: str
     score: Dict[str, float]
@@ -101,9 +104,9 @@ class ScoreEvolutionEntryDict(TypedDict, total=False):
 class ActionHistoryEntryDict(TypedDict, total=False):
     """
     Single entry in action application history.
-    
+
     Records each action applied during refinement with results.
-    
+
     Fields:
         round: Round number where action was applied
         timestamp: ISO 8601 timestamp of action application
@@ -111,6 +114,7 @@ class ActionHistoryEntryDict(TypedDict, total=False):
         delta: Dictionary with entity and relationship count changes
         execution_time_ms: Time in milliseconds to execute action (optional)
     """
+
     round: int
     timestamp: str
     action: str
@@ -122,9 +126,9 @@ class ActionHistoryEntryDict(TypedDict, total=False):
 class AuditEvent:
     """
     Single auditable event in the refinement process.
-    
+
     Captures all context needed to replay/debug/analyze refinement decisions.
-    
+
     Attributes:
         event_type: Type of event (see EventType enum)
         timestamp: ISO 8601 timestamp when event occurred
@@ -132,13 +136,13 @@ class AuditEvent:
         event_data: Event-specific data (varies by event_type)
         metadata: Optional additional context
     """
-    
+
     event_type: EventType
     timestamp: str
     round_num: int
     event_data: Dict[str, Any]
     metadata: Dict[str, Any] = field(default_factory=dict)
-    
+
     @classmethod
     def create(
         cls,
@@ -155,7 +159,7 @@ class AuditEvent:
             event_data=event_data,
             metadata=metadata or {},
         )
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         return {
@@ -165,7 +169,7 @@ class AuditEvent:
             "event_data": self.event_data,
             "metadata": self.metadata,
         }
-    
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "AuditEvent":
         """Deserialize from dictionary."""
@@ -181,23 +185,23 @@ class AuditEvent:
 class AuditLogger:
     """
     Comprehensive audit logger for ontology refinement.
-    
+
     Tracks all decisions, actions, scores, and recommendations throughout
     the refinement process. Provides JSON export for replay and analysis.
-    
+
     Thread-safe for concurrent refinement sessions (each session gets unique ID).
-    
+
     Attributes:
         session_id: Unique identifier for this audit session
         output_dir: Directory for audit log files (None = memory-only)
         events: List of all audit events in chronological order
-        
+
     Example:
         >>> logger = AuditLogger(output_dir="./audit_logs")
-        >>> 
+        >>>
         >>> # Start refinement cycle
         >>> logger.log_cycle_start(data="contract.txt", context=context)
-        >>> 
+        >>>
         >>> # Log strategy decision
         >>> logger.log_refinement_decision(
         ...     round_num=1,
@@ -206,7 +210,7 @@ class AuditLogger:
         ...     strategy=strategy,
         ...     context=context
         ... )
-        >>> 
+        >>>
         >>> # Apply action
         >>> logger.log_action_apply(
         ...     round_num=1,
@@ -214,11 +218,11 @@ class AuditLogger:
         ...     ontology_before=ontology_before,
         ...     ontology_after=ontology_after
         ... )
-        >>> 
+        >>>
         >>> # Export audit trail
         >>> logger.export_json("refinement_audit.json")
     """
-    
+
     def __init__(
         self,
         session_id: Optional[str] = None,
@@ -228,7 +232,7 @@ class AuditLogger:
     ):
         """
         Initialize audit logger.
-        
+
         Args:
             session_id: Unique session identifier. If None, auto-generated.
             output_dir: Directory to write audit files. If None, memory-only.
@@ -239,48 +243,51 @@ class AuditLogger:
         self.output_dir: Optional[Path] = Path(output_dir) if output_dir else None
         self.enable_file_logging = enable_file_logging and (output_dir is not None)
         self._log = logger or logging.getLogger(__name__)
-        
+
         # Event storage
         self.events: List[AuditEvent] = []
-        
+
         # Create output directory if needed
         if self.enable_file_logging and self.output_dir is not None:
             self.output_dir.mkdir(parents=True, exist_ok=True)
-            self._log.info(f"Audit logger initialized: session_id={self.session_id}, output_dir={self.output_dir}")
+            self._log.info(
+                f"Audit logger initialized: session_id={self.session_id}, output_dir={self.output_dir}"
+            )
         else:
             self._log.info(f"Audit logger initialized (memory-only): session_id={self.session_id}")
-    
+
     @staticmethod
     def _generate_session_id() -> str:
         """Generate unique session ID from timestamp and random suffix."""
         import uuid
+
         timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
         random_suffix = str(uuid.uuid4())[:8]
         return f"{timestamp}_{random_suffix}"
-    
+
     def _add_event(self, event: AuditEvent) -> None:
         """Add event to storage and optionally write to disk."""
         self.events.append(event)
-        
+
         # Optionally write to incremental log file
         if self.enable_file_logging:
             self._write_event_to_file(event)
-    
+
     def _write_event_to_file(self, event: AuditEvent) -> None:
         """Append event to incremental log file (JSONL format)."""
         if self.output_dir is None:
             return
         log_file = self.output_dir / f"audit_{self.session_id}.jsonl"
-        
+
         # Validate output path
         base_dir = Path(log_file).parent if Path(log_file).is_absolute() else None
         safe_log_file = validate_output_path(str(log_file), allow_overwrite=True, base_dir=base_dir)
-        
+
         with open(safe_log_file, "a", encoding="utf-8") as f:
             f.write(json.dumps(event.to_dict()) + "\n")
-    
+
     # Event logging methods
-    
+
     def log_cycle_start(
         self,
         data: Any,
@@ -301,11 +308,13 @@ class AuditLogger:
             },
             metadata={
                 "session_id": self.session_id,
-            }
+            },
         )
         self._add_event(event)
-        self._log.info(f"Refinement cycle started: max_rounds={max_rounds}, threshold={convergence_threshold}")
-    
+        self._log.info(
+            f"Refinement cycle started: max_rounds={max_rounds}, threshold={convergence_threshold}"
+        )
+
     def log_refinement_decision(
         self,
         round_num: int,
@@ -340,14 +349,14 @@ class AuditLogger:
             },
             metadata={
                 "domain": getattr(context, "domain", "unknown"),
-            }
+            },
         )
         self._add_event(event)
         self._log.info(
             f"Round {round_num}: Strategy decision - {strategy.get('action')} "
             f"(priority: {strategy.get('priority')}, impact: +{strategy.get('estimated_impact', 0):.2f})"
         )
-    
+
     def log_action_apply(
         self,
         round_num: int,
@@ -365,7 +374,7 @@ class AuditLogger:
             "entity_count": len(ontology_after.get("entities", [])),
             "relationship_count": len(ontology_after.get("relationships", [])),
         }
-        
+
         event = AuditEvent.create(
             event_type=EventType.ACTION_APPLY,
             round_num=round_num,
@@ -375,10 +384,11 @@ class AuditLogger:
                 "after": after_stats,
                 "delta": {
                     "entities": after_stats["entity_count"] - before_stats["entity_count"],
-                    "relationships": after_stats["relationship_count"] - before_stats["relationship_count"],
+                    "relationships": after_stats["relationship_count"]
+                    - before_stats["relationship_count"],
                 },
                 "execution_time_ms": execution_time_ms,
-            }
+            },
         )
         self._add_event(event)
         self._log.info(
@@ -386,7 +396,7 @@ class AuditLogger:
             f"entities: {before_stats['entity_count']} → {after_stats['entity_count']}, "
             f"relationships: {before_stats['relationship_count']} → {after_stats['relationship_count']}"
         )
-    
+
     def log_score_update(
         self,
         round_num: int,
@@ -411,17 +421,23 @@ class AuditLogger:
                     "clarity": getattr(score_after, "clarity", 0.0),
                 },
                 "delta": {
-                    "overall": getattr(score_after, "overall", 0.0) - getattr(score_before, "overall", 0.0),
-                    "completeness": getattr(score_after, "completeness", 0.0) - getattr(score_before, "completeness", 0.0),
-                    "consistency": getattr(score_after, "consistency", 0.0) - getattr(score_before, "consistency", 0.0),
-                    "clarity": getattr(score_after, "clarity", 0.0) - getattr(score_before, "clarity", 0.0),
+                    "overall": getattr(score_after, "overall", 0.0)
+                    - getattr(score_before, "overall", 0.0),
+                    "completeness": getattr(score_after, "completeness", 0.0)
+                    - getattr(score_before, "completeness", 0.0),
+                    "consistency": getattr(score_after, "consistency", 0.0)
+                    - getattr(score_before, "consistency", 0.0),
+                    "clarity": getattr(score_after, "clarity", 0.0)
+                    - getattr(score_before, "clarity", 0.0),
                 },
-            }
+            },
         )
         self._add_event(event)
         delta = getattr(score_after, "overall", 0.0) - getattr(score_before, "overall", 0.0)
-        self._log.info(f"Round {round_num}: Score updated - overall: {getattr(score_after, 'overall', 0.0):.3f} (Δ{delta:+.3f})")
-    
+        self._log.info(
+            f"Round {round_num}: Score updated - overall: {getattr(score_after, 'overall', 0.0):.3f} (Δ{delta:+.3f})"
+        )
+
     def log_recommendations(
         self,
         round_num: int,
@@ -436,11 +452,11 @@ class AuditLogger:
                 "recommendation_count": len(recommendations),
                 "recommendations": recommendations,
                 "score_overall": getattr(score, "overall", 0.0),
-            }
+            },
         )
         self._add_event(event)
         self._log.info(f"Round {round_num}: {len(recommendations)} recommendations issued")
-    
+
     def log_convergence(
         self,
         round_num: int,
@@ -460,11 +476,13 @@ class AuditLogger:
                 },
                 "reason": reason,
                 "total_rounds": round_num,
-            }
+            },
         )
         self._add_event(event)
-        self._log.info(f"Convergence achieved at round {round_num}: {getattr(final_score, 'overall', 0.0):.3f}")
-    
+        self._log.info(
+            f"Convergence achieved at round {round_num}: {getattr(final_score, 'overall', 0.0):.3f}"
+        )
+
     def log_max_rounds(
         self,
         round_num: int,
@@ -482,11 +500,13 @@ class AuditLogger:
                     "clarity": getattr(final_score, "clarity", 0.0),
                 },
                 "total_rounds": round_num,
-            }
+            },
         )
         self._add_event(event)
-        self._log.warning(f"Max rounds ({round_num}) reached without convergence: {getattr(final_score, 'overall', 0.0):.3f}")
-    
+        self._log.warning(
+            f"Max rounds ({round_num}) reached without convergence: {getattr(final_score, 'overall', 0.0):.3f}"
+        )
+
     def log_error(
         self,
         round_num: int,
@@ -502,11 +522,11 @@ class AuditLogger:
                 "error_type": error_type,
                 "error_message": error_message,
                 "context": context or {},
-            }
+            },
         )
         self._add_event(event)
         self._log.error(f"Round {round_num}: {error_type} - {error_message}")
-    
+
     def log_config_change(
         self,
         round_num: int,
@@ -522,17 +542,17 @@ class AuditLogger:
                 "config_before": config_before,
                 "config_after": config_after,
                 "reason": reason,
-            }
+            },
         )
         self._add_event(event)
         self._log.info(f"Round {round_num}: Configuration changed - {reason}")
-    
+
     # Export and analysis methods
-    
+
     def export_json(self, filepath: Union[str, Path], pretty: bool = True) -> None:
         """
         Export full audit trail to JSON file.
-        
+
         Args:
             filepath: Output file path
             pretty: Whether to pretty-print JSON (default: True)
@@ -543,23 +563,23 @@ class AuditLogger:
             "event_count": len(self.events),
             "events": [event.to_dict() for event in self.events],
         }
-        
+
         # Validate output path
         base_dir = filepath.parent if filepath.is_absolute() else None
         safe_filepath = validate_output_path(str(filepath), allow_overwrite=True, base_dir=base_dir)
-        
+
         with open(safe_filepath, "w", encoding="utf-8") as f:
             if pretty:
                 json.dump(data, f, indent=2, sort_keys=True)
             else:
-                json.dump(data, f, separators=(',', ':'), sort_keys=True)
-        
+                json.dump(data, f, separators=(",", ":"), sort_keys=True)
+
         self._log.info(f"Exported {len(self.events)} events to {filepath}")
-    
+
     def get_round_summary(self, round_num: int) -> RoundSummaryDict:
         """Get summary of events for a specific round."""
         round_events = [e for e in self.events if e.round_num == round_num]
-        
+
         return {
             "round_num": round_num,
             "event_count": len(round_events),
@@ -569,55 +589,59 @@ class AuditLogger:
             },
             "events": [e.to_dict() for e in round_events],
         }
-    
+
     def get_score_evolution(self) -> List[ScoreEvolutionEntryDict]:
         """Get score evolution across all rounds."""
         score_events = [e for e in self.events if e.event_type == EventType.SCORE_UPDATE]
-        
+
         evolution = []
         for event in score_events:
-            evolution.append({
-                "round": event.round_num,
-                "timestamp": event.timestamp,
-                "score": event.event_data["after"],
-                "delta": event.event_data["delta"],
-            })
-        
+            evolution.append(
+                {
+                    "round": event.round_num,
+                    "timestamp": event.timestamp,
+                    "score": event.event_data["after"],
+                    "delta": event.event_data["delta"],
+                }
+            )
+
         return evolution
-    
+
     def get_action_history(self) -> List[ActionHistoryEntryDict]:
         """Get history of all applied actions."""
         action_events = [e for e in self.events if e.event_type == EventType.ACTION_APPLY]
-        
+
         history = []
         for event in action_events:
-            history.append({
-                "round": event.round_num,
-                "timestamp": event.timestamp,
-                "action": event.event_data["action_name"],
-                "delta": event.event_data["delta"],
-                "execution_time_ms": event.event_data.get("execution_time_ms"),
-            })
-        
+            history.append(
+                {
+                    "round": event.round_num,
+                    "timestamp": event.timestamp,
+                    "action": event.event_data["action_name"],
+                    "delta": event.event_data["delta"],
+                    "execution_time_ms": event.event_data.get("execution_time_ms"),
+                }
+            )
+
         return history
-    
+
     def generate_summary_report(self) -> str:
         """Generate human-readable summary report."""
         if not self.events:
             return "No audit events recorded."
-        
+
         lines = []
         lines.append("=" * 80)
         lines.append(f"AUDIT SUMMARY - Session {self.session_id}")
         lines.append("=" * 80)
         lines.append("")
-        
+
         # Overall stats
         lines.append(f"Total Events: {len(self.events)}")
         max_round = max(e.round_num for e in self.events)
         lines.append(f"Rounds: {max_round}")
         lines.append("")
-        
+
         # Event breakdown
         lines.append("Events by Type:")
         for event_type in EventType:
@@ -625,7 +649,7 @@ class AuditLogger:
             if count > 0:
                 lines.append(f"  {event_type.value}: {count}")
         lines.append("")
-        
+
         # Score evolution
         score_evolution = self.get_score_evolution()
         if score_evolution:
@@ -634,10 +658,10 @@ class AuditLogger:
             last = score_evolution[-1]
             lines.append(f"  Round 1:  {first['score']['overall']:.3f}")
             lines.append(f"  Round {last['round']}: {last['score']['overall']:.3f}")
-            total_delta = last['score']['overall'] - first['score']['overall']
+            total_delta = last["score"]["overall"] - first["score"]["overall"]
             lines.append(f"  Improvement: {total_delta:+.3f}")
             lines.append("")
-        
+
         # Action history
         action_history = self.get_action_history()
         if action_history:
@@ -645,27 +669,28 @@ class AuditLogger:
             for action in action_history:
                 lines.append(f"  Round {action['round']}: {action['action']}")
             lines.append("")
-        
+
         # Convergence status
         converged = any(e.event_type == EventType.CONVERGENCE_ACHIEVED for e in self.events)
         max_reached = any(e.event_type == EventType.MAX_ROUNDS_REACHED for e in self.events)
-        
+
         if converged:
             lines.append("Status: ✅ CONVERGED")
         elif max_reached:
             lines.append("Status: ⚠️  MAX ROUNDS REACHED (DID NOT CONVERGE)")
         else:
             lines.append("Status: 🔄 IN PROGRESS")
-        
+
         lines.append("=" * 80)
-        
+
         return "\n".join(lines)
-    
+
     def __repr__(self) -> str:
         return f"AuditLogger(session_id={self.session_id}, events={len(self.events)})"
 
 
 # Convenience functions for common use cases
+
 
 def create_audit_logger(
     output_dir: Union[str, Path] = "./audit_logs",
@@ -684,8 +709,8 @@ def load_audit_trail(filepath: Union[str, Path]) -> List[AuditEvent]:
     # Validate input path
     base_dir = Path(filepath).parent if Path(filepath).is_absolute() else None
     safe_filepath = validate_input_path(str(filepath), must_exist=True, base_dir=base_dir)
-    
+
     with open(safe_filepath, "r", encoding="utf-8") as f:
         data = json.load(f)
-    
+
     return [AuditEvent.from_dict(event_dict) for event_dict in data["events"]]

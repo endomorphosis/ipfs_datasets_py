@@ -7,6 +7,7 @@ This script performs a deep analysis of the MCP server tools to verify:
 2. All required parameters are properly passed
 3. Return values are properly handled
 """
+
 import os
 import sys
 import inspect
@@ -31,7 +32,7 @@ implementation_results = {
     "implementation_issues": {},
     "tool_param_coverage": {},
     "tool_function_mapping": {},
-    "unmapped_library_functions": []
+    "unmapped_library_functions": [],
 }
 
 # Key library modules and their expected function mappings to tools
@@ -42,21 +43,23 @@ LIBRARY_TOOL_MAPPINGS = {
         "WebArchiveProcessor.extract_dataset_from_cdxj": "web_archive_tools/extract_dataset_from_cdxj.py",
         "WebArchiveProcessor.extract_text": "web_archive_tools/extract_text_from_warc.py",
         "WebArchiveProcessor.extract_links": "web_archive_tools/extract_links_from_warc.py",
-        "WebArchiveProcessor.extract_metadata": "web_archive_tools/extract_metadata_from_warc.py"
+        "WebArchiveProcessor.extract_metadata": "web_archive_tools/extract_metadata_from_warc.py",
     },
     "ipfs_datasets": {
         "load_dataset": "dataset_tools/load_dataset.py",
         "save_dataset": "dataset_tools/save_dataset.py",
         "process_dataset": "dataset_tools/process_dataset.py",
-        "convert_dataset_format": "dataset_tools/convert_dataset_format.py"
-    }
+        "convert_dataset_format": "dataset_tools/convert_dataset_format.py",
+    },
 }
+
 
 def print_header(message):
     """Print a header message"""
     print("\n" + "=" * 80)
     print(f" {message}")
     print("=" * 80)
+
 
 def get_library_function(module_name, function_path):
     """Get a function from a module by its path"""
@@ -82,6 +85,7 @@ def get_library_function(module_name, function_path):
 
     return None
 
+
 def get_tool_function(tool_path):
     """Get the main function from a tool file"""
     full_path = TOOLS_PATH / tool_path
@@ -106,30 +110,25 @@ def get_tool_function(tool_path):
 
     return None
 
+
 def compare_function_signatures(lib_func, tool_func):
     """Compare library and tool function signatures"""
     if not lib_func or not tool_func:
-        return {
-            "match": False,
-            "reason": "One or both functions are None"
-        }
+        return {"match": False, "reason": "One or both functions are None"}
 
     # Get signatures
     try:
         lib_sig = inspect.signature(lib_func)
         tool_sig = inspect.signature(tool_func)
     except (ValueError, TypeError) as e:
-        return {
-            "match": False,
-            "reason": f"Error getting signature: {e}"
-        }
+        return {"match": False, "reason": f"Error getting signature: {e}"}
 
     # Compare parameters
     lib_params = list(lib_sig.parameters.keys())
     tool_params = list(tool_sig.parameters.keys())
 
     # For class methods, remove 'self'
-    if lib_params and lib_params[0] == 'self':
+    if lib_params and lib_params[0] == "self":
         lib_params = lib_params[1:]
 
     # Check if tool accepts all required library params
@@ -149,8 +148,9 @@ def compare_function_signatures(lib_func, tool_func):
         "missing_params": missing_params,
         "extra_params": extra_params,
         "lib_params": lib_params,
-        "tool_params": tool_params
+        "tool_params": tool_params,
     }
+
 
 def analyze_tool_implementation(tool_path, lib_module, lib_func_path):
     """Analyze how well a tool implements a library function"""
@@ -165,7 +165,7 @@ def analyze_tool_implementation(tool_path, lib_module, lib_func_path):
         "has_tool_function": tool_func is not None,
         "signature_comparison": None,
         "properly_implemented": False,
-        "issues": []
+        "issues": [],
     }
 
     # Check if both functions exist
@@ -188,7 +188,7 @@ def analyze_tool_implementation(tool_path, lib_module, lib_func_path):
     # Check tool implementation by reading the source code
     tool_full_path = TOOLS_PATH / tool_path
     try:
-        with open(tool_full_path, 'r') as f:
+        with open(tool_full_path, "r") as f:
             source = f.read()
 
             # Check if the tool creates an instance of the class (for class methods)
@@ -210,6 +210,7 @@ def analyze_tool_implementation(tool_path, lib_module, lib_func_path):
 
     return result
 
+
 def check_all_tools():
     """Check implementation of all tools against their library counterparts"""
     for lib_module, mappings in LIBRARY_TOOL_MAPPINGS.items():
@@ -224,7 +225,7 @@ def check_all_tools():
             # Record tool-function mapping
             implementation_results["tool_function_mapping"][tool_path] = {
                 "library_module": lib_module,
-                "library_function": lib_func_path
+                "library_function": lib_func_path,
             }
 
             # Record parameter coverage
@@ -233,7 +234,7 @@ def check_all_tools():
                     "library_params": result["signature_comparison"].get("lib_params", []),
                     "tool_params": result["signature_comparison"].get("tool_params", []),
                     "missing_params": result["signature_comparison"].get("missing_params", []),
-                    "extra_params": result["signature_comparison"].get("extra_params", [])
+                    "extra_params": result["signature_comparison"].get("extra_params", []),
                 }
 
             # Record implementation quality
@@ -252,6 +253,7 @@ def check_all_tools():
                 for issue in result["issues"]:
                     print(f"    - {issue}")
 
+
 def check_for_unmapped_functions():
     """Find library functions that might not be mapped to tools"""
     for module_name in LIBRARY_TOOL_MAPPINGS.keys():
@@ -260,7 +262,7 @@ def check_for_unmapped_functions():
 
             # Get all public functions in the module
             for name, obj in inspect.getmembers(module):
-                if name.startswith('_'):
+                if name.startswith("_"):
                     continue
 
                 if inspect.isfunction(obj):
@@ -272,12 +274,14 @@ def check_for_unmapped_functions():
                             break
 
                     if not is_mapped:
-                        implementation_results["unmapped_library_functions"].append(f"{module_name}.{name}")
+                        implementation_results["unmapped_library_functions"].append(
+                            f"{module_name}.{name}"
+                        )
 
                 # Check for class methods
                 elif inspect.isclass(obj):
                     for method_name, method_obj in inspect.getmembers(obj):
-                        if method_name.startswith('_'):
+                        if method_name.startswith("_"):
                             continue
 
                         if inspect.isfunction(method_obj) or inspect.ismethod(method_obj):
@@ -290,10 +294,13 @@ def check_for_unmapped_functions():
                                     break
 
                             if not is_mapped:
-                                implementation_results["unmapped_library_functions"].append(f"{module_name}.{full_method_name}")
+                                implementation_results["unmapped_library_functions"].append(
+                                    f"{module_name}.{full_method_name}"
+                                )
 
         except ImportError as e:
             print(f"Error importing {module_name}: {e}")
+
 
 def main():
     print("\n" + "=" * 80)
@@ -319,10 +326,12 @@ def main():
     issues = len(implementation_results["implementation_issues"])
 
     print(f"Total tools checked: {total}")
-    print(f"Fully implemented: {fully} ({fully/total*100:.1f}%)")
-    print(f"Partially implemented: {partially} ({partially/total*100:.1f}%)")
-    print(f"Tools with issues: {issues} ({issues/total*100:.1f}%)")
-    print(f"Unmapped library functions: {len(implementation_results['unmapped_library_functions'])}")
+    print(f"Fully implemented: {fully} ({fully / total * 100:.1f}%)")
+    print(f"Partially implemented: {partially} ({partially / total * 100:.1f}%)")
+    print(f"Tools with issues: {issues} ({issues / total * 100:.1f}%)")
+    print(
+        f"Unmapped library functions: {len(implementation_results['unmapped_library_functions'])}"
+    )
 
     # Save results
     results_file = Path(__file__).parent / "mcp_implementation_test_results.json"
@@ -332,6 +341,7 @@ def main():
     print(f"\nDetailed results saved to: {results_file}")
 
     return issues == 0
+
 
 if __name__ == "__main__":
     success = main()

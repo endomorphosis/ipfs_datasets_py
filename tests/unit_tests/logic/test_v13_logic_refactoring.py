@@ -75,9 +75,7 @@ class TestGrammarNLPolicyCompilerHeuristic:
         assert result.clauses[0]["resource"].startswith("logic/")
 
     def test_multi_sentence_split(self):
-        result = self.compiler.compile(
-            "Dave must not modify. Eve may view records"
-        )
+        result = self.compiler.compile("Dave must not modify. Eve may view records")
         assert len(result.clauses) == 2
 
     def test_no_clauses_adds_warning(self):
@@ -91,9 +89,7 @@ class TestGrammarNLPolicyCompilerHeuristic:
         assert result.clauses[0]["source_sentence"] == text.rstrip(".")
 
     def test_semicolon_splitting(self):
-        result = self.compiler.compile(
-            "Alice must log; Bob must not delete"
-        )
+        result = self.compiler.compile("Alice must log; Bob must not delete")
         assert len(result.clauses) == 2
 
     def test_empty_string(self):
@@ -140,10 +136,12 @@ class TestGrammarCompilationResult:
 
     def test_compile_multi(self):
         compiler = GrammarNLPolicyCompiler(use_grammar=False)
-        results = compiler.compile_multi([
-            "Alice must not delete",
-            "Bob may read files",
-        ])
+        results = compiler.compile_multi(
+            [
+                "Alice must not delete",
+                "Bob may read files",
+            ]
+        )
         assert len(results) == 2
         assert results[0].success
         assert results[1].success
@@ -214,9 +212,7 @@ class TestZKPCapabilityEvidence:
         assert ev2.is_simulation is True
 
     def test_defaults(self):
-        ev = ZKPCapabilityEvidence(
-            proof_hash="c" * 64, theorem_cid="x", verifier_id="v"
-        )
+        ev = ZKPCapabilityEvidence(proof_hash="c" * 64, theorem_cid="x", verifier_id="v")
         assert ev.public_inputs == {}
         assert ev.is_simulation is True
 
@@ -291,7 +287,10 @@ class TestZKPToUCANBridgeProveAndDelegate:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             result = bridge.prove_and_delegate(
-                theorem="Q", actor="did:key:bob", resource="res", ability="ab",
+                theorem="Q",
+                actor="did:key:bob",
+                resource="res",
+                ability="ab",
                 private_axioms=["P", "P -> Q"],
             )
         assert result.zkp_caveat.is_simulation is True
@@ -302,7 +301,10 @@ class TestZKPToUCANBridgeProveAndDelegate:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             result = bridge.prove_and_delegate(
-                theorem="Q", actor="did:key:carol", resource="res", ability="ab",
+                theorem="Q",
+                actor="did:key:carol",
+                resource="res",
+                ability="ab",
                 private_axioms=["P", "P -> Q"],
             )
         assert result.delegation_token is not None
@@ -327,7 +329,10 @@ class TestZKPToUCANBridgeProveAndDelegate:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             result = bridge.prove_and_delegate(
-                theorem="Q", actor="did:key:ev", resource="r", ability="a",
+                theorem="Q",
+                actor="did:key:ev",
+                resource="r",
+                ability="a",
                 private_axioms=["P", "P -> Q"],
             )
         d = result.to_dict()
@@ -339,7 +344,10 @@ class TestZKPToUCANBridgeProveAndDelegate:
         bridge = ZKPToUCANBridge()
         with pytest.warns(UserWarning, match="SIMULATED"):
             bridge.prove_and_delegate(
-                theorem="Q", actor="did:key:f", resource="r", ability="a",
+                theorem="Q",
+                actor="did:key:f",
+                resource="r",
+                ability="a",
                 private_axioms=["P", "P -> Q"],
             )
 

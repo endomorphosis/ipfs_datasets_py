@@ -124,42 +124,27 @@ def test_authorized_holdout_executes_exact_frozen_pairs(
     assert run.receipt.source_commit == SOURCE_COMMIT
     assert len(run.receipt.cache_namespaces) == 4
     assert len(set(run.receipt.cache_namespaces)) == 4
-    assert HoldoutExecutionReceipt.from_dict(
-        run.receipt.to_dict()
-    ) == run.receipt
-    assert (
-        output / "state" / "holdout-authorization.json"
-    ).is_file()
+    assert HoldoutExecutionReceipt.from_dict(run.receipt.to_dict()) == run.receipt
+    assert (output / "state" / "holdout-authorization.json").is_file()
     assert (output / "state" / "holdout-access-audits.json").is_file()
-    assert (
-        output / "receipts" / "holdout-execution-receipt.json"
-    ).is_file()
+    assert (output / "receipts" / "holdout-execution-receipt.json").is_file()
     assert calls
 
-    positions = {
-        variant: [0] * len(plan.variant_ids) for variant in plan.variant_ids
-    }
+    positions = {variant: [0] * len(plan.variant_ids) for variant in plan.variant_ids}
     for block in plan.blocks:
         assert len({job.input_sha256 for job in block}) == 1
         assert {job.variant_id for job in block} == set(plan.variant_ids)
         for position, job in enumerate(block):
             positions[job.variant_id][position] += 1
     assert all(max(counts) - min(counts) <= 1 for counts in positions.values())
-    block_pairs = tuple(
-        plan.blocks[index : index + 2]
-        for index in range(0, len(plan.blocks), 2)
-    )
+    block_pairs = tuple(plan.blocks[index : index + 2] for index in range(0, len(plan.blocks), 2))
     assert all(
         pair[0][0].case.case_id == pair[1][0].case.case_id
-        and {pair[0][0].cache_mode, pair[1][0].cache_mode}
-        == {CacheMode.COLD, CacheMode.WARM}
+        and {pair[0][0].cache_mode, pair[1][0].cache_mode} == {CacheMode.COLD, CacheMode.WARM}
         for pair in block_pairs
     )
     leading_modes = [pair[0][0].cache_mode for pair in block_pairs]
-    assert abs(
-        leading_modes.count(CacheMode.COLD)
-        - leading_modes.count(CacheMode.WARM)
-    ) <= 1
+    assert abs(leading_modes.count(CacheMode.COLD) - leading_modes.count(CacheMode.WARM)) <= 1
 
 
 @pytest.mark.parametrize(
@@ -242,9 +227,7 @@ def test_generic_executor_and_existing_namespace_remain_fail_closed(
 ) -> None:
     calls: list[tuple[str, str]] = []
     generic_output = tmp_path / "generic"
-    with pytest.raises(
-        ablation.AblationValidationError, match="forbidden for holdout"
-    ):
+    with pytest.raises(ablation.AblationValidationError, match="forbidden for holdout"):
         ablation.execute_ablation(
             plan,
             _adapters(calls),
@@ -272,12 +255,8 @@ def test_generic_executor_and_existing_namespace_remain_fail_closed(
     assert calls == []
 
 
-def test_authorization_is_strict_content_addressed_and_nonempty(
-    corpus, authorization
-) -> None:
-    assert PilotAuthorizationReceipt.from_dict(
-        authorization.to_dict()
-    ) == authorization
+def test_authorization_is_strict_content_addressed_and_nonempty(corpus, authorization) -> None:
+    assert PilotAuthorizationReceipt.from_dict(authorization.to_dict()) == authorization
 
     changed = authorization.to_dict()
     changed["source_commit"] = "9" * 40

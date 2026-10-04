@@ -9,7 +9,9 @@ from ipfs_datasets_py.mcp_server.tool_metadata import tool_metadata
 from ._helpers import default_blob_dir, service
 
 
-@tool_metadata(category="wallet_tools", mcp_description="Verify an encrypted export bundle hash and schema.")
+@tool_metadata(
+    category="wallet_tools", mcp_description="Verify an encrypted export bundle hash and schema."
+)
 async def wallet_verify_export_bundle(
     path: str,
     blob_dir: Optional[str] = None,

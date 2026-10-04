@@ -33,7 +33,7 @@ from ipfs_datasets_py.p2p_networking.libp2p_kit import (
     DatasetShardManager,
     DistributedDatasetManager,
     ShardMetadata,
-    DatasetMetadata
+    DatasetMetadata,
 )
 from ipfs_datasets_py.resilient_operations import (
     ResilienceManager,
@@ -41,13 +41,12 @@ from ipfs_datasets_py.resilient_operations import (
     OperationStatus,
     CircuitBreaker,
     RetryConfig,
-    resilient
+    resilient,
 )
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -72,30 +71,28 @@ async def resilient_operations_example():
     # Create nodes
     print("Creating nodes...")
     coordinator_node = await create_node(
-        node_type=NodeRole.COORDINATOR,
-        storage_dir=coordinator_dir,
-        port=9701
+        node_type=NodeRole.COORDINATOR, storage_dir=coordinator_dir, port=9701
     )
 
     worker1_node = await create_node(
         node_type=NodeRole.WORKER,
         storage_dir=worker1_dir,
         port=9702,
-        bootstrap_peers=[f"/ip4/127.0.0.1/tcp/9701/p2p/{coordinator_node.node_id}"]
+        bootstrap_peers=[f"/ip4/127.0.0.1/tcp/9701/p2p/{coordinator_node.node_id}"],
     )
 
     worker2_node = await create_node(
         node_type=NodeRole.WORKER,
         storage_dir=worker2_dir,
         port=9703,
-        bootstrap_peers=[f"/ip4/127.0.0.1/tcp/9701/p2p/{coordinator_node.node_id}"]
+        bootstrap_peers=[f"/ip4/127.0.0.1/tcp/9701/p2p/{coordinator_node.node_id}"],
     )
 
     worker3_node = await create_node(
         node_type=NodeRole.WORKER,
         storage_dir=worker3_dir,
         port=9704,
-        bootstrap_peers=[f"/ip4/127.0.0.1/tcp/9701/p2p/{coordinator_node.node_id}"]
+        bootstrap_peers=[f"/ip4/127.0.0.1/tcp/9701/p2p/{coordinator_node.node_id}"],
     )
 
     print(f"Coordinator Node ID: {coordinator_node.node_id}")
@@ -108,25 +105,25 @@ async def resilient_operations_example():
     coordinator_resilience = ResilienceManager(
         node=coordinator_node,
         storage_dir=os.path.join(coordinator_dir, "resilience"),
-        health_check_interval_sec=10
+        health_check_interval_sec=10,
     )
 
     worker1_resilience = ResilienceManager(
         node=worker1_node,
         storage_dir=os.path.join(worker1_dir, "resilience"),
-        health_check_interval_sec=10
+        health_check_interval_sec=10,
     )
 
     worker2_resilience = ResilienceManager(
         node=worker2_node,
         storage_dir=os.path.join(worker2_dir, "resilience"),
-        health_check_interval_sec=10
+        health_check_interval_sec=10,
     )
 
     worker3_resilience = ResilienceManager(
         node=worker3_node,
         storage_dir=os.path.join(worker3_dir, "resilience"),
-        health_check_interval_sec=10
+        health_check_interval_sec=10,
     )
 
     # Connect the nodes
@@ -138,10 +135,7 @@ async def resilient_operations_example():
 
     # Create distributed dataset manager
     print("\nCreating distributed dataset manager...")
-    dataset_manager = DistributedDatasetManager(
-        node=coordinator_node,
-        storage_dir=coordinator_dir
-    )
+    dataset_manager = DistributedDatasetManager(node=coordinator_node, storage_dir=coordinator_dir)
 
     # Create and shard a simple dataset
     print("\nCreating and sharding dataset...")
@@ -159,9 +153,11 @@ async def resilient_operations_example():
     # Show updated node health
     print("\nUpdated node health status:")
     for node_id, health in coordinator_resilience.get_all_node_health().items():
-        print(f"Node {node_id}: {health.status.value}, " +
-              f"Availability: {health.availability_score:.2f}, " +
-              f"Avg Response: {health.avg_response_time_ms:.2f}ms")
+        print(
+            f"Node {node_id}: {health.status.value}, "
+            + f"Availability: {health.availability_score:.2f}, "
+            + f"Avg Response: {health.avg_response_time_ms:.2f}ms"
+        )
 
     # Demonstrate resilient shard transfer
     print("\nDemonstrating resilient shard transfer...")
@@ -174,7 +170,7 @@ async def resilient_operations_example():
         # Transfer to all workers with resilience
         result = await coordinator_resilience.resilient_shard_transfer(
             shard_id=shard_id,
-            target_node_ids=[worker1_node.node_id, worker2_node.node_id, worker3_node.node_id]
+            target_node_ids=[worker1_node.node_id, worker2_node.node_id, worker3_node.node_id],
         )
 
         print(f"Transfer status: {result.status.value}")
@@ -202,9 +198,7 @@ async def resilient_operations_example():
     # Demonstrate resilient rebalancing
     print("\nRebalancing shards with resilience...")
     rebalance_result = await coordinator_resilience.resilient_rebalance_shards(
-        dataset_id=dataset_id,
-        target_replication=2,
-        use_healthy_nodes_only=True
+        dataset_id=dataset_id, target_replication=2, use_healthy_nodes_only=True
     )
 
     print(f"Rebalance status: {rebalance_result.status.value}")
@@ -222,7 +216,7 @@ async def resilient_operations_example():
             try:
                 circuit_breaker.execute(lambda: simulate_error())
             except Exception as e:
-                print(f"Attempt {i+1} failed: {str(e)}")
+                print(f"Attempt {i + 1} failed: {str(e)}")
 
         print(f"After failures: {circuit_breaker.state}")
 
@@ -246,7 +240,7 @@ async def resilient_operations_example():
         operation_id=operation.operation_id,
         completed_items=["item1", "item2"],
         pending_items=["item3", "item4", "item5"],
-        metadata={"progress": 40, "started_at": time.time()}
+        metadata={"progress": 40, "started_at": time.time()},
     )
     print(f"Created checkpoint: {checkpoint.checkpoint_id}")
 
@@ -282,10 +276,7 @@ async def resilient_operations_example():
 
 
 async def create_node(
-    node_type: NodeRole,
-    storage_dir: str,
-    port: int = 0,
-    bootstrap_peers: List[str] = None
+    node_type: NodeRole, storage_dir: str, port: int = 0, bootstrap_peers: List[str] = None
 ) -> LibP2PNode:
     """Create a node of the specified type."""
     # Create a new node
@@ -293,7 +284,7 @@ async def create_node(
         role=node_type,
         storage_dir=storage_dir,
         listen_port=port,
-        bootstrap_peers=bootstrap_peers or []
+        bootstrap_peers=bootstrap_peers or [],
     )
 
     # Initialize the node
@@ -322,19 +313,21 @@ async def create_example_dataset(manager: DistributedDatasetManager):
     # Create sample data
     data = []
     for i in range(num_records):
-        data.append({
-            "id": i,
-            "title": f"Item {i}",
-            "value": random.random() * 100,
-            "category": random.choice(["A", "B", "C"]),
-            "vector": [random.random() for _ in range(10)]
-        })
+        data.append(
+            {
+                "id": i,
+                "title": f"Item {i}",
+                "value": random.random() * 100,
+                "category": random.choice(["A", "B", "C"]),
+                "vector": [random.random() for _ in range(10)],
+            }
+        )
 
     # Create dataset
     dataset_id = await manager.create_dataset(
         name=dataset_name,
         description="Example dataset for resilient operations",
-        metadata={"source": "synthetic", "type": "example"}
+        metadata={"source": "synthetic", "type": "example"},
     )
 
     # Shard and distribute
@@ -342,7 +335,7 @@ async def create_example_dataset(manager: DistributedDatasetManager):
         dataset_id=dataset_id,
         data=data,
         shard_size=shard_size,
-        replication_factor=1  # Start with 1, we'll use resilient_rebalance later
+        replication_factor=1,  # Start with 1, we'll use resilient_rebalance later
     )
 
     return dataset_id

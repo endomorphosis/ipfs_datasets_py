@@ -90,10 +90,7 @@ def crypto_ir_identity(
     schema_version: str = CRYPTO_IR_KERNEL_SCHEMA_VERSION,
     domain: str = CRYPTO_IR_IDENTITY_DOMAIN,
     collection_schema: (
-        CollectionSchema
-        | Mapping[str, CollectionSemantics | str]
-        | Sequence[CollectionRule]
-        | None
+        CollectionSchema | Mapping[str, CollectionSemantics | str] | Sequence[CollectionRule] | None
     ) = None,
 ) -> CanonicalIdentity:
     """Compute the shared fixed-profile identity for a Crypto IR payload."""
@@ -121,10 +118,7 @@ def chain_qualified_identity(
     genesis_digest: str,
     schema_version: str = CRYPTO_IR_KERNEL_SCHEMA_VERSION,
     collection_schema: (
-        CollectionSchema
-        | Mapping[str, CollectionSemantics | str]
-        | Sequence[CollectionRule]
-        | None
+        CollectionSchema | Mapping[str, CollectionSemantics | str] | Sequence[CollectionRule] | None
     ) = None,
 ) -> CanonicalIdentity:
     """Identity for a payload whose chain/genesis binding is authoritative.
@@ -139,9 +133,7 @@ def chain_qualified_identity(
         ("genesis_digest", genesis_digest),
     ):
         if not isinstance(value, str) or not value.strip() or value != value.strip():
-            raise CryptoIRIdentityError(
-                f"{name} must be a non-empty exact string"
-            )
+            raise CryptoIRIdentityError(f"{name} must be a non-empty exact string")
 
     envelope = {
         "chain_namespace": chain_namespace,

@@ -105,7 +105,7 @@ config = UnifiedVectorStoreConfig(
     auto_pin_to_ipfs=False,
     ipld_chunk_size=1000,
     batch_size=1000,
-    parallel_workers=4
+    parallel_workers=4,
 )
 ```
 
@@ -115,7 +115,7 @@ router = RouterIntegration(
     use_embeddings_router=True,
     use_ipfs_router=True,
     embeddings_provider="gemini",
-    ipfs_backend="accelerate"
+    ipfs_backend="accelerate",
 )
 
 # Generate embeddings
@@ -137,7 +137,7 @@ result = IPLDEmbeddingResult(
     metadata={"source": "doc1"},
     cid="QmXXX...",
     vector_cid="QmVVV...",
-    stored_at="2026-02-16T08:00:00Z"
+    stored_at="2026-02-16T08:00:00Z",
 )
 
 # Collection metadata
@@ -150,7 +150,7 @@ metadata = CollectionMetadata(
     index_cid="QmIDX...",
     vectors_cid="QmVEC...",
     chunked=True,
-    chunk_size=1000
+    chunk_size=1000,
 )
 ```
 

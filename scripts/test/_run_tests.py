@@ -9,14 +9,16 @@ import importlib.util as importlib_util
 import csv
 import sys
 
+
 def _save_to_csv(file_path, data: tuple[str]):
     """
     Save the given data to a CSV file at the specified path.
     """
-    with open(file_path, mode='w', newline='') as file:
+    with open(file_path, mode="w", newline="") as file:
         writer = csv.writer(file)
         for row in data:
             writer.writerow(row)
+
 
 async def main():
     """
@@ -35,14 +37,14 @@ async def main():
             try:
                 # Try to compile the file to check for syntax errors
                 try:
-                    compile(file.read_text(), file.name, 'exec')
+                    compile(file.read_text(), file.name, "exec")
                 except SyntaxError as e:
                     print(f"Syntax error in {file.name}: {e}")
-                    bad_files.append((file.resolve(), type(e).__name__ , str(e)))
+                    bad_files.append((file.resolve(), type(e).__name__, str(e)))
                     continue
                 except Exception as e:
                     print(f"Error compiling {file.name}: {e}")
-                    bad_files.append((file.resolve(), type(e).__name__ , str(e)))
+                    bad_files.append((file.resolve(), type(e).__name__, str(e)))
                     continue
 
                 # Try to import it to check for import errors
@@ -51,36 +53,36 @@ async def main():
                     spec = importlib_util.spec_from_file_location(module_name, file)
                     if spec is None:
                         print(f"Could not find spec for {file.name}")
-                        bad_files.append((file.resolve(), "ImportError" ,"Could not find spec"))
+                        bad_files.append((file.resolve(), "ImportError", "Could not find spec"))
                         continue
                     module = importlib_util.module_from_spec(spec)
                     spec.loader.exec_module(module)
                 except ImportError as e:
                     print(f"Import error in {file.name}: {e}")
-                    bad_files.append((file.resolve(), type(e).__name__ , str(e)))
+                    bad_files.append((file.resolve(), type(e).__name__, str(e)))
                     continue
                 except Exception as e:
                     print(f"Unexpected Error importing {file.name}: {e}")
-                    bad_files.append((file.resolve(), type(e).__name__ , str(e)))
+                    bad_files.append((file.resolve(), type(e).__name__, str(e)))
                     continue
 
                 # Run them to check for runtime errors
                 # This should throw attribute errors for all those assert statements.
                 if "if __name__ == '__main__':" in file.read_text():
                     try:
-                        with open(file, 'r') as f:
+                        with open(file, "r") as f:
                             code = f.read()
                         exec(code, module.__dict__)
                     except AttributeError as e:
                         print(f"Attribute error in {file.name}: {e}")
-                        bad_files.append((file.resolve(), type(e).__name__ , str(e)))
+                        bad_files.append((file.resolve(), type(e).__name__, str(e)))
                         continue
-                    except Exception as e: 
+                    except Exception as e:
                         print(f"Runtime error in {file.name}: {e}")
-                        bad_files.append((file.resolve(), type(e).__name__ , str(e)))
+                        bad_files.append((file.resolve(), type(e).__name__, str(e)))
                         continue
             except Exception as e:
-                continue # NO BREAKS
+                continue  # NO BREAKS
             finally:
                 # Ensure the module is cleaned up after each test
                 if module_name in sys.modules:
@@ -102,6 +104,7 @@ if __name__ == "__main__":
         exit(0)
     except Exception as e:
         import traceback
+
         print(f"Error: {e}\n{traceback.format_exc()}")
         exit(1)
     else:

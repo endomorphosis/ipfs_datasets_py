@@ -132,24 +132,22 @@ def test_summarize_parser_elements_includes_phase8_quality_metrics() -> None:
     assert summary["decoder_reconstruction_metrics"]["proof_ready_count"] == 1
     assert summary["prover_syntax_target_coverage"]["all_required_passed"] is True
     assert summary["prover_syntax_corpus_coverage"]["all_sources_complete"] is True
-    assert summary["prover_syntax_corpus_coverage"][
-        "all_sources_required_targets_passed"
-    ] is True
+    assert summary["prover_syntax_corpus_coverage"]["all_sources_required_targets_passed"] is True
     assert summary["phase8_quality_summary"]["requires_validation"] is True
-    assert summary["phase8_quality_summary"]["prover_syntax_corpus_coverage"][
-        "source_complete_rate"
-    ] == 1.0
+    assert (
+        summary["phase8_quality_summary"]["prover_syntax_corpus_coverage"]["source_complete_rate"]
+        == 1.0
+    )
     assert summary["parser_capability_profile_metrics"]["requires_validation"] is True
-    assert summary["parser_capability_profile_metrics"][
-        "coverage_blocker_distribution"
-    ] == {
+    assert summary["parser_capability_profile_metrics"]["coverage_blocker_distribution"] == {
         "cross_reference_requires_resolution": 1,
         "exception_requires_scope_review": 1,
         "llm_repair_required": 1,
     }
-    assert "missing_reconstruction_slot:cross_references" in summary[
-        "phase8_coverage_blocker_distribution"
-    ]
+    assert (
+        "missing_reconstruction_slot:cross_references"
+        in summary["phase8_coverage_blocker_distribution"]
+    )
 
 
 def test_summarize_phase8_parser_metrics_exposes_dedicated_surface() -> None:
@@ -167,17 +165,16 @@ def test_summarize_phase8_parser_metrics_exposes_dedicated_surface() -> None:
     assert summary["phase8_prover_corpus_source_complete_rate"] == 1.0
     assert summary["phase8_ir_grounded_slot_rate"] > 0.0
     assert summary["phase8_quality_record_count"] == 1
-    assert summary["phase8_quality_summary"]["prover_syntax_target_coverage"][
-        "all_required_passed"
-    ] is True
+    assert (
+        summary["phase8_quality_summary"]["prover_syntax_target_coverage"]["all_required_passed"]
+        is True
+    )
 
 
 def test_phase8_metrics_summarize_parser_capability_families() -> None:
     elements = [
         extract_normative_elements("The tenant must pay rent monthly.")[0],
-        extract_normative_elements(
-            "The Director is delegated authority to approve permits."
-        )[0],
+        extract_normative_elements("The Director is delegated authority to approve permits.")[0],
         extract_normative_elements(
             "The Director shall issue a permit within 10 days after application."
         )[0],
@@ -207,9 +204,10 @@ def test_phase8_metrics_summarize_parser_capability_families() -> None:
         "temporal_deadline_duty": 1,
     }
     assert capability["record_count"] == 8
-    assert capability["capability_family_distribution"] == summary[
-        "phase8_parser_capability_family_distribution"
-    ]
+    assert (
+        capability["capability_family_distribution"]
+        == summary["phase8_parser_capability_family_distribution"]
+    )
     assert capability["formula_proof_ready_count"] == 7
     assert capability["formula_proof_ready_rate"] == 0.875
     assert capability["repair_required_count"] == 1

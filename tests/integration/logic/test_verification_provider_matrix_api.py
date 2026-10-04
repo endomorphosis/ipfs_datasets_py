@@ -92,17 +92,13 @@ def test_provider_matrix_import_is_side_effect_free(monkeypatch) -> None:
         catalog = registry_mod.declared_backend_catalog()
         _ = registry_mod.provider_matrix_declarations()
 
-    assert registry_mod.EXECUTABLE_PROVIDER_MATRIX_INTERFACE == (
-        "ExecutableProviderMatrix@1"
-    )
+    assert registry_mod.EXECUTABLE_PROVIDER_MATRIX_INTERFACE == ("ExecutableProviderMatrix@1")
     assert api_mod.EXECUTABLE_PROVIDER_MATRIX_INTERFACE == "ExecutableProviderMatrix@1"
     assert len(catalog) >= 9
     # Optional tool stacks must not be required merely for declarative discovery.
     assert "ipfs_datasets_py.logic.external_provers.lazy_installer" not in sys.modules
     ipfs_warnings = [
-        item
-        for item in recorded
-        if "ipfs_datasets_py" in (getattr(item, "filename", "") or "")
+        item for item in recorded if "ipfs_datasets_py" in (getattr(item, "filename", "") or "")
     ]
     assert ipfs_warnings == []
 

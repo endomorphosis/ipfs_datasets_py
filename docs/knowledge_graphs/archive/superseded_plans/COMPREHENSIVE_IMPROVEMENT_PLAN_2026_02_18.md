@@ -252,7 +252,7 @@ Current status:
 2. Clarify which features require which optional dependencies
 3. Add dependency groups to setup.py:
    ```python
-   extras_require={
+   extras_require = {
        "neural": ["transformers>=4.0"],
        "advanced": ["spacy>=3.0", "nltk>=3.6"],
        "pdf": ["reportlab>=3.6"],
@@ -369,7 +369,7 @@ def _compile_create_relationship(self, rel):
         "start_node": rel.start_node,
         "end_node": rel.end_node,
         "rel_type": rel.relationship_type,
-        "properties": rel.properties or {}
+        "properties": rel.properties or {},
     }
 ```
 
@@ -481,7 +481,7 @@ def test_neural_extraction_without_transformers():
 **Implementation:**
 ```python
 # setup.py
-extras_require={
+extras_require = {
     "neural": [
         "transformers>=4.0",
         "torch>=1.9",

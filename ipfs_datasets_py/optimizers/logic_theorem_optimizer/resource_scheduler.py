@@ -183,14 +183,10 @@ class SchedulerPressureSummary:
         if unified_pressure is None:
             unified_pressure = max(
                 cls._ratio(data.get("memory_percent", data.get("memory_pressure", 0.0))),
-                cls._ratio(
-                    data.get("gpu_memory_percent", data.get("gpu_memory_pressure", 0.0))
-                ),
+                cls._ratio(data.get("gpu_memory_percent", data.get("gpu_memory_pressure", 0.0))),
             )
         observed_children = int(data.get("child_process_count", 0) or 0)
-        leased_process_slots = int(
-            scheduler.get("allocated_child_process_slots", 0) or 0
-        )
+        leased_process_slots = int(scheduler.get("allocated_child_process_slots", 0) or 0)
         return cls(
             cpu_utilization=data.get("cpu_percent", data.get("cpu_utilization", 0.0)),
             memory_pressure=data.get("memory_percent", data.get("memory_pressure", 0.0)),
@@ -231,7 +227,9 @@ class SchedulerPressureSummary:
         allocated = dict(data.get("allocated") or {})
         available = dict(data.get("available") or {})
         total_cpu = max(1.0, float(capacity.get("cpu_slots", 1) or 1))
-        total_mem = max(1.0, float(capacity.get("usable_memory_mb", capacity.get("memory_mb", 1)) or 1))
+        total_mem = max(
+            1.0, float(capacity.get("usable_memory_mb", capacity.get("memory_mb", 1)) or 1)
+        )
         available_mem = max(0.0, float(available.get("memory_mb", 0) or 0))
         gpu_total = capacity.get("usable_gpu_memory_mb")
         gpu_available = available.get("gpu_memory_mb")
@@ -377,18 +375,14 @@ def default_scheduler_state_path() -> Path:
 class ResourceSchedulerConfig:
     """Host-level capacity, reservation, and lease-recovery policy."""
 
-    total_cpu_slots: int = field(
-        default_factory=lambda: int(os.environ.get(DEFAULT_CPU_ENV, "20"))
-    )
+    total_cpu_slots: int = field(default_factory=lambda: int(os.environ.get(DEFAULT_CPU_ENV, "20")))
     total_memory_mb: int = field(default_factory=_default_memory_mb)
     total_gpu_memory_mb: Optional[int] = field(default_factory=_default_gpu_memory_mb)
     total_unified_memory_mb: Optional[int] = field(default_factory=_default_unified_memory_mb)
     total_child_process_slots: int = field(default_factory=_default_child_process_slots)
     reserved_memory_mb: int = 0
     reserved_gpu_memory_mb: int = 0
-    lane_reservations: Mapping[
-        str, Union[LaneReservation, Mapping[str, Any], int]
-    ] = field(
+    lane_reservations: Mapping[str, Union[LaneReservation, Mapping[str, Any], int]] = field(
         default_factory=lambda: {
             lane: LaneReservation(cpu_slots=slots)
             for lane, slots in DEFAULT_LANE_CPU_RESERVATIONS.items()
@@ -423,7 +417,9 @@ class ResourceSchedulerConfig:
             or not isinstance(self.total_gpu_memory_mb, int)
             or self.total_gpu_memory_mb <= 0
         ):
-            raise ResourceConfigurationError("total_gpu_memory_mb must be a positive integer or None")
+            raise ResourceConfigurationError(
+                "total_gpu_memory_mb must be a positive integer or None"
+            )
         if self.total_unified_memory_mb is not None and (
             isinstance(self.total_unified_memory_mb, bool)
             or not isinstance(self.total_unified_memory_mb, int)
@@ -437,9 +433,7 @@ class ResourceSchedulerConfig:
             or not isinstance(self.total_child_process_slots, int)
             or self.total_child_process_slots <= 0
         ):
-            raise ResourceConfigurationError(
-                "total_child_process_slots must be a positive integer"
-            )
+            raise ResourceConfigurationError("total_child_process_slots must be a positive integer")
         if (
             isinstance(self.reserved_memory_mb, bool)
             or not isinstance(self.reserved_memory_mb, int)
@@ -451,7 +445,9 @@ class ResourceSchedulerConfig:
             or not isinstance(self.reserved_gpu_memory_mb, int)
             or self.reserved_gpu_memory_mb < 0
         ):
-            raise ResourceConfigurationError("reserved_gpu_memory_mb must be a non-negative integer")
+            raise ResourceConfigurationError(
+                "reserved_gpu_memory_mb must be a non-negative integer"
+            )
         if self.reserved_memory_mb >= self.total_memory_mb:
             raise ResourceConfigurationError("reserved_memory_mb must be below total_memory_mb")
         if (
@@ -829,8 +825,7 @@ class GlobalResourceScheduler:
             return
         if state.get("leases") or state.get("waiters"):
             raise ResourceConfigurationError(
-                "scheduler capacity differs from active shared state at "
-                f"{self.state_path}"
+                f"scheduler capacity differs from active shared state at {self.state_path}"
             )
         state.clear()
         state.update(self._new_state())
@@ -924,7 +919,9 @@ class GlobalResourceScheduler:
         return ResourceSnapshot(**{key: item for key, item in payload.items() if key in allowed})
 
     @staticmethod
-    def _pressure_reason(snapshot: ResourceSnapshot, waiter: Mapping[str, Any], config: ResourceSchedulerConfig) -> str:
+    def _pressure_reason(
+        snapshot: ResourceSnapshot, waiter: Mapping[str, Any], config: ResourceSchedulerConfig
+    ) -> str:
         if (
             config.max_memory_percent is not None
             and snapshot.memory_percent is not None
@@ -1014,18 +1011,15 @@ class GlobalResourceScheduler:
             protected_memory += max(0, reservation.memory_mb - int(usage.get("memory_mb", 0)))
         usable_memory = self.config.total_memory_mb - self.config.reserved_memory_mb
         static_allows = (
-            used_cpu + int(waiter["cpu_slots"]) + protected_cpu
-            <= self.config.total_cpu_slots
-            and used_memory + int(waiter["memory_mb"]) + protected_memory
-            <= usable_memory
+            used_cpu + int(waiter["cpu_slots"]) + protected_cpu <= self.config.total_cpu_slots
+            and used_memory + int(waiter["memory_mb"]) + protected_memory <= usable_memory
         )
         if not static_allows:
             return False
         requested_unified = int(waiter.get("unified_memory_mb", 0))
         if (
             self.config.total_unified_memory_mb is not None
-            and used_unified_memory + requested_unified
-            > self.config.total_unified_memory_mb
+            and used_unified_memory + requested_unified > self.config.total_unified_memory_mb
         ):
             return False
         if (
@@ -1186,17 +1180,13 @@ class GlobalResourceScheduler:
             or not isinstance(unified_memory_mb, int)
             or unified_memory_mb < 0
         ):
-            raise ResourceConfigurationError(
-                "unified_memory_mb must be a non-negative integer"
-            )
+            raise ResourceConfigurationError("unified_memory_mb must be a non-negative integer")
         if (
             isinstance(child_process_slots, bool)
             or not isinstance(child_process_slots, int)
             or child_process_slots < 0
         ):
-            raise ResourceConfigurationError(
-                "child_process_slots must be a non-negative integer"
-            )
+            raise ResourceConfigurationError("child_process_slots must be a non-negative integer")
         if timeout is not None and (not math.isfinite(float(timeout)) or timeout < 0):
             raise ResourceConfigurationError("timeout must be non-negative and finite")
         if parent is not None and parent_lease is not None:
@@ -1209,11 +1199,15 @@ class GlobalResourceScheduler:
                 for reserved_lane, reservation in reservations.items()
                 if reserved_lane != lane_value
             )
-            maximum_memory = self.config.total_memory_mb - sum(
-                reservation.memory_mb
-                for reserved_lane, reservation in reservations.items()
-                if reserved_lane != lane_value
-            ) - self.config.reserved_memory_mb
+            maximum_memory = (
+                self.config.total_memory_mb
+                - sum(
+                    reservation.memory_mb
+                    for reserved_lane, reservation in reservations.items()
+                    if reserved_lane != lane_value
+                )
+                - self.config.reserved_memory_mb
+            )
             if cpu_slots > maximum_cpu or memory_mb > maximum_memory:
                 raise ResourceUnavailableError(
                     "request exceeds capacity available to its reservation lane"
@@ -1265,20 +1259,18 @@ class GlobalResourceScheduler:
                         if cpu_slots > int(parent_record["cpu_slots"]) or memory_mb > int(
                             parent_record["memory_mb"]
                         ):
-                            raise ResourceUnavailableError("child request exceeds parent lease capacity")
+                            raise ResourceUnavailableError(
+                                "child request exceeds parent lease capacity"
+                            )
                         if gpu_memory_mb > int(parent_record.get("gpu_memory_mb", 0)):
                             raise ResourceUnavailableError(
                                 "child GPU memory request exceeds parent lease capacity"
                             )
-                        if unified_memory_mb > int(
-                            parent_record.get("unified_memory_mb", 0)
-                        ):
+                        if unified_memory_mb > int(parent_record.get("unified_memory_mb", 0)):
                             raise ResourceUnavailableError(
                                 "child unified-memory request exceeds parent lease capacity"
                             )
-                        if child_process_slots > int(
-                            parent_record.get("child_process_slots", 0)
-                        ):
+                        if child_process_slots > int(parent_record.get("child_process_slots", 0)):
                             raise ResourceUnavailableError(
                                 "child process request exceeds parent lease capacity"
                             )
@@ -1303,11 +1295,11 @@ class GlobalResourceScheduler:
                     }
                 waiter = state["waiters"][waiter_id]
                 parent_record = state["leases"].get(parent_id) if parent_id else None
-                parent_cancelled = bool(parent_id and (parent_record is None or parent_record.get("cancelled")))
-                timed_out = deadline is not None and now_mono >= deadline
-                can_grant_now = self._can_grant(state, waiter) and self._is_fair_turn(
-                    state, waiter
+                parent_cancelled = bool(
+                    parent_id and (parent_record is None or parent_record.get("cancelled"))
                 )
+                timed_out = deadline is not None and now_mono >= deadline
+                can_grant_now = self._can_grant(state, waiter) and self._is_fair_turn(state, waiter)
                 if (
                     not externally_cancelled
                     and not parent_cancelled
@@ -1473,7 +1465,9 @@ class GlobalResourceScheduler:
                 lane_usage,
             ) = self._root_usage(state)
             reservations = self.config.reservations()
-            lane_names = sorted(set(reservations) | set(lane_usage) | set(state["metrics"]["lanes"]))
+            lane_names = sorted(
+                set(reservations) | set(lane_usage) | set(state["metrics"]["lanes"])
+            )
             lanes: Dict[str, Any] = {}
             for lane in lane_names:
                 usage = lane_usage.get(
@@ -1515,8 +1509,7 @@ class GlobalResourceScheduler:
                     "usable_gpu_memory_mb": (
                         None
                         if self.config.total_gpu_memory_mb is None
-                        else self.config.total_gpu_memory_mb
-                        - self.config.reserved_gpu_memory_mb
+                        else self.config.total_gpu_memory_mb - self.config.reserved_gpu_memory_mb
                     ),
                     "reserved_gpu_memory_mb": self.config.reserved_gpu_memory_mb,
                     "unified_memory_mb": self.config.total_unified_memory_mb,
@@ -1585,9 +1578,7 @@ class GlobalResourceScheduler:
                 "wait_time_seconds": {
                     "count": len(samples),
                     "total": float(metrics["wait_seconds_total"]),
-                    "mean": float(metrics["wait_seconds_total"]) / len(samples)
-                    if samples
-                    else 0.0,
+                    "mean": float(metrics["wait_seconds_total"]) / len(samples) if samples else 0.0,
                     "max": float(metrics["wait_seconds_max"]),
                     "p50": self._percentile(samples, 0.50),
                     "p95": self._percentile(samples, 0.95),
@@ -1690,9 +1681,7 @@ def configure_global_resource_scheduler(
     return scheduler
 
 
-def acquire_resource_lease(
-    lane: Union[str, ResourceLane], **kwargs: Any
-) -> ResourceLease:
+def acquire_resource_lease(lane: Union[str, ResourceLane], **kwargs: Any) -> ResourceLease:
     """Convenience entry point used by Hammer, Lean, validation, and Codex."""
 
     return get_global_resource_scheduler().acquire(lane, **kwargs)

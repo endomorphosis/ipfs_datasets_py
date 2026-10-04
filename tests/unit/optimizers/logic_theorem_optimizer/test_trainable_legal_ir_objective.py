@@ -110,18 +110,18 @@ def test_generalizable_projection_trains_legal_ir_view_head_from_cached_targets(
 
     assert report["sample_memory_used"] is False
     assert "legal_ir_view_global_logits" in report["candidate_update_order"]
-    assert "legal_ir:legal_ir_view_cross_entropy_loss" in report[
-        "evaluated_objective"
-    ]["selected_metric_names"]
-    first_attempt = report["epoch_reports"][0]["candidate_reports"][0][
-        "attempt_reports"
-    ][0]
+    assert (
+        "legal_ir:legal_ir_view_cross_entropy_loss"
+        in report["evaluated_objective"]["selected_metric_names"]
+    )
+    first_attempt = report["epoch_reports"][0]["candidate_reports"][0]["attempt_reports"][0]
     assert first_attempt["trainable_legal_ir_head_norms"]["finite"] is True
     assert set(first_attempt["gradient_norms_by_head"]) <= set(
         first_attempt["update_norms_by_head"]
     )
-    assert after.legal_ir_losses["legal_ir_view_cross_entropy_loss"] <= (
-        before.legal_ir_losses["legal_ir_view_cross_entropy_loss"]
+    assert (
+        after.legal_ir_losses["legal_ir_view_cross_entropy_loss"]
+        <= (before.legal_ir_losses["legal_ir_view_cross_entropy_loss"])
     )
 
 

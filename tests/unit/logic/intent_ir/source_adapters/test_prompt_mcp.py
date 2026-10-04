@@ -44,12 +44,7 @@ from ipfs_datasets_py.logic.intent_ir.source_adapters.skillcenter import (
 )
 
 
-FIXTURE_ROOT = (
-    Path(__file__).resolve().parents[4]
-    / "fixtures"
-    / "intent_ir"
-    / "prompt_mcp"
-)
+FIXTURE_ROOT = Path(__file__).resolve().parents[4] / "fixtures" / "intent_ir" / "prompt_mcp"
 
 
 def _load_json(path: Path) -> dict:
@@ -133,11 +128,7 @@ def test_prompt_identity_digests_are_stable_across_calls() -> None:
     expected = _expected_identities()["prompts"]["benign_goal"]
 
     assert first.entry_cid == second.entry_cid == expected["entry_cid"]
-    assert (
-        first.entry_identity.sha256
-        == second.entry_identity.sha256
-        == expected["entry_sha256"]
-    )
+    assert first.entry_identity.sha256 == second.entry_identity.sha256 == expected["entry_sha256"]
     assert first.content_sha256 == second.content_sha256 == expected["content_sha256"]
     assert first.entry_identity.cid.startswith("b")
     assert first.content_cid.startswith("b")
@@ -179,9 +170,7 @@ def test_benign_prompt_adapts_to_validated_intent_ir() -> None:
     digest_a = intent_ir_sha256(validated)
     digest_b = intent_ir_sha256(adapter.adapt(record))
     assert digest_a == digest_b
-    assert canonical_intent_ir_json(validated) == canonical_intent_ir_json(
-        adapter.adapt(record)
-    )
+    assert canonical_intent_ir_json(validated) == canonical_intent_ir_json(adapter.adapt(record))
 
 
 # ---------------------------------------------------------------------------
@@ -230,8 +219,7 @@ def test_prompt_injection_detector_codes_are_specific() -> None:
     assert any(f.code == "hostile.ignore_instructions" for f in ignore.findings)
     assert ignore.hostile_input_decision is PromptFindingDecision.QUARANTINED
     assert any(
-        f.code in {"hostile.tool_call_markup", "hostile.tool_instruction"}
-        for f in tool.findings
+        f.code in {"hostile.tool_call_markup", "hostile.tool_instruction"} for f in tool.findings
     )
     assert any(f.category.value == "secret" for f in secret.findings)
     assert secret.secret_pii_decision is PromptFindingDecision.QUARANTINED
@@ -260,11 +248,7 @@ def test_mcp_tool_identity_digests_are_stable_across_calls() -> None:
     expected = _expected_identities()["mcp_tools"]["benign_echo"]
 
     assert first.entry_cid == second.entry_cid == expected["entry_cid"]
-    assert (
-        first.entry_identity.sha256
-        == second.entry_identity.sha256
-        == expected["entry_sha256"]
-    )
+    assert first.entry_identity.sha256 == second.entry_identity.sha256 == expected["entry_sha256"]
     assert first.content_sha256 == second.content_sha256 == expected["content_sha256"]
 
 

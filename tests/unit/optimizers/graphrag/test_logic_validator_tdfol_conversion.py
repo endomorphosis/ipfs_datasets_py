@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
 
+
 def test_ontology_to_tdfol_returns_non_empty_string_facts_without_tdfol() -> None:
     from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
 
@@ -11,9 +12,7 @@ def test_ontology_to_tdfol_returns_non_empty_string_facts_without_tdfol() -> Non
 
     ontology = {
         "entities": [{"id": "e1", "type": "Person", "text": "Alice"}],
-        "relationships": [
-            {"id": "r1", "source_id": "e1", "target_id": "e1", "type": "knows"}
-        ],
+        "relationships": [{"id": "r1", "source_id": "e1", "target_id": "e1", "type": "knows"}],
     }
 
     formulas = validator.ontology_to_tdfol(ontology)
@@ -95,9 +94,7 @@ class TestEntityContradictionCount:
                 {"id": "e1", "type": "Person", "text": "Alice"},
                 {"id": "e2", "type": "Person", "text": "Bob"},
             ],
-            "relationships": [
-                {"id": "r1", "source_id": "e1", "target_id": "e2", "type": "knows"}
-            ],
+            "relationships": [{"id": "r1", "source_id": "e1", "target_id": "e2", "type": "knows"}],
         }
         count = validator.entity_contradiction_count(ontology)
         assert count == 0
@@ -127,4 +124,3 @@ class TestEntityContradictionCount:
         }
         count = validator.entity_contradiction_count(ontology)
         assert count >= 0
-

@@ -10,6 +10,7 @@ Covers previously-untested branches:
 * has_advanced_features(), get_workflow_scheduler(), get_peer_registry()
 * _initialize_mcplusplus_features: all internal paths
 """
+
 from __future__ import annotations
 
 import sys
@@ -33,6 +34,7 @@ from ipfs_datasets_py.mcp_server.exceptions import P2PServiceError
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_mgr(**kwargs) -> P2PServiceManager:
     defaults = dict(enabled=True, queue_path="/tmp/q.duckdb")
     defaults.update(kwargs)
@@ -43,8 +45,8 @@ def _make_mgr(**kwargs) -> P2PServiceManager:
 # _ensure_ipfs_accelerate_on_path
 # ===========================================================================
 
-class TestEnsureIpfsAccelerateOnPath:
 
+class TestEnsureIpfsAccelerateOnPath:
     def test_adds_path_when_candidate_exists(self, tmp_path):
         """When the candidate dir exists and is not in sys.path, it is prepended."""
         candidate = tmp_path / "ipfs_accelerate_py"
@@ -55,8 +57,7 @@ class TestEnsureIpfsAccelerateOnPath:
         # Capture sys.path length before
         before_len = len(sys.path)
 
-        with patch("ipfs_datasets_py.mcp_server.p2p_service_manager.__file__",
-                   str(fake_file)):
+        with patch("ipfs_datasets_py.mcp_server.p2p_service_manager.__file__", str(fake_file)):
             _ensure_ipfs_accelerate_on_path()
             # Function must not raise; sys.path must not be corrupted
             assert len(sys.path) >= before_len
@@ -71,8 +72,10 @@ class TestEnsureIpfsAccelerateOnPath:
 
     def test_oserror_suppressed(self):
         """OSError during path inspection must be silently swallowed."""
-        with patch("ipfs_datasets_py.mcp_server.p2p_service_manager.__file__",
-                   "/nonexistent/path/that/raises"):
+        with patch(
+            "ipfs_datasets_py.mcp_server.p2p_service_manager.__file__",
+            "/nonexistent/path/that/raises",
+        ):
             _ensure_ipfs_accelerate_on_path()  # must not raise
 
 
@@ -80,8 +83,8 @@ class TestEnsureIpfsAccelerateOnPath:
 # P2PServiceManager.start()
 # ===========================================================================
 
-class TestP2PServiceManagerStart:
 
+class TestP2PServiceManagerStart:
     def test_start_returns_false_when_disabled(self):
         mgr = _make_mgr(enabled=False)
         result = mgr.start()
@@ -112,8 +115,7 @@ class TestP2PServiceManagerStart:
         fake_p2p_tasks.TaskQueueP2PServiceRuntime = FakeRuntime
 
         mgr = _make_mgr()
-        with patch.dict(sys.modules,
-                        {"ipfs_accelerate_py.p2p_tasks.runtime": fake_p2p_tasks}):
+        with patch.dict(sys.modules, {"ipfs_accelerate_py.p2p_tasks.runtime": fake_p2p_tasks}):
             with patch.object(mgr, "_initialize_mcplusplus_features"):
                 result = mgr.start()
 
@@ -130,8 +132,7 @@ class TestP2PServiceManagerStart:
             def __getattr__(self, name):
                 raise RuntimeError("bad import attr")
 
-        with patch.dict(sys.modules,
-                        {"ipfs_accelerate_py.p2p_tasks.runtime": _BadModule()}):
+        with patch.dict(sys.modules, {"ipfs_accelerate_py.p2p_tasks.runtime": _BadModule()}):
             result = mgr.start()
         assert result is False
 
@@ -156,8 +157,8 @@ class TestP2PServiceManagerStart:
 # P2PServiceManager.state()
 # ===========================================================================
 
-class TestP2PServiceManagerState:
 
+class TestP2PServiceManagerState:
     def test_state_returns_p2pservicestate_instance(self):
         mgr = _make_mgr()
         result = mgr.state()
@@ -185,6 +186,7 @@ class TestP2PServiceManagerState:
             @property
             def last_error(self):
                 raise P2PServiceError("P2P failed")
+
             running = False
 
         mgr._runtime = BadRuntime()
@@ -200,18 +202,13 @@ class TestP2PServiceManagerState:
 
         # Make get_local_service_state raise
         import ipfs_datasets_py.mcp_server.p2p_service_manager as p2p_mod
+
         fake_service = MagicMock()
         fake_service.get_local_service_state.side_effect = RuntimeError("no state")
-        fake_p2p_service = types.ModuleType(
-            "ipfs_accelerate_py.p2p_tasks.service"
-        )
-        fake_p2p_service.get_local_service_state = MagicMock(
-            side_effect=RuntimeError("no state")
-        )
+        fake_p2p_service = types.ModuleType("ipfs_accelerate_py.p2p_tasks.service")
+        fake_p2p_service.get_local_service_state = MagicMock(side_effect=RuntimeError("no state"))
         fake_p2p_service.list_known_peers = MagicMock(return_value=[])
-        with patch.dict(
-            sys.modules, {"ipfs_accelerate_py.p2p_tasks.service": fake_p2p_service}
-        ):
+        with patch.dict(sys.modules, {"ipfs_accelerate_py.p2p_tasks.service": fake_p2p_service}):
             s = mgr.state()
         assert isinstance(s, P2PServiceState)
 
@@ -220,8 +217,8 @@ class TestP2PServiceManagerState:
 # has_advanced_features / get_workflow_scheduler / get_peer_registry
 # ===========================================================================
 
-class TestAdvancedFeatureAccessors:
 
+class TestAdvancedFeatureAccessors:
     def test_has_advanced_features_false_by_default(self):
         mgr = _make_mgr()
         assert mgr.has_advanced_features() is False
@@ -256,16 +253,14 @@ class TestAdvancedFeatureAccessors:
 # _initialize_mcplusplus_features
 # ===========================================================================
 
-class TestInitializeMCPPlusPlus:
 
+class TestInitializeMCPPlusPlus:
     def test_import_error_sets_available_false(self):
         """When ipfs_datasets_py.mcp_server.mcplusplus not importable → flag stays False."""
         mgr = _make_mgr()
         import ipfs_datasets_py.mcp_server.p2p_service_manager as p2p_mod
-        with patch.dict(
-            sys.modules,
-            {"ipfs_datasets_py.mcp_server.mcplusplus": None}
-        ):
+
+        with patch.dict(sys.modules, {"ipfs_datasets_py.mcp_server.mcplusplus": None}):
             mgr._initialize_mcplusplus_features()
         assert mgr._mcplusplus_available is False
 
@@ -277,10 +272,7 @@ class TestInitializeMCPPlusPlus:
         fake_mcp.HAVE_WORKFLOW_SCHEDULER = False
         fake_mcp.HAVE_PEER_REGISTRY = False
         fake_mcp.HAVE_BOOTSTRAP = False
-        with patch.dict(
-            sys.modules,
-            {"ipfs_datasets_py.mcp_server.mcplusplus": fake_mcp}
-        ):
+        with patch.dict(sys.modules, {"ipfs_datasets_py.mcp_server.mcplusplus": fake_mcp}):
             mgr._initialize_mcplusplus_features()
         assert mgr._workflow_scheduler is None
 
@@ -291,14 +283,12 @@ class TestInitializeMCPPlusPlus:
 
         class BoomModule:
             HAVE_MCPLUSPLUS = True  # gets past the guard
+
             @property
             def HAVE_WORKFLOW_SCHEDULER(self):
                 raise RuntimeError("boom")
 
-        with patch.dict(
-            sys.modules,
-            {"ipfs_datasets_py.mcp_server.mcplusplus": BoomModule()}
-        ):
+        with patch.dict(sys.modules, {"ipfs_datasets_py.mcp_server.mcplusplus": BoomModule()}):
             mgr._initialize_mcplusplus_features()
 
         assert mgr._mcplusplus_available is False

@@ -11,6 +11,7 @@ Targets (88% → 89%):
 - document_consistency_checker.py 89% → 93%+ (proof engine branch, recommendations, _generate_recommendations, calculate_confidence)
 - temporal_deontic_api.py 90% → 95%+ (add_theorem with start/end dates, query with date range)
 """
+
 import sys
 import uuid
 import asyncio
@@ -21,6 +22,7 @@ from unittest.mock import MagicMock, patch, PropertyMock
 
 # ─── helper: suppress chatty warnings ─────────────────────────────────────────
 import warnings
+
 warnings.filterwarnings("ignore", category=UserWarning)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
@@ -197,7 +199,9 @@ class TestInteractiveFOLConstructorEdgeCases:
 
     def test_remove_statement_with_long_text_returns_text_slice(self):
         # GIVEN a statement with text > 50 chars
-        long_text = "Every contractor must comply with all applicable regulations and standards of practice"
+        long_text = (
+            "Every contractor must comply with all applicable regulations and standards of practice"
+        )
         self.c.add_statement(long_text)
         stmt_id = list(self.c.session_statements.keys())[0]
         # WHEN – line 250 covered
@@ -219,11 +223,15 @@ class TestInteractiveFOLConstructorEdgeCases:
         self.c.add_statement("No contractor may not comply with data protection")
         stmts = list(self.c.session_statements.values())
         # patch _check_logical_conflict to force a conflict
-        with patch.object(self.c, "_check_logical_conflict", return_value={
-            "has_conflict": True,
-            "conflict_type": "negation_conflict",
-            "description": "Contradictory statements"
-        }):
+        with patch.object(
+            self.c,
+            "_check_logical_conflict",
+            return_value={
+                "has_conflict": True,
+                "conflict_type": "negation_conflict",
+                "description": "Contradictory statements",
+            },
+        ):
             # WHEN – lines 466-468, 487 covered
             result = self.c.validate_consistency()
         # THEN
@@ -273,8 +281,12 @@ class _TestIOConstructor(FOLConstructorIOMixin):
 
 def _make_statement(fol_formula=None, confidence=0.9):
     lc = LogicalComponents(
-        quantifiers=["All"], predicates=["comply"], entities=["contractor"],
-        logical_connectives=[], confidence=0.9, raw_text="Contractor must comply"
+        quantifiers=["All"],
+        predicates=["comply"],
+        entities=["contractor"],
+        logical_connectives=[],
+        confidence=0.9,
+        raw_text="Contractor must comply",
     )
     return StatementRecord(
         id=str(uuid.uuid4()),
@@ -326,6 +338,7 @@ class TestEnableSymbolicAI:
         # GIVEN – inject a fake symai module
         import importlib
         import ipfs_datasets_py.logic.integration as mod
+
         fake_symai = type(sys)("symai")
         fake_symai.Symbol = type("Symbol", (), {})
         fake_symai.Expression = type("Expression", (), {})
@@ -347,6 +360,7 @@ class TestEnableSymbolicAI:
     def test_enable_symbolicai_with_missing_symai_returns_false(self):
         # GIVEN – ensure symai is absent
         import ipfs_datasets_py.logic.integration as mod
+
         original = sys.modules.pop("symai", None)
         try:
             result = mod.enable_symbolicai(autoconfigure_env=False)
@@ -400,9 +414,7 @@ class TestDeonticQueryEngineComplianceAndConflicts:
         engine.load_rule_set(ruleset)
         # Patch _action_requires_permission to return True (line 344 covered)
         with patch.object(engine, "_action_requires_permission", return_value=True):
-            result = engine.check_compliance(
-                proposed_action="access restricted area", agent="user"
-            )
+            result = engine.check_compliance(proposed_action="access restricted area", agent="user")
         # THEN – recommendation includes permissions message OR is non-compliant
         assert not result.is_compliant or any(
             "permission" in r.lower() for r in result.recommendations
@@ -422,9 +434,7 @@ class TestDeonticQueryEngineComplianceAndConflicts:
         # GIVEN engine where proposed action violates obligation
         engine = _build_engine_with_rules()
         with patch.object(engine, "_action_satisfies_obligation", return_value=False):
-            result = engine.check_compliance(
-                proposed_action="skip reports", agent="contractor"
-            )
+            result = engine.check_compliance(proposed_action="skip reports", agent="contractor")
         # THEN – recommendations include obligation message (line 360 covered)
         assert any("obligation" in r.lower() for r in result.recommendations)
 
@@ -473,7 +483,9 @@ class TestDeonticQueryEngineComplianceAndConflicts:
     def test_create_query_engine_factory(self):
         # GIVEN a rule set
         agent = LegalAgent("a", "A", "person")
-        formula = DeonticFormula(operator=DO.OBLIGATION, proposition="pay fees", agent=agent, confidence=0.9)
+        formula = DeonticFormula(
+            operator=DO.OBLIGATION, proposition="pay fees", agent=agent, confidence=0.9
+        )
         ruleset = DeonticRuleSet(name="t", formulas=[formula])
         # WHEN
         engine = create_query_engine(ruleset)
@@ -484,7 +496,9 @@ class TestDeonticQueryEngineComplianceAndConflicts:
     def test_query_legal_rules_factory(self):
         # GIVEN rule set and NL query
         agent = LegalAgent("a", "A", "person")
-        formula = DeonticFormula(operator=DO.OBLIGATION, proposition="submit form", agent=agent, confidence=0.9)
+        formula = DeonticFormula(
+            operator=DO.OBLIGATION, proposition="submit form", agent=agent, confidence=0.9
+        )
         ruleset = DeonticRuleSet(name="t", formulas=[formula])
         # WHEN
         result = query_legal_rules(ruleset, "what must I do")
@@ -509,26 +523,33 @@ class TestDeonticLogicConverterEdges:
         # The import is local inside __init__: `from .legal_symbolic_analyzer import LegalSymbolicAnalyzer`
         # We mock at sys.modules level
         import sys
-        fake_mod = type(sys)("ipfs_datasets_py.logic.integration.converters.legal_symbolic_analyzer")
+
+        fake_mod = type(sys)(
+            "ipfs_datasets_py.logic.integration.converters.legal_symbolic_analyzer"
+        )
         # Remove from sys.modules to force ImportError on the inner import
         orig = sys.modules.pop(
             "ipfs_datasets_py.logic.integration.converters.legal_symbolic_analyzer", None
         )
         try:
             # WHEN – lines 129-130, 137-139 covered via exception path
-            with patch.dict(sys.modules, {
-                "ipfs_datasets_py.logic.integration.converters.legal_symbolic_analyzer": None
-            }):
+            with patch.dict(
+                sys.modules,
+                {"ipfs_datasets_py.logic.integration.converters.legal_symbolic_analyzer": None},
+            ):
                 converter = DeonticLogicConverter(enable_symbolic_ai=True)
             # THEN – graceful fallback
             assert converter.symbolic_analyzer is None
         finally:
             if orig is not None:
-                sys.modules["ipfs_datasets_py.logic.integration.converters.legal_symbolic_analyzer"] = orig
+                sys.modules[
+                    "ipfs_datasets_py.logic.integration.converters.legal_symbolic_analyzer"
+                ] = orig
 
     def test_enable_symbolic_ai_true_but_init_raises_exception_falls_back(self):
         # GIVEN enable_symbolic_ai=True but LegalSymbolicAnalyzer raises in __init__
         import sys
+
         # Patch the module to have a class that raises on init
         mod_key = "ipfs_datasets_py.logic.integration.converters.legal_symbolic_analyzer"
         orig = sys.modules.get(mod_key)
@@ -580,8 +601,12 @@ class TestDeonticLogicConverterEdges:
         converter.symbolic_analyzer = mock_sa
 
         agent = LegalAgent("contractor", "Contractor", "person")
-        f1 = DeonticFormula(operator=DO.OBLIGATION, proposition="pay fees", agent=agent, confidence=0.9)
-        f2 = DeonticFormula(operator=DO.OBLIGATION, proposition="submit reports", agent=agent, confidence=0.85)
+        f1 = DeonticFormula(
+            operator=DO.OBLIGATION, proposition="pay fees", agent=agent, confidence=0.9
+        )
+        f2 = DeonticFormula(
+            operator=DO.OBLIGATION, proposition="submit reports", agent=agent, confidence=0.85
+        )
         ctx = ConversionContext(
             source_document_path="./test.pdf",
             document_title="Test",
@@ -590,7 +615,9 @@ class TestDeonticLogicConverterEdges:
         )
 
         # Call _synthesize_complex_rules directly to hit lines 567-592
-        result = converter._synthesize_complex_rules([f1, f2], KnowledgeGraph(entities=[], relationships=[]), ctx)
+        result = converter._synthesize_complex_rules(
+            [f1, f2], KnowledgeGraph(entities=[], relationships=[]), ctx
+        )
         # THEN – synthesize was called
         assert mock_sa.synthesize_agent_rules.called
         assert result == []
@@ -647,9 +674,7 @@ class TestDeonticLogicConverterEdges:
             confidence_threshold=0.3,
         )
         kg = KnowledgeGraph(entities=[], relationships=[MockRelationship()])
-        result = converter.convert_relationships_to_logic(
-            kg.relationships, ctx
-        )
+        result = converter.convert_relationships_to_logic(kg.relationships, ctx)
         assert isinstance(result, list)
 
 
@@ -665,11 +690,13 @@ class TestTemporalDeonticAPIDateFields:
             add_theorem_from_parameters,
             query_theorems_from_parameters,
         )
+
         self._add_coro = add_theorem_from_parameters
         self._query_coro = query_theorems_from_parameters
 
     def _add(self, params):
         import asyncio
+
         loop = asyncio.new_event_loop()
         try:
             return loop.run_until_complete(self._add_coro(params))
@@ -678,6 +705,7 @@ class TestTemporalDeonticAPIDateFields:
 
     def _query(self, params):
         import asyncio
+
         loop = asyncio.new_event_loop()
         try:
             return loop.run_until_complete(self._query_coro(params))
@@ -765,8 +793,10 @@ class TestDocumentConsistencyCheckerProofPaths:
             TemporalDeonticRAGStore,
         )
         from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
-            ProofResult, ProofStatus,
+            ProofResult,
+            ProofStatus,
         )
+
         self.Checker = DocumentConsistencyChecker
         self.RAGStore = TemporalDeonticRAGStore
         self.ProofResult = ProofResult
@@ -823,6 +853,7 @@ class TestDocumentConsistencyCheckerProofPaths:
         from ipfs_datasets_py.logic.integration.domain.document_consistency_checker import (
             DocumentConsistencyChecker,
         )
+
         checker = DocumentConsistencyChecker(rag_store=self.RAGStore())
         issues = [
             {"type": "error", "severity": "medium", "category": "proof_error", "message": "failed"}
@@ -835,8 +866,7 @@ class TestDocumentConsistencyCheckerProofPaths:
         # GIVEN no issues → line "Document appears consistent" (lines 524, 528-530)
         checker = self.Checker(rag_store=self.RAGStore())
         recommendations = checker._generate_recommendations(None, [])
-        assert any("consistent" in r.lower() or "appears" in r.lower()
-                  for r in recommendations)
+        assert any("consistent" in r.lower() or "appears" in r.lower() for r in recommendations)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -850,12 +880,14 @@ class TestConvertersInitImportErrors:
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import (
             DeonticLogicConverter as DLC,
         )
+
         # THEN
         assert DLC is not None
 
     def test_domain_init_exports_legal_domain_knowledge(self):
         # GIVEN
         from ipfs_datasets_py.logic.integration.domain import LegalDomainKnowledge as LDK
+
         # THEN
         assert LDK is not None
 

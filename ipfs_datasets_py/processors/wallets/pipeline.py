@@ -117,13 +117,10 @@ def assert_finite_scope(request: BoundedRequest, *, mode: IngestMode) -> None:
     if mode is IngestMode.LEDGER_RANGE:
         if request.start_position is None or request.end_position is None:
             raise InvalidRequestError(
-                "ledger-range scans require explicit start_position and "
-                "end_position (finite scope)"
+                "ledger-range scans require explicit start_position and end_position (finite scope)"
             )
         if request.start_position > request.end_position:
-            raise InvalidRequestError(
-                "start_position must not be greater than end_position"
-            )
+            raise InvalidRequestError("start_position must not be greater than end_position")
     # All modes inherit hard page/item/request ceilings from OperationContext.
     limits = request.context.limits
     if limits.max_pages < 1 or limits.max_items < 1 or limits.max_requests < 1:
@@ -216,12 +213,9 @@ class PipelineRunReceipt:
 
     @property
     def checkpoint_advanced(self) -> bool:
-        return (
-            self.checkpoint_after is not None
-            and (
-                self.checkpoint_before is None
-                or self.checkpoint_after.revision != self.checkpoint_before.revision
-            )
+        return self.checkpoint_after is not None and (
+            self.checkpoint_before is None
+            or self.checkpoint_after.revision != self.checkpoint_before.revision
         )
 
     def to_partial(self, *, error: str | None = None) -> PartialRunReceipt:
@@ -260,9 +254,7 @@ class PipelineRunReceipt:
             "checkpoint_after": (
                 self.checkpoint_after.to_dict() if self.checkpoint_after else None
             ),
-            "export_receipt_id": (
-                self.export_receipt.receipt_id if self.export_receipt else None
-            ),
+            "export_receipt_id": (self.export_receipt.receipt_id if self.export_receipt else None),
             "warnings": list(self.warnings),
         }
 
@@ -327,9 +319,7 @@ class WalletLedgerProcessor:
         # Use explicit None checks: InMemory* stores implement __len__ and are
         # falsy when empty, which would incorrectly replace injected instances.
         self._checkpoint_store = (
-            checkpoint_store
-            if checkpoint_store is not None
-            else InMemoryCheckpointStore()
+            checkpoint_store if checkpoint_store is not None else InMemoryCheckpointStore()
         )
         self._coordinator = CheckpointCommitCoordinator(self._checkpoint_store)
         if not isinstance(raw_payload_policy, RawPayloadPolicy):
@@ -365,9 +355,7 @@ class WalletLedgerProcessor:
                 encryptor=effective_encryptor,
             )
         self._provider_name = _required_str(provider_name, "provider_name")
-        self._normalizer_version = _required_str(
-            normalizer_version, "normalizer_version"
-        )
+        self._normalizer_version = _required_str(normalizer_version, "normalizer_version")
         if (
             isinstance(normalized_schema_major, bool)
             or not isinstance(normalized_schema_major, int)
@@ -438,8 +426,7 @@ class WalletLedgerProcessor:
             request=request,
             observed_anchor=observed_anchor,
             export_formats=tuple(
-                f if isinstance(f, ExportFormat) else ExportFormat(str(f))
-                for f in export_formats
+                f if isinstance(f, ExportFormat) else ExportFormat(str(f)) for f in export_formats
             ),
             store_raw_payloads=store_raw_payloads,
             safety_depth=safety_depth,
@@ -468,8 +455,7 @@ class WalletLedgerProcessor:
             request=request,
             observed_anchor=observed_anchor,
             export_formats=tuple(
-                f if isinstance(f, ExportFormat) else ExportFormat(str(f))
-                for f in export_formats
+                f if isinstance(f, ExportFormat) else ExportFormat(str(f)) for f in export_formats
             ),
             store_raw_payloads=store_raw_payloads,
             safety_depth=safety_depth,
@@ -500,9 +486,7 @@ class WalletLedgerProcessor:
             raw_payload_policy=self._raw_payload_policy,
         )
 
-        checkpoint_before = await self._checkpoint_store.load(
-            identity.key, context=context
-        )
+        checkpoint_before = await self._checkpoint_store.load(identity.key, context=context)
         if checkpoint_before is not None and plan.observed_anchor is not None:
             validate_resume(
                 checkpoint_before,
@@ -536,9 +520,7 @@ class WalletLedgerProcessor:
             async for batch in self._page_stream(plan):
                 context.check_active()
                 if pages >= context.limits.max_pages:
-                    raise ResourceLimitError(
-                        f"page limit {context.limits.max_pages} exceeded"
-                    )
+                    raise ResourceLimitError(f"page limit {context.limits.max_pages} exceeded")
                 if not isinstance(batch, RecordBatch):
                     raise InvalidRequestError("provider must yield RecordBatch values")
                 batch.enforce(context.limits)
@@ -551,15 +533,12 @@ class WalletLedgerProcessor:
                     RawPayloadPolicy.OMITTED
                 ):
                     if (
-                        self._raw_payload_policy
-                        is RawPayloadPolicy.SEPARATELY_ENCRYPTED
+                        self._raw_payload_policy is RawPayloadPolicy.SEPARATELY_ENCRYPTED
                         and self._raw_payload_encryptor is None
-                        and getattr(self._raw_payload_store, "encryptor", None)
-                        is None
+                        and getattr(self._raw_payload_store, "encryptor", None) is None
                     ):
                         raise InvalidRequestError(
-                            "separately_encrypted raw payload policy requires "
-                            "an injected encryptor"
+                            "separately_encrypted raw payload policy requires an injected encryptor"
                         )
                     raw_body = canonical_native_batch(batch)
                     await self._raw_payload_store.put(
@@ -568,15 +547,11 @@ class WalletLedgerProcessor:
                         context=context,
                     )
 
-                normalized = self._normalizer.normalize(
-                    batch.records, context=context
-                )
+                normalized = self._normalizer.normalize(batch.records, context=context)
                 # Stream-normalize: only this page's records enter the sink.
                 normalized_tuple = tuple(normalized)
                 if len(normalized_tuple) > context.limits.max_items:
-                    raise ResourceLimitError(
-                        "normalized batch exceeds max_items limit"
-                    )
+                    raise ResourceLimitError("normalized batch exceeds max_items limit")
 
                 # Infer page anchor from the last record with a sequence+hash.
                 page_anchor = extract_batch_anchor(normalized_tuple) or last_anchor
@@ -623,13 +598,9 @@ class WalletLedgerProcessor:
 
             if last_anchor is not None and sink_commit is not None:
                 expected_revision = (
-                    None
-                    if checkpoint_before is None
-                    else checkpoint_before.revision
+                    None if checkpoint_before is None else checkpoint_before.revision
                 )
-                prior_history = (
-                    checkpoint_before.history if checkpoint_before is not None else ()
-                )
+                prior_history = checkpoint_before.history if checkpoint_before is not None else ()
                 candidate = build_checkpoint(
                     identity,
                     sequence=last_anchor.sequence,
@@ -668,17 +639,13 @@ class WalletLedgerProcessor:
                 # Partial receipt semantics: data may be committed to the sink
                 # but durable resume position stays unchanged without an anchor.
                 run_status = (
-                    RunStatus.PARTIAL
-                    if active_sink.committed_count
-                    else RunStatus.COMPLETE
+                    RunStatus.PARTIAL if active_sink.committed_count else RunStatus.COMPLETE
                 )
                 checkpoint_after = checkpoint_before
 
             if plan.export_formats:
                 if export_dir is None:
-                    raise InvalidRequestError(
-                        "export_dir is required when export_formats is set"
-                    )
+                    raise InvalidRequestError("export_dir is required when export_formats is set")
                 exporter = WalletDatasetExporter(
                     chain=self._chain,
                     output_dir=export_dir,
@@ -694,14 +661,10 @@ class WalletLedgerProcessor:
                     clock=self._clock,
                 )
                 cursor_before = (
-                    checkpoint_before.to_cursor()
-                    if checkpoint_before is not None
-                    else None
+                    checkpoint_before.to_cursor() if checkpoint_before is not None else None
                 )
                 cursor_after = (
-                    checkpoint_after.to_cursor()
-                    if checkpoint_after is not None
-                    else None
+                    checkpoint_after.to_cursor() if checkpoint_after is not None else None
                 )
                 export_status = (
                     ExportStatus.COMPLETE
@@ -755,9 +718,7 @@ class WalletLedgerProcessor:
             else:
                 raise
 
-        if run_status is RunStatus.CANCELLED or (
-            run_status is RunStatus.FAILED and pages > 0
-        ):
+        if run_status is RunStatus.CANCELLED or (run_status is RunStatus.FAILED and pages > 0):
             # Return a run receipt that reports checkpoint_advanced=False.
             return PipelineRunReceipt(
                 status=run_status,
@@ -818,9 +779,7 @@ class WalletLedgerProcessor:
             raw_payload_policy=self._raw_payload_policy,
             provider=self._provider_name,
             provider_kind="pipeline",
-            provider_capabilities=tuple(
-                sorted(cap.value for cap in self._capabilities.features)
-            ),
+            provider_capabilities=tuple(sorted(cap.value for cap in self._capabilities.features)),
             clock=self._clock,
         )
         return await exporter.export_wallet(request, sink)
@@ -857,7 +816,9 @@ def extract_batch_anchor(records: Sequence[object]) -> HashAnchor | None:
             if isinstance(position, Mapping):
                 raw_seq = position.get("sequence")
                 raw_hash = position.get("hash")
-                sequence = raw_seq if isinstance(raw_seq, int) and not isinstance(raw_seq, bool) else None
+                sequence = (
+                    raw_seq if isinstance(raw_seq, int) and not isinstance(raw_seq, bool) else None
+                )
                 block_hash = raw_hash if isinstance(raw_hash, str) else None
         else:
             position = getattr(record, "ledger_position", None)

@@ -3,6 +3,7 @@ Data Ingestion Engine
 
 Business logic for ingesting news articles, feeds, websites, and document collections.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -33,12 +34,14 @@ class DataIngestionEngine:
         try:
             meta = metadata or {}
             processing_steps = []
-            processing_steps.append({
-                "step": "content_extraction",
-                "status": "completed",
-                "timestamp": datetime.now().isoformat(),
-                "details": "Article content extracted successfully",
-            })
+            processing_steps.append(
+                {
+                    "step": "content_extraction",
+                    "status": "completed",
+                    "timestamp": datetime.now().isoformat(),
+                    "details": "Article content extracted successfully",
+                }
+            )
             extracted_data: Dict[str, Any] = {
                 "title": f"Sample Article from {url}",
                 "content": (
@@ -50,47 +53,65 @@ class DataIngestionEngine:
                 "word_count": 150,
                 "language": "en",
             }
-            processing_steps.append({
-                "step": "entity_extraction",
-                "status": "completed",
-                "timestamp": datetime.now().isoformat(),
-                "details": "Entities extracted from content",
-            })
+            processing_steps.append(
+                {
+                    "step": "entity_extraction",
+                    "status": "completed",
+                    "timestamp": datetime.now().isoformat(),
+                    "details": "Entities extracted from content",
+                }
+            )
             entities = [
-                {"text": "Sample Entity 1", "label": "PERSON", "confidence": 0.92,
-                 "start": 0, "end": 15},
-                {"text": "Sample Organization", "label": "ORG", "confidence": 0.88,
-                 "start": 20, "end": 39},
+                {
+                    "text": "Sample Entity 1",
+                    "label": "PERSON",
+                    "confidence": 0.92,
+                    "start": 0,
+                    "end": 15,
+                },
+                {
+                    "text": "Sample Organization",
+                    "label": "ORG",
+                    "confidence": 0.88,
+                    "start": 20,
+                    "end": 39,
+                },
             ]
             extracted_data["entities"] = entities
             if analysis_type == "comprehensive":
-                processing_steps.append({
-                    "step": "sentiment_analysis",
-                    "status": "completed",
-                    "timestamp": datetime.now().isoformat(),
-                    "details": "Sentiment analysis completed",
-                })
+                processing_steps.append(
+                    {
+                        "step": "sentiment_analysis",
+                        "status": "completed",
+                        "timestamp": datetime.now().isoformat(),
+                        "details": "Sentiment analysis completed",
+                    }
+                )
                 extracted_data["sentiment"] = {
                     "overall": "neutral",
                     "confidence": 0.85,
                     "scores": {"positive": 0.3, "neutral": 0.5, "negative": 0.2},
                 }
-                processing_steps.append({
-                    "step": "topic_classification",
-                    "status": "completed",
-                    "timestamp": datetime.now().isoformat(),
-                    "details": "Topic classification completed",
-                })
+                processing_steps.append(
+                    {
+                        "step": "topic_classification",
+                        "status": "completed",
+                        "timestamp": datetime.now().isoformat(),
+                        "details": "Topic classification completed",
+                    }
+                )
                 extracted_data["topics"] = [
                     {"topic": "politics", "confidence": 0.75},
                     {"topic": "economics", "confidence": 0.45},
                 ]
-            processing_steps.append({
-                "step": "corpus_storage",
-                "status": "completed",
-                "timestamp": datetime.now().isoformat(),
-                "details": "Article stored in investigation corpus",
-            })
+            processing_steps.append(
+                {
+                    "step": "corpus_storage",
+                    "status": "completed",
+                    "timestamp": datetime.now().isoformat(),
+                    "details": "Article stored in investigation corpus",
+                }
+            )
             return {
                 "ingestion_id": f"article_{hashlib.md5(url.encode()).hexdigest()[:8]}",
                 "url": url,
@@ -105,8 +126,7 @@ class DataIngestionEngine:
                     "entities_extracted": len(entities),
                     "topics_identified": len(extracted_data.get("topics", [])),
                     "confidence_avg": (
-                        sum(e["confidence"] for e in entities) / len(entities)
-                        if entities else 0
+                        sum(e["confidence"] for e in entities) / len(entities) if entities else 0
                     ),
                 },
                 "timestamp": datetime.now().isoformat(),
@@ -147,18 +167,21 @@ class DataIngestionEngine:
             )
             processed_articles = []
             for i, article in enumerate(filtered_articles):
-                article_result = self.ingest_article(article["url"], source_type="news_feed",
-                                                     analysis_type="standard")
-                processed_articles.append({
-                    "article_index": i,
-                    "url": article["url"],
-                    "title": article["title"],
-                    "ingestion_status": article_result["status"],
-                    "entities_count": len(
-                        article_result.get("extracted_data", {}).get("entities", [])
-                    ),
-                    "processing_time": 1.2 + (i * 0.1),
-                })
+                article_result = self.ingest_article(
+                    article["url"], source_type="news_feed", analysis_type="standard"
+                )
+                processed_articles.append(
+                    {
+                        "article_index": i,
+                        "url": article["url"],
+                        "title": article["title"],
+                        "ingestion_status": article_result["status"],
+                        "entities_count": len(
+                            article_result.get("extracted_data", {}).get("entities", [])
+                        ),
+                        "processing_time": 1.2 + (i * 0.1),
+                    }
+                )
             successful_articles = [
                 a for a in processed_articles if a["ingestion_status"] == "completed"
             ]
@@ -179,12 +202,14 @@ class DataIngestionEngine:
                     "total_entities_extracted": total_entities,
                     "success_rate": (
                         len(successful_articles) / len(processed_articles)
-                        if processed_articles else 0
+                        if processed_articles
+                        else 0
                     ),
                     "average_processing_time": (
                         sum(a["processing_time"] for a in processed_articles)
                         / len(processed_articles)
-                        if processed_articles else 0
+                        if processed_articles
+                        else 0
                     ),
                 },
                 "timestamp": datetime.now().isoformat(),
@@ -226,8 +251,7 @@ class DataIngestionEngine:
                         "status_code": 200,
                         "extracted_links": [f"{base_url}/link_{i}" for i in range(3)],
                         "entities_extracted": [
-                            {"text": f"Entity_{depth}_{page_num}", "type": "ORG",
-                             "confidence": 0.8}
+                            {"text": f"Entity_{depth}_{page_num}", "type": "ORG", "confidence": 0.8}
                         ],
                         "processing_time": 0.8 + (depth * 0.2),
                         "timestamp": datetime.now().isoformat(),
@@ -269,12 +293,10 @@ class DataIngestionEngine:
                     "total_entities_extracted": total_entities,
                     "total_content_length": total_content_length,
                     "average_page_size": (
-                        total_content_length / len(successful_pages)
-                        if successful_pages else 0
+                        total_content_length / len(successful_pages) if successful_pages else 0
                     ),
                     "crawl_success_rate": (
-                        len(successful_pages) / len(crawled_pages)
-                        if crawled_pages else 0
+                        len(successful_pages) / len(crawled_pages) if crawled_pages else 0
                     ),
                     "depth_distribution": self._calculate_depth_distribution(crawled_pages),
                     "content_type_distribution": self._calculate_content_type_distribution(
@@ -328,7 +350,8 @@ class DataIngestionEngine:
                     "total_entities": total_entities,
                     "success_rate": (
                         len(successful_docs) / len(processed_documents)
-                        if processed_documents else 0
+                        if processed_documents
+                        else 0
                     ),
                     "file_type_distribution": self._calculate_file_type_distribution(
                         processed_documents
@@ -338,7 +361,8 @@ class DataIngestionEngine:
                     ),
                     "average_document_size": (
                         sum(d.get("file_size", 0) for d in successful_docs) / len(successful_docs)
-                        if successful_docs else 0
+                        if successful_docs
+                        else 0
                     ),
                 },
                 "timestamp": datetime.now().isoformat(),
@@ -401,8 +425,13 @@ class DataIngestionEngine:
                 doc_result["status"] = "unsupported_format"
                 return doc_result
             doc_result["entities"] = [
-                {"text": f"Entity from {Path(doc_path).stem}", "type": "ORG",
-                 "confidence": 0.85, "start": 0, "end": 20}
+                {
+                    "text": f"Entity from {Path(doc_path).stem}",
+                    "type": "ORG",
+                    "confidence": 0.85,
+                    "start": 0,
+                    "end": 20,
+                }
             ]
             if extract_metadata:
                 doc_result["metadata"] = {
@@ -413,18 +442,18 @@ class DataIngestionEngine:
                     "subject": "Sample Document",
                     "word_count": 500,
                 }
-            doc_result.update({
-                "status": "completed",
-                "processing_time": 1.5,
-                "page_count": doc_result["extracted_content"].get("page_count", 1),
-            })
+            doc_result.update(
+                {
+                    "status": "completed",
+                    "processing_time": 1.5,
+                    "page_count": doc_result["extracted_content"].get("page_count", 1),
+                }
+            )
         except Exception as e:
             doc_result.update({"status": "failed", "error": str(e)})
         return doc_result
 
-    def _build_sitemap(
-        self, crawled_pages: List[Dict[str, Any]], max_depth: int
-    ) -> Dict[str, Any]:
+    def _build_sitemap(self, crawled_pages: List[Dict[str, Any]], max_depth: int) -> Dict[str, Any]:
         """Build a sitemap from crawled pages."""
         sitemap: Dict[str, Any] = {
             "root": {
@@ -441,17 +470,17 @@ class DataIngestionEngine:
                 depth_key = f"depth_{depth}"
                 if depth_key not in sitemap["root"]["children"]:
                     sitemap["root"]["children"][depth_key] = []
-                sitemap["root"]["children"][depth_key].append({
-                    "url": page["url"],
-                    "title": page["title"],
-                    "status": page["status"],
-                    "content_length": page["content_length"],
-                })
+                sitemap["root"]["children"][depth_key].append(
+                    {
+                        "url": page["url"],
+                        "title": page["title"],
+                        "status": page["status"],
+                        "content_length": page["content_length"],
+                    }
+                )
         return sitemap
 
-    def _calculate_depth_distribution(
-        self, crawled_pages: List[Dict[str, Any]]
-    ) -> Dict[str, int]:
+    def _calculate_depth_distribution(self, crawled_pages: List[Dict[str, Any]]) -> Dict[str, int]:
         distribution: Dict[str, int] = {}
         for page in crawled_pages:
             key = f"depth_{page['depth']}"
@@ -467,13 +496,15 @@ class DataIngestionEngine:
             distribution[ct] = distribution.get(ct, 0) + 1
         return distribution
 
-    def _analyze_document_collection(
-        self, documents: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+    def _analyze_document_collection(self, documents: List[Dict[str, Any]]) -> Dict[str, Any]:
         successful_docs = [d for d in documents if d["status"] == "completed"]
         if not successful_docs:
-            return {"content_similarity": {}, "common_entities": [],
-                    "temporal_distribution": {}, "topic_clusters": []}
+            return {
+                "content_similarity": {},
+                "common_entities": [],
+                "temporal_distribution": {},
+                "topic_clusters": [],
+            }
         entity_counts: Dict[str, int] = {}
         for doc in successful_docs:
             for entity in doc.get("entities", []):
@@ -489,25 +520,29 @@ class DataIngestionEngine:
             "common_entities": common_entities,
             "temporal_distribution": {},
             "topic_clusters": [
-                {"cluster_id": "cluster_1", "topic": "Legal Documents",
-                 "document_count": len(successful_docs) // 2, "similarity_score": 0.75},
-                {"cluster_id": "cluster_2", "topic": "Technical Reports",
-                 "document_count": len(successful_docs) // 3, "similarity_score": 0.68},
+                {
+                    "cluster_id": "cluster_1",
+                    "topic": "Legal Documents",
+                    "document_count": len(successful_docs) // 2,
+                    "similarity_score": 0.75,
+                },
+                {
+                    "cluster_id": "cluster_2",
+                    "topic": "Technical Reports",
+                    "document_count": len(successful_docs) // 3,
+                    "similarity_score": 0.68,
+                },
             ],
         }
 
-    def _calculate_file_type_distribution(
-        self, documents: List[Dict[str, Any]]
-    ) -> Dict[str, int]:
+    def _calculate_file_type_distribution(self, documents: List[Dict[str, Any]]) -> Dict[str, int]:
         dist: Dict[str, int] = {}
         for doc in documents:
             ext = doc.get("file_extension", "unknown")
             dist[ext] = dist.get(ext, 0) + 1
         return dist
 
-    def _calculate_language_distribution(
-        self, documents: List[Dict[str, Any]]
-    ) -> Dict[str, int]:
+    def _calculate_language_distribution(self, documents: List[Dict[str, Any]]) -> Dict[str, int]:
         dist: Dict[str, int] = {}
         for doc in documents:
             lang = doc.get("metadata", {}).get("language", "unknown")

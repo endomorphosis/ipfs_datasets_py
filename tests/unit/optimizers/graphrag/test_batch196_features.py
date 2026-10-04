@@ -9,11 +9,13 @@ Methods under test:
   - OntologyPipeline.run_score_max()
   - OntologyLearningAdapter.feedback_variance()
 """
+
 import pytest
 from unittest.mock import MagicMock
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────
+
 
 class _FakeEntry:
     def __init__(self, avg):
@@ -26,14 +28,20 @@ def _push_opt(o, avg):
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
 def _make_score(**kwargs):
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+
     defaults = dict(
-        completeness=0.5, consistency=0.5, clarity=0.5,
-        granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5,
+        completeness=0.5,
+        consistency=0.5,
+        clarity=0.5,
+        granularity=0.5,
+        relationship_coherence=0.5,
+        domain_alignment=0.5,
     )
     defaults.update(kwargs)
     return CriticScore(**defaults)
@@ -41,6 +49,7 @@ def _make_score(**kwargs):
 
 def _make_critic():
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
     return OntologyCritic(use_llm=False)
 
 
@@ -52,16 +61,19 @@ def _make_rel_mock(weight=0.0):
 
 def _make_result(relationships=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
     return EntityExtractionResult(entities=[], relationships=relationships or [], confidence=1.0)
 
 
 def _make_generator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
     return OntologyGenerator()
 
 
 def _make_pipeline():
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     return OntologyPipeline()
 
 
@@ -72,16 +84,21 @@ def _push_run(p, score_val):
 
 
 def _make_adapter():
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter()
 
 
 def _push_feedback(a, score):
     from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import FeedbackRecord
+
     a._feedback.append(FeedbackRecord(final_score=score))
 
 
 # ── OntologyOptimizer.score_delta_std ────────────────────────────────────────
+
 
 class TestScoreDeltaStd:
     def test_empty_returns_zero(self):
@@ -108,6 +125,7 @@ class TestScoreDeltaStd:
 
 
 # ── OntologyOptimizer.history_coefficient_of_variation ───────────────────────
+
 
 class TestHistoryCoefficientOfVariation:
     def test_empty_returns_zero(self):
@@ -136,6 +154,7 @@ class TestHistoryCoefficientOfVariation:
 
 # ── OntologyCritic.dimension_sum ─────────────────────────────────────────────
 
+
 class TestDimensionSum:
     def test_all_half_returns_three(self):
         c = _make_critic()
@@ -144,18 +163,31 @@ class TestDimensionSum:
 
     def test_all_zero_returns_zero(self):
         c = _make_critic()
-        s = _make_score(completeness=0.0, consistency=0.0, clarity=0.0,
-                        granularity=0.0, relationship_coherence=0.0, domain_alignment=0.0)
+        s = _make_score(
+            completeness=0.0,
+            consistency=0.0,
+            clarity=0.0,
+            granularity=0.0,
+            relationship_coherence=0.0,
+            domain_alignment=0.0,
+        )
         assert c.dimension_sum(s) == pytest.approx(0.0)
 
     def test_all_one_returns_six(self):
         c = _make_critic()
-        s = _make_score(completeness=1.0, consistency=1.0, clarity=1.0,
-                        granularity=1.0, relationship_coherence=1.0, domain_alignment=1.0)
+        s = _make_score(
+            completeness=1.0,
+            consistency=1.0,
+            clarity=1.0,
+            granularity=1.0,
+            relationship_coherence=1.0,
+            domain_alignment=1.0,
+        )
         assert c.dimension_sum(s) == pytest.approx(6.0)
 
 
 # ── OntologyGenerator.relationship_avg_weight ────────────────────────────────
+
 
 class TestRelationshipAvgWeight:
     def test_empty_returns_zero(self):
@@ -177,6 +209,7 @@ class TestRelationshipAvgWeight:
 
 # ── OntologyPipeline.run_score_min ───────────────────────────────────────────
 
+
 class TestRunScoreMin:
     def test_empty_returns_zero(self):
         p = _make_pipeline()
@@ -196,6 +229,7 @@ class TestRunScoreMin:
 
 # ── OntologyPipeline.run_score_max ───────────────────────────────────────────
 
+
 class TestRunScoreMax:
     def test_empty_returns_zero(self):
         p = _make_pipeline()
@@ -214,6 +248,7 @@ class TestRunScoreMax:
 
 
 # ── OntologyLearningAdapter.feedback_variance ────────────────────────────────
+
 
 class TestFeedbackVariance:
     def test_empty_returns_zero(self):

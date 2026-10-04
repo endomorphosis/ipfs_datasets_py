@@ -3,6 +3,7 @@
 Ensures that restricted directories cannot be accessed via path
 traversal even when the CLI accepts user-supplied paths.
 """
+
 from __future__ import annotations
 
 import json
@@ -31,15 +32,20 @@ class TestSafeResolveGraphRAG:
         with pytest.raises(ValueError, match="path_str must be a non-empty string"):
             _safe_resolve(path)
 
-    @pytest.mark.parametrize("path", [
-        "/etc/passwd",
-        "/etc/../etc/passwd",
-        "/proc/self/environ",
-        "/sys/class/net",
-        "/dev/null",
-    ])
+    @pytest.mark.parametrize(
+        "path",
+        [
+            "/etc/passwd",
+            "/etc/../etc/passwd",
+            "/proc/self/environ",
+            "/sys/class/net",
+            "/dev/null",
+        ],
+    )
     def test_forbidden_path_raises_value_error(self, path):
-        with pytest.raises(PathResolutionError, match="system path not allowed|escape base directory"):
+        with pytest.raises(
+            PathResolutionError, match="system path not allowed|escape base directory"
+        ):
             _safe_resolve(path)
 
     def test_safe_path_returns_resolved(self, tmp_path):
@@ -61,10 +67,13 @@ class TestSafeResolveGraphRAG:
 class TestSafeResolveLogic:
     """Tests for logic_theorem_optimizer/cli_wrapper._safe_resolve()."""
 
-    @pytest.mark.parametrize("path", [
-        "/etc/passwd",
-        "/proc/self/status",
-    ])
+    @pytest.mark.parametrize(
+        "path",
+        [
+            "/etc/passwd",
+            "/proc/self/status",
+        ],
+    )
     def test_forbidden_path_raises_value_error(self, path):
         with pytest.raises(ValueError, match="system path not allowed|escape base directory"):
             _logic_safe_resolve(path, must_exist=True)
@@ -81,7 +90,9 @@ def test_graphrag_validate_restricted_output_path_returns_nonzero(tmp_path, monk
 
     ontology_path = tmp_path / "ontology.json"
     ontology_path.write_text(
-        json.dumps({"entities": [{"id": "e1", "type": "Thing", "text": "Alice"}], "relationships": []}),
+        json.dumps(
+            {"entities": [{"id": "e1", "type": "Thing", "text": "Alice"}], "relationships": []}
+        ),
         encoding="utf-8",
     )
 

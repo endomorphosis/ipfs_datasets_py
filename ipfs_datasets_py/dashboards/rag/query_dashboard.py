@@ -21,12 +21,14 @@ try:
     import numpy as np
     import pandas as pd
     import matplotlib
-    matplotlib.use('Agg')  # Non-interactive backend for server environments
+
+    matplotlib.use("Agg")  # Non-interactive backend for server environments
     import matplotlib.pyplot as plt
     import matplotlib.dates as mdates
     from matplotlib.ticker import MaxNLocator
     from matplotlib.figure import Figure
     import seaborn as sns
+
     VISUALIZATION_LIBS_AVAILABLE = True
 except ImportError:
     VISUALIZATION_LIBS_AVAILABLE = False
@@ -36,6 +38,7 @@ try:
     import plotly.express as px
     import plotly.graph_objects as go
     from plotly.subplots import make_subplots
+
     INTERACTIVE_LIBS_AVAILABLE = True
 except ImportError:
     INTERACTIVE_LIBS_AVAILABLE = False
@@ -43,6 +46,7 @@ except ImportError:
 # Import template engine for dashboard generation
 try:
     from jinja2 import Template, Environment, FileSystemLoader
+
     TEMPLATE_ENGINE_AVAILABLE = True
 except ImportError:
     TEMPLATE_ENGINE_AVAILABLE = False
@@ -53,6 +57,7 @@ try:
     import tornado.ioloop
     import tornado.web
     import tornado.websocket
+
     REALTIME_LIBS_AVAILABLE = True
 except ImportError:
     REALTIME_LIBS_AVAILABLE = False
@@ -60,12 +65,12 @@ except ImportError:
 # Import visualization components from other modules
 from ipfs_datasets_py.dashboards.rag.query_visualization import (
     RAGQueryDashboard,
-    EnhancedQueryVisualizer
+    EnhancedQueryVisualizer,
 )
 
 from ipfs_datasets_py.optimizers.graphrag.query_optimizer import (
     QueryMetricsCollector,
-    GraphRAGQueryStats
+    GraphRAGQueryStats,
 )
 
 # Import audit components
@@ -73,11 +78,15 @@ try:
     from ipfs_datasets_py.audit.audit_visualization import (
         AuditMetricsAggregator,
         AuditVisualizer,
-        create_interactive_audit_trends
+        create_interactive_audit_trends,
     )
     from ipfs_datasets_py.audit.audit_logger import (
-        AuditLogger, AuditEvent, AuditLevel, AuditCategory
+        AuditLogger,
+        AuditEvent,
+        AuditLevel,
+        AuditCategory,
     )
+
     AUDIT_COMPONENTS_AVAILABLE = True
 except ImportError:
     AUDIT_COMPONENTS_AVAILABLE = False
@@ -85,6 +94,7 @@ except ImportError:
 # Try to import enhanced visualization component if available
 try:
     from ipfs_datasets_py.dashboards.rag.enhanced_visualization import EnhancedQueryAuditVisualizer
+
     ENHANCED_VIS_AVAILABLE = True
 except ImportError:
     ENHANCED_VIS_AVAILABLE = False
@@ -118,7 +128,9 @@ class RealTimeDashboardServer:
         self.application = None
         self.metrics_collectors = []
 
-    def register_metrics_collector(self, collector: Union['QueryMetricsCollector', 'AuditMetricsAggregator']) -> None:
+    def register_metrics_collector(
+        self, collector: Union["QueryMetricsCollector", "AuditMetricsAggregator"]
+    ) -> None:
         """
         Register a metrics collector with the dashboard server.
 
@@ -152,10 +164,19 @@ class RealTimeDashboardServer:
                 dashboard_server.clients.remove(self)
 
         # Create Tornado application
-        self.application = tornado.web.Application([
-            (r"/dashboardws", DashboardWebSocketHandler),
-            (r"/(.*)", tornado.web.StaticFileHandler, {"path": os.path.join(os.path.dirname(__file__), "static/dashboard"), "default_filename": "index.html"})
-        ])
+        self.application = tornado.web.Application(
+            [
+                (r"/dashboardws", DashboardWebSocketHandler),
+                (
+                    r"/(.*)",
+                    tornado.web.StaticFileHandler,
+                    {
+                        "path": os.path.join(os.path.dirname(__file__), "static/dashboard"),
+                        "default_filename": "index.html",
+                    },
+                ),
+            ]
+        )
 
         # Start server
         self.application.listen(self.port)
@@ -240,7 +261,7 @@ class RealTimeDashboardServer:
 
         return has_updates
 
-    def _collect_query_metrics(self, collector: 'QueryMetricsCollector') -> Dict[str, Any]:
+    def _collect_query_metrics(self, collector: "QueryMetricsCollector") -> Dict[str, Any]:
         """
         Collect metrics from a QueryMetricsCollector.
 
@@ -265,21 +286,20 @@ class RealTimeDashboardServer:
                 "timestamp": q.timestamp,
                 "duration_ms": q.duration_ms,
                 "status": q.status,
-                "query_type": q.query_type
-            } for q in recent_queries
+                "query_type": q.query_type,
+            }
+            for q in recent_queries
         ]
 
         # Performance over time (last hour in 5-minute intervals)
         time_series = collector.get_performance_time_series(
-            metrics=["latency", "success_rate"],
-            interval_minutes=5,
-            lookback_hours=1
+            metrics=["latency", "success_rate"], interval_minutes=5, lookback_hours=1
         )
         metrics["time_series"] = time_series
 
         return metrics
 
-    def _collect_audit_metrics(self, collector: 'AuditMetricsAggregator') -> Dict[str, Any]:
+    def _collect_audit_metrics(self, collector: "AuditMetricsAggregator") -> Dict[str, Any]:
         """
         Collect metrics from an AuditMetricsAggregator.
 
@@ -304,19 +324,15 @@ class RealTimeDashboardServer:
         metrics["time_series"] = {
             # Convert to a format suitable for JSON
             "by_level": {
-                level: [
-                    {"timestamp": item["timestamp"], "count": item["count"]}
-                    for item in data
-                ]
+                level: [{"timestamp": item["timestamp"], "count": item["count"]} for item in data]
                 for level, data in time_series.get("by_level", {}).items()
             },
             "by_category": {
                 category: [
-                    {"timestamp": item["timestamp"], "count": item["count"]}
-                    for item in data
+                    {"timestamp": item["timestamp"], "count": item["count"]} for item in data
                 ]
                 for category, data in time_series.get("by_category", {}).items()
-            }
+            },
         }
 
         return metrics
@@ -330,7 +346,9 @@ class UnifiedDashboard:
     with both static and real-time components.
     """
 
-    def __init__(self, dashboard_dir: Optional[str] = None, enable_realtime: bool = False, port: int = 8888) -> None:
+    def __init__(
+        self, dashboard_dir: Optional[str] = None, enable_realtime: bool = False, port: int = 8888
+    ) -> None:
         """
         Initialize the unified dashboard.
 
@@ -369,10 +387,14 @@ class UnifiedDashboard:
             try:
                 self.server = RealTimeDashboardServer(port=port)
             except ImportError:
-                logging.warning("Real-time libraries not available. Falling back to static dashboard.")
+                logging.warning(
+                    "Real-time libraries not available. Falling back to static dashboard."
+                )
                 self.enable_realtime = False
 
-    def register_metrics_collector(self, collector: Union['QueryMetricsCollector', 'AuditMetricsAggregator']) -> None:
+    def register_metrics_collector(
+        self, collector: Union["QueryMetricsCollector", "AuditMetricsAggregator"]
+    ) -> None:
         """
         Register a metrics collector with the dashboard.
 
@@ -384,14 +406,14 @@ class UnifiedDashboard:
 
     def generate_dashboard(
         self,
-        query_metrics_collector: Optional['QueryMetricsCollector'] = None,
-        audit_metrics_aggregator: Optional['AuditMetricsAggregator'] = None,
+        query_metrics_collector: Optional["QueryMetricsCollector"] = None,
+        audit_metrics_aggregator: Optional["AuditMetricsAggregator"] = None,
         title: str = "Unified Query & Audit Dashboard",
         theme: str = "light",
         include_performance: bool = True,
         include_security: bool = True,
         include_interactive: bool = True,
-        include_realtime: Optional[bool] = None  # None means use the instance default
+        include_realtime: Optional[bool] = None,  # None means use the instance default
     ) -> str:
         """
         Generate a comprehensive dashboard with both static and real-time components.
@@ -436,16 +458,18 @@ class UnifiedDashboard:
                 self.rag_dashboard.visualize_query_performance(
                     metrics_collector=query_metrics_collector,
                     output_file=perf_path,
-                    show_plot=False
+                    show_plot=False,
                 )
-                visualization_paths["query_performance"] = os.path.relpath(perf_path, self.dashboard_dir)
+                visualization_paths["query_performance"] = os.path.relpath(
+                    perf_path, self.dashboard_dir
+                )
 
                 # Generate query type distribution
                 types_path = os.path.join(static_visualizations_dir, "query_types.png")
                 self.rag_dashboard.visualize_query_types(
                     metrics_collector=query_metrics_collector,
                     output_file=types_path,
-                    show_plot=False
+                    show_plot=False,
                 )
                 visualization_paths["query_types"] = os.path.relpath(types_path, self.dashboard_dir)
 
@@ -460,17 +484,23 @@ class UnifiedDashboard:
                 # Plot events by category
                 category_path = os.path.join(static_visualizations_dir, "events_by_category.png")
                 self.visualizer.plot_events_by_category(output_file=category_path)
-                visualization_paths["events_by_category"] = os.path.relpath(category_path, self.dashboard_dir)
+                visualization_paths["events_by_category"] = os.path.relpath(
+                    category_path, self.dashboard_dir
+                )
 
                 # Plot events by level
                 level_path = os.path.join(static_visualizations_dir, "events_by_level.png")
                 self.visualizer.plot_events_by_level(output_file=level_path)
-                visualization_paths["events_by_level"] = os.path.relpath(level_path, self.dashboard_dir)
+                visualization_paths["events_by_level"] = os.path.relpath(
+                    level_path, self.dashboard_dir
+                )
 
                 # Plot login failures
                 login_path = os.path.join(static_visualizations_dir, "login_failures.png")
                 self.visualizer.plot_login_failures(output_file=login_path)
-                visualization_paths["login_failures"] = os.path.relpath(login_path, self.dashboard_dir)
+                visualization_paths["login_failures"] = os.path.relpath(
+                    login_path, self.dashboard_dir
+                )
 
         # Generate integrated visualizations if both collectors are available
         if query_metrics_collector and audit_metrics_aggregator:
@@ -480,22 +510,28 @@ class UnifiedDashboard:
                 self.rag_dashboard.visualize_query_audit_metrics(
                     audit_metrics_aggregator=audit_metrics_aggregator,
                     output_file=timeline_path,
-                    show_plot=False
+                    show_plot=False,
                 )
-                visualization_paths["query_audit_timeline"] = os.path.relpath(timeline_path, self.dashboard_dir)
+                visualization_paths["query_audit_timeline"] = os.path.relpath(
+                    timeline_path, self.dashboard_dir
+                )
             except Exception as e:
                 logging.error(f"Error generating query-audit timeline: {str(e)}")
 
             # Generate correlation analysis
             if ENHANCED_VIS_AVAILABLE:
-                correlation_path = os.path.join(static_visualizations_dir, "query_audit_correlation.png")
+                correlation_path = os.path.join(
+                    static_visualizations_dir, "query_audit_correlation.png"
+                )
                 try:
                     self.rag_dashboard.analyze_query_audit_correlation(
                         audit_metrics_aggregator=audit_metrics_aggregator,
                         output_file=correlation_path,
-                        show_plot=False
+                        show_plot=False,
                     )
-                    visualization_paths["query_audit_correlation"] = os.path.relpath(correlation_path, self.dashboard_dir)
+                    visualization_paths["query_audit_correlation"] = os.path.relpath(
+                        correlation_path, self.dashboard_dir
+                    )
                 except Exception as e:
                     logging.error(f"Error generating correlation analysis: {str(e)}")
 
@@ -508,15 +544,19 @@ class UnifiedDashboard:
 
             # Generate query performance interactive visualization
             if query_metrics_collector:
-                perf_interactive_path = os.path.join(interactive_dir, "query_performance_interactive.html")
+                perf_interactive_path = os.path.join(
+                    interactive_dir, "query_performance_interactive.html"
+                )
                 try:
                     self.rag_dashboard.visualize_query_performance(
                         metrics_collector=query_metrics_collector,
                         output_file=perf_interactive_path,
                         interactive=True,
-                        show_plot=False
+                        show_plot=False,
                     )
-                    interactive_visualizations["query_performance"] = os.path.relpath(perf_interactive_path, self.dashboard_dir)
+                    interactive_visualizations["query_performance"] = os.path.relpath(
+                        perf_interactive_path, self.dashboard_dir
+                    )
                 except Exception as e:
                     logging.error(f"Error generating interactive query performance: {str(e)}")
 
@@ -530,9 +570,11 @@ class UnifiedDashboard:
                         period="daily",
                         lookback_days=30,
                         output_file=daily_trends_path,
-                        show_plot=False
+                        show_plot=False,
                     )
-                    interactive_visualizations["daily_audit_trends"] = os.path.relpath(daily_trends_path, self.dashboard_dir)
+                    interactive_visualizations["daily_audit_trends"] = os.path.relpath(
+                        daily_trends_path, self.dashboard_dir
+                    )
                 except Exception as e:
                     logging.error(f"Error generating interactive daily audit trends: {str(e)}")
 
@@ -544,9 +586,11 @@ class UnifiedDashboard:
                         period="hourly",
                         lookback_days=7,
                         output_file=hourly_trends_path,
-                        show_plot=False
+                        show_plot=False,
                     )
-                    interactive_visualizations["hourly_audit_trends"] = os.path.relpath(hourly_trends_path, self.dashboard_dir)
+                    interactive_visualizations["hourly_audit_trends"] = os.path.relpath(
+                        hourly_trends_path, self.dashboard_dir
+                    )
                 except Exception as e:
                     logging.error(f"Error generating interactive hourly audit trends: {str(e)}")
 
@@ -559,9 +603,11 @@ class UnifiedDashboard:
                         lookback_days=30,
                         categories=["AUTHENTICATION", "AUTHORIZATION", "SECURITY"],
                         output_file=security_trends_path,
-                        show_plot=False
+                        show_plot=False,
                     )
-                    interactive_visualizations["security_audit_trends"] = os.path.relpath(security_trends_path, self.dashboard_dir)
+                    interactive_visualizations["security_audit_trends"] = os.path.relpath(
+                        security_trends_path, self.dashboard_dir
+                    )
                 except Exception as e:
                     logging.error(f"Error generating interactive security audit trends: {str(e)}")
 
@@ -576,7 +622,7 @@ class UnifiedDashboard:
                 has_query_metrics=query_metrics_collector is not None,
                 has_audit_metrics=audit_metrics_aggregator is not None,
                 enable_realtime=include_realtime,
-                websocket_port=self.server.port if self.server else None
+                websocket_port=self.server.port if self.server else None,
             )
         else:
             # Use Jinja2 for more sophisticated templates
@@ -588,7 +634,7 @@ class UnifiedDashboard:
                 has_query_metrics=query_metrics_collector is not None,
                 has_audit_metrics=audit_metrics_aggregator is not None,
                 enable_realtime=include_realtime,
-                websocket_port=self.server.port if self.server else None
+                websocket_port=self.server.port if self.server else None,
             )
 
         # Write dashboard HTML
@@ -617,7 +663,7 @@ class UnifiedDashboard:
         has_query_metrics: bool,
         has_audit_metrics: bool,
         enable_realtime: bool,
-        websocket_port: Optional[int]
+        websocket_port: Optional[int],
     ) -> str:
         """
         Generate basic HTML for the dashboard without using Jinja2.
@@ -650,8 +696,8 @@ class UnifiedDashboard:
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: {('#1a1a1a' if theme == 'dark' else '#f5f5f5')};
-            color: {('#f5f5f5' if theme == 'dark' else '#333')};
+            background-color: {("#1a1a1a" if theme == "dark" else "#f5f5f5")};
+            color: {("#f5f5f5" if theme == "dark" else "#333")};
         }}
         .dashboard {{
             max-width: 1200px;
@@ -660,15 +706,15 @@ class UnifiedDashboard:
         }}
         header {{
             margin-bottom: 20px;
-            border-bottom: 1px solid {('#444' if theme == 'dark' else '#ddd')};
+            border-bottom: 1px solid {("#444" if theme == "dark" else "#ddd")};
             padding-bottom: 10px;
         }}
         h1, h2, h3 {{
-            color: {('#fff' if theme == 'dark' else '#333')};
+            color: {("#fff" if theme == "dark" else "#333")};
         }}
         .section {{
             margin-bottom: 30px;
-            background-color: {('#2a2a2a' if theme == 'dark' else '#fff')};
+            background-color: {("#2a2a2a" if theme == "dark" else "#fff")};
             border-radius: 5px;
             padding: 15px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
@@ -680,18 +726,18 @@ class UnifiedDashboard:
         .visualization img {{
             max-width: 100%;
             border-radius: 5px;
-            border: 1px solid {('#444' if theme == 'dark' else '#ddd')};
+            border: 1px solid {("#444" if theme == "dark" else "#ddd")};
         }}
         .interactive-frame {{
             width: 100%;
             height: 600px;
             border: none;
             border-radius: 5px;
-            background-color: {('#fff' if theme == 'dark' else '#fff')};
+            background-color: {("#fff" if theme == "dark" else "#fff")};
         }}
         .stats-box {{
             display: inline-block;
-            background-color: {('#3a3a3a' if theme == 'dark' else '#f9f9f9')};
+            background-color: {("#3a3a3a" if theme == "dark" else "#f9f9f9")};
             border-radius: 5px;
             padding: 15px;
             margin: 10px;
@@ -706,32 +752,32 @@ class UnifiedDashboard:
         }}
         .stats-label {{
             font-size: 14px;
-            color: {('#aaa' if theme == 'dark' else '#666')};
+            color: {("#aaa" if theme == "dark" else "#666")};
         }}
         .tabbed-content {{
             margin-top: 20px;
         }}
         .tab-links {{
             display: flex;
-            border-bottom: 1px solid {('#444' if theme == 'dark' else '#ddd')};
+            border-bottom: 1px solid {("#444" if theme == "dark" else "#ddd")};
         }}
         .tab-link {{
             padding: 10px 15px;
-            background-color: {('#3a3a3a' if theme == 'dark' else '#f9f9f9')};
+            background-color: {("#3a3a3a" if theme == "dark" else "#f9f9f9")};
             border: none;
             border-radius: 5px 5px 0 0;
             margin-right: 5px;
             cursor: pointer;
-            color: {('#ddd' if theme == 'dark' else '#333')};
+            color: {("#ddd" if theme == "dark" else "#333")};
         }}
         .tab-link.active {{
-            background-color: {('#4a4a4a' if theme == 'dark' else '#fff')};
-            color: {('#fff' if theme == 'dark' else '#000')};
+            background-color: {("#4a4a4a" if theme == "dark" else "#fff")};
+            color: {("#fff" if theme == "dark" else "#000")};
         }}
         .tab-content {{
             display: none;
             padding: 15px;
-            background-color: {('#2a2a2a' if theme == 'dark' else '#fff')};
+            background-color: {("#2a2a2a" if theme == "dark" else "#fff")};
             border-radius: 0 5px 5px 5px;
         }}
         .tab-content.active {{
@@ -743,7 +789,7 @@ class UnifiedDashboard:
     <div class="dashboard {theme_class}">
         <header>
             <h1>{title}</h1>
-            <p>Generated on {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+            <p>Generated on {datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}</p>
         </header>
 """
 
@@ -826,14 +872,14 @@ class UnifiedDashboard:
                 html += f"""
                     <div class="visualization">
                         <h3>Query Performance</h3>
-                        <img src="{static_visualizations['query_performance']}" alt="Query Performance">
+                        <img src="{static_visualizations["query_performance"]}" alt="Query Performance">
                     </div>
 """
             if "query_types" in static_visualizations:
                 html += f"""
                     <div class="visualization">
                         <h3>Query Type Distribution</h3>
-                        <img src="{static_visualizations['query_types']}" alt="Query Types">
+                        <img src="{static_visualizations["query_types"]}" alt="Query Types">
                     </div>
 """
             html += """
@@ -848,21 +894,21 @@ class UnifiedDashboard:
                 html += f"""
                     <div class="visualization">
                         <h3>Events by Category</h3>
-                        <img src="{static_visualizations['events_by_category']}" alt="Events by Category">
+                        <img src="{static_visualizations["events_by_category"]}" alt="Events by Category">
                     </div>
 """
             if "events_by_level" in static_visualizations:
                 html += f"""
                     <div class="visualization">
                         <h3>Events by Level</h3>
-                        <img src="{static_visualizations['events_by_level']}" alt="Events by Level">
+                        <img src="{static_visualizations["events_by_level"]}" alt="Events by Level">
                     </div>
 """
             if "login_failures" in static_visualizations:
                 html += f"""
                     <div class="visualization">
                         <h3>Login Failures</h3>
-                        <img src="{static_visualizations['login_failures']}" alt="Login Failures">
+                        <img src="{static_visualizations["login_failures"]}" alt="Login Failures">
                     </div>
 """
             html += """
@@ -877,14 +923,14 @@ class UnifiedDashboard:
                 html += f"""
                     <div class="visualization">
                         <h3>Query-Audit Timeline</h3>
-                        <img src="{static_visualizations['query_audit_timeline']}" alt="Query-Audit Timeline">
+                        <img src="{static_visualizations["query_audit_timeline"]}" alt="Query-Audit Timeline">
                     </div>
 """
             if "query_audit_correlation" in static_visualizations:
                 html += f"""
                     <div class="visualization">
                         <h3>Query-Audit Correlation Analysis</h3>
-                        <img src="{static_visualizations['query_audit_correlation']}" alt="Query-Audit Correlation">
+                        <img src="{static_visualizations["query_audit_correlation"]}" alt="Query-Audit Correlation">
                     </div>
 """
             html += """
@@ -936,7 +982,7 @@ class UnifiedDashboard:
                 <div id="tab-inter-query" class="tab-content active">
                     <div class="visualization">
                         <h3>Interactive Query Performance</h3>
-                        <iframe class="interactive-frame" src="{interactive_visualizations['query_performance']}"></iframe>
+                        <iframe class="interactive-frame" src="{interactive_visualizations["query_performance"]}"></iframe>
                     </div>
                 </div>
 """
@@ -946,7 +992,7 @@ class UnifiedDashboard:
                 <div id="tab-inter-daily" class="tab-content {active}">
                     <div class="visualization">
                         <h3>Daily Audit Trends (30 Days)</h3>
-                        <iframe class="interactive-frame" src="{interactive_visualizations['daily_audit_trends']}"></iframe>
+                        <iframe class="interactive-frame" src="{interactive_visualizations["daily_audit_trends"]}"></iframe>
                     </div>
                 </div>
 """
@@ -956,7 +1002,7 @@ class UnifiedDashboard:
                 <div id="tab-inter-hourly" class="tab-content {active}">
                     <div class="visualization">
                         <h3>Hourly Audit Trends (7 Days)</h3>
-                        <iframe class="interactive-frame" src="{interactive_visualizations['hourly_audit_trends']}"></iframe>
+                        <iframe class="interactive-frame" src="{interactive_visualizations["hourly_audit_trends"]}"></iframe>
                     </div>
                 </div>
 """
@@ -966,7 +1012,7 @@ class UnifiedDashboard:
                 <div id="tab-inter-security" class="tab-content {active}">
                     <div class="visualization">
                         <h3>Security Event Trends</h3>
-                        <iframe class="interactive-frame" src="{interactive_visualizations['security_audit_trends']}"></iframe>
+                        <iframe class="interactive-frame" src="{interactive_visualizations["security_audit_trends"]}"></iframe>
                     </div>
                 </div>
 """
@@ -1027,7 +1073,7 @@ class UnifiedDashboard:
         has_query_metrics: bool,
         has_audit_metrics: bool,
         enable_realtime: bool,
-        websocket_port: Optional[int]
+        websocket_port: Optional[int],
     ) -> str:
         """
         Generate HTML using Jinja2 templates.
@@ -1389,7 +1435,7 @@ class UnifiedDashboard:
                 "tab_bg": "#3a3a3a",
                 "tab_text": "#ddd",
                 "active_tab_bg": "#4a4a4a",
-                "active_tab_text": "#fff"
+                "active_tab_text": "#fff",
             }
         else:
             theme_colors = {
@@ -1403,7 +1449,7 @@ class UnifiedDashboard:
                 "tab_bg": "#f9f9f9",
                 "tab_text": "#333",
                 "active_tab_bg": "#fff",
-                "active_tab_text": "#000"
+                "active_tab_text": "#000",
             }
 
         # Create template and render
@@ -1418,7 +1464,7 @@ class UnifiedDashboard:
             has_audit_metrics=has_audit_metrics,
             enable_realtime=enable_realtime,
             websocket_port=websocket_port,
-            generation_time=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            generation_time=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         )
 
         return html
@@ -1713,14 +1759,14 @@ def run_demonstration(dashboard_dir: Optional[str] = None, enable_realtime: bool
             duration_ms=duration,
             result_count=random.randint(1, 20),
             status=status,
-            timestamp=timestamp
+            timestamp=timestamp,
         )
 
     # Create sample audit metrics
     if AUDIT_COMPONENTS_AVAILABLE:
         audit_metrics = AuditMetricsAggregator(
             window_size=30 * 86400,  # 30 days
-            bucket_size=3600  # 1 hour buckets
+            bucket_size=3600,  # 1 hour buckets
         )
 
         # Generate sample audit events
@@ -1759,7 +1805,7 @@ def run_demonstration(dashboard_dir: Optional[str] = None, enable_realtime: bool
                     duration_ms=random.uniform(200, 1000),  # Slower than average
                     result_count=random.randint(0, 5),  # Fewer results
                     status=random.choices(["success", "failure"], weights=[0.6, 0.4])[0],
-                    timestamp=query_time
+                    timestamp=query_time,
                 )
 
             # Create the event
@@ -1769,7 +1815,7 @@ def run_demonstration(dashboard_dir: Optional[str] = None, enable_realtime: bool
                 action=action,
                 status=random.choices(["success", "failure"], weights=[0.9, 0.1])[0],
                 user=user,
-                timestamp=event_datetime.isoformat()
+                timestamp=event_datetime.isoformat(),
             )
 
             # Log the event
@@ -1778,10 +1824,7 @@ def run_demonstration(dashboard_dir: Optional[str] = None, enable_realtime: bool
         audit_metrics = None
 
     # Create dashboard
-    dashboard = UnifiedDashboard(
-        dashboard_dir=dashboard_dir,
-        enable_realtime=enable_realtime
-    )
+    dashboard = UnifiedDashboard(dashboard_dir=dashboard_dir, enable_realtime=enable_realtime)
 
     # Register metrics
     dashboard.register_metrics_collector(query_metrics)
@@ -1797,7 +1840,7 @@ def run_demonstration(dashboard_dir: Optional[str] = None, enable_realtime: bool
         include_performance=True,
         include_security=True,
         include_interactive=True,
-        include_realtime=enable_realtime
+        include_realtime=enable_realtime,
     )
 
     print(f"Dashboard generated at: {dashboard_path}")

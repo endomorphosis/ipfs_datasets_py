@@ -128,9 +128,7 @@ def _digest(value: object, field_name: str) -> str:
     text = _text(value, field_name)
     candidate = text.removeprefix("sha256:")
     if not _DIGEST.fullmatch(candidate):
-        if len(candidate) == 64 and all(
-            ch in "0123456789abcdef" for ch in candidate
-        ):
+        if len(candidate) == 64 and all(ch in "0123456789abcdef" for ch in candidate):
             return candidate
         raise TLARunnerError(f"{field_name} must be a lowercase SHA-256 digest")
     return candidate
@@ -162,9 +160,7 @@ class ModelCheckerCapability:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "tool", _enum(self.tool, ModelCheckerTool, "tool"))
-        object.__setattr__(
-            self, "backend_version", _text(self.backend_version, "backend_version")
-        )
+        object.__setattr__(self, "backend_version", _text(self.backend_version, "backend_version"))
         for name in (
             "checks_safety",
             "checks_liveness",
@@ -191,9 +187,7 @@ class ModelCheckerCapability:
             tuple(_text(item, "limitation") for item in self.limitations),
         )
         if self.schema_version != TLA_CAPABILITY_VERSION:
-            raise TLARunnerError(
-                f"unsupported capability schema: {self.schema_version!r}"
-            )
+            raise TLARunnerError(f"unsupported capability schema: {self.schema_version!r}")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -264,15 +258,12 @@ class CounterexampleState:
         if not isinstance(self.assignments, Mapping):
             raise TLARunnerError("assignments must be a mapping")
         normalized = {
-            _text(key, "assignment key"): str(value)
-            for key, value in self.assignments.items()
+            _text(key, "assignment key"): str(value) for key, value in self.assignments.items()
         }
         object.__setattr__(self, "assignments", FrozenMap(normalized).to_dict())
         object.__setattr__(self, "raw", _text(self.raw, "raw", optional=True))
         if self.schema_version != TLA_COUNTEREXAMPLE_VERSION:
-            raise TLARunnerError(
-                f"unsupported counterexample schema: {self.schema_version!r}"
-            )
+            raise TLARunnerError(f"unsupported counterexample schema: {self.schema_version!r}")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -307,9 +298,7 @@ class CounterexampleTrace:
             tuple(_text(item, "replay note") for item in self.replay_notes),
         )
         if self.schema_version != TLA_COUNTEREXAMPLE_VERSION:
-            raise TLARunnerError(
-                f"unsupported counterexample schema: {self.schema_version!r}"
-            )
+            raise TLARunnerError(f"unsupported counterexample schema: {self.schema_version!r}")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -352,15 +341,11 @@ class ModelCheckReceipt:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "tool", _enum(self.tool, ModelCheckerTool, "tool"))
-        object.__setattr__(
-            self, "status", _enum(self.status, ModelCheckOutcomeStatus, "status")
-        )
+        object.__setattr__(self, "status", _enum(self.status, ModelCheckOutcomeStatus, "status"))
         object.__setattr__(
             self, "artifact_digest", _digest(self.artifact_digest, "artifact_digest")
         )
-        object.__setattr__(
-            self, "model_digest", _digest(self.model_digest, "model_digest")
-        )
+        object.__setattr__(self, "model_digest", _digest(self.model_digest, "model_digest"))
         object.__setattr__(
             self,
             "configuration_digest",
@@ -371,9 +356,7 @@ class ModelCheckReceipt:
             "configuration_text",
             _text(self.configuration_text, "configuration_text", optional=True),
         )
-        object.__setattr__(
-            self, "executable", _text(self.executable, "executable", optional=True)
-        )
+        object.__setattr__(self, "executable", _text(self.executable, "executable", optional=True))
         object.__setattr__(
             self, "tool_version", _text(self.tool_version, "tool_version", optional=True)
         )
@@ -402,9 +385,7 @@ class ModelCheckReceipt:
         if self.status is ModelCheckOutcomeStatus.UNAVAILABLE and (
             self.checked_safety_properties or self.checked_liveness_properties
         ):
-            raise TLARunnerError(
-                "unavailable checker cannot claim properties were checked"
-            )
+            raise TLARunnerError("unavailable checker cannot claim properties were checked")
         if (
             isinstance(self.elapsed_ms, bool)
             or not isinstance(self.elapsed_ms, int)
@@ -422,20 +403,14 @@ class ModelCheckReceipt:
         if not isinstance(self.jvm_available, bool):
             raise TLARunnerError("jvm_available must be a boolean")
         object.__setattr__(self, "reason", _text(self.reason, "reason"))
-        object.__setattr__(
-            self, "stdout", _text(self.stdout, "stdout", optional=True)
-        )
-        object.__setattr__(
-            self, "stderr", _text(self.stderr, "stderr", optional=True)
-        )
+        object.__setattr__(self, "stdout", _text(self.stdout, "stdout", optional=True))
+        object.__setattr__(self, "stderr", _text(self.stderr, "stderr", optional=True))
         if self.counterexample is not None and not isinstance(
             self.counterexample, CounterexampleTrace
         ):
             raise TLARunnerError("counterexample must be a CounterexampleTrace")
         if self.schema_version != TLA_MODEL_CHECK_RECEIPT_VERSION:
-            raise TLARunnerError(
-                f"unsupported receipt schema: {self.schema_version!r}"
-            )
+            raise TLARunnerError(f"unsupported receipt schema: {self.schema_version!r}")
 
     @property
     def bounded(self) -> bool:
@@ -495,32 +470,24 @@ class ModelCheckOutcome:
     interface_version: str = TLA_BACKEND_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "request_digest", _digest(self.request_digest, "request_digest")
-        )
+        object.__setattr__(self, "request_digest", _digest(self.request_digest, "request_digest"))
         if not isinstance(self.result, ModelCheckResult):
             raise TLARunnerError("result must be a ModelCheckResult")
         if not isinstance(self.receipt, ModelCheckReceipt):
             raise TLARunnerError("receipt must be a ModelCheckReceipt")
-        if self.artifacts is not None and not isinstance(
-            self.artifacts, GeneratedTLAArtifacts
-        ):
+        if self.artifacts is not None and not isinstance(self.artifacts, GeneratedTLAArtifacts):
             raise TLARunnerError("artifacts must be GeneratedTLAArtifacts")
         if self.interface_version not in {
             TLA_BACKEND_VERSION,
             TLC_BACKEND_VERSION,
             APALACHE_BACKEND_VERSION,
         }:
-            raise TLARunnerError(
-                f"unsupported interface version: {self.interface_version!r}"
-            )
+            raise TLARunnerError(f"unsupported interface version: {self.interface_version!r}")
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "artifacts": (
-                self.artifacts.to_dict(include_text=False)
-                if self.artifacts is not None
-                else None
+                self.artifacts.to_dict(include_text=False) if self.artifacts is not None else None
             ),
             "interface_version": self.interface_version,
             "receipt": self.receipt.to_dict(),
@@ -537,9 +504,7 @@ def parse_counterexample_trace(output: str) -> CounterexampleTrace:
     """Parse TLC/Apalache state blocks while retaining the exact raw trace."""
 
     text = str(output or "")
-    pattern = re.compile(
-        r"(?ms)^State\s+(\d+):\s*([^\n]*)\n(.*?)(?=^State\s+\d+:|\Z)"
-    )
+    pattern = re.compile(r"(?ms)^State\s+(\d+):\s*([^\n]*)\n(.*?)(?=^State\s+\d+:|\Z)")
     states: list[CounterexampleState] = []
     for match in pattern.finditer(text):
         body = match.group(3).rstrip()
@@ -578,14 +543,10 @@ def replay_counterexample(
     for state in trace.states:
         unknown = sorted(set(state.assignments) - mapped_symbols - {"step"})
         if unknown:
-            notes.append(
-                f"state {state.index}: unmapped assignment keys: {', '.join(unknown)}"
-            )
+            notes.append(f"state {state.index}: unmapped assignment keys: {', '.join(unknown)}")
         known = sorted(set(state.assignments) & mapped_symbols)
         if known:
-            notes.append(
-                f"state {state.index}: replayed mapped symbols: {', '.join(known)}"
-            )
+            notes.append(f"state {state.index}: replayed mapped symbols: {', '.join(known)}")
     return CounterexampleTrace(
         states=trace.states,
         raw=trace.raw,
@@ -655,9 +616,8 @@ class TLAModelCheckerBackend:
         if not jvm_ok:
             reason = "JVM (java) is unavailable"
         elif not executable:
-            reason = (
-                f"{self.tool.value} executable unavailable; looked for "
-                + ", ".join(self.capability.executable_candidates)
+            reason = f"{self.tool.value} executable unavailable; looked for " + ", ".join(
+                self.capability.executable_candidates
             )
         return ToolProbe(
             runtime=ToolRuntime.JVM,
@@ -691,11 +651,7 @@ class TLAModelCheckerBackend:
     ) -> ModelCheckOutcome:
         if not isinstance(artifacts, GeneratedTLAArtifacts):
             raise TLARunnerError("artifacts must be GeneratedTLAArtifacts")
-        request_digest = (
-            request.digest
-            if request is not None
-            else artifacts.artifact_digest
-        )
+        request_digest = request.digest if request is not None else artifacts.artifact_digest
         bounds = (
             request.bounds
             if request is not None
@@ -706,12 +662,8 @@ class TLAModelCheckerBackend:
         )
         probe = self.probe()
         if not probe.available:
-            receipt = self._unavailable_receipt(
-                artifacts, probe=probe, bounds=bounds
-            )
-            result = self._result_from_receipt(
-                receipt, request=request, bounds=bounds
-            )
+            receipt = self._unavailable_receipt(artifacts, probe=probe, bounds=bounds)
+            result = self._result_from_receipt(receipt, request=request, bounds=bounds)
             return ModelCheckOutcome(
                 request_digest=request_digest,
                 result=result,
@@ -724,9 +676,7 @@ class TLAModelCheckerBackend:
         timeout_seconds = max(0.001, bounds.timeout_ms / 1000.0)
         config_text = artifacts.configuration_for(self.tool.value)
         config_name = (
-            f"{artifacts.module_name}.cfg"
-            if self.tool is ModelCheckerTool.TLC
-            else "apalache.cfg"
+            f"{artifacts.module_name}.cfg" if self.tool is ModelCheckerTool.TLC else "apalache.cfg"
         )
         tla_name = f"{artifacts.module_name}.tla"
         # Relative paths are resolved against the private workspace cwd.  The
@@ -775,9 +725,7 @@ class TLAModelCheckerBackend:
         )
         process = self._runner.run(tool_request, cancellation=cancellation)
         version = self._tool_version(executable)
-        combined = "\n".join(
-            part for part in (process.stdout, process.stderr) if part
-        )
+        combined = "\n".join(part for part in (process.stdout, process.stderr) if part)
         status, reason = self._classify(process, combined)
         counterexample: CounterexampleTrace | None = None
         if status is ModelCheckOutcomeStatus.COUNTEREXAMPLE:
@@ -790,9 +738,7 @@ class TLAModelCheckerBackend:
                     raw=counterexample.raw,
                     source="checker_counterexample_file",
                 )
-            counterexample = replay_counterexample(
-                counterexample, artifacts.source_map
-            )
+            counterexample = replay_counterexample(counterexample, artifacts.source_map)
 
         safety = (
             tuple(artifacts.safety_properties)
@@ -814,9 +760,7 @@ class TLAModelCheckerBackend:
             liveness: tuple[str, ...] = ()
         else:
             liveness = (
-                tuple(artifacts.liveness_properties)
-                if self.tool is ModelCheckerTool.TLC
-                else ()
+                tuple(artifacts.liveness_properties) if self.tool is ModelCheckerTool.TLC else ()
             )
             if status in {
                 ModelCheckOutcomeStatus.ERROR,
@@ -839,7 +783,9 @@ class TLAModelCheckerBackend:
             executable=executable,
             tool_version=version,
             command=tuple(str(arg) for arg in argv),
-            checked_safety_properties=safety if status is not ModelCheckOutcomeStatus.UNAVAILABLE else (),
+            checked_safety_properties=safety
+            if status is not ModelCheckOutcomeStatus.UNAVAILABLE
+            else (),
             checked_liveness_properties=liveness,
             fairness_limitations=tuple(artifacts.fairness_limitations)
             + tuple(self.capability.limitations),
@@ -874,9 +820,7 @@ class TLAModelCheckerBackend:
         payload = request.payload.to_dict()
         if "artifacts" in payload or "model_text" in payload:
             artifacts = self._artifacts_from_payload(payload)
-            return self.check(
-                artifacts, request=request, cancellation=cancellation
-            )
+            return self.check(artifacts, request=request, cancellation=cancellation)
         if "document" in payload:
             return self.compile_and_check(
                 payload["document"],
@@ -891,19 +835,15 @@ class TLAModelCheckerBackend:
                 module_name=module_name,
                 model_text=source if source.endswith("\n") else source + "\n",
                 tlc_config_text=str(
-                    payload.get("tlc_config")
-                    or "SPECIFICATION Spec\nINVARIANT Safety\n"
+                    payload.get("tlc_config") or "SPECIFICATION Spec\nINVARIANT Safety\n"
                 ),
                 apalache_config_text=str(
-                    payload.get("apalache_config")
-                    or "INIT Init\nNEXT Next\nINVARIANT Safety\n"
+                    payload.get("apalache_config") or "INIT Init\nNEXT Next\nINVARIANT Safety\n"
                 ),
                 source_map=(),
                 losses=(),
                 bounds=self._compiler.bounds,
-                source_document_id=str(
-                    payload.get("source_document_id") or request.claim_digest
-                ),
+                source_document_id=str(payload.get("source_document_id") or request.claim_digest),
                 source_kind="raw_tla",
                 safety_properties=("Safety",),
                 liveness_properties=(),
@@ -911,16 +851,10 @@ class TLAModelCheckerBackend:
                     "Raw TLA source was supplied without a compiler source map.",
                 ),
             )
-            return self.check(
-                artifacts, request=request, cancellation=cancellation
-            )
-        raise TLARunnerError(
-            "request payload must include document, artifacts, or TLA source"
-        )
+            return self.check(artifacts, request=request, cancellation=cancellation)
+        raise TLARunnerError("request payload must include document, artifacts, or TLA source")
 
-    def _artifacts_from_payload(
-        self, payload: Mapping[str, Any]
-    ) -> GeneratedTLAArtifacts:
+    def _artifacts_from_payload(self, payload: Mapping[str, Any]) -> GeneratedTLAArtifacts:
         if "artifacts" in payload and isinstance(payload["artifacts"], Mapping):
             data = dict(payload["artifacts"])
         else:
@@ -932,12 +866,10 @@ class TLAModelCheckerBackend:
             module_name=str(data.get("module_name", "StateModel")),
             model_text=model_text if model_text.endswith("\n") else model_text + "\n",
             tlc_config_text=str(
-                data.get("tlc_config_text")
-                or "SPECIFICATION Spec\nINVARIANT Safety\n"
+                data.get("tlc_config_text") or "SPECIFICATION Spec\nINVARIANT Safety\n"
             ),
             apalache_config_text=str(
-                data.get("apalache_config_text")
-                or "INIT Init\nNEXT Next\nINVARIANT Safety\n"
+                data.get("apalache_config_text") or "INIT Init\nNEXT Next\nINVARIANT Safety\n"
             ),
             source_map=(),
             losses=(),
@@ -957,13 +889,9 @@ class TLAModelCheckerBackend:
         bounds: ExecutionBounds,
     ) -> ModelCheckReceipt:
         jvm_ok = self._jvm_probe() if self.capability.requires_jvm else True
-        reason = probe.reason or (
-            f"{self.tool.value} executable unavailable; no model check ran"
-        )
+        reason = probe.reason or (f"{self.tool.value} executable unavailable; no model check ran")
         if not jvm_ok:
-            reason = (
-                f"JVM/tools unavailable for {self.tool.value}; no model check ran"
-            )
+            reason = f"JVM/tools unavailable for {self.tool.value}; no model check ran"
         config_text = artifacts.configuration_for(self.tool.value)
         return ModelCheckReceipt(
             tool=self.tool,
@@ -1055,13 +983,9 @@ class TLAModelCheckerBackend:
                 "success cannot be established",
             )
         success_markers = (
-            _TLC_SUCCESS_MARKERS
-            if self.tool is ModelCheckerTool.TLC
-            else _APALACHE_SUCCESS_MARKERS
+            _TLC_SUCCESS_MARKERS if self.tool is ModelCheckerTool.TLC else _APALACHE_SUCCESS_MARKERS
         )
-        if process.returncode == 0 and any(
-            marker in lower for marker in success_markers
-        ):
+        if process.returncode == 0 and any(marker in lower for marker in success_markers):
             return (
                 ModelCheckOutcomeStatus.PASSED,
                 "bounded model check passed within the explicitly recorded explored bounds",
@@ -1085,10 +1009,7 @@ class TLAModelCheckerBackend:
     def _counterexample_from_outputs(outputs: Mapping[str, bytes]) -> str:
         for name in sorted(outputs):
             lowered = name.lower()
-            if any(
-                token in lowered
-                for token in ("counterexample", "violation", "example")
-            ):
+            if any(token in lowered for token in ("counterexample", "violation", "example")):
                 try:
                     return outputs[name].decode("utf-8", errors="replace")
                 except Exception:
@@ -1238,9 +1159,7 @@ class TLABackend:
     ) -> ModelCheckOutcome:
         selected = _enum(tool, ModelCheckerTool, "tool")
         backend = self.tlc if selected is ModelCheckerTool.TLC else self.apalache
-        return backend.check(
-            artifacts, request=request, cancellation=cancellation
-        )
+        return backend.check(artifacts, request=request, cancellation=cancellation)
 
     def capabilities(self) -> dict[str, Any]:
         return {

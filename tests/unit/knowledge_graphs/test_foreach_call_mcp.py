@@ -13,6 +13,7 @@ from typing import Any, Dict, List
 # FOREACH clause tests
 # ---------------------------------------------------------------------------
 
+
 class TestForeachLexer:
     """Verify FOREACH is correctly tokenised."""
 
@@ -20,6 +21,7 @@ class TestForeachLexer:
         """GIVEN a Cypher lexer WHEN 'FOREACH' is encountered THEN it gets its own token type."""
         # GIVEN
         from ipfs_datasets_py.knowledge_graphs.cypher.lexer import CypherLexer, TokenType
+
         lexer = CypherLexer()
         # WHEN
         tokens = lexer.tokenize("FOREACH (x IN [1] | CREATE (:N {v: x}))")
@@ -30,6 +32,7 @@ class TestForeachLexer:
     def test_foreach_case_insensitive(self):
         """GIVEN a Cypher lexer WHEN 'foreach' (lower case) is used THEN it still gets FOREACH token."""
         from ipfs_datasets_py.knowledge_graphs.cypher.lexer import CypherLexer, TokenType
+
         lexer = CypherLexer()
         tokens = lexer.tokenize("foreach (x IN [1] | set x = 1)")
         types = [t.type for t in tokens if t.type not in (TokenType.EOF,)]
@@ -44,6 +47,7 @@ class TestForeachAST:
         # GIVEN
         from ipfs_datasets_py.knowledge_graphs.cypher.parser import CypherParser
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import ForeachClause
+
         parser = CypherParser()
         # WHEN
         ast = parser.parse("FOREACH (x IN [1, 2, 3] | CREATE (:Number {value: x}))")
@@ -57,6 +61,7 @@ class TestForeachAST:
         """GIVEN a FOREACH with a CREATE body WHEN parsed THEN the body contains a CreateClause."""
         from ipfs_datasets_py.knowledge_graphs.cypher.parser import CypherParser
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import ForeachClause, CreateClause
+
         parser = CypherParser()
         ast = parser.parse("FOREACH (n IN [1] | CREATE (:X {v: n}))")
         foreach_clause = ast.clauses[0]
@@ -68,6 +73,7 @@ class TestForeachAST:
         """GIVEN a FOREACH with variable 'item' WHEN parsed THEN variable is 'item'."""
         from ipfs_datasets_py.knowledge_graphs.cypher.parser import CypherParser
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import ForeachClause
+
         parser = CypherParser()
         ast = parser.parse("FOREACH (item IN [1, 2] | CREATE (:T {v: item}))")
         foreach_clause = ast.clauses[0]
@@ -82,6 +88,7 @@ class TestForeachCompilation:
         """GIVEN a FOREACH clause WHEN compiled THEN a Foreach IR op is emitted."""
         from ipfs_datasets_py.knowledge_graphs.cypher.parser import CypherParser
         from ipfs_datasets_py.knowledge_graphs.cypher.compiler import CypherCompiler
+
         parser = CypherParser()
         compiler = CypherCompiler()
         ast = parser.parse("FOREACH (item IN [10, 20] | CREATE (:Tag {value: item}))")
@@ -92,6 +99,7 @@ class TestForeachCompilation:
         """GIVEN a FOREACH clause WHEN compiled THEN the Foreach op records the loop variable."""
         from ipfs_datasets_py.knowledge_graphs.cypher.parser import CypherParser
         from ipfs_datasets_py.knowledge_graphs.cypher.compiler import CypherCompiler
+
         parser = CypherParser()
         compiler = CypherCompiler()
         ast = parser.parse("FOREACH (myVar IN [1] | CREATE (:T))")
@@ -104,6 +112,7 @@ class TestForeachCompilation:
         """GIVEN a FOREACH with body ops WHEN compiled THEN body_ops is a non-empty list."""
         from ipfs_datasets_py.knowledge_graphs.cypher.parser import CypherParser
         from ipfs_datasets_py.knowledge_graphs.cypher.compiler import CypherCompiler
+
         parser = CypherParser()
         compiler = CypherCompiler()
         ast = parser.parse("FOREACH (x IN [1] | CREATE (:N {v: x}))")
@@ -120,6 +129,7 @@ class TestForeachExecution:
     def test_foreach_creates_nodes(self):
         """GIVEN a FOREACH that creates nodes WHEN executed THEN the nodes exist in the graph."""
         from ipfs_datasets_py.knowledge_graphs.core.query_executor import QueryExecutor, GraphEngine
+
         graph = GraphEngine()
         executor = QueryExecutor(graph_engine=graph)
         # WHEN
@@ -131,6 +141,7 @@ class TestForeachExecution:
     def test_foreach_empty_list(self):
         """GIVEN a FOREACH over an empty list WHEN executed THEN no nodes are created."""
         from ipfs_datasets_py.knowledge_graphs.core.query_executor import QueryExecutor, GraphEngine
+
         graph = GraphEngine()
         executor = QueryExecutor(graph_engine=graph)
         executor.execute("FOREACH (x IN [] | CREATE (:Empty))")
@@ -142,6 +153,7 @@ class TestForeachExecution:
 # CALL subquery tests
 # ---------------------------------------------------------------------------
 
+
 class TestCallSubqueryAST:
     """Verify CALL { … } produces the correct AST node."""
 
@@ -149,6 +161,7 @@ class TestCallSubqueryAST:
         """GIVEN a CALL { … } query WHEN parsed THEN a CallSubquery node is produced."""
         from ipfs_datasets_py.knowledge_graphs.cypher.parser import CypherParser
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import CallSubquery
+
         parser = CypherParser()
         ast = parser.parse("CALL { MATCH (n:Person) RETURN n.name AS name }")
         assert len(ast.clauses) == 1
@@ -158,6 +171,7 @@ class TestCallSubqueryAST:
         """GIVEN a CALL subquery WHEN parsed THEN the body is a QueryNode."""
         from ipfs_datasets_py.knowledge_graphs.cypher.parser import CypherParser
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import CallSubquery, QueryNode
+
         parser = CypherParser()
         ast = parser.parse("CALL { MATCH (n) RETURN n }")
         call = ast.clauses[0]
@@ -167,10 +181,9 @@ class TestCallSubqueryAST:
         """GIVEN a CALL with YIELD WHEN parsed THEN yield_items are populated."""
         from ipfs_datasets_py.knowledge_graphs.cypher.parser import CypherParser
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import CallSubquery
+
         parser = CypherParser()
-        ast = parser.parse(
-            "CALL { MATCH (n) RETURN count(n) AS total } YIELD total"
-        )
+        ast = parser.parse("CALL { MATCH (n) RETURN count(n) AS total } YIELD total")
         call = ast.clauses[0]
         assert isinstance(call, CallSubquery)
         assert len(call.yield_items) == 1
@@ -180,10 +193,9 @@ class TestCallSubqueryAST:
         """GIVEN a CALL YIELD with AS rename WHEN parsed THEN the alias is recorded."""
         from ipfs_datasets_py.knowledge_graphs.cypher.parser import CypherParser
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import CallSubquery
+
         parser = CypherParser()
-        ast = parser.parse(
-            "CALL { MATCH (n) RETURN n.name AS nm } YIELD nm AS personName"
-        )
+        ast = parser.parse("CALL { MATCH (n) RETURN n.name AS nm } YIELD nm AS personName")
         call = ast.clauses[0]
         assert isinstance(call, CallSubquery)
         assert call.yield_items[0]["alias"] == "personName"
@@ -196,6 +208,7 @@ class TestCallSubqueryCompilation:
         """GIVEN a CALL subquery WHEN compiled THEN a CallSubquery IR op is emitted."""
         from ipfs_datasets_py.knowledge_graphs.cypher.parser import CypherParser
         from ipfs_datasets_py.knowledge_graphs.cypher.compiler import CypherCompiler
+
         parser = CypherParser()
         compiler = CypherCompiler()
         ast = parser.parse("CALL { MATCH (n:Person) RETURN n.name AS name }")
@@ -206,6 +219,7 @@ class TestCallSubqueryCompilation:
         """GIVEN a CALL with a MATCH inside WHEN compiled THEN inner_ops is non-empty."""
         from ipfs_datasets_py.knowledge_graphs.cypher.parser import CypherParser
         from ipfs_datasets_py.knowledge_graphs.cypher.compiler import CypherCompiler
+
         parser = CypherParser()
         compiler = CypherCompiler()
         ast = parser.parse("CALL { MATCH (n:Person) RETURN n.name AS name }")
@@ -217,11 +231,10 @@ class TestCallSubqueryCompilation:
         """GIVEN a CALL with YIELD WHEN compiled THEN yield_items is propagated to IR."""
         from ipfs_datasets_py.knowledge_graphs.cypher.parser import CypherParser
         from ipfs_datasets_py.knowledge_graphs.cypher.compiler import CypherCompiler
+
         parser = CypherParser()
         compiler = CypherCompiler()
-        ast = parser.parse(
-            "CALL { MATCH (n) RETURN count(n) AS total } YIELD total"
-        )
+        ast = parser.parse("CALL { MATCH (n) RETURN count(n) AS total } YIELD total")
         ops = compiler.compile(ast)
         call_op = next(op for op in ops if op.get("op") == "CallSubquery")
         assert call_op["yield_items"] == [{"name": "total", "alias": "total"}]
@@ -233,21 +246,21 @@ class TestCallSubqueryExecution:
     def test_call_subquery_merges_results(self):
         """GIVEN a CALL subquery that matches some nodes WHEN executed THEN results are returned without error."""
         from ipfs_datasets_py.knowledge_graphs.core.query_executor import QueryExecutor, GraphEngine
+
         graph = GraphEngine()
         # Pre-populate the graph
         graph.create_node(labels=["Person"], properties={"name": "Alice", "age": 30})
         graph.create_node(labels=["Person"], properties={"name": "Bob", "age": 25})
         executor = QueryExecutor(graph_engine=graph)
         # WHEN — CALL subquery fetches person names
-        result = executor.execute(
-            "CALL { MATCH (n:Person) RETURN n.name AS name }"
-        )
+        result = executor.execute("CALL { MATCH (n:Person) RETURN n.name AS name }")
         # THEN — no exception; a result object is returned
         assert result is not None
 
     def test_call_subquery_empty_inner_query(self):
         """GIVEN a CALL subquery with no matching nodes WHEN executed THEN no error is raised."""
         from ipfs_datasets_py.knowledge_graphs.core.query_executor import QueryExecutor, GraphEngine
+
         graph = GraphEngine()
         executor = QueryExecutor(graph_engine=graph)
         # Should not raise; result can be a Result object or list
@@ -259,34 +272,51 @@ class TestCallSubqueryExecution:
 # New MCP tool import tests
 # ---------------------------------------------------------------------------
 
+
 class TestNewMCPToolImports:
     """Verify the three new MCP graph tools can be imported directly."""
 
     def test_graph_srl_extract_importable(self):
         """GIVEN the graph_srl_extract module WHEN imported directly THEN no error."""
         pytest.importorskip("anyio", reason="anyio not installed in this env")
-        from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_srl_extract import graph_srl_extract
+        from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_srl_extract import (
+            graph_srl_extract,
+        )
+
         assert callable(graph_srl_extract)
 
     def test_graph_ontology_materialize_importable(self):
         """GIVEN the graph_ontology_materialize module WHEN imported directly THEN no error."""
         pytest.importorskip("anyio", reason="anyio not installed in this env")
-        from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_ontology_materialize import graph_ontology_materialize
+        from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_ontology_materialize import (
+            graph_ontology_materialize,
+        )
+
         assert callable(graph_ontology_materialize)
 
     def test_graph_distributed_execute_importable(self):
         """GIVEN the graph_distributed_execute module WHEN imported directly THEN no error."""
         pytest.importorskip("anyio", reason="anyio not installed in this env")
-        from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_distributed_execute import graph_distributed_execute
+        from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_distributed_execute import (
+            graph_distributed_execute,
+        )
+
         assert callable(graph_distributed_execute)
 
     def test_graph_tools_init_exports_all_three(self):
         """GIVEN graph_tools/__init__.py source WHEN checking __all__ declarations THEN all 3 new tools are listed."""
         import os
+
         init_path = os.path.join(
             os.path.dirname(__file__),
-            "..", "..", "..",
-            "ipfs_datasets_py", "mcp_server", "tools", "graph_tools", "__init__.py",
+            "..",
+            "..",
+            "..",
+            "ipfs_datasets_py",
+            "mcp_server",
+            "tools",
+            "graph_tools",
+            "__init__.py",
         )
         with open(os.path.normpath(init_path)) as fh:
             source = fh.read()
@@ -301,10 +331,9 @@ class TestKnowledgeGraphManagerNewMethods:
     def test_extract_srl_returns_dict(self):
         """GIVEN KnowledgeGraphManager WHEN extract_srl is called THEN a dict is returned."""
         from ipfs_datasets_py.core_operations.knowledge_graph_manager import KnowledgeGraphManager
+
         manager = KnowledgeGraphManager()
-        result = asyncio.run(
-            manager.extract_srl("Alice sent a report to Bob.")
-        )
+        result = asyncio.run(manager.extract_srl("Alice sent a report to Bob."))
         assert isinstance(result, dict)
         assert result.get("status") == "success"
         assert "frame_count" in result
@@ -312,16 +341,16 @@ class TestKnowledgeGraphManagerNewMethods:
     def test_extract_srl_with_triples(self):
         """GIVEN extract_srl with return_triples=True WHEN called THEN triples key is present."""
         from ipfs_datasets_py.core_operations.knowledge_graph_manager import KnowledgeGraphManager
+
         manager = KnowledgeGraphManager()
-        result = asyncio.run(
-            manager.extract_srl("Alice built the project.", return_triples=True)
-        )
+        result = asyncio.run(manager.extract_srl("Alice built the project.", return_triples=True))
         assert result.get("status") == "success"
         assert "triples" in result
 
     def test_ontology_materialize_returns_dict(self):
         """GIVEN KnowledgeGraphManager WHEN ontology_materialize is called THEN a dict is returned."""
         from ipfs_datasets_py.core_operations.knowledge_graph_manager import KnowledgeGraphManager
+
         manager = KnowledgeGraphManager()
         result = asyncio.run(
             manager.ontology_materialize("test_graph", schema={"transitive": ["isAncestorOf"]})
@@ -333,26 +362,25 @@ class TestKnowledgeGraphManagerNewMethods:
     def test_ontology_materialize_explain(self):
         """GIVEN ontology_materialize with explain=True WHEN called THEN traces key is present."""
         from ipfs_datasets_py.core_operations.knowledge_graph_manager import KnowledgeGraphManager
+
         manager = KnowledgeGraphManager()
-        result = asyncio.run(
-            manager.ontology_materialize("test_graph", explain=True)
-        )
+        result = asyncio.run(manager.ontology_materialize("test_graph", explain=True))
         assert result.get("status") == "success"
         assert "traces" in result
 
     def test_distributed_execute_returns_dict(self):
         """GIVEN KnowledgeGraphManager WHEN distributed_execute is called THEN a dict is returned."""
         from ipfs_datasets_py.core_operations.knowledge_graph_manager import KnowledgeGraphManager
+
         manager = KnowledgeGraphManager()
-        result = asyncio.run(
-            manager.distributed_execute("MATCH (n) RETURN n.name")
-        )
+        result = asyncio.run(manager.distributed_execute("MATCH (n) RETURN n.name"))
         assert isinstance(result, dict)
         assert result.get("status") == "success"
 
     def test_distributed_execute_explain(self):
         """GIVEN distributed_execute with explain=True WHEN called THEN plan key is present."""
         from ipfs_datasets_py.core_operations.knowledge_graph_manager import KnowledgeGraphManager
+
         manager = KnowledgeGraphManager()
         result = asyncio.run(
             manager.distributed_execute("MATCH (n:Person) RETURN n.name", explain=True)
@@ -367,29 +395,32 @@ class TestMCPToolsAsync:
     def test_graph_srl_extract_async(self):
         """GIVEN graph_srl_extract tool WHEN called async THEN returns status dict."""
         pytest.importorskip("anyio", reason="anyio not installed in this env")
-        from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_srl_extract import graph_srl_extract
-        result = asyncio.run(
-            graph_srl_extract("Alice sent a report to Bob.")
+        from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_srl_extract import (
+            graph_srl_extract,
         )
+
+        result = asyncio.run(graph_srl_extract("Alice sent a report to Bob."))
         assert isinstance(result, dict)
         assert "status" in result
 
     def test_graph_ontology_materialize_async(self):
         """GIVEN graph_ontology_materialize tool WHEN called async THEN returns status dict."""
         pytest.importorskip("anyio", reason="anyio not installed in this env")
-        from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_ontology_materialize import graph_ontology_materialize
-        result = asyncio.run(
-            graph_ontology_materialize("my_graph")
+        from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_ontology_materialize import (
+            graph_ontology_materialize,
         )
+
+        result = asyncio.run(graph_ontology_materialize("my_graph"))
         assert isinstance(result, dict)
         assert "status" in result
 
     def test_graph_distributed_execute_async(self):
         """GIVEN graph_distributed_execute tool WHEN called async THEN returns status dict."""
         pytest.importorskip("anyio", reason="anyio not installed in this env")
-        from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_distributed_execute import graph_distributed_execute
-        result = asyncio.run(
-            graph_distributed_execute("MATCH (n) RETURN n.name")
+        from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_distributed_execute import (
+            graph_distributed_execute,
         )
+
+        result = asyncio.run(graph_distributed_execute("MATCH (n) RETURN n.name"))
         assert isinstance(result, dict)
         assert "status" in result

@@ -6,6 +6,7 @@ Covers:
 - convert_format: convert between data formats
 - validate_data: validate data against a schema / rules
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -25,11 +26,13 @@ def _run(coro):
 # chunk_text
 # ---------------------------------------------------------------------------
 
+
 class TestChunkText:
     def test_returns_dict(self):
         from ipfs_datasets_py.mcp_server.tools.data_processing_tools.data_processing_tools import (
             chunk_text,
         )
+
         r = _run(chunk_text("Hello world, this is a sample text.", "sentence"))
         assert isinstance(r, dict)
 
@@ -37,6 +40,7 @@ class TestChunkText:
         from ipfs_datasets_py.mcp_server.tools.data_processing_tools.data_processing_tools import (
             chunk_text,
         )
+
         r = _run(chunk_text("Hello world.", "sentence"))
         assert "chunks" in r or "status" in r
 
@@ -44,6 +48,7 @@ class TestChunkText:
         from ipfs_datasets_py.mcp_server.tools.data_processing_tools.data_processing_tools import (
             chunk_text,
         )
+
         r = _run(chunk_text("One sentence. Two sentences. Three.", "sentence"))
         assert isinstance(r, dict)
 
@@ -51,6 +56,7 @@ class TestChunkText:
         from ipfs_datasets_py.mcp_server.tools.data_processing_tools.data_processing_tools import (
             chunk_text,
         )
+
         r = _run(chunk_text("A" * 100, "fixed", chunk_size=20))
         assert isinstance(r, dict)
 
@@ -58,6 +64,7 @@ class TestChunkText:
         from ipfs_datasets_py.mcp_server.tools.data_processing_tools.data_processing_tools import (
             chunk_text,
         )
+
         r = _run(chunk_text("", "sentence"))
         assert isinstance(r, dict)
 
@@ -65,6 +72,7 @@ class TestChunkText:
         from ipfs_datasets_py.mcp_server.tools.data_processing_tools.data_processing_tools import (
             chunk_text,
         )
+
         r = _run(chunk_text("Long text " * 20, "fixed", chunk_size=50, overlap=10))
         assert isinstance(r, dict)
 
@@ -73,11 +81,13 @@ class TestChunkText:
 # transform_data
 # ---------------------------------------------------------------------------
 
+
 class TestTransformData:
     def test_returns_dict(self):
         from ipfs_datasets_py.mcp_server.tools.data_processing_tools.data_processing_tools import (
             transform_data,
         )
+
         r = _run(transform_data({"key": "value"}, "normalize"))
         assert isinstance(r, dict)
 
@@ -85,6 +95,7 @@ class TestTransformData:
         from ipfs_datasets_py.mcp_server.tools.data_processing_tools.data_processing_tools import (
             transform_data,
         )
+
         r = _run(transform_data([1, 2, 3], "flatten"))
         assert isinstance(r, dict)
 
@@ -92,6 +103,7 @@ class TestTransformData:
         from ipfs_datasets_py.mcp_server.tools.data_processing_tools.data_processing_tools import (
             transform_data,
         )
+
         r = _run(transform_data({"x": 1}, "scale", parameters={"factor": 2}))
         assert isinstance(r, dict)
 
@@ -100,11 +112,13 @@ class TestTransformData:
 # convert_format
 # ---------------------------------------------------------------------------
 
+
 class TestConvertFormat:
     def test_returns_dict(self):
         from ipfs_datasets_py.mcp_server.tools.data_processing_tools.data_processing_tools import (
             convert_format,
         )
+
         r = _run(convert_format({"key": "val"}, "dict", "json"))
         assert isinstance(r, dict)
 
@@ -112,6 +126,7 @@ class TestConvertFormat:
         from ipfs_datasets_py.mcp_server.tools.data_processing_tools.data_processing_tools import (
             convert_format,
         )
+
         r = _run(convert_format([{"a": 1, "b": 2}], "json", "csv"))
         assert isinstance(r, dict)
 
@@ -119,11 +134,8 @@ class TestConvertFormat:
         from ipfs_datasets_py.mcp_server.tools.data_processing_tools.data_processing_tools import (
             convert_format,
         )
-        r = _run(
-            convert_format(
-                {"key": "val"}, "dict", "yaml", options={"indent": 2}
-            )
-        )
+
+        r = _run(convert_format({"key": "val"}, "dict", "yaml", options={"indent": 2}))
         assert isinstance(r, dict)
 
 
@@ -131,11 +143,13 @@ class TestConvertFormat:
 # validate_data
 # ---------------------------------------------------------------------------
 
+
 class TestValidateData:
     def test_returns_dict(self):
         from ipfs_datasets_py.mcp_server.tools.data_processing_tools.data_processing_tools import (
             validate_data,
         )
+
         r = _run(validate_data({"name": "Alice", "age": 30}, "schema"))
         assert isinstance(r, dict)
 
@@ -143,6 +157,7 @@ class TestValidateData:
         from ipfs_datasets_py.mcp_server.tools.data_processing_tools.data_processing_tools import (
             validate_data,
         )
+
         r = _run(validate_data({"x": 1}, "schema"))
         assert "status" in r or "valid" in r or "errors" in r
 
@@ -150,6 +165,7 @@ class TestValidateData:
         from ipfs_datasets_py.mcp_server.tools.data_processing_tools.data_processing_tools import (
             validate_data,
         )
+
         schema = {
             "type": "object",
             "properties": {"name": {"type": "string"}},
@@ -161,9 +177,6 @@ class TestValidateData:
         from ipfs_datasets_py.mcp_server.tools.data_processing_tools.data_processing_tools import (
             validate_data,
         )
-        r = _run(
-            validate_data(
-                [1, 2, 3], "custom", rules={"min_length": 1, "max_length": 100}
-            )
-        )
+
+        r = _run(validate_data([1, 2, 3], "custom", rules={"min_length": 1, "max_length": 100}))
         assert isinstance(r, dict)

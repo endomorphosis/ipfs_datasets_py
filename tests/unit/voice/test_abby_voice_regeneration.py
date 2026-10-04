@@ -15,8 +15,7 @@ def _row(
     audio_id: str = "abby-tts-old-a",
     response_id: str = "response-a",
     text: str = (
-        "Call (503) 771-7914. Address: 11-32 S-East 13th Ave, "
-        "Suite J-8, Portland, OR 97205."
+        "Call (503) 771-7914. Address: 11-32 S-East 13th Ave, Suite J-8, Portland, OR 97205."
     ),
 ) -> dict[str, object]:
     return {
@@ -36,8 +35,7 @@ def _row(
 
 def test_regeneration_normalizer_removes_phone_and_address_tts_traps() -> None:
     normalized = normalize_regeneration_spoken_text(
-        "Call (503) 771-7914. Address: 11-32 S-East 13th Ave, "
-        "Suite J-8, Portland, OR 97205."
+        "Call (503) 771-7914. Address: 11-32 S-East 13th Ave, Suite J-8, Portland, OR 97205."
     )
 
     assert "five zero three, seven seven one, seven nine one four" in normalized
@@ -64,8 +62,7 @@ def test_regeneration_normalizer_repairs_historical_direction_contraction() -> N
 
 def test_regeneration_normalizer_repairs_saint_organization_abbreviation() -> None:
     normalized = normalize_regeneration_spoken_text(
-        "Call St. Vincent de Paul, St. Mary’s Catholic Church, "
-        "or St. Charles."
+        "Call St. Vincent de Paul, St. Mary’s Catholic Church, or St. Charles."
     )
 
     assert "Saint Vincent de Paul" in normalized
@@ -73,9 +70,9 @@ def test_regeneration_normalizer_repairs_saint_organization_abbreviation() -> No
     assert "Saint Charles" in normalized
     assert "Street." not in normalized
     assert unsafe_spoken_transformation_reasons(normalized) == ()
-    assert unsafe_spoken_transformation_reasons(
-        "Street. Vincent de Paul and Street. Mary’s"
-    ) == ("organization_abbreviation_expansion_corruption",)
+    assert unsafe_spoken_transformation_reasons("Street. Vincent de Paul and Street. Mary’s") == (
+        "organization_abbreviation_expansion_corruption",
+    )
 
 
 def test_publication_numeric_punctuation_gate_covers_unicode_dashes_and_phone_parens() -> None:
@@ -88,12 +85,15 @@ def test_publication_numeric_punctuation_gate_covers_unicode_dashes_and_phone_pa
         "directional_address_dash",
         "parenthesized_area_code",
     )
-    assert unsafe_spoken_numeric_punctuation_reasons(
-        "Use the trauma-informed, twenty-one-day program."
-    ) == ()
-    assert unsafe_spoken_transformation_reasons(
-        "Lane County’South office"
-    ) == ("apostrophe_direction_corruption",)
+    assert (
+        unsafe_spoken_numeric_punctuation_reasons(
+            "Use the trauma-informed, twenty-one-day program."
+        )
+        == ()
+    )
+    assert unsafe_spoken_transformation_reasons("Lane County’South office") == (
+        "apostrophe_direction_corruption",
+    )
 
 
 def test_plan_and_workset_are_order_independent_and_preserve_supersession() -> None:
@@ -118,8 +118,7 @@ def test_plan_and_workset_are_order_independent_and_preserve_supersession() -> N
     assert len(workset.asr_manifest.items) == 2
     assert len(workset.validation_manifest.items) == 2
     assert all(
-        regeneration_text_risks(item.spoken_text) == ()
-        for item in workset.tts_manifest.items
+        regeneration_text_risks(item.spoken_text) == () for item in workset.tts_manifest.items
     )
 
 

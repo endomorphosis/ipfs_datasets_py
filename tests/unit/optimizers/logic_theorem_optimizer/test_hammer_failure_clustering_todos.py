@@ -21,9 +21,7 @@ FIXTURES = Path(__file__).resolve().parents[3] / "fixtures" / "legal_ir"
 def _failure(
     guidance_id: str,
     *,
-    allowed_paths: tuple[str, ...] = (
-        "ipfs_datasets_py/logic/bridge/deontic_norms.py",
-    ),
+    allowed_paths: tuple[str, ...] = ("ipfs_datasets_py/logic/bridge/deontic_norms.py",),
     contract_id: str = "legal-ir-view/deontic/v1",
     failure_reason: str = "hammer_unproved",
     obligation_family: str = "exception_scope_precedence",
@@ -136,9 +134,7 @@ def test_cluster_identity_uses_every_required_dedupe_dimension() -> None:
         max_todos_per_cycle=20,
         max_todos_per_scope=20,
     )
-    assert [todo.todo_id for todo in reversed_todos] == [
-        todo.todo_id for todo in todos
-    ]
+    assert [todo.todo_id for todo in reversed_todos] == [todo.todo_id for todo in todos]
 
 
 def test_single_high_impact_replay_qualifies_but_low_impact_replay_does_not() -> None:
@@ -213,9 +209,7 @@ def test_scope_and_cycle_caps_are_hard_and_high_impact_replays_rank_first() -> N
     high_impact = {
         "case_id": "urgent",
         "high_impact_replay_failure": True,
-        "hammer_guidance_artifacts": [
-            _failure("urgent", obligation_family="urgent_family")
-        ],
+        "hammer_guidance_artifacts": [_failure("urgent", obligation_family="urgent_family")],
         "schema_version": "legal-ir-replay-v1",
     }
     failures = [

@@ -4,6 +4,7 @@ PDF Entity Extraction Engine
 Canonical engine for extracting entities and relationships from PDF documents.
 Delegates to processors.specialized.graphrag.integration.GraphRAGIntegration.
 """
+
 from __future__ import annotations
 
 import logging
@@ -13,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 try:
     from ipfs_datasets_py.processors.specialized.graphrag.integration import GraphRAGIntegration
+
     _GRAPHRAG_AVAILABLE = True
 except ImportError:
     GraphRAGIntegration = None  # type: ignore[assignment,misc]
@@ -91,7 +93,10 @@ async def pdf_extract_entities(
         if "entity_summary" not in payload:
             payload["entity_summary"] = {}
 
-        payload.setdefault("message", f"Extracted {len(payload['entities_extracted'])} entities from document {document_id}")
+        payload.setdefault(
+            "message",
+            f"Extracted {len(payload['entities_extracted'])} entities from document {document_id}",
+        )
         return payload
 
     except Exception as exc:

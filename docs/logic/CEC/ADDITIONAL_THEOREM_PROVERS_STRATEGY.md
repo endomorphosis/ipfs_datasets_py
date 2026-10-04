@@ -127,25 +127,26 @@ pip install z3-solver
 from z3 import *
 from ipfs_datasets_py.logic.CEC.native import Formula
 
+
 class Z3Prover(ProverInterface):
     def __init__(self):
         self.solver = Solver()
-    
+
     def prove(self, conjecture: Formula, axioms: List[Formula]) -> ProofResult:
         # Convert DCEC formulas to Z3
         z3_axioms = [self.to_z3(ax) for ax in axioms]
         z3_conjecture = self.to_z3(conjecture)
-        
+
         # Add axioms to solver
         for ax in z3_axioms:
             self.solver.add(ax)
-        
+
         # Check if conjecture is consequence of axioms
         # (Add negation and check for unsat)
         self.solver.add(Not(z3_conjecture))
-        
+
         result = self.solver.check()
-        
+
         if result == unsat:
             return ProofResult(success=True, result="proved")
         elif result == sat:
@@ -184,28 +185,29 @@ chmod +x vampire
 import subprocess
 from typing import List
 
+
 class VampireProver(ProverInterface):
     def __init__(self, binary_path: str = "vampire"):
         self.binary_path = binary_path
-    
+
     def prove(self, conjecture: Formula, axioms: List[Formula]) -> ProofResult:
         # Convert to TPTP format
         tptp_problem = self.to_tptp(conjecture, axioms)
-        
+
         # Write to temporary file
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.p', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".p", delete=False) as f:
             f.write(tptp_problem)
             problem_file = f.name
-        
+
         try:
             # Run Vampire
             result = subprocess.run(
-                [self.binary_path, problem_file, '--mode', 'casc', '--time_limit', '30'],
+                [self.binary_path, problem_file, "--mode", "casc", "--time_limit", "30"],
                 capture_output=True,
                 text=True,
-                timeout=35
+                timeout=35,
             )
-            
+
             # Parse output
             if "Refutation found" in result.stdout:
                 proof_steps = self.parse_vampire_proof(result.stdout)
@@ -214,21 +216,21 @@ class VampireProver(ProverInterface):
                 return ProofResult(success=True, result="disproved")
             else:
                 return ProofResult(success=False, result="unknown")
-        
+
         finally:
             os.unlink(problem_file)
-    
+
     def to_tptp(self, conjecture: Formula, axioms: List[Formula]) -> str:
         lines = []
-        
+
         # Add axioms
         for i, axiom in enumerate(axioms):
             lines.append(f"fof(axiom_{i}, axiom, {self.formula_to_tptp(axiom)}).")
-        
+
         # Add conjecture
         lines.append(f"fof(conjecture, conjecture, {self.formula_to_tptp(conjecture)}).")
-        
-        return '\n'.join(lines)
+
+        return "\n".join(lines)
 ```
 
 ### 5. E Prover
@@ -319,12 +321,14 @@ from dataclasses import dataclass
 from typing import List, Optional, Dict, Any
 from enum import Enum
 
+
 class ProofResult(str, Enum):
     PROVED = "proved"
     DISPROVED = "disproved"
     TIMEOUT = "timeout"
     UNKNOWN = "unknown"
     ERROR = "error"
+
 
 @dataclass
 class ProofResponse:
@@ -338,65 +342,59 @@ class ProofResponse:
     error_message: Optional[str] = None
     metadata: Optional[Dict[str, Any]] = None
 
+
 class ProverInterface(ABC):
     """Abstract base class for all theorem provers."""
-    
+
     @abstractmethod
     def prove(
-        self,
-        conjecture: Formula,
-        axioms: List[Formula],
-        timeout_seconds: int = 30
+        self, conjecture: Formula, axioms: List[Formula], timeout_seconds: int = 30
     ) -> ProofResponse:
         """
         Attempt to prove the conjecture from the given axioms.
-        
+
         Args:
             conjecture: Formula to prove
             axioms: List of axiom formulas
             timeout_seconds: Maximum time allowed
-        
+
         Returns:
             ProofResponse with result and details
         """
         pass
-    
+
     @abstractmethod
-    def check_satisfiability(
-        self,
-        formula: Formula,
-        timeout_seconds: int = 30
-    ) -> ProofResponse:
+    def check_satisfiability(self, formula: Formula, timeout_seconds: int = 30) -> ProofResponse:
         """
         Check if formula is satisfiable.
-        
+
         Args:
             formula: Formula to check
             timeout_seconds: Maximum time allowed
-        
+
         Returns:
             ProofResponse with satisfiability result
         """
         pass
-    
+
     @property
     @abstractmethod
     def name(self) -> str:
         """Prover name."""
         pass
-    
+
     @property
     @abstractmethod
     def version(self) -> str:
         """Prover version."""
         pass
-    
+
     @property
     @abstractmethod
     def capabilities(self) -> List[str]:
         """List of prover capabilities."""
         pass
-    
+
     @abstractmethod
     def is_available(self) -> bool:
         """Check if prover is available/installed."""
@@ -408,47 +406,50 @@ class ProverInterface(ABC):
 ```python
 class NativePythonProver(ProverInterface):
     """Native Python prover implementation."""
-    
+
     name = "Native Python Prover"
     version = "1.0.0"
     capabilities = ["forward_chaining", "backward_chaining", "modal_tableaux"]
-    
+
     def prove(self, conjecture, axioms, timeout_seconds=30):
         # Implementation from prover_core.py
         pass
-    
+
     def is_available(self) -> bool:
         return True  # Always available
 
+
 class Z3Prover(ProverInterface):
     """Z3 SMT solver integration."""
-    
+
     name = "Z3 SMT Solver"
     version = "4.12.0"
     capabilities = ["smt", "model_checking", "satisfiability"]
-    
+
     def prove(self, conjecture, axioms, timeout_seconds=30):
         # Z3 implementation
         pass
-    
+
     def is_available(self) -> bool:
         try:
             import z3
+
             return True
         except ImportError:
             return False
 
+
 class VampireProver(ProverInterface):
     """Vampire automated theorem prover."""
-    
+
     name = "Vampire"
     version = "4.7"
     capabilities = ["saturation", "tptp", "first_order_logic"]
-    
+
     def prove(self, conjecture, axioms, timeout_seconds=30):
         # Vampire implementation
         pass
-    
+
     def is_available(self) -> bool:
         return shutil.which("vampire") is not None
 ```
@@ -462,63 +463,63 @@ class VampireProver(ProverInterface):
 ```python
 class ProverSelector:
     """Selects best prover for a given problem."""
-    
+
     def __init__(self):
         self.provers: List[ProverInterface] = []
         self.performance_stats: Dict[str, Dict] = {}
-    
+
     def register_prover(self, prover: ProverInterface):
         if prover.is_available():
             self.provers.append(prover)
-    
+
     def select_prover(self, problem: Problem) -> ProverInterface:
         """Select best prover based on problem characteristics."""
-        
+
         # Analyze problem
         features = self.extract_features(problem)
-        
+
         # Score each prover
         scores = []
         for prover in self.provers:
             score = self.score_prover(prover, features)
             scores.append((score, prover))
-        
+
         # Return best prover
         return max(scores, key=lambda x: x[0])[1]
-    
+
     def extract_features(self, problem: Problem) -> Dict[str, Any]:
         """Extract problem features for prover selection."""
         return {
-            'formula_count': len(problem.axioms) + 1,
-            'max_depth': self.get_max_depth(problem.conjecture),
-            'has_equality': self.has_equality(problem),
-            'has_arithmetic': self.has_arithmetic(problem),
-            'has_quantifiers': self.has_quantifiers(problem),
-            'has_modal': self.has_modal_operators(problem),
+            "formula_count": len(problem.axioms) + 1,
+            "max_depth": self.get_max_depth(problem.conjecture),
+            "has_equality": self.has_equality(problem),
+            "has_arithmetic": self.has_arithmetic(problem),
+            "has_quantifiers": self.has_quantifiers(problem),
+            "has_modal": self.has_modal_operators(problem),
         }
-    
+
     def score_prover(self, prover: ProverInterface, features: Dict) -> float:
         """Score prover suitability for problem."""
         score = 0.0
-        
+
         # Check capability match
-        if features['has_modal'] and 'modal_tableaux' in prover.capabilities:
+        if features["has_modal"] and "modal_tableaux" in prover.capabilities:
             score += 10.0
-        
-        if features['has_arithmetic'] and 'smt' in prover.capabilities:
+
+        if features["has_arithmetic"] and "smt" in prover.capabilities:
             score += 10.0
-        
-        if features['has_equality'] and 'equational' in prover.capabilities:
+
+        if features["has_equality"] and "equational" in prover.capabilities:
             score += 10.0
-        
+
         # Add historical performance
         stats = self.performance_stats.get(prover.name, {})
-        success_rate = stats.get('success_rate', 0.5)
-        avg_time = stats.get('avg_time_ms', 1000)
-        
+        success_rate = stats.get("success_rate", 0.5)
+        avg_time = stats.get("avg_time_ms", 1000)
+
         score += success_rate * 20.0
         score -= avg_time / 100.0  # Penalize slow provers
-        
+
         return score
 ```
 
@@ -527,100 +528,93 @@ class ProverSelector:
 ```python
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+
 class ParallelProverOrchestrator:
     """Run multiple provers in parallel."""
-    
+
     def __init__(self, provers: List[ProverInterface]):
         self.provers = [p for p in provers if p.is_available()]
-    
+
     def prove_parallel(
-        self,
-        conjecture: Formula,
-        axioms: List[Formula],
-        timeout_seconds: int = 60
+        self, conjecture: Formula, axioms: List[Formula], timeout_seconds: int = 60
     ) -> Dict[str, ProofResponse]:
         """
         Try multiple provers in parallel.
-        
+
         Returns dict mapping prover name to result.
         """
         results = {}
-        
+
         with ThreadPoolExecutor(max_workers=len(self.provers)) as executor:
             # Submit all prover tasks
             future_to_prover = {
-                executor.submit(
-                    prover.prove,
-                    conjecture,
-                    axioms,
-                    timeout_seconds
-                ): prover
+                executor.submit(prover.prove, conjecture, axioms, timeout_seconds): prover
                 for prover in self.provers
             }
-            
+
             # Collect results as they complete
             for future in as_completed(future_to_prover, timeout=timeout_seconds + 5):
                 prover = future_to_prover[future]
                 try:
                     result = future.result()
                     results[prover.name] = result
-                    
+
                     # If proved, we can stop (optional optimization)
                     if result.result == ProofResult.PROVED:
                         # Cancel remaining tasks
                         for f in future_to_prover:
                             f.cancel()
                         break
-                
+
                 except Exception as e:
                     results[prover.name] = ProofResponse(
                         success=False,
                         result=ProofResult.ERROR,
                         prover_name=prover.name,
                         time_ms=0,
-                        error_message=str(e)
+                        error_message=str(e),
                     )
-        
+
         return results
-    
+
     def get_consensus(self, results: Dict[str, ProofResponse]) -> ProofResult:
         """Determine consensus result from multiple provers."""
-        
+
         # Count votes
         votes = {}
         for result in results.values():
             votes[result.result] = votes.get(result.result, 0) + 1
-        
+
         # Majority vote
         if ProofResult.PROVED in votes and votes[ProofResult.PROVED] >= len(results) / 2:
             return ProofResult.PROVED
-        
+
         if ProofResult.DISPROVED in votes and votes[ProofResult.DISPROVED] >= len(results) / 2:
             return ProofResult.DISPROVED
-        
+
         return ProofResult.UNKNOWN
-    
+
     def get_confidence(self, results: Dict[str, ProofResponse]) -> float:
         """Calculate confidence score (0-1) from results."""
-        
+
         if not results:
             return 0.0
-        
+
         # Weight by prover reliability
         total_weight = 0.0
         weighted_score = 0.0
-        
+
         for prover_name, result in results.items():
             weight = self.get_prover_weight(prover_name)
             total_weight += weight
-            
+
             if result.result == ProofResult.PROVED:
                 weighted_score += weight * 1.0
             elif result.result == ProofResult.DISPROVED:
                 weighted_score += weight * 0.0
             else:
                 weighted_score += weight * 0.5
-        
+
         return weighted_score / total_weight if total_weight > 0 else 0.5
 ```
 

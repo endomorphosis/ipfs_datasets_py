@@ -46,11 +46,56 @@ from ipfs_datasets_py.utils.cid_utils import canonical_json_bytes
 
 
 STATE_CODES_50: List[str] = [
-    "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
-    "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
-    "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
-    "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
-    "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY",
+    "AL",
+    "AK",
+    "AZ",
+    "AR",
+    "CA",
+    "CO",
+    "CT",
+    "DE",
+    "FL",
+    "GA",
+    "HI",
+    "ID",
+    "IL",
+    "IN",
+    "IA",
+    "KS",
+    "KY",
+    "LA",
+    "ME",
+    "MD",
+    "MA",
+    "MI",
+    "MN",
+    "MS",
+    "MO",
+    "MT",
+    "NE",
+    "NV",
+    "NH",
+    "NJ",
+    "NM",
+    "NY",
+    "NC",
+    "ND",
+    "OH",
+    "OK",
+    "OR",
+    "PA",
+    "RI",
+    "SC",
+    "SD",
+    "TN",
+    "TX",
+    "UT",
+    "VT",
+    "VA",
+    "WA",
+    "WV",
+    "WI",
+    "WY",
 ]
 
 _CORPUS = get_canonical_legal_corpus("state_laws")
@@ -167,7 +212,12 @@ def _normalize_completed_states_registry(payload: Any) -> Dict[str, Any]:
             value = str(raw_entry.get(key) or "").strip()
             if value:
                 entry[key] = value
-        for key in ("completion_mode", "timeout_classification", "timeout_signal_kind", "timeout_original_error"):
+        for key in (
+            "completion_mode",
+            "timeout_classification",
+            "timeout_signal_kind",
+            "timeout_original_error",
+        ):
             value = str(raw_entry.get(key) or "").strip()
             if value:
                 entry[key] = value
@@ -288,14 +338,21 @@ def _prefill_state_results_from_registry(
             "completed_at": str(entry.get("completed_at") or ""),
             "skip_reason": "already_completed_registry",
         }
-        for key in ("completion_mode", "timeout_classification", "timeout_signal_kind", "timeout_original_error"):
+        for key in (
+            "completion_mode",
+            "timeout_classification",
+            "timeout_signal_kind",
+            "timeout_original_error",
+        ):
             value = str(entry.get(key) or "").strip()
             if value:
                 prefilled[state][key] = value
         if isinstance(entry.get("timeout_work_remaining"), bool):
             prefilled[state]["timeout_work_remaining"] = bool(entry.get("timeout_work_remaining"))
         if isinstance(entry.get("timeout_promoted_to_success"), bool):
-            prefilled[state]["timeout_promoted_to_success"] = bool(entry.get("timeout_promoted_to_success"))
+            prefilled[state]["timeout_promoted_to_success"] = bool(
+                entry.get("timeout_promoted_to_success")
+            )
     return prefilled
 
 
@@ -331,7 +388,12 @@ def _merge_completed_states_registry(
             "output_root": str(output_root),
             "source_progress_path": str(progress_path),
         }
-        for key in ("completion_mode", "timeout_classification", "timeout_signal_kind", "timeout_original_error"):
+        for key in (
+            "completion_mode",
+            "timeout_classification",
+            "timeout_signal_kind",
+            "timeout_original_error",
+        ):
             value = str(raw_entry.get(key) or "").strip()
             if value:
                 entry[key] = value
@@ -421,7 +483,9 @@ def _reconcile_state_results_from_partial_checkpoints(
         stage_label_lower = stage_label.lower()
         progress = payload.get("progress") if isinstance(payload.get("progress"), Mapping) else {}
         try:
-            checkpoint_statutes_count = int(payload.get("statutes_count") or len(list(payload.get("statutes") or [])))
+            checkpoint_statutes_count = int(
+                payload.get("statutes_count") or len(list(payload.get("statutes") or []))
+            )
         except Exception:
             checkpoint_statutes_count = 0
         try:
@@ -430,7 +494,9 @@ def _reconcile_state_results_from_partial_checkpoints(
             prior_count = 0
 
         try:
-            codes_completed = int(progress.get("codes_completed") or payload.get("codes_completed") or 0)
+            codes_completed = int(
+                progress.get("codes_completed") or payload.get("codes_completed") or 0
+            )
         except Exception:
             codes_completed = 0
         try:
@@ -502,14 +568,18 @@ def _eligible_timeout_recovery_states(
 
         timeout_classification = str(entry.get("timeout_classification") or "").strip().lower()
         if not timeout_classification and isinstance(entry.get("timeout_diagnostics"), Mapping):
-            timeout_classification = str(
-                (entry.get("timeout_diagnostics") or {}).get("classification") or ""
-            ).strip().lower()
+            timeout_classification = (
+                str((entry.get("timeout_diagnostics") or {}).get("classification") or "")
+                .strip()
+                .lower()
+            )
         if not timeout_classification.startswith("timeout_"):
             continue
 
         timeout_work_remaining = entry.get("timeout_work_remaining")
-        if not isinstance(timeout_work_remaining, bool) and isinstance(entry.get("timeout_diagnostics"), Mapping):
+        if not isinstance(timeout_work_remaining, bool) and isinstance(
+            entry.get("timeout_diagnostics"), Mapping
+        ):
             timeout_work_remaining = (entry.get("timeout_diagnostics") or {}).get("work_remaining")
         if timeout_work_remaining is False:
             # Already classified as timeout with no remaining work.
@@ -582,9 +652,15 @@ def _safe_cid_for_obj(payload: Mapping[str, Any]) -> str:
         return f"sha256:{digest}"
 
 
-def jsonld_payload_to_canonical_row(payload: Mapping[str, Any], *, state_code: str) -> Dict[str, Any]:
+def jsonld_payload_to_canonical_row(
+    payload: Mapping[str, Any], *, state_code: str
+) -> Dict[str, Any]:
     """Convert one state-law JSON-LD object into the canonical parquet schema."""
-    state = str(state_code or payload.get("stateCode") or payload.get("state_code") or "").strip().upper()
+    state = (
+        str(state_code or payload.get("stateCode") or payload.get("state_code") or "")
+        .strip()
+        .upper()
+    )
     identifier = _first_text(
         payload,
         ("identifier", "legislationIdentifier", "sectionNumber", "source_id", "@id"),
@@ -619,7 +695,9 @@ def _row_key(row: Mapping[str, Any]) -> tuple[str, ...]:
     return ("row", json.dumps(dict(row), ensure_ascii=True, sort_keys=True, default=str))
 
 
-def merge_canonical_rows(existing_rows: Sequence[Mapping[str, Any]], new_rows: Sequence[Mapping[str, Any]]) -> List[Dict[str, Any]]:
+def merge_canonical_rows(
+    existing_rows: Sequence[Mapping[str, Any]], new_rows: Sequence[Mapping[str, Any]]
+) -> List[Dict[str, Any]]:
     """Merge rows by stable identity, preferring the refreshed scraped row."""
     merged: Dict[tuple[str, ...], Dict[str, Any]] = {}
     order: List[tuple[str, ...]] = []
@@ -658,7 +736,9 @@ def _write_parquet_rows(rows: Sequence[Mapping[str, Any]], path: Path) -> None:
     import pyarrow.parquet as pq
 
     path.parent.mkdir(parents=True, exist_ok=True)
-    pq.write_table(pa.Table.from_pylist(_normalize_rows_for_parquet(rows)), path, compression="snappy")
+    pq.write_table(
+        pa.Table.from_pylist(_normalize_rows_for_parquet(rows)), path, compression="snappy"
+    )
 
 
 def _iter_jsonld_payloads(path: Path) -> Iterable[Dict[str, Any]]:
@@ -751,7 +831,11 @@ def _publish_state_parquet_file(
         )
     except Exception as exc:
         msg = str(exc)
-        if "no files have been modified" in msg.lower() or "nothing to commit" in msg.lower() or "empty commit" in msg.lower():
+        if (
+            "no files have been modified" in msg.lower()
+            or "nothing to commit" in msg.lower()
+            or "empty commit" in msg.lower()
+        ):
             upload_info = "no_change_already_current"
         else:
             raise
@@ -823,7 +907,9 @@ def _sync_stale_local_state_shards_to_hf(
                 remote_hash = ""
 
         if repo_path in repo_files and remote_hash == local_hash:
-            skipped.append({"state": state, "reason": "remote_already_current", "sha256": local_hash})
+            skipped.append(
+                {"state": state, "reason": "remote_already_current", "sha256": local_hash}
+            )
             continue
 
         uploaded.append(
@@ -930,7 +1016,9 @@ def build_state_laws_parquet_artifacts(
         try:
             from huggingface_hub import HfApi
 
-            repo_files = set(HfApi(token=token).list_repo_files(repo_id=repo_id, repo_type="dataset"))
+            repo_files = set(
+                HfApi(token=token).list_repo_files(repo_id=repo_id, repo_type="dataset")
+            )
         except Exception:
             repo_files = set()
 
@@ -1032,7 +1120,9 @@ def _publish_parquet_dir(
 def _run_full_corpus_guard_audit(*, states: Sequence[str]) -> Dict[str, Any]:
     """Run the static full-corpus truncation audit before uncapped scrapes."""
     script_path = Path(__file__).with_name("audit_state_scraper_full_corpus_guards.py")
-    spec = importlib.util.spec_from_file_location("audit_state_scraper_full_corpus_guards", script_path)
+    spec = importlib.util.spec_from_file_location(
+        "audit_state_scraper_full_corpus_guards", script_path
+    )
     if spec is None or spec.loader is None:
         return {
             "status": "fail",
@@ -1048,7 +1138,9 @@ def _run_full_corpus_guard_audit(*, states: Sequence[str]) -> Dict[str, Any]:
     spec.loader.exec_module(module)
 
     repo_root = Path(__file__).resolve().parents[3]
-    scraper_root = repo_root / "ipfs_datasets_py" / "processors" / "legal_scrapers" / "state_scrapers"
+    scraper_root = (
+        repo_root / "ipfs_datasets_py" / "processors" / "legal_scrapers" / "state_scrapers"
+    )
     findings: List[Any] = []
     missing: List[str] = []
     for state in states:
@@ -1071,15 +1163,29 @@ def _run_full_corpus_guard_audit(*, states: Sequence[str]) -> Dict[str, Any]:
         "missing_states": missing,
         "error_count": error_count,
         "warning_count": warning_count,
-        "findings": [item.to_dict() if hasattr(item, "to_dict") else dict(item) for item in findings],
+        "findings": [
+            item.to_dict() if hasattr(item, "to_dict") else dict(item) for item in findings
+        ],
     }
 
 
 async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
     requested_states = _normalize_states(args.states, include_dc=bool(args.include_dc))
-    output_root = Path(args.output_root).expanduser().resolve() if args.output_root else _CORPUS.default_local_root()
-    jsonld_dir = Path(args.jsonld_dir).expanduser().resolve() if args.jsonld_dir else _CORPUS.jsonld_dir(str(output_root))
-    parquet_dir = Path(args.parquet_dir).expanduser().resolve() if args.parquet_dir else _CORPUS.parquet_dir(str(output_root))
+    output_root = (
+        Path(args.output_root).expanduser().resolve()
+        if args.output_root
+        else _CORPUS.default_local_root()
+    )
+    jsonld_dir = (
+        Path(args.jsonld_dir).expanduser().resolve()
+        if args.jsonld_dir
+        else _CORPUS.jsonld_dir(str(output_root))
+    )
+    parquet_dir = (
+        Path(args.parquet_dir).expanduser().resolve()
+        if args.parquet_dir
+        else _CORPUS.parquet_dir(str(output_root))
+    )
     repo_id = str(args.repo_id or _CORPUS.hf_dataset_id).strip()
     completed_registry_raw = str(getattr(args, "completed_states_registry", "") or "").strip()
     completed_states_registry_path = (
@@ -1094,7 +1200,9 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
         else _default_completed_states_baseline_path()
     )
     skip_completed_states = bool(getattr(args, "skip_completed_states", True))
-    persist_completed_states_registry = bool(getattr(args, "persist_completed_states_registry", True))
+    persist_completed_states_registry = bool(
+        getattr(args, "persist_completed_states_registry", True)
+    )
     if hasattr(args, "load_completed_states_baseline"):
         load_completed_states_baseline = bool(getattr(args, "load_completed_states_baseline", True))
     elif completed_baseline_raw:
@@ -1186,7 +1294,11 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
     }
 
     def _recompute_progress_counts() -> None:
-        results = progress_state.get("state_results") if isinstance(progress_state.get("state_results"), dict) else {}
+        results = (
+            progress_state.get("state_results")
+            if isinstance(progress_state.get("state_results"), dict)
+            else {}
+        )
         completed_states = [state for state in requested_states if state in results]
         success_count = 0
         error_count = 0
@@ -1286,7 +1398,9 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
                     if isinstance(timeout_diagnostics_raw, Mapping)
                     else {}
                 )
-                timeout_classification = str(timeout_diagnostics.get("classification") or "").strip()
+                timeout_classification = str(
+                    timeout_diagnostics.get("classification") or ""
+                ).strip()
                 timeout_signal_kind = str(timeout_diagnostics.get("signal_kind") or "").strip()
                 timeout_work_remaining_value = timeout_diagnostics.get("work_remaining")
                 timeout_work_remaining = (
@@ -1295,7 +1409,9 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
                     else None
                 )
                 low_quality = bool((state_result or {}).get("low_quality"))
-                timed_out = bool(timeout_diagnostics.get("timed_out")) or ("timed out" in error_text.lower())
+                timed_out = bool(timeout_diagnostics.get("timed_out")) or (
+                    "timed out" in error_text.lower()
+                )
                 no_remaining_work_signal = timeout_classification in {
                     "timeout_with_no_detectable_remaining_work",
                     "timeout_without_progress_signal_no_remaining_work",
@@ -1308,10 +1424,18 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
                     and timeout_work_remaining is False
                     and (statutes_count > 0 or no_remaining_work_signal)
                 )
-                state_status = "error" if error_text else ("zero_statutes" if statutes_count <= 0 else "success")
+                state_status = (
+                    "error"
+                    if error_text
+                    else ("zero_statutes" if statutes_count <= 0 else "success")
+                )
                 if timeout_promoted_to_success:
                     state_status = "success"
-                state_name = str((state_result or {}).get("state_name") or (statute_data.get("state_name") if isinstance(statute_data, dict) else "") or "").strip()
+                state_name = str(
+                    (state_result or {}).get("state_name")
+                    or (statute_data.get("state_name") if isinstance(statute_data, dict) else "")
+                    or ""
+                ).strip()
                 state_entry = {
                     "state_code": state_code,
                     "state_name": state_name,
@@ -1377,10 +1501,17 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
             state_jsonld_path = jsonld_dir / f"STATE-{state_code}.jsonld"
             if not state_jsonld_path.exists():
                 incremental_publish_results.append(
-                    {"status": "skipped", "state": state_code, "reason": "missing_state_jsonld_after_scrape"}
+                    {
+                        "status": "skipped",
+                        "state": state_code,
+                        "reason": "missing_state_jsonld_after_scrape",
+                    }
                 )
                 return
-            print(f"[state_laws_refresh] incremental_publish state={state_code} stage=build", flush=True)
+            print(
+                f"[state_laws_refresh] incremental_publish state={state_code} stage=build",
+                flush=True,
+            )
             build = build_state_laws_parquet_artifacts(
                 states=[state_code],
                 jsonld_dir=jsonld_dir,
@@ -1392,7 +1523,10 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
             )
             state_parquet_path = parquet_dir / _CORPUS.state_parquet_filename(state_code)
             try:
-                print(f"[state_laws_refresh] incremental_publish state={state_code} stage=upload", flush=True)
+                print(
+                    f"[state_laws_refresh] incremental_publish state={state_code} stage=upload",
+                    flush=True,
+                )
                 publish = _publish_state_parquet_file(
                     state_code=state_code,
                     state_parquet_path=state_parquet_path,
@@ -1410,14 +1544,21 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
                         "publish": publish,
                     }
                 )
-                state_result_entry = progress_state.get("state_results", {}).get(state_code) if isinstance(progress_state.get("state_results"), dict) else None
+                state_result_entry = (
+                    progress_state.get("state_results", {}).get(state_code)
+                    if isinstance(progress_state.get("state_results"), dict)
+                    else None
+                )
                 if isinstance(state_result_entry, dict):
                     state_result_entry["incremental_publish_status"] = "success"
                     state_result_entry["incremental_publish_at"] = _utc_now_iso()
                     _recompute_progress_counts()
                     _write_progress_state()
                     _write_completed_states_registry_snapshot()
-                print(f"[state_laws_refresh] incremental_publish state={state_code} stage=done", flush=True)
+                print(
+                    f"[state_laws_refresh] incremental_publish state={state_code} stage=done",
+                    flush=True,
+                )
             except Exception as exc:
                 incremental_publish_results.append(
                     {
@@ -1428,7 +1569,11 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
                         "error": str(exc),
                     }
                 )
-                state_result_entry = progress_state.get("state_results", {}).get(state_code) if isinstance(progress_state.get("state_results"), dict) else None
+                state_result_entry = (
+                    progress_state.get("state_results", {}).get(state_code)
+                    if isinstance(progress_state.get("state_results"), dict)
+                    else None
+                )
                 if isinstance(state_result_entry, dict):
                     state_result_entry["incremental_publish_status"] = "error"
                     state_result_entry["incremental_publish_error"] = str(exc)
@@ -1453,9 +1598,13 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
                 "skipped_completed_states": skipped_completed_states,
             }
         else:
-            scrape_max_statutes = int(args.max_statutes) if int(args.max_statutes or 0) > 0 else None
+            scrape_max_statutes = (
+                int(args.max_statutes) if int(args.max_statutes or 0) > 0 else None
+            )
             scrape_max_statutes_for_run = scrape_max_statutes
-            if scrape_max_statutes is None and not bool(getattr(args, "skip_full_corpus_guard_audit", False)):
+            if scrape_max_statutes is None and not bool(
+                getattr(args, "skip_full_corpus_guard_audit", False)
+            ):
                 full_corpus_guard_audit = _run_full_corpus_guard_audit(states=states)
                 if str(full_corpus_guard_audit.get("status")) != "pass":
                     return {
@@ -1466,7 +1615,9 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
                     }
             previous_full_corpus_env = os.environ.get("STATE_SCRAPER_FULL_CORPUS")
             previous_checkpoint_dir_env = os.environ.get("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR")
-            os.environ["STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR"] = str(output_root / "partial_checkpoints")
+            os.environ["STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR"] = str(
+                output_root / "partial_checkpoints"
+            )
             if scrape_max_statutes is None:
                 # Several state scrapers intentionally keep normal probes bounded
                 # unless this flag is set.  Treat an uncapped refresh as an
@@ -1474,7 +1625,9 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
                 # sample-sized state shards.
                 os.environ["STATE_SCRAPER_FULL_CORPUS"] = "1"
             progress_heartbeat_stop = asyncio.Event()
-            progress_heartbeat_task = asyncio.create_task(_progress_heartbeat_loop(progress_heartbeat_stop))
+            progress_heartbeat_task = asyncio.create_task(
+                _progress_heartbeat_loop(progress_heartbeat_stop)
+            )
             try:
                 scrape_result = await scrape_state_laws(
                     states=states,
@@ -1525,13 +1678,19 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
         _write_completed_states_registry_snapshot()
 
         timeout_recovery_rounds = max(0, int(getattr(args, "timeout_recovery_rounds", 0) or 0))
-        timeout_recovery_multiplier = max(1.0, float(getattr(args, "timeout_recovery_timeout_multiplier", 1.5) or 1.5))
-        timeout_recovery_timeout_cap = max(0.0, float(getattr(args, "timeout_recovery_timeout_cap_seconds", 0.0) or 0.0))
+        timeout_recovery_multiplier = max(
+            1.0, float(getattr(args, "timeout_recovery_timeout_multiplier", 1.5) or 1.5)
+        )
+        timeout_recovery_timeout_cap = max(
+            0.0, float(getattr(args, "timeout_recovery_timeout_cap_seconds", 0.0) or 0.0)
+        )
         timeout_recovery_retry_attempts = max(
             int(args.per_state_retry_attempts or 0),
             int(getattr(args, "timeout_recovery_retry_attempts", 0) or 0),
         )
-        timeout_recovery_parallel_workers = int(getattr(args, "timeout_recovery_parallel_workers", 0) or 0)
+        timeout_recovery_parallel_workers = int(
+            getattr(args, "timeout_recovery_parallel_workers", 0) or 0
+        )
         if timeout_recovery_parallel_workers <= 0:
             timeout_recovery_parallel_workers = max(1, int(args.parallel_workers or 1))
 
@@ -1546,7 +1705,9 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
 
             round_timeout_seconds = base_timeout_seconds
             if round_idx >= 0:
-                round_timeout_seconds = base_timeout_seconds * (timeout_recovery_multiplier ** float(round_idx + 1))
+                round_timeout_seconds = base_timeout_seconds * (
+                    timeout_recovery_multiplier ** float(round_idx + 1)
+                )
             if timeout_recovery_timeout_cap > 0:
                 round_timeout_seconds = min(round_timeout_seconds, timeout_recovery_timeout_cap)
             round_timeout_seconds = max(base_timeout_seconds, round_timeout_seconds)
@@ -1656,7 +1817,9 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
         "full_corpus_guard_audit": full_corpus_guard_audit,
         "checkpoint_reconciliation": checkpoint_reconciliation,
         "timeout_recovery": {
-            "enabled": bool(args.scrape and int(getattr(args, "timeout_recovery_rounds", 0) or 0) > 0),
+            "enabled": bool(
+                args.scrape and int(getattr(args, "timeout_recovery_rounds", 0) or 0) > 0
+            ),
             "round_count": len(timeout_recovery_history),
             "rounds": timeout_recovery_history,
         },
@@ -1664,8 +1827,12 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
         "incremental_state_publish": {
             "enabled": bool(publish_to_hf and incremental_state_publish),
             "results": incremental_publish_results,
-            "success_count": sum(1 for item in incremental_publish_results if str(item.get("status")) == "success"),
-            "error_count": sum(1 for item in incremental_publish_results if str(item.get("status")) == "error"),
+            "success_count": sum(
+                1 for item in incremental_publish_results if str(item.get("status")) == "success"
+            ),
+            "error_count": sum(
+                1 for item in incremental_publish_results if str(item.get("status")) == "error"
+            ),
         },
         "publish": publish_result,
         "scrape_gap_states": scrape_gaps,
@@ -1676,20 +1843,37 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
             "completed_state_count": len(completed_registry_states),
             "skipped_completed_states": skipped_completed_states,
             "baseline_path": str(completed_states_baseline_path),
-            "baseline_loaded": bool(load_completed_states_baseline and completed_states_baseline_path.exists()),
+            "baseline_loaded": bool(
+                load_completed_states_baseline and completed_states_baseline_path.exists()
+            ),
         },
     }
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Refresh and publish the canonical state-laws corpus")
+    parser = argparse.ArgumentParser(
+        description="Refresh and publish the canonical state-laws corpus"
+    )
     parser.add_argument("--states", default="all", help="Comma-separated state codes, or all")
-    parser.add_argument("--include-dc", action="store_true", help="Include District of Columbia when --states=all")
-    parser.add_argument("--output-root", default="", help="Corpus output root; defaults to ~/.ipfs_datasets/state_laws")
+    parser.add_argument(
+        "--include-dc", action="store_true", help="Include District of Columbia when --states=all"
+    )
+    parser.add_argument(
+        "--output-root",
+        default="",
+        help="Corpus output root; defaults to ~/.ipfs_datasets/state_laws",
+    )
     parser.add_argument("--jsonld-dir", default="", help="Override source JSON-LD directory")
     parser.add_argument("--parquet-dir", default="", help="Override destination parquet directory")
-    parser.add_argument("--scrape", action="store_true", help="Run state scrapers before building parquet")
-    parser.add_argument("--max-statutes", type=int, default=0, help="Optional cap across the scrape run; 0 means all")
+    parser.add_argument(
+        "--scrape", action="store_true", help="Run state scrapers before building parquet"
+    )
+    parser.add_argument(
+        "--max-statutes",
+        type=int,
+        default=0,
+        help="Optional cap across the scrape run; 0 means all",
+    )
     parser.add_argument("--rate-limit-delay", type=float, default=1.0)
     parser.add_argument("--parallel-workers", type=int, default=4)
     parser.add_argument("--per-state-retry-attempts", type=int, default=1)
@@ -1730,7 +1914,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--progress-heartbeat-seconds", type=float, default=60.0)
     parser.add_argument("--allow-justia-fallback", action="store_true")
     parser.add_argument("--no-merge-existing-local", action="store_true")
-    parser.add_argument("--merge-hf-existing", action="store_true", help="Download and merge existing HF state parquet shards")
+    parser.add_argument(
+        "--merge-hf-existing",
+        action="store_true",
+        help="Download and merge existing HF state parquet shards",
+    )
     parser.add_argument("--publish-to-hf", action="store_true")
     parser.add_argument(
         "--completed-states-registry",
@@ -1807,7 +1995,9 @@ def main() -> int:
         build = result.get("build") or {}
         if build:
             print(f"Combined rows: {build.get('combined_row_count')}")
-            print(f"Missing JSON-LD states: {','.join(build.get('missing_jsonld_states') or []) or 'None'}")
+            print(
+                f"Missing JSON-LD states: {','.join(build.get('missing_jsonld_states') or []) or 'None'}"
+            )
         if result.get("publish"):
             print(f"Publish: {(result.get('publish') or {}).get('upload_commit')}")
     return 0

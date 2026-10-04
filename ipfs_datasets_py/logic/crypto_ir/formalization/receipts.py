@@ -192,20 +192,14 @@ class AnalysisAttempt:
     schema_version: str = ANALYSIS_ATTEMPT_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "attempt_id", _identifier(self.attempt_id, "attempt_id")
-        )
-        object.__setattr__(
-            self, "obligation_id", _identifier(self.obligation_id, "obligation_id")
-        )
+        object.__setattr__(self, "attempt_id", _identifier(self.attempt_id, "attempt_id"))
+        object.__setattr__(self, "obligation_id", _identifier(self.obligation_id, "obligation_id"))
         object.__setattr__(
             self,
             "model_digest",
             _text(self.model_digest, "model_digest", allow_empty=True),
         )
-        object.__setattr__(
-            self, "outcome", _enum(AttemptOutcome, self.outcome, "outcome")
-        )
+        object.__setattr__(self, "outcome", _enum(AttemptOutcome, self.outcome, "outcome"))
         object.__setattr__(
             self,
             "proof_authority",
@@ -229,9 +223,7 @@ class AnalysisAttempt:
             "form_id",
             "reason",
         ):
-            object.__setattr__(
-                self, name, _text(getattr(self, name), name, allow_empty=True)
-            )
+            object.__setattr__(self, name, _text(getattr(self, name), name, allow_empty=True))
         object.__setattr__(
             self, "logic_family", _enum(LogicFamily, self.logic_family, "logic_family")
         )
@@ -246,9 +238,7 @@ class AnalysisAttempt:
             self, "assumption_ids", _unique_ids(self.assumption_ids, "assumption_ids")
         )
         object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         # SAT is never proof.
         if self.outcome in {
             AttemptOutcome.SATISFIABLE,
@@ -287,9 +277,7 @@ class AnalysisAttempt:
             "model_digest": self.model_digest,
             "obligation_id": self.obligation_id,
             "outcome": (
-                self.outcome.value
-                if isinstance(self.outcome, AttemptOutcome)
-                else self.outcome
+                self.outcome.value if isinstance(self.outcome, AttemptOutcome) else self.outcome
             ),
             "policy_id": self.policy_id,
             "policy_revision": self.policy_revision,
@@ -409,20 +397,14 @@ class AnalysisReceipt:
     schema_version: str = ANALYSIS_RECEIPT_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "receipt_id", _identifier(self.receipt_id, "receipt_id")
-        )
-        object.__setattr__(
-            self, "obligation_id", _identifier(self.obligation_id, "obligation_id")
-        )
+        object.__setattr__(self, "receipt_id", _identifier(self.receipt_id, "receipt_id"))
+        object.__setattr__(self, "obligation_id", _identifier(self.obligation_id, "obligation_id"))
         object.__setattr__(
             self,
             "model_digest",
             _text(self.model_digest, "model_digest", allow_empty=True),
         )
-        object.__setattr__(
-            self, "outcome", _enum(AttemptOutcome, self.outcome, "outcome")
-        )
+        object.__setattr__(self, "outcome", _enum(AttemptOutcome, self.outcome, "outcome"))
         object.__setattr__(
             self,
             "proof_authority",
@@ -458,14 +440,16 @@ class AnalysisReceipt:
             "code_epoch",
             "summary",
         ):
-            object.__setattr__(
-                self, name, _text(getattr(self, name), name, allow_empty=True)
-            )
+            object.__setattr__(self, name, _text(getattr(self, name), name, allow_empty=True))
         object.__setattr__(
             self, "capability_ids", _unique_ids(self.capability_ids, "capability_ids")
         )
         object.__setattr__(self, "tool_ids", _unique_ids(self.tool_ids, "tool_ids"))
-        if type(self.timeout_ms) is not int or isinstance(self.timeout_ms, bool) or self.timeout_ms < 0:
+        if (
+            type(self.timeout_ms) is not int
+            or isinstance(self.timeout_ms, bool)
+            or self.timeout_ms < 0
+        ):
             raise FormalizationError("timeout_ms must be a non-negative int")
         object.__setattr__(
             self, "assumption_ids", _unique_ids(self.assumption_ids, "assumption_ids")
@@ -474,9 +458,7 @@ class AnalysisReceipt:
         if not isinstance(self.disagreement, bool):
             raise FormalizationError("disagreement must be a bool")
         object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
 
     @property
     def binds_obligation_model_tool_policy_capability_timeout(self) -> bool:
@@ -515,9 +497,7 @@ class AnalysisReceipt:
             "model_digest": self.model_digest,
             "obligation_id": self.obligation_id,
             "outcome": (
-                self.outcome.value
-                if isinstance(self.outcome, AttemptOutcome)
-                else self.outcome
+                self.outcome.value if isinstance(self.outcome, AttemptOutcome) else self.outcome
             ),
             "policy_id": self.policy_id,
             "policy_revision": self.policy_revision,
@@ -571,9 +551,7 @@ class AnalysisReceipt:
         authority = proof_authority_for_outcome(outcome)
         tools = tuple(
             dict.fromkeys(
-                a.tool_name or a.backend_id
-                for a in attempts
-                if a.tool_name or a.backend_id
+                a.tool_name or a.backend_id for a in attempts if a.tool_name or a.backend_id
             )
         )
         capabilities = tuple(
@@ -697,9 +675,7 @@ def _aggregate_outcome(
     return AttemptOutcome.UNKNOWN
 
 
-def _summary_for(
-    outcome: AttemptOutcome, authority: ProofAuthority, form: LoweredForm
-) -> str:
+def _summary_for(outcome: AttemptOutcome, authority: ProofAuthority, form: LoweredForm) -> str:
     return (
         f"outcome={outcome.value}; authority={authority.value}; "
         f"contract={form.contract_id}; family={form.logic_family.value}"
@@ -722,9 +698,7 @@ def build_analysis_receipt(
             receipt_id=receipt_id,
             timeout_ms=run.timeout_ms if run is not None else 0,
         )
-    return AnalysisReceipt.from_portfolio_run(
-        run, obligation, form, receipt_id=receipt_id
-    )
+    return AnalysisReceipt.from_portfolio_run(run, obligation, form, receipt_id=receipt_id)
 
 
 __all__ = [

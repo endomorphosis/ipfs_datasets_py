@@ -148,9 +148,7 @@ def test_compiler_exposes_packet_002396_explicit_adaptive_ambiguities(
         source="unit_test",
         normalized_text="",
     )
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
 
     for predicted_family, target_family, family_margin, expected_type in evidence_cases:
         ranking = _mock_adaptive_ranking(

@@ -44,9 +44,7 @@ from benchmarks.logic_pipeline.variants import (
 )
 
 
-FRONTEND_REPORT_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.frontend-overlap-report.v1"
-)
+FRONTEND_REPORT_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.frontend-overlap-report.v1"
 FRONTEND_OBSERVATION_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.frontend-observation.v1"
 )
@@ -54,8 +52,7 @@ FRONTEND_ANALYSIS_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.frontend-overlap-analysis.v1"
 )
 DEFAULT_FRONTEND_REPORT_PATH: Final = Path(
-    "workspace/benchmarks/hammer-symai-spacy-leanstral/results/"
-    "frontend-overlap-v1.json"
+    "workspace/benchmarks/hammer-symai-spacy-leanstral/results/frontend-overlap-v1.json"
 )
 FRONTEND_VARIANT_IDS: Final = ("A0", "A1", "A4", "A5", "A7", "A8")
 CACHE_MODES: Final = ("cold", "warm")
@@ -84,12 +81,8 @@ STATUS_VALUES: Final = frozenset(
         "infrastructure_failure",
     }
 )
-CAPABILITY_STATUS_VALUES: Final = frozenset(
-    {"available", "unavailable", "degraded"}
-)
-EXPECTED_CLASSES: Final = frozenset(
-    {"proved", "disproved", "ambiguous", "unsupported"}
-)
+CAPABILITY_STATUS_VALUES: Final = frozenset({"available", "unavailable", "degraded"})
+EXPECTED_CLASSES: Final = frozenset({"proved", "disproved", "ambiguous", "unsupported"})
 PAIRWISE_COMPARISONS: Final = (
     ("A0", "A1", "current_route_vs_full_spacy"),
     ("A1", "A4", "symai_off_vs_ambiguity_gated"),
@@ -131,16 +124,12 @@ def HSSLEV1159F06() -> str:
 
 
 def _mapping(value: object, field: str) -> Mapping[str, object]:
-    if not isinstance(value, Mapping) or not all(
-        isinstance(key, str) for key in value
-    ):
+    if not isinstance(value, Mapping) or not all(isinstance(key, str) for key in value):
         raise FrontendReportError(f"{field} must be an object with string keys")
     return value
 
 
-def _exact(
-    value: Mapping[str, object], expected: set[str], field: str
-) -> None:
+def _exact(value: Mapping[str, object], expected: set[str], field: str) -> None:
     actual = set(value)
     if actual != expected:
         raise FrontendReportError(
@@ -224,9 +213,7 @@ def _artifact_digest(value: Mapping[str, object]) -> str:
     return hashlib.sha256(canonical_json(body).encode("utf-8")).hexdigest()
 
 
-def _case_catalog() -> tuple[
-    dict[str, dict[str, object]], dict[str, list[str]]
-]:
+def _case_catalog() -> tuple[dict[str, dict[str, object]], dict[str, list[str]]]:
     _manifest, cases = load_unsealed_pilot_development()
     catalog: dict[str, dict[str, object]] = {}
     by_split = {split: [] for split in SPLITS}
@@ -265,9 +252,7 @@ def _validate_capabilities(value: object) -> dict[str, dict[str, str]]:
         _exact(record, {"status", "reason"}, f"capabilities.{name}")
         status = _string(record["status"], f"capabilities.{name}.status")
         if status not in CAPABILITY_STATUS_VALUES:
-            raise FrontendReportError(
-                f"unsupported capabilities.{name}.status: {status!r}"
-            )
+            raise FrontendReportError(f"unsupported capabilities.{name}.status: {status!r}")
         reason = _string(
             record["reason"],
             f"capabilities.{name}.reason",
@@ -280,10 +265,7 @@ def _validate_capabilities(value: object) -> dict[str, dict[str, str]]:
 def _semantic_success(row: Mapping[str, object]) -> bool | None:
     if row["status"] in {"unavailable", "infrastructure_failure"}:
         return None
-    return bool(
-        row["normalized_ir_exact_match"]
-        or row["deterministic_semantic_equivalence"]
-    )
+    return bool(row["normalized_ir_exact_match"] or row["deterministic_semantic_equivalence"])
 
 
 def _validate_measured_source(
@@ -291,9 +273,7 @@ def _validate_measured_source(
 ) -> None:
     raw = row["case_result"]
     if raw is None:
-        raise FrontendReportError(
-            "measured observations require full case-result evidence"
-        )
+        raise FrontendReportError("measured observations require full case-result evidence")
     try:
         result = CaseResultRecord.from_dict(raw)
         validate_kernel_bound_result(result)
@@ -305,20 +285,14 @@ def _validate_measured_source(
     ) as exc:
         raise FrontendReportError("case_result failed strict validation") from exc
     if expected_run_id is not None and result.run_id != expected_run_id:
-        raise FrontendReportError(
-            "case_result run id differs from the front-end report"
-        )
+        raise FrontendReportError("case_result run id differs from the front-end report")
     for field in ("case_id", "variant_id"):
         if getattr(result, field) != row[field]:
-            raise FrontendReportError(
-                f"case_result {field} differs from the observation"
-            )
+            raise FrontendReportError(f"case_result {field} differs from the observation")
     if result.split.value != row["split"]:
         raise FrontendReportError("case_result split differs from the observation")
     if result.cache_mode.value != row["cache_mode"]:
-        raise FrontendReportError(
-            "case_result cache mode differs from the observation"
-        )
+        raise FrontendReportError("case_result cache mode differs from the observation")
     if result.digest != row["source_receipt_sha256"]:
         raise FrontendReportError("source receipt does not match case_result")
     definition = VARIANT_REGISTRY[str(row["variant_id"])]
@@ -351,40 +325,25 @@ def _validate_measured_source(
     spacy_invoked = graph_invoked(StageName.SPACY)
     symai_invoked = graph_invoked(StageName.SYMAI)
     if row["spacy_invoked"] is not spacy_invoked:
-        raise FrontendReportError(
-            "spacy_invoked differs from the case_result graph receipt"
-        )
+        raise FrontendReportError("spacy_invoked differs from the case_result graph receipt")
     if row["symai_invoked"] is not symai_invoked:
-        raise FrontendReportError(
-            "symai_invoked differs from the case_result graph receipt"
-        )
+        raise FrontendReportError("symai_invoked differs from the case_result graph receipt")
     symai_stage = by_stage.get(StageName.SYMAI)
-    symai_setup = (
-        None
-        if symai_stage is None
-        else extract_symai_cache_setup_telemetry(symai_stage)
-    )
+    symai_setup = None if symai_stage is None else extract_symai_cache_setup_telemetry(symai_stage)
     setup_calls = 0 if symai_setup is None else symai_setup.model_calls
     setup_time = 0.0 if symai_setup is None else symai_setup.wall_time_ms
-    total_calls = (
-        sum(item.telemetry.model_calls for item in result.stages)
+    total_calls = sum(item.telemetry.model_calls for item in result.stages) + setup_calls
+    symai_calls = (
+        sum(item.telemetry.model_calls for item in result.stages if item.stage is StageName.SYMAI)
         + setup_calls
     )
-    symai_calls = sum(
-        item.telemetry.model_calls
-        for item in result.stages
-        if item.stage is StageName.SYMAI
-    ) + setup_calls
     total_time = round(
-        sum(item.telemetry.wall_time_ms for item in result.stages)
-        + setup_time,
+        sum(item.telemetry.wall_time_ms for item in result.stages) + setup_time,
         6,
     )
     if row["model_calls"] != total_calls or row["symai_model_calls"] != symai_calls:
         raise FrontendReportError("model-call telemetry differs from case_result")
-    if not math.isclose(
-        float(row["total_wall_time_ms"]), total_time, abs_tol=1e-6
-    ):
+    if not math.isclose(float(row["total_wall_time_ms"]), total_time, abs_tol=1e-6):
         raise FrontendReportError("latency telemetry differs from case_result")
 
     expected_missing_status = {
@@ -393,24 +352,16 @@ def _validate_measured_source(
     }.get(result.status)
     if expected_missing_status is not None:
         if row["status"] != expected_missing_status:
-            raise FrontendReportError(
-                "case_result missingness differs from the observation"
-            )
+            raise FrontendReportError("case_result missingness differs from the observation")
         return
     if result.status is OutcomeStatus.EXCLUDED:
-        raise FrontendReportError(
-            "measured front-end scope cannot contain excluded case results"
-        )
+        raise FrontendReportError("measured front-end scope cannot contain excluded case results")
     if row["status"] in {"unavailable", "infrastructure_failure"}:
-        raise FrontendReportError(
-            "front-end missingness is not supported by the case result"
-        )
+        raise FrontendReportError("front-end missingness is not supported by the case result")
 
     signature = row["semantic_signature_sha256"]
     if signature is None:
-        raise FrontendReportError(
-            "measured observations require a semantic signature"
-        )
+        raise FrontendReportError("measured observations require a semantic signature")
     source_digest: str | None = None
     for stage in reversed(result.stages):
         stage_data = stage.to_dict()["data"]
@@ -426,21 +377,15 @@ def _validate_measured_source(
         if stage.stage is StageName.SPACY:
             modal_ir = stage_data.get("modal_ir")
             if modal_ir is not None:
-                source_digest = hashlib.sha256(
-                    canonical_json(modal_ir).encode("utf-8")
-                ).hexdigest()
+                source_digest = hashlib.sha256(canonical_json(modal_ir).encode("utf-8")).hexdigest()
                 break
         if stage.stage is StageName.COMPILER:
             candidate_digest = stage_data.get("modal_ir_sha256")
-            if isinstance(candidate_digest, str) and _SHA256.fullmatch(
-                candidate_digest
-            ):
+            if isinstance(candidate_digest, str) and _SHA256.fullmatch(candidate_digest):
                 source_digest = candidate_digest
                 break
     if source_digest is None or signature != source_digest:
-        raise FrontendReportError(
-            "semantic signature is not bound to a front-end stage payload"
-        )
+        raise FrontendReportError("semantic signature is not bound to a front-end stage payload")
 
 
 def _validate_observation(
@@ -483,9 +428,7 @@ def _validate_observation(
     case = catalog[case_id]
     split = _string(data["split"], "observation.split")
     stratum = _safe_id(data["stratum"], "observation.stratum")
-    expected_class = _string(
-        data["expected_class"], "observation.expected_class"
-    )
+    expected_class = _string(data["expected_class"], "observation.expected_class")
     if (
         split != case["split"]
         or stratum != case["stratum"]
@@ -529,9 +472,7 @@ def _validate_observation(
     if predicted is not None:
         predicted = _string(predicted, "observation.predicted_class")
         if predicted not in EXPECTED_CLASSES:
-            raise FrontendReportError(
-                f"unsupported predicted class: {predicted!r}"
-            )
+            raise FrontendReportError(f"unsupported predicted class: {predicted!r}")
     ambiguity_correct = _nullable_bool(
         data["ambiguity_classification_correct"],
         "observation.ambiguity_classification_correct",
@@ -540,15 +481,9 @@ def _validate_observation(
         data["fail_closed_classification_correct"],
         "observation.fail_closed_classification_correct",
     )
-    spacy_invoked = _boolean(
-        data["spacy_invoked"], "observation.spacy_invoked"
-    )
-    symai_invoked = _boolean(
-        data["symai_invoked"], "observation.symai_invoked"
-    )
-    symai_calls = _count(
-        data["symai_model_calls"], "observation.symai_model_calls"
-    )
+    spacy_invoked = _boolean(data["spacy_invoked"], "observation.spacy_invoked")
+    symai_invoked = _boolean(data["symai_invoked"], "observation.symai_invoked")
+    symai_calls = _count(data["symai_model_calls"], "observation.symai_model_calls")
     model_calls = _count(data["model_calls"], "observation.model_calls")
     _number(data["total_wall_time_ms"], "observation.total_wall_time_ms")
     if symai_calls > model_calls:
@@ -569,26 +504,16 @@ def _validate_observation(
     )
     if unavailable:
         if any(item is not None for item in metric_values):
-            raise FrontendReportError(
-                "unavailable observations cannot carry semantic scores"
-            )
+            raise FrontendReportError("unavailable observations cannot carry semantic scores")
         if data["semantic_signature_sha256"] is not None:
-            raise FrontendReportError(
-                "unavailable observations cannot carry semantic output"
-            )
+            raise FrontendReportError("unavailable observations cannot carry semantic output")
         if missing_reason is None:
-            raise FrontendReportError(
-                "unavailable observations require a missing reason"
-            )
+            raise FrontendReportError("unavailable observations require a missing reason")
     else:
         if any(item is None for item in (exact_match, equivalence, predicted)):
-            raise FrontendReportError(
-                "measured semantic observations require quality metrics"
-            )
+            raise FrontendReportError("measured semantic observations require quality metrics")
         if semantic_signature is None:
-            raise FrontendReportError(
-                "measured semantic observations require a semantic signature"
-            )
+            raise FrontendReportError("measured semantic observations require a semantic signature")
         expected_ir_sha256 = hashlib.sha256(
             canonical_json(case["expected_ir"]).encode("utf-8")
         ).hexdigest()
@@ -597,43 +522,25 @@ def _validate_observation(
                 "normalized-IR exact-match score differs from reviewed target"
             )
         if validator_receipt is None:
-            raise FrontendReportError(
-                "measured semantic observations require a validator receipt"
-            )
+            raise FrontendReportError("measured semantic observations require a validator receipt")
         expected_ambiguous = expected_class == "ambiguous"
         if expected_ambiguous and ambiguity_correct is None:
-            raise FrontendReportError(
-                "ambiguous cases require classification evidence"
-            )
-        if expected_ambiguous and ambiguity_correct is not (
-            predicted == expected_class
-        ):
-            raise FrontendReportError(
-                "ambiguity score differs from the reviewed class"
-            )
+            raise FrontendReportError("ambiguous cases require classification evidence")
+        if expected_ambiguous and ambiguity_correct is not (predicted == expected_class):
+            raise FrontendReportError("ambiguity score differs from the reviewed class")
         expected_fail_closed = expected_class in {"disproved", "unsupported"}
         if expected_fail_closed and fail_closed is None:
-            raise FrontendReportError(
-                "negative cases require fail-closed classification evidence"
-            )
-        if expected_fail_closed and fail_closed is not (
-            predicted == expected_class
-        ):
-            raise FrontendReportError(
-                "fail-closed score differs from the reviewed class"
-            )
+            raise FrontendReportError("negative cases require fail-closed classification evidence")
+        if expected_fail_closed and fail_closed is not (predicted == expected_class):
+            raise FrontendReportError("fail-closed score differs from the reviewed class")
         if status == "semantically_correct" and not (exact_match or equivalence):
-            raise FrontendReportError(
-                "semantically correct status requires exact or equivalent IR"
-            )
+            raise FrontendReportError("semantically correct status requires exact or equivalent IR")
         if status == "semantically_incorrect" and (exact_match or equivalence):
             raise FrontendReportError(
                 "semantically incorrect status conflicts with semantic scores"
             )
         if missing_reason is not None:
-            raise FrontendReportError(
-                "measured semantic observations cannot carry missingness"
-            )
+            raise FrontendReportError("measured semantic observations cannot carry missingness")
     return dict(data)
 
 
@@ -652,21 +559,13 @@ def _percentile(values: Sequence[float], percentile: float) -> float | None:
 def _metric_record(rows: Sequence[Mapping[str, object]]) -> dict[str, object]:
     measured = [row for row in rows if _semantic_success(row) is not None]
     correct = [row for row in measured if _semantic_success(row)]
-    ambiguous = [
-        row for row in measured if row["expected_class"] == "ambiguous"
-    ]
-    fail_closed = [
-        row
-        for row in measured
-        if row["expected_class"] in {"disproved", "unsupported"}
-    ]
+    ambiguous = [row for row in measured if row["expected_class"] == "ambiguous"]
+    fail_closed = [row for row in measured if row["expected_class"] in {"disproved", "unsupported"}]
     latencies = [float(row["total_wall_time_ms"]) for row in measured]
     return {
         "scheduled_count": len(rows),
         "measured_count": len(measured),
-        "unavailable_count": sum(
-            row["status"] == "unavailable" for row in rows
-        ),
+        "unavailable_count": sum(row["status"] == "unavailable" for row in rows),
         "infrastructure_failure_count": sum(
             row["status"] == "infrastructure_failure" for row in rows
         ),
@@ -676,32 +575,21 @@ def _metric_record(rows: Sequence[Mapping[str, object]]) -> dict[str, object]:
             len(measured),
         ),
         "deterministic_semantic_equivalence_rate": _rate(
-            sum(
-                bool(row["deterministic_semantic_equivalence"])
-                for row in measured
-            ),
+            sum(bool(row["deterministic_semantic_equivalence"]) for row in measured),
             len(measured),
         ),
         "ambiguity_classification_accuracy": _rate(
-            sum(
-                bool(row["ambiguity_classification_correct"])
-                for row in ambiguous
-            ),
+            sum(bool(row["ambiguity_classification_correct"]) for row in ambiguous),
             len(ambiguous),
         ),
         "unsupported_fail_closed_accuracy": _rate(
-            sum(
-                bool(row["fail_closed_classification_correct"])
-                for row in fail_closed
-            ),
+            sum(bool(row["fail_closed_classification_correct"]) for row in fail_closed),
             len(fail_closed),
         ),
         "latency_ms_p50": _percentile(latencies, 0.50),
         "latency_ms_p95": _percentile(latencies, 0.95),
         "model_calls": sum(int(row["model_calls"]) for row in measured),
-        "symai_model_calls": sum(
-            int(row["symai_model_calls"]) for row in measured
-        ),
+        "symai_model_calls": sum(int(row["symai_model_calls"]) for row in measured),
     }
 
 
@@ -722,9 +610,7 @@ def derive_frontend_analysis(
     }
     variant_metrics: list[dict[str, object]] = []
     for split in SPLITS:
-        strata = sorted(
-            {str(row["stratum"]) for row in rows if row["split"] == split}
-        )
+        strata = sorted({str(row["stratum"]) for row in rows if row["split"] == split})
         for mode in CACHE_MODES:
             for variant in FRONTEND_VARIANT_IDS:
                 selected = [
@@ -744,11 +630,7 @@ def derive_frontend_analysis(
                             {
                                 "stratum": stratum,
                                 "metrics": _metric_record(
-                                    [
-                                        row
-                                        for row in selected
-                                        if row["stratum"] == stratum
-                                    ]
+                                    [row for row in selected if row["stratum"] == stratum]
                                 ),
                             }
                             for stratum in strata
@@ -978,9 +860,7 @@ def validate_frontend_report(value: object) -> dict[str, object]:
     _exact(raw_case_ids, set(SPLITS), "case_ids_by_split")
     if any(raw_case_ids[split] != by_split[split] for split in SPLITS):
         raise FrontendReportError("front-end case membership/order changed")
-    expected_strata = {
-        case_id: item["stratum"] for case_id, item in catalog.items()
-    }
+    expected_strata = {case_id: item["stratum"] for case_id, item in catalog.items()}
     if data["stratum_by_case"] != expected_strata:
         raise FrontendReportError("case-to-stratum pairing changed")
     if data["variant_ids"] != list(FRONTEND_VARIANT_IDS):
@@ -1003,16 +883,12 @@ def validate_frontend_report(value: object) -> dict[str, object]:
         raise FrontendReportError("development selection contract changed")
 
     capabilities = _validate_capabilities(data["capabilities"])
-    capability_digest = hashlib.sha256(
-        canonical_json(capabilities).encode("utf-8")
-    ).hexdigest()
+    capability_digest = hashlib.sha256(canonical_json(capabilities).encode("utf-8")).hexdigest()
     if data["capability_inventory_sha256"] != capability_digest:
         raise FrontendReportError("capability inventory digest changed")
 
     raw_observations = _array(data["observations"], "observations")
-    observations = [
-        _validate_observation(item, catalog) for item in raw_observations
-    ]
+    observations = [_validate_observation(item, catalog) for item in raw_observations]
     coordinates = [
         (
             str(row["split"]),
@@ -1030,9 +906,7 @@ def validate_frontend_report(value: object) -> dict[str, object]:
         for case_id in by_split[split]
     }
     if len(coordinates) != len(set(coordinates)):
-        raise FrontendReportError(
-            "front-end report contains duplicate observations"
-        )
+        raise FrontendReportError("front-end report contains duplicate observations")
     if set(coordinates) != expected_coordinates:
         raise FrontendReportError(
             "front-end observation matrix is incomplete; "
@@ -1047,29 +921,17 @@ def validate_frontend_report(value: object) -> dict[str, object]:
         for case_id in by_split[split]
     ]
     if coordinates != expected_order:
-        raise FrontendReportError(
-            "front-end observations are not in canonical order"
-        )
+        raise FrontendReportError("front-end observations are not in canonical order")
     if execution_mode == "capability_preflight":
-        if not any(
-            item["status"] != "available" for item in capabilities.values()
-        ):
-            raise FrontendReportError(
-                "capability preflight requires a recorded capability gap"
-            )
+        if not any(item["status"] != "available" for item in capabilities.values()):
+            raise FrontendReportError("capability preflight requires a recorded capability gap")
         if any(row["status"] != "unavailable" for row in observations):
-            raise FrontendReportError(
-                "capability-preflight observations must remain unavailable"
-            )
+            raise FrontendReportError("capability-preflight observations must remain unavailable")
         if any(row["case_result"] is not None for row in observations):
-            raise FrontendReportError(
-                "capability preflight cannot embed fabricated case results"
-            )
+            raise FrontendReportError("capability preflight cannot embed fabricated case results")
     else:
         for row in observations:
-            _validate_measured_source(
-                row, expected_run_id=str(data["run_id"])
-            )
+            _validate_measured_source(row, expected_run_id=str(data["run_id"]))
             if row["status"] not in {
                 "unavailable",
                 "infrastructure_failure",
@@ -1087,9 +949,7 @@ def validate_frontend_report(value: object) -> dict[str, object]:
 
     derived = derive_frontend_analysis(observations)
     if data["analysis"] != derived:
-        raise FrontendReportError(
-            "serialized front-end analysis differs from observations"
-        )
+        raise FrontendReportError("serialized front-end analysis differs from observations")
     if data["artifact_sha256"] != _artifact_digest(data):
         raise FrontendReportError("front-end report artifact digest changed")
     return dict(data)
@@ -1104,19 +964,13 @@ def load_frontend_report(
     try:
         text = report_path.read_text(encoding="utf-8")
     except (OSError, UnicodeError) as exc:
-        raise FrontendReportError(
-            f"cannot read front-end report: {report_path}"
-        ) from exc
+        raise FrontendReportError(f"cannot read front-end report: {report_path}") from exc
     if not text.endswith("\n"):
-        raise FrontendReportError(
-            "front-end report is not canonical newline JSON"
-        )
+        raise FrontendReportError("front-end report is not canonical newline JSON")
     try:
         value = json.loads(text, object_pairs_hook=_reject_duplicate_pairs)
     except (json.JSONDecodeError, FrontendReportError) as exc:
-        raise FrontendReportError(
-            "front-end report is not strict JSON"
-        ) from exc
+        raise FrontendReportError("front-end report is not strict JSON") from exc
     if canonical_json(value) + "\n" != text:
         raise FrontendReportError("front-end report is not canonical JSON")
     return validate_frontend_report(value)
@@ -1157,10 +1011,7 @@ def create_capability_preflight_report() -> dict[str, object]:
                     if capabilities[name]["status"] != "available"
                 ]
                 if missing:
-                    reason = (
-                        "capability unavailable or degraded: "
-                        + ", ".join(missing)
-                    )
+                    reason = "capability unavailable or degraded: " + ", ".join(missing)
                 else:
                     reason = (
                         "comparative execution withheld because required paired "
@@ -1169,9 +1020,7 @@ def create_capability_preflight_report() -> dict[str, object]:
                 for case_id in by_split[split]:
                     case = catalog[case_id]
                     coordinate = {
-                        "capability_inventory_sha256": (
-                            capability_inventory_sha256
-                        ),
+                        "capability_inventory_sha256": (capability_inventory_sha256),
                         "case_id": case_id,
                         "split": split,
                         "cache_mode": mode,
@@ -1218,21 +1067,16 @@ def create_capability_preflight_report() -> dict[str, object]:
         "protocol_sha256": DEFAULT_PROTOCOL_SHA256,
         "registry_sha256": VARIANT_REGISTRY_SHA256,
         "corpus_manifest_sha256": FROZEN_CORPUS_MANIFEST_SHA256,
-        "split_sha256": {
-            split: FROZEN_SPLIT_SHA256[Split(split)] for split in SPLITS
-        },
+        "split_sha256": {split: FROZEN_SPLIT_SHA256[Split(split)] for split in SPLITS},
         "case_ids_by_split": by_split,
-        "stratum_by_case": {
-            case_id: item["stratum"] for case_id, item in catalog.items()
-        },
+        "stratum_by_case": {case_id: item["stratum"] for case_id, item in catalog.items()},
         "variant_ids": list(FRONTEND_VARIANT_IDS),
         "cache_modes": list(CACHE_MODES),
         "development_selection": {
             "status": "preregistered_full_split",
             "case_ids": by_split["development"],
             "selection_basis": (
-                "all reviewed development cases; "
-                "no outcome-derived case shortlist"
+                "all reviewed development cases; no outcome-derived case shortlist"
             ),
             "outcomes_inspected": False,
         },
@@ -1264,13 +1108,9 @@ def build_frontend_report(
     capability_records = _validate_capabilities(capabilities)
     catalog, by_split = _case_catalog()
     if isinstance(observations, (str, bytes, Mapping)):
-        raise FrontendReportError(
-            "observations must be a sequence of observation mappings"
-        )
+        raise FrontendReportError("observations must be a sequence of observation mappings")
     try:
-        rows = [
-            _validate_observation(item, catalog) for item in observations
-        ]
+        rows = [_validate_observation(item, catalog) for item in observations]
     except TypeError as exc:
         raise FrontendReportError(
             "observations must be a sequence of observation mappings"
@@ -1300,9 +1140,7 @@ def build_frontend_report(
         for row in rows
     ]
     if len(coordinates) != len(set(coordinates)):
-        raise FrontendReportError(
-            "front-end report contains duplicate observations"
-        )
+        raise FrontendReportError("front-end report contains duplicate observations")
     if set(coordinates) != set(order):
         raise FrontendReportError(
             "front-end observation matrix is incomplete; "
@@ -1331,21 +1169,16 @@ def build_frontend_report(
         "protocol_sha256": DEFAULT_PROTOCOL_SHA256,
         "registry_sha256": VARIANT_REGISTRY_SHA256,
         "corpus_manifest_sha256": FROZEN_CORPUS_MANIFEST_SHA256,
-        "split_sha256": {
-            split: FROZEN_SPLIT_SHA256[Split(split)] for split in SPLITS
-        },
+        "split_sha256": {split: FROZEN_SPLIT_SHA256[Split(split)] for split in SPLITS},
         "case_ids_by_split": by_split,
-        "stratum_by_case": {
-            case_id: item["stratum"] for case_id, item in catalog.items()
-        },
+        "stratum_by_case": {case_id: item["stratum"] for case_id, item in catalog.items()},
         "variant_ids": list(FRONTEND_VARIANT_IDS),
         "cache_modes": list(CACHE_MODES),
         "development_selection": {
             "status": "preregistered_full_split",
             "case_ids": by_split["development"],
             "selection_basis": (
-                "all reviewed development cases; "
-                "no outcome-derived case shortlist"
+                "all reviewed development cases; no outcome-derived case shortlist"
             ),
             "outcomes_inspected": False,
         },
@@ -1364,9 +1197,7 @@ def frontend_summary(report: Mapping[str, object]) -> dict[str, object]:
 
     analysis = _mapping(report["analysis"], "analysis")
     coverage = _mapping(analysis["coverage"], "analysis.coverage")
-    metrics = _array(
-        analysis["variant_metrics"], "analysis.variant_metrics"
-    )
+    metrics = _array(analysis["variant_metrics"], "analysis.variant_metrics")
     return {
         "section": "frontend",
         "status": "valid",
@@ -1376,14 +1207,10 @@ def frontend_summary(report: Mapping[str, object]) -> dict[str, object]:
         "split_count": coverage["split_count"],
         "stratum_count": coverage["stratum_count"],
         "semantic_measurement_count": sum(
-            int(_mapping(item, "variant_metric")["metrics"]["measured_count"])
-            for item in metrics
+            int(_mapping(item, "variant_metric")["metrics"]["measured_count"]) for item in metrics
         ),
         "missingness_retained": any(
-            _mapping(item, "variant_metric")["metrics"][
-                "semantic_quality_rate"
-            ]
-            is None
+            _mapping(item, "variant_metric")["metrics"]["semantic_quality_rate"] is None
             for item in metrics
         ),
     }

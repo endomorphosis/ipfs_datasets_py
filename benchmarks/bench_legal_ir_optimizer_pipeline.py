@@ -68,9 +68,7 @@ REQUIRED_MEASUREMENTS = (
     "quality_metrics",
 )
 
-THROUGHPUT_REMEDIATION_SCHEMA_VERSION = (
-    "legal-ir-throughput-remediation-benchmark-v1"
-)
+THROUGHPUT_REMEDIATION_SCHEMA_VERSION = "legal-ir-throughput-remediation-benchmark-v1"
 MINIMUM_WARM_CYCLES_PER_HOUR_RATIO = 1.8
 MINIMUM_SAMPLES_PER_SECOND_RATIO = 1.5
 
@@ -96,24 +94,29 @@ _DRY_SAMPLE_IDS = tuple(f"legal-ir-remediation-{index:02d}" for index in range(1
 
 QUALITY_ALIASES: Mapping[str, tuple[str, ...]] = {
     "compiler_ir_cosine": (
-        "compiler_ir_cosine", "latest_compiler_ir_cosine", "best_validation_ir_cosine"
+        "compiler_ir_cosine",
+        "latest_compiler_ir_cosine",
+        "best_validation_ir_cosine",
     ),
     "structural_validity": (
-        "structural_validity", "latest_structural_validity", "symbolic_validity_success_rate"
+        "structural_validity",
+        "latest_structural_validity",
+        "symbolic_validity_success_rate",
     ),
     "symbolic_validity_success_rate": (
-        "symbolic_validity_success_rate", "latest_symbolic_validity_success_rate",
+        "symbolic_validity_success_rate",
+        "latest_symbolic_validity_success_rate",
         "structural_validity",
     ),
-    "hammer_proof_success_rate": (
-        "hammer_proof_success_rate", "latest_hammer_proof_success_rate"
-    ),
+    "hammer_proof_success_rate": ("hammer_proof_success_rate", "latest_hammer_proof_success_rate"),
     "hammer_reconstruction_success_rate": (
-        "hammer_reconstruction_success_rate", "reconstruction_success_rate",
+        "hammer_reconstruction_success_rate",
+        "reconstruction_success_rate",
         "latest_hammer_reconstruction_success_rate",
     ),
     "source_copy_penalty": (
-        "source_copy_penalty", "latest_compiler_ir_source_copy_reward_hack_penalty",
+        "source_copy_penalty",
+        "latest_compiler_ir_source_copy_reward_hack_penalty",
         "source_copy_reward_hack_penalty",
     ),
 }
@@ -183,11 +186,15 @@ def _runtime_block(summary: Mapping[str, Any]) -> Mapping[str, Any]:
 
 def _spans(summary: Mapping[str, Any]) -> list[Mapping[str, Any]]:
     spans = _runtime_block(summary).get("spans", ())
-    return [item for item in spans if isinstance(item, Mapping)] if isinstance(spans, Sequence) else []
+    return (
+        [item for item in spans if isinstance(item, Mapping)] if isinstance(spans, Sequence) else []
+    )
 
 
 def _elapsed(summary: Mapping[str, Any]) -> float:
-    direct = _first_number(summary, ("benchmark_elapsed_seconds", "latest_cycle_seconds", "elapsed_seconds"))
+    direct = _first_number(
+        summary, ("benchmark_elapsed_seconds", "latest_cycle_seconds", "elapsed_seconds")
+    )
     if direct is not None and direct > 0.0:
         return direct
     cycles = [
@@ -281,9 +288,12 @@ def aggregate_pipeline_summaries(
         elapsed = sum(_elapsed(item) for item in by_cache[state])
         if elapsed <= 0.0:
             raise ValueError(f"{state} summaries have no positive elapsed time")
-        throughput[state] = sum(_completed_units(item) for item in by_cache[state]) / elapsed * 3600.0
+        throughput[state] = (
+            sum(_completed_units(item) for item in by_cache[state]) / elapsed * 3600.0
+        )
         hit_values = [
-            value for item in by_cache[state]
+            value
+            for item in by_cache[state]
             for value in [_ratio(_runtime_block(item).get("cache_hit_rate"))]
             if value is not None
         ]
@@ -320,10 +330,7 @@ def aggregate_pipeline_summaries(
             transient_rates.append(max(0.0, min(1.0, transient)))
         accepted_patches += max(
             0.0,
-            _first_number(
-                summary, ("codex_main_apply_count", "codex_accepted_patch_count")
-            )
-            or 0.0,
+            _first_number(summary, ("codex_main_apply_count", "codex_accepted_patch_count")) or 0.0,
         )
         item_count, batch_count, capacity = _leanstral_batch_counts(summary)
         dispatched += item_count
@@ -420,9 +427,7 @@ def aggregate_pipeline_summaries(
         codex_accepted_patches_per_hour=accepted_patches / total_elapsed * 3600.0,
         transient_failure_rate=max(transient_rates, default=0.0),
         cycle_seconds=(
-            statistics.fmean(cycle_samples)
-            if cycle_samples
-            else total_elapsed / len(summaries)
+            statistics.fmean(cycle_samples) if cycle_samples else total_elapsed / len(summaries)
         ),
         cold_cache_hit_rate=cache_rates["cold"],
         warm_cache_hit_rate=cache_rates["warm"],
@@ -489,7 +494,9 @@ def _dry_metrics(
 def dry_run_trials() -> list[BenchmarkTrial]:
     """Deterministic schema-complete trials used only to validate the harness."""
 
-    baseline = BenchmarkTrial(ParallelismProfile(name="fixed_baseline"), _dry_metrics(1.0, cpu=0.72, cycle=737.526))
+    baseline = BenchmarkTrial(
+        ParallelismProfile(name="fixed_baseline"), _dry_metrics(1.0, cpu=0.72, cycle=737.526)
+    )
     balanced_profile = ParallelismProfile(
         name="balanced_dgx_spark",
         hammer_workers=4,
@@ -532,9 +539,7 @@ def _profile_observation(trial: BenchmarkTrial, *, dry_run: bool) -> dict[str, A
         if metrics.cycle_seconds
         else 0.0,
         "warm_cycles_per_hour": round(warm_cycles_per_hour, 9),
-        "cold_samples_per_second": round(
-            metrics.cold_cache_throughput_per_hour / 3600.0, 12
-        ),
+        "cold_samples_per_second": round(metrics.cold_cache_throughput_per_hour / 3600.0, 12),
         "samples_per_second": round(metrics.warm_cache_throughput_per_hour / 3600.0, 12),
         # Queue residence is not interchangeable with state-to-accepted-patch
         # lag.  Legacy aggregate trials did not retain the latter, so only the
@@ -546,15 +551,9 @@ def _profile_observation(trial: BenchmarkTrial, *, dry_run: bool) -> dict[str, A
         "cold_state_to_accepted_patch_lag_p95_seconds": (
             round(metrics.queue_lag_p95_seconds * 1.25, 9) if dry_run else None
         ),
-        "canonical_sample_digest": (
-            canonical_digest(list(_DRY_SAMPLE_IDS)) if dry_run else None
-        ),
-        "cold_cache_throughput_per_hour": round(
-            metrics.cold_cache_throughput_per_hour, 9
-        ),
-        "warm_cache_throughput_per_hour": round(
-            metrics.warm_cache_throughput_per_hour, 9
-        ),
+        "canonical_sample_digest": (canonical_digest(list(_DRY_SAMPLE_IDS)) if dry_run else None),
+        "cold_cache_throughput_per_hour": round(metrics.cold_cache_throughput_per_hour, 9),
+        "warm_cache_throughput_per_hour": round(metrics.warm_cache_throughput_per_hour, 9),
         "sample_count": metrics.sample_count,
         "aggregate_evidence_digest": canonical_digest(trial.to_dict()),
     }
@@ -659,14 +658,10 @@ def _source_profile_observation(
             for item in by_cache[state]
         ]
         if not values or any(value is None for value in values):
-            missing.append(
-                f"{profile_name}:{state}_state_to_accepted_patch_lag_p95_seconds"
-            )
+            missing.append(f"{profile_name}:{state}_state_to_accepted_patch_lag_p95_seconds")
             cache_lags[state] = None
         else:
-            cache_lags[state] = max(
-                float(value) for value in values if value is not None
-            )
+            cache_lags[state] = max(float(value) for value in values if value is not None)
     sample_digests = {
         value
         for item in summaries
@@ -751,7 +746,16 @@ def _source_family_quality(
         for block in candidates:
             value = block.get(family)
             if value is None:
-                value = block.get(next((key for key, target in _FAMILY_ALIASES.items() if target == family and key in block), ""))
+                value = block.get(
+                    next(
+                        (
+                            key
+                            for key, target in _FAMILY_ALIASES.items()
+                            if target == family and key in block
+                        ),
+                        "",
+                    )
+                )
             if isinstance(value, Mapping):
                 observations.append(value)
         if not observations:
@@ -784,7 +788,9 @@ def _source_family_quality(
 def _source_runtime_and_artifacts(
     summaries: Sequence[Mapping[str, Any]], profile_name: str
 ) -> tuple[dict[str, Any], dict[str, Any], list[str]]:
-    warm = [item for item in summaries if str(item.get("benchmark_cache_state", "")).lower() == "warm"]
+    warm = [
+        item for item in summaries if str(item.get("benchmark_cache_state", "")).lower() == "warm"
+    ]
     source = warm[-1] if warm else (summaries[-1] if summaries else {})
     missing: list[str] = []
 
@@ -814,8 +820,7 @@ def _source_runtime_and_artifacts(
         missing.append(f"{profile_name}:cuda_autoencoder_training")
 
     lean_device = str(
-        _first_value(source, ("leanstral_device", "inference_device", "service_device"))
-        or ""
+        _first_value(source, ("leanstral_device", "inference_device", "service_device")) or ""
     ).lower()
     reuse_count = number(("leanstral_reuse_count", "warm_reuse_count", "service_reuse_count"))
     weight_reload_count = number(
@@ -824,9 +829,7 @@ def _source_runtime_and_artifacts(
     lean_service_ids = {
         str(value)
         for item in summaries
-        for value in [
-            _first_value(item, ("leanstral_service_id", "service_instance_id"))
-        ]
+        for value in [_first_value(item, ("leanstral_service_id", "service_instance_id"))]
         if value is not None and str(value).strip()
     }
     lean_passed = (
@@ -891,9 +894,7 @@ def _source_runtime_and_artifacts(
         and 0 <= checkpoint_bytes <= checkpoint_max
     )
     summary_bounded = (
-        summary_bytes is not None
-        and summary_max is not None
-        and 0 <= summary_bytes <= summary_max
+        summary_bytes is not None and summary_max is not None and 0 <= summary_bytes <= summary_max
     )
     if not checkpoint_bounded:
         missing.append(f"{profile_name}:bounded_checkpoint_bytes")
@@ -929,7 +930,11 @@ def _source_runtime_and_artifacts(
             "passed": codex_passed,
         },
         "orphaned_child_count": orphan_count,
-        "passed": autoencoder_passed and lean_passed and hammer_passed and codex_passed and no_orphans,
+        "passed": autoencoder_passed
+        and lean_passed
+        and hammer_passed
+        and codex_passed
+        and no_orphans,
     }
     artifacts = {
         "observed": True,
@@ -971,8 +976,7 @@ def _source_promotion_contract(
     candidates = [
         item
         for item in trials
-        if item.profile.name != "fixed_baseline"
-        and "saturated" not in item.profile.name.lower()
+        if item.profile.name != "fixed_baseline" and "saturated" not in item.profile.name.lower()
     ]
     if len(baselines) != 1 or not candidates:
         return _promotion_contract(trials, dry_run=False), {}
@@ -1016,12 +1020,11 @@ def _source_promotion_contract(
     }
     raw_selected = [item for name in names for item in groups.get(name, [])]
     for dimension, aliases in identity_aliases.items():
-        values = [
-            _first_value(item, aliases)
-            for item in raw_selected
-        ]
+        values = [_first_value(item, aliases) for item in raw_selected]
         normalized = {
-            canonical_digest(value) if isinstance(value, (Mapping, Sequence)) and not isinstance(value, str) else str(value)
+            canonical_digest(value)
+            if isinstance(value, (Mapping, Sequence)) and not isinstance(value, str)
+            else str(value)
             for value in values
             if value is not None and str(value).strip()
         }
@@ -1031,9 +1034,7 @@ def _source_promotion_contract(
         else:
             matching_dimensions[dimension] = values[0]
     baseline_digest = observations["fixed_baseline"].get("canonical_sample_digest")
-    candidate_digest = observations[candidate_trial.profile.name].get(
-        "canonical_sample_digest"
-    )
+    candidate_digest = observations[candidate_trial.profile.name].get("canonical_sample_digest")
     sample_matched = bool(baseline_digest and baseline_digest == candidate_digest)
     if not sample_matched:
         missing.append("matched_identity:canonical_sample_digest")
@@ -1051,23 +1052,34 @@ def _source_promotion_contract(
         "codex_bundle_and_validation_rescue",
         "resource_aware_pipeline_scheduling",
     }
-    ablation = _first_value(candidate_sources[-1], ("ablation_evidence",)) if candidate_sources else None
-    raw_ablation_observations = ablation.get("observations") if isinstance(ablation, Mapping) else None
-    observed_components = {
-        str(item.get("component") or "")
-        for item in raw_ablation_observations
-        if isinstance(item, Mapping)
-    } if isinstance(raw_ablation_observations, Sequence) else set()
+    ablation = (
+        _first_value(candidate_sources[-1], ("ablation_evidence",)) if candidate_sources else None
+    )
+    raw_ablation_observations = (
+        ablation.get("observations") if isinstance(ablation, Mapping) else None
+    )
+    observed_components = (
+        {
+            str(item.get("component") or "")
+            for item in raw_ablation_observations
+            if isinstance(item, Mapping)
+        }
+        if isinstance(raw_ablation_observations, Sequence)
+        else set()
+    )
     ablation_complete = (
         isinstance(ablation, Mapping)
         and ablation.get("complete") is True
         and required_ablation_components <= observed_components
         and all(
-            all(_finite(item.get(metric)) is not None for metric in (
-                "warm_cycles_per_hour",
-                "samples_per_second",
-                "state_to_accepted_patch_lag_p95_seconds",
-            ))
+            all(
+                _finite(item.get(metric)) is not None
+                for metric in (
+                    "warm_cycles_per_hour",
+                    "samples_per_second",
+                    "state_to_accepted_patch_lag_p95_seconds",
+                )
+            )
             for item in raw_ablation_observations
             if isinstance(item, Mapping)
         )
@@ -1088,9 +1100,8 @@ def _source_promotion_contract(
         "reproducibility": {
             "canonical_sample_digest": baseline_digest if sample_matched else None,
             "matching_dimensions": matching_dimensions,
-            "matched": sample_matched and all(
-                value is not None for value in matching_dimensions.values()
-            ),
+            "matched": sample_matched
+            and all(value is not None for value in matching_dimensions.values()),
             "cold_definition": "isolated empty cache namespace",
             "warm_definition": "retained cache and persistent service from the paired cold run",
             "run_order": ["baseline_cold", "baseline_warm", "candidate_cold", "candidate_warm"],
@@ -1116,31 +1127,15 @@ def _dry_family_quality(*, candidate: bool) -> dict[str, dict[str, float]]:
         result[family] = {
             "ir_cross_entropy_loss": round(0.40 - family_adjustment - adjustment, 6),
             "ir_cosine_similarity": round(0.90 + family_adjustment + adjustment, 6),
-            "autoencoder_cross_entropy_loss": round(
-                0.34 - family_adjustment - adjustment, 6
-            ),
-            "autoencoder_cosine_similarity": round(
-                0.91 + family_adjustment + adjustment, 6
-            ),
+            "autoencoder_cross_entropy_loss": round(0.34 - family_adjustment - adjustment, 6),
+            "autoencoder_cosine_similarity": round(0.91 + family_adjustment + adjustment, 6),
             "semantic_equivalence": round(0.94 + family_adjustment + adjustment, 6),
-            "proof_success_rate": round(
-                0.91 + family_adjustment + adjustment, 6
-            ),
-            "reconstruction_success_rate": round(
-                0.89 + family_adjustment + adjustment, 6
-            ),
-            "provenance": round(
-                0.97 + min(family_adjustment, 0.007) + adjustment, 6
-            ),
-            "round_trip": round(
-                0.93 + family_adjustment + adjustment, 6
-            ),
-            "uncertainty": round(
-                0.12 - min(family_adjustment, 0.007) - adjustment, 6
-            ),
-            "holdout": round(
-                0.90 + family_adjustment + adjustment, 6
-            ),
+            "proof_success_rate": round(0.91 + family_adjustment + adjustment, 6),
+            "reconstruction_success_rate": round(0.89 + family_adjustment + adjustment, 6),
+            "provenance": round(0.97 + min(family_adjustment, 0.007) + adjustment, 6),
+            "round_trip": round(0.93 + family_adjustment + adjustment, 6),
+            "uncertainty": round(0.12 - min(family_adjustment, 0.007) - adjustment, 6),
+            "holdout": round(0.90 + family_adjustment + adjustment, 6),
             "source_copy_penalty": round(max(0.0, 0.05 - adjustment), 6),
         }
     return result
@@ -1208,8 +1203,7 @@ def matched_benchmark_evidence(
     candidates = [
         item
         for item in trials
-        if item.profile.name != "fixed_baseline"
-        and "saturated" not in item.profile.name.lower()
+        if item.profile.name != "fixed_baseline" and "saturated" not in item.profile.name.lower()
     ]
     if not candidates:
         raise ValueError("matched benchmark requires at least one candidate trial")
@@ -1245,20 +1239,15 @@ def matched_benchmark_evidence(
     candidate_warm = _finite(candidate.get("warm_cycles_per_hour")) or 0.0
     baseline_samples = _finite(baseline.get("samples_per_second")) or 0.0
     candidate_samples = _finite(candidate.get("samples_per_second")) or 0.0
-    warm_ratio = _comparison_ratio(
-        candidate_warm, baseline_warm
-    )
-    samples_ratio = _comparison_ratio(
-        candidate_samples, baseline_samples
-    )
+    warm_ratio = _comparison_ratio(candidate_warm, baseline_warm)
+    samples_ratio = _comparison_ratio(candidate_samples, baseline_samples)
     lag_before = _finite(baseline.get("state_to_accepted_patch_lag_p95_seconds"))
     lag_after = _finite(candidate.get("state_to_accepted_patch_lag_p95_seconds"))
     checks = {
         "warm_cycles_per_hour": {
             "minimum_candidate_over_baseline": MINIMUM_WARM_CYCLES_PER_HOUR_RATIO,
             "observed_candidate_over_baseline": warm_ratio,
-            "passed": warm_ratio is not None
-            and warm_ratio >= MINIMUM_WARM_CYCLES_PER_HOUR_RATIO,
+            "passed": warm_ratio is not None and warm_ratio >= MINIMUM_WARM_CYCLES_PER_HOUR_RATIO,
         },
         "samples_per_second": {
             "minimum_candidate_over_baseline": MINIMUM_SAMPLES_PER_SECOND_RATIO,
@@ -1333,18 +1322,18 @@ def matched_benchmark_evidence(
         "comparison": {
             "warm_cycles_per_hour_ratio": warm_ratio,
             "samples_per_second_ratio": samples_ratio,
-            "state_to_accepted_patch_lag_p95_delta_seconds": round(
-                lag_after - lag_before, 9
-            ) if lag_before is not None and lag_after is not None else None,
+            "state_to_accepted_patch_lag_p95_delta_seconds": round(lag_after - lag_before, 9)
+            if lag_before is not None and lag_after is not None
+            else None,
         },
         "threshold_checks": checks,
         "missing_evidence": missing,
         "performance_passed": not missing and all(item["passed"] for item in checks.values()),
         # A dry run proves only schema and decision-path operation.  It cannot
         # be replayed as execution evidence by a production promotion gate.
-        "promotion_eligible": not dry_run and not missing and all(
-            item["passed"] for item in checks.values()
-        ),
+        "promotion_eligible": not dry_run
+        and not missing
+        and all(item["passed"] for item in checks.values()),
     }
 
 
@@ -1476,15 +1465,12 @@ def benchmark_document(
         raise ValueError("benchmark report requires at least one trial")
     source_observations: Mapping[str, Mapping[str, Any]] = {}
     if not dry_run and source_summaries:
-        contract, source_observations = _source_promotion_contract(
-            trials, source_summaries
-        )
+        contract, source_observations = _source_promotion_contract(trials, source_summaries)
     else:
         contract = _promotion_contract(trials, dry_run=dry_run)
     has_baseline = sum(item.profile.name == "fixed_baseline" for item in trials) == 1
     has_candidate = any(
-        item.profile.name != "fixed_baseline"
-        and "saturated" not in item.profile.name.lower()
+        item.profile.name != "fixed_baseline" and "saturated" not in item.profile.name.lower()
         for item in trials
     )
     matched: dict[str, Any]
@@ -1567,7 +1553,9 @@ def _trials_from_documents(raw: Sequence[Mapping[str, Any]]) -> list[BenchmarkTr
             raise ValueError(f"profile settings changed between repetitions: {profile.name}")
         summaries_by_profile[profile.name].append(item)
     for name in sorted(summaries_by_profile):
-        direct.append(aggregate_pipeline_summaries(summaries_by_profile[name], profile_by_name[name]))
+        direct.append(
+            aggregate_pipeline_summaries(summaries_by_profile[name], profile_by_name[name])
+        )
     names = [trial.profile.name for trial in direct]
     if len(names) != len(set(names)):
         raise ValueError("benchmark input contains duplicate aggregate profile names")

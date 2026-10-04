@@ -68,9 +68,9 @@ def _compiler_record(
         split=contracts.Split.PILOT,
         cache_mode=cache_mode,
         input_data={"text": SOURCE_TEXT},
-        requested_identity=variants.get_variant_definition(
-            variant_id
-        ).requested_identity(contracts.StageName.COMPILER),
+        requested_identity=variants.get_variant_definition(variant_id).requested_identity(
+            contracts.StageName.COMPILER
+        ),
         environment_sha256=ENVIRONMENT_SHA256,
         source=("synthetic-g236-control-test",),
         semantic_protocol_cid=contracts.SEMANTIC_PROTOCOL_V2_CID,
@@ -96,9 +96,7 @@ def _semantic_result(
     variant_id: str,
 ) -> contracts.CaseResultRecord:
     if variant_id == "A0":
-        return contracts.CaseResultRecord.from_stages(
-            (exposure.compiler_record,)
-        )
+        return contracts.CaseResultRecord.from_stages((exposure.compiler_record,))
     compiler = _compiler_record(
         payload,
         cache_mode=cache_mode,
@@ -113,9 +111,7 @@ def _semantic_result(
         split=contracts.Split.PILOT,
         cache_mode=cache_mode,
         input_data={"text": SOURCE_TEXT},
-        requested_identity=definition.requested_identity(
-            contracts.StageName.SPACY
-        ),
+        requested_identity=definition.requested_identity(contracts.StageName.SPACY),
         environment_sha256=ENVIRONMENT_SHA256,
         upstream_stage_digests=(compiler.digest,),
         source=("synthetic-g236-control-test",),
@@ -141,13 +137,9 @@ def _semantic_result(
             split=contracts.Split.PILOT,
             cache_mode=cache_mode,
             input_data={"text": SOURCE_TEXT},
-            requested_identity=definition.requested_identity(
-                contracts.StageName.SYMAI
-            ),
+            requested_identity=definition.requested_identity(contracts.StageName.SYMAI),
             environment_sha256=ENVIRONMENT_SHA256,
-            upstream_stage_digests=tuple(
-                record.digest for record in records
-            ),
+            upstream_stage_digests=tuple(record.digest for record in records),
             source=("synthetic-g236-control-test",),
             semantic_protocol_cid=contracts.SEMANTIC_PROTOCOL_V2_CID,
         )
@@ -155,10 +147,7 @@ def _semantic_result(
             contracts.StageName.SYMAI,
             handler=lambda _request: adapters.StageOutput(
                 data={
-                    "schema": (
-                        "ipfs-datasets.logic-pipeline-benchmark."
-                        "policy-decision.v1"
-                    ),
+                    "schema": ("ipfs-datasets.logic-pipeline-benchmark.policy-decision.v1"),
                     "stage": "symai",
                     "invoked": True,
                     "reason": "synthetic G236 policy evidence",
@@ -187,9 +176,7 @@ def _failed_optional_adapter(
         output = adapters.StageOutput(
             data={"safe_failure_class": "timed_out"},
             status=contracts.StageStatus.FAILED,
-            failure_code=(
-                contracts.FailureCode.LEANSTRAL_TIMEOUT_SCHEMA_OR_FORBIDDEN_CONSTRUCT
-            ),
+            failure_code=(contracts.FailureCode.LEANSTRAL_TIMEOUT_SCHEMA_OR_FORBIDDEN_CONSTRUCT),
             failure_detail="synthetic invalid-control model timeout",
         )
     return adapters.StageAdapter(
@@ -223,12 +210,7 @@ def _coordinate_evidence(
     )
     evidence = []
     for variant_id in variant_ids:
-        coordinate_root = (
-            root
-            / namespace
-            / cache_mode.value
-            / variant_id
-        )
+        coordinate_root = root / namespace / cache_mode.value / variant_id
         coordinate_root.mkdir(parents=True)
         runner = runtime.NativeKernelRunner(
             "/synthetic/lean",
@@ -242,9 +224,7 @@ def _coordinate_evidence(
         )
         route = {
             stage: _failed_optional_adapter(stage)
-            for stage in variants.get_causal_proof_variant_profile(
-                variant_id
-            ).optional_order
+            for stage in variants.get_causal_proof_variant_profile(variant_id).optional_order
         }
         route[contracts.StageName.KERNEL] = adapters.StageAdapter(
             contracts.StageName.KERNEL,
@@ -295,9 +275,7 @@ def _reviewed_records(
         source_cid=cid_for_bytes(SOURCE_TEXT.encode("utf-8")),
         control_kind=ControlKind.CONTRADICTORY,
         source_manifest_cid=(
-            manifest.source_manifest_cid
-            if source_manifest_cid is None
-            else source_manifest_cid
+            manifest.source_manifest_cid if source_manifest_cid is None else source_manifest_cid
         ),
         rescue_manifest_cid=manifest.manifest_cid,
         review_authority_cid=review_authority_cid,
@@ -348,9 +326,7 @@ def reviewed_population(
         split=contracts.Split.PILOT,
         source_cid=cid_for_bytes(SOURCE_TEXT.encode("utf-8")),
         obligation_id=str(PROOF_CONTEXT["obligation_id"]),
-        proof_obligation=PROOF_CONTEXT[
-            "proof_obligation"
-        ],  # type: ignore[arg-type]
+        proof_obligation=PROOF_CONTEXT["proof_obligation"],  # type: ignore[arg-type]
         optional_components=("hammer", "leanstral"),
         review_attestation_cid=cid_for_dag_json(
             {
@@ -360,18 +336,12 @@ def reviewed_population(
         ),
     )
     manifest = CausalRescueManifestV2(
-        plan_cid=cid_for_dag_json(
-            {"schema": "synthetic-g236-plan.v1"}
-        ),
-        source_manifest_cid=cid_for_dag_json(
-            {"schema": "synthetic-g236-source-manifest.v1"}
-        ),
+        plan_cid=cid_for_dag_json({"schema": "synthetic-g236-plan.v1"}),
+        source_manifest_cid=cid_for_dag_json({"schema": "synthetic-g236-source-manifest.v1"}),
         case_manifest_sha256=MANIFEST_SHA256,
         cases=(rescue_case,),
     )
-    entry, attestation, review_authority, execution_authority = (
-        _reviewed_records(manifest)
-    )
+    entry, attestation, review_authority, execution_authority = _reviewed_records(manifest)
     index = build_reviewed_control_index_v2(
         review_authority_cid=review_authority,
         execution_authority_cid=execution_authority,
@@ -408,10 +378,7 @@ def _forbid_new_bare_sha_fields(value: object) -> None:
 
 def _plain_json(value: object) -> object:
     if isinstance(value, Mapping):
-        return {
-            str(key): _plain_json(member)
-            for key, member in value.items()
-        }
+        return {str(key): _plain_json(member) for key, member in value.items()}
     if isinstance(value, (tuple, list)):
         return [_plain_json(member) for member in value]
     return value
@@ -443,10 +410,7 @@ def test_reviewed_control_index_is_cid_native_and_round_trips(
         index.entries[0].source_cid,
         codecs=("raw",),
     )
-    assert (
-        ReviewedControlIndexV2.from_dict(index.to_dict()).index_cid
-        == index.index_cid
-    )
+    assert ReviewedControlIndexV2.from_dict(index.to_dict()).index_cid == index.index_cid
     _forbid_new_bare_sha_fields(index.to_dict())
 
 
@@ -471,17 +435,9 @@ def test_zero_terminal_native_acceptances_passes_complete_population(
     assert gate["invalid_control_case_count"] == 1
     assert gate["required_coordinate_count"] == 26
     assert gate["observed_coordinate_count"] == 26
-    assert (
-        gate[
-            "terminal_independent_native_kernel_acceptance_count"
-        ]
-        == 0
-    )
+    assert gate["terminal_independent_native_kernel_acceptance_count"] == 0
     assert gate["failure_codes"] == ()
-    assert all(
-        item["terminal_native_kernel_accepted"] is False
-        for item in gate["observations"]
-    )
+    assert all(item["terminal_native_kernel_accepted"] is False for item in gate["observations"])
     assert (
         validate_reviewed_control_safety_gate_v2(
             gate,
@@ -521,18 +477,9 @@ def test_any_terminal_native_acceptance_is_fatal(
     assert gate["passed"] is False
     assert gate["fatal"] is True
     assert gate["fully_observed"] is True
-    assert (
-        gate[
-            "terminal_independent_native_kernel_acceptance_count"
-        ]
-        == 1
-    )
-    assert gate["accepted_runtime_evidence_cids"] == (
-        accepted.receipt_cid,
-    )
-    assert gate["failure_codes"] == (
-        "invalid_control_terminal_native_kernel_acceptance",
-    )
+    assert gate["terminal_independent_native_kernel_acceptance_count"] == 1
+    assert gate["accepted_runtime_evidence_cids"] == (accepted.receipt_cid,)
+    assert gate["failure_codes"] == ("invalid_control_terminal_native_kernel_acceptance",)
 
 
 def test_missing_or_duplicate_runtime_coordinate_is_incomplete(
@@ -552,9 +499,7 @@ def test_missing_or_duplicate_runtime_coordinate_is_incomplete(
     assert missing["passed"] is False
     assert missing["fatal"] is False
     assert len(missing["missing_coordinate_cids"]) == 1
-    assert "required_runtime_coordinate_missing" in missing[
-        "failure_codes"
-    ]
+    assert "required_runtime_coordinate_missing" in missing["failure_codes"]
 
     duplicated = build_reviewed_control_safety_gate_v2(
         index,
@@ -563,12 +508,8 @@ def test_missing_or_duplicate_runtime_coordinate_is_incomplete(
     )
     assert duplicated["status"] == "incomplete"
     assert duplicated["complete"] is False
-    assert "duplicate_runtime_coordinate" in duplicated[
-        "failure_codes"
-    ]
-    assert "duplicate_runtime_evidence_receipt" in duplicated[
-        "failure_codes"
-    ]
+    assert "duplicate_runtime_coordinate" in duplicated["failure_codes"]
+    assert "duplicate_runtime_evidence_receipt" in duplicated["failure_codes"]
 
 
 def test_forged_or_duplicate_control_classification_fails_closed(
@@ -602,14 +543,10 @@ def test_stale_manifest_binding_and_caller_assertions_are_incomplete(
     reviewed_population,
 ) -> None:
     manifest = reviewed_population["manifest"]
-    stale_source_manifest_cid = cid_for_dag_json(
-        {"schema": "synthetic-stale-source-manifest.v1"}
-    )
-    entry, attestation, review_authority, execution_authority = (
-        _reviewed_records(
-            manifest,
-            source_manifest_cid=stale_source_manifest_cid,
-        )
+    stale_source_manifest_cid = cid_for_dag_json({"schema": "synthetic-stale-source-manifest.v1"})
+    entry, attestation, review_authority, execution_authority = _reviewed_records(
+        manifest,
+        source_manifest_cid=stale_source_manifest_cid,
     )
     stale_index = build_reviewed_control_index_v2(
         review_authority_cid=review_authority,
@@ -625,9 +562,7 @@ def test_stale_manifest_binding_and_caller_assertions_are_incomplete(
     )
     assert stale["status"] == "incomplete"
     assert "control_manifest_set_mismatch" in stale["failure_codes"]
-    assert "control_index_manifest_binding_mismatch" in stale[
-        "failure_codes"
-    ]
+    assert "control_index_manifest_binding_mismatch" in stale["failure_codes"]
 
     with pytest.raises(
         ReviewedControlSafetyError,
@@ -654,11 +589,7 @@ def test_stale_manifest_binding_and_caller_assertions_are_incomplete(
     forged_gate["passed"] = True
     forged_gate["status"] = "passed"
     forged_gate["receipt_cid"] = cid_for_dag_json(
-        {
-            key: _plain_json(value)
-            for key, value in forged_gate.items()
-            if key != "receipt_cid"
-        }
+        {key: _plain_json(value) for key, value in forged_gate.items() if key != "receipt_cid"}
     )
     with pytest.raises(
         ReviewedControlSafetyError,

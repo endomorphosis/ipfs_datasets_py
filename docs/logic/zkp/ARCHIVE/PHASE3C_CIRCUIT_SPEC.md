@@ -124,10 +124,10 @@ Complexity: ~1 constraint
 **Format: 4-field scalar representation**
 ```python
 public_inputs = [
-    theorem_hash_scalar,       # Index 0: SHA256(theorem) mod r
+    theorem_hash_scalar,  # Index 0: SHA256(theorem) mod r
     axioms_commitment_scalar,  # Index 1: SHA256(axioms) mod r
-    circuit_version,           # Index 2: uint32 (0-255)
-    ruleset_id_scalar,         # Index 3: ruleset identifier scalar
+    circuit_version,  # Index 2: uint32 (0-255)
+    ruleset_id_scalar,  # Index 3: ruleset identifier scalar
 ]
 ```
 

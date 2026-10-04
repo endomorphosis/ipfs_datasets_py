@@ -7,15 +7,15 @@ with minimal changes.
 
 Usage:
     from ipfs_datasets_py.knowledge_graphs.neo4j_compat import GraphDatabase
-    
+
     # Change only the connection URI - everything else works as-is!
     driver = GraphDatabase.driver("ipfs://localhost:5001", auth=("user", "token"))
-    
+
     with driver.session() as session:
         result = session.run("MATCH (n) RETURN n LIMIT 10")
         for record in result:
             print(record["n"])
-    
+
     driver.close()
 
 Supported Features (Phase 1):
@@ -45,15 +45,12 @@ __all__ = [
     "GraphDatabase",
     "IPFSDriver",
     "create_driver",
-    
     # Session and transaction management
     "IPFSSession",
     "IPFSTransaction",
-    
     # Result handling
     "Result",
     "Record",
-    
     # Graph types
     "Node",
     "Relationship",

@@ -37,15 +37,9 @@ from types import MappingProxyType
 from typing import Any, Final, Protocol, runtime_checkable
 
 COUNTEREXAMPLE_EXPLANATION_INTERFACE: Final = "CounterexampleExplanation@1"
-EXPLANATION_SCHEMA: Final = (
-    "ipfs_datasets_py/logic/counterexample-explanation@1"
-)
-EXPLANATION_FACT_SCHEMA: Final = (
-    "ipfs_datasets_py/logic/counterexample-explanation-fact@1"
-)
-REPAIR_HYPOTHESIS_SCHEMA: Final = (
-    "ipfs_datasets_py/logic/counterexample-repair-hypothesis@1"
-)
+EXPLANATION_SCHEMA: Final = "ipfs_datasets_py/logic/counterexample-explanation@1"
+EXPLANATION_FACT_SCHEMA: Final = "ipfs_datasets_py/logic/counterexample-explanation-fact@1"
+REPAIR_HYPOTHESIS_SCHEMA: Final = "ipfs_datasets_py/logic/counterexample-repair-hypothesis@1"
 ALGORITHM_VERSION: Final = "counterexample-explanation/1.0.0"
 ALGORITHM_NAME: Final = "deterministic_source_aware_explanation"
 
@@ -338,8 +332,7 @@ def _is_private_or_forbidden_key(key: str) -> bool:
     if normalized == "raw":
         return True
     return bool(
-        _PRIVATE_CHANNEL_KEY_RE.search(normalized)
-        or _FORBIDDEN_CHANNEL_KEY_RE.match(normalized)
+        _PRIVATE_CHANNEL_KEY_RE.search(normalized) or _FORBIDDEN_CHANNEL_KEY_RE.match(normalized)
     )
 
 
@@ -353,24 +346,17 @@ def _assert_public_safe(value: Any, *, label: str = "explanation") -> None:
                 key_l = key.lower().replace("-", "_")
                 child_path = f"{path}.{key}" if path else key
                 if key_l == "raw":
-                    raise ExplanationError(
-                        f"{label} must not contain raw payload at {child_path}"
-                    )
+                    raise ExplanationError(f"{label} must not contain raw payload at {child_path}")
                 if key_l in _SAFE_PUBLIC_KEYS:
                     walk(child, path=child_path)
                     continue
                 if _is_private_or_forbidden_key(key) or any(
-                    marker == key_l or marker in key_l
-                    for marker in _FORBIDDEN_PUBLIC_MARKERS
+                    marker == key_l or marker in key_l for marker in _FORBIDDEN_PUBLIC_MARKERS
                 ):
-                    raise ExplanationError(
-                        f"{label} contains forbidden public channel key {key!r}"
-                    )
+                    raise ExplanationError(f"{label} contains forbidden public channel key {key!r}")
                 walk(child, path=child_path)
             return
-        if isinstance(node, Sequence) and not isinstance(
-            node, (str, bytes, bytearray, memoryview)
-        ):
+        if isinstance(node, Sequence) and not isinstance(node, (str, bytes, bytearray, memoryview)):
             for index, child in enumerate(node):
                 walk(child, path=f"{path}[{index}]")
             return
@@ -400,9 +386,7 @@ def _strip_private(value: Any) -> Any:
                 continue
             cleaned[key] = _strip_private(child)
         return cleaned
-    if isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray, memoryview)
-    ):
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray, memoryview)):
         return [_strip_private(item) for item in value]
     if isinstance(value, str):
         lowered = value.lower()
@@ -428,9 +412,7 @@ def _as_mapping(value: Any) -> dict[str, Any]:
         converted = to_public()
         if isinstance(converted, Mapping):
             return dict(converted)
-    raise ExplanationError(
-        "input must be a mapping or expose to_dict()/to_public_dict()"
-    )
+    raise ExplanationError("input must be a mapping or expose to_dict()/to_public_dict()")
 
 
 def _claims_proof(value: Mapping[str, Any] | str) -> bool:
@@ -473,18 +455,14 @@ class SourceSpanRef:
     mapping_status: MappingStatus | str = MappingStatus.ABSENT
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "span_ids", _string_tuple(self.span_ids, "span_ids")
-        )
+        object.__setattr__(self, "span_ids", _string_tuple(self.span_ids, "span_ids"))
         object.__setattr__(
             self, "source_ref_ids", _string_tuple(self.source_ref_ids, "source_ref_ids")
         )
         object.__setattr__(
             self, "ast_scope_ids", _string_tuple(self.ast_scope_ids, "ast_scope_ids")
         )
-        object.__setattr__(
-            self, "tree_ids", _string_tuple(self.tree_ids, "tree_ids")
-        )
+        object.__setattr__(self, "tree_ids", _string_tuple(self.tree_ids, "tree_ids"))
         status = self.mapping_status
         if isinstance(status, str):
             try:
@@ -527,9 +505,7 @@ class SourceSpanRef:
             return cls(mapping_status=MappingStatus.ABSENT)
         data = _mapping(source_map, "source_map")
         span_ids = tuple(
-            str(item)
-            for item in (data.get("span_ids") or data.get("spans") or ())
-            if str(item)
+            str(item) for item in (data.get("span_ids") or data.get("spans") or ()) if str(item)
         )
         source_ref_ids = tuple(
             str(item)
@@ -542,9 +518,7 @@ class SourceSpanRef:
             if str(item)
         )
         tree_ids = tuple(
-            str(item)
-            for item in (data.get("tree_ids") or data.get("trees") or ())
-            if str(item)
+            str(item) for item in (data.get("tree_ids") or data.get("trees") or ()) if str(item)
         )
         # Explicit unsupported markers from callers / frontends.
         explicit = str(data.get("mapping_status") or data.get("status") or "").lower()
@@ -591,7 +565,9 @@ class DecodedValue:
             self, "path", _text(self.path, "decoded_value.path", optional=True, maximum=512)
         )
         object.__setattr__(
-            self, "role", _text(self.role, "decoded_value.role", optional=True, maximum=64) or "assignment"
+            self,
+            "role",
+            _text(self.role, "decoded_value.role", optional=True, maximum=64) or "assignment",
         )
         object.__setattr__(self, "value", _json_ready(_strip_private(self.value)))
 
@@ -614,9 +590,7 @@ class ExpectedActualDelta:
     equal: bool = False
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "path", _text(self.path, "delta.path", maximum=512)
-        )
+        object.__setattr__(self, "path", _text(self.path, "delta.path", maximum=512))
         expected = _json_ready(_strip_private(self.expected))
         actual = _json_ready(_strip_private(self.actual))
         object.__setattr__(self, "expected", expected)
@@ -653,9 +627,7 @@ class FirstDivergence:
             except ValueError as exc:
                 raise ExplanationError(f"unsupported divergence kind {self.kind!r}") from exc
         object.__setattr__(self, "kind", kind)
-        object.__setattr__(
-            self, "path", _text(self.path, "first_divergence.path", maximum=512)
-        )
+        object.__setattr__(self, "path", _text(self.path, "first_divergence.path", maximum=512))
         object.__setattr__(
             self, "detail", _text(self.detail, "first_divergence.detail", maximum=1024)
         )
@@ -665,9 +637,7 @@ class FirstDivergence:
             raise ExplanationError("first_divergence.index must be int or None")
         if not isinstance(self.source_span, SourceSpanRef):
             if isinstance(self.source_span, Mapping):
-                object.__setattr__(
-                    self, "source_span", SourceSpanRef.from_dict(self.source_span)
-                )
+                object.__setattr__(self, "source_span", SourceSpanRef.from_dict(self.source_span))
             else:
                 raise ExplanationError("source_span must be a SourceSpanRef")
         payload = self._identity_core()
@@ -717,9 +687,7 @@ class CausalLink:
     def __post_init__(self) -> None:
         if not isinstance(self.step, int) or self.step < 0:
             raise ExplanationError("causal link step must be a non-negative int")
-        object.__setattr__(
-            self, "label", _text(self.label, "causal_link.label", maximum=256)
-        )
+        object.__setattr__(self, "label", _text(self.label, "causal_link.label", maximum=256))
         object.__setattr__(
             self, "path", _text(self.path, "causal_link.path", optional=True, maximum=512)
         )
@@ -730,9 +698,7 @@ class CausalLink:
         )
         if not isinstance(self.source_span, SourceSpanRef):
             if isinstance(self.source_span, Mapping):
-                object.__setattr__(
-                    self, "source_span", SourceSpanRef.from_dict(self.source_span)
-                )
+                object.__setattr__(self, "source_span", SourceSpanRef.from_dict(self.source_span))
             else:
                 raise ExplanationError("causal_link.source_span must be a SourceSpanRef")
 
@@ -757,9 +723,7 @@ class AffectedProofHole:
     formal_goal_id: str = ""
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "hole_id", _text(self.hole_id, "proof_hole.hole_id", maximum=256)
-        )
+        object.__setattr__(self, "hole_id", _text(self.hole_id, "proof_hole.hole_id", maximum=256))
         object.__setattr__(
             self,
             "reason",
@@ -820,9 +784,7 @@ class ExplanationFact:
             "statement",
             _text(self.statement, "fact.statement", maximum=1024),
         )
-        object.__setattr__(
-            self, "path", _text(self.path, "fact.path", optional=True, maximum=512)
-        )
+        object.__setattr__(self, "path", _text(self.path, "fact.path", optional=True, maximum=512))
         object.__setattr__(self, "value", _json_ready(_strip_private(self.value)))
         if not isinstance(self.replay_verified, bool):
             raise ExplanationError("fact.replay_verified must be boolean")
@@ -886,17 +848,13 @@ class RepairHypothesis:
             "repair_class",
             _text(self.repair_class, "repair_class", maximum=128),
         )
-        object.__setattr__(
-            self, "detail", _text(self.detail, "hypothesis.detail", maximum=1024)
-        )
+        object.__setattr__(self, "detail", _text(self.detail, "hypothesis.detail", maximum=1024))
         status = self.status
         if isinstance(status, str):
             try:
                 status = HypothesisStatus(status)
             except ValueError as exc:
-                raise ExplanationError(
-                    f"unsupported hypothesis status {self.status!r}"
-                ) from exc
+                raise ExplanationError(f"unsupported hypothesis status {self.status!r}") from exc
         object.__setattr__(self, "status", status)
         authority = _text(self.authority, "hypothesis.authority", maximum=64).lower()
         if authority not in _HYPOTHESIS_AUTHORITIES:
@@ -918,8 +876,7 @@ class RepairHypothesis:
         object.__setattr__(
             self,
             "schema",
-            _text(self.schema, "hypothesis.schema", maximum=256)
-            or REPAIR_HYPOTHESIS_SCHEMA,
+            _text(self.schema, "hypothesis.schema", maximum=256) or REPAIR_HYPOTHESIS_SCHEMA,
         )
         body = {
             "authority": self.authority,
@@ -1020,9 +977,7 @@ class CounterexampleExplanation:
         object.__setattr__(self, "causal_chain", tuple(self.causal_chain))
         if any(not isinstance(item, CausalLink) for item in self.causal_chain):
             raise ExplanationError("causal_chain must be CausalLink values")
-        object.__setattr__(
-            self, "assumptions", _string_tuple(self.assumptions, "assumptions")
-        )
+        object.__setattr__(self, "assumptions", _string_tuple(self.assumptions, "assumptions"))
         object.__setattr__(
             self,
             "bounds",
@@ -1031,25 +986,12 @@ class CounterexampleExplanation:
         object.__setattr__(self, "source_spans", tuple(self.source_spans))
         if any(not isinstance(item, SourceSpanRef) for item in self.source_spans):
             raise ExplanationError("source_spans must be SourceSpanRef values")
-        object.__setattr__(
-            self, "affected_proof_holes", tuple(self.affected_proof_holes)
-        )
-        if any(
-            not isinstance(item, AffectedProofHole)
-            for item in self.affected_proof_holes
-        ):
-            raise ExplanationError(
-                "affected_proof_holes must be AffectedProofHole values"
-            )
-        object.__setattr__(
-            self, "repair_hypotheses", tuple(self.repair_hypotheses)
-        )
-        if any(
-            not isinstance(item, RepairHypothesis) for item in self.repair_hypotheses
-        ):
-            raise ExplanationError(
-                "repair_hypotheses must be RepairHypothesis values"
-            )
+        object.__setattr__(self, "affected_proof_holes", tuple(self.affected_proof_holes))
+        if any(not isinstance(item, AffectedProofHole) for item in self.affected_proof_holes):
+            raise ExplanationError("affected_proof_holes must be AffectedProofHole values")
+        object.__setattr__(self, "repair_hypotheses", tuple(self.repair_hypotheses))
+        if any(not isinstance(item, RepairHypothesis) for item in self.repair_hypotheses):
+            raise ExplanationError("repair_hypotheses must be RepairHypothesis values")
         for hyp in self.repair_hypotheses:
             if hyp.authority not in _HYPOTHESIS_AUTHORITIES:
                 raise ExplanationError("repair hypothesis authority is elevated")
@@ -1114,8 +1056,7 @@ class CounterexampleExplanation:
         object.__setattr__(
             self,
             "algorithm_version",
-            _text(self.algorithm_version, "algorithm_version", maximum=128)
-            or ALGORITHM_VERSION,
+            _text(self.algorithm_version, "algorithm_version", maximum=128) or ALGORITHM_VERSION,
         )
         object.__setattr__(
             self,
@@ -1123,19 +1064,14 @@ class CounterexampleExplanation:
             _text(self.schema, "schema", maximum=256) or EXPLANATION_SCHEMA,
         )
         if self.schema != EXPLANATION_SCHEMA:
-            raise ExplanationError(
-                f"unsupported explanation schema {self.schema!r}"
-            )
+            raise ExplanationError(f"unsupported explanation schema {self.schema!r}")
         object.__setattr__(
             self,
             "interface",
-            _text(self.interface, "interface", maximum=128)
-            or COUNTEREXAMPLE_EXPLANATION_INTERFACE,
+            _text(self.interface, "interface", maximum=128) or COUNTEREXAMPLE_EXPLANATION_INTERFACE,
         )
         if self.interface != COUNTEREXAMPLE_EXPLANATION_INTERFACE:
-            raise ExplanationError(
-                f"unsupported explanation interface {self.interface!r}"
-            )
+            raise ExplanationError(f"unsupported explanation interface {self.interface!r}")
         if self.redacted is not True:
             raise ExplanationError("public explanations must be redacted")
 
@@ -1312,9 +1248,7 @@ class CounterexampleExplanation:
                 if isinstance(item, Mapping)
             ),
             unsupported_mappings=tuple(data.get("unsupported_mappings") or ()),
-            mapping_status=str(
-                data.get("mapping_status") or MappingStatus.ABSENT.value
-            ),
+            mapping_status=str(data.get("mapping_status") or MappingStatus.ABSENT.value),
             replay_verified=bool(data.get("replay_verified")),
             replay_receipt_id=str(data.get("replay_receipt_id") or ""),
             witness_content_id=str(data.get("witness_content_id") or ""),
@@ -1324,9 +1258,7 @@ class CounterexampleExplanation:
             algorithm=str(data.get("algorithm") or ALGORITHM_NAME),
             algorithm_version=str(data.get("algorithm_version") or ALGORITHM_VERSION),
             schema=str(data.get("schema") or EXPLANATION_SCHEMA),
-            interface=str(
-                data.get("interface") or COUNTEREXAMPLE_EXPLANATION_INTERFACE
-            ),
+            interface=str(data.get("interface") or COUNTEREXAMPLE_EXPLANATION_INTERFACE),
             redacted=True,
         )
 
@@ -1345,8 +1277,7 @@ class CounterexampleExplanationProtocol(Protocol):
         proof_holes: Sequence[Mapping[str, Any] | Any] | None = None,
         replay_receipt: Mapping[str, Any] | Any | None = None,
         replay_verified: bool | None = None,
-    ) -> CounterexampleExplanation:
-        ...
+    ) -> CounterexampleExplanation: ...
 
 
 # ---------------------------------------------------------------------------
@@ -1369,16 +1300,13 @@ _HYPOTHESIS_DETAIL: Final[Mapping[str, str]] = MappingProxyType(
             "divergence; does not claim a completed proof."
         ),
         "add_obligation_or_fallback_test": (
-            "Hypothesis: add an obligation or fallback test covering the "
-            "observed divergence."
+            "Hypothesis: add an obligation or fallback test covering the observed divergence."
         ),
         "constrain_ast_scope_or_model_bound": (
-            "Hypothesis: constrain the AST scope or model bound related to "
-            "the decoded assignments."
+            "Hypothesis: constrain the AST scope or model bound related to the decoded assignments."
         ),
         "add_premise_or_evidence_dependency": (
-            "Hypothesis: add a premise or evidence dependency supporting "
-            "the violated property."
+            "Hypothesis: add a premise or evidence dependency supporting the violated property."
         ),
         "adjust_portfolio_or_resource_bound": (
             "Hypothesis: adjust portfolio or resource bounds (not a proof)."
@@ -1434,9 +1362,7 @@ def _public_source_identifiers(raw: Mapping[str, Any]) -> dict[str, Any]:
             value = mapping.get(key)
             if isinstance(value, str) and value.strip():
                 collected[key].append(value.strip())
-            elif isinstance(value, Sequence) and not isinstance(
-                value, (str, bytes, bytearray)
-            ):
+            elif isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
                 for item in value:
                     text = str(item).strip()
                     if text and not _is_private_or_forbidden_key(text):
@@ -1493,9 +1419,7 @@ def _merge_source_map(
             value = source.get(key) if isinstance(source, Mapping) else None
             if isinstance(value, str) and value.strip():
                 values.append(value.strip())
-            elif isinstance(value, Sequence) and not isinstance(
-                value, (str, bytes, bytearray)
-            ):
+            elif isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
                 values.extend(str(item).strip() for item in value if str(item).strip())
         if values:
             merged[key] = sorted(set(values))
@@ -1654,9 +1578,9 @@ def _decode_values(kind: str, payload: Mapping[str, Any]) -> list[DecodedValue]:
             for index, message in enumerate(payload.get("messages") or ()):
                 decoded.append(
                     DecodedValue(
-                        name=str(message) if not isinstance(message, Mapping) else str(
-                            message.get("type") or message.get("label") or index
-                        ),
+                        name=str(message)
+                        if not isinstance(message, Mapping)
+                        else str(message.get("type") or message.get("label") or index),
                         value=_strip_private(message) if isinstance(message, Mapping) else message,
                         path=f"messages[{index}]",
                         role="message",
@@ -1713,9 +1637,7 @@ def _compute_deltas(
     if kind in {"smt_model", "generic"}:
         actual_map = payload.get("assignments") or payload.get("model") or {}
         expected_map = (
-            expected_payload.get("assignments")
-            or expected_payload.get("model")
-            or expected_payload
+            expected_payload.get("assignments") or expected_payload.get("model") or expected_payload
         )
         if isinstance(actual_map, Mapping) and isinstance(expected_map, Mapping):
             names = sorted(set(actual_map) | set(expected_map), key=str)
@@ -1775,10 +1697,7 @@ def _first_divergence(
             return FirstDivergence(
                 kind=DivergenceKind.VIOLATED_CONDITION,
                 path=first.path,
-                detail=(
-                    f"first expected/actual mismatch for {violated_property} "
-                    f"at {first.path}"
-                ),
+                detail=(f"first expected/actual mismatch for {violated_property} at {first.path}"),
                 expected=first.expected,
                 actual=first.actual,
                 index=0,
@@ -1790,10 +1709,7 @@ def _first_divergence(
             return FirstDivergence(
                 kind=DivergenceKind.VIOLATED_CONDITION,
                 path=f"assignments.{name}",
-                detail=(
-                    f"property {violated_property} violated under decoded "
-                    f"assignment {name}"
-                ),
+                detail=(f"property {violated_property} violated under decoded assignment {name}"),
                 expected=None,
                 actual=assignments[name],
                 index=0,
@@ -1935,16 +1851,10 @@ def _causal_chain(
     links: list[CausalLink] = []
     if kind in {"trace", "protocol_attack"}:
         steps = list(payload.get("steps") or payload.get("trace") or payload.get("events") or ())
-        limit = (
-            (divergence.index + 1)
-            if isinstance(divergence.index, int)
-            else len(steps)
-        )
+        limit = (divergence.index + 1) if isinstance(divergence.index, int) else len(steps)
         for index, step in enumerate(steps[: max(0, limit)]):
             if isinstance(step, Mapping):
-                label = str(
-                    step.get("label") or step.get("action") or step.get("type") or index
-                )
+                label = str(step.get("label") or step.get("action") or step.get("type") or index)
                 path = f"steps[{index}]"
             else:
                 label = str(step)
@@ -2006,9 +1916,7 @@ def _causal_chain(
                     str(k)
                     for k in (
                         (payload.get("assignments") or payload.get("model") or {})
-                        if isinstance(
-                            payload.get("assignments") or payload.get("model"), Mapping
-                        )
+                        if isinstance(payload.get("assignments") or payload.get("model"), Mapping)
                         else {}
                     )
                 ),
@@ -2155,9 +2063,7 @@ def _normalize_proof_hole(item: Any) -> AffectedProofHole | None:
     if isinstance(item, AffectedProofHole):
         return item
     data = _as_mapping(item)
-    hole_id = str(
-        data.get("hole_id") or data.get("id") or data.get("proof_hole_id") or ""
-    ).strip()
+    hole_id = str(data.get("hole_id") or data.get("id") or data.get("proof_hole_id") or "").strip()
     if not hole_id:
         return None
     related: list[str] = []
@@ -2167,9 +2073,7 @@ def _normalize_proof_hole(item: Any) -> AffectedProofHole | None:
             value = source.get(key)
             if isinstance(value, str) and value.strip():
                 related.append(value.strip())
-            elif isinstance(value, Sequence) and not isinstance(
-                value, (str, bytes, bytearray)
-            ):
+            elif isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
                 related.extend(str(v) for v in value if str(v).strip())
         span = source.get("span")
         if isinstance(span, Mapping) and span.get("span_id"):
@@ -2303,10 +2207,7 @@ def _resolve_replay_verification(
     if replay_receipt is not None:
         data = _as_mapping(replay_receipt)
         receipt_id = str(
-            data.get("receipt_id")
-            or data.get("content_id")
-            or data.get("result_id")
-            or ""
+            data.get("receipt_id") or data.get("content_id") or data.get("result_id") or ""
         ).strip()
         status = str(data.get("status") or "").lower()
         violation = data.get("violation_reproduced")
@@ -2397,8 +2298,7 @@ def _build_cited_facts(
             ExplanationFact(
                 role=FactRole.EXPECTED_ACTUAL,
                 statement=(
-                    f"delta at {delta.path}: expected={delta.expected!r} "
-                    f"actual={delta.actual!r}"
+                    f"delta at {delta.path}: expected={delta.expected!r} actual={delta.actual!r}"
                 ),
                 path=delta.path,
                 value=delta.to_dict(),
@@ -2502,10 +2402,9 @@ class CounterexampleExplainer:
         payload = _payload_of(view)
         source_map = _source_map_of(view)
         source_span = SourceSpanRef.from_source_map(source_map)
-        property_id = (
-            _text(violated_property, "violated_property", optional=True, maximum=256)
-            or _extract_property(view)
-        )
+        property_id = _text(
+            violated_property, "violated_property", optional=True, maximum=256
+        ) or _extract_property(view)
         assumptions = (
             _string_tuple(assumption_ids, "assumption_ids")
             if assumption_ids is not None
@@ -2580,14 +2479,15 @@ class CounterexampleExplainer:
             causal_chain=tuple(causal),
             assumptions=assumptions,
             bounds=bounds,
-            source_spans=(source_span,) if (
+            source_spans=(source_span,)
+            if (
                 source_span.span_ids
                 or source_span.source_ref_ids
                 or source_span.ast_scope_ids
                 or source_span.tree_ids
-                or source_span.mapping_status
-                is not MappingStatus.ABSENT
-            ) else (),
+                or source_span.mapping_status is not MappingStatus.ABSENT
+            )
+            else (),
             affected_proof_holes=tuple(holes),
             repair_hypotheses=tuple(hypotheses),
             cited_facts=tuple(cited),

@@ -40,9 +40,7 @@ from ipfs_datasets_py.tests.contract.processors.wallets.conformance import (
 )
 
 
-FIXTURE_DIR = (
-    Path(__file__).resolve().parents[3] / "fixtures" / "wallets" / "solana"
-)
+FIXTURE_DIR = Path(__file__).resolve().parents[3] / "fixtures" / "wallets" / "solana"
 SESSION = json.loads((FIXTURE_DIR / "rpc_session.json").read_text(encoding="utf-8"))
 
 
@@ -120,9 +118,7 @@ def _extra_fixture_ingestion_and_normalization(
         clock=lambda: datetime(2026, 7, 29, tzinfo=timezone.utc),
     )
     records = normalizer.normalize(bundles, context=_context("normalize"))
-    transactions = [
-        item for item in records if isinstance(item, TransactionRecord)
-    ]
+    transactions = [item for item in records if isinstance(item, TransactionRecord)]
     assert {item.status for item in transactions} == {
         TransactionStatus.SUCCEEDED,
         TransactionStatus.FAILED,
@@ -134,9 +130,7 @@ def _extra_fixture_ingestion_and_normalization(
         "900719925474099312345",
     }
     events = [item for item in records if isinstance(item, ContractEventRecord)]
-    assert any(
-        item.extensions["solana"].data["inner_index"] == 0 for item in events
-    )
+    assert any(item.extensions["solana"].data["inner_index"] == 0 for item in events)
     assert any(isinstance(item, TokenAccountRecord) for item in records)
     assert all(callable(getattr(item, "to_dict", None)) for item in records)
 
@@ -144,13 +138,9 @@ def _extra_fixture_ingestion_and_normalization(
 def _extra_finalized_checkpoint_and_skipped_slot(
     _suite: WalletProcessorConformance,
 ) -> None:
-    provider = SolanaLedgerProvider(
-        _FixtureRpc(), endpoint="https://fixture.invalid"
-    )
+    provider = SolanaLedgerProvider(_FixtureRpc(), endpoint="https://fixture.invalid")
     checkpoint = asyncio.run(
-        provider.finalized_checkpoint(
-            "wallet:fixture", context=_context("checkpoint")
-        )
+        provider.finalized_checkpoint("wallet:fixture", context=_context("checkpoint"))
     )
     assert checkpoint.anchor.sequence == SESSION["slots"]["finalized"]
     assert checkpoint.anchor.block_hash == SESSION["blocks"]["100"]["blockhash"]
@@ -172,9 +162,7 @@ def _extra_finalized_checkpoint_and_skipped_slot(
 def _extra_read_only_and_optional_nft_projection(
     _suite: WalletProcessorConformance,
 ) -> None:
-    provider = SolanaLedgerProvider(
-        _FixtureRpc(), endpoint="https://fixture.invalid"
-    )
+    provider = SolanaLedgerProvider(_FixtureRpc(), endpoint="https://fixture.invalid")
     assert provider.capabilities.metadata["read_only"] is True
     assert provider.capabilities.metadata["nft_enrichment"] == "optional_projection"
     assert provider.capabilities.metadata["supports_sign"] is False

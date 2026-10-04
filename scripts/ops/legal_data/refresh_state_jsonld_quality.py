@@ -125,7 +125,9 @@ def load_jsonld(path: Path) -> List[Dict[str, object]]:
 def build_fallback_jsonld_row(state_code: str, statute: Dict[str, object]) -> Dict[str, object]:
     section_number = str(statute.get("section_number") or "").strip()
     section_name = str(statute.get("section_name") or "").strip()
-    statute_id = str(statute.get("statute_id") or "").strip() or section_number or section_name or "UNKNOWN"
+    statute_id = (
+        str(statute.get("statute_id") or "").strip() or section_number or section_name or "UNKNOWN"
+    )
     full_text = str(statute.get("full_text") or "").strip()
     source_url = str(statute.get("source_url") or "").strip()
     title = section_name or section_number or statute_id
@@ -144,7 +146,9 @@ def build_fallback_jsonld_row(state_code: str, statute: Dict[str, object]) -> Di
     }
 
 
-def extract_scrape_jsonld_rows(result: Dict[str, object], state_code: str) -> List[Dict[str, object]]:
+def extract_scrape_jsonld_rows(
+    result: Dict[str, object], state_code: str
+) -> List[Dict[str, object]]:
     out: List[Dict[str, object]] = []
     data = result.get("data") if isinstance(result, dict) else None
     if not isinstance(data, list):
@@ -242,7 +246,9 @@ def quality_stats(rows: List[Dict[str, object]]) -> Tuple[int, int, int, float]:
     return real, synth, total, real_ratio
 
 
-def is_not_worse_quality(after_rows: List[Dict[str, object]], before_rows: List[Dict[str, object]]) -> bool:
+def is_not_worse_quality(
+    after_rows: List[Dict[str, object]], before_rows: List[Dict[str, object]]
+) -> bool:
     before_real, before_synth, before_total, before_real_ratio = quality_stats(before_rows)
     after_real, after_synth, after_total, after_real_ratio = quality_stats(after_rows)
 
@@ -267,7 +273,13 @@ async def refresh_state(
     preserve_prior_size: bool,
 ) -> Dict[str, object]:
     state_code = state_code.upper().strip()
-    state_file = Path.home() / ".ipfs_datasets" / "state_laws" / "state_laws_jsonld" / f"STATE-{state_code}.jsonld"
+    state_file = (
+        Path.home()
+        / ".ipfs_datasets"
+        / "state_laws"
+        / "state_laws_jsonld"
+        / f"STATE-{state_code}.jsonld"
+    )
 
     before = load_jsonld(state_file)
 
@@ -294,7 +306,9 @@ async def refresh_state(
 
     before_real = [r for r in before if not is_synthetic_row(r) and not is_low_quality_row(r)]
     before_synth = [r for r in before if is_synthetic_row(r)]
-    after_real = [r for r in after_combined if not is_synthetic_row(r) and not is_low_quality_row(r)]
+    after_real = [
+        r for r in after_combined if not is_synthetic_row(r) and not is_low_quality_row(r)
+    ]
     after_synth = [r for r in after_combined if is_synthetic_row(r)]
 
     before_candidate = build_target_rows(
@@ -304,7 +318,9 @@ async def refresh_state(
         target_lines=max(1, target_lines),
     )
 
-    target_for_after = max(target_lines, len(before_candidate)) if preserve_prior_size else target_lines
+    target_for_after = (
+        max(target_lines, len(before_candidate)) if preserve_prior_size else target_lines
+    )
     after_candidate = build_target_rows(
         state_code=state_code,
         real_rows=dedupe(after_real + before_real),
@@ -333,8 +349,12 @@ async def refresh_state(
         "after_total": len(after_combined),
         "after_real": len(after_real),
         "final_total": len(final_rows),
-        "final_real": len([r for r in final_rows if not is_synthetic_row(r) and not is_low_quality_row(r)]),
-        "final_synthetic": len([r for r in final_rows if is_synthetic_row(r) or is_low_quality_row(r)]),
+        "final_real": len(
+            [r for r in final_rows if not is_synthetic_row(r) and not is_low_quality_row(r)]
+        ),
+        "final_synthetic": len(
+            [r for r in final_rows if is_synthetic_row(r) or is_low_quality_row(r)]
+        ),
         "selected": selected,
     }
 
@@ -361,7 +381,11 @@ def main() -> int:
         action="store_true",
         help="Do not force output size to be at least prior file size",
     )
-    parser.add_argument("--allow-regression", action="store_true", help="Allow writing worse quality mix than existing file")
+    parser.add_argument(
+        "--allow-regression",
+        action="store_true",
+        help="Allow writing worse quality mix than existing file",
+    )
     args = parser.parse_args()
 
     state_code = str(args.state or "").upper().strip()

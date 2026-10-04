@@ -10,6 +10,7 @@ Stale smoke tests (already implemented in source, now formally exercised):
   * OntologyGenerator.entity_confidence_sum(result)
   * OntologyPipeline.run_score_geometric_mean()
 """
+
 import math
 import types
 import pytest
@@ -19,11 +20,16 @@ import pytest
 # Lightweight stubs to avoid heavy import chain
 # ---------------------------------------------------------------------------
 
+
 def _make_adapter(scores):
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     class _FR:
         def __init__(self, s):
             self.final_score = s
+
     la = object.__new__(OntologyLearningAdapter)
     la._feedback = [_FR(s) for s in scores]
     return la
@@ -36,9 +42,7 @@ def ontology_builder(ontology_dict_factory):
     def _build(entity_ids, rels):
         ontology = ontology_dict_factory(entity_count=0, relationship_count=0)
         ontology["entities"] = [{"id": i} for i in entity_ids]
-        ontology["relationships"] = [
-            {"source_id": s, "target_id": t} for s, t in rels
-        ]
+        ontology["relationships"] = [{"source_id": s, "target_id": t} for s, t in rels]
         return ontology
 
     return _build
@@ -46,23 +50,32 @@ def ontology_builder(ontology_dict_factory):
 
 def _make_validator():
     from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
     return object.__new__(LogicValidator)
 
 
 def _make_optimizer(scores):
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     class _E:
         def __init__(self, v):
             self.average_score = v
+
     o = object.__new__(OntologyOptimizer)
     o._history = [_E(v) for v in scores]
     return o
 
 
-def _make_critic_score(completeness=0.5, consistency=0.5, clarity=0.5,
-                       granularity=0.5, relationship_coherence=0.5,
-                       domain_alignment=0.5):
+def _make_critic_score(
+    completeness=0.5,
+    consistency=0.5,
+    clarity=0.5,
+    granularity=0.5,
+    relationship_coherence=0.5,
+    domain_alignment=0.5,
+):
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+
     return CriticScore(
         completeness=completeness,
         consistency=consistency,
@@ -82,6 +95,7 @@ def _make_entity(confidence):
             self.entity_type = "t"
             self.text = ""
             self.properties = {}
+
     return _Ent(confidence)
 
 
@@ -91,17 +105,21 @@ def _make_extraction_result(entity_confidences):
             self.entities = ents
             self.relationships = []
             self.confidence = 1.0
+
     return _R([_make_entity(c) for c in entity_confidences])
 
 
 def _make_pipeline(scores):
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     class _S:
         def __init__(self, v):
             self.overall = v
+
     class _R:
         def __init__(self, v):
             self.score = _S(v)
+
     p = object.__new__(OntologyPipeline)
     p._run_history = [_R(v) for v in scores]
     return p
@@ -110,6 +128,7 @@ def _make_pipeline(scores):
 # ---------------------------------------------------------------------------
 # OntologyLearningAdapter.feedback_iqr_ratio
 # ---------------------------------------------------------------------------
+
 
 class TestFeedbackIqrRatio:
     def test_empty_returns_zero(self):
@@ -167,6 +186,7 @@ class TestFeedbackIqrRatio:
     def test_symmetric_uniform_distribution(self):
         # [0, 1, 2, ..., 9] / 9
         import random
+
         scores = [i / 9.0 for i in range(10)]
         la = _make_adapter(scores)
         r = la.feedback_iqr_ratio()
@@ -184,6 +204,7 @@ class TestFeedbackIqrRatio:
 # ---------------------------------------------------------------------------
 # LogicValidator.sink_count
 # ---------------------------------------------------------------------------
+
 
 class TestSinkCount:
     def test_empty_returns_zero(self, ontology_builder):
@@ -242,8 +263,10 @@ class TestSinkCount:
         # dict-style ontology with source/target keys
         ont = {
             "entities": [{"id": "X"}, {"id": "Y"}, {"id": "Z"}],
-            "relationships": [{"source_id": "X", "target_id": "Y"},
-                               {"source_id": "X", "target_id": "Z"}],
+            "relationships": [
+                {"source_id": "X", "target_id": "Y"},
+                {"source_id": "X", "target_id": "Z"},
+            ],
         }
         v = _make_validator()
         assert v.sink_count(ont) == 2  # Y and Z are sinks
@@ -274,6 +297,7 @@ class TestSinkCount:
 # Stale smoke tests — methods that already exist in source
 # ---------------------------------------------------------------------------
 
+
 class TestStaleSmoke:
     # OntologyOptimizer.score_geometric_mean
     def test_score_geometric_mean_empty(self):
@@ -289,6 +313,7 @@ class TestStaleSmoke:
     # OntologyCritic.dimension_max
     def test_dimension_max_returns_highest_dim(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
         critic = object.__new__(OntologyCritic)
         score = _make_critic_score(completeness=0.9, consistency=0.3)
         result = critic.dimension_max(score)
@@ -296,6 +321,7 @@ class TestStaleSmoke:
 
     def test_dimension_max_returns_string(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
         critic = object.__new__(OntologyCritic)
         score = _make_critic_score()
         assert isinstance(critic.dimension_max(score), str)
@@ -303,12 +329,14 @@ class TestStaleSmoke:
     # OntologyGenerator.entity_confidence_sum
     def test_entity_confidence_sum_empty(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
         gen = object.__new__(OntologyGenerator)
         result = gen.entity_confidence_sum(_make_extraction_result([]))
         assert result == 0.0
 
     def test_entity_confidence_sum_values(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
         gen = object.__new__(OntologyGenerator)
         result = gen.entity_confidence_sum(_make_extraction_result([0.3, 0.4, 0.5]))
         assert abs(result - 1.2) < 1e-9

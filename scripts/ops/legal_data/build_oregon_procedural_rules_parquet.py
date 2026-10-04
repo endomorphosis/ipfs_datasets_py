@@ -50,7 +50,9 @@ def _record_code_name(record: Dict[str, Any]) -> str:
 def _canonical_json_bytes(record: Dict[str, Any]) -> bytes:
     # Exclude CID fields to keep hashing stable across rebuilds.
     normalized = {k: v for k, v in record.items() if k not in {"ipfs_cid", "cid"}}
-    return json.dumps(normalized, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    return json.dumps(normalized, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode(
+        "utf-8"
+    )
 
 
 def _ipfs_cid(record: Dict[str, Any]) -> str:

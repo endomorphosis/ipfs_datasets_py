@@ -64,9 +64,7 @@ def test_mediator_state_round_trip_preserves_core_fields(ontology_builder) -> No
         current_ontology=ontology_builder("_0"),
     )
     state.add_round(ontology_builder("_1"), _sample_score(0.75), "initial_generation")
-    state.add_round(
-        ontology_builder("_2"), _sample_score(0.83), "add_missing_relationships"
-    )
+    state.add_round(ontology_builder("_2"), _sample_score(0.83), "add_missing_relationships")
     state.total_time_ms = 123.45
     state.converged = True
     state.metadata["final_score"] = state.critic_scores[-1].overall

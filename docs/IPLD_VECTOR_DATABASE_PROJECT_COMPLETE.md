@@ -213,11 +213,7 @@ from ipfs_datasets_py.vector_stores import create_vector_store, add_texts_to_sto
 
 # Create IPLD store with router integration
 store = await create_vector_store(
-    "ipld",
-    "documents",
-    dimension=768,
-    use_embeddings_router=True,
-    use_ipfs_router=True
+    "ipld", "documents", dimension=768, use_embeddings_router=True, use_ipfs_router=True
 )
 
 await store.create_collection()
@@ -267,7 +263,7 @@ await bridge.migrate(
     target_store=ipld_store,
     collection="embeddings",
     batch_size=1000,
-    verify=True
+    verify=True,
 )
 ```
 

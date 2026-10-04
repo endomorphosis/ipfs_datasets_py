@@ -74,9 +74,7 @@ def _parse_pointer(pointer: str) -> tuple[str, ...]:
     if pointer == "":
         return ()
     if not pointer.startswith("/"):
-        raise CanonicalizationError(
-            f"collection path {pointer!r} must be an RFC 6901 JSON Pointer"
-        )
+        raise CanonicalizationError(f"collection path {pointer!r} must be an RFC 6901 JSON Pointer")
     return tuple(_decode_pointer_segment(part) for part in pointer[1:].split("/"))
 
 
@@ -130,45 +128,32 @@ class CollectionSchema:
 
     def __init__(
         self,
-        rules: (
-            Mapping[str, CollectionSemantics | str]
-            | Sequence[CollectionRule]
-            | None
-        ) = None,
+        rules: (Mapping[str, CollectionSemantics | str] | Sequence[CollectionRule] | None) = None,
         *,
         require_declared: bool = False,
     ) -> None:
         if rules is None:
             prepared: list[CollectionRule] = []
         elif isinstance(rules, Mapping):
-            prepared = [
-                CollectionRule(pointer, semantics)
-                for pointer, semantics in rules.items()
-            ]
+            prepared = [CollectionRule(pointer, semantics) for pointer, semantics in rules.items()]
         else:
             prepared = []
             for rule in rules:
                 if not isinstance(rule, CollectionRule):
-                    raise TypeError(
-                        "collection rules must be CollectionRule instances"
-                    )
+                    raise TypeError("collection rules must be CollectionRule instances")
                 prepared.append(rule)
 
         by_pointer: dict[str, CollectionRule] = {}
         for rule in prepared:
             if rule.pointer in by_pointer:
-                raise CanonicalizationError(
-                    f"duplicate collection rule for {rule.pointer!r}"
-                )
+                raise CanonicalizationError(f"duplicate collection rule for {rule.pointer!r}")
             by_pointer[rule.pointer] = rule
 
         ordered = tuple(by_pointer[key] for key in sorted(by_pointer))
         object.__setattr__(self, "rules", ordered)
         object.__setattr__(self, "require_declared", bool(require_declared))
 
-    def semantics_for(
-        self, path: tuple[str, ...]
-    ) -> CollectionSemantics | None:
+    def semantics_for(self, path: tuple[str, ...]) -> CollectionSemantics | None:
         """Return the most-specific matching declaration for *path*."""
 
         best: CollectionSemantics | None = None
@@ -178,8 +163,7 @@ class CollectionSchema:
             if len(parts) != len(path):
                 continue
             if not all(
-                declared == "*" or declared == actual
-                for declared, actual in zip(parts, path)
+                declared == "*" or declared == actual for declared, actual in zip(parts, path)
             ):
                 continue
             specificity = sum(part != "*" for part in parts)
@@ -205,10 +189,7 @@ CanonicalizationSchema = CollectionSchema
 
 def coerce_collection_schema(
     schema: (
-        CollectionSchema
-        | Mapping[str, CollectionSemantics | str]
-        | Sequence[CollectionRule]
-        | None
+        CollectionSchema | Mapping[str, CollectionSemantics | str] | Sequence[CollectionRule] | None
     ),
 ) -> CollectionSchema:
     """Return *schema* as an immutable :class:`CollectionSchema`."""
@@ -223,9 +204,7 @@ def _normalize_text(value: str, *, label: str) -> str:
     try:
         normalized.encode("utf-8")
     except UnicodeEncodeError as exc:
-        raise CanonicalizationError(
-            f"{label} contains an unpaired Unicode surrogate"
-        ) from exc
+        raise CanonicalizationError(f"{label} contains an unpaired Unicode surrogate") from exc
     return normalized
 
 
@@ -257,15 +236,9 @@ def _canonical_number(value: int | float | Decimal) -> str:
         exponent += 1
 
     point = len(digits) + exponent
-    output_size = (
-        point
-        if point >= len(digits)
-        else len(digits) + (1 - point if point <= 0 else 1)
-    )
+    output_size = point if point >= len(digits) else len(digits) + (1 - point if point <= 0 else 1)
     if output_size > _MAX_DECIMAL_DIGITS:
-        raise CanonicalizationError(
-            "canonical decimal expansion exceeds the profile size limit"
-        )
+        raise CanonicalizationError("canonical decimal expansion exceeds the profile size limit")
 
     if point <= 0:
         body = "0." + ("0" * -point) + digits
@@ -329,9 +302,7 @@ def _encode(
             )
             encoded_items.append(encoded_key + b":" + encoded_value)
         return b"{" + b",".join(encoded_items) + b"}"
-    if isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray, memoryview)
-    ):
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray, memoryview)):
         semantics = schema.semantics_for(path)
         if semantics is None:
             if schema.require_declared:
@@ -364,16 +335,10 @@ def canonical_json_bytes(
     value: Any,
     *,
     collection_schema: (
-        CollectionSchema
-        | Mapping[str, CollectionSemantics | str]
-        | Sequence[CollectionRule]
-        | None
+        CollectionSchema | Mapping[str, CollectionSemantics | str] | Sequence[CollectionRule] | None
     ) = None,
     collection_semantics: (
-        CollectionSchema
-        | Mapping[str, CollectionSemantics | str]
-        | Sequence[CollectionRule]
-        | None
+        CollectionSchema | Mapping[str, CollectionSemantics | str] | Sequence[CollectionRule] | None
     ) = None,
 ) -> bytes:
     """Return the canonical UTF-8 JSON representation of *value*.
@@ -383,13 +348,9 @@ def canonical_json_bytes(
     """
 
     if collection_schema is not None and collection_semantics is not None:
-        raise TypeError(
-            "use either collection_schema or collection_semantics, not both"
-        )
+        raise TypeError("use either collection_schema or collection_semantics, not both")
     schema = coerce_collection_schema(
-        collection_schema
-        if collection_schema is not None
-        else collection_semantics
+        collection_schema if collection_schema is not None else collection_semantics
     )
     return _encode(value, path=(), schema=schema)
 
@@ -398,16 +359,10 @@ def canonical_json(
     value: Any,
     *,
     collection_schema: (
-        CollectionSchema
-        | Mapping[str, CollectionSemantics | str]
-        | Sequence[CollectionRule]
-        | None
+        CollectionSchema | Mapping[str, CollectionSemantics | str] | Sequence[CollectionRule] | None
     ) = None,
     collection_semantics: (
-        CollectionSchema
-        | Mapping[str, CollectionSemantics | str]
-        | Sequence[CollectionRule]
-        | None
+        CollectionSchema | Mapping[str, CollectionSemantics | str] | Sequence[CollectionRule] | None
     ) = None,
 ) -> str:
     """Return the canonical JSON text representation of *value*."""

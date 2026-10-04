@@ -109,9 +109,7 @@ def _intent(**overrides: Any) -> TransactionIntent:
     return TransactionIntent(**base)
 
 
-def _candidate(
-    intent: TransactionIntent | None = None, **overrides: Any
-) -> TransactionCandidate:
+def _candidate(intent: TransactionIntent | None = None, **overrides: Any) -> TransactionCandidate:
     intent = intent or _intent()
     base: dict[str, Any] = {
         "candidate_id": "candidate:tx-swap-001",
@@ -324,10 +322,7 @@ def test_code_epoch_receipt_bound_and_round_trip() -> None:
 def test_required_obligation_set_receipt_bound() -> None:
     obl = _obligation_set()
     assert obl.required_authority_for("obl:no-reentrancy") is AnalysisAuthority.PROOF
-    assert (
-        obl.required_authority_for("obl:intent-effect-equality")
-        is AnalysisAuthority.STATIC
-    )
+    assert obl.required_authority_for("obl:intent-effect-equality") is AnalysisAuthority.STATIC
     restored = RequiredObligationSet.from_dict(obl.to_dict())
     assert restored.digest == obl.digest
     assert restored.obligation_ids == obl.obligation_ids
@@ -340,12 +335,11 @@ def test_decision_binds_epochs_and_obligations() -> None:
     assert decision.blocks_automation is False
     assert decision.permits_automation()
     assert decision.obligation_set_digest == request.required_obligations.digest
-    assert decision.primary_code_epoch_digest == request.epoch_by_id(
-        request.primary_code_epoch_id
-    ).digest
-    assert set(decision.code_epoch_digests) == {
-        e.epoch_id for e in request.code_epochs
-    }
+    assert (
+        decision.primary_code_epoch_digest
+        == request.epoch_by_id(request.primary_code_epoch_id).digest
+    )
+    assert set(decision.code_epoch_digests) == {e.epoch_id for e in request.code_epochs}
     assert set(decision.evaluated_effect_ids) == {
         "effect:swap-usdc-weth",
         "effect:approve-router",
@@ -421,9 +415,7 @@ def test_bad_analysis_outcomes_block(
         ),
     )
     decision = evaluate_contract_safety(
-        _passing_request(
-            intent=intent, candidate=candidate, code=code, evidence=evidence
-        ),
+        _passing_request(intent=intent, candidate=candidate, code=code, evidence=evidence),
         now=_NOW_OK,
     )
     assert decision.blocks_automation
@@ -437,9 +429,7 @@ def test_unexecuted_blocks() -> None:
     candidate = _candidate(intent)
     code = _code_epoch()
     evidence = (
-        _evidence(
-            "obl:no-reentrancy", code, intent, candidate, executed=False
-        ),
+        _evidence("obl:no-reentrancy", code, intent, candidate, executed=False),
         _evidence("obl:auth-least-privilege", code, intent, candidate),
         _evidence(
             "obl:intent-effect-equality",
@@ -450,9 +440,7 @@ def test_unexecuted_blocks() -> None:
         ),
     )
     decision = evaluate_contract_safety(
-        _passing_request(
-            intent=intent, candidate=candidate, code=code, evidence=evidence
-        ),
+        _passing_request(intent=intent, candidate=candidate, code=code, evidence=evidence),
         now=_NOW_OK,
     )
     assert decision.blocks_automation
@@ -471,9 +459,7 @@ def test_missing_evidence_is_unexecuted() -> None:
         _evidence("obl:auth-least-privilege", code, intent, candidate),
     )
     decision = evaluate_contract_safety(
-        _passing_request(
-            intent=intent, candidate=candidate, code=code, evidence=evidence
-        ),
+        _passing_request(intent=intent, candidate=candidate, code=code, evidence=evidence),
         now=_NOW_OK,
     )
     assert decision.blocks_automation
@@ -485,9 +471,7 @@ def test_unavailable_blocks() -> None:
     candidate = _candidate(intent)
     code = _code_epoch()
     evidence = (
-        _evidence(
-            "obl:no-reentrancy", code, intent, candidate, unavailable=True
-        ),
+        _evidence("obl:no-reentrancy", code, intent, candidate, unavailable=True),
         _evidence("obl:auth-least-privilege", code, intent, candidate),
         _evidence(
             "obl:intent-effect-equality",
@@ -498,9 +482,7 @@ def test_unavailable_blocks() -> None:
         ),
     )
     decision = evaluate_contract_safety(
-        _passing_request(
-            intent=intent, candidate=candidate, code=code, evidence=evidence
-        ),
+        _passing_request(intent=intent, candidate=candidate, code=code, evidence=evidence),
         now=_NOW_OK,
     )
     assert decision.blocks_automation
@@ -536,9 +518,7 @@ def test_stale_evidence_freshness_blocks() -> None:
         ),
     )
     decision = evaluate_contract_safety(
-        _passing_request(
-            intent=intent, candidate=candidate, code=code, evidence=evidence
-        ),
+        _passing_request(intent=intent, candidate=candidate, code=code, evidence=evidence),
         now=_NOW_OK,
     )
     assert decision.blocks_automation
@@ -600,16 +580,12 @@ def test_sat_cannot_satisfy_proof_requirement() -> None:
         ),
     )
     decision = evaluate_contract_safety(
-        _passing_request(
-            intent=intent, candidate=candidate, code=code, evidence=evidence
-        ),
+        _passing_request(intent=intent, candidate=candidate, code=code, evidence=evidence),
         now=_NOW_OK,
     )
     assert decision.blocks_automation
     assert decision.obligation_results["obl:no-reentrancy"] == "authority_mismatch"
-    assert any(
-        c.startswith("contract.authority_mismatch:") for c in decision.reason_codes
-    )
+    assert any(c.startswith("contract.authority_mismatch:") for c in decision.reason_codes)
 
 
 def test_monitor_and_simulation_remain_distinct_from_proof() -> None:
@@ -635,9 +611,7 @@ def test_monitor_and_simulation_remain_distinct_from_proof() -> None:
             ),
         )
         decision = evaluate_contract_safety(
-            _passing_request(
-                intent=intent, candidate=candidate, code=code, evidence=evidence
-            ),
+            _passing_request(intent=intent, candidate=candidate, code=code, evidence=evidence),
             now=_NOW_OK,
         )
         assert decision.blocks_automation
@@ -672,9 +646,7 @@ def test_code_epoch_digest_substitution_blocks() -> None:
         ),
     )
     decision = evaluate_contract_safety(
-        _passing_request(
-            intent=intent, candidate=candidate, code=code, evidence=evidence
-        ),
+        _passing_request(intent=intent, candidate=candidate, code=code, evidence=evidence),
         now=_NOW_OK,
     )
     assert decision.blocks_automation
@@ -742,16 +714,12 @@ def test_candidate_substitution_blocks() -> None:
         ),
     )
     decision = evaluate_contract_safety(
-        _passing_request(
-            intent=intent, candidate=candidate, code=code, evidence=evidence
-        ),
+        _passing_request(intent=intent, candidate=candidate, code=code, evidence=evidence),
         now=_NOW_OK,
     )
     assert decision.blocks_automation
     assert decision.obligation_results["obl:no-reentrancy"] == "mismatched"
-    assert any(
-        c.startswith("contract.candidate_mismatch:") for c in decision.reason_codes
-    )
+    assert any(c.startswith("contract.candidate_mismatch:") for c in decision.reason_codes)
 
 
 def test_effect_mismatch_blocks_unevaluated_effects() -> None:
@@ -777,16 +745,12 @@ def test_effect_mismatch_blocks_unevaluated_effects() -> None:
         ),
     )
     decision = evaluate_contract_safety(
-        _passing_request(
-            intent=intent, candidate=candidate, code=code, evidence=evidence
-        ),
+        _passing_request(intent=intent, candidate=candidate, code=code, evidence=evidence),
         now=_NOW_OK,
     )
     assert decision.blocks_automation
     assert decision.obligation_results["obl:no-reentrancy"] == "mismatched"
-    assert any(
-        c.startswith("contract.effect_mismatch:") for c in decision.reason_codes
-    )
+    assert any(c.startswith("contract.effect_mismatch:") for c in decision.reason_codes)
 
 
 def test_obligation_set_substitution_invalidates_on_revalidate() -> None:
@@ -853,9 +817,7 @@ def test_upgraded_contract_invalidates_prior_permission() -> None:
     )
     assert revalidated.blocks_automation
     assert revalidated.outcome is TransactionVerdictOutcome.STALE
-    assert any(
-        c.startswith("contract.epoch_upgraded:") for c in revalidated.reason_codes
-    )
+    assert any(c.startswith("contract.epoch_upgraded:") for c in revalidated.reason_codes)
 
 
 def test_evaluate_with_live_upgraded_epoch_blocks() -> None:
@@ -872,9 +834,7 @@ def test_evaluate_with_live_upgraded_epoch_blocks() -> None:
         ),
     )
     assert decision.blocks_automation
-    assert any(
-        c.startswith("contract.epoch_upgraded:") for c in decision.reason_codes
-    )
+    assert any(c.startswith("contract.epoch_upgraded:") for c in decision.reason_codes)
 
 
 def test_state_epoch_change_invalidates() -> None:
@@ -1003,9 +963,7 @@ def test_deny_precedes_inconclusive_when_both_present() -> None:
         # missing intent-effect evidence → unexecuted
     )
     decision = evaluate_contract_safety(
-        _passing_request(
-            intent=intent, candidate=candidate, code=code, evidence=evidence
-        ),
+        _passing_request(intent=intent, candidate=candidate, code=code, evidence=evidence),
         now=_NOW_OK,
     )
     assert decision.outcome is TransactionVerdictOutcome.DENY

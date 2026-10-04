@@ -32,7 +32,7 @@ The error reporting module is included in the main package:
 from ipfs_datasets_py.error_reporting import (
     ErrorReporter,
     get_global_error_reporter,
-    install_error_handlers
+    install_error_handlers,
 )
 ```
 
@@ -64,19 +64,19 @@ reporter = get_global_error_reporter()
 
 # Report a generic error
 reporter.report_error(
-    error_type='ValueError',
-    error_message='Invalid input value',
-    source='python',
-    error_location='module.py:42',
-    stack_trace='Traceback...',
-    context={'user_id': 123, 'action': 'process_data'}
+    error_type="ValueError",
+    error_message="Invalid input value",
+    source="python",
+    error_location="module.py:42",
+    stack_trace="Traceback...",
+    context={"user_id": 123, "action": "process_data"},
 )
 
 # Report an exception
 try:
     risky_operation()
 except Exception as e:
-    reporter.report_exception(e, source='python', context={'module': 'data_processor'})
+    reporter.report_exception(e, source="python", context={"module": "data_processor"})
 ```
 
 ### JavaScript Error Reporting
@@ -124,7 +124,7 @@ Or use it from Python:
 from ipfs_datasets_py.error_reporting.docker_error_monitor import DockerErrorMonitor
 
 monitor = DockerErrorMonitor()
-exit_code = monitor.run_command(['python', 'script.py'])
+exit_code = monitor.run_command(["python", "script.py"])
 ```
 
 ### MCP Server Integration
@@ -225,7 +225,7 @@ from ipfs_datasets_py.error_reporting import ErrorReporter
 
 reporter = ErrorReporter(
     enabled=True,
-    min_report_interval=1800  # 30 minutes
+    min_report_interval=1800,  # 30 minutes
 )
 ```
 

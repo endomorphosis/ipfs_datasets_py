@@ -94,9 +94,7 @@ def _regressed_ir() -> dict:
         }
     )
     changed["graph"]["edges"][0]["label"] = "may_provide"
-    changed["counterexamples"] = [
-        {"assignment": {"notice": True}, "violates": "po-permit"}
-    ]
+    changed["counterexamples"] = [{"assignment": {"notice": True}, "violates": "po-permit"}]
     changed["round_trip"]["recompiled_ir"] = "P(agency, provide_notice)"
     return changed
 
@@ -202,9 +200,7 @@ def test_comparison_reports_disagreement_when_ce_cosine_improve_but_semantics_re
 
     assert report.accepted is False
     assert report.schema_version == LEGAL_IR_SEMANTIC_METRICS_SCHEMA_VERSION
-    assert report.disagreements == (
-        "deontic:ce_cosine_improved_semantic_equivalence_regressed",
-    )
+    assert report.disagreements == ("deontic:ce_cosine_improved_semantic_equivalence_regressed",)
     assert "deontic:ce_cosine_semantic_disagreement" in report.block_reasons
     assert payload["family_results"]["deontic"]["disagreement"] is True
 

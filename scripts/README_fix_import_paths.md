@@ -64,9 +64,9 @@ def fix_import_paths():
     fixes = [
         # Comment indicating source file and line number
         (
-            Path('relative/file/path.py'),    # Target file
-            r'old_import_pattern',            # Exact pattern to replace
-            'new_corrected_import',           # Replacement import
+            Path("relative/file/path.py"),  # Target file
+            r"old_import_pattern",  # Exact pattern to replace
+            "new_corrected_import",  # Replacement import
         ),
         # ... additional fixes
     ]
@@ -76,19 +76,19 @@ def fix_import_paths():
 
 ```python
 for file_path, old_import, new_import in fixes:
-    if file_path.exists():                    # Verify file exists
-        with open(file_path, 'r') as f:
-            content = f.read()                # Read current content
-        
-        if old_import in content:             # Confirm pattern exists
+    if file_path.exists():  # Verify file exists
+        with open(file_path, "r") as f:
+            content = f.read()  # Read current content
+
+        if old_import in content:  # Confirm pattern exists
             content = content.replace(old_import, new_import)  # Apply fix
-            with open(file_path, 'w') as f:
-                f.write(content)              # Save changes
-            print(f'Fixed: {file_path}')
+            with open(file_path, "w") as f:
+                f.write(content)  # Save changes
+            print(f"Fixed: {file_path}")
         else:
-            print(f'Warning: Pattern not found in {file_path}')
+            print(f"Warning: Pattern not found in {file_path}")
     else:
-        print(f'Warning: File not found: {file_path}')
+        print(f"Warning: File not found: {file_path}")
 ```
 
 ## Fix Categories
@@ -97,9 +97,9 @@ for file_path, old_import, new_import in fixes:
 ```python
 # Example: Missing 's' in tools directory
 (
-    Path('tests/test_admin.py'),
-    r'from ipfs_datasets_py.mcp_server.tools.admin_tool.system_health import system_health',
-    'from ipfs_datasets_py.mcp_server.tools.admin_tools.system_health import system_health',
+    Path("tests/test_admin.py"),
+    r"from ipfs_datasets_py.mcp_server.tools.admin_tool.system_health import system_health",
+    "from ipfs_datasets_py.mcp_server.tools.admin_tools.system_health import system_health",
 )
 ```
 
@@ -107,9 +107,9 @@ for file_path, old_import, new_import in fixes:
 ```python
 # Example: Function name mismatch
 (
-    Path('tests/test_cache.py'),
-    r'from ipfs_datasets_py.mcp_server.tools.cache_tools.get_stats import get_stats',
-    'from ipfs_datasets_py.mcp_server.tools.cache_tools.cache_stats import cache_stats',
+    Path("tests/test_cache.py"),
+    r"from ipfs_datasets_py.mcp_server.tools.cache_tools.get_stats import get_stats",
+    "from ipfs_datasets_py.mcp_server.tools.cache_tools.cache_stats import cache_stats",
 )
 ```
 
@@ -117,9 +117,9 @@ for file_path, old_import, new_import in fixes:
 ```python
 # Example: Wrong category name
 (
-    Path('tests/test_vectors.py'),
-    r'from ipfs_datasets_py.mcp_server.tools.vector_store.create_index import create_index',
-    'from ipfs_datasets_py.mcp_server.tools.vector_tools.create_vector_store import create_vector_store',
+    Path("tests/test_vectors.py"),
+    r"from ipfs_datasets_py.mcp_server.tools.vector_store.create_index import create_index",
+    "from ipfs_datasets_py.mcp_server.tools.vector_tools.create_vector_store import create_vector_store",
 )
 ```
 

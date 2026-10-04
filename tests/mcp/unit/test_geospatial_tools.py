@@ -6,6 +6,7 @@ Tests cover:
 - map_spatiotemporal_events: spatial-temporal clustering
 - query_geographic_context: natural language geographic queries
 """
+
 from __future__ import annotations
 
 import json
@@ -24,6 +25,7 @@ class TestExtractGeographicEntities:
         from ipfs_datasets_py.mcp_server.tools.geospatial_tools.geospatial_tools import (
             extract_geographic_entities,
         )
+
         result = extract_geographic_entities("The earthquake struck Tokyo, Japan.")
         parsed = json.loads(result)
         assert isinstance(parsed, dict)
@@ -37,6 +39,7 @@ class TestExtractGeographicEntities:
         from ipfs_datasets_py.mcp_server.tools.geospatial_tools.geospatial_tools import (
             extract_geographic_entities,
         )
+
         result = json.loads(
             extract_geographic_entities("Floods hit Paris, France and Berlin, Germany.")
         )
@@ -51,9 +54,8 @@ class TestExtractGeographicEntities:
         from ipfs_datasets_py.mcp_server.tools.geospatial_tools.geospatial_tools import (
             extract_geographic_entities,
         )
-        result = json.loads(
-            extract_geographic_entities("Some text", confidence_threshold=0.0)
-        )
+
+        result = json.loads(extract_geographic_entities("Some text", confidence_threshold=0.0))
         assert isinstance(result, dict)
 
     def test_include_coordinates_false(self):
@@ -65,9 +67,8 @@ class TestExtractGeographicEntities:
         from ipfs_datasets_py.mcp_server.tools.geospatial_tools.geospatial_tools import (
             extract_geographic_entities,
         )
-        result = json.loads(
-            extract_geographic_entities("London, UK", include_coordinates=False)
-        )
+
+        result = json.loads(extract_geographic_entities("London, UK", include_coordinates=False))
         assert isinstance(result, dict)
 
 
@@ -83,6 +84,7 @@ class TestMapSpatiotemporalEvents:
         from ipfs_datasets_py.mcp_server.tools.geospatial_tools.geospatial_tools import (
             map_spatiotemporal_events,
         )
+
         result = map_spatiotemporal_events("Events in New York on 2024-01-15.")
         parsed = json.loads(result)
         assert isinstance(parsed, dict)
@@ -96,6 +98,7 @@ class TestMapSpatiotemporalEvents:
         from ipfs_datasets_py.mcp_server.tools.geospatial_tools.geospatial_tools import (
             map_spatiotemporal_events,
         )
+
         result = json.loads(
             map_spatiotemporal_events(
                 "Storms across the US",
@@ -113,6 +116,7 @@ class TestMapSpatiotemporalEvents:
         from ipfs_datasets_py.mcp_server.tools.geospatial_tools.geospatial_tools import (
             map_spatiotemporal_events,
         )
+
         result = json.loads(
             map_spatiotemporal_events("Wildfire in California", clustering_distance=200.0)
         )
@@ -131,6 +135,7 @@ class TestQueryGeographicContext:
         from ipfs_datasets_py.mcp_server.tools.geospatial_tools.geospatial_tools import (
             query_geographic_context,
         )
+
         result = query_geographic_context(
             "What events happened in Europe?",
             "Protests in Berlin and Paris last month.",
@@ -147,6 +152,7 @@ class TestQueryGeographicContext:
         from ipfs_datasets_py.mcp_server.tools.geospatial_tools.geospatial_tools import (
             query_geographic_context,
         )
+
         result = json.loads(
             query_geographic_context(
                 "Floods near the coast?",
@@ -166,6 +172,7 @@ class TestQueryGeographicContext:
         from ipfs_datasets_py.mcp_server.tools.geospatial_tools.geospatial_tools import (
             query_geographic_context,
         )
+
         result = json.loads(
             query_geographic_context(
                 "Cities in Asia?",

@@ -56,12 +56,8 @@ def test_package_exports_forbid_signing_surface() -> None:
 
 def test_provider_and_processor_have_no_prohibited_methods() -> None:
     backend = MappingPayloadBackend(payloads={})
-    provider = XamanPayloadProvider(
-        network=XRPLNetwork.TESTNET, backend=backend
-    )
-    processor = XamanWalletProcessor(
-        network=XRPLNetwork.TESTNET, payload_provider=provider
-    )
+    provider = XamanPayloadProvider(network=XRPLNetwork.TESTNET, backend=backend)
+    processor = XamanWalletProcessor(network=XRPLNetwork.TESTNET, payload_provider=provider)
     processor.assert_read_only_surface()
 
     for obj in (provider, processor, type(provider), type(processor)):

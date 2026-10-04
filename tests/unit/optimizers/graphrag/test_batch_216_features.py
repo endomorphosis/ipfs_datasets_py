@@ -10,11 +10,13 @@ Methods under test (2 new + 4 stale-verified):
     - OntologyGenerator.entity_confidence_mode(result)
     - OntologyPipeline.run_score_range()
 """
+
 import math
 import pytest
 
 
 # ── helpers ───────────────────────────────────────────────────────────────────
+
 
 class _FakeEntry:
     def __init__(self, avg):
@@ -27,17 +29,26 @@ def _push_opt(o, avg):
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
 def _make_critic():
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
     return OntologyCritic.__new__(OntologyCritic)
 
 
-def _make_score(completeness=0.5, consistency=0.5, clarity=0.5,
-                granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5):
+def _make_score(
+    completeness=0.5,
+    consistency=0.5,
+    clarity=0.5,
+    granularity=0.5,
+    relationship_coherence=0.5,
+    domain_alignment=0.5,
+):
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+
     return CriticScore(
         completeness=completeness,
         consistency=consistency,
@@ -50,16 +61,19 @@ def _make_score(completeness=0.5, consistency=0.5, clarity=0.5,
 
 def _make_validator():
     from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
     return LogicValidator()
 
 
 def _make_entity(eid, text=None, confidence=1.0, entity_type="T"):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
     return Entity(id=eid, type=entity_type, text=text or eid, confidence=confidence)
 
 
 def _make_result(entities=None, relationships=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
     return EntityExtractionResult(
         entities=entities or [],
         relationships=relationships or [],
@@ -69,21 +83,27 @@ def _make_result(entities=None, relationships=None):
 
 def _make_generator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
     return OntologyGenerator()
 
 
 def _make_adapter():
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter()
 
 
 def _push_feedback(a, score):
     from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import FeedbackRecord
+
     a._feedback.append(FeedbackRecord(final_score=score))
 
 
 def _make_pipeline():
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     p = OntologyPipeline.__new__(OntologyPipeline)
     p._run_history = []
     return p
@@ -109,8 +129,7 @@ def ontology_builder(ontology_dict_factory):
         )
         ontology["entities"] = [{"id": entity_id} for entity_id in entities]
         ontology["relationships"] = [
-            {"source": source_id, "target": target_id}
-            for source_id, target_id in rels
+            {"source": source_id, "target": target_id} for source_id, target_id in rels
         ]
         return ontology
 
@@ -120,6 +139,7 @@ def ontology_builder(ontology_dict_factory):
 # ═══════════════════════════════════════════════════════════════════════════════
 # OntologyLearningAdapter.feedback_spike_count
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestFeedbackSpikeCount:
     def test_empty_feedback_returns_zero(self):
@@ -213,6 +233,7 @@ class TestFeedbackSpikeCount:
 # LogicValidator.radius_approx
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestRadiusApprox:
     def test_empty_graph_returns_zero(self):
         v = _make_validator()
@@ -296,6 +317,7 @@ class TestRadiusApprox:
 # Stale smoke tests (methods already existed before Batch 216)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestStaleSmokeBatch216:
     def test_score_bimodality_coefficient_callable(self):
         o = _make_optimizer()
@@ -329,12 +351,15 @@ class TestStaleSmokeBatch216:
 
     def test_run_score_range_nonempty(self):
         p = _make_pipeline()
+
         class _FakeScore:
             def __init__(self, v):
                 self.overall = v
+
         class _FakeRunOverall:
             def __init__(self, v):
                 self.score = _FakeScore(v)
+
         for s in [0.3, 0.7, 0.5]:
             p._run_history.append(_FakeRunOverall(s))
         lo, hi = p.run_score_range()

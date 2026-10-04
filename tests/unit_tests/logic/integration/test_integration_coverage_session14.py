@@ -14,6 +14,7 @@ Targets:
   - bridges/prover_installer.py        71%  → 82%+  (coq/lean install paths)
   - domain/temporal_deontic_rag_store.py 86% → 92%+ (query_in_temporal_range)
 """
+
 from __future__ import annotations
 
 import os
@@ -29,11 +30,13 @@ from typing import Any
 # Section 1: CaselawBulkProcessor — sync helpers
 # ===========================================================================
 
+
 class TestProcessingStatsDataclass:
     """CaselawBulkProcessor.ProcessingStats dataclass and properties."""
 
     def _make_stats(self):
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import ProcessingStats
+
         return ProcessingStats()
 
     def test_processing_time_zero_when_no_timestamps(self):
@@ -69,7 +72,10 @@ class TestBulkProcessingConfigDataclass:
     """BulkProcessingConfig defaults and construction."""
 
     def test_default_config(self):
-        from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import BulkProcessingConfig
+        from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
+            BulkProcessingConfig,
+        )
+
         cfg = BulkProcessingConfig()
         assert cfg.max_concurrent_documents == 5
         assert cfg.min_document_length == 100
@@ -77,7 +83,10 @@ class TestBulkProcessingConfigDataclass:
         assert cfg.enable_duplicate_detection is True
 
     def test_custom_config(self):
-        from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import BulkProcessingConfig
+        from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
+            BulkProcessingConfig,
+        )
+
         cfg = BulkProcessingConfig(
             caselaw_directories=["/tmp/cases"],
             max_concurrent_documents=2,
@@ -93,6 +102,7 @@ class TestCaselawDocumentDataclass:
 
     def test_basic_construction(self):
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import CaselawDocument
+
         doc = CaselawDocument(
             document_id="doc1",
             title="Test Case",
@@ -113,14 +123,17 @@ class TestCaselawBulkProcessorPassesFilters:
 
     def _make_processor(self, **cfg_kwargs):
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
-            CaselawBulkProcessor, BulkProcessingConfig,
+            CaselawBulkProcessor,
+            BulkProcessingConfig,
         )
+
         with tempfile.TemporaryDirectory() as tmpdir:
             cfg = BulkProcessingConfig(output_directory=tmpdir, **cfg_kwargs)
             return CaselawBulkProcessor(cfg)
 
     def _doc(self, text="A" * 200, date=None, jurisdiction="Federal", domains=None, strength=1.0):
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import CaselawDocument
+
         return CaselawDocument(
             document_id="d1",
             title="T",
@@ -136,8 +149,10 @@ class TestCaselawBulkProcessorPassesFilters:
     def test_passes_all_default_filters(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
-                CaselawBulkProcessor, BulkProcessingConfig,
+                CaselawBulkProcessor,
+                BulkProcessingConfig,
             )
+
             cfg = BulkProcessingConfig(output_directory=tmpdir)
             proc = CaselawBulkProcessor(cfg)
             assert proc._passes_filters(self._doc()) is True
@@ -145,8 +160,10 @@ class TestCaselawBulkProcessorPassesFilters:
     def test_fails_min_length_filter(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
-                CaselawBulkProcessor, BulkProcessingConfig,
+                CaselawBulkProcessor,
+                BulkProcessingConfig,
             )
+
             cfg = BulkProcessingConfig(output_directory=tmpdir, min_document_length=500)
             proc = CaselawBulkProcessor(cfg)
             assert proc._passes_filters(self._doc(text="short")) is False
@@ -154,8 +171,10 @@ class TestCaselawBulkProcessorPassesFilters:
     def test_fails_date_range_start_filter(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
-                CaselawBulkProcessor, BulkProcessingConfig,
+                CaselawBulkProcessor,
+                BulkProcessingConfig,
             )
+
             cfg = BulkProcessingConfig(
                 output_directory=tmpdir,
                 date_range=(datetime(2022, 1, 1), None),
@@ -167,8 +186,10 @@ class TestCaselawBulkProcessorPassesFilters:
     def test_fails_date_range_end_filter(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
-                CaselawBulkProcessor, BulkProcessingConfig,
+                CaselawBulkProcessor,
+                BulkProcessingConfig,
             )
+
             cfg = BulkProcessingConfig(
                 output_directory=tmpdir,
                 date_range=(None, datetime(2019, 1, 1)),
@@ -180,8 +201,10 @@ class TestCaselawBulkProcessorPassesFilters:
     def test_fails_jurisdiction_filter(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
-                CaselawBulkProcessor, BulkProcessingConfig,
+                CaselawBulkProcessor,
+                BulkProcessingConfig,
             )
+
             cfg = BulkProcessingConfig(
                 output_directory=tmpdir,
                 jurisdictions_filter=["State"],
@@ -192,8 +215,10 @@ class TestCaselawBulkProcessorPassesFilters:
     def test_passes_jurisdiction_filter(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
-                CaselawBulkProcessor, BulkProcessingConfig,
+                CaselawBulkProcessor,
+                BulkProcessingConfig,
             )
+
             cfg = BulkProcessingConfig(
                 output_directory=tmpdir,
                 jurisdictions_filter=["Federal"],
@@ -204,8 +229,10 @@ class TestCaselawBulkProcessorPassesFilters:
     def test_fails_legal_domains_filter(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
-                CaselawBulkProcessor, BulkProcessingConfig,
+                CaselawBulkProcessor,
+                BulkProcessingConfig,
             )
+
             cfg = BulkProcessingConfig(
                 output_directory=tmpdir,
                 legal_domains_filter=["criminal"],
@@ -216,8 +243,10 @@ class TestCaselawBulkProcessorPassesFilters:
     def test_fails_precedent_strength_filter(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
-                CaselawBulkProcessor, BulkProcessingConfig,
+                CaselawBulkProcessor,
+                BulkProcessingConfig,
             )
+
             cfg = BulkProcessingConfig(
                 output_directory=tmpdir,
                 min_precedent_strength=0.8,
@@ -232,8 +261,10 @@ class TestCaselawBulkProcessorSyncHelpers:
     def _make_proc(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
-                CaselawBulkProcessor, BulkProcessingConfig,
+                CaselawBulkProcessor,
+                BulkProcessingConfig,
             )
+
             cfg = BulkProcessingConfig(output_directory=tmpdir)
             return CaselawBulkProcessor(cfg), tmpdir
 
@@ -274,7 +305,9 @@ class TestCaselawBulkProcessorSyncHelpers:
 
     def test_extract_jurisdiction_from_path_international(self):
         proc, _ = self._make_proc()
-        assert proc._extract_jurisdiction_from_path("/data/international/case.txt") == "International"
+        assert (
+            proc._extract_jurisdiction_from_path("/data/international/case.txt") == "International"
+        )
 
     def test_extract_jurisdiction_from_path_unknown(self):
         proc, _ = self._make_proc()
@@ -291,6 +324,7 @@ class TestCaselawBulkProcessorSyncHelpers:
     def test_extract_agent_from_context_defendant(self):
         proc, _ = self._make_proc()
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import CaselawDocument
+
         doc = CaselawDocument("d1", "T", "text", datetime.now(), "Federal", "Court", "")
         agent = proc._extract_agent_from_context("the defendant must pay", doc)
         assert agent.identifier == "defendant"
@@ -298,6 +332,7 @@ class TestCaselawBulkProcessorSyncHelpers:
     def test_extract_agent_from_context_plaintiff(self):
         proc, _ = self._make_proc()
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import CaselawDocument
+
         doc = CaselawDocument("d1", "T", "text", datetime.now(), "Federal", "Court", "")
         agent = proc._extract_agent_from_context("the plaintiff must file", doc)
         assert agent.identifier == "plaintiff"
@@ -305,6 +340,7 @@ class TestCaselawBulkProcessorSyncHelpers:
     def test_extract_agent_from_context_court(self):
         proc, _ = self._make_proc()
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import CaselawDocument
+
         doc = CaselawDocument("d1", "T", "text", datetime.now(), "Federal", "Court", "")
         agent = proc._extract_agent_from_context("the court orders payment", doc)
         assert agent.identifier == "court"
@@ -312,6 +348,7 @@ class TestCaselawBulkProcessorSyncHelpers:
     def test_extract_agent_from_context_corporation(self):
         proc, _ = self._make_proc()
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import CaselawDocument
+
         doc = CaselawDocument("d1", "T", "text", datetime.now(), "Federal", "Court", "")
         agent = proc._extract_agent_from_context("the company must comply", doc)
         assert agent.identifier == "corporation"
@@ -319,6 +356,7 @@ class TestCaselawBulkProcessorSyncHelpers:
     def test_extract_agent_from_context_employee(self):
         proc, _ = self._make_proc()
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import CaselawDocument
+
         doc = CaselawDocument("d1", "T", "text", datetime.now(), "Federal", "Court", "")
         agent = proc._extract_agent_from_context("the employee must notify", doc)
         assert agent.identifier == "employee"
@@ -326,6 +364,7 @@ class TestCaselawBulkProcessorSyncHelpers:
     def test_extract_agent_from_context_default_party(self):
         proc, _ = self._make_proc()
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import CaselawDocument
+
         doc = CaselawDocument("d1", "T", "text", datetime.now(), "Federal", "Court", "")
         agent = proc._extract_agent_from_context("anyone must comply with the rule", doc)
         assert agent.identifier == "party"
@@ -333,6 +372,7 @@ class TestCaselawBulkProcessorSyncHelpers:
     def test_create_knowledge_graph_from_document(self):
         proc, _ = self._make_proc()
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import CaselawDocument
+
         doc = CaselawDocument("d1", "Title", "body text", datetime.now(), "Federal", "Court", "")
         kg = proc._create_knowledge_graph_from_document(doc)
         assert hasattr(kg, "entities")
@@ -346,14 +386,17 @@ class TestExtractFormulasPatternMatching:
     def _make_proc(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
-                CaselawBulkProcessor, BulkProcessingConfig,
+                CaselawBulkProcessor,
+                BulkProcessingConfig,
             )
+
             cfg = BulkProcessingConfig(output_directory=tmpdir, min_theorem_confidence=0.5)
             return CaselawBulkProcessor(cfg)
 
     def _doc(self, text):
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import CaselawDocument
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticOperator
+
         return CaselawDocument("d", "T", text, datetime.now(), "Federal", "Court", "")
 
     def test_obligation_pattern(self):
@@ -361,30 +404,39 @@ class TestExtractFormulasPatternMatching:
         doc = self._doc("The defendant must comply with the court order and pay the fine.")
         formulas = proc._extract_formulas_pattern_matching(doc)
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticOperator
+
         obligations = [f for f in formulas if f.operator == DeonticOperator.OBLIGATION]
         assert len(obligations) >= 1
 
     def test_permission_pattern(self):
         proc = self._make_proc()
-        doc = self._doc("The party may file additional evidence with the court at any time during the trial.")
+        doc = self._doc(
+            "The party may file additional evidence with the court at any time during the trial."
+        )
         formulas = proc._extract_formulas_pattern_matching(doc)
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticOperator
+
         permissions = [f for f in formulas if f.operator == DeonticOperator.PERMISSION]
         assert len(permissions) >= 1
 
     def test_prohibition_pattern(self):
         proc = self._make_proc()
-        doc = self._doc("The respondent must not disclose confidential information to third parties.")
+        doc = self._doc(
+            "The respondent must not disclose confidential information to third parties."
+        )
         formulas = proc._extract_formulas_pattern_matching(doc)
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticOperator
+
         prohibitions = [f for f in formulas if f.operator == DeonticOperator.PROHIBITION]
         assert len(prohibitions) >= 1
 
     def test_confidence_threshold_filters(self):
         """Formulas below the min_theorem_confidence threshold are removed."""
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
-            CaselawBulkProcessor, BulkProcessingConfig,
+            CaselawBulkProcessor,
+            BulkProcessingConfig,
         )
+
         with tempfile.TemporaryDirectory() as tmpdir:
             cfg = BulkProcessingConfig(output_directory=tmpdir, min_theorem_confidence=0.99)
             proc = CaselawBulkProcessor(cfg)
@@ -400,8 +452,11 @@ class TestProcessSingleDocument:
     def test_without_logic_converter_fallback(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
-                CaselawBulkProcessor, BulkProcessingConfig, CaselawDocument,
+                CaselawBulkProcessor,
+                BulkProcessingConfig,
+                CaselawDocument,
             )
+
             cfg = BulkProcessingConfig(output_directory=tmpdir)
             proc = CaselawBulkProcessor(cfg)
             doc = CaselawDocument(
@@ -420,8 +475,11 @@ class TestProcessSingleDocument:
     def test_with_logic_converter_success(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
-                CaselawBulkProcessor, BulkProcessingConfig, CaselawDocument,
+                CaselawBulkProcessor,
+                BulkProcessingConfig,
+                CaselawDocument,
             )
+
             cfg = BulkProcessingConfig(output_directory=tmpdir)
             mock_converter = MagicMock()
             mock_result = MagicMock()
@@ -446,8 +504,11 @@ class TestProcessSingleDocument:
     def test_exception_returns_empty_list(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
-                CaselawBulkProcessor, BulkProcessingConfig, CaselawDocument,
+                CaselawBulkProcessor,
+                BulkProcessingConfig,
+                CaselawDocument,
             )
+
             cfg = BulkProcessingConfig(output_directory=tmpdir)
             proc = CaselawBulkProcessor(cfg)
             doc = CaselawDocument("d3", "T", "x", datetime.now(), "F", "C", "")
@@ -463,8 +524,10 @@ class TestCreateBulkProcessorFactory:
     def test_factory_creates_processor(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
-                create_bulk_processor, CaselawBulkProcessor,
+                create_bulk_processor,
+                CaselawBulkProcessor,
             )
+
             proc = create_bulk_processor(["/tmp/cases"], output_directory=tmpdir, max_concurrent=3)
             assert isinstance(proc, CaselawBulkProcessor)
             assert proc.config.max_concurrent_documents == 3
@@ -476,13 +539,16 @@ class TestCaselawAsyncMethods:
 
     def _make_processor_with_tmpdir(self, tmpdir, **cfg_kwargs):
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
-            CaselawBulkProcessor, BulkProcessingConfig,
+            CaselawBulkProcessor,
+            BulkProcessingConfig,
         )
+
         cfg = BulkProcessingConfig(output_directory=tmpdir, **cfg_kwargs)
         return CaselawBulkProcessor(cfg)
 
     def test_discover_no_directories(self):
         import anyio
+
         with tempfile.TemporaryDirectory() as tmpdir:
             proc = self._make_processor_with_tmpdir(tmpdir, caselaw_directories=[])
             anyio.run(proc._discover_caselaw_documents)
@@ -490,42 +556,50 @@ class TestCaselawAsyncMethods:
 
     def test_discover_nonexistent_directory(self):
         import anyio
+
         with tempfile.TemporaryDirectory() as tmpdir:
             proc = self._make_processor_with_tmpdir(
-                tmpdir,
-                caselaw_directories=["/nonexistent_path_xyz"]
+                tmpdir, caselaw_directories=["/nonexistent_path_xyz"]
             )
             anyio.run(proc._discover_caselaw_documents)
             assert proc.stats.total_documents == 0
 
     def test_discover_valid_directory_with_txt_file(self):
         import anyio
+
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create a test .txt file
             test_file = os.path.join(tmpdir, "case.txt")
-            with open(test_file, 'w') as f:
+            with open(test_file, "w") as f:
                 f.write("The defendant must pay damages. " * 10)
             # Use tmpdir as the caselaw directory
             cases_dir = tmpdir
             with tempfile.TemporaryDirectory() as outdir:
-                proc = self._make_processor_with_tmpdir(
-                    outdir,
-                    caselaw_directories=[cases_dir]
-                )
+                proc = self._make_processor_with_tmpdir(outdir, caselaw_directories=[cases_dir])
                 anyio.run(proc._discover_caselaw_documents)
                 assert proc.stats.total_documents >= 1
 
     def test_preprocess_documents(self):
         import anyio
+
         with tempfile.TemporaryDirectory() as tmpdir:
-            from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import CaselawDocument
+            from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
+                CaselawDocument,
+            )
+
             proc = self._make_processor_with_tmpdir(tmpdir)
             # Add two docs, one duplicate
             text_a = "The defendant shall pay damages. " * 10
             text_b = "The plaintiff may seek remedies. " * 10
-            doc1 = CaselawDocument("d1", "T1", text_a, datetime(2020, 1, 1), "Fed", "C", "", ["contract"])
-            doc2 = CaselawDocument("d2", "T2", text_b, datetime(2021, 1, 1), "Fed", "C", "", ["contract"])
-            doc3 = CaselawDocument("d3", "T3", text_a, datetime(2019, 1, 1), "Fed", "C", "", ["contract"])  # dup of d1
+            doc1 = CaselawDocument(
+                "d1", "T1", text_a, datetime(2020, 1, 1), "Fed", "C", "", ["contract"]
+            )
+            doc2 = CaselawDocument(
+                "d2", "T2", text_b, datetime(2021, 1, 1), "Fed", "C", "", ["contract"]
+            )
+            doc3 = CaselawDocument(
+                "d3", "T3", text_a, datetime(2019, 1, 1), "Fed", "C", "", ["contract"]
+            )  # dup of d1
             proc.processing_queue = [doc3, doc1, doc2]
             anyio.run(proc._preprocess_documents)
             # Sorted by date; duplicates removed
@@ -533,8 +607,12 @@ class TestCaselawAsyncMethods:
 
     def test_extract_theorems_sequential(self):
         import anyio
+
         with tempfile.TemporaryDirectory() as tmpdir:
-            from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import CaselawDocument
+            from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
+                CaselawDocument,
+            )
+
             proc = self._make_processor_with_tmpdir(tmpdir, enable_parallel_processing=False)
             text = "The defendant must pay all damages to the plaintiff."
             doc = CaselawDocument("d1", "T", text, datetime.now(), "Fed", "C", "", ["contract"])
@@ -544,6 +622,7 @@ class TestCaselawAsyncMethods:
 
     def test_build_unified_system(self):
         import anyio
+
         with tempfile.TemporaryDirectory() as tmpdir:
             proc = self._make_processor_with_tmpdir(tmpdir)
             anyio.run(proc._build_unified_system)
@@ -553,6 +632,7 @@ class TestCaselawAsyncMethods:
 
     def test_export_unified_system(self):
         import anyio
+
         with tempfile.TemporaryDirectory() as tmpdir:
             proc = self._make_processor_with_tmpdir(tmpdir)
             proc.stats.processed_documents = 2
@@ -566,14 +646,14 @@ class TestCaselawAsyncMethods:
 
     def test_process_caselaw_corpus_empty(self):
         import anyio
+
         with tempfile.TemporaryDirectory() as tmpdir:
             from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
                 ProcessingStats,
             )
+
             proc = self._make_processor_with_tmpdir(
-                tmpdir,
-                caselaw_directories=[],
-                enable_consistency_validation=False
+                tmpdir, caselaw_directories=[], enable_consistency_validation=False
             )
             stats = anyio.run(proc.process_caselaw_corpus)
             assert isinstance(stats, ProcessingStats)
@@ -581,11 +661,15 @@ class TestCaselawAsyncMethods:
     def test_add_theorem_to_store(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
-                CaselawBulkProcessor, BulkProcessingConfig, CaselawDocument,
+                CaselawBulkProcessor,
+                BulkProcessingConfig,
+                CaselawDocument,
             )
             from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-                DeonticFormula, DeonticOperator
+                DeonticFormula,
+                DeonticOperator,
             )
+
             cfg = BulkProcessingConfig(output_directory=tmpdir)
             proc = CaselawBulkProcessor(cfg)
             formula = DeonticFormula(
@@ -602,11 +686,13 @@ class TestCaselawAsyncMethods:
 # Section 2: CECBridge — all prove paths + caching
 # ===========================================================================
 
+
 class TestCECBridgeInit:
     """CECBridge initialization branches."""
 
     def test_default_init(self):
         from ipfs_datasets_py.logic.integration.cec_bridge import CECBridge
+
         bridge = CECBridge(enable_ipfs_cache=False)
         assert bridge.enable_z3 is True
         assert bridge.ipfs_cache is None
@@ -614,6 +700,7 @@ class TestCECBridgeInit:
     def test_init_with_ipfs_cache_failure(self):
         """GIVEN IPFS host unreachable THEN ipfs_cache falls back to None."""
         from ipfs_datasets_py.logic.integration.cec_bridge import CECBridge
+
         with patch(
             "ipfs_datasets_py.logic.integration.cec_bridge.IPFSProofCache",
             side_effect=Exception("IPFS unavailable"),
@@ -623,12 +710,14 @@ class TestCECBridgeInit:
 
     def test_init_disable_z3(self):
         from ipfs_datasets_py.logic.integration.cec_bridge import CECBridge
+
         bridge = CECBridge(enable_z3=False, enable_ipfs_cache=False)
         assert bridge.cec_z3 is None
         assert bridge.z3_bridge is None
 
     def test_init_disable_prover_router(self):
         from ipfs_datasets_py.logic.integration.cec_bridge import CECBridge
+
         bridge = CECBridge(enable_prover_router=False, enable_ipfs_cache=False)
         assert bridge.prover_router is None
 
@@ -638,6 +727,7 @@ class TestCECBridgeProve:
 
     def _bridge(self):
         from ipfs_datasets_py.logic.integration.cec_bridge import CECBridge
+
         return CECBridge(enable_ipfs_cache=False)
 
     def test_prove_cec_strategy(self):
@@ -646,6 +736,7 @@ class TestCECBridgeProve:
         formula.__str__ = lambda self: "TestFormula"
         result = bridge.prove(formula, strategy="cec", use_cache=False)
         from ipfs_datasets_py.logic.integration.cec_bridge import UnifiedProofResult
+
         assert isinstance(result, UnifiedProofResult)
 
     def test_prove_auto_strategy_no_cec_type(self):
@@ -654,6 +745,7 @@ class TestCECBridgeProve:
         formula = "GenericFormula"
         result = bridge.prove(formula, strategy="auto", use_cache=False)
         from ipfs_datasets_py.logic.integration.cec_bridge import UnifiedProofResult
+
         assert isinstance(result, UnifiedProofResult)
 
     def test_prove_router_strategy(self):
@@ -662,6 +754,7 @@ class TestCECBridgeProve:
         formula.__str__ = lambda self: "RouterFormula"
         result = bridge.prove(formula, strategy="router", use_cache=False)
         from ipfs_datasets_py.logic.integration.cec_bridge import UnifiedProofResult
+
         assert isinstance(result, UnifiedProofResult)
 
     def test_prove_z3_strategy_no_adapter(self):
@@ -671,6 +764,7 @@ class TestCECBridgeProve:
         formula.__str__ = lambda self: "Z3Formula"
         result = bridge.prove(formula, strategy="z3", use_cache=False)
         from ipfs_datasets_py.logic.integration.cec_bridge import UnifiedProofResult
+
         assert isinstance(result, UnifiedProofResult)
 
     def test_prove_with_use_cache_false(self):
@@ -679,6 +773,7 @@ class TestCECBridgeProve:
         formula.__str__ = lambda self: "CachedFormula"
         result = bridge.prove(formula, use_cache=False)
         from ipfs_datasets_py.logic.integration.cec_bridge import UnifiedProofResult
+
         assert isinstance(result, UnifiedProofResult)
 
 
@@ -687,6 +782,7 @@ class TestCECBridgeSelectStrategy:
 
     def test_select_strategy_no_prover_router_no_z3(self):
         from ipfs_datasets_py.logic.integration.cec_bridge import CECBridge
+
         bridge = CECBridge(enable_ipfs_cache=False, enable_z3=False, enable_prover_router=False)
         formula = MagicMock(spec=[])
         strategy = bridge._select_strategy(formula)
@@ -694,6 +790,7 @@ class TestCECBridgeSelectStrategy:
 
     def test_select_strategy_with_prover_router(self):
         from ipfs_datasets_py.logic.integration.cec_bridge import CECBridge
+
         bridge = CECBridge(enable_ipfs_cache=False, enable_z3=False)
         formula = MagicMock(spec=[])
         strategy = bridge._select_strategy(formula)
@@ -706,6 +803,7 @@ class TestCECBridgeCacheOperations:
 
     def test_compute_formula_hash_consistent(self):
         from ipfs_datasets_py.logic.integration.cec_bridge import CECBridge
+
         bridge = CECBridge(enable_ipfs_cache=False)
         h1 = bridge._compute_formula_hash("formula_A")
         h2 = bridge._compute_formula_hash("formula_A")
@@ -713,12 +811,14 @@ class TestCECBridgeCacheOperations:
 
     def test_get_cached_proof_miss(self):
         from ipfs_datasets_py.logic.integration.cec_bridge import CECBridge
+
         bridge = CECBridge(enable_ipfs_cache=False)
         result = bridge._get_cached_proof("unknown_formula")
         assert result is None
 
     def test_get_cached_proof_cec_cache_hit(self):
         from ipfs_datasets_py.logic.integration.cec_bridge import CECBridge, UnifiedProofResult
+
         bridge = CECBridge(enable_ipfs_cache=False)
         formula = "test_formula"
         fhash = bridge._compute_formula_hash(formula)
@@ -730,11 +830,11 @@ class TestCECBridgeCacheOperations:
 
     def test_cache_proof_stores_in_cec_cache(self):
         from ipfs_datasets_py.logic.integration.cec_bridge import CECBridge, UnifiedProofResult
+
         bridge = CECBridge(enable_ipfs_cache=False)
         formula = "cache_test_formula_xyz"
         proved_result = UnifiedProofResult(
-            is_proved=True, is_valid=True, prover_used="test",
-            proof_time=0.01, status="valid"
+            is_proved=True, is_valid=True, prover_used="test", proof_time=0.01, status="valid"
         )
         bridge._cache_proof(formula, proved_result)
         # Should be retrievable
@@ -744,32 +844,33 @@ class TestCECBridgeCacheOperations:
 
     def test_cache_proof_with_ipfs_cache(self):
         from ipfs_datasets_py.logic.integration.cec_bridge import CECBridge, UnifiedProofResult
+
         bridge = CECBridge(enable_ipfs_cache=False)
         mock_ipfs = MagicMock()
         bridge.ipfs_cache = mock_ipfs
         formula = "ipfs_cache_formula"
         proved_result = UnifiedProofResult(
-            is_proved=True, is_valid=True, prover_used="test",
-            proof_time=0.01, status="valid"
+            is_proved=True, is_valid=True, prover_used="test", proof_time=0.01, status="valid"
         )
         bridge._cache_proof(formula, proved_result)
         mock_ipfs.put.assert_called_once()
 
     def test_cache_proof_ipfs_exception_swallowed(self):
         from ipfs_datasets_py.logic.integration.cec_bridge import CECBridge, UnifiedProofResult
+
         bridge = CECBridge(enable_ipfs_cache=False)
         mock_ipfs = MagicMock()
         mock_ipfs.put.side_effect = Exception("IPFS down")
         bridge.ipfs_cache = mock_ipfs
         # Should not raise
         result = UnifiedProofResult(
-            is_proved=True, is_valid=True, prover_used="test",
-            proof_time=0.01, status="valid"
+            is_proved=True, is_valid=True, prover_used="test", proof_time=0.01, status="valid"
         )
         bridge._cache_proof("formula", result)
 
     def test_get_statistics(self):
         from ipfs_datasets_py.logic.integration.cec_bridge import CECBridge
+
         bridge = CECBridge(enable_ipfs_cache=False)
         stats = bridge.get_statistics()
         assert isinstance(stats, dict)
@@ -781,9 +882,14 @@ class TestUnifiedProofResultDataclass:
 
     def test_basic_fields(self):
         from ipfs_datasets_py.logic.integration.cec_bridge import UnifiedProofResult
+
         r = UnifiedProofResult(
-            is_proved=True, is_valid=True, prover_used="z3",
-            proof_time=0.5, status="valid", error_message=None
+            is_proved=True,
+            is_valid=True,
+            prover_used="z3",
+            proof_time=0.5,
+            status="valid",
+            error_message=None,
         )
         assert r.is_proved is True
         assert r.prover_used == "z3"
@@ -791,9 +897,14 @@ class TestUnifiedProofResultDataclass:
 
     def test_with_error(self):
         from ipfs_datasets_py.logic.integration.cec_bridge import UnifiedProofResult
+
         r = UnifiedProofResult(
-            is_proved=False, is_valid=False, prover_used="cec",
-            proof_time=0.0, status="error", error_message="timeout"
+            is_proved=False,
+            is_valid=False,
+            prover_used="cec",
+            proof_time=0.0,
+            status="error",
+            error_message="timeout",
         )
         assert r.error_message == "timeout"
 
@@ -802,33 +913,46 @@ class TestUnifiedProofResultDataclass:
 # Section 3: SymbolicFOLBridge — remaining uncovered paths
 # ===========================================================================
 
+
 class TestSymbolicFOLBridgeLogicalComponents:
     """LogicalComponents dict-like interface (lines 57-68)."""
 
     def test_contains(self):
         from ipfs_datasets_py.logic.integration.bridges.symbolic_fol_bridge import LogicalComponents
+
         lc = LogicalComponents(
-            quantifiers=["all"], predicates=["is"],
-            entities=["Cat"], logical_connectives=[], confidence=0.7, raw_text="test"
+            quantifiers=["all"],
+            predicates=["is"],
+            entities=["Cat"],
+            logical_connectives=[],
+            confidence=0.7,
+            raw_text="test",
         )
         assert "quantifiers" in lc
         assert "nonexistent" not in lc
 
     def test_getitem(self):
         from ipfs_datasets_py.logic.integration.bridges.symbolic_fol_bridge import LogicalComponents
+
         lc = LogicalComponents(
-            quantifiers=["some"], predicates=[], entities=["Dog"],
-            logical_connectives=[], confidence=0.5, raw_text="text"
+            quantifiers=["some"],
+            predicates=[],
+            entities=["Dog"],
+            logical_connectives=[],
+            confidence=0.5,
+            raw_text="text",
         )
         assert lc["quantifiers"] == ["some"]
 
     def test_get_with_default(self):
         from ipfs_datasets_py.logic.integration.bridges.symbolic_fol_bridge import LogicalComponents
+
         lc = LogicalComponents([], [], [], [], 0.5, "text")
         assert lc.get("nonexistent_field", "default") == "default"
 
     def test_keys(self):
         from ipfs_datasets_py.logic.integration.bridges.symbolic_fol_bridge import LogicalComponents
+
         lc = LogicalComponents([], [], [], [], 0.5, "text")
         ks = lc.keys()
         assert "quantifiers" in ks
@@ -840,18 +964,21 @@ class TestSymbolicFOLBridgeCreateSymbol:
 
     def test_empty_text_raises(self):
         from ipfs_datasets_py.logic.integration.bridges.symbolic_fol_bridge import SymbolicFOLBridge
+
         bridge = SymbolicFOLBridge()
         with pytest.raises(ValueError):
             bridge.create_semantic_symbol("")
 
     def test_whitespace_only_raises(self):
         from ipfs_datasets_py.logic.integration.bridges.symbolic_fol_bridge import SymbolicFOLBridge
+
         bridge = SymbolicFOLBridge()
         with pytest.raises(ValueError):
             bridge.create_semantic_symbol("   ")
 
     def test_valid_text_returns_symbol(self):
         from ipfs_datasets_py.logic.integration.bridges.symbolic_fol_bridge import SymbolicFOLBridge
+
         bridge = SymbolicFOLBridge()
         symbol = bridge.create_semantic_symbol("All cats are mammals")
         assert symbol is not None
@@ -863,10 +990,12 @@ class TestSymbolicFOLBridgePatternMatch:
 
     def _bridge(self):
         from ipfs_datasets_py.logic.integration.bridges.symbolic_fol_bridge import SymbolicFOLBridge
+
         return SymbolicFOLBridge()
 
     def _lc(self, quantifiers, predicates, entities, connectives, text):
         from ipfs_datasets_py.logic.integration.bridges.symbolic_fol_bridge import LogicalComponents
+
         return LogicalComponents(quantifiers, predicates, entities, connectives, 0.7, text)
 
     def test_universal_quantifier_pattern(self):
@@ -935,8 +1064,12 @@ class TestSymbolicFOLBridgeSemanticToFOL:
     def test_cache_hit(self):
         """Lines 341-344: cache hit returns cached result."""
         from ipfs_datasets_py.logic.integration.bridges.symbolic_fol_bridge import (
-            SymbolicFOLBridge, FOLConversionResult, LogicalComponents, Symbol,
+            SymbolicFOLBridge,
+            FOLConversionResult,
+            LogicalComponents,
+            Symbol,
         )
+
         bridge = SymbolicFOLBridge(enable_caching=True)
         symbol = Symbol("test caching phrase", semantic=False)
         # Pre-populate cache
@@ -953,13 +1086,16 @@ class TestSymbolicFOLBridgeSemanticToFOL:
     def test_fallback_conversion_called_on_error(self):
         """Lines 368-373: fallback conversion when exception occurs."""
         from ipfs_datasets_py.logic.integration.bridges.symbolic_fol_bridge import (
-            SymbolicFOLBridge, Symbol,
+            SymbolicFOLBridge,
+            Symbol,
         )
+
         bridge = SymbolicFOLBridge(fallback_enabled=True, enable_caching=False)
         symbol = Symbol("This is a test sentence", semantic=False)
         # Force an error in extract_logical_components
         with patch.object(
-            bridge, "extract_logical_components",
+            bridge,
+            "extract_logical_components",
             side_effect=RuntimeError("forced error"),
         ):
             result = bridge.semantic_to_fol(symbol)
@@ -971,6 +1107,7 @@ class TestSymbolicFOLBridgeFallbackConversion:
 
     def test_fallback_conversion_basic(self):
         from ipfs_datasets_py.logic.integration.bridges.symbolic_fol_bridge import SymbolicFOLBridge
+
         bridge = SymbolicFOLBridge()
         result = bridge._fallback_conversion("test text", "symbolic")
         assert result.fallback_used is True
@@ -979,6 +1116,7 @@ class TestSymbolicFOLBridgeFallbackConversion:
     def test_fallback_conversion_exception(self):
         """Lines 519-527: exception in _fallback_conversion."""
         from ipfs_datasets_py.logic.integration.bridges.symbolic_fol_bridge import SymbolicFOLBridge
+
         bridge = SymbolicFOLBridge()
         # Patch _normalize_proposition to force an exception inside _fallback_conversion
         with patch.object(bridge, "_fallback_extraction", side_effect=RuntimeError("forced")):
@@ -992,6 +1130,7 @@ class TestSymbolicFOLBridgeGetStatistics:
 
     def test_statistics_empty_cache(self):
         from ipfs_datasets_py.logic.integration.bridges.symbolic_fol_bridge import SymbolicFOLBridge
+
         bridge = SymbolicFOLBridge(enable_caching=True)
         stats = bridge.get_statistics()
         assert "cache_size" in stats
@@ -1000,8 +1139,11 @@ class TestSymbolicFOLBridgeGetStatistics:
 
     def test_statistics_with_cache_entries(self):
         from ipfs_datasets_py.logic.integration.bridges.symbolic_fol_bridge import (
-            SymbolicFOLBridge, FOLConversionResult, LogicalComponents,
+            SymbolicFOLBridge,
+            FOLConversionResult,
+            LogicalComponents,
         )
+
         bridge = SymbolicFOLBridge(enable_caching=True)
         bridge._cache["key1"] = FOLConversionResult(
             "formula", LogicalComponents([], [], [], [], 0.7, "text"), 0.7, []
@@ -1014,11 +1156,13 @@ class TestSymbolicFOLBridgeGetStatistics:
 # Section 4: FOLConstructorIOMixin — export, consistency, insights
 # ===========================================================================
 
+
 def _make_fol_constructor():
     """Build a minimal InteractiveFOLConstructor with some statements."""
     from ipfs_datasets_py.logic.integration.interactive.interactive_fol_constructor import (
         InteractiveFOLConstructor,
     )
+
     constructor = InteractiveFOLConstructor(domain="legal")
     constructor._session_id = constructor.start_session()
     constructor.add_statement("All contracts require mutual consent")
@@ -1082,9 +1226,7 @@ class TestFOLConstructorIOCheckConsistency:
 
     def test_no_conflict(self):
         constructor = _make_fol_constructor()
-        result = constructor._check_consistency_with_existing(
-            "Some birds can fly", MagicMock()
-        )
+        result = constructor._check_consistency_with_existing("Some birds can fly", MagicMock())
         assert result["consistent"] is True
 
     def test_universal_contradiction(self):
@@ -1157,6 +1299,7 @@ class TestFOLConstructorIOSessionHealth:
         from ipfs_datasets_py.logic.integration.interactive.interactive_fol_constructor import (
             InteractiveFOLConstructor,
         )
+
         c = InteractiveFOLConstructor(domain="legal")
         c.start_session()
         health = c._assess_session_health()
@@ -1175,6 +1318,7 @@ class TestFOLConstructorIOSessionHealth:
 # Section 5: LegalSymbolicAnalyzer — fallback methods + LegalReasoningEngine
 # ===========================================================================
 
+
 class TestLegalSymbolicAnalyzerFallbacks:
     """_fallback_* methods of LegalSymbolicAnalyzer."""
 
@@ -1182,6 +1326,7 @@ class TestLegalSymbolicAnalyzerFallbacks:
         from ipfs_datasets_py.logic.integration.domain.legal_symbolic_analyzer import (
             LegalSymbolicAnalyzer,
         )
+
         return LegalSymbolicAnalyzer()
 
     def test_fallback_entity_identification_contractor(self):
@@ -1216,6 +1361,7 @@ class TestLegalSymbolicAnalyzerFallbacks:
     def test_fallback_deontic_extraction_obligation(self):
         analyzer = self._make_analyzer()
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticOperator
+
         props = analyzer._fallback_deontic_extraction(
             "The defendant must pay all damages immediately."
         )
@@ -1225,6 +1371,7 @@ class TestLegalSymbolicAnalyzerFallbacks:
     def test_fallback_deontic_extraction_permission(self):
         analyzer = self._make_analyzer()
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticOperator
+
         props = analyzer._fallback_deontic_extraction(
             "The party may seek remedies under the agreement."
         )
@@ -1234,6 +1381,7 @@ class TestLegalSymbolicAnalyzerFallbacks:
     def test_fallback_deontic_extraction_prohibition(self):
         analyzer = self._make_analyzer()
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticOperator
+
         props = analyzer._fallback_deontic_extraction(
             "Disclosure of confidential information is prohibited."
         )
@@ -1250,9 +1398,7 @@ class TestLegalSymbolicAnalyzerFallbacks:
 
     def test_fallback_temporal_extraction_before(self):
         analyzer = self._make_analyzer()
-        conditions = analyzer._fallback_temporal_extraction(
-            "Complete before the deadline expires."
-        )
+        conditions = analyzer._fallback_temporal_extraction("Complete before the deadline expires.")
         assert len(conditions) >= 1
 
     def test_fallback_temporal_extraction_no_deadline(self):
@@ -1288,6 +1434,7 @@ class TestLegalReasoningEngineFallbacks:
         from ipfs_datasets_py.logic.integration.domain.legal_symbolic_analyzer import (
             LegalReasoningEngine,
         )
+
         return LegalReasoningEngine()
 
     def test_infer_implicit_obligations_with_contract(self):
@@ -1327,16 +1474,13 @@ class TestLegalReasoningEngineFallbacks:
     def test_analyze_legal_precedents_no_symai(self):
         engine = self._make_engine()
         result = engine.analyze_legal_precedents(
-            "Current case about contract breach",
-            ["Smith v Jones 2020", "Doe v Corp 2019"]
+            "Current case about contract breach", ["Smith v Jones 2020", "Doe v Corp 2019"]
         )
         assert "applicable_precedents" in result
 
     def test_fallback_precedent_analysis(self):
         engine = self._make_engine()
-        result = engine._fallback_precedent_analysis(
-            "current case", ["precedent 1", "precedent 2"]
-        )
+        result = engine._fallback_precedent_analysis("current case", ["precedent 1", "precedent 2"])
         assert "applicable_precedents" in result
         assert result["confidence"] == 0.0
 
@@ -1369,6 +1513,7 @@ class TestInitializeSymbolicAI:
 
     def test_early_return_when_already_initialized(self):
         import ipfs_datasets_py.logic.integration.domain.legal_symbolic_analyzer as m
+
         # Force re-initialization state
         original_flag = m._SYMAI_INIT_ATTEMPTED
         m._SYMAI_INIT_ATTEMPTED = True
@@ -1379,6 +1524,7 @@ class TestInitializeSymbolicAI:
 
     def test_sets_attempted_on_first_call(self):
         import ipfs_datasets_py.logic.integration.domain.legal_symbolic_analyzer as m
+
         original_flag = m._SYMAI_INIT_ATTEMPTED
         m._SYMAI_INIT_ATTEMPTED = False
         try:
@@ -1389,13 +1535,19 @@ class TestInitializeSymbolicAI:
 
     def test_exception_path_sets_available_false(self):
         import ipfs_datasets_py.logic.integration.domain.legal_symbolic_analyzer as m
+
         original_flag = m._SYMAI_INIT_ATTEMPTED
         original_avail = m.SYMBOLIC_AI_AVAILABLE
         m._SYMAI_INIT_ATTEMPTED = False
         m.SYMBOLIC_AI_AVAILABLE = True
-        with patch.dict("sys.modules", {"ipfs_datasets_py.logic.integration.utils.engine_env": MagicMock(
-            autoconfigure_engine_env=MagicMock(side_effect=RuntimeError("unexpected error"))
-        )}):
+        with patch.dict(
+            "sys.modules",
+            {
+                "ipfs_datasets_py.logic.integration.utils.engine_env": MagicMock(
+                    autoconfigure_engine_env=MagicMock(side_effect=RuntimeError("unexpected error"))
+                )
+            },
+        ):
             try:
                 m._initialize_symbolic_ai()
             except Exception:
@@ -1408,6 +1560,7 @@ class TestInitializeSymbolicAI:
 # Section 6: NeurosymbolicGraphRAG — pipeline + query + summary
 # ===========================================================================
 
+
 class TestNeurosymbolicGraphRAG:
     """NeurosymbolicGraphRAG pipeline methods."""
 
@@ -1415,6 +1568,7 @@ class TestNeurosymbolicGraphRAG:
         from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic_graphrag import (
             NeurosymbolicGraphRAG,
         )
+
         return NeurosymbolicGraphRAG(use_neural=False, enable_proof_caching=False)
 
     def test_init_no_neural(self):
@@ -1427,14 +1581,13 @@ class TestNeurosymbolicGraphRAG:
         from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic_graphrag import (
             NeurosymbolicGraphRAG,
         )
+
         pipeline = NeurosymbolicGraphRAG(use_neural=False, enable_proof_caching=True)
         assert pipeline.enable_proof_caching is True
 
     def test_process_document_basic(self):
         pipeline = self._make_pipeline()
-        result = pipeline.process_document(
-            "Alice must pay Bob within 30 days.", "doc1"
-        )
+        result = pipeline.process_document("Alice must pay Bob within 30 days.", "doc1")
         assert result.doc_id == "doc1"
         assert "doc1" in pipeline.documents
 
@@ -1485,6 +1638,7 @@ class TestNeurosymbolicGraphRAG:
     def test_prove_theorems_no_coordinator(self):
         pipeline = self._make_pipeline()
         from ipfs_datasets_py.logic.TDFOL import parse_tdfol
+
         try:
             formula = parse_tdfol("O(pay(alice))")
             proven = pipeline._prove_theorems([formula], "test_doc")
@@ -1493,7 +1647,10 @@ class TestNeurosymbolicGraphRAG:
             pass  # parsing may fail in test environment
 
     def test_pipeline_result_dataclass(self):
-        from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic_graphrag import PipelineResult
+        from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic_graphrag import (
+            PipelineResult,
+        )
+
         r = PipelineResult(doc_id="d1", text="text")
         assert r.doc_id == "d1"
         assert r.confidence == 0.0
@@ -1504,11 +1661,15 @@ class TestNeurosymbolicGraphRAG:
 # Section 7: TDFOLGrammarBridge — _fallback_parse additional paths
 # ===========================================================================
 
+
 class TestTDFOLGrammarBridgeFallback:
     """_fallback_parse: implication + atom + empty."""
 
     def _bridge(self):
-        from ipfs_datasets_py.logic.integration.bridges.tdfol_grammar_bridge import TDFOLGrammarBridge
+        from ipfs_datasets_py.logic.integration.bridges.tdfol_grammar_bridge import (
+            TDFOLGrammarBridge,
+        )
+
         return TDFOLGrammarBridge()
 
     def test_fallback_parse_simple_atom(self):
@@ -1541,6 +1702,7 @@ class TestTDFOLGrammarBridgeFallback:
     def test_formula_to_natural_language(self):
         bridge = self._bridge()
         from ipfs_datasets_py.logic.TDFOL import parse_tdfol
+
         try:
             formula = parse_tdfol("O(pay(alice))")
             nl = bridge.formula_to_natural_language(formula)
@@ -1554,16 +1716,19 @@ class TestTDFOLGrammarBridgeFallback:
 # Section 8: TDFOLCECBridge — to_target_format + _load_cec_rules
 # ===========================================================================
 
+
 class TestTDFOLCECBridgeHelpers:
     """TDFOLCECBridge additional coverage."""
 
     def _bridge(self):
         from ipfs_datasets_py.logic.integration.bridges.tdfol_cec_bridge import TDFOLCECBridge
+
         return TDFOLCECBridge()
 
     def test_to_target_format_basic(self):
         bridge = self._bridge()
         from ipfs_datasets_py.logic.TDFOL import parse_tdfol
+
         try:
             formula = parse_tdfol("O(pay(alice))")
             dcec_str = bridge.to_target_format(formula)
@@ -1587,6 +1752,7 @@ class TestTDFOLCECBridgeHelpers:
         bridge.cec_available = False
         from ipfs_datasets_py.logic.TDFOL import parse_tdfol
         from ipfs_datasets_py.logic.TDFOL.tdfol_prover import ProofStatus
+
         try:
             formula = parse_tdfol("O(pay(alice))")
             result = bridge.prove(formula, [], timeout_ms=100)
@@ -1599,32 +1765,41 @@ class TestTDFOLCECBridgeHelpers:
 # Section 9: ProverInstaller — coq/lean ensure paths
 # ===========================================================================
 
+
 class TestProverInstallerEnsure:
     """ensure_coq / ensure_lean installation paths."""
 
     def test_ensure_coq_already_installed(self):
         from ipfs_datasets_py.logic.integration.bridges.prover_installer import ensure_coq
+
         with patch("shutil.which", return_value="/usr/bin/coqc"):
             result = ensure_coq(yes=True, strict=False)
         assert result is True
 
     def test_ensure_coq_not_installed_no_manager(self):
         from ipfs_datasets_py.logic.integration.bridges.prover_installer import ensure_coq
-        with patch("shutil.which", return_value=None), \
-             patch("subprocess.run", side_effect=FileNotFoundError("no package manager")):
+
+        with (
+            patch("shutil.which", return_value=None),
+            patch("subprocess.run", side_effect=FileNotFoundError("no package manager")),
+        ):
             result = ensure_coq(yes=True, strict=False)
         assert result is False
 
     def test_ensure_lean_already_installed(self):
         from ipfs_datasets_py.logic.integration.bridges.prover_installer import ensure_lean
+
         with patch("shutil.which", return_value="/usr/bin/lean"):
             result = ensure_lean(yes=True, strict=False)
         assert result is True
 
     def test_ensure_lean_not_installed(self):
         from ipfs_datasets_py.logic.integration.bridges.prover_installer import ensure_lean
-        with patch("shutil.which", return_value=None), \
-             patch("subprocess.run", side_effect=FileNotFoundError("no manager")):
+
+        with (
+            patch("shutil.which", return_value=None),
+            patch("subprocess.run", side_effect=FileNotFoundError("no manager")),
+        ):
             result = ensure_lean(yes=True, strict=False)
         assert result is False
 
@@ -1633,6 +1808,7 @@ class TestProverInstallerEnsure:
 # Section 10: TemporalDeonticRAGStore — query_in_temporal_range + add_theorem
 # ===========================================================================
 
+
 class TestTemporalDeonticRAGStoreAdditional:
     """Additional coverage for temporal_deontic_rag_store."""
 
@@ -1640,6 +1816,7 @@ class TestTemporalDeonticRAGStoreAdditional:
         from ipfs_datasets_py.logic.integration.domain.temporal_deontic_rag_store import (
             TemporalDeonticRAGStore,
         )
+
         return TemporalDeonticRAGStore()
 
     def test_retrieve_relevant_theorems_empty(self):
@@ -1655,9 +1832,13 @@ class TestTemporalDeonticRAGStoreAdditional:
     def test_add_theorem_and_retrieve(self):
         store = self._store()
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticFormula, DeonticOperator,
+            DeonticFormula,
+            DeonticOperator,
         )
-        f = DeonticFormula(operator=DeonticOperator.OBLIGATION, proposition="pay_rent", confidence=0.9)
+
+        f = DeonticFormula(
+            operator=DeonticOperator.OBLIGATION, proposition="pay_rent", confidence=0.9
+        )
         tid = store.add_theorem(
             formula=f,
             temporal_scope=(datetime(2020, 1, 1), datetime(2022, 12, 31)),
@@ -1670,16 +1851,23 @@ class TestTemporalDeonticRAGStoreAdditional:
     def test_jurisdiction_index_populated(self):
         store = self._store()
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticFormula, DeonticOperator,
+            DeonticFormula,
+            DeonticOperator,
         )
-        f = DeonticFormula(operator=DeonticOperator.PERMISSION, proposition="appeal", confidence=0.8)
-        store.add_theorem(formula=f, temporal_scope=(None, None), jurisdiction="State", legal_domain="appeals")
+
+        f = DeonticFormula(
+            operator=DeonticOperator.PERMISSION, proposition="appeal", confidence=0.8
+        )
+        store.add_theorem(
+            formula=f, temporal_scope=(None, None), jurisdiction="State", legal_domain="appeals"
+        )
         assert "State" in store.jurisdiction_index
 
 
 # ===========================================================================
 # Section 11: DeonticLogicConverter — relationship conversion helpers
 # ===========================================================================
+
 
 class TestDeonticLogicConverterHelpers:
     """Additional coverage for deontic_logic_converter."""
@@ -1688,6 +1876,7 @@ class TestDeonticLogicConverterHelpers:
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import (
             DeonticLogicConverter,
         )
+
         return DeonticLogicConverter()
 
     def _entity(self, entity_id, name, etype, properties=None, source_text=None):
@@ -1723,10 +1912,7 @@ class TestDeonticLogicConverterHelpers:
 
     def test_extract_proposition_from_entity_properties(self):
         conv = self._converter()
-        entity = self._entity(
-            "e1", "agreement", "obligation",
-            properties={"action": "pay_damages"}
-        )
+        entity = self._entity("e1", "agreement", "obligation", properties={"action": "pay_damages"})
         result = conv._extract_proposition_from_entity(entity)
         assert "pay_damages" in result or len(result) > 0
 
@@ -1742,6 +1928,7 @@ class TestDeonticLogicConverterHelpers:
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import (
             ConversionContext,
         )
+
         ctx = ConversionContext(source_document_path="/tmp/test.txt", enable_agent_inference=False)
         entity = self._entity("e1", "party", "legal_entity")
         agent = conv._extract_agent_from_entity(entity, ctx)
@@ -1752,6 +1939,7 @@ class TestDeonticLogicConverterHelpers:
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import (
             ConversionContext,
         )
+
         ctx = ConversionContext(source_document_path="/tmp/test.txt", enable_agent_inference=True)
         entity = self._entity("e1", "Alice", "party", properties={"name": "Alice"})
         agent = conv._extract_agent_from_entity(entity, ctx)

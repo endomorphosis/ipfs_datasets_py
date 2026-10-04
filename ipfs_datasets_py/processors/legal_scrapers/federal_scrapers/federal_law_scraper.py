@@ -379,7 +379,9 @@ async def scrape_federal_laws(
                             "ruleset_label": source_label,
                             "court": source_court,
                             "title": str(doc.get("title") or "Local Rule"),
-                            "rule_number": _extract_rule_number(str(doc.get("title") or ""), str(doc.get("url") or "")),
+                            "rule_number": _extract_rule_number(
+                                str(doc.get("title") or ""), str(doc.get("url") or "")
+                            ),
                             "text": str(doc.get("title") or ""),
                             "source_url": str(doc.get("url") or ""),
                             "document_type": "local_rule_reference",

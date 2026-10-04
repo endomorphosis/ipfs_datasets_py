@@ -4,6 +4,7 @@ PDF LLM Optimization Engine
 Canonical engine for optimizing PDF content for Large Language Model consumption.
 Delegates to processors.specialized.pdf.pdf_processor.PDFProcessor.
 """
+
 from __future__ import annotations
 
 import logging
@@ -14,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 try:
     from ipfs_datasets_py.processors.specialized.pdf.pdf_processor import PDFProcessor
+
     _PDF_AVAILABLE = True
 except ImportError:
     PDFProcessor = None  # type: ignore[assignment,misc]
@@ -52,13 +54,19 @@ async def pdf_optimize_for_llm(
         return {"status": "error", "message": f"Invalid target_llm. Must be one of: {_VALID_LLMS}"}
 
     if chunk_strategy not in _VALID_STRATEGIES:
-        return {"status": "error", "message": f"Invalid chunk_strategy. Must be one of: {_VALID_STRATEGIES}"}
+        return {
+            "status": "error",
+            "message": f"Invalid chunk_strategy. Must be one of: {_VALID_STRATEGIES}",
+        }
 
     if max_chunk_size <= 0:
         return {"status": "error", "message": "max_chunk_size must be greater than 0"}
 
     if overlap_size < 0 or overlap_size >= max_chunk_size:
-        return {"status": "error", "message": "overlap_size must be non-negative and less than max_chunk_size"}
+        return {
+            "status": "error",
+            "message": "overlap_size must be non-negative and less than max_chunk_size",
+        }
 
     # Resolve source
     pdf_path: Optional[Path] = None
@@ -72,7 +80,10 @@ async def pdf_optimize_for_llm(
         elif "path" in pdf_source:
             pdf_path = Path(pdf_source["path"])
         else:
-            return {"status": "error", "message": "PDF source dict must contain 'document_id' or 'path'"}
+            return {
+                "status": "error",
+                "message": "PDF source dict must contain 'document_id' or 'path'",
+            }
     elif pdf_source is not None:
         return {"status": "error", "message": "pdf_source must be a file path string or data dict"}
 
@@ -95,7 +106,9 @@ async def pdf_optimize_for_llm(
             # document_id path: retrieve processed content and re-optimize
             result = {}
 
-        optimized_chunks: List[Dict[str, Any]] = result.get("optimized_chunks", []) if isinstance(result, dict) else []
+        optimized_chunks: List[Dict[str, Any]] = (
+            result.get("optimized_chunks", []) if isinstance(result, dict) else []
+        )
 
         return {
             "status": "success",

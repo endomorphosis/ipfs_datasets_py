@@ -93,9 +93,12 @@ def _cluster(
         "obligation_family": family,
         "target_view": target_view,
     }
-    signature = "hammer-failure:" + hashlib.sha256(
-        json.dumps(key, ensure_ascii=True, sort_keys=True).encode("utf-8")
-    ).hexdigest()[:20]
+    signature = (
+        "hammer-failure:"
+        + hashlib.sha256(
+            json.dumps(key, ensure_ascii=True, sort_keys=True).encode("utf-8")
+        ).hexdigest()[:20]
+    )
     return {
         **key,
         "available_backends": ["z3", "vampire", "lean"],
@@ -134,8 +137,7 @@ def test_clustered_repairs_compile_every_priority_lane_deterministically() -> No
     assert len(forward) == len(_LANES)
     assert [item.to_dict() for item in forward] == [item.to_dict() for item in reverse]
     assert all(
-        item.schema_version == LEGAL_IR_CLUSTERED_GAP_REPAIR_SCHEMA_VERSION
-        for item in forward
+        item.schema_version == LEGAL_IR_CLUSTERED_GAP_REPAIR_SCHEMA_VERSION for item in forward
     )
     assert all(item.allowed_paths and item.validation_commands for item in forward)
     assert all(
@@ -211,22 +213,21 @@ def test_cluster_boundary_rejects_noise_unsafe_paths_and_contract_mismatches() -
         "ipfs_datasets_py/logic/deontic/ir.py",
     )
 
-    assert generate_clustered_legal_ir_compiler_repairs(
-        [one_off, unavailable, unsafe, mismatch],
-        sample_or_document=SAMPLE,
-    ) == []
+    assert (
+        generate_clustered_legal_ir_compiler_repairs(
+            [one_off, unavailable, unsafe, mismatch],
+            sample_or_document=SAMPLE,
+        )
+        == []
+    )
 
 
 def test_duplicate_cluster_evidence_is_merged_independent_of_input_order() -> None:
     first = _cluster(*_LANES[1])
     second = {**first, "proof_obligation_ids": ["obl-second", "obl-deontic_polarity"]}
 
-    left = generate_clustered_legal_ir_compiler_repairs(
-        [first, second], sample_or_document=SAMPLE
-    )
-    right = generate_clustered_legal_ir_compiler_repairs(
-        [second, first], sample_or_document=SAMPLE
-    )
+    left = generate_clustered_legal_ir_compiler_repairs([first, second], sample_or_document=SAMPLE)
+    right = generate_clustered_legal_ir_compiler_repairs([second, first], sample_or_document=SAMPLE)
 
     assert [repair.to_dict() for repair in left] == [repair.to_dict() for repair in right]
     assert left[0].proof_obligation_ids == ["obl-deontic_polarity", "obl-second"]
@@ -266,9 +267,7 @@ def test_lane_apis_are_typed_source_free_and_stable() -> None:
 def _nested_keys(value: Any) -> set[str]:
     if isinstance(value, dict):
         return {str(key) for key in value} | {
-            nested
-            for item in value.values()
-            for nested in _nested_keys(item)
+            nested for item in value.values() for nested in _nested_keys(item)
         }
     if isinstance(value, (list, tuple)):
         return {nested for item in value for nested in _nested_keys(item)}

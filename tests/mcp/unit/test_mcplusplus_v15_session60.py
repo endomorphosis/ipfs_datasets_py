@@ -38,6 +38,7 @@ _MCP_SERVER_DIR = _REPO_ROOT / "ipfs_datasets_py" / "mcp_server"
 # Module-level helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_delegation(
     cid: str = "cid-root",
     resource: str = "my_tool",
@@ -46,6 +47,7 @@ def _make_delegation(
     proof_cid: Any = None,
 ):
     from ipfs_datasets_py.mcp_server.ucan_delegation import Capability, Delegation
+
     cap = Capability(resource=resource, ability=ability)
     return Delegation(
         cid=cid,
@@ -61,11 +63,13 @@ def _make_delegation(
 # Item 1 — DelegationManager.save_encrypted / load_encrypted
 # ===========================================================================
 
+
 class TestDelegationManagerEncryptedPersistence:
     """DelegationManager.save_encrypted / load_encrypted round-trip."""
 
     def _fresh_mgr(self, path: str):
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         return DelegationManager(path)
 
     def test_save_encrypted_creates_enc_file(self, tmp_path):
@@ -122,6 +126,7 @@ class TestDelegationManagerEncryptedPersistence:
     def test_save_encrypted_fallback_when_cryptography_absent(self, tmp_path):
         """Falls back to plain save with UserWarning when cryptography absent."""
         from ipfs_datasets_py.mcp_server import ucan_delegation as _ud
+
         store_path = str(tmp_path / "delegations.json")
         mgr = self._fresh_mgr(store_path)
         mgr.revoke("fallback-cid")
@@ -151,6 +156,7 @@ class TestDelegationManagerEncryptedPersistence:
 # ===========================================================================
 # Item 2 — P2PMetricsCollector delegation metrics in health check
 # ===========================================================================
+
 
 class TestP2PMetricsCollectorDelegationMetrics:
     """P2PMetricsCollector._record_delegation_metrics surfaces gauges."""
@@ -188,7 +194,7 @@ class TestP2PMetricsCollectorDelegationMetrics:
         # Find the method body in the source — docstring is long, use 1000 chars
         start = src.find("def _record_delegation_metrics")
         assert start != -1
-        snippet = src[start:start + 1000]
+        snippet = src[start : start + 1000]
         assert "except" in snippet, "must have exception guard"
 
     def test_get_alert_conditions_calls_record_delegation_metrics_source(self):
@@ -209,7 +215,7 @@ class TestP2PMetricsCollectorDelegationMetrics:
         """_record_delegation_metrics lazy-imports from ucan_delegation."""
         src = self._get_monitoring_src()
         start = src.find("def _record_delegation_metrics")
-        snippet = src[start:start + 600]
+        snippet = src[start : start + 600]
         assert "ucan_delegation" in snippet, "must import from ucan_delegation"
 
     def test_p2p_metrics_collector_class_exists_in_source(self):
@@ -222,11 +228,13 @@ class TestP2PMetricsCollectorDelegationMetrics:
 # Item 3 — ComplianceChecker.save / load
 # ===========================================================================
 
+
 class TestComplianceCheckerPersistence:
     """ComplianceChecker.save(path) / load(path) round-trip."""
 
     def _default_checker(self, deny_list=None):
         from ipfs_datasets_py.mcp_server.compliance_checker import make_default_compliance_checker
+
         return make_default_compliance_checker(deny_list=deny_list)
 
     def test_save_creates_json_file(self, tmp_path):
@@ -264,6 +272,7 @@ class TestComplianceCheckerPersistence:
         checker.save(path)
 
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         checker2 = ComplianceChecker()
         loaded = checker2.load(path)
         assert loaded == len(checker.list_rules())
@@ -276,6 +285,7 @@ class TestComplianceCheckerPersistence:
         checker.save(path)
 
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         checker2 = ComplianceChecker()
         checker2.load(path)
         # The tool should be denied after loading
@@ -287,6 +297,7 @@ class TestComplianceCheckerPersistence:
     def test_load_missing_file_returns_zero(self, tmp_path):
         """load() on missing file returns 0."""
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         checker = ComplianceChecker()
         result = checker.load(str(tmp_path / "no_such_file.json"))
         assert result == 0
@@ -297,6 +308,7 @@ class TestComplianceCheckerPersistence:
         with open(path, "w") as fh:
             fh.write("not valid json {{{")
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         checker = ComplianceChecker()
         result = checker.load(path)
         assert result == 0
@@ -315,6 +327,7 @@ class TestComplianceCheckerPersistence:
         checker.save(path)
 
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         checker2 = ComplianceChecker()
         checker2.load(path)
 
@@ -332,8 +345,10 @@ class TestComplianceCheckerPersistence:
             json.dump(data, fh)
 
         from ipfs_datasets_py.mcp_server.compliance_checker import (
-            ComplianceChecker, ComplianceStatus,
+            ComplianceChecker,
+            ComplianceStatus,
         )
+
         checker = ComplianceChecker()
         loaded = checker.load(path)
         assert loaded == 1
@@ -350,6 +365,7 @@ class TestComplianceCheckerPersistence:
 # Item 4 — server.revoke_delegation_chain(root_cid)
 # ===========================================================================
 
+
 class TestServerRevokeDelegationChain:
     """server.revoke_delegation_chain() calls manager.revoke_chain() and saves."""
 
@@ -363,8 +379,11 @@ class TestServerRevokeDelegationChain:
     def test_revoke_chain_returns_count(self):
         """revoke_delegation_chain returns the count of newly-revoked CIDs."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import (
-            DelegationManager, Capability, Delegation,
+            DelegationManager,
+            Capability,
+            Delegation,
         )
+
         mgr = DelegationManager()
         # Build a 2-link chain: root → leaf
         root = Delegation(
@@ -390,6 +409,7 @@ class TestServerRevokeDelegationChain:
     def test_revoke_chain_no_manager_returns_zero(self):
         """revoke_delegation_chain() returns 0 when no manager initialised."""
         import types
+
         stub = types.SimpleNamespace(
             _server_delegation_manager=None,
         )
@@ -406,6 +426,7 @@ class TestServerRevokeDelegationChain:
     def test_revoke_chain_exception_returns_zero(self):
         """revoke_delegation_chain() returns 0 when revoke_chain raises."""
         import types
+
         bad_mgr = MagicMock()
         bad_mgr.revoke_chain.side_effect = RuntimeError("simulated error")
         bad_mgr.save = MagicMock()
@@ -437,12 +458,14 @@ class TestServerRevokeDelegationChain:
     def test_revoke_chain_calls_save(self):
         """revoke_delegation_chain() calls save() after revoking."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         mgr = DelegationManager()
         save_calls = []
         orig_save = mgr.save
         mgr.save = lambda: save_calls.append(1) or orig_save()
 
         import types
+
         stub = types.SimpleNamespace(_server_delegation_manager=mgr)
 
         def revoke_delegation_chain(root_cid: str) -> int:
@@ -465,12 +488,18 @@ class TestServerRevokeDelegationChain:
 # Item 5 — Full E2E test
 # ===========================================================================
 
+
 class TestFullE2E:
     """End-to-end: startup → pipeline → monitoring gauge → encrypted revoke → shutdown."""
 
     def test_delegation_manager_encrypt_decrypt_cycle(self, tmp_path):
         """Full save_encrypted → load_encrypted lifecycle for DelegationManager."""
-        from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager, Capability, Delegation
+        from ipfs_datasets_py.mcp_server.ucan_delegation import (
+            DelegationManager,
+            Capability,
+            Delegation,
+        )
+
         store_path = str(tmp_path / "e2e_delegations.json")
         mgr = DelegationManager(store_path)
 
@@ -495,8 +524,10 @@ class TestFullE2E:
     def test_compliance_checker_save_load_full_cycle(self, tmp_path):
         """Full ComplianceChecker persistence cycle — save then load and check."""
         from ipfs_datasets_py.mcp_server.compliance_checker import (
-            make_default_compliance_checker, ComplianceChecker,
+            make_default_compliance_checker,
+            ComplianceChecker,
         )
+
         path = str(tmp_path / "compliance_rules.json")
         checker = make_default_compliance_checker(deny_list={"blocked_tool"})
         checker.save(path)
@@ -520,8 +551,11 @@ class TestFullE2E:
     def test_revoke_chain_via_manager(self):
         """DelegationManager.revoke_chain revoking a root also marks it in is_revoked."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import (
-            DelegationManager, Capability, Delegation,
+            DelegationManager,
+            Capability,
+            Delegation,
         )
+
         mgr = DelegationManager()
         root = Delegation(
             cid="root",
@@ -536,6 +570,7 @@ class TestFullE2E:
     def test_delegation_metrics_keys(self):
         """DelegationManager.get_metrics returns expected keys."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         mgr = DelegationManager()
         metrics = mgr.get_metrics()
         assert "delegation_count" in metrics
@@ -544,24 +579,29 @@ class TestFullE2E:
     def test_compliance_checker_save_method_exists(self):
         """ComplianceChecker.save exists and is callable."""
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         assert callable(getattr(ComplianceChecker, "save", None))
 
     def test_compliance_checker_load_method_exists(self):
         """ComplianceChecker.load exists and is callable."""
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         assert callable(getattr(ComplianceChecker, "load", None))
 
     def test_delegation_manager_save_encrypted_method_exists(self):
         """DelegationManager.save_encrypted exists and is callable."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         assert callable(getattr(DelegationManager, "save_encrypted", None))
 
     def test_delegation_manager_load_encrypted_method_exists(self):
         """DelegationManager.load_encrypted exists and is callable."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         assert callable(getattr(DelegationManager, "load_encrypted", None))
 
     def test_delegation_manager_revoke_chain_method_exists(self):
         """DelegationManager.revoke_chain exists and is callable."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         assert callable(getattr(DelegationManager, "revoke_chain", None))

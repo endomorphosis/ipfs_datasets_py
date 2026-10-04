@@ -136,18 +136,10 @@ def test_required_install_gaps_are_declared() -> None:
     assert get_toolchain("mchyper").availability is InstallAvailability.DECLARED_GAP
     assert get_toolchain("souffle").availability is InstallAvailability.DECLARED_GAP
     assert get_toolchain("secpal").availability is InstallAvailability.DECLARED_GAP
-    assert (
-        get_toolchain("runtime-mtl-external").availability
-        is InstallAvailability.DECLARED_GAP
-    )
+    assert get_toolchain("runtime-mtl-external").availability is InstallAvailability.DECLARED_GAP
     # In-process engines remain available without install.
-    assert (
-        get_toolchain("datalog-authorization").availability
-        is InstallAvailability.IN_PROCESS
-    )
-    assert (
-        get_toolchain("runtime-mtl").availability is InstallAvailability.IN_PROCESS
-    )
+    assert get_toolchain("datalog-authorization").availability is InstallAvailability.IN_PROCESS
+    assert get_toolchain("runtime-mtl").availability is InstallAvailability.IN_PROCESS
 
 
 def test_jvm_opam_maude_and_circuit_dependencies_are_bound() -> None:
@@ -192,9 +184,7 @@ def test_install_requires_explicit_call_and_yes_consent() -> None:
     with pytest.raises(ToolchainError, match="yes=True"):
         authorize_provider_install("apalache", yes=False, explicit_call=True)
     with pytest.raises(ToolchainError, match="import"):
-        authorize_provider_install(
-            "apalache", yes=True, explicit_call=True, import_context=True
-        )
+        authorize_provider_install("apalache", yes=True, explicit_call=True, import_context=True)
     with pytest.raises(ToolchainError, match="capability discovery"):
         authorize_provider_install(
             "apalache", yes=True, explicit_call=True, capability_discovery=True
@@ -208,9 +198,7 @@ def test_declared_gap_and_in_process_providers_refuse_managed_install() -> None:
         with pytest.raises(ToolchainError, match="declared install gap"):
             authorize_provider_install(provider, yes=True, explicit_call=True)
     with pytest.raises(ToolchainError, match="in-process"):
-        authorize_provider_install(
-            "datalog-authorization", yes=True, explicit_call=True
-        )
+        authorize_provider_install("datalog-authorization", yes=True, explicit_call=True)
 
 
 def test_managed_install_requires_checksum_verification_when_flagged() -> None:
@@ -367,9 +355,7 @@ def test_toolchain_isolation_policy_matches_bounded_runner_defaults() -> None:
 )
 def test_malicious_workspace_paths_are_rejected(tmp_path: Path, path: str) -> None:
     with pytest.raises(ToolProcessError):
-        _runner(tmp_path).run(
-            ToolRunRequest(argv=("fake",), input_files={path: "x"})
-        )
+        _runner(tmp_path).run(ToolRunRequest(argv=("fake",), input_files={path: "x"}))
 
 
 def test_shell_metacharacters_are_literal_and_do_not_escape_workspace(

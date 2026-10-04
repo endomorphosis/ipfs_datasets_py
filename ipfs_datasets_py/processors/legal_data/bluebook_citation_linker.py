@@ -14,29 +14,87 @@ import re
 import tempfile
 from typing import Any, Dict, Iterable, List, Optional, Sequence
 
-from ipfs_datasets_py.processors.legal_data.canonical_legal_corpora import get_canonical_legal_corpus
+from ipfs_datasets_py.processors.legal_data.canonical_legal_corpora import (
+    get_canonical_legal_corpus,
+)
 from ipfs_datasets_py.processors.legal_data.citation_extraction import (
     BLUEBOOK_STATE_TO_CODE,
     Citation,
     CitationExtractor,
 )
-from ipfs_datasets_py.processors.legal_data.legal_source_recovery import build_missing_citation_recovery_query
+from ipfs_datasets_py.processors.legal_data.legal_source_recovery import (
+    build_missing_citation_recovery_query,
+)
 
 logger = logging.getLogger(__name__)
 
-_IDENTIFIER_FIELDS = ["statute_id", "identifier", "id", "document_number", "citation", "citations", "name", "name_abbreviation", "rule_id", "source_id"]
-_TITLE_FIELDS = ["section_name", "short_title", "heading", "title", "name", "name_abbreviation", "title_name", "code_name", "primary_candidate_title"]
-_URL_FIELDS = ["source_url", "url", "html_url", "pdf_url", "fr_page_url", "fr_json_url", "primary_candidate_url"]
-_TEXT_FIELDS = ["full_text", "text", "section_text", "content", "body", "semantic_text", "summary", "head_matter"]
+_IDENTIFIER_FIELDS = [
+    "statute_id",
+    "identifier",
+    "id",
+    "document_number",
+    "citation",
+    "citations",
+    "name",
+    "name_abbreviation",
+    "rule_id",
+    "source_id",
+]
+_TITLE_FIELDS = [
+    "section_name",
+    "short_title",
+    "heading",
+    "title",
+    "name",
+    "name_abbreviation",
+    "title_name",
+    "code_name",
+    "primary_candidate_title",
+]
+_URL_FIELDS = [
+    "source_url",
+    "url",
+    "html_url",
+    "pdf_url",
+    "fr_page_url",
+    "fr_json_url",
+    "primary_candidate_url",
+]
+_TEXT_FIELDS = [
+    "full_text",
+    "text",
+    "section_text",
+    "content",
+    "body",
+    "semantic_text",
+    "summary",
+    "head_matter",
+]
 _CID_FIELDS = ["ipfs_cid", "cid", "source_cid"]
-_OFFICIAL_CITE_FIELDS = ["official_cite", "citation", "citations", "bluebook_citation", "identifier", "citation_text", "normalized_citation"]
+_OFFICIAL_CITE_FIELDS = [
+    "official_cite",
+    "citation",
+    "citations",
+    "bluebook_citation",
+    "identifier",
+    "citation_text",
+    "normalized_citation",
+]
 _RECOVERY_CITE_FIELDS = ["citation_text", "normalized_citation"]
 _STATE_FIELDS = ["state_code", "state"]
 _SECTION_FIELDS = ["section", "section_number", "section_id", "title_num", "section_num"]
 _TITLE_NUMBER_FIELDS = ["title", "title_number", "title_no", "usc_title", "title_num"]
 _CODE_NAME_FIELDS = ["code_name", "code", "code_title", "title_name"]
 _VOLUME_FIELDS = ["volume", "volume_number", "fr_volume"]
-_PAGE_FIELDS = ["page", "page_number", "start_page", "page_start", "first_page", "last_page", "fr_page"]
+_PAGE_FIELDS = [
+    "page",
+    "page_number",
+    "start_page",
+    "page_start",
+    "first_page",
+    "last_page",
+    "fr_page",
+]
 _REPORTER_FIELDS = ["reporter", "reporter_abbrev", "reporter_abbreviation", "publication", "series"]
 _CONGRESS_FIELDS = ["congress", "congress_number", "session", "volume"]
 _LAW_NUMBER_FIELDS = ["law_number", "public_law", "public_law_number", "pl_number", "page"]
@@ -51,7 +109,9 @@ def get_citation_audit_progress() -> Dict[str, str]:
     return dict(_LAST_CITATION_AUDIT_PROGRESS)
 
 
-def _resolve_text_worker(text: str, state_code: Optional[str], exhaustive: bool) -> List["CitationLink"]:
+def _resolve_text_worker(
+    text: str, state_code: Optional[str], exhaustive: bool
+) -> List["CitationLink"]:
     resolver = BluebookCitationResolver()
     return resolver.resolve_text(text, state_code=state_code, exhaustive=exhaustive)
 
@@ -189,6 +249,7 @@ def _normalize_malformed_citation(text: str) -> str:
     normalized = re.sub(r"\s+", " ", normalized)
     return normalized.strip()
 
+
 def _token_overlap_ratio(query_text: str, candidate_text: str) -> float:
     query_tokens = {token for token in _normalize_text(query_text).split() if token}
     candidate_tokens = {token for token in _normalize_text(candidate_text).split() if token}
@@ -213,7 +274,12 @@ def _guess_corpora_from_text(text: str, state_code: Optional[str]) -> List[str]:
         return ["federal_register"]
     if "pub l" in normalized or "public law" in normalized:
         return ["us_code", "federal_register", "caselaw_access_project"]
-    if "ors" in normalized or "rev stat" in normalized or "stat" in normalized or "code" in normalized:
+    if (
+        "ors" in normalized
+        or "rev stat" in normalized
+        or "stat" in normalized
+        or "code" in normalized
+    ):
         return ["state_laws", "state_admin_rules", "state_court_rules"]
     if state_code:
         return ["state_laws", "state_admin_rules", "state_court_rules"]
@@ -230,14 +296,16 @@ def _state_section_aliases(section: Any) -> List[str]:
     if normalized and normalized != lowered:
         candidates.append(normalized)
     if normalized:
-        candidates.extend([
-            f"section-{normalized}",
-            f"section {normalized}",
-            f"rule-{normalized}",
-            f"rule {normalized}",
-            f"part-{normalized}",
-            f"part {normalized}",
-        ])
+        candidates.extend(
+            [
+                f"section-{normalized}",
+                f"section {normalized}",
+                f"rule-{normalized}",
+                f"rule {normalized}",
+                f"part-{normalized}",
+                f"part {normalized}",
+            ]
+        )
 
     aliases: List[str] = []
     for candidate in candidates:
@@ -321,11 +389,15 @@ def _is_direct_citation_source(path: str) -> bool:
 
 @lru_cache(maxsize=128)
 def _inventory_profiles_for_repo(repo_id: str, corpus_key: str) -> tuple[Any, ...]:
-    disable_inventory_bonus = str(os.getenv("IPFS_DATASETS_PY_DISABLE_INVENTORY_BONUS", "")).strip().lower()
+    disable_inventory_bonus = (
+        str(os.getenv("IPFS_DATASETS_PY_DISABLE_INVENTORY_BONUS", "")).strip().lower()
+    )
     if disable_inventory_bonus in {"1", "true", "yes", "on"}:
         return ()
     try:
-        from ipfs_datasets_py.processors.legal_scrapers.justicedao_dataset_inventory import inspect_justicedao_datasets
+        from ipfs_datasets_py.processors.legal_scrapers.justicedao_dataset_inventory import (
+            inspect_justicedao_datasets,
+        )
 
         profiles = inspect_justicedao_datasets(dataset_prefix="")
     except Exception:
@@ -336,7 +408,9 @@ def _inventory_profiles_for_repo(repo_id: str, corpus_key: str) -> tuple[Any, ..
     normalized_corpus = str(corpus_key or "").strip().lower()
     for profile in profiles:
         dataset_id = str(getattr(profile, "dataset_id", "") or "").strip()
-        canonical_corpus_key = str(getattr(profile, "canonical_corpus_key", "") or "").strip().lower()
+        canonical_corpus_key = (
+            str(getattr(profile, "canonical_corpus_key", "") or "").strip().lower()
+        )
         if dataset_id == normalized_repo or canonical_corpus_key == normalized_corpus:
             matches.append(profile)
     return tuple(matches)
@@ -370,7 +444,15 @@ def _inventory_bonus_for_candidate(
 
         if _is_direct_citation_source(candidate_text):
             bonus += 60
-            if query_modes.intersection({"identifier_lookup", "citation_lookup", "section_lookup", "state_section_lookup", "jsonld_lookup"}):
+            if query_modes.intersection(
+                {
+                    "identifier_lookup",
+                    "citation_lookup",
+                    "section_lookup",
+                    "state_section_lookup",
+                    "jsonld_lookup",
+                }
+            ):
                 bonus += 40
         else:
             bonus -= 120
@@ -388,11 +470,21 @@ def _order_dataset_server_parquet_records(
     state_code: Optional[str],
 ) -> List[str]:
     preferred_names = list(config.preferred_parquet_names)
-    if state_code and config.state_field and config.key in {"state_laws", "state_admin_rules", "state_court_rules"}:
-        preferred_names.insert(0, get_canonical_legal_corpus(config.key).state_parquet_filename(state_code))
+    if (
+        state_code
+        and config.state_field
+        and config.key in {"state_laws", "state_admin_rules", "state_court_rules"}
+    ):
+        preferred_names.insert(
+            0, get_canonical_legal_corpus(config.key).state_parquet_filename(state_code)
+        )
 
     prefix = str(config.parquet_prefix or "").strip("/").lower()
-    path_hints = [str(item).strip("/").lower() for item in list(config.preferred_path_substrings or []) if str(item).strip()]
+    path_hints = [
+        str(item).strip("/").lower()
+        for item in list(config.preferred_path_substrings or [])
+        if str(item).strip()
+    ]
     if prefix:
         path_hints.insert(0, prefix)
 
@@ -438,7 +530,11 @@ def _order_dataset_server_parquet_records(
 
         return (-score, len(record_url), record_url)
 
-    ordered = [str(item.get("url") or "") for item in sorted(parquet_records, key=_score) if str(item.get("url") or "")]
+    ordered = [
+        str(item.get("url") or "")
+        for item in sorted(parquet_records, key=_score)
+        if str(item.get("url") or "")
+    ]
     deduped: List[str] = []
     seen: set[str] = set()
     for item in ordered:
@@ -565,7 +661,12 @@ _CORPUS_CONFIGS: Dict[str, CorpusSourceConfig] = {
         key="netherlands_laws",
         dataset_id=get_canonical_legal_corpus("netherlands_laws").hf_dataset_id,
         local_roots=(get_canonical_legal_corpus("netherlands_laws").parquet_dir(),),
-        preferred_parquet_names=("netherlands_laws.parquet", "laws.parquet", "articles.parquet", "cid_index.parquet"),
+        preferred_parquet_names=(
+            "netherlands_laws.parquet",
+            "laws.parquet",
+            "articles.parquet",
+            "cid_index.parquet",
+        ),
         parquet_prefix="parquet",
         cid_field=get_canonical_legal_corpus("netherlands_laws").cid_field,
         preferred_path_substrings=("parquet/laws/", "parquet/articles/", "parquet/cid_index/"),
@@ -574,7 +675,12 @@ _CORPUS_CONFIGS: Dict[str, CorpusSourceConfig] = {
         key="france_laws",
         dataset_id=get_canonical_legal_corpus("france_laws").hf_dataset_id,
         local_roots=(get_canonical_legal_corpus("france_laws").parquet_dir(),),
-        preferred_parquet_names=("france_laws.parquet", "laws.parquet", "articles.parquet", "cid_index.parquet"),
+        preferred_parquet_names=(
+            "france_laws.parquet",
+            "laws.parquet",
+            "articles.parquet",
+            "cid_index.parquet",
+        ),
         parquet_prefix="parquet",
         cid_field=get_canonical_legal_corpus("france_laws").cid_field,
         preferred_path_substrings=("parquet/laws/", "parquet/articles/", "parquet/cid_index/"),
@@ -583,7 +689,12 @@ _CORPUS_CONFIGS: Dict[str, CorpusSourceConfig] = {
         key="spain_laws",
         dataset_id=get_canonical_legal_corpus("spain_laws").hf_dataset_id,
         local_roots=(get_canonical_legal_corpus("spain_laws").parquet_dir(),),
-        preferred_parquet_names=("spain_laws.parquet", "laws.parquet", "articles.parquet", "cid_index.parquet"),
+        preferred_parquet_names=(
+            "spain_laws.parquet",
+            "laws.parquet",
+            "articles.parquet",
+            "cid_index.parquet",
+        ),
         parquet_prefix="parquet",
         cid_field=get_canonical_legal_corpus("spain_laws").cid_field,
         preferred_path_substrings=("parquet/laws/", "parquet/articles/", "parquet/cid_index/"),
@@ -592,7 +703,12 @@ _CORPUS_CONFIGS: Dict[str, CorpusSourceConfig] = {
         key="germany_laws",
         dataset_id=get_canonical_legal_corpus("germany_laws").hf_dataset_id,
         local_roots=(get_canonical_legal_corpus("germany_laws").parquet_dir(),),
-        preferred_parquet_names=("germany_laws.parquet", "laws.parquet", "articles.parquet", "cid_index.parquet"),
+        preferred_parquet_names=(
+            "germany_laws.parquet",
+            "laws.parquet",
+            "articles.parquet",
+            "cid_index.parquet",
+        ),
         parquet_prefix="parquet",
         cid_field=get_canonical_legal_corpus("germany_laws").cid_field,
         preferred_path_substrings=("parquet/laws/", "parquet/articles/", "parquet/cid_index/"),
@@ -645,7 +761,9 @@ class BluebookCitationResolver:
             if key in seen:
                 continue
             seen.add(key)
-            links.append(self.resolve_citation(citation, state_code=state_code, exhaustive=exhaustive))
+            links.append(
+                self.resolve_citation(citation, state_code=state_code, exhaustive=exhaustive)
+            )
         return links
 
     def suggest_citations_for_text(
@@ -665,8 +783,13 @@ class BluebookCitationResolver:
         seen: set[tuple[str, str]] = set()
 
         for corpus_key in corpora:
-            for suggestion in self._suggest_from_corpus(query_text, corpus_key, effective_state, max_suggestions=max_suggestions):
-                key = (str(suggestion.get("corpus_key") or ""), str(suggestion.get("suggested_citation") or ""))
+            for suggestion in self._suggest_from_corpus(
+                query_text, corpus_key, effective_state, max_suggestions=max_suggestions
+            ):
+                key = (
+                    str(suggestion.get("corpus_key") or ""),
+                    str(suggestion.get("suggested_citation") or ""),
+                )
                 if key in seen:
                     continue
                 seen.add(key)
@@ -746,7 +869,11 @@ class BluebookCitationResolver:
             if fallback_link is not None:
                 return fallback_link
 
-        if citation.type == "case" and citation.url and recovery_corpus_key == "caselaw_access_project":
+        if (
+            citation.type == "case"
+            and citation.url
+            and recovery_corpus_key == "caselaw_access_project"
+        ):
             strict_mode = bool(self.require_exact_anchor)
             return CitationLink(
                 citation_text=citation.text,
@@ -802,7 +929,11 @@ class BluebookCitationResolver:
         max_suggestions: int,
     ) -> List[Dict[str, Any]]:
         override_value = self.parquet_file_overrides.get(corpus_key)
-        override_items = [str(override_value)] if isinstance(override_value, str) else [str(item) for item in list(override_value or [])]
+        override_items = (
+            [str(override_value)]
+            if isinstance(override_value, str)
+            else [str(item) for item in list(override_value or [])]
+        )
         if override_items:
             return self._suggest_from_parquet_overrides(
                 query_text,
@@ -831,7 +962,7 @@ class BluebookCitationResolver:
             return []
 
         suggestions: List[Dict[str, Any]] = []
-        for item in list(result.results or [])[: max_suggestions]:
+        for item in list(result.results or [])[:max_suggestions]:
             row = dict(item.get("row") or {})
             suggestion_text = _suggested_citation_from_row(row)
             if not suggestion_text:
@@ -918,9 +1049,20 @@ class BluebookCitationResolver:
             rows = self._load_local_parquet_rows(source_ref)
             filtered = []
             for row in rows:
-                if state_code and str(row.get("state_code") or "").upper() not in {"", str(state_code).upper()}:
+                if state_code and str(row.get("state_code") or "").upper() not in {
+                    "",
+                    str(state_code).upper(),
+                }:
                     continue
-                haystack = _normalize_text(" ".join(str(row.get(field) or "") for field in _OFFICIAL_CITE_FIELDS + _IDENTIFIER_FIELDS + _TITLE_FIELDS + _TEXT_FIELDS))
+                haystack = _normalize_text(
+                    " ".join(
+                        str(row.get(field) or "")
+                        for field in _OFFICIAL_CITE_FIELDS
+                        + _IDENTIFIER_FIELDS
+                        + _TITLE_FIELDS
+                        + _TEXT_FIELDS
+                    )
+                )
                 if any(token in haystack for token in tokens):
                     filtered.append(row)
                 if len(filtered) >= max_rows:
@@ -930,7 +1072,13 @@ class BluebookCitationResolver:
         con = duckdb.connect()
         try:
             schema = self._schema_for_source(con, source_ref)
-            search_fields = [field for field in (_OFFICIAL_CITE_FIELDS + _IDENTIFIER_FIELDS + _TITLE_FIELDS + _TEXT_FIELDS) if field in schema]
+            search_fields = [
+                field
+                for field in (
+                    _OFFICIAL_CITE_FIELDS + _IDENTIFIER_FIELDS + _TITLE_FIELDS + _TEXT_FIELDS
+                )
+                if field in schema
+            ]
             if not search_fields:
                 return []
             clauses: List[str] = []
@@ -965,7 +1113,9 @@ class BluebookCitationResolver:
             for field in (_OFFICIAL_CITE_FIELDS + _IDENTIFIER_FIELDS + _TITLE_FIELDS + _TEXT_FIELDS)
         )
         token_overlap = _token_overlap_ratio(query_text, row_text)
-        semantic_confidence = 1.0 / (1.0 + abs(float(semantic_score or 0.0))) if semantic_mode else 0.0
+        semantic_confidence = (
+            1.0 / (1.0 + abs(float(semantic_score or 0.0))) if semantic_mode else 0.0
+        )
         confidence = max(0.0, min(1.0, 0.2 + (0.6 * token_overlap) + (0.2 * semantic_confidence)))
         return {
             "semantic_score": float(semantic_score or 0.0),
@@ -986,7 +1136,9 @@ class BluebookCitationResolver:
         return {
             "suggested_citation": suggestion_text,
             "corpus_key": corpus_key,
-            "dataset_id": _CORPUS_CONFIGS.get(corpus_key).dataset_id if corpus_key in _CORPUS_CONFIGS else None,
+            "dataset_id": _CORPUS_CONFIGS.get(corpus_key).dataset_id
+            if corpus_key in _CORPUS_CONFIGS
+            else None,
             "state_code": str(_first_present(row, _STATE_FIELDS) or "").upper() or None,
             "source_document_id": str(_first_present(row, _IDENTIFIER_FIELDS) or ""),
             "source_title": str(_first_present(row, _TITLE_FIELDS) or ""),
@@ -1017,10 +1169,12 @@ class BluebookCitationResolver:
                 query_canonical_legal_corpus,
             )
         except Exception as exc:
-            attempts.append({
-                "status": "error",
-                "reason": f"canonical_query_import_failed: {exc}",
-            })
+            attempts.append(
+                {
+                    "status": "error",
+                    "reason": f"canonical_query_import_failed: {exc}",
+                }
+            )
             return None, attempts
 
         query_text = normalized_citation or citation.text
@@ -1036,16 +1190,22 @@ class BluebookCitationResolver:
                     parquet_file_overrides=self.parquet_file_overrides,
                 )
             except Exception as exc:
-                attempts.append({
-                    "corpus_key": corpus_key,
-                    "status": "error",
-                    "reason": str(exc).strip() or exc.__class__.__name__,
-                })
+                attempts.append(
+                    {
+                        "corpus_key": corpus_key,
+                        "status": "error",
+                        "reason": str(exc).strip() or exc.__class__.__name__,
+                    }
+                )
                 continue
 
             result_payload = canonical_corpus_query_result_to_dict(result)
             attempts.append(result_payload)
-            rows = [dict(item.get("row") or {}) for item in list(result.results or []) if dict(item.get("row") or {})]
+            rows = [
+                dict(item.get("row") or {})
+                for item in list(result.results or [])
+                if dict(item.get("row") or {})
+            ]
             best = self._rank_rows(rows, citation, state_code)
             if best is None:
                 continue
@@ -1085,7 +1245,9 @@ class BluebookCitationResolver:
 
         return None, attempts
 
-    def _preferred_resolution_metadata(self, corpora: Sequence[str], state_code: Optional[str]) -> Dict[str, Any]:
+    def _preferred_resolution_metadata(
+        self, corpora: Sequence[str], state_code: Optional[str]
+    ) -> Dict[str, Any]:
         candidate_corpora = [str(item).strip() for item in corpora if str(item).strip()]
         preferred_dataset_ids: List[str] = []
         preferred_parquet_files: List[str] = []
@@ -1117,7 +1279,11 @@ class BluebookCitationResolver:
         if citation.type == "federal_register" and citation.volume and citation.page:
             return f"{citation.volume} FR {citation.page}"
         if citation.type == "public_law" and citation.volume and citation.page:
-            return f"Pub. L. No. {citation.volume}-{citation.page}" if "No." in citation.text else f"Pub. L. {citation.volume}-{citation.page}"
+            return (
+                f"Pub. L. No. {citation.volume}-{citation.page}"
+                if "No." in citation.text
+                else f"Pub. L. {citation.volume}-{citation.page}"
+            )
         return citation.text
 
     def _candidate_corpora(self, citation: Citation) -> List[str]:
@@ -1144,7 +1310,11 @@ class BluebookCitationResolver:
         config = _CORPUS_CONFIGS[corpus_key]
         if corpus_key in self.parquet_file_overrides:
             override_value = self.parquet_file_overrides.get(corpus_key)
-            override_items = [str(override_value)] if isinstance(override_value, str) else [str(item) for item in override_value]
+            override_items = (
+                [str(override_value)]
+                if isinstance(override_value, str)
+                else [str(item) for item in override_value]
+            )
             filtered_items = [item for item in override_items if _is_direct_citation_source(item)]
             return filtered_items
         if self.prefer_hf_sources and self.allow_hf_fallback and config.dataset_id:
@@ -1158,7 +1328,9 @@ class BluebookCitationResolver:
             return []
         return self._find_hf_sources(config, state_code=state_code)
 
-    def _find_local_sources(self, config: CorpusSourceConfig, *, state_code: Optional[str]) -> List[str]:
+    def _find_local_sources(
+        self, config: CorpusSourceConfig, *, state_code: Optional[str]
+    ) -> List[str]:
         candidate_paths: List[str] = []
         roots = [Path(item) for item in config.local_roots]
         override_root = self.local_root_overrides.get(config.key)
@@ -1166,7 +1338,10 @@ class BluebookCitationResolver:
             roots = [Path(override_root).expanduser().resolve()]
         preferred_names = list(config.preferred_parquet_names)
         if state_code and config.state_field:
-            preferred_names = [get_canonical_legal_corpus(config.key).state_parquet_filename(state_code), *preferred_names]
+            preferred_names = [
+                get_canonical_legal_corpus(config.key).state_parquet_filename(state_code),
+                *preferred_names,
+            ]
         for root in roots:
             if not root.exists():
                 continue
@@ -1186,7 +1361,9 @@ class BluebookCitationResolver:
                 deduped.append(path)
         return deduped
 
-    def _find_hf_sources(self, config: CorpusSourceConfig, *, state_code: Optional[str]) -> List[str]:
+    def _find_hf_sources(
+        self, config: CorpusSourceConfig, *, state_code: Optional[str]
+    ) -> List[str]:
         cache_key = (config.key, state_code)
         cached_sources = self._hf_source_cache.get(cache_key)
         if cached_sources is not None:
@@ -1197,7 +1374,11 @@ class BluebookCitationResolver:
         except Exception:
             hf_hub_url = None
             list_repo_files = None
-        repo_ids = [repo_id for repo_id in (config.dataset_id, *list(config.dataset_id_aliases or [])) if repo_id]
+        repo_ids = [
+            repo_id
+            for repo_id in (config.dataset_id, *list(config.dataset_id_aliases or []))
+            if repo_id
+        ]
         for repo_id in repo_ids:
             had_listing_error = False
             used_repo_listing = False
@@ -1206,13 +1387,17 @@ class BluebookCitationResolver:
                     if repo_id in self._hf_repo_file_cache:
                         repo_files = list(self._hf_repo_file_cache[repo_id])
                     else:
-                        timeout_raw = str(os.getenv("IPFS_DATASETS_PY_HF_LIST_TIMEOUT_SECONDS", "12")).strip()
+                        timeout_raw = str(
+                            os.getenv("IPFS_DATASETS_PY_HF_LIST_TIMEOUT_SECONDS", "12")
+                        ).strip()
                         try:
                             timeout_seconds = max(1.0, float(timeout_raw))
                         except Exception:
                             timeout_seconds = 12.0
                         with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-                            future = executor.submit(list_repo_files, repo_id=repo_id, repo_type="dataset")
+                            future = executor.submit(
+                                list_repo_files, repo_id=repo_id, repo_type="dataset"
+                            )
                             repo_files = future.result(timeout=timeout_seconds)
                         self._hf_repo_file_cache[repo_id] = [str(path) for path in repo_files]
                 except Exception as exc:
@@ -1226,18 +1411,34 @@ class BluebookCitationResolver:
                         if str(path).endswith(".parquet") and _is_direct_citation_source(str(path))
                     ]
                     if parquet_files:
-                        ordered = self._order_hf_parquet_files(config, repo_id, parquet_files, state_code=state_code)
-                        ordered = self._filter_exact_state_partition(config, ordered, state_code=state_code)
+                        ordered = self._order_hf_parquet_files(
+                            config, repo_id, parquet_files, state_code=state_code
+                        )
+                        ordered = self._filter_exact_state_partition(
+                            config, ordered, state_code=state_code
+                        )
                         if ordered:
-                            resolved = [hf_hub_url(repo_id=repo_id, repo_type="dataset", filename=filename) for filename in ordered]
+                            resolved = [
+                                hf_hub_url(repo_id=repo_id, repo_type="dataset", filename=filename)
+                                for filename in ordered
+                            ]
                             self._hf_source_cache[cache_key] = list(resolved)
                             return resolved
 
-            if had_listing_error or list_repo_files is None or hf_hub_url is None or used_repo_listing:
+            if (
+                had_listing_error
+                or list_repo_files is None
+                or hf_hub_url is None
+                or used_repo_listing
+            ):
                 parquet_records = _dataset_server_parquet_records(repo_id)
                 if parquet_records:
-                    ordered_urls = _order_dataset_server_parquet_records(config, parquet_records, state_code=state_code)
-                    ordered_urls = self._filter_exact_state_partition(config, ordered_urls, state_code=state_code)
+                    ordered_urls = _order_dataset_server_parquet_records(
+                        config, parquet_records, state_code=state_code
+                    )
+                    ordered_urls = self._filter_exact_state_partition(
+                        config, ordered_urls, state_code=state_code
+                    )
                     if ordered_urls:
                         self._hf_source_cache[cache_key] = list(ordered_urls)
                         return ordered_urls
@@ -1258,7 +1459,9 @@ class BluebookCitationResolver:
             or config.key not in {"state_laws", "state_admin_rules", "state_court_rules"}
         ):
             return [str(source) for source in sources]
-        expected_name = get_canonical_legal_corpus(config.key).state_parquet_filename(state_code).lower()
+        expected_name = (
+            get_canonical_legal_corpus(config.key).state_parquet_filename(state_code).lower()
+        )
         filtered = [
             str(source)
             for source in sources
@@ -1275,11 +1478,21 @@ class BluebookCitationResolver:
         state_code: Optional[str],
     ) -> List[str]:
         preferred_names = list(config.preferred_parquet_names)
-        if state_code and config.state_field and config.key in {"state_laws", "state_admin_rules", "state_court_rules"}:
-            preferred_names.insert(0, get_canonical_legal_corpus(config.key).state_parquet_filename(state_code))
+        if (
+            state_code
+            and config.state_field
+            and config.key in {"state_laws", "state_admin_rules", "state_court_rules"}
+        ):
+            preferred_names.insert(
+                0, get_canonical_legal_corpus(config.key).state_parquet_filename(state_code)
+            )
 
         prefix = str(config.parquet_prefix or "").strip("/").lower()
-        path_hints = [str(item).strip("/").lower() for item in list(config.preferred_path_substrings or []) if str(item).strip()]
+        path_hints = [
+            str(item).strip("/").lower()
+            for item in list(config.preferred_path_substrings or [])
+            if str(item).strip()
+        ]
         if prefix:
             path_hints.insert(0, prefix)
 
@@ -1295,7 +1508,9 @@ class BluebookCitationResolver:
                 weight = max(1, 100 - index)
                 if filename == preferred_lower:
                     score += 500 + weight
-                elif candidate_lower.endswith(f"/{preferred_lower}") or candidate_lower.endswith(preferred_lower):
+                elif candidate_lower.endswith(f"/{preferred_lower}") or candidate_lower.endswith(
+                    preferred_lower
+                ):
                     score += 450 + weight
                 elif preferred_lower in filename:
                     score += 250 + weight
@@ -1337,7 +1552,9 @@ class BluebookCitationResolver:
             return []
         return ordered[:8]
 
-    def _query_source(self, source_ref: str, corpus_key: str, citation: Citation, state_code: Optional[str]) -> List[Dict[str, Any]]:
+    def _query_source(
+        self, source_ref: str, corpus_key: str, citation: Citation, state_code: Optional[str]
+    ) -> List[Dict[str, Any]]:
         if self.materialize_remote_sources and source_ref.startswith(("http://", "https://")):
             local_source = self._materialize_remote_parquet(source_ref)
             if local_source:
@@ -1351,7 +1568,9 @@ class BluebookCitationResolver:
         con = duckdb.connect()
         try:
             schema = self._schema_for_source(con, source_ref)
-            where_clauses, params = self._build_where_clause(schema, corpus_key, citation, state_code)
+            where_clauses, params = self._build_where_clause(
+                schema, corpus_key, citation, state_code
+            )
             if not where_clauses:
                 return []
             query = f"SELECT * FROM read_parquet('{_sql_literal_path(source_ref)}') WHERE {' AND '.join(where_clauses)} LIMIT 25"
@@ -1401,7 +1620,9 @@ class BluebookCitationResolver:
         self._materialized_remote_sources[source_ref] = str(target_path)
         return str(target_path)
 
-    def _query_source_with_pandas(self, source_ref: str, corpus_key: str, citation: Citation, state_code: Optional[str]) -> List[Dict[str, Any]]:
+    def _query_source_with_pandas(
+        self, source_ref: str, corpus_key: str, citation: Citation, state_code: Optional[str]
+    ) -> List[Dict[str, Any]]:
         rows = self._load_local_parquet_rows(source_ref)
         filtered: List[Dict[str, Any]] = []
         for row in rows:
@@ -1420,6 +1641,7 @@ class BluebookCitationResolver:
                 max_rows = 0
         try:
             import pyarrow.parquet as pq
+
             if max_rows:
                 parquet_file = pq.ParquetFile(source_ref)
                 collected: List[Dict[str, Any]] = []
@@ -1440,6 +1662,7 @@ class BluebookCitationResolver:
             pass
         try:
             import pandas as pd
+
             if max_rows:
                 df = pd.read_parquet(source_ref)
                 if len(df) > max_rows:
@@ -1454,7 +1677,9 @@ class BluebookCitationResolver:
         if cached is not None:
             return cached
         try:
-            cursor = con.execute(f"DESCRIBE SELECT * FROM read_parquet('{_sql_literal_path(source_ref)}')")
+            cursor = con.execute(
+                f"DESCRIBE SELECT * FROM read_parquet('{_sql_literal_path(source_ref)}')"
+            )
             schema = {row[0] for row in cursor.fetchall()}
         except Exception:
             cursor = con.execute(
@@ -1464,7 +1689,9 @@ class BluebookCitationResolver:
         self._schema_cache[source_ref] = schema
         return schema
 
-    def _build_where_clause(self, schema: set[str], corpus_key: str, citation: Citation, state_code: Optional[str]) -> tuple[List[str], List[Any]]:
+    def _build_where_clause(
+        self, schema: set[str], corpus_key: str, citation: Citation, state_code: Optional[str]
+    ) -> tuple[List[str], List[Any]]:
         clauses: List[str] = []
         params: List[Any] = []
         if corpus_key == "us_code":
@@ -1475,14 +1702,24 @@ class BluebookCitationResolver:
             law_field = next((field for field in _LAW_NUMBER_FIELDS if field in schema), None)
             subclauses: List[str] = []
             if title_field and section_field and citation.title and citation.section:
-                subclauses.append(f"(CAST({title_field} AS VARCHAR) = ? AND CAST({section_field} AS VARCHAR) = ?)")
+                subclauses.append(
+                    f"(CAST({title_field} AS VARCHAR) = ? AND CAST({section_field} AS VARCHAR) = ?)"
+                )
                 params.extend([str(citation.title), str(citation.section)])
             for official_field in official_fields:
                 for term in _citation_match_terms(citation):
                     subclauses.append(f"lower(CAST({official_field} AS VARCHAR)) = lower(?)")
                     params.append(term)
-            if citation.type == "public_law" and congress_field and law_field and citation.volume and citation.page:
-                subclauses.append(f"(CAST({congress_field} AS VARCHAR) = ? AND CAST({law_field} AS VARCHAR) = ?)")
+            if (
+                citation.type == "public_law"
+                and congress_field
+                and law_field
+                and citation.volume
+                and citation.page
+            ):
+                subclauses.append(
+                    f"(CAST({congress_field} AS VARCHAR) = ? AND CAST({law_field} AS VARCHAR) = ?)"
+                )
                 params.extend([str(citation.volume), str(citation.page)])
             if subclauses:
                 clauses.append(f"({' OR '.join(subclauses)})")
@@ -1493,7 +1730,9 @@ class BluebookCitationResolver:
             official_fields = [field for field in _OFFICIAL_CITE_FIELDS if field in schema]
             subclauses: List[str] = []
             if volume_field and page_field and citation.volume and citation.page:
-                subclauses.append(f"(CAST({volume_field} AS VARCHAR) = ? AND CAST({page_field} AS VARCHAR) = ?)")
+                subclauses.append(
+                    f"(CAST({volume_field} AS VARCHAR) = ? AND CAST({page_field} AS VARCHAR) = ?)"
+                )
                 params.extend([str(citation.volume), str(citation.page)])
             for official_field in official_fields:
                 for term in _citation_match_terms(citation):
@@ -1532,7 +1771,13 @@ class BluebookCitationResolver:
         if corpus_key == "caselaw_access_project" and citation.type == "case":
             citation_fields = [
                 field
-                for field in ("official_cite", "citation", "citations", "bluebook_citation", "identifier")
+                for field in (
+                    "official_cite",
+                    "citation",
+                    "citations",
+                    "bluebook_citation",
+                    "identifier",
+                )
                 if field in schema
             ]
             reporter_field = next((field for field in _REPORTER_FIELDS if field in schema), None)
@@ -1556,7 +1801,14 @@ class BluebookCitationResolver:
                 clauses.append(f"({' OR '.join(subclauses)})")
             return clauses, params
         search_fields = [
-            field for field in (_OFFICIAL_CITE_FIELDS + _IDENTIFIER_FIELDS + _TITLE_FIELDS + _REPORTER_FIELDS + _TEXT_FIELDS)
+            field
+            for field in (
+                _OFFICIAL_CITE_FIELDS
+                + _IDENTIFIER_FIELDS
+                + _TITLE_FIELDS
+                + _REPORTER_FIELDS
+                + _TEXT_FIELDS
+            )
             if field in schema
         ]
         terms = _citation_match_terms(citation)
@@ -1574,25 +1826,33 @@ class BluebookCitationResolver:
             volume_field = next((field for field in _VOLUME_FIELDS if field in schema), None)
             page_field = next((field for field in _PAGE_FIELDS if field in schema), None)
             if volume_field and page_field and citation.volume and citation.page:
-                subclauses.append(f"(CAST({volume_field} AS VARCHAR) = ? AND CAST({page_field} AS VARCHAR) = ?)")
+                subclauses.append(
+                    f"(CAST({volume_field} AS VARCHAR) = ? AND CAST({page_field} AS VARCHAR) = ?)"
+                )
                 params.extend([str(citation.volume), str(citation.page)])
         if citation.type == "public_law":
             congress_field = next((field for field in _CONGRESS_FIELDS if field in schema), None)
             law_field = next((field for field in _LAW_NUMBER_FIELDS if field in schema), None)
             if congress_field and law_field and citation.volume and citation.page:
-                subclauses.append(f"(CAST({congress_field} AS VARCHAR) = ? AND CAST({law_field} AS VARCHAR) = ?)")
+                subclauses.append(
+                    f"(CAST({congress_field} AS VARCHAR) = ? AND CAST({law_field} AS VARCHAR) = ?)"
+                )
                 params.extend([str(citation.volume), str(citation.page)])
         if citation.type == "cfr":
             title_field = next((field for field in _TITLE_NUMBER_FIELDS if field in schema), None)
             section_field = next((field for field in _SECTION_FIELDS if field in schema), None)
             if title_field and section_field and citation.title and citation.section:
-                subclauses.append(f"(CAST({title_field} AS VARCHAR) = ? AND CAST({section_field} AS VARCHAR) = ?)")
+                subclauses.append(
+                    f"(CAST({title_field} AS VARCHAR) = ? AND CAST({section_field} AS VARCHAR) = ?)"
+                )
                 params.extend([str(citation.title), str(citation.section)])
         if subclauses:
             clauses.append(f"({' OR '.join(subclauses)})")
         return clauses, params
 
-    def _rank_rows(self, rows: Sequence[Dict[str, Any]], citation: Citation, state_code: Optional[str]) -> Optional[tuple[Dict[str, Any], str, float]]:
+    def _rank_rows(
+        self, rows: Sequence[Dict[str, Any]], citation: Citation, state_code: Optional[str]
+    ) -> Optional[tuple[Dict[str, Any], str, float]]:
         best_row: Optional[Dict[str, Any]] = None
         best_field = ""
         best_score = 0.0
@@ -1604,9 +1864,8 @@ class BluebookCitationResolver:
                 continue
             effective_field = exact_field or field
             effective_exact_rank = exact_rank if self.require_exact_anchor else 0
-            if (
-                effective_exact_rank > best_exact_rank
-                or (effective_exact_rank == best_exact_rank and score > best_score)
+            if effective_exact_rank > best_exact_rank or (
+                effective_exact_rank == best_exact_rank and score > best_score
             ):
                 best_row = row
                 best_field = effective_field
@@ -1618,8 +1877,12 @@ class BluebookCitationResolver:
             return None
         return best_row, best_field, best_score
 
-    def _exact_anchor_rank(self, row: Dict[str, Any], citation: Citation, state_code: Optional[str]) -> tuple[int, str]:
-        normalized_terms = {_normalize_text(term) for term in _citation_match_terms(citation) if term}
+    def _exact_anchor_rank(
+        self, row: Dict[str, Any], citation: Citation, state_code: Optional[str]
+    ) -> tuple[int, str]:
+        normalized_terms = {
+            _normalize_text(term) for term in _citation_match_terms(citation) if term
+        }
         compact_terms = {_compact_alnum(term) for term in _citation_match_terms(citation) if term}
         row_state = str(_first_present(row, _STATE_FIELDS) or "").upper()
         normalized_section = _normalize_section(citation.section)
@@ -1627,7 +1890,11 @@ class BluebookCitationResolver:
 
         if citation.type == "usc":
             row_title = str(_first_present(row, _TITLE_NUMBER_FIELDS) or "")
-            if row_title == str(citation.title or "") and row_section == normalized_section and normalized_section:
+            if (
+                row_title == str(citation.title or "")
+                and row_section == normalized_section
+                and normalized_section
+            ):
                 return 4, "title+section"
             if row_section and row_section == normalized_section:
                 return 3, "section_number"
@@ -1636,48 +1903,70 @@ class BluebookCitationResolver:
                     continue
                 value_norm = _normalize_text(row.get(field))
                 value_compact = _compact_alnum(row.get(field))
-                if (value_norm and value_norm in normalized_terms) or (value_compact and value_compact in compact_terms):
+                if (value_norm and value_norm in normalized_terms) or (
+                    value_compact and value_compact in compact_terms
+                ):
                     return 3, field
             return 0, ""
 
         if citation.type == "cfr":
             row_title = str(_first_present(row, _TITLE_NUMBER_FIELDS) or "")
-            if row_title == str(citation.title or "") and row_section == normalized_section and normalized_section:
+            if (
+                row_title == str(citation.title or "")
+                and row_section == normalized_section
+                and normalized_section
+            ):
                 return 4, "title+section"
             for field in _RECOVERY_CITE_FIELDS:
                 if field not in row:
                     continue
                 value_norm = _normalize_text(row.get(field))
                 value_compact = _compact_alnum(row.get(field))
-                if (value_norm and value_norm in normalized_terms) or (value_compact and value_compact in compact_terms):
+                if (value_norm and value_norm in normalized_terms) or (
+                    value_compact and value_compact in compact_terms
+                ):
                     return 3, field
             return 0, ""
 
         if citation.type == "federal_register":
             row_volume = str(_first_present(row, _VOLUME_FIELDS) or "")
             row_page = str(_first_present(row, _PAGE_FIELDS) or "")
-            if row_volume == str(citation.volume or "") and row_page == str(citation.page or "") and row_volume and row_page:
+            if (
+                row_volume == str(citation.volume or "")
+                and row_page == str(citation.page or "")
+                and row_volume
+                and row_page
+            ):
                 return 4, "volume+page"
             for field in _RECOVERY_CITE_FIELDS:
                 if field not in row:
                     continue
                 value_norm = _normalize_text(row.get(field))
                 value_compact = _compact_alnum(row.get(field))
-                if (value_norm and value_norm in normalized_terms) or (value_compact and value_compact in compact_terms):
+                if (value_norm and value_norm in normalized_terms) or (
+                    value_compact and value_compact in compact_terms
+                ):
                     return 3, field
             return 0, ""
 
         if citation.type == "public_law":
             row_congress = str(_first_present(row, _CONGRESS_FIELDS) or "")
             row_law_number = str(_first_present(row, _LAW_NUMBER_FIELDS) or "")
-            if row_congress == str(citation.volume or "") and row_law_number == str(citation.page or "") and row_congress and row_law_number:
+            if (
+                row_congress == str(citation.volume or "")
+                and row_law_number == str(citation.page or "")
+                and row_congress
+                and row_law_number
+            ):
                 return 4, "congress+law_number"
             for field in _OFFICIAL_CITE_FIELDS + _IDENTIFIER_FIELDS:
                 if field not in row:
                     continue
                 value_norm = _normalize_text(row.get(field))
                 value_compact = _compact_alnum(row.get(field))
-                if (value_norm and value_norm in normalized_terms) or (value_compact and value_compact in compact_terms):
+                if (value_norm and value_norm in normalized_terms) or (
+                    value_compact and value_compact in compact_terms
+                ):
                     return 3, field
             return 0, ""
 
@@ -1693,7 +1982,12 @@ class BluebookCitationResolver:
                     return 4, field
             row_volume = str(_first_present(row, _VOLUME_FIELDS) or "")
             row_page = str(_first_present(row, _PAGE_FIELDS) or "")
-            if not (row_volume and row_page and row_volume == str(citation.volume or "") and row_page == str(citation.page or "")):
+            if not (
+                row_volume
+                and row_page
+                and row_volume == str(citation.volume or "")
+                and row_page == str(citation.page or "")
+            ):
                 return 0, ""
             row_reporter = _normalized_reporter(_first_present(row, _REPORTER_FIELDS))
             citation_reporter = _normalized_reporter(citation.reporter)
@@ -1706,7 +2000,9 @@ class BluebookCitationResolver:
             if expected_state and row_state and row_state != expected_state:
                 return 0, ""
             if normalized_section and row_section == normalized_section:
-                return (4 if expected_state and row_state == expected_state else 3), "section_number"
+                return (
+                    4 if expected_state and row_state == expected_state else 3
+                ), "section_number"
             aliases = _state_section_aliases(citation.section)
             normalized_aliases = {_normalize_text(alias) for alias in aliases if alias}
             compact_aliases = {_compact_alnum(alias) for alias in aliases if alias}
@@ -1716,9 +2012,11 @@ class BluebookCitationResolver:
                 normalized_value = _normalize_text(row.get(field))
                 compact_value = _compact_alnum(row.get(field))
                 if (
-                    normalized_value and any(alias and alias in normalized_value for alias in normalized_aliases)
+                    normalized_value
+                    and any(alias and alias in normalized_value for alias in normalized_aliases)
                 ) or (
-                    compact_value and any(alias and alias in compact_value for alias in compact_aliases)
+                    compact_value
+                    and any(alias and alias in compact_value for alias in compact_aliases)
                 ):
                     return (3 if expected_state else 2), field
             return 0, ""
@@ -1729,12 +2027,16 @@ class BluebookCitationResolver:
                 continue
             value_norm = _normalize_text(row.get(field))
             value_compact = _compact_alnum(row.get(field))
-            if (value_norm and value_norm in normalized_terms) or (value_compact and value_compact in compact_terms):
+            if (value_norm and value_norm in normalized_terms) or (
+                value_compact and value_compact in compact_terms
+            ):
                 return 2, field
         return 0, ""
 
     def _source_provenance_for_row(self, row: Dict[str, Any]) -> Dict[str, Any]:
-        primary_citation = str(_first_present(row, _OFFICIAL_CITE_FIELDS + _IDENTIFIER_FIELDS) or "").strip()
+        primary_citation = str(
+            _first_present(row, _OFFICIAL_CITE_FIELDS + _IDENTIFIER_FIELDS) or ""
+        ).strip()
         source_title = str(_first_present(row, _TITLE_FIELDS) or "").strip()
         source_url = str(_first_present(row, _URL_FIELDS) or "").strip()
         source_cid = str(_first_present(row, _CID_FIELDS) or "").strip()
@@ -1750,11 +2052,20 @@ class BluebookCitationResolver:
             "guarantee_level": "exact_anchor",
         }
 
-    def _row_score(self, row: Dict[str, Any], citation: Citation, state_code: Optional[str], *, include_field: bool = False) -> Any:
+    def _row_score(
+        self,
+        row: Dict[str, Any],
+        citation: Citation,
+        state_code: Optional[str],
+        *,
+        include_field: bool = False,
+    ) -> Any:
         score = 0.0
         matched_field = ""
         official_exact = False
-        normalized_terms = {_normalize_text(term) for term in _citation_match_terms(citation) if term}
+        normalized_terms = {
+            _normalize_text(term) for term in _citation_match_terms(citation) if term
+        }
         compact_terms = {_compact_alnum(term) for term in _citation_match_terms(citation) if term}
         for field in _OFFICIAL_CITE_FIELDS:
             if field in row and _normalize_text(row.get(field)) in normalized_terms:
@@ -1782,32 +2093,42 @@ class BluebookCitationResolver:
         if citation.type == "usc":
             row_title = _first_present(row, _TITLE_NUMBER_FIELDS)
             row_section = _first_present(row, _SECTION_FIELDS)
-            if str(row_title or "") == str(citation.title or "") and _normalize_section(row_section) == _normalize_section(citation.section):
+            if str(row_title or "") == str(citation.title or "") and _normalize_section(
+                row_section
+            ) == _normalize_section(citation.section):
                 score += 8.0
                 matched_field = matched_field or "title+section"
         if citation.type == "federal_register":
             row_volume = _first_present(row, _VOLUME_FIELDS)
             row_page = _first_present(row, _PAGE_FIELDS)
-            if str(row_volume or "") == str(citation.volume or "") and str(row_page or "") == str(citation.page or ""):
+            if str(row_volume or "") == str(citation.volume or "") and str(row_page or "") == str(
+                citation.page or ""
+            ):
                 score += 8.0
                 matched_field = matched_field or "volume+page"
         if citation.type == "cfr":
             row_title = _first_present(row, _TITLE_NUMBER_FIELDS)
             row_section = _first_present(row, _SECTION_FIELDS)
-            if str(row_title or "") == str(citation.title or "") and _normalize_section(row_section) == _normalize_section(citation.section):
+            if str(row_title or "") == str(citation.title or "") and _normalize_section(
+                row_section
+            ) == _normalize_section(citation.section):
                 score += 8.0
                 matched_field = matched_field or "title+section"
         if citation.type == "public_law":
             row_congress = _first_present(row, _CONGRESS_FIELDS)
             row_law_number = _first_present(row, _LAW_NUMBER_FIELDS)
-            if str(row_congress or "") == str(citation.volume or "") and str(row_law_number or "") == str(citation.page or ""):
+            if str(row_congress or "") == str(citation.volume or "") and str(
+                row_law_number or ""
+            ) == str(citation.page or ""):
                 score += 8.0
                 matched_field = matched_field or "congress+law_number"
         if citation.type == "case":
             row_volume = _first_present(row, _VOLUME_FIELDS)
             row_page = _first_present(row, _PAGE_FIELDS)
             row_reporter = _first_present(row, _REPORTER_FIELDS)
-            if str(row_volume or "") == str(citation.volume or "") and str(row_page or "") == str(citation.page or ""):
+            if str(row_volume or "") == str(citation.volume or "") and str(row_page or "") == str(
+                citation.page or ""
+            ):
                 score += 6.0
                 matched_field = matched_field or "volume+page"
             if row_reporter and _compact_alnum(row_reporter) == _compact_alnum(citation.reporter):
@@ -1816,7 +2137,9 @@ class BluebookCitationResolver:
         if citation.type == "state_statute":
             row_state = str(_first_present(row, _STATE_FIELDS) or "").upper()
             row_section = _normalize_section(_first_present(row, _SECTION_FIELDS))
-            section_exact = bool(row_section and row_section == _normalize_section(citation.section))
+            section_exact = bool(
+                row_section and row_section == _normalize_section(citation.section)
+            )
             source_section_exact = False
             if not section_exact and citation.section:
                 state_aliases = _state_section_aliases(citation.section)
@@ -1828,9 +2151,11 @@ class BluebookCitationResolver:
                     normalized_value = _normalize_text(row.get(field))
                     compact_value = _compact_alnum(row.get(field))
                     if (
-                        normalized_value and any(alias and alias in normalized_value for alias in normalized_aliases)
+                        normalized_value
+                        and any(alias and alias in normalized_value for alias in normalized_aliases)
                     ) or (
-                        compact_value and any(alias and alias in compact_value for alias in compact_aliases)
+                        compact_value
+                        and any(alias and alias in compact_value for alias in compact_aliases)
                     ):
                         source_section_exact = True
                         score += 6.0
@@ -1845,7 +2170,11 @@ class BluebookCitationResolver:
                     matched_field = matched_field or "state_code"
                 code_name = _normalize_text(citation.metadata.get("code_name"))
                 row_code_name = _normalize_text(_first_present(row, _CODE_NAME_FIELDS))
-                if code_name and row_code_name and (code_name in row_code_name or row_code_name in code_name):
+                if (
+                    code_name
+                    and row_code_name
+                    and (code_name in row_code_name or row_code_name in code_name)
+                ):
                     score += 2.0
                     matched_field = matched_field or "code_name"
         if _first_present(row, _URL_FIELDS):
@@ -1960,17 +2289,21 @@ def resolve_bluebook_lookup_result_document(
             inferred_corpus = str(guessed_corpora[0] or "").strip() if guessed_corpora else ""
             if not inferred_corpus and suggestions:
                 inferred_corpus = str(suggestions[0].get("corpus_key") or "").strip()
-            synthetic_unresolved = [{
-                "citation_text": text,
-                "normalized_citation": text,
-                "corpus_key": inferred_corpus or None,
-                "metadata": {
-                    "state_code": state_code,
-                    "recovery_supported": True,
-                    "recovery_corpus_key": inferred_corpus or None,
-                    "candidate_corpora": [inferred_corpus] if inferred_corpus else guessed_corpora,
-                },
-            }]
+            synthetic_unresolved = [
+                {
+                    "citation_text": text,
+                    "normalized_citation": text,
+                    "corpus_key": inferred_corpus or None,
+                    "metadata": {
+                        "state_code": state_code,
+                        "recovery_supported": True,
+                        "recovery_corpus_key": inferred_corpus or None,
+                        "candidate_corpora": [inferred_corpus]
+                        if inferred_corpus
+                        else guessed_corpora,
+                    },
+                }
+            ]
             recovery_status["attempted"] = True
             recovery_results = _recover_unresolved_citation_payloads(
                 synthetic_unresolved,
@@ -1985,7 +2318,9 @@ def resolve_bluebook_lookup_result_document(
             continue
         metadata = dict(item.get("metadata") or {})
         resolution_quality = str(metadata.get("resolution_quality") or "")
-        guarantee_level = str((metadata.get("source_provenance") or {}).get("guarantee_level") or "")
+        guarantee_level = str(
+            (metadata.get("source_provenance") or {}).get("guarantee_level") or ""
+        )
         if resolution_quality == "exact_anchor" and guarantee_level == "exact_anchor":
             continue
         non_exact_matched_citations.append(
@@ -2013,7 +2348,9 @@ def resolve_bluebook_lookup_result_document(
         "citation_resolution_ratio": (matched_count / len(link_payloads)) if link_payloads else 1.0,
         "exact_anchor_match_count": exact_anchor_match_count,
         "non_exact_match_count": len(non_exact_matched_citations),
-        "exact_anchor_match_ratio": (exact_anchor_match_count / matched_count) if matched_count else 1.0,
+        "exact_anchor_match_ratio": (exact_anchor_match_count / matched_count)
+        if matched_count
+        else 1.0,
         "citations": link_payloads,
         "unresolved_citations": unresolved,
         "non_exact_matched_citations": non_exact_matched_citations,
@@ -2033,10 +2370,12 @@ def _recover_unresolved_citation_payloads(
     try:
         from .legal_source_recovery import recover_missing_legal_citation_source
     except Exception as exc:
-        return [{
-            "status": "error",
-            "error": f"recovery_import_failed: {exc}",
-        }]
+        return [
+            {
+                "status": "error",
+                "error": f"recovery_import_failed: {exc}",
+            }
+        ]
 
     results: List[Dict[str, Any]] = []
     for citation in unresolved:
@@ -2047,8 +2386,13 @@ def _recover_unresolved_citation_payloads(
             result = asyncio.run(
                 recover_missing_legal_citation_source(
                     citation_text=str(citation.get("citation_text") or ""),
-                    normalized_citation=str(citation.get("normalized_citation") or citation.get("citation_text") or ""),
-                    corpus_key=str(metadata.get("recovery_corpus_key") or citation.get("corpus_key") or "") or None,
+                    normalized_citation=str(
+                        citation.get("normalized_citation") or citation.get("citation_text") or ""
+                    ),
+                    corpus_key=str(
+                        metadata.get("recovery_corpus_key") or citation.get("corpus_key") or ""
+                    )
+                    or None,
                     state_code=str(metadata.get("state_code") or "") or None,
                     metadata={
                         "candidate_corpora": list(metadata.get("candidate_corpora") or []),
@@ -2063,8 +2407,13 @@ def _recover_unresolved_citation_payloads(
             result = {
                 "status": "error",
                 "citation_text": str(citation.get("citation_text") or ""),
-                "normalized_citation": str(citation.get("normalized_citation") or citation.get("citation_text") or ""),
-                "corpus_key": str(metadata.get("recovery_corpus_key") or citation.get("corpus_key") or "") or None,
+                "normalized_citation": str(
+                    citation.get("normalized_citation") or citation.get("citation_text") or ""
+                ),
+                "corpus_key": str(
+                    metadata.get("recovery_corpus_key") or citation.get("corpus_key") or ""
+                )
+                or None,
                 "state_code": str(metadata.get("state_code") or "") or None,
                 "error": str(exc).strip() or exc.__class__.__name__,
             }
@@ -2110,16 +2459,18 @@ def audit_bluebook_citation_resolution_for_documents(
         skip_raw = str(os.getenv("IPFS_DATASETS_PY_CITATION_AUDIT_SKIP_DOCUMENT_IDS", "")).strip()
         skip_ids = {item.strip() for item in skip_raw.split(",") if item.strip()}
         if document_id in skip_ids:
-            document_reports.append({
-                "document_id": document_id,
-                "document_title": document_title,
-                "citation_count": 0,
-                "matched_citation_count": 0,
-                "unmatched_citation_count": 0,
-                "all_citations_resolved": False,
-                "citations": [],
-                "error": "skipped_by_env",
-            })
+            document_reports.append(
+                {
+                    "document_id": document_id,
+                    "document_title": document_title,
+                    "citation_count": 0,
+                    "matched_citation_count": 0,
+                    "unmatched_citation_count": 0,
+                    "all_citations_resolved": False,
+                    "citations": [],
+                    "error": "skipped_by_env",
+                }
+            )
             continue
         _LAST_CITATION_AUDIT_PROGRESS = {
             "stage": "resolve_text",
@@ -2132,22 +2483,26 @@ def audit_bluebook_citation_resolution_for_documents(
                 timeout_seconds = max(0.0, float(timeout_raw))
             except Exception:
                 timeout_seconds = 0.0
-        use_process_timeout = str(os.getenv("IPFS_DATASETS_PY_CITATION_AUDIT_USE_PROCESS", "")).strip().lower() in {
+        use_process_timeout = str(
+            os.getenv("IPFS_DATASETS_PY_CITATION_AUDIT_USE_PROCESS", "")
+        ).strip().lower() in {
             "1",
             "true",
             "yes",
             "on",
         }
         if not text:
-            document_reports.append({
-                "document_id": document_id,
-                "document_title": document_title,
-                "citation_count": 0,
-                "matched_citation_count": 0,
-                "unmatched_citation_count": 0,
-                "all_citations_resolved": True,
-                "citations": [],
-            })
+            document_reports.append(
+                {
+                    "document_id": document_id,
+                    "document_title": document_title,
+                    "citation_count": 0,
+                    "matched_citation_count": 0,
+                    "unmatched_citation_count": 0,
+                    "all_citations_resolved": True,
+                    "citations": [],
+                }
+            )
             continue
         try:
             if timeout_seconds:
@@ -2168,7 +2523,9 @@ def audit_bluebook_citation_resolution_for_documents(
                         )
                         links = future.result(timeout=timeout_seconds)
             else:
-                links = active_resolver.resolve_text(text, state_code=state_code, exhaustive=exhaustive)
+                links = active_resolver.resolve_text(
+                    text, state_code=state_code, exhaustive=exhaustive
+                )
         except concurrent.futures.TimeoutError:
             errored_documents.append(
                 {
@@ -2177,16 +2534,18 @@ def audit_bluebook_citation_resolution_for_documents(
                     "error": f"timeout_after_{timeout_seconds:.1f}s",
                 }
             )
-            document_reports.append({
-                "document_id": document_id,
-                "document_title": document_title,
-                "citation_count": 0,
-                "matched_citation_count": 0,
-                "unmatched_citation_count": 0,
-                "all_citations_resolved": False,
-                "citations": [],
-                "error": f"timeout_after_{timeout_seconds:.1f}s",
-            })
+            document_reports.append(
+                {
+                    "document_id": document_id,
+                    "document_title": document_title,
+                    "citation_count": 0,
+                    "matched_citation_count": 0,
+                    "unmatched_citation_count": 0,
+                    "all_citations_resolved": False,
+                    "citations": [],
+                    "error": f"timeout_after_{timeout_seconds:.1f}s",
+                }
+            )
             continue
         except Exception as exc:
             if isinstance(exc, TimeoutError) and "citation_resolver_timeout_after" in str(exc):
@@ -2197,16 +2556,18 @@ def audit_bluebook_citation_resolution_for_documents(
                         "error": str(exc),
                     }
                 )
-                document_reports.append({
-                    "document_id": document_id,
-                    "document_title": document_title,
-                    "citation_count": 0,
-                    "matched_citation_count": 0,
-                    "unmatched_citation_count": 0,
-                    "all_citations_resolved": False,
-                    "citations": [],
-                    "error": str(exc),
-                })
+                document_reports.append(
+                    {
+                        "document_id": document_id,
+                        "document_title": document_title,
+                        "citation_count": 0,
+                        "matched_citation_count": 0,
+                        "unmatched_citation_count": 0,
+                        "all_citations_resolved": False,
+                        "citations": [],
+                        "error": str(exc),
+                    }
+                )
                 continue
             errored_documents.append(
                 {
@@ -2215,16 +2576,18 @@ def audit_bluebook_citation_resolution_for_documents(
                     "error": str(exc),
                 }
             )
-            document_reports.append({
-                "document_id": document_id,
-                "document_title": document_title,
-                "citation_count": 0,
-                "matched_citation_count": 0,
-                "unmatched_citation_count": 0,
-                "all_citations_resolved": False,
-                "citations": [],
-                "error": str(exc),
-            })
+            document_reports.append(
+                {
+                    "document_id": document_id,
+                    "document_title": document_title,
+                    "citation_count": 0,
+                    "matched_citation_count": 0,
+                    "unmatched_citation_count": 0,
+                    "all_citations_resolved": False,
+                    "citations": [],
+                    "error": str(exc),
+                }
+            )
             continue
         link_payloads = [citation_link_to_dict(link) for link in links]
         matched_count = sum(1 for item in link_payloads if bool(item.get("matched")))
@@ -2232,23 +2595,37 @@ def audit_bluebook_citation_resolution_for_documents(
         total_citations += len(link_payloads)
         matched_citations += matched_count
         unresolved_citations += unresolved_count
-        document_reports.append({
-            "document_id": document_id,
-            "document_title": document_title,
-            "citation_count": len(link_payloads),
-            "matched_citation_count": matched_count,
-            "unmatched_citation_count": unresolved_count,
-            "all_citations_resolved": bool(link_payloads) and unresolved_count == 0,
-            "citations": link_payloads,
-        })
-    documents_with_citations = sum(1 for item in document_reports if int(item.get("citation_count") or 0) > 0)
-    fully_resolved_documents = sum(1 for item in document_reports if bool(item.get("all_citations_resolved")))
-    unresolved_documents = [{
-        "document_id": item["document_id"],
-        "document_title": item["document_title"],
-        "unmatched_citation_count": item["unmatched_citation_count"],
-        "unmatched_citations": [citation for citation in list(item.get("citations") or []) if not bool(citation.get("matched"))],
-    } for item in document_reports if int(item.get("unmatched_citation_count") or 0) > 0]
+        document_reports.append(
+            {
+                "document_id": document_id,
+                "document_title": document_title,
+                "citation_count": len(link_payloads),
+                "matched_citation_count": matched_count,
+                "unmatched_citation_count": unresolved_count,
+                "all_citations_resolved": bool(link_payloads) and unresolved_count == 0,
+                "citations": link_payloads,
+            }
+        )
+    documents_with_citations = sum(
+        1 for item in document_reports if int(item.get("citation_count") or 0) > 0
+    )
+    fully_resolved_documents = sum(
+        1 for item in document_reports if bool(item.get("all_citations_resolved"))
+    )
+    unresolved_documents = [
+        {
+            "document_id": item["document_id"],
+            "document_title": item["document_title"],
+            "unmatched_citation_count": item["unmatched_citation_count"],
+            "unmatched_citations": [
+                citation
+                for citation in list(item.get("citations") or [])
+                if not bool(citation.get("matched"))
+            ],
+        }
+        for item in document_reports
+        if int(item.get("unmatched_citation_count") or 0) > 0
+    ]
     return {
         "document_count": len(document_reports),
         "documents_with_citations": documents_with_citations,
@@ -2257,8 +2634,12 @@ def audit_bluebook_citation_resolution_for_documents(
         "matched_citation_count": matched_citations,
         "unmatched_citation_count": unresolved_citations,
         "error_count": len(errored_documents),
-        "citation_resolution_ratio": (matched_citations / total_citations) if total_citations else 1.0,
-        "document_resolution_ratio": (fully_resolved_documents / documents_with_citations) if documents_with_citations else 1.0,
+        "citation_resolution_ratio": (matched_citations / total_citations)
+        if total_citations
+        else 1.0,
+        "document_resolution_ratio": (fully_resolved_documents / documents_with_citations)
+        if documents_with_citations
+        else 1.0,
         "documents": document_reports,
         "unresolved_documents": unresolved_documents,
         "errored_documents": errored_documents,
@@ -2292,7 +2673,9 @@ def audit_bluebook_exact_anchor_guarantees_for_documents(
                 continue
             metadata = dict(citation.get("metadata") or {})
             resolution_quality = str(metadata.get("resolution_quality") or "")
-            guarantee_level = str((metadata.get("source_provenance") or {}).get("guarantee_level") or "")
+            guarantee_level = str(
+                (metadata.get("source_provenance") or {}).get("guarantee_level") or ""
+            )
             if resolution_quality == "exact_anchor" and guarantee_level == "exact_anchor":
                 continue
             non_exact_citations.append(
@@ -2321,9 +2704,7 @@ def audit_bluebook_exact_anchor_guarantees_for_documents(
         "exact_anchor_match_count": max(0, matched_count - non_exact_count),
         "non_exact_match_count": non_exact_count,
         "exact_anchor_match_ratio": (
-            (max(0, matched_count - non_exact_count) / matched_count)
-            if matched_count
-            else 1.0
+            (max(0, matched_count - non_exact_count) / matched_count) if matched_count else 1.0
         ),
         "non_exact_matches": non_exact_citations,
         "resolution_audit": resolution_audit,

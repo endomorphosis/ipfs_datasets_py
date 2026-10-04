@@ -5,6 +5,7 @@ Enhanced vector store tools — standalone async MCP functions.
 Business logic (MockVectorStoreService) lives in
 ipfs_datasets_py.vector_stores.vector_store_engine.
 """
+
 from __future__ import annotations
 
 import logging
@@ -12,7 +13,10 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Union
 
 # Import engine from core package (re-export for backward compat)
-from ipfs_datasets_py.vector_stores.vector_store_engine import MockVectorStoreService, _AwaitableDict  # noqa: F401
+from ipfs_datasets_py.vector_stores.vector_store_engine import (
+    MockVectorStoreService,
+    _AwaitableDict,
+)  # noqa: F401
 
 logger = logging.getLogger(__name__)
 
@@ -60,13 +64,15 @@ async def enhanced_vector_index(
     else:
         result = {"status": "invalid_action", "action": action}
 
-    return _AwaitableDict({
-        "action": action,
-        "index_name": index_name,
-        "result": result,
-        "status": result.get("status", "success"),
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-    })
+    return _AwaitableDict(
+        {
+            "action": action,
+            "index_name": index_name,
+            "result": result,
+            "status": result.get("status", "success"),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+    )
 
 
 async def enhanced_vector_search(
@@ -80,7 +86,9 @@ async def enhanced_vector_search(
     rerank: bool = False,
 ) -> Dict[str, Any]:
     """Perform advanced vector similarity search with optional filtering and reranking."""
-    search_result = await _DEFAULT_VECTOR_SERVICE.search_vectors(collection=collection, query_vector=query_vector, top_k=top_k, filters=filters)
+    search_result = await _DEFAULT_VECTOR_SERVICE.search_vectors(
+        collection=collection, query_vector=query_vector, top_k=top_k, filters=filters
+    )
     results = search_result.get("results", [])
     if score_threshold is not None:
         results = [r for r in results if r.get("score", 0) >= score_threshold]
@@ -121,11 +129,20 @@ async def enhanced_vector_storage(
     vector_ids = vector_ids or []
 
     if action in ("add", "batch_add"):
-        result: Dict[str, Any] = {"status": "success", "collection": collection, "count": len(vectors)}
+        result: Dict[str, Any] = {
+            "status": "success",
+            "collection": collection,
+            "count": len(vectors),
+        }
     elif action == "update":
         result = {"status": "updated", "collection": collection, "count": len(vectors)}
     elif action == "delete":
-        result = {"status": "deleted" if vector_id else "success", "collection": collection, "vector_id": vector_id, "ids": vector_ids}
+        result = {
+            "status": "deleted" if vector_id else "success",
+            "collection": collection,
+            "vector_id": vector_id,
+            "ids": vector_ids,
+        }
     elif action in ("get", "list"):
         result = {"status": "success", "collection": collection, "vectors": []}
     elif action == "get_metadata":
@@ -150,14 +167,22 @@ async def enhanced_vector_storage(
 # Backward-compatible class shims
 class EnhancedVectorIndexTool:
     """Backward-compatible shim."""
-    async def execute(self, parameters: Union[Dict[str, Any], str], **kwargs: Any) -> Dict[str, Any]:  # noqa: D102
+
+    async def execute(
+        self, parameters: Union[Dict[str, Any], str], **kwargs: Any
+    ) -> Dict[str, Any]:  # noqa: D102
         if not isinstance(parameters, dict):
             parameters = {"action": parameters, **kwargs}
-        return await enhanced_vector_index(parameters.get("action", "list"), parameters.get("index_name"), parameters.get("config", {}))
+        return await enhanced_vector_index(
+            parameters.get("action", "list"),
+            parameters.get("index_name"),
+            parameters.get("config", {}),
+        )
 
 
 class EnhancedVectorSearchTool:
     """Backward-compatible shim."""
+
     async def execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:  # noqa: D102
         return await enhanced_vector_search(
             parameters.get("collection") or parameters.get("index_name", ""),
@@ -173,6 +198,7 @@ class EnhancedVectorSearchTool:
 
 class EnhancedVectorStorageTool:
     """Backward-compatible shim."""
+
     async def execute(self, parameters: Union[Dict[str, Any], str], **kwargs: Any) -> Any:  # noqa: D102
         if not isinstance(parameters, dict):
             parameters = {"action": parameters, **kwargs}

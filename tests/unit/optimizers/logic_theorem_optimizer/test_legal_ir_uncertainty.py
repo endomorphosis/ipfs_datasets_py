@@ -83,17 +83,10 @@ def test_low_confidence_learned_guidance_routes_to_audit_not_codex() -> None:
         config=LegalIRUncertaintyConfig(families=("deontic",)),
     )
 
-    assert [item["guidance_id"] for item in routed["codex_guidance_items"]] == [
-        "codex-ok"
-    ]
-    assert [item["guidance_id"] for item in routed["audit_guidance_items"]] == [
-        "audit-low"
-    ]
+    assert [item["guidance_id"] for item in routed["codex_guidance_items"]] == ["codex-ok"]
+    assert [item["guidance_id"] for item in routed["audit_guidance_items"]] == ["audit-low"]
     assert routed["codex_guidance_items"][0]["uncertainty_route"] == ROUTE_CODEX_TODO
-    assert (
-        routed["audit_guidance_items"][0]["uncertainty_route"]
-        == ROUTE_HAMMER_LEANSTRAL_AUDIT
-    )
+    assert routed["audit_guidance_items"][0]["uncertainty_route"] == ROUTE_HAMMER_LEANSTRAL_AUDIT
 
 
 def test_promotion_gate_blocks_calibration_error_by_configured_family_threshold() -> None:
@@ -126,9 +119,7 @@ def test_unsupported_family_abstains_and_blocks_promotion() -> None:
 
     assert gate["accepted"] is False
     assert gate["family_results"]["unsupported"]["unsupported_family_rate"] == 1.0
-    assert (
-        gate["family_results"]["unsupported"]["unsupported_abstention_rate"] == 1.0
-    )
+    assert gate["family_results"]["unsupported"]["unsupported_abstention_rate"] == 1.0
     assert "unsupported:unsupported_family_signal" in gate["block_reasons"]
     assert gate["unsupported_guidance_ids"] == ["unsupported"]
 
@@ -151,13 +142,8 @@ def test_configured_family_threshold_blocks_unsupported_abstention() -> None:
     )
 
     assert gate["accepted"] is False
-    assert (
-        gate["family_results"]["deontic"]["unsupported_abstention_rate"] == 1.0
-    )
-    assert (
-        "deontic:unsupported_abstention_above_threshold"
-        in gate["block_reasons"]
-    )
+    assert gate["family_results"]["deontic"]["unsupported_abstention_rate"] == 1.0
+    assert "deontic:unsupported_abstention_above_threshold" in gate["block_reasons"]
 
 
 def test_runner_reports_uncertain_learned_guidance_as_audit_only(tmp_path) -> None:

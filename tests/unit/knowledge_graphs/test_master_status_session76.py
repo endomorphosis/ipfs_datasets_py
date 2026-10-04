@@ -15,17 +15,39 @@ import pytest
 
 # ── Paths ───────────────────────────────────────────────────────────────────
 _KG_DIR = os.path.join(
-    os.path.dirname(__file__), "..", "..", "..",
-    "ipfs_datasets_py", "knowledge_graphs",
+    os.path.dirname(__file__),
+    "..",
+    "..",
+    "..",
+    "ipfs_datasets_py",
+    "knowledge_graphs",
 )
 _DOCS_KG = os.path.join(
-    os.path.dirname(__file__), "..", "..", "..",
-    "docs", "knowledge_graphs",
+    os.path.dirname(__file__),
+    "..",
+    "..",
+    "..",
+    "docs",
+    "knowledge_graphs",
 )
 
 
 def _read(rel: str) -> str:
-    _moved = {'COMPREHENSIVE_ANALYSIS_2026_02_18.md', 'DOCUMENTATION_GUIDE.md', 'CHANGELOG_KNOWLEDGE_GRAPHS.md', 'IMPROVEMENT_TODO.md', 'INDEX.md', 'P3_P4_IMPLEMENTATION_COMPLETE.md', 'QUICKSTART.md', 'EXECUTIVE_SUMMARY_FINAL_2026_02_18.md', 'MASTER_REFACTORING_PLAN_2026.md', 'MASTER_STATUS.md', 'DEFERRED_FEATURES.md', 'ROADMAP.md', 'REFACTORING_COMPLETE_2026_02_18.md'}
+    _moved = {
+        "COMPREHENSIVE_ANALYSIS_2026_02_18.md",
+        "DOCUMENTATION_GUIDE.md",
+        "CHANGELOG_KNOWLEDGE_GRAPHS.md",
+        "IMPROVEMENT_TODO.md",
+        "INDEX.md",
+        "P3_P4_IMPLEMENTATION_COMPLETE.md",
+        "QUICKSTART.md",
+        "EXECUTIVE_SUMMARY_FINAL_2026_02_18.md",
+        "MASTER_REFACTORING_PLAN_2026.md",
+        "MASTER_STATUS.md",
+        "DEFERRED_FEATURES.md",
+        "ROADMAP.md",
+        "REFACTORING_COMPLETE_2026_02_18.md",
+    }
     base = _DOCS_KG if rel in _moved else _KG_DIR
     with open(os.path.join(base, rel), encoding="utf-8") as fh:
         return fh.read()
@@ -38,12 +60,11 @@ def tiny_kg():
     from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
 
     kg = KnowledgeGraph("session76_test")
-    alice = kg.add_entity("person", "Alice",   confidence=0.9)
-    bob   = kg.add_entity("person", "Bob",     confidence=0.8)
-    carol = kg.add_entity("org",    "ACME",    confidence=1.0,
-                           properties={"size": "large"})
+    alice = kg.add_entity("person", "Alice", confidence=0.9)
+    bob = kg.add_entity("person", "Bob", confidence=0.8)
+    carol = kg.add_entity("org", "ACME", confidence=1.0, properties={"size": "large"})
     kg.add_relationship("works_at", alice, carol)
-    kg.add_relationship("knows",    alice, bob)
+    kg.add_relationship("knows", alice, bob)
     return kg, alice.entity_id, bob.entity_id, carol.entity_id
 
 
@@ -53,12 +74,14 @@ def tiny_kg():
 class TestGNNLayerTypeAndConfig:
     def test_layer_type_values(self):
         from ipfs_datasets_py.knowledge_graphs.query.gnn import GNNLayerType
+
         assert GNNLayerType.GRAPH_CONV.value == "graph_conv"
         assert GNNLayerType.GRAPH_SAGE.value == "graph_sage"
         assert GNNLayerType.GRAPH_ATTENTION.value == "graph_attention"
 
     def test_gnn_config_defaults(self):
         from ipfs_datasets_py.knowledge_graphs.query.gnn import GNNConfig
+
         cfg = GNNConfig()
         assert cfg.embedding_dim == 64
         assert cfg.num_layers == 2
@@ -67,14 +90,17 @@ class TestGNNLayerTypeAndConfig:
 
     def test_gnn_config_custom(self):
         from ipfs_datasets_py.knowledge_graphs.query.gnn import GNNConfig, GNNLayerType
-        cfg = GNNConfig(embedding_dim=32, num_layers=3,
-                        layer_type=GNNLayerType.GRAPH_CONV, normalize=False)
+
+        cfg = GNNConfig(
+            embedding_dim=32, num_layers=3, layer_type=GNNLayerType.GRAPH_CONV, normalize=False
+        )
         assert cfg.embedding_dim == 32
         assert cfg.num_layers == 3
         assert cfg.normalize is False
 
     def test_node_embedding_dim(self):
         from ipfs_datasets_py.knowledge_graphs.query.gnn import NodeEmbedding
+
         emb = NodeEmbedding(entity_id="e1", features=[0.1, 0.2, 0.3], layer=1)
         assert emb.dim == 3
 
@@ -85,6 +111,7 @@ class TestGNNLayerTypeAndConfig:
 class TestGNNFeatureExtraction:
     def test_feature_keys_match_entities(self, tiny_kg):
         from ipfs_datasets_py.knowledge_graphs.query.gnn import GraphNeuralNetworkAdapter
+
         kg, alice_id, bob_id, carol_id = tiny_kg
         adapter = GraphNeuralNetworkAdapter(kg)
         features = adapter.extract_node_features()
@@ -92,6 +119,7 @@ class TestGNNFeatureExtraction:
 
     def test_feature_vector_length_consistent(self, tiny_kg):
         from ipfs_datasets_py.knowledge_graphs.query.gnn import GraphNeuralNetworkAdapter
+
         kg, alice_id, bob_id, carol_id = tiny_kg
         adapter = GraphNeuralNetworkAdapter(kg)
         features = adapter.extract_node_features()
@@ -101,12 +129,14 @@ class TestGNNFeatureExtraction:
     def test_empty_graph_returns_empty(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
         from ipfs_datasets_py.knowledge_graphs.query.gnn import GraphNeuralNetworkAdapter
+
         kg = KnowledgeGraph("empty")
         adapter = GraphNeuralNetworkAdapter(kg)
         assert adapter.extract_node_features() == {}
 
     def test_confidence_in_features(self, tiny_kg):
         from ipfs_datasets_py.knowledge_graphs.query.gnn import GraphNeuralNetworkAdapter
+
         kg, alice_id, bob_id, carol_id = tiny_kg
         adapter = GraphNeuralNetworkAdapter(kg)
         features = adapter.extract_node_features()
@@ -120,6 +150,7 @@ class TestGNNFeatureExtraction:
 class TestGNNMessagePassing:
     def test_output_keys_same_as_input(self, tiny_kg):
         from ipfs_datasets_py.knowledge_graphs.query.gnn import GraphNeuralNetworkAdapter
+
         kg, alice_id, bob_id, carol_id = tiny_kg
         adapter = GraphNeuralNetworkAdapter(kg)
         raw = adapter.extract_node_features()
@@ -128,6 +159,7 @@ class TestGNNMessagePassing:
 
     def test_zero_iterations_still_returns_features(self, tiny_kg):
         from ipfs_datasets_py.knowledge_graphs.query.gnn import GraphNeuralNetworkAdapter
+
         kg, alice_id, bob_id, carol_id = tiny_kg
         adapter = GraphNeuralNetworkAdapter(kg)
         raw = adapter.extract_node_features()
@@ -136,8 +168,11 @@ class TestGNNMessagePassing:
 
     def test_graph_sage_layer(self, tiny_kg):
         from ipfs_datasets_py.knowledge_graphs.query.gnn import (
-            GraphNeuralNetworkAdapter, GNNConfig, GNNLayerType,
+            GraphNeuralNetworkAdapter,
+            GNNConfig,
+            GNNLayerType,
         )
+
         kg, alice_id, bob_id, carol_id = tiny_kg
         cfg = GNNConfig(layer_type=GNNLayerType.GRAPH_SAGE, num_layers=1, normalize=False)
         adapter = GraphNeuralNetworkAdapter(kg, cfg)
@@ -147,8 +182,11 @@ class TestGNNMessagePassing:
 
     def test_graph_conv_layer(self, tiny_kg):
         from ipfs_datasets_py.knowledge_graphs.query.gnn import (
-            GraphNeuralNetworkAdapter, GNNConfig, GNNLayerType,
+            GraphNeuralNetworkAdapter,
+            GNNConfig,
+            GNNLayerType,
         )
+
         kg, alice_id, bob_id, carol_id = tiny_kg
         cfg = GNNConfig(layer_type=GNNLayerType.GRAPH_CONV, num_layers=1, normalize=False)
         adapter = GraphNeuralNetworkAdapter(kg, cfg)
@@ -158,8 +196,11 @@ class TestGNNMessagePassing:
 
     def test_attention_layer(self, tiny_kg):
         from ipfs_datasets_py.knowledge_graphs.query.gnn import (
-            GraphNeuralNetworkAdapter, GNNConfig, GNNLayerType,
+            GraphNeuralNetworkAdapter,
+            GNNConfig,
+            GNNLayerType,
         )
+
         kg, alice_id, bob_id, carol_id = tiny_kg
         cfg = GNNConfig(layer_type=GNNLayerType.GRAPH_ATTENTION, num_layers=1, normalize=False)
         adapter = GraphNeuralNetworkAdapter(kg, cfg)
@@ -174,8 +215,10 @@ class TestGNNMessagePassing:
 class TestGNNEmbeddingsAndSimilarity:
     def test_compute_embeddings_returns_node_embeddings(self, tiny_kg):
         from ipfs_datasets_py.knowledge_graphs.query.gnn import (
-            GraphNeuralNetworkAdapter, NodeEmbedding,
+            GraphNeuralNetworkAdapter,
+            NodeEmbedding,
         )
+
         kg, alice_id, bob_id, carol_id = tiny_kg
         adapter = GraphNeuralNetworkAdapter(kg)
         embs = adapter.compute_embeddings()
@@ -183,6 +226,7 @@ class TestGNNEmbeddingsAndSimilarity:
 
     def test_embeddings_cached(self, tiny_kg):
         from ipfs_datasets_py.knowledge_graphs.query.gnn import GraphNeuralNetworkAdapter
+
         kg, alice_id, bob_id, carol_id = tiny_kg
         adapter = GraphNeuralNetworkAdapter(kg)
         embs1 = adapter.compute_embeddings()
@@ -191,6 +235,7 @@ class TestGNNEmbeddingsAndSimilarity:
 
     def test_embeddings_normalized_unit_length(self, tiny_kg):
         from ipfs_datasets_py.knowledge_graphs.query.gnn import GraphNeuralNetworkAdapter, GNNConfig
+
         kg, alice_id, bob_id, carol_id = tiny_kg
         adapter = GraphNeuralNetworkAdapter(kg, GNNConfig(normalize=True))
         embs = adapter.compute_embeddings(force_recompute=True)
@@ -200,6 +245,7 @@ class TestGNNEmbeddingsAndSimilarity:
 
     def test_link_prediction_self_score_max(self, tiny_kg):
         from ipfs_datasets_py.knowledge_graphs.query.gnn import GraphNeuralNetworkAdapter
+
         kg, alice_id, bob_id, carol_id = tiny_kg
         adapter = GraphNeuralNetworkAdapter(kg)
         score = adapter.link_prediction_score(alice_id, alice_id)
@@ -207,6 +253,7 @@ class TestGNNEmbeddingsAndSimilarity:
 
     def test_link_prediction_unknown_entity_zero(self, tiny_kg):
         from ipfs_datasets_py.knowledge_graphs.query.gnn import GraphNeuralNetworkAdapter
+
         kg, alice_id, bob_id, carol_id = tiny_kg
         adapter = GraphNeuralNetworkAdapter(kg)
         score = adapter.link_prediction_score("nonexistent", alice_id)
@@ -214,6 +261,7 @@ class TestGNNEmbeddingsAndSimilarity:
 
     def test_find_similar_entities_count(self, tiny_kg):
         from ipfs_datasets_py.knowledge_graphs.query.gnn import GraphNeuralNetworkAdapter
+
         kg, alice_id, bob_id, carol_id = tiny_kg
         adapter = GraphNeuralNetworkAdapter(kg)
         similar = adapter.find_similar_entities(alice_id, top_k=2)
@@ -222,6 +270,7 @@ class TestGNNEmbeddingsAndSimilarity:
 
     def test_find_similar_entities_sorted_descending(self, tiny_kg):
         from ipfs_datasets_py.knowledge_graphs.query.gnn import GraphNeuralNetworkAdapter
+
         kg, alice_id, bob_id, carol_id = tiny_kg
         adapter = GraphNeuralNetworkAdapter(kg)
         similar = adapter.find_similar_entities(alice_id, top_k=10)
@@ -230,6 +279,7 @@ class TestGNNEmbeddingsAndSimilarity:
 
     def test_find_similar_entities_excludes_self(self, tiny_kg):
         from ipfs_datasets_py.knowledge_graphs.query.gnn import GraphNeuralNetworkAdapter
+
         kg, alice_id, bob_id, carol_id = tiny_kg
         adapter = GraphNeuralNetworkAdapter(kg)
         similar = adapter.find_similar_entities(alice_id, top_k=10)
@@ -243,6 +293,7 @@ class TestGNNEmbeddingsAndSimilarity:
 class TestGNNExportHelpers:
     def test_adjacency_dict_keys_are_entity_ids(self, tiny_kg):
         from ipfs_datasets_py.knowledge_graphs.query.gnn import GraphNeuralNetworkAdapter
+
         kg, alice_id, bob_id, carol_id = tiny_kg
         adapter = GraphNeuralNetworkAdapter(kg)
         adj = adapter.to_adjacency_dict()
@@ -250,6 +301,7 @@ class TestGNNExportHelpers:
 
     def test_adjacency_follows_relationship_direction(self, tiny_kg):
         from ipfs_datasets_py.knowledge_graphs.query.gnn import GraphNeuralNetworkAdapter
+
         kg, alice_id, bob_id, carol_id = tiny_kg
         adapter = GraphNeuralNetworkAdapter(kg)
         adj = adapter.to_adjacency_dict()
@@ -258,6 +310,7 @@ class TestGNNExportHelpers:
 
     def test_export_node_features_array_shape(self, tiny_kg):
         from ipfs_datasets_py.knowledge_graphs.query.gnn import GraphNeuralNetworkAdapter
+
         kg, alice_id, bob_id, carol_id = tiny_kg
         adapter = GraphNeuralNetworkAdapter(kg)
         ids, matrix = adapter.export_node_features_array()
@@ -272,6 +325,7 @@ class TestGNNExportHelpers:
 class TestKGProofTypeAndStatement:
     def test_proof_type_values(self):
         from ipfs_datasets_py.knowledge_graphs.query.zkp import KGProofType
+
         assert KGProofType.ENTITY_EXISTS.value == "entity_exists"
         assert KGProofType.ENTITY_PROPERTY.value == "entity_property"
         assert KGProofType.PATH_EXISTS.value == "path_exists"
@@ -279,6 +333,7 @@ class TestKGProofTypeAndStatement:
 
     def test_proof_statement_to_from_dict(self, tiny_kg):
         from ipfs_datasets_py.knowledge_graphs.query.zkp import KGZKProver, KGProofStatement
+
         kg, alice_id, bob_id, carol_id = tiny_kg
         prover = KGZKProver(kg)
         stmt = prover.prove_entity_exists("person", "Alice")
@@ -296,6 +351,7 @@ class TestKGProofTypeAndStatement:
 class TestKGZKProver:
     def test_prove_entity_exists_success(self, tiny_kg):
         from ipfs_datasets_py.knowledge_graphs.query.zkp import KGZKProver
+
         kg, alice_id, bob_id, carol_id = tiny_kg
         stmt = KGZKProver(kg).prove_entity_exists("person", "Alice")
         assert stmt is not None
@@ -304,12 +360,14 @@ class TestKGZKProver:
 
     def test_prove_entity_exists_none_for_unknown(self, tiny_kg):
         from ipfs_datasets_py.knowledge_graphs.query.zkp import KGZKProver
+
         kg, alice_id, bob_id, carol_id = tiny_kg
         stmt = KGZKProver(kg).prove_entity_exists("person", "Charlie")
         assert stmt is None
 
     def test_prove_entity_exists_does_not_reveal_id(self, tiny_kg):
         from ipfs_datasets_py.knowledge_graphs.query.zkp import KGZKProver
+
         kg, alice_id, bob_id, carol_id = tiny_kg
         stmt = KGZKProver(kg).prove_entity_exists("person", "Alice")
         assert alice_id not in stmt.commitment
@@ -317,6 +375,7 @@ class TestKGZKProver:
 
     def test_prove_entity_property_success(self, tiny_kg):
         from ipfs_datasets_py.knowledge_graphs.query.zkp import KGZKProver
+
         kg, alice_id, bob_id, carol_id = tiny_kg
         value_hash = hashlib.sha256("large".encode()).hexdigest()
         stmt = KGZKProver(kg).prove_entity_property(carol_id, "size", value_hash)
@@ -324,12 +383,14 @@ class TestKGZKProver:
 
     def test_prove_entity_property_wrong_hash(self, tiny_kg):
         from ipfs_datasets_py.knowledge_graphs.query.zkp import KGZKProver
+
         kg, alice_id, bob_id, carol_id = tiny_kg
         stmt = KGZKProver(kg).prove_entity_property(carol_id, "size", "wrong_hash")
         assert stmt is None
 
     def test_prove_path_exists_success(self, tiny_kg):
         from ipfs_datasets_py.knowledge_graphs.query.zkp import KGZKProver
+
         kg, alice_id, bob_id, carol_id = tiny_kg
         stmt = KGZKProver(kg).prove_path_exists("person", "org", max_hops=2)
         assert stmt is not None
@@ -338,18 +399,21 @@ class TestKGZKProver:
 
     def test_prove_path_exists_none_when_unreachable(self, tiny_kg):
         from ipfs_datasets_py.knowledge_graphs.query.zkp import KGZKProver
+
         kg, alice_id, bob_id, carol_id = tiny_kg
         stmt = KGZKProver(kg).prove_path_exists("org", "person", max_hops=1)
         assert stmt is None  # no reverse edges
 
     def test_prove_query_answer_count_success(self, tiny_kg):
         from ipfs_datasets_py.knowledge_graphs.query.zkp import KGZKProver
+
         kg, alice_id, bob_id, carol_id = tiny_kg
         stmt = KGZKProver(kg).prove_query_answer_count(2, "entity")
         assert stmt is not None
 
     def test_prove_query_answer_count_fails_when_too_few(self, tiny_kg):
         from ipfs_datasets_py.knowledge_graphs.query.zkp import KGZKProver
+
         kg, alice_id, bob_id, carol_id = tiny_kg
         stmt = KGZKProver(kg).prove_query_answer_count(100, "entity")
         assert stmt is None
@@ -361,16 +425,19 @@ class TestKGZKProver:
 class TestKGZKVerifier:
     def test_valid_statement_passes(self, tiny_kg):
         from ipfs_datasets_py.knowledge_graphs.query.zkp import KGZKProver, KGZKVerifier
+
         kg, alice_id, bob_id, carol_id = tiny_kg
         stmt = KGZKProver(kg).prove_entity_exists("person", "Alice")
         assert KGZKVerifier().verify_statement(stmt)
 
     def test_none_statement_fails(self):
         from ipfs_datasets_py.knowledge_graphs.query.zkp import KGZKVerifier
+
         assert KGZKVerifier().verify_statement(None) is False
 
     def test_replay_protection(self, tiny_kg):
         from ipfs_datasets_py.knowledge_graphs.query.zkp import KGZKProver, KGZKVerifier
+
         kg, alice_id, bob_id, carol_id = tiny_kg
         stmt = KGZKProver(kg).prove_entity_exists("person", "Alice")
         verifier = KGZKVerifier()
@@ -379,6 +446,7 @@ class TestKGZKVerifier:
 
     def test_verify_batch(self, tiny_kg):
         from ipfs_datasets_py.knowledge_graphs.query.zkp import KGZKProver, KGZKVerifier
+
         kg, alice_id, bob_id, carol_id = tiny_kg
         prover = KGZKProver(kg)
         stmts = [
@@ -393,6 +461,7 @@ class TestKGZKVerifier:
 
     def test_batch_prove(self, tiny_kg):
         from ipfs_datasets_py.knowledge_graphs.query.zkp import KGZKProver, KGZKVerifier
+
         kg, alice_id, bob_id, carol_id = tiny_kg
         prover = KGZKProver(kg)
         requests = [
@@ -412,22 +481,30 @@ class TestKGZKVerifier:
 class TestQueryModuleExports:
     def test_gnn_symbols_importable(self):
         from ipfs_datasets_py.knowledge_graphs.query import (
-            GraphNeuralNetworkAdapter, GNNConfig, GNNLayerType, NodeEmbedding,
+            GraphNeuralNetworkAdapter,
+            GNNConfig,
+            GNNLayerType,
+            NodeEmbedding,
         )
 
     def test_zkp_symbols_importable(self):
         from ipfs_datasets_py.knowledge_graphs.query import (
-            KGZKProver, KGZKVerifier, KGProofStatement, KGProofType,
+            KGZKProver,
+            KGZKVerifier,
+            KGProofStatement,
+            KGProofType,
         )
 
     def test_gnn_symbols_in_all(self):
         import importlib
+
         qmod = importlib.import_module("ipfs_datasets_py.knowledge_graphs.query")
         for sym in ("GraphNeuralNetworkAdapter", "GNNConfig", "GNNLayerType", "NodeEmbedding"):
             assert sym in qmod.__all__, f"{sym!r} missing from __all__"
 
     def test_zkp_symbols_in_all(self):
         import importlib
+
         qmod = importlib.import_module("ipfs_datasets_py.knowledge_graphs.query")
         for sym in ("KGZKProver", "KGZKVerifier", "KGProofStatement", "KGProofType"):
             assert sym in qmod.__all__, f"{sym!r} missing from __all__"
@@ -477,8 +554,12 @@ class TestDocIntegritySession76:
 # ═══════════════════════════════════════════════════════════════════════════
 class TestVersionAgreement:
     def _top_version(self, rel: str) -> str:
-        _moved = {'MASTER_STATUS.md', 'ROADMAP.md', 'CHANGELOG_KNOWLEDGE_GRAPHS.md',
-                  'DEFERRED_FEATURES.md'}
+        _moved = {
+            "MASTER_STATUS.md",
+            "ROADMAP.md",
+            "CHANGELOG_KNOWLEDGE_GRAPHS.md",
+            "DEFERRED_FEATURES.md",
+        }
         base = _DOCS_KG if rel in _moved else _KG_DIR
         with open(os.path.join(base, rel), encoding="utf-8") as fh:
             for line in fh:
@@ -498,4 +579,3 @@ class TestVersionAgreement:
     def test_roadmap_current_version(self):
         text = _read("ROADMAP.md")
         assert "3.22.30" in text
-

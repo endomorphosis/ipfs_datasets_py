@@ -40,9 +40,7 @@ from ipfs_datasets_py.processors.wallets.protocols import (  # noqa: E402
 )
 
 
-FIXTURE_DIR = (
-    Path(__file__).resolve().parents[3] / "fixtures" / "wallets" / "ethereum"
-)
+FIXTURE_DIR = Path(__file__).resolve().parents[3] / "fixtures" / "wallets" / "ethereum"
 SESSION = json.loads((FIXTURE_DIR / "rpc_session.json").read_text(encoding="utf-8"))
 
 
@@ -117,9 +115,7 @@ class TestEthereumSharedConformance(WalletProcessorConformanceMixin):
 
 
 def test_fixture_manifest_is_active_and_maps_every_ethereum_obligation() -> None:
-    manifest = json.loads(
-        (FIXTURE_DIR / "manifest.json").read_text(encoding="utf-8")
-    )
+    manifest = json.loads((FIXTURE_DIR / "manifest.json").read_text(encoding="utf-8"))
     assert manifest["goal_id"] == "WALPROC-G300"
     assert manifest["task_id"] == "WALPROC-018"
     assert manifest["classification"]["status"] == "active"

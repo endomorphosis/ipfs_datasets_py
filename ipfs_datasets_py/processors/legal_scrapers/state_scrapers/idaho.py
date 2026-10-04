@@ -19,7 +19,9 @@ from .registry import StateScraperRegistry
 class IdahoScraper(BaseStateScraper):
     """Scraper for Idaho state laws from https://legislature.idaho.gov"""
 
-    _ID_SECTION_URL_RE = re.compile(r"/statutesrules/idstat/title\d+/t\d+ch\d+/sect\d+[\-\.0-9A-Za-z]*$", re.IGNORECASE)
+    _ID_SECTION_URL_RE = re.compile(
+        r"/statutesrules/idstat/title\d+/t\d+ch\d+/sect\d+[\-\.0-9A-Za-z]*$", re.IGNORECASE
+    )
     _ID_TITLE_URL_RE = re.compile(r"/statutesrules/idstat/title\d+/?$", re.IGNORECASE)
     _ID_CHAPTER_URL_RE = re.compile(r"/statutesrules/idstat/title\d+/t\d+ch\d+/?$", re.IGNORECASE)
     _ID_SECTION_NUM_RE = re.compile(r"/sect([0-9A-Za-z.-]+)/?$", re.IGNORECASE)
@@ -31,26 +33,30 @@ class IdahoScraper(BaseStateScraper):
             if self._ID_SECTION_URL_RE.search(source):
                 filtered.append(statute)
         return filtered
-    
+
     def get_base_url(self) -> str:
         """Return the base URL for Idaho's legislative website."""
         return "https://legislature.idaho.gov"
-    
+
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for Idaho."""
-        return [{
-            "name": "Idaho Statutes",
-            "url": f"{self.get_base_url()}/statutesrules/idstat/",
-            "type": "Code"
-        }]
-    
-    async def scrape_code(self, code_name: str, code_url: str, max_statutes: int | None = None) -> List[NormalizedStatute]:
+        return [
+            {
+                "name": "Idaho Statutes",
+                "url": f"{self.get_base_url()}/statutesrules/idstat/",
+                "type": "Code",
+            }
+        ]
+
+    async def scrape_code(
+        self, code_name: str, code_url: str, max_statutes: int | None = None
+    ) -> List[NormalizedStatute]:
         """Scrape a specific code from Idaho's legislative website.
-        
+
         Args:
             code_name: Name of the code to scrape
             code_url: URL of the code
-            
+
         Returns:
             List of NormalizedStatute objects
         """
@@ -76,7 +82,11 @@ class IdahoScraper(BaseStateScraper):
                 if limit is not None and len(statutes) >= limit:
                     break
                 section_links = await self._discover_section_links(chapter_url)
-                if chapter_index == 1 or chapter_index % 10 == 0 or chapter_index == len(chapter_links):
+                if (
+                    chapter_index == 1
+                    or chapter_index % 10 == 0
+                    or chapter_index == len(chapter_links)
+                ):
                     self.logger.info(
                         "Idaho official index: title=%s chapter=%s/%s sections=%s statutes_so_far=%s",
                         title_label or title_url,
@@ -97,13 +107,17 @@ class IdahoScraper(BaseStateScraper):
                     )
                     if statute is not None:
                         statutes.append(statute)
-                        checkpoint.maybe_write(statutes, title_label=title_label, chapter_label=chapter_label)
+                        checkpoint.maybe_write(
+                            statutes, title_label=title_label, chapter_label=chapter_label
+                        )
 
         if statutes:
             checkpoint.write(statutes, title_label="complete", chapter_label="complete")
             return statutes[:limit] if limit is not None else statutes
 
-        self.logger.warning("Idaho official direct crawl returned no statutes; skipping generic recovery fallback")
+        self.logger.warning(
+            "Idaho official direct crawl returned no statutes; skipping generic recovery fallback"
+        )
         return []
 
     async def _fetch_official_id_html(self, url: str, timeout_seconds: int = 15) -> str:
@@ -137,7 +151,9 @@ class IdahoScraper(BaseStateScraper):
             payload = b""
         self._record_fetch_event(provider="requests_direct", success=bool(payload))
         if payload:
-            await self._cache_successful_page_fetch(url=url, payload=payload, provider="requests_direct")
+            await self._cache_successful_page_fetch(
+                url=url, payload=payload, provider="requests_direct"
+            )
             return payload.decode("utf-8", errors="replace")
         return ""
 
@@ -296,13 +312,19 @@ class _IdahoCheckpoint:
         if not raw_dir:
             self.path: Optional[Path] = None
         else:
-            self.path = Path(raw_dir).expanduser().resolve() / f"STATE-{state_code.upper()}-partial.json"
+            self.path = (
+                Path(raw_dir).expanduser().resolve() / f"STATE-{state_code.upper()}-partial.json"
+            )
             self.path.parent.mkdir(parents=True, exist_ok=True)
-        self.interval = max(1, int(float(os.getenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_INTERVAL", "500") or 500)))
+        self.interval = max(
+            1, int(float(os.getenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_INTERVAL", "500") or 500))
+        )
         self.last_count = 0
         self.last_write_ts = 0.0
 
-    def maybe_write(self, statutes: List[NormalizedStatute], *, title_label: str, chapter_label: str) -> None:
+    def maybe_write(
+        self, statutes: List[NormalizedStatute], *, title_label: str, chapter_label: str
+    ) -> None:
         count = len(statutes)
         if not self.path or count <= 0:
             return
@@ -310,7 +332,9 @@ class _IdahoCheckpoint:
             return
         self.write(statutes, title_label=title_label, chapter_label=chapter_label)
 
-    def write(self, statutes: List[NormalizedStatute], *, title_label: str, chapter_label: str) -> None:
+    def write(
+        self, statutes: List[NormalizedStatute], *, title_label: str, chapter_label: str
+    ) -> None:
         if not self.path:
             return
         payload = {

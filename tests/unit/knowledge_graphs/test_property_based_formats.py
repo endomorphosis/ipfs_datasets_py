@@ -22,13 +22,17 @@ from typing import List
 import pytest
 
 from ipfs_datasets_py.knowledge_graphs.migration.formats import (
-    GraphData, NodeData, RelationshipData, MigrationFormat,
+    GraphData,
+    NodeData,
+    RelationshipData,
+    MigrationFormat,
 )
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _random_str(length: int = 6) -> str:
     """Return a random alphabetic string."""
@@ -107,6 +111,7 @@ TEXT_FORMATS = [
 BINARY_FORMATS: list = []
 try:
     import libipld  # noqa: F401
+
     BINARY_FORMATS.append((MigrationFormat.CAR, "car"))
 except ImportError:
     pass
@@ -271,6 +276,7 @@ class TestPropertyBasedRoundtrip:
 # ---------------------------------------------------------------------------
 # CAR-specific property tests (only when libipld installed)
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.skipif(not BINARY_FORMATS, reason="libipld not installed")
 class TestCARFormatPropertyBased:

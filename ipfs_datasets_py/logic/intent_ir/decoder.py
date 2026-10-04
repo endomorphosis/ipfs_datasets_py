@@ -251,9 +251,7 @@ def migrate_intent_ir(
     losses = tuple(item for item in diagnostics if item.lossy)
     if losses and not allow_lossy:
         paths = ", ".join(item.path for item in losses)
-        raise IntentIRDecodeError(
-            f"Intent IR migration would be lossy at: {paths}"
-        )
+        raise IntentIRDecodeError(f"Intent IR migration would be lossy at: {paths}")
     registry_result = INTENT_IR_SCHEMA_REGISTRY.migrate(
         raw,
         source_schema_id=LEGACY_INTENT_IR_SCHEMA_VERSION,
@@ -294,25 +292,17 @@ def _decode_v1(raw: Mapping[str, Any]) -> IntentIRDocument:
         ),
         statements=tuple(
             _decode_statement(item, f"$.statements[{index}]")
-            for index, item in enumerate(
-                _array(raw["statements"], "$.statements")
-            )
+            for index, item in enumerate(_array(raw["statements"], "$.statements"))
         ),
         actions=tuple(
             _decode_action(item, f"$.actions[{index}]")
-            for index, item in enumerate(
-                _array(raw.get("actions", []), "$.actions")
-            )
+            for index, item in enumerate(_array(raw.get("actions", []), "$.actions"))
         ),
         control_edges=tuple(
             _decode_edge(item, f"$.control_edges[{index}]")
-            for index, item in enumerate(
-                _array(raw.get("control_edges", []), "$.control_edges")
-            )
+            for index, item in enumerate(_array(raw.get("control_edges", []), "$.control_edges"))
         ),
-        entry_action_ids=_string_tuple(
-            raw.get("entry_action_ids", []), "$.entry_action_ids"
-        ),
+        entry_action_ids=_string_tuple(raw.get("entry_action_ids", []), "$.entry_action_ids"),
         terminal_action_ids=_string_tuple(
             raw.get("terminal_action_ids", []), "$.terminal_action_ids"
         ),
@@ -333,39 +323,21 @@ def _decode_source(value: Any, path: str) -> SourceRef:
     span = None
     if span_value is not None:
         span_raw = _object(span_value, f"{path}.span")
-        _check_fields(
-            span_raw, _SPAN_FIELDS, _SPAN_FIELDS, f"{path}.span"
-        )
+        _check_fields(span_raw, _SPAN_FIELDS, _SPAN_FIELDS, f"{path}.span")
         span = SourceSpan(
-            start_char=_integer(
-                span_raw["start_char"], f"{path}.span.start_char"
-            ),
-            end_char=_integer(
-                span_raw["end_char"], f"{path}.span.end_char"
-            ),
+            start_char=_integer(span_raw["start_char"], f"{path}.span.start_char"),
+            end_char=_integer(span_raw["end_char"], f"{path}.span.end_char"),
         )
     return SourceRef(
         ref_id=_string(raw["ref_id"], f"{path}.ref_id"),
         source_uri=_string(raw["source_uri"], f"{path}.source_uri"),
         source_id=_string(raw["source_id"], f"{path}.source_id"),
-        source_revision=_string(
-            raw["source_revision"], f"{path}.source_revision"
-        ),
-        content_sha256=_string(
-            raw["content_sha256"], f"{path}.content_sha256"
-        ),
-        container_uri=_string(
-            raw.get("container_uri", ""), f"{path}.container_uri"
-        ),
-        container_sha256=_string(
-            raw.get("container_sha256", ""), f"{path}.container_sha256"
-        ),
-        content_cid=_string(
-            raw.get("content_cid", ""), f"{path}.content_cid"
-        ),
-        license_expression=_string(
-            raw.get("license_expression", ""), f"{path}.license_expression"
-        ),
+        source_revision=_string(raw["source_revision"], f"{path}.source_revision"),
+        content_sha256=_string(raw["content_sha256"], f"{path}.content_sha256"),
+        container_uri=_string(raw.get("container_uri", ""), f"{path}.container_uri"),
+        container_sha256=_string(raw.get("container_sha256", ""), f"{path}.container_sha256"),
+        content_cid=_string(raw.get("content_cid", ""), f"{path}.content_cid"),
+        license_expression=_string(raw.get("license_expression", ""), f"{path}.license_expression"),
         review_status=_enum(
             ReviewStatus,
             raw.get("review_status", ReviewStatus.UNREVIEWED.value),
@@ -382,12 +354,8 @@ def _decode_statement(value: Any, path: str) -> IntentStatement:
         statement_id=_string(raw["statement_id"], f"{path}.statement_id"),
         kind=_enum(StatementKind, raw["kind"], f"{path}.kind"),
         modality=_enum(IntentModality, raw["modality"], f"{path}.modality"),
-        normalized_text=_string(
-            raw["normalized_text"], f"{path}.normalized_text"
-        ),
-        source_ref_ids=_string_tuple(
-            raw["source_ref_ids"], f"{path}.source_ref_ids"
-        ),
+        normalized_text=_string(raw["normalized_text"], f"{path}.normalized_text"),
+        source_ref_ids=_string_tuple(raw["source_ref_ids"], f"{path}.source_ref_ids"),
         predicate=_string(raw.get("predicate", ""), f"{path}.predicate"),
         arguments=_string_tuple(raw.get("arguments", []), f"{path}.arguments"),
         confidence=_number(raw.get("confidence", 1.0), f"{path}.confidence"),
@@ -408,25 +376,13 @@ def _decode_action(value: Any, path: str) -> IntentAction:
         actor=_string(raw["actor"], f"{path}.actor"),
         verb=_string(raw["verb"], f"{path}.verb"),
         object_refs=_string_tuple(raw["object_refs"], f"{path}.object_refs"),
-        source_ref_ids=_string_tuple(
-            raw["source_ref_ids"], f"{path}.source_ref_ids"
-        ),
+        source_ref_ids=_string_tuple(raw["source_ref_ids"], f"{path}.source_ref_ids"),
         tool_refs=_string_tuple(raw.get("tool_refs", []), f"{path}.tool_refs"),
-        input_refs=_string_tuple(
-            raw.get("input_refs", []), f"{path}.input_refs"
-        ),
-        output_refs=_string_tuple(
-            raw.get("output_refs", []), f"{path}.output_refs"
-        ),
-        precondition_ids=_string_tuple(
-            raw.get("precondition_ids", []), f"{path}.precondition_ids"
-        ),
-        effect_ids=_string_tuple(
-            raw.get("effect_ids", []), f"{path}.effect_ids"
-        ),
-        verification_ids=_string_tuple(
-            raw.get("verification_ids", []), f"{path}.verification_ids"
-        ),
+        input_refs=_string_tuple(raw.get("input_refs", []), f"{path}.input_refs"),
+        output_refs=_string_tuple(raw.get("output_refs", []), f"{path}.output_refs"),
+        precondition_ids=_string_tuple(raw.get("precondition_ids", []), f"{path}.precondition_ids"),
+        effect_ids=_string_tuple(raw.get("effect_ids", []), f"{path}.effect_ids"),
+        verification_ids=_string_tuple(raw.get("verification_ids", []), f"{path}.verification_ids"),
         grounding=_enum(NodeGrounding, raw["grounding"], f"{path}.grounding"),
     )
 
@@ -436,23 +392,15 @@ def _decode_edge(value: Any, path: str) -> IntentControlEdge:
     _check_fields(raw, _EDGE_FIELDS, _EDGE_REQUIRED, path)
     return IntentControlEdge(
         edge_id=_string(raw["edge_id"], f"{path}.edge_id"),
-        source_action_id=_string(
-            raw["source_action_id"], f"{path}.source_action_id"
-        ),
-        target_action_id=_string(
-            raw["target_action_id"], f"{path}.target_action_id"
-        ),
+        source_action_id=_string(raw["source_action_id"], f"{path}.source_action_id"),
+        target_action_id=_string(raw["target_action_id"], f"{path}.target_action_id"),
         kind=_enum(
             ControlEdgeKind,
             raw.get("kind", ControlEdgeKind.NEXT.value),
             f"{path}.kind",
         ),
-        guard_statement_id=_string(
-            raw.get("guard_statement_id", ""), f"{path}.guard_statement_id"
-        ),
-        source_ref_ids=_string_tuple(
-            raw.get("source_ref_ids", []), f"{path}.source_ref_ids"
-        ),
+        guard_statement_id=_string(raw.get("guard_statement_id", ""), f"{path}.guard_statement_id"),
+        source_ref_ids=_string_tuple(raw.get("source_ref_ids", []), f"{path}.source_ref_ids"),
         grounding=_enum(NodeGrounding, raw["grounding"], f"{path}.grounding"),
     )
 
@@ -494,9 +442,7 @@ def _migrate_v0_1(
         (migrated, "tags", "$.tags"),
     ]
     for index, item in enumerate(migrated.get("statements", [])):
-        set_paths.append(
-            (item, "source_ref_ids", f"$.statements[{index}].source_ref_ids")
-        )
+        set_paths.append((item, "source_ref_ids", f"$.statements[{index}].source_ref_ids"))
     for index, item in enumerate(migrated.get("actions", [])):
         for name in (
             "object_refs",
@@ -510,9 +456,7 @@ def _migrate_v0_1(
         ):
             set_paths.append((item, name, f"$.actions[{index}].{name}"))
     for index, item in enumerate(migrated.get("control_edges", [])):
-        set_paths.append(
-            (item, "source_ref_ids", f"$.control_edges[{index}].source_ref_ids")
-        )
+        set_paths.append((item, "source_ref_ids", f"$.control_edges[{index}].source_ref_ids"))
 
     for owner, name, path in set_paths:
         if name not in owner:
@@ -540,13 +484,9 @@ def _migrate_v0_1(
     for collection_name in ("statements", "actions", "control_edges"):
         for index, item in enumerate(migrated.get(collection_name, [])):
             path = f"$.{collection_name}[{index}].grounding"
-            if collection_name == "control_edges" and not item.get(
-                "source_ref_ids", []
-            ):
+            if collection_name == "control_edges" and not item.get("source_ref_ids", []):
                 grounding = NodeGrounding.INFERRED.value
-                message = (
-                    "Classified a legacy edge without source references as inferred"
-                )
+                message = "Classified a legacy edge without source references as inferred"
             else:
                 grounding = NodeGrounding.GROUNDED.value
                 message = "Classified a legacy source-referenced node as grounded"
@@ -577,10 +517,7 @@ def _migrate_v0_1(
         MigrationDiagnostic(
             code="schema_version_upgraded",
             path="$.schema_version",
-            message=(
-                f"Upgraded {LEGACY_INTENT_IR_SCHEMA_VERSION} to "
-                f"{INTENT_IR_SCHEMA_VERSION}"
-            ),
+            message=(f"Upgraded {LEGACY_INTENT_IR_SCHEMA_VERSION} to {INTENT_IR_SCHEMA_VERSION}"),
         )
     )
     return migrated, diagnostics
@@ -657,10 +594,7 @@ def _plain_json(value: Any, path: str) -> Any:
     if isinstance(value, Mapping):
         return _plain_object(value, path)
     if isinstance(value, list):
-        return [
-            _plain_json(item, f"{path}[{index}]")
-            for index, item in enumerate(value)
-        ]
+        return [_plain_json(item, f"{path}[{index}]") for index, item in enumerate(value)]
     if value is None or isinstance(value, (str, bool, int)):
         return value
     if isinstance(value, float) and math.isfinite(value):
@@ -670,10 +604,7 @@ def _plain_json(value: Any, path: str) -> Any:
 
 def _thaw_registry_json(value: Any) -> Any:
     if isinstance(value, Mapping):
-        return {
-            str(key): _thaw_registry_json(item)
-            for key, item in value.items()
-        }
+        return {str(key): _thaw_registry_json(item) for key, item in value.items()}
     if isinstance(value, (list, tuple)):
         return [_thaw_registry_json(item) for item in value]
     return value
@@ -721,8 +652,7 @@ def _number(value: Any, path: str) -> float:
 
 def _string_tuple(value: Any, path: str) -> tuple[str, ...]:
     return tuple(
-        _string(item, f"{path}[{index}]")
-        for index, item in enumerate(_array(value, path))
+        _string(item, f"{path}[{index}]") for index, item in enumerate(_array(value, path))
     )
 
 
@@ -745,14 +675,10 @@ def _check_fields(
 ) -> None:
     unknown = sorted(set(value) - allowed)
     if unknown:
-        raise IntentIRDecodeError(
-            f"{path} contains unknown fields: {', '.join(unknown)}"
-        )
+        raise IntentIRDecodeError(f"{path} contains unknown fields: {', '.join(unknown)}")
     missing = sorted(required - set(value))
     if missing:
-        raise IntentIRDecodeError(
-            f"{path} is missing required fields: {', '.join(missing)}"
-        )
+        raise IntentIRDecodeError(f"{path} is missing required fields: {', '.join(missing)}")
 
 
 INTENT_IR_SCHEMA_REGISTRY = IRSchemaRegistry(
