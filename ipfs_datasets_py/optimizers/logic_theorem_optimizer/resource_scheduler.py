@@ -41,7 +41,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.runtime_telemetry impor
     ResourceSnapshot,
     collect_resource_snapshot,
 )
-from .proof_resource_safety import ProofHostResources, collect_proof_host_resources
+from .proof_resource_safety import ProofHostResources, ProofPressureSources, collect_proof_host_resources
 
 
 RESOURCE_SCHEDULER_SCHEMA_VERSION = "legal-ir-global-resource-scheduler-v1"
@@ -1494,6 +1494,16 @@ class GlobalResourceScheduler:
                 except Exception:
                     # Diagnostics must preserve telemetry-refusal behavior.
                     observation.update(primary_gate=None, last_sample=None)
+                # Scope attribution belongs only to this request's existing
+                # sample. Failure to project optional metadata must not erase
+                # a valid gate/scalar sample or change the admission decision.
+                if host is not None and observation.get("last_sample") is not None:
+                    try:
+                        sources = getattr(host, "pressure_sources", None)
+                        if type(sources) is ProofPressureSources:
+                            observation["last_sample"]["pressure_sources"] = sources.to_dict()
+                    except Exception:
+                        pass
             if reason:
                 self._record_pressure(state, reason, now)
                 self._record_proof_refusal(state, waiter, host=host, reason=reason, gate="envelope",

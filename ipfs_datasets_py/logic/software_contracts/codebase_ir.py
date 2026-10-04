@@ -16,7 +16,7 @@ import threading
 import time
 from collections import OrderedDict
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass, fields
+from dataclasses import dataclass, fields, is_dataclass
 from enum import Enum
 from pathlib import Path
 from types import (BuiltinFunctionType, FunctionType, MappingProxyType, ModuleType,
@@ -521,6 +521,118 @@ def _manifest_native_cas_state(cas):
     return (maximum, *(str(values[name]) for name in ("root", "structured_root", "source_root")))
 
 
+def _ast_observation_value(value):
+    if not isinstance(value, type) and is_dataclass(value):
+        return (type(value), tuple((field.name, _ast_observation_value(getattr(value, field.name)))
+                                  for field in fields(value)))
+    if type(value) is tuple:
+        return tuple(_ast_observation_value(item) for item in value)
+    if type(value) is dict:
+        return tuple(sorted((key, _ast_observation_value(item)) for key, item in value.items()))
+    return _manifest_binding_value(value)
+
+
+def _ast_observation_function(function):
+    wrapped = getattr(function, "__wrapped__", None)
+    return (function, function.__code__, _ast_observation_value(function.__defaults__),
+            _ast_observation_value(function.__kwdefaults__),
+            None if wrapped is None else _ast_observation_function(wrapped))
+
+
+def _ast_observation_bindings():
+    """Capture live reconstruction semantics, never ASTs or read results."""
+    import re
+    from . import ast_ir, duckdb_ast_store, schema_versions
+    modules = (ast_ir, duckdb_ast_store, schema_versions)
+    names = {module.__name__ for module in modules}
+    result = []
+    classes = set()
+    for module in modules:
+        result.append(module)
+        for name, value in sorted(vars(module).items()):
+            if type(value) is FunctionType:
+                result.append((module.__name__, name, _ast_observation_function(value)))
+            elif type(value) is ModuleType:
+                result.append((module.__name__, name, value))
+            elif isinstance(value, re.Pattern):
+                result.append((module.__name__, name, value.pattern, value.flags))
+            elif isinstance(value, type) and value.__module__ in names:
+                result.append((module.__name__, name, value))
+                classes.add(value)
+            elif name.isupper() and (type(value) in (str, int, float, bool, tuple, frozenset)
+                                     or (not isinstance(value, type) and is_dataclass(value))):
+                result.append((module.__name__, name, _ast_observation_value(value)))
+    for cls in sorted(classes, key=lambda value: (value.__module__, value.__name__)):
+        for name, value in sorted(vars(cls).items()):
+            if isinstance(value, (classmethod, staticmethod)):
+                value = value.__func__
+            if type(value) is FunctionType:
+                result.append((cls, name, _ast_observation_function(value)))
+            elif isinstance(value, property):
+                result.append((cls, name, tuple(None if fn is None else _ast_observation_function(fn)
+                                               for fn in (value.fget, value.fset, value.fdel))))
+            elif name.isupper() and type(value) in (str, int, tuple, frozenset):
+                result.append((cls, name, _ast_observation_value(value)))
+    result.append(_ast_observation_function(RepositoryCodebaseIndex.load_ast_artifact))
+    return tuple(result)
+
+
+def _ast_observation_provenance():
+    """Pre-import schema/store wrappers retain the ordinary historical path."""
+    from . import ast_ir, duckdb_ast_store
+    if ASTRecord is not ast_ir.ASTRecord:
+        return False
+    functions = [(ast_ir, ast_ir.ASTRecord.from_dict.__func__),
+                 (ast_ir, ast_ir.ASTRecord.from_json.__func__),
+                 (duckdb_ast_store, duckdb_ast_store.project_ast_record)]
+    functions.extend((duckdb_ast_store, getattr(duckdb_ast_store.DuckDBASTStore, name))
+                     for name in ("_rebuild", "_verify_loaded_rows", "get_many_by_ast_cid"))
+    return all(type(function) is FunctionType
+               and function.__module__ == module.__name__
+               and function.__code__.co_filename == module.__file__
+               and not hasattr(function, "__wrapped__")
+               for module, function in functions)
+
+
+def _ast_observation_context(index, store):
+    """Only unmodified native durable reads may discharge duplicate construction."""
+    from . import cache, duckdb_ast_store
+    try:
+        duckdb = sys.modules.get("duckdb")
+        if (type(index) is not RepositoryCodebaseIndex or "load_ast_artifact" in vars(index)
+                or type(store) is not duckdb_ast_store.DuckDBASTStore
+                or duckdb is None or type(store._connection) is not duckdb.DuckDBPyConnection
+                or set(vars(store)) != {"_connection", "_lock", "_by_blob", "_by_ast_cid",
+                                       "_by_file", "_invalidations", "_stats"}
+                or not cache._structured_reader_is_native()
+                or not _ast_observation_provenance()
+                or _ast_observation_bindings() != _ast_observation_native_bindings):
+            return None
+        state = _manifest_native_cas_state(index.artifacts)
+        return None if state is None else (id(store), id(store._connection), id(index.artifacts), state)
+    except (AttributeError, TypeError, ValueError):
+        return None
+
+
+def _verify_observed_ast(artifacts, manifest, entry, unit, projection):
+    """Join a fresh, fully verified SQL reconstruction to fresh exact CAS bytes.
+
+    The CAS still performs its original bounded decode, canonical and CID
+    checks. Exact payload equality transfers only the AST schema validation
+    already performed in this batch; no previous observation is reused.
+    """
+    payload = artifacts._read_structured_payload(unit.ast_cid)
+    artifacts._decode_structured_payload(unit.ast_cid, payload)
+    if payload != projection.ast_blob.payload_json.encode("utf-8"):
+        raise CodebaseIRError("AST artifact differs from verified active payload")
+    source, revision = projection.source_file, projection.source_revision
+    if (source.source_cid != entry.source_cid or source.path != entry.path
+            or revision.repository_id != manifest.snapshot.repository_id
+            or revision.revision != "snapshot:" + manifest.snapshot.snapshot_cid
+            or revision.repository_tree_cid != manifest.snapshot.snapshot_cid):
+        raise CodebaseIRError("AST artifact does not match the manifest")
+
+
 def _load_manifest_from_cas(cas, manifest_cid):
     """Fresh exact body identity may reuse only a privately validated manifest.
 
@@ -910,6 +1022,7 @@ class RepositoryCodebaseIndex:
             store = self.ingestor.store
             def observe_entries(entries) -> None:
                 ast_entries = [entry for entry in entries if units[entry.source_key].ast_cid is not None]
+                native_context = _ast_observation_context(self, store)
                 oversized = False
                 try:
                     projections = store.get_many_by_ast_cid(
@@ -925,6 +1038,8 @@ class RepositoryCodebaseIndex:
                     observe_entries(entries[:middle])
                     observe_entries(entries[middle:])
                     return
+                if native_context is not None and _ast_observation_context(self, store) != native_context:
+                    raise CodebaseIRError("AST observation owner or reconstruction semantics changed")
                 by_path = dict(zip((entry.path for entry in ast_entries), projections))
                 for entry in entries:
                     checkpoint()
@@ -933,8 +1048,13 @@ class RepositoryCodebaseIndex:
                     unit = units[entry.source_key]
                     if unit.ast_cid is not None:
                         self._require_ast_projection(manifest, entry, unit, by_path[entry.path])
-                    self.load_ast_artifact(manifest, entry.path)
+                    if native_context is not None and unit.parse_status in {"ok", "partial"}:
+                        _verify_observed_ast(self.artifacts, manifest, entry, unit, by_path[entry.path])
+                    else:
+                        self.load_ast_artifact(manifest, entry.path)
                 store.require_active_identities(projections, checkpoint=checkpoint)
+                if native_context is not None and _ast_observation_context(self, store) != native_context:
+                    raise CodebaseIRError("AST observation owner or reconstruction semantics changed")
             for offset in range(0, len(captured.entries), 32):
                 observe_entries(captured.entries[offset:offset + 32])
             checkpoint()
@@ -999,6 +1119,7 @@ class RepositoryCodebaseIndex:
 
 # Capture native callable/default/schema identities before the first memo call;
 # import stays free of filesystem reads. Live producer bytes are read on use.
+_ast_observation_native_bindings = _ast_observation_bindings()
 _MANIFEST_NATIVE_RECORD_TYPES = _manifest_record_types()
 _MANIFEST_NATIVE_JSON_FIELDS = (
     (_MANIFEST_NATIVE_RECORD_TYPES[5], ("metadata", "signature", "annotations", "normalized_ast")),
