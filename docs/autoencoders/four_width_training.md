@@ -164,3 +164,125 @@ The local run folder is
 `workspace/test-logs/decoder-four-width-20261004`. It contains the sealed recipe,
 readiness and representation audits, preflight, resource receipts and training
 results. Final measured outcomes are recorded alongside the published evidence.
+
+## Continuation and native producer follow-up
+
+`scripts/ops/autoencoder/benchmark_formula_checkpoint_continuation.py` continues
+the saved 8D baseline final attempt, 384D auxiliary selected state, and 768D
+baseline final attempt. Each width has two preregistered learning-rate arms:
+0.0001 and 0.001, with the existing non-action head multiplier of ten. Four
+ten-epoch curriculum stages give 170 updates per arm. Targets, losses, auxiliary
+sampling policy, 512-token limits and fidelity selection remain fixed. The
+optimizer and scheduler start fresh; this is weight continuation, not an exact
+optimizer resume. The representations remain cached, and the encoders and
+historical 8D linguistic teacher are not fine-tuned by these formula-sidecar fits.
+
+Before fitting, every restored parent's original development predictions must
+match its saved outputs exactly. Separate postfit evaluation of the already
+exposed R6 cohort cannot select a checkpoint or initiate another fit. The local
+run folder is `workspace/test-logs/decoder-continuation-20261004`; it retains
+failed preflights as well as successful attempts and resource receipts.
+
+The new 4096D producer components are:
+
+- `native/leanstral4096_worker.cpp` under the autoencoder package: a source-only
+  CPU worker with separate vocabulary and full-forward modes, fixed single-source
+  batching, last pooling, L2 normalization, token accounting and process cleanup.
+- `scripts/ops/autoencoder/build_leanstral4096_worker.py`: builds against pinned
+  existing native headers and CPU libraries without changing the shared backend.
+- `source_embeddings_4096_native_owner.py`: a bounded, owned vocabulary-only
+  operation. It never enables full-forward training or changes the shared service.
+- `scripts/ops/autoencoder/probe_native_4096_sources.py`: under the resource
+  guardian, builds the worker, runs compiled parser controls, and checks the 239
+  exact existing paragraph/clause source strings. It submits no formulas or
+  reference labels to the tokenizer.
+
+Vocabulary-only loading does not initialize llama.cpp's runtime embedding-width
+fields. Its receipt therefore reports those dimensions as null, alongside the
+declared GGUF embedding metadata and actual untruncated token IDs. This distinction
+must remain intact: successful tokenization is not an embedding, trained model,
+semantic qualification, or Lake admission. The production `embed_rows()` gate
+remains closed. The native run folder is
+`workspace/test-logs/decoder-native-owner-20261004`.
+
+Before a 4096D fit, a full-forward owner must verify the actual model content,
+native output dimensions, device execution and operation lifecycle. It must then
+produce same-source vectors under the fixed profile, release the large native
+model, and train a separate compatible formula-sidecar lineage. The current
+loader prefetches the 67 GB model; vocabulary-only success does not establish
+enough memory headroom for this operation. Existing fixed-batch diagnostic
+vectors, padded inputs and caller-written verification flags remain unsuitable.
+
+### Continuation measurements
+
+All six continuations completed 170 updates, for 1,020 new updates. Counts below
+are exact paragraph reconstructions out of 48, compared with each chosen parent
+endpoint. R6 is an already exposed regression cohort, not a fresh holdout. Values
+after the arrow are the 0.0001 / 0.001 learning-rate arms' final attempts.
+
+| Width | Development exact | Exposed R6 exact | Fit seconds, low / high LR |
+| --- | --- | --- | --- |
+| 8 | 1 → 1 / 1 | 0 → 0 / 0 | 27.87 / 27.05 |
+| 384 | 48 → 48 / 48 | 28 → 29 / 30 | 39.52 / 39.99 |
+| 768 | 46 → 48 / 48 | 47 → 48 / 48 | 49.74 / 49.58 |
+| 4096 | Not trained | Not evaluated | Not measured |
+
+Both larger widths selected their final states at epoch 40. The 8D lower-rate
+arm selected epoch 4; its final attempt was rejected. The higher-rate 8D arm
+retained its parent. At learning rate 0.001, exposed R6 token cross-entropy fell
+from 0.02953 to 0.02169 for 384D and from 0.01840 to 0.00383 for 768D. The 8D
+continuations did not establish an exact-reconstruction improvement.
+
+Each fit presented 1,220 decoder rows. Wall seconds per row presentation were
+0.02285/0.02218, 0.03239/0.03278 and 0.04077/0.04064 for 8D, 384D and 768D
+respectively. These include the training call's development evaluations. They
+exclude resource admission, external control panels and the separate R6 evaluator.
+Inputs were warm cached representations, with one CPU worker, bridge names `[]`,
+provers off and legal-IR metric disk cache off. No bridge-on evaluate ran. These
+are continuation measurements on one shared host, not a from-scratch speedup.
+
+The full six-fit guarded phase took 436.82 seconds; the separate R6 evaluator
+took 27.61 seconds, or 107.62 seconds with admission and accounting. Maximum
+sampled training process-group RSS was 1,090,940,928 bytes under a 4 GiB
+reservation. All successful reservations released normally. Earlier failed
+setup attempts remain recorded and charged; the 140 GB campaign cap did not
+change. A guardian-local adoption fix now reads the shared scheduler configuration
+after the storage census, immediately before admission, and pins that one client.
+It does not reset shared state or reacquire after a changed active lease.
+
+The native 4096D vocabulary probe also completed: seven compiled parser controls
+passed, and all 239 sources fit without truncation at 8–74 tokens. Vocabulary
+loading and tokenization took 0.49041 seconds (0.00205 seconds per source), with
+244,211,712 bytes maximum sampled child RSS. Build, controls and probe took
+6.28 seconds; the guarded attempt took 70.66 seconds. OS cache warmth is
+uncontrolled. These are tokenizer-preflight timings, not formalization or
+embedding-inference throughput. The GGUF declares `deepseek2.embedding_length`
+4096 and has no separate output-width declaration; runtime widths remain
+unobserved. The existing model and all seven native controls produced zero
+training vectors. Its independent saved-evidence audit passed 3,658 checks.
+
+### Separate 8D object projection experiment
+
+`isolated_object_clause_decoder_experiment.py` adds an opt-in 8D formula-sidecar
+schema with a private 8-to-64 object projection, cloned from the existing shared
+projection. It adds 576 parameters. Actor/modality and recurrent features keep
+their existing paths; the readout, labels, loss reductions and selection gates
+are unchanged. The strict trainer, action loss and boundary helper recognize the
+explicit new schema. Existing schemas retain their previous behavior.
+
+The guarded comparison in `workspace/test-logs/object-projection-r2-20261004`
+ran 340 updates per arm. Original and isolated models reproduced the saved
+initial predictions exactly before fitting. Final training exactness changed
+9→10/48 and development exactness 1→2/48, but both arms retained their initial
+selected checkpoint. The isolated head reduced raw training object accuracy
+112→100/180 while increasing development object accuracy 91→98/180. Generated
+development object accuracy increased 88→102/180; this mixed result does not
+establish an object-learning improvement.
+
+Fit wall time increased from 46.00 to 51.25 seconds for 2,440 decoder-row
+presentations: approximately 0.01885 versus 0.02101 seconds per presentation.
+The full guarded pair took 167.71 seconds. It used the same warm inputs,
+one CPU worker, empty bridge list, disabled provers and disabled metric disk
+cache. No separate R6 evaluation ran for this rejected experimental head.
+It remains an explicit experiment, not a production default or a replacement
+for the historical linguistic teacher.

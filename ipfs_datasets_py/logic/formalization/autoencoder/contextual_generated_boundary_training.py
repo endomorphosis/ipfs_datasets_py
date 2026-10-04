@@ -40,6 +40,9 @@ def _specification(model, codec):
     elif schema == "ordered-clause-recurrent-source-decoder-development/v1":
         from . import ordered_clause_recurrent_decoder_experiment as owner
         contextual, state_size = True, 7
+    elif schema == "isolated-object-8d-clause-source-decoder-development/v1":
+        from . import isolated_object_clause_decoder_experiment as owner
+        contextual, state_size = True, 7
     else:
         raise ValueError("explicit supported trainable boundary architecture required")
     return owner.checked_specification(model, codec), contextual, state_size

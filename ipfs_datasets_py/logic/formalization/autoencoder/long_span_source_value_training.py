@@ -24,6 +24,7 @@ _count_labels = exposure._count_labels
 _count_logits = exposure._count_logits
 _BalancedCountSelector = exposure._BalancedCountSelector
 _source_batch = exposure._source_batch
+_ISOLATED_OBJECT_SCHEMA = "isolated-object-8d-clause-source-decoder-development/v1"
 
 
 def _head_specification(model, codec, source_value_weight):
@@ -32,6 +33,9 @@ def _head_specification(model, codec, source_value_weight):
     if not present:
         return None
     description = model.describe()
+    if description.get("schema") == _ISOLATED_OBJECT_SCHEMA:
+        from . import isolated_object_clause_decoder_experiment as isolated_values
+        return isolated_values.checked_specification(model, codec)
     if description.get("schema") == "ordered-clause-recurrent-source-decoder-development/v1":
         from . import ordered_clause_recurrent_decoder_experiment as recurrent_values
         return recurrent_values.checked_specification(model, codec)
@@ -189,6 +193,9 @@ def _evaluate(torch, model, rows, references, transform, options, codec, deadlin
 
 def _non_action_optimizer_groups(model, trainable, specification, options, multiplier):
     """Partition checked head parameters without changing global clipping order."""
+    if specification is not None and specification.get("schema") == _ISOLATED_OBJECT_SCHEMA:
+        from . import isolated_object_clause_decoder_experiment as isolated_values
+        return isolated_values.optimizer_groups(model, trainable, specification, options, multiplier)
     core._require(specification is not None and specification.get("schema") in (
         "action-factorized-clause-source-decoder-development/v1",
         "ordered-clause-recurrent-source-decoder-development/v1"),
@@ -389,14 +396,14 @@ def train(student, training_rows, validation_rows, *, training_references, valid
     head_specification = _head_specification(student, codec, source_value_weight)
     core._require(not separate_head_rate or head_specification is not None
         and head_specification.get("schema") in ("action-factorized-clause-source-decoder-development/v1",
-            "ordered-clause-recurrent-source-decoder-development/v1"),
+            "ordered-clause-recurrent-source-decoder-development/v1", _ISOLATED_OBJECT_SCHEMA),
         "non-action learning rate requires checked factorized or recurrent source head")
     contextual = head_specification is not None and head_specification.get("schema") in (
         "clause-source-decoder-development/v1", "action-factorized-clause-source-decoder-development/v1",
-        "ordered-clause-recurrent-source-decoder-development/v1")
+        "ordered-clause-recurrent-source-decoder-development/v1", _ISOLATED_OBJECT_SCHEMA)
     core._require(action_contrastive_weight == 0. or head_specification is not None
         and head_specification.get("schema") in ("action-factorized-clause-source-decoder-development/v1",
-            "ordered-clause-recurrent-source-decoder-development/v1"),
+            "ordered-clause-recurrent-source-decoder-development/v1", _ISOLATED_OBJECT_SCHEMA),
         "positive action-contrastive weight requires action-factorized clause model")
     core._require(contextual == (source_contexts is not None), "clause source model and explicit contexts must be paired")
     contextual_boundary = bool(generated_boundary_weight and (contextual or generated_boundary_site_policy != "first_last"))
@@ -449,7 +456,7 @@ def train(student, training_rows, validation_rows, *, training_references, valid
             "projected-source-decoder-development/v1", "mean-centered-source-decoder-development/v1",
             "shared-slot-source-decoder-development/v1", "clause-source-decoder-development/v1",
             "action-factorized-clause-source-decoder-development/v1",
-            "ordered-clause-recurrent-source-decoder-development/v1"):
+            "ordered-clause-recurrent-source-decoder-development/v1", _ISOLATED_OBJECT_SCHEMA):
         inventory = [dict(id=row["id"], source_sha256=hashlib.sha256(row["source_text"].encode()).hexdigest())
             for row in training_rows]
         for name in ("normalization", "count_prior"):
@@ -519,6 +526,11 @@ def train(student, training_rows, validation_rows, *, training_references, valid
     if head_specification is not None:
         estimate += 16*options["batch_size"]*values.MAX_RULES*len(values.SOURCE_FIELDS)*len(codec["target_vocabulary"])*4
         estimate += 8*(len(training_rows)+len(validation_rows))*values.MAX_RULES*len(values.SOURCE_FIELDS)
+    isolated_object = head_specification is not None and head_specification.get("schema") == _ISOLATED_OBJECT_SCHEMA
+    if isolated_object:
+        # Additional private64-vector and full three-field affine graph. The
+        # unchanged parameter accounting already includes its576 parameters.
+        estimate += 16*options["batch_size"]*values.MAX_RULES*(64+3*len(codec["target_vocabulary"]))*4
     # Bound per-step receipts and final scalar logits as well as tensor work.
     estimate += options["max_optimizer_steps"]*(2048+2*options["batch_size"]*640)
     if head_specification is not None:
@@ -1007,6 +1019,13 @@ def train(student, training_rows, validation_rows, *, training_references, valid
             optimizer_weight_decay_policy="same_coefficient_in_both_groups; per_step_shrinkage_is_learning_rate_times_weight_decay",
             optimizer_group_learning_rates_scope="committed_updates_are_pre_scheduler; epoch_history_is_post_scheduler",
             non_action_learning_rate_used_for_selection=False)
+    if isolated_object:
+        report.update(isolated_object_source_projection=True,
+            isolated_object_additional_parameters=576,
+            isolated_object_auxiliary_objective_added=False,
+            isolated_object_existing_loss_reductions_unchanged=True,
+            isolated_object_recurrent_features_extended=False,
+            isolated_object_historical_teacher_modified=False)
     if context_receipt is not None:
         report.update(source_contexts_sha256=core.digest(source_contexts), source_context_inventory=context_receipt,
             source_context_target_access=False,
