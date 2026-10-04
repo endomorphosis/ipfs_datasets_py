@@ -46,7 +46,7 @@ CPU preparation and result analysis run concurrently.
 
 ## SRT-001 Freeze the fair composition protocol
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: benchmark
@@ -67,7 +67,7 @@ CPU preparation and result analysis run concurrently.
 
 ## SRT-020 Capture exact runnable tool and service identities
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: benchmark
@@ -91,7 +91,7 @@ CPU preparation and result analysis run concurrently.
 
 ## SRT-002 Factor canonical IR, constructor, realizer, and result contracts
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: benchmark
@@ -112,7 +112,7 @@ CPU preparation and result analysis run concurrently.
 
 ## SRT-003 Implement the common deterministic canonical-IR realizer
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: decompiler
@@ -133,7 +133,7 @@ CPU preparation and result analysis run concurrently.
 
 ## SRT-004 Add the typed-deontic canonical constructor adapter
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: compiler
@@ -154,7 +154,7 @@ CPU preparation and result analysis run concurrently.
 
 ## SRT-005 Add the modal plus full-spaCy canonical constructor adapter
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: compiler
@@ -175,7 +175,7 @@ CPU preparation and result analysis run concurrently.
 
 ## SRT-006 Add fair Leanstral constructor and realizer adapters
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: benchmark
@@ -199,7 +199,7 @@ CPU preparation and result analysis run concurrently.
 
 ## SRT-007 Build the eight-cell constructor-by-realizer runner
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: benchmark
@@ -223,7 +223,7 @@ CPU preparation and result analysis run concurrently.
 
 ## SRT-008 Add oracle-reverse calibration and anti-leakage controls
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: benchmark
@@ -247,7 +247,7 @@ CPU preparation and result analysis run concurrently.
 
 ## SRT-009 Add repeat scheduling and paired composition statistics
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P1
 - Track: benchmark
@@ -268,7 +268,7 @@ CPU preparation and result analysis run concurrently.
 
 ## SRT-010 Make autoencoder guidance a scoreable composition
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P1
 - Track: compiler
@@ -289,7 +289,7 @@ CPU preparation and result analysis run concurrently.
 
 ## SRT-011 Add a canonical SyMAI round-trip contract
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P1
 - Track: benchmark
@@ -313,7 +313,7 @@ CPU preparation and result analysis run concurrently.
 
 ## SRT-012 Add selective Leanstral repair and Hammer candidate selection
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P1
 - Track: compiler
@@ -337,7 +337,7 @@ CPU preparation and result analysis run concurrently.
 
 ## SRT-013 Extend the matrix with autoencoder, SyMAI, and selective repair
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P1
 - Track: benchmark
@@ -361,7 +361,7 @@ CPU preparation and result analysis run concurrently.
 
 ## SRT-014 Execute the pilot composition matrix and freeze the winner
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: benchmark
@@ -385,7 +385,7 @@ CPU preparation and result analysis run concurrently.
 
 ## SRT-021 Freeze the no-eligible failure and remediation manifest
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: benchmark
@@ -407,7 +407,7 @@ CPU preparation and result analysis run concurrently.
 
 ## SRT-022 Repair deterministic source-copy and polarity behavior
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: decompiler
@@ -429,7 +429,7 @@ CPU preparation and result analysis run concurrently.
 
 ## SRT-023 Repair model and SyMAI empty-output and polarity paths
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: model-adapter
@@ -454,7 +454,7 @@ CPU preparation and result analysis run concurrently.
 
 ## SRT-024 Implement and qualify causal autoencoder guidance
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: compiler
@@ -476,7 +476,7 @@ CPU preparation and result analysis run concurrently.
 
 ## SRT-025 Qualify every replacement arm and capability
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: benchmark
@@ -501,7 +501,7 @@ CPU preparation and result analysis run concurrently.
 
 ## SRT-026 Execute the complete replacement composition matrix
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: benchmark
@@ -527,7 +527,7 @@ CPU preparation and result analysis run concurrently.
 
 ## SRT-027 Validate the replacement selection gate
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: benchmark
@@ -549,7 +549,7 @@ CPU preparation and result analysis run concurrently.
 
 ## SRT-015 Specify the canonical compiler/decompiler from measured evidence
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: compiler
@@ -571,7 +571,7 @@ CPU preparation and result analysis run concurrently.
 
 ## SRT-016 Implement the selected canonical compiler
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: compiler
@@ -595,7 +595,7 @@ CPU preparation and result analysis run concurrently.
 
 ## SRT-017 Implement the selected canonical decompiler
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: decompiler
@@ -619,7 +619,7 @@ CPU preparation and result analysis run concurrently.
 
 ## SRT-018 Integrate and rebenchmark the canonical round-trip
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P0
 - Track: benchmark
@@ -644,7 +644,7 @@ CPU preparation and result analysis run concurrently.
 
 ## SRT-019 Publish the canonical selection and supervisor handoff
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P1
 - Track: benchmark
