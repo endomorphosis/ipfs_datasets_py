@@ -1211,9 +1211,9 @@ class UnifiedDashboardDocumenter:
                 [
                     f'''
                 <div class="screenshot-card">
-                    <div class="screenshot-header">{screenshot['name']}</div>
+                    <div class="screenshot-header">{screenshot["name"]}</div>
                     <div class="screenshot-content">
-                        <div class="screenshot-desc">{screenshot['description']}</div>
+                        <div class="screenshot-desc">{screenshot["description"]}</div>
                     </div>
                 </div>
                 '''
@@ -1233,11 +1233,11 @@ class UnifiedDashboardDocumenter:
                     f'''
                 <div class="interaction-item">
                     <div class="interaction-details">
-                        <div class="interaction-title">{test['test']}</div>
-                        <div class="interaction-desc">{test['details']}</div>
+                        <div class="interaction-title">{test["test"]}</div>
+                        <div class="interaction-desc">{test["details"]}</div>
                     </div>
-                    <div class="status-badge status-{'implemented' if '✅' in test['status'] else 'partial'}">
-                        {test['status']}
+                    <div class="status-badge status-{"implemented" if "✅" in test["status"] else "partial"}">
+                        {test["status"]}
                     </div>
                 </div>
                 '''
