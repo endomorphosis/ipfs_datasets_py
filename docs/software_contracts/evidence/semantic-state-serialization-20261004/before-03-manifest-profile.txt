@@ -1,0 +1,73 @@
+         35864972 function calls (28241301 primitive calls) in 8.248 seconds
+
+   Ordered by: cumulative time
+   List reduced from 305 to 65 due to restriction <65>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.003    0.003    8.258    8.258 /home/barberb/lift_coding/.worktrees/ir-pressure-attribution-datasets-20261004/ipfs_datasets_py/logic/software_contracts/codebase_ir.py:684(_reconstruct_manifest)
+        1    0.000    0.000    4.402    4.402 /home/barberb/lift_coding/.worktrees/ir-pressure-attribution-datasets-20261004/ipfs_datasets_py/logic/software_contracts/codebase_ir.py:191(from_dict)
+        1    0.001    0.001    4.399    4.399 /home/barberb/lift_coding/.worktrees/ir-pressure-attribution-datasets-20261004/ipfs_datasets_py/logic/software_contracts/semantic_index/models.py:452(from_dict)
+    28587    0.012    0.000    4.339    0.000 /home/barberb/lift_coding/.worktrees/ir-pressure-attribution-datasets-20261004/ipfs_datasets_py/logic/software_contracts/content.py:416(cid_for_structured)
+    27516    0.009    0.000    3.921    0.000 /home/barberb/lift_coding/.worktrees/ir-pressure-attribution-datasets-20261004/ipfs_datasets_py/logic/software_contracts/semantic_index/models.py:383(edge_id)
+    28588    0.022    0.000    3.537    0.000 /home/barberb/lift_coding/.worktrees/ir-pressure-attribution-datasets-20261004/ipfs_datasets_py/logic/software_contracts/content.py:362(_cid_from_digest_bytes)
+        1    0.000    0.000    2.310    2.310 /home/barberb/lift_coding/.worktrees/ir-pressure-attribution-datasets-20261004/ipfs_datasets_py/logic/software_contracts/codebase_ir.py:187(cid)
+        1    0.000    0.000    2.171    2.171 /home/barberb/lift_coding/.worktrees/ir-pressure-attribution-datasets-20261004/ipfs_datasets_py/logic/software_contracts/codebase_ir.py:179(to_dict)
+        1    0.001    0.001    2.161    2.161 /home/barberb/lift_coding/.worktrees/ir-pressure-attribution-datasets-20261004/ipfs_datasets_py/logic/software_contracts/semantic_index/models.py:449(to_dict)
+    13758    0.005    0.000    2.080    0.000 /home/barberb/lift_coding/.worktrees/ir-pressure-attribution-datasets-20261004/ipfs_datasets_py/logic/software_contracts/semantic_index/models.py:390(to_dict)
+6790626/3874152    0.589    0.000    2.037    0.000 {built-in method builtins.isinstance}
+        2    0.000    0.000    2.021    1.011 /home/barberb/lift_coding/.worktrees/ir-pressure-attribution-datasets-20261004/ipfs_datasets_py/logic/software_contracts/semantic_index/models.py:446(state_cid)
+    28588    0.017    0.000    1.782    0.000 /home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/__init__.py:447(digest)
+        2    0.002    0.001    1.748    0.874 /home/barberb/lift_coding/.worktrees/ir-pressure-attribution-datasets-20261004/ipfs_datasets_py/logic/software_contracts/semantic_index/models.py:443(identity_payload)
+    28588    0.072    0.000    1.720    0.000 /home/barberb/lift_coding/.worktrees/ir-pressure-attribution-datasets-20261004/ipfs_datasets_py/logic/software_contracts/content.py:206(_encode_digest)
+463915/292387    0.249    0.000    1.696    0.000 /home/barberb/.local/lib/python3.12/site-packages/typing_validation/validation.py:743(validate)
+    61405    0.525    0.000    1.468    0.000 /home/barberb/lift_coding/.worktrees/ir-pressure-attribution-datasets-20261004/ipfs_datasets_py/logic/software_contracts/content.py:106(_memo_registration_key)
+  1458237    0.275    0.000    1.430    0.000 /usr/lib/python3.12/typing.py:1194(__instancecheck__)
+783677/55351    0.274    0.000    1.198    0.000 /home/barberb/lift_coding/.worktrees/ir-pressure-attribution-datasets-20261004/ipfs_datasets_py/logic/software_contracts/semantic_index/models.py:130(_thaw_structured)
+      528    0.000    0.000    1.171    0.002 /home/barberb/lift_coding/.worktrees/ir-pressure-attribution-datasets-20261004/ipfs_datasets_py/logic/software_contracts/semantic_index/models.py:456(<genexpr>)
+      527    0.002    0.000    1.171    0.002 /home/barberb/lift_coding/.worktrees/ir-pressure-attribution-datasets-20261004/ipfs_datasets_py/logic/software_contracts/semantic_index/models.py:320(from_dict)
+   287669    0.027    0.000    1.163    0.000 {built-in method builtins.getattr}
+      527    0.005    0.000    1.159    0.002 /home/barberb/lift_coding/.worktrees/ir-pressure-attribution-datasets-20261004/ipfs_datasets_py/logic/software_contracts/semantic_index/models.py:265(__post_init__)
+  1458237    0.342    0.000    1.155    0.000 /usr/lib/python3.12/typing.py:1465(__subclasscheck__)
+        1    0.000    0.000    1.143    1.143 /home/barberb/lift_coding/.worktrees/ir-pressure-attribution-datasets-20261004/ipfs_datasets_py/logic/software_contracts/semantic_index/models.py:428(__post_init__)
+        3    0.001    0.000    1.142    0.381 /home/barberb/lift_coding/.worktrees/ir-pressure-attribution-datasets-20261004/ipfs_datasets_py/logic/software_contracts/semantic_index/models.py:409(_sorted_records)
+     4587    0.001    0.000    1.079    0.000 /home/barberb/lift_coding/.worktrees/ir-pressure-attribution-datasets-20261004/ipfs_datasets_py/logic/software_contracts/semantic_index/models.py:458(<genexpr>)
+     4586    0.008    0.000    1.078    0.000 /home/barberb/lift_coding/.worktrees/ir-pressure-attribution-datasets-20261004/ipfs_datasets_py/logic/software_contracts/semantic_index/models.py:395(from_dict)
+   114352    0.289    0.000    0.986    0.000 /home/barberb/.local/lib/python3.12/site-packages/typing_validation/validation.py:439(_validate_union)
+    28588    0.052    0.000    0.960    0.000 /home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/__init__.py:48(__new__)
+    28588    0.016    0.000    0.913    0.000 /home/barberb/lift_coding/.worktrees/ir-pressure-attribution-datasets-20261004/ipfs_datasets_py/logic/software_contracts/content.py:338(canonical_dag_json_bytes)
+    28588    0.020    0.000    0.822    0.000 /home/barberb/.local/lib/python3.12/site-packages/multiformats/multicodec/__init__.py:297(get)
+     1581    0.003    0.000    0.809    0.001 /home/barberb/lift_coding/.worktrees/ir-pressure-attribution-datasets-20261004/ipfs_datasets_py/logic/software_contracts/semantic_index/models.py:317(to_dict)
+    28588    0.027    0.000    0.803    0.000 /home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/__init__.py:211(digest)
+        1    0.005    0.005    0.728    0.728 /home/barberb/lift_coding/.worktrees/ir-pressure-attribution-datasets-20261004/ipfs_datasets_py/logic/software_contracts/codebase_ir.py:380(_manifest_compact)
+ 432879/1    0.324    0.000    0.723    0.723 /home/barberb/lift_coding/.worktrees/ir-pressure-attribution-datasets-20261004/ipfs_datasets_py/logic/software_contracts/codebase_ir.py:324(_manifest_compact_value)
+48854/5148    0.009    0.000    0.721    0.000 /home/barberb/lift_coding/.worktrees/ir-pressure-attribution-datasets-20261004/ipfs_datasets_py/logic/software_contracts/codebase_ir.py:345(<genexpr>)
+1929104/35283    0.614    0.000    0.652    0.000 /home/barberb/lift_coding/.worktrees/ir-pressure-attribution-datasets-20261004/ipfs_datasets_py/logic/software_contracts/content.py:273(validate_structured_value)
+  1458237    0.244    0.000    0.639    0.000 {built-in method builtins.issubclass}
+842763/443629    0.128    0.000    0.613    0.000 {built-in method builtins.hash}
+    28588    0.017    0.000    0.605    0.000 /home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/_hashfuns/sha.py:17(hashfun)
+    54864    0.013    0.000    0.587    0.000 {built-in method builtins.sorted}
+    30701    0.011    0.000    0.580    0.000 /home/barberb/lift_coding/.worktrees/ir-pressure-attribution-datasets-20261004/ipfs_datasets_py/logic/software_contracts/content.py:201(_require_unchanged_registration)
+     5114    0.001    0.000    0.574    0.000 /home/barberb/lift_coding/.worktrees/ir-pressure-attribution-datasets-20261004/ipfs_datasets_py/logic/software_contracts/semantic_index/models.py:410(<lambda>)
+    28588    0.014    0.000    0.557    0.000 /home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/_hashfuns/utils.py:30(validate_hashfun_args)
+228186/24603    0.067    0.000    0.459    0.000 /home/barberb/lift_coding/.worktrees/ir-pressure-attribution-datasets-20261004/ipfs_datasets_py/logic/software_contracts/codebase_ir.py:353(<genexpr>)
+   292387    0.069    0.000    0.441    0.000 /home/barberb/.local/lib/python3.12/site-packages/typing_validation/validation.py:347(_validate_type)
+    92109    0.063    0.000    0.407    0.000 /home/barberb/.local/lib/python3.12/site-packages/bases/encoding/base.py:322(__hash__)
+   365282    0.167    0.000    0.399    0.000 {built-in method builtins.all}
+  1458237    0.201    0.000    0.396    0.000 <frozen abc>:121(__subclasscheck__)
+167242/1054    0.102    0.000    0.355    0.000 /home/barberb/lift_coding/.worktrees/ir-pressure-attribution-datasets-20261004/ipfs_datasets_py/logic/software_contracts/semantic_index/identity.py:63(normalize_ast)
+  71334/1    0.058    0.000    0.351    0.351 /home/barberb/lift_coding/.worktrees/ir-pressure-attribution-datasets-20261004/ipfs_datasets_py/logic/software_contracts/codebase_ir.py:301(_manifest_clone)
+5727/5148    0.001    0.000    0.350    0.000 /home/barberb/lift_coding/.worktrees/ir-pressure-attribution-datasets-20261004/ipfs_datasets_py/logic/software_contracts/codebase_ir.py:311(<genexpr>)
+    57176    0.072    0.000    0.335    0.000 /home/barberb/.local/lib/python3.12/site-packages/typing_validation/validation.py:237(_type_error)
+    30723    0.309    0.000    0.330    0.000 /usr/lib/python3.12/dataclasses.py:1271(fields)
+    28588    0.019    0.000    0.309    0.000 /usr/lib/python3.12/json/__init__.py:183(dumps)
+194248/6695    0.078    0.000    0.304    0.000 /home/barberb/lift_coding/.worktrees/ir-pressure-attribution-datasets-20261004/ipfs_datasets_py/logic/software_contracts/semantic_index/models.py:121(_freeze_structured)
+    28588    0.017    0.000    0.286    0.000 /usr/lib/python3.12/json/encoder.py:183(encode)
+   276327    0.065    0.000    0.277    0.000 /home/barberb/.local/lib/python3.12/site-packages/multiformats/multicodec/__init__.py:286(__hash__)
+      527    0.000    0.000    0.271    0.001 /home/barberb/lift_coding/.worktrees/ir-pressure-attribution-datasets-20261004/ipfs_datasets_py/logic/software_contracts/semantic_index/identity.py:141(symbol_version_cid)
+    28588    0.261    0.000    0.261    0.000 /usr/lib/python3.12/json/encoder.py:205(iterencode)
+     6168    0.005    0.000    0.259    0.000 /home/barberb/lift_coding/.worktrees/ir-pressure-attribution-datasets-20261004/ipfs_datasets_py/logic/software_contracts/semantic_index/models.py:139(_mapping)
+43127/11027    0.006    0.000    0.258    0.000 /home/barberb/lift_coding/.worktrees/ir-pressure-attribution-datasets-20261004/ipfs_datasets_py/logic/software_contracts/semantic_index/models.py:126(<genexpr>)
+    41274    0.022    0.000    0.258    0.000 /home/barberb/lift_coding/.worktrees/ir-pressure-attribution-datasets-20261004/ipfs_datasets_py/logic/software_contracts/semantic_index/models.py:387(identity_payload)
+        1    0.070    0.070    0.252    0.252 /home/barberb/lift_coding/.worktrees/ir-pressure-attribution-datasets-20261004/ipfs_datasets_py/logic/software_contracts/codebase_ir.py:391(_manifest_retained_bytes)
+
+
