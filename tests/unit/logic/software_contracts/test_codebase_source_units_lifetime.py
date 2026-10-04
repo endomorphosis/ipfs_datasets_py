@@ -64,10 +64,21 @@ def test_duplicate_native_report_released_before_second_source_observation(repla
     returned['report']['output']['rows'][0]['candidate']['new']=True
     assert case.report==before
     assert case.closed and case.refs[0]() is None
-    assert case.admission['memory_mb']==4096 and case.admission['timeout_seconds']==30
+    assert case.admission['memory_mb']==4096
+    assert 0<case.admission['timeout_seconds']<=30
     for observed in case.observations:
         assert 0<observed['kwargs']['timeout_seconds']<=30
         assert observed['kwargs']['memory_mb']==4096
+
+
+def test_admission_and_source_fences_share_the_original_deadline(replay_case,monkeypatch):
+    case=replay_case
+    ticks=iter([100.,105.,106.,110.])
+    monkeypatch.setattr(owner,'time',SimpleNamespace(monotonic=lambda:next(ticks)))
+    case.run()
+    assert case.admission['timeout_seconds']==25.
+    assert [item['kwargs']['timeout_seconds'] for item in case.observations]==[24.,20.]
+    assert case.closed
 
 
 @pytest.mark.parametrize('damage',['report_bytes','execution_flags'])

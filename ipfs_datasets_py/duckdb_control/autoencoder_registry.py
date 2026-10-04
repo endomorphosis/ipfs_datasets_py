@@ -28,6 +28,9 @@ from .contracts import canonical_json_bytes, content_identity
 
 
 SCHEMA = "ipfs_datasets_py/autoencoder-control@1"
+RUN_LIFECYCLE_SCHEMA = "autoencoder-run-lifecycle@1"
+RUN_TERMINAL_SCHEMA = "autoencoder-run-terminal@1"
+_TERMINAL_RUN_STATES = frozenset({"cancelled", "superseded"})
 MAX_COMMAND_BYTES = 65_536
 MAX_INPUT_SNAPSHOT_BYTES = 1_048_576
 INPUT_SNAPSHOT_SCHEMA = "autoencoder-daemon-corpus-inputs-v1"
@@ -254,6 +257,53 @@ class AutoencoderRegistry:
         descriptor = _artifact(artifact)
         digest = descriptor["sha256"]
         return self.artifact_root / digest[:2] / digest
+
+    def read_artifact(self, artifact: Mapping[str, Any], *, max_bytes: int) -> bytes:
+        """Read exact immutable bytes within an explicit consumer bound.
+
+        Open the root, prefix and regular file without following symlinks. Hash
+        the same bounded descriptor that supplies the returned bytes; a prior
+        path verification cannot authorize a later unchecked read. This grants
+        no model, execution or proof authority and does not mutate the registry.
+        """
+        self._ensure_owner()
+        descriptor = _artifact(artifact)
+        if type(max_bytes) is not int or max_bytes < 1:
+            raise RegistryError("artifact read limit must be a positive exact integer")
+        if descriptor["bytes"] > min(max_bytes, self.max_artifact_bytes):
+            raise RegistryError("artifact exceeds consumer read bound")
+        path = self.artifact_path(descriptor)
+        directory_flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC
+        file_flags = os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC
+        descriptors = []
+        try:
+            root_fd = os.open(self.artifact_root, directory_flags)
+            descriptors.append(root_fd)
+            prefix_fd = os.open(path.parent.name, directory_flags, dir_fd=root_fd)
+            descriptors.append(prefix_fd)
+            file_fd = os.open(path.name, file_flags, dir_fd=prefix_fd)
+            descriptors.append(file_fd)
+            before = os.fstat(file_fd)
+            if not stat.S_ISREG(before.st_mode) or before.st_size != descriptor["bytes"]:
+                raise RegistryError("artifact must be an exact bounded regular file")
+            digest, size, chunks = hashlib.sha256(), 0, []
+            while size <= descriptor["bytes"]:
+                chunk = os.read(file_fd, min(1024 * 1024, descriptor["bytes"] + 1 - size))
+                if not chunk:
+                    break
+                chunks.append(chunk)
+                digest.update(chunk)
+                size += len(chunk)
+            after = os.fstat(file_fd)
+            if (size != descriptor["bytes"] or after.st_size != descriptor["bytes"]
+                    or digest.hexdigest() != descriptor["sha256"]):
+                raise RegistryError("artifact bytes or digest mismatch")
+            return b"".join(chunks)
+        except OSError as exc:
+            raise RegistryError("artifact is missing, aliased or unreadable") from exc
+        finally:
+            for fd in reversed(descriptors):
+                os.close(fd)
 
     def verify_artifact(self, artifact: Mapping[str, Any]) -> dict[str, Any]:
         self._ensure_owner()
@@ -594,6 +644,14 @@ class AutoencoderRegistry:
     def claim_run(self, operation_id: str, run_id: str, worker_id: str, lease_seconds: float = 300) -> dict[str, Any]:
         def apply(cx: Any) -> dict[str, Any]:
             run = self._run(cx, run_id)
+            if run["status"] in _TERMINAL_RUN_STATES:
+                raise RegistryError("cancelled or superseded run is terminal")
+            policy = self._run_lifecycle(cx, run_id)
+            if policy is not None and run["attempt"] >= policy["max_attempts"]:
+                raise RegistryError("run attempt budget exhausted")
+            if policy is not None and (type(lease_seconds) not in (int, float)
+                    or not math.isfinite(lease_seconds) or lease_seconds > policy["wall_time_seconds"] + 10):
+                raise RegistryError("run lease exceeds configured wall-time budget")
             if run["status"] == "completed" or self._live(run["lease"]):
                 raise RegistryError("run is completed or already leased")
             lease = self._new_lease({"run_id": run_id, "attempt": run["attempt"] + 1}, worker_id, run["fence"] + 1, lease_seconds)
@@ -627,6 +685,13 @@ class AutoencoderRegistry:
             self._check_lease(lease, run["lease"])
             if run["status"] != "running":
                 raise RegistryError("run is not running")
+            policy = self._run_lifecycle(cx, run["run_id"])
+            if policy is not None:
+                if descriptor["bytes"] > policy["max_checkpoint_bytes"]:
+                    raise RegistryError("candidate exceeds configured checkpoint budget")
+                expected = policy["expected_head"]
+                if self._head(cx, expected["variant_id"], expected["branch"]) != expected:
+                    raise RegistryError("run parent head changed before completion")
             metadata = {"producer_run": run["run_id"], "attempt": lease["attempt"], "result": result}
             version_id = self._insert_version(cx, run["variant_id"], descriptor, metadata, run["base_version_id"])
             cx.execute("UPDATE autoencoder_control.runs SET status='completed', result=? WHERE run_id=?", [result_json, run["run_id"]])
@@ -648,6 +713,129 @@ class AutoencoderRegistry:
             event_id = self._event(cx, operation_id, "run_failed", {"run_id": run["run_id"], "attempt": lease["attempt"]})
             return {"run_id": run["run_id"], "status": "failed", "event_id": event_id}
         return self._mutate(operation_id, "FailRun", {"lease": lease, "result": result}, apply)
+
+    @staticmethod
+    def _lifecycle_operation(run_id: str) -> str:
+        return "run-lifecycle:" + hashlib.sha256(run_id.encode()).hexdigest()
+
+    @staticmethod
+    def _lifecycle_policy(policy: Mapping[str, Any]) -> dict[str, Any]:
+        keys = {"schema", "max_attempts", "wall_time_seconds", "memory_bytes", "max_input_bytes",
+                "max_samples", "optimizer_steps", "head_refits", "max_checkpoint_bytes", "expected_head"}
+        if not isinstance(policy, Mapping) or set(policy) != keys or policy["schema"] != RUN_LIFECYCLE_SCHEMA:
+            raise RegistryError("closed versioned run lifecycle policy required")
+        limits = {"max_attempts": (1, 3), "memory_bytes": (1024**3, 16 * 1024**3),
+                  "max_input_bytes": (1, 32 * 1024**2), "max_samples": (3, 128),
+                  "optimizer_steps": (0, 0), "head_refits": (1, 1),
+                  "max_checkpoint_bytes": (1, 32 * 1024**2)}
+        for key, (lower, upper) in limits.items():
+            if type(policy[key]) is not int or not lower <= policy[key] <= upper:
+                raise RegistryError("invalid lifecycle budget: " + key)
+        seconds = policy["wall_time_seconds"]
+        if type(seconds) not in (int, float) or not math.isfinite(seconds) or not 0 < seconds <= 600:
+            raise RegistryError("invalid lifecycle wall-time budget")
+        head = policy["expected_head"]
+        if not isinstance(head, Mapping) or set(head) != {"variant_id", "branch", "version_id", "generation"}:
+            raise RegistryError("exact lifecycle parent head required")
+        for name in ("variant_id", "branch", "version_id"):
+            _token(head[name], name)
+        if type(head["generation"]) is not int or head["generation"] < 1:
+            raise RegistryError("invalid lifecycle head generation")
+        return json.loads(_json(policy))
+
+    def _run_lifecycle(self, cx: Any, run_id: str) -> dict[str, Any] | None:
+        operation = self._lifecycle_operation(run_id)
+        row = cx.execute("SELECT payload_digest, receipt FROM autoencoder_control.operations WHERE operation_id=?", [operation]).fetchone()
+        if row is None:
+            return None
+        receipt = json.loads(row[1])
+        if (set(receipt) != {"schema", "operation_id", "command", "admitted", "run_id", "policy"}
+                or receipt["schema"] != SCHEMA or receipt["operation_id"] != operation
+                or receipt["command"] != "ConfigureRunLifecycle" or receipt["run_id"] != run_id
+                or receipt["admitted"] is not False):
+            raise RegistryError("run lifecycle receipt differs")
+        policy = self._lifecycle_policy(receipt["policy"])
+        expected = self._command_digest(operation, "ConfigureRunLifecycle", {"run_id": run_id, "policy": policy})
+        if row[0] != expected:
+            raise RegistryError("run lifecycle operation identity differs")
+        return policy
+
+    def configure_run_lifecycle(self, run_id: str, policy: Mapping[str, Any]) -> dict[str, Any]:
+        """Opt in one queued run to immutable bounded lifecycle semantics.
+
+        The extension lives in the existing command log; DDL, version IDs and
+        legacy run semantics are unchanged. No mutable parallel head is added.
+        """
+        _token(run_id, "run_id")
+        policy = self._lifecycle_policy(policy)
+        def apply(cx: Any) -> dict[str, Any]:
+            run = self._run(cx, run_id)
+            head = policy["expected_head"]
+            if run["status"] != "queued" or run["attempt"] != 0 or run["lease"] is not None:
+                raise RegistryError("lifecycle must be configured before the first claim")
+            if (run["variant_id"] != head["variant_id"] or run["base_version_id"] != head["version_id"]
+                    or self._head(cx, head["variant_id"], head["branch"]) != head):
+                raise RegistryError("lifecycle parent head differs")
+            return {"run_id": run_id, "policy": policy}
+        return self._mutate(self._lifecycle_operation(run_id), "ConfigureRunLifecycle",
+                            {"run_id": run_id, "policy": policy}, apply)
+
+    def get_run_lifecycle(self, run_id: str) -> dict[str, Any] | None:
+        """Read the immutable lifecycle policy without training or claiming."""
+        with self._transaction() as cx:
+            self._run(cx, run_id)
+            return self._run_lifecycle(cx, run_id)
+
+    def terminate_run(self, operation_id: str, run_id: str, *, terminal: str,
+                      expected_attempt: int, expected_fence: int, reason: str,
+                      successor_run_id: str | None = None) -> dict[str, Any]:
+        """Atomically revoke an unfinished run; completed history stays intact."""
+        _token(run_id, "run_id")
+        if terminal not in _TERMINAL_RUN_STATES:
+            raise RegistryError("cancelled or superseded terminal state required")
+        if any(type(value) is not int or value < 0 for value in (expected_attempt, expected_fence)):
+            raise RegistryError("exact nonnegative run attempt/fence required")
+        if type(reason) is not str or not 0 < len(reason.encode()) <= 1024:
+            raise RegistryError("bounded terminal reason required")
+        if successor_run_id is not None:
+            _token(successor_run_id, "successor_run_id")
+            if successor_run_id == run_id or terminal != "superseded":
+                raise RegistryError("distinct superseding run required")
+        payload = {"run_id": run_id, "terminal": terminal, "expected_attempt": expected_attempt,
+                   "expected_fence": expected_fence, "reason": reason, "successor_run_id": successor_run_id}
+        def apply(cx: Any) -> dict[str, Any]:
+            run = self._run(cx, run_id)
+            if self._run_lifecycle(cx, run_id) is None:
+                raise RegistryError("run has not opted into versioned terminal semantics")
+            if run["status"] not in {"queued", "running", "failed"}:
+                raise RegistryError("completed or terminal run cannot be terminated again")
+            if (run["attempt"], run["fence"]) != (expected_attempt, expected_fence):
+                raise RegistryError("terminal run attempt/fence compare-and-swap conflict")
+            if successor_run_id is not None:
+                successor = self._run(cx, successor_run_id)
+                if successor["variant_id"] != run["variant_id"] or successor["status"] in _TERMINAL_RUN_STATES:
+                    raise RegistryError("superseding run variant or state differs")
+            result = {"schema": RUN_TERMINAL_SCHEMA, "run_id": run_id, "terminal": terminal,
+                "reason": reason, "successor_run_id": successor_run_id, "prior_status": run["status"],
+                "previous_result_sha256": content_identity(run["result"]),
+                "previous_lease_sha256": content_identity(run["lease"]),
+                "attempt": run["attempt"], "fence": run["fence"] + 1,
+                "owner_generation": self.owner_generation, "admitted": False,
+                "retryable": False, "publishable": False}
+            cx.execute("UPDATE autoencoder_control.runs SET status=?, fence=?, lease=NULL, result=? WHERE run_id=?",
+                       [terminal, result["fence"], _json(result), run_id])
+            event_id = self._event(cx, operation_id, "run_" + terminal, result)
+            return {"run_id": run_id, "status": terminal, "fence": result["fence"], "event_id": event_id,
+                    "terminal_schema": RUN_TERMINAL_SCHEMA}
+        return self._mutate(operation_id, "TerminateRun", payload, apply)
+
+    @classmethod
+    def _reject_terminal_producer(cls, cx: Any, version: Mapping[str, Any]) -> None:
+        producer = version["metadata"].get("producer_run")
+        if type(producer) is str:
+            row = cx.execute("SELECT status FROM autoencoder_control.runs WHERE run_id=?", [producer]).fetchone()
+            if row is not None and row[0] in _TERMINAL_RUN_STATES:
+                raise RegistryError("terminal producer run cannot publish or promote a candidate")
 
     @staticmethod
     def _head(cx: Any, variant_id: str, branch: str) -> dict[str, Any] | None:
@@ -686,6 +874,7 @@ class AutoencoderRegistry:
         # rechecked afterward. This callback cannot turn a model into a proof.
         def apply(cx: Any) -> dict[str, Any]:
             head = self._head(cx, variant_id, branch)
+            self._reject_terminal_producer(cx, self._version(cx, version_id))
             if version["variant_id"] != variant_id or head is None or (head["version_id"], head["generation"]) != (expected_version_id, expected_generation):
                 raise RegistryError("head compare-and-swap conflict")
             cx.execute("UPDATE autoencoder_control.heads SET version_id=?, generation=? WHERE variant_id=? AND branch=?", [version_id, expected_generation + 1, variant_id, branch])
@@ -701,7 +890,7 @@ class AutoencoderRegistry:
             return old
         self.verify_artifact(descriptor)
         def apply(cx: Any) -> dict[str, Any]:
-            self._version(cx, version_id)
+            self._reject_terminal_producer(cx, self._version(cx, version_id))
             event_id = self._event(cx, operation_id, "publication_requested", {"version_id": version_id, "plan_artifact": descriptor}, "huggingface")
             return {"event_id": event_id, "uploaded": False}
         return self._mutate(operation_id, "EnqueuePublication", payload, apply)

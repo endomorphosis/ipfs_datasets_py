@@ -7,10 +7,101 @@ from __future__ import annotations
 
 import math
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 MIB = 1024 * 1024
+MAX_PRESSURE_CGROUP_SAMPLES = 8
+
+
+@dataclass(frozen=True, slots=True)
+class PressureReading:
+    """One optional PSI reading; absence never masquerades as observed zero."""
+
+    avg10: float | None
+    status: str
+
+    def __post_init__(self) -> None:
+        if type(self.status) is not str or self.status not in {"observed", "unavailable", "malformed"}:
+            raise ValueError("invalid PSI reading status")
+        if self.status == "observed":
+            if (type(self.avg10) not in {int, float} or not math.isfinite(self.avg10)
+                    or not 0 <= self.avg10 <= 100):
+                raise ValueError("observed PSI must be a finite percentage")
+        elif self.avg10 is not None:
+            raise ValueError("unobserved PSI cannot carry a percentage")
+
+    @property
+    def effective_percent(self) -> float:
+        # Preserve the pre-existing optional-PSI fallback used for admission.
+        return 0.0 if self.avg10 is None else self.avg10
+
+    def to_dict(self) -> dict:
+        self.__post_init__()
+        return {"avg10": self.avg10, "status": self.status}
+
+
+@dataclass(frozen=True, slots=True)
+class PressureScopeSample:
+    scope: str
+    depth: int | None
+    memory: PressureReading
+    cpu: PressureReading
+    io: PressureReading
+
+    def __post_init__(self) -> None:
+        if type(self.scope) is not str or not ((self.scope == "host" and self.depth is None)
+                or (self.scope == "cgroup" and type(self.depth) is int
+                    and 0 <= self.depth < MAX_PRESSURE_CGROUP_SAMPLES)):
+            raise ValueError("bounded anonymous PSI scope required")
+        if any(type(value) is not PressureReading for value in (self.memory, self.cpu, self.io)):
+            raise ValueError("exact immutable PSI readings required")
+
+    def to_dict(self) -> dict:
+        self.__post_init__()
+        return dict(scope=self.scope, depth=self.depth, memory=self.memory.to_dict(),
+                    cpu=self.cpu.to_dict(), io=self.io.to_dict())
+
+
+@dataclass(frozen=True, slots=True)
+class ProofPressureSources:
+    """Bounded attribution only; it cannot modify admission or its accounting.
+
+    Memory and I/O record ``full avg10``; CPU records ``some avg10``.
+    Depth zero names the selected visible cgroup, never a host pathname.
+    All further ancestors are still sampled for the original aggregate gate.
+    """
+
+    samples: tuple[PressureScopeSample, ...]
+    omitted_cgroup_scopes: int = 0
+    omitted_maxima: tuple[float | None, float | None, float | None] = (None, None, None)
+
+    def __post_init__(self) -> None:
+        if (type(self.samples) is not tuple or not 1 <= len(self.samples) <= 1 + MAX_PRESSURE_CGROUP_SAMPLES
+                or any(type(row) is not PressureScopeSample for row in self.samples)):
+            raise ValueError("bounded immutable PSI sample population required")
+        for position, row in enumerate(self.samples):
+            row.__post_init__()
+            if (row.scope, row.depth) != (("host", None) if position == 0 else ("cgroup", position - 1)):
+                raise ValueError("PSI samples must retain host then contiguous cgroup depths")
+        if (type(self.omitted_cgroup_scopes) is not int
+                or not 0 <= self.omitted_cgroup_scopes <= 2**53 - 1
+                or (self.omitted_cgroup_scopes and len(self.samples) != 1 + MAX_PRESSURE_CGROUP_SAMPLES)):
+            raise ValueError("invalid omitted cgroup scope count")
+        if type(self.omitted_maxima) is not tuple or len(self.omitted_maxima) != 3:
+            raise ValueError("three immutable omitted PSI maxima required")
+        for value in self.omitted_maxima:
+            if value is not None and (type(value) not in {int, float}
+                    or not math.isfinite(value) or not 0 <= value <= 100):
+                raise ValueError("invalid omitted PSI percentage")
+        if not self.omitted_cgroup_scopes and any(value is not None for value in self.omitted_maxima):
+            raise ValueError("unomitted scopes cannot carry omitted PSI maxima")
+
+    def to_dict(self) -> dict:
+        self.__post_init__()
+        return dict(schema="proof-pressure-sources@1", samples=[row.to_dict() for row in self.samples],
+                    omitted_cgroup_scopes=self.omitted_cgroup_scopes,
+                    omitted_maxima=dict(zip(("memory", "cpu", "io"), self.omitted_maxima)))
 
 
 @dataclass(frozen=True)
@@ -25,6 +116,9 @@ class ProofHostResources:
     # the scheduler's child-process envelopes. None preserves unknown telemetry.
     pid_task_limit: int | None = None
     available_pid_tasks: int | None = None
+    # Optional provenance must not affect equality, scheduler configuration or
+    # scalar admission. Unknown/custom metadata is ignored by the observer.
+    pressure_sources: ProofPressureSources | None = field(default=None, compare=False, repr=False)
 
     def __post_init__(self) -> None:
         for name in ("cpu_slots", "total_memory_mb", "available_memory_mb"):
@@ -47,17 +141,26 @@ class ProofHostResources:
                 raise ValueError(f"{name} must be finite and between 0 and 100")
 
 
-def _psi(path: Path, kind: str) -> float:
+def _psi_reading(path: Path, kind: str) -> PressureReading:
+    status = "unavailable"
     try:
         for line in path.read_text().splitlines():
             parts = line.split()
             if parts[0] == kind:
                 value = float(dict(part.split("=") for part in parts[1:])["avg10"])
                 if math.isfinite(value) and 0 <= value <= 100:
-                    return value
-    except (OSError, ValueError, KeyError, IndexError):
-        pass
-    return 0.0
+                    return PressureReading(value, "observed")
+                status = "malformed"
+    except OSError:
+        status = "unavailable"
+    except (ValueError, KeyError, IndexError):
+        status = "malformed"
+    return PressureReading(None, status)
+
+
+def _psi(path: Path, kind: str) -> float:
+    """Compatibility scalar surface, with the original optional-read fallback."""
+    return _psi_reading(path, kind).effective_percent
 
 
 def _task_counter_text(path: Path, *, optional: bool = False) -> str | None:
@@ -186,9 +289,13 @@ def collect_proof_host_resources(
     host_pid_budget = _host_pid_budget(proc_root)
     if host_pid_budget is not None:
         pid_budgets.append(host_pid_budget)
-    memory_stall = _psi(proc_root / "pressure/memory", "full")
-    cpu_stall = _psi(proc_root / "pressure/cpu", "some")
-    io_stall = _psi(proc_root / "pressure/io", "full")
+    host_readings = (_psi_reading(proc_root / "pressure/memory", "full"),
+                     _psi_reading(proc_root / "pressure/cpu", "some"),
+                     _psi_reading(proc_root / "pressure/io", "full"))
+    memory_stall, cpu_stall, io_stall = (row.effective_percent for row in host_readings)
+    samples = [PressureScopeSample("host", None, *host_readings)]
+    depth, omitted_scopes = 0, 0
+    omitted_maxima = [None, None, None]
     while True:
         pid_budget = _cgroup_pid_budget(current)
         if pid_budget is not None:
@@ -206,9 +313,21 @@ def collect_proof_host_resources(
             limit_bytes, available_bytes = memory_budget
             total = min(total, limit_bytes)
             available = min(available, available_bytes)
-        memory_stall = max(memory_stall, _psi(current / "memory.pressure", "full"))
-        cpu_stall = max(cpu_stall, _psi(current / "cpu.pressure", "some"))
-        io_stall = max(io_stall, _psi(current / "io.pressure", "full"))
+        readings = (_psi_reading(current / "memory.pressure", "full"),
+                    _psi_reading(current / "cpu.pressure", "some"),
+                    _psi_reading(current / "io.pressure", "full"))
+        memory_stall = max(memory_stall, readings[0].effective_percent)
+        cpu_stall = max(cpu_stall, readings[1].effective_percent)
+        io_stall = max(io_stall, readings[2].effective_percent)
+        if depth < MAX_PRESSURE_CGROUP_SAMPLES:
+            samples.append(PressureScopeSample("cgroup", depth, *readings))
+        else:
+            omitted_scopes += 1
+            for position, row in enumerate(readings):
+                if row.avg10 is not None:
+                    previous = omitted_maxima[position]
+                    omitted_maxima[position] = row.avg10 if previous is None else max(previous, row.avg10)
+        depth += 1
         if current == cgroup_root:
             break
         current = current.parent
@@ -217,4 +336,5 @@ def collect_proof_host_resources(
     return ProofHostResources(max(1, cpu), max(1, total // MIB), available // MIB,
                               memory_stall, cpu_stall, io_stall,
                               min((limit for limit, _ in pid_budgets), default=None),
-                              min((available for _, available in pid_budgets), default=None))
+                              min((available for _, available in pid_budgets), default=None),
+                              pressure_sources=ProofPressureSources(tuple(samples), omitted_scopes, tuple(omitted_maxima)))

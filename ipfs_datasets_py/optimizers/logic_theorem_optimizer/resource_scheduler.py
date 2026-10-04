@@ -41,7 +41,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.runtime_telemetry impor
     ResourceSnapshot,
     collect_resource_snapshot,
 )
-from .proof_resource_safety import ProofHostResources, collect_proof_host_resources
+from .proof_resource_safety import ProofHostResources, ProofPressureSources, collect_proof_host_resources
 
 
 RESOURCE_SCHEDULER_SCHEMA_VERSION = "legal-ir-global-resource-scheduler-v1"
@@ -51,6 +51,9 @@ DEFAULT_MEMORY_ENV = "IPFS_DATASETS_RESOURCE_MEMORY_MB"
 DEFAULT_GPU_MEMORY_ENV = "IPFS_DATASETS_RESOURCE_GPU_MEMORY_MB"
 DEFAULT_UNIFIED_MEMORY_ENV = "IPFS_DATASETS_RESOURCE_UNIFIED_MEMORY_MB"
 DEFAULT_CHILD_PROCESS_ENV = "IPFS_DATASETS_RESOURCE_CHILD_PROCESS_SLOTS"
+DEFAULT_PROOF_RECOVERY_ENV = "IPFS_DATASETS_PROOF_RESOURCE_RECOVERY"
+DEFAULT_PROOF_PROFILE_ENV = "IPFS_DATASETS_PROOF_RESOURCE_PROFILE"
+LOCAL_BENCHMARK_PROOF_PROFILE = "local-benchmark@1"
 
 # Admission estimates, not kernel-enforced task ceilings. Linux PID limits
 # include JVM/ML service threads; process reservations cannot be compared 1:1.
@@ -109,8 +112,9 @@ class LeaseTimeoutError(ResourceSchedulerError, TimeoutError):
         timeout_decision: Optional[Mapping[str, Any]] = None,
     ) -> None:
         super().__init__(*args)
-        # Diagnostic evidence belongs to this waiter, not the latest unrelated
-        # request examined by fairness. It never authorizes an admission.
+        # The versioned primary-gate observation is distinct from historical
+        # per-waiter proof_refusal_observation and the actual timeout branch.
+        # None of these diagnostic records authorizes admission.
         self.admission_observation = deepcopy(admission_observation)
         # These are the inputs used by the actual terminal timeout branch.
         # They do not identify an exclusive blocking predicate or cause.
@@ -425,11 +429,16 @@ class ResourceSchedulerConfig:
         repr=False,
     )
     proof_safety_enabled: bool = False
+    proof_resource_profile: Optional[str] = None
     proof_memory_headroom_mb: int = 0
     proof_memory_stall_percent: float = 2.0
     proof_cpu_stall_percent: float = 50.0
     proof_io_stall_percent: float = 10.0
     proof_backoff_seconds: float = 2.0
+    proof_recovery_enabled: bool = False
+    proof_recovery_samples: int = 2
+    proof_recovery_interval_seconds: float = 0.25
+    proof_recovery_grants: int = 4
     max_waiting_requests: Optional[int] = None
     proof_resource_sampler: Callable[[], ProofHostResources] = field(
         default=collect_proof_host_resources, compare=False, repr=False,
@@ -469,6 +478,31 @@ class ResourceSchedulerConfig:
         return _normalise_reservations(self.lane_reservations)
 
     def validate(self) -> None:
+        if self.proof_resource_profile not in (None, LOCAL_BENCHMARK_PROOF_PROFILE):
+            raise ResourceConfigurationError("unknown proof resource profile")
+        if self.proof_resource_profile == LOCAL_BENCHMARK_PROOF_PROFILE and (
+            not self.proof_safety_enabled or not self.proof_recovery_enabled
+            or self.proof_memory_stall_percent != 10.0
+            or self.proof_cpu_stall_percent != 50.0 or self.proof_io_stall_percent != 10.0
+            or self.proof_recovery_samples != 2 or self.proof_recovery_grants != 1
+            or self.proof_recovery_interval_seconds != 0.25
+            or type(self.proof_memory_headroom_mb) is not int
+            or type(self.total_memory_mb) is not int
+            or self.proof_memory_headroom_mb * 4 < self.total_memory_mb
+        ):
+            raise ResourceConfigurationError("local benchmark proof policy differs from its declared profile")
+        if not isinstance(self.proof_recovery_enabled, bool):
+            raise ResourceConfigurationError("proof_recovery_enabled must be a bool")
+        if self.proof_recovery_enabled and not self.proof_safety_enabled:
+            raise ResourceConfigurationError("proof recovery requires proof safety")
+        for name in ("proof_recovery_samples", "proof_recovery_grants"):
+            value = getattr(self, name)
+            if type(value) is not int or not 1 <= value <= 1024:
+                raise ResourceConfigurationError(f"{name} must be an integer in [1, 1024]")
+        interval = self.proof_recovery_interval_seconds
+        if (isinstance(interval, bool) or not isinstance(interval, (int, float))
+                or not math.isfinite(interval) or not 0.001 <= interval <= 3600):
+            raise ResourceConfigurationError("proof_recovery_interval_seconds must be in [0.001, 3600]")
         if (isinstance(self.proof_backoff_seconds, bool)
                 or not math.isfinite(float(self.proof_backoff_seconds))
                 or self.proof_backoff_seconds < 0):
@@ -566,11 +600,16 @@ class ResourceSchedulerConfig:
         return {
             "max_waiting_requests": self.max_waiting_requests,
             "proof_safety_enabled": self.proof_safety_enabled,
+            "proof_resource_profile": self.proof_resource_profile,
             "proof_memory_headroom_mb": self.proof_memory_headroom_mb,
             "proof_memory_stall_percent": self.proof_memory_stall_percent,
             "proof_cpu_stall_percent": self.proof_cpu_stall_percent,
             "proof_io_stall_percent": self.proof_io_stall_percent,
             "proof_backoff_seconds": self.proof_backoff_seconds,
+            "proof_recovery_enabled": self.proof_recovery_enabled,
+            "proof_recovery_samples": self.proof_recovery_samples,
+            "proof_recovery_interval_seconds": self.proof_recovery_interval_seconds,
+            "proof_recovery_grants": self.proof_recovery_grants,
             "total_cpu_slots": self.total_cpu_slots,
             "total_memory_mb": self.total_memory_mb,
             "total_gpu_memory_mb": self.total_gpu_memory_mb,
@@ -973,28 +1012,27 @@ class GlobalResourceScheduler:
         stored.setdefault("total_child_process_slots", 64)
         stored.setdefault("max_waiting_requests", None)
         stored.setdefault("proof_safety_enabled", False)
+        stored.setdefault("proof_resource_profile", None)
         stored.setdefault("proof_memory_headroom_mb", 0)
         stored.setdefault("proof_memory_stall_percent", 2.0)
         stored.setdefault("proof_cpu_stall_percent", 50.0)
         stored.setdefault("proof_io_stall_percent", 10.0)
         stored.setdefault("proof_backoff_seconds", 2.0)
+        stored.setdefault("proof_recovery_enabled", False)
+        stored.setdefault("proof_recovery_samples", 2)
+        stored.setdefault("proof_recovery_interval_seconds", 0.25)
+        stored.setdefault("proof_recovery_grants", 4)
         if stored == expected:
+            self._validate_recovery_state(state)
             state["config"] = expected
             return
         if not allow_reconfigure:
-            # Another client may deliberately change an idle pool's limits.
-            # A facade opened before that change has no authority to silently
-            # restore its cached configuration during an ordinary operation.
             raise ResourceConfigurationError(
                 f"scheduler configuration changed at {self.state_path}; "
                 "open a new scheduler facade with the intended configuration"
             )
-        # A restart can change detected capacity while the file still holds
-        # old owners. Recover only proven-dead owners before testing whether
-        # configuration can change. Expired live owners and independently live
-        # descendants retain their reservations and still block reconfiguration.
         self._recover_stale_locked(state, time.time())
-        if state.get("leases") or state.get("waiters"):
+        if state.get("leases") or state.get("waiters") or state.get("proof_recovery"):
             raise ResourceConfigurationError(
                 f"scheduler capacity differs from active shared state at {self.state_path}"
             )
@@ -1208,11 +1246,12 @@ class GlobalResourceScheduler:
         if isinstance(waiter, dict):
             waiter["last_proof_refusal"] = deepcopy(observation)
 
+
     def _pressure_allows(
         self, waiter: Mapping[str, Any], *, state: Optional[Dict[str, Any]] = None,
-        decision_cycle_at: Optional[float] = None,
+        decision_cycle_at: Optional[float] = None, proof_checked: bool = False,
     ) -> tuple[bool, str]:
-        if self.config.proof_safety_enabled:
+        if self.config.proof_safety_enabled and not proof_checked:
             host = None
             demand = None
 
@@ -1271,8 +1310,8 @@ class GlobalResourceScheduler:
         return None
 
     def _root_can_grant(
-        self, state: Dict[str, Any], waiter: Mapping[str, Any], *,
-        decision_cycle_at: Optional[float] = None,
+        self, state: Mapping[str, Any], waiter: Mapping[str, Any], *,
+        pressure_checked: bool = False, decision_cycle_at: Optional[float] = None,
     ) -> bool:
         (
             used_cpu,
@@ -1318,10 +1357,76 @@ class GlobalResourceScheduler:
                     return False
             elif used_gpu_memory + requested_gpu > total_gpu - self.config.reserved_gpu_memory_mb:
                 return False
-        pressure_allows, _ = self._pressure_allows(
-            waiter, state=state, decision_cycle_at=decision_cycle_at,
-        )
+        pressure_allows = pressure_checked or self._pressure_allows(waiter, state=state, decision_cycle_at=decision_cycle_at)[0]
         return pressure_allows
+
+    def _validate_recovery_state(self, state: Mapping[str, Any]) -> None:
+        recovery = state.get("proof_recovery", {})
+        if recovery == {}:
+            return
+        keys = {"phase", "healthy_samples", "next_sample_at", "next_grant_at", "grants_remaining"}
+        if (not self.config.proof_recovery_enabled or type(recovery) is not dict
+                or set(recovery) != keys or type(recovery.get("phase")) is not str
+                or recovery["phase"] not in {"settling", "paced"}):
+            raise SchedulerStateError("invalid shared proof recovery state")
+        for name, maximum in (("healthy_samples", self.config.proof_recovery_samples),
+                              ("grants_remaining", self.config.proof_recovery_grants)):
+            if type(recovery[name]) is not int or not 0 <= recovery[name] <= maximum:
+                raise SchedulerStateError("invalid shared proof recovery counter")
+        for name in ("next_sample_at", "next_grant_at"):
+            value = recovery[name]
+            if (type(value) not in (int, float) or not math.isfinite(value) or value < 0):
+                raise SchedulerStateError("invalid shared proof recovery timestamp")
+        if ((recovery["phase"] == "paced"
+                and recovery["healthy_samples"] != self.config.proof_recovery_samples)
+                or (recovery["phase"] == "settling"
+                    and (recovery["healthy_samples"] >= self.config.proof_recovery_samples
+                         or recovery["grants_remaining"] != self.config.proof_recovery_grants
+                         or recovery["next_grant_at"] != 0))):
+            raise SchedulerStateError("inconsistent shared proof recovery state")
+
+    def _record_pressure(self, state: Dict[str, Any], reason: str, now: float) -> None:
+        until = now + self.config.proof_backoff_seconds
+        state.setdefault("proof_backoff", {}).update(until=until, reason=reason)
+        if self.config.proof_recovery_enabled:
+            state["proof_recovery"] = dict(phase="settling", healthy_samples=0,
+                next_sample_at=until, next_grant_at=0.0,
+                grants_remaining=self.config.proof_recovery_grants)
+
+    def _recovery_ready(self, state: Mapping[str, Any], waiter: Mapping[str, Any], now: float) -> bool:
+        """A read-only gate; fairness probes must never spend a grant."""
+        # A fairness probe may have observed pressure after our own healthy
+        # sample, even with a zero/expired cooldown. Require a fresh healthy
+        # decision to clear that refusal before validation can bypass pacing.
+        if state.get("proof_backoff"):
+            return False
+        recovery = state.get("proof_recovery", {})
+        # Validation (including supervisor cleanup) retains its reserved lane.
+        # This exempts pacing only: all ordinary pressure checks run first.
+        if not recovery or waiter["lane"] == ResourceLane.VALIDATION.value:
+            return True
+        return (recovery["phase"] == "paced" and recovery["grants_remaining"] > 0
+                and now >= recovery["next_grant_at"])
+
+    def _observe_recovery(self, state: Dict[str, Any], now: float) -> None:
+        recovery = state.get("proof_recovery", {})
+        if (recovery and recovery["phase"] == "paced" and recovery["grants_remaining"] == 0
+                and now >= recovery["next_grant_at"]):
+            state["proof_recovery"] = {}
+            return
+        if recovery and recovery["phase"] == "settling" and now >= recovery["next_sample_at"]:
+            recovery["healthy_samples"] += 1
+            recovery["next_sample_at"] = now + self.config.proof_recovery_interval_seconds
+            if recovery["healthy_samples"] == self.config.proof_recovery_samples:
+                recovery["phase"] = "paced"
+                recovery["next_grant_at"] = now
+
+    def _consume_recovery_grant(self, state: Dict[str, Any], waiter: Mapping[str, Any], now: float) -> None:
+        recovery = state.get("proof_recovery", {})
+        if not recovery or waiter["lane"] == ResourceLane.VALIDATION.value:
+            return
+        recovery["grants_remaining"] -= 1
+        recovery["next_grant_at"] = now + self.config.proof_recovery_interval_seconds
 
     @staticmethod
     def _child_can_grant(state: Mapping[str, Any], waiter: Mapping[str, Any]) -> bool:
@@ -1351,7 +1456,8 @@ class GlobalResourceScheduler:
             <= int(parent.get("child_process_slots", 0))
         )
 
-    def _can_grant(self, state: Dict[str, Any], waiter: Mapping[str, Any]) -> bool:
+    def _can_grant(self, state: Mapping[str, Any], waiter: Mapping[str, Any], *,
+                   observation: Optional[Dict[str, Any]] = None) -> bool:
         decision_cycle_at = None
         if self.config.proof_safety_enabled:
             # Treat every outstanding envelope as not yet materialized. This
@@ -1361,32 +1467,26 @@ class GlobalResourceScheduler:
             decision_cycle_at = now
             backoff = state.setdefault("proof_backoff", {})
             if now < float(backoff.get("until", 0)):
+                if observation is not None:
+                    observation["primary_gate"] = dict(status="backoff", observed_at=now,
+                        reason=backoff.get("reason"), backoff_until=backoff["until"])
                 return False
             reason = ""
             host = None
             demand = None
             error_type = None
+            reserved = additional = None
             try:
                 host = self.config.proof_resource_sampler()
-                root_usage = self._root_usage(state)
-                reserved = root_usage[1]
-                reserved_processes = root_usage[4]
+                reserved = self._root_usage(state)[1]
                 additional = 0 if waiter.get("parent_lease_id") else int(waiter["memory_mb"])
                 if host.available_memory_mb < self.config.proof_memory_headroom_mb + reserved + additional:
                     reason = "proof_memory_headroom"
-                # Root envelopes cover all descendants. Conservatively treat
-                # existing reservations as not yet materialized, even though
-                # live pids.current may already include some of their tasks.
+                reserved_processes = self._root_usage(state)[4]
                 additional_processes = 0 if waiter.get("parent_lease_id") else int(waiter.get("child_process_slots", 0))
-                pid_demand = PROOF_PID_HEADROOM_TASKS + PROOF_PID_TASKS_PER_PROCESS * (
-                    reserved_processes + additional_processes)
-                demand = {
-                    "root_reserved_memory_mb": reserved,
-                    "additional_memory_mb": additional,
-                    "root_reserved_process_slots": reserved_processes,
-                    "additional_process_slots": additional_processes,
-                    "pid_tasks_required": pid_demand,
-                }
+                pid_demand = PROOF_PID_HEADROOM_TASKS + PROOF_PID_TASKS_PER_PROCESS * (reserved_processes + additional_processes)
+                demand = dict(root_reserved_memory_mb=reserved, additional_memory_mb=additional,
+                    root_reserved_process_slots=reserved_processes, additional_process_slots=additional_processes, pid_tasks_required=pid_demand)
                 if host.available_pid_tasks is not None and host.available_pid_tasks < pid_demand:
                     reason = "proof_pid_headroom"
                 for observed, threshold, label in (
@@ -1401,22 +1501,60 @@ class GlobalResourceScheduler:
                 host = None
                 demand = None
                 error_type = type(exc).__name__
+            if not reason and self.config.proof_recovery_enabled:
+                _, reason = self._pressure_allows(waiter, proof_checked=True)
+            if observation is not None:
+                # Retain only this request's existing primary-gate sample. No
+                # extra sampler call, ledger field, lease key or request text.
+                # Later capacity/fairness/secondary-pressure gates are separate.
+                try:
+                    observation["primary_gate"] = dict(
+                        status="refused" if reason else "passed", observed_at=now,
+                        reason=reason or None, backoff_until=None)
+                    observation["last_sample"] = dict(observed_at=now,
+                        host=None if host is None else dict(
+                            available_memory_mb=host.available_memory_mb,
+                            memory_stall_percent=host.memory_stall_percent,
+                            cpu_stall_percent=host.cpu_stall_percent,
+                            io_stall_percent=host.io_stall_percent),
+                        reserved_root_memory_mb=reserved, additional_request_memory_mb=additional,
+                        thresholds=dict(memory_headroom_mb=self.config.proof_memory_headroom_mb,
+                            memory_stall_percent=self.config.proof_memory_stall_percent,
+                            cpu_stall_percent=self.config.proof_cpu_stall_percent,
+                            io_stall_percent=self.config.proof_io_stall_percent),
+                        reason=reason or None)
+                except Exception:
+                    # Diagnostics must preserve telemetry-refusal behavior.
+                    observation.update(primary_gate=None, last_sample=None)
+                if host is None:
+                    observation["last_sample"] = None
+                # Scope attribution belongs only to this request's existing
+                # sample. Failure to project optional metadata must not erase
+                # a valid gate/scalar sample or change the admission decision.
+                if host is not None and observation.get("last_sample") is not None:
+                    try:
+                        sources = getattr(host, "pressure_sources", None)
+                        if type(sources) is ProofPressureSources:
+                            observation["last_sample"]["pressure_sources"] = sources.to_dict()
+                    except Exception:
+                        pass
             if reason:
-                backoff.update(until=now + self.config.proof_backoff_seconds, reason=reason)
-                self._record_proof_refusal(
-                    state, waiter, host=host, reason=reason, gate="envelope",
-                    decision_cycle_at=now, demand=demand,
-                    backoff_until=backoff["until"], error_type=error_type,
-                )
+                self._record_pressure(state, reason, now)
+                self._record_proof_refusal(state, waiter, host=host, reason=reason, gate="envelope",
+                    decision_cycle_at=now, demand=demand, backoff_until=backoff.get("until"), error_type=error_type)
                 return False
             backoff.clear()
+            if self.config.proof_recovery_enabled:
+                self._observe_recovery(state, now)
+                if not self._recovery_ready(state, waiter, now):
+                    return False
         if waiter.get("parent_lease_id"):
             return self._child_can_grant(state, waiter) and (
-                not self.config.proof_safety_enabled or self._pressure_allows(
-                    waiter, state=state, decision_cycle_at=decision_cycle_at,
-                )[0]
+                not self.config.proof_safety_enabled or self.config.proof_recovery_enabled
+                or self._pressure_allows(waiter, state=state, decision_cycle_at=now)[0]
             )
-        return self._root_can_grant(state, waiter, decision_cycle_at=decision_cycle_at)
+        return self._root_can_grant(state, waiter, pressure_checked=self.config.proof_recovery_enabled,
+                                    decision_cycle_at=decision_cycle_at)
 
     def _is_fair_turn(self, state: Mapping[str, Any], waiter: Mapping[str, Any]) -> bool:
         # Skip an older waiter only when it cannot currently use capacity.
@@ -1591,9 +1729,12 @@ class GlobalResourceScheduler:
         started_mono = time.monotonic()
         deadline = None if timeout is None else started_mono + float(timeout)
         terminal: Optional[str] = None
-        admission_observation: Optional[Mapping[str, Any]] = None
+        proof_refusal_observation: Optional[Mapping[str, Any]] = None
         timeout_decision: Optional[Mapping[str, Any]] = None
         granted_record: Optional[Dict[str, Any]] = None
+        admission_observation: Dict[str, Any] = dict(
+            schema="resource-admission-observation@1", scope="proof_primary_gate",
+            complete_admission_decision=False, primary_gate=None, last_sample=None)
 
         while granted_record is None and terminal is None:
             now_wall = time.time()
@@ -1655,7 +1796,12 @@ class GlobalResourceScheduler:
                     parent_id and (parent_record is None or parent_record.get("cancelled"))
                 )
                 timed_out = deadline is not None and now_mono >= deadline
-                can_grant_now = self._can_grant(state, waiter) and self._is_fair_turn(state, waiter)
+                can_grant_now = self._can_grant(
+                    state, waiter, observation=admission_observation) and self._is_fair_turn(state, waiter)
+                if can_grant_now and self.config.proof_recovery_enabled:
+                    # Another waiter's fairness probe can observe fresh pressure.
+                    # Recheck the shared fence before creating the actual lease.
+                    can_grant_now = self._recovery_ready(state, waiter, time.time())
                 if (
                     not externally_cancelled
                     and not parent_cancelled
@@ -1672,7 +1818,7 @@ class GlobalResourceScheduler:
                     self._lane_metrics(state, lane_value)["cancellations_total"] += 1
                     terminal = "cancelled"
                 elif timed_out and not can_grant_now:
-                    admission_observation = deepcopy(waiter.get("last_proof_refusal"))
+                    proof_refusal_observation = deepcopy(waiter.get("last_proof_refusal"))
                     timeout_decision = {
                         "schema": "resource-lease-timeout-decision@1",
                         "decision_scope": "actual_terminal_timeout_branch",
@@ -1729,6 +1875,8 @@ class GlobalResourceScheduler:
                         "wait_seconds": wait_seconds,
                     }
                     state["leases"][lease_id] = granted_record
+                    if self.config.proof_recovery_enabled:
+                        self._consume_recovery_grant(state, waiter, time.time())
                     self._record_wait(state, lane_value, wait_seconds)
                     state["metrics"]["acquisitions_total"] += 1
                     self._lane_metrics(state, lane_value)["acquisitions_total"] += 1
@@ -1749,13 +1897,16 @@ class GlobalResourceScheduler:
                     time.sleep(wait_for)
 
         if terminal == "cancelled":
-            raise LeaseCancelledError("resource lease request was cancelled")
+            error = LeaseCancelledError("resource lease request was cancelled")
+            error.admission_observation = deepcopy(dict(admission_observation, terminal=terminal))
+            error.proof_refusal_observation = deepcopy(proof_refusal_observation)
+            raise error
         if terminal == "timeout":
-            raise LeaseTimeoutError(
-                "timed out waiting for a resource lease",
-                admission_observation=admission_observation,
-                timeout_decision=timeout_decision,
-            )
+            error = LeaseTimeoutError("timed out waiting for a resource lease",
+                                      timeout_decision=timeout_decision)
+            error.admission_observation = deepcopy(dict(admission_observation, terminal=terminal))
+            error.proof_refusal_observation = deepcopy(proof_refusal_observation)
+            raise error
         assert granted_record is not None
         return ResourceLease(self, granted_record)
 
@@ -1959,6 +2110,7 @@ class GlobalResourceScheduler:
                 "active_child_lease_count": active_children,
                 "waiting_request_count": len(state["waiters"]),
                 "proof_backoff": dict(state.get("proof_backoff", {})),
+                "proof_recovery": dict(state.get("proof_recovery", {})),
                 "last_proof_refusal": deepcopy(state.get("last_proof_refusal")),
                 "saturation": {
                     "saturated": cpu >= self.config.total_cpu_slots
@@ -2057,8 +2209,8 @@ class GlobalResourceScheduler:
 
         with self._locked_state() as state:
             self._recover_stale_locked(state, time.time())
-            if (state["leases"] or state["waiters"]) and not force:
-                raise ResourceSchedulerError("cannot reset a scheduler with active work")
+            if (state["leases"] or state["waiters"] or state.get("proof_recovery")) and not force:
+                raise ResourceSchedulerError("cannot reset a scheduler with active work or pressure recovery")
             state.clear()
             state.update(self._new_state())
 
@@ -2067,11 +2219,45 @@ _GLOBAL_SCHEDULERS: Dict[str, GlobalResourceScheduler] = {}
 _GLOBAL_SCHEDULERS_LOCK = threading.Lock()
 
 
+def selected_proof_resource_profile() -> Optional[str]:
+    """Return an explicit operator profile; unknown or empty values fail closed."""
+    value = os.environ.get(DEFAULT_PROOF_PROFILE_ENV)
+    if value not in (None, LOCAL_BENCHMARK_PROOF_PROFILE):
+        raise ResourceConfigurationError(f"unknown {DEFAULT_PROOF_PROFILE_ENV}")
+    return value
+
+
+def default_proof_admission_timeout_seconds() -> float:
+    """Profile default only; callers must still cap waits by their work deadline."""
+    return 90.0 if selected_proof_resource_profile() == LOCAL_BENCHMARK_PROOF_PROFILE else 30.0
+
+
 def default_resource_scheduler_config() -> ResourceSchedulerConfig:
     """Use conservative admission unless an operator explicitly opts out."""
+    profile = selected_proof_resource_profile()
+    recovery = os.environ.get(DEFAULT_PROOF_RECOVERY_ENV, "1" if profile else "0")
+    if recovery not in {"0", "1"}:
+        raise ResourceConfigurationError(f"{DEFAULT_PROOF_RECOVERY_ENV} must be exactly 0 or 1")
     if os.environ.get("IPFS_DATASETS_PROOF_RESOURCE_SAFETY", "1") == "0":
+        if profile:
+            raise ResourceConfigurationError("local benchmark profile requires proof safety")
+        if recovery == "1":
+            raise ResourceConfigurationError("proof recovery requires proof safety")
         return ResourceSchedulerConfig()
-    return ResourceSchedulerConfig.for_proof_host()
+    if profile:
+        # Never select the account-wide default ledger implicitly. A benchmark
+        # controller owns a run-local path and passes the same profile to every
+        # worker; persisted identity rejects clients using a different policy.
+        state_path = os.environ.get(DEFAULT_STATE_ENV)
+        if not state_path or not Path(state_path).is_absolute():
+            raise ResourceConfigurationError("local benchmark profile requires an explicit absolute scheduler path")
+        if recovery != "1":
+            raise ResourceConfigurationError("local benchmark profile requires proof recovery")
+        return ResourceSchedulerConfig.for_proof_host(
+            proof_resource_profile=profile, proof_memory_stall_percent=10.0,
+            proof_recovery_enabled=True, proof_recovery_grants=1,
+        )
+    return ResourceSchedulerConfig.for_proof_host(proof_recovery_enabled=recovery == "1")
 
 
 def get_global_resource_scheduler(
@@ -2113,6 +2299,8 @@ def acquire_resource_lease(lane: Union[str, ResourceLane], **kwargs: Any) -> Res
 
 __all__ = [
     "RESOURCE_SCHEDULER_SCHEMA_VERSION",
+    "DEFAULT_PROOF_PROFILE_ENV",
+    "LOCAL_BENCHMARK_PROOF_PROFILE",
     "DEFAULT_LANE_CPU_RESERVATIONS",
     "ResourceLane",
     "LaneReservation",
@@ -2129,6 +2317,8 @@ __all__ = [
     "LeaseNotFoundError",
     "SchedulerStateError",
     "default_scheduler_state_path",
+    "selected_proof_resource_profile",
+    "default_proof_admission_timeout_seconds",
     "get_global_resource_scheduler",
     "configure_global_resource_scheduler",
     "acquire_resource_lease",

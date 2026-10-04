@@ -110,7 +110,7 @@ def test_root_and_child_timeout_describe_actual_branch_and_keep_parent(tmp_path,
         error = timed_out(native, parent=parent, request_id=request)
         decision = assert_timeout_decision(error, request=request,
                                           parent=parent.lease_id if parent else None)
-        history = error.admission_observation
+        history = error.proof_refusal_observation
         assert history["historical"] is True
         assert history["waiter_id"] == decision["waiter_id"]
         assert history["sequence"] == decision["sequence"]
@@ -139,10 +139,10 @@ def test_backoff_timeout_has_actual_decision_and_null_own_refusal(tmp_path, monk
     one = assert_timeout_decision(first, request="first")
     two = assert_timeout_decision(second, request="second")
     assert one["waiter_id"] != two["waiter_id"]
-    assert second.admission_observation is None
+    assert second.proof_refusal_observation is None
     assert samples.calls == 1
     state = closed_state(native)
-    assert state["last_proof_refusal"] == first.admission_observation
+    assert state["last_proof_refusal"] == first.proof_refusal_observation
     assert state["last_proof_refusal"]["waiter_id"] != two["waiter_id"]
     assert state["waiters"] == state["leases"] == {}
     assert state["metrics"]["timeouts_total"] == 2
@@ -154,7 +154,7 @@ def test_capacity_only_timeout_keeps_held_lease_and_does_not_sample(tmp_path):
     with native.acquire("hammer", cpu_slots=6, memory_mb=100, timeout=0) as held:
         error = timed_out(native, request_id="capacity")
         assert_timeout_decision(error, request="capacity", proof_safety=False)
-        assert error.admission_observation is None
+        assert error.proof_refusal_observation is None
         state = closed_state(native)
         assert set(state["leases"]) == {held.lease_id}
         assert state["waiters"] == {}
@@ -168,9 +168,9 @@ def test_unknown_sample_is_separate_from_actual_timeout_branch(tmp_path):
     native = scheduler(tmp_path, samples)
     error = timed_out(native, request_id="unknown-sample")
     assert_timeout_decision(error, request="unknown-sample")
-    assert error.admission_observation["reason"] == "proof_resource_telemetry_unknown"
-    assert error.admission_observation["sample"] is None
-    assert error.admission_observation["error_type"] == "OSError"
+    assert error.proof_refusal_observation["reason"] == "proof_resource_telemetry_unknown"
+    assert error.proof_refusal_observation["sample"] is None
+    assert error.proof_refusal_observation["error_type"] == "OSError"
     assert samples.calls == 1
     assert closed_state(native)["waiters"] == {}
 
@@ -184,7 +184,7 @@ def test_diagnostic_lane_is_bounded_without_changing_actual_state_lane(tmp_path)
     decision = caught.value.timeout_decision
     assert decision["lane"] == lane[:128]
     assert decision["lane_truncated"] is True
-    assert decision["waiter_id"] == caught.value.admission_observation["waiter_id"]
+    assert decision["waiter_id"] == caught.value.proof_refusal_observation["waiter_id"]
     state = closed_state(native)
     assert state["metrics"]["lanes"][lane]["timeouts_total"] == 1
     assert lane[:128] not in state["metrics"]["lanes"]
@@ -299,7 +299,7 @@ def test_own_historical_refusal_is_not_final_rival_fairness_cause(tmp_path):
         with pytest.raises(LeaseTimeoutError) as caught:
             native.acquire("hammer", cpu_slots=1, memory_mb=100,
                            timeout=0.04, request_id="current")
-        own = caught.value.admission_observation
+        own = caught.value.proof_refusal_observation
         decision = assert_timeout_decision(caught.value, request="current")
         assert own["request_id"] == "current"
         assert own["waiter_id"] == decision["waiter_id"]
