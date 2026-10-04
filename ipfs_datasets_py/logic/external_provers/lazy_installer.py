@@ -1107,12 +1107,7 @@ def normalize_prover_name(prover_name: str) -> str:
     """Return the canonical lazy-installer name for a prover."""
 
     normalized = (
-        str(prover_name or "")
-        .strip()
-        .lower()
-        .replace("-", "_")
-        .replace(".", "_")
-        .replace(" ", "_")
+        str(prover_name or "").strip().lower().replace("-", "_").replace(".", "_").replace(" ", "_")
     )
     return _ALIASES.get(normalized, normalized)
 
