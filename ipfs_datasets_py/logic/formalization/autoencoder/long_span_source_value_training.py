@@ -984,7 +984,7 @@ def train(student, training_rows, validation_rows, *, training_references, valid
                         break
                     object_base_objective = objective.detach()
                     objective = objective + auxiliary_source_object_weight*object_result["loss"]
-                paraphrase_result = paraphrase_base_objective = None
+                paraphrase_result = paraphrase_base_objective = paraphrase_weighted_loss = None
                 if paraphrase_cache is not None:
                     paraphrase_forward_attempts += 1
                     try:
@@ -999,7 +999,8 @@ def train(student, training_rows, validation_rows, *, training_references, valid
                     # A zero multiple would create otherwise absent gradients
                     # and Adam state. This control never attaches that graph.
                     if paraphrase_weight>0.:
-                        objective = objective + paraphrase_weight*paraphrase_result["loss"]
+                        paraphrase_weighted_loss = paraphrase_weight*paraphrase_result["loss"]
+                        objective = objective + paraphrase_weighted_loss
                 core._require(core._finite(torch, objective) and core._finite(torch, source_loss), "nonfinite objective")
                 if time.monotonic() >= deadline:
                     stopped, complete = "deadline", False
@@ -1090,7 +1091,7 @@ def train(student, training_rows, validation_rows, *, training_references, valid
                     committed_updates[-1]["paraphrase_modality_auxiliary"] = dict(
                         zero_based_committed_step=steps-1, weight=paraphrase_weight,
                         base_objective=float(paraphrase_base_objective),
-                        weighted_loss=paraphrase_weight*float(paraphrase_result["loss"].detach()),
+                        weighted_loss=0. if paraphrase_weighted_loss is None else float(paraphrase_weighted_loss.detach()),
                         receipt=paraphrase_result["receipt"])
                 if margin_result is not None:
                     margin_gradient_receipt.update(combined_preclip_norm=float(preclip_norm.detach()),

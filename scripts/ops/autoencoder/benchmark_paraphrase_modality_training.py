@@ -272,6 +272,11 @@ def bank_readout(ctx,lane,model,bank,deadline):
     require(value['complete'] and len(value['rows'])==180 and value['groups']['all']['rows']==180
         and value['model_tensor_sha256']==before and lane['core'].tensor_digest(model)==before,
         'full180 detached TRAIN readout incomplete or changed model')
+    for modality in ('O','P','F'):
+        require(value['groups']['modality:'+modality]['rows']==60,'complete TRAIN modality readout required')
+        for template in ('rule_gerund_by_actor','topicalized_actor_norm'):
+            require(value['groups']['stratum:'+modality+':'+template]['rows']==30
+                and value['groups']['template:'+template]['rows']==90,'complete TRAIN template readout required')
     require(value['used_for_selection'] is False and value['optimizer_steps']==0,'TRAIN readout changed authority')
     check_deadline(deadline);return value
 
