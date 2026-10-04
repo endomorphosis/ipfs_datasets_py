@@ -12,7 +12,7 @@ from pathlib import Path, PurePosixPath
 import warnings
 
 from .security.security_formula_corpus import _qualified_functions, _verify_span
-from .security.security_formalization_evaluation import _function_span
+from .security.security_formalization_evaluation import _function_line_index, _function_span
 from .source_screening import _contains_secret, _credential_path_reason
 
 SCHEMA = "source-function-units@1"
@@ -79,9 +79,12 @@ def extract_function_units(*, source_bytes, source_sha256, source_path, max_func
         return result
     if len(found) > max_functions:
         raise ValueError("source function bound exceeded; inventory is not truncated")
+    # Reuse only byte geometry within this extraction call. Each function still
+    # gets exact span verification and independently parsed AST comparison.
+    line_index = _function_line_index(source_bytes) if found else None
     mapped_bytes = mapped_lines = 0
     for node, qualified, enclosing in found:
-        body, binding = _function_span(source_bytes, node)
+        body, binding = _function_span(source_bytes, node, _line_index=line_index)
         mapped_bytes += len(body)
         mapped_lines += len(binding["line_byte_map"])
         if mapped_bytes > 4 * MAX_SOURCE_BYTES or mapped_lines > 65536:
