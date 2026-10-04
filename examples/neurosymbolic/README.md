@@ -185,9 +185,7 @@ if result.is_proved():
 ### Pattern 2: Temporal Reasoning
 
 ```python
-from ipfs_datasets_py.logic.TDFOL.tdfol_core import (
-    Predicate, TemporalFormula, TemporalOperator
-)
+from ipfs_datasets_py.logic.TDFOL.tdfol_core import Predicate, TemporalFormula, TemporalOperator
 
 p = Predicate("P", ())
 always_p = TemporalFormula(TemporalOperator.ALWAYS, p)
@@ -199,9 +197,7 @@ result = reasoner.prove(p)  # Should derive p from □p
 ### Pattern 3: Deontic Reasoning
 
 ```python
-from ipfs_datasets_py.logic.TDFOL.tdfol_core import (
-    Predicate, DeonticFormula, DeonticOperator
-)
+from ipfs_datasets_py.logic.TDFOL.tdfol_core import Predicate, DeonticFormula, DeonticOperator
 
 p = Predicate("Pay", ())
 obligatory_p = DeonticFormula(DeonticOperator.OBLIGATORY, p)
@@ -217,32 +213,16 @@ result = reasoner.prove(permitted_p)  # O(p) → P(p)
 
 ```python
 # Basic reasoner (40 rules only)
-reasoner = NeurosymbolicReasoner(
-    use_cec=False,
-    use_modal=False,
-    use_nl=False
-)
+reasoner = NeurosymbolicReasoner(use_cec=False, use_modal=False, use_nl=False)
 
 # With CEC (127 rules)
-reasoner = NeurosymbolicReasoner(
-    use_cec=True,
-    use_modal=False,
-    use_nl=False
-)
+reasoner = NeurosymbolicReasoner(use_cec=True, use_modal=False, use_nl=False)
 
 # With modal logic provers
-reasoner = NeurosymbolicReasoner(
-    use_cec=False,
-    use_modal=True,
-    use_nl=False
-)
+reasoner = NeurosymbolicReasoner(use_cec=False, use_modal=True, use_nl=False)
 
 # Full-featured (recommended)
-reasoner = NeurosymbolicReasoner(
-    use_cec=True,
-    use_modal=True,
-    use_nl=True
-)
+reasoner = NeurosymbolicReasoner(use_cec=True, use_modal=True, use_nl=True)
 ```
 
 ### Adjusting Timeouts

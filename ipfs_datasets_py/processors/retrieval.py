@@ -135,7 +135,9 @@ def embed_texts_with_router_or_local(
             device=resolved_device,
             parallel_batches=resolved_parallel_batches,
         )
-        normalized = [[float(value) for value in list(vector or [])] for vector in list(vectors or [])]
+        normalized = [
+            [float(value) for value in list(vector or [])] for vector in list(vectors or [])
+        ]
         if len(normalized) == len(items) and all(vector for vector in normalized):
             return normalized, {
                 "backend": "embeddings_router",
@@ -238,11 +240,17 @@ def embed_texts_with_router_or_local_chunked(
         )
         for text in items:
             try:
-                chunks = [chunk.content for chunk in chunker.chunk_text(text) if str(chunk.content or "").strip()]
+                chunks = [
+                    chunk.content
+                    for chunk in chunker.chunk_text(text)
+                    if str(chunk.content or "").strip()
+                ]
             except Exception:
                 chunks = []
             if not chunks:
-                chunks = _simple_chunk_text(text, chunk_size=chunk_size, chunk_overlap=chunk_overlap)
+                chunks = _simple_chunk_text(
+                    text, chunk_size=chunk_size, chunk_overlap=chunk_overlap
+                )
             chunks_by_doc.append(chunks or [text])
     except Exception:
         for text in items:
@@ -284,7 +292,9 @@ def embed_texts_with_router_or_local_chunked(
                 device=resolved_device,
                 parallel_batches=resolved_parallel_batches,
             )
-        normalized = [[float(value) for value in list(vector or [])] for vector in list(vectors or [])]
+        normalized = [
+            [float(value) for value in list(vector or [])] for vector in list(vectors or [])
+        ]
         if len(normalized) == len(flat_chunks) and all(vector for vector in normalized):
             per_doc_vectors: List[List[float]] = []
             offset = 0
@@ -319,7 +329,9 @@ def embed_texts_with_router_or_local_chunked(
 
     per_doc_vectors = []
     for chunks in chunks_by_doc:
-        chunk_vectors = [hashed_term_projection(chunk, dimension=fallback_dimension) for chunk in chunks]
+        chunk_vectors = [
+            hashed_term_projection(chunk, dimension=fallback_dimension) for chunk in chunks
+        ]
         if not chunk_vectors:
             per_doc_vectors.append(hashed_term_projection("", dimension=fallback_dimension))
             continue
@@ -535,7 +547,9 @@ def _document_term_counts(document: Mapping[str, Any], *, title: str, text: str)
         if counts:
             return counts
 
-    if isinstance(raw_term_frequencies, Sequence) and not isinstance(raw_term_frequencies, (str, bytes, bytearray)):
+    if isinstance(raw_term_frequencies, Sequence) and not isinstance(
+        raw_term_frequencies, (str, bytes, bytearray)
+    ):
         for item in raw_term_frequencies:
             if not isinstance(item, Mapping):
                 continue
@@ -586,6 +600,8 @@ def _bm25_score(
             continue
         df = max(1, int(document_frequency.get(term) or 0))
         idf = math.log(1.0 + ((total_documents - df + 0.5) / (df + 0.5)))
-        normalization = frequency + k1 * (1.0 - b + b * (document_length / max(1.0, average_length)))
+        normalization = frequency + k1 * (
+            1.0 - b + b * (document_length / max(1.0, average_length))
+        )
         score += idf * ((frequency * (k1 + 1.0)) / max(1e-9, normalization))
     return score

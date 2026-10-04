@@ -15,13 +15,13 @@ import sys
 import os
 
 # Add project root to Python path
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 # Import test modules for easier access
 try:
-    #from .test_skeleton_format_support_coverage import FormatSupportCoverageTest
+    # from .test_skeleton_format_support_coverage import FormatSupportCoverageTest
     # from .test_skeleton_processing_success_rate import ProcessingSuccessRateTest
     # from .test_skeleton_resource_utilization import ResourceUtilizationTest
     # from .test_skeleton_processing_speed import ProcessingSpeedTest

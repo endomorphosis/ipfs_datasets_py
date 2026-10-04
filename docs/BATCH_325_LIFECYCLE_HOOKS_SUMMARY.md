@@ -135,7 +135,7 @@ manager.register_hook(LifecycleEventType.BEFORE_OPERATION, hook)
 ```python
 error_hook = ConditionalHook(
     condition=lambda e: e.event_type == LifecycleEventType.ON_ERROR,
-    callback=lambda e: log_error(e.data["exception"])
+    callback=lambda e: log_error(e.data["exception"]),
 )
 manager.register_hook(LifecycleEventType.ON_ERROR, error_hook)
 ```

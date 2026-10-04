@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 # Result dataclasses
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class SearchMatch:
     """Represents a single search match."""
@@ -78,6 +79,7 @@ class CodebaseSearchResult:
 # Engine
 # ---------------------------------------------------------------------------
 
+
 class CodebaseSearchEngine:
     """
     Advanced codebase search engine with pattern matching, filtering, and analysis.
@@ -95,11 +97,23 @@ class CodebaseSearchEngine:
         """Initialise the search engine with default exclusion patterns."""
         self.logger = logging.getLogger(__name__)
         self.default_exclude_patterns = [
-            "*.git*", "*__pycache__*", "*.pyc", "*.pyo", "*.pyd",
-            "*node_modules*", "*.npm*", "*.yarn*",
-            "*.egg-info*", "*.dist-info*", "*build*", "*dist*",
-            "*.ipynb_checkpoints*", "*.pytest_cache*",
-            "*.coverage*", "*.tox*", "*.mypy_cache*",
+            "*.git*",
+            "*__pycache__*",
+            "*.pyc",
+            "*.pyo",
+            "*.pyd",
+            "*node_modules*",
+            "*.npm*",
+            "*.yarn*",
+            "*.egg-info*",
+            "*.dist-info*",
+            "*build*",
+            "*dist*",
+            "*.ipynb_checkpoints*",
+            "*.pytest_cache*",
+            "*.coverage*",
+            "*.tox*",
+            "*.mypy_cache*",
         ]
 
         # Dataset-aware patterns for specialised search
@@ -192,13 +206,9 @@ class CodebaseSearchEngine:
                         start_idx = max(0, line_num - context_lines - 1)
                         end_idx = min(len(lines), line_num + context_lines)
                         context_before = [
-                            lines[i].rstrip("\n\r")
-                            for i in range(start_idx, line_num - 1)
+                            lines[i].rstrip("\n\r") for i in range(start_idx, line_num - 1)
                         ]
-                        context_after = [
-                            lines[i].rstrip("\n\r")
-                            for i in range(line_num, end_idx)
-                        ]
+                        context_after = [lines[i].rstrip("\n\r") for i in range(line_num, end_idx)]
                     matches.append(
                         SearchMatch(
                             file_path=str(file_path),
@@ -245,8 +255,9 @@ class CodebaseSearchEngine:
             try:
                 for item in dir_path.iterdir():
                     if item.is_file():
-                        if not self._should_exclude_file(str(item), exclude_patterns) and \
-                                self._should_include_file(item, extensions):
+                        if not self._should_exclude_file(
+                            str(item), exclude_patterns
+                        ) and self._should_include_file(item, extensions):
                             files.append(item)
                     elif item.is_dir() and not item.name.startswith("."):
                         process_directory(item, current_depth + 1)
@@ -256,8 +267,9 @@ class CodebaseSearchEngine:
                 logger.warning(f"Error processing directory {dir_path}: {e}")
 
         if search_path.is_file():
-            if not self._should_exclude_file(str(search_path), exclude_patterns) and \
-                    self._should_include_file(search_path, extensions):
+            if not self._should_exclude_file(
+                str(search_path), exclude_patterns
+            ) and self._should_include_file(search_path, extensions):
                 files.append(search_path)
         else:
             process_directory(search_path)
@@ -300,9 +312,7 @@ class CodebaseSearchEngine:
             pattern, case_insensitive, whole_word, regex
         )
 
-        files_to_search = self._find_files(
-            search_path, extension_list, exclude_patterns, max_depth
-        )
+        files_to_search = self._find_files(search_path, extension_list, exclude_patterns, max_depth)
 
         if not files_to_search:
             return CodebaseSearchResult(
@@ -348,9 +358,7 @@ class CodebaseSearchEngine:
             extensions_included=extension_list or [],
             patterns_excluded=exclude_patterns,
         )
-        return CodebaseSearchResult(
-            summary=summary, file_results=file_results, errors=errors
-        )
+        return CodebaseSearchResult(summary=summary, file_results=file_results, errors=errors)
 
     def format_results(
         self,
@@ -469,9 +477,7 @@ class CodebaseSearchEngine:
         lines += ["  </files>", "</search_results>"]
         return "\n".join(lines)
 
-    def search_dataset_patterns(
-        self, path: str = ".", pattern_type: str = "all"
-    ) -> Dict[str, Any]:
+    def search_dataset_patterns(self, path: str = ".", pattern_type: str = "all") -> Dict[str, Any]:
         """Search for dataset-specific patterns (IPFS hashes, ML patterns, etc.)."""
         patterns_to_search = self.dataset_patterns
         if pattern_type != "all" and pattern_type in self.dataset_patterns:

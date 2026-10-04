@@ -34,6 +34,7 @@ def _ms():
 
 # ── TestQuickstartRelAttributes ──────────────────────────────────────────────
 
+
 class TestQuickstartRelAttributes:
     """rel.source / rel.target are non-existent; must use .source_id/.target_id."""
 
@@ -64,13 +65,12 @@ class TestQuickstartRelAttributes:
 
 # ── TestQuickstartEngineAPI ──────────────────────────────────────────────────
 
+
 class TestQuickstartEngineAPI:
     """execute_cypher is the correct method; engine.execute() doesn't exist."""
 
     def test_execute_cypher_present(self):
-        assert "execute_cypher" in _qs(), (
-            "QUICKSTART must use engine.execute_cypher()"
-        )
+        assert "execute_cypher" in _qs(), "QUICKSTART must use engine.execute_cypher()"
 
     def test_engine_execute_bare_absent(self):
         # Should not have "engine.execute(" without "execute_cypher" or "_query"
@@ -92,6 +92,7 @@ class TestQuickstartEngineAPI:
 
 
 # ── TestQuickstartIPFSStoreAPI ───────────────────────────────────────────────
+
 
 class TestQuickstartIPFSStoreAPI:
     """backend.store() takes bytes/str/dict, not a KnowledgeGraph object."""
@@ -119,6 +120,7 @@ class TestQuickstartIPFSStoreAPI:
 
 # ── TestQuickstartHybridSearch ───────────────────────────────────────────────
 
+
 class TestQuickstartHybridSearch:
     """HybridSearchEngine is the correct class (not HybridSearch); API arg fixes."""
 
@@ -135,9 +137,7 @@ class TestQuickstartHybridSearch:
         )
 
     def test_top_k_absent(self):
-        assert "top_k=" not in _qs(), (
-            "QUICKSTART must not use top_k= — correct kwarg is k="
-        )
+        assert "top_k=" not in _qs(), "QUICKSTART must not use top_k= — correct kwarg is k="
 
     def test_k_arg_present(self):
         assert re.search(r"\bk\s*=\s*\d", _qs()), (
@@ -161,6 +161,7 @@ class TestQuickstartHybridSearch:
 
 
 # ── TestMasterStatusCoverageMatrix ───────────────────────────────────────────
+
 
 class TestMasterStatusCoverageMatrix:
     """Feature Completeness Matrix coverage % must reflect current 99-100% reality."""
@@ -189,9 +190,7 @@ class TestMasterStatusCoverageMatrix:
         matrix_start = content.find("### Core Features (All Complete")
         matrix_end = content.find("### Migration & Compatibility", matrix_start)
         core_section = content[matrix_start:matrix_end]
-        assert "| 70%" not in core_section, (
-            "Core feature rows must not show stale 70% coverage"
-        )
+        assert "| 70%" not in core_section, "Core feature rows must not show stale 70% coverage"
 
     def test_100_percent_present_in_cypher_rows(self):
         content = _ms()
@@ -199,21 +198,18 @@ class TestMasterStatusCoverageMatrix:
         cypher_section_start = content.find("### Query Capabilities")
         cypher_section_end = content.find("### Advanced Features", cypher_section_start)
         cypher_section = content[cypher_section_start:cypher_section_end]
-        assert "100%" in cypher_section, (
-            "Cypher rows in Feature Matrix should show 100% coverage"
-        )
+        assert "100%" in cypher_section, "Cypher rows in Feature Matrix should show 100% coverage"
 
     def test_100_percent_in_migration_table(self):
         content = _ms()
         mig_start = content.find("### Migration & Compatibility")
         mig_end = content.find("## Recent Major Changes", mig_start)
         mig_section = content[mig_start:mig_end]
-        assert "100%" in mig_section, (
-            "Migration table must show 100% after s29+ coverage work"
-        )
+        assert "100%" in mig_section, "Migration table must show 100% after s29+ coverage work"
 
 
 # ── TestThreeDocVersionAgreement ─────────────────────────────────────────────
+
 
 class TestThreeDocVersionAgreement:
     """MASTER_STATUS, ROADMAP, and CHANGELOG must all agree on v3.22.18."""

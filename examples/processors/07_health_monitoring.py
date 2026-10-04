@@ -18,13 +18,13 @@ async def example_1_basic_health_check():
     print("\n" + "=" * 70)
     print("Example 1: Basic Health Check")
     print("=" * 70)
-    
+
     config = ProcessorConfig(enable_monitoring=True)
     processor = UniversalProcessor(config)
-    
+
     print("Checking system health...")
     health = processor.check_health()
-    
+
     if health:
         print(f"\n✓ System Status: {health.status.value.upper()}")
         print(f"  - Total processors: {health.processor_count}")
@@ -39,10 +39,10 @@ async def example_2_health_report_text():
     print("\n" + "=" * 70)
     print("Example 2: Health Report (Text Format)")
     print("=" * 70)
-    
+
     config = ProcessorConfig(enable_monitoring=True)
     processor = UniversalProcessor(config)
-    
+
     # Generate text report
     report = processor.get_health_report(format="text")
     print(report)
@@ -53,16 +53,16 @@ async def example_3_health_report_json():
     print("\n" + "=" * 70)
     print("Example 3: Health Report (JSON Format)")
     print("=" * 70)
-    
+
     config = ProcessorConfig(enable_monitoring=True)
     processor = UniversalProcessor(config)
-    
+
     # Generate JSON report
     report_json = processor.get_health_report(format="json")
-    
+
     print("JSON output (pretty-printed):")
     print(report_json)
-    
+
     # Parse JSON for programmatic access
     data = json.loads(report_json)
     print(f"\nParsed data:")
@@ -75,14 +75,14 @@ async def example_4_health_status_levels():
     print("\n" + "=" * 70)
     print("Example 4: Health Status Levels")
     print("=" * 70)
-    
+
     statuses = [
         (HealthStatus.HEALTHY, "≥95%", "Operating normally"),
         (HealthStatus.DEGRADED, "80-95%", "Some issues, still functional"),
         (HealthStatus.UNHEALTHY, "<80%", "Significant problems"),
-        (HealthStatus.UNKNOWN, "N/A", "No data available")
+        (HealthStatus.UNKNOWN, "N/A", "No data available"),
     ]
-    
+
     print("Health status levels:")
     for status, success_rate, description in statuses:
         print(f"\n  {status.value.upper()}:")
@@ -95,13 +95,13 @@ async def example_5_monitoring_individual_processors():
     print("\n" + "=" * 70)
     print("Example 5: Individual Processor Monitoring")
     print("=" * 70)
-    
+
     config = ProcessorConfig(enable_monitoring=True)
     processor = UniversalProcessor(config)
-    
+
     # Get system health (includes per-processor health)
     health = processor.check_health()
-    
+
     if health:
         print("Per-processor health:")
         for name, proc_health in health.processor_health.items():
@@ -109,9 +109,9 @@ async def example_5_monitoring_individual_processors():
                 HealthStatus.HEALTHY: "✓",
                 HealthStatus.DEGRADED: "⚠",
                 HealthStatus.UNHEALTHY: "✗",
-                HealthStatus.UNKNOWN: "?"
+                HealthStatus.UNKNOWN: "?",
             }.get(proc_health.status, "?")
-            
+
             print(f"\n  {status_symbol} {name}:")
             print(f"    Status: {proc_health.status.value}")
             print(f"    Success rate: {proc_health.success_rate:.1%}")
@@ -124,31 +124,31 @@ async def example_6_alerting_on_unhealthy():
     print("\n" + "=" * 70)
     print("Example 6: Alerting on Unhealthy Processors")
     print("=" * 70)
-    
+
     config = ProcessorConfig(enable_monitoring=True)
     processor = UniversalProcessor(config)
-    
+
     # Check health
     health = processor.check_health()
-    
+
     if health:
         # Alert if system is unhealthy
         if health.status == HealthStatus.UNHEALTHY:
             print("🚨 ALERT: System is UNHEALTHY!")
             print(f"   {health.unhealthy_count} unhealthy processors detected")
-            
+
             # Get list of unhealthy processors
             # unhealthy = processor._health_monitor.get_unhealthy_processors()
             # for proc in unhealthy:
             #     print(f"   - {proc.name}: {proc.success_rate:.1%} success rate")
-        
+
         elif health.status == HealthStatus.DEGRADED:
             print("⚠ WARNING: System is DEGRADED")
             print(f"   {health.degraded_count} degraded processors")
-        
+
         else:
             print("✓ System is HEALTHY")
-    
+
     print("\nExample alert configuration:")
     print("  • UNHEALTHY: Send PagerDuty alert")
     print("  • DEGRADED: Send Slack notification")
@@ -160,10 +160,10 @@ async def example_7_periodic_health_checks():
     print("\n" + "=" * 70)
     print("Example 7: Periodic Health Monitoring")
     print("=" * 70)
-    
+
     config = ProcessorConfig(enable_monitoring=True)
     processor = UniversalProcessor(config)
-    
+
     print("Example: Monitoring health every 5 minutes")
     print("\nPseudo-code:")
     print("""
@@ -181,7 +181,7 @@ async def example_7_periodic_health_checks():
     # Run in background
     asyncio.create_task(monitor_health())
     """)
-    
+
     print("Best practices:")
     print("  • Check health every 1-5 minutes in production")
     print("  • Log metrics for historical analysis")
@@ -194,9 +194,9 @@ async def example_8_health_dashboard_integration():
     print("\n" + "=" * 70)
     print("Example 8: Dashboard Integration")
     print("=" * 70)
-    
+
     print("Integration options:")
-    
+
     print("\n1. Prometheus metrics:")
     print("""
     from prometheus_client import Gauge
@@ -218,13 +218,13 @@ async def example_8_health_dashboard_integration():
         
         processor_health.labels(processor_name=name).set(status_value)
     """)
-    
+
     print("\n2. Grafana dashboard:")
     print("  • Visualize health status over time")
     print("  • Alert on status changes")
     print("  • Track success rates")
     print("  • Monitor processing times")
-    
+
     print("\n3. Custom logging:")
     print("""
     import logging
@@ -243,9 +243,9 @@ async def example_9_health_based_routing():
     print("\n" + "=" * 70)
     print("Example 9: Health-Based Routing")
     print("=" * 70)
-    
+
     print("Use health information for intelligent routing:")
-    
+
     print("\nScenario 1: Skip unhealthy processors")
     print("""
     health = processor.check_health()
@@ -261,7 +261,7 @@ async def example_9_health_based_routing():
         '*': healthy_processors[0]  # Use first healthy processor
     }
     """)
-    
+
     print("\nScenario 2: Load balancing based on performance")
     print("""
     # Choose processor with best performance
@@ -279,7 +279,7 @@ async def example_10_continuous_monitoring():
     print("\n" + "=" * 70)
     print("Example 10: Production Monitoring Setup")
     print("=" * 70)
-    
+
     print("Complete monitoring setup:")
     print("""
     # 1. Configure with monitoring enabled
@@ -321,7 +321,7 @@ async def example_10_continuous_monitoring():
     # 5. Start monitoring
     asyncio.create_task(background_monitor())
     """)
-    
+
     print("\nProduction checklist:")
     print("  ✓ Health check endpoint exposed")
     print("  ✓ Metrics endpoint for monitoring systems")
@@ -337,7 +337,7 @@ async def main():
     print("=" * 70)
     print("HEALTH MONITORING EXAMPLES")
     print("=" * 70)
-    
+
     examples = [
         example_1_basic_health_check,
         example_2_health_report_text,
@@ -348,13 +348,13 @@ async def main():
         example_7_periodic_health_checks,
         example_8_health_dashboard_integration,
         example_9_health_based_routing,
-        example_10_continuous_monitoring
+        example_10_continuous_monitoring,
     ]
-    
+
     for example in examples:
         await example()
         await asyncio.sleep(0.1)
-    
+
     print("\n" + "=" * 70)
     print("Examples complete!")
     print("=" * 70)

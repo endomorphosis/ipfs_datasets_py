@@ -85,9 +85,7 @@ results = searcher.search("EPA water regulations California")
 
 ### 2. MCP Server
 ```python
-from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import (
-    register_brave_legal_search_tools
-)
+from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import register_brave_legal_search_tools
 
 register_brave_legal_search_tools(tool_registry)
 ```
@@ -95,8 +93,8 @@ register_brave_legal_search_tools(tool_registry)
 ### 3. Shared Components
 ```python
 from ipfs_datasets_py.processors.legal_scrapers.complaint_analysis import (
-    get_keywords,           # Shared keyword registry
-    LegalPatternExtractor   # Shared pattern extractor
+    get_keywords,  # Shared keyword registry
+    LegalPatternExtractor,  # Shared pattern extractor
 )
 ```
 

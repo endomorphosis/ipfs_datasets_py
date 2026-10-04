@@ -376,11 +376,14 @@ def test_task_board_generated_status_helpers_are_reusable() -> None:
         "complete": 1,
         "blocked": 1,
     }
-    assert count_unmanaged_generated_status_sections(
-        updated,
-        start_marker="<!-- daemon:start -->",
-        end_marker="<!-- daemon:end -->",
-    ) == 0
+    assert (
+        count_unmanaged_generated_status_sections(
+            updated,
+            start_marker="<!-- daemon:start -->",
+            end_marker="<!-- daemon:end -->",
+        )
+        == 0
+    )
     assert "<!-- daemon:start -->" in updated
     assert "Latest result: `valid`" in updated
     assert "stale" not in updated
@@ -447,7 +450,9 @@ def test_relevant_file_context_helpers_are_reusable(tmp_path: Path) -> None:
     docs = repo / "docs"
     docs.mkdir()
     (docs / "runtime.md").write_text("runtime docs\n", encoding="utf-8")
-    task = Task(index=1, title="Port runtime feature with TypeScript parity", status="needed", checkbox_id=1)
+    task = Task(
+        index=1, title="Port runtime feature with TypeScript parity", status="needed", checkbox_id=1
+    )
     tracked_files = "\n".join(
         [
             "src/lib/logic/unrelated.ts",
@@ -475,16 +480,18 @@ def test_relevant_file_context_helpers_are_reusable(tmp_path: Path) -> None:
     )
 
     assert tokens == ["runtime", "feature"]
-    assert rank_relevant_context_file("src/lib/logic/runtime.test.ts", tokens) > rank_relevant_context_file(
+    assert rank_relevant_context_file(
+        "src/lib/logic/runtime.test.ts", tokens
+    ) > rank_relevant_context_file(
         "src/lib/logic/unrelated.ts",
         tokens,
     )
     assert selected == ["src/lib/logic/runtime.ts", "src/lib/logic/runtime.test.ts"]
     assert "### src/lib/logic/runtime.test.ts" in rendered
     assert "docs/runtime.md" not in rendered
-    assert render_relevant_file_context(repo_root=repo, tracked_files=tracked_files, task_or_title=None) == (
-        "[No selected task tokens available.]"
-    )
+    assert render_relevant_file_context(
+        repo_root=repo, tracked_files=tracked_files, task_or_title=None
+    ) == ("[No selected task tokens available.]")
 
 
 def test_typescript_diagnostic_context_helpers_are_reusable() -> None:
@@ -516,7 +523,9 @@ def test_typescript_diagnostic_context_helpers_are_reusable() -> None:
     assert "src/lib/logic/feature.ts:2:22 TS1005: Expression expected." in rendered
     assert "> 2: export const value = ;" in rendered
     assert "  1: export const before = true;" in rendered
-    assert render_file_edit_diagnostic_context(errors=[diagnostic], files=edits, radius=1) == rendered
+    assert (
+        render_file_edit_diagnostic_context(errors=[diagnostic], files=edits, radius=1) == rendered
+    )
 
 
 def test_file_replacement_retry_prompt_helper_is_reusable() -> None:
@@ -549,7 +558,9 @@ def test_artifact_failure_classifier_handles_provider_parse_and_quality_failures
         == "provider_http_403"
     )
     assert classify_artifact_failure_kind({"errors": ["call timed out"]}) == "timeout"
-    assert classify_artifact_failure_kind({"errors": ["LLM response did not contain JSON"]}) == "parse"
+    assert (
+        classify_artifact_failure_kind({"errors": ["LLM response did not contain JSON"]}) == "parse"
+    )
     assert (
         classify_artifact_failure_kind(
             {"failure_kind": "validation", "validation_results": [{"stderr": "error TS2314"}]},
@@ -558,8 +569,14 @@ def test_artifact_failure_classifier_handles_provider_parse_and_quality_failures
         )
         == "typescript_quality"
     )
-    assert classify_artifact_failure_kind({"failure_kind": "preflight", "errors": ["ignored"]}) == "preflight"
-    assert classify_artifact_failure_kind({"validation_results": [{"stderr": "error TS1005"}]}) == "validation"
+    assert (
+        classify_artifact_failure_kind({"failure_kind": "preflight", "errors": ["ignored"]})
+        == "preflight"
+    )
+    assert (
+        classify_artifact_failure_kind({"validation_results": [{"stderr": "error TS1005"}]})
+        == "validation"
+    )
     assert classify_artifact_failure_kind({}) == "invalid_no_change"
 
 
@@ -625,7 +642,9 @@ def test_task_result_failure_context_helper_is_reusable() -> None:
         ),
     ]
 
-    context = format_task_result_failure_context(rows, "Task checkbox-1: Port runtime feature", limit=2)
+    context = format_task_result_failure_context(
+        rows, "Task checkbox-1: Port runtime feature", limit=2
+    )
 
     assert "Summary: old failure" in context
     assert "Summary: new failure" in context
@@ -667,7 +686,11 @@ def test_plan_task_selection_and_backlog_helpers_are_reusable() -> None:
                     "errors": ["first", "second", "third"],
                 },
             }
-        return {"total_since_success": 1, "by_kind_since_success": {"parse": 1}, "latest_failure": {}}
+        return {
+            "total_since_success": 1,
+            "by_kind_since_success": {"parse": 1},
+            "latest_failure": {},
+        }
 
     backlog = build_blocked_task_backlog(
         tasks,
@@ -689,19 +712,25 @@ def test_plan_task_selection_and_backlog_helpers_are_reusable() -> None:
     assert markdown_task_label(tasks[3]) == "Task checkbox-4: Open 'runtime' task"
     assert first_open_plan_task(tasks) == tasks[3]
     assert select_next_plan_task(tasks) == tasks[3]
-    assert plan_task_from_latest_result(
-        tasks,
-        {"artifact": {"target_task": "Task checkbox-4: Open 'runtime' task"}},
-    ) == tasks[3]
+    assert (
+        plan_task_from_latest_result(
+            tasks,
+            {"artifact": {"target_task": "Task checkbox-4: Open 'runtime' task"}},
+        )
+        == tasks[3]
+    )
     assert backlog[0]["failure_budget_exhausted"] is True
-    assert "failure kinds: `{\"validation\": 3}`" in backlog_markdown
+    assert 'failure kinds: `{"validation": 3}`' in backlog_markdown
     assert "latest errors: first; second" in backlog_markdown
     assert selected_blocked == tasks[2]
-    assert select_next_plan_task(
-        tasks[:3],
-        revisit_blocked=True,
-        blocked_selector=lambda blocked_tasks: select_blocked_plan_task(blocked_tasks, rows),
-    ) == tasks[1]
+    assert (
+        select_next_plan_task(
+            tasks[:3],
+            revisit_blocked=True,
+            blocked_selector=lambda blocked_tasks: select_blocked_plan_task(blocked_tasks, rows),
+        )
+        == tasks[1]
+    )
 
 
 def test_path_policy_validates_allowlist_and_private_artifacts() -> None:
@@ -715,10 +744,13 @@ def test_path_policy_validates_allowlist_and_private_artifacts() -> None:
     )
 
     assert policy.validate_write_path("todo/source.py") == []
-    assert "outside example daemon allowlist" in policy.validate_write_path(
-        "elsewhere/source.py",
-        daemon_label="example daemon",
-    )[0]
+    assert (
+        "outside example daemon allowlist"
+        in policy.validate_write_path(
+            "elsewhere/source.py",
+            daemon_label="example daemon",
+        )[0]
+    )
     assert any(
         "private/session artifacts" in error
         for error in policy.validate_write_path("todo/auth/session.json")
@@ -751,7 +783,9 @@ def test_proposal_preflight_policy_helpers_are_reusable() -> None:
         fixture_test_required_message="fixture needs test",
     )
 
-    implementation_task = Task(index=1, title="Port runtime feature", status="needed", checkbox_id=1)
+    implementation_task = Task(
+        index=1, title="Port runtime feature", status="needed", checkbox_id=1
+    )
     fixture_task = Task(index=2, title="Add fixture parity capture", status="needed", checkbox_id=2)
 
     assert task_title_contains_any(fixture_task, ("fixture",))
@@ -783,15 +817,18 @@ def test_proposal_preflight_policy_helpers_are_reusable() -> None:
         selected_task=fixture_task,
         policy=policy,
     ) == ["fixture needs test"]
-    assert preflight_proposal_payload(
-        patch="diff --git a/src/runtime/feature.ts b/src/runtime/feature.ts\n",
-        files=[],
-        paths=["src/runtime/feature.ts"],
-        selected_task=implementation_task,
-        proposal_transport="worktree",
-        default_transport="llm_router",
-        policy=policy,
-    ) == []
+    assert (
+        preflight_proposal_payload(
+            patch="diff --git a/src/runtime/feature.ts b/src/runtime/feature.ts\n",
+            files=[],
+            paths=["src/runtime/feature.ts"],
+            selected_task=implementation_task,
+            proposal_transport="worktree",
+            default_transport="llm_router",
+            policy=policy,
+        )
+        == []
+    )
 
 
 def test_parse_json_proposal_accepts_plain_json_and_filters_invalid_files() -> None:
@@ -816,7 +853,9 @@ def test_parse_json_proposal_accepts_plain_json_and_filters_invalid_files() -> N
 
 
 def test_parse_file_replacement_response_accepts_json_file_edits_and_patch_fallback() -> None:
-    patch = "diff --git a/todo/source.py b/todo/source.py\n--- a/todo/source.py\n+++ b/todo/source.py\n"
+    patch = (
+        "diff --git a/todo/source.py b/todo/source.py\n--- a/todo/source.py\n+++ b/todo/source.py\n"
+    )
     response = parse_file_replacement_response(
         json.dumps(
             {
@@ -832,7 +871,9 @@ def test_parse_file_replacement_response_accepts_json_file_edits_and_patch_fallb
             }
         )
     )
-    diff_response = parse_file_replacement_response("```diff\ndiff --git a/a b/a\n--- a/a\n+++ b/a\n```\n")
+    diff_response = parse_file_replacement_response(
+        "```diff\ndiff --git a/a b/a\n--- a/a\n+++ b/a\n```\n"
+    )
 
     assert response.summary == "Reusable response"
     assert response.impact == "Exercises shared file replacement parser"
@@ -864,7 +905,9 @@ def test_build_file_replacement_validation_repair_prompt_renders_failed_results_
         target_task="Task checkbox-9: Repair the candidate.",
         changed_files=["todo/source.py"],
         validation_results=[
-            CommandResult(("python3", "-m", "py_compile", "todo/source.py"), 1, "", "SyntaxError: bad"),
+            CommandResult(
+                ("python3", "-m", "py_compile", "todo/source.py"), 1, "", "SyntaxError: bad"
+            ),
             CommandResult(("python3", "-m", "pytest", "todo"), 0, "ok", ""),
         ],
     )
@@ -886,7 +929,9 @@ def test_build_file_replacement_validation_repair_prompt_renders_failed_results_
     assert '{"summary":"short"' in prompt
 
 
-def test_attempt_file_replacement_validation_repair_updates_failed_candidate(tmp_path: Path) -> None:
+def test_attempt_file_replacement_validation_repair_updates_failed_candidate(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "repo"
     worktree = tmp_path / "worktree"
     (repo / "todo").mkdir(parents=True)
@@ -1028,10 +1073,12 @@ def test_task_board_status_helpers_are_reusable() -> None:
     )
 
     assert count_unmanaged_generated_status_sections(board, start_marker=start, end_marker=end) == 1
-    assert count_unmanaged_generated_status_sections(cleaned, start_marker=start, end_marker=end) == 0
+    assert (
+        count_unmanaged_generated_status_sections(cleaned, start_marker=start, end_marker=end) == 0
+    )
     assert "Latest target: `stale`" not in cleaned
     assert task_status_counts(tasks) == {"needed": 1, "in_progress": 0, "complete": 1, "blocked": 0}
-    assert "- Counts: `{\"blocked\": 0, \"complete\": 1, \"in_progress\": 0, \"needed\": 1}`" in block
+    assert '- Counts: `{"blocked": 0, "complete": 1, "in_progress": 0, "needed": 1}`' in block
     assert managed_status_block_pattern(start, end).search(updated)
     assert updated.count("## Generated Status") == 1
     assert "2026-01-01T00:00:00Z" in updated
@@ -1050,7 +1097,7 @@ def test_codex_jsonl_helpers_parse_assistant_proposals() -> None:
                         "content": [
                             {
                                 "type": "output_text",
-                                "text": "```json\n{\"summary\":\"from codex\",\"files\":[]}\n```",
+                                "text": '```json\n{"summary":"from codex","files":[]}\n```',
                             }
                         ],
                     },
@@ -1061,7 +1108,7 @@ def test_codex_jsonl_helpers_parse_assistant_proposals() -> None:
 
     candidates = extract_codex_event_text_candidates(response)
 
-    assert candidates == ["```json\n{\"summary\":\"from codex\",\"files\":[]}\n```"]
+    assert candidates == ['```json\n{"summary":"from codex","files":[]}\n```']
     assert extract_json(response) == {"summary": "from codex", "files": []}
     assert looks_like_empty_codex_event_stream(json.dumps({"type": "thread.started"}))
     assert not looks_like_empty_codex_event_stream(response)
@@ -1087,13 +1134,20 @@ def test_command_result_adapters_accept_objects_and_mappings() -> None:
         stdout: str = ""
         stderr: str = ""
 
-    object_result, mapping_result, valid_mapping_result, invalid_result = command_results_from_objects(
-        [
-            ExternalResult(("python3", "-m", "py_compile", "todo/source.py"), 0, "ok", ""),
-            {"command": ["pytest", "-q"], "returncode": "1", "stderr": "failed"},
-            {"command": ["git", "status"], "returncode": None, "valid": True, "stdout": "clean"},
-            {"command": "bad", "returncode": "not-int"},
-        ]
+    object_result, mapping_result, valid_mapping_result, invalid_result = (
+        command_results_from_objects(
+            [
+                ExternalResult(("python3", "-m", "py_compile", "todo/source.py"), 0, "ok", ""),
+                {"command": ["pytest", "-q"], "returncode": "1", "stderr": "failed"},
+                {
+                    "command": ["git", "status"],
+                    "returncode": None,
+                    "valid": True,
+                    "stdout": "clean",
+                },
+                {"command": "bad", "returncode": "not-int"},
+            ]
+        )
     )
 
     assert object_result == CommandResult(
@@ -1129,7 +1183,9 @@ def test_command_runner_from_legacy_function_adapts_timeout_and_stdin(tmp_path: 
         }
 
     run_legacy = command_runner_from_legacy_function(legacy_run_command)
-    result = run_legacy(("python3", "-m", "compileall"), cwd=tmp_path, timeout_seconds=17, stdin="ok")
+    result = run_legacy(
+        ("python3", "-m", "compileall"), cwd=tmp_path, timeout_seconds=17, stdin="ok"
+    )
     ledger_path = tmp_path / "events.jsonl"
     append_jsonl(ledger_path, {"path": Path("docs/plan.md"), "ok": True})
 
@@ -1370,7 +1426,9 @@ def test_validation_command_helpers_are_reusable(tmp_path: Path) -> None:
     assert failure_calls == [("first",)]
 
 
-def test_llm_router_invocation_runs_isolated_child_with_prefixed_env(tmp_path: Path, monkeypatch) -> None:
+def test_llm_router_invocation_runs_isolated_child_with_prefixed_env(
+    tmp_path: Path, monkeypatch
+) -> None:
     monkeypatch.delenv("SYNTH_LLM_BACKEND", raising=False)
     package = tmp_path / "ipfs_datasets_py"
     package.mkdir()
@@ -1605,7 +1663,10 @@ def test_proposal_record_history_helpers_read_runner_jsonl_shapes(tmp_path: Path
     log = tmp_path / "runner.jsonl"
     rows = [
         {"proposal": {"target_task": "Task A", "failure_kind": "llm", "errors": ["first"]}},
-        {"stage": "before_validation", "diagnostic": {"target_task": "Task A", "failure_kind": "parse"}},
+        {
+            "stage": "before_validation",
+            "diagnostic": {"target_task": "Task A", "failure_kind": "parse"},
+        },
         {
             "proposal": {
                 "target_task": "Task B",
@@ -1642,7 +1703,9 @@ def test_daemon_diagnostic_failure_loop_helpers_are_reusable() -> None:
                 "target_task": "Task `A`",
                 "failure_kind": "quality",
                 "errors": ["src/example.ts(1,1): error TS2339: Property 'foo' does not exist."],
-                "validation_results": [{"stdout": "", "stderr": "error TS2339: Property 'bar' does not exist."}],
+                "validation_results": [
+                    {"stdout": "", "stderr": "error TS2339: Property 'bar' does not exist."}
+                ],
             },
         ),
         (
@@ -1687,12 +1750,15 @@ def test_daemon_diagnostic_failure_loop_helpers_are_reusable() -> None:
     assert rollback_counts["total"] == 2
     assert rollback_counts["consecutive"] == 0
     assert rollback_counts["by_kind"] == {"quality": 2}
-    assert recent_rollback_failure_count(
-        rows[:-1],
-        "Task A",
-        classify_failure_kind=lambda artifact: str(artifact.get("failure_kind") or ""),
-        rollback_failure_kinds=frozenset({"quality"}),
-    ) == 2
+    assert (
+        recent_rollback_failure_count(
+            rows[:-1],
+            "Task A",
+            classify_failure_kind=lambda artifact: str(artifact.get("failure_kind") or ""),
+            rollback_failure_kinds=frozenset({"quality"}),
+        )
+        == 2
+    )
 
 
 def test_daemon_validation_failure_summary_helpers_are_reusable() -> None:
@@ -1752,7 +1818,13 @@ def test_daemon_validation_failure_summary_helpers_are_reusable() -> None:
     assert failure_summary_has_content(validation_summary)
     assert candidate["attempt"] == 2
     assert candidate["summary"]["exception_types"] == ["SyntaxError"]
-    assert gate["failed_gates"] == ["proposal_quality", "patch_check", "post_apply_validation", "tests", "validation"]
+    assert gate["failed_gates"] == [
+        "proposal_quality",
+        "patch_check",
+        "post_apply_validation",
+        "tests",
+        "validation",
+    ]
     assert cycle_gate["source"] == "recorded_partial_with_synthesized_defaults"
     assert "quality_gate_summary" in cycle_gate["patch_failure_tail"]
     assert normalized_failure_head_lines(pytest_output, limit=2) == [
@@ -1777,41 +1849,59 @@ def test_proposal_retry_policy_helpers_are_reusable() -> None:
     assert proposal_error_text(retryable) == "provider timed out while generating candidate"
     assert should_skip_validation_for_empty_proposal(empty_llm)
     assert not should_skip_validation_for_empty_proposal(source_only)
-    assert block_threshold_for_failure_kind(
-        "syntax_preflight",
-        default_threshold=3,
-        capped_failure_kinds=frozenset({"syntax_preflight"}),
-        capped_threshold=2,
-    ) == 2
-    assert proposal_block_threshold(
-        source_only,
-        default_threshold=3,
-        exact_thresholds={"no_visible_source_change": 1},
-    ) == 1
-    assert prompt_limit_for_mode(
-        max_prompt_chars=60000,
-        max_compact_prompt_chars=3600,
-        compact_prompt=True,
-    ) == 3600
-    assert prompt_limit_for_mode(
-        max_prompt_chars=60000,
-        max_compact_prompt_chars=3600,
-        compact_prompt=False,
-    ) == 60000
+    assert (
+        block_threshold_for_failure_kind(
+            "syntax_preflight",
+            default_threshold=3,
+            capped_failure_kinds=frozenset({"syntax_preflight"}),
+            capped_threshold=2,
+        )
+        == 2
+    )
+    assert (
+        proposal_block_threshold(
+            source_only,
+            default_threshold=3,
+            exact_thresholds={"no_visible_source_change": 1},
+        )
+        == 1
+    )
+    assert (
+        prompt_limit_for_mode(
+            max_prompt_chars=60000,
+            max_compact_prompt_chars=3600,
+            compact_prompt=True,
+        )
+        == 3600
+    )
+    assert (
+        prompt_limit_for_mode(
+            max_prompt_chars=60000,
+            max_compact_prompt_chars=3600,
+            compact_prompt=False,
+        )
+        == 60000
+    )
     assert proposal_record_has_failure_markers(
         record,
         failure_kind="llm",
         markers=frozenset({"code -15"}),
     )
-    assert count_proposal_records_with_failure_markers(
-        [record, {"failure_kind": "llm", "errors": ["other"]}],
-        failure_kind="llm",
-        markers=frozenset({"code -15"}),
-    ) == 1
-    assert count_recent_proposal_failures(
-        [{"failure_kind": "llm"}, {"failure_kind": "validation"}],
-        failure_kinds=frozenset({"llm"}),
-    ) == 1
+    assert (
+        count_proposal_records_with_failure_markers(
+            [record, {"failure_kind": "llm", "errors": ["other"]}],
+            failure_kind="llm",
+            markers=frozenset({"code -15"}),
+        )
+        == 1
+    )
+    assert (
+        count_recent_proposal_failures(
+            [{"failure_kind": "llm"}, {"failure_kind": "validation"}],
+            failure_kinds=frozenset({"llm"}),
+        )
+        == 1
+    )
     context = format_recent_failure_context(
         [
             {
@@ -1882,31 +1972,46 @@ def test_status_payload_helpers_preserve_active_state_for_heartbeats(tmp_path: P
     assert same.started_at == "t1"
     assert changed.started_at == "t3"
     assert heartbeat_snapshot == changed
-    assert status_started_at(
-        {"state": "llm_call_started", "state_started_at": "old"},
-        state="llm_call_started",
-        now="new",
-    ) == "old"
-    assert status_started_at(
-        {"state": "llm_call_started", "state_started_at": "old"},
-        state="llm_call_completed",
-        now="new",
-    ) == "new"
-    assert status_key_started_at(
-        {"phase_key": "3|requesting_worktree_edit", "phase_started_at": "p-old"},
-        current_key="3|requesting_worktree_edit",
-        now="p-new",
-    ) == "p-old"
-    assert status_key_started_at(
-        {"phase_key": "3|requesting_worktree_edit", "phase_started_at": "p-old"},
-        current_key="3|running_tests",
-        now="p-new",
-    ) == "p-new"
-    assert build_status_phase_key(
-        "retrying_worktree_edit",
-        cycle_index=7,
-        details={"proposal_attempt": 2, "retry_reason": "patch validation failed"},
-    ) == "7|retrying_worktree_edit|attempt=2|retry=patch validation failed"
+    assert (
+        status_started_at(
+            {"state": "llm_call_started", "state_started_at": "old"},
+            state="llm_call_started",
+            now="new",
+        )
+        == "old"
+    )
+    assert (
+        status_started_at(
+            {"state": "llm_call_started", "state_started_at": "old"},
+            state="llm_call_completed",
+            now="new",
+        )
+        == "new"
+    )
+    assert (
+        status_key_started_at(
+            {"phase_key": "3|requesting_worktree_edit", "phase_started_at": "p-old"},
+            current_key="3|requesting_worktree_edit",
+            now="p-new",
+        )
+        == "p-old"
+    )
+    assert (
+        status_key_started_at(
+            {"phase_key": "3|requesting_worktree_edit", "phase_started_at": "p-old"},
+            current_key="3|running_tests",
+            now="p-new",
+        )
+        == "p-new"
+    )
+    assert (
+        build_status_phase_key(
+            "retrying_worktree_edit",
+            cycle_index=7,
+            details={"proposal_attempt": 2, "retry_reason": "patch validation failed"},
+        )
+        == "7|retrying_worktree_edit|attempt=2|retry=patch validation failed"
+    )
 
     payload = build_active_status_payload(
         state="heartbeat",
@@ -2138,9 +2243,9 @@ def test_git_apply_strategy_helpers_are_reusable() -> None:
     assert check["strict_check"]["valid"] is False
     assert applied["valid"] is True
     assert applied["apply_strategy"] == "three_way"
-    assert git_apply_check_with_fallbacks("", repo_root=Path("/repo"), run_command_fn=fake_run_command)["stderr"] == (
-        "empty unified diff"
-    )
+    assert git_apply_check_with_fallbacks(
+        "", repo_root=Path("/repo"), run_command_fn=fake_run_command
+    )["stderr"] == ("empty unified diff")
     assert any("--check" in call and "--3way" in call for call in calls)
     assert any("--check" not in call and "--3way" in call for call in calls)
 
@@ -2169,7 +2274,9 @@ def test_path_snapshot_helpers_restore_and_summarize(tmp_path: Path) -> None:
     )
 
     snapshots = snapshot_patch_paths(repo, diff)
-    duplicate_snapshots = snapshot_paths(repo, ["tracked.txt", "tracked.txt", "nested\\created.txt"])
+    duplicate_snapshots = snapshot_paths(
+        repo, ["tracked.txt", "tracked.txt", "nested\\created.txt"]
+    )
 
     original.write_text("after\n", encoding="utf-8")
     created.parent.mkdir(parents=True)
@@ -2200,11 +2307,13 @@ def test_path_snapshot_helpers_restore_and_summarize(tmp_path: Path) -> None:
         "deleted_files": [],
         "reason": "content_changed",
     }
-    assert restore_result == {"valid": True, "restored": ["tracked.txt", "nested/created.txt"], "errors": []}
+    assert restore_result == {
+        "valid": True,
+        "restored": ["tracked.txt", "nested/created.txt"],
+        "errors": [],
+    }
     assert retained_patch == "diff --git a/tracked.txt b/tracked.txt\n"
-    assert diff_calls == [
-        ("git", "diff", "--binary", "--", "tracked.txt", "nested/created.txt")
-    ]
+    assert diff_calls == [("git", "diff", "--binary", "--", "tracked.txt", "nested/created.txt")]
     assert retained_patch_for_paths(repo, {}, run_command_fn=fake_run_command) == ""
     assert original.read_text(encoding="utf-8") == "before\n"
     assert not created.exists()
@@ -2225,7 +2334,10 @@ def test_working_tree_diff_helpers_restore_expected_diff() -> None:
             return {"valid": True, "stdout": current_diff, "stderr": ""}
         return {"valid": True, "stdout": "", "stderr": ""}
 
-    assert working_tree_diff(Path("/repo"), run_command_fn=fake_run_command, timeout=17) == current_diff
+    assert (
+        working_tree_diff(Path("/repo"), run_command_fn=fake_run_command, timeout=17)
+        == current_diff
+    )
     assert restore_working_tree_diff(
         Path("/repo"),
         expected_diff,
@@ -2298,13 +2410,19 @@ def test_dirty_path_recovery_helpers_fingerprint_and_summarize(tmp_path: Path) -
     fingerprint = dirty_paths_fingerprint(
         repo,
         status_stdout=" M ipfs_datasets_py/logic/deontic/parser.py\n",
-        paths=["ipfs_datasets_py/logic/deontic/parser.py", "tests/unit_tests/logic/deontic/test_parser.py"],
+        paths=[
+            "ipfs_datasets_py/logic/deontic/parser.py",
+            "tests/unit_tests/logic/deontic/test_parser.py",
+        ],
         run_command_fn=fake_run_command,
         timeout=19,
     )
     summary = dirty_paths_diff_summary(
         repo,
-        ["ipfs_datasets_py/logic/deontic/parser.py", "tests/unit_tests/logic/deontic/test_parser.py"],
+        [
+            "ipfs_datasets_py/logic/deontic/parser.py",
+            "tests/unit_tests/logic/deontic/test_parser.py",
+        ],
         run_command_fn=fake_run_command,
         timeout=19,
         test_file_prefixes=("tests/unit_tests/logic/deontic/",),
@@ -2317,10 +2435,22 @@ def test_dirty_path_recovery_helpers_fingerprint_and_summarize(tmp_path: Path) -
     assert summary["insertions"] == 2
     assert summary["deletions"] == 2
     assert summary["deletion_heavy_files"] == ["ipfs_datasets_py/logic/deontic/parser.py"]
-    assert summary["production_deletion_heavy_files"] == ["ipfs_datasets_py/logic/deontic/parser.py"]
+    assert summary["production_deletion_heavy_files"] == [
+        "ipfs_datasets_py/logic/deontic/parser.py"
+    ]
     assert summary["test_deletion_heavy_files"] == []
-    assert ("git", "diff", "--binary", "--", "ipfs_datasets_py/logic/deontic/parser.py", "tests/unit_tests/logic/deontic/test_parser.py") in calls
-    assert dirty_paths_fingerprint(repo, status_stdout="", paths=[], run_command_fn=fake_run_command) == ""
+    assert (
+        "git",
+        "diff",
+        "--binary",
+        "--",
+        "ipfs_datasets_py/logic/deontic/parser.py",
+        "tests/unit_tests/logic/deontic/test_parser.py",
+    ) in calls
+    assert (
+        dirty_paths_fingerprint(repo, status_stdout="", paths=[], run_command_fn=fake_run_command)
+        == ""
+    )
     assert dirty_paths_diff_summary(repo, [], run_command_fn=fake_run_command) == {}
 
 
@@ -2375,10 +2505,21 @@ def test_auto_commit_helpers_are_reusable(tmp_path: Path) -> None:
     notes_file.write_text("old notes\n", encoding="utf-8")
 
     subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True, text=True)
-    subprocess.run(["git", "checkout", "-b", "main"], cwd=repo, check=True, capture_output=True, text=True)
+    subprocess.run(
+        ["git", "checkout", "-b", "main"], cwd=repo, check=True, capture_output=True, text=True
+    )
     subprocess.run(["git", "add", "."], cwd=repo, check=True, capture_output=True, text=True)
     subprocess.run(
-        ["git", "-c", "user.name=Test", "-c", "user.email=test@example.invalid", "commit", "-m", "init"],
+        [
+            "git",
+            "-c",
+            "user.name=Test",
+            "-c",
+            "user.email=test@example.invalid",
+            "commit",
+            "-m",
+            "init",
+        ],
         cwd=repo,
         check=True,
         capture_output=True,
@@ -2415,13 +2556,19 @@ def test_auto_commit_helpers_are_reusable(tmp_path: Path) -> None:
         ["./src/lib/logic/feature.ts", "notes.txt", "../outside.ts", "src/lib/logic/feature.ts"],
         allowed_prefixes=("src/lib/logic/",),
     ) == ["src/lib/logic/feature.ts"]
-    assert build_auto_commit_subject(
-        summary="Runtime feature works",
-        subject_prefix="chore(todo-test):",
-    ) == "chore(todo-test): runtime feature works"
+    assert (
+        build_auto_commit_subject(
+            summary="Runtime feature works",
+            subject_prefix="chore(todo-test):",
+        )
+        == "chore(todo-test): runtime feature works"
+    )
     assert result["committed"] is True
     assert result["changed_files"] == ["src/lib/logic/feature.ts"]
-    assert [state for state, _details in statuses] == ["auto_commit_started", "auto_commit_completed"]
+    assert [state for state, _details in statuses] == [
+        "auto_commit_started",
+        "auto_commit_completed",
+    ]
     assert statuses[0][1]["auto_commit_paths"] == ["src/lib/logic/feature.ts"]
 
     logic_status = subprocess.run(
@@ -2596,7 +2743,9 @@ def test_artifact_sidecar_and_ledger_helpers_are_reusable(tmp_path: Path) -> Non
     assert isinstance(paths, WorkSidecarPaths)
     assert base.name == "20260505T010203Z-accepted-runtime-feature-works"
     assert sidecar_paths(base) == paths
-    assert slugify_artifact_name("Runtime Feature Works!", fallback="work") == "runtime-feature-works"
+    assert (
+        slugify_artifact_name("Runtime Feature Works!", fallback="work") == "runtime-feature-works"
+    )
     assert artifact_string_items(["todo/source.py", "", Path("docs/note.md"), 7]) == [
         "todo/source.py",
         "docs/note.md",
@@ -2613,7 +2762,9 @@ def test_artifact_sidecar_and_ledger_helpers_are_reusable(tmp_path: Path) -> Non
     assert ledger_entry["diff"]["line_count"] == len(diff_text.splitlines())
     assert ledger_path.name == DEFAULT_ACCEPTED_WORK_LEDGER_FILENAME
     assert scoped_ledger_path == ledger_path
-    ledger_rows = [json.loads(line) for line in ledger_path.read_text(encoding="utf-8").splitlines()]
+    ledger_rows = [
+        json.loads(line) for line in ledger_path.read_text(encoding="utf-8").splitlines()
+    ]
     assert ledger_rows[0]["summary"] == proposal.summary
     assert ledger_rows[1]["artifacts"]["mode"] == "ledger_only"
     assert ledger_rows[1]["artifacts"]["ledger"] == ".daemon/accepted-work/accepted-work.jsonl"
@@ -2648,7 +2799,9 @@ def test_artifact_sidecar_and_ledger_helpers_are_reusable(tmp_path: Path) -> Non
     ]
     assert legacy_sidecars.diff.read_text(encoding="utf-8") == diff_text
     assert legacy_sidecars.stat.read_text(encoding="utf-8") == "todo/source.py | 1 +\n"
-    assert json.loads(legacy_sidecars.manifest.read_text(encoding="utf-8"))["diff_available"] is True
+    assert (
+        json.loads(legacy_sidecars.manifest.read_text(encoding="utf-8"))["diff_available"] is True
+    )
     assert failed_manifest["reason"] == "validation"
     assert failed_manifest["validation_results"][0]["returncode"] == 1
     assert failed_workspace["reason"] == "validation"
@@ -2713,7 +2866,9 @@ def test_proposal_work_persistence_helpers_write_ledgers_and_sidecars(tmp_path: 
     assert accepted.artifacts.diff.read_text(encoding="utf-8") == diff_text
     assert ledger_only.artifacts is None
     assert ledger_only.ledger_entry["artifacts"]["mode"] == "ledger_only"
-    ledger_rows = [json.loads(line) for line in accepted.ledger_path.read_text(encoding="utf-8").splitlines()]
+    ledger_rows = [
+        json.loads(line) for line in accepted.ledger_path.read_text(encoding="utf-8").splitlines()
+    ]
     assert [row["transport"] for row in ledger_rows] == ["ephemeral_worktree", "direct"]
     assert failed.manifest.exists()
     assert failed.manifest.parent == resolved_failed_dir
@@ -2782,7 +2937,7 @@ def test_deterministic_fallback_helpers_are_reusable(tmp_path: Path) -> None:
     assert proposal.target_task == task.label
     assert proposal.files[0] == {"path": "todo/source.py", "content": "VALUE = 1\n"}
     assert proposal.files[1]["path"] == "todo/progress.json"
-    assert "\"fallbackKind\": \"processor_suite\"" in proposal.files[1]["content"]
+    assert '"fallbackKind": "processor_suite"' in proposal.files[1]["content"]
 
 
 def test_plan_selection_and_blocked_backlog_helpers_are_reusable() -> None:
@@ -2798,7 +2953,11 @@ def test_plan_selection_and_blocked_backlog_helpers_are_reusable() -> None:
         return {
             "total_since_success": 2 if label == tasks[1].label else 1,
             "by_kind_since_success": {"validation": 2},
-            "latest_failure": {"failure_kind": "validation", "summary": "failed", "errors": ["bad"]},
+            "latest_failure": {
+                "failure_kind": "validation",
+                "summary": "failed",
+                "errors": ["bad"],
+            },
         }
 
     backlog = build_blocked_task_backlog(
@@ -2819,11 +2978,24 @@ def test_plan_selection_and_blocked_backlog_helpers_are_reusable() -> None:
     )
 
     assert markdown_task_label(tasks[1]) == tasks[1].label
-    assert plan_task_from_latest_result(tasks, {"artifact": {"target_task": tasks[1].label}}) == tasks[1]
-    assert plan_task_from_latest_result(tasks, {"artifact": {"target_task": "Task checkbox-4: old title"}}) == tasks[3]
+    assert (
+        plan_task_from_latest_result(tasks, {"artifact": {"target_task": tasks[1].label}})
+        == tasks[1]
+    )
+    assert (
+        plan_task_from_latest_result(
+            tasks, {"artifact": {"target_task": "Task checkbox-4: old title"}}
+        )
+        == tasks[3]
+    )
     assert first_open_plan_task(tasks) == tasks[2]
     assert select_next_plan_task(tasks) == tasks[2]
-    assert select_next_plan_task(tasks[:2], revisit_blocked=True, blocked_selector=lambda _tasks: tasks[1]) == tasks[1]
+    assert (
+        select_next_plan_task(
+            tasks[:2], revisit_blocked=True, blocked_selector=lambda _tasks: tasks[1]
+        )
+        == tasks[1]
+    )
     assert selected_blocked == tasks[3]
     assert backlog[0]["failure_budget_exhausted"] is True
     assert "`Task checkbox-2: Blocked early`" in markdown
@@ -2920,11 +3092,15 @@ def test_worktree_path_and_file_edit_helpers_are_reusable(tmp_path: Path) -> Non
     (worktree / "src" / "lib" / "logic").mkdir(parents=True)
     (worktree / "docs").mkdir()
     (worktree / "package.json").write_text("{}\n", encoding="utf-8")
-    (worktree / "src" / "lib" / "logic" / "a.ts").write_text("export const a = 1;\n", encoding="utf-8")
+    (worktree / "src" / "lib" / "logic" / "a.ts").write_text(
+        "export const a = 1;\n", encoding="utf-8"
+    )
     (worktree / "src" / "lib" / "logic" / "binary.ts").write_bytes(b"\xff")
     (worktree / "docs" / "PLAN.md").write_text("Plan\n", encoding="utf-8")
 
-    assert unique_worktree_paths(["docs", "docs", "src\\lib\\logic\\a.ts", "", Path("docs/PLAN.md")]) == [
+    assert unique_worktree_paths(
+        ["docs", "docs", "src\\lib\\logic\\a.ts", "", Path("docs/PLAN.md")]
+    ) == [
         "docs",
         "src/lib/logic/a.ts",
         "docs/PLAN.md",
@@ -2934,11 +3110,14 @@ def test_worktree_path_and_file_edit_helpers_are_reusable(tmp_path: Path) -> Non
     assert repo_relative_worktree_path(outside, repo_root=repo) == outside.as_posix()
     assert worktree_path_allowed("src/lib/logic/a.ts", allowed_prefixes=allowed) is True
     assert worktree_path_allowed("src/lib/logic.ts", allowed_prefixes=allowed) is False
-    assert resolve_worktree_file_edit_path(
-        root,
-        "src\\lib\\logic\\a.ts",
-        allowed_prefixes=allowed,
-    ) == root / "src/lib/logic/a.ts"
+    assert (
+        resolve_worktree_file_edit_path(
+            root,
+            "src\\lib\\logic\\a.ts",
+            allowed_prefixes=allowed,
+        )
+        == root / "src/lib/logic/a.ts"
+    )
     assert disallowed_worktree_paths(
         ["src/lib/logic/a.ts", "docs\\PLAN.md", ".metadata.json", "package.json", "package.json"],
         allowed_prefixes=allowed,
@@ -2978,14 +3157,17 @@ def test_worktree_path_and_file_edit_helpers_are_reusable(tmp_path: Path) -> Non
             return CommandResult(command_tuple, 0, "diff --git a/docs/NEW.md b/docs/NEW.md\n", "")
         raise AssertionError(f"unexpected command: {command_tuple}")
 
-    assert worktree_diff(
-        worktree_path=worktree,
-        paths=["docs/NEW.md", "docs\\NEW.md", Path("src/lib/logic/a.ts")],
-        raw_trace=diff_trace,
-        label="harvest",
-        timeout_seconds=9,
-        run_command_fn=fake_diff_run_command,
-    ) == "diff --git a/docs/NEW.md b/docs/NEW.md\n"
+    assert (
+        worktree_diff(
+            worktree_path=worktree,
+            paths=["docs/NEW.md", "docs\\NEW.md", Path("src/lib/logic/a.ts")],
+            raw_trace=diff_trace,
+            label="harvest",
+            timeout_seconds=9,
+            run_command_fn=fake_diff_run_command,
+        )
+        == "diff --git a/docs/NEW.md b/docs/NEW.md\n"
+    )
     assert diff_calls == [
         ("git", "status", "--porcelain", "--", "docs/NEW.md", "src/lib/logic/a.ts"),
         ("git", "add", "-N", "--", "docs/NEW.md"),
@@ -3000,13 +3182,16 @@ def test_worktree_path_and_file_edit_helpers_are_reusable(tmp_path: Path) -> Non
     def fail_run_command(*_args, **_kwargs):
         raise AssertionError("worktree_diff should not run Git for empty pathsets")
 
-    assert worktree_diff(
-        worktree_path=worktree,
-        paths=[""],
-        raw_trace=empty_trace,
-        label="empty",
-        run_command_fn=fail_run_command,
-    ) == ""
+    assert (
+        worktree_diff(
+            worktree_path=worktree,
+            paths=[""],
+            raw_trace=empty_trace,
+            label="empty",
+            run_command_fn=fail_run_command,
+        )
+        == ""
+    )
     assert empty_trace["empty_status"] == {"skipped": True, "reason": "no_paths"}
     assert empty_trace["empty_untracked_paths"] == []
     assert empty_trace["empty_git_diff"] == {"skipped": True, "reason": "no_paths"}
@@ -3029,7 +3214,9 @@ def test_worktree_path_and_file_edit_helpers_are_reusable(tmp_path: Path) -> Non
     ]
 
     write_worktree_file_edits_to_root(root, edits, allowed_prefixes=allowed)
-    assert (root / "src" / "lib" / "logic" / "a.ts").read_text(encoding="utf-8") == "export const a = 1;\n"
+    assert (root / "src" / "lib" / "logic" / "a.ts").read_text(
+        encoding="utf-8"
+    ) == "export const a = 1;\n"
     assert (root / "docs" / "PLAN.md").read_text(encoding="utf-8") == "Plan\n"
     for unsafe_edit in (
         {"path": "../escape.ts", "content": ""},
@@ -3058,7 +3245,9 @@ def test_worktree_diff_helper_intent_adds_untracked_files_and_records_trace(tmp_
         if command[:3] == ("git", "add", "-N"):
             return CommandResult(command, 0, "", "")
         if command[:3] == ("git", "diff", "--binary"):
-            return CommandResult(command, 0, "diff --git a/src/lib/logic/a.ts b/src/lib/logic/a.ts\n", "")
+            return CommandResult(
+                command, 0, "diff --git a/src/lib/logic/a.ts b/src/lib/logic/a.ts\n", ""
+            )
         raise AssertionError(f"unexpected command: {command!r}")
 
     trace: dict[str, object] = {}
@@ -3101,13 +3290,16 @@ def test_worktree_diff_helper_intent_adds_untracked_files_and_records_trace(tmp_
     assert "_status" not in unprefixed_trace
     assert unprefixed_trace["status"]["valid"] is True
 
-    assert worktree_diff(
-        worktree_path=worktree,
-        paths=[],
-        raw_trace=empty_trace,
-        label="empty",
-        run_command_fn=fake_run_command,
-    ) == ""
+    assert (
+        worktree_diff(
+            worktree_path=worktree,
+            paths=[],
+            raw_trace=empty_trace,
+            label="empty",
+            run_command_fn=fake_run_command,
+        )
+        == ""
+    )
     assert empty_trace["empty_status"] == {"skipped": True, "reason": "no_paths"}
     assert empty_trace["empty_untracked_paths"] == []
     assert empty_trace["empty_git_diff"] == {"skipped": True, "reason": "no_paths"}
@@ -3271,14 +3463,19 @@ def test_config_repo_root_file_replacement_helpers_use_daemon_config_root(tmp_pa
     diff = config_proposal_diff_from_worktree(config, worktree, changed)
 
     assert config_repo_root(config) == repo
-    assert config_repo_root(CustomRootConfig(project_root=repo), repo_root_field="project_root") == repo
+    assert (
+        config_repo_root(CustomRootConfig(project_root=repo), repo_root_field="project_root")
+        == repo
+    )
     assert "+VALUE = 2" in diff
     config_promote_worktree_files(config, worktree, changed)
     assert config_verify_promoted_worktree_files(config, worktree, changed) == []
     assert (repo / "todo" / "source.py").read_text(encoding="utf-8") == "VALUE = 2\n"
 
 
-def test_config_file_replacement_persistence_helpers_use_config_artifact_dirs(tmp_path: Path) -> None:
+def test_config_file_replacement_persistence_helpers_use_config_artifact_dirs(
+    tmp_path: Path,
+) -> None:
     @dataclass(frozen=True)
     class ArtifactConfig:
         repo_root: Path
@@ -3323,9 +3520,13 @@ def test_config_file_replacement_persistence_helpers_use_config_artifact_dirs(tm
     accepted_dir = repo / "todo" / "accepted"
     failed_dir = repo / "todo" / "failed"
     ledger_path = accepted_dir / DEFAULT_ACCEPTED_WORK_LEDGER_FILENAME
-    ledger_rows = [json.loads(line) for line in ledger_path.read_text(encoding="utf-8").splitlines()]
+    ledger_rows = [
+        json.loads(line) for line in ledger_path.read_text(encoding="utf-8").splitlines()
+    ]
 
-    assert config_artifact_directory(config, directory_field="missing_dir", default=Path("fallback")) == Path("fallback")
+    assert config_artifact_directory(
+        config, directory_field="missing_dir", default=Path("fallback")
+    ) == Path("fallback")
     assert ledger_rows[0]["target_task"] == proposal.target_task
     assert ledger_rows[0]["artifacts"]["mode"] == "sidecars"
     assert any(path.name.endswith(".workspace.json") for path in accepted_dir.iterdir())
@@ -3483,10 +3684,13 @@ def test_supervisor_status_payload_builder_is_reusable(tmp_path: Path) -> None:
 
 
 def test_restart_wrapper_command_builder_is_reusable() -> None:
-    assert quoted_env_assignments(
-        {"MODEL_NAME": "gpt 5.5", "PROVIDER": "llm_router"},
-        ("MODEL_NAME", "MISSING", "PROVIDER"),
-    ) == "MODEL_NAME='gpt 5.5' PROVIDER=llm_router"
+    assert (
+        quoted_env_assignments(
+            {"MODEL_NAME": "gpt 5.5", "PROVIDER": "llm_router"},
+            ("MODEL_NAME", "MISSING", "PROVIDER"),
+        )
+        == "MODEL_NAME='gpt 5.5' PROVIDER=llm_router"
+    )
 
     command = build_restart_loop_command(
         ("bash", "scripts/run_daemon.sh"),
@@ -3504,7 +3708,9 @@ def test_restart_wrapper_command_builder_is_reusable() -> None:
     assert "sleep 11; done" in command
 
 
-def test_restarting_wrapper_liveness_helper_supports_tmux_and_pid_modes(tmp_path, monkeypatch) -> None:
+def test_restarting_wrapper_liveness_helper_supports_tmux_and_pid_modes(
+    tmp_path, monkeypatch
+) -> None:
     from ipfs_datasets_py.optimizers.todo_daemon import wrapper as wrapper_module
 
     monkeypatch.setattr(wrapper_module, "tmux_available", lambda: True)
@@ -3559,7 +3765,7 @@ def test_lifecycle_wrapper_renderer_matches_legacy_shell_shape() -> None:
 
     assert rendered.startswith("#!/usr/bin/env bash\nset -uo pipefail\n")
     assert "# legacy marker" in rendered
-    assert "exec python3 -m ipfs_datasets_py.optimizers.todo_daemon example check \"$@\"" in rendered
+    assert 'exec python3 -m ipfs_datasets_py.optimizers.todo_daemon example check "$@"' in rendered
 
 
 def test_supervisor_child_runtime_helpers_are_reusable(tmp_path: Path) -> None:
@@ -3589,12 +3795,18 @@ def test_supervisor_child_runtime_helpers_are_reusable(tmp_path: Path) -> None:
         "synthetic.daemon",
         "--once",
     )
-    assert RestartPolicy(restart_backoff_seconds=30, fast_restart_backoff_seconds=2).delay_for_status(
-        "no_change"
-    ) == 2
-    assert RestartPolicy(restart_backoff_seconds=30, fast_restart_backoff_seconds=2).delay_for_status(
-        "validation_failed"
-    ) == 30
+    assert (
+        RestartPolicy(restart_backoff_seconds=30, fast_restart_backoff_seconds=2).delay_for_status(
+            "no_change"
+        )
+        == 2
+    )
+    assert (
+        RestartPolicy(restart_backoff_seconds=30, fast_restart_backoff_seconds=2).delay_for_status(
+            "validation_failed"
+        )
+        == 30
+    )
     assert rc == 0
     assert child.child_pid_path.read_text(encoding="utf-8").strip() == str(child.pid)
     assert child.latest_log_path is not None
@@ -3626,9 +3838,7 @@ def test_supervisor_loop_cli_config_helpers_are_reusable(tmp_path: Path) -> None
     )
 
     config = supervisor_loop_config_from_args(args)
-    payload = supervisor_loop_result_payload(
-        SupervisorLoop(config).run()
-    )
+    payload = supervisor_loop_result_payload(SupervisorLoop(config).run())
 
     assert config.spec.name == "synthetic-loop"
     assert config.command == ("python3", "-c", "print('ok')")
@@ -3724,13 +3934,17 @@ def test_python_supervisor_loop_reuses_child_runtime_and_status(tmp_path: Path) 
     )
 
     result = loop.run()
-    supervisor_status = json.loads((tmp_path / ".daemon" / "supervisor.json").read_text(encoding="utf-8"))
+    supervisor_status = json.loads(
+        (tmp_path / ".daemon" / "supervisor.json").read_text(encoding="utf-8")
+    )
 
     assert result.status == "child_exited"
     assert result.restart_count == 1
     assert result.last_exit_code == 0
     assert not (tmp_path / ".daemon" / "child.pid").exists()
-    assert (tmp_path / ".daemon" / "latest-child.log").read_text(encoding="utf-8").strip() == "loop-once"
+    assert (tmp_path / ".daemon" / "latest-child.log").read_text(
+        encoding="utf-8"
+    ).strip() == "loop-once"
     assert supervisor_status["status"] == "child_exited"
     assert supervisor_status["restart_count"] == 1
     assert supervisor_status["example_supervisor"] is True
@@ -3772,7 +3986,9 @@ def test_python_supervisor_loop_stop_decision_exits_without_restart(tmp_path: Pa
     )
 
     result = loop.run()
-    supervisor_status = json.loads((tmp_path / ".daemon" / "supervisor.json").read_text(encoding="utf-8"))
+    supervisor_status = json.loads(
+        (tmp_path / ".daemon" / "supervisor.json").read_text(encoding="utf-8")
+    )
 
     assert result.status == "completed"
     assert result.restart_count == 0
@@ -3828,7 +4044,11 @@ def test_file_replacement_apply_flow_promotes_only_after_validation(tmp_path: Pa
             "",
         ),
         has_visible_source_change=lambda changed: any(path.endswith(".py") for path in changed),
-        attempt_validation_repair=lambda proposal, _config, _worktree: (False, proposal.changed_files, ""),
+        attempt_validation_repair=lambda proposal, _config, _worktree: (
+            False,
+            proposal.changed_files,
+            "",
+        ),
         persist_failed_work=lambda _proposal, _config, diff_text, reason, transport: failed.append(
             (reason, transport, diff_text)
         ),
@@ -3904,12 +4124,12 @@ def test_file_replacement_default_persistence_uses_config_artifact_dirs(tmp_path
     failed_dir = repo / config.failed_work_dir
     accepted_rows = [
         json.loads(line)
-        for line in (accepted_dir / DEFAULT_ACCEPTED_WORK_LEDGER_FILENAME).read_text(encoding="utf-8").splitlines()
+        for line in (accepted_dir / DEFAULT_ACCEPTED_WORK_LEDGER_FILENAME)
+        .read_text(encoding="utf-8")
+        .splitlines()
     ]
     failed_manifests = [
-        path
-        for path in failed_dir.glob("*.json")
-        if not path.name.endswith(".workspace.json")
+        path for path in failed_dir.glob("*.json") if not path.name.endswith(".workspace.json")
     ]
 
     assert accepted_result.valid
@@ -3918,7 +4138,9 @@ def test_file_replacement_default_persistence_uses_config_artifact_dirs(tmp_path
     assert accepted_rows[0]["summary"] == "Default persistence accepted"
     assert accepted_rows[0]["transport"] == "ephemeral_worktree"
     assert accepted_rows[0]["artifacts"]["mode"] == "sidecars"
-    assert accepted_rows[0]["artifacts"]["manifest"].startswith(".daemon/file-replacement-accepted/")
+    assert accepted_rows[0]["artifacts"]["manifest"].startswith(
+        ".daemon/file-replacement-accepted/"
+    )
     assert len(failed_manifests) == 1
     failed_manifest = json.loads(failed_manifests[0].read_text(encoding="utf-8"))
     assert failed_manifest["reason"] == "preflight"
@@ -3980,12 +4202,12 @@ def test_config_file_replacement_hook_factory_wires_config_persistence(tmp_path:
     failed_dir = repo / config.failed_dir
     accepted_rows = [
         json.loads(line)
-        for line in (accepted_dir / DEFAULT_ACCEPTED_WORK_LEDGER_FILENAME).read_text(encoding="utf-8").splitlines()
+        for line in (accepted_dir / DEFAULT_ACCEPTED_WORK_LEDGER_FILENAME)
+        .read_text(encoding="utf-8")
+        .splitlines()
     ]
     failed_manifests = [
-        path
-        for path in failed_dir.glob("*.json")
-        if not path.name.endswith(".workspace.json")
+        path for path in failed_dir.glob("*.json") if not path.name.endswith(".workspace.json")
     ]
 
     assert isinstance(hooks, FileReplacementHooks)
@@ -4011,7 +4233,11 @@ def test_file_replacement_apply_flow_rejects_disallowed_paths(tmp_path: Path) ->
         run_validation=lambda _config, _commands: [],
         syntax_preflight=lambda _worktree, _changed, _config: ([], [], ""),
         has_visible_source_change=lambda _changed: False,
-        attempt_validation_repair=lambda proposal, _config, _worktree: (False, proposal.changed_files, ""),
+        attempt_validation_repair=lambda proposal, _config, _worktree: (
+            False,
+            proposal.changed_files,
+            "",
+        ),
         persist_failed_work=lambda _proposal, _config, diff_text, reason, transport: failed.append(
             (reason, transport, diff_text)
         ),
@@ -4195,15 +4421,21 @@ def test_todo_daemon_spec_env_helpers_are_reusable(tmp_path: Path) -> None:
     assert env_float("BAD_FLOAT", 1.5, env=env) == 1.5
     assert env_float("NEGATIVE_FLOAT", -4.0, env=env, minimum=0.0) == 0.0
     assert repo_root_from_env(env=env) == repo.resolve()
-    assert repo_root_from_env(str(tmp_path / "explicit"), env=env) == (tmp_path / "explicit").resolve()
+    assert (
+        repo_root_from_env(str(tmp_path / "explicit"), env=env) == (tmp_path / "explicit").resolve()
+    )
     assert daemon_dir == Path("state/.daemon")
-    assert env_path_in_dir("STATUS_PATH", daemon_dir, "status.json", env=env) == Path("custom/status.json")
+    assert env_path_in_dir("STATUS_PATH", daemon_dir, "status.json", env=env) == Path(
+        "custom/status.json"
+    )
     assert env_path_in_dir("PROGRESS_PATH", daemon_dir, "progress.json", env=env) == Path(
         "state/.daemon/progress.json"
     )
 
 
-def test_package_lifecycle_dispatcher_routes_builtin_daemons(tmp_path: Path, capsys, monkeypatch) -> None:
+def test_package_lifecycle_dispatcher_routes_builtin_daemons(
+    tmp_path: Path, capsys, monkeypatch
+) -> None:
     for name in (
         "DAEMON_DIR",
         "STATUS_PATH",
@@ -4230,7 +4462,10 @@ def test_package_lifecycle_dispatcher_routes_builtin_daemons(tmp_path: Path, cap
     assert rc == 0
     assert payload["name"] == "logic-port"
     assert payload["schema"] == "ipfs_datasets_py.logic_port_daemon"
-    assert payload["runner"] == ["bash", "ipfs_datasets_py/scripts/ops/legal_data/run_logic_port_daemon.sh"]
+    assert payload["runner"] == [
+        "bash",
+        "ipfs_datasets_py/scripts/ops/legal_data/run_logic_port_daemon.sh",
+    ]
     assert payload["task_board_path"] == "docs/IPFS_DATASETS_LOGIC_TYPESCRIPT_PORT_PLAN.md"
 
     rc = todo_daemon_package_main(["list"])
@@ -4244,9 +4479,7 @@ def test_package_lifecycle_dispatcher_routes_builtin_daemons(tmp_path: Path, cap
 
     assert rc == 0
     assert {item["daemon"] for item in wrappers["wrappers"]} == {"legal-parser", "logic-port"}
-    assert {
-        item["path"] for item in wrappers["wrappers"]
-    } >= {
+    assert {item["path"] for item in wrappers["wrappers"]} >= {
         "scripts/ops/legal_data/check_logic_port_daemon.sh",
         "scripts/ops/legal_data/ensure_legal_parser_optimizer_daemon.sh",
     }
@@ -4335,8 +4568,9 @@ def test_reusable_todo_daemon_module_cli_runs_hooked_daemon(tmp_path: Path, caps
             parse_tasks=parse_markdown_tasks,
             select_task=lambda tasks, _config: next(iter(tasks), None),
             replace_task_mark=replace_task_mark,
-            update_generated_status=lambda markdown, latest, _tasks: markdown.rstrip()
-            + f"\n\nLatest result: {latest['result']}\n",
+            update_generated_status=lambda markdown, latest, _tasks: (
+                markdown.rstrip() + f"\n\nLatest result: {latest['result']}\n"
+            ),
             produce_proposal=lambda _config, _selected, _write_status: Proposal(
                 summary="Accepted module task",
                 files=[{"path": "todo/module-output.txt", "content": "ok\n"}],
@@ -4382,7 +4616,10 @@ def test_reusable_todo_daemon_module_cli_runs_hooked_daemon(tmp_path: Path, caps
     assert payload["valid"] is True
     assert payload["latest"]["summary"] == "Accepted module task"
     assert "- [x] Task checkbox-1: Module entry task." in board.read_text(encoding="utf-8")
-    assert json.loads((repo / "todo" / "status.json").read_text(encoding="utf-8"))["active_state"] == "cycle_completed"
+    assert (
+        json.loads((repo / "todo" / "status.json").read_text(encoding="utf-8"))["active_state"]
+        == "cycle_completed"
+    )
     assert len((repo / "todo" / "results.jsonl").read_text(encoding="utf-8").splitlines()) == 1
 
 
@@ -4401,7 +4638,9 @@ def test_todo_daemon_runner_marks_valid_task_complete(tmp_path: Path) -> None:
             count=1,
         )
 
-    def update_generated_status(markdown: str, latest: dict[str, object], _tasks: list[Task]) -> str:
+    def update_generated_status(
+        markdown: str, latest: dict[str, object], _tasks: list[Task]
+    ) -> str:
         return markdown.rstrip() + f"\n\nLatest result: {latest['result']}\n"
 
     def produce_proposal(
@@ -4410,7 +4649,10 @@ def test_todo_daemon_runner_marks_valid_task_complete(tmp_path: Path) -> None:
         write_status,
     ) -> Proposal:
         write_status("producing_fixture", target_task=_selected.label)
-        return Proposal(summary="Synthetic accepted work", files=[{"path": "todo/output.txt", "content": "ok\n"}])
+        return Proposal(
+            summary="Synthetic accepted work",
+            files=[{"path": "todo/output.txt", "content": "ok\n"}],
+        )
 
     def apply_proposal(proposal: Proposal, _config: SyntheticDaemonConfig) -> Proposal:
         proposal.applied = True
@@ -4469,8 +4711,9 @@ def test_file_replacement_todo_daemon_runner_uses_reusable_apply_flow(tmp_path: 
         parse_tasks=parse_markdown_tasks,
         select_task=lambda tasks, _config: next(iter(tasks), None),
         replace_task_mark=replace_task_mark,
-        update_generated_status=lambda markdown, latest, _tasks: markdown.rstrip()
-        + f"\n\nLatest result: {latest['result']}\n",
+        update_generated_status=lambda markdown, latest, _tasks: (
+            markdown.rstrip() + f"\n\nLatest result: {latest['result']}\n"
+        ),
         produce_proposal=lambda _config, _selected, _write_status: Proposal(
             summary="Concrete accepted work",
             files=[{"path": "todo/source.py", "content": "VALUE = 3\n"}],
@@ -4497,7 +4740,11 @@ def test_file_replacement_todo_daemon_runner_uses_reusable_apply_flow(tmp_path: 
             "",
         ),
         has_visible_source_change=lambda changed: any(path.endswith(".py") for path in changed),
-        attempt_validation_repair=lambda proposal, _config, _worktree: (False, proposal.changed_files, ""),
+        attempt_validation_repair=lambda proposal, _config, _worktree: (
+            False,
+            proposal.changed_files,
+            "",
+        ),
         persist_failed_work=lambda _proposal, _config, _diff_text, _reason, _transport: None,
         persist_accepted_work=lambda proposal, _config, _diff_text, _transport: accepted.append(
             proposal.summary
@@ -4541,9 +4788,12 @@ def test_todo_daemon_runner_pre_task_block_marks_task_blocked(tmp_path: Path) ->
         parse_tasks=parse_markdown_tasks,
         select_task=lambda tasks, _config: next(iter(tasks), None),
         replace_task_mark=replace_task_mark,
-        update_generated_status=lambda markdown, latest, _tasks: markdown.rstrip()
-        + f"\n\nLatest result: {latest['result']}\n",
-        produce_proposal=lambda _config, _selected, _write_status: Proposal(summary="should not run"),
+        update_generated_status=lambda markdown, latest, _tasks: (
+            markdown.rstrip() + f"\n\nLatest result: {latest['result']}\n"
+        ),
+        produce_proposal=lambda _config, _selected, _write_status: Proposal(
+            summary="should not run"
+        ),
         apply_proposal=lambda proposal, _config: proposal,
         run_validation=lambda _config, _proposal: [],
         should_skip_validation=lambda _proposal: True,

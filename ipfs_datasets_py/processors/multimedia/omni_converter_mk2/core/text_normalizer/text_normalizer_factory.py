@@ -17,6 +17,6 @@ def make_text_normalizer():
     resources = {
         "logger": logger,
         "normalized_content": NormalizedContent,
-        "importlib_util" : importlib.util,
+        "importlib_util": importlib.util,
     }
     return TextNormalizer(resources=resources, configs=configs)

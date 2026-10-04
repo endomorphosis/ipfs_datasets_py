@@ -31,6 +31,7 @@ import pytest
 # Helpers / fixtures
 # ---------------------------------------------------------------------------
 
+
 def _make_entity(
     eid: str,
     label: str = "Person",
@@ -43,12 +44,14 @@ def _make_entity(
 # constraints/__init__.py
 # ---------------------------------------------------------------------------
 
+
 class TestConstraintTypes:
     """Tests for ConstraintType, ConstraintDefinition, ConstraintViolation."""
 
     def test_constraint_type_values(self):
         # GIVEN the ConstraintType enum
         from ipfs_datasets_py.knowledge_graphs.constraints import ConstraintType
+
         # WHEN we inspect values
         # THEN all four types exist
         assert ConstraintType.UNIQUE.value == "unique"
@@ -59,8 +62,10 @@ class TestConstraintTypes:
     def test_constraint_definition_fields(self):
         # GIVEN a ConstraintDefinition
         from ipfs_datasets_py.knowledge_graphs.constraints import (
-            ConstraintDefinition, ConstraintType,
+            ConstraintDefinition,
+            ConstraintType,
         )
+
         defn = ConstraintDefinition(
             name="test_constraint",
             constraint_type=ConstraintType.UNIQUE,
@@ -79,6 +84,7 @@ class TestConstraintTypes:
     def test_constraint_violation_fields(self):
         # GIVEN a ConstraintViolation
         from ipfs_datasets_py.knowledge_graphs.constraints import ConstraintViolation
+
         v = ConstraintViolation(
             constraint_name="unique_email",
             entity_id="e1",
@@ -96,6 +102,7 @@ class TestUniqueConstraint:
 
     def _make_constraint(self, label=None):
         from ipfs_datasets_py.knowledge_graphs.constraints import UniqueConstraint
+
         return UniqueConstraint("unique_email", "email", label=label)
 
     def test_validate_returns_none_for_first_entity(self):
@@ -166,6 +173,7 @@ class TestExistenceConstraint:
 
     def _make_constraint(self):
         from ipfs_datasets_py.knowledge_graphs.constraints import ExistenceConstraint
+
         return ExistenceConstraint("exists_name", "name", label="Person")
 
     def test_validate_passes_when_property_present(self):
@@ -227,6 +235,7 @@ class TestTypeConstraint:
 
     def _make_constraint(self, label=None):
         from ipfs_datasets_py.knowledge_graphs.constraints import TypeConstraint
+
         return TypeConstraint("type_age_int", "age", int, label=label)
 
     def test_validate_passes_correct_type(self):
@@ -280,6 +289,7 @@ class TestCustomConstraint:
     def test_validate_passes_when_fn_returns_none(self):
         # GIVEN a custom constraint that always passes
         from ipfs_datasets_py.knowledge_graphs.constraints import CustomConstraint
+
         cc = CustomConstraint("custom_ok", lambda e: None)
         entity = {"id": "e1", "type": "Person", "properties": {}}
         # WHEN validate is called
@@ -290,6 +300,7 @@ class TestCustomConstraint:
     def test_validate_returns_violation_when_fn_returns_message(self):
         # GIVEN a custom constraint that fails
         from ipfs_datasets_py.knowledge_graphs.constraints import CustomConstraint
+
         cc = CustomConstraint("custom_fail", lambda e: "Custom failure")
         entity = {"id": "e1", "type": "Person", "properties": {}}
         # WHEN validate is called
@@ -301,6 +312,7 @@ class TestCustomConstraint:
     def test_validate_skips_wrong_label(self):
         # GIVEN a custom constraint scoped to "Admin"
         from ipfs_datasets_py.knowledge_graphs.constraints import CustomConstraint
+
         cc = CustomConstraint("custom_admin", lambda e: "fail", label="Admin")
         entity = {"id": "e1", "type": "User", "properties": {}}
         # WHEN entity is User not Admin
@@ -311,6 +323,7 @@ class TestCustomConstraint:
     def test_register_is_noop(self):
         # GIVEN a custom constraint
         from ipfs_datasets_py.knowledge_graphs.constraints import CustomConstraint
+
         cc = CustomConstraint("custom", lambda e: None)
         # WHEN register is called
         cc.register({"id": "e1", "type": "Person", "properties": {}})
@@ -322,6 +335,7 @@ class TestConstraintManager:
 
     def _make_manager(self):
         from ipfs_datasets_py.knowledge_graphs.constraints import ConstraintManager
+
         return ConstraintManager()
 
     def test_add_unique_constraint(self):
@@ -460,6 +474,7 @@ class TestConstraintManager:
 # migration/ipfs_importer.py
 # ---------------------------------------------------------------------------
 
+
 class TestImportConfig:
     """Tests for ImportConfig dataclass."""
 
@@ -467,6 +482,7 @@ class TestImportConfig:
         # GIVEN ImportConfig with no args
         from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import ImportConfig
         from ipfs_datasets_py.knowledge_graphs.migration.formats import MigrationFormat
+
         cfg = ImportConfig()
         # WHEN we inspect defaults
         # THEN sensible defaults are set
@@ -480,6 +496,7 @@ class TestImportConfig:
         # GIVEN ImportConfig with custom values
         from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import ImportConfig
         from ipfs_datasets_py.knowledge_graphs.migration.formats import MigrationFormat
+
         cfg = ImportConfig(
             input_file="test.json",
             batch_size=500,
@@ -498,6 +515,7 @@ class TestImportResult:
     def test_to_dict(self):
         # GIVEN an ImportResult
         from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import ImportResult
+
         result = ImportResult(
             success=True,
             nodes_imported=10,
@@ -517,6 +535,7 @@ class TestImportResult:
     def test_to_dict_with_errors(self):
         # GIVEN an ImportResult with errors
         from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import ImportResult
+
         result = ImportResult(success=False, errors=["err1", "err2"])
         # WHEN converted to dict
         d = result.to_dict()
@@ -530,8 +549,10 @@ class TestIPFSImporterInit:
     def test_init_stores_config(self):
         # GIVEN an ImportConfig
         from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import (
-            ImportConfig, IPFSImporter,
+            ImportConfig,
+            IPFSImporter,
         )
+
         cfg = ImportConfig()
         # WHEN we create the importer
         importer = IPFSImporter(cfg)
@@ -541,8 +562,10 @@ class TestIPFSImporterInit:
     def test_init_handles_missing_ipfs_gracefully(self):
         # GIVEN ImportConfig
         from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import (
-            ImportConfig, IPFSImporter,
+            ImportConfig,
+            IPFSImporter,
         )
+
         # WHEN IPFS components are unavailable (typical test environment)
         # THEN init succeeds without raising
         importer = IPFSImporter(ImportConfig())
@@ -555,9 +578,11 @@ class TestIPFSImporterLoadGraphData:
     def test_load_from_graph_data_attr(self):
         # GIVEN config with direct graph_data
         from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import (
-            ImportConfig, IPFSImporter,
+            ImportConfig,
+            IPFSImporter,
         )
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
+
         gd = GraphData()
         cfg = ImportConfig(graph_data=gd)
         importer = IPFSImporter(cfg)
@@ -569,9 +594,11 @@ class TestIPFSImporterLoadGraphData:
     def test_load_raises_when_no_input(self):
         # GIVEN config with neither input_file nor graph_data
         from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import (
-            ImportConfig, IPFSImporter,
+            ImportConfig,
+            IPFSImporter,
         )
         from ipfs_datasets_py.knowledge_graphs.exceptions import MigrationError
+
         cfg = ImportConfig()
         importer = IPFSImporter(cfg)
         # WHEN _load_graph_data is called
@@ -586,11 +613,15 @@ class TestIPFSImporterValidateGraphData:
     def test_valid_graph_data_returns_no_errors(self):
         # GIVEN a valid GraphData with consistent relationships
         from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import (
-            ImportConfig, IPFSImporter,
+            ImportConfig,
+            IPFSImporter,
         )
         from ipfs_datasets_py.knowledge_graphs.migration.formats import (
-            GraphData, NodeData, RelationshipData,
+            GraphData,
+            NodeData,
+            RelationshipData,
         )
+
         gd = GraphData()
         gd.nodes = [NodeData("n1"), NodeData("n2")]
         gd.relationships = [RelationshipData("r1", "KNOWS", "n1", "n2")]
@@ -603,9 +634,11 @@ class TestIPFSImporterValidateGraphData:
     def test_duplicate_node_ids_detected(self):
         # GIVEN a GraphData with duplicate node IDs
         from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import (
-            ImportConfig, IPFSImporter,
+            ImportConfig,
+            IPFSImporter,
         )
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData, NodeData
+
         gd = GraphData()
         gd.nodes = [NodeData("n1"), NodeData("n1")]  # duplicate
         importer = IPFSImporter(ImportConfig())
@@ -617,11 +650,15 @@ class TestIPFSImporterValidateGraphData:
     def test_relationship_with_nonexistent_node_detected(self):
         # GIVEN a relationship that references a missing node
         from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import (
-            ImportConfig, IPFSImporter,
+            ImportConfig,
+            IPFSImporter,
         )
         from ipfs_datasets_py.knowledge_graphs.migration.formats import (
-            GraphData, NodeData, RelationshipData,
+            GraphData,
+            NodeData,
+            RelationshipData,
         )
+
         gd = GraphData()
         gd.nodes = [NodeData("n1")]
         gd.relationships = [RelationshipData("r1", "KNOWS", "n1", "n_missing")]
@@ -638,9 +675,11 @@ class TestIPFSImporterImportData:
     def test_import_data_fails_when_ipfs_unavailable(self):
         # GIVEN an importer with IPFS not available and a direct graph_data
         from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import (
-            ImportConfig, IPFSImporter,
+            ImportConfig,
+            IPFSImporter,
         )
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
+
         cfg = ImportConfig(graph_data=GraphData(), validate_data=False)
         importer = IPFSImporter(cfg)
         importer._ipfs_available = False
@@ -653,9 +692,11 @@ class TestIPFSImporterImportData:
     def test_import_data_aborts_on_excessive_validation_errors(self):
         # GIVEN many duplicate nodes (> 10 errors)
         from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import (
-            ImportConfig, IPFSImporter,
+            ImportConfig,
+            IPFSImporter,
         )
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData, NodeData
+
         gd = GraphData()
         # 12 duplicate node IDs
         gd.nodes = [NodeData("n1")] * 12
@@ -670,17 +711,22 @@ class TestIPFSImporterImportData:
     def test_import_data_with_mocked_session(self):
         # GIVEN a mocked IPFS session that accepts queries
         from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import (
-            ImportConfig, IPFSImporter,
+            ImportConfig,
+            IPFSImporter,
         )
         from ipfs_datasets_py.knowledge_graphs.migration.formats import (
-            GraphData, NodeData, RelationshipData,
+            GraphData,
+            NodeData,
+            RelationshipData,
         )
+
         gd = GraphData()
         gd.nodes = [NodeData("n1", labels=["Person"], properties={"name": "Alice"})]
         gd.relationships = []  # No relationships to simplify mock
 
-        cfg = ImportConfig(graph_data=gd, validate_data=False,
-                           create_indexes=False, create_constraints=False)
+        cfg = ImportConfig(
+            graph_data=gd, validate_data=False, create_indexes=False, create_constraints=False
+        )
         importer = IPFSImporter(cfg)
         importer._ipfs_available = True
 
@@ -713,16 +759,17 @@ class TestIPFSImporterImportData:
     def test_import_data_handles_migration_error(self):
         # GIVEN an importer that raises MigrationError during connect
         from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import (
-            ImportConfig, IPFSImporter,
+            ImportConfig,
+            IPFSImporter,
         )
         from ipfs_datasets_py.knowledge_graphs.exceptions import MigrationError
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
+
         gd = GraphData()
         cfg = ImportConfig(graph_data=gd, validate_data=False)
         importer = IPFSImporter(cfg)
 
-        with patch.object(importer, "_connect",
-                          side_effect=MigrationError("Cannot connect")):
+        with patch.object(importer, "_connect", side_effect=MigrationError("Cannot connect")):
             with patch.object(importer, "_close"):
                 result = importer.import_data()
 
@@ -733,11 +780,14 @@ class TestIPFSImporterImportData:
     def test_import_schema_with_indexes_and_constraints(self):
         # GIVEN an importer and graph data with schema
         from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import (
-            ImportConfig, IPFSImporter,
+            ImportConfig,
+            IPFSImporter,
         )
         from ipfs_datasets_py.knowledge_graphs.migration.formats import (
-            GraphData, SchemaData,
+            GraphData,
+            SchemaData,
         )
+
         schema = SchemaData(
             indexes=[{"name": "idx_name"}],
             constraints=[{"name": "uc_email"}],
@@ -745,10 +795,13 @@ class TestIPFSImporterImportData:
         gd = GraphData()
         gd.schema = schema
 
-        cfg = ImportConfig(graph_data=gd, validate_data=False,
-                           create_indexes=True, create_constraints=True)
+        cfg = ImportConfig(
+            graph_data=gd, validate_data=False, create_indexes=True, create_constraints=True
+        )
         importer = IPFSImporter(cfg)
-        importer._ipfs_available = False  # will fail at _connect, but _import_schema still reachable
+        importer._ipfs_available = (
+            False  # will fail at _connect, but _import_schema still reachable
+        )
 
         # Patch _connect to raise so we can test schema path separately
         with patch.object(importer, "_load_graph_data", return_value=gd):
@@ -766,6 +819,7 @@ class TestIPFSImporterImportData:
 # migration/neo4j_exporter.py
 # ---------------------------------------------------------------------------
 
+
 class TestExportConfig:
     """Tests for ExportConfig dataclass."""
 
@@ -773,6 +827,7 @@ class TestExportConfig:
         # GIVEN ExportConfig with no args
         from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import ExportConfig
         from ipfs_datasets_py.knowledge_graphs.migration.formats import MigrationFormat
+
         cfg = ExportConfig()
         # THEN sensible defaults
         assert cfg.uri == "bolt://localhost:7687"
@@ -784,6 +839,7 @@ class TestExportConfig:
     def test_custom_values(self):
         # GIVEN ExportConfig with custom values
         from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import ExportConfig
+
         cfg = ExportConfig(
             uri="bolt://myhost:7687",
             username="admin",
@@ -802,6 +858,7 @@ class TestExportResult:
     def test_to_dict(self):
         # GIVEN an ExportResult
         from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import ExportResult
+
         result = ExportResult(
             success=True,
             node_count=100,
@@ -823,8 +880,10 @@ class TestNeo4jExporterInit:
     def test_init_handles_missing_neo4j(self):
         # GIVEN no neo4j package installed
         from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import (
-            ExportConfig, Neo4jExporter,
+            ExportConfig,
+            Neo4jExporter,
         )
+
         # WHEN we create an exporter (neo4j almost certainly not installed in CI)
         exporter = Neo4jExporter(ExportConfig())
         # THEN init succeeds and flag is set
@@ -834,8 +893,10 @@ class TestNeo4jExporterInit:
     def test_init_stores_config(self):
         # GIVEN ExportConfig
         from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import (
-            ExportConfig, Neo4jExporter,
+            ExportConfig,
+            Neo4jExporter,
         )
+
         cfg = ExportConfig(uri="bolt://test:7687")
         exporter = Neo4jExporter(cfg)
         # THEN config stored
@@ -848,8 +909,10 @@ class TestNeo4jExporterExport:
     def test_export_fails_when_neo4j_unavailable(self):
         # GIVEN exporter with no neo4j package
         from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import (
-            ExportConfig, Neo4jExporter,
+            ExportConfig,
+            Neo4jExporter,
         )
+
         exporter = Neo4jExporter(ExportConfig())
         exporter._neo4j_available = False
         # WHEN export is called
@@ -861,12 +924,13 @@ class TestNeo4jExporterExport:
     def test_export_handles_migration_error(self):
         # GIVEN exporter that raises MigrationError on connect
         from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import (
-            ExportConfig, Neo4jExporter,
+            ExportConfig,
+            Neo4jExporter,
         )
         from ipfs_datasets_py.knowledge_graphs.exceptions import MigrationError
+
         exporter = Neo4jExporter(ExportConfig())
-        with patch.object(exporter, "_connect",
-                          side_effect=MigrationError("Cannot connect")):
+        with patch.object(exporter, "_connect", side_effect=MigrationError("Cannot connect")):
             with patch.object(exporter, "_close"):
                 result = exporter.export()
         # THEN failure recorded
@@ -876,8 +940,10 @@ class TestNeo4jExporterExport:
     def test_export_with_mocked_driver(self):
         # GIVEN a fully mocked Neo4j driver
         from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import (
-            ExportConfig, Neo4jExporter,
+            ExportConfig,
+            Neo4jExporter,
         )
+
         exporter = Neo4jExporter(ExportConfig(include_schema=False))
         exporter._neo4j_available = True
 
@@ -896,8 +962,10 @@ class TestNeo4jExporterExport:
     def test_export_saves_to_file(self):
         # GIVEN exporter with output_file
         from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import (
-            ExportConfig, Neo4jExporter,
+            ExportConfig,
+            Neo4jExporter,
         )
+
         cfg = ExportConfig(output_file="/tmp/kg_test_export.json", include_schema=False)
         exporter = Neo4jExporter(cfg)
 
@@ -906,8 +974,10 @@ class TestNeo4jExporterExport:
         with patch.object(exporter, "_connect", return_value=True):
             with patch.object(exporter, "_export_nodes", return_value=2):
                 with patch.object(exporter, "_export_relationships", return_value=1):
-                    with patch("ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter.GraphData",
-                               return_value=mock_gd):
+                    with patch(
+                        "ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter.GraphData",
+                        return_value=mock_gd,
+                    ):
                         with patch.object(exporter, "_close"):
                             result = exporter.export()
 
@@ -917,12 +987,13 @@ class TestNeo4jExporterExport:
     def test_export_to_graph_data_returns_none_on_error(self):
         # GIVEN exporter that fails to connect
         from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import (
-            ExportConfig, Neo4jExporter,
+            ExportConfig,
+            Neo4jExporter,
         )
         from ipfs_datasets_py.knowledge_graphs.exceptions import MigrationError
+
         exporter = Neo4jExporter(ExportConfig())
-        with patch.object(exporter, "_connect",
-                          side_effect=MigrationError("No connection")):
+        with patch.object(exporter, "_connect", side_effect=MigrationError("No connection")):
             with patch.object(exporter, "_close"):
                 result = exporter.export_to_graph_data()
         # THEN returns None
@@ -931,15 +1002,16 @@ class TestNeo4jExporterExport:
     def test_export_to_graph_data_restores_output_file(self):
         # GIVEN exporter with output_file set
         from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import (
-            ExportConfig, Neo4jExporter,
+            ExportConfig,
+            Neo4jExporter,
         )
         from ipfs_datasets_py.knowledge_graphs.exceptions import MigrationError
+
         cfg = ExportConfig(output_file="original.json")
         exporter = Neo4jExporter(cfg)
         original = exporter.config.output_file
 
-        with patch.object(exporter, "_connect",
-                          side_effect=MigrationError("No connection")):
+        with patch.object(exporter, "_connect", side_effect=MigrationError("No connection")):
             with patch.object(exporter, "_close"):
                 exporter.export_to_graph_data()
 
@@ -949,16 +1021,17 @@ class TestNeo4jExporterExport:
     def test_close_called_even_on_error(self):
         # GIVEN exporter that raises during export
         from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import (
-            ExportConfig, Neo4jExporter,
+            ExportConfig,
+            Neo4jExporter,
         )
+
         exporter = Neo4jExporter(ExportConfig())
         close_called = []
 
         def mock_close():
             close_called.append(True)
 
-        with patch.object(exporter, "_connect",
-                          side_effect=RuntimeError("Unexpected")):
+        with patch.object(exporter, "_connect", side_effect=RuntimeError("Unexpected")):
             with patch.object(exporter, "_close", side_effect=mock_close):
                 exporter.export()
 
@@ -972,9 +1045,11 @@ class TestNeo4jExporterNodeLabelFilter:
     def test_export_nodes_builds_label_filter_query(self):
         # GIVEN exporter with node_labels filter
         from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import (
-            ExportConfig, Neo4jExporter,
+            ExportConfig,
+            Neo4jExporter,
         )
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
+
         cfg = ExportConfig(node_labels=["Person", "Company"])
         exporter = Neo4jExporter(cfg)
         gd = GraphData()
@@ -1002,9 +1077,11 @@ class TestNeo4jExporterNodeLabelFilter:
     def test_export_relationships_with_type_filter(self):
         # GIVEN exporter with relationship_types filter
         from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import (
-            ExportConfig, Neo4jExporter,
+            ExportConfig,
+            Neo4jExporter,
         )
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
+
         cfg = ExportConfig(relationship_types=["KNOWS", "WORKS_AT"])
         exporter = Neo4jExporter(cfg)
         gd = GraphData()
@@ -1033,6 +1110,7 @@ class TestNeo4jExporterNodeLabelFilter:
 # transactions/wal.py — compact, recover, get_transaction_history, stats
 # ---------------------------------------------------------------------------
 
+
 class _MockStorage:
     """In-memory storage mock for WAL tests."""
 
@@ -1054,8 +1132,11 @@ class _MockStorage:
 
 def _make_wal_entry(txn_id: str = "txn-1", state=None, prev_cid=None):
     from ipfs_datasets_py.knowledge_graphs.transactions.types import (
-        WALEntry, TransactionState, IsolationLevel,
+        WALEntry,
+        TransactionState,
+        IsolationLevel,
     )
+
     if state is None:
         state = TransactionState.COMMITTED
     return WALEntry(
@@ -1076,6 +1157,7 @@ class TestWALCompact:
     def test_compact_returns_new_head_cid(self):
         # GIVEN a WAL with one entry
         from ipfs_datasets_py.knowledge_graphs.transactions.wal import WriteAheadLog
+
         storage = _MockStorage()
         wal = WriteAheadLog(storage)
         entry = _make_wal_entry()
@@ -1089,6 +1171,7 @@ class TestWALCompact:
     def test_compact_resets_entry_count(self):
         # GIVEN a WAL with several entries
         from ipfs_datasets_py.knowledge_graphs.transactions.wal import WriteAheadLog
+
         storage = _MockStorage()
         wal = WriteAheadLog(storage)
         for i in range(5):
@@ -1103,6 +1186,7 @@ class TestWALCompact:
     def test_compact_updates_wal_head(self):
         # GIVEN a WAL
         from ipfs_datasets_py.knowledge_graphs.transactions.wal import WriteAheadLog
+
         storage = _MockStorage()
         wal = WriteAheadLog(storage)
         cid1 = wal.append(_make_wal_entry("txn-1"))
@@ -1120,6 +1204,7 @@ class TestWALRecover:
     def test_recover_empty_wal_returns_empty_list(self):
         # GIVEN an empty WAL
         from ipfs_datasets_py.knowledge_graphs.transactions.wal import WriteAheadLog
+
         storage = _MockStorage()
         wal = WriteAheadLog(storage)
         # WHEN recover called
@@ -1131,8 +1216,11 @@ class TestWALRecover:
         # GIVEN a WAL with a committed entry containing operations
         from ipfs_datasets_py.knowledge_graphs.transactions.wal import WriteAheadLog
         from ipfs_datasets_py.knowledge_graphs.transactions.types import (
-            TransactionState, Operation, OperationType,
+            TransactionState,
+            Operation,
+            OperationType,
         )
+
         storage = _MockStorage()
         wal = WriteAheadLog(storage)
         op = Operation(type=OperationType.WRITE_NODE, node_id="n1", data={"labels": ["Person"]})
@@ -1148,8 +1236,11 @@ class TestWALRecover:
         # GIVEN a WAL with an aborted entry
         from ipfs_datasets_py.knowledge_graphs.transactions.wal import WriteAheadLog
         from ipfs_datasets_py.knowledge_graphs.transactions.types import (
-            TransactionState, Operation, OperationType,
+            TransactionState,
+            Operation,
+            OperationType,
         )
+
         storage = _MockStorage()
         wal = WriteAheadLog(storage)
         op = Operation(type=OperationType.WRITE_NODE, node_id="n2")
@@ -1168,6 +1259,7 @@ class TestWALTransactionHistory:
     def test_history_returns_matching_entries(self):
         # GIVEN a WAL with two entries for different transactions
         from ipfs_datasets_py.knowledge_graphs.transactions.wal import WriteAheadLog
+
         storage = _MockStorage()
         wal = WriteAheadLog(storage)
         wal.append(_make_wal_entry("txn-A"))
@@ -1180,6 +1272,7 @@ class TestWALTransactionHistory:
     def test_history_returns_empty_for_unknown_txn(self):
         # GIVEN a WAL with one entry
         from ipfs_datasets_py.knowledge_graphs.transactions.wal import WriteAheadLog
+
         storage = _MockStorage()
         wal = WriteAheadLog(storage)
         wal.append(_make_wal_entry("txn-1"))
@@ -1195,6 +1288,7 @@ class TestWALStats:
     def test_get_stats_keys(self):
         # GIVEN a WAL
         from ipfs_datasets_py.knowledge_graphs.transactions.wal import WriteAheadLog
+
         storage = _MockStorage()
         wal = WriteAheadLog(storage)
         # WHEN stats requested
@@ -1208,6 +1302,7 @@ class TestWALStats:
     def test_get_stats_entry_count_increments(self):
         # GIVEN a WAL
         from ipfs_datasets_py.knowledge_graphs.transactions.wal import WriteAheadLog
+
         storage = _MockStorage()
         wal = WriteAheadLog(storage)
         assert wal.get_stats()["entry_count"] == 0
@@ -1220,6 +1315,7 @@ class TestWALStats:
     def test_verify_integrity_empty_wal(self):
         # GIVEN an empty WAL
         from ipfs_datasets_py.knowledge_graphs.transactions.wal import WriteAheadLog
+
         storage = _MockStorage()
         wal = WriteAheadLog(storage)
         # WHEN integrity verified
@@ -1231,15 +1327,22 @@ class TestWALStats:
         # GIVEN a WAL with two entries (timestamps decreasing = reverse chrono order)
         from ipfs_datasets_py.knowledge_graphs.transactions.wal import WriteAheadLog
         from ipfs_datasets_py.knowledge_graphs.transactions.types import (
-            WALEntry, TransactionState, IsolationLevel, Operation, OperationType,
+            WALEntry,
+            TransactionState,
+            IsolationLevel,
+            Operation,
+            OperationType,
         )
+
         storage = _MockStorage()
         wal = WriteAheadLog(storage)
         t1 = time.time()
         op = Operation(type=OperationType.WRITE_NODE, node_id="n1")
         e1 = WALEntry(
-            txn_id="txn-1", timestamp=t1,
-            operations=[op], prev_wal_cid=None,
+            txn_id="txn-1",
+            timestamp=t1,
+            operations=[op],
+            prev_wal_cid=None,
             txn_state=TransactionState.COMMITTED,
             isolation_level=IsolationLevel.READ_COMMITTED,
         )
@@ -1253,6 +1356,7 @@ class TestWALStats:
 # ---------------------------------------------------------------------------
 # transactions/manager.py — conflict detection, apply_operations, recover
 # ---------------------------------------------------------------------------
+
 
 def _make_mock_graph_engine():
     """Return a MagicMock that looks like a GraphEngine."""
@@ -1275,6 +1379,7 @@ class TestTransactionManagerBegin:
         # GIVEN a TransactionManager
         from ipfs_datasets_py.knowledge_graphs.transactions.manager import TransactionManager
         from ipfs_datasets_py.knowledge_graphs.transactions.types import TransactionState
+
         engine = _make_mock_graph_engine()
         storage = _make_mock_storage()
         mgr = TransactionManager(engine, storage)
@@ -1288,6 +1393,7 @@ class TestTransactionManagerBegin:
         # GIVEN a manager
         from ipfs_datasets_py.knowledge_graphs.transactions.manager import TransactionManager
         from ipfs_datasets_py.knowledge_graphs.transactions.types import IsolationLevel
+
         engine = _make_mock_graph_engine()
         storage = _make_mock_storage()
         mgr = TransactionManager(engine, storage)
@@ -1299,6 +1405,7 @@ class TestTransactionManagerBegin:
     def test_begin_increments_active_count(self):
         # GIVEN a manager
         from ipfs_datasets_py.knowledge_graphs.transactions.manager import TransactionManager
+
         engine = _make_mock_graph_engine()
         storage = _make_mock_storage()
         mgr = TransactionManager(engine, storage)
@@ -1316,14 +1423,19 @@ class TestTransactionManagerAddOperation:
         # GIVEN an active transaction
         from ipfs_datasets_py.knowledge_graphs.transactions.manager import TransactionManager
         from ipfs_datasets_py.knowledge_graphs.transactions.types import (
-            Operation, OperationType,
+            Operation,
+            OperationType,
         )
+
         engine = _make_mock_graph_engine()
         storage = _make_mock_storage()
         mgr = TransactionManager(engine, storage)
         txn = mgr.begin()
-        op = Operation(type=OperationType.WRITE_NODE, node_id="n1",
-                       data={"labels": ["Person"], "properties": {}})
+        op = Operation(
+            type=OperationType.WRITE_NODE,
+            node_id="n1",
+            data={"labels": ["Person"], "properties": {}},
+        )
         # WHEN operation added
         mgr.add_operation(txn, op)
         # THEN it appears in the transaction
@@ -1333,14 +1445,19 @@ class TestTransactionManagerAddOperation:
         # GIVEN an active transaction
         from ipfs_datasets_py.knowledge_graphs.transactions.manager import TransactionManager
         from ipfs_datasets_py.knowledge_graphs.transactions.types import (
-            Operation, OperationType,
+            Operation,
+            OperationType,
         )
+
         engine = _make_mock_graph_engine()
         storage = _make_mock_storage()
         mgr = TransactionManager(engine, storage)
         txn = mgr.begin()
-        op = Operation(type=OperationType.SET_PROPERTY, node_id="entity-42",
-                       data={"property": "name", "value": "Alice"})
+        op = Operation(
+            type=OperationType.SET_PROPERTY,
+            node_id="entity-42",
+            data={"property": "name", "value": "Alice"},
+        )
         # WHEN operation added
         mgr.add_operation(txn, op)
         # THEN entity ID tracked in write_set
@@ -1350,9 +1467,12 @@ class TestTransactionManagerAddOperation:
         # GIVEN an aborted transaction
         from ipfs_datasets_py.knowledge_graphs.transactions.manager import TransactionManager
         from ipfs_datasets_py.knowledge_graphs.transactions.types import (
-            Operation, OperationType, TransactionState,
+            Operation,
+            OperationType,
+            TransactionState,
         )
         from ipfs_datasets_py.knowledge_graphs.transactions.types import TransactionAbortedError
+
         engine = _make_mock_graph_engine()
         storage = _make_mock_storage()
         mgr = TransactionManager(engine, storage)
@@ -1372,6 +1492,7 @@ class TestTransactionManagerRollback:
         # GIVEN an active transaction
         from ipfs_datasets_py.knowledge_graphs.transactions.manager import TransactionManager
         from ipfs_datasets_py.knowledge_graphs.transactions.types import TransactionState
+
         engine = _make_mock_graph_engine()
         storage = _make_mock_storage()
         mgr = TransactionManager(engine, storage)
@@ -1384,6 +1505,7 @@ class TestTransactionManagerRollback:
     def test_rollback_removes_from_active(self):
         # GIVEN an active transaction
         from ipfs_datasets_py.knowledge_graphs.transactions.manager import TransactionManager
+
         engine = _make_mock_graph_engine()
         storage = _make_mock_storage()
         mgr = TransactionManager(engine, storage)
@@ -1398,8 +1520,10 @@ class TestTransactionManagerRollback:
         # GIVEN a transaction with operations
         from ipfs_datasets_py.knowledge_graphs.transactions.manager import TransactionManager
         from ipfs_datasets_py.knowledge_graphs.transactions.types import (
-            Operation, OperationType,
+            Operation,
+            OperationType,
         )
+
         engine = _make_mock_graph_engine()
         storage = _make_mock_storage()
         mgr = TransactionManager(engine, storage)
@@ -1419,6 +1543,7 @@ class TestTransactionManagerConflictDetection:
         # GIVEN a manager with READ_COMMITTED isolation
         from ipfs_datasets_py.knowledge_graphs.transactions.manager import TransactionManager
         from ipfs_datasets_py.knowledge_graphs.transactions.types import IsolationLevel
+
         engine = _make_mock_graph_engine()
         storage = _make_mock_storage()
         mgr = TransactionManager(engine, storage)
@@ -1434,8 +1559,10 @@ class TestTransactionManagerConflictDetection:
         # GIVEN a manager with REPEATABLE_READ isolation
         from ipfs_datasets_py.knowledge_graphs.transactions.manager import TransactionManager
         from ipfs_datasets_py.knowledge_graphs.transactions.types import (
-            IsolationLevel, ConflictError,
+            IsolationLevel,
+            ConflictError,
         )
+
         engine = _make_mock_graph_engine()
         storage = _make_mock_storage()
         mgr = TransactionManager(engine, storage)
@@ -1452,8 +1579,10 @@ class TestTransactionManagerConflictDetection:
         # GIVEN SERIALIZABLE isolation
         from ipfs_datasets_py.knowledge_graphs.transactions.manager import TransactionManager
         from ipfs_datasets_py.knowledge_graphs.transactions.types import (
-            IsolationLevel, ConflictError,
+            IsolationLevel,
+            ConflictError,
         )
+
         engine = _make_mock_graph_engine()
         storage = _make_mock_storage()
         mgr = TransactionManager(engine, storage)
@@ -1469,6 +1598,7 @@ class TestTransactionManagerConflictDetection:
         # GIVEN REPEATABLE_READ with non-overlapping writes
         from ipfs_datasets_py.knowledge_graphs.transactions.manager import TransactionManager
         from ipfs_datasets_py.knowledge_graphs.transactions.types import IsolationLevel
+
         engine = _make_mock_graph_engine()
         storage = _make_mock_storage()
         mgr = TransactionManager(engine, storage)
@@ -1487,8 +1617,13 @@ class TestTransactionManagerApplyOperations:
         # GIVEN a manager and transaction with WRITE_NODE op
         from ipfs_datasets_py.knowledge_graphs.transactions.manager import TransactionManager
         from ipfs_datasets_py.knowledge_graphs.transactions.types import (
-            Transaction, TransactionState, IsolationLevel, Operation, OperationType,
+            Transaction,
+            TransactionState,
+            IsolationLevel,
+            Operation,
+            OperationType,
         )
+
         engine = _make_mock_graph_engine()
         storage = _make_mock_storage()
         mgr = TransactionManager(engine, storage)
@@ -1497,10 +1632,15 @@ class TestTransactionManagerApplyOperations:
             data={"labels": ["Person"], "properties": {"name": "Alice"}},
         )
         txn = Transaction(
-            txn_id="txn-test", isolation_level=IsolationLevel.READ_COMMITTED,
-            state=TransactionState.ACTIVE, operations=[op],
-            read_set=[], write_set=[], start_time=time.time(),
-            snapshot_cid=None, wal_entries=[],
+            txn_id="txn-test",
+            isolation_level=IsolationLevel.READ_COMMITTED,
+            state=TransactionState.ACTIVE,
+            operations=[op],
+            read_set=[],
+            write_set=[],
+            start_time=time.time(),
+            snapshot_cid=None,
+            wal_entries=[],
         )
         # WHEN _apply_operations called
         mgr._apply_operations(txn)
@@ -1511,18 +1651,28 @@ class TestTransactionManagerApplyOperations:
         # GIVEN a manager with a node in the engine
         from ipfs_datasets_py.knowledge_graphs.transactions.manager import TransactionManager
         from ipfs_datasets_py.knowledge_graphs.transactions.types import (
-            Transaction, TransactionState, IsolationLevel, Operation, OperationType,
+            Transaction,
+            TransactionState,
+            IsolationLevel,
+            Operation,
+            OperationType,
         )
+
         engine = _make_mock_graph_engine()
         engine._nodes = {"node-99": {"id": "node-99", "labels": ["X"], "properties": {}}}
         storage = _make_mock_storage()
         mgr = TransactionManager(engine, storage)
         op = Operation(type=OperationType.DELETE_NODE, node_id="node-99")
         txn = Transaction(
-            txn_id="txn-del", isolation_level=IsolationLevel.READ_COMMITTED,
-            state=TransactionState.ACTIVE, operations=[op],
-            read_set=[], write_set=[], start_time=time.time(),
-            snapshot_cid=None, wal_entries=[],
+            txn_id="txn-del",
+            isolation_level=IsolationLevel.READ_COMMITTED,
+            state=TransactionState.ACTIVE,
+            operations=[op],
+            read_set=[],
+            write_set=[],
+            start_time=time.time(),
+            snapshot_cid=None,
+            wal_entries=[],
         )
         # WHEN _apply_operations called
         mgr._apply_operations(txn)
@@ -1533,8 +1683,13 @@ class TestTransactionManagerApplyOperations:
         # GIVEN a manager with a node
         from ipfs_datasets_py.knowledge_graphs.transactions.manager import TransactionManager
         from ipfs_datasets_py.knowledge_graphs.transactions.types import (
-            Transaction, TransactionState, IsolationLevel, Operation, OperationType,
+            Transaction,
+            TransactionState,
+            IsolationLevel,
+            Operation,
+            OperationType,
         )
+
         engine = _make_mock_graph_engine()
         engine._nodes = {"n1": {"id": "n1", "labels": [], "properties": {}}}
         storage = _make_mock_storage()
@@ -1545,10 +1700,15 @@ class TestTransactionManagerApplyOperations:
             data={"property": "color", "value": "blue"},
         )
         txn = Transaction(
-            txn_id="txn-prop", isolation_level=IsolationLevel.READ_COMMITTED,
-            state=TransactionState.ACTIVE, operations=[op],
-            read_set=[], write_set=[], start_time=time.time(),
-            snapshot_cid=None, wal_entries=[],
+            txn_id="txn-prop",
+            isolation_level=IsolationLevel.READ_COMMITTED,
+            state=TransactionState.ACTIVE,
+            operations=[op],
+            read_set=[],
+            write_set=[],
+            start_time=time.time(),
+            snapshot_cid=None,
+            wal_entries=[],
         )
         # WHEN _apply_operations called
         mgr._apply_operations(txn)
@@ -1562,6 +1722,7 @@ class TestTransactionManagerGetStats:
     def test_get_stats_keys(self):
         # GIVEN a manager
         from ipfs_datasets_py.knowledge_graphs.transactions.manager import TransactionManager
+
         engine = _make_mock_graph_engine()
         storage = _make_mock_storage()
         mgr = TransactionManager(engine, storage)
@@ -1576,6 +1737,7 @@ class TestTransactionManagerGetStats:
     def test_get_stats_reflects_active_count(self):
         # GIVEN a manager with 2 active transactions
         from ipfs_datasets_py.knowledge_graphs.transactions.manager import TransactionManager
+
         engine = _make_mock_graph_engine()
         storage = _make_mock_storage()
         mgr = TransactionManager(engine, storage)

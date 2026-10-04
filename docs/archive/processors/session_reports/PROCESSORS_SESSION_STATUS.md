@@ -155,14 +155,14 @@ from ipfs_datasets_py.processors import UniversalProcessor
 processor = UniversalProcessor()
 
 # All these work automatically!
-result1 = await processor.process("QmXXX...")                    # Direct CID
-result2 = await processor.process("ipfs://QmXXX...")             # ipfs:// URL
-result3 = await processor.process("/ipfs/QmXXX...")             # /ipfs/ path
-result4 = await processor.process("ipns://example.com")          # ipns:// URL
+result1 = await processor.process("QmXXX...")  # Direct CID
+result2 = await processor.process("ipfs://QmXXX...")  # ipfs:// URL
+result3 = await processor.process("/ipfs/QmXXX...")  # /ipfs/ path
+result4 = await processor.process("ipns://example.com")  # ipns:// URL
 
 # IPFS metadata included
-print(result1.metadata.resource_usage['ipfs_cid'])
-print(result1.metadata.resource_usage['ipfs_size'])
+print(result1.metadata.resource_usage["ipfs_cid"])
+print(result1.metadata.resource_usage["ipfs_size"])
 
 # IPFS entities in knowledge graph
 ipfs_entities = [e for e in result1.knowledge_graph.entities if e.type == "IPFSContent"]

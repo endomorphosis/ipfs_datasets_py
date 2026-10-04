@@ -5,7 +5,11 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional, Sequence
 
 from ...logic.deontic import DeonticGraphBuilder
-from .case_knowledge import analyze_case_graph_gaps, build_case_knowledge_graph, summarize_case_graph
+from .case_knowledge import (
+    analyze_case_graph_gaps,
+    build_case_knowledge_graph,
+    summarize_case_graph,
+)
 from .claim_intake import normalize_claim_type, refresh_required_elements
 from .dependency_graph import DependencyGraphBuilder
 from .document_structure import parse_legal_document, summarize_formal_document
@@ -31,11 +35,17 @@ def build_legal_analysis_bundle(
     """Build a normalized multi-graph legal analysis bundle."""
 
     normalized_claim_type = normalize_claim_type(claim_type)
-    normalized_claim_label = str(claim_label or normalized_claim_type.replace("_", " ").title()).strip()
+    normalized_claim_label = str(
+        claim_label or normalized_claim_type.replace("_", " ").title()
+    ).strip()
     facts = list(canonical_facts or [])
 
     required_elements = refresh_required_elements(
-        {"claim_type": normalized_claim_type, "label": normalized_claim_label, "description": source_text},
+        {
+            "claim_type": normalized_claim_type,
+            "label": normalized_claim_label,
+            "description": source_text,
+        },
         facts,
         source_text,
     )
@@ -64,7 +74,9 @@ def build_legal_analysis_bundle(
 
     legal_graph_builder = LegalRequirementsGraphBuilder()
     if statutes:
-        legal_graph = legal_graph_builder.build_from_statutes(list(statutes), [normalized_claim_type])
+        legal_graph = legal_graph_builder.build_from_statutes(
+            list(statutes), [normalized_claim_type]
+        )
     else:
         legal_graph = legal_graph_builder.build_rules_of_procedure("federal")
         for element in legal_graph.elements.values():

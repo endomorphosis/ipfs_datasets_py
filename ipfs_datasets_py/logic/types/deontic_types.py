@@ -261,7 +261,9 @@ class DeonticRuleSet:
                     and formula1.proposition == formula2.proposition
                     and formula1.agent == formula2.agent
                 ):
-                    conflicts.append((formula1, formula2, "Direct conflict: obligation vs prohibition"))
+                    conflicts.append(
+                        (formula1, formula2, "Direct conflict: obligation vs prohibition")
+                    )
                 elif (
                     formula1.operator == DeonticOperator.PERMISSION
                     and formula2.operator == DeonticOperator.PROHIBITION

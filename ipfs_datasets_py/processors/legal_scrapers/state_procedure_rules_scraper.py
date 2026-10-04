@@ -53,7 +53,9 @@ _RI_COURT_RULES_PAGE_RE = re.compile(
     re.IGNORECASE,
 )
 _RI_COURT_RULES_DOC_RE = re.compile(r"\.pdf(?:$|[?#])", re.IGNORECASE)
-_RI_COURT_RULES_ALLOWED_DOC_PATH_RE = re.compile(r"^/(?:Courts/|Legal-Resources/Documents/)", re.IGNORECASE)
+_RI_COURT_RULES_ALLOWED_DOC_PATH_RE = re.compile(
+    r"^/(?:Courts/|Legal-Resources/Documents/)", re.IGNORECASE
+)
 _RI_COURT_RULE_SIGNAL_RE = re.compile(
     r"\b(rule|rules|procedure|practice|evidence|tribunal|arbitration|domestic|juvenile|disciplinary)\b",
     re.IGNORECASE,
@@ -161,7 +163,9 @@ _WA_RULE_LIST_PAGES: List[Dict[str, str]] = [
     },
 ]
 _WA_RULE_SECTION_NUMBER_RE = re.compile(r"^\d+(?:\.\d+)?(?:[A-Za-z]+)?(?:\s+[A-Za-z]+)?$")
-_WA_EFFECTIVE_DATE_RE = re.compile(r"\b(?:Adopted|Amended)\s+effective\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})", re.IGNORECASE)
+_WA_EFFECTIVE_DATE_RE = re.compile(
+    r"\b(?:Adopted|Amended)\s+effective\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})", re.IGNORECASE
+)
 _NJ_RULE_PARTS: List[Dict[str, str]] = [
     {
         "section": "Part 3",
@@ -217,12 +221,20 @@ _NV_RULE_SOURCES: List[Dict[str, str]] = [
         "official_cite_prefix": "NRCrP",
     },
 ]
-_NV_RULE_HEADING_RE = re.compile(r"^Rule\s+([0-9]+(?:\.[0-9]+)?(?:\([a-z]\))?)\s*\.\s*(.+)$", re.IGNORECASE)
+_NV_RULE_HEADING_RE = re.compile(
+    r"^Rule\s+([0-9]+(?:\.[0-9]+)?(?:\([a-z]\))?)\s*\.\s*(.+)$", re.IGNORECASE
+)
 _NV_EFFECTIVE_DATE_RE = re.compile(r"effective\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})", re.IGNORECASE)
 _CT_PRACTICE_BOOK_URL = "https://jud.ct.gov/Publications/PracticeBook/PB.pdf"
-_CT_OFFICIAL_EDITION_RE = re.compile(r"OFFICIAL\s+(\d{4})\s+CONNECTICUT\s+PRACTICE\s+BOOK", re.IGNORECASE)
-_CT_AREA_HEADER_RE = re.compile(r"^SUPERIOR COURT—PROCEDURE IN (CIVIL|CRIMINAL) MATTERS\b", re.IGNORECASE)
-_CT_SECTION_HEADING_RE = re.compile(r"^Sec\.\s((?:1[1-9]|2[0-5]|3[6-9]|4[0-4])-\d+[A-Za-z]?)\.\s*(.*)$")
+_CT_OFFICIAL_EDITION_RE = re.compile(
+    r"OFFICIAL\s+(\d{4})\s+CONNECTICUT\s+PRACTICE\s+BOOK", re.IGNORECASE
+)
+_CT_AREA_HEADER_RE = re.compile(
+    r"^SUPERIOR COURT—PROCEDURE IN (CIVIL|CRIMINAL) MATTERS\b", re.IGNORECASE
+)
+_CT_SECTION_HEADING_RE = re.compile(
+    r"^Sec\.\s((?:1[1-9]|2[0-5]|3[6-9]|4[0-4])-\d+[A-Za-z]?)\.\s*(.*)$"
+)
 _CT_BODY_START_PREFIXES = (
     "A ",
     "An ",
@@ -269,12 +281,25 @@ _ID_RULE_LIST_PAGES: List[Dict[str, str]] = [
 _ID_RULE_LINK_RE = re.compile(r"^Rule\s+(\d+(?:\.\d+)?)\.\s+(.+)$", re.IGNORECASE)
 _ID_EFFECTIVE_DATE_RE = re.compile(r"effective\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})", re.IGNORECASE)
 _ME_CIVIL_RULES_INDEX_URL = "https://www.courts.maine.gov/rules/rules-civil.html"
-_ME_CRIMINAL_RULES_ONLY_URL = "https://www.courts.maine.gov/rules/text/mru_crim_p_only_2025-05-01.pdf"
-_ME_CIVIL_REVIEWED_RE = re.compile(r"Last\s+reviewed\s+and\s+edited\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})", re.IGNORECASE)
-_ME_CIVIL_AMENDMENTS_RE = re.compile(r"Includes amendments effective\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})", re.IGNORECASE)
-_ME_CRIMINAL_EDITED_RE = re.compile(r"Last\s+reviewed\s+and\s+edited\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})", re.IGNORECASE)
-_ME_CRIMINAL_AMENDMENTS_RE = re.compile(r"Including amendments effective\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})", re.IGNORECASE)
-_ME_RULE_LINK_RE = re.compile(r"^Rule[s]?\s+([0-9]+(?:[A-Z]|\.[0-9A-Z]+| through Rule [0-9A-Z&\s.-]+)?)\s*-\s*(.+)$", re.IGNORECASE)
+_ME_CRIMINAL_RULES_ONLY_URL = (
+    "https://www.courts.maine.gov/rules/text/mru_crim_p_only_2025-05-01.pdf"
+)
+_ME_CIVIL_REVIEWED_RE = re.compile(
+    r"Last\s+reviewed\s+and\s+edited\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})", re.IGNORECASE
+)
+_ME_CIVIL_AMENDMENTS_RE = re.compile(
+    r"Includes amendments effective\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})", re.IGNORECASE
+)
+_ME_CRIMINAL_EDITED_RE = re.compile(
+    r"Last\s+reviewed\s+and\s+edited\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})", re.IGNORECASE
+)
+_ME_CRIMINAL_AMENDMENTS_RE = re.compile(
+    r"Including amendments effective\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})", re.IGNORECASE
+)
+_ME_RULE_LINK_RE = re.compile(
+    r"^Rule[s]?\s+([0-9]+(?:[A-Z]|\.[0-9A-Z]+| through Rule [0-9A-Z&\s.-]+)?)\s*-\s*(.+)$",
+    re.IGNORECASE,
+)
 _ME_CRIMINAL_RULE_HEADING_RE = re.compile(r"^RULE\s+(\d+(?:[A-Z]|\.[0-9A-Z]+)?)\.\s+(.+)$")
 _MD_RULE_TITLES: List[Dict[str, str]] = [
     {
@@ -385,8 +410,12 @@ _UT_RULE_LIST_PAGES: List[Dict[str, str]] = [
         "type_code": "urcrp",
     },
 ]
-_UT_RULE_LINK_RE = re.compile(r"^Rule\s+([0-9]+(?:\.[0-9]+|[A-Z])?)\.?\s+(.+?)(?:\.)?$", re.IGNORECASE)
-_UT_RULE_PAGE_HEADING_RE = re.compile(r"^Rule\s+([0-9]+(?:\.[0-9]+|[A-Z])?)\.\s+(.+?)(?:\.)?$", re.IGNORECASE)
+_UT_RULE_LINK_RE = re.compile(
+    r"^Rule\s+([0-9]+(?:\.[0-9]+|[A-Z])?)\.?\s+(.+?)(?:\.)?$", re.IGNORECASE
+)
+_UT_RULE_PAGE_HEADING_RE = re.compile(
+    r"^Rule\s+([0-9]+(?:\.[0-9]+|[A-Z])?)\.\s+(.+?)(?:\.)?$", re.IGNORECASE
+)
 _UT_EFFECTIVE_DATE_RE = re.compile(r"^Effective:\s*(.+)$", re.IGNORECASE)
 _NM_RULE_DOCUMENTS: List[Dict[str, str]] = [
     {
@@ -430,7 +459,9 @@ _WV_RULE_SOURCES: List[Dict[str, str]] = [
     },
 ]
 _WV_RULE_HEADING_RE = re.compile(r"^Rule\s+(\d+(?:\.\d+)?)\.\s+(.+?)(?:\.)?$", re.IGNORECASE)
-_WV_EFFECTIVE_DATE_RE = re.compile(r"\[.*?effective.*?([A-Za-z]+\s+\d{1,2},\s+\d{4}).*?\]", re.IGNORECASE)
+_WV_EFFECTIVE_DATE_RE = re.compile(
+    r"\[.*?effective.*?([A-Za-z]+\s+\d{1,2},\s+\d{4}).*?\]", re.IGNORECASE
+)
 _ND_RULE_LIST_PAGES: List[Dict[str, str]] = [
     {
         "title_name": "North Dakota Rules of Civil Procedure",
@@ -531,7 +562,9 @@ _AL_RULE_LIST_PAGES: List[Dict[str, str]] = [
     },
 ]
 _AL_RULE_LABEL_RE = re.compile(r"^Rules?\s+([0-9]+(?:\.[0-9]+)?[A-Za-z]?)\.\s*$", re.IGNORECASE)
-_AL_EFFECTIVE_DATE_RE = re.compile(r"eff\.\s*([0-9-]+)|effective\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})", re.IGNORECASE)
+_AL_EFFECTIVE_DATE_RE = re.compile(
+    r"eff\.\s*([0-9-]+)|effective\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})", re.IGNORECASE
+)
 _TN_RULE_LIST_PAGES: List[Dict[str, str]] = [
     {
         "title_name": "Tennessee Rules of Civil Procedure",
@@ -709,20 +742,44 @@ _MA_RULE_HEADING_RE = re.compile(
     r"(?:Civil|Criminal)\s+Procedure\s+Rule\s+(\d+(?:\.\d+)?)\s*:\s*(.+)$",
     re.IGNORECASE,
 )
-_MA_EFFECTIVE_DATE_RE = re.compile(r"(?:effective|effective on)\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})", re.IGNORECASE)
+_MA_EFFECTIVE_DATE_RE = re.compile(
+    r"(?:effective|effective on)\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})", re.IGNORECASE
+)
 _NC_GENERAL_RULES_PAGE_URL = "https://www.nccourts.gov/courts/supreme-court/court-rules/general-rules-of-practice-for-the-superior-and-district-courts"
 _NC_GENERAL_RULES_PDF_URL = (
     "https://www.nccourts.gov/assets/inline-files/General%20Rules%20of%20Practice%20for%20the%20Superior%20and%20District%20Courts%20-%206%20August%202025.pdf"
     "?VersionId=u4fR8cUEcyA6RLo_IBoitMhuOC0CIjgW"
 )
 _NC_RULE_HEADING_RE = re.compile(r"^Rule\s+(\d+(?:\.\d+)?)\.\s+(.+?)(?:\.)?$", re.IGNORECASE)
-_TX_CIVIL_RULES_PDF_URL = "https://www.txcourts.gov/media/1462465/texas-rules-of-civil-procedure-march-1-2026.pdf"
-_TX_RULE_HEADING_RE = re.compile(r"^RULE\s+(\d+(?:[A-Za-z]|\.\d+)?)\.\s+(.+?)(?:\.)?$", re.IGNORECASE)
+_TX_CIVIL_RULES_PDF_URL = (
+    "https://www.txcourts.gov/media/1462465/texas-rules-of-civil-procedure-march-1-2026.pdf"
+)
+_TX_RULE_HEADING_RE = re.compile(
+    r"^RULE\s+(\d+(?:[A-Za-z]|\.\d+)?)\.\s+(.+?)(?:\.)?$", re.IGNORECASE
+)
 _MS_CIVIL_RULES_PDF_URL = "https://www.firstcircuitcourt.ms.gov/sites/firstcircuitcourt/files/files/rules_of_civil_procedure%206-26-18.pdf"
 _MS_CRIMINAL_RULES_PDF_URL = "https://www.firstcircuitcourt.ms.gov/sites/firstcircuitcourt/files/files/rules_of_criminal_procedure%206-26-18.pdf"
-_MS_CIVIL_RULE_HEADING_RE = re.compile(r"^RULE\s+(\d+(?:\.\d+|[A-Z])?)\.\s+(.+?)(?:\.)?$", re.IGNORECASE)
+_MS_CIVIL_RULE_HEADING_RE = re.compile(
+    r"^RULE\s+(\d+(?:\.\d+|[A-Z])?)\.\s+(.+?)(?:\.)?$", re.IGNORECASE
+)
 _MS_CRIMINAL_RULE_HEADING_RE = re.compile(r"^Rule\s+(\d+\.\d+)\s+(.+?)(?:\.)?$", re.IGNORECASE)
-_REPLACEMENT_SUPPLEMENT_STATES = {"IA", "AR", "AL", "TN", "VA", "IN", "IL", "GA", "PA", "LA", "WY", "MA", "NC", "TX", "MS"}
+_REPLACEMENT_SUPPLEMENT_STATES = {
+    "IA",
+    "AR",
+    "AL",
+    "TN",
+    "VA",
+    "IN",
+    "IL",
+    "GA",
+    "PA",
+    "LA",
+    "WY",
+    "MA",
+    "NC",
+    "TX",
+    "MS",
+}
 _NE_RULE_ARTICLES: List[Dict[str, str]] = [
     {
         "title_name": "Nebraska Court Rules of Pleading in Civil Cases",
@@ -1439,7 +1496,11 @@ def _extract_new_hampshire_rules_from_online_book_html(
             " ".join(str(line or "").split())
             for line in content.get_text("\n", strip=True).splitlines()
         ]
-        content_lines = [line for line in content_lines if line and line.lower() != "back to top" and line != "--"]
+        content_lines = [
+            line
+            for line in content_lines
+            if line and line.lower() != "back to top" and line != "--"
+        ]
         full_text = "\n".join([heading_text, *content_lines]).strip()
         if len(full_text) < 80:
             continue
@@ -1493,7 +1554,9 @@ def _extract_nevada_rules_from_html(
     soup = BeautifulSoup(html_text or "", "html.parser")
     effective_matches = [
         " ".join(match.group(1).split())
-        for match in _NV_EFFECTIVE_DATE_RE.finditer(" ".join(soup.get_text(" ", strip=True).split()))
+        for match in _NV_EFFECTIVE_DATE_RE.finditer(
+            " ".join(soup.get_text(" ", strip=True).split())
+        )
         if match.group(1)
     ]
     effective_date = effective_matches[-1] if effective_matches else None
@@ -1570,7 +1633,9 @@ def _extract_nevada_rules_from_html(
             current_number = heading_match.group(1).strip()
             current_name = heading_match.group(2).strip().rstrip(".")
             anchor = paragraph.find("a")
-            current_anchor = str(anchor.get("name") or anchor.get("id") or "").strip() if anchor else ""
+            current_anchor = (
+                str(anchor.get("name") or anchor.get("id") or "").strip() if anchor else ""
+            )
             buffer = [f"Rule {current_number}. {current_name}"]
             continue
 
@@ -1618,7 +1683,11 @@ def _extract_idaho_rule_links(
     for anchor in content.select("a[href]"):
         href = str(anchor.get("href") or "").strip()
         parent = anchor.find_parent("p")
-        label_source = parent.get_text(" ", strip=True) if parent is not None else anchor.get_text(" ", strip=True)
+        label_source = (
+            parent.get_text(" ", strip=True)
+            if parent is not None
+            else anchor.get_text(" ", strip=True)
+        )
         label = " ".join(str(label_source or "").split())
         if not href or "Rule " not in label:
             continue
@@ -1838,7 +1907,11 @@ def _extract_maine_criminal_rules_from_page_texts(
             current_lines = []
             current_page = 0
             return
-        section_name = " ".join(part.strip() for part in current_name_parts if part.strip()).strip().rstrip(".")
+        section_name = (
+            " ".join(part.strip() for part in current_name_parts if part.strip())
+            .strip()
+            .rstrip(".")
+        )
         full_text = "\n".join(current_lines).strip()
         key = (current_number.lower(), section_name.lower())
         if section_name and len(full_text) >= 60 and key not in seen:
@@ -1880,7 +1953,10 @@ def _extract_maine_criminal_rules_from_page_texts(
             line = " ".join(raw_line.replace("\x00", " ").split())
             if not line or line.isdigit():
                 continue
-            if line in {"MAINE RULES OF UNIFIED CRIMINAL PROCEDURE", "I. SCOPE, PURPOSE, AND CONSTRUCTION"}:
+            if line in {
+                "MAINE RULES OF UNIFIED CRIMINAL PROCEDURE",
+                "I. SCOPE, PURPOSE, AND CONSTRUCTION",
+            }:
                 continue
             if re.match(r"^[IVXLC]+\.\s", line):
                 continue
@@ -1895,7 +1971,9 @@ def _extract_maine_criminal_rules_from_page_texts(
                 continue
             if not collecting or not current_number:
                 continue
-            if current_name_parts and current_name_parts[-1].endswith(("OF", "THE", "TO", "WITH", "AS")):
+            if current_name_parts and current_name_parts[-1].endswith(
+                ("OF", "THE", "TO", "WITH", "AS")
+            ):
                 current_name_parts.append(line)
                 current_lines[0] = f"RULE {current_number}. {' '.join(current_name_parts)}"
                 continue
@@ -1944,7 +2022,9 @@ def _split_connecticut_heading_and_body(text: str) -> tuple[str, List[str]]:
     normalized = " ".join(str(text or "").split())
     if not normalized:
         return "", []
-    starts_like_body = normalized.startswith(("(", "[", '"', "'")) or bool(re.match(r"^[A-Za-z0-9]+\)", normalized))
+    starts_like_body = normalized.startswith(("(", "[", '"', "'")) or bool(
+        re.match(r"^[A-Za-z0-9]+\)", normalized)
+    )
     if not starts_like_body:
         starts_like_body = any(normalized.startswith(prefix) for prefix in _CT_BODY_START_PREFIXES)
     if starts_like_body:
@@ -2001,7 +2081,13 @@ def _extract_connecticut_rules_from_page_texts(
     heading_mode = False
 
     def flush() -> None:
-        nonlocal current_family, current_number, current_page, heading_parts, content_lines, heading_mode
+        nonlocal \
+            current_family, \
+            current_number, \
+            current_page, \
+            heading_parts, \
+            content_lines, \
+            heading_mode
         if not current_family or not current_number:
             current_number = ""
             current_page = 0
@@ -2011,7 +2097,9 @@ def _extract_connecticut_rules_from_page_texts(
             return
 
         section_name = _join_connecticut_heading_parts(heading_parts)
-        full_lines = [f"Sec. {current_number}. {section_name}" if section_name else f"Sec. {current_number}."]
+        full_lines = [
+            f"Sec. {current_number}. {section_name}" if section_name else f"Sec. {current_number}."
+        ]
         full_lines.extend(line for line in content_lines if line)
         full_text = "\n".join(full_lines).strip()
         if section_name and len(full_text) >= 40:
@@ -2032,7 +2120,9 @@ def _extract_connecticut_rules_from_page_texts(
                         short_title=section_name,
                         full_text=full_text,
                         summary=section_name,
-                        source_url=f"{source_url}#page={current_page}" if current_page else source_url,
+                        source_url=f"{source_url}#page={current_page}"
+                        if current_page
+                        else source_url,
                         official_cite=f"Conn. Practice Book § {current_number}",
                         legal_area=current_family,
                         structured_data={
@@ -2053,24 +2143,40 @@ def _extract_connecticut_rules_from_page_texts(
     for page_number, page_text in page_texts:
         for raw_line in str(page_text or "").splitlines():
             line = " ".join(raw_line.replace("\x00", " ").split())
-            if not line or line.isdigit() or line.startswith("© Copyrighted by the Secretary of the State"):
+            if (
+                not line
+                or line.isdigit()
+                or line.startswith("© Copyrighted by the Secretary of the State")
+            ):
                 continue
 
             area_match = _CT_AREA_HEADER_RE.match(line)
             if area_match:
-                current_family = "civil_procedure" if area_match.group(1).lower() == "civil" else "criminal_procedure"
+                current_family = (
+                    "civil_procedure"
+                    if area_match.group(1).lower() == "civil"
+                    else "criminal_procedure"
+                )
                 continue
 
-            if line.startswith("CHAPTER ") or line == "Sec. Sec." or line.startswith("For previous Histories"):
+            if (
+                line.startswith("CHAPTER ")
+                or line == "Sec. Sec."
+                or line.startswith("For previous Histories")
+            ):
                 continue
 
             section_match = _CT_SECTION_HEADING_RE.match(line)
             if section_match:
                 flush()
                 current_number = section_match.group(1).strip()
-                current_family = _connecticut_procedure_family_for_section(current_number) or current_family
+                current_family = (
+                    _connecticut_procedure_family_for_section(current_number) or current_family
+                )
                 current_page = page_number
-                heading_part, initial_body_lines = _split_connecticut_heading_and_body(section_match.group(2))
+                heading_part, initial_body_lines = _split_connecticut_heading_and_body(
+                    section_match.group(2)
+                )
                 heading_parts = [heading_part] if heading_part else []
                 content_lines = initial_body_lines
                 heading_mode = not initial_body_lines
@@ -2292,7 +2398,9 @@ def _extract_california_rule_from_html(
     if main is None:
         return None
 
-    lines = [" ".join(str(line or "").split()) for line in main.get_text("\n", strip=True).splitlines()]
+    lines = [
+        " ".join(str(line or "").split()) for line in main.get_text("\n", strip=True).splitlines()
+    ]
     lines = [line for line in lines if line]
     if not lines:
         return None
@@ -2345,7 +2453,9 @@ async def _fetch_html_with_direct_fallback(
     validator,
     timeout_seconds: int = 120,
 ) -> str:
-    payload = await fetcher._fetch_page_content_with_archival_fallback(url, timeout_seconds=timeout_seconds)
+    payload = await fetcher._fetch_page_content_with_archival_fallback(
+        url, timeout_seconds=timeout_seconds
+    )
     html = payload.decode("utf-8", errors="replace") if payload else ""
     if validator(html):
         return html
@@ -2372,7 +2482,9 @@ async def _fetch_html_with_direct_fallback(
             return direct_html
         fetcher._record_fetch_event(provider="direct", success=False, error="validator_failed")
     elif response is not None:
-        fetcher._record_fetch_event(provider="direct", success=False, error=f"http {response.status_code}")
+        fetcher._record_fetch_event(
+            provider="direct", success=False, error=f"http {response.status_code}"
+        )
 
     curl_bytes, curl_error = _fetch_url_via_curl(url, timeout_seconds=timeout_seconds)
     if curl_bytes:
@@ -2421,9 +2533,13 @@ async def _fetch_html_with_requests_first(
             return direct_html
         fetcher._record_fetch_event(provider="direct", success=False, error="validator_failed")
     elif response is not None:
-        fetcher._record_fetch_event(provider="direct", success=False, error=f"http {response.status_code}")
+        fetcher._record_fetch_event(
+            provider="direct", success=False, error=f"http {response.status_code}"
+        )
 
-    payload = await fetcher._fetch_page_content_with_archival_fallback(url, timeout_seconds=timeout_seconds)
+    payload = await fetcher._fetch_page_content_with_archival_fallback(
+        url, timeout_seconds=timeout_seconds
+    )
     html = payload.decode("utf-8", errors="replace") if payload else ""
     if validator(html):
         return html
@@ -2470,9 +2586,13 @@ async def _fetch_massachusetts_html(
             return html
         fetcher._record_fetch_event(provider="direct", success=False, error="validator_failed")
     elif response is not None:
-        fetcher._record_fetch_event(provider="direct", success=False, error=f"http {response.status_code}")
+        fetcher._record_fetch_event(
+            provider="direct", success=False, error=f"http {response.status_code}"
+        )
 
-    payload = await fetcher._fetch_page_content_with_archival_fallback(url, timeout_seconds=timeout_seconds)
+    payload = await fetcher._fetch_page_content_with_archival_fallback(
+        url, timeout_seconds=timeout_seconds
+    )
     html = payload.decode("utf-8", errors="replace") if payload else ""
     if validator(html):
         return html
@@ -2498,7 +2618,9 @@ async def _fetch_pdf_bytes_with_direct_fallback(
 ) -> bytes:
     prefer_direct = "firstcircuitcourt.ms.gov" in url
     if not prefer_direct:
-        payload = await fetcher._fetch_page_content_with_archival_fallback(url, timeout_seconds=timeout_seconds)
+        payload = await fetcher._fetch_page_content_with_archival_fallback(
+            url, timeout_seconds=timeout_seconds
+        )
         if isinstance(payload, (bytes, bytearray)) and bytes(payload).startswith(b"%PDF-"):
             return bytes(payload)
 
@@ -2524,7 +2646,9 @@ async def _fetch_pdf_bytes_with_direct_fallback(
             return direct_bytes
         fetcher._record_fetch_event(provider="direct", success=False, error="not_pdf")
     elif response is not None:
-        fetcher._record_fetch_event(provider="direct", success=False, error=f"http {response.status_code}")
+        fetcher._record_fetch_event(
+            provider="direct", success=False, error=f"http {response.status_code}"
+        )
 
     curl_bytes, curl_error = _fetch_url_via_curl(url, timeout_seconds=timeout_seconds)
     if curl_bytes and curl_bytes.startswith(b"%PDF-"):
@@ -2550,7 +2674,9 @@ async def _fetch_json_with_direct_fallback(
 ) -> Any:
     prefer_direct = "/njcourts_rules_of_court/" in url
     if not prefer_direct:
-        payload = await fetcher._fetch_page_content_with_archival_fallback(url, timeout_seconds=timeout_seconds)
+        payload = await fetcher._fetch_page_content_with_archival_fallback(
+            url, timeout_seconds=timeout_seconds
+        )
         if payload:
             try:
                 return json.loads(payload.decode("utf-8", errors="replace"))
@@ -2581,7 +2707,9 @@ async def _fetch_json_with_direct_fallback(
             )
             return parsed
     elif response is not None:
-        fetcher._record_fetch_event(provider="direct", success=False, error=f"http {response.status_code}")
+        fetcher._record_fetch_event(
+            provider="direct", success=False, error=f"http {response.status_code}"
+        )
 
     curl_bytes, curl_error = _fetch_url_via_curl(
         url,
@@ -2844,7 +2972,9 @@ def _extract_maryland_rule_from_html(
         return None
 
     heading = lines[heading_index]
-    heading_match = re.match(r"^RULE\s+([234]-\d+[A-Za-z]?(?:\.\d+)?)\.\s+(.+)$", heading, re.IGNORECASE)
+    heading_match = re.match(
+        r"^RULE\s+([234]-\d+[A-Za-z]?(?:\.\d+)?)\.\s+(.+)$", heading, re.IGNORECASE
+    )
     if not heading_match:
         return None
 
@@ -3103,7 +3233,9 @@ def _extract_alaska_rules_from_page_texts(
         normalized_page = " ".join(str(page_text or "").split())
         if "Table of Contents" in normalized_page:
             continue
-        if "Rule 1." in normalized_page and ("Scope of Rules" in normalized_page or "Scope." in normalized_page):
+        if "Rule 1." in normalized_page and (
+            "Scope of Rules" in normalized_page or "Scope." in normalized_page
+        ):
             body_start = index
             break
 
@@ -3188,10 +3320,7 @@ def _extract_alaska_rules_from_page_texts(
                     and not heading_name.startswith("SLA ")
                     and (
                         line.startswith("Rule ")
-                        or (
-                            heading_name[0].isupper()
-                            and not re.match(r"^\d{4}\b", heading_name)
-                        )
+                        or (heading_name[0].isupper() and not re.match(r"^\d{4}\b", heading_name))
                     )
                 ):
                     flush()
@@ -3235,9 +3364,7 @@ def _extract_hawaii_rules_from_html(
     body_start = heading_indexes[0]
     if "Table of Contents" in lines:
         rule_one_indexes = [
-            index
-            for index in heading_indexes
-            if re.match(r"^Rule\s+1\.\s*$", lines[index])
+            index for index in heading_indexes if re.match(r"^Rule\s+1\.\s*$", lines[index])
         ]
         if len(rule_one_indexes) >= 2:
             body_start = rule_one_indexes[1]
@@ -3328,7 +3455,9 @@ def _extract_hawaii_rules_from_html(
                     continue
                 name_parts.append(inline_name)
                 if inline_name.endswith("."):
-                    current_name = " ".join(part.strip().rstrip(".") for part in name_parts if part.strip()).strip()
+                    current_name = " ".join(
+                        part.strip().rstrip(".") for part in name_parts if part.strip()
+                    ).strip()
                     if current_name:
                         buffer = [f"Rule {current_number}. {current_name}"]
                         index += 1
@@ -3346,7 +3475,9 @@ def _extract_hawaii_rules_from_html(
                 if next_line.endswith("."):
                     break
 
-            current_name = " ".join(part.strip().rstrip(".") for part in name_parts if part.strip()).strip()
+            current_name = " ".join(
+                part.strip().rstrip(".") for part in name_parts if part.strip()
+            ).strip()
             current_name = re.split(r"\s+[IVXLC]+\.\s+", current_name, maxsplit=1)[0].strip()
             if not current_name:
                 current_number = ""
@@ -3594,7 +3725,13 @@ def _extract_new_mexico_rules_from_page_texts(
     )
 
     def flush() -> None:
-        nonlocal current_number, current_name, current_page, current_effective_date, body_lines, capture_body
+        nonlocal \
+            current_number, \
+            current_name, \
+            current_page, \
+            current_effective_date, \
+            body_lines, \
+            capture_body
         if not current_number or not current_name:
             current_number = ""
             current_name = ""
@@ -3694,10 +3831,14 @@ def _extract_new_mexico_rules_from_page_texts(
                 if (
                     len(body_lines) == 1
                     and (
-                        current_name.lower().endswith(("by", "and", "or", "of", "for", "to", "with", "under", "in"))
+                        current_name.lower().endswith(
+                            ("by", "and", "or", "of", "for", "to", "with", "under", "in")
+                        )
                         or line[:1].islower()
                     )
-                    and not re.match(r"^(?:[A-Z]\.|[A-Z]\)|\([A-Za-z0-9]+\)|ARTICLE\b|PART\b)", line)
+                    and not re.match(
+                        r"^(?:[A-Z]\.|[A-Z]\)|\([A-Za-z0-9]+\)|ARTICLE\b|PART\b)", line
+                    )
                 ):
                     current_name = f"{current_name} {line.rstrip('.')}".strip()
                     body_lines[0] = f"{current_number}. {current_name}."
@@ -3792,7 +3933,10 @@ def _extract_west_virginia_civil_rules_from_page_texts(
             line = " ".join(raw_line.replace("\x00", " ").split())
             if not line or line.isdigit():
                 continue
-            if line.startswith("West Virginia Rules of Civil Procedure") or line == "Table of Contents":
+            if (
+                line.startswith("West Virginia Rules of Civil Procedure")
+                or line == "Table of Contents"
+            ):
                 continue
             if re.match(r"^[IVXLC]+\.\s", line):
                 continue
@@ -3854,7 +3998,11 @@ def _extract_west_virginia_criminal_rules_from_html(
             sibling_name = getattr(sibling, "name", None)
             if sibling_name in {"h4", "h5"}:
                 break
-            text = " ".join(sibling.get_text(" ", strip=True).split()) if hasattr(sibling, "get_text") else ""
+            text = (
+                " ".join(sibling.get_text(" ", strip=True).split())
+                if hasattr(sibling, "get_text")
+                else ""
+            )
             if text:
                 effective_match = _WV_EFFECTIVE_DATE_RE.search(text)
                 if effective_match:
@@ -4099,7 +4247,9 @@ def _extract_minnesota_rule_from_html(
         return None
 
     heading_text = " ".join(heading.get_text(" ", strip=True).split())
-    heading_match = re.match(r"^Rule\s+([0-9]+(?:\.[0-9]+)?[A-Za-z]?)\.\s+(.+)$", heading_text, re.IGNORECASE)
+    heading_match = re.match(
+        r"^Rule\s+([0-9]+(?:\.[0-9]+)?[A-Za-z]?)\.\s+(.+)$", heading_text, re.IGNORECASE
+    )
     if heading_match is None:
         return None
 
@@ -4112,7 +4262,11 @@ def _extract_minnesota_rule_from_html(
         sibling_name = getattr(sibling, "name", None)
         if sibling_name in {"h3", "h5"}:
             break
-        text = " ".join(sibling.get_text(" ", strip=True).split()) if hasattr(sibling, "get_text") else ""
+        text = (
+            " ".join(sibling.get_text(" ", strip=True).split())
+            if hasattr(sibling, "get_text")
+            else ""
+        )
         if not text:
             continue
         effective_matches = _MN_EFFECTIVE_TEXT_RE.findall(text)
@@ -4173,7 +4327,9 @@ def _extract_iowa_rules_from_page_texts(
                 continue
             candidate_page = normalized_page[marker_index:]
             next_rule_index = candidate_page.find(" Rule ", len(first_marker))
-            first_rule_block = candidate_page[:next_rule_index] if next_rule_index > 0 else candidate_page
+            first_rule_block = (
+                candidate_page[:next_rule_index] if next_rule_index > 0 else candidate_page
+            )
             has_body_sentence = re.search(
                 r"\.\s+(?:The|Every|When|In|An|A|No|On|If|This|These|Any|Unless|After|Before|Upon)\b",
                 first_rule_block,
@@ -4270,7 +4426,13 @@ def _extract_arkansas_rules_from_page_texts(
     )
 
     def flush() -> None:
-        nonlocal current_number, current_name, current_page, current_effective_date, body_lines, capture_body
+        nonlocal \
+            current_number, \
+            current_name, \
+            current_page, \
+            current_effective_date, \
+            body_lines, \
+            capture_body
         if not current_number or not current_name:
             current_number = ""
             current_name = ""
@@ -4455,13 +4617,17 @@ def _extract_alabama_rule_from_text(
                     break
             if section_name:
                 break
-        heading_match = re.match(rf"^Rule\s+{re.escape(section_number)}\.\s+(.+)$", line, re.IGNORECASE)
+        heading_match = re.match(
+            rf"^Rule\s+{re.escape(section_number)}\.\s+(.+)$", line, re.IGNORECASE
+        )
         if heading_match:
             section_name = " ".join(heading_match.group(1).split()).strip()
             if ". " in section_name:
                 section_name = section_name.split(". ", 1)[0].strip()
             else:
-                repeated_word_match = re.match(r"^(.+?\b([A-Z][A-Za-z]+))\s+\2\s+[a-z].*$", section_name)
+                repeated_word_match = re.match(
+                    r"^(.+?\b([A-Z][A-Za-z]+))\s+\2\s+[a-z].*$", section_name
+                )
                 if repeated_word_match:
                     section_name = repeated_word_match.group(1).strip()
             section_name = section_name.rstrip(".")
@@ -4481,7 +4647,9 @@ def _extract_alabama_rule_from_text(
     body_start = normalized_text.lower().find(f"rule {section_number}.".lower())
     full_text = normalized_text[body_start:].strip()
     stop_markers = ["Committee Comments", "Committee Notes", "Court Comment", "Appendix to Rule"]
-    stop_positions = [full_text.find(marker) for marker in stop_markers if full_text.find(marker) != -1]
+    stop_positions = [
+        full_text.find(marker) for marker in stop_markers if full_text.find(marker) != -1
+    ]
     if stop_positions:
         full_text = full_text[: min(stop_positions)].strip()
     if len(full_text) < 60:
@@ -4759,9 +4927,13 @@ def _extract_indiana_rule_links(
     content = soup.select_one("#mc-main-content") or soup
     current_as_of = None
     page_text = " ".join(content.get_text(" ", strip=True).split())
-    match = re.search(r"Updated,\s+Effective\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})", page_text, re.IGNORECASE)
+    match = re.search(
+        r"Updated,\s+Effective\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})", page_text, re.IGNORECASE
+    )
     if match is None:
-        match = re.search(r"current\s+as\s+of\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})", page_text, re.IGNORECASE)
+        match = re.search(
+            r"current\s+as\s+of\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})", page_text, re.IGNORECASE
+        )
     if match:
         current_as_of = " ".join(match.group(1).split())
 
@@ -4947,7 +5119,9 @@ def _extract_illinois_rule_from_text(
     procedure_family: str,
     legal_area: str,
 ) -> Optional[NormalizedStatute]:
-    normalized = "\n".join(" ".join(line.split()) for line in str(text or "").splitlines() if line.strip())
+    normalized = "\n".join(
+        " ".join(line.split()) for line in str(text or "").splitlines() if line.strip()
+    )
     heading_match = None
     for line in normalized.splitlines()[:10]:
         match = _IL_PDF_HEADING_RE.match(line.strip())
@@ -5124,10 +5298,7 @@ def _extract_pennsylvania_rules_from_html(
         return []
 
     soup = BeautifulSoup(html_text or "", "html.parser")
-    lines = [
-        " ".join(line.split())
-        for line in soup.get_text("\n", strip=True).splitlines()
-    ]
+    lines = [" ".join(line.split()) for line in soup.get_text("\n", strip=True).splitlines()]
     lines = [line for line in lines if line]
 
     statutes: List[NormalizedStatute] = []
@@ -5191,7 +5362,9 @@ def _extract_pennsylvania_rules_from_html(
         if not collecting:
             if heading and heading.group(1).strip() == first_rule_number:
                 collecting = True
-            elif re.fullmatch(r"Rule\s+%s\.\s*" % re.escape(first_rule_number), line, re.IGNORECASE):
+            elif re.fullmatch(
+                r"Rule\s+%s\.\s*" % re.escape(first_rule_number), line, re.IGNORECASE
+            ):
                 collecting = True
             else:
                 continue
@@ -5214,7 +5387,11 @@ def _extract_pennsylvania_rules_from_html(
             if max_rules and len(statutes) >= int(max_rules):
                 break
             continue
-        if line.startswith("Title 231") or line.startswith("Title 234") or line.startswith("Chapter "):
+        if (
+            line.startswith("Title 231")
+            or line.startswith("Title 234")
+            or line.startswith("Chapter ")
+        ):
             continue
         if line == "Rule":
             continue
@@ -5224,7 +5401,9 @@ def _extract_pennsylvania_rules_from_html(
     return statutes[: max_rules or None]
 
 
-def _extract_louisiana_rule_links(html_text: str, page_url: str) -> tuple[List[Dict[str, str]], Optional[str]]:
+def _extract_louisiana_rule_links(
+    html_text: str, page_url: str
+) -> tuple[List[Dict[str, str]], Optional[str]]:
     current_as_of = None
     current_match = re.search(
         r"Current through amendments effective\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})",
@@ -5378,7 +5557,13 @@ def _extract_wyoming_rules_from_page_texts(
     capture_body = False
 
     def flush() -> None:
-        nonlocal current_number, current_name, current_page, current_effective_date, body_lines, capture_body
+        nonlocal \
+            current_number, \
+            current_name, \
+            current_page, \
+            current_effective_date, \
+            body_lines, \
+            capture_body
         if not current_number or not current_name or current_page is None:
             current_number = None
             current_name = None
@@ -5546,7 +5731,11 @@ def _extract_massachusetts_rule_from_html(
             continue
         if text == "Table of Contents":
             continue
-        if started_body and text in {"Contact", "Downloads", "Help Us Improve Mass.gov with your feedback"}:
+        if started_body and text in {
+            "Contact",
+            "Downloads",
+            "Help Us Improve Mass.gov with your feedback",
+        }:
             break
         if started_body and text == "Reporter's notes":
             break
@@ -5741,7 +5930,11 @@ def _extract_texas_civil_rules_from_page_texts(
             if _TX_RULE_HEADING_RE.match(line) is None or "." * 4 in line:
                 continue
             for follow_line in lines[line_index + 1 : line_index + 6]:
-                if not follow_line or "." * 4 in follow_line or _TX_RULE_HEADING_RE.match(follow_line):
+                if (
+                    not follow_line
+                    or "." * 4 in follow_line
+                    or _TX_RULE_HEADING_RE.match(follow_line)
+                ):
                     continue
                 if len(follow_line) >= 20 and re.search(r"[a-z]", follow_line):
                     found_body = True
@@ -5818,7 +6011,9 @@ def _extract_texas_civil_rules_from_page_texts(
                 continue
             if not current_number or not capture_body:
                 continue
-            if line in {"COMMENTS TO 1941 RULES", "COMMENTS TO 1941 ADOPTION"} or line.startswith("COMMENT TO"):
+            if line in {"COMMENTS TO 1941 RULES", "COMMENTS TO 1941 ADOPTION"} or line.startswith(
+                "COMMENT TO"
+            ):
                 capture_body = False
                 continue
             if line.startswith("PART ") and body_lines:
@@ -5842,7 +6037,10 @@ def _extract_mississippi_civil_rules_from_page_texts(
     start_page_index = 0
     for index, (_, page_text) in enumerate(page_texts):
         text = str(page_text or "")
-        if "CHAPTER I. SCOPE OF RULES; ONE FORM OF ACTION" in text and "RULE 1. SCOPE OF RULES" in text:
+        if (
+            "CHAPTER I. SCOPE OF RULES; ONE FORM OF ACTION" in text
+            and "RULE 1. SCOPE OF RULES" in text
+        ):
             start_page_index = index
             break
 
@@ -5894,7 +6092,10 @@ def _extract_mississippi_civil_rules_from_page_texts(
         capture_body = False
 
     for page_number, page_text in page_texts[start_page_index:]:
-        lines = [_normalize_mississippi_pdf_line(line) for line in str(page_text or "").replace("\r", "\n").splitlines()]
+        lines = [
+            _normalize_mississippi_pdf_line(line)
+            for line in str(page_text or "").replace("\r", "\n").splitlines()
+        ]
         for line in lines:
             if not line or re.fullmatch(r"\d+", line):
                 continue
@@ -5980,7 +6181,10 @@ def _extract_mississippi_criminal_rules_from_page_texts(
         capture_body = False
 
     for page_number, page_text in page_texts[start_page_index:]:
-        lines = [_normalize_mississippi_pdf_line(line) for line in str(page_text or "").replace("\r", "\n").splitlines()]
+        lines = [
+            _normalize_mississippi_pdf_line(line)
+            for line in str(page_text or "").replace("\r", "\n").splitlines()
+        ]
         for line in lines:
             if not line or re.fullmatch(r"\d+", line):
                 continue
@@ -6033,10 +6237,7 @@ def _extract_nebraska_rule_from_html(
     if body is None:
         return None
 
-    text_lines = [
-        " ".join(line.split())
-        for line in body.get_text("\n", strip=True).splitlines()
-    ]
+    text_lines = [" ".join(line.split()) for line in body.get_text("\n", strip=True).splitlines()]
     text_lines = [line for line in text_lines if line and line != "Printer-Friendly Version"]
     if not text_lines:
         return None
@@ -6205,26 +6406,39 @@ def _merge_fetch_analytics(
 ) -> Dict[str, Dict[str, Any]]:
     merged: Dict[str, Dict[str, Any]] = {}
 
-    for state_code in sorted(set(base_fetch_analytics_by_state) | set(supplemental_fetch_analytics_by_state)):
+    for state_code in sorted(
+        set(base_fetch_analytics_by_state) | set(supplemental_fetch_analytics_by_state)
+    ):
         base_metrics = base_fetch_analytics_by_state.get(state_code) or {}
         supplemental_metrics = supplemental_fetch_analytics_by_state.get(state_code) or {}
 
-        attempted = int(base_metrics.get("attempted", 0) or 0) + int(supplemental_metrics.get("attempted", 0) or 0)
-        success = int(base_metrics.get("success", 0) or 0) + int(supplemental_metrics.get("success", 0) or 0)
+        attempted = int(base_metrics.get("attempted", 0) or 0) + int(
+            supplemental_metrics.get("attempted", 0) or 0
+        )
+        success = int(base_metrics.get("success", 0) or 0) + int(
+            supplemental_metrics.get("success", 0) or 0
+        )
         fallback_count = int(base_metrics.get("fallback_count", 0) or 0) + int(
             supplemental_metrics.get("fallback_count", 0) or 0
         )
-        cache_hits = int(base_metrics.get("cache_hits", 0) or 0) + int(supplemental_metrics.get("cache_hits", 0) or 0)
+        cache_hits = int(base_metrics.get("cache_hits", 0) or 0) + int(
+            supplemental_metrics.get("cache_hits", 0) or 0
+        )
         cache_writes = int(base_metrics.get("cache_writes", 0) or 0) + int(
             supplemental_metrics.get("cache_writes", 0) or 0
         )
 
         providers: Dict[str, int] = {}
-        for provider_metrics in [base_metrics.get("providers"), supplemental_metrics.get("providers")]:
+        for provider_metrics in [
+            base_metrics.get("providers"),
+            supplemental_metrics.get("providers"),
+        ]:
             if not isinstance(provider_metrics, dict):
                 continue
             for provider, count in provider_metrics.items():
-                providers[str(provider)] = int(providers.get(str(provider), 0) or 0) + int(count or 0)
+                providers[str(provider)] = int(providers.get(str(provider), 0) or 0) + int(
+                    count or 0
+                )
 
         merged[state_code] = {
             "attempted": attempted,
@@ -6396,7 +6610,9 @@ async def _scrape_oregon_court_rules_supplement(
             return []
 
         scrape_method = getattr(scraper, method_name)
-        rows = await scrape_method(code_name, code_url) if code_url else await scrape_method(code_name)
+        rows = (
+            await scrape_method(code_name, code_url) if code_url else await scrape_method(code_name)
+        )
         deduped: List[NormalizedStatute] = []
         for row in rows:
             source_url = str(getattr(row, "source_url", "") or "").strip().lower()
@@ -6475,7 +6691,9 @@ async def _scrape_michigan_court_rules_supplement(
         if chapter_key in existing_urls:
             continue
 
-        raw_bytes = await fetcher._fetch_page_content_with_archival_fallback(chapter_url, timeout_seconds=120)
+        raw_bytes = await fetcher._fetch_page_content_with_archival_fallback(
+            chapter_url, timeout_seconds=120
+        )
         if not raw_bytes:
             continue
 
@@ -6525,15 +6743,17 @@ async def _scrape_california_court_rules_supplement(
         title_html = await _fetch_html_with_direct_fallback(
             fetcher,
             str(title["url"]),
-            validator=lambda html: len(
-                _extract_california_rule_links(
-                    html,
-                    title_url=str(title["url"]),
-                    procedure_family=str(title["procedure_family"]),
-                    legal_area=str(title["legal_area"]),
-                )[0]
-            )
-            > 0,
+            validator=lambda html: (
+                len(
+                    _extract_california_rule_links(
+                        html,
+                        title_url=str(title["url"]),
+                        procedure_family=str(title["procedure_family"]),
+                        legal_area=str(title["legal_area"]),
+                    )[0]
+                )
+                > 0
+            ),
             timeout_seconds=120,
         )
         if not title_html:
@@ -6557,16 +6777,18 @@ async def _scrape_california_court_rules_supplement(
             rule_html = await _fetch_html_with_direct_fallback(
                 fetcher,
                 rule_url,
-                validator=lambda html: _extract_california_rule_from_html(
-                    html,
-                    rule_url=rule_url,
-                    code_name="California Rules of Court",
-                    title_name=str(title["title_name"]),
-                    procedure_family=str(rule["procedure_family"]),
-                    legal_area=str(rule["legal_area"]),
-                    current_as_of=current_as_of,
-                )
-                is not None,
+                validator=lambda html: (
+                    _extract_california_rule_from_html(
+                        html,
+                        rule_url=rule_url,
+                        code_name="California Rules of Court",
+                        title_name=str(title["title_name"]),
+                        procedure_family=str(rule["procedure_family"]),
+                        legal_area=str(rule["legal_area"]),
+                        current_as_of=current_as_of,
+                    )
+                    is not None
+                ),
                 timeout_seconds=120,
             )
             if not rule_html:
@@ -6619,7 +6841,9 @@ async def _scrape_ohio_court_rules_supplement(
         if source_url.lower() in existing_urls:
             continue
 
-        raw_bytes = await fetcher._fetch_page_content_with_archival_fallback(source_url, timeout_seconds=180)
+        raw_bytes = await fetcher._fetch_page_content_with_archival_fallback(
+            source_url, timeout_seconds=180
+        )
         if not raw_bytes:
             continue
 
@@ -6748,16 +6972,18 @@ async def _scrape_washington_court_rules_supplement(
         list_html = await _fetch_html_with_direct_fallback(
             fetcher,
             list_url,
-            validator=lambda html: len(
-                _extract_washington_rule_links(
-                    html,
-                    page_url=list_url,
-                    procedure_family=str(list_page["procedure_family"]),
-                    legal_area=str(list_page["legal_area"]),
-                    official_cite_prefix=str(list_page["official_cite_prefix"]),
+            validator=lambda html: (
+                len(
+                    _extract_washington_rule_links(
+                        html,
+                        page_url=list_url,
+                        procedure_family=str(list_page["procedure_family"]),
+                        legal_area=str(list_page["legal_area"]),
+                        official_cite_prefix=str(list_page["official_cite_prefix"]),
+                    )
                 )
-            )
-            > 0,
+                > 0
+            ),
             timeout_seconds=120,
         )
         if not list_html:
@@ -6853,7 +7079,9 @@ async def _scrape_new_jersey_court_rules_supplement(
         rule_entries = [top_rule]
         if bool(top_rule.get("lazy")):
             subtree_url = f"https://www.njcourts.gov/njcourts_rules_of_court/subtree?tid={top_rule.get('key')}"
-            subtree_data = await _fetch_json_with_direct_fallback(fetcher, subtree_url, timeout_seconds=120)
+            subtree_data = await _fetch_json_with_direct_fallback(
+                fetcher, subtree_url, timeout_seconds=120
+            )
             if isinstance(subtree_data, list) and subtree_data:
                 rule_entries = subtree_data
 
@@ -6883,7 +7111,9 @@ async def _scrape_new_jersey_court_rules_supplement(
             if source_url.lower() in existing_urls:
                 continue
 
-            term_data = await _fetch_json_with_direct_fallback(fetcher, source_url, timeout_seconds=120)
+            term_data = await _fetch_json_with_direct_fallback(
+                fetcher, source_url, timeout_seconds=120
+            )
             description_html = ""
             if isinstance(term_data, dict):
                 description_html = str(term_data.get("description") or "")
@@ -6934,18 +7164,20 @@ async def _scrape_new_hampshire_court_rules_supplement(
         html = await _fetch_html_with_direct_fallback(
             fetcher,
             source_url,
-            validator=lambda raw_html: len(
-                _extract_new_hampshire_rules_from_online_book_html(
-                    raw_html,
-                    source_url=source_url,
-                    title_name=str(source["title_name"]),
-                    procedure_family=str(source["procedure_family"]),
-                    legal_area=str(source["legal_area"]),
-                    official_cite_prefix=str(source["official_cite_prefix"]),
-                    rule_number_max=int(source.get("rule_number_max", 99) or 99),
+            validator=lambda raw_html: (
+                len(
+                    _extract_new_hampshire_rules_from_online_book_html(
+                        raw_html,
+                        source_url=source_url,
+                        title_name=str(source["title_name"]),
+                        procedure_family=str(source["procedure_family"]),
+                        legal_area=str(source["legal_area"]),
+                        official_cite_prefix=str(source["official_cite_prefix"]),
+                        rule_number_max=int(source.get("rule_number_max", 99) or 99),
+                    )
                 )
-            )
-            > 0,
+                > 0
+            ),
             timeout_seconds=120,
         )
         if not html:
@@ -6999,17 +7231,19 @@ async def _scrape_nevada_court_rules_supplement(
         html = await _fetch_html_with_direct_fallback(
             fetcher,
             source_url,
-            validator=lambda raw_html: len(
-                _extract_nevada_rules_from_html(
-                    raw_html,
-                    source_url=source_url,
-                    title_name=str(source["title_name"]),
-                    procedure_family=str(source["procedure_family"]),
-                    legal_area=str(source["legal_area"]),
-                    official_cite_prefix=str(source["official_cite_prefix"]),
+            validator=lambda raw_html: (
+                len(
+                    _extract_nevada_rules_from_html(
+                        raw_html,
+                        source_url=source_url,
+                        title_name=str(source["title_name"]),
+                        procedure_family=str(source["procedure_family"]),
+                        legal_area=str(source["legal_area"]),
+                        official_cite_prefix=str(source["official_cite_prefix"]),
+                    )
                 )
-            )
-            > 0,
+                > 0
+            ),
             timeout_seconds=120,
         )
         if not html:
@@ -7083,9 +7317,10 @@ async def _scrape_connecticut_court_rules_supplement(
             continue
 
         enriched = fetcher._enrich_statute_structure(statute).to_dict()
-        family = _classify_procedure_family(enriched) or str(
-            statute.structured_data.get("procedure_family") or ""
-        ).strip()
+        family = (
+            _classify_procedure_family(enriched)
+            or str(statute.structured_data.get("procedure_family") or "").strip()
+        )
         if not family:
             continue
         enriched["procedure_family"] = family
@@ -7118,16 +7353,18 @@ async def _scrape_idaho_court_rules_supplement(
         list_html = await _fetch_html_with_direct_fallback(
             fetcher,
             list_url,
-            validator=lambda html: len(
-                _extract_idaho_rule_links(
-                    html,
-                    page_url=list_url,
-                    procedure_family=str(list_page["procedure_family"]),
-                    legal_area=str(list_page["legal_area"]),
-                    official_cite_prefix=str(list_page["official_cite_prefix"]),
+            validator=lambda html: (
+                len(
+                    _extract_idaho_rule_links(
+                        html,
+                        page_url=list_url,
+                        procedure_family=str(list_page["procedure_family"]),
+                        legal_area=str(list_page["legal_area"]),
+                        official_cite_prefix=str(list_page["official_cite_prefix"]),
+                    )
                 )
-            )
-            > 0,
+                > 0
+            ),
             timeout_seconds=120,
         )
         if not list_html:
@@ -7151,15 +7388,17 @@ async def _scrape_idaho_court_rules_supplement(
             rule_html = await _fetch_html_with_direct_fallback(
                 fetcher,
                 rule_url,
-                validator=lambda html: _extract_idaho_rule_from_html(
-                    html,
-                    rule_url=rule_url,
-                    title_name=str(list_page["title_name"]),
-                    procedure_family=str(rule["procedure_family"]),
-                    legal_area=str(rule["legal_area"]),
-                    official_cite_prefix=str(rule["official_cite_prefix"]),
-                )
-                is not None,
+                validator=lambda html: (
+                    _extract_idaho_rule_from_html(
+                        html,
+                        rule_url=rule_url,
+                        title_name=str(list_page["title_name"]),
+                        procedure_family=str(rule["procedure_family"]),
+                        legal_area=str(rule["legal_area"]),
+                        official_cite_prefix=str(rule["official_cite_prefix"]),
+                    )
+                    is not None
+                ),
                 timeout_seconds=120,
             )
             if not rule_html:
@@ -7202,7 +7441,9 @@ async def _scrape_maine_court_rules_supplement(
     civil_html = await _fetch_html_with_direct_fallback(
         fetcher,
         _ME_CIVIL_RULES_INDEX_URL,
-        validator=lambda html: len(_extract_maine_civil_rule_links(html, index_url=_ME_CIVIL_RULES_INDEX_URL)[0]) > 0,
+        validator=lambda html: (
+            len(_extract_maine_civil_rule_links(html, index_url=_ME_CIVIL_RULES_INDEX_URL)[0]) > 0
+        ),
         timeout_seconds=120,
     )
     if civil_html:
@@ -7254,11 +7495,15 @@ async def _scrape_maine_court_rules_supplement(
         if raw_bytes:
             try:
                 from pypdf import PdfReader
+
                 reader = PdfReader(BytesIO(raw_bytes))
             except Exception:
                 reader = None
             if reader is not None:
-                page_texts = [(index + 1, page.extract_text() or "") for index, page in enumerate(reader.pages)]
+                page_texts = [
+                    (index + 1, page.extract_text() or "")
+                    for index, page in enumerate(reader.pages)
+                ]
                 statutes = _extract_maine_criminal_rules_from_page_texts(
                     page_texts,
                     source_url=_ME_CRIMINAL_RULES_ONLY_URL,
@@ -7300,15 +7545,17 @@ async def _scrape_maryland_court_rules_supplement(
         title_html = await _fetch_html_with_direct_fallback(
             fetcher,
             title_url,
-            validator=lambda html: len(
-                _extract_maryland_chapter_links(
-                    html,
-                    page_url=title_url,
-                    procedure_family=str(title["procedure_family"]),
-                    legal_area=str(title["legal_area"]),
+            validator=lambda html: (
+                len(
+                    _extract_maryland_chapter_links(
+                        html,
+                        page_url=title_url,
+                        procedure_family=str(title["procedure_family"]),
+                        legal_area=str(title["legal_area"]),
+                    )
                 )
-            )
-            > 0,
+                > 0
+            ),
             timeout_seconds=120,
         )
         if not title_html:
@@ -7328,17 +7575,19 @@ async def _scrape_maryland_court_rules_supplement(
             chapter_html = await _fetch_html_with_direct_fallback(
                 fetcher,
                 chapter_url,
-                validator=lambda html: len(
-                    _extract_maryland_rule_links(
-                        html,
-                        page_url=chapter_url,
-                        title_name=str(title["title_name"]),
-                        chapter_name=str(chapter["chapter_name"]),
-                        procedure_family=str(chapter["procedure_family"]),
-                        legal_area=str(chapter["legal_area"]),
+                validator=lambda html: (
+                    len(
+                        _extract_maryland_rule_links(
+                            html,
+                            page_url=chapter_url,
+                            title_name=str(title["title_name"]),
+                            chapter_name=str(chapter["chapter_name"]),
+                            procedure_family=str(chapter["procedure_family"]),
+                            legal_area=str(chapter["legal_area"]),
+                        )
                     )
-                )
-                > 0,
+                    > 0
+                ),
                 timeout_seconds=120,
             )
             if not chapter_html:
@@ -7363,15 +7612,17 @@ async def _scrape_maryland_court_rules_supplement(
                 rule_html = await _fetch_html_with_direct_fallback(
                     fetcher,
                     rule_url,
-                    validator=lambda html: _extract_maryland_rule_from_html(
-                        html,
-                        rule_url=rule_url,
-                        title_name=str(rule["title_name"]),
-                        chapter_name=str(rule["chapter_name"]),
-                        procedure_family=str(rule["procedure_family"]),
-                        legal_area=str(rule["legal_area"]),
-                    )
-                    is not None,
+                    validator=lambda html: (
+                        _extract_maryland_rule_from_html(
+                            html,
+                            rule_url=rule_url,
+                            title_name=str(rule["title_name"]),
+                            chapter_name=str(rule["chapter_name"]),
+                            procedure_family=str(rule["procedure_family"]),
+                            legal_area=str(rule["legal_area"]),
+                        )
+                        is not None
+                    ),
                     timeout_seconds=120,
                 )
                 if not rule_html:
@@ -7420,16 +7671,18 @@ async def _scrape_south_carolina_court_rules_supplement(
         list_html = await _fetch_html_with_direct_fallback(
             fetcher,
             list_url,
-            validator=lambda html: len(
-                _extract_south_carolina_rule_links(
-                    html,
-                    page_url=list_url,
-                    procedure_family=str(list_page["procedure_family"]),
-                    legal_area=str(list_page["legal_area"]),
-                    official_cite_prefix=str(list_page["official_cite_prefix"]),
+            validator=lambda html: (
+                len(
+                    _extract_south_carolina_rule_links(
+                        html,
+                        page_url=list_url,
+                        procedure_family=str(list_page["procedure_family"]),
+                        legal_area=str(list_page["legal_area"]),
+                        official_cite_prefix=str(list_page["official_cite_prefix"]),
+                    )
                 )
-            )
-            > 0,
+                > 0
+            ),
             timeout_seconds=120,
         )
         if not list_html:
@@ -7453,15 +7706,17 @@ async def _scrape_south_carolina_court_rules_supplement(
             rule_html = await _fetch_html_with_direct_fallback(
                 fetcher,
                 rule_url,
-                validator=lambda html: _extract_south_carolina_rule_from_html(
-                    html,
-                    rule_url=rule_url,
-                    title_name=str(list_page["title_name"]),
-                    procedure_family=str(rule["procedure_family"]),
-                    legal_area=str(rule["legal_area"]),
-                    official_cite_prefix=str(rule["official_cite_prefix"]),
-                )
-                is not None,
+                validator=lambda html: (
+                    _extract_south_carolina_rule_from_html(
+                        html,
+                        rule_url=rule_url,
+                        title_name=str(list_page["title_name"]),
+                        procedure_family=str(rule["procedure_family"]),
+                        legal_area=str(rule["legal_area"]),
+                        official_cite_prefix=str(rule["official_cite_prefix"]),
+                    )
+                    is not None
+                ),
                 timeout_seconds=120,
             )
             if not rule_html:
@@ -7537,9 +7792,10 @@ async def _scrape_alaska_court_rules_supplement(
             if source_key in existing_urls:
                 continue
             enriched = fetcher._enrich_statute_structure(statute).to_dict()
-            family = _classify_procedure_family(enriched) or str(
-                statute.structured_data.get("procedure_family") or ""
-            ).strip()
+            family = (
+                _classify_procedure_family(enriched)
+                or str(statute.structured_data.get("procedure_family") or "").strip()
+            )
             if not family:
                 continue
             enriched["procedure_family"] = family
@@ -7572,16 +7828,18 @@ async def _scrape_nebraska_court_rules_supplement(
         article_html = await _fetch_html_with_direct_fallback(
             fetcher,
             article_url,
-            validator=lambda html: len(
-                _extract_nebraska_rule_links(
-                    html,
-                    page_url=article_url,
-                    procedure_family=str(article["procedure_family"]),
-                    legal_area=str(article["legal_area"]),
-                    official_cite_prefix=str(article["official_cite_prefix"]),
+            validator=lambda html: (
+                len(
+                    _extract_nebraska_rule_links(
+                        html,
+                        page_url=article_url,
+                        procedure_family=str(article["procedure_family"]),
+                        legal_area=str(article["legal_area"]),
+                        official_cite_prefix=str(article["official_cite_prefix"]),
+                    )
                 )
-            )
-            > 0,
+                > 0
+            ),
             timeout_seconds=120,
         )
         if not article_html:
@@ -7605,17 +7863,19 @@ async def _scrape_nebraska_court_rules_supplement(
             rule_html = await _fetch_html_with_direct_fallback(
                 fetcher,
                 rule_url,
-                validator=lambda html: _extract_nebraska_rule_from_html(
-                    html,
-                    rule_url=rule_url,
-                    title_name=str(article["title_name"]),
-                    section_number=str(rule["section_number"]),
-                    section_name=str(rule["section_name"]),
-                    procedure_family=str(rule["procedure_family"]),
-                    legal_area=str(rule["legal_area"]),
-                    official_cite_prefix=str(rule["official_cite_prefix"]),
-                )
-                is not None,
+                validator=lambda html: (
+                    _extract_nebraska_rule_from_html(
+                        html,
+                        rule_url=rule_url,
+                        title_name=str(article["title_name"]),
+                        section_number=str(rule["section_number"]),
+                        section_name=str(rule["section_name"]),
+                        procedure_family=str(rule["procedure_family"]),
+                        legal_area=str(rule["legal_area"]),
+                        official_cite_prefix=str(rule["official_cite_prefix"]),
+                    )
+                    is not None
+                ),
                 timeout_seconds=120,
             )
             if not rule_html:
@@ -7666,18 +7926,20 @@ async def _scrape_hawaii_court_rules_supplement(
         source_html = await _fetch_html_with_direct_fallback(
             fetcher,
             source_url,
-            validator=lambda html: len(
-                _extract_hawaii_rules_from_html(
-                    html,
-                    source_url=source_url,
-                    title_name=str(source["title_name"]),
-                    procedure_family=str(source["procedure_family"]),
-                    legal_area=str(source["legal_area"]),
-                    official_cite_prefix=str(source["official_cite_prefix"]),
-                    effective_date=str(source["effective_date"]),
+            validator=lambda html: (
+                len(
+                    _extract_hawaii_rules_from_html(
+                        html,
+                        source_url=source_url,
+                        title_name=str(source["title_name"]),
+                        procedure_family=str(source["procedure_family"]),
+                        legal_area=str(source["legal_area"]),
+                        official_cite_prefix=str(source["official_cite_prefix"]),
+                        effective_date=str(source["effective_date"]),
+                    )
                 )
-            )
-            > 0,
+                > 0
+            ),
             timeout_seconds=120,
         )
         if not source_html:
@@ -7699,9 +7961,10 @@ async def _scrape_hawaii_court_rules_supplement(
             if source_key in existing_urls:
                 continue
             enriched = fetcher._enrich_statute_structure(statute).to_dict()
-            family = _classify_procedure_family(enriched) or str(
-                statute.structured_data.get("procedure_family") or ""
-            ).strip()
+            family = (
+                _classify_procedure_family(enriched)
+                or str(statute.structured_data.get("procedure_family") or "").strip()
+            )
             if not family:
                 continue
             enriched["procedure_family"] = family
@@ -7734,17 +7997,19 @@ async def _scrape_utah_court_rules_supplement(
         list_html = await _fetch_html_with_direct_fallback(
             fetcher,
             list_url,
-            validator=lambda html: len(
-                _extract_utah_rule_links(
-                    html,
-                    page_url=list_url,
-                    procedure_family=str(list_page["procedure_family"]),
-                    legal_area=str(list_page["legal_area"]),
-                    official_cite_prefix=str(list_page["official_cite_prefix"]),
-                    type_code=str(list_page["type_code"]),
+            validator=lambda html: (
+                len(
+                    _extract_utah_rule_links(
+                        html,
+                        page_url=list_url,
+                        procedure_family=str(list_page["procedure_family"]),
+                        legal_area=str(list_page["legal_area"]),
+                        official_cite_prefix=str(list_page["official_cite_prefix"]),
+                        type_code=str(list_page["type_code"]),
+                    )
                 )
-            )
-            > 0,
+                > 0
+            ),
             timeout_seconds=120,
         )
         if not list_html:
@@ -7876,9 +8141,10 @@ async def _scrape_new_mexico_court_rules_supplement(
             if source_key in existing_urls:
                 continue
             enriched = fetcher._enrich_statute_structure(statute).to_dict()
-            family = _classify_procedure_family(enriched) or str(
-                statute.structured_data.get("procedure_family") or ""
-            ).strip()
+            family = (
+                _classify_procedure_family(enriched)
+                or str(statute.structured_data.get("procedure_family") or "").strip()
+            )
             if not family:
                 continue
             enriched["procedure_family"] = family
@@ -7925,7 +8191,9 @@ async def _scrape_west_virginia_court_rules_supplement(
                 reader = PdfReader(BytesIO(raw_bytes))
             except Exception:
                 continue
-            page_texts = [(index + 1, page.extract_text() or "") for index, page in enumerate(reader.pages)]
+            page_texts = [
+                (index + 1, page.extract_text() or "") for index, page in enumerate(reader.pages)
+            ]
             statutes = _extract_west_virginia_civil_rules_from_page_texts(
                 page_texts,
                 source_url=source_url,
@@ -7938,17 +8206,19 @@ async def _scrape_west_virginia_court_rules_supplement(
             html_text = await _fetch_html_with_direct_fallback(
                 fetcher,
                 source_url,
-                validator=lambda html: len(
-                    _extract_west_virginia_criminal_rules_from_html(
-                        html,
-                        source_url=source_url,
-                        title_name=str(source["title_name"]),
-                        procedure_family=str(source["procedure_family"]),
-                        legal_area=str(source["legal_area"]),
-                        official_cite_prefix=str(source["official_cite_prefix"]),
+                validator=lambda html: (
+                    len(
+                        _extract_west_virginia_criminal_rules_from_html(
+                            html,
+                            source_url=source_url,
+                            title_name=str(source["title_name"]),
+                            procedure_family=str(source["procedure_family"]),
+                            legal_area=str(source["legal_area"]),
+                            official_cite_prefix=str(source["official_cite_prefix"]),
+                        )
                     )
-                )
-                > 0,
+                    > 0
+                ),
                 timeout_seconds=120,
             )
             if not html_text:
@@ -7969,9 +8239,10 @@ async def _scrape_west_virginia_court_rules_supplement(
             if source_key in existing_urls:
                 continue
             enriched = fetcher._enrich_statute_structure(statute).to_dict()
-            family = _classify_procedure_family(enriched) or str(
-                statute.structured_data.get("procedure_family") or ""
-            ).strip()
+            family = (
+                _classify_procedure_family(enriched)
+                or str(statute.structured_data.get("procedure_family") or "").strip()
+            )
             if not family:
                 continue
             enriched["procedure_family"] = family
@@ -8004,16 +8275,18 @@ async def _scrape_north_dakota_court_rules_supplement(
         list_html = await _fetch_html_with_direct_fallback(
             fetcher,
             list_url,
-            validator=lambda html: len(
-                _extract_north_dakota_rule_links(
-                    html,
-                    page_url=list_url,
-                    procedure_family=str(list_page["procedure_family"]),
-                    legal_area=str(list_page["legal_area"]),
-                    official_cite_prefix=str(list_page["official_cite_prefix"]),
+            validator=lambda html: (
+                len(
+                    _extract_north_dakota_rule_links(
+                        html,
+                        page_url=list_url,
+                        procedure_family=str(list_page["procedure_family"]),
+                        legal_area=str(list_page["legal_area"]),
+                        official_cite_prefix=str(list_page["official_cite_prefix"]),
+                    )
                 )
-            )
-            > 0,
+                > 0
+            ),
             timeout_seconds=120,
         )
         if not list_html:
@@ -8036,15 +8309,17 @@ async def _scrape_north_dakota_court_rules_supplement(
             rule_html = await _fetch_html_with_direct_fallback(
                 fetcher,
                 rule_url,
-                validator=lambda html: _extract_north_dakota_rule_from_html(
-                    html,
-                    rule_url=rule_url,
-                    title_name=str(list_page["title_name"]),
-                    procedure_family=str(rule["procedure_family"]),
-                    legal_area=str(rule["legal_area"]),
-                    official_cite_prefix=str(rule["official_cite_prefix"]),
-                )
-                is not None,
+                validator=lambda html: (
+                    _extract_north_dakota_rule_from_html(
+                        html,
+                        rule_url=rule_url,
+                        title_name=str(list_page["title_name"]),
+                        procedure_family=str(rule["procedure_family"]),
+                        legal_area=str(rule["legal_area"]),
+                        official_cite_prefix=str(rule["official_cite_prefix"]),
+                    )
+                    is not None
+                ),
                 timeout_seconds=120,
             )
             if not rule_html:
@@ -8092,16 +8367,18 @@ async def _scrape_minnesota_court_rules_supplement(
         list_html = await _fetch_html_with_direct_fallback(
             fetcher,
             list_url,
-            validator=lambda html: len(
-                _extract_minnesota_rule_links(
-                    html,
-                    page_url=list_url,
-                    procedure_family=str(list_page["procedure_family"]),
-                    legal_area=str(list_page["legal_area"]),
-                    official_cite_prefix=str(list_page["official_cite_prefix"]),
+            validator=lambda html: (
+                len(
+                    _extract_minnesota_rule_links(
+                        html,
+                        page_url=list_url,
+                        procedure_family=str(list_page["procedure_family"]),
+                        legal_area=str(list_page["legal_area"]),
+                        official_cite_prefix=str(list_page["official_cite_prefix"]),
+                    )
                 )
-            )
-            > 0,
+                > 0
+            ),
             timeout_seconds=120,
         )
         if not list_html:
@@ -8124,15 +8401,17 @@ async def _scrape_minnesota_court_rules_supplement(
             rule_html = await _fetch_html_with_direct_fallback(
                 fetcher,
                 rule_url,
-                validator=lambda html: _extract_minnesota_rule_from_html(
-                    html,
-                    rule_url=rule_url,
-                    title_name=str(list_page["title_name"]),
-                    procedure_family=str(rule["procedure_family"]),
-                    legal_area=str(rule["legal_area"]),
-                    official_cite_prefix=str(rule["official_cite_prefix"]),
-                )
-                is not None,
+                validator=lambda html: (
+                    _extract_minnesota_rule_from_html(
+                        html,
+                        rule_url=rule_url,
+                        title_name=str(list_page["title_name"]),
+                        procedure_family=str(rule["procedure_family"]),
+                        legal_area=str(rule["legal_area"]),
+                        official_cite_prefix=str(rule["official_cite_prefix"]),
+                    )
+                    is not None
+                ),
                 timeout_seconds=120,
             )
             if not rule_html:
@@ -8185,7 +8464,9 @@ async def _scrape_iowa_court_rules_supplement(
             from pypdf import PdfReader
 
             reader = PdfReader(BytesIO(raw_bytes))
-            page_texts = [(index + 1, page.extract_text() or "") for index, page in enumerate(reader.pages)]
+            page_texts = [
+                (index + 1, page.extract_text() or "") for index, page in enumerate(reader.pages)
+            ]
         except Exception:
             extracted = await fetcher._extract_text_from_document_bytes(
                 raw_bytes,
@@ -8213,9 +8494,10 @@ async def _scrape_iowa_court_rules_supplement(
             if source_key in existing_urls:
                 continue
             enriched = fetcher._enrich_statute_structure(statute).to_dict()
-            family = _classify_procedure_family(enriched) or str(
-                statute.structured_data.get("procedure_family") or ""
-            ).strip()
+            family = (
+                _classify_procedure_family(enriched)
+                or str(statute.structured_data.get("procedure_family") or "").strip()
+            )
             if not family:
                 continue
             enriched["procedure_family"] = family
@@ -8252,7 +8534,9 @@ async def _scrape_arkansas_court_rules_supplement(
             from pypdf import PdfReader
 
             reader = PdfReader(BytesIO(raw_bytes))
-            page_texts = [(index + 1, page.extract_text() or "") for index, page in enumerate(reader.pages)]
+            page_texts = [
+                (index + 1, page.extract_text() or "") for index, page in enumerate(reader.pages)
+            ]
         except Exception:
             extracted = await fetcher._extract_text_from_document_bytes(
                 raw_bytes,
@@ -8280,9 +8564,10 @@ async def _scrape_arkansas_court_rules_supplement(
             if source_key in existing_urls:
                 continue
             enriched = fetcher._enrich_statute_structure(statute).to_dict()
-            family = _classify_procedure_family(enriched) or str(
-                statute.structured_data.get("procedure_family") or ""
-            ).strip()
+            family = (
+                _classify_procedure_family(enriched)
+                or str(statute.structured_data.get("procedure_family") or "").strip()
+            )
             if not family:
                 continue
             enriched["procedure_family"] = family
@@ -8314,17 +8599,19 @@ async def _scrape_alabama_court_rules_supplement(
         list_html = await _fetch_html_with_direct_fallback(
             fetcher,
             list_url,
-            validator=lambda html: len(
-                _extract_alabama_rule_links(
-                    html,
-                    page_url=list_url,
-                    procedure_family=str(list_page["procedure_family"]),
-                    legal_area=str(list_page["legal_area"]),
-                    official_cite_prefix=str(list_page["official_cite_prefix"]),
-                    url_prefix=str(list_page["url_prefix"]),
+            validator=lambda html: (
+                len(
+                    _extract_alabama_rule_links(
+                        html,
+                        page_url=list_url,
+                        procedure_family=str(list_page["procedure_family"]),
+                        legal_area=str(list_page["legal_area"]),
+                        official_cite_prefix=str(list_page["official_cite_prefix"]),
+                        url_prefix=str(list_page["url_prefix"]),
+                    )
                 )
-            )
-            > 0,
+                > 0
+            ),
             timeout_seconds=120,
         )
         if not list_html:
@@ -8405,16 +8692,18 @@ async def _scrape_tennessee_court_rules_supplement(
         list_html = await _fetch_html_with_direct_fallback(
             fetcher,
             list_url,
-            validator=lambda html: len(
-                _extract_tennessee_rule_links(
-                    html,
-                    page_url=list_url,
-                    procedure_family=str(list_page["procedure_family"]),
-                    legal_area=str(list_page["legal_area"]),
-                    official_cite_prefix=str(list_page["official_cite_prefix"]),
+            validator=lambda html: (
+                len(
+                    _extract_tennessee_rule_links(
+                        html,
+                        page_url=list_url,
+                        procedure_family=str(list_page["procedure_family"]),
+                        legal_area=str(list_page["legal_area"]),
+                        official_cite_prefix=str(list_page["official_cite_prefix"]),
+                    )
                 )
-            )
-            > 0,
+                > 0
+            ),
             timeout_seconds=120,
         )
         if not list_html:
@@ -8438,15 +8727,17 @@ async def _scrape_tennessee_court_rules_supplement(
             rule_html = await _fetch_html_with_direct_fallback(
                 fetcher,
                 rule_url,
-                validator=lambda html: _extract_tennessee_rule_from_html(
-                    html,
-                    rule_url=rule_url,
-                    title_name=str(list_page["title_name"]),
-                    procedure_family=str(rule["procedure_family"]),
-                    legal_area=str(rule["legal_area"]),
-                    official_cite_prefix=str(rule["official_cite_prefix"]),
-                )
-                is not None,
+                validator=lambda html: (
+                    _extract_tennessee_rule_from_html(
+                        html,
+                        rule_url=rule_url,
+                        title_name=str(list_page["title_name"]),
+                        procedure_family=str(rule["procedure_family"]),
+                        legal_area=str(rule["legal_area"]),
+                        official_cite_prefix=str(rule["official_cite_prefix"]),
+                    )
+                    is not None
+                ),
                 timeout_seconds=120,
             )
             if not rule_html:
@@ -8554,16 +8845,18 @@ async def _scrape_indiana_court_rules_supplement(
         list_html = await _fetch_html_with_direct_fallback(
             fetcher,
             list_url,
-            validator=lambda html: len(
-                _extract_indiana_rule_links(
-                    html,
-                    page_url=list_url,
-                    procedure_family=str(rule_set["procedure_family"]),
-                    legal_area=str(rule_set["legal_area"]),
-                    official_cite_prefix=str(rule_set["official_cite_prefix"]),
-                )[0]
-            )
-            > 0,
+            validator=lambda html: (
+                len(
+                    _extract_indiana_rule_links(
+                        html,
+                        page_url=list_url,
+                        procedure_family=str(rule_set["procedure_family"]),
+                        legal_area=str(rule_set["legal_area"]),
+                        official_cite_prefix=str(rule_set["official_cite_prefix"]),
+                    )[0]
+                )
+                > 0
+            ),
             timeout_seconds=120,
         )
         if not list_html:
@@ -8588,8 +8881,10 @@ async def _scrape_indiana_court_rules_supplement(
                 fetcher,
                 rule_url,
                 validator=lambda html: (
-                    lambda statute: statute is not None
-                    and str(statute.section_number or "").strip() == str(rule["section_number"])
+                    lambda statute: (
+                        statute is not None
+                        and str(statute.section_number or "").strip() == str(rule["section_number"])
+                    )
                 )(
                     _extract_indiana_rule_from_html(
                         html,
@@ -8651,17 +8946,19 @@ async def _scrape_illinois_court_rules_supplement(
         list_html = await _fetch_html_with_direct_fallback(
             fetcher,
             list_url,
-            validator=lambda html: len(
-                _extract_illinois_rule_links(
-                    html,
-                    page_url=list_url,
-                    article_code=str(rule_set["article_code"]),
-                    procedure_family=str(rule_set["procedure_family"]),
-                    legal_area=str(rule_set["legal_area"]),
-                    official_cite_prefix=str(rule_set["official_cite_prefix"]),
+            validator=lambda html: (
+                len(
+                    _extract_illinois_rule_links(
+                        html,
+                        page_url=list_url,
+                        article_code=str(rule_set["article_code"]),
+                        procedure_family=str(rule_set["procedure_family"]),
+                        legal_area=str(rule_set["legal_area"]),
+                        official_cite_prefix=str(rule_set["official_cite_prefix"]),
+                    )
                 )
-            )
-            > 0,
+                > 0
+            ),
             timeout_seconds=120,
         )
         if not list_html:
@@ -8742,7 +9039,9 @@ async def _scrape_georgia_court_rules_supplement(
         if remaining is not None and remaining <= 0:
             break
         source_url = str(source["url"])
-        raw_bytes = await _fetch_pdf_bytes_with_direct_fallback(fetcher, source_url, timeout_seconds=240)
+        raw_bytes = await _fetch_pdf_bytes_with_direct_fallback(
+            fetcher, source_url, timeout_seconds=240
+        )
         if not raw_bytes:
             continue
 
@@ -8750,7 +9049,9 @@ async def _scrape_georgia_court_rules_supplement(
             from pypdf import PdfReader
 
             reader = PdfReader(BytesIO(raw_bytes))
-            page_texts = [(index + 1, page.extract_text() or "") for index, page in enumerate(reader.pages)]
+            page_texts = [
+                (index + 1, page.extract_text() or "") for index, page in enumerate(reader.pages)
+            ]
         except Exception:
             extracted = await fetcher._extract_text_from_document_bytes(
                 raw_bytes,
@@ -8811,20 +9112,22 @@ async def _scrape_pennsylvania_court_rules_supplement(
         chapter_html = await _fetch_html_with_direct_fallback(
             fetcher,
             chapter_url,
-            validator=lambda html: len(
-                _extract_pennsylvania_rules_from_html(
-                    html,
-                    source_url=chapter_url,
-                    title_name=str(chapter["title_name"]),
-                    procedure_family=str(chapter["procedure_family"]),
-                    legal_area=str(chapter["legal_area"]),
-                    official_cite_prefix=str(chapter["official_cite_prefix"]),
-                    first_rule_number=str(chapter["first_rule_number"]),
-                    current_as_of=str(chapter["current_as_of"]),
-                    max_rules=1,
+            validator=lambda html: (
+                len(
+                    _extract_pennsylvania_rules_from_html(
+                        html,
+                        source_url=chapter_url,
+                        title_name=str(chapter["title_name"]),
+                        procedure_family=str(chapter["procedure_family"]),
+                        legal_area=str(chapter["legal_area"]),
+                        official_cite_prefix=str(chapter["official_cite_prefix"]),
+                        first_rule_number=str(chapter["first_rule_number"]),
+                        current_as_of=str(chapter["current_as_of"]),
+                        max_rules=1,
+                    )
                 )
-            )
-            > 0,
+                > 0
+            ),
             timeout_seconds=180,
         )
         if not chapter_html:
@@ -8875,13 +9178,17 @@ async def _scrape_louisiana_court_rules_supplement(
     list_html = await _fetch_html_with_direct_fallback(
         fetcher,
         _LA_SUPREME_COURT_RULES_URL,
-        validator=lambda html: len(_extract_louisiana_rule_links(html, _LA_SUPREME_COURT_RULES_URL)[0]) > 0,
+        validator=lambda html: (
+            len(_extract_louisiana_rule_links(html, _LA_SUPREME_COURT_RULES_URL)[0]) > 0
+        ),
         timeout_seconds=120,
     )
     if not list_html:
         return supplemental_rules, fetcher.get_fetch_analytics_snapshot()
 
-    rule_links, current_as_of = _extract_louisiana_rule_links(list_html, _LA_SUPREME_COURT_RULES_URL)
+    rule_links, current_as_of = _extract_louisiana_rule_links(
+        list_html, _LA_SUPREME_COURT_RULES_URL
+    )
     for rule in rule_links:
         if remaining is not None and remaining <= 0:
             break
@@ -8891,16 +9198,18 @@ async def _scrape_louisiana_court_rules_supplement(
         rule_html = await _fetch_html_with_direct_fallback(
             fetcher,
             rule_url,
-            validator=lambda html: _extract_louisiana_rule_from_html(
-                html,
-                rule_url=rule_url,
-                title_name="Rules of Supreme Court of Louisiana",
-                procedure_family=str(rule["procedure_family"]),
-                legal_area=str(rule["legal_area"]),
-                official_cite_prefix=str(rule["official_cite_prefix"]),
-                current_as_of=current_as_of,
-            )
-            is not None,
+            validator=lambda html: (
+                _extract_louisiana_rule_from_html(
+                    html,
+                    rule_url=rule_url,
+                    title_name="Rules of Supreme Court of Louisiana",
+                    procedure_family=str(rule["procedure_family"]),
+                    legal_area=str(rule["legal_area"]),
+                    official_cite_prefix=str(rule["official_cite_prefix"]),
+                    current_as_of=current_as_of,
+                )
+                is not None
+            ),
             timeout_seconds=120,
         )
         if not rule_html:
@@ -8964,7 +9273,9 @@ async def _scrape_wyoming_court_rules_supplement(
             continue
 
         reader = PdfReader(BytesIO(raw_bytes))
-        page_texts = [(index + 1, page.extract_text() or "") for index, page in enumerate(reader.pages)]
+        page_texts = [
+            (index + 1, page.extract_text() or "") for index, page in enumerate(reader.pages)
+        ]
         statutes = _extract_wyoming_rules_from_page_texts(
             page_texts,
             source_url=source_url,
@@ -8983,9 +9294,10 @@ async def _scrape_wyoming_court_rules_supplement(
             if source_key in existing_urls:
                 continue
             enriched = fetcher._enrich_statute_structure(statute).to_dict()
-            family = _classify_procedure_family(enriched) or str(
-                statute.structured_data.get("procedure_family") or ""
-            ).strip()
+            family = (
+                _classify_procedure_family(enriched)
+                or str(statute.structured_data.get("procedure_family") or "").strip()
+            )
             if not family:
                 continue
             enriched["procedure_family"] = family
@@ -9020,16 +9332,18 @@ async def _scrape_massachusetts_court_rules_supplement(
         list_html = await _fetch_massachusetts_html(
             fetcher,
             list_url,
-            validator=lambda html: len(
-                _extract_massachusetts_rule_links(
-                    html,
-                    page_url=list_url,
-                    procedure_family=str(list_page["procedure_family"]),
-                    legal_area=str(list_page["legal_area"]),
-                    official_cite_prefix=str(list_page["official_cite_prefix"]),
+            validator=lambda html: (
+                len(
+                    _extract_massachusetts_rule_links(
+                        html,
+                        page_url=list_url,
+                        procedure_family=str(list_page["procedure_family"]),
+                        legal_area=str(list_page["legal_area"]),
+                        official_cite_prefix=str(list_page["official_cite_prefix"]),
+                    )
                 )
-            )
-            > 0,
+                > 0
+            ),
             timeout_seconds=120,
         )
         if not list_html:
@@ -9051,15 +9365,17 @@ async def _scrape_massachusetts_court_rules_supplement(
             rule_html = await _fetch_massachusetts_html(
                 fetcher,
                 rule_url,
-                validator=lambda html: _extract_massachusetts_rule_from_html(
-                    html,
-                    rule_url=rule_url,
-                    title_name=str(list_page["title_name"]),
-                    procedure_family=str(rule["procedure_family"]),
-                    legal_area=str(rule["legal_area"]),
-                    official_cite_prefix=str(rule["official_cite_prefix"]),
-                )
-                is not None,
+                validator=lambda html: (
+                    _extract_massachusetts_rule_from_html(
+                        html,
+                        rule_url=rule_url,
+                        title_name=str(list_page["title_name"]),
+                        procedure_family=str(rule["procedure_family"]),
+                        legal_area=str(rule["legal_area"]),
+                        official_cite_prefix=str(rule["official_cite_prefix"]),
+                    )
+                    is not None
+                ),
                 timeout_seconds=120,
             )
             if not rule_html:
@@ -9200,8 +9516,16 @@ async def _scrape_mississippi_court_rules_supplement(
     supplemental_rules: List[Dict[str, Any]] = []
 
     for pdf_url, parser, family in [
-        (_MS_CIVIL_RULES_PDF_URL, _extract_mississippi_civil_rules_from_page_texts, "civil_procedure"),
-        (_MS_CRIMINAL_RULES_PDF_URL, _extract_mississippi_criminal_rules_from_page_texts, "criminal_procedure"),
+        (
+            _MS_CIVIL_RULES_PDF_URL,
+            _extract_mississippi_civil_rules_from_page_texts,
+            "civil_procedure",
+        ),
+        (
+            _MS_CRIMINAL_RULES_PDF_URL,
+            _extract_mississippi_criminal_rules_from_page_texts,
+            "criminal_procedure",
+        ),
     ]:
         if remaining is not None and remaining <= 0:
             break
@@ -9219,7 +9543,9 @@ async def _scrape_mississippi_court_rules_supplement(
             continue
 
         reader = PdfReader(BytesIO(raw_bytes))
-        page_texts = [(index + 1, page.extract_text() or "") for index, page in enumerate(reader.pages)]
+        page_texts = [
+            (index + 1, page.extract_text() or "") for index, page in enumerate(reader.pages)
+        ]
         statutes = parser(page_texts, source_url=pdf_url)
 
         for statute in statutes:
@@ -9378,7 +9704,10 @@ async def scrape_state_procedure_rules(
                 remaining_rule_budget = None
                 if max_rules and max_rules > 0:
                     remaining_rule_budget = max(int(max_rules) - len(procedure_statutes), 0)
-                ri_supplement, ri_fetch_analytics = await _scrape_rhode_island_court_rules_supplement(
+                (
+                    ri_supplement,
+                    ri_fetch_analytics,
+                ) = await _scrape_rhode_island_court_rules_supplement(
                     existing_source_urls=seen_source_urls,
                     max_rules=remaining_rule_budget,
                 )
@@ -9514,7 +9843,10 @@ async def scrape_state_procedure_rules(
                 remaining_rule_budget = None
                 if max_rules and max_rules > 0:
                     remaining_rule_budget = max(int(max_rules) - len(procedure_statutes), 0)
-                nh_supplement, nh_fetch_analytics = await _scrape_new_hampshire_court_rules_supplement(
+                (
+                    nh_supplement,
+                    nh_fetch_analytics,
+                ) = await _scrape_new_hampshire_court_rules_supplement(
                     existing_source_urls=seen_source_urls,
                     max_rules=remaining_rule_budget,
                 )
@@ -9548,7 +9880,10 @@ async def scrape_state_procedure_rules(
                 remaining_rule_budget = None
                 if max_rules and max_rules > 0:
                     remaining_rule_budget = max(int(max_rules) - len(procedure_statutes), 0)
-                ct_supplement, ct_fetch_analytics = await _scrape_connecticut_court_rules_supplement(
+                (
+                    ct_supplement,
+                    ct_fetch_analytics,
+                ) = await _scrape_connecticut_court_rules_supplement(
                     existing_source_urls=seen_source_urls,
                     max_rules=remaining_rule_budget,
                 )
@@ -9616,7 +9951,10 @@ async def scrape_state_procedure_rules(
                 remaining_rule_budget = None
                 if max_rules and max_rules > 0:
                     remaining_rule_budget = max(int(max_rules) - len(procedure_statutes), 0)
-                sc_supplement, sc_fetch_analytics = await _scrape_south_carolina_court_rules_supplement(
+                (
+                    sc_supplement,
+                    sc_fetch_analytics,
+                ) = await _scrape_south_carolina_court_rules_supplement(
                     existing_source_urls=seen_source_urls,
                     max_rules=remaining_rule_budget,
                 )
@@ -9718,7 +10056,10 @@ async def scrape_state_procedure_rules(
                 remaining_rule_budget = None
                 if max_rules and max_rules > 0:
                     remaining_rule_budget = max(int(max_rules) - len(procedure_statutes), 0)
-                wv_supplement, wv_fetch_analytics = await _scrape_west_virginia_court_rules_supplement(
+                (
+                    wv_supplement,
+                    wv_fetch_analytics,
+                ) = await _scrape_west_virginia_court_rules_supplement(
                     existing_source_urls=seen_source_urls,
                     max_rules=remaining_rule_budget,
                 )
@@ -9735,7 +10076,10 @@ async def scrape_state_procedure_rules(
                 remaining_rule_budget = None
                 if max_rules and max_rules > 0:
                     remaining_rule_budget = max(int(max_rules) - len(procedure_statutes), 0)
-                nd_supplement, nd_fetch_analytics = await _scrape_north_dakota_court_rules_supplement(
+                (
+                    nd_supplement,
+                    nd_fetch_analytics,
+                ) = await _scrape_north_dakota_court_rules_supplement(
                     existing_source_urls=seen_source_urls,
                     max_rules=remaining_rule_budget,
                 )
@@ -9945,7 +10289,10 @@ async def scrape_state_procedure_rules(
                 remaining_rule_budget = None
                 if max_rules and max_rules > 0:
                     remaining_rule_budget = max(int(max_rules) - len(procedure_statutes), 0)
-                pa_supplement, pa_fetch_analytics = await _scrape_pennsylvania_court_rules_supplement(
+                (
+                    pa_supplement,
+                    pa_fetch_analytics,
+                ) = await _scrape_pennsylvania_court_rules_supplement(
                     existing_source_urls=seen_source_urls,
                     max_rules=remaining_rule_budget,
                 )
@@ -10011,7 +10358,10 @@ async def scrape_state_procedure_rules(
                 remaining_rule_budget = None
                 if max_rules and max_rules > 0:
                     remaining_rule_budget = max(int(max_rules) - len(procedure_statutes), 0)
-                ma_supplement, ma_fetch_analytics = await _scrape_massachusetts_court_rules_supplement(
+                (
+                    ma_supplement,
+                    ma_fetch_analytics,
+                ) = await _scrape_massachusetts_court_rules_supplement(
                     existing_source_urls=seen_source_urls,
                     max_rules=remaining_rule_budget,
                 )
@@ -10033,7 +10383,10 @@ async def scrape_state_procedure_rules(
                 remaining_rule_budget = None
                 if max_rules and max_rules > 0:
                     remaining_rule_budget = max(int(max_rules) - len(procedure_statutes), 0)
-                nc_supplement, nc_fetch_analytics = await _scrape_north_carolina_court_rules_supplement(
+                (
+                    nc_supplement,
+                    nc_fetch_analytics,
+                ) = await _scrape_north_carolina_court_rules_supplement(
                     existing_source_urls=seen_source_urls,
                     max_rules=remaining_rule_budget,
                 )
@@ -10077,7 +10430,10 @@ async def scrape_state_procedure_rules(
                 remaining_rule_budget = None
                 if max_rules and max_rules > 0:
                     remaining_rule_budget = max(int(max_rules) - len(procedure_statutes), 0)
-                ms_supplement, ms_fetch_analytics = await _scrape_mississippi_court_rules_supplement(
+                (
+                    ms_supplement,
+                    ms_fetch_analytics,
+                ) = await _scrape_mississippi_court_rules_supplement(
                     existing_source_urls=seen_source_urls,
                     max_rules=remaining_rule_budget,
                 )

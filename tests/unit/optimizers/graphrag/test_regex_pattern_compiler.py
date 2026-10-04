@@ -34,7 +34,7 @@ class TestPrecompiledPattern:
 
     def test_precompiled_pattern_creation(self):
         """Test creating a PrecompiledPattern."""
-        pattern_str = r'\b[A-Z][a-z]+\b'
+        pattern_str = r"\b[A-Z][a-z]+\b"
         compiled = re.compile(pattern_str, re.IGNORECASE)
         precomp = PrecompiledPattern(
             compiled_pattern=compiled,
@@ -49,9 +49,9 @@ class TestPrecompiledPattern:
     def test_precompiled_pattern_can_match(self):
         """Test that PrecompiledPattern can perform matches."""
         precomp = PrecompiledPattern(
-            compiled_pattern=re.compile(r'\b[A-Z][a-z]+\b', re.IGNORECASE),
+            compiled_pattern=re.compile(r"\b[A-Z][a-z]+\b", re.IGNORECASE),
             entity_type="Person",
-            original_pattern=r'\b[A-Z][a-z]+\b',
+            original_pattern=r"\b[A-Z][a-z]+\b",
         )
 
         text = "John and Jane are here"
@@ -81,7 +81,15 @@ class TestBasePatternCompilation:
         patterns = compiler._compile_base_patterns()
         entity_types = {p.entity_type for p in patterns}
 
-        expected_types = {'Person', 'Organization', 'Date', 'MonetaryAmount', 'Location', 'Obligation', 'Concept'}
+        expected_types = {
+            "Person",
+            "Organization",
+            "Date",
+            "MonetaryAmount",
+            "Location",
+            "Obligation",
+            "Concept",
+        }
         assert expected_types.issubset(entity_types)
 
     def test_base_pattern_objects_are_precompiled(self, compiler):
@@ -109,28 +117,28 @@ class TestDomainPatternCompilation:
         """Test that patterns exist for multiple domains."""
         patterns = compiler._compile_domain_patterns()
 
-        expected_domains = {'legal', 'medical', 'technical', 'financial'}
+        expected_domains = {"legal", "medical", "technical", "financial"}
         assert set(patterns.keys()) == expected_domains
 
     def test_legal_patterns_exist(self, compiler):
         """Test that legal domain patterns are compiled."""
         patterns = compiler._compile_domain_patterns()
-        legal_patterns = patterns['legal']
+        legal_patterns = patterns["legal"]
 
         assert len(legal_patterns) > 0
         # Check for expected legal types
         legal_types = {p.entity_type for p in legal_patterns}
-        assert 'LegalParty' in legal_types
-        assert 'LegalReference' in legal_types
+        assert "LegalParty" in legal_types
+        assert "LegalReference" in legal_types
 
     def test_medical_patterns_exist(self, compiler):
         """Test that medical domain patterns are compiled."""
         patterns = compiler._compile_domain_patterns()
-        medical_patterns = patterns['medical']
+        medical_patterns = patterns["medical"]
 
         assert len(medical_patterns) > 0
         medical_types = {p.entity_type for p in medical_patterns}
-        assert 'MedicalConcept' in medical_types
+        assert "MedicalConcept" in medical_types
 
 
 class TestBuildPrecompiledPatterns:
@@ -154,21 +162,23 @@ class TestBuildPrecompiledPatterns:
 
         # Verify legal patterns are included
         entity_types = {p.entity_type for p in patterns}
-        assert 'LegalParty' in entity_types
+        assert "LegalParty" in entity_types
 
     def test_build_with_custom_rules(self, compiler):
         """Test building patterns with custom rules."""
         custom_rules = [
-            (r'\b(?:custom|term)\b', 'CustomType'),
-            (r'\b\d{3}-\d{4}\b', 'Reference'),
+            (r"\b(?:custom|term)\b", "CustomType"),
+            (r"\b\d{3}-\d{4}\b", "Reference"),
         ]
 
         patterns = compiler.build_precompiled_patterns("general", custom_rules=custom_rules)
 
         # Should include custom rules
-        custom_types = {p.entity_type for p in patterns if p.entity_type in ['CustomType', 'Reference']}
-        assert 'CustomType' in custom_types
-        assert 'Reference' in custom_types
+        custom_types = {
+            p.entity_type for p in patterns if p.entity_type in ["CustomType", "Reference"]
+        }
+        assert "CustomType" in custom_types
+        assert "Reference" in custom_types
 
     def test_build_patterns_are_precompiled(self, compiler):
         """Test that all built patterns are pre-compiled."""
@@ -198,12 +208,12 @@ class TestextractEntitiesWithPrecompiled:
         assert len(entities) > 0
         # Check entity structure
         for entity in entities:
-            assert 'id' in entity
-            assert 'type' in entity
-            assert 'text' in entity
-            assert 'confidence' in entity
-            assert 'span' in entity
-            assert 'timestamp' in entity
+            assert "id" in entity
+            assert "type" in entity
+            assert "text" in entity
+            assert "confidence" in entity
+            assert "span" in entity
+            assert "timestamp" in entity
 
     def test_extract_with_type_filtering(self, compiler, sample_text):
         """Test extraction with entity type filtering."""
@@ -213,7 +223,7 @@ class TestextractEntitiesWithPrecompiled:
         entities = compiler.extract_entities_with_precompiled(
             sample_text,
             patterns,
-            allowed_types={'Person'},
+            allowed_types={"Person"},
             min_len=2,
             stopwords=set(),
             max_confidence=1.0,
@@ -221,7 +231,7 @@ class TestextractEntitiesWithPrecompiled:
 
         # All entities should be Person type
         for entity in entities:
-            assert entity['type'] == 'Person'
+            assert entity["type"] == "Person"
 
     def test_extract_respects_min_length(self, compiler):
         """Test that extraction respects minimum entity length."""
@@ -240,13 +250,13 @@ class TestextractEntitiesWithPrecompiled:
 
         # No single-character entities should be present
         for entity in entities:
-            assert len(entity['text']) >= 2
+            assert len(entity["text"]) >= 2
 
     def test_extract_filters_stopwords(self, compiler):
         """Test that extraction filters stopwords."""
         text = "the quick brown fox jumps over the lazy dog and runs away"
         patterns = compiler.build_precompiled_patterns("general")
-        stopwords = {'the', 'quick', 'brown', 'lazy', 'and'}  # common lowercase stopwords
+        stopwords = {"the", "quick", "brown", "lazy", "and"}  # common lowercase stopwords
 
         entities = compiler.extract_entities_with_precompiled(
             text,
@@ -258,7 +268,7 @@ class TestextractEntitiesWithPrecompiled:
         )
 
         # No stopword entities should be present (case-insensitive)
-        entity_texts_lower = {e['text'].lower() for e in entities}
+        entity_texts_lower = {e["text"].lower() for e in entities}
         for stopword in stopwords:
             assert stopword.lower() not in entity_texts_lower
 
@@ -278,7 +288,7 @@ class TestextractEntitiesWithPrecompiled:
 
         # All confidences should be <= 0.6
         for entity in entities:
-            assert entity['confidence'] <= 0.6
+            assert entity["confidence"] <= 0.6
 
     def test_extract_no_duplicates(self, compiler, sample_text):
         """Test that extraction doesn't create duplicate entities."""
@@ -294,7 +304,7 @@ class TestextractEntitiesWithPrecompiled:
         )
 
         # Check for text duplicates (case-insensitive)
-        entity_texts_lower = [e['text'].lower() for e in entities]
+        entity_texts_lower = [e["text"].lower() for e in entities]
         assert len(entity_texts_lower) == len(set(entity_texts_lower))
 
     def test_extract_empty_text(self, compiler):

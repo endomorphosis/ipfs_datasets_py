@@ -236,6 +236,7 @@ tests/finance_dashboard/test_graphrag_analysis.py
 ```python
 # OLD - deprecated (still works with warning)
 from ipfs_datasets_py.processors.graphrag_processor import GraphRAGProcessor
+
 processor = GraphRAGProcessor(vector_store=vs, knowledge_graph=kg)
 result = processor.query("search query")
 
@@ -252,6 +253,7 @@ result = await processor.process_query("search query")
 ```python
 # OLD - deprecated (still works with warning)
 from ipfs_datasets_py.processors.website_graphrag_processor import WebsiteGraphRAGProcessor
+
 processor = WebsiteGraphRAGProcessor()
 result = await processor.process_website("https://example.com")
 
@@ -275,7 +277,7 @@ from ipfs_datasets_py.processors.graphrag_processor import GraphRAGProcessor, Mo
 from ipfs_datasets_py.processors.graphrag.unified_graphrag import (
     UnifiedGraphRAGProcessor,
     GraphRAGConfiguration,
-    GraphRAGResult
+    GraphRAGResult,
 )
 ```
 

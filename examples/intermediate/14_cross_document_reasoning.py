@@ -20,14 +20,14 @@ from pathlib import Path
 
 async def demo_entity_linking():
     """Link entities across multiple documents."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 1: Cross-Document Entity Linking")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n🔗 Entity Linking")
     print("   Identify same entities mentioned across documents")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.search import CrossDocumentReasoner
 
 # Multiple documents about related topics
@@ -62,21 +62,21 @@ for entity, mentions in entity_links.items():
 # - "Apple Inc." and "Apple Computer" and "Apple" are linked
 # - "Steve Jobs" and "Jobs" are linked
 # - Ambiguous mentions are resolved using context
-    '''
-    
+    """
+
     print(example_code)
 
 
 async def demo_relationship_discovery():
     """Discover relationships across documents."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 2: Cross-Document Relationship Discovery")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n🕸️  Relationship Discovery")
     print("   Find connections between entities across documents")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.search import CrossDocumentReasoner
 
 reasoner = CrossDocumentReasoner()
@@ -103,21 +103,21 @@ for rel in relationships:
 #   Evidence:
 #     - "was founded by Steve Jobs"
 #     - "co-founded Apple Computer with"
-    '''
-    
+    """
+
     print(example_code)
 
 
 async def demo_temporal_analysis():
     """Analyze temporal relationships across documents."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 3: Temporal Analysis")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n⏱️  Temporal Analysis")
     print("   Construct timelines from multiple documents")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.search import TemporalReasoner
 
 temporal = TemporalReasoner()
@@ -148,21 +148,21 @@ if conflicts:
         print(f"    Conflicting events:")
         for event in conflict['events']:
             print(f"      {event['time']}: {event['description']}")
-    '''
-    
+    """
+
     print(example_code)
 
 
 async def demo_multi_document_qa():
     """Answer questions using multiple documents."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 4: Multi-Document Question Answering")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n❓ Multi-Document QA")
     print("   Answer questions requiring information from multiple docs")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.search import MultiDocumentQA
 
 qa = MultiDocumentQA(
@@ -189,21 +189,21 @@ for question in questions:
     print(f"Sources:")
     for source in answer['sources']:
         print(f"  - Doc {source['doc_id']}: {source['excerpt']}")
-    '''
-    
+    """
+
     print(example_code)
 
 
 async def demo_contradiction_detection():
     """Detect contradictions across documents."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 5: Contradiction Detection")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n⚠️  Contradiction Detection")
     print("   Find conflicting information across documents")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.search import ContradictionDetector
 
 detector = ContradictionDetector()
@@ -239,21 +239,21 @@ resolutions = await detector.resolve_contradictions(
 for resolution in resolutions:
     print(f"\\nResolved: {resolution['correct_statement']}")
     print(f"Reasoning: {resolution['reasoning']}")
-    '''
-    
+    """
+
     print(example_code)
 
 
 async def demo_document_clustering():
     """Cluster documents by topic and relationships."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 6: Document Clustering")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n📊 Document Clustering")
     print("   Group related documents together")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.search import DocumentClusterer
 
 clusterer = DocumentClusterer(
@@ -280,21 +280,21 @@ similarities = await clusterer.compute_similarities(documents)
 print("\\nMost similar document pairs:")
 for pair in similarities[:5]:
     print(f"  {pair['doc1']} <-> {pair['doc2']}: {pair['score']:.2f}")
-    '''
-    
+    """
+
     print(example_code)
 
 
 async def demo_information_fusion():
     """Fuse information from multiple sources."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 7: Information Fusion")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n🔀 Information Fusion")
     print("   Combine information from multiple documents into coherent view")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.search import InformationFuser
 
 fuser = InformationFuser(
@@ -333,59 +333,59 @@ summary = await fuser.generate_summary(
 
 print(f"\\nSummary:")
 print(f"{summary}")
-    '''
-    
+    """
+
     print(example_code)
 
 
 def show_tips():
     """Show tips for cross-document reasoning."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("TIPS FOR CROSS-DOCUMENT REASONING")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n1. Entity Linking:")
     print("   - Use string similarity for simple cases")
     print("   - Add context-aware disambiguation")
     print("   - Link to external knowledge bases")
     print("   - Handle acronyms and abbreviations")
-    
+
     print("\n2. Relationship Discovery:")
     print("   - Extract from multiple documents")
     print("   - Use confidence scores")
     print("   - Validate with external sources")
     print("   - Consider temporal aspects")
-    
+
     print("\n3. Contradiction Handling:")
     print("   - Detect early in pipeline")
     print("   - Consider source reliability")
     print("   - Check temporal order")
     print("   - Flag for human review if needed")
-    
+
     print("\n4. Performance:")
     print("   - Process documents in parallel")
     print("   - Cache entity extractions")
     print("   - Use incremental updates")
     print("   - Index for fast lookup")
-    
+
     print("\n5. Quality:")
     print("   - Set confidence thresholds")
     print("   - Validate against ground truth")
     print("   - Human-in-the-loop for critical decisions")
     print("   - Monitor accuracy over time")
-    
+
     print("\n6. Scaling:")
     print("   - Partition by time or topic")
     print("   - Use approximate methods for large collections")
     print("   - Distributed processing")
     print("   - Hierarchical clustering")
-    
+
     print("\n7. Applications:")
     print("   - Research and literature review")
     print("   - Fact-checking and verification")
     print("   - Intelligence analysis")
     print("   - Knowledge base construction")
-    
+
     print("\n8. Next Steps:")
     print("   - See 12_graphrag_basic.py for graph integration")
     print("   - See 15_graphrag_optimization.py for production systems")
@@ -393,10 +393,10 @@ def show_tips():
 
 async def main():
     """Run all cross-document reasoning demonstrations."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("IPFS DATASETS PYTHON - CROSS-DOCUMENT REASONING")
-    print("="*70)
-    
+    print("=" * 70)
+
     await demo_entity_linking()
     await demo_relationship_discovery()
     await demo_temporal_analysis()
@@ -404,12 +404,12 @@ async def main():
     await demo_contradiction_detection()
     await demo_document_clustering()
     await demo_information_fusion()
-    
+
     show_tips()
-    
-    print("\n" + "="*70)
+
+    print("\n" + "=" * 70)
     print("✅ CROSS-DOCUMENT REASONING EXAMPLES COMPLETE")
-    print("="*70)
+    print("=" * 70)
 
 
 if __name__ == "__main__":

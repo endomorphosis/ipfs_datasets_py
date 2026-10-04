@@ -9,7 +9,9 @@ from typing import Any, Callable, List, Mapping, Optional, Sequence, Tuple
 
 
 TASK_HEADING_RE = re.compile(r"^### Task\s+([^:\n]+):\s+(.+)$", re.MULTILINE)
-CHECKBOX_TASK_RE = re.compile(r"^(?P<indent>\s*)-\s+\[(?P<mark>[ xX~!])\]\s+(?P<title>.+)$", re.MULTILINE)
+CHECKBOX_TASK_RE = re.compile(
+    r"^(?P<indent>\s*)-\s+\[(?P<mark>[ xX~!])\]\s+(?P<title>.+)$", re.MULTILINE
+)
 DAEMON_TASK_BOARD_RE = re.compile(
     r"\n?<!--\s*[\w.-]+-daemon-task-board:start\s*-->[\s\S]*?<!--\s*[\w.-]+-daemon-task-board:end\s*-->\n?",
     re.MULTILINE,
@@ -154,7 +156,9 @@ def plan_task_from_latest_result(
     return None
 
 
-FailureSummaryFn = Callable[[Sequence[Tuple[Mapping[str, Any], Mapping[str, Any]]], str], Mapping[str, Any]]
+FailureSummaryFn = Callable[
+    [Sequence[Tuple[Mapping[str, Any], Mapping[str, Any]]], str], Mapping[str, Any]
+]
 FailureBudgetFn = Callable[[PlanTask, Sequence[Tuple[Mapping[str, Any], Mapping[str, Any]]]], bool]
 TaskDependencyReasonFn = Callable[[PlanTask, Sequence[PlanTask]], str]
 TaskFailureCountFn = Callable[[Sequence[Tuple[Mapping[str, Any], Mapping[str, Any]]], str], int]
@@ -205,7 +209,11 @@ def blocked_task_backlog_markdown(
         return empty_message
     lines: list[str] = []
     for item in backlog:
-        latest = item.get("latest_failure", {}) if isinstance(item.get("latest_failure"), Mapping) else {}
+        latest = (
+            item.get("latest_failure", {})
+            if isinstance(item.get("latest_failure"), Mapping)
+            else {}
+        )
         errors = latest.get("errors", []) if isinstance(latest.get("errors", []), list) else []
         task_label = str(item.get("task", "")).replace("`", "'")
         lines.append(f"- `{task_label}`")

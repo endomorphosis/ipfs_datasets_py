@@ -222,7 +222,7 @@ from ipfs_datasets_py.logic.external_provers import (
     Z3ProverBridge,
     SymbolicAIProverBridge,
     ProverRouter,
-    ProverStrategy
+    ProverStrategy,
 )
 
 # Use specific prover

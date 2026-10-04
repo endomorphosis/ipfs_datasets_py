@@ -19,8 +19,14 @@ The caselaw MCP dashboard at `http://127.0.0.1:8899/mcp/caselaw` had the followi
 
 ```python
 tool_subdirs = [
-    "dataset_tools", "ipfs_tools", "vector_tools", "graph_tools", 
-    "audit_tools", "media_tools", "investigation_tools", "legal_dataset_tools"
+    "dataset_tools",
+    "ipfs_tools",
+    "vector_tools",
+    "graph_tools",
+    "audit_tools",
+    "media_tools",
+    "investigation_tools",
+    "legal_dataset_tools",
 ]
 ```
 
@@ -202,24 +208,13 @@ crontab -e
 ### Programmatic Usage
 ```python
 import asyncio
-from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import (
-    scrape_state_laws,
-    create_schedule
-)
+from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import scrape_state_laws, create_schedule
 
 # One-time scraping
-result = await scrape_state_laws(
-    states=["CA", "NY"],
-    legal_areas=["criminal"],
-    max_statutes=100
-)
+result = await scrape_state_laws(states=["CA", "NY"], legal_areas=["criminal"], max_statutes=100)
 
 # Create recurring schedule
-schedule = await create_schedule(
-    schedule_id="daily_ca_ny",
-    states=["CA", "NY"],
-    interval_hours=24
-)
+schedule = await create_schedule(schedule_id="daily_ca_ny", states=["CA", "NY"], interval_hours=24)
 ```
 
 ## Technical Details

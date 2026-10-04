@@ -19,6 +19,7 @@ def test_claude_cli_import():
     THEN it should import successfully
     """
     from ipfs_datasets_py.utils.claude_cli import ClaudeCLI
+
     assert ClaudeCLI is not None
 
 
@@ -29,10 +30,10 @@ def test_claude_cli_initialization():
     THEN it should create the instance with correct attributes
     """
     from ipfs_datasets_py.utils.claude_cli import ClaudeCLI
-    
+
     with tempfile.TemporaryDirectory() as tmpdir:
         cli = ClaudeCLI(install_dir=tmpdir)
-        
+
         assert cli.install_dir == Path(tmpdir)
         assert cli.cli_module == "anthropic"
         assert cli.api_key_file.parent == Path(tmpdir)
@@ -45,19 +46,19 @@ def test_claude_cli_get_status():
     THEN it should return a status dictionary
     """
     from ipfs_datasets_py.utils.claude_cli import ClaudeCLI
-    
+
     with tempfile.TemporaryDirectory() as tmpdir:
         cli = ClaudeCLI(install_dir=tmpdir)
         status = cli.get_status()
-        
+
         assert isinstance(status, dict)
-        assert 'installed' in status
-        assert 'version' in status
-        assert 'install_dir' in status
-        assert 'config_file' in status
-        assert 'api_key_configured' in status
-        assert 'package' in status
-        assert status['api_key_configured'] is False
+        assert "installed" in status
+        assert "version" in status
+        assert "install_dir" in status
+        assert "config_file" in status
+        assert "api_key_configured" in status
+        assert "package" in status
+        assert status["api_key_configured"] is False
 
 
 def test_claude_cli_custom_directory():
@@ -67,11 +68,11 @@ def test_claude_cli_custom_directory():
     THEN it should use the custom directory
     """
     from ipfs_datasets_py.utils.claude_cli import ClaudeCLI
-    
+
     with tempfile.TemporaryDirectory() as tmpdir:
-        custom_dir = os.path.join(tmpdir, 'custom_claude')
+        custom_dir = os.path.join(tmpdir, "custom_claude")
         cli = ClaudeCLI(install_dir=custom_dir)
-        
+
         assert cli.install_dir == Path(custom_dir)
         assert cli.install_dir.exists()
 
@@ -83,22 +84,22 @@ def test_claude_cli_api_key_configuration():
     THEN it should save and retrieve the key
     """
     from ipfs_datasets_py.utils.claude_cli import ClaudeCLI
-    
+
     with tempfile.TemporaryDirectory() as tmpdir:
         cli = ClaudeCLI(install_dir=tmpdir)
         test_key = "test_api_key_12345"
-        
+
         # Configure API key
         success = cli.configure_api_key(test_key)
         assert success is True
-        
+
         # Retrieve API key
         retrieved_key = cli.get_api_key()
         assert retrieved_key == test_key
-        
+
         # Check status
         status = cli.get_status()
-        assert status['api_key_configured'] is True
+        assert status["api_key_configured"] is True
 
 
 def test_claude_cli_mcp_tools_import():
@@ -111,9 +112,9 @@ def test_claude_cli_mcp_tools_import():
         ClaudeCLIStatusTool,
         ClaudeCLIInstallTool,
         ClaudeCLIExecuteTool,
-        ClaudeCLIConfigTool
+        ClaudeCLIConfigTool,
     )
-    
+
     assert ClaudeCLIStatusTool is not None
     assert ClaudeCLIInstallTool is not None
     assert ClaudeCLIExecuteTool is not None
@@ -128,17 +129,17 @@ def test_claude_cli_mcp_tool_initialization():
     """
     from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.claude_cli_tools import (
         ClaudeCLIStatusTool,
-        ClaudeCLIInstallTool
+        ClaudeCLIInstallTool,
     )
-    
+
     status_tool = ClaudeCLIStatusTool()
     assert status_tool.name == "claude_cli_status"
     assert "claude" in status_tool.description.lower()
-    
+
     install_tool = ClaudeCLIInstallTool()
     assert install_tool.name == "claude_cli_install"
     assert "install" in install_tool.description.lower()
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

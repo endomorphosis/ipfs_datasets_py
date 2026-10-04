@@ -95,7 +95,10 @@ import base64
 import mimetypes
 from typing import Callable, Dict, List, Optional, Protocol, Sequence, TypedDict, runtime_checkable
 
-from .utils.cli_tools.copilot import build_standalone_copilot_command_template, find_standalone_copilot_cli
+from .utils.cli_tools.copilot import (
+    build_standalone_copilot_command_template,
+    find_standalone_copilot_cli,
+)
 
 from .router_deps import RouterDeps, get_default_router_deps
 from .optimizers.common.backend_selection import canonicalize_provider
@@ -159,9 +162,8 @@ def _default_task_p2p_announce_files() -> list[str]:
 
 def _read_task_p2p_announce() -> dict | None:
     # Optional env override.
-    raw = (
-        os.environ.get("IPFS_ACCELERATE_PY_TASK_P2P_ANNOUNCE_FILE")
-        or os.environ.get("IPFS_DATASETS_PY_TASK_P2P_ANNOUNCE_FILE")
+    raw = os.environ.get("IPFS_ACCELERATE_PY_TASK_P2P_ANNOUNCE_FILE") or os.environ.get(
+        "IPFS_DATASETS_PY_TASK_P2P_ANNOUNCE_FILE"
     )
     if raw is not None and str(raw).strip().lower() in {"0", "false", "no", "off"}:
         return None
@@ -181,7 +183,11 @@ def _read_task_p2p_announce() -> dict | None:
             if not text:
                 continue
             info = json.loads(text)
-            if isinstance(info, dict) and isinstance(info.get("multiaddr"), str) and "/p2p/" in str(info.get("multiaddr")):
+            if (
+                isinstance(info, dict)
+                and isinstance(info.get("multiaddr"), str)
+                and "/p2p/" in str(info.get("multiaddr"))
+            ):
                 return info
         except Exception:
             continue
@@ -257,7 +263,11 @@ def submit_task(
         raise LLMRouterError("Task delegation helpers not available") from exc
 
     explicit_payload = kwargs.pop("payload", None)
-    payload: Dict[str, object] = dict(explicit_payload) if isinstance(explicit_payload, dict) else {"prompt": str(prompt or "")}
+    payload: Dict[str, object] = (
+        dict(explicit_payload)
+        if isinstance(explicit_payload, dict)
+        else {"prompt": str(prompt or "")}
+    )
     if "prompt" not in payload:
         payload["prompt"] = str(prompt or "")
     for k in ("max_new_tokens", "max_tokens", "temperature"):
@@ -269,9 +279,10 @@ def submit_task(
     # - we have an announce hint (local service), OR
     # - user explicitly enables auto-discovery, AND libp2p is installed.
     have_hint = bool(remote_multiaddr)
-    explicit_discovery = os.environ.get("IPFS_DATASETS_PY_TASK_P2P_AUTO_DISCOVERY") is not None or os.environ.get(
-        "IPFS_ACCELERATE_PY_TASK_P2P_AUTO_DISCOVERY"
-    ) is not None
+    explicit_discovery = (
+        os.environ.get("IPFS_DATASETS_PY_TASK_P2P_AUTO_DISCOVERY") is not None
+        or os.environ.get("IPFS_ACCELERATE_PY_TASK_P2P_AUTO_DISCOVERY") is not None
+    )
 
     should_try_p2p = bool(remote_multiaddr) or (explicit_discovery and auto_discovery)
     if not should_try_p2p and announce is not None:
@@ -282,7 +293,9 @@ def submit_task(
             import anyio
 
             from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import RemoteQueue
-            from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import submit_task_with_info
+            from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import (
+                submit_task_with_info,
+            )
 
             remote = RemoteQueue(peer_id=remote_peer_id or "", multiaddr=remote_multiaddr)
 
@@ -297,7 +310,11 @@ def submit_task(
             info = anyio.run(_run, backend="trio")
             if isinstance(info, dict):
                 tid = str(info.get("task_id") or "").strip()
-                pid = str(info.get("peer_id") or "").strip() or remote_peer_id or _extract_peer_id_from_multiaddr(remote_multiaddr)
+                pid = (
+                    str(info.get("peer_id") or "").strip()
+                    or remote_peer_id
+                    or _extract_peer_id_from_multiaddr(remote_multiaddr)
+                )
                 if pid and tid:
                     return _encode_p2p_task_id(peer_id=pid, task_id=tid)
                 if tid:
@@ -339,9 +356,10 @@ def get_task(task_id: str, *, queue_path: Optional[str] = None) -> Optional[dict
         remote_multiaddr = str(announce.get("multiaddr") or "").strip()
         remote_peer_id = str(announce.get("peer_id") or "").strip() or remote_peer_id
 
-    explicit_discovery = os.environ.get("IPFS_DATASETS_PY_TASK_P2P_AUTO_DISCOVERY") is not None or os.environ.get(
-        "IPFS_ACCELERATE_PY_TASK_P2P_AUTO_DISCOVERY"
-    ) is not None
+    explicit_discovery = (
+        os.environ.get("IPFS_DATASETS_PY_TASK_P2P_AUTO_DISCOVERY") is not None
+        or os.environ.get("IPFS_ACCELERATE_PY_TASK_P2P_AUTO_DISCOVERY") is not None
+    )
     should_try_p2p = bool(parsed is not None or remote_multiaddr)
     if not should_try_p2p and announce is not None:
         should_try_p2p = True
@@ -353,7 +371,9 @@ def get_task(task_id: str, *, queue_path: Optional[str] = None) -> Optional[dict
             import anyio
 
             from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import RemoteQueue
-            from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import get_task as get_task_p2p
+            from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import (
+                get_task as get_task_p2p,
+            )
 
             remote = RemoteQueue(peer_id=effective_peer_id or "", multiaddr=remote_multiaddr)
 
@@ -406,9 +426,10 @@ def wait_task(
         remote_multiaddr = str(announce.get("multiaddr") or "").strip()
         remote_peer_id = str(announce.get("peer_id") or "").strip() or remote_peer_id
 
-    explicit_discovery = os.environ.get("IPFS_DATASETS_PY_TASK_P2P_AUTO_DISCOVERY") is not None or os.environ.get(
-        "IPFS_ACCELERATE_PY_TASK_P2P_AUTO_DISCOVERY"
-    ) is not None
+    explicit_discovery = (
+        os.environ.get("IPFS_DATASETS_PY_TASK_P2P_AUTO_DISCOVERY") is not None
+        or os.environ.get("IPFS_ACCELERATE_PY_TASK_P2P_AUTO_DISCOVERY") is not None
+    )
     should_try_p2p = bool(parsed is not None or remote_multiaddr)
     if not should_try_p2p and announce is not None:
         should_try_p2p = True
@@ -420,12 +441,16 @@ def wait_task(
             import anyio
 
             from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import RemoteQueue
-            from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import wait_task as wait_task_p2p
+            from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import (
+                wait_task as wait_task_p2p,
+            )
 
             remote = RemoteQueue(peer_id=effective_peer_id or "", multiaddr=remote_multiaddr)
 
             async def _run() -> Optional[dict]:
-                task = await wait_task_p2p(remote=remote, task_id=str(effective_task_id), timeout_s=float(timeout_s))
+                task = await wait_task_p2p(
+                    remote=remote, task_id=str(effective_task_id), timeout_s=float(timeout_s)
+                )
                 return task if isinstance(task, dict) else None
 
             return anyio.run(_run, backend="trio")
@@ -442,7 +467,9 @@ def wait_task(
     q = TaskQueue(queue_path)
     deadline = time.time() + max(0.0, float(timeout_s))
     task = q.get(str(task_id))
-    while task is not None and task.get("status") in {"queued", "running"} and time.time() < deadline:
+    while (
+        task is not None and task.get("status") in {"queued", "running"} and time.time() < deadline
+    ):
         time.sleep(0.1)
         task = q.get(str(task_id))
     return task if isinstance(task, dict) else None
@@ -473,12 +500,16 @@ def get_remote_capabilities(*, timeout_s: float = 10.0, detail: bool = False) ->
         import anyio
 
         from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import RemoteQueue
-        from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import get_capabilities as get_capabilities_p2p
+        from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import (
+            get_capabilities as get_capabilities_p2p,
+        )
 
         remote = RemoteQueue(peer_id=remote_peer_id, multiaddr=remote_multiaddr)
 
         async def _run() -> Dict[str, object]:
-            caps = await get_capabilities_p2p(remote=remote, timeout_s=float(timeout_s), detail=bool(detail))
+            caps = await get_capabilities_p2p(
+                remote=remote, timeout_s=float(timeout_s), detail=bool(detail)
+            )
             return caps if isinstance(caps, dict) else {}
 
         return anyio.run(_run, backend="trio")
@@ -512,13 +543,17 @@ def call_remote_tool(
         import anyio
 
         from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import RemoteQueue
-        from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import call_tool as call_tool_p2p
+        from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import (
+            call_tool as call_tool_p2p,
+        )
 
         remote = RemoteQueue(peer_id=remote_peer_id, multiaddr=remote_multiaddr)
         safe_args: Dict[str, object] = args if isinstance(args, dict) else {}
 
         async def _run() -> Dict[str, object]:
-            resp = await call_tool_p2p(remote=remote, tool_name=str(tool_name), args=safe_args, timeout_s=float(timeout_s))
+            resp = await call_tool_p2p(
+                remote=remote, tool_name=str(tool_name), args=safe_args, timeout_s=float(timeout_s)
+            )
             return resp if isinstance(resp, dict) else {"ok": False, "error": "invalid_response"}
 
         return anyio.run(_run, backend="trio")
@@ -547,7 +582,9 @@ def get_remote_cache_value(*, key: str, timeout_s: float = 10.0) -> Dict[str, ob
         import anyio
 
         from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import RemoteQueue
-        from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import cache_get as cache_get_p2p
+        from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import (
+            cache_get as cache_get_p2p,
+        )
 
         remote = RemoteQueue(peer_id=remote_peer_id, multiaddr=remote_multiaddr)
 
@@ -587,7 +624,9 @@ def set_remote_cache_value(
         import anyio
 
         from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import RemoteQueue
-        from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import cache_set as cache_set_p2p
+        from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import (
+            cache_set as cache_set_p2p,
+        )
 
         remote = RemoteQueue(peer_id=remote_peer_id, multiaddr=remote_multiaddr)
 
@@ -711,7 +750,9 @@ def _classify_codex_error_kind(*, stdout: str, stderr: str) -> Optional[str]:
     if provider_msg and _is_codex_quota_exceeded_message(provider_msg):
         return "quota_exceeded"
 
-    combined = "\n".join([p for p in [provider_msg, stdout, stderr] if isinstance(p, str) and p.strip()])
+    combined = "\n".join(
+        [p for p in [provider_msg, stdout, stderr] if isinstance(p, str) and p.strip()]
+    )
     if _is_codex_quota_exceeded_message(combined):
         return "quota_exceeded"
 
@@ -854,7 +895,12 @@ def get_accelerate_status() -> dict:
     except Exception:
         backend_available = False
 
-    return {"available": backend_available, "enabled": True, "env_disabled": False, "env_var": env_value}
+    return {
+        "available": backend_available,
+        "enabled": True,
+        "env_disabled": False,
+        "env_var": env_value,
+    }
 
 
 def _extract_generated_text_from_task_result(result: object) -> Optional[str]:
@@ -953,7 +999,9 @@ def _render_multimodal_prompt_for_text_provider(
     return "\n\n".join(section for section in sections if section)
 
 
-def _resolve_transformers_module(*, deps: Optional[RouterDeps] = None, module_override: object | None = None) -> object | None:
+def _resolve_transformers_module(
+    *, deps: Optional[RouterDeps] = None, module_override: object | None = None
+) -> object | None:
     """Resolve the transformers module with optional RouterDeps injection/caching."""
 
     if module_override is not None:
@@ -1016,7 +1064,9 @@ def _stable_kwargs_digest(kwargs: Dict[str, object]) -> str:
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:16]
 
 
-def _effective_model_key(*, provider_key: str, model_name: Optional[str], kwargs: Dict[str, object]) -> str:
+def _effective_model_key(
+    *, provider_key: str, model_name: Optional[str], kwargs: Dict[str, object]
+) -> str:
     """Best-effort model identifier for caching.
 
     Callers are inconsistent about whether they pass the model via ``model_name``
@@ -1066,9 +1116,13 @@ def _effective_model_key(*, provider_key: str, model_name: Optional[str], kwargs
     return (os.getenv("IPFS_DATASETS_PY_LLM_MODEL", "") or "").strip()
 
 
-def _response_cache_key(*, provider: Optional[str], model_name: Optional[str], prompt: str, kwargs: Dict[str, object]) -> str:
+def _response_cache_key(
+    *, provider: Optional[str], model_name: Optional[str], prompt: str, kwargs: Dict[str, object]
+) -> str:
     provider_key = (provider or "auto").strip().lower()
-    model_key = _effective_model_key(provider_key=provider_key, model_name=model_name, kwargs=kwargs)
+    model_key = _effective_model_key(
+        provider_key=provider_key, model_name=model_name, kwargs=kwargs
+    )
 
     strategy = _response_cache_key_strategy()
     if strategy == "cid":
@@ -1091,7 +1145,9 @@ def _response_cache_key(*, provider: Optional[str], model_name: Optional[str], p
 
 @runtime_checkable
 class LLMProvider(Protocol):
-    def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str: ...
+    def generate(
+        self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object
+    ) -> str: ...
 
 
 @runtime_checkable
@@ -1391,18 +1447,21 @@ def _effective_llm_provider_name(explicit_provider: Optional[str]) -> str:
 
 def _is_hf_model_compatibility_error(exc: BaseException) -> bool:
     message = str(exc or "").lower()
-    return any(
-        token in message
-        for token in (
-            "http 404",
-            "not found",
-            "model",
-            "pipeline",
-            "task",
-            "unsupported",
-            "does not support",
+    return (
+        any(
+            token in message
+            for token in (
+                "http 404",
+                "not found",
+                "model",
+                "pipeline",
+                "task",
+                "unsupported",
+                "does not support",
+            )
         )
-    ) and "http 402" not in message
+        and "http 402" not in message
+    )
 
 
 def _hf_llm_fallback_models(*, kwargs: dict[str, object]) -> list[str]:
@@ -1478,9 +1537,26 @@ def _hf_live_model_manager_candidate_models() -> list[str]:
         elif pipeline_tag == "summarization":
             score -= 40
 
-        if any(token in lower for token in ("instruct", "chat", "assistant", "gpt", "deepseek", "qwen", "mistral", "llama", "zephyr", "oss", "router")):
+        if any(
+            token in lower
+            for token in (
+                "instruct",
+                "chat",
+                "assistant",
+                "gpt",
+                "deepseek",
+                "qwen",
+                "mistral",
+                "llama",
+                "zephyr",
+                "oss",
+                "router",
+            )
+        ):
             score += 50
-        if any(token in lower for token in ("bart", "pegasus", "xsum", "headline", "booksum", "summar")):
+        if any(
+            token in lower for token in ("bart", "pegasus", "xsum", "headline", "booksum", "summar")
+        ):
             score -= 50
 
         return (score, len(model_id), model_id)
@@ -1545,7 +1621,9 @@ def _hf_arch_router_candidate_models(*, kwargs: dict[str, object]) -> list[str]:
     if not models:
         if _hf_dynamic_model_discovery_enabled(kwargs=kwargs):
             limit = _hf_llm_discovery_limit(kwargs=kwargs)
-            for model_id in _discover_hf_models_for_pipeline(pipeline_tag="text-generation", limit=limit):
+            for model_id in _discover_hf_models_for_pipeline(
+                pipeline_tag="text-generation", limit=limit
+            ):
                 text = str(model_id or "").strip()
                 if text and text not in models:
                     models.append(text)
@@ -1583,20 +1661,25 @@ def _build_hf_arch_router_prompt(*, route_config: list[dict[str, str]], prompt: 
     )
     format_prompt = (
         "Your task is to decide which route is best suit with user intent on the conversation in <conversation></conversation> XML tags. Follow the instruction:\n"
-        "1. If the latest intent from user is irrelevant or user intent is full filled, response with other route {\"route\": \"other\"}.\n"
+        '1. If the latest intent from user is irrelevant or user intent is full filled, response with other route {"route": "other"}.\n'
         "2. You must analyze the route descriptions and find the best match route for user latest intent.\n"
         "3. You only response the name of the route that best matches the user's request, use the exact name in the <routes></routes>.\n\n"
         "Based on your analysis, provide your response in the following JSON formats if you decide to match any route:\n"
-        "{\"route\": \"route_name\"}"
+        '{"route": "route_name"}'
     )
     conversation = [{"role": "user", "content": prompt}]
-    return task_instruction.format(
-        routes=json.dumps(route_config, ensure_ascii=False),
-        conversation=json.dumps(conversation, ensure_ascii=False),
-    ) + format_prompt
+    return (
+        task_instruction.format(
+            routes=json.dumps(route_config, ensure_ascii=False),
+            conversation=json.dumps(conversation, ensure_ascii=False),
+        )
+        + format_prompt
+    )
 
 
-def _parse_hf_arch_router_response(response_text: str, *, candidate_models: list[str]) -> Optional[str]:
+def _parse_hf_arch_router_response(
+    response_text: str, *, candidate_models: list[str]
+) -> Optional[str]:
     text = str(response_text or "").strip()
     if not text:
         return None
@@ -1726,7 +1809,10 @@ def _hf_llm_discovery_limit(*, kwargs: dict[str, object]) -> int:
 def _hf_llm_discovery_tags(*, kwargs: dict[str, object]) -> list[str]:
     raw = kwargs.get("hf_llm_discovery_tags")
     if raw is None:
-        raw = os.getenv("IPFS_DATASETS_PY_HF_LLM_DISCOVERY_TAGS", "text-generation,text2text-generation,summarization")
+        raw = os.getenv(
+            "IPFS_DATASETS_PY_HF_LLM_DISCOVERY_TAGS",
+            "text-generation,text2text-generation,summarization",
+        )
     text = str(raw or "").strip()
     if not text:
         return ["text-generation", "text2text-generation", "summarization"]
@@ -2012,7 +2098,9 @@ def _get_p2p_task_queue_provider() -> LLMProvider:
         return queue_path, float(wait_timeout_s)
 
     def _wait_for_text(task_id: str, *, queue_path: str, wait_timeout_s: float) -> str:
-        task = wait_task(str(task_id), queue_path=queue_path or None, timeout_s=float(wait_timeout_s))
+        task = wait_task(
+            str(task_id), queue_path=queue_path or None, timeout_s=float(wait_timeout_s)
+        )
         if not isinstance(task, dict):
             raise LLMRouterError(f"TaskQueue task did not complete before timeout: {task_id}")
 
@@ -2027,11 +2115,16 @@ def _get_p2p_task_queue_provider() -> LLMProvider:
         raise LLMRouterError("TaskQueue task completed without generated text")
 
     class _P2PTaskQueueProvider:
-        def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str:
+        def generate(
+            self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object
+        ) -> str:
             call_options = dict(kwargs)
             queue_path, wait_timeout_s = _queue_options(call_options)
 
-            task_type = str(call_options.pop("task_type", None) or "text-generation").strip() or "text-generation"
+            task_type = (
+                str(call_options.pop("task_type", None) or "text-generation").strip()
+                or "text-generation"
+            )
             task_id = submit_task(
                 prompt=str(prompt or ""),
                 model_name=model_name or os.getenv("IPFS_DATASETS_PY_LLM_MODEL", "gpt2"),
@@ -2039,7 +2132,9 @@ def _get_p2p_task_queue_provider() -> LLMProvider:
                 queue_path=queue_path or None,
                 **call_options,
             )
-            return _wait_for_text(str(task_id), queue_path=queue_path, wait_timeout_s=wait_timeout_s)
+            return _wait_for_text(
+                str(task_id), queue_path=queue_path, wait_timeout_s=wait_timeout_s
+            )
 
         def generate_multimodal(
             self,
@@ -2097,7 +2192,9 @@ def _get_p2p_task_queue_provider() -> LLMProvider:
                 queue_path=queue_path or None,
                 payload=payload,
             )
-            return _wait_for_text(str(task_id), queue_path=queue_path, wait_timeout_s=wait_timeout_s)
+            return _wait_for_text(
+                str(task_id), queue_path=queue_path, wait_timeout_s=wait_timeout_s
+            )
 
     return _P2PTaskQueueProvider()
 
@@ -2107,7 +2204,9 @@ def _get_openrouter_provider() -> Optional[LLMProvider]:
     if not api_key:
         return None
 
-    base_url = os.getenv("IPFS_DATASETS_PY_OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1").rstrip("/")
+    base_url = os.getenv(
+        "IPFS_DATASETS_PY_OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1"
+    ).rstrip("/")
 
     def _request(payload: dict, *, timeout: float, bill_to: str = "") -> dict:
         req = urllib.request.Request(
@@ -2118,8 +2217,16 @@ def _get_openrouter_provider() -> Optional[LLMProvider]:
                 "Authorization": f"Bearer {api_key}",
                 "Content-Type": "application/json",
                 "Accept": "application/json",
-                **({"HTTP-Referer": os.getenv("OPENROUTER_HTTP_REFERER")} if os.getenv("OPENROUTER_HTTP_REFERER") else {}),
-                **({"X-Title": os.getenv("OPENROUTER_APP_TITLE")} if os.getenv("OPENROUTER_APP_TITLE") else {}),
+                **(
+                    {"HTTP-Referer": os.getenv("OPENROUTER_HTTP_REFERER")}
+                    if os.getenv("OPENROUTER_HTTP_REFERER")
+                    else {}
+                ),
+                **(
+                    {"X-Title": os.getenv("OPENROUTER_APP_TITLE")}
+                    if os.getenv("OPENROUTER_APP_TITLE")
+                    else {}
+                ),
                 **({"X-HF-Bill-To": bill_to} if bill_to else {}),
             },
         )
@@ -2180,7 +2287,9 @@ def _get_openrouter_provider() -> Optional[LLMProvider]:
             timeout = float(kwargs.get("timeout", 120))
             return _request(payload, timeout=timeout, bill_to=bill_to)
 
-        def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str:
+        def generate(
+            self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object
+        ) -> str:
             data = self.chat_completions(
                 [{"role": "user", "content": prompt}],
                 model_name=model_name,
@@ -2208,7 +2317,9 @@ def _get_openai_provider() -> Optional[LLMProvider]:
     if not api_key:
         return None
 
-    base_url = os.getenv("IPFS_DATASETS_PY_OPENAI_BASE_URL", "https://api.openai.com/v1").rstrip("/")
+    base_url = os.getenv("IPFS_DATASETS_PY_OPENAI_BASE_URL", "https://api.openai.com/v1").rstrip(
+        "/"
+    )
 
     def _request(payload: dict, *, timeout: float) -> dict:
         req = urllib.request.Request(
@@ -2277,7 +2388,9 @@ def _get_openai_provider() -> Optional[LLMProvider]:
             timeout = float(kwargs.get("timeout", 120))
             return _request(payload, timeout=timeout)
 
-        def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str:
+        def generate(
+            self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object
+        ) -> str:
             data = self.chat_completions(
                 [{"role": "user", "content": prompt}],
                 model_name=model_name,
@@ -2318,7 +2431,9 @@ def _get_hf_inference_api_provider() -> Optional[LLMProvider]:
             timeout = float(kwargs.get("timeout", 120))
             bill_to = _resolve_hf_bill_to(kwargs=dict(kwargs))
             provider_name = _resolve_hf_provider(kwargs=dict(kwargs)).strip() or "auto"
-            selected_model = (model_name or _default_hf_inference_model(kwargs=dict(kwargs))).strip()
+            selected_model = (
+                model_name or _default_hf_inference_model(kwargs=dict(kwargs))
+            ).strip()
 
             try:
                 hub = importlib.import_module("huggingface_hub")
@@ -2337,7 +2452,9 @@ def _get_hf_inference_api_provider() -> Optional[LLMProvider]:
                 completions = getattr(chat, "completions", None) if chat is not None else None
                 create = getattr(completions, "create", None) if completions is not None else None
                 if not callable(create):
-                    raise RuntimeError("huggingface_hub.InferenceClient chat completions not available")
+                    raise RuntimeError(
+                        "huggingface_hub.InferenceClient chat completions not available"
+                    )
 
                 payload: dict[str, object] = {
                     "messages": list(messages),
@@ -2378,7 +2495,9 @@ def _get_hf_inference_api_provider() -> Optional[LLMProvider]:
                 raise RuntimeError("HF Inference Providers chat response invalid")
             return data
 
-        def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str:
+        def generate(
+            self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object
+        ) -> str:
             if _hf_use_chat_completions(model_name=model_name, kwargs=dict(kwargs)):
                 data = self.chat_completions(
                     [{"role": "user", "content": prompt}],
@@ -2395,8 +2514,14 @@ def _get_hf_inference_api_provider() -> Optional[LLMProvider]:
             timeout = float(kwargs.get("timeout", 120))
             wait_for_model_raw = kwargs.get("wait_for_model", True)
             use_cache_raw = kwargs.get("use_cache", True)
-            wait_for_model = _truthy(wait_for_model_raw) if isinstance(wait_for_model_raw, str) else bool(wait_for_model_raw)
-            use_cache = _truthy(use_cache_raw) if isinstance(use_cache_raw, str) else bool(use_cache_raw)
+            wait_for_model = (
+                _truthy(wait_for_model_raw)
+                if isinstance(wait_for_model_raw, str)
+                else bool(wait_for_model_raw)
+            )
+            use_cache = (
+                _truthy(use_cache_raw) if isinstance(use_cache_raw, str) else bool(use_cache_raw)
+            )
 
             parameters: dict[str, object] = {
                 "max_new_tokens": max_new_tokens,
@@ -2412,7 +2537,13 @@ def _get_hf_inference_api_provider() -> Optional[LLMProvider]:
                 },
             }
 
-            for optional in ("top_p", "top_k", "repetition_penalty", "do_sample", "return_full_text"):
+            for optional in (
+                "top_p",
+                "top_k",
+                "repetition_penalty",
+                "do_sample",
+                "return_full_text",
+            ):
                 if optional in kwargs and kwargs.get(optional) is not None:
                     parameters[optional] = kwargs.get(optional)
 
@@ -2475,7 +2606,9 @@ def _get_hf_inference_api_provider() -> Optional[LLMProvider]:
                     detail = exc.read().decode("utf-8", errors="replace") if exc.fp else ""
                     if exc.code in {400, 404, 422, 503}:
                         return _generate_via_inference_client()
-                    raise RuntimeError(f"HF Inference API HTTP {exc.code}: {detail or exc.reason}") from exc
+                    raise RuntimeError(
+                        f"HF Inference API HTTP {exc.code}: {detail or exc.reason}"
+                    ) from exc
                 except Exception as exc:
                     if "404" in str(exc) or "Not Found" in str(exc):
                         return _generate_via_inference_client()
@@ -2496,7 +2629,9 @@ def _get_hf_inference_api_provider() -> Optional[LLMProvider]:
                 raise RuntimeError("HF Inference API response missing generated text")
 
             effective_kwargs = dict(kwargs)
-            selected_model = (model_name or _default_hf_inference_model(kwargs=effective_kwargs)).strip()
+            selected_model = (
+                model_name or _default_hf_inference_model(kwargs=effective_kwargs)
+            ).strip()
             routed_model: Optional[str] = None
 
             if model_name is None and not bool(kwargs.get("hf_skip_model_routing")):
@@ -2504,14 +2639,16 @@ def _get_hf_inference_api_provider() -> Optional[LLMProvider]:
                     prompt=prompt,
                     kwargs=effective_kwargs,
                     request_timeout=timeout,
-                    generate_fn=lambda router_prompt, router_model, router_timeout: _HFInferenceAPIProvider().generate(
-                        router_prompt,
-                        model_name=router_model,
-                        hf_skip_model_routing=True,
-                        max_new_tokens=128,
-                        temperature=0.0,
-                        timeout=router_timeout,
-                        return_full_text=False,
+                    generate_fn=lambda router_prompt, router_model, router_timeout: (
+                        _HFInferenceAPIProvider().generate(
+                            router_prompt,
+                            model_name=router_model,
+                            hf_skip_model_routing=True,
+                            max_new_tokens=128,
+                            temperature=0.0,
+                            timeout=router_timeout,
+                            return_full_text=False,
+                        )
                     ),
                 )
                 if routed_model:
@@ -2556,9 +2693,15 @@ def _get_codex_cli_provider() -> Optional[LLMProvider]:
             image_paths: Sequence[str] | None = None,
             **kwargs: object,
         ) -> str:
-            model = (model_name or _coalesce_env("IPFS_DATASETS_PY_CODEX_CLI_MODEL", "IPFS_DATASETS_PY_CODEX_MODEL") or "gpt-5.3-codex").strip()
+            model = (
+                model_name
+                or _coalesce_env("IPFS_DATASETS_PY_CODEX_CLI_MODEL", "IPFS_DATASETS_PY_CODEX_MODEL")
+                or "gpt-5.3-codex"
+            ).strip()
             sandbox = (os.getenv("IPFS_DATASETS_PY_CODEX_SANDBOX", "auto") or "auto").strip()
-            skip_git_repo_check = os.getenv("IPFS_DATASETS_PY_CODEX_SKIP_GIT_REPO_CHECK", "1") != "0"
+            skip_git_repo_check = (
+                os.getenv("IPFS_DATASETS_PY_CODEX_SKIP_GIT_REPO_CHECK", "1") != "0"
+            )
             timeout = float(kwargs.get("timeout", 180))
 
             trace_jsonl_path = kwargs.pop("trace_jsonl_path", None)
@@ -2567,7 +2710,12 @@ def _get_codex_cli_provider() -> Optional[LLMProvider]:
             trace_metadata_path = kwargs.pop("trace_metadata_path", None)
             trace_enabled = bool(kwargs.pop("trace", False) or trace_jsonl_path or trace_dir)
 
-            if trace_enabled and not trace_jsonl_path and isinstance(trace_dir, str) and trace_dir.strip():
+            if (
+                trace_enabled
+                and not trace_jsonl_path
+                and isinstance(trace_dir, str)
+                and trace_dir.strip()
+            ):
                 os.makedirs(trace_dir.strip(), exist_ok=True)
                 trace_jsonl_path = os.path.join(
                     trace_dir.strip(),
@@ -2647,13 +2795,16 @@ def _get_codex_cli_provider() -> Optional[LLMProvider]:
                                 "stdout_chars": len(partial_stdout),
                                 "stderr_chars": len(partial_stderr),
                                 "state_db_warning_count": partial_stderr.count("state_5.sqlite"),
-                                "file_watch_limit_warning_count": partial_stderr.count("OS file watch limit reached"),
+                                "file_watch_limit_warning_count": partial_stderr.count(
+                                    "OS file watch limit reached"
+                                ),
                                 "thread_started": '"type":"thread.started"' in partial_stdout,
                                 "turn_started": '"type":"turn.started"' in partial_stdout,
                                 "turn_completed": '"type":"turn.completed"' in partial_stdout,
                                 "item_completed": '"type":"item.completed"' in partial_stdout,
                                 "last_agent_message_chars": len(
-                                    _extract_last_agent_message_from_codex_jsonl(partial_stdout) or ""
+                                    _extract_last_agent_message_from_codex_jsonl(partial_stdout)
+                                    or ""
                                 ),
                             },
                         )
@@ -2669,7 +2820,11 @@ def _get_codex_cli_provider() -> Optional[LLMProvider]:
                 if extracted:
                     text_out = extracted
 
-            extracted_message = _extract_last_agent_message_from_codex_jsonl(stdout or "") if json_mode and stdout else ""
+            extracted_message = (
+                _extract_last_agent_message_from_codex_jsonl(stdout or "")
+                if json_mode and stdout
+                else ""
+            )
             diagnostics_metadata = {
                 "ts": datetime.now(timezone.utc).isoformat(),
                 "provider": "codex_cli",
@@ -2684,7 +2839,9 @@ def _get_codex_cli_provider() -> Optional[LLMProvider]:
                 "stdout_chars": len(stdout or ""),
                 "stderr_chars": len(stderr or ""),
                 "state_db_warning_count": (stderr or "").count("state_5.sqlite"),
-                "file_watch_limit_warning_count": (stderr or "").count("OS file watch limit reached"),
+                "file_watch_limit_warning_count": (stderr or "").count(
+                    "OS file watch limit reached"
+                ),
                 "thread_started": '"type":"thread.started"' in (stdout or ""),
                 "turn_started": '"type":"turn.started"' in (stdout or ""),
                 "turn_completed": '"type":"turn.completed"' in (stdout or ""),
@@ -2731,7 +2888,9 @@ def _get_codex_cli_provider() -> Optional[LLMProvider]:
                 raise LLMRouterError(f"Codex usage limit reached{suffix}")
             raise LLMRouterError((stderr or "").strip() or "codex exec failed")
 
-        def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str:
+        def generate(
+            self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object
+        ) -> str:
             return self._run_codex(prompt, model_name=model_name, **kwargs)
 
         def generate_multimodal(
@@ -2747,7 +2906,9 @@ def _get_codex_cli_provider() -> Optional[LLMProvider]:
             **kwargs: object,
         ) -> str:
             if image_urls:
-                raise LLMRouterError("codex_cli multimodal path requires local image_paths; image_urls are not supported")
+                raise LLMRouterError(
+                    "codex_cli multimodal path requires local image_paths; image_urls are not supported"
+                )
 
             prompt_sections: list[str] = []
             if system_prompt and str(system_prompt).strip():
@@ -2798,7 +2959,9 @@ def _get_copilot_cli_provider() -> Optional[LLMProvider]:
     supports_image_inputs = _copilot_cli_supports_image_inputs(command)
 
     class _CopilotCLIProvider:
-        def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str:
+        def generate(
+            self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object
+        ) -> str:
             model = (
                 (model_name or "").strip()
                 or os.getenv("IPFS_DATASETS_PY_COPILOT_CLI_MODEL", "").strip()
@@ -2978,7 +3141,9 @@ def _get_copilot_cli_provider() -> Optional[LLMProvider]:
                     "copilot_cli multimodal path unavailable: installed Copilot CLI does not advertise image input support"
                 )
             if image_urls:
-                raise LLMRouterError("copilot_cli multimodal path requires local image_paths; image_urls are not supported")
+                raise LLMRouterError(
+                    "copilot_cli multimodal path requires local image_paths; image_urls are not supported"
+                )
 
             model = (
                 (model_name or "").strip()
@@ -3086,7 +3251,9 @@ def _get_copilot_sdk_provider() -> Optional[LLMProvider]:
         return None
 
     class _CopilotSDKProvider:
-        def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str:
+        def generate(
+            self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object
+        ) -> str:
             _ = model_name
             model = os.environ.get("IPFS_DATASETS_PY_COPILOT_SDK_MODEL", "").strip()
             timeout_seconds = float(os.environ.get("IPFS_DATASETS_PY_COPILOT_SDK_TIMEOUT", "120"))
@@ -3111,7 +3278,11 @@ def _get_copilot_sdk_provider() -> Optional[LLMProvider]:
                     await client.stop()
 
             try:
-                from ipfs_datasets_py.utils.anyio_compat import AsyncContextError, fail_after, run as run_anyio
+                from ipfs_datasets_py.utils.anyio_compat import (
+                    AsyncContextError,
+                    fail_after,
+                    run as run_anyio,
+                )
 
                 async def _run_with_timeout() -> str:
                     with fail_after(timeout_seconds):
@@ -3130,7 +3301,9 @@ def _get_gemini_cli_provider() -> Optional[LLMProvider]:
         return None
 
     class _GeminiCLIProvider:
-        def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str:
+        def generate(
+            self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object
+        ) -> str:
             _ = model_name
             timeout = float(kwargs.get("timeout", 180))
 
@@ -3164,9 +3337,11 @@ def _get_gemini_cli_provider() -> Optional[LLMProvider]:
             if proc.returncode == 0:
                 return _clean_gemini_output(proc.stdout or "")
 
-            stderr = (proc.stderr or "")
+            stderr = proc.stderr or ""
             # Known failure mode when running on Node.js v18.
-            node18_regex_error = ("invalid regular expression flags" in stderr.lower()) and ("node.js v18" in stderr.lower())
+            node18_regex_error = ("invalid regular expression flags" in stderr.lower()) and (
+                "node.js v18" in stderr.lower()
+            )
             if node18_regex_error:
                 try:
                     proc2 = _run(base_cmd)
@@ -3187,9 +3362,13 @@ def _get_gemini_py_provider() -> Optional[LLMProvider]:
         return None
 
     class _GeminiPyProvider:
-        def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str:
+        def generate(
+            self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object
+        ) -> str:
             _ = model_name
-            client = GeminiCLI(use_accelerate=_truthy(os.getenv("IPFS_DATASETS_PY_ENABLE_IPFS_ACCELERATE")))
+            client = GeminiCLI(
+                use_accelerate=_truthy(os.getenv("IPFS_DATASETS_PY_ENABLE_IPFS_ACCELERATE"))
+            )
             timeout = int(float(kwargs.get("timeout", 180)))
             result = client.execute(["generate", prompt], capture_output=True, timeout=timeout)
             if result.returncode != 0:
@@ -3205,10 +3384,14 @@ def _get_claude_code_provider() -> Optional[LLMProvider]:
         return None
 
     class _ClaudeCodeProvider:
-        def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str:
+        def generate(
+            self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object
+        ) -> str:
             _ = model_name
             timeout = float(kwargs.get("timeout", 180))
-            return _clean_claude_output(_run_cli_command(command, prompt, timeout_seconds=timeout, label="Claude Code CLI"))
+            return _clean_claude_output(
+                _run_cli_command(command, prompt, timeout_seconds=timeout, label="Claude Code CLI")
+            )
 
     return _ClaudeCodeProvider()
 
@@ -3220,9 +3403,13 @@ def _get_claude_py_provider() -> Optional[LLMProvider]:
         return None
 
     class _ClaudePyProvider:
-        def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str:
+        def generate(
+            self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object
+        ) -> str:
             _ = model_name
-            client = ClaudeCLI(use_accelerate=_truthy(os.getenv("IPFS_DATASETS_PY_ENABLE_IPFS_ACCELERATE")))
+            client = ClaudeCLI(
+                use_accelerate=_truthy(os.getenv("IPFS_DATASETS_PY_ENABLE_IPFS_ACCELERATE"))
+            )
             timeout = int(float(kwargs.get("timeout", 180)))
             result = client.execute(["chat", prompt], capture_output=True, timeout=timeout)
             if result.returncode != 0:
@@ -3255,15 +3442,18 @@ def _get_mistral_vibe_provider() -> Optional[LLMProvider]:
             return False
 
     class _MistralVibeProvider:
-        def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str:
+        def generate(
+            self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object
+        ) -> str:
             model = (
-                model_name
-                or os.environ.get("IPFS_DATASETS_PY_MISTRAL_VIBE_MODEL", "")
+                model_name or os.environ.get("IPFS_DATASETS_PY_MISTRAL_VIBE_MODEL", "")
             ).strip()
             timeout = float(kwargs.get("timeout", 240))
             agent = str(kwargs.pop("mistral_vibe_agent", "") or "").strip()
             if agent and not re.fullmatch(r"[A-Za-z0-9_-]+", agent):
-                raise ValueError("mistral_vibe_agent must contain only letters, digits, underscores, or hyphens")
+                raise ValueError(
+                    "mistral_vibe_agent must contain only letters, digits, underscores, or hyphens"
+                )
             command_for_call = command
             if agent and "{agent}" not in command_for_call:
                 command_for_call = f"{command_for_call} --agent {{agent}}"
@@ -3308,7 +3498,9 @@ def _get_accelerate_provider(deps: RouterDeps) -> Optional[LLMProvider]:
     # importing the external ipfs_accelerate_py package, which may not be installed
     # or may lack the llm_router module in some configurations.
     try:
-        from ipfs_datasets_py.ml.accelerate_integration.manager import AccelerateManager as _LocalAccelerateManager
+        from ipfs_datasets_py.ml.accelerate_integration.manager import (
+            AccelerateManager as _LocalAccelerateManager,
+        )
 
         manager: object = _LocalAccelerateManager()
 
@@ -3347,7 +3539,9 @@ def _get_accelerate_provider(deps: RouterDeps) -> Optional[LLMProvider]:
             return None
 
         class _AccelerateLLMProvider:
-            def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str:
+            def generate(
+                self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object
+            ) -> str:
                 # AccelerateManager routes through: ipfs_accelerate_py → p2p_task_queue
                 # (codex_cli/copilot_cli/hf) → http peers.  Any of those may succeed.
                 # Do NOT pass task_type here — AccelerateManager auto-detects llm.generate
@@ -3384,7 +3578,9 @@ def _get_accelerate_provider(deps: RouterDeps) -> Optional[LLMProvider]:
                 payload: dict[str, object] = {
                     "prompt": str(prompt or ""),
                     "image_urls": [str(url) for url in image_urls or () if str(url or "").strip()],
-                    "image_data_urls": [_image_path_to_data_url(path) for path in image_paths or ()],
+                    "image_data_urls": [
+                        _image_path_to_data_url(path) for path in image_paths or ()
+                    ],
                     "system_prompt": system_prompt,
                     "additional_text_blocks": _coerce_text_sequence(additional_text_blocks),
                 }
@@ -3453,14 +3649,24 @@ def _get_accelerate_provider(deps: RouterDeps) -> Optional[LLMProvider]:
                         message = result.get("message")
                         if isinstance(message, str) and message.strip():
                             raise RuntimeError(message.strip())
-                    raise RuntimeError("AccelerateManager multimodal provider did not return generated text")
+                    raise RuntimeError(
+                        "AccelerateManager multimodal provider did not return generated text"
+                    )
                 except Exception as exc:
                     manager_error = exc
 
                 provider_candidates: list[str] = []
                 if effective_model.strip().lower() in {
-                    "codex_cli", "copilot_cli", "copilot_sdk", "openai", "hf_inference_api",
-                    "openrouter", "gemini_cli", "gemini_py", "claude_code", "claude_py",
+                    "codex_cli",
+                    "copilot_cli",
+                    "copilot_sdk",
+                    "openai",
+                    "hf_inference_api",
+                    "openrouter",
+                    "gemini_cli",
+                    "gemini_py",
+                    "claude_code",
+                    "claude_py",
                 }:
                     provider_candidates.append(effective_model.strip().lower())
                 if remote_provider is not None:
@@ -3518,7 +3724,9 @@ def _get_accelerate_provider(deps: RouterDeps) -> Optional[LLMProvider]:
             return None
 
         class _ExternalAccelerateLLMProvider:
-            def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str:
+            def generate(
+                self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object
+            ) -> str:
                 payload = {"prompt": prompt, **kwargs}
                 result = manager.run_inference(
                     model_name or os.getenv("IPFS_DATASETS_PY_LLM_MODEL", ""),
@@ -3615,7 +3823,11 @@ def _get_local_hf_provider(*, deps: Optional[RouterDeps] = None) -> Optional[LLM
                 return prompt, safe_max_new_tokens
 
             model_max_length = getattr(tokenizer, "model_max_length", None)
-            if not isinstance(model_max_length, int) or model_max_length <= 0 or model_max_length > 100_000:
+            if (
+                not isinstance(model_max_length, int)
+                or model_max_length <= 0
+                or model_max_length > 100_000
+            ):
                 model_max_length = 1024
 
             safe_max_new_tokens = max(
@@ -3636,7 +3848,9 @@ def _get_local_hf_provider(*, deps: Optional[RouterDeps] = None) -> Optional[LLM
                 )
                 input_ids = encoded.get("input_ids") if isinstance(encoded, dict) else None
                 if input_ids:
-                    return tokenizer.decode(input_ids, skip_special_tokens=False), safe_max_new_tokens
+                    return tokenizer.decode(
+                        input_ids, skip_special_tokens=False
+                    ), safe_max_new_tokens
             except Exception:
                 pass
 
@@ -3655,7 +3869,11 @@ def _get_local_hf_provider(*, deps: Optional[RouterDeps] = None) -> Optional[LLM
             # a much smaller budget so call sites can keep moving.
             tokenizer = getattr(pipe, "tokenizer", None)
             model_max_length = getattr(tokenizer, "model_max_length", None)
-            if not isinstance(model_max_length, int) or model_max_length <= 0 or model_max_length > 100_000:
+            if (
+                not isinstance(model_max_length, int)
+                or model_max_length <= 0
+                or model_max_length > 100_000
+            ):
                 model_max_length = 1024
 
             retry_max_new_tokens = max(1, min(max_new_tokens, 32, max(1, model_max_length // 8)))
@@ -3671,14 +3889,18 @@ def _get_local_hf_provider(*, deps: Optional[RouterDeps] = None) -> Optional[LLM
                     )
                     input_ids = encoded.get("input_ids") if isinstance(encoded, dict) else None
                     if input_ids:
-                        return tokenizer.decode(input_ids, skip_special_tokens=False), retry_max_new_tokens
+                        return tokenizer.decode(
+                            input_ids, skip_special_tokens=False
+                        ), retry_max_new_tokens
                 except Exception:
                     pass
 
             approx_chars = max(256, retry_prompt_budget * 4)
             return prompt[-approx_chars:], retry_max_new_tokens
 
-        def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str:
+        def generate(
+            self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object
+        ) -> str:
             model = model_name or os.getenv("IPFS_DATASETS_PY_LLM_MODEL", "gpt2")
             pipe = self._pipelines.get(model)
             if pipe is None:
@@ -3796,7 +4018,9 @@ def _generate_with_provider_fallbacks(
             except Exception:
                 pass
 
-        if _is_hf_inference_provider_name(effective_provider_name) and _is_hf_model_compatibility_error(initial_exc):
+        if _is_hf_inference_provider_name(
+            effective_provider_name
+        ) and _is_hf_model_compatibility_error(initial_exc):
             attempted = set()
             if model_name is not None and str(model_name).strip():
                 attempted.add(str(model_name).strip())
@@ -3894,9 +4118,15 @@ def _get_mock_provider() -> LLMProvider:
                 cats = "cats" in text and "animals" in text
                 if fmt == "prolog":
                     # Use ASCII tokens to satisfy tests that check for prolog-like syntax.
-                    return "forall(X, (cat(X) -> animal(X)))." if cats else "exists(X, statement(X))."
+                    return (
+                        "forall(X, (cat(X) -> animal(X)))." if cats else "exists(X, statement(X))."
+                    )
                 if fmt == "tptp":
-                    return "fof(ax1, axiom, ! [X] : ( cat(X) => animal(X) ) )." if cats else "fof(ax1, axiom, ? [X] : statement(X) )."
+                    return (
+                        "fof(ax1, axiom, ! [X] : ( cat(X) => animal(X) ) )."
+                        if cats
+                        else "fof(ax1, axiom, ? [X] : statement(X) )."
+                    )
                 # symbolic/default
                 return "∀x (Cat(x) → Animal(x))" if cats else "∃x Statement(x)"
 
@@ -3909,15 +4139,23 @@ def _get_mock_provider() -> LLMProvider:
                     "fol_formula": formula,
                     "confidence": 0.9,
                     "logical_components": {
-                        "quantifiers": ["∀" if fmt == "symbolic" else ("forall" if fmt == "prolog" else "!")],
+                        "quantifiers": [
+                            "∀" if fmt == "symbolic" else ("forall" if fmt == "prolog" else "!")
+                        ],
                         "predicates": ["Cat", "Animal"],
                         "entities": ["cat", "animal"],
-                        "connectives": ["→" if fmt == "symbolic" else ("->" if fmt == "prolog" else "=>")],
+                        "connectives": [
+                            "→" if fmt == "symbolic" else ("->" if fmt == "prolog" else "=>")
+                        ],
                     },
                     "reasoning_steps": ["mock"],
                     "validation_results": {"valid": True, "backend": "mock"},
                     "warnings": [],
-                    "metadata": {"backend": "mock", "model": model_name or "mock", "output_format": fmt},
+                    "metadata": {
+                        "backend": "mock",
+                        "model": model_name or "mock",
+                        "output_format": fmt,
+                    },
                 }
                 return json.dumps(payload, ensure_ascii=False)
 
@@ -3938,7 +4176,9 @@ def _get_mock_provider() -> LLMProvider:
                 return "is, are, has"
             if "extract" in lowered and "entit" in lowered:
                 return "cat, animal"
-            if "extract" in lowered and ("connective" in lowered or "logical connective" in lowered):
+            if "extract" in lowered and (
+                "connective" in lowered or "logical connective" in lowered
+            ):
                 return "and, or, not"
 
             if "first-order logic" in lowered or "fol" in lowered:
@@ -4053,7 +4293,9 @@ def get_llm_provider(
         cached = resolved_deps.get_cached(deps_key)
         if cached is not None:
             return cached
-        return resolved_deps.set_cached(deps_key, _resolve_provider_uncached(provider, deps=resolved_deps))
+        return resolved_deps.set_cached(
+            deps_key, _resolve_provider_uncached(provider, deps=resolved_deps)
+        )
 
     # Process-global caching path.
     return _resolve_provider_cached(provider, _provider_cache_key())
@@ -4075,7 +4317,9 @@ def generate_text(
     _clear_last_generation_trace()
     if _response_cache_enabled():
         try:
-            cache_key = _response_cache_key(provider=provider, model_name=model_name, prompt=prompt, kwargs=dict(kwargs))
+            cache_key = _response_cache_key(
+                provider=provider, model_name=model_name, prompt=prompt, kwargs=dict(kwargs)
+            )
             getter = getattr(resolved_deps, "get_cached_or_remote", None)
             cached = getter(cache_key) if callable(getter) else resolved_deps.get_cached(cache_key)
             if isinstance(cached, str):
@@ -4090,7 +4334,9 @@ def generate_text(
         if not _response_cache_enabled():
             return
         try:
-            cache_key = _response_cache_key(provider=provider, model_name=used_model_name, prompt=prompt, kwargs=dict(kwargs))
+            cache_key = _response_cache_key(
+                provider=provider, model_name=used_model_name, prompt=prompt, kwargs=dict(kwargs)
+            )
             setter = getattr(resolved_deps, "set_cached_and_remote", None)
             if callable(setter):
                 setter(cache_key, str(value))
@@ -4114,10 +4360,9 @@ def generate_text(
         # When provider selection is automatic, OR when an explicitly-pinned optional
         # provider fails (e.g. codex credits exhausted), fall through to other providers
         # in priority order before giving up.
-        _pinned_optional = (
-            provider is not None
-            and provider.strip().lower() in {p.lower() for p in _UNPINNED_OPTIONAL_PROVIDER_ORDER}
-        )
+        _pinned_optional = provider is not None and provider.strip().lower() in {
+            p.lower() for p in _UNPINNED_OPTIONAL_PROVIDER_ORDER
+        }
         if provider is None or _pinned_optional:
             for fallback_name, fallback_provider in _iter_unpinned_optional_providers():
                 if fallback_provider is backend:
@@ -4148,7 +4393,9 @@ def generate_text(
                         model_name=model_name,
                         kwargs=dict(kwargs),
                     )
-                    _set_last_generation_trace(provider_name="ipfs_accelerate_py", model_name=model_name)
+                    _set_last_generation_trace(
+                        provider_name="ipfs_accelerate_py", model_name=model_name
+                    )
                     _cache_result(str(result), used_model_name=model_name)
                     return result
             except Exception:
@@ -4216,7 +4463,9 @@ def _parse_openai_compat_response(data: dict) -> OpenAICompatResponse:
                             token = entry.get("token")
                             logprob = entry.get("logprob")
                             if isinstance(token, str) and isinstance(logprob, (int, float)):
-                                top_logprobs.append(OpenAICompatTopLogProb(token=token, logprob=float(logprob)))
+                                top_logprobs.append(
+                                    OpenAICompatTopLogProb(token=token, logprob=float(logprob))
+                                )
     except Exception:
         top_logprobs = []
 
@@ -4224,7 +4473,9 @@ def _parse_openai_compat_response(data: dict) -> OpenAICompatResponse:
         choices=[
             OpenAICompatChoice(
                 message=OpenAICompatMessage(content=str(content).strip()),
-                logprobs=OpenAICompatLogProbs(content=[OpenAICompatLogProbsContentItem(top_logprobs=top_logprobs)]),
+                logprobs=OpenAICompatLogProbs(
+                    content=[OpenAICompatLogProbsContentItem(top_logprobs=top_logprobs)]
+                ),
             )
         ]
     )
@@ -4264,7 +4515,9 @@ def chat_completions_create(
         choices=[
             OpenAICompatChoice(
                 message=OpenAICompatMessage(content=str(text).strip()),
-                logprobs=OpenAICompatLogProbs(content=[OpenAICompatLogProbsContentItem(top_logprobs=[])]),
+                logprobs=OpenAICompatLogProbs(
+                    content=[OpenAICompatLogProbsContentItem(top_logprobs=[])]
+                ),
             )
         ]
     )
@@ -4287,7 +4540,9 @@ def get_openai_compat_async_client(
     default_model = model
 
     class _ChatCompletions:
-        async def create(self, *, messages: list[dict[str, str]], model: str, **kwargs: object) -> OpenAICompatResponse:
+        async def create(
+            self, *, messages: list[dict[str, str]], model: str, **kwargs: object
+        ) -> OpenAICompatResponse:
             effective_model = default_model or model
 
             def _run_sync() -> OpenAICompatResponse:

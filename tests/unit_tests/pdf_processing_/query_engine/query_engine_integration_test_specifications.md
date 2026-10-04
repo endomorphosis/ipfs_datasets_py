@@ -5,11 +5,11 @@
 ### Dataset Categories
 ```python
 class DatasetSize(Enum):
-    TINY = "tiny"       # 1-2 documents, <25 entities, <10 relationships
-    SMALL = "small"     # 3-10 documents, 25-100 entities, 10-75 relationships  
-    MEDIUM = "medium"   # 11-30 documents, 101-500 entities, 76-250 relationships
-    LARGE = "large"     # 31-100 documents, 501-2000 entities, 251-1000 relationships
-    XLARGE = "xlarge"   # 100+ documents, 2000+ entities, 1000+ relationships
+    TINY = "tiny"  # 1-2 documents, <25 entities, <10 relationships
+    SMALL = "small"  # 3-10 documents, 25-100 entities, 10-75 relationships
+    MEDIUM = "medium"  # 11-30 documents, 101-500 entities, 76-250 relationships
+    LARGE = "large"  # 31-100 documents, 501-2000 entities, 251-1000 relationships
+    XLARGE = "xlarge"  # 100+ documents, 2000+ entities, 1000+ relationships
 ```
 
 ### Document Cross-Reference Definition
@@ -23,11 +23,11 @@ A **cross-reference** exists when:
 ### Query Complexity Levels
 ```python
 class QueryComplexity(Enum):
-    TRIVIAL = "trivial"   # 1-2 words, single entity lookup, no operators
-    SIMPLE = "simple"     # 3-5 words, single clause, one query intent  
-    MODERATE = "moderate" # 6-10 words, 2-3 entities/concepts, may have one operator
-    COMPLEX = "complex"   # 11-20 words, multiple clauses, mixed intents
-    ADVANCED = "advanced" # 20+ words, nested conditions, multiple operators
+    TRIVIAL = "trivial"  # 1-2 words, single entity lookup, no operators
+    SIMPLE = "simple"  # 3-5 words, single clause, one query intent
+    MODERATE = "moderate"  # 6-10 words, 2-3 entities/concepts, may have one operator
+    COMPLEX = "complex"  # 11-20 words, multiple clauses, mixed intents
+    ADVANCED = "advanced"  # 20+ words, nested conditions, multiple operators
 ```
 
 ### Query Intent Classification
@@ -40,13 +40,13 @@ class QueryComplexity(Enum):
 ### Processing Time Thresholds
 ```python
 PERFORMANCE_THRESHOLDS = {
-    "trivial_query": 0.5,      # seconds
-    "simple_query": 2.0,       # seconds
-    "moderate_query": 5.0,     # seconds
-    "complex_query": 8.0,      # seconds
-    "advanced_query": 12.0,    # seconds
-    "graph_traversal": 15.0,   # seconds (max 3 hops)
-    "cross_document": 12.0,    # seconds (≤10 documents)
+    "trivial_query": 0.5,  # seconds
+    "simple_query": 2.0,  # seconds
+    "moderate_query": 5.0,  # seconds
+    "complex_query": 8.0,  # seconds
+    "advanced_query": 12.0,  # seconds
+    "graph_traversal": 15.0,  # seconds (max 3 hops)
+    "cross_document": 12.0,  # seconds (≤10 documents)
     "absolute_timeout": 30.0,  # seconds (hard limit)
 }
 ```
@@ -56,8 +56,8 @@ PERFORMANCE_THRESHOLDS = {
 MEMORY_LIMITS = {
     "baseline_measurement_point": "after_fixture_setup_before_test",
     "peak_increase_allowed": 500,  # MB above baseline
-    "leak_detection_threshold": 50, # MB retained after 30s
-    "gc_wait_time": 30,            # seconds to wait for garbage collection
+    "leak_detection_threshold": 50,  # MB retained after 30s
+    "gc_wait_time": 30,  # seconds to wait for garbage collection
 }
 ```
 
@@ -77,10 +77,10 @@ def generate_cache_key(query_text: str, query_type: str, filters: Dict, max_resu
 ```python
 CACHE_CONFIG = {
     "implementation": "LRU",
-    "capacity": 1000,           # items
-    "ttl": 3600,                # seconds (1 hour)
+    "capacity": 1000,  # items
+    "ttl": 3600,  # seconds (1 hour)
     "thread_safety": "threading.RLock",  # reentrant lock per cache instance
-    "speedup_threshold": 0.5,   # second query must be ≤50% of first
+    "speedup_threshold": 0.5,  # second query must be ≤50% of first
 }
 ```
 
@@ -89,12 +89,12 @@ CACHE_CONFIG = {
 ### Relevance Score Ranges
 ```python
 class RelevanceLevel(Enum):
-    NONE = (0.0, 0.1)        # No meaningful relevance
-    MINIMAL = (0.1, 0.3)     # Barely relevant, below inclusion threshold
-    LOW = (0.3, 0.4)         # Marginally relevant, included in results
-    MEDIUM = (0.4, 0.7)      # Moderately relevant
-    HIGH = (0.7, 0.9)        # Highly relevant
-    PERFECT = (0.9, 1.0)     # Near-exact match
+    NONE = (0.0, 0.1)  # No meaningful relevance
+    MINIMAL = (0.1, 0.3)  # Barely relevant, below inclusion threshold
+    LOW = (0.3, 0.4)  # Marginally relevant, included in results
+    MEDIUM = (0.4, 0.7)  # Moderately relevant
+    HIGH = (0.7, 0.9)  # Highly relevant
+    PERFECT = (0.9, 1.0)  # Near-exact match
 ```
 
 ### Semantic Similarity Calculation
@@ -104,7 +104,9 @@ def calculate_semantic_similarity(embedding1: np.ndarray, embedding2: np.ndarray
     Calculate cosine similarity between two embeddings.
     Uses all-MiniLM-L6-v2 model (384 dimensions).
     """
-    return np.dot(embedding1, embedding2) / (np.linalg.norm(embedding1) * np.linalg.norm(embedding2))
+    return np.dot(embedding1, embedding2) / (
+        np.linalg.norm(embedding1) * np.linalg.norm(embedding2)
+    )
 ```
 
 ### Inclusion Threshold
@@ -116,19 +118,19 @@ def calculate_semantic_similarity(embedding1: np.ndarray, embedding2: np.ndarray
 The **complete pipeline** consists of these sequential stages:
 ```python
 PIPELINE_STAGES = [
-    "validation",      # Parameter validation and sanitization
-    "normalization",   # Query text normalization
-    "cache_check",     # Check for cached results
+    "validation",  # Parameter validation and sanitization
+    "normalization",  # Query text normalization
+    "cache_check",  # Check for cached results
     "type_detection",  # Automatic query type classification
-    "preprocessing",   # Type-specific query preparation
-    "processing",      # Main query execution
-    "filtering",       # Apply user-specified filters
-    "ranking",         # Sort by relevance scores
-    "limiting",        # Apply max_results limit
-    "enrichment",      # Add metadata to results
-    "suggestion",      # Generate follow-up suggestions
-    "caching",         # Store results in cache
-    "response",        # Build QueryResponse object
+    "preprocessing",  # Type-specific query preparation
+    "processing",  # Main query execution
+    "filtering",  # Apply user-specified filters
+    "ranking",  # Sort by relevance scores
+    "limiting",  # Apply max_results limit
+    "enrichment",  # Add metadata to results
+    "suggestion",  # Generate follow-up suggestions
+    "caching",  # Store results in cache
+    "response",  # Build QueryResponse object
 ]
 ```
 
@@ -155,8 +157,8 @@ def calculate_result_quality(results: List[QueryResult], expected: List[Dict]) -
     """
     Calculate F1 score for result quality.
     """
-    precision = len(set(r.id for r in results) & set(e['id'] for e in expected)) / len(results)
-    recall = len(set(r.id for r in results) & set(e['id'] for e in expected)) / len(expected)
+    precision = len(set(r.id for r in results) & set(e["id"] for e in expected)) / len(results)
+    recall = len(set(r.id for r in results) & set(e["id"] for e in expected)) / len(expected)
     f1_score = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
     return f1_score
 ```
@@ -203,18 +205,18 @@ ERROR_HANDLING = {
         "types": ["NetworkTimeout", "TemporaryDBUnavailable", "ModelLoadTimeout"],
         "retry_attempts": 3,
         "backoff_sequence": [1, 2, 4],  # seconds
-        "final_action": "raise_original_error"
+        "final_action": "raise_original_error",
     },
     "system_errors": {
         "types": ["OutOfMemoryError", "DiskFullError", "ModelCorruption"],
         "retry_attempts": 0,
-        "final_action": "immediate_failure_with_context"
+        "final_action": "immediate_failure_with_context",
     },
     "validation_errors": {
         "types": ["EmptyQuery", "InvalidMaxResults", "MalformedFilters"],
         "retry_attempts": 0,
-        "final_action": "immediate_failure_with_guidance"
-    }
+        "final_action": "immediate_failure_with_guidance",
+    },
 }
 ```
 
@@ -235,7 +237,7 @@ def calculate_path_score(path: List[str], relationships: List[Dict]) -> float:
     Calculate path score for graph traversal.
     """
     distance_score = 1.0 / len(path)  # Inverse of path length
-    
+
     # Relationship relevance weights
     REL_WEIGHTS = {
         "founded": 1.0,
@@ -243,12 +245,13 @@ def calculate_path_score(path: List[str], relationships: List[Dict]) -> float:
         "competitor_of": 0.8,
         "acquired_by": 0.7,
         "partners_with": 0.6,
-        "default": 0.5
+        "default": 0.5,
     }
-    
-    relevance_score = sum(REL_WEIGHTS.get(r['type'], REL_WEIGHTS['default']) 
-                          for r in relationships) / len(relationships)
-    
+
+    relevance_score = sum(
+        REL_WEIGHTS.get(r["type"], REL_WEIGHTS["default"]) for r in relationships
+    ) / len(relationships)
+
     # Combined score (equal weighting)
     return (distance_score + relevance_score) / 2.0
 ```
@@ -330,11 +333,12 @@ ValueError: Invalid max_results parameter
 ```python
 class CacheThreadSafety:
     """Thread-safe cache using fine-grained locking."""
+
     def __init__(self):
         self._cache = {}
         self._lock = threading.RLock()  # Reentrant lock
         self._key_locks = {}  # Per-key locks for fine-grained control
-    
+
     def get(self, key: str):
         with self._lock:  # Quick check
             if key in self._cache:

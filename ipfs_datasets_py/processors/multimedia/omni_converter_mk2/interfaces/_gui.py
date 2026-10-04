@@ -2,14 +2,12 @@
 # from typing import Callable
 
 
-
 # from fastapi import FastAPI
 
 
 # from fastapi.staticfiles import StaticFiles
 # from fastapi.middleware.cors import CORSMiddleware
 # from fastapi.responses import HTMLResponse
-
 
 
 # from configs import Configs, configs
@@ -42,7 +40,7 @@
 #         self._read_root: Callable = self.resources['read_root']
 #         self._get_status: Callable = self.resources['get_status']
 #         self._run: Callable = self.resources['run']
-        
+
 #         # Classes
 #         self.python_api: PythonAPI = self.resources['python_api']
 #         self.app: FastAPI = self.resources['api']
@@ -81,11 +79,11 @@
 #         @self.app.get("/api/status")
 #         async def get_status():
 #             return self._get_status(self._api_connected)
-        
+
 #     async def run(self, host: str = "0.0.0.0", port: int = 8000):
 #         """
 #         Run the FastAPI application.
-        
+
 #         Args:
 #             host (str): The host to run the application on.
 #             port (int): The port to run the application on.
@@ -105,7 +103,6 @@
 #         self._api_connected = False
 #         # Add any additional cleanup logic here if needed
 #         print("Tearing down GUI and cleaning up resources.")
-
 
 
 # def make_gui():

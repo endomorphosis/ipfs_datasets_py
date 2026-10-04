@@ -4,6 +4,7 @@ MCP Server Component Verification Script
 
 This script verifies the basic components of the MCP server implementation.
 """
+
 import os
 import sys
 from pathlib import Path
@@ -11,6 +12,7 @@ import importlib
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+
 
 def check_mcp_server():
     """Check the MCP server implementation components."""
@@ -26,7 +28,14 @@ def check_mcp_server():
 
     # List key files
     print("\nKey files:")
-    key_files = ["__init__.py", "server.py", "client.py", "configs.py", "logger.py", "simple_server.py"]
+    key_files = [
+        "__init__.py",
+        "server.py",
+        "client.py",
+        "configs.py",
+        "logger.py",
+        "simple_server.py",
+    ]
     for file in key_files:
         file_path = mcp_server_dir / file
         if file_path.exists():
@@ -54,7 +63,12 @@ def check_mcp_server():
         print("✓ Successfully imported ipfs_datasets_py.mcp_server")
 
         # Check for important attributes
-        check_attrs = ["configs", "IPFSDatasetsMCPServer", "SimpleIPFSDatasetsMCPServer", "start_server"]
+        check_attrs = [
+            "configs",
+            "IPFSDatasetsMCPServer",
+            "SimpleIPFSDatasetsMCPServer",
+            "start_server",
+        ]
         for attr in check_attrs:
             try:
                 if hasattr(mcp_server_module, attr):
@@ -82,6 +96,7 @@ def check_mcp_server():
 
     print("\nComponent check complete!")
     return True
+
 
 if __name__ == "__main__":
     check_mcp_server()

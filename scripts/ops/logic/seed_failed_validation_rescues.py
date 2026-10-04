@@ -65,8 +65,7 @@ def seed_failed_validation_rescues(
         seeded_ids = [
             todo.todo_id
             for todo in seeded
-            if todo.todo_id not in before_ids
-            and supervisor.queue.get(todo.todo_id) is not None
+            if todo.todo_id not in before_ids and supervisor.queue.get(todo.todo_id) is not None
         ]
         if not dry_run and seeded_ids:
             supervisor.queue.save_jsonl(queue_path)

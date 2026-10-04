@@ -5,6 +5,7 @@ Business logic is in ipfs_datasets_py.sessions.session_engine (via the local
 session_engine.py shim).  Each function below replaces a class that previously
 extended EnhancedBaseMCPTool.
 """
+
 from __future__ import annotations
 
 import logging
@@ -27,6 +28,7 @@ _session_manager = MockSessionManager()
 # 1.  create_session  (was EnhancedSessionCreationTool)
 # ---------------------------------------------------------------------------
 
+
 async def create_session(
     session_name: str = "",
     user_id: str = "anonymous_user",
@@ -39,9 +41,17 @@ async def create_session(
     """Create and initialise a new session."""
     try:
         if session_name and len(session_name) > 100:
-            return {"status": "error", "error": "session_name too long (max 100 chars)", "code": "INVALID_NAME"}
+            return {
+                "status": "error",
+                "error": "session_name too long (max 100 chars)",
+                "code": "INVALID_NAME",
+            }
         if not validate_session_type(session_type):
-            return {"status": "error", "error": f"Invalid session type: {session_type}", "code": "INVALID_SESSION_TYPE"}
+            return {
+                "status": "error",
+                "error": f"Invalid session type: {session_type}",
+                "code": "INVALID_SESSION_TYPE",
+            }
         if user_id and not validate_user_id(user_id):
             return {"status": "error", "error": "Invalid user ID format", "code": "INVALID_USER_ID"}
 
@@ -55,16 +65,26 @@ async def create_session(
             tags=tags or [],
         )
         logger.info("Session created: %s for user %s", session_data["session_id"], user_id)
-        return {"status": "success", "session": session_data, "message": f"Session '{session_name}' created successfully"}
+        return {
+            "status": "success",
+            "session": session_data,
+            "message": f"Session '{session_name}' created successfully",
+        }
 
     except Exception as exc:
         logger.error("Session creation error: %s", exc)
-        return {"status": "error", "error": "Session creation failed", "code": "CREATION_FAILED", "message": str(exc)}
+        return {
+            "status": "error",
+            "error": "Session creation failed",
+            "code": "CREATION_FAILED",
+            "message": str(exc),
+        }
 
 
 # ---------------------------------------------------------------------------
 # 2.  manage_session  (was EnhancedSessionManagementTool)
 # ---------------------------------------------------------------------------
+
 
 async def manage_session(
     action: str = "get",
@@ -77,60 +97,130 @@ async def manage_session(
     try:
         if action == "get":
             if not session_id:
-                return {"status": "error", "error": "session_id is required for get action", "code": "MISSING_SESSION_ID"}
+                return {
+                    "status": "error",
+                    "error": "session_id is required for get action",
+                    "code": "MISSING_SESSION_ID",
+                }
             if not validate_session_id(session_id):
-                return {"status": "error", "error": "Invalid session ID format", "code": "INVALID_SESSION_ID"}
+                return {
+                    "status": "error",
+                    "error": "Invalid session ID format",
+                    "code": "INVALID_SESSION_ID",
+                }
             session = await _session_manager.get_session(session_id)
             if not session:
-                return {"status": "error", "error": "Session not found", "code": "SESSION_NOT_FOUND"}
-            return {"status": "success", "session": session, "message": "Session retrieved successfully"}
+                return {
+                    "status": "error",
+                    "error": "Session not found",
+                    "code": "SESSION_NOT_FOUND",
+                }
+            return {
+                "status": "success",
+                "session": session,
+                "message": "Session retrieved successfully",
+            }
 
         elif action == "update":
             if not session_id:
-                return {"status": "error", "error": "session_id is required for update action", "code": "MISSING_SESSION_ID"}
+                return {
+                    "status": "error",
+                    "error": "session_id is required for update action",
+                    "code": "MISSING_SESSION_ID",
+                }
             if not validate_session_id(session_id):
-                return {"status": "error", "error": "Invalid session ID format", "code": "INVALID_SESSION_ID"}
+                return {
+                    "status": "error",
+                    "error": "Invalid session ID format",
+                    "code": "INVALID_SESSION_ID",
+                }
             session = await _session_manager.update_session(session_id, **(updates or {}))
             if not session:
-                return {"status": "error", "error": "Session not found", "code": "SESSION_NOT_FOUND"}
-            return {"status": "success", "session": session, "message": "Session updated successfully"}
+                return {
+                    "status": "error",
+                    "error": "Session not found",
+                    "code": "SESSION_NOT_FOUND",
+                }
+            return {
+                "status": "success",
+                "session": session,
+                "message": "Session updated successfully",
+            }
 
         elif action == "delete":
             if not session_id:
-                return {"status": "error", "error": "session_id is required for delete action", "code": "MISSING_SESSION_ID"}
+                return {
+                    "status": "error",
+                    "error": "session_id is required for delete action",
+                    "code": "MISSING_SESSION_ID",
+                }
             if not validate_session_id(session_id):
-                return {"status": "error", "error": "Invalid session ID format", "code": "INVALID_SESSION_ID"}
+                return {
+                    "status": "error",
+                    "error": "Invalid session ID format",
+                    "code": "INVALID_SESSION_ID",
+                }
             deleted = await _session_manager.delete_session(session_id)
             if not deleted:
-                return {"status": "error", "error": "Session not found", "code": "SESSION_NOT_FOUND"}
-            return {"status": "success", "session_id": session_id, "message": "Session deleted successfully"}
+                return {
+                    "status": "error",
+                    "error": "Session not found",
+                    "code": "SESSION_NOT_FOUND",
+                }
+            return {
+                "status": "success",
+                "session_id": session_id,
+                "message": "Session deleted successfully",
+            }
 
         elif action == "list":
             sessions = await _session_manager.list_sessions(**(filters or {}))
-            return {"status": "success", "sessions": sessions, "count": len(sessions), "message": f"Found {len(sessions)} sessions"}
+            return {
+                "status": "success",
+                "sessions": sessions,
+                "count": len(sessions),
+                "message": f"Found {len(sessions)} sessions",
+            }
 
         elif action == "cleanup":
             opts = cleanup_options or {}
             max_age_hours = opts.get("max_age_hours", 24)
             dry_run = opts.get("dry_run", False)
             if not dry_run:
-                expired = await _session_manager.cleanup_expired_sessions(max_age_hours=max_age_hours)
+                expired = await _session_manager.cleanup_expired_sessions(
+                    max_age_hours=max_age_hours
+                )
             else:
                 expired = []
-            return {"status": "success", "cleaned_up": len(expired), "dry_run": dry_run, "message": f"Cleaned up {len(expired)} expired sessions"}
+            return {
+                "status": "success",
+                "cleaned_up": len(expired),
+                "dry_run": dry_run,
+                "message": f"Cleaned up {len(expired)} expired sessions",
+            }
 
         else:
-            return {"status": "error", "error": f"Unknown action: {action}", "code": "UNKNOWN_ACTION",
-                    "valid_actions": ["get", "update", "delete", "list", "cleanup"]}
+            return {
+                "status": "error",
+                "error": f"Unknown action: {action}",
+                "code": "UNKNOWN_ACTION",
+                "valid_actions": ["get", "update", "delete", "list", "cleanup"],
+            }
 
     except Exception as exc:
         logger.error("Session management error: %s", exc)
-        return {"status": "error", "error": "Session management failed", "code": "MANAGEMENT_FAILED", "message": str(exc)}
+        return {
+            "status": "error",
+            "error": "Session management failed",
+            "code": "MANAGEMENT_FAILED",
+            "message": str(exc),
+        }
 
 
 # ---------------------------------------------------------------------------
 # 3.  get_session_state  (was EnhancedSessionStateTool)
 # ---------------------------------------------------------------------------
+
 
 async def get_session_state(
     session_id: str,
@@ -141,7 +231,11 @@ async def get_session_state(
     """Get comprehensive session state, metrics, and health information."""
     try:
         if not validate_session_id(session_id):
-            return {"status": "error", "error": "Invalid session ID format", "code": "INVALID_SESSION_ID"}
+            return {
+                "status": "error",
+                "error": "Invalid session ID format",
+                "code": "INVALID_SESSION_ID",
+            }
 
         session = await _session_manager.get_session(session_id)
         if not session:
@@ -202,30 +296,49 @@ async def get_session_state(
         if "tags" in session:
             state_data["tags"] = session["tags"]
 
-        return {"status": "success", "session_state": state_data, "message": "Session state retrieved successfully"}
+        return {
+            "status": "success",
+            "session_state": state_data,
+            "message": "Session state retrieved successfully",
+        }
 
     except Exception as exc:
         logger.error("Session state retrieval error: %s", exc)
-        return {"status": "error", "error": "Session state retrieval failed", "code": "STATE_RETRIEVAL_FAILED", "message": str(exc)}
+        return {
+            "status": "error",
+            "error": "Session state retrieval failed",
+            "code": "STATE_RETRIEVAL_FAILED",
+            "message": str(exc),
+        }
 
 
 # ---------------------------------------------------------------------------
 # Backward-compatible class shims
 # ---------------------------------------------------------------------------
 
+
 class EnhancedSessionCreationTool:
     """Backward-compatible shim — delegates to :func:`create_session`."""
+
     name = "create_session"
-    async def execute(self, **kw): return await create_session(**kw)  # type: ignore[misc]
+
+    async def execute(self, **kw):
+        return await create_session(**kw)  # type: ignore[misc]
 
 
 class EnhancedSessionManagementTool:
     """Backward-compatible shim — delegates to :func:`manage_session`."""
+
     name = "manage_session"
-    async def execute(self, **kw): return await manage_session(**kw)  # type: ignore[misc]
+
+    async def execute(self, **kw):
+        return await manage_session(**kw)  # type: ignore[misc]
 
 
 class EnhancedSessionStateTool:
     """Backward-compatible shim — delegates to :func:`get_session_state`."""
+
     name = "get_session_state"
-    async def execute(self, **kw): return await get_session_state(**kw)  # type: ignore[misc]
+
+    async def execute(self, **kw):
+        return await get_session_state(**kw)  # type: ignore[misc]

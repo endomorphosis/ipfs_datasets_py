@@ -3,10 +3,6 @@ from __future__ import annotations
 from __version__ import __version__
 
 
-
-
-
-
 from enum import Enum
 import logging
 import os
@@ -20,9 +16,9 @@ from pydantic import (
     AliasChoices,
     AfterValidator as AV,
     BeforeValidator as BV,
-    BaseModel, 
+    BaseModel,
     DirectoryPath,
-    Field, 
+    Field,
     FilePath,
     model_validator,
     PrivateAttr,
@@ -37,9 +33,12 @@ from .playwright.browser_launch_configs import BrowserLaunchConfigs
 from .types.valid_path import ValidPath
 
 from external_interface.config_parser.resources._normalize_dict_keys_and_values import (
-    normalize_dict_keys_and_values
+    normalize_dict_keys_and_values,
 )
-from external_interface.config_parser.resources._check_for_invalid_keys import _check_for_invalid_keys
+from external_interface.config_parser.resources._check_for_invalid_keys import (
+    _check_for_invalid_keys,
+)
+
 
 def convert_log_level(value: str | int) -> int:
     """
@@ -50,7 +49,9 @@ def convert_log_level(value: str | int) -> int:
             raise ValueError("Invalid log level. Must be between 0 and 50.")
     elif isinstance(value, str):
         if value.upper() not in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
-            raise ValueError("Invalid log level. Must be one of: DEBUG, INFO, WARNING, ERROR, CRITICAL.")
+            raise ValueError(
+                "Invalid log level. Must be one of: DEBUG, INFO, WARNING, ERROR, CRITICAL."
+            )
     else:
         raise ValueError("Invalid log level. Must be a string or an integer.")
 
@@ -59,17 +60,17 @@ def convert_log_level(value: str | int) -> int:
         "INFO": logging.INFO,
         "WARNING": logging.WARNING,
         "ERROR": logging.ERROR,
-        "CRITICAL": logging.CRITICAL
+        "CRITICAL": logging.CRITICAL,
     }
     return log_levels.get(value.upper(), logging.DEBUG) if isinstance(value, str) else value
 
 
-
 def check_config_yaml_version(value: str) -> str:
     if value != __version__:
-        raise ValueError(f"Config file version {value} does not match the program version {__version__}. Either update/re-generate your config.yaml file, or use the command line.")
+        raise ValueError(
+            f"Config file version {value} does not match the program version {__version__}. Either update/re-generate your config.yaml file, or use the command line."
+        )
     return value
-
 
 
 class Configs(BaseModel):
@@ -109,43 +110,50 @@ class Configs(BaseModel):
             Defaults to 60 seconds.
         pool_health_check_rate (int): Health check rate in seconds for checking resources in the Pools.
             Defaults to 30 seconds.
-        print_configs_on_startup (bool): Print the program configs to console on start-up. Sensitive values like API keys will be [REDACTED]. 
+        print_configs_on_startup (bool): Print the program configs to console on start-up. Sensitive values like API keys will be [REDACTED].
             Defaults to False.
     """
+
     # Paths
-    input_folder:            DirectoryPath = Field(default="input")
-    output_folder:           DirectoryPath = Field(default="output")
-    config_yaml:             FilePath      = Field(default="config.yaml")
-    
-    max_program_memory:      int = Field(default=1024, ge=128, le=16384, # Between 128MB and 16GB
-                                        alias=AliasChoices('MAX_PROGRAM_MEMORY', 'max_program_memory')
-                                    )
+    input_folder: DirectoryPath = Field(default="input")
+    output_folder: DirectoryPath = Field(default="output")
+    config_yaml: FilePath = Field(default="config.yaml")
+
+    max_program_memory: int = Field(
+        default=1024,
+        ge=128,
+        le=16384,  # Between 128MB and 16GB
+        alias=AliasChoices("MAX_PROGRAM_MEMORY", "max_program_memory"),
+    )
     max_connections_per_api: int = Field(default=3, ge=1, le=10)
-    max_cpu_cores:           int = Field(default=4, ge=1, le=32)
-    conversion_timeout:      int = Field(default=30, ge=1, le=300)  # Between 1 and 300 seconds
-    max_workers:             int = Field(default=4, ge=1)
-    max_queue_size:          int = Field(default=1024, ge=1, le=4096)
-    batch_size:              int = Field(default=1024, ge=1, le=4096, alias='batch_size')
-    pool_refresh_rate:       int = Field(default=60, ge=1, le=3600)  # Between 1 second and 1 hour
-    pool_health_check_rate:  int = Field(default=30, ge=1, le=1800)  # Between 1 second and 30 minutes
-    concurrency_limit:       int = Field(default=10, ge=1, le=100)
-    
-    budget_in_usd:           float = Field(default=25.0, ge=0.0)
+    max_cpu_cores: int = Field(default=4, ge=1, le=32)
+    conversion_timeout: int = Field(default=30, ge=1, le=300)  # Between 1 and 300 seconds
+    max_workers: int = Field(default=4, ge=1)
+    max_queue_size: int = Field(default=1024, ge=1, le=4096)
+    batch_size: int = Field(default=1024, ge=1, le=4096, alias="batch_size")
+    pool_refresh_rate: int = Field(default=60, ge=1, le=3600)  # Between 1 second and 1 hour
+    pool_health_check_rate: int = Field(
+        default=30, ge=1, le=1800
+    )  # Between 1 second and 30 minutes
+    concurrency_limit: int = Field(default=10, ge=1, le=100)
 
-    api_key:                 SecretStr = Field(default="abcde123456", min_length=8)
-    api_url:                 str       = Field(default="http://www.example.com")
-    docintel_endpoint:       str       = Field(default="http://www.example2.com")
+    budget_in_usd: float = Field(default=25.0, ge=0.0)
 
-    log_level:     Annotated[str | int, AV(convert_log_level)]   = Field(default=logging.DEBUG)
-    version:       Annotated[str, AV(check_config_yaml_version)] = Field(default=__version__, pattern=r"^\d+\.\d+\.\d+$")
+    api_key: SecretStr = Field(default="abcde123456", min_length=8)
+    api_url: str = Field(default="http://www.example.com")
+    docintel_endpoint: str = Field(default="http://www.example2.com")
 
-    use_docintel:             bool = Field(default=False)
+    log_level: Annotated[str | int, AV(convert_log_level)] = Field(default=logging.DEBUG)
+    version: Annotated[str, AV(check_config_yaml_version)] = Field(
+        default=__version__, pattern=r"^\d+\.\d+\.\d+$"
+    )
+
+    use_docintel: bool = Field(default=False)
     print_configs_on_startup: bool = Field(default=False)
 
-    _logger:           Logger = PrivateAttr(default=None)
-    _can_use_llm:      bool = PrivateAttr(default=True)
+    _logger: Logger = PrivateAttr(default=None)
+    _can_use_llm: bool = PrivateAttr(default=True)
     _can_use_docintel: bool = PrivateAttr(default=True)
-
 
     def __init__(self, **data):
         keys_to_check = ["docintel_endpoint", "api_url", "api_key", "log_level"]
@@ -154,20 +162,26 @@ class Configs(BaseModel):
 
         super().__init__(**data)
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def check_for_mock_api_values(self) -> Self:
         if self.api_url == "http://www.example.com":
-            print("WARNING: The default LLM API URL is NOT a valid API endpoint. Please update the config file with an actual LLM API endpoint.")
+            print(
+                "WARNING: The default LLM API URL is NOT a valid API endpoint. Please update the config file with an actual LLM API endpoint."
+            )
             self._can_use_llm = False
         if self.api_url == "abcde123456":
-            print("WARNING: The default LLM API key is NOT a valid API key. Please update the config file with an actual LLM API key.")
+            print(
+                "WARNING: The default LLM API key is NOT a valid API key. Please update the config file with an actual LLM API key."
+            )
             self._can_use_llm = False
         return self
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def check_for_docintel_endpoint(self) -> Self:
         if self.use_docintel is True and self.docintel_endpoint == "http://www.example2.com":
-            print("WARNING: The default Document Intelligence Endpoint is NOT a valid endpoint. Please update the config file with an actual Document Intelligence Endpoint.")
+            print(
+                "WARNING: The default Document Intelligence Endpoint is NOT a valid endpoint. Please update the config file with an actual Document Intelligence Endpoint."
+            )
             self._can_use_docintel = False
         return self
 
@@ -182,7 +196,6 @@ class Configs(BaseModel):
     # @property
     # def logger(self) -> Logger:
     #     return self._logger
-
 
     # def make_logger(self, name: str, log_level: Optional[int] = None) -> Logger:
     #     """
@@ -200,7 +213,6 @@ class Configs(BaseModel):
     #     self._logger = Logger(name, _log_level)
     #     return self._logger
 
-
     # def make_duck_db(self, db_path: Optional[Path] = None) -> DuckDBPyConnection:
     #     """
     #     Create and return a DuckDB connection.
@@ -213,5 +225,6 @@ class Configs(BaseModel):
     #     """
     #     _path = db_path if db_path is not None else ':memory:'
     #     return duckdb.connect(_path)
-    
+
+
 configs = Configs()

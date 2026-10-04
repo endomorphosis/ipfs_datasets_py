@@ -16,26 +16,30 @@ from .registry import StateScraperRegistry
 class NebraskaScraper(BaseStateScraper):
     """Scraper for Nebraska state laws from https://nebraskalegislature.gov"""
 
-    _NE_CHAPTER_URL_RE = re.compile(r"/laws/browse-chapters\.php\?chapter=\d+[A-Za-z]?$", re.IGNORECASE)
+    _NE_CHAPTER_URL_RE = re.compile(
+        r"/laws/browse-chapters\.php\?chapter=\d+[A-Za-z]?$", re.IGNORECASE
+    )
     # Nebraska section identifiers frequently include comma-delimited numeric
     # segments (for example, "2-32,113"). Accept those formats so full-corpus
     # scans do not silently drop valid sections.
     _NE_SECTION_NUMBER_RE = re.compile(
         r"^\d+[A-Za-z]?(?:-\d{1,3}(?:,\d{3})*[A-Za-z]?)+(?:\.\d+)?[A-Za-z]?$"
     )
-    
+
     def get_base_url(self) -> str:
         """Return the base URL for Nebraska's legislative website."""
         return "https://nebraskalegislature.gov"
-    
+
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for Nebraska."""
-        return [{
-            "name": "Nebraska Revised Statutes",
-            "url": f"{self.get_base_url()}/laws/browse-statutes.php",
-            "type": "Code"
-        }]
-    
+        return [
+            {
+                "name": "Nebraska Revised Statutes",
+                "url": f"{self.get_base_url()}/laws/browse-statutes.php",
+                "type": "Code",
+            }
+        ]
+
     async def scrape_code(
         self,
         code_name: str,
@@ -43,11 +47,11 @@ class NebraskaScraper(BaseStateScraper):
         max_statutes: Optional[int] = None,
     ) -> List[NormalizedStatute]:
         """Scrape a specific code from Nebraska's legislative website.
-        
+
         Args:
             code_name: Name of the code to scrape
             code_url: URL of the code
-            
+
         Returns:
             List of NormalizedStatute objects
         """
@@ -63,7 +67,9 @@ class NebraskaScraper(BaseStateScraper):
             if direct:
                 return direct[: int(limit)]
         fallback_limit = max(10, int(limit if limit != 1000000 else 40))
-        return await self._generic_scrape(code_name, code_url, "Neb. Rev. Stat.", max_sections=fallback_limit)
+        return await self._generic_scrape(
+            code_name, code_url, "Neb. Rev. Stat.", max_sections=fallback_limit
+        )
 
     async def _scrape_official_index(
         self,
@@ -103,8 +109,12 @@ class NebraskaScraper(BaseStateScraper):
             )
         resume_chapters_scanned = max(0, int(checkpoint_progress.get("chapters_scanned") or 0))
         resume_sections_scanned = max(0, int(checkpoint_progress.get("sections_scanned") or 0))
-        resume_discovered_sections = max(0, int(checkpoint_progress.get("discovered_sections") or 0))
-        chapter_rewind = max(0, int(self._env_int("STATE_SCRAPER_NE_RESUME_CHAPTER_REWIND", default=4)))
+        resume_discovered_sections = max(
+            0, int(checkpoint_progress.get("discovered_sections") or 0)
+        )
+        chapter_rewind = max(
+            0, int(self._env_int("STATE_SCRAPER_NE_RESUME_CHAPTER_REWIND", default=4))
+        )
         resume_chapter_floor = max(0, resume_chapters_scanned - chapter_rewind)
         sections_scanned_total = int(max(len(statutes), resume_sections_scanned))
         sections_discovered_total = int(max(len(statutes), resume_discovered_sections))
@@ -139,6 +149,7 @@ class NebraskaScraper(BaseStateScraper):
                     len(section_urls),
                     len(statutes),
                 )
+
             def _progress_hook(
                 scanned_sections: int,
                 total_sections: int,
@@ -166,6 +177,7 @@ class NebraskaScraper(BaseStateScraper):
                             "codes_total": 1,
                         },
                     )
+
             parsed = await self._scrape_section_urls(
                 code_name,
                 section_urls,
@@ -213,7 +225,9 @@ class NebraskaScraper(BaseStateScraper):
         )
         return statutes[:limit] if limit is not None else statutes
 
-    async def _scrape_direct_seed_sections(self, code_name: str, max_statutes: int = 2) -> List[NormalizedStatute]:
+    async def _scrape_direct_seed_sections(
+        self, code_name: str, max_statutes: int = 2
+    ) -> List[NormalizedStatute]:
         seeds = [
             ("1-101", f"{self.get_base_url()}/laws/statutes.php?statute=1-101"),
             ("28-303", f"{self.get_base_url()}/laws/statutes.php?statute=28-303"),
@@ -241,7 +255,10 @@ class NebraskaScraper(BaseStateScraper):
         for anchor in soup.find_all("a", href=True):
             href = str(anchor.get("href") or "").strip()
             absolute = urljoin(browse_url, href)
-            if not self._NE_CHAPTER_URL_RE.search(urlparse(absolute).path + ("?" + urlparse(absolute).query if urlparse(absolute).query else "")):
+            if not self._NE_CHAPTER_URL_RE.search(
+                urlparse(absolute).path
+                + ("?" + urlparse(absolute).query if urlparse(absolute).query else "")
+            ):
                 continue
             if absolute in seen:
                 continue
@@ -316,12 +333,16 @@ class NebraskaScraper(BaseStateScraper):
             for tag in statute_panel(["script", "style", "nav", "header", "footer", "aside"]):
                 tag.decompose()
             heading_node = statute_panel.find("h2") or statute_panel.find("h1") or statute_panel
-            section_number = self._normalize_legal_text(heading_node.get_text(" ", strip=True)).rstrip(".")
+            section_number = self._normalize_legal_text(
+                heading_node.get_text(" ", strip=True)
+            ).rstrip(".")
             if not self._NE_SECTION_NUMBER_RE.match(section_number):
                 section_number = self._section_number_from_url(source_url)
             if not self._NE_SECTION_NUMBER_RE.match(section_number):
                 return None
-            section_name = self._normalize_legal_text((statute_panel.find("h3") or statute_panel).get_text(" ", strip=True))
+            section_name = self._normalize_legal_text(
+                (statute_panel.find("h3") or statute_panel).get_text(" ", strip=True)
+            )
             full_text = self._normalize_legal_text(statute_panel.get_text(" ", strip=True))
             if not section_name:
                 section_name = f"Section {section_number}"

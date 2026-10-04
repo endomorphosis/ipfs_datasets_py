@@ -4,14 +4,14 @@ DEPRECATED: OCR Engine module.
 This module has been deprecated and moved to processors.specialized.pdf.
 
 .. deprecated:: 1.9.0
-   This module is deprecated. Use OCR engines from 
-   processors.specialized.pdf instead. This file will be removed 
+   This module is deprecated. Use OCR engines from
+   processors.specialized.pdf instead. This file will be removed
    in v2.0.0 (August 2026).
 
 Migration:
     OLD:
         from ipfs_datasets_py.processors.ocr_engine import OCREngine, MultiEngineOCR
-    
+
     NEW:
         from ipfs_datasets_py.processors.specialized.pdf import OCREngine, MultiEngineOCR
 
@@ -27,7 +27,7 @@ warnings.warn(
     "This import will be removed in v2.0.0 (August 2026). "
     "See docs/PROCESSORS_REFACTORING_MIGRATION_GUIDE.md for details.",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 
 # Import from new location for backward compatibility
@@ -50,10 +50,10 @@ except ImportError:
     MultiEngineOCR = None
 
 __all__ = [
-    'OCREngine',
-    'SuryaOCR',
-    'TesseractOCR',
-    'EasyOCR',
-    'TrOCREngine',
-    'MultiEngineOCR',
+    "OCREngine",
+    "SuryaOCR",
+    "TesseractOCR",
+    "EasyOCR",
+    "TrOCREngine",
+    "MultiEngineOCR",
 ]

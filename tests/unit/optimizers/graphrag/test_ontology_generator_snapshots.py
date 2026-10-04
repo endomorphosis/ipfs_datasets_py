@@ -50,11 +50,18 @@ class TestEntityExtractionResultSnapshots:
             Entity(id="e3", text="ACME Corp", type="Organization", confidence=0.87),
         ]
         relationships = [
-            Relationship(id="r1", source_id="e1", target_id="e3", type="works_for", confidence=0.92),
-            Relationship(id="r2", source_id="e2", target_id="e3", type="works_for", confidence=0.88),
+            Relationship(
+                id="r1", source_id="e1", target_id="e3", type="works_for", confidence=0.92
+            ),
+            Relationship(
+                id="r2", source_id="e2", target_id="e3", type="works_for", confidence=0.88
+            ),
             Relationship(id="r3", source_id="e1", target_id="e2", type="knows", confidence=0.75),
         ]
-        result = EntityExtractionResult( entities=entities, relationships=relationships, confidence=0.91, 
+        result = EntityExtractionResult(
+            entities=entities,
+            relationships=relationships,
+            confidence=0.91,
         )
 
         # Convert to JSON-serializable format
@@ -64,8 +71,10 @@ class TestEntityExtractionResultSnapshots:
             "overall_confidence": result.confidence,
             "entity_types": sorted(set(e.type for e in result.entities)),
             "relationship_types": sorted(set(r.type for r in result.relationships)),
-            "avg_entity_confidence": sum(e.confidence for e in result.entities) / len(result.entities),
-            "avg_relationship_confidence": sum(r.confidence for r in result.relationships) / len(result.relationships),
+            "avg_entity_confidence": sum(e.confidence for e in result.entities)
+            / len(result.entities),
+            "avg_relationship_confidence": sum(r.confidence for r in result.relationships)
+            / len(result.relationships),
         }
 
         # Compare with snapshot
@@ -80,15 +89,18 @@ class TestEntityExtractionResultSnapshots:
     def test_large_extraction_snapshot(self):
         """Snapshot of larger extraction result."""
         # Create 50 entities and 100 relationships
-        entities = [Entity(id=f"e{i}", text=f"Entity_{i}", type="Entity", confidence=0.85 + i*0.001) for i in range(50)]
+        entities = [
+            Entity(id=f"e{i}", text=f"Entity_{i}", type="Entity", confidence=0.85 + i * 0.001)
+            for i in range(50)
+        ]
         relationships = [
             Relationship(
-                id=f"r{j}", 
-                source_id=f"e{j % 50}", 
-                target_id=f"e{(j+1) % 50}", 
-                type="related_to", 
-                confidence=0.80 + (j % 20) * 0.01
-            ) 
+                id=f"r{j}",
+                source_id=f"e{j % 50}",
+                target_id=f"e{(j + 1) % 50}",
+                type="related_to",
+                confidence=0.80 + (j % 20) * 0.01,
+            )
             for j in range(100)
         ]
         result = EntityExtractionResult(
@@ -119,7 +131,7 @@ class TestEntityExtractionResultSnapshots:
         """Snapshot of extraction with rich metadata."""
         entities = [Entity(id="e1", text="Test", type="Test", confidence=0.9)]
         relationships = []
-        
+
         metadata = {
             "source_file": "test.txt",
             "processing_time_ms": 123.45,
@@ -134,7 +146,7 @@ class TestEntityExtractionResultSnapshots:
                 "merge_count": 2,
             },
         }
-        
+
         result = EntityExtractionResult(
             entities=entities,
             relationships=relationships,
@@ -166,15 +178,23 @@ class TestEntityExtractionResultSnapshots:
             Entity(id="e4", text="NYC", type="Location", confidence=0.92),
         ]
         relationships = [
-            Relationship(id="r1", source_id="e1", target_id="e3", type="works_for", confidence=0.92),
-            Relationship(id="r2", source_id="e1", target_id="e4", type="located_in", confidence=0.88),
-            Relationship(id="r3", source_id="e3", target_id="e4", type="located_in", confidence=0.85),
+            Relationship(
+                id="r1", source_id="e1", target_id="e3", type="works_for", confidence=0.92
+            ),
+            Relationship(
+                id="r2", source_id="e1", target_id="e4", type="located_in", confidence=0.88
+            ),
+            Relationship(
+                id="r3", source_id="e3", target_id="e4", type="located_in", confidence=0.85
+            ),
         ]
-        result = EntityExtractionResult(entities=entities, relationships=relationships, confidence=0.91)
+        result = EntityExtractionResult(
+            entities=entities, relationships=relationships, confidence=0.91
+        )
 
         # Filter by Person type
         filtered = result.filter_by_type("Person")
-        
+
         snapshot_data = {
             "original_entity_count": len(result.entities),
             "filtered_entity_count": len(filtered.entities),
@@ -201,7 +221,7 @@ class TestEntityRelationshipSnapshots:
             Entity(id="e1", text="Alice", type="Person", confidence=0.95),
             Entity(id="e2", text="Acme Inc.", type="Organization", confidence=0.87),
         ]
-        
+
         snapshot_data = {
             "entity_text_formats": [e.to_text() for e in entities],
             "format_pattern_entity_matches": all("(" in e.to_text() for e in entities),
@@ -220,7 +240,7 @@ class TestEntityRelationshipSnapshots:
         e1 = Entity(id="e1", text="Alice", type="Person", confidence=0.95)
         e2 = Entity(id="e1", text="Alice", type="Person", confidence=0.95)
         e3 = Entity(id="e1", text="Alice", type="Person", confidence=0.90)  # Different confidence
-        
+
         snapshot_data = {
             "e1_equals_e2": e1 == e2,
             "e1_not_equals_e3": e1 != e3,
@@ -250,14 +270,16 @@ class TestRelationshipSnapshots:
             confidence=0.92,
             direction="subject_to_object",
         )
-        
+
         rel_dict = rel.to_dict()
         snapshot_data = {
             "dict_keys": sorted(rel_dict.keys()),
             "has_all_fields": all(
-                k in rel_dict for k in ["id", "source_id", "target_id", "type", "confidence", "direction"]
+                k in rel_dict
+                for k in ["id", "source_id", "target_id", "type", "confidence", "direction"]
             ),
-            "properties_preserved": rel_dict.get("properties") == {"strength": 0.8, "context": "colleagues"},
+            "properties_preserved": rel_dict.get("properties")
+            == {"strength": 0.8, "context": "colleagues"},
         }
 
         snapshot = load_snapshot("relationship_to_dict")

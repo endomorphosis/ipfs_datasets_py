@@ -125,15 +125,18 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
+
 class DeonticOp(str, Enum):
     O = "O"
     P = "P"
     F = "F"
 
+
 class FrameKind(str, Enum):
     ACTION = "action"
     EVENT = "event"
     STATE = "state"
+
 
 class TemporalRelation(str, Enum):
     BEFORE = "before"
@@ -141,6 +144,7 @@ class TemporalRelation(str, Enum):
     WITHIN = "within"
     BY = "by"
     DURING = "during"
+
 
 @dataclass(frozen=True)
 class CanonicalId:
@@ -150,17 +154,20 @@ class CanonicalId:
     def ref(self) -> str:
         return f"{self.namespace}:{self.value}"
 
+
 @dataclass
 class SourceRef:
     source_id: str
     sentence_text: str
     sentence_span: Optional[str] = None
 
+
 @dataclass
 class Entity:
     id: CanonicalId
     type_name: str
     attrs: Dict[str, Any] = field(default_factory=dict)
+
 
 @dataclass
 class TemporalExpr:
@@ -169,12 +176,14 @@ class TemporalExpr:
     end: Optional[str] = None
     duration: Optional[str] = None
 
+
 @dataclass
 class TemporalConstraint:
     id: CanonicalId
     relation: TemporalRelation
     expr: TemporalExpr
     anchor_ref: Optional[str] = None
+
 
 @dataclass
 class Frame:
@@ -184,10 +193,12 @@ class Frame:
     roles: Dict[str, str] = field(default_factory=dict)
     attrs: Dict[str, Any] = field(default_factory=dict)
 
+
 @dataclass
 class Atom:
     pred: str
     args: List[str] = field(default_factory=list)
+
 
 @dataclass
 class ConditionNode:
@@ -196,6 +207,7 @@ class ConditionNode:
     children: List["ConditionNode"] = field(default_factory=list)
     var: Optional[str] = None
     var_type: Optional[str] = None
+
 
 @dataclass
 class Norm:
@@ -206,6 +218,7 @@ class Norm:
     exceptions: List[ConditionNode] = field(default_factory=list)
     temporal_ref: Optional[str] = None
     priority: int = 0
+
 
 @dataclass
 class LegalIR:
@@ -515,7 +528,9 @@ handle_query(query, time_context):
 ```python
 def check_compliance(query: dict, time_context: dict) -> dict: ...
 
+
 def find_violations(state: dict, time_range: tuple[str, str]) -> dict: ...
+
 
 def explain_proof(proof_id: str, format: str = "nl") -> dict: ...
 ```

@@ -81,7 +81,7 @@ from ipfs_datasets_py.logic.TDFOL.tdfol_prover import ProofResult
 visualizer = ProofTreeVisualizer(proof_result)
 
 # ASCII output (terminal-friendly)
-print(visualizer.render_ascii(style='detailed', colors=True))
+print(visualizer.render_ascii(style="detailed", colors=True))
 
 # Export to DOT file
 visualizer.export_dot("proof.dot")
@@ -102,12 +102,12 @@ visualizer.export_json("proof.json")
 from ipfs_datasets_py.logic.TDFOL.proof_tree_visualizer import visualize_proof
 
 # Quick ASCII output
-print(visualize_proof(proof_result, output_format='ascii', colors=True))
+print(visualize_proof(proof_result, output_format="ascii", colors=True))
 
 # Quick file export
-visualize_proof(proof_result, output_format='svg', output_path='proof.svg')
-visualize_proof(proof_result, output_format='html', output_path='proof.html')
-visualize_proof(proof_result, output_format='json', output_path='proof.json')
+visualize_proof(proof_result, output_format="svg", output_path="proof.svg")
+visualize_proof(proof_result, output_format="html", output_path="proof.html")
+visualize_proof(proof_result, output_format="json", output_path="proof.json")
 ```
 
 ### Advanced Usage
@@ -116,26 +116,19 @@ visualize_proof(proof_result, output_format='json', output_path='proof.json')
 from ipfs_datasets_py.logic.TDFOL.proof_tree_visualizer import (
     ProofTreeVisualizer,
     VerbosityLevel,
-    TreeStyle
+    TreeStyle,
 )
 
 # Create visualizer with custom verbosity
-visualizer = ProofTreeVisualizer(
-    proof_result,
-    verbosity=VerbosityLevel.DETAILED
-)
+visualizer = ProofTreeVisualizer(proof_result, verbosity=VerbosityLevel.DETAILED)
 
 # Render with specific style and width
-ascii_output = visualizer.render_ascii(
-    style='detailed',
-    colors=True,
-    max_width=120
-)
+ascii_output = visualizer.render_ascii(style="detailed", colors=True, max_width=120)
 
 # Get JSON for programmatic access
 json_data = visualizer.to_json()
-tree_structure = json_data['tree']
-proof_steps = json_data['steps']
+tree_structure = json_data["tree"]
+proof_steps = json_data["steps"]
 ```
 
 ## Output Formats
@@ -260,6 +253,7 @@ class ProofTreeVisualizer:
 ```python
 class NodeType(Enum):
     """Type of node in proof tree."""
+
     AXIOM = "axiom"
     PREMISE = "premise"
     INFERRED = "inferred"
@@ -268,14 +262,18 @@ class NodeType(Enum):
     CONTRADICTION = "contradiction"
     LEMMA = "lemma"
 
+
 class TreeStyle(Enum):
     """Style for ASCII rendering."""
+
     COMPACT = "compact"
     EXPANDED = "expanded"
     DETAILED = "detailed"
 
+
 class VerbosityLevel(Enum):
     """Verbosity level."""
+
     MINIMAL = "minimal"
     NORMAL = "normal"
     DETAILED = "detailed"
@@ -310,42 +308,40 @@ from ipfs_datasets_py.logic.TDFOL.tdfol_prover import ProofResult, ProofStatus, 
 from ipfs_datasets_py.logic.TDFOL.proof_tree_visualizer import visualize_proof
 
 # Create a simple proof: A, B ⊢ A ∧ B
-step1 = ProofStep(
-    formula=Predicate("A", []),
-    justification="Axiom A",
-    rule_name="Axiom"
-)
+step1 = ProofStep(formula=Predicate("A", []), justification="Axiom A", rule_name="Axiom")
 
-step2 = ProofStep(
-    formula=Predicate("B", []),
-    justification="Axiom B",
-    rule_name="Axiom"
-)
+step2 = ProofStep(formula=Predicate("B", []), justification="Axiom B", rule_name="Axiom")
 
 step3 = ProofStep(
     formula=BinaryFormula(LogicOperator.AND, Predicate("A", []), Predicate("B", [])),
     justification="Conjunction of A and B",
     rule_name="AND-Introduction",
-    premises=[step1.formula, step2.formula]
+    premises=[step1.formula, step2.formula],
 )
 
 proof = ProofResult(
     status=ProofStatus.PROVED,
     formula=step3.formula,
     proof_steps=[step1, step2, step3],
-    method="forward_chaining"
+    method="forward_chaining",
 )
 
 # Visualize
-print(visualize_proof(proof, output_format='ascii', colors=True))
+print(visualize_proof(proof, output_format="ascii", colors=True))
 ```
 
 ### Example 2: TDFOL Proof with Temporal-Deontic Operators
 
 ```python
 from ipfs_datasets_py.logic.TDFOL.tdfol_core import (
-    Predicate, Variable, DeonticFormula, DeonticOperator,
-    TemporalFormula, TemporalOperator, BinaryFormula, LogicOperator
+    Predicate,
+    Variable,
+    DeonticFormula,
+    DeonticOperator,
+    TemporalFormula,
+    TemporalOperator,
+    BinaryFormula,
+    LogicOperator,
 )
 from ipfs_datasets_py.logic.TDFOL.proof_tree_visualizer import ProofTreeVisualizer
 
@@ -355,7 +351,7 @@ from ipfs_datasets_py.logic.TDFOL.proof_tree_visualizer import ProofTreeVisualiz
 visualizer = ProofTreeVisualizer(proof)
 
 # Multiple outputs
-print(visualizer.render_ascii(style='detailed', colors=True))
+print(visualizer.render_ascii(style="detailed", colors=True))
 visualizer.export_dot("agent_proof.dot")
 visualizer.render_html("agent_proof.html", interactive=True)
 visualizer.export_json("agent_proof.json")
@@ -376,16 +372,18 @@ print(f"Proof method: {json_data['method']}")
 print(f"Time: {json_data['time_ms']:.2f} ms")
 
 # Extract inference rules used
-rules = [step['rule_name'] for step in json_data['steps']]
+rules = [step["rule_name"] for step in json_data["steps"]]
 print(f"Rules used: {', '.join(rules)}")
+
 
 # Analyze tree depth
 def get_depth(node):
-    if not node['premises']:
+    if not node["premises"]:
         return 1
-    return 1 + max(get_depth(p) for p in node['premises'])
+    return 1 + max(get_depth(p) for p in node["premises"])
 
-depth = get_depth(json_data['tree'])
+
+depth = get_depth(json_data["tree"])
 print(f"Proof tree depth: {depth}")
 ```
 

@@ -156,7 +156,10 @@ class GraphQueryExecutor:
                 while len(collected) < target:
                     check_timeout()
                     request_n = target - len(collected)
-                    if getattr(budgets, "page_size_scan_type", 0) and budgets.page_size_scan_type > 0:
+                    if (
+                        getattr(budgets, "page_size_scan_type", 0)
+                        and budgets.page_size_scan_type > 0
+                    ):
                         request_n = min(request_n, int(budgets.page_size_scan_type))
                     page = self._backend.scan_type(
                         op.entity_type,
@@ -229,7 +232,10 @@ class GraphQueryExecutor:
                             break
 
                         request_n = remaining
-                        if getattr(budgets, "page_size_neighbors", 0) and budgets.page_size_neighbors > 0:
+                        if (
+                            getattr(budgets, "page_size_neighbors", 0)
+                            and budgets.page_size_neighbors > 0
+                        ):
                             request_n = min(request_n, int(budgets.page_size_neighbors))
                         page = self._backend.neighbors(
                             eid,
@@ -263,7 +269,10 @@ class GraphQueryExecutor:
                                     limit=max_ws,
                                     detail="expand",
                                 )
-                            if limit_after_expand is not None and len(next_ids) >= limit_after_expand:
+                            if (
+                                limit_after_expand is not None
+                                and len(next_ids) >= limit_after_expand
+                            ):
                                 stop_early = True
                                 break
 

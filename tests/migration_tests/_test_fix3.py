@@ -10,28 +10,36 @@ from collections import defaultdict
 
 # Import the module
 sys.path.append(os.getcwd())
-from ipfs_datasets_py.rag.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer, GraphRAGQueryOptimizer, GraphRAGQueryStats
+from ipfs_datasets_py.rag.rag_query_optimizer import (
+    UnifiedGraphRAGQueryOptimizer,
+    GraphRAGQueryOptimizer,
+    GraphRAGQueryStats,
+)
+
 
 class NoneReturningOptimizer(GraphRAGQueryOptimizer):
     """A test optimizer that returns None from optimize_query."""
 
     def optimize_query(self, *args, **kwargs):
-        print('NoneReturningOptimizer.optimize_query called - returning None')
+        print("NoneReturningOptimizer.optimize_query called - returning None")
         return None  # This will trigger our safety check
+
 
 class MockMetricsCollector:
     """Mock metrics collector for testing."""
 
     def start_query_tracking(self, *args, **kwargs):
         print("start_query_tracking called")
-        return 'test-id-123'
+        return "test-id-123"
 
     def time_phase(self, *args, **kwargs):
         class TimerContext:
             def __enter__(self):
                 return self
+
             def __exit__(self, *args):
                 pass
+
         return TimerContext()
 
     def record_additional_metric(self, *args, **kwargs):
@@ -40,22 +48,25 @@ class MockMetricsCollector:
     def end_query_tracking(self, *args, **kwargs):
         pass
 
+
 class MockBudgetManager:
     """Mock budget manager for testing."""
 
     def allocate_budget(self, *args, **kwargs):
         return {
-            'vector_search_ms': 500,
-            'graph_traversal_ms': 1000,
-            'ranking_ms': 100,
-            'max_nodes': 100
+            "vector_search_ms": 500,
+            "graph_traversal_ms": 1000,
+            "ranking_ms": 100,
+            "max_nodes": 100,
         }
+
 
 class MockRewriter:
     """Mock query rewriter for testing."""
 
     def rewrite_query(self, query, *args, **kwargs):
         return query
+
 
 class TestOptimizer(UnifiedGraphRAGQueryOptimizer):
     """A test version of UnifiedGraphRAGQueryOptimizer."""
@@ -64,11 +75,11 @@ class TestOptimizer(UnifiedGraphRAGQueryOptimizer):
         # Initialize with mocks
         self.metrics_collector = MockMetricsCollector()
         self._traversal_stats = {
-            'paths_explored': [],
-            'path_scores': {},
-            'entity_frequency': defaultdict(int),
-            'entity_connectivity': {},
-            'relation_usefulness': defaultdict(float)
+            "paths_explored": [],
+            "path_scores": {},
+            "entity_frequency": defaultdict(int),
+            "entity_connectivity": {},
+            "relation_usefulness": defaultdict(float),
         }
         self.query_stats = GraphRAGQueryStats()
         self.budget_manager = MockBudgetManager()
@@ -78,9 +89,9 @@ class TestOptimizer(UnifiedGraphRAGQueryOptimizer):
         none_optimizer = NoneReturningOptimizer()
         self.base_optimizer = none_optimizer
         self._specific_optimizers = {
-            'general': none_optimizer,
-            'wikipedia': none_optimizer,
-            'ipld': none_optimizer
+            "general": none_optimizer,
+            "wikipedia": none_optimizer,
+            "ipld": none_optimizer,
         }
 
         # Other required attributes
@@ -89,16 +100,17 @@ class TestOptimizer(UnifiedGraphRAGQueryOptimizer):
         self.last_query_id = None
 
     def detect_graph_type(self, query):
-        return 'general'
+        return "general"
 
     def _detect_entity_types(self, query_text, predefined_types=None):
-        return ['concept', 'topic']
+        return ["concept", "topic"]
 
     def optimize_traversal_path(self, query, graph_processor):
         return query
 
     def _estimate_query_complexity(self, query):
-        return 'medium'
+        return "medium"
+
 
 def test_fixed_optimizer():
     """Test that the fixed optimizer never returns None."""
@@ -108,9 +120,9 @@ def test_fixed_optimizer():
 
     # Create a test query with vector
     test_query = {
-        'query_text': 'test query',
-        'query_vector': np.array([0.1, 0.2, 0.3]),
-        'traversal': {'max_depth': 2}
+        "query_text": "test query",
+        "query_vector": np.array([0.1, 0.2, 0.3]),
+        "traversal": {"max_depth": 2},
     }
 
     # Call optimize_query - should return fallback plan, not None
@@ -129,6 +141,7 @@ def test_fixed_optimizer():
         print("FAILURE: optimize_query returned None")
 
     return success
+
 
 if __name__ == "__main__":
     # Run the test

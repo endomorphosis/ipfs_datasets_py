@@ -20,30 +20,21 @@
 ### Example 1: Simple Entity and Relationship Extraction
 
 ```python
-from ipfs_datasets_py.knowledge_graphs.extraction import (
-    Entity, Relationship, KnowledgeGraph
-)
+from ipfs_datasets_py.knowledge_graphs.extraction import Entity, Relationship, KnowledgeGraph
 
 # Create entities
 person = Entity(
     entity_type="person",
     name="Marie Curie",
-    properties={
-        "birth_year": "1867",
-        "nationality": "Polish",
-        "field": "Physics"
-    },
-    confidence=0.95
+    properties={"birth_year": "1867", "nationality": "Polish", "field": "Physics"},
+    confidence=0.95,
 )
 
 award = Entity(
     entity_type="award",
     name="Nobel Prize",
-    properties={
-        "field": "Physics",
-        "year": "1903"
-    },
-    confidence=0.98
+    properties={"field": "Physics", "year": "1903"},
+    confidence=0.98,
 )
 
 # Create relationship
@@ -52,7 +43,7 @@ won_award = Relationship(
     target_entity=award,
     relationship_type="WON",
     properties={"year": "1903", "shared_with": "Pierre Curie"},
-    confidence=0.92
+    confidence=0.92,
 )
 
 # Build knowledge graph
@@ -117,7 +108,7 @@ iPad, Mac computers, and Apple Watch. Tim Cook became CEO in 2011.
 kg_conservative = extractor.extract_knowledge_graph(
     text,
     extraction_temperature=0.2,  # Low - conservative
-    structure_temperature=0.3     # Flat structure
+    structure_temperature=0.3,  # Flat structure
 )
 print(f"Conservative: {len(kg_conservative.entities)} entities")
 
@@ -125,7 +116,7 @@ print(f"Conservative: {len(kg_conservative.entities)} entities")
 kg_balanced = extractor.extract_knowledge_graph(
     text,
     extraction_temperature=0.6,  # Medium - balanced
-    structure_temperature=0.5
+    structure_temperature=0.5,
 )
 print(f"Balanced: {len(kg_balanced.entities)} entities")
 
@@ -133,7 +124,7 @@ print(f"Balanced: {len(kg_balanced.entities)} entities")
 kg_detailed = extractor.extract_knowledge_graph(
     text,
     extraction_temperature=0.9,  # High - detailed
-    structure_temperature=0.8    # Rich hierarchies
+    structure_temperature=0.8,  # Rich hierarchies
 )
 print(f"Detailed: {len(kg_detailed.entities)} entities")
 ```
@@ -152,23 +143,21 @@ extractor = KnowledgeGraphExtractor()
 try:
     # Extract from Wikipedia page
     kg = extractor.extract_from_wikipedia(
-        page_title="Artificial Intelligence",
-        extraction_temperature=0.7,
-        structure_temperature=0.6
+        page_title="Artificial Intelligence", extraction_temperature=0.7, structure_temperature=0.6
     )
-    
+
     print(f"Extracted {len(kg.entities)} entities from Wikipedia")
-    
+
     # Get entities by type
     persons = kg.get_entities_by_type("person")
     organizations = kg.get_entities_by_type("organization")
-    
+
     print(f"Found {len(persons)} people and {len(organizations)} organizations")
-    
+
     # Save to file
     with open("ai_knowledge_graph.json", "w") as f:
         f.write(kg.to_json())
-        
+
 except ValueError as e:
     print(f"Page not found: {e}")
 except RuntimeError as e:
@@ -187,26 +176,23 @@ documents = [
     {
         "text": "Python is a high-level programming language created by Guido van Rossum.",
         "source": "doc1.txt",
-        "date": "2024-01-15"
+        "date": "2024-01-15",
     },
     {
         "text": "Guido van Rossum started working on Python in 1989 while at CWI in the Netherlands.",
         "source": "doc2.txt",
-        "date": "2024-01-16"
+        "date": "2024-01-16",
     },
     {
         "text": "Python is widely used in data science, web development, and artificial intelligence.",
         "source": "doc3.txt",
-        "date": "2024-01-17"
-    }
+        "date": "2024-01-17",
+    },
 ]
 
 # Extract and merge knowledge from all documents
 kg = extractor.extract_from_documents(
-    documents,
-    text_key="text",
-    extraction_temperature=0.7,
-    structure_temperature=0.5
+    documents, text_key="text", extraction_temperature=0.7, structure_temperature=0.5
 )
 
 print(f"Merged knowledge graph: {len(kg.entities)} entities, {len(kg.relationships)} relationships")
@@ -221,14 +207,12 @@ print(f"Found {len(guido_entities)} entity/entities for Guido van Rossum")
 ```python
 from ipfs_datasets_py.knowledge_graphs.extraction import (
     KnowledgeGraphExtractor,
-    KnowledgeGraphExtractorWithValidation
+    KnowledgeGraphExtractorWithValidation,
 )
 
 # Option 1: Manual validation
 extractor = KnowledgeGraphExtractor()
-kg = extractor.extract_knowledge_graph(
-    "Albert Einstein developed the theory of relativity."
-)
+kg = extractor.extract_knowledge_graph("Albert Einstein developed the theory of relativity.")
 
 validation = extractor.validate_against_wikidata(kg, "Albert Einstein")
 print(f"Coverage: {validation['coverage']:.2%}")
@@ -236,13 +220,12 @@ print(f"Missing facts: {len(validation['missing_relationships'])}")
 
 # Option 2: Automatic validation during extraction
 validator = KnowledgeGraphExtractorWithValidation(
-    validate_during_extraction=True,
-    auto_correct_suggestions=True
+    validate_during_extraction=True, auto_correct_suggestions=True
 )
 
 result = validator.extract_knowledge_graph(
     "Albert Einstein developed the theory of relativity.",
-    validation_depth=2  # Validate entities and relationships
+    validation_depth=2,  # Validate entities and relationships
 )
 
 kg = result["knowledge_graph"]
@@ -269,22 +252,22 @@ custom_patterns = [
         "pattern": r"(\w+(?:\s+\w+)*)\s+develops?\s+(\w+(?:\s+\w+)*)",
         "source_type": "person",
         "target_type": "technology",
-        "confidence": 0.85
+        "confidence": 0.85,
     },
     {
         "name": "mentored_by",
         "pattern": r"(\w+(?:\s+\w+)*)\s+(?:was\s+)?mentored\s+by\s+(\w+(?:\s+\w+)*)",
         "source_type": "person",
         "target_type": "person",
-        "confidence": 0.90
+        "confidence": 0.90,
     },
     {
         "name": "leads_project",
         "pattern": r"(\w+(?:\s+\w+)*)\s+leads?\s+(?:the\s+)?(\w+(?:\s+\w+)*)\s+project",
         "source_type": "person",
         "target_type": "project",
-        "confidence": 0.88
-    }
+        "confidence": 0.88,
+    },
 ]
 
 # Create extractor with custom patterns
@@ -321,7 +304,7 @@ kg = extractor.extract_enhanced_knowledge_graph(
     large_text,
     use_chunking=True,  # Automatically chunks large texts
     extraction_temperature=0.7,
-    structure_temperature=0.6
+    structure_temperature=0.6,
 )
 
 print(f"Extracted: {len(kg.entities)} entities, {len(kg.relationships)} relationships")
@@ -337,9 +320,7 @@ print(f"Extracted: {len(kg.entities)} entities, {len(kg.relationships)} relation
 ### Example 9: Basic Graph Querying
 
 ```python
-from ipfs_datasets_py.knowledge_graphs.extraction import (
-    KnowledgeGraphExtractor, KnowledgeGraph
-)
+from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraphExtractor, KnowledgeGraph
 
 # Build a knowledge graph
 extractor = KnowledgeGraphExtractor()
@@ -360,7 +341,7 @@ for person in persons:
 marie = kg.get_entities_by_name("Marie Curie")
 if marie:
     marie_entity = marie[0]
-    
+
     # Get all relationships for Marie Curie
     marie_rels = kg.get_relationships_by_entity(marie_entity)
     print(f"\nMarie Curie's relationships: {len(marie_rels)}")
@@ -389,14 +370,14 @@ if len(entities) >= 2:
     # Find path between two entities
     source = entities[0]
     target = entities[-1]
-    
+
     path = kg.find_path(source.entity_id, target.entity_id, max_depth=5)
-    
+
     if path:
         print(f"Path from {source.name} to {target.name}:")
         for i, entity_id in enumerate(path):
             entity = kg.get_entity_by_id(entity_id)
-            print(f"  {i+1}. {entity.name}")
+            print(f"  {i + 1}. {entity.name}")
     else:
         print("No path found")
 ```
@@ -404,9 +385,7 @@ if len(entities) >= 2:
 ### Example 11: Graph Merging
 
 ```python
-from ipfs_datasets_py.knowledge_graphs.extraction import (
-    KnowledgeGraphExtractor, KnowledgeGraph
-)
+from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraphExtractor, KnowledgeGraph
 
 extractor = KnowledgeGraphExtractor()
 
@@ -441,7 +420,7 @@ if guido:
 ```python
 from ipfs_datasets_py.knowledge_graphs.extraction import (
     KnowledgeGraphExtractor,
-    KnowledgeGraphExtractorWithValidation
+    KnowledgeGraphExtractorWithValidation,
 )
 
 # Step 1: Extract knowledge graph
@@ -499,40 +478,32 @@ output_dir = "knowledge_graphs/"
 os.makedirs(output_dir, exist_ok=True)
 
 # Track statistics
-stats = {
-    "processed": 0,
-    "total_entities": 0,
-    "total_relationships": 0,
-    "errors": []
-}
+stats = {"processed": 0, "total_entities": 0, "total_relationships": 0, "errors": []}
 
 for filename in os.listdir(input_dir):
     if filename.endswith(".txt"):
         filepath = os.path.join(input_dir, filename)
-        
+
         try:
             # Read document
             with open(filepath, "r") as f:
                 text = f.read()
-            
+
             # Extract knowledge graph
             kg = extractor.extract_knowledge_graph(text)
-            
+
             # Save output
-            output_path = os.path.join(
-                output_dir,
-                filename.replace(".txt", "_kg.json")
-            )
+            output_path = os.path.join(output_dir, filename.replace(".txt", "_kg.json"))
             with open(output_path, "w") as f:
                 f.write(kg.to_json())
-            
+
             # Update statistics
             stats["processed"] += 1
             stats["total_entities"] += len(kg.entities)
             stats["total_relationships"] += len(kg.relationships)
-            
+
             print(f"✓ Processed {filename}: {len(kg.entities)} entities")
-            
+
         except Exception as e:
             stats["errors"].append({"file": filename, "error": str(e)})
             print(f"✗ Error processing {filename}: {e}")
@@ -551,9 +522,7 @@ print(f"  Errors: {len(stats['errors'])}")
 ### Example 14: Incremental Knowledge Building
 
 ```python
-from ipfs_datasets_py.knowledge_graphs.extraction import (
-    KnowledgeGraphExtractor, KnowledgeGraph
-)
+from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraphExtractor, KnowledgeGraph
 import json
 import os
 
@@ -576,17 +545,17 @@ new_information = [
     "John Smith joined the engineering team in 2023.",
     "The engineering team is developing a new product called ProjectX.",
     "ProjectX uses machine learning algorithms.",
-    "Sarah Johnson leads the engineering team."
+    "Sarah Johnson leads the engineering team.",
 ]
 
 # Incrementally add knowledge
 for info in new_information:
     # Extract from new information
     new_kg = extractor.extract_knowledge_graph(info)
-    
+
     # Merge into knowledge base
     kb.merge(new_kg)
-    
+
     print(f"Added: {info[:50]}...")
 
 # Save updated knowledge base
@@ -609,18 +578,13 @@ print(f"Teams: {len(team_entities)}, Projects: {len(project_entities)}")
 ### Example 15: Error Handling and Retry Logic
 
 ```python
-from ipfs_datasets_py.knowledge_graphs.extraction import (
-    KnowledgeGraphExtractor,
-    KnowledgeGraph
-)
+from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraphExtractor, KnowledgeGraph
 import time
 from typing import Optional
 
+
 def extract_with_retry(
-    text: str,
-    extractor: KnowledgeGraphExtractor,
-    max_retries: int = 3,
-    retry_delay: int = 2
+    text: str, extractor: KnowledgeGraphExtractor, max_retries: int = 3, retry_delay: int = 2
 ) -> Optional[KnowledgeGraph]:
     """
     Extract knowledge graph with retry logic.
@@ -640,8 +604,9 @@ def extract_with_retry(
         except Exception as e:
             print(f"Unexpected error: {e}")
             return None
-    
+
     return None
+
 
 # Usage
 extractor = KnowledgeGraphExtractor()
@@ -665,17 +630,15 @@ from datetime import datetime
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('kg_extraction.log'),
-        logging.StreamHandler()
-    ]
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[logging.FileHandler("kg_extraction.log"), logging.StreamHandler()],
 )
 logger = logging.getLogger(__name__)
 
+
 class MonitoredExtractor:
     """Wrapper for extraction with logging and metrics."""
-    
+
     def __init__(self):
         self.extractor = KnowledgeGraphExtractor()
         self.stats = {
@@ -683,37 +646,37 @@ class MonitoredExtractor:
             "total_entities": 0,
             "total_relationships": 0,
             "total_time": 0.0,
-            "errors": 0
+            "errors": 0,
         }
-    
+
     def extract(self, text: str, **kwargs):
         """Extract with monitoring."""
         start_time = time.time()
-        
+
         try:
             logger.info(f"Starting extraction for text of length {len(text)}")
-            
+
             kg = self.extractor.extract_knowledge_graph(text, **kwargs)
-            
+
             # Update statistics
             elapsed = time.time() - start_time
             self.stats["total_extractions"] += 1
             self.stats["total_entities"] += len(kg.entities)
             self.stats["total_relationships"] += len(kg.relationships)
             self.stats["total_time"] += elapsed
-            
+
             logger.info(
                 f"Extraction complete: {len(kg.entities)} entities, "
                 f"{len(kg.relationships)} relationships in {elapsed:.2f}s"
             )
-            
+
             return kg
-            
+
         except Exception as e:
             self.stats["errors"] += 1
             logger.error(f"Extraction failed: {e}", exc_info=True)
             raise
-    
+
     def get_stats(self):
         """Get extraction statistics."""
         if self.stats["total_extractions"] > 0:
@@ -722,12 +685,13 @@ class MonitoredExtractor:
         else:
             avg_time = 0
             avg_entities = 0
-        
+
         return {
             **self.stats,
             "avg_time_per_extraction": avg_time,
-            "avg_entities_per_extraction": avg_entities
+            "avg_entities_per_extraction": avg_entities,
         }
+
 
 # Usage
 extractor = MonitoredExtractor()
@@ -735,7 +699,7 @@ extractor = MonitoredExtractor()
 texts = [
     "Python is a programming language.",
     "JavaScript was created by Brendan Eich.",
-    "Ruby was designed by Yukihiro Matsumoto."
+    "Ruby was designed by Yukihiro Matsumoto.",
 ]
 
 for text in texts:
@@ -751,57 +715,57 @@ for key, value in stats.items():
 ### Example 17: Caching for Performance
 
 ```python
-from ipfs_datasets_py.knowledge_graphs.extraction import (
-    KnowledgeGraphExtractor, KnowledgeGraph
-)
+from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraphExtractor, KnowledgeGraph
 import hashlib
 import json
 import os
 from typing import Optional
 
+
 class CachedExtractor:
     """Extractor with file-based caching."""
-    
+
     def __init__(self, cache_dir: str = ".kg_cache"):
         self.extractor = KnowledgeGraphExtractor()
         self.cache_dir = cache_dir
         os.makedirs(cache_dir, exist_ok=True)
-    
+
     def _get_cache_key(self, text: str, **kwargs) -> str:
         """Generate cache key from text and parameters."""
         content = text + json.dumps(kwargs, sort_keys=True)
         return hashlib.sha256(content.encode()).hexdigest()
-    
+
     def _get_cache_path(self, cache_key: str) -> str:
         """Get cache file path."""
         return os.path.join(self.cache_dir, f"{cache_key}.json")
-    
+
     def extract(self, text: str, use_cache: bool = True, **kwargs) -> KnowledgeGraph:
         """Extract with caching."""
         cache_key = self._get_cache_key(text, **kwargs)
         cache_path = self._get_cache_path(cache_key)
-        
+
         # Try to load from cache
         if use_cache and os.path.exists(cache_path):
             print(f"Loading from cache: {cache_key[:12]}...")
             with open(cache_path, "r") as f:
                 return KnowledgeGraph.from_json(f.read())
-        
+
         # Extract and cache
         print(f"Extracting (cache miss): {cache_key[:12]}...")
         kg = self.extractor.extract_knowledge_graph(text, **kwargs)
-        
+
         # Save to cache
         with open(cache_path, "w") as f:
             f.write(kg.to_json())
-        
+
         return kg
-    
+
     def clear_cache(self):
         """Clear all cached extractions."""
         for filename in os.listdir(self.cache_dir):
             os.remove(os.path.join(self.cache_dir, filename))
         print(f"Cache cleared: {self.cache_dir}")
+
 
 # Usage
 extractor = CachedExtractor()
@@ -841,12 +805,10 @@ if len(kg.entities) == 0:
     print("1. Increase extraction_temperature (0.7-0.9)")
     print("2. Check if text has proper nouns/entities")
     print("3. Use rule-based extraction for simple cases")
-    
+
     # Try with higher temperature
     kg = extractor.extract_knowledge_graph(
-        text,
-        extraction_temperature=0.9,
-        structure_temperature=0.8
+        text, extraction_temperature=0.9, structure_temperature=0.8
     )
     print(f"With high temperature: {len(kg.entities)} entities")
 ```
@@ -878,7 +840,7 @@ for title in page_titles:
 ```python
 from ipfs_datasets_py.knowledge_graphs.extraction import (
     KnowledgeGraphExtractor,
-    KnowledgeGraphExtractorWithValidation
+    KnowledgeGraphExtractorWithValidation,
 )
 
 # If validation fails, check if entity exists in Wikidata

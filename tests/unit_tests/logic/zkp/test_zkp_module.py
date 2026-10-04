@@ -27,7 +27,7 @@ from ipfs_datasets_py.logic.zkp import (
 
 class TestZKPProver:
     """Test ZKPProver functionality."""
-    
+
     def test_initialization(self):
         """
         GIVEN: ZKPProver class
@@ -37,10 +37,10 @@ class TestZKPProver:
         prover = ZKPProver()
         assert prover.security_level == 128
         assert prover.enable_caching == True
-        
+
         stats = prover.get_stats()
-        assert stats['proofs_generated'] == 0
-    
+        assert stats["proofs_generated"] == 0
+
     def test_simple_proof_generation(self):
         """
         GIVEN: ZKPProver
@@ -48,15 +48,12 @@ class TestZKPProver:
         THEN: Proof is created successfully
         """
         prover = ZKPProver()
-        proof = prover.generate_proof(
-            theorem="Q",
-            private_axioms=["P", "P -> Q"]
-        )
-        
+        proof = prover.generate_proof(theorem="Q", private_axioms=["P", "P -> Q"])
+
         assert isinstance(proof, ZKPProof)
         assert proof.size_bytes == 160  # Simulated Groth16 size
-        assert proof.public_inputs['theorem'] == "Q"
-        assert proof.metadata['num_axioms'] == 2
+        assert proof.public_inputs["theorem"] == "Q"
+        assert proof.metadata["num_axioms"] == 2
 
     def test_simulated_proof_has_magic_header_and_fixed_size(self):
         prover = ZKPProver(backend="simulated")
@@ -68,7 +65,6 @@ class TestZKPProver:
         assert isinstance(proof.proof_data, (bytes, bytearray))
         assert len(proof.proof_data) == 160
         assert proof.proof_data[:8] == b"SIMZKP\x00\x01"
-
 
     def test_simulated_proof_metadata_includes_layout_tags(self):
         prover = ZKPProver(backend="simulated")
@@ -97,7 +93,7 @@ class TestZKPProver:
         assert tags["witness"]["length"] == 32
         assert tags["padding"]["offset"] == 104
         assert tags["padding"]["length"] == 56
-    
+
     def test_proof_privacy(self):
         """
         GIVEN: ZKPProver with private axioms
@@ -106,19 +102,16 @@ class TestZKPProver:
         """
         prover = ZKPProver()
         private_axioms = ["Secret P", "Secret Q", "P -> Q"]
-        proof = prover.generate_proof(
-            theorem="Q",
-            private_axioms=private_axioms
-        )
-        
+        proof = prover.generate_proof(theorem="Q", private_axioms=private_axioms)
+
         # Check axioms are not exposed
         public_inputs = proof.public_inputs
         for axiom in private_axioms:
             assert axiom not in str(public_inputs)
-        
+
         # Only theorem is public
-        assert public_inputs['theorem'] == "Q"
-    
+        assert public_inputs["theorem"] == "Q"
+
     def test_proof_caching(self):
         """
         GIVEN: ZKPProver with caching enabled
@@ -126,23 +119,17 @@ class TestZKPProver:
         THEN: Second generation uses cache
         """
         prover = ZKPProver(enable_caching=True)
-        
+
         # First proof
-        proof1 = prover.generate_proof(
-            theorem="Q",
-            private_axioms=["P", "P -> Q"]
-        )
-        
+        proof1 = prover.generate_proof(theorem="Q", private_axioms=["P", "P -> Q"])
+
         # Second proof (should hit cache)
-        proof2 = prover.generate_proof(
-            theorem="Q",
-            private_axioms=["P", "P -> Q"]
-        )
-        
+        proof2 = prover.generate_proof(theorem="Q", private_axioms=["P", "P -> Q"])
+
         stats = prover.get_stats()
-        assert stats['proofs_generated'] == 1
-        assert stats['cache_hits'] == 1
-        assert stats['cache_hit_rate'] == 0.5
+        assert stats["proofs_generated"] == 1
+        assert stats["cache_hits"] == 1
+        assert stats["cache_hit_rate"] == 0.5
 
     def test_proof_caching_whitespace_invariant(self):
         prover = ZKPProver(enable_caching=True)
@@ -159,8 +146,8 @@ class TestZKPProver:
         )
 
         stats = prover.get_stats()
-        assert stats['proofs_generated'] == 1
-        assert stats['cache_hits'] == 1
+        assert stats["proofs_generated"] == 1
+        assert stats["cache_hits"] == 1
         assert proof2.public_inputs["theorem"] == "  Q\n"
         assert proof2.public_inputs["theorem_hash"] == proof1.public_inputs["theorem_hash"]
 
@@ -201,7 +188,10 @@ class TestZKPProver:
         assert isinstance(proof.public_inputs["attestation_ref"], str)
         assert len(proof.public_inputs["attestation_ref"]) == 64
         assert proof.public_inputs["attestation_view_version"] == 1
-        assert proof.metadata["attestation_view"]["attestation_ref"] == proof.public_inputs["attestation_ref"]
+        assert (
+            proof.metadata["attestation_view"]["attestation_ref"]
+            == proof.public_inputs["attestation_ref"]
+        )
 
     def test_simulated_attestation_view_layout_is_decodable(self):
         prover = ZKPProver(backend="simulated", enable_caching=False)
@@ -230,7 +220,9 @@ class TestZKPProver:
             metadata={"circuit_ref": "legal_ir_zkp_attestation@v2", "circuit_version": 2},
         )
 
-        assert proof_v1.public_inputs["attestation_ref"] != proof_v2.public_inputs["attestation_ref"]
+        assert (
+            proof_v1.public_inputs["attestation_ref"] != proof_v2.public_inputs["attestation_ref"]
+        )
         view_v1 = build_proof_attestation_view(
             proof_data=proof_v1.proof_data,
             public_inputs=proof_v1.public_inputs,
@@ -243,7 +235,7 @@ class TestZKPProver:
         )
         assert view_v1["circuit_ref"] == "legal_ir_zkp_attestation@v1"
         assert view_v2["circuit_ref"] == "legal_ir_zkp_attestation@v2"
-    
+
     def test_proof_size_limit(self):
         """
         GIVEN: ZKPProver
@@ -251,19 +243,19 @@ class TestZKPProver:
         THEN: All proofs are succinct (<500 bytes)
         """
         prover = ZKPProver()
-        
+
         # Test with different complexities
         test_cases = [
             ("Q", ["P", "P -> Q"]),
             ("R", ["P", "Q", "P AND Q -> R"]),
             ("Z", ["A", "B", "C", "D", "E", "A AND B AND C AND D AND E -> Z"]),
         ]
-        
+
         for theorem, axioms in test_cases:
             proof = prover.generate_proof(theorem=theorem, private_axioms=axioms)
             assert proof.size_bytes < 500, f"Proof too large: {proof.size_bytes} bytes"
             assert proof.size_bytes == 160  # Fixed simulated Groth16 size
-    
+
     def test_empty_inputs_error(self):
         """
         GIVEN: ZKPProver
@@ -271,10 +263,10 @@ class TestZKPProver:
         THEN: ZKPError is raised
         """
         prover = ZKPProver()
-        
+
         with pytest.raises(ZKPError, match="Theorem cannot be empty"):
             prover.generate_proof(theorem="", private_axioms=["P"])
-        
+
         with pytest.raises(ZKPError, match="At least one axiom required"):
             prover.generate_proof(theorem="Q", private_axioms=[])
 
@@ -284,13 +276,15 @@ class TestZKPProver:
 
     def test_groth16_backend_fails_closed(self):
         prover = ZKPProver(backend="groth16")
-        with pytest.raises(ZKPError, match=r"Groth16 backend is (not implemented|disabled by default)"):
+        with pytest.raises(
+            ZKPError, match=r"Groth16 backend is (not implemented|disabled by default)"
+        ):
             prover.generate_proof(theorem="Q", private_axioms=["P", "P -> Q"])
 
 
 class TestZKPVerifier:
     """Test ZKPVerifier functionality."""
-    
+
     def test_initialization(self):
         """
         GIVEN: ZKPVerifier class
@@ -299,10 +293,10 @@ class TestZKPVerifier:
         """
         verifier = ZKPVerifier()
         assert verifier.security_level == 128
-        
+
         stats = verifier.get_stats()
-        assert stats['proofs_verified'] == 0
-    
+        assert stats["proofs_verified"] == 0
+
     def test_valid_proof_verification(self):
         """
         GIVEN: Valid ZKP proof
@@ -311,20 +305,17 @@ class TestZKPVerifier:
         """
         # Generate valid proof
         prover = ZKPProver()
-        proof = prover.generate_proof(
-            theorem="Q",
-            private_axioms=["P", "P -> Q"]
-        )
-        
+        proof = prover.generate_proof(theorem="Q", private_axioms=["P", "P -> Q"])
+
         # Verify proof
         verifier = ZKPVerifier()
         is_valid = verifier.verify_proof(proof)
-        
+
         assert is_valid == True
-        
+
         stats = verifier.get_stats()
-        assert stats['proofs_verified'] == 1
-        assert stats['proofs_rejected'] == 0
+        assert stats["proofs_verified"] == 1
+        assert stats["proofs_rejected"] == 0
 
     def test_malformed_proof_rejected_without_crash(self):
         """
@@ -340,15 +331,17 @@ class TestZKPVerifier:
         assert verifier.verify_proof(MalformedProof()) is False
 
         stats = verifier.get_stats()
-        assert stats['proofs_verified'] == 0
-        assert stats['proofs_rejected'] == 1
+        assert stats["proofs_verified"] == 0
+        assert stats["proofs_rejected"] == 1
 
     def test_groth16_verifier_fails_closed(self):
         prover = ZKPProver()
         proof = prover.generate_proof(theorem="Q", private_axioms=["P", "P -> Q"])
 
         verifier = ZKPVerifier(backend="groth16")
-        with pytest.raises(ZKPError, match=r"Groth16 backend is (not implemented|disabled by default)"):
+        with pytest.raises(
+            ZKPError, match=r"Groth16 backend is (not implemented|disabled by default)"
+        ):
             verifier.verify_proof(proof)
 
     def test_verifier_rejects_missing_public_inputs(self):
@@ -358,20 +351,20 @@ class TestZKPVerifier:
         THEN: Verification returns False
         """
         verifier = ZKPVerifier()
-        
+
         # Create a proof missing theorem hash
         proof = ZKPProof(
-            proof_data=b'x' * 160,
-            public_inputs={'theorem': 'Q'},  # missing theorem_hash
-            metadata={'proof_system': 'test'},
+            proof_data=b"x" * 160,
+            public_inputs={"theorem": "Q"},  # missing theorem_hash
+            metadata={"proof_system": "test"},
             timestamp=0.0,
-            size_bytes=160
+            size_bytes=160,
         )
-        
+
         assert verifier.verify_proof(proof) is False
-        
+
         stats = verifier.get_stats()
-        assert stats['proofs_rejected'] >= 1
+        assert stats["proofs_rejected"] >= 1
 
     def test_verifier_rejects_inconsistent_theorem_hash(self):
         """
@@ -380,19 +373,16 @@ class TestZKPVerifier:
         THEN: Verification returns False
         """
         verifier = ZKPVerifier()
-        
+
         # Hash doesn't match theorem
         proof = ZKPProof(
-            proof_data=b'x' * 160,
-            public_inputs={
-                'theorem': 'Q',
-                'theorem_hash': 'wrong_hash_value'
-            },
-            metadata={'proof_system': 'test'},
+            proof_data=b"x" * 160,
+            public_inputs={"theorem": "Q", "theorem_hash": "wrong_hash_value"},
+            metadata={"proof_system": "test"},
             timestamp=0.0,
-            size_bytes=160
+            size_bytes=160,
         )
-        
+
         assert verifier.verify_proof(proof) is False
 
     def test_verifier_rejects_proof_with_bad_metadata(self):
@@ -402,19 +392,19 @@ class TestZKPVerifier:
         THEN: Verification returns False (strict checking)
         """
         verifier = ZKPVerifier()
-        
+
         # Create a proof with metadata missing proof_system
         proof = ZKPProof(
-            proof_data=b'x' * 160,
+            proof_data=b"x" * 160,
             public_inputs={
-                'theorem': 'Q',
-                'theorem_hash': __import__('hashlib').sha256(b'Q').hexdigest()
+                "theorem": "Q",
+                "theorem_hash": __import__("hashlib").sha256(b"Q").hexdigest(),
             },
             metadata={},  # missing proof_system
             timestamp=0.0,
-            size_bytes=160
+            size_bytes=160,
         )
-        
+
         # Should reject because metadata is incomplete
         result = verifier.verify_proof(proof)
         # Strict mode: fail if proof_system is missing
@@ -456,7 +446,7 @@ class TestZKPVerifier:
 
 class TestZKPCircuit:
     """Test ZKPCircuit functionality."""
-    
+
     def test_circuit_initialization(self):
         """
         GIVEN: ZKPCircuit class
@@ -467,7 +457,7 @@ class TestZKPCircuit:
         assert circuit.num_gates() == 0
         assert circuit.num_inputs() == 0
         assert circuit.num_wires() == 0
-    
+
     def test_add_inputs(self):
         """
         GIVEN: ZKPCircuit
@@ -475,14 +465,14 @@ class TestZKPCircuit:
         THEN: Inputs are tracked correctly
         """
         circuit = ZKPCircuit()
-        
+
         p_wire = circuit.add_input("P")
         q_wire = circuit.add_input("Q")
-        
+
         assert p_wire == 0
         assert q_wire == 1
         assert circuit.num_inputs() == 2
-    
+
     def test_and_gate(self):
         """
         GIVEN: ZKPCircuit with inputs
@@ -493,14 +483,14 @@ class TestZKPCircuit:
         p = circuit.add_input("P")
         q = circuit.add_input("Q")
         result = circuit.add_and_gate(p, q)
-        
+
         assert circuit.num_gates() == 1
         assert result == 2  # Third wire
 
 
 class TestZKPIntegration:
     """Test ZKP integration scenarios."""
-    
+
     def test_end_to_end_workflow(self):
         """
         GIVEN: Complete ZKP system
@@ -510,24 +500,21 @@ class TestZKPIntegration:
         # Setup
         prover = ZKPProver()
         verifier = ZKPVerifier()
-        
+
         # Prove
         proof = prover.generate_proof(
             theorem="Socrates is mortal",
-            private_axioms=[
-                "Socrates is human",
-                "All humans are mortal"
-            ]
+            private_axioms=["Socrates is human", "All humans are mortal"],
         )
-        
+
         # Verify
         is_valid = verifier.verify_proof(proof)
         assert is_valid == True
-        
+
         # Check privacy
         assert "Socrates is human" not in str(proof.public_inputs)
         assert "All humans are mortal" not in str(proof.public_inputs)
-    
+
     def test_proof_serialization(self):
         """
         GIVEN: ZKP proof
@@ -535,17 +522,14 @@ class TestZKPIntegration:
         THEN: Proof is preserved correctly
         """
         prover = ZKPProver()
-        original_proof = prover.generate_proof(
-            theorem="Q",
-            private_axioms=["P", "P -> Q"]
-        )
-        
+        original_proof = prover.generate_proof(theorem="Q", private_axioms=["P", "P -> Q"])
+
         # Serialize
         proof_dict = original_proof.to_dict()
-        
+
         # Deserialize
         restored_proof = ZKPProof.from_dict(proof_dict)
-        
+
         # Verify restored proof
         verifier = ZKPVerifier()
         assert verifier.verify_proof(restored_proof) == True
@@ -558,15 +542,13 @@ class TestZKPIntegration:
         """
         prover = ZKPProver()
         original = prover.generate_proof(
-            theorem="Q",
-            private_axioms=["P", "P -> Q"],
-            metadata={"custom_field": "custom_value"}
+            theorem="Q", private_axioms=["P", "P -> Q"], metadata={"custom_field": "custom_value"}
         )
-        
+
         # Round-trip
         proof_dict = original.to_dict()
         restored = ZKPProof.from_dict(proof_dict)
-        
+
         # Check all fields
         assert restored.proof_data == original.proof_data
         assert restored.public_inputs == original.public_inputs
@@ -581,17 +563,14 @@ class TestZKPIntegration:
         THEN: Hex encoding is stable and reversible
         """
         prover = ZKPProver()
-        proof = prover.generate_proof(
-            theorem="Q",
-            private_axioms=["P", "P -> Q"]
-        )
-        
+        proof = prover.generate_proof(theorem="Q", private_axioms=["P", "P -> Q"])
+
         original_bytes = proof.proof_data
         proof_dict = proof.to_dict()
         restored = ZKPProof.from_dict(proof_dict)
-        
+
         assert restored.proof_data == original_bytes
-        assert proof_dict['proof_data'] == original_bytes.hex()
+        assert proof_dict["proof_data"] == original_bytes.hex()
 
     def test_form_certificate_serialization_includes_attestation_view(self):
         from ipfs_datasets_py.logic.zkp.form_circuit import FormCompletionCertificate
@@ -610,7 +589,10 @@ class TestZKPIntegration:
 
         cert_dict = cert.to_dict()
         assert "zkp_attestation" in cert_dict
-        assert cert_dict["zkp_attestation"]["attestation_ref"] == proof.public_inputs["attestation_ref"]
+        assert (
+            cert_dict["zkp_attestation"]["attestation_ref"]
+            == proof.public_inputs["attestation_ref"]
+        )
 
 
 if __name__ == "__main__":

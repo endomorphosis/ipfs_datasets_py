@@ -23,17 +23,17 @@ class TestEntityRoundTripProperty:
     )
     def test_entity_to_dict_from_dict_roundtrip(self, entity: Entity):
         """Entity.from_dict(entity.to_dict()) == entity for all valid entities.
-        
+
         This property test generates random Entity instances and verifies that
         serialization via to_dict() followed by deserialization via from_dict()
         produces an equivalent Entity.
         """
         # Serialize to dict
         entity_dict = entity.to_dict()
-        
+
         # Deserialize back to Entity
         restored = Entity.from_dict(entity_dict)
-        
+
         # All fields must match
         assert restored.id == entity.id
         assert restored.type == entity.type
@@ -51,7 +51,7 @@ class TestEntityRoundTripProperty:
     def test_entity_to_dict_contains_required_keys(self, entity: Entity):
         """Entity.to_dict() always includes required keys."""
         entity_dict = entity.to_dict()
-        
+
         # Required keys must be present
         assert "id" in entity_dict
         assert "type" in entity_dict
@@ -69,7 +69,7 @@ class TestEntityRoundTripProperty:
     def test_entity_to_dict_serializes_source_span_correctly(self, entity: Entity):
         """source_span is serialized as a list or None."""
         entity_dict = entity.to_dict()
-        
+
         if entity.source_span is None:
             assert entity_dict["source_span"] is None
         else:
@@ -87,7 +87,7 @@ class TestEntityRoundTripProperty:
         """from_dict() converts source_span list back to tuple."""
         entity_dict = entity.to_dict()
         restored = Entity.from_dict(entity_dict)
-        
+
         if entity.source_span is None:
             assert restored.source_span is None
         else:
@@ -105,7 +105,7 @@ class TestEntityRoundTripProperty:
         """Properties dict is preserved through round-trip."""
         entity_dict = entity.to_dict()
         restored = Entity.from_dict(entity_dict)
-        
+
         assert len(restored.properties) == len(entity.properties)
         for key in entity.properties:
             assert key in restored.properties
@@ -127,7 +127,7 @@ class TestEntityRoundTripProperty:
         """Confidence remains in [0, 1] after round-trip."""
         entity_dict = entity.to_dict()
         restored = Entity.from_dict(entity_dict)
-        
+
         assert 0.0 <= restored.confidence <= 1.0
         assert 0.0 <= entity.confidence <= 1.0
 
@@ -138,9 +138,9 @@ class TestEntityRoundTripProperty:
             "type": "Person",
             "text": "Alice",
         }
-        
+
         entity = Entity.from_dict(minimal_dict)
-        
+
         assert entity.id == "test-123"
         assert entity.type == "Person"
         assert entity.text == "Alice"
@@ -152,10 +152,10 @@ class TestEntityRoundTripProperty:
         """from_dict() raises KeyError when required fields are missing."""
         with pytest.raises(KeyError):
             Entity.from_dict({"id": "test", "type": "Person"})  # missing 'text'
-        
+
         with pytest.raises(KeyError):
             Entity.from_dict({"id": "test", "text": "Alice"})  # missing 'type'
-        
+
         with pytest.raises(KeyError):
             Entity.from_dict({"type": "Person", "text": "Alice"})  # missing 'id'
 
@@ -171,7 +171,7 @@ class TestEntityRoundTripProperty:
     def test_entity_copy_with_preserves_other_fields(self, entity: Entity, new_text: str):
         """copy_with() only changes the specified field."""
         modified = entity.copy_with(text=new_text)
-        
+
         assert modified.text == new_text
         assert modified.id == entity.id
         assert modified.type == entity.type
@@ -182,7 +182,7 @@ class TestEntityRoundTripProperty:
     def test_entity_copy_with_raises_on_unknown_field(self):
         """copy_with() raises TypeError for unknown field names."""
         entity = Entity(id="e1", type="Person", text="Alice")
-        
+
         with pytest.raises(TypeError, match="Unknown Entity field"):
             entity.copy_with(unknown_field="value")
 
@@ -195,7 +195,7 @@ class TestEntityRoundTripProperty:
     def test_entity_to_text_format(self, entity: Entity):
         """to_text() returns expected format."""
         text_repr = entity.to_text()
-        
+
         assert entity.text in text_repr
         assert entity.type in text_repr
         assert "conf=" in text_repr

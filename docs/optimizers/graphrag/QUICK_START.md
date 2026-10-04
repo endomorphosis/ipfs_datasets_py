@@ -31,7 +31,7 @@ data = {
 
 ontology = generator.generate(data)
 
-# Result: 
+# Result:
 # {
 #   "entities": [
 #       {"id": "alice", "type": "Person", "name": "Alice"},
@@ -91,19 +91,19 @@ for rec in report.recommendations:
 for cycle in range(5):
     # Generate batch of different ontologies
     results = []
-    for extraction_strategy in ['rule_based', 'hybrid']:
-        gen = OntologyGenerator(use_rule_based=(extraction_strategy == 'rule_based'))
+    for extraction_strategy in ["rule_based", "hybrid"]:
+        gen = OntologyGenerator(use_rule_based=(extraction_strategy == "rule_based"))
         ont = gen.generate(data)
         results.append(ont)
-    
+
     # Analyze
     report = optimizer.analyze_batch(results)
-    
-    print(f"Cycle {cycle+1}: avg={report.average_score:.2f}, trend={report.trend}")
-    
+
+    print(f"Cycle {cycle + 1}: avg={report.average_score:.2f}, trend={report.trend}")
+
     # Check convergence
-    if report.trend == 'stable' and report.average_score > 0.80:
-        print(f"Converged after {cycle+1} cycles!")
+    if report.trend == "stable" and report.average_score > 0.80:
+        print(f"Converged after {cycle + 1} cycles!")
         break
 ```
 
@@ -122,7 +122,7 @@ query = "Who developed the crawler that processes Wikipedia?"
 plan = optimizer.optimize_query(query)
 
 print(f"Execution plan generated with {len(plan.get('scenes', []))} scenes")
-for scene in plan.get('scenes', []):
+for scene in plan.get("scenes", []):
     print(f"  - Scene: {scene.get('description')}")
 ```
 
@@ -133,7 +133,7 @@ for scene in plan.get('scenes', []):
 ```python
 ontology = generator.generate(
     data,
-    entity_types=['Person', 'Tool']  # Only extract these types
+    entity_types=["Person", "Tool"],  # Only extract these types
 )
 ```
 
@@ -173,10 +173,10 @@ from ipfs_datasets_py.optimizers.graphrag import OntologyGenerator
 
 # Customize extraction behavior
 gen = OntologyGenerator(
-    use_rule_based=True,      # Use deterministic regex extraction
-    use_llm=False,            # Don't call external LLM (requires ipfs_accelerate_py)
+    use_rule_based=True,  # Use deterministic regex extraction
+    use_llm=False,  # Don't call external LLM (requires ipfs_accelerate_py)
     relationship_threshold=0.7,  # Confidence threshold for relationships
-    max_relationships_per_entity=10
+    max_relationships_per_entity=10,
 )
 ```
 

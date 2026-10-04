@@ -28,32 +28,27 @@ TRIGGER_PATTERNS = {
   pull_request:
     branches: [main]
   workflow_dispatch:""",
-    
-    # Monitoring Workflows  
+    # Monitoring Workflows
     "monitoring": """on:
   schedule:
     - cron: '*/30 * * * *'  # Every 30 minutes
   workflow_dispatch:""",
-    
     # Daily Validation
     "daily_validation": """on:
   schedule:
     - cron: '0 2 * * *'  # Daily at 2 AM UTC
   workflow_dispatch:""",
-    
     # Auto-Healing Workflows
     "auto_healing": """on:
   workflow_run:
     workflows: ["TARGET_WORKFLOW"]
     types: [completed]
   workflow_dispatch:""",
-    
     # PR Workflows
     "pr_workflow": """on:
   pull_request:
     types: [opened, synchronize, reopened]
   workflow_dispatch:""",
-    
     # Manual Only
     "manual": """on:
   workflow_dispatch:""",
@@ -135,21 +130,21 @@ def get_workflow_category(workflow_name: str) -> Optional[str]:
 def has_invalid_trigger(workflow_path: Path) -> bool:
     """Check if workflow has 'true:' instead of 'on:'"""
     try:
-        with open(workflow_path, 'r') as f:
+        with open(workflow_path, "r") as f:
             content = f.read()
-        
+
         # Check for 'true:' at the beginning of a line (likely invalid trigger)
-        if re.search(r'^true:\s*$', content, re.MULTILINE):
+        if re.search(r"^true:\s*$", content, re.MULTILINE):
             return True
-        
+
         # Check if workflow is missing 'on:' trigger
         try:
             workflow = yaml.safe_load(content)
-            if 'on' not in workflow and 'true' in workflow:
+            if "on" not in workflow and "true" in workflow:
                 return True
         except:
             pass
-        
+
         return False
     except Exception as e:
         print(f"Error reading {workflow_path}: {e}")
@@ -159,30 +154,24 @@ def has_invalid_trigger(workflow_path: Path) -> bool:
 def restore_trigger(workflow_path: Path, dry_run: bool = True) -> bool:
     """Restore proper trigger configuration to a workflow"""
     try:
-        with open(workflow_path, 'r') as f:
+        with open(workflow_path, "r") as f:
             content = f.read()
-        
+
         workflow_name = workflow_path.name
         category = get_workflow_category(workflow_name)
-        
+
         if not category:
             print(f"⚠️  {workflow_name}: Unknown category, using manual trigger")
             category = "manual"
-        
+
         trigger_pattern = TRIGGER_PATTERNS[category]
-        
+
         # Replace 'true:' with appropriate trigger
-        new_content = re.sub(
-            r'^true:\s*$',
-            trigger_pattern,
-            content,
-            count=1,
-            flags=re.MULTILINE
-        )
-        
+        new_content = re.sub(r"^true:\s*$", trigger_pattern, content, count=1, flags=re.MULTILINE)
+
         if new_content != content:
             if not dry_run:
-                with open(workflow_path, 'w') as f:
+                with open(workflow_path, "w") as f:
                     f.write(new_content)
                 print(f"✅ {workflow_name}: Restored {category} trigger")
             else:
@@ -191,84 +180,68 @@ def restore_trigger(workflow_path: Path, dry_run: bool = True) -> bool:
         else:
             print(f"ℹ️  {workflow_name}: No changes needed")
             return False
-    
+
     except Exception as e:
         print(f"❌ Error processing {workflow_path}: {e}")
         return False
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Restore workflow trigger configurations"
-    )
+    parser = argparse.ArgumentParser(description="Restore workflow trigger configurations")
     parser.add_argument(
-        '--dry-run',
-        action='store_true',
-        help='Preview changes without applying them'
+        "--dry-run", action="store_true", help="Preview changes without applying them"
     )
+    parser.add_argument("--apply", action="store_true", help="Apply trigger fixes")
+    parser.add_argument("--workflow", type=str, help="Fix specific workflow file")
     parser.add_argument(
-        '--apply',
-        action='store_true',
-        help='Apply trigger fixes'
+        "--workflows-dir", type=str, default=".github/workflows", help="Path to workflows directory"
     )
-    parser.add_argument(
-        '--workflow',
-        type=str,
-        help='Fix specific workflow file'
-    )
-    parser.add_argument(
-        '--workflows-dir',
-        type=str,
-        default='.github/workflows',
-        help='Path to workflows directory'
-    )
-    
+
     args = parser.parse_args()
-    
+
     if not args.dry_run and not args.apply:
         print("Error: Must specify either --dry-run or --apply")
         return 1
-    
+
     workflows_dir = Path(args.workflows_dir)
-    
+
     if args.workflow:
         # Fix specific workflow
         workflow_path = workflows_dir / args.workflow
         if not workflow_path.exists():
             print(f"Error: Workflow {args.workflow} not found")
             return 1
-        
+
         if has_invalid_trigger(workflow_path):
             restore_trigger(workflow_path, dry_run=args.dry_run)
         else:
             print(f"ℹ️  {args.workflow}: Already has valid trigger")
     else:
         # Fix all workflows
-        workflow_files = list(workflows_dir.glob("*.yml")) + \
-                        list(workflows_dir.glob("*.yaml"))
-        
+        workflow_files = list(workflows_dir.glob("*.yml")) + list(workflows_dir.glob("*.yaml"))
+
         fixed_count = 0
         skipped_count = 0
-        
+
         print(f"\n{'🔍 DRY RUN MODE' if args.dry_run else '🔧 APPLYING FIXES'}\n")
-        
+
         for workflow_path in sorted(workflow_files):
-            if workflow_path.name.startswith('.'):
+            if workflow_path.name.startswith("."):
                 continue
-            
+
             if has_invalid_trigger(workflow_path):
                 if restore_trigger(workflow_path, dry_run=args.dry_run):
                     fixed_count += 1
             else:
                 skipped_count += 1
-        
+
         print(f"\n📊 Summary:")
         print(f"  {'Would fix' if args.dry_run else 'Fixed'}: {fixed_count} workflows")
         print(f"  Skipped: {skipped_count} workflows (already valid)")
-        
+
         if args.dry_run:
             print(f"\nℹ️  Run with --apply to apply these changes")
-    
+
     return 0
 
 

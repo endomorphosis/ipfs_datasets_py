@@ -822,6 +822,7 @@ System information.
 from pydantic import BaseModel, Field
 from typing import Optional, Dict, List
 
+
 class ConversionRequest(BaseModel):
     text: str = Field(..., min_length=1, max_length=10000)
     language: str = Field(default="en", pattern="^[a-z]{2}$")
@@ -857,6 +858,7 @@ class ProofStep(BaseModel):
     formula: str
     justification: str
     rule_used: Optional[str] = None
+
 
 class ProvingResponse(BaseModel):
     success: bool
@@ -1351,34 +1353,28 @@ spec:
 ```python
 import requests
 
+
 class CECClient:
     def __init__(self, base_url: str, api_key: str):
         self.base_url = base_url
-        self.headers = {
-            "X-API-Key": api_key,
-            "Content-Type": "application/json"
-        }
-    
+        self.headers = {"X-API-Key": api_key, "Content-Type": "application/json"}
+
     def convert_nl_to_dcec(self, text: str) -> dict:
         response = requests.post(
-            f"{self.base_url}/api/v1/convert/nl-to-dcec",
-            json={"text": text},
-            headers=self.headers
+            f"{self.base_url}/api/v1/convert/nl-to-dcec", json={"text": text}, headers=self.headers
         )
         response.raise_for_status()
         return response.json()
-    
+
     def prove(self, conjecture: str, axioms: list[str]) -> dict:
         response = requests.post(
             f"{self.base_url}/api/v1/prove",
-            json={
-                "conjecture": conjecture,
-                "axioms": axioms
-            },
-            headers=self.headers
+            json={"conjecture": conjecture, "axioms": axioms},
+            headers=self.headers,
         )
         response.raise_for_status()
         return response.json()
+
 
 # Usage
 client = CECClient("http://localhost:8000", "your_api_key")

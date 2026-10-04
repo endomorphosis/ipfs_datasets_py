@@ -33,12 +33,25 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Generate Bluebook citation fuzz cases with llm_router and exercise linker + recovery flows."
     )
-    parser.add_argument("--samples", type=int, default=12, help="Number of LLM-generated citation cases to execute.")
-    parser.add_argument("--provider", help="llm_router provider name, e.g. openrouter or hf_inference_api.")
+    parser.add_argument(
+        "--samples", type=int, default=12, help="Number of LLM-generated citation cases to execute."
+    )
+    parser.add_argument(
+        "--provider", help="llm_router provider name, e.g. openrouter or hf_inference_api."
+    )
     parser.add_argument("--model", dest="model_name", help="Model name to pass to llm_router.")
-    parser.add_argument("--temperature", type=float, default=1.0, help="Sampling temperature for citation generation.")
-    parser.add_argument("--corpora", default="", help="Comma-separated corpus hints for generation.")
-    parser.add_argument("--states", default="", help="Comma-separated state-code hints for generation.")
+    parser.add_argument(
+        "--temperature",
+        type=float,
+        default=1.0,
+        help="Sampling temperature for citation generation.",
+    )
+    parser.add_argument(
+        "--corpora", default="", help="Comma-separated corpus hints for generation."
+    )
+    parser.add_argument(
+        "--states", default="", help="Comma-separated state-code hints for generation."
+    )
     parser.add_argument(
         "--input-candidates",
         help=(
@@ -46,8 +59,17 @@ def build_parser() -> argparse.ArgumentParser:
             "Use '-' to read from stdin. Prior harness artifacts with a top-level candidates list are accepted."
         ),
     )
-    parser.add_argument("--adversarial-ratio", type=float, default=0.35, help="Approximate ratio of adversarial citations.")
-    parser.add_argument("--disable-hf-fallback", action="store_true", help="Disable Hugging Face dataset fallback in the linker.")
+    parser.add_argument(
+        "--adversarial-ratio",
+        type=float,
+        default=0.35,
+        help="Approximate ratio of adversarial citations.",
+    )
+    parser.add_argument(
+        "--disable-hf-fallback",
+        action="store_true",
+        help="Disable Hugging Face dataset fallback in the linker.",
+    )
     parser.add_argument(
         "--prefer-hf-corpora",
         action="store_true",
@@ -68,24 +90,81 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Download each selected Hugging Face parquet once into the local temp cache before querying it.",
     )
-    parser.add_argument("--disable-exhaustive", action="store_true", help="Skip exhaustive canonical corpus lookup before recovery.")
-    parser.add_argument("--disable-recovery", action="store_true", help="Skip search/recovery for unresolved citations.")
-    parser.add_argument("--seed-from-corpora", action="store_true", help="Sample real corpus rows first and feed seeded examples into the LLM prompt.")
-    parser.add_argument("--seed-only", action="store_true", help="Execute grounded sampled corpus citations directly without LLM generation.")
-    parser.add_argument("--seed-examples-per-corpus", type=int, default=2, help="How many grounded seed examples to sample from each corpus.")
-    parser.add_argument("--max-seed-examples-per-state", type=int, default=0, help="Optional cap for grounded seed examples per corpus/state partition.")
-    parser.add_argument("--max-seed-examples-per-source", type=int, default=0, help="Optional cap for grounded seed examples per source parquet slice.")
-    parser.add_argument("--sampling-shuffle-seed", type=int, default=0, help="Deterministic shuffle seed for stratified seeded sampling.")
-    parser.add_argument("--recovery-max-candidates", type=int, default=8, help="Max live/archive candidates per unresolved citation.")
-    parser.add_argument("--recovery-archive-top-k", type=int, default=3, help="How many recovered URLs to archive.")
+    parser.add_argument(
+        "--disable-exhaustive",
+        action="store_true",
+        help="Skip exhaustive canonical corpus lookup before recovery.",
+    )
+    parser.add_argument(
+        "--disable-recovery",
+        action="store_true",
+        help="Skip search/recovery for unresolved citations.",
+    )
+    parser.add_argument(
+        "--seed-from-corpora",
+        action="store_true",
+        help="Sample real corpus rows first and feed seeded examples into the LLM prompt.",
+    )
+    parser.add_argument(
+        "--seed-only",
+        action="store_true",
+        help="Execute grounded sampled corpus citations directly without LLM generation.",
+    )
+    parser.add_argument(
+        "--seed-examples-per-corpus",
+        type=int,
+        default=2,
+        help="How many grounded seed examples to sample from each corpus.",
+    )
+    parser.add_argument(
+        "--max-seed-examples-per-state",
+        type=int,
+        default=0,
+        help="Optional cap for grounded seed examples per corpus/state partition.",
+    )
+    parser.add_argument(
+        "--max-seed-examples-per-source",
+        type=int,
+        default=0,
+        help="Optional cap for grounded seed examples per source parquet slice.",
+    )
+    parser.add_argument(
+        "--sampling-shuffle-seed",
+        type=int,
+        default=0,
+        help="Deterministic shuffle seed for stratified seeded sampling.",
+    )
+    parser.add_argument(
+        "--recovery-max-candidates",
+        type=int,
+        default=8,
+        help="Max live/archive candidates per unresolved citation.",
+    )
+    parser.add_argument(
+        "--recovery-archive-top-k", type=int, default=3, help="How many recovered URLs to archive."
+    )
     parser.add_argument(
         "--skip-live-search",
         action="store_true",
         help="Skip live web search during recovery so fuzz runs can isolate citation hints/Common Crawl fallback.",
     )
-    parser.add_argument("--max-acceptable-failure-rate", type=float, default=0.10, help="Failure-rate threshold used for corpus-level actionability.")
-    parser.add_argument("--min-actionable-failures", type=int, default=2, help="Minimum failing samples before a corpus/cluster becomes actionable.")
-    parser.add_argument("--merge-recovered-rows", action="store_true", help="Merge produced recovery manifests into local canonical parquet files.")
+    parser.add_argument(
+        "--max-acceptable-failure-rate",
+        type=float,
+        default=0.10,
+        help="Failure-rate threshold used for corpus-level actionability.",
+    )
+    parser.add_argument(
+        "--min-actionable-failures",
+        type=int,
+        default=2,
+        help="Minimum failing samples before a corpus/cluster becomes actionable.",
+    )
+    parser.add_argument(
+        "--merge-recovered-rows",
+        action="store_true",
+        help="Merge produced recovery manifests into local canonical parquet files.",
+    )
     parser.add_argument(
         "--hydrate-merge-from-hf",
         action="store_true",
@@ -96,9 +175,17 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="After an HF-hydrated merge, upload the full merged parquet back to its canonical Hugging Face path.",
     )
-    parser.add_argument("--publish-to-hf", action="store_true", help="Upload recovery manifests to the canonical Hugging Face repo.")
+    parser.add_argument(
+        "--publish-to-hf",
+        action="store_true",
+        help="Upload recovery manifests to the canonical Hugging Face repo.",
+    )
     parser.add_argument("--hf-token", help="Optional Hugging Face token override.")
-    parser.add_argument("--output-dir", default="artifacts/bluebook_linker_fuzz", help="Directory for run artifacts.")
+    parser.add_argument(
+        "--output-dir",
+        default="artifacts/bluebook_linker_fuzz",
+        help="Directory for run artifacts.",
+    )
     parser.add_argument("--json", action="store_true", help="Emit the full run payload as JSON.")
     return parser
 
@@ -136,10 +223,20 @@ def main(argv: list[str] | None = None) -> int:
                 seed_from_corpora=bool(args.seed_from_corpora),
                 seed_only=bool(args.seed_only),
                 seed_examples_per_corpus=max(1, int(args.seed_examples_per_corpus)),
-                max_seed_examples_per_state=(max(1, int(args.max_seed_examples_per_state)) if int(args.max_seed_examples_per_state) > 0 else None),
-                max_seed_examples_per_source=(max(1, int(args.max_seed_examples_per_source)) if int(args.max_seed_examples_per_source) > 0 else None),
+                max_seed_examples_per_state=(
+                    max(1, int(args.max_seed_examples_per_state))
+                    if int(args.max_seed_examples_per_state) > 0
+                    else None
+                ),
+                max_seed_examples_per_source=(
+                    max(1, int(args.max_seed_examples_per_source))
+                    if int(args.max_seed_examples_per_source) > 0
+                    else None
+                ),
                 sampling_shuffle_seed=int(args.sampling_shuffle_seed),
-                max_acceptable_failure_rate=max(0.0, min(1.0, float(args.max_acceptable_failure_rate))),
+                max_acceptable_failure_rate=max(
+                    0.0, min(1.0, float(args.max_acceptable_failure_rate))
+                ),
                 min_actionable_failures=max(1, int(args.min_actionable_failures)),
                 recovery_max_candidates=max(1, int(args.recovery_max_candidates)),
                 recovery_archive_top_k=max(0, int(args.recovery_archive_top_k)),
@@ -164,14 +261,20 @@ def main(argv: list[str] | None = None) -> int:
     else:
         summary = run.summary
         print(f"Executed {summary['sample_count_executed']} citation cases")
-        print(f"Matched attempts: {summary['matched_attempt_count']} ({summary['matched_attempt_ratio']:.1%})")
+        print(
+            f"Matched attempts: {summary['matched_attempt_count']} ({summary['matched_attempt_ratio']:.1%})"
+        )
         print(f"Unmatched citations: {summary['unmatched_citation_count']}")
         print(f"Recoveries: {summary['recovery_count']}")
         print(f"Merged recoveries: {summary['merged_recovery_count']}")
         coverage = summary.get("coverage_by_corpus") or {}
         actionable = list(coverage.get("actionable_corpora") or [])
         print(f"Actionable corpora: {', '.join(actionable) if actionable else 'none'}")
-        matrix = summary.get("scraper_family_matrix") if isinstance(summary.get("scraper_family_matrix"), dict) else {}
+        matrix = (
+            summary.get("scraper_family_matrix")
+            if isinstance(summary.get("scraper_family_matrix"), dict)
+            else {}
+        )
         missing = list(matrix.get("missing_requested_corpora") or [])
         unmerged = list(matrix.get("unmerged_recovery_corpora") or [])
         fully_merged = list(matrix.get("fully_merged_recovery_corpora") or [])
@@ -180,10 +283,14 @@ def main(argv: list[str] | None = None) -> int:
         if matrix:
             print(f"Missing requested corpora: {', '.join(missing) if missing else 'none'}")
             print(f"Unmerged recovery corpora: {', '.join(unmerged) if unmerged else 'none'}")
-            print(f"Fully merged recovery corpora: {', '.join(fully_merged) if fully_merged else 'none'}")
+            print(
+                f"Fully merged recovery corpora: {', '.join(fully_merged) if fully_merged else 'none'}"
+            )
             print(f"Unpublished HF corpora: {', '.join(unpublished) if unpublished else 'none'}")
             print(f"Published HF corpora: {', '.join(published) if published else 'none'}")
-        recovery_merge = summary.get("recovery_merge") if isinstance(summary.get("recovery_merge"), dict) else {}
+        recovery_merge = (
+            summary.get("recovery_merge") if isinstance(summary.get("recovery_merge"), dict) else {}
+        )
         if recovery_merge:
             print(f"HF upload-ready merges: {int(recovery_merge.get('upload_ready_count') or 0)}")
             print(f"HF published merges: {int(recovery_merge.get('published_merged_count') or 0)}")

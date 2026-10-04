@@ -32,11 +32,7 @@ Memory mapping allows working with files larger than available RAM:
 from ipfs_datasets_py.streaming_data_loader import load_memory_mapped_vectors
 
 # Memory-mapped access to large vector datasets
-vectors = load_memory_mapped_vectors(
-    file_path="embeddings.bin",
-    dimension=768,
-    mode='r'
-)
+vectors = load_memory_mapped_vectors(file_path="embeddings.bin", dimension=768, mode="r")
 
 # Efficient random access without loading entire dataset
 vector = vectors[1000]  # Get a specific vector
@@ -52,10 +48,7 @@ from ipfs_datasets_py.streaming_data_loader import load_parquet
 
 # Load a large Parquet file with streaming
 dataset = load_parquet(
-    parquet_path="large_dataset.parquet",
-    batch_size=10000,
-    prefetch_batches=2,
-    cache_enabled=True
+    parquet_path="large_dataset.parquet", batch_size=10000, prefetch_batches=2, cache_enabled=True
 )
 
 # Process data in batches without loading the entire dataset into memory
@@ -92,8 +85,8 @@ processor = StreamProcessor(
     pipeline=[
         lambda batch: filter_rows(batch),
         lambda batch: transform_columns(batch),
-        lambda batch: compute_features(batch)
-    ]
+        lambda batch: compute_features(batch),
+    ],
 )
 
 # Process a large file with minimal memory usage
@@ -111,7 +104,7 @@ from ipfs_datasets_py.streaming_data_loader import CheckpointedProcessor
 processor = CheckpointedProcessor(
     operation_func=complex_transformation,
     checkpoint_interval=10000,  # Checkpoint every 10,000 records
-    checkpoint_path="checkpoint.json"
+    checkpoint_path="checkpoint.json",
 )
 
 # Process a large dataset with checkpointing
@@ -138,8 +131,8 @@ index = IPFSKnnIndex(
     optimization_params={
         "M": 16,  # Number of connections per layer
         "ef_construction": 200,  # Size of dynamic candidate list during construction
-        "ef_search": 100  # Size of dynamic candidate list during search
-    }
+        "ef_search": 100,  # Size of dynamic candidate list during search
+    },
 )
 
 # Add vectors with optimized indexing
@@ -149,7 +142,7 @@ index.add_vectors(vectors, metadata=metadata)
 results = index.search(
     query_vector=query_vector,
     top_k=10,
-    optimization_level=2  # Higher level means more optimization
+    optimization_level=2,  # Higher level means more optimization
 )
 ```
 
@@ -168,8 +161,8 @@ quantized_index = create_quantized_index(
     quantization="product",  # Product quantization
     quantization_params={
         "nbits": 8,  # Bits per subvector component
-        "M": 64  # Number of subvectors
-    }
+        "M": 64,  # Number of subvectors
+    },
 )
 
 # Save memory with quantized storage (much smaller than full-precision)
@@ -227,7 +220,7 @@ optimizer = QueryOptimizer()
 # Optimize a query
 optimized_query = optimizer.optimize_query(
     query="SELECT * FROM dataset WHERE column1 = 'value' AND column2 > 100",
-    dataset_stats=dataset_stats
+    dataset_stats=dataset_stats,
 )
 
 # Execute the optimized query
@@ -249,7 +242,7 @@ optimized_plan = optimizer.optimize_query(
     query_vector=query_vector,
     query_text="How does IPFS work?",
     graph_type="knowledge_graph",
-    optimization_level="advanced"
+    optimization_level="advanced",
 )
 
 # Execute the optimized query plan
@@ -267,15 +260,11 @@ from ipfs_datasets_py.p2p_networking.libp2p_kit import DistributedProcessor
 
 # Create a distributed processor
 processor = DistributedProcessor(
-    node_ids=["node-1", "node-2", "node-3"],
-    operation=lambda shard: process_data(shard)
+    node_ids=["node-1", "node-2", "node-3"], operation=lambda shard: process_data(shard)
 )
 
 # Process a large dataset across multiple nodes
-result = await processor.process_distributed(
-    dataset_id=dataset_id,
-    collect_results=True
-)
+result = await processor.process_distributed(dataset_id=dataset_id, collect_results=True)
 ```
 
 ### Parallel Query Execution
@@ -286,15 +275,11 @@ Execute queries in parallel across nodes:
 from ipfs_datasets_py.p2p_networking.libp2p_kit import ParallelQueryExecutor
 
 # Create a parallel query executor
-executor = ParallelQueryExecutor(
-    node_ids=["node-1", "node-2", "node-3"]
-)
+executor = ParallelQueryExecutor(node_ids=["node-1", "node-2", "node-3"])
 
 # Execute queries in parallel
 results = await executor.execute_queries(
-    queries=[query1, query2, query3],
-    dataset_id=dataset_id,
-    merge_results=True
+    queries=[query1, query2, query3], dataset_id=dataset_id, merge_results=True
 )
 ```
 
@@ -311,7 +296,7 @@ from ipfs_datasets_py.caching import DatasetCache
 cache = DatasetCache(
     cache_dir="~/.ipfs_datasets/cache",
     max_size_gb=10,
-    eviction_policy="lru"  # Least Recently Used
+    eviction_policy="lru",  # Least Recently Used
 )
 
 # Try to get data from cache first
@@ -336,7 +321,7 @@ from ipfs_datasets_py.query_optimizer import ResultCache
 # Create a result cache
 result_cache = ResultCache(
     max_size=100,
-    ttl_seconds=3600  # Cache results for 1 hour
+    ttl_seconds=3600,  # Cache results for 1 hour
 )
 
 # Generate a cache key based on query
@@ -364,9 +349,7 @@ from ipfs_datasets_py.batch_processor import BatchProcessor
 
 # Create a batch processor
 processor = BatchProcessor(
-    batch_size=1000,
-    max_workers=4,
-    operation=lambda batch: process_batch(batch)
+    batch_size=1000, max_workers=4, operation=lambda batch: process_batch(batch)
 )
 
 # Process a large dataset in batches
@@ -402,15 +385,11 @@ import multiprocessing
 num_cores = multiprocessing.cpu_count()
 processor = ParallelProcessor(
     max_workers=num_cores,
-    mode="process"  # "process" or "thread"
+    mode="process",  # "process" or "thread"
 )
 
 # Process data in parallel
-results = processor.map(
-    function=process_item,
-    items=data_items,
-    chunk_size=100
-)
+results = processor.map(function=process_item, items=data_items, chunk_size=100)
 ```
 
 ### Parallel File Operations
@@ -426,7 +405,7 @@ file_processor = ParallelFileProcessor(max_workers=4)
 # Process multiple files in parallel
 results = file_processor.process_files(
     file_paths=["file1.parquet", "file2.parquet", "file3.parquet"],
-    operation=lambda file_path: process_file(file_path)
+    operation=lambda file_path: process_file(file_path),
 )
 ```
 
@@ -465,9 +444,7 @@ profiler = Profiler()
 
 # Profile a function
 profile_data = profiler.profile(
-    function=complex_function,
-    args=(arg1, arg2),
-    kwargs={"param1": value1}
+    function=complex_function, args=(arg1, arg2), kwargs={"param1": value1}
 )
 
 # Analyze profile data

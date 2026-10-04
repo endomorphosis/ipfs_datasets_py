@@ -43,7 +43,7 @@ def test_procurement_solicitation_award_duties_export_operative_predicates():
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -87,7 +87,7 @@ def test_procurement_selection_opening_and_administration_export_operative_predi
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -256,7 +256,7 @@ def test_geospatial_record_duties_export_operative_predicates():
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -279,12 +279,10 @@ def test_geospatial_record_duties_export_operative_predicates():
         expected_formula for _, _, expected_formula, _ in examples
     ]
     assert all(
-        record["checked_slots"] == ["actor", "modality", "action"]
-        for record in capability_records
+        record["checked_slots"] == ["actor", "modality", "action"] for record in capability_records
     )
     assert all(
-        record["grounded_slots"] == ["actor", "modality", "action"]
-        for record in capability_records
+        record["grounded_slots"] == ["actor", "modality", "action"] for record in capability_records
     )
     assert all(record["source_grounded_slot_rate"] == 1.0 for record in capability_records)
     assert all(record["requires_validation"] is False for record in capability_records)
@@ -361,12 +359,10 @@ def test_emergency_operations_duties_export_operative_predicates():
         expected_formula for _, _, expected_formula, _ in examples
     ]
     assert all(
-        record["checked_slots"] == ["actor", "modality", "action"]
-        for record in capability_records
+        record["checked_slots"] == ["actor", "modality", "action"] for record in capability_records
     )
     assert all(
-        record["grounded_slots"] == ["actor", "modality", "action"]
-        for record in capability_records
+        record["grounded_slots"] == ["actor", "modality", "action"] for record in capability_records
     )
     assert all(record["source_grounded_slot_rate"] == 1.0 for record in capability_records)
     assert all(record["requires_validation"] is False for record in capability_records)
@@ -420,7 +416,7 @@ def test_rulemaking_enactment_amendment_and_repeal_export_operative_predicates()
         assert norm.modality == "O"
         assert norm.action == action
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
         assert rejected_predicate not in expected_formula
@@ -446,12 +442,10 @@ def test_rulemaking_enactment_amendment_and_repeal_export_operative_predicates()
         "O(∀x (Council(x) → RepealRegulation(x)))",
     ]
     assert all(
-        record["checked_slots"] == ["actor", "modality", "action"]
-        for record in capability_records
+        record["checked_slots"] == ["actor", "modality", "action"] for record in capability_records
     )
     assert all(
-        record["grounded_slots"] == ["actor", "modality", "action"]
-        for record in capability_records
+        record["grounded_slots"] == ["actor", "modality", "action"] for record in capability_records
     )
     assert all(record["source_grounded_slot_rate"] == 1.0 for record in capability_records)
     assert all(record["requires_validation"] is False for record in capability_records)
@@ -554,12 +548,10 @@ def test_health_compliance_light_verb_duties_export_operative_predicates():
         formula for _, _, formula, _ in examples
     ]
     assert all(
-        record["checked_slots"] == ["actor", "modality", "action"]
-        for record in capability_records
+        record["checked_slots"] == ["actor", "modality", "action"] for record in capability_records
     )
     assert all(
-        record["grounded_slots"] == ["actor", "modality", "action"]
-        for record in capability_records
+        record["grounded_slots"] == ["actor", "modality", "action"] for record in capability_records
     )
     assert all(record["source_grounded_slot_rate"] == 1.0 for record in capability_records)
     assert all(record["requires_validation"] is False for record in capability_records)
@@ -567,17 +559,16 @@ def test_health_compliance_light_verb_duties_export_operative_predicates():
 
 
 def test_health_compliance_prover_records_preserve_symbols_and_reference_blocker():
-    element = extract_normative_elements(
-        "The provider shall administer vaccination to children."
-    )[0]
+    element = extract_normative_elements("The provider shall administer vaccination to children.")[
+        0
+    ]
     norm = LegalNormIR.from_parser_element(element)
 
     records = [target.to_dict() for target in validate_ir_with_provers(norm).targets]
 
     assert len(records) == 5
     assert all(
-        record["source_formula_symbols"] == ["Provider", "VaccinateChildren"]
-        for record in records
+        record["source_formula_symbols"] == ["Provider", "VaccinateChildren"] for record in records
     )
     assert all(
         record["target_symbol_alignment"]["missing_exported_formula_symbols"] == []
@@ -588,9 +579,7 @@ def test_health_compliance_prover_records_preserve_symbols_and_reference_blocker
         for record in records
     )
     assert records[2]["target"] == "fol"
-    assert records[2]["exported_formula"] == (
-        "forall x. (Provider(x) -> VaccinateChildren(x))"
-    )
+    assert records[2]["exported_formula"] == ("forall x. (Provider(x) -> VaccinateChildren(x))")
 
     blocked = extract_normative_elements(
         "The Secretary shall publish the notice except as provided in section 552."
@@ -670,12 +659,10 @@ def test_evidence_custody_inventory_and_transfer_duties_export_operative_predica
         expected_formula for _, _, expected_formula, _ in examples
     ]
     assert all(
-        record["checked_slots"] == ["actor", "modality", "action"]
-        for record in capability_records
+        record["checked_slots"] == ["actor", "modality", "action"] for record in capability_records
     )
     assert all(
-        record["grounded_slots"] == ["actor", "modality", "action"]
-        for record in capability_records
+        record["grounded_slots"] == ["actor", "modality", "action"] for record in capability_records
     )
     assert all(record["source_grounded_slot_rate"] == 1.0 for record in capability_records)
     assert all(record["requires_validation"] is False for record in capability_records)
@@ -752,12 +739,10 @@ def test_evidence_custody_documentation_records_and_transfer_logs_export_operati
         expected_formula for _, _, expected_formula, _ in examples
     ]
     assert all(
-        record["checked_slots"] == ["actor", "modality", "action"]
-        for record in capability_records
+        record["checked_slots"] == ["actor", "modality", "action"] for record in capability_records
     )
     assert all(
-        record["grounded_slots"] == ["actor", "modality", "action"]
-        for record in capability_records
+        record["grounded_slots"] == ["actor", "modality", "action"] for record in capability_records
     )
     assert all(record["source_grounded_slot_rate"] == 1.0 for record in capability_records)
     assert all(record["requires_validation"] is False for record in capability_records)
@@ -834,12 +819,10 @@ def test_code_maintenance_revision_annotation_and_supplement_duties_export_opera
         expected_formula for _, _, expected_formula, _ in examples
     ]
     assert all(
-        record["checked_slots"] == ["actor", "modality", "action"]
-        for record in capability_records
+        record["checked_slots"] == ["actor", "modality", "action"] for record in capability_records
     )
     assert all(
-        record["grounded_slots"] == ["actor", "modality", "action"]
-        for record in capability_records
+        record["grounded_slots"] == ["actor", "modality", "action"] for record in capability_records
     )
     assert all(record["source_grounded_slot_rate"] == 1.0 for record in capability_records)
     assert all(record["requires_validation"] is False for record in capability_records)
@@ -920,12 +903,10 @@ def test_meeting_governance_duties_export_operative_predicates():
         expected_formula for _, _, _, expected_formula, _ in examples
     ]
     assert all(
-        record["checked_slots"] == ["actor", "modality", "action"]
-        for record in capability_records
+        record["checked_slots"] == ["actor", "modality", "action"] for record in capability_records
     )
     assert all(
-        record["grounded_slots"] == ["actor", "modality", "action"]
-        for record in capability_records
+        record["grounded_slots"] == ["actor", "modality", "action"] for record in capability_records
     )
     assert all(record["source_grounded_slot_rate"] == 1.0 for record in capability_records)
     assert all(record["requires_validation"] is False for record in capability_records)
@@ -1006,12 +987,10 @@ def test_derivative_records_processing_duties_export_operative_predicates():
         expected_formula for _, _, _, expected_formula, _ in examples
     ]
     assert all(
-        record["checked_slots"] == ["actor", "modality", "action"]
-        for record in capability_records
+        record["checked_slots"] == ["actor", "modality", "action"] for record in capability_records
     )
     assert all(
-        record["grounded_slots"] == ["actor", "modality", "action"]
-        for record in capability_records
+        record["grounded_slots"] == ["actor", "modality", "action"] for record in capability_records
     )
     assert all(record["source_grounded_slot_rate"] == 1.0 for record in capability_records)
     assert all(record["requires_validation"] is False for record in capability_records)
@@ -1108,12 +1087,10 @@ def test_incident_and_risk_reporting_duties_export_operative_predicates():
         expected_formula for _, _, _, expected_formula, _ in examples
     ]
     assert all(
-        record["checked_slots"] == ["actor", "modality", "action"]
-        for record in capability_records
+        record["checked_slots"] == ["actor", "modality", "action"] for record in capability_records
     )
     assert all(
-        record["grounded_slots"] == ["actor", "modality", "action"]
-        for record in capability_records
+        record["grounded_slots"] == ["actor", "modality", "action"] for record in capability_records
     )
     assert all(record["source_grounded_slot_rate"] == 1.0 for record in capability_records)
     assert all(record["requires_validation"] is False for record in capability_records)

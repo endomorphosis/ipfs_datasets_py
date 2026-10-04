@@ -15,9 +15,11 @@ print("=== MINIMAL IMPORT TEST ===")
 print("Testing direct web_archive import...")
 try:
     import ipfs_datasets_py.processors.web_archiving.web_archive_utils
+
     print("✓ web_archive module imported")
 
     from ipfs_datasets_py.processors.web_archiving.web_archive import WebArchiveProcessor
+
     print("✓ WebArchiveProcessor class imported")
 
     processor = WebArchiveProcessor()
@@ -26,14 +28,17 @@ try:
 except Exception as e:
     print(f"✗ Error: {e}")
     import traceback
+
     traceback.print_exc()
 
 print("\nTesting direct graphrag_processor import...")
 try:
     import ipfs_datasets_py.graphrag_processor
+
     print("✓ graphrag_processor module imported")
 
     from ipfs_datasets_py.processors.graphrag_processor import MockGraphRAGProcessor
+
     print("✓ MockGraphRAGProcessor class imported")
 
     mock_proc = MockGraphRAGProcessor()
@@ -42,6 +47,7 @@ try:
 except Exception as e:
     print(f"✗ Error: {e}")
     import traceback
+
     traceback.print_exc()
 
 print("\n=== TEST COMPLETE ===")

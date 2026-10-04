@@ -33,7 +33,14 @@ def parse_ir_ops_from_query(query: str) -> List[Dict[str, Any]]:
 
 
 def compile_ir(ops: List[Dict[str, Any]]):
-    from ipfs_datasets_py.search.graph_query.ir import Expand, Limit, Project, QueryIR, ScanType, SeedEntities
+    from ipfs_datasets_py.search.graph_query.ir import (
+        Expand,
+        Limit,
+        Project,
+        QueryIR,
+        ScanType,
+        SeedEntities,
+    )
 
     compiled_ops = []
     for raw in ops:
@@ -62,7 +69,9 @@ def compile_ir(ops: List[Dict[str, Any]]):
                 raise ValueError("Expand.relationship_types must be a list or null")
             if direction not in ("outgoing", "incoming", "both"):
                 raise ValueError("Expand.direction must be one of: outgoing, incoming, both")
-            if max_per_node is not None and (not isinstance(max_per_node, int) or max_per_node <= 0):
+            if max_per_node is not None and (
+                not isinstance(max_per_node, int) or max_per_node <= 0
+            ):
                 raise ValueError("Expand.max_per_node must be a positive int or null")
             compiled_ops.append(
                 Expand(
@@ -123,13 +132,18 @@ def query_knowledge_graph(
         # pdf_tools/pdf_query_knowledge_graph.
         # Always import legacy processor for test_graph compatibility
         # noqa: F401 not needed — both GraphRAGProcessor and MockGraphRAGProcessor are used below
-        from ipfs_datasets_py.processors.graphrag_processor import GraphRAGProcessor, MockGraphRAGProcessor
+        from ipfs_datasets_py.processors.graphrag_processor import (
+            GraphRAGProcessor,
+            MockGraphRAGProcessor,
+        )
+
         # Import unified processor (recommended) with fallback to legacy
         try:
             from ipfs_datasets_py.processors.specialized.graphrag.unified_graphrag import (
                 UnifiedGraphRAGProcessor,
-                GraphRAGConfiguration
+                GraphRAGConfiguration,
             )
+
             # Use unified processor
             config = GraphRAGConfiguration(processing_mode="fast")
             processor = UnifiedGraphRAGProcessor(config=config)
@@ -176,7 +190,9 @@ def query_knowledge_graph(
 
     from ipfs_datasets_py.search.graph_query import GraphQueryExecutor
     from ipfs_datasets_py.search.graph_query.budgets import budgets_from_preset
-    from ipfs_datasets_py.search.graph_query.sharded_car import sharded_car_backend_from_manifest_cid
+    from ipfs_datasets_py.search.graph_query.sharded_car import (
+        sharded_car_backend_from_manifest_cid,
+    )
 
     backend = sharded_car_backend_from_manifest_cid(
         manifest_cid,

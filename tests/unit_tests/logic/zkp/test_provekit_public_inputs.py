@@ -188,9 +188,7 @@ def test_with_attestation_derives_public_attestation_fields():
     assert attested.attestation_ref
     assert len(attested.attestation_ref) == 64
     assert attested.attestation_view_version == 1
-    assert attested.to_zkp_public_inputs()["attestation_ref"] == (
-        attested.attestation_ref
-    )
+    assert attested.to_zkp_public_inputs()["attestation_ref"] == (attested.attestation_ref)
 
 
 def test_canonical_json_and_hash_are_deterministic():
@@ -229,4 +227,3 @@ def test_record_rejects_invalid_core_public_inputs(kwargs):
 
     with pytest.raises((TypeError, ValueError)):
         ProveKitPublicInputRecord(**base)
-

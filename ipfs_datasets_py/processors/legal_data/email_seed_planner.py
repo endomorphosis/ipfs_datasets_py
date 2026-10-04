@@ -11,7 +11,9 @@ def _load_json(path: str | Path) -> dict[str, Any]:
 
 
 def _tokenize(text: str) -> list[str]:
-    return [token for token in re.findall(r"[A-Za-z0-9]+", str(text or "").lower()) if len(token) >= 4]
+    return [
+        token for token in re.findall(r"[A-Za-z0-9]+", str(text or "").lower()) if len(token) >= 4
+    ]
 
 
 EMAIL_FOCUSED_TERMS = {
@@ -52,10 +54,26 @@ def build_email_seed_plan(
     worksheet = _load_json(worksheet_path)
 
     summary = str(package.get("summary") or worksheet.get("summary") or "").strip()
-    factual_allegations = [str(item or "").strip() for item in list(package.get("factual_allegations") or []) if str(item or "").strip()]
-    supporting_evidence = [str(item or "").strip() for item in list(package.get("supporting_evidence") or []) if str(item or "").strip()]
-    outstanding_gaps = [str(item or "").strip() for item in list(worksheet.get("outstanding_intake_gaps") or []) if str(item or "").strip()]
-    follow_up_items = [dict(item) for item in list(worksheet.get("follow_up_items") or []) if isinstance(item, dict)]
+    factual_allegations = [
+        str(item or "").strip()
+        for item in list(package.get("factual_allegations") or [])
+        if str(item or "").strip()
+    ]
+    supporting_evidence = [
+        str(item or "").strip()
+        for item in list(package.get("supporting_evidence") or [])
+        if str(item or "").strip()
+    ]
+    outstanding_gaps = [
+        str(item or "").strip()
+        for item in list(worksheet.get("outstanding_intake_gaps") or [])
+        if str(item or "").strip()
+    ]
+    follow_up_items = [
+        dict(item)
+        for item in list(worksheet.get("follow_up_items") or [])
+        if isinstance(item, dict)
+    ]
 
     weighted_terms: dict[str, int] = {}
     for term, weight in EMAIL_FOCUSED_TERMS.items():
@@ -65,8 +83,16 @@ def build_email_seed_plan(
         lowered = str(text or "").lower()
         for token in _tokenize(lowered):
             if token in EMAIL_FOCUSED_TERMS:
-                weighted_terms[token] = weighted_terms.get(token, 0) + base_weight + EMAIL_FOCUSED_TERMS[token]
-        for phrase in ("hearing request", "informal review", "final decision", "written notice", "review request"):
+                weighted_terms[token] = (
+                    weighted_terms.get(token, 0) + base_weight + EMAIL_FOCUSED_TERMS[token]
+                )
+        for phrase in (
+            "hearing request",
+            "informal review",
+            "final decision",
+            "written notice",
+            "review request",
+        ):
             if phrase in lowered:
                 for token in _tokenize(phrase):
                     weighted_terms[token] = weighted_terms.get(token, 0) + base_weight + 4
@@ -83,7 +109,10 @@ def build_email_seed_plan(
         _bump(str(item.get("question") or ""), 4)
         _bump(str(item.get("gap") or ""), 3)
 
-    ranked_terms = [term for term, _score in sorted(weighted_terms.items(), key=lambda item: (-item[1], item[0]))]
+    ranked_terms = [
+        term
+        for term, _score in sorted(weighted_terms.items(), key=lambda item: (-item[1], item[0]))
+    ]
     top_terms = ranked_terms[:12]
     subject_phrases = []
     for phrase in (
@@ -114,7 +143,11 @@ def build_email_seed_plan(
     return {
         "summary": summary,
         "outstanding_intake_gaps": outstanding_gaps,
-        "blocker_objectives": [str(item.get("objective") or "").strip() for item in follow_up_items if str(item.get("objective") or "").strip()],
+        "blocker_objectives": [
+            str(item.get("objective") or "").strip()
+            for item in follow_up_items
+            if str(item.get("objective") or "").strip()
+        ],
         "complaint_email_query": complaint_query,
         "complaint_email_keywords": top_terms,
         "recommended_subject_phrases": subject_phrases[:6],

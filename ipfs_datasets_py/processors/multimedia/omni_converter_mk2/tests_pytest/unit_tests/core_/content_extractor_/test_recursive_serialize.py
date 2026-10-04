@@ -1,6 +1,7 @@
 """
 Test suite for core/content_extractor/_recursive_serialize.py converted from unittest to pytest.
 """
+
 import pytest
 from unittest.mock import Mock, MagicMock, patch
 from typing import Any
@@ -14,6 +15,7 @@ import base64
 try:
     import numpy as np
     import pandas as pd
+
     NUMPY_AVAILABLE = True
     PANDAS_AVAILABLE = True
 except ImportError:
@@ -25,11 +27,14 @@ except ImportError:
 try:
     from core.content_extractor._recursive_serialize import _recursive_serialize
 except ImportError:
-    pytest.skip("core.content_extractor._recursive_serialize module not available", allow_module_level=True)
+    pytest.skip(
+        "core.content_extractor._recursive_serialize module not available", allow_module_level=True
+    )
 
 
 class SampleEnum(Enum):
     """Sample enum for serialization tests."""
+
     RED = "red"
     BLUE = "blue"
     GREEN = 3
@@ -37,6 +42,7 @@ class SampleEnum(Enum):
 
 class CustomObject:
     """Custom object for testing serialization."""
+
     def __init__(self, name: str, value: int):
         self.name = name
         self.value = value
@@ -44,15 +50,17 @@ class CustomObject:
 
 class CustomObjectWithStr:
     """Custom object with __str__ method."""
+
     def __init__(self, data: str):
         self.data = data
-    
+
     def __str__(self):
         return f"CustomObjectWithStr({self.data})"
 
 
 class CustomObjectWithDict:
     """Custom object with __dict__ attribute."""
+
     def __init__(self, x: int, y: str):
         self.x = x
         self.y = y
@@ -73,27 +81,27 @@ class TestRecursiveSerialize:
         result = _recursive_serialize("hello")
         assert result == "hello"
         assert isinstance(result, str)
-        
+
         # Test integer
         result = _recursive_serialize(42)
         assert result == 42
         assert isinstance(result, int)
-        
+
         # Test float
         result = _recursive_serialize(3.14)
         assert result == 3.14
         assert isinstance(result, float)
-        
+
         # Test boolean True
         result = _recursive_serialize(True)
         assert result is True
         assert isinstance(result, bool)
-        
+
         # Test boolean False
         result = _recursive_serialize(False)
         assert result is False
         assert isinstance(result, bool)
-        
+
         # Test None
         result = _recursive_serialize(None)
         assert result is None
@@ -109,7 +117,7 @@ class TestRecursiveSerialize:
         """
         test_list = [1, "hello", 3.14, True, None, [1, 2, 3]]
         result = _recursive_serialize(test_list)
-        
+
         assert isinstance(result, list)
         assert len(result) == 6
         assert result[0] == 1
@@ -130,7 +138,7 @@ class TestRecursiveSerialize:
         """
         test_tuple = (1, "hello", 3.14, (2, 3))
         result = _recursive_serialize(test_tuple)
-        
+
         assert isinstance(result, list)
         assert len(result) == 4
         assert result[0] == 1
@@ -152,10 +160,10 @@ class TestRecursiveSerialize:
             "age": 25,
             "active": True,
             "data": {"nested": "value"},
-            "items": [1, 2, 3]
+            "items": [1, 2, 3],
         }
         result = _recursive_serialize(test_dict)
-        
+
         assert isinstance(result, dict)
         assert result["name"] == "test"
         assert result["age"] == 25
@@ -176,13 +184,13 @@ class TestRecursiveSerialize:
             "level1": {
                 "level2": [
                     {"level3": {"level4": "deep_value"}},
-                    {"another": [1, 2, {"nested_list": True}]}
+                    {"another": [1, 2, {"nested_list": True}]},
                 ]
             },
-            "simple": "value"
+            "simple": "value",
         }
         result = _recursive_serialize(nested_data)
-        
+
         assert isinstance(result, dict)
         assert result["simple"] == "value"
         assert result["level1"]["level2"][0]["level3"]["level4"] == "deep_value"
@@ -199,7 +207,7 @@ class TestRecursiveSerialize:
         """
         test_set = {1, 2, 3, "hello"}
         result = _recursive_serialize(test_set)
-        
+
         assert isinstance(result, list)
         assert len(result) == 4
         assert 1 in result
@@ -218,7 +226,7 @@ class TestRecursiveSerialize:
         test_datetime = datetime(2023, 12, 25, 15, 30, 45)
         result_datetime = _recursive_serialize(test_datetime)
         assert result_datetime == "2023-12-25T15:30:45"
-        
+
         test_date = date(2023, 12, 25)
         result_date = _recursive_serialize(test_date)
         assert result_date == "2023-12-25"
@@ -233,7 +241,7 @@ class TestRecursiveSerialize:
         """
         test_decimal = Decimal("123.456")
         result = _recursive_serialize(test_decimal)
-        
+
         # Should be either float or string that preserves the value
         if isinstance(result, float):
             assert abs(result - 123.456) < 0.001
@@ -252,7 +260,7 @@ class TestRecursiveSerialize:
         """
         test_bytes = b"hello world"
         result = _recursive_serialize(test_bytes)
-        
+
         # Should be either base64 encoded or decoded string
         if isinstance(result, str):
             # If base64 encoded, should be able to decode back
@@ -262,7 +270,7 @@ class TestRecursiveSerialize:
             except:
                 # If not base64, might be direct decode
                 assert result == "hello world"
-        
+
         test_bytearray = bytearray(b"test data")
         result_bytearray = _recursive_serialize(test_bytearray)
         assert isinstance(result_bytearray, str)
@@ -277,7 +285,7 @@ class TestRecursiveSerialize:
         """
         test_path = Path("/home/user/document.txt")
         result = _recursive_serialize(test_path)
-        
+
         assert isinstance(result, str)
         assert result == "/home/user/document.txt"
 
@@ -295,18 +303,18 @@ class TestRecursiveSerialize:
         array_1d = np.array([1, 2, 3, 4])
         result_1d = _recursive_serialize(array_1d)
         assert result_1d == [1, 2, 3, 4]
-        
+
         # Test 2D array
         array_2d = np.array([[1, 2], [3, 4]])
         result_2d = _recursive_serialize(array_2d)
         assert result_2d == [[1, 2], [3, 4]]
-        
+
         # Test numpy scalar
         scalar = np.int64(42)
         result_scalar = _recursive_serialize(scalar)
         assert result_scalar == 42
         assert isinstance(result_scalar, int)
-        
+
         # Test numpy float
         float_scalar = np.float64(3.14)
         result_float = _recursive_serialize(float_scalar)
@@ -325,17 +333,17 @@ class TestRecursiveSerialize:
         # Test Series
         series = pd.Series([1, 2, 3, 4], name="test_series")
         result_series = _recursive_serialize(series)
-        
+
         # Should be list or dict
         if isinstance(result_series, list):
             assert result_series == [1, 2, 3, 4]
         elif isinstance(result_series, dict):
             assert "values" in result_series
-        
+
         # Test DataFrame
         df = pd.DataFrame({"A": [1, 2], "B": [3, 4]})
         result_df = _recursive_serialize(df)
-        
+
         assert isinstance(result_df, (dict, list))
 
     def test_serialize_custom_objects(self):
@@ -350,15 +358,15 @@ class TestRecursiveSerialize:
         # Test object with __dict__
         obj_with_dict = CustomObjectWithDict(42, "test")
         result_dict = _recursive_serialize(obj_with_dict)
-        
+
         if isinstance(result_dict, dict):
             assert result_dict["x"] == 42
             assert result_dict["y"] == "test"
-        
+
         # Test object with __str__
         obj_with_str = CustomObjectWithStr("test_data")
         result_str = _recursive_serialize(obj_with_str)
-        
+
         if isinstance(result_str, str):
             assert "test_data" in result_str
 
@@ -388,7 +396,7 @@ class TestRecursiveSerialize:
         list_with_none = [1, None, 3]
         result_list = _recursive_serialize(list_with_none)
         assert result_list == [1, None, 3]
-        
+
         dict_with_none = {"a": 1, "b": None, "c": 3}
         result_dict = _recursive_serialize(dict_with_none)
         assert result_dict == {"a": 1, "b": None, "c": 3}
@@ -404,7 +412,7 @@ class TestRecursiveSerialize:
         enum_str = SampleEnum.RED
         result_str = _recursive_serialize(enum_str)
         assert result_str == "red"
-        
+
         enum_int = SampleEnum.GREEN
         result_int = _recursive_serialize(enum_int)
         assert result_int == 3
@@ -419,7 +427,7 @@ class TestRecursiveSerialize:
         """
         test_frozenset = frozenset([1, 2, 3, "hello"])
         result = _recursive_serialize(test_frozenset)
-        
+
         assert isinstance(result, list)
         assert len(result) == 4
         assert 1 in result
@@ -437,5 +445,5 @@ class TestRecursiveSerialize:
         """
         test_range = range(5)
         result = _recursive_serialize(test_range)
-        
+
         assert result == [0, 1, 2, 3, 4]

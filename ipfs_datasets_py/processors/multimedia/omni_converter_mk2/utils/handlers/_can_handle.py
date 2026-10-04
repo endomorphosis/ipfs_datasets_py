@@ -1,12 +1,13 @@
 import os
 from typing import Optional
 
+
 def can_handle(
-        supported_formats: frozenset[str], 
-        format_extensions: frozenset[str], 
-        file_path: str, 
-        format_name: Optional[str] = None
-    ) -> bool:
+    supported_formats: frozenset[str],
+    format_extensions: frozenset[str],
+    file_path: str,
+    format_name: Optional[str] = None,
+) -> bool:
     if format_name:
         return format_name in supported_formats
 
@@ -15,7 +16,7 @@ def can_handle(
     ext = ext.lower()
     if not ext:
         return False
-    ext = ext.lstrip('.')
+    ext = ext.lstrip(".")
     if ext in supported_formats:
         return True
     return False

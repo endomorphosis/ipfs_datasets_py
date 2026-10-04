@@ -4,11 +4,13 @@ Test stubs for libp2p_kit_full module.
 Feature: LibP2P Kit Full Implementation
   Full-featured LibP2P networking implementation
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def nat_configuration():
@@ -83,6 +85,7 @@ def peer_connection_parameters():
 
 
 # Test scenarios
+
 
 def test_initialize_full_libp2p_node():
     """
@@ -173,6 +176,7 @@ def test_monitor_peer_connections():
 
 
 # Step definitions
+
 
 # Given steps
 @given("NAT configuration")
@@ -343,4 +347,3 @@ def the_custom_protocol_is_available():
     """Step: Then the custom protocol is available"""
     # TODO: Implement step
     pass
-

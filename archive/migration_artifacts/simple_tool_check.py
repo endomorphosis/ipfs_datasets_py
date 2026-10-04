@@ -5,7 +5,9 @@ Simple tool status checker that avoids hanging.
 
 import sys
 import importlib
-sys.path.insert(0, '.')
+
+sys.path.insert(0, ".")
+
 
 def check_tool_import(module_name, function_name):
     """Check if a tool can be imported."""
@@ -20,6 +22,7 @@ def check_tool_import(module_name, function_name):
         return False, f"Function not found: {e}"
     except Exception as e:
         return False, f"Other error: {e}"
+
 
 def main():
     """Check all tools."""
@@ -48,7 +51,8 @@ def main():
 
     print(f"\n=== Summary ===")
     print(f"Successful imports: {success_count}/{total_count}")
-    print(f"Success rate: {(success_count/total_count)*100:.1f}%")
+    print(f"Success rate: {(success_count / total_count) * 100:.1f}%")
+
 
 if __name__ == "__main__":
     main()

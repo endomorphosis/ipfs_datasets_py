@@ -12,7 +12,9 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.logic_optimizer import 
 )
 
 
-def _typed_imports_smoke() -> tuple[type[BaseOptimizer], OntologyGenerator, OntologyCritic, LogicTheoremOptimizer]:
+def _typed_imports_smoke() -> tuple[
+    type[BaseOptimizer], OntologyGenerator, OntologyCritic, LogicTheoremOptimizer
+]:
     gen = OntologyGenerator()
     critic = OntologyCritic(use_llm=False)
     logic = LogicTheoremOptimizer()

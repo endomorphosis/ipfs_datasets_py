@@ -20,12 +20,14 @@ from ipfs_datasets_py.audit.audit_logger import AuditHandler, AuditEvent, AuditL
 # Try to import optional dependencies
 try:
     import syslog
+
     SYSLOG_AVAILABLE = True
 except ImportError:
     SYSLOG_AVAILABLE = False
 
 try:
     from elasticsearch import Elasticsearch
+
     ELASTICSEARCH_AVAILABLE = True
 except ImportError:
     ELASTICSEARCH_AVAILABLE = False
@@ -41,14 +43,18 @@ class FileAuditHandler(AuditHandler):
     - Customizable formatting of events
     """
 
-    def __init__(self, name: str, file_path: str,
-                 min_level: AuditLevel = AuditLevel.INFO,
-                 formatter: Optional[Callable[[AuditEvent], str]] = None,
-                 rotate_size_mb: Optional[float] = None,
-                 rotate_count: int = 5,
-                 use_compression: bool = False,
-                 mode: str = 'a',
-                 encoding: str = 'utf-8'):
+    def __init__(
+        self,
+        name: str,
+        file_path: str,
+        min_level: AuditLevel = AuditLevel.INFO,
+        formatter: Optional[Callable[[AuditEvent], str]] = None,
+        rotate_size_mb: Optional[float] = None,
+        rotate_count: int = 5,
+        use_compression: bool = False,
+        mode: str = "a",
+        encoding: str = "utf-8",
+    ):
         """
         Initialize the file audit handler.
 
@@ -99,7 +105,7 @@ class FileAuditHandler(AuditHandler):
         # Rename existing rotated files
         for i in range(self.rotate_count - 1, 0, -1):
             old_path = f"{self.file_path}.{i}"
-            new_path = f"{self.file_path}.{i+1}"
+            new_path = f"{self.file_path}.{i + 1}"
 
             if os.path.exists(old_path):
                 if os.path.exists(new_path):
@@ -126,12 +132,12 @@ class FileAuditHandler(AuditHandler):
             try:
                 # Format the event
                 formatted_event = self.format_event(event)
-                if not formatted_event.endswith('\n'):
-                    formatted_event += '\n'
+                if not formatted_event.endswith("\n"):
+                    formatted_event += "\n"
 
                 # Write to file
                 if self.use_compression:
-                    self._file.write(formatted_event.encode('utf-8'))
+                    self._file.write(formatted_event.encode("utf-8"))
                 else:
                     self._file.write(formatted_event)
 
@@ -139,8 +145,10 @@ class FileAuditHandler(AuditHandler):
 
                 # Update current size and check rotation
                 self._current_size += len(formatted_event)
-                if (self.rotate_size_mb is not None and
-                    self._current_size > self.rotate_size_mb * 1024 * 1024):
+                if (
+                    self.rotate_size_mb is not None
+                    and self._current_size > self.rotate_size_mb * 1024 * 1024
+                ):
                     self._rotate_file()
 
                 return True
@@ -167,13 +175,17 @@ class JSONAuditHandler(AuditHandler):
     - Support for writing to file or any file-like object
     """
 
-    def __init__(self, name: str, file_path: Optional[str] = None,
-                 file_obj: Optional[TextIO] = None,
-                 min_level: AuditLevel = AuditLevel.INFO,
-                 pretty: bool = False,
-                 rotate_size_mb: Optional[float] = None,
-                 rotate_count: int = 5,
-                 use_compression: bool = False):
+    def __init__(
+        self,
+        name: str,
+        file_path: Optional[str] = None,
+        file_obj: Optional[TextIO] = None,
+        min_level: AuditLevel = AuditLevel.INFO,
+        pretty: bool = False,
+        rotate_size_mb: Optional[float] = None,
+        rotate_count: int = 5,
+        use_compression: bool = False,
+    ):
         """
         Initialize the JSON audit handler.
 
@@ -232,7 +244,7 @@ class JSONAuditHandler(AuditHandler):
         # Rename existing rotated files
         for i in range(self.rotate_count - 1, 0, -1):
             old_path = f"{self.file_path}.{i}"
-            new_path = f"{self.file_path}.{i+1}"
+            new_path = f"{self.file_path}.{i + 1}"
 
             if os.path.exists(old_path):
                 if os.path.exists(new_path):
@@ -249,7 +261,7 @@ class JSONAuditHandler(AuditHandler):
     def _handle_event(self, event: AuditEvent) -> bool:
         """Write the audit event as JSON."""
         with self._lock:
-            if self._file is None or (hasattr(self._file, 'closed') and self._file.closed):
+            if self._file is None or (hasattr(self._file, "closed") and self._file.closed):
                 if not self._owns_file:
                     return False  # Can't reopen a file we don't own
 
@@ -266,12 +278,12 @@ class JSONAuditHandler(AuditHandler):
                 else:
                     json_str = event.to_json()
 
-                if not json_str.endswith('\n'):
-                    json_str += '\n'
+                if not json_str.endswith("\n"):
+                    json_str += "\n"
 
                 # Write to file
                 if isinstance(self._file, gzip.GzipFile):
-                    self._file.write(json_str.encode('utf-8'))
+                    self._file.write(json_str.encode("utf-8"))
                 else:
                     self._file.write(json_str)
 
@@ -280,8 +292,10 @@ class JSONAuditHandler(AuditHandler):
                 # Update current size and check rotation
                 if self._owns_file:
                     self._current_size += len(json_str)
-                    if (self.rotate_size_mb is not None and
-                        self._current_size > self.rotate_size_mb * 1024 * 1024):
+                    if (
+                        self.rotate_size_mb is not None
+                        and self._current_size > self.rotate_size_mb * 1024 * 1024
+                    ):
                         self._rotate_file()
 
                 return True
@@ -293,7 +307,12 @@ class JSONAuditHandler(AuditHandler):
     def close(self) -> None:
         """Close the file handler if we own it."""
         with self._lock:
-            if self._owns_file and self._file and hasattr(self._file, 'closed') and not self._file.closed:
+            if (
+                self._owns_file
+                and self._file
+                and hasattr(self._file, "closed")
+                and not self._file.closed
+            ):
                 self._file.close()
                 self._file = None
 
@@ -316,13 +335,17 @@ class SyslogAuditHandler(AuditHandler):
         AuditLevel.WARNING: syslog.LOG_WARNING if SYSLOG_AVAILABLE else 4,
         AuditLevel.ERROR: syslog.LOG_ERR if SYSLOG_AVAILABLE else 3,
         AuditLevel.CRITICAL: syslog.LOG_CRIT if SYSLOG_AVAILABLE else 2,
-        AuditLevel.EMERGENCY: syslog.LOG_EMERG if SYSLOG_AVAILABLE else 0
+        AuditLevel.EMERGENCY: syslog.LOG_EMERG if SYSLOG_AVAILABLE else 0,
     }
 
-    def __init__(self, name: str, min_level: AuditLevel = AuditLevel.INFO,
-                 formatter: Optional[Callable[[AuditEvent], str]] = None,
-                 facility: int = None,
-                 identity: str = "ipfs_datasets_audit"):
+    def __init__(
+        self,
+        name: str,
+        min_level: AuditLevel = AuditLevel.INFO,
+        formatter: Optional[Callable[[AuditEvent], str]] = None,
+        facility: int = None,
+        identity: str = "ipfs_datasets_audit",
+    ):
         """
         Initialize the syslog audit handler.
 
@@ -382,15 +405,19 @@ class ElasticsearchAuditHandler(AuditHandler):
     - Configurable connection parameters and authentication
     """
 
-    def __init__(self, name: str, hosts: List[str],
-                 min_level: AuditLevel = AuditLevel.INFO,
-                 index_pattern: str = "audit-logs-{date}",
-                 username: Optional[str] = None,
-                 password: Optional[str] = None,
-                 api_key: Optional[Union[str, tuple]] = None,
-                 bulk_size: int = 100,
-                 bulk_timeout: float = 5.0,
-                 **kwargs):
+    def __init__(
+        self,
+        name: str,
+        hosts: List[str],
+        min_level: AuditLevel = AuditLevel.INFO,
+        index_pattern: str = "audit-logs-{date}",
+        username: Optional[str] = None,
+        password: Optional[str] = None,
+        api_key: Optional[Union[str, tuple]] = None,
+        bulk_size: int = 100,
+        bulk_timeout: float = 5.0,
+        **kwargs,
+    ):
         """
         Initialize the Elasticsearch audit handler.
 
@@ -409,7 +436,9 @@ class ElasticsearchAuditHandler(AuditHandler):
         super().__init__(name, min_level)
 
         if not ELASTICSEARCH_AVAILABLE:
-            logging.warning("Elasticsearch is not available; ElasticsearchAuditHandler will not function")
+            logging.warning(
+                "Elasticsearch is not available; ElasticsearchAuditHandler will not function"
+            )
             self.enabled = False
             return
 
@@ -482,7 +511,9 @@ class ElasticsearchAuditHandler(AuditHandler):
 
             # Check for errors
             if response.get("errors", False):
-                errors = [item["index"]["error"] for item in response["items"] if "error" in item["index"]]
+                errors = [
+                    item["index"]["error"] for item in response["items"] if "error" in item["index"]
+                ]
                 logging.error(f"Errors in Elasticsearch bulk indexing: {errors}")
                 return False
 
@@ -506,8 +537,12 @@ class ElasticsearchAuditHandler(AuditHandler):
 
             # Check if we should flush
             should_flush = len(self._buffer) >= self.bulk_size
-            time_since_last_flush = (datetime.datetime.now() - self._last_flush_time).total_seconds()
-            should_flush = should_flush or (self._buffer and time_since_last_flush >= self.bulk_timeout)
+            time_since_last_flush = (
+                datetime.datetime.now() - self._last_flush_time
+            ).total_seconds()
+            should_flush = should_flush or (
+                self._buffer and time_since_last_flush >= self.bulk_timeout
+            )
 
             if should_flush:
                 return self._flush_buffer()
@@ -534,11 +569,15 @@ class AlertingAuditHandler(AuditHandler):
     - Alert aggregation for related events
     """
 
-    def __init__(self, name: str, min_level: AuditLevel = AuditLevel.WARNING,
-                 alert_handlers: Optional[List[Callable[[AuditEvent], None]]] = None,
-                 rate_limit_seconds: float = 60.0,
-                 aggregation_window_seconds: float = 300.0,
-                 alert_rules: Optional[List[Dict[str, Any]]] = None):
+    def __init__(
+        self,
+        name: str,
+        min_level: AuditLevel = AuditLevel.WARNING,
+        alert_handlers: Optional[List[Callable[[AuditEvent], None]]] = None,
+        rate_limit_seconds: float = 60.0,
+        aggregation_window_seconds: float = 300.0,
+        alert_rules: Optional[List[Dict[str, Any]]] = None,
+    ):
         """
         Initialize the alerting audit handler.
 
@@ -687,8 +726,9 @@ class AlertingAuditHandler(AuditHandler):
                 # Remove events outside the time window
                 cutoff_time = now - datetime.timedelta(seconds=window_seconds)
                 self._aggregated_events[rule_id] = [
-                    e for e in self._aggregated_events[rule_id]
-                    if datetime.datetime.fromisoformat(e.timestamp.rstrip('Z')) > cutoff_time
+                    e
+                    for e in self._aggregated_events[rule_id]
+                    if datetime.datetime.fromisoformat(e.timestamp.rstrip("Z")) > cutoff_time
                 ]
 
             # Add the current event

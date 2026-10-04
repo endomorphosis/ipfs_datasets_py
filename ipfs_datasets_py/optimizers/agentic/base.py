@@ -19,14 +19,14 @@ from ipfs_datasets_py.optimizers.common.seed_control import apply_deterministic_
 
 class ChangeControlMethod(Enum):
     """Change control method for managing optimizations."""
-    
+
     GITHUB = "github"  # GitHub issues + draft PRs
     PATCH = "patch"  # Patch-based with worktrees and IPFS
 
 
 class OptimizationMethod(Enum):
     """Type of optimization method to use."""
-    
+
     ADVERSARIAL = "adversarial"  # Generate competing solutions
     ACTOR_CRITIC = "actor_critic"  # Reward-based learning
     TEST_DRIVEN = "test_driven"  # Test-first optimization
@@ -36,10 +36,10 @@ class OptimizationMethod(Enum):
 @dataclass
 class OptimizationTask:
     """Represents a task for optimization.
-    
+
     This now integrates with the unified AgenticExtractionConfig from the common
     extraction_contexts module, supporting both typed config and legacy dict config.
-    
+
     Attributes:
         task_id: Unique identifier for the task
         description: Human-readable description of what to optimize
@@ -52,18 +52,20 @@ class OptimizationTask:
         created_at: When the task was created
         metadata: Additional task metadata
     """
-    
+
     task_id: str
     description: str
     target_files: List[Path] = field(default_factory=list)
     method: OptimizationMethod = OptimizationMethod.TEST_DRIVEN
     priority: int = 50
-    config: Union[AgenticExtractionConfig, Dict[str, Any]] = field(default_factory=lambda: AgenticExtractionConfig())
+    config: Union[AgenticExtractionConfig, Dict[str, Any]] = field(
+        default_factory=lambda: AgenticExtractionConfig()
+    )
     constraints: Dict[str, Any] = field(default_factory=dict)
     assigned_agent: Optional[str] = None
     created_at: datetime = field(default_factory=datetime.now)
     metadata: Dict[str, Any] = field(default_factory=dict)
-    
+
     def __post_init__(self):
         """Normalise config to AgenticExtractionConfig if passed as dict."""
         if isinstance(self.config, dict):
@@ -81,7 +83,7 @@ class OptimizationTask:
 @dataclass
 class ValidationResult:
     """Result of validating an optimization.
-    
+
     Attributes:
         passed: Whether validation passed
         syntax_check: Syntax validation result
@@ -94,7 +96,7 @@ class ValidationResult:
         errors: List of validation errors
         warnings: List of validation warnings
     """
-    
+
     passed: bool
     syntax_check: bool = True
     type_check: bool = True
@@ -105,7 +107,7 @@ class ValidationResult:
     style_check: bool = True
     errors: List[str] = field(default_factory=list)
     warnings: List[str] = field(default_factory=list)
-    
+
     def __repr__(self) -> str:
         """Compact representation for debugging."""
         checks = []
@@ -123,7 +125,7 @@ class ValidationResult:
             checks.append("sec✗")
         if not self.style_check:
             checks.append("style✗")
-        
+
         status = "PASS" if self.passed else "FAIL"
         failed_checks = ", ".join(checks) if checks else "all checks ✓"
         error_summary = f", {len(self.errors)} errors" if self.errors else ""
@@ -134,7 +136,7 @@ class ValidationResult:
 @dataclass
 class OptimizationResult:
     """Result of an optimization attempt.
-    
+
     Attributes:
         task_id: ID of the optimization task
         success: Whether optimization succeeded
@@ -149,7 +151,7 @@ class OptimizationResult:
         error_message: Error message if optimization failed
         metadata: Additional result metadata
     """
-    
+
     task_id: str
     success: bool
     method: OptimizationMethod
@@ -175,20 +177,20 @@ class OptimizationResult:
 
 class AgenticOptimizer(ABC):
     """Base class for all agentic optimizers.
-    
+
     This abstract class defines the interface that all optimization methods
     must implement. Each optimizer implements a specific optimization strategy
     (adversarial, actor-critic, test-driven, or chaos engineering).
     Now uses the unified OptimizerConfig dataclass for consistent configuration
     across all optimizer types (agentic, logic, graphrag).
-    
+
     Attributes:
         agent_id: Unique identifier for this optimizer agent
         method: Optimization method this optimizer implements
         llm_router: LLM router for generating optimizations
         change_control: Change control method to use
         config: Configuration (OptimizerConfig dataclass or dict for backward compat)
-    
+
     Example:
         >>> from ipfs_datasets_py.optimizers.common import OptimizerConfig
         >>> from ipfs_datasets_py.optimizers.agentic import TestDrivenOptimizer
@@ -208,7 +210,7 @@ class AgenticOptimizer(ABC):
         ...     config={"domain": "legal", "max_rounds": 5}
         ... )
     """
-    
+
     def __init__(
         self,
         agent_id: str,
@@ -218,7 +220,7 @@ class AgenticOptimizer(ABC):
         logger: Optional[_logging.Logger] = None,
     ):
         """Initialize the optimizer.
-        
+
         Args:
             agent_id: Unique identifier for this agent
             llm_router: LLM router for text generation
@@ -231,7 +233,7 @@ class AgenticOptimizer(ABC):
         self.method = self._get_method()
         self.llm_router = llm_router
         self.change_control = change_control
-        
+
         # Normalize config to OptimizerConfig dataclass
         if isinstance(config, OptimizerConfig):
             self.config = config
@@ -242,32 +244,32 @@ class AgenticOptimizer(ABC):
             self.config = OptimizerConfig()
         else:
             raise TypeError(f"config must be OptimizerConfig or dict, got {type(config).__name__}")
-        
+
         self._log = logger or self.config.logger or _logging.getLogger(__name__)
         self._seed_status = apply_deterministic_seed(self.config.seed)
-        
+
     @abstractmethod
     def _get_method(self) -> OptimizationMethod:
         """Return the optimization method this optimizer implements.
-        
+
         Returns:
             OptimizationMethod enum value
         """
         pass
-    
+
     def get_config_value(self, key: str, default: Any = None) -> Any:
         """Get a configuration value with fallback to default.
-        
+
         This helper method provides unified access to config values whether using
         the new OptimizerConfig dataclass or legacy dict-based configs.
-        
+
         Args:
             key: Configuration key to retrieve
             default: Default value if key not found
-            
+
         Returns:
             Configuration value or default
-            
+
         Example:
             >>> max_rounds = optimizer.get_config_value("max_rounds", 5)
             >>> domain = optimizer.get_config_value("domain", "general")
@@ -275,51 +277,63 @@ class AgenticOptimizer(ABC):
         if isinstance(self.config, OptimizerConfig):
             return getattr(self.config, key, default)
         return self.config.get(key, default)  # Legacy dict access
-    
+
     @property
     def domain(self) -> str:
         """Get the optimization domain from config.
-        
+
         Returns:
             Domain string (e.g., 'legal', 'medical', 'general')
         """
-        return self.config.domain if isinstance(self.config, OptimizerConfig) else self.config.get("domain", "general")
-    
+        return (
+            self.config.domain
+            if isinstance(self.config, OptimizerConfig)
+            else self.config.get("domain", "general")
+        )
+
     @property
     def max_rounds(self) -> int:
         """Get maximum optimization rounds from config.
-        
+
         Returns:
             Maximum number of optimization rounds
         """
-        return self.config.max_rounds if isinstance(self.config, OptimizerConfig) else self.config.get("max_rounds", 5)
-    
+        return (
+            self.config.max_rounds
+            if isinstance(self.config, OptimizerConfig)
+            else self.config.get("max_rounds", 5)
+        )
+
     @property
     def verbose(self) -> bool:
         """Get verbose logging flag from config.
-        
+
         Returns:
             Whether verbose logging is enabled
         """
-        return self.config.verbose if isinstance(self.config, OptimizerConfig) else self.config.get("verbose", False)
-        
+        return (
+            self.config.verbose
+            if isinstance(self.config, OptimizerConfig)
+            else self.config.get("verbose", False)
+        )
+
     @abstractmethod
     def optimize(self, task: OptimizationTask) -> OptimizationResult:
         """Perform optimization on the given task.
-        
+
         This is the main entry point for optimization. Implementations should:
         1. Analyze the task and target files
         2. Generate optimization using the specific method
         3. Create a patch with the changes
         4. Validate the optimization
         5. Return results with all metadata
-        
+
         Args:
             task: The optimization task to perform
-            
+
         Returns:
             OptimizationResult with success status and details
-            
+
         Raises:
             ValueError: If task is invalid
             RuntimeError: If optimization fails
@@ -350,32 +364,32 @@ class AgenticOptimizer(ABC):
         # If there's no optimized code, return a basic passing result
         if not result.success or not result.optimized_code:
             return ValidationResult(passed=result.success)
-        
+
         try:
             from ipfs_datasets_py.optimizers.agentic.validation import (
                 OptimizationValidator,
                 ValidationLevel,
             )
-            
+
             # Get validation level from config
             validation_level_str = self.get_config_value("validation_level", "standard")
             try:
                 validation_level = ValidationLevel(validation_level_str.lower())
             except (ValueError, AttributeError):
                 validation_level = ValidationLevel.STANDARD
-            
+
             # Create validator
             validator = OptimizationValidator(
                 level=validation_level,
                 parallel=True,
                 max_workers=4,
             )
-            
+
             # Build validation context with metrics
             context = {}
             if result.metrics:
                 context["baseline_metrics"] = result.metrics
-            
+
             # Validate optimized code
             detailed_result = validator.validate(
                 code=result.optimized_code,
@@ -383,7 +397,7 @@ class AgenticOptimizer(ABC):
                 level=validation_level,
                 context=context,
             )
-            
+
             # Convert detailed result to simple ValidationResult
             validation_result = ValidationResult(
                 passed=detailed_result.passed,
@@ -397,9 +411,9 @@ class AgenticOptimizer(ABC):
                 errors=detailed_result.errors,
                 warnings=detailed_result.warnings,
             )
-            
+
             return validation_result
-            
+
         except Exception as e:
             # If validation framework fails, log and return basic result
             self._log.warning(f"Comprehensive validation failed: {e}")
@@ -407,10 +421,10 @@ class AgenticOptimizer(ABC):
                 passed=result.success,
                 errors=[f"Validation framework error: {str(e)}"],
             )
-        
+
     def get_capabilities(self) -> Dict[str, Any]:
         """Return the capabilities of this optimizer.
-        
+
         Returns:
             Dictionary describing optimizer capabilities:
             - method: Optimization method
@@ -437,54 +451,54 @@ class AgenticOptimizer(ABC):
 
 class ChangeController(ABC):
     """Base class for change control implementations.
-    
+
     Handles creating, reviewing, and applying code changes using
     either GitHub integration or patch-based system.
     """
-    
+
     @abstractmethod
     def create_change(self, result: OptimizationResult) -> str:
         """Create a change request (issue+PR or patch).
-        
+
         Args:
             result: The optimization result to create change for
-            
+
         Returns:
             Change identifier (PR URL or patch CID)
         """
         pass
-        
+
     @abstractmethod
     def check_approval(self, change_id: str) -> bool:
         """Check if a change has been approved.
-        
+
         Args:
             change_id: The change identifier to check
-            
+
         Returns:
             True if approved, False otherwise
         """
         pass
-        
+
     @abstractmethod
     def apply_change(self, change_id: str) -> bool:
         """Apply an approved change.
-        
+
         Args:
             change_id: The change identifier to apply
-            
+
         Returns:
             True if successfully applied, False otherwise
         """
         pass
-        
+
     @abstractmethod
     def rollback_change(self, change_id: str) -> bool:
         """Rollback a previously applied change.
-        
+
         Args:
             change_id: The change identifier to rollback
-            
+
         Returns:
             True if successfully rolled back, False otherwise
         """

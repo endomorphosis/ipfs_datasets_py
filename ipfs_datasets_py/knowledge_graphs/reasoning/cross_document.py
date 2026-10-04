@@ -18,6 +18,7 @@ The cross-document reasoning leverages the query optimization from
 optimizers/graphrag/query_optimizer
 to efficiently traverse entity relationships and find relevant connections.
 """
+
 from __future__ import annotations
 
 import logging
@@ -26,6 +27,7 @@ import os
 import re
 from typing import Dict, List, Any, Optional, Tuple
 from collections import Counter
+
 try:
     import numpy as np
 except ImportError:
@@ -152,7 +154,9 @@ class CrossDocumentReasoner(ReasoningHelpersMixin):
         self.avg_connection_count = 0
         self.avg_confidence = 0.0
 
-    def _compute_document_similarity(self, source_doc: DocumentNode, target_doc: DocumentNode) -> float:
+    def _compute_document_similarity(
+        self, source_doc: DocumentNode, target_doc: DocumentNode
+    ) -> float:
         """Compute a similarity score between two documents.
 
         Preference order:
@@ -171,16 +175,43 @@ class CrossDocumentReasoner(ReasoningHelpersMixin):
                     if denom > 0:
                         sim = float(np.dot(a, b) / denom)
                         return max(0.0, min(1.0, sim))
-            except (TypeError, ValueError, AttributeError, FloatingPointError,
-                    np.linalg.LinAlgError):
+            except (
+                TypeError,
+                ValueError,
+                AttributeError,
+                FloatingPointError,
+                np.linalg.LinAlgError,
+            ):
                 pass
 
         def tokenize(text: str) -> List[str]:
             tokens = re.findall(r"[a-z0-9]+", (text or "").lower())
             stop = {
-                "the", "a", "an", "and", "or", "but", "if", "then", "else",
-                "of", "to", "in", "on", "for", "with", "by", "from", "as",
-                "is", "are", "was", "were", "be", "been", "being",
+                "the",
+                "a",
+                "an",
+                "and",
+                "or",
+                "but",
+                "if",
+                "then",
+                "else",
+                "of",
+                "to",
+                "in",
+                "on",
+                "for",
+                "with",
+                "by",
+                "from",
+                "as",
+                "is",
+                "are",
+                "was",
+                "were",
+                "be",
+                "been",
+                "being",
             }
             return [t for t in tokens if len(t) >= 3 and t not in stop]
 
@@ -212,7 +243,7 @@ class CrossDocumentReasoner(ReasoningHelpersMixin):
         max_documents: int = 10,
         min_relevance: float = 0.6,
         max_hops: int = 2,
-        return_trace: bool = False
+        return_trace: bool = False,
     ) -> Dict[str, Any]:
         """
         Perform cross-document reasoning to answer a query.
@@ -272,14 +303,14 @@ class CrossDocumentReasoner(ReasoningHelpersMixin):
             query=query,
             query_embedding=query_embedding,
             reasoning_depth=reasoning_depth,
-            reasoning_trace_id=trace_id
+            reasoning_trace_id=trace_id,
         )
 
         # Step 1: Find relevant documents (either from input or by vector search)
         trace.add_node(
             node_type=ReasoningNodeType.QUERY,
             content=query,
-            metadata={"reasoning_step": "document_retrieval"}
+            metadata={"reasoning_step": "document_retrieval"},
         )
 
         if return_reasoning_object:
@@ -306,21 +337,19 @@ class CrossDocumentReasoner(ReasoningHelpersMixin):
                     "document_id": doc.id,
                     "source": doc.source,
                     "relevance_score": doc.relevance_score,
-                    "entities": doc.entities
-                }
+                    "entities": doc.entities,
+                },
             )
 
         # Step 2: Identify entities and extract entity-mediated connections
         trace.add_node(
             node_type=ReasoningNodeType.INFERENCE,
             content="Identifying entity-mediated connections between documents",
-            metadata={"reasoning_step": "entity_connection_discovery"}
+            metadata={"reasoning_step": "entity_connection_discovery"},
         )
 
         entity_connections = self._find_entity_connections(
-            documents=documents,
-            knowledge_graph=knowledge_graph,
-            max_hops=max_hops
+            documents=documents, knowledge_graph=knowledge_graph, max_hops=max_hops
         )
 
         # Add entity connections to reasoning object
@@ -336,21 +365,21 @@ class CrossDocumentReasoner(ReasoningHelpersMixin):
                     "source_doc_id": conn.source_doc_id,
                     "target_doc_id": conn.target_doc_id,
                     "relation_type": conn.relation_type.value,
-                    "connection_strength": conn.connection_strength
-                }
+                    "connection_strength": conn.connection_strength,
+                },
             )
 
         # Step 3: Generate traversal paths for reasoning
         trace.add_node(
             node_type=ReasoningNodeType.INFERENCE,
             content="Generating traversal paths for reasoning",
-            metadata={"reasoning_step": "traversal_path_generation"}
+            metadata={"reasoning_step": "traversal_path_generation"},
         )
 
         traversal_paths = self._generate_traversal_paths(
             documents=documents,
             entity_connections=entity_connections,
-            reasoning_depth=reasoning_depth
+            reasoning_depth=reasoning_depth,
         )
 
         # Add traversal paths to reasoning object
@@ -360,7 +389,7 @@ class CrossDocumentReasoner(ReasoningHelpersMixin):
         trace.add_node(
             node_type=ReasoningNodeType.INFERENCE,
             content="Synthesizing answer from connected information",
-            metadata={"reasoning_step": "answer_synthesis"}
+            metadata={"reasoning_step": "answer_synthesis"},
         )
 
         answer, confidence = self._synthesize_answer(
@@ -368,7 +397,7 @@ class CrossDocumentReasoner(ReasoningHelpersMixin):
             documents=documents,
             entity_connections=entity_connections,
             traversal_paths=traversal_paths,
-            reasoning_depth=reasoning_depth
+            reasoning_depth=reasoning_depth,
         )
 
         # Add answer to reasoning object
@@ -383,30 +412,39 @@ class CrossDocumentReasoner(ReasoningHelpersMixin):
                 "confidence": confidence,
                 "reasoning_depth": reasoning_depth,
                 "document_count": len(documents),
-                "connection_count": len(entity_connections)
-            }
+                "connection_count": len(entity_connections),
+            },
         )
 
         # Update statistics
         self.successful_queries += 1
-        self.avg_document_count = ((self.avg_document_count * (self.successful_queries - 1)) +
-                                 len(documents)) / self.successful_queries
-        self.avg_connection_count = ((self.avg_connection_count * (self.successful_queries - 1)) +
-                                   len(entity_connections)) / self.successful_queries
-        self.avg_confidence = ((self.avg_confidence * (self.successful_queries - 1)) +
-                             confidence) / self.successful_queries
+        self.avg_document_count = (
+            (self.avg_document_count * (self.successful_queries - 1)) + len(documents)
+        ) / self.successful_queries
+        self.avg_connection_count = (
+            (self.avg_connection_count * (self.successful_queries - 1)) + len(entity_connections)
+        ) / self.successful_queries
+        self.avg_confidence = (
+            (self.avg_confidence * (self.successful_queries - 1)) + confidence
+        ) / self.successful_queries
 
         # Prepare and return the result
         result = {
             "answer": answer,
-            "documents": [{"id": doc.id, "source": doc.source, "relevance": doc.relevance_score}
-                         for doc in documents],
-            "entity_connections": [{"entity": conn.entity_name,
-                                   "type": conn.entity_type,
-                                   "relation": conn.relation_type.value,
-                                   "strength": conn.connection_strength}
-                                  for conn in entity_connections],
-            "confidence": confidence
+            "documents": [
+                {"id": doc.id, "source": doc.source, "relevance": doc.relevance_score}
+                for doc in documents
+            ],
+            "entity_connections": [
+                {
+                    "entity": conn.entity_name,
+                    "type": conn.entity_type,
+                    "relation": conn.relation_type.value,
+                    "strength": conn.connection_strength,
+                }
+                for conn in entity_connections
+            ],
+            "confidence": confidence,
         }
 
         if return_trace:
@@ -424,7 +462,7 @@ class CrossDocumentReasoner(ReasoningHelpersMixin):
         input_documents: Optional[List[Dict[str, Any]]],
         vector_store: Optional[Any],
         max_documents: int = 10,
-        min_relevance: float = 0.6
+        min_relevance: float = 0.6,
     ) -> List[DocumentNode]:
         """
         Get relevant documents for the query.
@@ -449,15 +487,17 @@ class CrossDocumentReasoner(ReasoningHelpersMixin):
                 relevance = doc.get("relevance_score", 0.9 - (i * 0.05))
 
                 if relevance >= min_relevance and len(documents) < max_documents:
-                    documents.append(DocumentNode(
-                        id=doc.get("id", str(uuid.uuid4())),
-                        content=doc.get("content", ""),
-                        source=doc.get("source", "unknown"),
-                        metadata=doc.get("metadata", {}),
-                        vector=doc.get("vector", None),
-                        relevance_score=relevance,
-                        entities=doc.get("entities", [])
-                    ))
+                    documents.append(
+                        DocumentNode(
+                            id=doc.get("id", str(uuid.uuid4())),
+                            content=doc.get("content", ""),
+                            source=doc.get("source", "unknown"),
+                            metadata=doc.get("metadata", {}),
+                            vector=doc.get("vector", None),
+                            relevance_score=relevance,
+                            entities=doc.get("entities", []),
+                        )
+                    )
 
         # If we need more documents and have a vector store, use it
         if len(documents) < max_documents and vector_store:
@@ -470,7 +510,7 @@ class CrossDocumentReasoner(ReasoningHelpersMixin):
                 vector_results = vector_store.search(
                     query_vector=query_embedding,
                     top_k=max_documents - len(documents),
-                    min_score=min_relevance
+                    min_score=min_relevance,
                 )
 
                 for result in vector_results:
@@ -482,7 +522,7 @@ class CrossDocumentReasoner(ReasoningHelpersMixin):
                         metadata=result.metadata,
                         vector=result.vector if hasattr(result, "vector") else None,
                         relevance_score=result.score,
-                        entities=result.metadata.get("entities", [])
+                        entities=result.metadata.get("entities", []),
                     )
                     documents.append(doc_node)
 
@@ -508,10 +548,7 @@ class CrossDocumentReasoner(ReasoningHelpersMixin):
         )
 
     def _find_entity_connections(
-        self,
-        documents: List[DocumentNode],
-        knowledge_graph: Optional[Any],
-        max_hops: int = 2
+        self, documents: List[DocumentNode], knowledge_graph: Optional[Any], max_hops: int = 2
     ) -> List[EntityMediatedConnection]:
         """
         Find entity-mediated connections between documents.
@@ -548,26 +585,28 @@ class CrossDocumentReasoner(ReasoningHelpersMixin):
 
                         # Create connections between all pairs of documents with this entity
                         for i in range(len(doc_ids)):
-                            for j in range(i+1, len(doc_ids)):
+                            for j in range(i + 1, len(doc_ids)):
                                 # Determine relation type based on entity and documents
                                 relation_type, strength = self._determine_relation(
                                     entity_id=entity_id,
                                     source_doc_id=doc_ids[i],
                                     target_doc_id=doc_ids[j],
                                     documents=documents,
-                                    knowledge_graph=knowledge_graph
+                                    knowledge_graph=knowledge_graph,
                                 )
 
                                 if strength >= self.min_connection_strength:
-                                    connections.append(EntityMediatedConnection(
-                                        entity_id=entity_id,
-                                        entity_name=entity_name,
-                                        entity_type=entity_type,
-                                        source_doc_id=doc_ids[i],
-                                        target_doc_id=doc_ids[j],
-                                        relation_type=relation_type,
-                                        connection_strength=strength
-                                    ))
+                                    connections.append(
+                                        EntityMediatedConnection(
+                                            entity_id=entity_id,
+                                            entity_name=entity_name,
+                                            entity_type=entity_type,
+                                            source_doc_id=doc_ids[i],
+                                            target_doc_id=doc_ids[j],
+                                            relation_type=relation_type,
+                                            connection_strength=strength,
+                                        )
+                                    )
 
             # Multi-hop connections for indirect reasoning
             # v3.0.0: Implemented multi-hop graph traversal
@@ -578,12 +617,14 @@ class CrossDocumentReasoner(ReasoningHelpersMixin):
                     )
                     connections.extend(indirect_connections)
                 except Exception as e:
-                    logger.warning(f"Multi-hop traversal failed ({type(e).__name__}): {e}. Using direct connections only.")
+                    logger.warning(
+                        f"Multi-hop traversal failed ({type(e).__name__}): {e}. Using direct connections only."
+                    )
         else:
             # Without a knowledge graph, use simpler heuristics
             # For example, look for matching entity names in the entities lists
             for i, doc1 in enumerate(documents):
-                for j in range(i+1, len(documents)):
+                for j in range(i + 1, len(documents)):
                     doc2 = documents[j]
 
                     # Find common entities based on string matching
@@ -594,15 +635,17 @@ class CrossDocumentReasoner(ReasoningHelpersMixin):
                         relation_type = InformationRelationType.COMPLEMENTARY
                         strength = 0.7  # Default moderate strength
 
-                        connections.append(EntityMediatedConnection(
-                            entity_id=entity_id,
-                            entity_name=entity_id,  # Use ID as name without a knowledge graph
-                            entity_type="unknown",
-                            source_doc_id=doc1.id,
-                            target_doc_id=doc2.id,
-                            relation_type=relation_type,
-                            connection_strength=strength
-                        ))
+                        connections.append(
+                            EntityMediatedConnection(
+                                entity_id=entity_id,
+                                entity_name=entity_id,  # Use ID as name without a knowledge graph
+                                entity_type="unknown",
+                                source_doc_id=doc1.id,
+                                target_doc_id=doc2.id,
+                                relation_type=relation_type,
+                                connection_strength=strength,
+                            )
+                        )
 
         return connections
 
@@ -612,7 +655,7 @@ class CrossDocumentReasoner(ReasoningHelpersMixin):
         source_doc_id: str,
         target_doc_id: str,
         documents: List[DocumentNode],
-        knowledge_graph: Any
+        knowledge_graph: Any,
     ) -> Tuple[InformationRelationType, float]:
         """
         Determine the relation type between two documents regarding a shared entity.
@@ -696,14 +739,13 @@ class CrossDocumentReasoner(ReasoningHelpersMixin):
 
         return relation_type, strength
 
-
     def _synthesize_answer(
         self,
         query: str,
         documents: List[DocumentNode],
         entity_connections: List[EntityMediatedConnection],
         traversal_paths: List[List[str]],
-        reasoning_depth: str
+        reasoning_depth: str,
     ) -> Tuple[str, float]:
         """
         Synthesize an answer based on connected information.
@@ -734,7 +776,7 @@ class CrossDocumentReasoner(ReasoningHelpersMixin):
             prompt += "Relevant documents:\n"
 
             for i, doc in enumerate(documents[:5]):  # Include top 5 most relevant docs
-                prompt += f"Document {i+1} ({doc.source}):\n{doc.content[:500]}...\n\n"
+                prompt += f"Document {i + 1} ({doc.source}):\n{doc.content[:500]}...\n\n"
 
             prompt += "Entity-mediated connections between documents:\n"
             for conn in entity_connections[:5]:  # Include top 5 connections
@@ -747,14 +789,18 @@ class CrossDocumentReasoner(ReasoningHelpersMixin):
             try:
                 answer, confidence = self._generate_llm_answer(prompt, query, router)
             except Exception as e:
-                logger.warning(f"LLM generation failed ({type(e).__name__}): {e}. Using fallback method.")
+                logger.warning(
+                    f"LLM generation failed ({type(e).__name__}): {e}. Using fallback method."
+                )
                 answer = f"Based on the information in the documents, I can provide the following answer to '{query}'..."
                 confidence = 0.75
         else:
             # Provide a generic answer for the mock implementation
-            answer = f"Based on the analysis of {len(documents)} documents with {len(entity_connections)} entity-mediated connections, " + \
-                     f"the answer to '{query}' involves information connected through entities like " + \
-                     ", ".join([conn.entity_name for conn in entity_connections[:3]])
+            answer = (
+                f"Based on the analysis of {len(documents)} documents with {len(entity_connections)} entity-mediated connections, "
+                + f"the answer to '{query}' involves information connected through entities like "
+                + ", ".join([conn.entity_name for conn in entity_connections[:3]])
+            )
             confidence = 0.6
 
         return answer, confidence
@@ -769,10 +815,12 @@ class CrossDocumentReasoner(ReasoningHelpersMixin):
         return {
             "total_queries": self.total_queries,
             "successful_queries": self.successful_queries,
-            "success_rate": self.successful_queries / self.total_queries if self.total_queries > 0 else 0,
+            "success_rate": self.successful_queries / self.total_queries
+            if self.total_queries > 0
+            else 0,
             "avg_document_count": self.avg_document_count,
             "avg_connection_count": self.avg_connection_count,
-            "avg_confidence": self.avg_confidence
+            "avg_confidence": self.avg_confidence,
         }
 
     def explain_reasoning(self, reasoning_id: str) -> Dict[str, Any]:
@@ -797,8 +845,8 @@ class CrossDocumentReasoner(ReasoningHelpersMixin):
                 "Identified relevant documents based on query",
                 "Found entity connections between documents",
                 "Analyzed information relationships",
-                "Generated synthetic answer"
-            ]
+                "Generated synthetic answer",
+            ],
         }
 
 
@@ -813,8 +861,7 @@ def _example_usage():
 
     # Initialize cross-document reasoner
     reasoner = CrossDocumentReasoner(
-        query_optimizer=query_optimizer,
-        reasoning_tracer=reasoning_tracer
+        query_optimizer=query_optimizer, reasoning_tracer=reasoning_tracer
     )
 
     # Sample documents for testing
@@ -825,7 +872,7 @@ def _example_usage():
             "source": "IPFS Documentation",
             "metadata": {"published_date": "2020-01-01"},
             "relevance_score": 0.95,
-            "entities": ["IPFS", "peer-to-peer", "protocol", "web"]
+            "entities": ["IPFS", "peer-to-peer", "protocol", "web"],
         },
         {
             "id": "doc2",
@@ -833,7 +880,7 @@ def _example_usage():
             "source": "IPFS Website",
             "metadata": {"published_date": "2021-03-15"},
             "relevance_score": 0.90,
-            "entities": ["IPFS", "content addressing", "file", "namespace"]
+            "entities": ["IPFS", "content addressing", "file", "namespace"],
         },
         {
             "id": "doc3",
@@ -841,8 +888,8 @@ def _example_usage():
             "source": "Distributed Systems Book",
             "metadata": {"published_date": "2019-05-20"},
             "relevance_score": 0.85,
-            "entities": ["content addressing", "cryptographic hash", "location"]
-        }
+            "entities": ["content addressing", "cryptographic hash", "location"],
+        },
     ]
 
     # Perform cross-document reasoning
@@ -850,7 +897,7 @@ def _example_usage():
         query="How does IPFS use content addressing?",
         input_documents=sample_documents,
         reasoning_depth="moderate",
-        return_trace=True
+        return_trace=True,
     )
 
     # Print result
@@ -862,7 +909,9 @@ def _example_usage():
         print(f"- {doc['id']} ({doc['source']}): Relevance {doc['relevance']:.2f}")
     print("\nEntity Connections:")
     for conn in result["entity_connections"]:
-        print(f"- {conn['entity']} ({conn['type']}): {conn['relation']} connection with strength {conn['strength']:.2f}")
+        print(
+            f"- {conn['entity']} ({conn['type']}): {conn['relation']} connection with strength {conn['strength']:.2f}"
+        )
 
     # Get reasoning explanation
     if "reasoning_trace" in result:

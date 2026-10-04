@@ -74,13 +74,17 @@ def _extract_nested_source_type(payload: object, *, max_depth: int = 4) -> str:
         return ""
 
     metadata = dict(payload.get("metadata") or {})
-    source_hint = str(
-        payload.get("source_type")
-        or payload.get("upstream_source_type")
-        or metadata.get("source_type")
-        or metadata.get("upstream_source_type")
-        or ""
-    ).strip().lower()
+    source_hint = (
+        str(
+            payload.get("source_type")
+            or payload.get("upstream_source_type")
+            or metadata.get("source_type")
+            or metadata.get("upstream_source_type")
+            or ""
+        )
+        .strip()
+        .lower()
+    )
     if source_hint in {"pacer", "tyler_host", "courtlistener"}:
         return source_hint
 
@@ -99,8 +103,17 @@ def _detect_auto_input_type(input_path: str, source_type_hint: str | None = None
 
     normalized_hint = str(source_type_hint or "").strip().lower()
     if normalized_hint:
-        if normalized_hint not in {"json", "directory", "courtlistener", "pacer", "tyler_host", "packaged"}:
-            raise ValueError("--source-type-hint must be one of: json, directory, courtlistener, pacer, tyler_host, packaged")
+        if normalized_hint not in {
+            "json",
+            "directory",
+            "courtlistener",
+            "pacer",
+            "tyler_host",
+            "packaged",
+        }:
+            raise ValueError(
+                "--source-type-hint must be one of: json, directory, courtlistener, pacer, tyler_host, packaged"
+            )
         if normalized_hint in {"pacer", "tyler_host", "courtlistener"}:
             return normalized_hint
 
@@ -113,10 +126,18 @@ def _detect_auto_input_type(input_path: str, source_type_hint: str | None = None
         if path.is_dir():
             if normalized_hint == "packaged" or (path / "bundle_manifest.json").exists():
                 return "packaged"
-            return normalized_hint if normalized_hint in {"directory", "pacer", "tyler_host"} else "directory"
+            return (
+                normalized_hint
+                if normalized_hint in {"directory", "pacer", "tyler_host"}
+                else "directory"
+            )
 
         suffix = path.suffix.lower()
-        if normalized_hint == "packaged" or path.name == "bundle_manifest.json" or suffix in {".zip", ".car"}:
+        if (
+            normalized_hint == "packaged"
+            or path.name == "bundle_manifest.json"
+            or suffix in {".zip", ".car"}
+        ):
             return "packaged"
 
         if suffix == ".json":
@@ -187,7 +208,13 @@ def _classify_courtlistener_error(message: str) -> tuple[str, dict[str, object]]
     return ("courtlistener_ingestion_error", {})
 
 
-def _emit_cli_error(parsed: argparse.Namespace, *, message: str, error_type: str = "runtime_error", details: dict[str, object] | None = None) -> int:
+def _emit_cli_error(
+    parsed: argparse.Namespace,
+    *,
+    message: str,
+    error_type: str = "runtime_error",
+    details: dict[str, object] | None = None,
+) -> int:
     payload: dict[str, object] = {
         "status": "error",
         "error_type": str(error_type or "runtime_error"),
@@ -234,6 +261,7 @@ _PACKAGED_MODE_TO_FIELD_FLAG = {
     "recap_fetch": "recap-fetch-fields",
     "recap_preflight": "recap-fetch-fields",
 }
+
 
 def _create_bundle_zip(bundle_dir: str | Path) -> str:
     bundle_path = Path(bundle_dir)
@@ -398,7 +426,9 @@ def _call_packaged_citation_audit_builder(
 
 def _packaged_read_modes(parsed: argparse.Namespace) -> set[str]:
     modes: set[str] = set()
-    action_mode = _PACKAGED_ACTION_TO_MODE.get(str(getattr(parsed, "packaged_action", "") or "").strip().lower())
+    action_mode = _PACKAGED_ACTION_TO_MODE.get(
+        str(getattr(parsed, "packaged_action", "") or "").strip().lower()
+    )
     if action_mode:
         modes.add(action_mode)
     for flag_name, mode_name in _PACKAGED_READ_FLAG_TO_MODE.items():
@@ -441,12 +471,24 @@ def _resolve_packaged_field_selections(
     if dashboard_fields and "dashboard" not in packaged_modes:
         parser.error("--dashboard-fields is only valid with --operator-dashboard.")
     if report_fields and not ({"report", "dashboard_report"} & packaged_modes):
-        parser.error("--report-fields is only valid with --load-packaged-report or --load-operator-dashboard-report.")
+        parser.error(
+            "--report-fields is only valid with --load-packaged-report or --load-operator-dashboard-report."
+        )
     if recap_fetch_fields and "recap_fetch" not in packaged_modes:
         if "recap_preflight" not in packaged_modes:
-            parser.error("--recap-fetch-fields is only valid with --submit-packaged-recap-fetch or --packaged-recap-preflight.")
-    if generic_fields and not packaged_modes and not bool(getattr(parsed, "citation_source_audit", False)) and not bool(getattr(parsed, "recover_citation_sources", False)) and not bool(getattr(parsed, "recap_fetch_request_id", None)):
-        parser.error("--fields is only valid with packaged read modes, --citation-source-audit, --recover-citation-sources, or --recap-fetch-request-id.")
+            parser.error(
+                "--recap-fetch-fields is only valid with --submit-packaged-recap-fetch or --packaged-recap-preflight."
+            )
+    if (
+        generic_fields
+        and not packaged_modes
+        and not bool(getattr(parsed, "citation_source_audit", False))
+        and not bool(getattr(parsed, "recover_citation_sources", False))
+        and not bool(getattr(parsed, "recap_fetch_request_id", None))
+    ):
+        parser.error(
+            "--fields is only valid with packaged read modes, --citation-source-audit, --recover-citation-sources, or --recap-fetch-request-id."
+        )
 
     specific_fields_by_mode = {
         "summary": summary_fields,
@@ -459,30 +501,54 @@ def _resolve_packaged_field_selections(
     }
     for mode_name, field_values in specific_fields_by_mode.items():
         if generic_fields and field_values and mode_name in packaged_modes:
-            parser.error(f"Use either --fields or --{_PACKAGED_MODE_TO_FIELD_FLAG[mode_name]}, not both.")
+            parser.error(
+                f"Use either --fields or --{_PACKAGED_MODE_TO_FIELD_FLAG[mode_name]}, not both."
+            )
 
     resolved = {
-        "summary": generic_fields if ("summary" in packaged_modes and generic_fields) else summary_fields,
-        "inspection": generic_fields if ("inspection" in packaged_modes and generic_fields) else inspection_fields,
-        "dashboard": generic_fields if ("dashboard" in packaged_modes and generic_fields) else dashboard_fields,
-        "report": generic_fields if ("report" in packaged_modes and generic_fields) else report_fields,
-        "dashboard_report": generic_fields if ("dashboard_report" in packaged_modes and generic_fields) else report_fields,
-        "recap_fetch": generic_fields if ("recap_fetch" in packaged_modes and generic_fields) else recap_fetch_fields,
-        "recap_preflight": generic_fields if ("recap_preflight" in packaged_modes and generic_fields) else recap_fetch_fields,
+        "summary": generic_fields
+        if ("summary" in packaged_modes and generic_fields)
+        else summary_fields,
+        "inspection": generic_fields
+        if ("inspection" in packaged_modes and generic_fields)
+        else inspection_fields,
+        "dashboard": generic_fields
+        if ("dashboard" in packaged_modes and generic_fields)
+        else dashboard_fields,
+        "report": generic_fields
+        if ("report" in packaged_modes and generic_fields)
+        else report_fields,
+        "dashboard_report": generic_fields
+        if ("dashboard_report" in packaged_modes and generic_fields)
+        else report_fields,
+        "recap_fetch": generic_fields
+        if ("recap_fetch" in packaged_modes and generic_fields)
+        else recap_fetch_fields,
+        "recap_preflight": generic_fields
+        if ("recap_preflight" in packaged_modes and generic_fields)
+        else recap_fetch_fields,
     }
-    if (resolved["report"] or resolved["dashboard_report"]) and str(parsed.report_format or "").strip().lower() not in {"parsed", "row"}:
-        parser.error("--report-fields/--fields for packaged reports requires --report-format parsed or row.")
+    if (resolved["report"] or resolved["dashboard_report"]) and str(
+        parsed.report_format or ""
+    ).strip().lower() not in {"parsed", "row"}:
+        parser.error(
+            "--report-fields/--fields for packaged reports requires --report-format parsed or row."
+        )
     return resolved
 
 
-def _apply_packaged_action_alias(parsed: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
+def _apply_packaged_action_alias(
+    parsed: argparse.Namespace, parser: argparse.ArgumentParser
+) -> None:
     action = str(getattr(parsed, "packaged_action", "") or "").strip().lower()
     if not action:
         return
     mode_name = _PACKAGED_ACTION_TO_MODE[action]
     for flag_name, candidate_mode in _PACKAGED_READ_FLAG_TO_MODE.items():
         if candidate_mode != mode_name and bool(getattr(parsed, flag_name, False)):
-            parser.error("--packaged-action cannot be combined with a different packaged read mode flag.")
+            parser.error(
+                "--packaged-action cannot be combined with a different packaged read mode flag."
+            )
     if action == "summary":
         parsed.summary_only = True
     elif action == "inspect":
@@ -499,14 +565,18 @@ def _apply_packaged_action_alias(parsed: argparse.Namespace, parser: argparse.Ar
         parsed.packaged_recap_preflight = True
 
 
-def _build_packaged_read_only_summary(packager: DocketDatasetPackager, manifest_path: str | Path) -> dict[str, object]:
+def _build_packaged_read_only_summary(
+    packager: DocketDatasetPackager, manifest_path: str | Path
+) -> dict[str, object]:
     summary_view = packager.load_summary_view(manifest_path)
     manifest = dict(summary_view.get("package_manifest") or {})
     manifest_summary = dict(manifest.get("summary") or {})
     provenance = dict(manifest.get("provenance") or {})
     eu_audit = dict(manifest.get("eu_citation_audit") or {})
     if not eu_audit:
-        eu_audit = dict((provenance.get("citation_source_audit") or {}).get("eu_citation_audit") or {})
+        eu_audit = dict(
+            (provenance.get("citation_source_audit") or {}).get("eu_citation_audit") or {}
+        )
     latest_routing = dict(provenance.get("latest_proof_packet_routing_explanation") or {})
     return {
         "dataset_id": str(summary_view.get("dataset_id") or manifest.get("dataset_id") or ""),
@@ -518,8 +588,12 @@ def _build_packaged_read_only_summary(packager: DocketDatasetPackager, manifest_
         "eu_citation_count": int(eu_audit.get("citation_count") or 0),
         "eu_unique_citation_count": int(eu_audit.get("unique_citation_count") or 0),
         "eu_documents_with_citations": int(eu_audit.get("documents_with_citations") or 0),
-        "knowledge_graph_entity_count": int(manifest_summary.get("knowledge_graph_entity_count") or 0),
-        "knowledge_graph_relationship_count": int(manifest_summary.get("knowledge_graph_relationship_count") or 0),
+        "knowledge_graph_entity_count": int(
+            manifest_summary.get("knowledge_graph_entity_count") or 0
+        ),
+        "knowledge_graph_relationship_count": int(
+            manifest_summary.get("knowledge_graph_relationship_count") or 0
+        ),
         "proof_tactician_plan_count": int(manifest_summary.get("tactician_plan_count") or 0),
         "proof_packet_count": int(manifest_summary.get("proof_packet_count") or 0),
         "proof_store_count": int(manifest_summary.get("proof_store_count") or 0),
@@ -538,7 +612,9 @@ def _build_recap_fetch_status_summary(parsed: argparse.Namespace) -> dict[str, o
     }
 
 
-def _latest_routing_explanation_from_dataset_dict(dataset_payload: dict[str, object]) -> dict[str, object]:
+def _latest_routing_explanation_from_dataset_dict(
+    dataset_payload: dict[str, object],
+) -> dict[str, object]:
     metadata = dict(dataset_payload.get("metadata") or {})
     proof_assistant = dict(dataset_payload.get("proof_assistant") or {})
     proof_metadata = dict(proof_assistant.get("metadata") or {})
@@ -551,21 +627,29 @@ def _latest_routing_explanation_from_dataset_dict(dataset_payload: dict[str, obj
     )
 
 
-def _build_packaged_summary_from_dataset_dict(dataset_payload: dict[str, object]) -> dict[str, object]:
+def _build_packaged_summary_from_dataset_dict(
+    dataset_payload: dict[str, object],
+) -> dict[str, object]:
     summary = summarize_docket_dataset(dataset_payload)
     metadata = dict(dataset_payload.get("metadata") or {})
     eu_audit = dict(metadata.get("eu_citation_audit") or {})
     if not eu_audit:
-        eu_audit = dict((metadata.get("citation_source_audit") or {}).get("eu_citation_audit") or {})
+        eu_audit = dict(
+            (metadata.get("citation_source_audit") or {}).get("eu_citation_audit") or {}
+        )
     return {
         "dataset_id": str(dataset_payload.get("dataset_id") or summary.get("dataset_id") or ""),
         "docket_id": str(dataset_payload.get("docket_id") or summary.get("docket_id") or ""),
         "case_name": str(dataset_payload.get("case_name") or ""),
         "court": str(dataset_payload.get("court") or ""),
-        "document_count": int(summary.get("document_count") or len(list(dataset_payload.get("documents") or []))),
+        "document_count": int(
+            summary.get("document_count") or len(list(dataset_payload.get("documents") or []))
+        ),
         "attachment_count": int(summary.get("attachment_count") or 0),
         "knowledge_graph_entity_count": int(summary.get("knowledge_graph_entity_count") or 0),
-        "knowledge_graph_relationship_count": int(summary.get("knowledge_graph_relationship_count") or 0),
+        "knowledge_graph_relationship_count": int(
+            summary.get("knowledge_graph_relationship_count") or 0
+        ),
         "proof_tactician_plan_count": int(summary.get("proof_tactician_plan_count") or 0),
         "proof_packet_count": int(summary.get("proof_packet_count") or 0),
         "proof_store_count": int(summary.get("proof_store_count") or 0),
@@ -581,12 +665,16 @@ def _build_packaged_summary_from_dataset_dict(dataset_payload: dict[str, object]
     }
 
 
-def _build_packaged_inspection_from_dataset_dict(dataset_payload: dict[str, object]) -> dict[str, object]:
+def _build_packaged_inspection_from_dataset_dict(
+    dataset_payload: dict[str, object],
+) -> dict[str, object]:
     summary = summarize_docket_dataset(dataset_payload)
     metadata = dict(dataset_payload.get("metadata") or {})
     eu_audit = dict(metadata.get("eu_citation_audit") or {})
     if not eu_audit:
-        eu_audit = dict((metadata.get("citation_source_audit") or {}).get("eu_citation_audit") or {})
+        eu_audit = dict(
+            (metadata.get("citation_source_audit") or {}).get("eu_citation_audit") or {}
+        )
     latest_routing = _latest_routing_explanation_from_dataset_dict(dataset_payload)
     routing_evidence = list(latest_routing.get("routing_evidence") or [])
     top_routing = dict((routing_evidence or [{}])[0])
@@ -595,19 +683,25 @@ def _build_packaged_inspection_from_dataset_dict(dataset_payload: dict[str, obje
         "docket_id": str(dataset_payload.get("docket_id") or summary.get("docket_id") or ""),
         "case_name": str(dataset_payload.get("case_name") or ""),
         "court": str(dataset_payload.get("court") or ""),
-        "document_count": int(summary.get("document_count") or len(list(dataset_payload.get("documents") or []))),
+        "document_count": int(
+            summary.get("document_count") or len(list(dataset_payload.get("documents") or []))
+        ),
         "attachment_count": int(summary.get("attachment_count") or 0),
         "eu_citation_count": int(eu_audit.get("citation_count") or 0),
         "eu_unique_citation_count": int(eu_audit.get("unique_citation_count") or 0),
         "eu_documents_with_citations": int(eu_audit.get("documents_with_citations") or 0),
         "latest_proof_packet_id": str(
             dict(dataset_payload.get("metadata") or {}).get("latest_proof_packet_id")
-            or dict(dataset_payload.get("proof_assistant") or {}).get("metadata", {}).get("latest_proof_packet_id")
+            or dict(dataset_payload.get("proof_assistant") or {})
+            .get("metadata", {})
+            .get("latest_proof_packet_id")
             or ""
         ),
         "latest_proof_packet_version": int(
             dict(dataset_payload.get("metadata") or {}).get("latest_proof_packet_version")
-            or dict(dataset_payload.get("proof_assistant") or {}).get("metadata", {}).get("latest_proof_packet_version")
+            or dict(dataset_payload.get("proof_assistant") or {})
+            .get("metadata", {})
+            .get("latest_proof_packet_version")
             or 0
         ),
         "latest_routing_reason": str(latest_routing.get("routing_reason") or ""),
@@ -633,8 +727,12 @@ def _build_loaded_report_from_dataset_dict(
     if normalized_format == "row":
         return {
             "report_json": json.dumps(inspection, indent=2, ensure_ascii=False),
-            "report_text": packager.render_packaged_inspection_report_from_inspection(inspection, report_format="text"),
-            "report_markdown": packager.render_packaged_inspection_report_from_inspection(inspection, report_format="markdown"),
+            "report_text": packager.render_packaged_inspection_report_from_inspection(
+                inspection, report_format="text"
+            ),
+            "report_markdown": packager.render_packaged_inspection_report_from_inspection(
+                inspection, report_format="markdown"
+            ),
             "inspection": inspection,
         }
     return packager.render_packaged_inspection_report_from_inspection(
@@ -668,15 +766,21 @@ def _build_operator_dashboard_from_dataset_dict(
         "proof_revalidation_snapshot": {
             "source": "enriched_dataset_operator_dashboard_snapshot",
             "current_status": {
-                "review_required_work_item_count": int(proof_metadata.get("review_required_work_item_count") or 0),
-                "high_priority_revalidation_count": int(proof_metadata.get("high_priority_revalidation_count") or 0),
+                "review_required_work_item_count": int(
+                    proof_metadata.get("review_required_work_item_count") or 0
+                ),
+                "high_priority_revalidation_count": int(
+                    proof_metadata.get("high_priority_revalidation_count") or 0
+                ),
                 "queue_count": int(proof_metadata.get("review_required_work_item_count") or 0),
                 "latest_run_available": bool(revalidation_runs),
             },
             "latest_run_summary": {
                 "run_id": str(latest_run.get("run_id") or ""),
                 "best_terminal_source_type": str(latest_run.get("best_terminal_source_type") or ""),
-                "best_terminal_support_strength": str(latest_run.get("best_terminal_support_strength") or ""),
+                "best_terminal_support_strength": str(
+                    latest_run.get("best_terminal_support_strength") or ""
+                ),
                 "attached_packet_count": int(latest_run.get("attached_packet_count") or 0),
             },
             "next_queue_item_summary": {},
@@ -690,8 +794,12 @@ def _build_operator_dashboard_from_dataset_dict(
         },
         "summary": {
             **summary_view,
-            "review_required_work_item_count": int(proof_metadata.get("review_required_work_item_count") or 0),
-            "high_priority_revalidation_count": int(proof_metadata.get("high_priority_revalidation_count") or 0),
+            "review_required_work_item_count": int(
+                proof_metadata.get("review_required_work_item_count") or 0
+            ),
+            "high_priority_revalidation_count": int(
+                proof_metadata.get("high_priority_revalidation_count") or 0
+            ),
             "revalidation_run_count": len(revalidation_runs),
         },
         "source": "enriched_dataset_operator_dashboard",
@@ -710,8 +818,12 @@ def _build_loaded_operator_dashboard_report_from_dataset_dict(
     if normalized_format == "row":
         return {
             "report_json": json.dumps(dashboard, indent=2, ensure_ascii=False),
-            "report_text": render_packaged_docket_operator_dashboard(dashboard, report_format="text"),
-            "report_markdown": render_packaged_docket_operator_dashboard(dashboard, report_format="markdown"),
+            "report_text": render_packaged_docket_operator_dashboard(
+                dashboard, report_format="text"
+            ),
+            "report_markdown": render_packaged_docket_operator_dashboard(
+                dashboard, report_format="markdown"
+            ),
             "dashboard": dashboard,
         }
     return render_packaged_docket_operator_dashboard(
@@ -806,9 +918,7 @@ def _handle_packaged_read_outputs(
     active_recap_fetch_fields: list[str],
 ) -> None:
     enriched_packaged_read = (
-        parsed.input_type == "packaged"
-        and bool(parsed.enrich_query)
-        and isinstance(dataset, dict)
+        parsed.input_type == "packaged" and bool(parsed.enrich_query) and isinstance(dataset, dict)
     )
 
     if parsed.summary_only:
@@ -862,7 +972,9 @@ def _handle_packaged_read_outputs(
             enriched_packaged_read=enriched_packaged_read,
         )
         if active_report_fields and isinstance(loaded_dashboard_report, dict):
-            loaded_dashboard_report = _filter_mapping_fields(dict(loaded_dashboard_report), active_report_fields)
+            loaded_dashboard_report = _filter_mapping_fields(
+                dict(loaded_dashboard_report), active_report_fields
+            )
         payload["loaded_operator_dashboard_report"] = loaded_dashboard_report
 
     if parsed.packaged_recap_preflight:
@@ -898,19 +1010,23 @@ def _handle_packaged_read_outputs(
                 parsed.report_format,
             )
         else:
-            report_content = _stringify_packaged_report(
-                _resolve_loaded_packaged_report(
+            report_content = (
+                _stringify_packaged_report(
+                    _resolve_loaded_packaged_report(
+                        parsed,
+                        packager,
+                        dataset,
+                        enriched_packaged_read=enriched_packaged_read,
+                    ),
+                    parsed.report_format,
+                )
+                if str(parsed.report_format or "").strip().lower() in {"parsed", "row"}
+                else _resolve_loaded_packaged_report(
                     parsed,
                     packager,
                     dataset,
                     enriched_packaged_read=enriched_packaged_read,
-                ),
-                parsed.report_format,
-            ) if str(parsed.report_format or "").strip().lower() in {"parsed", "row"} else _resolve_loaded_packaged_report(
-                parsed,
-                packager,
-                dataset,
-                enriched_packaged_read=enriched_packaged_read,
+                )
             )
         payload["inspection_report"] = {
             "report_path": _write_text_output(parsed.export_packaged_report, report_content),
@@ -924,22 +1040,28 @@ def _handle_packaged_read_outputs(
                 parsed.report_format,
             )
         else:
-            dashboard_report_content = _stringify_packaged_report(
-                _resolve_loaded_operator_dashboard_report(
+            dashboard_report_content = (
+                _stringify_packaged_report(
+                    _resolve_loaded_operator_dashboard_report(
+                        parsed,
+                        packager,
+                        dataset,
+                        enriched_packaged_read=enriched_packaged_read,
+                    ),
+                    parsed.report_format,
+                )
+                if str(parsed.report_format or "").strip().lower() in {"parsed", "row"}
+                else _resolve_loaded_operator_dashboard_report(
                     parsed,
                     packager,
                     dataset,
                     enriched_packaged_read=enriched_packaged_read,
-                ),
-                parsed.report_format,
-            ) if str(parsed.report_format or "").strip().lower() in {"parsed", "row"} else _resolve_loaded_operator_dashboard_report(
-                parsed,
-                packager,
-                dataset,
-                enriched_packaged_read=enriched_packaged_read,
+                )
             )
         payload["operator_dashboard_report"] = {
-            "report_path": _write_text_output(parsed.export_operator_dashboard_report, dashboard_report_content),
+            "report_path": _write_text_output(
+                parsed.export_operator_dashboard_report, dashboard_report_content
+            ),
             "report_format": str(parsed.report_format),
         }
 
@@ -955,71 +1077,295 @@ def create_parser() -> argparse.ArgumentParser:
         required=True,
         help="Whether --input-path points to a docket JSON object, a docket directory, a CourtListener docket id/URL, a normalized PACER export, a raw PACER docket HTML file, a Tyler Host export, an existing packaged docket manifest/archive, or should be auto-detected.",
     )
-    parser.add_argument("--input-path", required=True, help="Path to the docket JSON file, docket document directory, CourtListener docket id/URL, PACER export path or raw PACER HTML file, Tyler Host export path, packaged manifest/archive, or an auto-detected source path.")
-    parser.add_argument("--output", required=False, help="Path to write the docket dataset artifact JSON.")
-    parser.add_argument("--source-type-hint", choices=["json", "directory", "courtlistener", "pacer", "tyler_host", "packaged"], default=None, help="Optional hint for --input-type auto when the path alone is ambiguous. Useful for normalized PACER or Tyler Host JSON exports.")
-    parser.add_argument("--docket-id", default=None, help="Optional docket id override for directory imports.")
-    parser.add_argument("--case-name", default=None, help="Optional case name override for directory imports.")
+    parser.add_argument(
+        "--input-path",
+        required=True,
+        help="Path to the docket JSON file, docket document directory, CourtListener docket id/URL, PACER export path or raw PACER HTML file, Tyler Host export path, packaged manifest/archive, or an auto-detected source path.",
+    )
+    parser.add_argument(
+        "--output", required=False, help="Path to write the docket dataset artifact JSON."
+    )
+    parser.add_argument(
+        "--source-type-hint",
+        choices=["json", "directory", "courtlistener", "pacer", "tyler_host", "packaged"],
+        default=None,
+        help="Optional hint for --input-type auto when the path alone is ambiguous. Useful for normalized PACER or Tyler Host JSON exports.",
+    )
+    parser.add_argument(
+        "--docket-id", default=None, help="Optional docket id override for directory imports."
+    )
+    parser.add_argument(
+        "--case-name", default=None, help="Optional case name override for directory imports."
+    )
     parser.add_argument("--court", default="", help="Optional court name to attach to the dataset.")
     parser.add_argument("--glob", default="*", help="Glob pattern used for directory imports.")
-    parser.add_argument("--skip-knowledge-graph", action="store_true", help="Do not build the knowledge graph artifact.")
+    parser.add_argument(
+        "--skip-knowledge-graph",
+        action="store_true",
+        help="Do not build the knowledge graph artifact.",
+    )
     parser.add_argument("--skip-bm25", action="store_true", help="Do not build the BM25 artifact.")
-    parser.add_argument("--skip-vector-index", action="store_true", help="Do not build the vector index artifact.")
-    parser.add_argument("--vector-dimension", type=int, default=32, help="Vector dimension for the lightweight vector index.")
-    parser.add_argument("--courtlistener-api-token", default=None, help="Optional CourtListener API token.")
-    parser.add_argument("--max-courtlistener-documents", type=int, default=None, help="Optional limit for RECAP documents fetched from CourtListener.")
-    parser.add_argument("--skip-courtlistener-documents", action="store_true", help="Only import the CourtListener docket metadata and party records, skipping RECAP document fetches.")
-    parser.add_argument("--skip-courtlistener-text", action="store_true", help="Do not fetch missing full text for RECAP documents from CourtListener.")
-    parser.add_argument("--search-backend", choices=["bm25", "vector"], default=None, help="Search the loaded docket dataset or packaged manifest with the selected backend.")
-    parser.add_argument("--query", default=None, help="Search query text used with --search-backend.")
-    parser.add_argument("--top-k", type=int, default=10, help="Top-k result count used with --search-backend.")
-    parser.add_argument("--enrich-query", action="append", default=None, help="For packaged inputs, run a tactician-guided enrichment query and attach a proof packet. Repeat for multiple queries.")
-    parser.add_argument("--follow-up-top-k", type=int, default=10, help="Top-k used for tactician follow-up retrieval against packaged bundles.")
-    parser.add_argument("--package-dir", default=None, help="Optional directory to also write a packaged parquet/CAR docket bundle.")
-    parser.add_argument("--parquet-dir", default=None, help="Optional directory to write a parquet-only docket bundle.")
-    parser.add_argument("--package-name", default=None, help="Optional package name for structured bundle output.")
-    parser.add_argument("--courtlistener-cache-package-dir", default=None, help="Optional directory to write a packaged Parquet/CAR bundle for the CourtListener shared fetch cache.")
-    parser.add_argument("--courtlistener-cache-dir", default=None, help="Optional explicit CourtListener shared fetch cache directory to package.")
-    parser.add_argument("--zip-package", action="store_true", help="Also write a .zip archive for any docket/cache bundle that gets generated.")
-    parser.add_argument("--no-car", action="store_true", help="Do not emit CAR files when writing a docket package.")
+    parser.add_argument(
+        "--skip-vector-index", action="store_true", help="Do not build the vector index artifact."
+    )
+    parser.add_argument(
+        "--vector-dimension",
+        type=int,
+        default=32,
+        help="Vector dimension for the lightweight vector index.",
+    )
+    parser.add_argument(
+        "--courtlistener-api-token", default=None, help="Optional CourtListener API token."
+    )
+    parser.add_argument(
+        "--max-courtlistener-documents",
+        type=int,
+        default=None,
+        help="Optional limit for RECAP documents fetched from CourtListener.",
+    )
+    parser.add_argument(
+        "--skip-courtlistener-documents",
+        action="store_true",
+        help="Only import the CourtListener docket metadata and party records, skipping RECAP document fetches.",
+    )
+    parser.add_argument(
+        "--skip-courtlistener-text",
+        action="store_true",
+        help="Do not fetch missing full text for RECAP documents from CourtListener.",
+    )
+    parser.add_argument(
+        "--search-backend",
+        choices=["bm25", "vector"],
+        default=None,
+        help="Search the loaded docket dataset or packaged manifest with the selected backend.",
+    )
+    parser.add_argument(
+        "--query", default=None, help="Search query text used with --search-backend."
+    )
+    parser.add_argument(
+        "--top-k", type=int, default=10, help="Top-k result count used with --search-backend."
+    )
+    parser.add_argument(
+        "--enrich-query",
+        action="append",
+        default=None,
+        help="For packaged inputs, run a tactician-guided enrichment query and attach a proof packet. Repeat for multiple queries.",
+    )
+    parser.add_argument(
+        "--follow-up-top-k",
+        type=int,
+        default=10,
+        help="Top-k used for tactician follow-up retrieval against packaged bundles.",
+    )
+    parser.add_argument(
+        "--package-dir",
+        default=None,
+        help="Optional directory to also write a packaged parquet/CAR docket bundle.",
+    )
+    parser.add_argument(
+        "--parquet-dir",
+        default=None,
+        help="Optional directory to write a parquet-only docket bundle.",
+    )
+    parser.add_argument(
+        "--package-name", default=None, help="Optional package name for structured bundle output."
+    )
+    parser.add_argument(
+        "--courtlistener-cache-package-dir",
+        default=None,
+        help="Optional directory to write a packaged Parquet/CAR bundle for the CourtListener shared fetch cache.",
+    )
+    parser.add_argument(
+        "--courtlistener-cache-dir",
+        default=None,
+        help="Optional explicit CourtListener shared fetch cache directory to package.",
+    )
+    parser.add_argument(
+        "--zip-package",
+        action="store_true",
+        help="Also write a .zip archive for any docket/cache bundle that gets generated.",
+    )
+    parser.add_argument(
+        "--no-car", action="store_true", help="Do not emit CAR files when writing a docket package."
+    )
     parser.add_argument(
         "--packaged-action",
-        choices=["summary", "inspect", "dashboard", "report", "dashboard-report", "recap-fetch", "recap-preflight"],
+        choices=[
+            "summary",
+            "inspect",
+            "dashboard",
+            "report",
+            "dashboard-report",
+            "recap-fetch",
+            "recap-preflight",
+        ],
         default=None,
         help="Preferred packaged read selector for scripts: summary, inspect, dashboard, report, dashboard-report, recap-fetch, or recap-preflight.",
     )
-    parser.add_argument("--inspect-packaged", action="store_true", help="For packaged inputs, include a lightweight inspection payload with latest routing/proof provenance.")
-    parser.add_argument("--inspection-fields", default=None, help="Comma-separated field subset for --inspect-packaged.")
-    parser.add_argument("--operator-dashboard", action="store_true", help="For packaged inputs, include the combined operator dashboard payload.")
-    parser.add_argument("--dashboard-fields", default=None, help="Comma-separated field subset for --operator-dashboard.")
-    parser.add_argument("--summary-only", action="store_true", help="For packaged inputs, include only the lightweight manifest-driven summary view.")
-    parser.add_argument("--summary-fields", default=None, help="Comma-separated field subset for --summary-only packaged output.")
-    parser.add_argument("--citation-source-audit", action="store_true", help="Include a citation source resolution audit for the docket dataset or packaged bundle.")
-    parser.add_argument("--citation-audit-fields", default=None, help="Comma-separated field subset for --citation-source-audit output.")
-    parser.add_argument("--no-eu-citation-audit", action="store_true", help="Skip the EU/member-state citation audit within --citation-source-audit.")
-    parser.add_argument("--eu-citation-language", default=None, help="Optional language hint for EU/member-state citation extraction.")
-    parser.add_argument("--eu-citation-max-documents", type=int, default=120, help="Max documents to scan for EU/member-state citations.")
-    parser.add_argument("--recover-citation-sources", action="store_true", help="Run unresolved citation audit misses through the legal source recovery workflow.")
-    parser.add_argument("--citation-recovery-fields", default=None, help="Comma-separated field subset for --recover-citation-sources output.")
-    parser.add_argument("--recovery-max-candidates", type=int, default=8, help="Maximum recovery candidates to keep per unresolved citation.")
-    parser.add_argument("--recovery-archive-top-k", type=int, default=3, help="How many top recovery candidates to archive per unresolved citation.")
-    parser.add_argument("--publish-recovered-citations-to-hf", action="store_true", help="Publish recovered citation manifests to the target Hugging Face dataset.")
-    parser.add_argument("--hf-token", default=None, help="Optional Hugging Face token used with --publish-recovered-citations-to-hf.")
-    parser.add_argument("--load-packaged-report", action="store_true", help="For packaged inputs, load the archived inspection_report artifact directly.")
-    parser.add_argument("--load-operator-dashboard-report", action="store_true", help="For packaged inputs, load the archived operator_dashboard_report artifact directly.")
-    parser.add_argument("--submit-packaged-recap-fetch", action="store_true", help="For packaged inputs, submit PACER-gated acquisition queue rows to CourtListener RECAP Fetch.")
-    parser.add_argument("--packaged-recap-preflight", action="store_true", help="For packaged inputs, inspect whether PACER/CourtListener RECAP Fetch has the required packaged context and secrets.")
-    parser.add_argument("--recap-fetch-request-id", default=None, help="Optional CourtListener RECAP Fetch request id to inspect.")
-    parser.add_argument("--recap-fetch-fields", default=None, help="Comma-separated field subset for --submit-packaged-recap-fetch or --recap-fetch-request-id.")
-    parser.add_argument("--pacer-username", default=None, help="Optional PACER username override for CourtListener RECAP Fetch.")
-    parser.add_argument("--pacer-password", default=None, help="Optional PACER password override for CourtListener RECAP Fetch.")
-    parser.add_argument("--pacer-client-code", default=None, help="Optional PACER client code for CourtListener RECAP Fetch.")
-    parser.add_argument("--report-fields", default=None, help="Comma-separated field subset for --load-packaged-report when using parsed/row output.")
-    parser.add_argument("--fields", default=None, help="Comma-separated field subset for the active packaged read mode.")
-    parser.add_argument("--export-packaged-report", default=None, help="For packaged inputs, write a provenance/inspection report to this path.")
-    parser.add_argument("--export-operator-dashboard-report", default=None, help="For packaged inputs, write the archived operator dashboard report to this path.")
-    parser.add_argument("--export-hf-records-parquet", default=None, help="Write a single Hugging Face-friendly row-oriented Parquet export. For packaged inputs, this flattens every bundle component into one record table.")
-    parser.add_argument("--report-format", choices=["json", "markdown", "text", "parsed", "row"], default="markdown", help="Format used with packaged report load/export.")
+    parser.add_argument(
+        "--inspect-packaged",
+        action="store_true",
+        help="For packaged inputs, include a lightweight inspection payload with latest routing/proof provenance.",
+    )
+    parser.add_argument(
+        "--inspection-fields",
+        default=None,
+        help="Comma-separated field subset for --inspect-packaged.",
+    )
+    parser.add_argument(
+        "--operator-dashboard",
+        action="store_true",
+        help="For packaged inputs, include the combined operator dashboard payload.",
+    )
+    parser.add_argument(
+        "--dashboard-fields",
+        default=None,
+        help="Comma-separated field subset for --operator-dashboard.",
+    )
+    parser.add_argument(
+        "--summary-only",
+        action="store_true",
+        help="For packaged inputs, include only the lightweight manifest-driven summary view.",
+    )
+    parser.add_argument(
+        "--summary-fields",
+        default=None,
+        help="Comma-separated field subset for --summary-only packaged output.",
+    )
+    parser.add_argument(
+        "--citation-source-audit",
+        action="store_true",
+        help="Include a citation source resolution audit for the docket dataset or packaged bundle.",
+    )
+    parser.add_argument(
+        "--citation-audit-fields",
+        default=None,
+        help="Comma-separated field subset for --citation-source-audit output.",
+    )
+    parser.add_argument(
+        "--no-eu-citation-audit",
+        action="store_true",
+        help="Skip the EU/member-state citation audit within --citation-source-audit.",
+    )
+    parser.add_argument(
+        "--eu-citation-language",
+        default=None,
+        help="Optional language hint for EU/member-state citation extraction.",
+    )
+    parser.add_argument(
+        "--eu-citation-max-documents",
+        type=int,
+        default=120,
+        help="Max documents to scan for EU/member-state citations.",
+    )
+    parser.add_argument(
+        "--recover-citation-sources",
+        action="store_true",
+        help="Run unresolved citation audit misses through the legal source recovery workflow.",
+    )
+    parser.add_argument(
+        "--citation-recovery-fields",
+        default=None,
+        help="Comma-separated field subset for --recover-citation-sources output.",
+    )
+    parser.add_argument(
+        "--recovery-max-candidates",
+        type=int,
+        default=8,
+        help="Maximum recovery candidates to keep per unresolved citation.",
+    )
+    parser.add_argument(
+        "--recovery-archive-top-k",
+        type=int,
+        default=3,
+        help="How many top recovery candidates to archive per unresolved citation.",
+    )
+    parser.add_argument(
+        "--publish-recovered-citations-to-hf",
+        action="store_true",
+        help="Publish recovered citation manifests to the target Hugging Face dataset.",
+    )
+    parser.add_argument(
+        "--hf-token",
+        default=None,
+        help="Optional Hugging Face token used with --publish-recovered-citations-to-hf.",
+    )
+    parser.add_argument(
+        "--load-packaged-report",
+        action="store_true",
+        help="For packaged inputs, load the archived inspection_report artifact directly.",
+    )
+    parser.add_argument(
+        "--load-operator-dashboard-report",
+        action="store_true",
+        help="For packaged inputs, load the archived operator_dashboard_report artifact directly.",
+    )
+    parser.add_argument(
+        "--submit-packaged-recap-fetch",
+        action="store_true",
+        help="For packaged inputs, submit PACER-gated acquisition queue rows to CourtListener RECAP Fetch.",
+    )
+    parser.add_argument(
+        "--packaged-recap-preflight",
+        action="store_true",
+        help="For packaged inputs, inspect whether PACER/CourtListener RECAP Fetch has the required packaged context and secrets.",
+    )
+    parser.add_argument(
+        "--recap-fetch-request-id",
+        default=None,
+        help="Optional CourtListener RECAP Fetch request id to inspect.",
+    )
+    parser.add_argument(
+        "--recap-fetch-fields",
+        default=None,
+        help="Comma-separated field subset for --submit-packaged-recap-fetch or --recap-fetch-request-id.",
+    )
+    parser.add_argument(
+        "--pacer-username",
+        default=None,
+        help="Optional PACER username override for CourtListener RECAP Fetch.",
+    )
+    parser.add_argument(
+        "--pacer-password",
+        default=None,
+        help="Optional PACER password override for CourtListener RECAP Fetch.",
+    )
+    parser.add_argument(
+        "--pacer-client-code",
+        default=None,
+        help="Optional PACER client code for CourtListener RECAP Fetch.",
+    )
+    parser.add_argument(
+        "--report-fields",
+        default=None,
+        help="Comma-separated field subset for --load-packaged-report when using parsed/row output.",
+    )
+    parser.add_argument(
+        "--fields",
+        default=None,
+        help="Comma-separated field subset for the active packaged read mode.",
+    )
+    parser.add_argument(
+        "--export-packaged-report",
+        default=None,
+        help="For packaged inputs, write a provenance/inspection report to this path.",
+    )
+    parser.add_argument(
+        "--export-operator-dashboard-report",
+        default=None,
+        help="For packaged inputs, write the archived operator dashboard report to this path.",
+    )
+    parser.add_argument(
+        "--export-hf-records-parquet",
+        default=None,
+        help="Write a single Hugging Face-friendly row-oriented Parquet export. For packaged inputs, this flattens every bundle component into one record table.",
+    )
+    parser.add_argument(
+        "--report-format",
+        choices=["json", "markdown", "text", "parsed", "row"],
+        default="markdown",
+        help="Format used with packaged report load/export.",
+    )
     parser.add_argument("--json", action="store_true", help="Print a JSON summary instead of text.")
     return parser
 
@@ -1121,8 +1467,18 @@ def main(args: list[str] | None = None) -> int:
         and not parsed.export_packaged_report
         and not parsed.export_operator_dashboard_report
     )
-    if not parsed.output and not packaged_read_only and not citation_audit_only and not citation_recovery_only and not recap_fetch_status_only and not search_only and not hf_records_export_only:
-        parser.error("--output is required unless you are only inspecting or loading a packaged report.")
+    if (
+        not parsed.output
+        and not packaged_read_only
+        and not citation_audit_only
+        and not citation_recovery_only
+        and not recap_fetch_status_only
+        and not search_only
+        and not hf_records_export_only
+    ):
+        parser.error(
+            "--output is required unless you are only inspecting or loading a packaged report."
+        )
     if citation_audit_fields and not parsed.citation_source_audit:
         parser.error("--citation-audit-fields is only valid with --citation-source-audit.")
     if citation_recovery_fields and not parsed.recover_citation_sources:
@@ -1131,8 +1487,12 @@ def main(args: list[str] | None = None) -> int:
         parser.error("Use either --fields or --citation-audit-fields, not both.")
     if generic_fields and citation_recovery_fields:
         parser.error("Use either --fields or --citation-recovery-fields, not both.")
-    if recap_fetch_fields and not (parsed.submit_packaged_recap_fetch or parsed.recap_fetch_request_id):
-        parser.error("--recap-fetch-fields is only valid with --submit-packaged-recap-fetch or --recap-fetch-request-id.")
+    if recap_fetch_fields and not (
+        parsed.submit_packaged_recap_fetch or parsed.recap_fetch_request_id
+    ):
+        parser.error(
+            "--recap-fetch-fields is only valid with --submit-packaged-recap-fetch or --recap-fetch-request-id."
+        )
     if generic_fields and recap_fetch_fields:
         parser.error("Use either --fields or --recap-fetch-fields, not both.")
     active_packaged_fields = _resolve_packaged_field_selections(
@@ -1149,14 +1509,24 @@ def main(args: list[str] | None = None) -> int:
     active_summary_fields = active_packaged_fields["summary"]
     active_inspection_fields = active_packaged_fields["inspection"]
     active_dashboard_fields = active_packaged_fields["dashboard"]
-    active_report_fields = active_packaged_fields["report"] or active_packaged_fields["dashboard_report"]
+    active_report_fields = (
+        active_packaged_fields["report"] or active_packaged_fields["dashboard_report"]
+    )
     active_recap_fetch_fields = (
         generic_fields
         if (parsed.recap_fetch_request_id and generic_fields)
         else (active_packaged_fields["recap_fetch"] or active_packaged_fields["recap_preflight"])
     )
-    active_citation_audit_fields = generic_fields if (parsed.citation_source_audit and generic_fields) else citation_audit_fields
-    active_citation_recovery_fields = generic_fields if (parsed.recover_citation_sources and generic_fields) else citation_recovery_fields
+    active_citation_audit_fields = (
+        generic_fields
+        if (parsed.citation_source_audit and generic_fields)
+        else citation_audit_fields
+    )
+    active_citation_recovery_fields = (
+        generic_fields
+        if (parsed.recover_citation_sources and generic_fields)
+        else citation_recovery_fields
+    )
 
     builder = DocketDatasetBuilder(vector_dimension=int(parsed.vector_dimension or 32))
     common_kwargs = {
@@ -1166,7 +1536,11 @@ def main(args: list[str] | None = None) -> int:
     }
 
     dataset = None
-    packaged_read_packager = DocketDatasetPackager() if (packaged_read_only or packaged_manifest_audit_or_recovery) else None
+    packaged_read_packager = (
+        DocketDatasetPackager()
+        if (packaged_read_only or packaged_manifest_audit_or_recovery)
+        else None
+    )
 
     try:
         if parsed.input_type == "json":
@@ -1202,9 +1576,13 @@ def main(args: list[str] | None = None) -> int:
                 dataset.metadata["source_path"] = str(parsed.input_path)
         elif parsed.input_type == "packaged":
             if parsed.skip_knowledge_graph or parsed.skip_bm25 or parsed.skip_vector_index:
-                parser.error("Skip flags are only valid for source docket imports, not packaged bundle enrichment.")
+                parser.error(
+                    "Skip flags are only valid for source docket imports, not packaged bundle enrichment."
+                )
             if parsed.vector_dimension != 32:
-                parser.error("--vector-dimension is only used for source docket imports, not packaged bundle enrichment.")
+                parser.error(
+                    "--vector-dimension is only used for source docket imports, not packaged bundle enrichment."
+                )
             if parsed.enrich_query:
                 dataset = enrich_packaged_docket_with_tactician(
                     parsed.input_path,
@@ -1249,7 +1627,9 @@ def main(args: list[str] | None = None) -> int:
                 output_path = dataset.write_json(output_target)
             else:
                 output_target.parent.mkdir(parents=True, exist_ok=True)
-                output_target.write_text(json.dumps(dataset, indent=2, ensure_ascii=False), encoding="utf-8")
+                output_target.write_text(
+                    json.dumps(dataset, indent=2, ensure_ascii=False), encoding="utf-8"
+                )
                 output_path = output_target
         package_payload = None
         package_dir = parsed.parquet_dir or parsed.package_dir
@@ -1275,7 +1655,9 @@ def main(args: list[str] | None = None) -> int:
             elif package_payload is not None:
                 hf_records_manifest_path = str(package_payload.get("manifest_json_path") or "")
             else:
-                parser.error("--export-hf-records-parquet for source imports requires --parquet-dir or --package-dir so the full component bundle can be flattened.")
+                parser.error(
+                    "--export-hf-records-parquet for source imports requires --parquet-dir or --package-dir so the full component bundle can be flattened."
+                )
             hf_records_export = export_packaged_docket_hf_records_parquet(
                 hf_records_manifest_path,
                 parsed.export_hf_records_parquet,
@@ -1327,12 +1709,16 @@ def main(args: list[str] | None = None) -> int:
                     dataset.metadata = dict(getattr(dataset, "metadata") or {})
                     dataset.metadata["citation_source_audit"] = dict(citation_audit)
                     if isinstance(citation_audit.get("eu_citation_audit"), dict):
-                        dataset.metadata["eu_citation_audit"] = dict(citation_audit.get("eu_citation_audit") or {})
+                        dataset.metadata["eu_citation_audit"] = dict(
+                            citation_audit.get("eu_citation_audit") or {}
+                        )
                 elif isinstance(dataset, dict):
                     metadata = dict(dataset.get("metadata") or {})
                     metadata["citation_source_audit"] = dict(citation_audit)
                     if isinstance(citation_audit.get("eu_citation_audit"), dict):
-                        metadata["eu_citation_audit"] = dict(citation_audit.get("eu_citation_audit") or {})
+                        metadata["eu_citation_audit"] = dict(
+                            citation_audit.get("eu_citation_audit") or {}
+                        )
                     dataset["metadata"] = metadata
             else:
                 citation_audit = _call_packaged_citation_audit_builder(
@@ -1391,7 +1777,9 @@ def main(args: list[str] | None = None) -> int:
             )
         if parsed.recap_fetch_request_id:
             if parsed.input_type != "packaged":
-                parser.error("--recap-fetch-request-id currently expects --input-type packaged so the CLI stays aligned with packaged CourtListener workflows.")
+                parser.error(
+                    "--recap-fetch-request-id currently expects --input-type packaged so the CLI stays aligned with packaged CourtListener workflows."
+                )
             recap_fetch_status = get_courtlistener_recap_fetch_request(
                 parsed.recap_fetch_request_id,
                 api_token=parsed.courtlistener_api_token,
@@ -1407,7 +1795,9 @@ def main(args: list[str] | None = None) -> int:
         )
         if inspection_requested:
             if parsed.input_type != "packaged":
-                parser.error("--inspect-packaged, --operator-dashboard, --summary-only, --load-packaged-report, --load-operator-dashboard-report, --submit-packaged-recap-fetch, --export-packaged-report, and --export-operator-dashboard-report are only valid with --input-type packaged.")
+                parser.error(
+                    "--inspect-packaged, --operator-dashboard, --summary-only, --load-packaged-report, --load-operator-dashboard-report, --submit-packaged-recap-fetch, --export-packaged-report, and --export-operator-dashboard-report are only valid with --input-type packaged."
+                )
             packager = packaged_read_packager or DocketDatasetPackager()
             _handle_packaged_read_outputs(
                 parsed,
@@ -1427,12 +1817,7 @@ def main(args: list[str] | None = None) -> int:
         if parsed.courtlistener_cache_package_dir:
             cache_dir = parsed.courtlistener_cache_dir
             if not cache_dir:
-                cache_dir = (
-                    Path.home()
-                    / ".cache"
-                    / "ipfs_datasets_py"
-                    / "legal_fetch_cache"
-                )
+                cache_dir = Path.home() / ".cache" / "ipfs_datasets_py" / "legal_fetch_cache"
             cache_package_payload = package_courtlistener_fetch_cache(
                 cache_dir,
                 parsed.courtlistener_cache_package_dir,
@@ -1440,7 +1825,9 @@ def main(args: list[str] | None = None) -> int:
                 include_car=include_car,
             )
             if parsed.zip_package:
-                cache_package_payload["zip_path"] = _create_bundle_zip(cache_package_payload["bundle_dir"])
+                cache_package_payload["zip_path"] = _create_bundle_zip(
+                    cache_package_payload["bundle_dir"]
+                )
             payload["courtlistener_cache_package"] = cache_package_payload
     except CourtListenerIngestionError as exc:
         classified_error_type, classified_details = _classify_courtlistener_error(str(exc))
@@ -1470,15 +1857,27 @@ def main(args: list[str] | None = None) -> int:
             for key, value in payload["summary"].items():
                 print(f"{key}: {value}")
         if parsed.search_backend and "search_results" in payload:
-            print(_render_search_text(payload["search_results"], backend=str(parsed.search_backend)))
+            print(
+                _render_search_text(payload["search_results"], backend=str(parsed.search_backend))
+            )
         if parsed.inspect_packaged and "inspection" in payload:
             _print_packaged_inspection(dict(payload["inspection"]))
         if parsed.operator_dashboard and "operator_dashboard" in payload:
-            print(render_packaged_docket_operator_dashboard(payload["operator_dashboard"], report_format="text"))
+            print(
+                render_packaged_docket_operator_dashboard(
+                    payload["operator_dashboard"], report_format="text"
+                )
+            )
         if parsed.load_packaged_report and "loaded_packaged_report" in payload:
-            print(_stringify_packaged_report(payload["loaded_packaged_report"], parsed.report_format))
+            print(
+                _stringify_packaged_report(payload["loaded_packaged_report"], parsed.report_format)
+            )
         if parsed.load_operator_dashboard_report and "loaded_operator_dashboard_report" in payload:
-            print(_stringify_packaged_report(payload["loaded_operator_dashboard_report"], parsed.report_format))
+            print(
+                _stringify_packaged_report(
+                    payload["loaded_operator_dashboard_report"], parsed.report_format
+                )
+            )
         if parsed.citation_source_audit and "citation_source_audit" in payload:
             print("Citation Source Audit")
             for key, value in dict(payload["citation_source_audit"]).items():
@@ -1509,8 +1908,12 @@ def main(args: list[str] | None = None) -> int:
             print(f"inspection_report_path: {payload['inspection_report']['report_path']}")
             print(f"inspection_report_format: {payload['inspection_report']['report_format']}")
         if "operator_dashboard_report" in payload:
-            print(f"operator_dashboard_report_path: {payload['operator_dashboard_report']['report_path']}")
-            print(f"operator_dashboard_report_format: {payload['operator_dashboard_report']['report_format']}")
+            print(
+                f"operator_dashboard_report_path: {payload['operator_dashboard_report']['report_path']}"
+            )
+            print(
+                f"operator_dashboard_report_format: {payload['operator_dashboard_report']['report_format']}"
+            )
     return 0
 
 

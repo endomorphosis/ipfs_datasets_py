@@ -1,5 +1,16 @@
 from __future__ import annotations
-from types_ import Any, Callable, Configs, Logger, TypeVar, Union, MagicMock, AbilityProcessor, DependencySpecificObject
+from types_ import (
+    Any,
+    Callable,
+    Configs,
+    Logger,
+    TypeVar,
+    Union,
+    MagicMock,
+    AbilityProcessor,
+    DependencySpecificObject,
+)
+
 
 class XlsxProcessor:
     """
@@ -72,11 +83,8 @@ class XlsxProcessor:
         ...
         ```
     """
-    
-    def __init__(self, 
-                 resources: dict[str, Callable] = None, 
-                 configs: Configs = None
-                ) -> None:
+
+    def __init__(self, resources: dict[str, Callable] = None, configs: Configs = None) -> None:
         """Initialize the XLSX processor."""
         self.configs = configs
         self.resources = resources
@@ -98,15 +106,17 @@ class XlsxProcessor:
         self._logger: Logger = self.resources["logger"]
 
         # Optional image extraction function
-        self._get_images_from_sheets: Callable | AbilityProcessor = self.resources["get_images_from_sheets"]
+        self._get_images_from_sheets: Callable | AbilityProcessor = self.resources[
+            "get_images_from_sheets"
+        ]
         self._extract_images: Callable | MagicMock = self.resources["extract_images"]
 
     def can_process(self, format_name: str) -> bool:
         """Check if this processor can handle the given format.
-        
+
         Args:
             format_name: The name of the format to check.
-            
+
         Returns:
             True if this processor can handle the format and openpyxl is available,
             False otherwise.
@@ -116,23 +126,23 @@ class XlsxProcessor:
     @property
     def supported_formats(self) -> list[str]:
         """Get the list of formats supported by this processor.
-        
+
         Returns:
             A list of format names supported by this processor.
         """
         return self._supported_formats if self._processor_available else []
-    
+
     @property
     def processor_info(self) -> dict[str, Any]:
         """Get information about this processor.
-        
+
         Returns:
             A dictionary containing information about this processor.
         """
         info = {
             "name": self._processor_name,
             "supported_formats": self._supported_formats,
-            "available": self._processor_available
+            "available": self._processor_available,
         }
         if self._processor_available:
             info["version"] = self._get_version()
@@ -142,7 +152,7 @@ class XlsxProcessor:
     @property
     def dependency_info(self) -> dict[str, Union[str, None]]:
         """Get information about the dependencies of this processor.
-        
+
         Returns:
             A dictionary containing information about the dependencies of this processor.
 
@@ -153,17 +163,17 @@ class XlsxProcessor:
         """
         self._get_dependency_info(self.resources)
 
-    def format_data(self, data: bytes) -> 'DependencySpecificObject' | bytes:
+    def format_data(self, data: bytes) -> "DependencySpecificObject" | bytes:
         """Open an XLSX file and return a dependency-specific object.
         Examples include: openpyxl Workbook object, pandas DataFrame, etc.
         If none is necessary, return the original bytes.
 
         Args:
             data: The binary data of the XLSX document.
-            
+
         Returns:
             An dependency-specific object, or the original bytes.
-            
+
         Raises:
             ValueError: If there's an error formatting the data.
         """
@@ -175,16 +185,16 @@ class XlsxProcessor:
 
     def extract_text(self, data: DependencySpecificObject | bytes, options: dict[str, Any]) -> str:
         """Extract plain text from an XLSX document.
-        
+
         Args:
             data: The binary data of the XLSX document.
             options: Processing options.
                 include_empty_cells: Whether to include empty cells (default: False)
                 max_rows: Maximum number of rows to extract per sheet (default: 1000)
-                
+
         Returns:
             Extracted text from the XLSX document.
-            
+
         Raises:
             ValueError: If openpyxl is not available or the data cannot be processed as an XLSX.
         """
@@ -193,17 +203,19 @@ class XlsxProcessor:
         except Exception as e:
             self._logger.error(f"Error extracting text from XLSX: {e}")
             raise ValueError(f"Error extracting text from XLSX: {e}") from e
-    
-    def extract_metadata(self, data: DependencySpecificObject | bytes, options: dict[str, Any]) -> dict[str, Any]:
+
+    def extract_metadata(
+        self, data: DependencySpecificObject | bytes, options: dict[str, Any]
+    ) -> dict[str, Any]:
         """Extract metadata from an XLSX document.
-        
+
         Args:
             data: The binary data of the XLSX document.
             options: Processing options.
-            
+
         Returns:
             Metadata extracted from the XLSX document.
-            
+
         Raises:
             ValueError: If openpyxl is not available or the data cannot be processed as an XLSX.
         """
@@ -212,8 +224,10 @@ class XlsxProcessor:
         except Exception as e:
             self._logger.error(f"Error extracting metadata from XLSX: {e}")
             raise ValueError(f"Error extracting metadata from XLSX: {e}")
-    
-    def extract_structure(self, data: DependencySpecificObject | bytes, options: dict[str, Any]) -> list[dict[str, Any]]:
+
+    def extract_structure(
+        self, data: DependencySpecificObject | bytes, options: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         """Extract structural elements from an XLSX document. This includes:
             - Computed fields
             - Named ranges
@@ -224,10 +238,10 @@ class XlsxProcessor:
         Args:
             data: The binary data of the XLSX document.
             options: Processing options.
-            
+
         Returns:
             A list of structural elements extracted from the XLSX document.
-            
+
         Raises:
             ValueError: If openpyxl is not available or the data cannot be processed as an XLSX.
         """
@@ -237,7 +251,9 @@ class XlsxProcessor:
             self._logger.error(f"Error extracting structure from XLSX: {e}")
             raise ValueError(f"Error extracting structure from XLSX: {e}")
 
-    def extract_images(self, data: DependencySpecificObject | bytes, options: dict[str, Any]) -> list[dict[str, Any]]:
+    def extract_images(
+        self, data: DependencySpecificObject | bytes, options: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         """Extract images from an XLSX document.
 
         Args:
@@ -259,17 +275,19 @@ class XlsxProcessor:
             self._logger.error(f"Error extracting images from XLSX: {e}")
             raise ValueError(f"Error extracting images from XLSX: {e}")
 
-    def process(self, data: bytes, options: dict[str, Any]) -> tuple[str, dict[str, Any], list[dict[str, Any]]]:
+    def process(
+        self, data: bytes, options: dict[str, Any]
+    ) -> tuple[str, dict[str, Any], list[dict[str, Any]]]:
         """
         Process an XLSX document completely, extracting text, metadata, and structure.
-        
+
         Args:
             data: The binary data of the XLSX document.
             options: Processing options.
-            
+
         Returns:
             A tuple of (text content, metadata, sections).
-            
+
         Raises:
             ValueError: If openpyxl is not available or the data cannot be processed as an XLSX.
         """
@@ -298,23 +316,23 @@ class XlsxProcessor:
 
             # Create a human-readable text version
             text_content = [f"XLSX Document: {metadata.get('title', 'Untitled')}"]
-            
+
             if "creator" in metadata:
                 text_content.append(f"Creator: {metadata['creator']}")
-            
+
             if "subject" in metadata:
                 text_content.append(f"Subject: {metadata['subject']}")
-            
+
             if "creation_date" in metadata:
                 text_content.append(f"Created: {metadata['creation_date']}")
-            
+
             if "sheet_count" in metadata:
                 text_content.append(f"Total Sheets: {metadata['sheet_count']}")
                 text_content.append(f"Sheet Names: {', '.join(metadata['sheets'])}")
-            
+
             text_content.append("\n## Content\n")
             text_content.append(text)
-            
+
             if images:
                 text_content.append("\n## Images\n")
                 for img in images:
@@ -329,4 +347,3 @@ class XlsxProcessor:
         except Exception as e:
             self._logger.error(f"Error processing XLSX document: {e}")
             raise ValueError(f"Error processing XLSX document: {e}")
-

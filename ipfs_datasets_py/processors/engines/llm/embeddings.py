@@ -15,8 +15,8 @@ from ipfs_datasets_py.processors.llm_optimizer import (
 )
 
 __all__ = [
-    'extract_embedding_from_chunk',
-    'extract_embeddings_from_chunks',
-    'extract_embedding_from_nested_data',
-    'get_embedding_from_llm_document_chunks',
+    "extract_embedding_from_chunk",
+    "extract_embeddings_from_chunks",
+    "extract_embedding_from_nested_data",
+    "get_embedding_from_llm_document_chunks",
 ]

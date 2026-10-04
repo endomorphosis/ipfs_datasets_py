@@ -14,7 +14,9 @@ from ipfs_datasets_py.processors.legal_scrapers import huggingface_api_search as
 
 
 @pytest.mark.anyio
-async def test_archive_urls_parallel_gathers_each_url_result(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_archive_urls_parallel_gathers_each_url_result(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setattr(archiver_module, "HAVE_AIOHTTP", True)
     monkeypatch.setattr(archiver_module.SharedFetchCache, "from_env", staticmethod(lambda: None))
 
@@ -51,7 +53,9 @@ async def test_archive_urls_parallel_gathers_each_url_result(monkeypatch: pytest
     assert [result.content for result in results] == [f"content:{url}" for url in urls]
 
 
-def test_parallel_web_archiver_initializes_hf_search_without_explicit_env_token(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_parallel_web_archiver_initializes_hf_search_without_explicit_env_token(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     observed: dict[str, object] = {}
 
     class _FakeSearch:
@@ -71,7 +75,9 @@ def test_parallel_web_archiver_initializes_hf_search_without_explicit_env_token(
     assert observed["api_key"] is None
 
 
-def test_huggingface_api_search_uses_cli_token_and_org_bill_to(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_huggingface_api_search_uses_cli_token_and_org_bill_to(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     captured: dict[str, object] = {}
 
     class _FakeInferenceClient:
@@ -88,7 +94,11 @@ def test_huggingface_api_search_uses_cli_token_and_org_bill_to(monkeypatch: pyte
     monkeypatch.delenv("HUGGINGFACE_API_KEY", raising=False)
     monkeypatch.delenv("HF_TOKEN", raising=False)
     monkeypatch.delenv("HF_API_TOKEN", raising=False)
-    monkeypatch.setattr(hf_search_module.importlib, "import_module", lambda name: type("_Hub", (), {"get_token": staticmethod(lambda: "cli-token")})())
+    monkeypatch.setattr(
+        hf_search_module.importlib,
+        "import_module",
+        lambda name: type("_Hub", (), {"get_token": staticmethod(lambda: "cli-token")})(),
+    )
 
     searcher = hf_search_module.HuggingFaceAPISearch(use_streaming=False)
 
@@ -112,7 +122,9 @@ def test_huggingface_api_search_honors_max_results(monkeypatch: pytest.MonkeyPat
         raising=False,
     )
 
-    searcher = hf_search_module.HuggingFaceAPISearch(api_key="hf-test-token", use_streaming=True, max_results=10)
+    searcher = hf_search_module.HuggingFaceAPISearch(
+        api_key="hf-test-token", use_streaming=True, max_results=10
+    )
 
     results = searcher.search("epa", max_results=1)
 
@@ -120,7 +132,9 @@ def test_huggingface_api_search_honors_max_results(monkeypatch: pytest.MonkeyPat
     assert results[0]["url"] == "https://example.com/1"
 
 
-def test_huggingface_api_search_can_disable_streaming_with_env(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_huggingface_api_search_can_disable_streaming_with_env(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setattr(hf_search_module, "HAVE_DATASETS", True)
     monkeypatch.setenv("IPFS_DATASETS_PY_HF_API_SEARCH_DISABLE_STREAMING", "1")
 
@@ -150,7 +164,9 @@ def test_huggingface_api_search_caps_streaming_scan_rows(monkeypatch: pytest.Mon
     assert searcher.search("needle") == []
 
 
-def test_huggingface_api_search_defaults_to_state_jurisdiction(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_huggingface_api_search_defaults_to_state_jurisdiction(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     observed: dict[str, object] = {}
 
     def _fake_search_state(query, state_code=None, filters=None, max_results=None):
@@ -216,7 +232,9 @@ def test_huggingface_api_search_search_federal_redirects_in_admin_rules_mode(
     searcher = hf_search_module.HuggingFaceAPISearch(use_streaming=False)
     monkeypatch.setattr(searcher, "search_state", _fake_search_state)
 
-    results = searcher.search_federal("administrative rules", filters={"kind": "rule"}, max_results=3)
+    results = searcher.search_federal(
+        "administrative rules", filters={"kind": "rule"}, max_results=3
+    )
 
     assert results == [{"url": "https://example.com/state"}]
     assert observed["query"] == "administrative rules"
@@ -231,7 +249,14 @@ async def test_get_warc_pointer_uses_passed_state_context(monkeypatch: pytest.Mo
     class _FakeSearch:
         def search(self, **kwargs):
             observed.update(kwargs)
-            return [{"url": kwargs["query"], "warc_file": "crawl.warc.gz", "warc_offset": 10, "warc_length": 20}]
+            return [
+                {
+                    "url": kwargs["query"],
+                    "warc_file": "crawl.warc.gz",
+                    "warc_offset": 10,
+                    "warc_length": 20,
+                }
+            ]
 
     monkeypatch.setattr(archiver_module, "HAVE_HF_API", True)
 
@@ -252,7 +277,9 @@ async def test_get_warc_pointer_uses_passed_state_context(monkeypatch: pytest.Mo
 
 
 @pytest.mark.anyio
-async def test_get_warc_pointer_normalizes_state_index_pointer_fields(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_get_warc_pointer_normalizes_state_index_pointer_fields(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     class _FakeSearch:
         def search(self, **kwargs):
             return [
@@ -268,7 +295,9 @@ async def test_get_warc_pointer_normalizes_state_index_pointer_fields(monkeypatc
     archiver = ParallelWebArchiver(use_warc_pointers=False)
     archiver._hf_search = _FakeSearch()
 
-    result = await archiver.get_warc_pointer("https://rules.example.gov/title-1", jurisdiction="state", state_code="TX")
+    result = await archiver.get_warc_pointer(
+        "https://rules.example.gov/title-1", jurisdiction="state", state_code="TX"
+    )
 
     assert result is not None
     assert result["warc_file"] == "crawl-data/state.warc.gz"
@@ -278,7 +307,9 @@ async def test_get_warc_pointer_normalizes_state_index_pointer_fields(monkeypatc
 
 
 @pytest.mark.anyio
-async def test_archive_via_warc_fetches_body_from_state_index_pointer(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_archive_via_warc_fetches_body_from_state_index_pointer(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     class _FakeSearch:
         def search(self, **kwargs):
             return [
@@ -301,7 +332,9 @@ async def test_archive_via_warc_fetches_body_from_state_index_pointer(monkeypatc
             assert warc_length == 20
             return b"fake gz member"
 
-    fake_integration = types.ModuleType("ipfs_datasets_py.processors.web_archiving.common_crawl_integration")
+    fake_integration = types.ModuleType(
+        "ipfs_datasets_py.processors.web_archiving.common_crawl_integration"
+    )
     fake_integration.CommonCrawlSearchEngine = _FakeCommonCrawlSearchEngine
     fake_integration._ensure_common_crawl_import_path = lambda: None
 
@@ -312,9 +345,17 @@ async def test_archive_via_warc_fetches_body_from_state_index_pointer(monkeypatc
         )
     )
 
-    monkeypatch.setitem(sys.modules, "ipfs_datasets_py.processors.web_archiving.common_crawl_integration", fake_integration)
-    monkeypatch.setitem(sys.modules, "common_crawl_search_engine", types.ModuleType("common_crawl_search_engine"))
-    monkeypatch.setitem(sys.modules, "common_crawl_search_engine.ccindex", types.SimpleNamespace(api=fake_ccapi))
+    monkeypatch.setitem(
+        sys.modules,
+        "ipfs_datasets_py.processors.web_archiving.common_crawl_integration",
+        fake_integration,
+    )
+    monkeypatch.setitem(
+        sys.modules, "common_crawl_search_engine", types.ModuleType("common_crawl_search_engine")
+    )
+    monkeypatch.setitem(
+        sys.modules, "common_crawl_search_engine.ccindex", types.SimpleNamespace(api=fake_ccapi)
+    )
     monkeypatch.setitem(sys.modules, "common_crawl_search_engine.ccindex.api", fake_ccapi)
 
     archiver = ParallelWebArchiver(use_warc_pointers=False)
@@ -362,7 +403,9 @@ async def test_archive_urls_parallel_threads_state_context_into_single_url_archi
         state_code="az",
     )
 
-    assert sorted(observed) == sorted([
-        ("https://rules.example.gov/1", "state", "AZ"),
-        ("https://rules.example.gov/2", "state", "AZ"),
-    ])
+    assert sorted(observed) == sorted(
+        [
+            ("https://rules.example.gov/1", "state", "AZ"),
+            ("https://rules.example.gov/2", "state", "AZ"),
+        ]
+    )

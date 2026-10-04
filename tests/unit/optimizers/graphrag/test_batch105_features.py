@@ -30,7 +30,8 @@ def _score(v: float) -> CriticScore:
         consistency=v,
         clarity=v,
         granularity=v,
-        relationship_coherence=v, domain_alignment=v,
+        relationship_coherence=v,
+        domain_alignment=v,
     )
 
 
@@ -50,7 +51,9 @@ class TestGroupEntitiesByConfidenceBand:
 
     def test_empty_bands_returns_all_bucket(self):
         gen = OntologyGenerator()
-        result = EntityExtractionResult(entities=[_entity("a", 0.7)], relationships=[], confidence=0.0, metadata={})
+        result = EntityExtractionResult(
+            entities=[_entity("a", 0.7)], relationships=[], confidence=0.0, metadata={}
+        )
         out = gen.group_entities_by_confidence_band(result, [])
         assert list(out.keys()) == ["all"]
         assert len(out["all"]) == 1
@@ -70,7 +73,9 @@ class TestGroupEntitiesByConfidenceBand:
 
     def test_unsorted_bands_supported(self):
         gen = OntologyGenerator()
-        result = EntityExtractionResult(entities=[_entity("a", 0.5)], relationships=[], confidence=0.0, metadata={})
+        result = EntityExtractionResult(
+            entities=[_entity("a", 0.5)], relationships=[], confidence=0.0, metadata={}
+        )
         out = gen.group_entities_by_confidence_band(result, [0.9, 0.4])
         assert len(out["[0.4,0.9)"]) == 1
 
@@ -132,7 +137,9 @@ class TestScoreMedian:
 class TestValidatorRelationshipDensity:
     def test_no_entities_zero(self):
         v = LogicValidator()
-        assert v.relationship_density({"entities": [], "relationships": [{"id": "r1"}]}) == pytest.approx(0.0)
+        assert v.relationship_density(
+            {"entities": [], "relationships": [{"id": "r1"}]}
+        ) == pytest.approx(0.0)
 
     def test_simple_ratio(self):
         v = LogicValidator()

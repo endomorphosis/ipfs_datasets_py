@@ -124,7 +124,7 @@ from ipfs_datasets_py.logic.TDFOL import (
     DependencyType,
     CircularDependencyError,
     analyze_proof_dependencies,
-    find_proof_chain
+    find_proof_chain,
 )
 ```
 
@@ -243,10 +243,7 @@ chain = find_proof_chain(start, end, kb, proofs)
 ### Basic Usage
 
 ```python
-from ipfs_datasets_py.logic.TDFOL import (
-    FormulaDependencyGraph,
-    ProofResult
-)
+from ipfs_datasets_py.logic.TDFOL import FormulaDependencyGraph, ProofResult
 
 # From proof
 graph = FormulaDependencyGraph(proof_result=result)

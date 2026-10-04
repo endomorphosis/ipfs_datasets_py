@@ -32,7 +32,9 @@ def test_ipfs_kit_backend_uses_ipfs_add_and_extracts_nested_cid(monkeypatch):
 
     class FakeKit:
         def ipfs_add(self, path, recursive=False, pin=False):
-            calls.append({"path": path, "recursive": recursive, "pin": pin, "exists": os.path.isfile(path)})
+            calls.append(
+                {"path": path, "recursive": recursive, "pin": pin, "exists": os.path.isfile(path)}
+            )
             return {"success": True, "data": {"Hash": "bafykitcid"}}
 
     _install_fake_ipfs_kit(lambda **kwargs: FakeKit())
@@ -90,7 +92,11 @@ def test_router_bootstraps_ipfs_kit_when_kubo_cli_missing(monkeypatch):
 
     import ipfs_datasets_py.auto_installer as auto_installer
 
-    monkeypatch.setattr(auto_installer, "ensure_main_ipfs_kit_py", lambda: calls.__setitem__("bootstrap", calls["bootstrap"] + 1) or True)
+    monkeypatch.setattr(
+        auto_installer,
+        "ensure_main_ipfs_kit_py",
+        lambda: calls.__setitem__("bootstrap", calls["bootstrap"] + 1) or True,
+    )
 
     ipfs_backend_router = importlib.import_module("ipfs_datasets_py.ipfs_backend_router")
     monkeypatch.setattr(ipfs_backend_router, "_kubo_cli_available", lambda cmd=None: False)
@@ -115,7 +121,11 @@ def test_router_respects_ipfs_kit_auto_install_opt_out(monkeypatch):
 
     import ipfs_datasets_py.auto_installer as auto_installer
 
-    monkeypatch.setattr(auto_installer, "ensure_main_ipfs_kit_py", lambda: calls.__setitem__("bootstrap", calls["bootstrap"] + 1) or True)
+    monkeypatch.setattr(
+        auto_installer,
+        "ensure_main_ipfs_kit_py",
+        lambda: calls.__setitem__("bootstrap", calls["bootstrap"] + 1) or True,
+    )
 
     ipfs_backend_router = importlib.import_module("ipfs_datasets_py.ipfs_backend_router")
     monkeypatch.setattr(ipfs_backend_router, "_kubo_cli_available", lambda cmd=None: False)

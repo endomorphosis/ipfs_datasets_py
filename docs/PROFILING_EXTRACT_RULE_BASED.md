@@ -175,8 +175,7 @@ for pattern, ent_type in patterns:
 ```python
 # Compile all patterns once at init or config time
 self._compiled_patterns = [
-    (re.compile(pattern, re.IGNORECASE | re.MULTILINE), ent_type)
-    for pattern, ent_type in patterns
+    (re.compile(pattern, re.IGNORECASE | re.MULTILINE), ent_type) for pattern, ent_type in patterns
 ]
 
 # In _extract_entities_from_patterns:

@@ -111,7 +111,9 @@ def call_workspace_tool(tool_name: str, arguments: Dict[str, Any] | None = None)
     return service.call_mcp_tool(tool_name, arguments or {})
 
 
-def call_workspace_mcp(tool_name: str, arguments: Dict[str, Any] | None = None, request_id: int = 1) -> Dict[str, Any]:
+def call_workspace_mcp(
+    tool_name: str, arguments: Dict[str, Any] | None = None, request_id: int = 1
+) -> Dict[str, Any]:
     ensure_complaint_generator_on_path()
     from complaint_generator.mcp import handle_jsonrpc_message
 
@@ -152,7 +154,14 @@ def run_workspace_cli(args: list[str]) -> subprocess.CompletedProcess[str]:
     root = str(COMPLAINT_GENERATOR_ROOT)
     env["PYTHONPATH"] = root if not existing_pythonpath else f"{root}:{existing_pythonpath}"
     command = [sys.executable, "-m", COMPLAINT_CLI_IMPLEMENTATION_MODULE, *args]
-    return subprocess.run(command, check=False, capture_output=True, text=True, cwd=str(COMPLAINT_GENERATOR_ROOT), env=env)
+    return subprocess.run(
+        command,
+        check=False,
+        capture_output=True,
+        text=True,
+        cwd=str(COMPLAINT_GENERATOR_ROOT),
+        env=env,
+    )
 
 
 def _extract_json_object_from_text(raw: str) -> Dict[str, Any]:

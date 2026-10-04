@@ -29,14 +29,14 @@ from ipfs_datasets_py.logic.security_models.crypto_exchange.reports.xaman_testne
 
 
 def _load_json(path: Path) -> dict[str, Any]:
-    return json.loads(path.read_text(encoding='utf-8'))
+    return json.loads(path.read_text(encoding="utf-8"))
 
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
-        json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=True) + '\n',
-        encoding='utf-8',
+        json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=True) + "\n",
+        encoding="utf-8",
     )
 
 
@@ -45,7 +45,7 @@ def _apalache_version(executable: str | None) -> str | None:
         return None
     try:
         completed = subprocess.run(
-            [executable, 'version'],
+            [executable, "version"],
             check=False,
             capture_output=True,
             text=True,
@@ -67,7 +67,7 @@ def generate(
     tla_path = repo_root / TLA_ARTIFACT_PATH
     report_path = repo_root / APALACHE_REPORT_PATH
     tla_path.parent.mkdir(parents=True, exist_ok=True)
-    tla_path.write_text(XAMAN_TESTNET_PAYLOAD_TLA + '\n', encoding='utf-8')
+    tla_path.write_text(XAMAN_TESTNET_PAYLOAD_TLA + "\n", encoding="utf-8")
 
     executable = apalache_executable
     if executable is None:
@@ -78,11 +78,11 @@ def generate(
 
         executable = (
             ensure_prover_executable(
-                'apalache',
-                reason='Xaman Testnet Apalache invariant execution',
+                "apalache",
+                reason="Xaman Testnet Apalache invariant execution",
             )
             if run_solver
-            else find_executable('apalache-mc') or find_executable('apalache')
+            else find_executable("apalache-mc") or find_executable("apalache")
         )
     runs = None
     if run_solver and executable is not None:
@@ -95,10 +95,10 @@ def generate(
 
     report = build_xaman_testnet_apalache_report(
         model_payload=_load_json(repo_root / MODEL_PATH),
-        model_cid=(repo_root / MODEL_CID_PATH).read_text(encoding='utf-8').strip(),
+        model_cid=(repo_root / MODEL_CID_PATH).read_text(encoding="utf-8").strip(),
         trace_map_payload=_load_json(repo_root / TRACE_MAP_PATH),
         assumptions_payload=_load_json(repo_root / ASSUMPTIONS_PATH),
-        tla_source=tla_path.read_text(encoding='utf-8').rstrip('\n'),
+        tla_source=tla_path.read_text(encoding="utf-8").rstrip("\n"),
         apalache_executable=executable,
         apalache_version=_apalache_version(executable),
         apalache_runs=runs,
@@ -109,10 +109,20 @@ def generate(
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--repo-root', default=str(ROOT_DIR), help='Repository root containing security_ir_artifacts.')
-    parser.add_argument('--apalache-executable', default=None, help='Optional explicit Apalache executable.')
-    parser.add_argument('--no-run', action='store_true', help='Emit a report without invoking Apalache.')
-    parser.add_argument('--timeout-seconds', type=int, default=120, help='Per-invariant Apalache timeout.')
+    parser.add_argument(
+        "--repo-root",
+        default=str(ROOT_DIR),
+        help="Repository root containing security_ir_artifacts.",
+    )
+    parser.add_argument(
+        "--apalache-executable", default=None, help="Optional explicit Apalache executable."
+    )
+    parser.add_argument(
+        "--no-run", action="store_true", help="Emit a report without invoking Apalache."
+    )
+    parser.add_argument(
+        "--timeout-seconds", type=int, default=120, help="Per-invariant Apalache timeout."
+    )
     args = parser.parse_args(argv)
 
     report = generate(
@@ -124,13 +134,13 @@ def main(argv: list[str] | None = None) -> int:
     print(
         json.dumps(
             {
-                'tla_path': TLA_ARTIFACT_PATH,
-                'apalache_report_path': APALACHE_REPORT_PATH,
-                'overall_status': report['overall_status'],
-                'security_decision': report['security_decision'],
-                'checked_invariant_count': report['summary']['checked_invariant_count'],
-                'unavailable_apalache_blocks_testnet_assurance': report['coverage_decision'][
-                    'unavailable_apalache_blocks_testnet_assurance'
+                "tla_path": TLA_ARTIFACT_PATH,
+                "apalache_report_path": APALACHE_REPORT_PATH,
+                "overall_status": report["overall_status"],
+                "security_decision": report["security_decision"],
+                "checked_invariant_count": report["summary"]["checked_invariant_count"],
+                "unavailable_apalache_blocks_testnet_assurance": report["coverage_decision"][
+                    "unavailable_apalache_blocks_testnet_assurance"
                 ],
             },
             sort_keys=True,
@@ -139,5 +149,5 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
-if __name__ == '__main__':  # pragma: no cover
+if __name__ == "__main__":  # pragma: no cover
     raise SystemExit(main())

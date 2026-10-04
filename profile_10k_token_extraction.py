@@ -34,6 +34,7 @@ try:
         GraphRAGEntityExtractor,
         ExtractionStrategy,
     )
+
     EXTRACTION_AVAILABLE = True
 except ImportError:
     EXTRACTION_AVAILABLE = False
@@ -44,9 +45,10 @@ except ImportError:
 # Test Document Generation
 # ---------------------------------------------------------------------------
 
+
 def generate_large_document(target_tokens: int = 10000) -> str:
     """Generate a synthetic document with approximately target_tokens tokens.
-    
+
     Uses realistic climate policy text to simulate real workloads.
     """
     base_text = """
@@ -114,17 +116,17 @@ def generate_large_document(target_tokens: int = 10000) -> str:
     industries are supported through the transition. This includes retraining programs,
     economic diversification, and social protection measures.
     """
-    
+
     # Replicate text to reach target token count
     # Rough estimate: 1 token ≈ 0.75 words
     current_tokens = len(base_text.split())
     repetitions = (target_tokens // current_tokens) + 1
-    
+
     text_parts = [base_text]
     for i in range(1, repetitions):
         # Add variation by prepending section markers
         text_parts.append(f"\n\n## Section {i}\n\n{base_text}")
-    
+
     return "".join(text_parts)
 
 
@@ -132,12 +134,10 @@ def generate_large_document(target_tokens: int = 10000) -> str:
 # Profiling Functions
 # ---------------------------------------------------------------------------
 
-def profile_extraction_timing(
-    document: str,
-    strategy: Optional[str] = None
-) -> Dict[str, float]:
+
+def profile_extraction_timing(document: str, strategy: Optional[str] = None) -> Dict[str, float]:
     """Profile extraction with detailed phase timing.
-    
+
     Returns dict with:
     - total_time: Total extraction time (seconds)
     - per_phase: Dict of phase → time for extraction pipeline stages
@@ -145,21 +145,23 @@ def profile_extraction_timing(
     """
     if not EXTRACTION_AVAILABLE:
         return {"error": "Extraction not available"}
-    
-    strategy_enum = ExtractionStrategy.REGEX if strategy is None else ExtractionStrategy[strategy.upper()]
+
+    strategy_enum = (
+        ExtractionStrategy.REGEX if strategy is None else ExtractionStrategy[strategy.upper()]
+    )
     extractor = GraphRAGEntityExtractor(strategy=strategy_enum)
-    
+
     # Phase 1: Initialization (already done above)
-    
+
     # Phase 2: Extraction
     start_time = time.perf_counter()
     entities = extractor.extract(document)
     total_time = time.perf_counter() - start_time
-    
+
     # Calculate throughput
     token_count = len(document.split())
     tokens_per_sec = token_count / total_time if total_time > 0 else 0
-    
+
     return {
         "total_time": total_time,
         "token_count": token_count,
@@ -171,24 +173,24 @@ def profile_extraction_timing(
 
 def profile_extraction_memory(document: str) -> Dict[str, Any]:
     """Profile memory usage during extraction.
-    
+
     Returns dict with:
     - peak_memory_mb: Peak memory usage (MiB)
     - memory_per_token: Memory per token (bytes)
     """
     if not EXTRACTION_AVAILABLE:
         return {"error": "Extraction not available"}
-    
+
     tracemalloc.start()
-    
+
     extractor = GraphRAGEntityExtractor(strategy=ExtractionStrategy.REGEX)
     entities = extractor.extract(document)
-    
+
     current, peak = tracemalloc.get_traced_memory()
     tracemalloc.stop()
-    
+
     token_count = len(document.split())
-    
+
     return {
         "peak_memory_mb": peak / (1024 * 1024),
         "current_memory_mb": current / (1024 * 1024),
@@ -199,41 +201,41 @@ def profile_extraction_memory(document: str) -> Dict[str, Any]:
 
 def profile_extraction_hotspots(document: str) -> str:
     """Profile with cProfile to identify hot paths.
-    
+
     Returns formatted profiling statistics.
     """
     if not EXTRACTION_AVAILABLE:
         return "Extraction not available"
-    
+
     profiler = cProfile.Profile()
-    
+
     def run_extraction():
         extractor = GraphRAGEntityExtractor(strategy=ExtractionStrategy.REGEX)
         return extractor.extract(document)
-    
+
     profiler.enable()
     entities = run_extraction()
     profiler.disable()
-    
+
     # Generate statistics
     stream = io.StringIO()
     stats = pstats.Stats(profiler, stream=stream)
-    stats.sort_stats('cumulative')
+    stats.sort_stats("cumulative")
     stats.print_stats(20)  # Top 20 functions
-    
+
     return stream.getvalue()
 
 
 def compare_strategies(document: str) -> List[Dict[str, Any]]:
     """Compare extraction performance across different strategies.
-    
+
     Returns list of results for each strategy.
     """
     if not EXTRACTION_AVAILABLE:
         return [{"error": "Extraction not available"}]
-    
+
     results = []
-    
+
     # Try each available strategy
     for strategy in [ExtractionStrategy.REGEX]:
         try:
@@ -241,11 +243,13 @@ def compare_strategies(document: str) -> List[Dict[str, Any]]:
             timing["strategy"] = strategy.name
             results.append(timing)
         except Exception as e:
-            results.append({
-                "strategy": strategy.name,
-                "error": str(e),
-            })
-    
+            results.append(
+                {
+                    "strategy": strategy.name,
+                    "error": str(e),
+                }
+            )
+
     return results
 
 
@@ -253,75 +257,75 @@ def compare_strategies(document: str) -> List[Dict[str, Any]]:
 # Main Profiling Workflow
 # ---------------------------------------------------------------------------
 
-def run_full_profile(
-    token_count: int = 10000,
-    verbose: bool = False
-) -> Dict[str, Any]:
+
+def run_full_profile(token_count: int = 10000, verbose: bool = False) -> Dict[str, Any]:
     """Run complete profiling suite.
-    
+
     Args:
         token_count: Target document size in tokens.
         verbose: Print detailed output to stdout.
-    
+
     Returns:
         Dict with all profiling results.
     """
     if verbose:
         print(f"Generating {token_count}-token document...")
-    
+
     document = generate_large_document(token_count)
     actual_tokens = len(document.split())
-    
+
     if verbose:
         print(f"Document generated: {actual_tokens} tokens")
-        print("\n" + "="*70)
+        print("\n" + "=" * 70)
         print("Phase 1: Timing Profile")
-        print("="*70)
-    
+        print("=" * 70)
+
     timing_results = profile_extraction_timing(document)
-    
+
     if verbose:
         print(f"Total time: {timing_results['total_time']:.3f}s")
         print(f"Throughput: {timing_results['tokens_per_second']:.0f} tokens/second")
         print(f"Entities extracted: {timing_results['entity_count']}")
         print(f"Entity rate: {timing_results['entities_per_second']:.1f} entities/second")
-    
+
     if verbose:
-        print("\n" + "="*70)
+        print("\n" + "=" * 70)
         print("Phase 2: Memory Profile")
-        print("="*70)
-    
+        print("=" * 70)
+
     memory_results = profile_extraction_memory(document)
-    
+
     if verbose:
         print(f"Peak memory: {memory_results['peak_memory_mb']:.2f} MiB")
         print(f"Memory per token: {memory_results['memory_per_token_bytes']:.1f} bytes")
-    
+
     if verbose:
-        print("\n" + "="*70)
+        print("\n" + "=" * 70)
         print("Phase 3: Hot Path Analysis")
-        print("="*70)
-    
+        print("=" * 70)
+
     hotspot_stats = profile_extraction_hotspots(document)
-    
+
     if verbose:
         print(hotspot_stats)
-    
+
     if verbose:
-        print("\n" + "="*70)
+        print("\n" + "=" * 70)
         print("Phase 4: Strategy Comparison")
-        print("="*70)
-    
+        print("=" * 70)
+
     strategy_comparison = compare_strategies(document)
-    
+
     if verbose:
         for result in strategy_comparison:
             if "error" in result:
                 print(f"{result.get('strategy', 'unknown')}: ERROR - {result['error']}")
             else:
-                print(f"{result['strategy']}: {result['total_time']:.3f}s, "
-                      f"{result['tokens_per_second']:.0f} tokens/s")
-    
+                print(
+                    f"{result['strategy']}: {result['total_time']:.3f}s, "
+                    f"{result['tokens_per_second']:.0f} tokens/s"
+                )
+
     # Compile full results
     return {
         "document_stats": {
@@ -336,13 +340,10 @@ def run_full_profile(
     }
 
 
-def generate_recommendations(
-    timing: Dict[str, Any],
-    memory: Dict[str, Any]
-) -> List[str]:
+def generate_recommendations(timing: Dict[str, Any], memory: Dict[str, Any]) -> List[str]:
     """Generate optimization recommendations based on profiling results."""
     recommendations = []
-    
+
     # Throughput analysis
     tokens_per_sec = timing.get("tokens_per_second", 0)
     if tokens_per_sec < 1000:
@@ -350,7 +351,7 @@ def generate_recommendations(
             f"Low throughput ({tokens_per_sec:.0f} tokens/s). Consider: "
             "(1) Regex optimization, (2) Batch processing, (3) Parallel extraction."
         )
-    
+
     # Memory analysis
     peak_mb = memory.get("peak_memory_mb", 0)
     if peak_mb > 100:
@@ -358,14 +359,14 @@ def generate_recommendations(
             f"High memory usage ({peak_mb:.1f} MiB). Consider: "
             "(1) Streaming extraction, (2) Incremental processing, (3) Memory pooling."
         )
-    
+
     memory_per_token = memory.get("memory_per_token_bytes", 0)
     if memory_per_token > 1000:
         recommendations.append(
             f"High memory per token ({memory_per_token:.0f} bytes). "
             "Review data structures for unnecessary copying or large intermediate objects."
         )
-    
+
     # Entity extraction rate
     entities_per_sec = timing.get("entities_per_second", 0)
     if entities_per_sec < 10:
@@ -373,12 +374,12 @@ def generate_recommendations(
             f"Low entity extraction rate ({entities_per_sec:.1f}/s). "
             "Check for expensive post-processing or validation overhead."
         )
-    
+
     if not recommendations:
         recommendations.append(
             "Performance is within acceptable bounds. No immediate optimizations required."
         )
-    
+
     return recommendations
 
 
@@ -386,55 +387,45 @@ def generate_recommendations(
 # CLI Interface
 # ---------------------------------------------------------------------------
 
+
 def main():
     parser = argparse.ArgumentParser(
         description="Profile GraphRAG entity extraction on large documents (10k+ tokens)"
     )
     parser.add_argument(
-        "--tokens",
-        type=int,
-        default=10000,
-        help="Target document size in tokens (default: 10000)"
+        "--tokens", type=int, default=10000, help="Target document size in tokens (default: 10000)"
     )
-    parser.add_argument(
-        "--output",
-        type=str,
-        help="Save results to JSON file"
-    )
-    parser.add_argument(
-        "--verbose",
-        action="store_true",
-        help="Print detailed profiling output"
-    )
-    
+    parser.add_argument("--output", type=str, help="Save results to JSON file")
+    parser.add_argument("--verbose", action="store_true", help="Print detailed profiling output")
+
     args = parser.parse_args()
-    
+
     if not EXTRACTION_AVAILABLE:
         print("ERROR: GraphRAG entity extraction not available", file=sys.stderr)
         print("Install required dependencies or check module path", file=sys.stderr)
         sys.exit(1)
-    
+
     # Run profiling
     results = run_full_profile(token_count=args.tokens, verbose=args.verbose)
-    
+
     # Save to file if requested
     if args.output:
         output_path = Path(args.output)
         with output_path.open("w") as f:
             json.dump(results, f, indent=2)
         print(f"\nResults saved to: {output_path}")
-    
+
     # Summary output (always shown)
     if not args.verbose:
         print("\n10k-Token Extraction Profile Summary")
-        print("="*70)
+        print("=" * 70)
         print(f"Document: {results['document_stats']['actual_tokens']} tokens")
         print(f"Time: {results['timing']['total_time']:.3f}s")
         print(f"Throughput: {results['timing']['tokens_per_second']:.0f} tokens/s")
         print(f"Peak Memory: {results['memory']['peak_memory_mb']:.2f} MiB")
         print(f"Entities: {results['timing']['entity_count']}")
         print("\nRecommendations:")
-        for i, rec in enumerate(results['recommendations'], 1):
+        for i, rec in enumerate(results["recommendations"], 1):
             print(f"  {i}. {rec}")
 
 

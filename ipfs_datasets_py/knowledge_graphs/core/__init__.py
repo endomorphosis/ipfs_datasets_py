@@ -26,12 +26,12 @@ Features:
 
 Usage:
     from ipfs_datasets_py.knowledge_graphs.core import GraphEngine, QueryExecutor
-    
+
     # Create graph engine
     from ipfs_datasets_py.knowledge_graphs.storage import IPLDBackend
     storage = IPLDBackend()
     engine = GraphEngine(storage_backend=storage)
-    
+
     # Create query executor
     executor = QueryExecutor(graph_engine=engine)
     result = executor.execute("MATCH (n) RETURN n")

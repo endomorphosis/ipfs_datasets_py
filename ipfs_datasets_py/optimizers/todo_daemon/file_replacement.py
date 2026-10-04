@@ -73,13 +73,17 @@ def parse_file_replacement_response(
             patch=str(parsed.get("patch", "")),
             files=normalize_file_edits(parsed.get("files", [])),
             tasks=normalize_task_references(parsed.get("tasks", [])),
-            validation_commands=normalize_validation_commands(parsed.get("validation_commands", [])),
+            validation_commands=normalize_validation_commands(
+                parsed.get("validation_commands", [])
+            ),
             raw_response=text,
         )
 
     diff_match = DIFF_BLOCK_RE.search(text)
     if diff_match:
-        return FileReplacementResponse(summary=fenced_diff_summary, patch=diff_match.group(1), raw_response=text)
+        return FileReplacementResponse(
+            summary=fenced_diff_summary, patch=diff_match.group(1), raw_response=text
+        )
 
     if looks_like_empty_codex_event_stream(text):
         return FileReplacementResponse(
@@ -112,7 +116,10 @@ def build_file_replacement_validation_repair_prompt(
     )
     files = "\n".join(f"- {path}" for path in proposal.changed_files) or "- none"
     rules = tuple(str(rule).strip() for rule in repair_rules if str(rule).strip())
-    rules_text = "\n".join(f"- {rule}" for rule in rules) or "- Keep the repair focused on the failed validation."
+    rules_text = (
+        "\n".join(f"- {rule}" for rule in rules)
+        or "- Keep the repair focused on the failed validation."
+    )
     return f"""
 You are repairing a {subject} inside an isolated temporary validation worktree.
 
@@ -154,7 +161,9 @@ def materialize_proposal_files_in_worktree(
     return materialize_proposal_files(proposal, worktree)
 
 
-def proposal_files_from_validation_worktree(worktree: Path, changed: Iterable[str]) -> list[dict[str, str]]:
+def proposal_files_from_validation_worktree(
+    worktree: Path, changed: Iterable[str]
+) -> list[dict[str, str]]:
     """Read complete-file proposal payloads back from a validation worktree."""
 
     return engine_proposal_files_from_worktree(worktree, changed)
@@ -169,7 +178,9 @@ def config_proposal_diff_from_worktree(
 ) -> str:
     """Return a proposal diff using the daemon config's repository root."""
 
-    return proposal_diff_from_worktree(config_repo_root(config, repo_root_field=repo_root_field), worktree, changed)
+    return proposal_diff_from_worktree(
+        config_repo_root(config, repo_root_field=repo_root_field), worktree, changed
+    )
 
 
 def config_promote_worktree_files(
@@ -181,7 +192,9 @@ def config_promote_worktree_files(
 ) -> None:
     """Promote accepted worktree files into the daemon config's repository root."""
 
-    promote_worktree_files(config_repo_root(config, repo_root_field=repo_root_field), worktree, changed)
+    promote_worktree_files(
+        config_repo_root(config, repo_root_field=repo_root_field), worktree, changed
+    )
 
 
 def config_verify_promoted_worktree_files(
@@ -193,7 +206,9 @@ def config_verify_promoted_worktree_files(
 ) -> list[str]:
     """Verify promoted files against the daemon config's repository root."""
 
-    return verify_promoted_worktree_files(config_repo_root(config, repo_root_field=repo_root_field), worktree, changed)
+    return verify_promoted_worktree_files(
+        config_repo_root(config, repo_root_field=repo_root_field), worktree, changed
+    )
 
 
 def config_artifact_directory(
@@ -292,9 +307,15 @@ def attempt_file_replacement_validation_repair(
     syntax_preflight: Callable[[Path, list[str], Any], tuple[list[CommandResult], list[str], str]],
     run_validation: Callable[[Any, tuple[tuple[str, ...], ...]], list[CommandResult]],
     validation_commands_for_proposal: Callable[[Proposal, Any], tuple[tuple[str, ...], ...]],
-    materialize_proposal_in_worktree: Callable[[Proposal, Any, Path], list[str]] = materialize_proposal_files_in_worktree,
-    proposal_diff_from_worktree: Callable[[Any, Path, Iterable[str]], str] = config_proposal_diff_from_worktree,
-    proposal_files_from_worktree: Callable[[Path, Iterable[str]], list[dict[str, str]]] = proposal_files_from_validation_worktree,
+    materialize_proposal_in_worktree: Callable[
+        [Proposal, Any, Path], list[str]
+    ] = materialize_proposal_files_in_worktree,
+    proposal_diff_from_worktree: Callable[
+        [Any, Path, Iterable[str]], str
+    ] = config_proposal_diff_from_worktree,
+    proposal_files_from_worktree: Callable[
+        [Path, Iterable[str]], list[dict[str, str]]
+    ] = proposal_files_from_validation_worktree,
     worktree_config: Callable[[Any, Path], Any] = dataclass_worktree_config,
 ) -> tuple[bool, list[str], str]:
     """Attempt one validation-repair pass for a complete-file replacement proposal."""
@@ -305,24 +326,37 @@ def attempt_file_replacement_validation_repair(
         raw = call_repair_model(build_prompt(proposal, config), config)
         repair = parse_repair(raw)
     except BaseException as exc:
-        proposal.errors.append(f"Validation repair pass failed before producing JSON: {compact_message(exc)}")
+        proposal.errors.append(
+            f"Validation repair pass failed before producing JSON: {compact_message(exc)}"
+        )
         return False, proposal.changed_files, ""
     repair.target_task = proposal.target_task
     repair_errors: list[str] = []
     for item in repair.files:
         repair_errors.extend(validate_write_path(item["path"]))
     if repair_errors:
-        proposal.errors.extend(f"Validation repair pass rejected write path: {error}" for error in repair_errors)
+        proposal.errors.extend(
+            f"Validation repair pass rejected write path: {error}" for error in repair_errors
+        )
         return False, proposal.changed_files, ""
     if not repair.files:
         proposal.errors.append("Validation repair pass produced no file replacements.")
         return False, proposal.changed_files, ""
 
-    changed = list(dict.fromkeys(proposal.changed_files + materialize_proposal_in_worktree(repair, config, worktree)))
-    repair_results, repair_preflight_errors, repair_failure_kind = syntax_preflight(worktree, changed, config)
+    changed = list(
+        dict.fromkeys(
+            proposal.changed_files + materialize_proposal_in_worktree(repair, config, worktree)
+        )
+    )
+    repair_results, repair_preflight_errors, repair_failure_kind = syntax_preflight(
+        worktree, changed, config
+    )
     proposal.validation_results = repair_results
     if repair_preflight_errors:
-        proposal.errors.extend("Validation repair pass syntax preflight failed: " + error for error in repair_preflight_errors)
+        proposal.errors.extend(
+            "Validation repair pass syntax preflight failed: " + error
+            for error in repair_preflight_errors
+        )
         proposal.failure_kind = repair_failure_kind or "syntax_preflight"
         return False, changed, proposal_diff_from_worktree(config, worktree, changed)
 
@@ -331,7 +365,9 @@ def attempt_file_replacement_validation_repair(
         validation_commands_for_proposal(proposal, config),
     )
     if not all(result.ok for result in proposal.validation_results):
-        proposal.errors.append("Validation repair pass failed; candidate worktree was not promoted.")
+        proposal.errors.append(
+            "Validation repair pass failed; candidate worktree was not promoted."
+        )
         proposal.failure_kind = "validation"
         return False, changed, proposal_diff_from_worktree(config, worktree, changed)
 
@@ -357,13 +393,27 @@ class FileReplacementHooks:
         [Proposal, Any, Path],
         tuple[bool, list[str], str],
     ] = no_file_replacement_validation_repair
-    persist_failed_work: Callable[[Proposal, Any, str, str, str], None] = config_persist_failed_file_replacement_work
-    persist_accepted_work: Callable[[Proposal, Any, str, str], None] = config_persist_accepted_file_replacement_work
-    materialize_proposal_in_worktree: Callable[[Proposal, Any, Path], list[str]] = materialize_proposal_files_in_worktree
-    proposal_diff_from_worktree: Callable[[Any, Path, Iterable[str]], str] = config_proposal_diff_from_worktree
-    proposal_files_from_worktree: Callable[[Path, Iterable[str]], list[dict[str, str]]] = proposal_files_from_validation_worktree
-    promote_worktree_files: Callable[[Any, Path, Iterable[str]], None] = config_promote_worktree_files
-    verify_promoted_worktree_files: Callable[[Any, Path, Iterable[str]], list[str]] = config_verify_promoted_worktree_files
+    persist_failed_work: Callable[[Proposal, Any, str, str, str], None] = (
+        config_persist_failed_file_replacement_work
+    )
+    persist_accepted_work: Callable[[Proposal, Any, str, str], None] = (
+        config_persist_accepted_file_replacement_work
+    )
+    materialize_proposal_in_worktree: Callable[[Proposal, Any, Path], list[str]] = (
+        materialize_proposal_files_in_worktree
+    )
+    proposal_diff_from_worktree: Callable[[Any, Path, Iterable[str]], str] = (
+        config_proposal_diff_from_worktree
+    )
+    proposal_files_from_worktree: Callable[[Path, Iterable[str]], list[dict[str, str]]] = (
+        proposal_files_from_validation_worktree
+    )
+    promote_worktree_files: Callable[[Any, Path, Iterable[str]], None] = (
+        config_promote_worktree_files
+    )
+    verify_promoted_worktree_files: Callable[[Any, Path, Iterable[str]], list[str]] = (
+        config_verify_promoted_worktree_files
+    )
     worktree_config: Callable[[Any, Path], Any] = dataclass_worktree_config
     no_visible_source_change_message: str = (
         "Accepted work must promote at least one visible source or fixture file; "
@@ -393,11 +443,21 @@ def build_config_file_replacement_hooks(
         "Accepted work must promote at least one visible source or fixture file; "
         "runtime-only progress records are not sufficient."
     ),
-    materialize_proposal_in_worktree: Callable[[Proposal, Any, Path], list[str]] = materialize_proposal_files_in_worktree,
-    proposal_diff_from_worktree: Callable[[Any, Path, Iterable[str]], str] = config_proposal_diff_from_worktree,
-    proposal_files_from_worktree: Callable[[Path, Iterable[str]], list[dict[str, str]]] = proposal_files_from_validation_worktree,
-    promote_worktree_files: Callable[[Any, Path, Iterable[str]], None] = config_promote_worktree_files,
-    verify_promoted_worktree_files: Callable[[Any, Path, Iterable[str]], list[str]] = config_verify_promoted_worktree_files,
+    materialize_proposal_in_worktree: Callable[
+        [Proposal, Any, Path], list[str]
+    ] = materialize_proposal_files_in_worktree,
+    proposal_diff_from_worktree: Callable[
+        [Any, Path, Iterable[str]], str
+    ] = config_proposal_diff_from_worktree,
+    proposal_files_from_worktree: Callable[
+        [Path, Iterable[str]], list[dict[str, str]]
+    ] = proposal_files_from_validation_worktree,
+    promote_worktree_files: Callable[
+        [Any, Path, Iterable[str]], None
+    ] = config_promote_worktree_files,
+    verify_promoted_worktree_files: Callable[
+        [Any, Path, Iterable[str]], list[str]
+    ] = config_verify_promoted_worktree_files,
     worktree_config: Callable[[Any, Path], Any] = dataclass_worktree_config,
 ) -> FileReplacementHooks:
     """Build file-replacement hooks with reusable config-backed artifact persistence."""
@@ -461,14 +521,14 @@ class ProposalPreflightPolicy:
     """Configurable preflight guardrails for proposal patch/file payloads."""
 
     forbidden_snippets: tuple[str, ...] = ()
-    forbidden_snippet_message: str = "Rejected proposal because it contains forbidden snippet {snippet}."
+    forbidden_snippet_message: str = (
+        "Rejected proposal because it contains forbidden snippet {snippet}."
+    )
     prefer_file_edits: bool = False
     file_edit_required_prefixes: tuple[str, ...] = ()
     file_edit_excluded_prefixes: tuple[str, ...] = ()
     file_edit_patch_exempt_transports: frozenset[str] = frozenset({"worktree"})
-    file_edit_required_message: str = (
-        "Rejected proposal because matching path changes must use JSON `files` complete replacements."
-    )
+    file_edit_required_message: str = "Rejected proposal because matching path changes must use JSON `files` complete replacements."
     implementation_required_prefixes: tuple[str, ...] = ()
     implementation_excluded_prefixes: tuple[str, ...] = ()
     non_implementation_task_keywords: tuple[str, ...] = ()
@@ -546,7 +606,13 @@ def preflight_proposal_payload(
         proposal_transport in policy.file_edit_patch_exempt_transports
         or default_transport in policy.file_edit_patch_exempt_transports
     )
-    if policy.prefer_file_edits and patch.strip() and not file_list and has_file_required_change and not patch_exempt:
+    if (
+        policy.prefer_file_edits
+        and patch.strip()
+        and not file_list
+        and has_file_required_change
+        and not patch_exempt
+    ):
         errors.append(policy.file_edit_required_message)
 
     if selected_task is not None and path_list:
@@ -559,7 +625,11 @@ def preflight_proposal_payload(
             selected_task,
             policy.non_implementation_task_keywords,
         )
-        if policy.implementation_required_prefixes and not allows_non_implementation and not implementation_change:
+        if (
+            policy.implementation_required_prefixes
+            and not allows_non_implementation
+            and not implementation_change
+        ):
             errors.append(policy.implementation_required_message)
 
         fixture_task = task_title_contains_any(selected_task, policy.fixture_task_keywords)
@@ -648,12 +718,16 @@ def apply_file_replacement_proposal(
             proposal_validation_commands,
         )
         if not all(result.ok for result in proposal.validation_results):
-            repaired, changed, repair_diff = hooks.attempt_validation_repair(proposal, config, worktree)
+            repaired, changed, repair_diff = hooks.attempt_validation_repair(
+                proposal, config, worktree
+            )
             diff_text = repair_diff or hooks.proposal_diff_from_worktree(config, worktree, changed)
             proposal.changed_files = changed
             if not repaired:
                 if not proposal.failure_kind:
-                    proposal.errors.append("Validation failed in temporary worktree; candidate was not promoted.")
+                    proposal.errors.append(
+                        "Validation failed in temporary worktree; candidate was not promoted."
+                    )
                     proposal.failure_kind = "validation"
                 hooks.persist_failed_work(
                     proposal,
@@ -665,13 +739,17 @@ def apply_file_replacement_proposal(
                 return proposal
 
         hooks.promote_worktree_files(config, worktree, proposal.changed_files)
-        promotion_errors = hooks.verify_promoted_worktree_files(config, worktree, proposal.changed_files)
+        promotion_errors = hooks.verify_promoted_worktree_files(
+            config, worktree, proposal.changed_files
+        )
         proposal.promotion_errors = promotion_errors
         proposal.promotion_verified = not promotion_errors
         if promotion_errors:
             proposal.errors.extend(promotion_errors)
             proposal.failure_kind = "promotion"
-            hooks.persist_failed_work(proposal, config, diff_text, "promotion", "ephemeral_worktree")
+            hooks.persist_failed_work(
+                proposal, config, diff_text, "promotion", "ephemeral_worktree"
+            )
             return proposal
         proposal.applied = True
         hooks.persist_accepted_work(proposal, config, diff_text, "ephemeral_worktree")

@@ -5,7 +5,9 @@ from pathlib import Path
 
 def test_netherlands_jurisdiction_is_registered_and_keeps_cli_commands():
     from ipfs_datasets_py.processors.legal_scrapers.legal_corpus import get_jurisdiction
-    from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws import get_jurisdiction as get_nl
+    from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws import (
+        get_jurisdiction as get_nl,
+    )
 
     jurisdiction = get_jurisdiction("netherlands")
 

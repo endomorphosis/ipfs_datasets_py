@@ -47,8 +47,10 @@ from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator 
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 class _FakeEntry:
     """Minimal history entry with average_score."""
+
     def __init__(self, s: float) -> None:
         self.average_score = s
 
@@ -111,8 +113,8 @@ def _cs(**kwargs):
 # OntologyOptimizer.score_trimmed_mean
 # ---------------------------------------------------------------------------
 
-class TestScoreTrimmedMean:
 
+class TestScoreTrimmedMean:
     def test_empty_returns_zero(self):
         opt = _make_opt([])
         assert opt.score_trimmed_mean() == 0.0
@@ -176,14 +178,24 @@ class TestScoreTrimmedMean:
 # OntologyCritic.score_dimension_kurtosis
 # ---------------------------------------------------------------------------
 
-class TestScoreDimensionKurtosis:
 
+class TestScoreDimensionKurtosis:
     def test_uniform_returns_zero(self):
         # All 6 dimensions equal → zero variance → 0.0
         critic = _make_critic()
-        s = _cs(**{d: 1.0 for d in ("completeness", "consistency",
-                                      "clarity", "granularity",
-                                      "relationship_coherence", "domain_alignment")})
+        s = _cs(
+            **{
+                d: 1.0
+                for d in (
+                    "completeness",
+                    "consistency",
+                    "clarity",
+                    "granularity",
+                    "relationship_coherence",
+                    "domain_alignment",
+                )
+            }
+        )
         assert critic.score_dimension_kurtosis(s) == pytest.approx(0.0)
 
     def test_all_zeros_returns_zero(self):
@@ -204,8 +216,14 @@ class TestScoreDimensionKurtosis:
     def test_symmetric_scores(self):
         # Symmetric distribution: two extreme + one middle
         critic = _make_critic()
-        s = _cs(completeness=0.0, consistency=0.0, clarity=0.5,
-                granularity=0.5, relationship_coherence=1.0, domain_alignment=1.0)
+        s = _cs(
+            completeness=0.0,
+            consistency=0.0,
+            clarity=0.5,
+            granularity=0.5,
+            relationship_coherence=1.0,
+            domain_alignment=1.0,
+        )
         k = critic.score_dimension_kurtosis(s)
         # Expect < 0 (platykurtic — bimodal / flat)
         assert k < 0.0
@@ -229,8 +247,14 @@ class TestScoreDimensionKurtosis:
     def test_two_equal_halves_platykurtic(self):
         # Half 0.0, half 1.0 → bimodal / platykurtic
         critic = _make_critic()
-        s = _cs(completeness=0.0, consistency=0.0, clarity=0.0,
-                granularity=1.0, relationship_coherence=1.0, domain_alignment=1.0)
+        s = _cs(
+            completeness=0.0,
+            consistency=0.0,
+            clarity=0.0,
+            granularity=1.0,
+            relationship_coherence=1.0,
+            domain_alignment=1.0,
+        )
         k = critic.score_dimension_kurtosis(s)
         assert k < 0.0
 
@@ -239,8 +263,8 @@ class TestScoreDimensionKurtosis:
 # OntologyGenerator.entity_avg_degree
 # ---------------------------------------------------------------------------
 
-class TestEntityAvgDegree:
 
+class TestEntityAvgDegree:
     def _gen(self):
         return object.__new__(OntologyGenerator)
 
@@ -284,7 +308,9 @@ class TestEntityAvgDegree:
         r1 = self._r("r1", "hub", "e2")
         r2 = self._r("r2", "hub", "e3")
         r3 = self._r("r3", "hub", "e4")
-        result = EntityExtractionResult(entities=[e1, e2, e3, e4], relationships=[r1, r2, r3], confidence=0.9)
+        result = EntityExtractionResult(
+            entities=[e1, e2, e3, e4], relationships=[r1, r2, r3], confidence=0.9
+        )
         # hub: degree 3, e2/e3/e4: degree 1 each → total 6 / 4 = 1.5
         assert gen.entity_avg_degree(result) == pytest.approx(1.5)
 
@@ -322,8 +348,8 @@ class TestEntityAvgDegree:
 # OntologyPipeline.run_score_negative_rate
 # ---------------------------------------------------------------------------
 
-class TestRunScoreNegativeRate:
 
+class TestRunScoreNegativeRate:
     def test_empty_returns_zero(self):
         p = _make_pipeline([])
         assert p.run_score_negative_rate() == 0.0
@@ -381,6 +407,7 @@ class TestRunScoreNegativeRate:
 # ---------------------------------------------------------------------------
 # Stale smoke tests — already-implemented methods
 # ---------------------------------------------------------------------------
+
 
 class TestStaleFeedbackNegativeRate:
     """Smoke test: feedback_negative_rate was implemented before Batch 222."""

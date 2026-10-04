@@ -6,17 +6,16 @@ Following GIVEN-WHEN-THEN format for clear test structure.
 
 import pytest
 from ipfs_datasets_py.logic.CEC.native.dcec_english_grammar import (
-    DCECEnglishGrammar, create_dcec_grammar
+    DCECEnglishGrammar,
+    create_dcec_grammar,
 )
 from ipfs_datasets_py.logic.CEC.native.grammar_engine import Category
-from ipfs_datasets_py.logic.CEC.native.dcec_core import (
-    Formula, LogicalConnective
-)
+from ipfs_datasets_py.logic.CEC.native.dcec_core import Formula, LogicalConnective
 
 
 class TestDCECEnglishGrammar:
     """Test suite for DCECEnglishGrammar class."""
-    
+
     def test_grammar_initialization(self):
         """
         GIVEN: DCEC English grammar parameters
@@ -25,13 +24,13 @@ class TestDCECEnglishGrammar:
         """
         # GIVEN / WHEN
         grammar = DCECEnglishGrammar()
-        
+
         # THEN
         assert grammar is not None
         assert grammar.engine is not None
         assert len(grammar.engine.lexicon) > 0
         assert len(grammar.engine.rules) > 0
-    
+
     def test_factory_function(self):
         """
         GIVEN: Factory function for grammar creation
@@ -40,7 +39,7 @@ class TestDCECEnglishGrammar:
         """
         # GIVEN / WHEN
         grammar = create_dcec_grammar()
-        
+
         # THEN
         assert isinstance(grammar, DCECEnglishGrammar)
         assert grammar.engine is not None
@@ -48,7 +47,7 @@ class TestDCECEnglishGrammar:
 
 class TestLexicon:
     """Test suite for DCEC lexicon."""
-    
+
     def test_logical_connectives_in_lexicon(self):
         """
         GIVEN: Initialized DCEC grammar
@@ -57,13 +56,13 @@ class TestLexicon:
         """
         # GIVEN
         grammar = DCECEnglishGrammar()
-        
+
         # WHEN / THEN
         assert "and" in grammar.engine.lexicon
         assert "or" in grammar.engine.lexicon
         assert "not" in grammar.engine.lexicon
         assert "if" in grammar.engine.lexicon
-    
+
     def test_deontic_modals_in_lexicon(self):
         """
         GIVEN: Initialized DCEC grammar
@@ -72,14 +71,14 @@ class TestLexicon:
         """
         # GIVEN
         grammar = DCECEnglishGrammar()
-        
+
         # WHEN / THEN
         assert "must" in grammar.engine.lexicon
         assert "may" in grammar.engine.lexicon
         assert "forbidden" in grammar.engine.lexicon
         assert "obligated" in grammar.engine.lexicon
         assert "prohibited" in grammar.engine.lexicon
-    
+
     def test_cognitive_modals_in_lexicon(self):
         """
         GIVEN: Initialized DCEC grammar
@@ -88,13 +87,13 @@ class TestLexicon:
         """
         # GIVEN
         grammar = DCECEnglishGrammar()
-        
+
         # WHEN / THEN
         assert "believes" in grammar.engine.lexicon
         assert "knows" in grammar.engine.lexicon
         assert "intends" in grammar.engine.lexicon
         assert "desires" in grammar.engine.lexicon
-    
+
     def test_temporal_operators_in_lexicon(self):
         """
         GIVEN: Initialized DCEC grammar
@@ -103,13 +102,13 @@ class TestLexicon:
         """
         # GIVEN
         grammar = DCECEnglishGrammar()
-        
+
         # WHEN / THEN
         assert "always" in grammar.engine.lexicon
         assert "eventually" in grammar.engine.lexicon
         assert "next" in grammar.engine.lexicon
         assert "until" in grammar.engine.lexicon
-    
+
     def test_quantifiers_in_lexicon(self):
         """
         GIVEN: Initialized DCEC grammar
@@ -118,13 +117,13 @@ class TestLexicon:
         """
         # GIVEN
         grammar = DCECEnglishGrammar()
-        
+
         # WHEN / THEN
         assert "all" in grammar.engine.lexicon
         assert "every" in grammar.engine.lexicon
         assert "some" in grammar.engine.lexicon
         assert "any" in grammar.engine.lexicon
-    
+
     def test_common_agents_in_lexicon(self):
         """
         GIVEN: Initialized DCEC grammar
@@ -133,18 +132,18 @@ class TestLexicon:
         """
         # GIVEN
         grammar = DCECEnglishGrammar()
-        
+
         # WHEN / THEN
         assert "jack" in grammar.engine.lexicon
         assert "robot" in grammar.engine.lexicon
         assert "alice" in grammar.engine.lexicon
         assert "bob" in grammar.engine.lexicon
         assert "system" in grammar.engine.lexicon
-        
+
         # Check category
         jack_entries = grammar.engine.lexicon["jack"]
         assert any(e.category == Category.AGENT for e in jack_entries)
-    
+
     def test_common_actions_in_lexicon(self):
         """
         GIVEN: Initialized DCEC grammar
@@ -153,13 +152,13 @@ class TestLexicon:
         """
         # GIVEN
         grammar = DCECEnglishGrammar()
-        
+
         # WHEN / THEN
         for action in ["laugh", "sleep", "run", "eat", "walk", "talk", "work"]:
             assert action in grammar.engine.lexicon
             entries = grammar.engine.lexicon[action]
             assert any(e.category == Category.ACTION_TYPE for e in entries)
-    
+
     def test_common_fluents_in_lexicon(self):
         """
         GIVEN: Initialized DCEC grammar
@@ -168,7 +167,7 @@ class TestLexicon:
         """
         # GIVEN
         grammar = DCECEnglishGrammar()
-        
+
         # WHEN / THEN
         for fluent in ["happy", "sad", "hungry", "tired", "sick", "angry"]:
             assert fluent in grammar.engine.lexicon
@@ -178,7 +177,7 @@ class TestLexicon:
 
 class TestGrammarRules:
     """Test suite for DCEC grammar rules."""
-    
+
     def test_has_conjunction_rule(self):
         """
         GIVEN: Initialized DCEC grammar
@@ -187,14 +186,14 @@ class TestGrammarRules:
         """
         # GIVEN
         grammar = DCECEnglishGrammar()
-        
+
         # WHEN
         and_rules = [r for r in grammar.engine.rules if "and" in r.name.lower()]
-        
+
         # THEN
         assert len(and_rules) > 0
         assert any(r.category == Category.BOOLEAN for r in and_rules)
-    
+
     def test_has_disjunction_rule(self):
         """
         GIVEN: Initialized DCEC grammar
@@ -203,14 +202,14 @@ class TestGrammarRules:
         """
         # GIVEN
         grammar = DCECEnglishGrammar()
-        
+
         # WHEN
         or_rules = [r for r in grammar.engine.rules if "or" in r.name.lower()]
-        
+
         # THEN
         assert len(or_rules) > 0
         assert any(r.category == Category.BOOLEAN for r in or_rules)
-    
+
     def test_has_negation_rule(self):
         """
         GIVEN: Initialized DCEC grammar
@@ -219,14 +218,14 @@ class TestGrammarRules:
         """
         # GIVEN
         grammar = DCECEnglishGrammar()
-        
+
         # WHEN
         not_rules = [r for r in grammar.engine.rules if "not" in r.name.lower()]
-        
+
         # THEN
         assert len(not_rules) > 0
         assert any(r.category == Category.BOOLEAN for r in not_rules)
-    
+
     def test_has_deontic_rules(self):
         """
         GIVEN: Initialized DCEC grammar
@@ -235,14 +234,15 @@ class TestGrammarRules:
         """
         # GIVEN
         grammar = DCECEnglishGrammar()
-        
+
         # WHEN
-        deontic_rules = [r for r in grammar.engine.rules
-                        if "obligated" in r.name or "forbidden" in r.name]
-        
+        deontic_rules = [
+            r for r in grammar.engine.rules if "obligated" in r.name or "forbidden" in r.name
+        ]
+
         # THEN
         assert len(deontic_rules) > 0
-    
+
     def test_has_cognitive_rules(self):
         """
         GIVEN: Initialized DCEC grammar
@@ -251,14 +251,15 @@ class TestGrammarRules:
         """
         # GIVEN
         grammar = DCECEnglishGrammar()
-        
+
         # WHEN
-        cognitive_rules = [r for r in grammar.engine.rules
-                          if "believes" in r.name or "knows" in r.name]
-        
+        cognitive_rules = [
+            r for r in grammar.engine.rules if "believes" in r.name or "knows" in r.name
+        ]
+
         # THEN
         assert len(cognitive_rules) > 0
-    
+
     def test_has_temporal_rules(self):
         """
         GIVEN: Initialized DCEC grammar
@@ -267,18 +268,19 @@ class TestGrammarRules:
         """
         # GIVEN
         grammar = DCECEnglishGrammar()
-        
+
         # WHEN
-        temporal_rules = [r for r in grammar.engine.rules
-                         if "always" in r.name or "eventually" in r.name]
-        
+        temporal_rules = [
+            r for r in grammar.engine.rules if "always" in r.name or "eventually" in r.name
+        ]
+
         # THEN
         assert len(temporal_rules) > 0
 
 
 class TestLinearization:
     """Test suite for DCEC→English linearization."""
-    
+
     def test_linearize_conjunction(self):
         """
         GIVEN: A conjunction semantic value
@@ -291,17 +293,17 @@ class TestLinearization:
             "type": "connective",
             "operator": LogicalConnective.AND,
             "left": {"type": "atomic", "predicate": "P", "arguments": []},
-            "right": {"type": "atomic", "predicate": "Q", "arguments": []}
+            "right": {"type": "atomic", "predicate": "Q", "arguments": []},
         }
-        
+
         # WHEN
         text = grammar._linearize_boolean(semantic_value)
-        
+
         # THEN
         assert "and" in text.lower()
         assert "p" in text.lower()
         assert "q" in text.lower()
-    
+
     def test_linearize_negation(self):
         """
         GIVEN: A negation semantic value
@@ -313,16 +315,16 @@ class TestLinearization:
         semantic_value = {
             "type": "connective",
             "operator": LogicalConnective.NOT,
-            "formula": {"type": "atomic", "predicate": "P", "arguments": []}
+            "formula": {"type": "atomic", "predicate": "P", "arguments": []},
         }
-        
+
         # WHEN
         text = grammar._linearize_boolean(semantic_value)
-        
+
         # THEN
         assert "not" in text.lower()
         assert "p" in text.lower()
-    
+
     def test_linearize_deontic_obligated(self):
         """
         GIVEN: A deontic obligation semantic value
@@ -335,17 +337,17 @@ class TestLinearization:
             "type": "deontic",
             "operator": "obligated",
             "agent": {"name": "jack"},
-            "action": {"name": "run"}
+            "action": {"name": "run"},
         }
-        
+
         # WHEN
         text = grammar._linearize_boolean(semantic_value)
-        
+
         # THEN
         assert "jack" in text.lower()
         assert "must" in text.lower()
         assert "run" in text.lower()
-    
+
     def test_linearize_cognitive_believes(self):
         """
         GIVEN: A cognitive belief semantic value
@@ -358,16 +360,16 @@ class TestLinearization:
             "type": "cognitive",
             "operator": "believes",
             "agent": {"name": "alice"},
-            "proposition": {"type": "atomic", "predicate": "P", "arguments": []}
+            "proposition": {"type": "atomic", "predicate": "P", "arguments": []},
         }
-        
+
         # WHEN
         text = grammar._linearize_boolean(semantic_value)
-        
+
         # THEN
         assert "alice" in text.lower()
         assert "believes" in text.lower()
-    
+
     def test_linearize_temporal_always(self):
         """
         GIVEN: A temporal always semantic value
@@ -379,12 +381,12 @@ class TestLinearization:
         semantic_value = {
             "type": "temporal",
             "operator": "always",
-            "proposition": {"type": "atomic", "predicate": "P", "arguments": []}
+            "proposition": {"type": "atomic", "predicate": "P", "arguments": []},
         }
-        
+
         # WHEN
         text = grammar._linearize_boolean(semantic_value)
-        
+
         # THEN
         assert "always" in text.lower()
         assert "p" in text.lower()
@@ -392,7 +394,7 @@ class TestLinearization:
 
 class TestSemanticConversion:
     """Test suite for semantic↔formula conversion."""
-    
+
     def test_semantic_to_formula_atomic(self):
         """
         GIVEN: An atomic semantic value
@@ -401,19 +403,15 @@ class TestSemanticConversion:
         """
         # GIVEN
         grammar = DCECEnglishGrammar()
-        semantic_value = {
-            "type": "atomic",
-            "predicate": "happy",
-            "arguments": []
-        }
-        
+        semantic_value = {"type": "atomic", "predicate": "happy", "arguments": []}
+
         # WHEN
         formula = grammar._semantic_to_formula(semantic_value)
-        
+
         # THEN
         assert formula is not None
         # AtomicFormula check would go here
-    
+
     def test_formula_to_semantic_atomic(self):
         """
         GIVEN: An AtomicFormula
@@ -423,11 +421,12 @@ class TestSemanticConversion:
         # GIVEN
         grammar = DCECEnglishGrammar()
         from ipfs_datasets_py.logic.CEC.native.dcec_core import AtomicFormula
+
         formula = AtomicFormula("happy", [])
-        
+
         # WHEN
         semantic = grammar._formula_to_semantic(formula)
-        
+
         # THEN
         assert semantic["type"] == "atomic"
         assert semantic["predicate"] == "happy"
@@ -435,7 +434,7 @@ class TestSemanticConversion:
 
 class TestEndToEnd:
     """End-to-end integration tests."""
-    
+
     def test_parse_simple_agent_action(self):
         """
         GIVEN: English text "jack runs"
@@ -445,15 +444,15 @@ class TestEndToEnd:
         # GIVEN
         grammar = DCECEnglishGrammar()
         text = "jack runs"
-        
+
         # WHEN
         formula = grammar.parse_to_dcec(text)
-        
+
         # THEN
         # May or may not parse depending on tokenization and rules
         # This is a basic sanity check
         assert formula is None or isinstance(formula, Formula)
-    
+
     def test_round_trip_basic(self):
         """
         GIVEN: A simple DCEC formula
@@ -463,11 +462,12 @@ class TestEndToEnd:
         # GIVEN
         grammar = DCECEnglishGrammar()
         from ipfs_datasets_py.logic.CEC.native.dcec_core import AtomicFormula
+
         original_formula = AtomicFormula("happy", [])
-        
+
         # WHEN
         english = grammar.formula_to_english(original_formula)
-        
+
         # THEN
         assert english is not None
         assert isinstance(english, str)
@@ -476,7 +476,7 @@ class TestEndToEnd:
 
 class TestEdgeCases:
     """Test suite for edge cases and error handling."""
-    
+
     def test_parse_empty_string(self):
         """
         GIVEN: Empty string input
@@ -485,13 +485,13 @@ class TestEdgeCases:
         """
         # GIVEN
         grammar = DCECEnglishGrammar()
-        
+
         # WHEN
         formula = grammar.parse_to_dcec("")
-        
+
         # THEN
         assert formula is None
-    
+
     def test_parse_unknown_words(self):
         """
         GIVEN: Text with unknown words
@@ -501,13 +501,13 @@ class TestEdgeCases:
         # GIVEN
         grammar = DCECEnglishGrammar()
         text = "xyzabc qwerty"
-        
+
         # WHEN
         formula = grammar.parse_to_dcec(text)
-        
+
         # THEN
         assert formula is None  # Unknown words should fail to parse
-    
+
     def test_linearize_unknown_type(self):
         """
         GIVEN: Semantic value with unknown type
@@ -517,10 +517,10 @@ class TestEdgeCases:
         # GIVEN
         grammar = DCECEnglishGrammar()
         semantic_value = {"type": "unknown", "data": "test"}
-        
+
         # WHEN
         text = grammar._linearize_boolean(semantic_value)
-        
+
         # THEN
         assert text is not None
         assert isinstance(text, str)

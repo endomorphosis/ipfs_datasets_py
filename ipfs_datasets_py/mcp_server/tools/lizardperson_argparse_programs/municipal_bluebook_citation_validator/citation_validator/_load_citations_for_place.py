@@ -2,7 +2,9 @@ from pathlib import Path
 from typing import Any
 
 
-from ipfs_datasets_py.mcp_server.tools.lizardperson_argparse_programs.municipal_bluebook_citation_validator.dependencies import dependencies
+from ipfs_datasets_py.mcp_server.tools.lizardperson_argparse_programs.municipal_bluebook_citation_validator.dependencies import (
+    dependencies,
+)
 
 
 def load_citations_for_place(gnis: str, citation_dir: Path) -> list[dict[str, Any]]:
@@ -16,4 +18,4 @@ def load_citations_for_place(gnis: str, citation_dir: Path) -> list[dict[str, An
         DatabaseConnection: Database of citations for the specified place.
     """
     path = citation_dir / f"{gnis}_citations.parquet"
-    return dependencies.duckdb.from_parquet(path).fetchdf().to_dict('records')
+    return dependencies.duckdb.from_parquet(path).fetchdf().to_dict("records")

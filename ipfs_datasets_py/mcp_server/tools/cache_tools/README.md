@@ -26,7 +26,7 @@ await set_cache_entry(
     key="dataset_hash_abc",
     value={"rows": 1000, "schema": [...]},
     namespace="metadata",
-    ttl_seconds=3600
+    ttl_seconds=3600,
 )
 
 # Retrieve it

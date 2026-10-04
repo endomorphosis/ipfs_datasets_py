@@ -43,6 +43,7 @@ COLD_TIER_DIR = os.environ.get("MCPPP_STORAGE_DIR", ".mcppp_dag_cold")
 @dataclass
 class MerkleNode:
     """A node in the Merkle tree used for epoch summarization."""
+
     hash: str
     left: Optional["MerkleNode"] = None
     right: Optional["MerkleNode"] = None
@@ -63,6 +64,7 @@ class CompactionProof:
     - timestamp_range: (start, end) timestamps of epoch
     - cold_storage_path: File path where full epoch data is stored
     """
+
     merkle_root: str
     epoch_id: int
     event_count: int
@@ -81,13 +83,17 @@ class CompactionProof:
     @property
     def cid(self) -> str:
         """Content-addressed ID for this compaction proof."""
-        payload = json.dumps({
-            "merkle_root": self.merkle_root,
-            "epoch_id": self.epoch_id,
-            "event_count": self.event_count,
-            "frontier_cids": self.frontier_cids,
-            "root_cids": self.root_cids,
-        }, sort_keys=True, separators=(",", ":"))
+        payload = json.dumps(
+            {
+                "merkle_root": self.merkle_root,
+                "epoch_id": self.epoch_id,
+                "event_count": self.event_count,
+                "frontier_cids": self.frontier_cids,
+                "root_cids": self.root_cids,
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        )
         return hashlib.sha256(payload.encode()).hexdigest()
 
     def to_dict(self) -> Dict[str, Any]:
@@ -113,6 +119,7 @@ class CompactionProof:
 # ---------------------------------------------------------------------------
 # Merkle Tree Construction
 # ---------------------------------------------------------------------------
+
 
 def _hash_leaf(data: str) -> str:
     """Hash a leaf node (event CID + payload digest)."""
@@ -150,7 +157,9 @@ def build_merkle_tree(event_cids: List[str]) -> Tuple[str, List[List[str]]]:
     return current_layer[0], layers
 
 
-def merkle_proof_for_cid(event_cid: str, event_cids: List[str], layers: List[List[str]]) -> List[Dict[str, str]]:
+def merkle_proof_for_cid(
+    event_cid: str, event_cids: List[str], layers: List[List[str]]
+) -> List[Dict[str, str]]:
     """Generate a Merkle inclusion proof for a specific CID.
 
     Returns list of sibling hashes needed to verify the CID is in the tree.
@@ -177,7 +186,9 @@ def merkle_proof_for_cid(event_cid: str, event_cids: List[str], layers: List[Lis
     return proof_path
 
 
-def verify_merkle_proof(event_cid: str, proof_path: List[Dict[str, str]], expected_root: str) -> bool:
+def verify_merkle_proof(
+    event_cid: str, proof_path: List[Dict[str, str]], expected_root: str
+) -> bool:
     """Verify a Merkle inclusion proof for a CID against a known root."""
     current_hash = _hash_leaf(event_cid)
 
@@ -194,6 +205,7 @@ def verify_merkle_proof(event_cid: str, proof_path: List[Dict[str, str]], expect
 # Profile F proof selection
 # ---------------------------------------------------------------------------
 
+
 def _profile_f_zk_certificate(event_cids: List[str]) -> Optional[Dict[str, Any]]:
     """Issue a real bounded proof only when the canonical provider is ready."""
     mode = os.environ.get("MCPPP_PROFILE_F_ZK", "0").strip().lower()
@@ -201,6 +213,7 @@ def _profile_f_zk_certificate(event_cids: List[str]) -> Optional[Dict[str, Any]]
         return None
     try:
         from .event_dag_zkp import availability, prove_event_dag_compaction
+
         if not availability().get("available"):
             raise RuntimeError("Profile F Groth16 provider is unavailable")
         return prove_event_dag_compaction(event_cids)
@@ -209,6 +222,7 @@ def _profile_f_zk_certificate(event_cids: List[str]) -> Optional[Dict[str, Any]]
             raise RuntimeError("Profile F ZK proof is required but unavailable") from error
         logger.warning("Profile F ZK proof unavailable; retaining hash commitment: %s", error)
         return None
+
 
 def generate_compaction_proof(
     epoch_events: List[Dict[str, Any]],
@@ -231,14 +245,18 @@ def generate_compaction_proof(
     # The validation_digest proves we checked internal consistency
     validation_digest = _compute_validation_digest(epoch_events)
 
-    proof_input = json.dumps({
-        "merkle_root": merkle_root,
-        "epoch_id": epoch_id,
-        "event_count": len(epoch_events),
-        "validation_digest": validation_digest,
-        "proof_type": "hash_commitment_v1",
-        "timestamp": time.time(),
-    }, sort_keys=True, separators=(",", ":"))
+    proof_input = json.dumps(
+        {
+            "merkle_root": merkle_root,
+            "epoch_id": epoch_id,
+            "event_count": len(epoch_events),
+            "validation_digest": validation_digest,
+            "proof_type": "hash_commitment_v1",
+            "timestamp": time.time(),
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    )
 
     # Double-SHA256 integrity commitment; zero_knowledge remains false.
     first_hash = hashlib.sha256(proof_input.encode()).digest()
@@ -262,11 +280,15 @@ def _compute_validation_digest(epoch_events: List[Dict[str, Any]]) -> str:
             if parent_cid not in all_cids:
                 cross_epoch_parents.add(parent_cid)
 
-    digest_input = json.dumps({
-        "internal_event_count": len(all_cids),
-        "cross_epoch_parent_count": len(cross_epoch_parents),
-        "cross_epoch_parents": sorted(cross_epoch_parents)[:10],  # Cap for proof size
-    }, sort_keys=True, separators=(",", ":"))
+    digest_input = json.dumps(
+        {
+            "internal_event_count": len(all_cids),
+            "cross_epoch_parent_count": len(cross_epoch_parents),
+            "cross_epoch_parents": sorted(cross_epoch_parents)[:10],  # Cap for proof size
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    )
 
     return hashlib.sha256(digest_input.encode()).hexdigest()
 
@@ -282,6 +304,7 @@ def verify_compaction_proof(proof: CompactionProof) -> bool:
     if proof.zero_knowledge:
         try:
             from .event_dag_zkp import verify_event_dag_compaction
+
             return bool(verify_event_dag_compaction(json.loads(proof.proof)).get("valid"))
         except Exception:
             return False
@@ -298,6 +321,7 @@ def verify_compaction_proof(proof: CompactionProof) -> bool:
 # ---------------------------------------------------------------------------
 # DAG Epoch Compactor
 # ---------------------------------------------------------------------------
+
 
 class DAGCompactor:
     """Manages epoch-based compaction of an EventDAG.
@@ -322,8 +346,7 @@ class DAGCompactor:
         self._current_epoch_id = 0
         self._compaction_proofs: List[CompactionProof] = []
         self._total_compacted_events = 0
-        self._max_storage_bytes = int(os.environ.get(
-            "MCPPP_MAX_COLD_STORAGE_GB", "10")) * 1024 ** 3
+        self._max_storage_bytes = int(os.environ.get("MCPPP_MAX_COLD_STORAGE_GB", "10")) * 1024**3
 
         os.makedirs(storage_dir, exist_ok=True)
         self._load_compaction_index()
@@ -339,7 +362,8 @@ class DAGCompactor:
             if total_size >= self._max_storage_bytes:
                 logger.error(
                     "Cold storage quota exceeded: %.1f GB >= %d GB, compaction skipped",
-                    total_size / (1024 ** 3), self._max_storage_bytes // (1024 ** 3),
+                    total_size / (1024**3),
+                    self._max_storage_bytes // (1024**3),
                 )
                 return False
             return True
@@ -356,25 +380,28 @@ class DAGCompactor:
                 self._current_epoch_id = data.get("current_epoch_id", 0)
                 self._total_compacted_events = data.get("total_compacted_events", 0)
                 for pd in data.get("proofs", []):
-                    self._compaction_proofs.append(CompactionProof(
-                        merkle_root=pd["merkle_root"],
-                        epoch_id=pd["epoch_id"],
-                        event_count=pd["event_count"],
-                        frontier_cids=pd.get("frontier_cids", []),
-                        root_cids=pd.get("root_cids", []),
-                        proof=pd.get("proof", ""),
-                        proof_system=pd.get("proof_system", "hash-commitment-v1"),
-                        zero_knowledge=bool(pd.get("zero_knowledge", False)),
-                        verification_key_cid=pd.get("verification_key_cid", ""),
-                        verification_key_sha256=pd.get("verification_key_sha256", ""),
-                        timestamp_start=pd.get("timestamp_start", 0.0),
-                        timestamp_end=pd.get("timestamp_end", 0.0),
-                        cold_storage_path=pd.get("cold_storage_path", ""),
-                        verified=pd.get("verified", False),
-                    ))
+                    self._compaction_proofs.append(
+                        CompactionProof(
+                            merkle_root=pd["merkle_root"],
+                            epoch_id=pd["epoch_id"],
+                            event_count=pd["event_count"],
+                            frontier_cids=pd.get("frontier_cids", []),
+                            root_cids=pd.get("root_cids", []),
+                            proof=pd.get("proof", ""),
+                            proof_system=pd.get("proof_system", "hash-commitment-v1"),
+                            zero_knowledge=bool(pd.get("zero_knowledge", False)),
+                            verification_key_cid=pd.get("verification_key_cid", ""),
+                            verification_key_sha256=pd.get("verification_key_sha256", ""),
+                            timestamp_start=pd.get("timestamp_start", 0.0),
+                            timestamp_end=pd.get("timestamp_end", 0.0),
+                            cold_storage_path=pd.get("cold_storage_path", ""),
+                            verified=pd.get("verified", False),
+                        )
+                    )
                 logger.info(
                     "Loaded compaction index: %d epochs, %d total compacted events",
-                    len(self._compaction_proofs), self._total_compacted_events,
+                    len(self._compaction_proofs),
+                    self._total_compacted_events,
                 )
                 # Validate that referenced epoch files actually exist
                 missing = []
@@ -385,7 +412,8 @@ class DAGCompactor:
                 if missing:
                     logger.warning(
                         "Compaction index references %d missing epoch files: %s",
-                        len(missing), missing[:10],
+                        len(missing),
+                        missing[:10],
                     )
             except (json.JSONDecodeError, KeyError, OSError, IOError) as e:
                 logger.warning("Failed to load compaction index: %s", e)
@@ -442,12 +470,15 @@ class DAGCompactor:
             # Sort events by timestamp to identify the oldest epoch
             sorted_events = sorted(
                 events.items(),
-                key=lambda kv: kv[1].get("timestamp", 0) if isinstance(kv[1], dict)
-                else getattr(kv[1], "timestamp", 0)
+                key=lambda kv: (
+                    kv[1].get("timestamp", 0)
+                    if isinstance(kv[1], dict)
+                    else getattr(kv[1], "timestamp", 0)
+                ),
             )
 
             # Take the oldest epoch_size events
-            epoch_items = sorted_events[:self.epoch_size]
+            epoch_items = sorted_events[: self.epoch_size]
             epoch_cids = [cid for cid, _ in epoch_items]
 
             # Serialize events for cold storage
@@ -457,21 +488,26 @@ class DAGCompactor:
                     epoch_data.append(event)
                 else:
                     # Dataclass event — serialize
-                    epoch_data.append({
-                        "cid": cid,
-                        "event_type": getattr(event, "event_type", "unknown"),
-                        "parent_cids": getattr(event, "parent_cids", []),
-                        "payload": getattr(event, "payload", {}),
-                        "timestamp": getattr(event, "timestamp", 0),
-                    })
+                    epoch_data.append(
+                        {
+                            "cid": cid,
+                            "event_type": getattr(event, "event_type", "unknown"),
+                            "parent_cids": getattr(event, "parent_cids", []),
+                            "payload": getattr(event, "payload", {}),
+                            "timestamp": getattr(event, "timestamp", 0),
+                        }
+                    )
 
             # Determine epoch boundaries
             frontier_cids = []
             root_cids = []
             epoch_cid_set = set(epoch_cids)
             for cid, event in epoch_items:
-                parent_cids = (event.get("parent_cids", []) if isinstance(event, dict)
-                               else getattr(event, "parent_cids", []))
+                parent_cids = (
+                    event.get("parent_cids", [])
+                    if isinstance(event, dict)
+                    else getattr(event, "parent_cids", [])
+                )
                 # Root: parents are not in this epoch
                 if not parent_cids or all(p not in epoch_cid_set for p in parent_cids):
                     root_cids.append(cid)
@@ -489,18 +525,19 @@ class DAGCompactor:
             zk_certificate = _profile_f_zk_certificate(epoch_cids)
 
             # Persist cold epoch to disk (atomic write)
-            cold_path = os.path.join(
-                self.storage_dir, f"epoch_{self._current_epoch_id:06d}.json"
-            )
+            cold_path = os.path.join(self.storage_dir, f"epoch_{self._current_epoch_id:06d}.json")
             tmp_cold_path = cold_path + ".tmp"
             try:
                 with open(tmp_cold_path, "w") as f:
-                    json.dump({
-                        "epoch_id": self._current_epoch_id,
-                        "merkle_root": merkle_root,
-                        "events": epoch_data,
-                        "merkle_layers": layers,
-                    }, f)
+                    json.dump(
+                        {
+                            "epoch_id": self._current_epoch_id,
+                            "merkle_root": merkle_root,
+                            "events": epoch_data,
+                            "merkle_layers": layers,
+                        },
+                        f,
+                    )
                     f.flush()
                     os.fsync(f.fileno())
                 os.replace(tmp_cold_path, cold_path)
@@ -523,7 +560,9 @@ class DAGCompactor:
                 event_count=len(epoch_cids),
                 frontier_cids=frontier_cids[:50],  # Cap for memory
                 root_cids=root_cids[:50],
-                proof=json.dumps(zk_certificate, sort_keys=True, separators=(",", ":")) if zk_certificate else proof_hex,
+                proof=json.dumps(zk_certificate, sort_keys=True, separators=(",", ":"))
+                if zk_certificate
+                else proof_hex,
                 proof_system=(zk_certificate or {}).get("proof_system", "hash-commitment-v1"),
                 zero_knowledge=bool((zk_certificate or {}).get("zero_knowledge", False)),
                 verification_key_cid=(zk_certificate or {}).get("verification_key_cid", ""),
@@ -541,8 +580,10 @@ class DAGCompactor:
 
             logger.info(
                 "Compacted epoch %d: %d events → merkle_root=%s, proof=%s...",
-                compaction.epoch_id, compaction.event_count,
-                merkle_root[:16], proof_hex[:16],
+                compaction.epoch_id,
+                compaction.event_count,
+                merkle_root[:16],
+                proof_hex[:16],
             )
 
             return CompactionResult(
@@ -565,7 +606,9 @@ class DAGCompactor:
                 data = json.load(f)
             events = data.get("events", [])
             if not isinstance(events, list):
-                logger.error("Cold epoch %d has invalid events type: %s", epoch_id, type(events).__name__)
+                logger.error(
+                    "Cold epoch %d has invalid events type: %s", epoch_id, type(events).__name__
+                )
                 return []
             return events
         except (json.JSONDecodeError, UnicodeDecodeError) as e:
@@ -617,7 +660,7 @@ class DAGCompactor:
                 return proof.epoch_id
 
         # Check CID→epoch index cache
-        if not hasattr(self, '_cid_epoch_index'):
+        if not hasattr(self, "_cid_epoch_index"):
             self._cid_epoch_index: dict = {}
 
         if cid in self._cid_epoch_index:
@@ -625,10 +668,10 @@ class DAGCompactor:
 
         # Scan cold epochs (expensive, but build index as we go)
         for proof in self._compaction_proofs:
-            if proof.epoch_id in getattr(self, '_indexed_epochs', set()):
+            if proof.epoch_id in getattr(self, "_indexed_epochs", set()):
                 continue
             events = self.load_cold_epoch(proof.epoch_id)
-            if not hasattr(self, '_indexed_epochs'):
+            if not hasattr(self, "_indexed_epochs"):
                 self._indexed_epochs: set = set()
             self._indexed_epochs.add(proof.epoch_id)
             for event in events:
@@ -662,5 +705,6 @@ class DAGCompactor:
 @dataclass
 class CompactionResult:
     """Result of a compaction operation."""
+
     compacted_cids: List[str]
     proof: CompactionProof

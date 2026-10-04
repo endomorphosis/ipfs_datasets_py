@@ -129,19 +129,19 @@ Tests executable ✓
 1. **Fetch HTML**
    ```python
    response = requests.get(code_url, headers=headers, timeout=30)
-   soup = BeautifulSoup(response.content, 'html.parser')
+   soup = BeautifulSoup(response.content, "html.parser")
    ```
 
 2. **Extract Links**
    ```python
-   section_links = soup.find_all('a', href=True, limit=max_sections)
+   section_links = soup.find_all("a", href=True, limit=max_sections)
    ```
 
 3. **Process Each Link**
    ```python
    for link in section_links:
        section_text = link.get_text(strip=True)
-       section_url = link.get('href', '')
+       section_url = link.get("href", "")
        section_number = self._extract_section_number(section_text)
        legal_area = self._identify_legal_area(code_name)
    ```
@@ -159,7 +159,7 @@ Tests executable ✓
        legal_area=legal_area,
        source_url=link_url,
        official_cite=f"{citation_format} § {section_number}",
-       metadata=StatuteMetadata()
+       metadata=StatuteMetadata(),
    )
    ```
 
@@ -224,19 +224,19 @@ All scrapers now output NormalizedStatute objects with these required fields:
 
 ```python
 {
-    "state_code": "CA",                          # ✓
-    "state_name": "California",                  # ✓
-    "statute_id": "Penal Code § 187",           # ✓
-    "code_name": "Penal Code",                   # ✓
-    "section_number": "187",                     # ✓
-    "section_name": "Murder",                    # ✓
-    "full_text": "Section 187: Murder...",       # ✓ (was missing)
-    "legal_area": "criminal",                    # ✓
-    "source_url": "https://...",                 # ✓
-    "official_cite": "Cal. Penal Code § 187",   # ✓
-    "scraped_at": "2025-10-16T...",             # ✓
-    "scraper_version": "1.0",                    # ✓
-    "metadata": {}                               # ✓
+    "state_code": "CA",  # ✓
+    "state_name": "California",  # ✓
+    "statute_id": "Penal Code § 187",  # ✓
+    "code_name": "Penal Code",  # ✓
+    "section_number": "187",  # ✓
+    "section_name": "Murder",  # ✓
+    "full_text": "Section 187: Murder...",  # ✓ (was missing)
+    "legal_area": "criminal",  # ✓
+    "source_url": "https://...",  # ✓
+    "official_cite": "Cal. Penal Code § 187",  # ✓
+    "scraped_at": "2025-10-16T...",  # ✓
+    "scraper_version": "1.0",  # ✓
+    "metadata": {},  # ✓
 }
 ```
 

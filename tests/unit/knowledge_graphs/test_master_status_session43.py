@@ -25,6 +25,7 @@ Coverage advance:
 
 All 32 tests pass, 0 regressions.
 """
+
 import unittest
 from unittest.mock import MagicMock, patch
 import pytest
@@ -40,6 +41,7 @@ def _spacy_extractor():
     from ipfs_datasets_py.knowledge_graphs.extraction.extractor import (
         KnowledgeGraphExtractor,
     )
+
     ext = KnowledgeGraphExtractor(use_spacy=True)
     assert ext.use_spacy and ext.nlp is not None, "spaCy must be installed for this test"
     return ext
@@ -48,6 +50,7 @@ def _spacy_extractor():
 # ---------------------------------------------------------------------------
 # 1. extract_entities with spaCy (lines 174-189)
 # ---------------------------------------------------------------------------
+
 
 class TestSpacyExtractEntities(unittest.TestCase):
     """GIVEN extractor with real spaCy WHEN extract_entities called THEN spaCy NER runs (174-189)."""
@@ -105,24 +108,28 @@ class TestSpacyExtractEntities(unittest.TestCase):
 # 2. Bug fix: extraction_method field in Entity (entities.py)
 # ---------------------------------------------------------------------------
 
+
 class TestEntityExtractionMethodField(unittest.TestCase):
     """GIVEN Entity dataclass has extraction_method field THEN it can be set/read."""
 
     def test_entity_extraction_method_default_none(self):
         """GIVEN Entity created without extraction_method THEN field is None."""
         from ipfs_datasets_py.knowledge_graphs.extraction.entities import Entity
+
         e = Entity(name="Alice", entity_type="person")
         self.assertIsNone(e.extraction_method)
 
     def test_entity_extraction_method_set(self):
         """GIVEN Entity created with extraction_method THEN field is stored."""
         from ipfs_datasets_py.knowledge_graphs.extraction.entities import Entity
+
         e = Entity(name="Alice", entity_type="person", extraction_method="dependency_parsing")
         self.assertEqual(e.extraction_method, "dependency_parsing")
 
     def test_entity_extraction_method_in_to_dict(self):
         """GIVEN Entity with extraction_method WHEN to_dict() THEN field present."""
         from ipfs_datasets_py.knowledge_graphs.extraction.entities import Entity
+
         e = Entity(name="Alice", entity_type="person", extraction_method="spacy_ner")
         d = e.to_dict()
         # to_dict might or might not include extraction_method; entity must not crash
@@ -134,18 +141,21 @@ class TestEntityExtractionMethodField(unittest.TestCase):
 # 3. Bug fix: extraction_method field in Relationship (relationships.py)
 # ---------------------------------------------------------------------------
 
+
 class TestRelationshipExtractionMethodField(unittest.TestCase):
     """GIVEN Relationship dataclass has extraction_method field THEN it can be set/read."""
 
     def test_relationship_extraction_method_default_none(self):
         """GIVEN Relationship without extraction_method THEN field is None."""
         from ipfs_datasets_py.knowledge_graphs.extraction.relationships import Relationship
+
         r = Relationship(relationship_type="related_to")
         self.assertIsNone(r.extraction_method)
 
     def test_relationship_extraction_method_set(self):
         """GIVEN Relationship with extraction_method THEN field stored."""
         from ipfs_datasets_py.knowledge_graphs.extraction.relationships import Relationship
+
         r = Relationship(relationship_type="is_a", extraction_method="srl_inference")
         self.assertEqual(r.extraction_method, "srl_inference")
 
@@ -153,6 +163,7 @@ class TestRelationshipExtractionMethodField(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # 4. _aggressive_entity_extraction body (lines 517-591)
 # ---------------------------------------------------------------------------
+
 
 class TestAggressiveEntityExtractionBody(unittest.TestCase):
     """GIVEN spaCy extractor WHEN _aggressive_entity_extraction called THEN body executes."""
@@ -163,6 +174,7 @@ class TestAggressiveEntityExtractionBody(unittest.TestCase):
     def test_aggressive_returns_additional_entities(self):
         """GIVEN text with compound nouns WHEN _aggressive_entity_extraction THEN returns list."""
         from ipfs_datasets_py.knowledge_graphs.extraction.entities import Entity
+
         existing = [Entity(name="Alice", entity_type="person")]
         result = self.ext._aggressive_entity_extraction(
             "Alice studied machine learning algorithms at Stanford University.", existing
@@ -171,6 +183,7 @@ class TestAggressiveEntityExtractionBody(unittest.TestCase):
         self.assertIsInstance(result, list)
         for ent in result:
             from ipfs_datasets_py.knowledge_graphs.extraction.entities import Entity as _E
+
             self.assertIsInstance(ent, _E)
 
     def test_aggressive_with_empty_existing(self):
@@ -214,6 +227,7 @@ class TestAggressiveEntityExtractionBody(unittest.TestCase):
     def test_aggressive_raises_entity_extraction_error_on_fatal(self):
         """GIVEN nlp raises RuntimeError WHEN _aggressive THEN EntityExtractionError raised (592-594)."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import EntityExtractionError
+
         bad_doc = MagicMock()
         bad_doc.noun_chunks.__iter__ = MagicMock(side_effect=RuntimeError("fatal"))
         original_nlp = self.ext.nlp
@@ -235,6 +249,7 @@ class TestAggressiveEntityExtractionBody(unittest.TestCase):
 # 5. _infer_complex_relationships body (lines 618-739)
 # ---------------------------------------------------------------------------
 
+
 class TestInferComplexRelationshipsBody(unittest.TestCase):
     """GIVEN spaCy extractor WHEN _infer_complex_relationships called THEN body executes."""
 
@@ -250,6 +265,7 @@ class TestInferComplexRelationshipsBody(unittest.TestCase):
         """GIVEN entities+relationships WHEN _infer_complex THEN may infer additional (lines 654-684)."""
         from ipfs_datasets_py.knowledge_graphs.extraction.entities import Entity
         from ipfs_datasets_py.knowledge_graphs.extraction.relationships import Relationship
+
         alice = Entity(name="Alice", entity_type="person")
         physics = Entity(name="physics", entity_type="concept")
         result = self.ext._infer_complex_relationships(
@@ -261,6 +277,7 @@ class TestInferComplexRelationshipsBody(unittest.TestCase):
         """GIVEN A→B and B→C relationships WHEN _infer THEN may create transitive A→C (lines 686-726)."""
         from ipfs_datasets_py.knowledge_graphs.extraction.entities import Entity
         from ipfs_datasets_py.knowledge_graphs.extraction.relationships import Relationship
+
         alice = Entity(name="Alice", entity_type="person")
         bob = Entity(name="Bob", entity_type="person")
         carol = Entity(name="Carol", entity_type="person")
@@ -294,6 +311,7 @@ class TestInferComplexRelationshipsBody(unittest.TestCase):
     def test_infer_raises_relationship_extraction_error_on_fatal(self):
         """GIVEN nlp raises RuntimeError WHEN _infer THEN RelationshipExtractionError raised (729-737)."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import RelationshipExtractionError
+
         original_nlp = self.ext.nlp
         self.ext.nlp = MagicMock(side_effect=RuntimeError("fatal inference error"))
         with self.assertRaises(RelationshipExtractionError):
@@ -305,6 +323,7 @@ class TestInferComplexRelationshipsBody(unittest.TestCase):
 # 6. extract_knowledge_graph with extraction_temperature > 0.8 (lines 806-811)
 # ---------------------------------------------------------------------------
 
+
 class TestExtractKgHighExtractionTemperature(unittest.TestCase):
     """GIVEN extraction_temperature>0.8 and spaCy WHEN extract_knowledge_graph THEN
     aggressive entity extraction called (lines 806-811)."""
@@ -315,6 +334,7 @@ class TestExtractKgHighExtractionTemperature(unittest.TestCase):
     def test_high_extraction_temperature_runs_aggressive(self):
         """GIVEN extraction_temperature=0.9 WHEN extract_knowledge_graph THEN aggressive path entered."""
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
         kg = self.ext.extract_knowledge_graph(
             "Alice studied machine learning at Stanford University.",
             extraction_temperature=0.9,
@@ -328,6 +348,7 @@ class TestExtractKgHighExtractionTemperature(unittest.TestCase):
         WHEN extraction_temperature=0.9 THEN warning logged, extraction completes (lines 808-811)."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import EntityExtractionError
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
         with patch.object(
             self.ext,
             "_aggressive_entity_extraction",
@@ -345,10 +366,9 @@ class TestExtractKgHighExtractionTemperature(unittest.TestCase):
         WHEN extraction_temperature=0.9 THEN those entities added to kg (lines 807-810)."""
         from ipfs_datasets_py.knowledge_graphs.extraction.entities import Entity
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
         extra = [Entity(name="quantum computer", entity_type="technology")]
-        with patch.object(
-            self.ext, "_aggressive_entity_extraction", return_value=extra
-        ):
+        with patch.object(self.ext, "_aggressive_entity_extraction", return_value=extra):
             kg = self.ext.extract_knowledge_graph(
                 "Scientists use quantum computers.",
                 extraction_temperature=0.9,
@@ -363,6 +383,7 @@ class TestExtractKgHighExtractionTemperature(unittest.TestCase):
 # 7. extract_knowledge_graph with structure_temperature > 0.8 (lines 832-837)
 # ---------------------------------------------------------------------------
 
+
 class TestExtractKgHighStructureTemperature(unittest.TestCase):
     """GIVEN structure_temperature>0.8 and spaCy WHEN extract_knowledge_graph THEN
     complex relationship inference called (lines 832-837)."""
@@ -373,6 +394,7 @@ class TestExtractKgHighStructureTemperature(unittest.TestCase):
     def test_high_structure_temperature_runs_infer_complex(self):
         """GIVEN structure_temperature=0.9 WHEN extract_knowledge_graph THEN infer path entered."""
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
         kg = self.ext.extract_knowledge_graph(
             "Alice taught Bob. Bob taught Carol.",
             structure_temperature=0.9,
@@ -384,6 +406,7 @@ class TestExtractKgHighStructureTemperature(unittest.TestCase):
         WHEN structure_temperature=0.9 THEN warning logged, extraction completes (lines 836-837)."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import RelationshipExtractionError
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
         with patch.object(
             self.ext,
             "_infer_complex_relationships",
@@ -401,6 +424,7 @@ class TestExtractKgHighStructureTemperature(unittest.TestCase):
         from ipfs_datasets_py.knowledge_graphs.extraction.relationships import Relationship
         from ipfs_datasets_py.knowledge_graphs.extraction.entities import Entity
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
         a = Entity(name="Alice", entity_type="person")
         b = Entity(name="physics", entity_type="concept")
         extra_rel = Relationship(
@@ -411,9 +435,7 @@ class TestExtractKgHighStructureTemperature(unittest.TestCase):
             source_text="",
             extraction_method="transitive_inference",
         )
-        with patch.object(
-            self.ext, "_infer_complex_relationships", return_value=[extra_rel]
-        ):
+        with patch.object(self.ext, "_infer_complex_relationships", return_value=[extra_rel]):
             kg = self.ext.extract_knowledge_graph(
                 "Alice studies physics.",
                 structure_temperature=0.9,
@@ -427,6 +449,7 @@ class TestExtractKgHighStructureTemperature(unittest.TestCase):
 # 8. Combined: extract_knowledge_graph with both high temperatures
 # ---------------------------------------------------------------------------
 
+
 class TestExtractKgBothHighTemperatures(unittest.TestCase):
     """GIVEN both temperatures > 0.8 and spaCy WHEN extract_knowledge_graph THEN both paths run."""
 
@@ -437,6 +460,7 @@ class TestExtractKgBothHighTemperatures(unittest.TestCase):
         """GIVEN extraction_temperature=0.9 AND structure_temperature=0.9
         WHEN extract_knowledge_graph THEN both aggressive+infer paths run."""
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
         kg = self.ext.extract_knowledge_graph(
             "Alice and Bob studied machine learning algorithms at Stanford University.",
             extraction_temperature=0.9,
@@ -450,6 +474,7 @@ class TestExtractKgBothHighTemperatures(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # 9. _infer_complex: transitive relationship limit (lines 720-725)
 # ---------------------------------------------------------------------------
+
 
 class TestInferTransitiveLimit(unittest.TestCase):
     """GIVEN many transitive relationships WHEN _infer THEN limit of 20 is respected (720-725)."""
@@ -467,18 +492,22 @@ class TestInferTransitiveLimit(unittest.TestCase):
         entities = [Entity(name=f"n{i}", entity_type="concept") for i in range(25)]
         rels = []
         # n0 → n1
-        rels.append(Relationship(
-            relationship_type="knows",
-            source_entity=entities[0],
-            target_entity=entities[1],
-        ))
+        rels.append(
+            Relationship(
+                relationship_type="knows",
+                source_entity=entities[0],
+                target_entity=entities[1],
+            )
+        )
         # n1 → n2..n22 (21 targets)
         for i in range(2, 23):
-            rels.append(Relationship(
-                relationship_type="knows",
-                source_entity=entities[1],
-                target_entity=entities[i],
-            ))
+            rels.append(
+                Relationship(
+                    relationship_type="knows",
+                    source_entity=entities[1],
+                    target_entity=entities[i],
+                )
+            )
 
         result = self.ext._infer_complex_relationships(
             "nodes connect via hubs.",
@@ -492,6 +521,7 @@ class TestInferTransitiveLimit(unittest.TestCase):
         """GIVEN 3-token chunk where modifier+head are both in entity_map
         WHEN _infer_complex THEN subtype_of relationship created (lines 639-650)."""
         from ipfs_datasets_py.knowledge_graphs.extraction.entities import Entity
+
         # Need text with 3+ token noun chunk in spaCy parse
         # 'The advanced quantum computing algorithm' → head='algorithm', modifier='The advanced quantum computing'
         alg_modifier = Entity(name="The advanced quantum computing", entity_type="concept")

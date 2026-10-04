@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 try:
     from ipfs_datasets_py.core_operations.logic_processor import LogicProcessor
+
     _PROCESSOR = LogicProcessor()
     _AVAILABLE = True
 except Exception as _e:
@@ -65,11 +66,15 @@ class TDFOLParseTool:
         validate = params.get("validate", False)
 
         # Detect format
-        has_unicode = any(c in formula for c in ("∀", "∃", "→", "∧", "∨", "¬", "O(", "P(", "F(", "G("))
+        has_unicode = any(
+            c in formula for c in ("∀", "∃", "→", "∧", "∨", "¬", "O(", "P(", "F(", "G(")
+        )
         is_symbolic = fmt == "symbolic" or (fmt == "auto" and has_unicode)
         detected = "symbolic" if is_symbolic else "natural_language"
 
-        result = await tdfol_parse(text=formula, format=fmt if fmt != "auto" else "symbolic", language=language)
+        result = await tdfol_parse(
+            text=formula, format=fmt if fmt != "auto" else "symbolic", language=language
+        )
         if not isinstance(result, dict):
             result = {"success": True, "formula": formula}
         result.setdefault("success", True)

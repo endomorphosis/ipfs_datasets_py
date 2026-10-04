@@ -25,7 +25,7 @@ async def shard_embeddings_by_dimension(
     shard_size: int = 1000,
     dimension_chunks: Optional[int] = None,
     metadata: Optional[Dict[str, Any]] = None,
-    **kwargs
+    **kwargs,
 ) -> Dict[str, Any]:
     """
     Shard embeddings by splitting high-dimensional vectors into smaller chunks.
@@ -48,10 +48,10 @@ async def shard_embeddings_by_dimension(
         if isinstance(embeddings_data, str):
             if not os.path.exists(embeddings_data):
                 raise FileNotFoundError(f"Embeddings file not found: {embeddings_data}")
-            with open(embeddings_data, 'r') as f:
+            with open(embeddings_data, "r") as f:
                 data = json.load(f)
-            if isinstance(data, dict) and 'embeddings' in data:
-                embeddings = data['embeddings']
+            if isinstance(data, dict) and "embeddings" in data:
+                embeddings = data["embeddings"]
             elif isinstance(data, list):
                 embeddings = data
             else:
@@ -63,10 +63,10 @@ async def shard_embeddings_by_dimension(
             raise ValueError("No embeddings data provided")
 
         sample_embedding = embeddings[0]
-        if not isinstance(sample_embedding, dict) or 'embedding' not in sample_embedding:
+        if not isinstance(sample_embedding, dict) or "embedding" not in sample_embedding:
             raise ValueError("Embeddings must contain 'embedding' field")
 
-        embedding_dim = len(sample_embedding['embedding'])
+        embedding_dim = len(sample_embedding["embedding"])
         total_embeddings = len(embeddings)
         total_shards = math.ceil(total_embeddings / shard_size)
 
@@ -97,64 +97,78 @@ async def shard_embeddings_by_dimension(
                     chunked_embeddings = []
                     for embedding_item in shard_embeddings:
                         chunked_item = embedding_item.copy()
-                        chunked_item['embedding'] = embedding_item['embedding'][dim_start:dim_end]
-                        chunked_item['dimension_range'] = [dim_start, dim_end]
+                        chunked_item["embedding"] = embedding_item["embedding"][dim_start:dim_end]
+                        chunked_item["dimension_range"] = [dim_start, dim_end]
                         chunked_embeddings.append(chunked_item)
 
                     dim_shard_filename = f"shard_{shard_idx:04d}_dim_{dim_chunk_idx:04d}.json"
                     dim_shard_path = output_path / dim_shard_filename
 
-                    with open(dim_shard_path, 'w') as f:
-                        json.dump({
-                            "embeddings": chunked_embeddings,
-                            "shard_info": {
-                                "shard_index": shard_idx,
-                                "dimension_chunk_index": dim_chunk_idx,
-                                "embedding_count": len(chunked_embeddings),
-                                "dimension_range": [dim_start, dim_end],
-                                "dimension_size": dim_end - dim_start,
+                    with open(dim_shard_path, "w") as f:
+                        json.dump(
+                            {
+                                "embeddings": chunked_embeddings,
+                                "shard_info": {
+                                    "shard_index": shard_idx,
+                                    "dimension_chunk_index": dim_chunk_idx,
+                                    "embedding_count": len(chunked_embeddings),
+                                    "dimension_range": [dim_start, dim_end],
+                                    "dimension_size": dim_end - dim_start,
+                                },
+                                "metadata": shard_metadata,
                             },
-                            "metadata": shard_metadata,
-                        }, f, indent=2)
+                            f,
+                            indent=2,
+                        )
 
-                    dimension_shards.append({
-                        "filename": dim_shard_filename,
-                        "path": str(dim_shard_path),
-                        "dimension_range": [dim_start, dim_end],
-                        "embedding_count": len(chunked_embeddings),
-                    })
+                    dimension_shards.append(
+                        {
+                            "filename": dim_shard_filename,
+                            "path": str(dim_shard_path),
+                            "dimension_range": [dim_start, dim_end],
+                            "embedding_count": len(chunked_embeddings),
+                        }
+                    )
 
-                shards_info.append({
-                    "shard_index": shard_idx,
-                    "embedding_range": [start_idx, end_idx],
-                    "embedding_count": len(shard_embeddings),
-                    "dimension_shards": dimension_shards,
-                    "type": "dimension_chunked",
-                })
+                shards_info.append(
+                    {
+                        "shard_index": shard_idx,
+                        "embedding_range": [start_idx, end_idx],
+                        "embedding_count": len(shard_embeddings),
+                        "dimension_shards": dimension_shards,
+                        "type": "dimension_chunked",
+                    }
+                )
             else:
                 shard_filename = f"shard_{shard_idx:04d}.json"
                 shard_path = output_path / shard_filename
 
-                with open(shard_path, 'w') as f:
-                    json.dump({
-                        "embeddings": shard_embeddings,
-                        "shard_info": {
-                            "shard_index": shard_idx,
-                            "embedding_range": [start_idx, end_idx],
-                            "embedding_count": len(shard_embeddings),
-                            "full_dimension": embedding_dim,
+                with open(shard_path, "w") as f:
+                    json.dump(
+                        {
+                            "embeddings": shard_embeddings,
+                            "shard_info": {
+                                "shard_index": shard_idx,
+                                "embedding_range": [start_idx, end_idx],
+                                "embedding_count": len(shard_embeddings),
+                                "full_dimension": embedding_dim,
+                            },
+                            "metadata": shard_metadata,
                         },
-                        "metadata": shard_metadata,
-                    }, f, indent=2)
+                        f,
+                        indent=2,
+                    )
 
-                shards_info.append({
-                    "shard_index": shard_idx,
-                    "filename": shard_filename,
-                    "path": str(shard_path),
-                    "embedding_range": [start_idx, end_idx],
-                    "embedding_count": len(shard_embeddings),
-                    "type": "standard",
-                })
+                shards_info.append(
+                    {
+                        "shard_index": shard_idx,
+                        "filename": shard_filename,
+                        "path": str(shard_path),
+                        "embedding_range": [start_idx, end_idx],
+                        "embedding_count": len(shard_embeddings),
+                        "type": "standard",
+                    }
+                )
 
         manifest = {
             "metadata": shard_metadata,
@@ -163,7 +177,7 @@ async def shard_embeddings_by_dimension(
             "output_directory": str(output_path),
         }
         manifest_path = output_path / "sharding_manifest.json"
-        with open(manifest_path, 'w') as f:
+        with open(manifest_path, "w") as f:
             json.dump(manifest, f, indent=2)
 
         return {
@@ -191,7 +205,7 @@ async def shard_embeddings_by_cluster(
     num_clusters: int = 10,
     clustering_method: str = "kmeans",
     shard_size: int = 1000,
-    **kwargs
+    **kwargs,
 ) -> Dict[str, Any]:
     """
     Shard embeddings by clustering similar vectors together.
@@ -214,10 +228,10 @@ async def shard_embeddings_by_cluster(
         if isinstance(embeddings_data, str):
             if not os.path.exists(embeddings_data):
                 raise FileNotFoundError(f"Embeddings file not found: {embeddings_data}")
-            with open(embeddings_data, 'r') as f:
+            with open(embeddings_data, "r") as f:
                 data = json.load(f)
-            if isinstance(data, dict) and 'embeddings' in data:
-                embeddings = data['embeddings']
+            if isinstance(data, dict) and "embeddings" in data:
+                embeddings = data["embeddings"]
             elif isinstance(data, list):
                 embeddings = data
             else:
@@ -228,6 +242,7 @@ async def shard_embeddings_by_cluster(
         total_embeddings = len(embeddings)
 
         import random
+
         random.seed(42)
 
         clusters: Dict[int, list] = {i: [] for i in range(num_clusters)}
@@ -253,25 +268,31 @@ async def shard_embeddings_by_cluster(
                 shard_filename = f"cluster_{cluster_id:04d}_shard_{shard_idx:04d}.json"
                 shard_path = output_path / shard_filename
 
-                with open(shard_path, 'w') as f:
-                    json.dump({
-                        "embeddings": shard_embeddings,
-                        "shard_info": {
-                            "cluster_id": cluster_id,
-                            "shard_index": shard_idx,
-                            "embedding_count": len(shard_embeddings),
-                            "original_indices": original_indices,
-                            "clustering_method": clustering_method,
+                with open(shard_path, "w") as f:
+                    json.dump(
+                        {
+                            "embeddings": shard_embeddings,
+                            "shard_info": {
+                                "cluster_id": cluster_id,
+                                "shard_index": shard_idx,
+                                "embedding_count": len(shard_embeddings),
+                                "original_indices": original_indices,
+                                "clustering_method": clustering_method,
+                            },
                         },
-                    }, f, indent=2)
+                        f,
+                        indent=2,
+                    )
 
-                cluster_shards.append({
-                    "cluster_id": cluster_id,
-                    "shard_index": shard_idx,
-                    "filename": shard_filename,
-                    "path": str(shard_path),
-                    "embedding_count": len(shard_embeddings),
-                })
+                cluster_shards.append(
+                    {
+                        "cluster_id": cluster_id,
+                        "shard_index": shard_idx,
+                        "filename": shard_filename,
+                        "path": str(shard_path),
+                        "embedding_count": len(shard_embeddings),
+                    }
+                )
 
         manifest = {
             "metadata": {
@@ -285,7 +306,7 @@ async def shard_embeddings_by_cluster(
             "output_directory": str(output_path),
         }
         manifest_path = output_path / "clustering_manifest.json"
-        with open(manifest_path, 'w') as f:
+        with open(manifest_path, "w") as f:
             json.dump(manifest, f, indent=2)
 
         return {
@@ -308,10 +329,7 @@ async def shard_embeddings_by_cluster(
 
 
 async def merge_embedding_shards(
-    manifest_file: str,
-    output_file: str,
-    merge_strategy: str = "sequential",
-    **kwargs
+    manifest_file: str, output_file: str, merge_strategy: str = "sequential", **kwargs
 ) -> Dict[str, Any]:
     """
     Merge previously sharded embeddings back into a single file.
@@ -329,7 +347,7 @@ async def merge_embedding_shards(
         if not os.path.exists(manifest_file):
             raise FileNotFoundError(f"Manifest file not found: {manifest_file}")
 
-        with open(manifest_file, 'r') as f:
+        with open(manifest_file, "r") as f:
             manifest = json.load(f)
 
         output_path = Path(output_file)
@@ -338,28 +356,28 @@ async def merge_embedding_shards(
         merged_embeddings: list = []
 
         if merge_strategy == "sequential":
-            shards = manifest.get('shards', manifest.get('cluster_shards', []))
-            for shard_info in sorted(shards, key=lambda x: x.get('shard_index', 0)):
-                shard_path = shard_info['path']
+            shards = manifest.get("shards", manifest.get("cluster_shards", []))
+            for shard_info in sorted(shards, key=lambda x: x.get("shard_index", 0)):
+                shard_path = shard_info["path"]
                 if os.path.exists(shard_path):
-                    with open(shard_path, 'r') as f:
+                    with open(shard_path, "r") as f:
                         shard_data = json.load(f)
-                    merged_embeddings.extend(shard_data['embeddings'])
+                    merged_embeddings.extend(shard_data["embeddings"])
 
         elif merge_strategy == "clustered":
-            cluster_shards = manifest.get('cluster_shards', [])
+            cluster_shards = manifest.get("cluster_shards", [])
             clusters: Dict[int, list] = {}
             for shard_info in cluster_shards:
-                cid = shard_info['cluster_id']
+                cid = shard_info["cluster_id"]
                 clusters.setdefault(cid, []).append(shard_info)
 
             for cid in sorted(clusters.keys()):
-                for shard_info in sorted(clusters[cid], key=lambda x: x['shard_index']):
-                    shard_path = shard_info['path']
+                for shard_info in sorted(clusters[cid], key=lambda x: x["shard_index"]):
+                    shard_path = shard_info["path"]
                     if os.path.exists(shard_path):
-                        with open(shard_path, 'r') as f:
+                        with open(shard_path, "r") as f:
                             shard_data = json.load(f)
-                        merged_embeddings.extend(shard_data['embeddings'])
+                        merged_embeddings.extend(shard_data["embeddings"])
 
         merged_data = {
             "embeddings": merged_embeddings,
@@ -368,12 +386,12 @@ async def merge_embedding_shards(
                 "merge_strategy": merge_strategy,
                 "original_manifest": manifest_file,
                 "merged_from_shards": len(
-                    manifest.get('shards', manifest.get('cluster_shards', []))
+                    manifest.get("shards", manifest.get("cluster_shards", []))
                 ),
             },
         }
 
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             json.dump(merged_data, f, indent=2)
 
         return {
@@ -381,7 +399,7 @@ async def merge_embedding_shards(
             "output_file": str(output_path),
             "total_embeddings": len(merged_embeddings),
             "merge_strategy": merge_strategy,
-            "shards_merged": len(manifest.get('shards', manifest.get('cluster_shards', []))),
+            "shards_merged": len(manifest.get("shards", manifest.get("cluster_shards", []))),
         }
 
     except Exception as e:

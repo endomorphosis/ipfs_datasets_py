@@ -21,6 +21,7 @@ from typing import Any, Dict
 # graph_create
 # ---------------------------------------------------------------------------
 
+
 class TestGraphCreate:
     """Tests for graph_create tool."""
 
@@ -32,6 +33,7 @@ class TestGraphCreate:
         THEN the result must be a dict
         """
         from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_create import graph_create
+
         result = await graph_create()
         assert isinstance(result, dict)
 
@@ -43,6 +45,7 @@ class TestGraphCreate:
         THEN the result is a dict (success or error)
         """
         from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_create import graph_create
+
         result = await graph_create(driver_url="ipfs://127.0.0.1:9999")
         assert isinstance(result, dict)
 
@@ -54,6 +57,7 @@ class TestGraphCreate:
         THEN the result dict contains a 'status' key
         """
         from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_create import graph_create
+
         result = await graph_create()
         assert "status" in result
 
@@ -61,6 +65,7 @@ class TestGraphCreate:
 # ---------------------------------------------------------------------------
 # graph_add_entity
 # ---------------------------------------------------------------------------
+
 
 class TestGraphAddEntity:
     """Tests for graph_add_entity tool."""
@@ -73,6 +78,7 @@ class TestGraphAddEntity:
         THEN the result is a dict
         """
         from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_add_entity import graph_add_entity
+
         result = await graph_add_entity(
             entity_id="node_001",
             entity_type="Person",
@@ -87,6 +93,7 @@ class TestGraphAddEntity:
         THEN the result is a dict
         """
         from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_add_entity import graph_add_entity
+
         result = await graph_add_entity(
             entity_id="node_002",
             entity_type="Organization",
@@ -102,6 +109,7 @@ class TestGraphAddEntity:
         THEN the result dict contains the entity_id
         """
         from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_add_entity import graph_add_entity
+
         result = await graph_add_entity(entity_id="node_eid_check", entity_type="Concept")
         assert "entity_id" in result or "status" in result
 
@@ -109,6 +117,7 @@ class TestGraphAddEntity:
 # ---------------------------------------------------------------------------
 # graph_add_relationship
 # ---------------------------------------------------------------------------
+
 
 class TestGraphAddRelationship:
     """Tests for graph_add_relationship tool."""
@@ -123,6 +132,7 @@ class TestGraphAddRelationship:
         from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_add_relationship import (
             graph_add_relationship,
         )
+
         result = await graph_add_relationship(
             source_id="node_a",
             target_id="node_b",
@@ -140,6 +150,7 @@ class TestGraphAddRelationship:
         from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_add_relationship import (
             graph_add_relationship,
         )
+
         result = await graph_add_relationship(
             source_id="node_c",
             target_id="node_d",
@@ -152,6 +163,7 @@ class TestGraphAddRelationship:
 # ---------------------------------------------------------------------------
 # graph_query_cypher
 # ---------------------------------------------------------------------------
+
 
 class TestGraphQueryCypher:
     """Tests for graph_query_cypher tool."""
@@ -166,6 +178,7 @@ class TestGraphQueryCypher:
         from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_query_cypher import (
             graph_query_cypher,
         )
+
         result = await graph_query_cypher(query="MATCH (n) RETURN n LIMIT 5")
         assert isinstance(result, dict)
 
@@ -179,6 +192,7 @@ class TestGraphQueryCypher:
         from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_query_cypher import (
             graph_query_cypher,
         )
+
         result = await graph_query_cypher(
             query="MATCH (n:Person {name: $name}) RETURN n",
             parameters={"name": "Alice"},
@@ -189,6 +203,7 @@ class TestGraphQueryCypher:
 # ---------------------------------------------------------------------------
 # graph_transaction_begin / commit / rollback
 # ---------------------------------------------------------------------------
+
 
 class TestGraphTransactions:
     """Tests for graph transaction tools."""
@@ -203,6 +218,7 @@ class TestGraphTransactions:
         from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_transaction_begin import (
             graph_transaction_begin,
         )
+
         result = await graph_transaction_begin()
         assert isinstance(result, dict)
 
@@ -216,6 +232,7 @@ class TestGraphTransactions:
         from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_transaction_commit import (
             graph_transaction_commit,
         )
+
         result = await graph_transaction_commit(transaction_id="txn_test_001")
         assert isinstance(result, dict)
 
@@ -229,6 +246,7 @@ class TestGraphTransactions:
         from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_transaction_rollback import (
             graph_transaction_rollback,
         )
+
         result = await graph_transaction_rollback(transaction_id="txn_test_002")
         assert isinstance(result, dict)
 
@@ -236,6 +254,7 @@ class TestGraphTransactions:
 # ---------------------------------------------------------------------------
 # graph_search_hybrid
 # ---------------------------------------------------------------------------
+
 
 class TestGraphSearchHybrid:
     """Tests for graph_search_hybrid tool."""
@@ -250,6 +269,7 @@ class TestGraphSearchHybrid:
         from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_search_hybrid import (
             graph_search_hybrid,
         )
+
         result = await graph_search_hybrid(query="machine learning")
         assert isinstance(result, dict)
 
@@ -263,6 +283,7 @@ class TestGraphSearchHybrid:
         from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_search_hybrid import (
             graph_search_hybrid,
         )
+
         result = await graph_search_hybrid(
             query="neural network",
             limit=5,

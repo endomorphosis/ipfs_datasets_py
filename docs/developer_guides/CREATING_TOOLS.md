@@ -15,24 +15,25 @@ MCP tool for [functionality].
 This is a thin wrapper around core business logic.
 """
 
+
 async def tool_name(param1: str, param2: Optional[int] = None) -> Dict[str, Any]:
     """
     [Description of what the tool does].
-    
+
     Args:
         param1: [Description]
         param2: [Description]
-    
+
     Returns:
         Dict with status, result, and optional error
     """
     # Import from core module
     from ipfs_datasets_py.core_operations import CoreClass
-    
+
     # Delegate to core logic
     manager = CoreClass()
     result = await manager.method(param1, param2)
-    
+
     return result
 ```
 
@@ -45,37 +46,31 @@ First, create the business logic in `ipfs_datasets_py/core_operations/`:
 ```python
 # ipfs_datasets_py/core_operations/my_feature.py
 
+
 class MyFeatureManager:
     """Core business logic for my feature."""
-    
+
     def __init__(self, config: Optional[Dict] = None):
         self.config = config or {}
-    
+
     async def do_something(self, input_data: str) -> Dict[str, Any]:
         """
         Core logic implementation.
-        
+
         This is where ALL business logic lives.
         """
         try:
             # Validation
             if not input_data:
                 return {"status": "error", "error": "Input required"}
-            
+
             # Processing
             result = process(input_data)
-            
+
             # Return
-            return {
-                "status": "success",
-                "result": result,
-                "input": input_data
-            }
+            return {"status": "success", "result": result, "input": input_data}
         except Exception as e:
-            return {
-                "status": "error",
-                "error": str(e)
-            }
+            return {"status": "error", "error": str(e)}
 ```
 
 ### Step 2: Export from core_operations
@@ -86,10 +81,10 @@ Add to `ipfs_datasets_py/core_operations/__init__.py`:
 from .my_feature import MyFeatureManager
 
 __all__ = [
-    'DatasetLoader',
-    'IPFSPinner',
-    'KnowledgeGraphManager',
-    'MyFeatureManager',  # Add new class
+    "DatasetLoader",
+    "IPFSPinner",
+    "KnowledgeGraphManager",
+    "MyFeatureManager",  # Add new class
 ]
 ```
 
@@ -109,27 +104,24 @@ Thin wrapper around MyFeatureManager.
 from typing import Dict, Any, Optional
 
 
-async def my_tool(
-    input_data: str,
-    options: Optional[Dict] = None
-) -> Dict[str, Any]:
+async def my_tool(input_data: str, options: Optional[Dict] = None) -> Dict[str, Any]:
     """
     [Tool description].
-    
+
     Args:
         input_data: Input data to process
         options: Optional configuration
-    
+
     Returns:
         Dict with status and result
-    
+
     Example:
         >>> result = await my_tool("data")
         >>> print(result["status"])
         "success"
     """
     from ipfs_datasets_py.core_operations import MyFeatureManager
-    
+
     manager = MyFeatureManager(config=options)
     return await manager.do_something(input_data)
 ```
@@ -143,7 +135,7 @@ Add to category's `__init__.py`:
 
 from .my_tool import my_tool
 
-__all__ = ['my_tool']
+__all__ = ["my_tool"]
 ```
 
 ### Step 5: Add Tests
@@ -232,6 +224,7 @@ async def bad_tool(input_data):
 # GOOD - Thin wrapper
 async def good_tool(input_data):
     from ipfs_datasets_py.core_operations import Manager
+
     return await Manager().process(input_data)
 ```
 
@@ -242,6 +235,7 @@ async def good_tool(input_data):
 async def tool1(data):
     # Same logic
     pass
+
 
 async def tool2(data):
     # Same logic duplicated
@@ -254,10 +248,13 @@ async def tool2(data):
 # GOOD - Shared logic
 async def tool1(data):
     from ipfs_datasets_py.core_operations import Manager
+
     return await Manager().process(data)
+
 
 async def tool2(data):
     from ipfs_datasets_py.core_operations import Manager
+
     return await Manager().process(data)
 ```
 

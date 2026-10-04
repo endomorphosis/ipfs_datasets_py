@@ -12,21 +12,25 @@ import traceback
 from unittest.mock import patch, MagicMock, AsyncMock
 
 # Add the project root to the Python path
-sys.path.insert(0, '/home/barberb/ipfs_datasets_py')
+sys.path.insert(0, "/home/barberb/ipfs_datasets_py")
+
 
 def test_audit_tools():
     """Test audit tools functionality."""
     try:
-        from ipfs_datasets_py.mcp_server.tools.audit_tools.record_audit_event import record_audit_event
-        from ipfs_datasets_py.mcp_server.tools.audit_tools.generate_audit_report import generate_audit_report
+        from ipfs_datasets_py.mcp_server.tools.audit_tools.record_audit_event import (
+            record_audit_event,
+        )
+        from ipfs_datasets_py.mcp_server.tools.audit_tools.generate_audit_report import (
+            generate_audit_report,
+        )
 
         print("✅ Audit tools import successful")
 
         # Test record_audit_event
-        result = anyio.run(record_audit_event(
-            "test_event", "system", "info",
-            details={"test": "data"}
-        ))
+        result = anyio.run(
+            record_audit_event("test_event", "system", "info", details={"test": "data"})
+        )
 
         if result.get("status") == "success":
             print("✅ record_audit_event working")
@@ -34,10 +38,7 @@ def test_audit_tools():
             print("❌ record_audit_event failed:", result.get("message"))
 
         # Test generate_audit_report
-        result = anyio.run(generate_audit_report(
-            start_date="2025-05-01",
-            end_date="2025-05-24"
-        ))
+        result = anyio.run(generate_audit_report(start_date="2025-05-01", end_date="2025-05-24"))
 
         if result.get("status") == "success":
             print("✅ generate_audit_report working")
@@ -51,10 +52,12 @@ def test_audit_tools():
         traceback.print_exc()
         return False
 
+
 def test_cli_tools():
     """Test CLI tools functionality."""
     try:
         from ipfs_datasets_py.mcp_server.tools.cli.execute_command import execute_command
+
         print("✅ CLI tools import successful")
 
         # Test execute_command with a safe command
@@ -72,10 +75,14 @@ def test_cli_tools():
         traceback.print_exc()
         return False
 
+
 def test_function_tools():
     """Test function tools functionality."""
     try:
-        from ipfs_datasets_py.mcp_server.tools.functions.execute_python_snippet import execute_python_snippet
+        from ipfs_datasets_py.mcp_server.tools.functions.execute_python_snippet import (
+            execute_python_snippet,
+        )
+
         print("✅ Function tools import successful")
 
         # Test execute_python_snippet
@@ -93,16 +100,18 @@ def test_function_tools():
         traceback.print_exc()
         return False
 
+
 def test_security_tools():
     """Test security tools functionality."""
     try:
-        from ipfs_datasets_py.mcp_server.tools.security_tools.check_access_permission import check_access_permission
+        from ipfs_datasets_py.mcp_server.tools.security_tools.check_access_permission import (
+            check_access_permission,
+        )
+
         print("✅ Security tools import successful")
 
         # Test check_access_permission
-        result = anyio.run(check_access_permission(
-            "resource123", "user456", "read"
-        ))
+        result = anyio.run(check_access_permission("resource123", "user456", "read"))
 
         if result.get("status") == "success":
             print("✅ check_access_permission working")
@@ -116,11 +125,17 @@ def test_security_tools():
         traceback.print_exc()
         return False
 
+
 def test_vector_tools():
     """Test vector tools functionality."""
     try:
-        from ipfs_datasets_py.mcp_server.tools.vector_tools.create_vector_index import create_vector_index
-        from ipfs_datasets_py.mcp_server.tools.vector_tools.search_vector_index import search_vector_index
+        from ipfs_datasets_py.mcp_server.tools.vector_tools.create_vector_index import (
+            create_vector_index,
+        )
+        from ipfs_datasets_py.mcp_server.tools.vector_tools.search_vector_index import (
+            search_vector_index,
+        )
+
         print("✅ Vector tools import successful")
 
         # Test create_vector_index
@@ -139,10 +154,12 @@ def test_vector_tools():
         traceback.print_exc()
         return False
 
+
 def test_web_archive_tools():
     """Test web archive tools functionality."""
     try:
         from ipfs_datasets_py.mcp_server.tools.web_archive_tools.create_warc import create_warc
+
         print("✅ Web archive tools import successful")
 
         # Test create_warc (this should work as it's synchronous)
@@ -159,6 +176,7 @@ def test_web_archive_tools():
         print(f"❌ Web archive tools test failed: {e}")
         traceback.print_exc()
         return False
+
 
 def main():
     """Run all tests and report results."""
@@ -187,12 +205,13 @@ def main():
 
     print("\n" + "=" * 50)
     print(f"📊 Results: {passed}/{total} test groups passed")
-    print(f"🎯 Success Rate: {(passed/total)*100:.1f}%")
+    print(f"🎯 Success Rate: {(passed / total) * 100:.1f}%")
 
     if passed == total:
         print("🎉 All test groups passed!")
     else:
-        print(f"⚠️  {total-passed} test groups need attention")
+        print(f"⚠️  {total - passed} test groups need attention")
+
 
 if __name__ == "__main__":
     main()

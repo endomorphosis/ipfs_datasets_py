@@ -16,7 +16,9 @@ def test_remote_inference_detected_via_libp2p_backend_manager(monkeypatch):
     """
 
     if not _truthy(os.getenv("IPFS_DATASETS_PY_RUN_REMOTE_INTEGRATION_TESTS")):
-        pytest.skip("Set IPFS_DATASETS_PY_RUN_REMOTE_INTEGRATION_TESTS=1 to run remote inference tests")
+        pytest.skip(
+            "Set IPFS_DATASETS_PY_RUN_REMOTE_INTEGRATION_TESTS=1 to run remote inference tests"
+        )
 
     monkeypatch.setenv("IPFS_ACCELERATE_PY_ENABLE_BACKEND_MANAGER", "1")
 
@@ -69,4 +71,6 @@ def test_remote_inference_detected_via_libp2p_backend_manager(monkeypatch):
     backend = selected.get("backend")
     assert backend is not None, "backend selection was not observed"
     assert getattr(backend, "backend_type", None) == BackendType.P2P
-    assert "libp2p" in set(getattr(getattr(backend, "capabilities", None), "protocols", set()) or set())
+    assert "libp2p" in set(
+        getattr(getattr(backend, "capabilities", None), "protocols", set()) or set()
+    )

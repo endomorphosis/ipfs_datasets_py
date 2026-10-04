@@ -12,19 +12,21 @@ from .registry import StateScraperRegistry
 
 class MissouriScraper(BaseStateScraper):
     """Scraper for Missouri state laws from http://www.moga.mo.gov"""
-    
+
     def get_base_url(self) -> str:
         """Return the base URL for Missouri's legislative website."""
         return "https://revisor.mo.gov"
-    
+
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for Missouri."""
-        return [{
-            "name": "Missouri Revised Statutes",
-            "url": f"{self.get_base_url()}/main/Home.aspx",
-            "type": "Code"
-        }]
-    
+        return [
+            {
+                "name": "Missouri Revised Statutes",
+                "url": f"{self.get_base_url()}/main/Home.aspx",
+                "type": "Code",
+            }
+        ]
+
     async def scrape_code(
         self,
         code_name: str,
@@ -32,11 +34,11 @@ class MissouriScraper(BaseStateScraper):
         max_statutes: Optional[int] = None,
     ) -> List[NormalizedStatute]:
         """Scrape a specific code from Missouri's legislative website.
-        
+
         Args:
             code_name: Name of the code to scrape
             code_url: URL of the code
-            
+
         Returns:
             List of NormalizedStatute objects
         """
@@ -59,7 +61,9 @@ class MissouriScraper(BaseStateScraper):
                 return direct
         return []
 
-    async def _scrape_direct_sections(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+    async def _scrape_direct_sections(
+        self, code_name: str, max_statutes: int
+    ) -> List[NormalizedStatute]:
         try:
             from bs4 import BeautifulSoup
         except ImportError:
@@ -71,7 +75,9 @@ class MissouriScraper(BaseStateScraper):
         ]
         statutes: List[NormalizedStatute] = []
         for source_url in section_urls[: max(1, int(max_statutes or 1))]:
-            payload = await self._fetch_page_content_with_archival_fallback(source_url, timeout_seconds=12)
+            payload = await self._fetch_page_content_with_archival_fallback(
+                source_url, timeout_seconds=12
+            )
             if not payload:
                 continue
             text, section_name = self._extract_section_text_and_name(payload)
@@ -100,16 +106,12 @@ class MissouriScraper(BaseStateScraper):
                 )
             )
         return statutes
-    
+
     async def _custom_scrape_missouri(
-        self,
-        code_name: str,
-        code_url: str,
-        citation_format: str,
-        max_sections: int = 220
+        self, code_name: str, code_url: str, citation_format: str, max_sections: int = 220
     ) -> List[NormalizedStatute]:
         """Custom scraper for Missouri's legislative website.
-        
+
         Use the Missouri Revisor site and gather section links from chapter pages.
         This avoids very slow fallback URL chains that can cause global timeout.
         """
@@ -118,11 +120,11 @@ class MissouriScraper(BaseStateScraper):
         except ImportError as e:
             self.logger.error(f"Required library not available: {e}")
             return []
-        
+
         statutes = []
         headers = {
-            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 '
-                          '(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
+            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+            "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
         }
 
         try:
@@ -133,15 +135,15 @@ class MissouriScraper(BaseStateScraper):
             )
             if not home_bytes:
                 return []
-            soup = BeautifulSoup(home_bytes, 'html.parser')
+            soup = BeautifulSoup(home_bytes, "html.parser")
         except Exception as e:
             self.logger.warning(f"Missouri: failed to load home page: {e}")
             return []
 
         chapter_urls = []
-        for link in soup.find_all('a', href=True):
-            href = link.get('href', '')
-            if 'OneChapter.aspx?chapter=' not in href:
+        for link in soup.find_all("a", href=True):
+            href = link.get("href", "")
+            if "OneChapter.aspx?chapter=" not in href:
                 continue
             full = urljoin(home_url, href)
             if full not in chapter_urls:
@@ -156,8 +158,8 @@ class MissouriScraper(BaseStateScraper):
         for chapter_url in chapter_urls:
             if len(statutes) >= max_sections:
                 break
-            chapter_vals = parse_qs(urlparse(chapter_url).query).get('chapter') or []
-            chapter_number = (chapter_vals[0].strip() if chapter_vals else '')
+            chapter_vals = parse_qs(urlparse(chapter_url).query).get("chapter") or []
+            chapter_number = chapter_vals[0].strip() if chapter_vals else ""
             try:
                 chapter_bytes = await self._fetch_page_content_with_archival_fallback(
                     chapter_url,
@@ -165,33 +167,35 @@ class MissouriScraper(BaseStateScraper):
                 )
                 if not chapter_bytes:
                     continue
-                chap_soup = BeautifulSoup(chapter_bytes, 'html.parser')
+                chap_soup = BeautifulSoup(chapter_bytes, "html.parser")
             except Exception:
                 continue
 
-            for link in chap_soup.find_all('a', href=True):
+            for link in chap_soup.find_all("a", href=True):
                 if len(statutes) >= max_sections:
                     break
-                href = link.get('href', '')
-                if 'OneSection.aspx?section=' not in href:
+                href = link.get("href", "")
+                if "OneSection.aspx?section=" not in href:
                     continue
 
                 full_url = urljoin(chapter_url, href)
                 parsed = urlparse(full_url)
-                section_vals = parse_qs(parsed.query).get('section') or []
-                section_number = (section_vals[0].strip() if section_vals else '')
+                section_vals = parse_qs(parsed.query).get("section") or []
+                section_number = section_vals[0].strip() if section_vals else ""
                 if not section_number:
                     continue
                 if section_number in seen_sections:
                     continue
                 seen_sections.add(section_number)
 
-                link_text = link.get_text(' ', strip=True) or f"Section {section_number}"
+                link_text = link.get_text(" ", strip=True) or f"Section {section_number}"
                 section_payload = await self._fetch_page_content_with_archival_fallback(
                     full_url,
                     timeout_seconds=20,
                 )
-                full_text, extracted_name = self._extract_section_text_and_name(section_payload or b"")
+                full_text, extracted_name = self._extract_section_text_and_name(
+                    section_payload or b""
+                )
                 section_name = (extracted_name or link_text or f"Section {section_number}")[:200]
                 if not full_text:
                     full_text = f"Section {section_number}: {link_text}"
@@ -222,8 +226,8 @@ class MissouriScraper(BaseStateScraper):
             for chapter_url in chapter_urls:
                 if len(statutes) >= max_sections:
                     break
-                chapter_vals = parse_qs(urlparse(chapter_url).query).get('chapter') or []
-                chapter_number = (chapter_vals[0].strip() if chapter_vals else '')
+                chapter_vals = parse_qs(urlparse(chapter_url).query).get("chapter") or []
+                chapter_number = chapter_vals[0].strip() if chapter_vals else ""
                 if not chapter_number or chapter_number in seen_sections:
                     continue
                 seen_sections.add(chapter_number)
@@ -248,7 +252,7 @@ class MissouriScraper(BaseStateScraper):
         if not statutes:
             self.logger.warning("Missouri custom scraper found no section-level links")
             return []
-        
+
         return statutes
 
     def _extract_section_text_and_name(self, payload: bytes) -> tuple[str, str]:

@@ -293,9 +293,10 @@ class MyLogicConverter(LogicConverter):
 import pytest
 from ipfs_datasets_py.logic.converters.my_converter import MyLogicConverter
 
+
 class TestMyLogicConverter:
     """Test suite for MyLogicConverter."""
-    
+
     def test_simple_conversion(self):
         """
         GIVEN: Simple natural language statement
@@ -304,30 +305,30 @@ class TestMyLogicConverter:
         """
         converter = MyLogicConverter()
         result = converter.convert("All cats are animals")
-        
+
         assert result.success
         assert "∀" in result.fol
         assert "Cat" in result.fol
         assert "Animal" in result.fol
-    
+
     def test_complex_conversion(self):
         """Test complex statement conversion."""
         converter = MyLogicConverter()
         result = converter.convert(
             "If all cats are animals and Fluffy is a cat, then Fluffy is an animal"
         )
-        
+
         assert result.success
         assert result.confidence > 0.7
-    
+
     def test_invalid_input(self):
         """Test error handling for invalid input."""
         converter = MyLogicConverter()
-        
+
         # Empty input
         result = converter.convert("")
         assert not result.success
-        
+
         # Too long input
         long_text = "a" * 100_000
         with pytest.raises(ValueError):
@@ -342,7 +343,7 @@ from .converters.my_converter import MyLogicConverter
 
 __all__ = [
     # ... existing exports
-    'MyLogicConverter',
+    "MyLogicConverter",
 ]
 ```
 
@@ -358,24 +359,26 @@ from typing import Optional
 from ipfs_datasets_py.logic.integration.bridges import BaseProverBridge
 from ipfs_datasets_py.logic.common import ProofResult, ProofStatus
 
+
 class MyProverBridge(BaseProverBridge):
     """
     Bridge to My External Prover.
-    
+
     Requires: my-prover binary in PATH
     Install: pip install my-prover
     """
-    
+
     def __init__(self, config: Optional[dict] = None):
         """Initialize bridge."""
         super().__init__(config)
         self.prover_name = "MyProver"
         self._check_availability()
-    
+
     def _check_availability(self):
         """Check if prover is available."""
         try:
             import subprocess
+
             result = subprocess.run(
                 ["my-prover", "--version"],
                 capture_output=True,
@@ -384,16 +387,16 @@ class MyProverBridge(BaseProverBridge):
             self.available = result.returncode == 0
         except (FileNotFoundError, subprocess.TimeoutExpired):
             self.available = False
-    
+
     def prove(self, formula: str, assumptions: list = None, timeout: int = 30) -> ProofResult:
         """
         Prove formula using My Prover.
-        
+
         Args:
             formula: Formula to prove
             assumptions: List of assumptions
             timeout: Timeout in seconds
-        
+
         Returns:
             ProofResult with status and proof
         """
@@ -402,20 +405,21 @@ class MyProverBridge(BaseProverBridge):
                 status=ProofStatus.ERROR,
                 error="MyProver not available",
             )
-        
+
         try:
             # Convert to prover format
             prover_input = self._format_for_prover(formula, assumptions)
-            
+
             # Run prover
             import subprocess
+
             result = subprocess.run(
                 ["my-prover", "--input", prover_input],
                 capture_output=True,
                 timeout=timeout,
                 text=True,
             )
-            
+
             # Parse result
             if "proved" in result.stdout.lower():
                 return ProofResult(
@@ -428,7 +432,7 @@ class MyProverBridge(BaseProverBridge):
                     status=ProofStatus.UNPROVABLE,
                     proof=None,
                 )
-        
+
         except subprocess.TimeoutExpired:
             return ProofResult(
                 status=ProofStatus.TIMEOUT,
@@ -439,7 +443,7 @@ class MyProverBridge(BaseProverBridge):
                 status=ProofStatus.ERROR,
                 error=str(e),
             )
-    
+
     def _format_for_prover(self, formula: str, assumptions: list) -> str:
         """Convert to prover's input format."""
         # Implement format conversion
@@ -454,13 +458,11 @@ import pytest
 from ipfs_datasets_py.logic.external_provers.my_prover_bridge import MyProverBridge
 from ipfs_datasets_py.logic.common import ProofStatus
 
-@pytest.mark.skipif(
-    not MyProverBridge().available,
-    reason="MyProver not installed"
-)
+
+@pytest.mark.skipif(not MyProverBridge().available, reason="MyProver not installed")
 class TestMyProverBridge:
     """Test suite for MyProverBridge."""
-    
+
     def test_simple_proof(self):
         """
         GIVEN: Simple provable formula
@@ -469,22 +471,22 @@ class TestMyProverBridge:
         """
         bridge = MyProverBridge()
         result = bridge.prove("P → Q", assumptions=["P", "P → Q"])
-        
+
         assert result.status == ProofStatus.PROVED
         assert result.proof is not None
-    
+
     def test_unprovable(self):
         """Test unprovable formula."""
         bridge = MyProverBridge()
         result = bridge.prove("Q", assumptions=["P"])
-        
+
         assert result.status == ProofStatus.UNPROVABLE
-    
+
     def test_timeout(self):
         """Test timeout handling."""
         bridge = MyProverBridge()
         result = bridge.prove("complex_formula", timeout=1)
-        
+
         assert result.status == ProofStatus.TIMEOUT
 ```
 
@@ -499,15 +501,16 @@ class TestMyProverBridge:
 from ipfs_datasets_py.logic.TDFOL.inference_rules import InferenceRule
 from ipfs_datasets_py.logic.types import Formula
 
+
 class MyInferenceRule(InferenceRule):
     """
     My custom inference rule.
-    
+
     Pattern: A, A → B ⊢ B  (Modus Ponens example)
-    
+
     Description:
         If we have A and A implies B, we can infer B.
-    
+
     Examples:
         >>> rule = MyInferenceRule()
         >>> premises = [Formula("P"), Formula("P → Q")]
@@ -515,7 +518,7 @@ class MyInferenceRule(InferenceRule):
         >>> print(conclusion)
         'Q'
     """
-    
+
     def __init__(self):
         super().__init__(
             name="MyRule",
@@ -523,60 +526,60 @@ class MyInferenceRule(InferenceRule):
             pattern=["A", "A → B"],
             conclusion="B",
         )
-    
+
     def is_applicable(self, premises: list) -> bool:
         """
         Check if rule can be applied to premises.
-        
+
         Args:
             premises: List of premise formulas
-        
+
         Returns:
             True if rule is applicable
         """
         # Check if we have right number and structure of premises
         if len(premises) != 2:
             return False
-        
+
         # Check if one is implication and other is antecedent
         for prem in premises:
             if self._is_implication(prem):
                 return self._check_structure(premises, prem)
-        
+
         return False
-    
+
     def apply(self, premises: list) -> Formula:
         """
         Apply rule to premises to derive conclusion.
-        
+
         Args:
             premises: List of premise formulas
-        
+
         Returns:
             Derived conclusion formula
-        
+
         Raises:
             ValueError: If rule is not applicable
         """
         if not self.is_applicable(premises):
             raise ValueError(f"{self.name} not applicable to {premises}")
-        
+
         # Extract conclusion
         for prem in premises:
             if self._is_implication(prem):
                 return self._extract_consequent(prem)
-        
+
         raise ValueError("No implication found")
-    
+
     def _is_implication(self, formula: Formula) -> bool:
         """Check if formula is an implication."""
         return "→" in str(formula)
-    
+
     def _check_structure(self, premises: list, implication: Formula) -> bool:
         """Check if structure matches rule pattern."""
         # Implementation depends on your formula representation
         pass
-    
+
     def _extract_consequent(self, implication: Formula) -> Formula:
         """Extract consequent from implication."""
         # Implementation depends on your formula representation
@@ -591,9 +594,10 @@ import pytest
 from ipfs_datasets_py.logic.TDFOL.inference_rules.my_rule import MyInferenceRule
 from ipfs_datasets_py.logic.types import Formula
 
+
 class TestMyInferenceRule:
     """Test suite for MyInferenceRule."""
-    
+
     def test_rule_application(self):
         """
         GIVEN: Premises matching rule pattern
@@ -605,29 +609,29 @@ class TestMyInferenceRule:
             Formula("P"),
             Formula("P → Q"),
         ]
-        
+
         conclusion = rule.apply(premises)
         assert str(conclusion) == "Q"
-    
+
     def test_rule_not_applicable(self):
         """Test rule rejects invalid premises."""
         rule = MyInferenceRule()
         premises = [Formula("P"), Formula("R")]
-        
+
         assert not rule.is_applicable(premises)
-        
+
         with pytest.raises(ValueError):
             rule.apply(premises)
-    
+
     def test_rule_commutativity(self):
         """Test rule works regardless of premise order."""
         rule = MyInferenceRule()
         premises1 = [Formula("P"), Formula("P → Q")]
         premises2 = [Formula("P → Q"), Formula("P")]
-        
+
         result1 = rule.apply(premises1)
         result2 = rule.apply(premises2)
-        
+
         assert str(result1) == str(result2)
 ```
 
@@ -677,10 +681,8 @@ Always use type hints:
 ```python
 from typing import List, Optional, Dict, Any
 
-def convert_formula(
-    text: str,
-    options: Optional[Dict[str, Any]] = None
-) -> List[str]:
+
+def convert_formula(text: str, options: Optional[Dict[str, Any]] = None) -> List[str]:
     """Convert text to formulas."""
     pass
 ```
@@ -769,15 +771,18 @@ def test_simple_case():
     """Unit test."""
     pass
 
+
 @pytest.mark.integration
 def test_end_to_end():
     """Integration test."""
     pass
 
+
 @pytest.mark.slow
 def test_performance():
     """Performance test."""
     pass
+
 
 @pytest.mark.skipif(not DEPENDENCY_AVAILABLE, reason="Dependency not installed")
 def test_with_optional_dependency():

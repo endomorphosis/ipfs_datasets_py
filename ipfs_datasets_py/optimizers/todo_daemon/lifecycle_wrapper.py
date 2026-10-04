@@ -57,7 +57,9 @@ def lifecycle_wrapper_core_lines(spec: LifecycleWrapperSpec) -> tuple[str, ...]:
     command = _require_safe_shell_token(spec.command, label="command")
     module = _require_safe_shell_token(spec.module, label="module")
     python_executable = _require_safe_shell_token(spec.python_executable, label="python executable")
-    repo_root_ancestor = _require_safe_relative_expr(spec.repo_root_ancestor, label="repo-root ancestor")
+    repo_root_ancestor = _require_safe_relative_expr(
+        spec.repo_root_ancestor, label="repo-root ancestor"
+    )
     lines = [
         'SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"',
         f'REPO_ROOT="${{REPO_ROOT:-$(cd "$SCRIPT_DIR/{repo_root_ancestor}" && pwd)}}"',
@@ -71,7 +73,7 @@ def lifecycle_wrapper_core_lines(spec: LifecycleWrapperSpec) -> tuple[str, ...]:
         [
             f'export PYTHONPATH="{spec.pythonpath_expr}"',
             'cd "$REPO_ROOT" || exit 2',
-            f"exec {python_executable} -m {module} {daemon} {command} \"$@\"",
+            f'exec {python_executable} -m {module} {daemon} {command} "$@"',
         ]
     )
     return tuple(lines)

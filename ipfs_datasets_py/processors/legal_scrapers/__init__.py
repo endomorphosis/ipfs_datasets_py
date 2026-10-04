@@ -312,6 +312,7 @@ from .state_laws_scheduler_engine import (
     run_schedule_now,
     enable_disable_schedule,
 )
+
 # Incremental Updates Engine — delta scraping helpers
 from .incremental_updates_engine import (
     IncrementalUpdateTracker,
@@ -332,12 +333,14 @@ from .brave_legal_search import (
     create_legal_search,
     search_legal,
 )
+
 # NOTE: multi_engine_legal_search.py has no MultiEngineLegalSearch *class*.
 # It exposes standalone async functions: multi_engine_legal_search() and get_multi_engine_stats().
 # The module itself is aliased as MultiEngineLegalSearch for backward compatibility with code
 # that previously imported the (non-existent) class by that name.
 from . import multi_engine_legal_search as _multi_engine_module  # noqa: F401
 from .multi_engine_legal_search import multi_engine_legal_search, get_multi_engine_stats  # noqa: F401
+
 MultiEngineLegalSearch = _multi_engine_module  # module alias for backward compat
 from .knowledge_base_loader import (
     LegalKnowledgeBase,
@@ -402,9 +405,11 @@ def __getattr__(name: str):
         return value
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
+
 # Legal Web Archive Search - Unified search with archiving (NEW)
 try:
     from .legal_web_archive_search import LegalWebArchiveSearch
+
     HAVE_WEB_ARCHIVE_SEARCH = True
 except Exception:
     LegalWebArchiveSearch = None
@@ -413,6 +418,7 @@ except Exception:
 # Common Crawl Index Loader - HuggingFace integration (NEW)
 try:
     from .common_crawl_index_loader import CommonCrawlIndexLoader
+
     HAVE_CC_INDEX_LOADER = True
 except Exception:
     CommonCrawlIndexLoader = None
@@ -422,6 +428,7 @@ except Exception:
 # These components are used by both Brave Legal Search and Complaint Analysis
 try:
     from . import common
+
     HAVE_COMMON_MODULE = True
 except Exception:
     common = None
@@ -430,6 +437,7 @@ except Exception:
 # Query Expander - LLM-based query expansion (NEW - Enhancement 9)
 try:
     from .query_expander import QueryExpander, ExpandedQuery, expand_query
+
     HAVE_QUERY_EXPANDER = True
 except Exception:
     QueryExpander = None
@@ -440,6 +448,7 @@ except Exception:
 # Enhanced Query Expander - Enhanced with legal synonyms and relationships (Enhancement 12 Phase 2)
 try:
     from .enhanced_query_expander import EnhancedQueryExpander, EnhancedExpandedQuery
+
     HAVE_ENHANCED_QUERY_EXPANDER = True
 except Exception:
     EnhancedQueryExpander = None
@@ -449,6 +458,7 @@ except Exception:
 # Result Filter - Advanced result filtering (Enhancement 12 Phase 3)
 try:
     from .result_filter import ResultFilter, FilterConfig, FilteredResult
+
     HAVE_RESULT_FILTER = True
 except Exception:
     ResultFilter = None
@@ -461,8 +471,9 @@ try:
     from .search_result_citation_extractor import (
         SearchResultCitationExtractor,
         SearchResultWithCitations,
-        CitationNetwork
+        CitationNetwork,
     )
+
     HAVE_SEARCH_RESULT_CITATION_EXTRACTOR = True
 except Exception:
     SearchResultCitationExtractor = None
@@ -475,11 +486,8 @@ HAVE_LEGAL_GRAPHRAG = False
 
 # Multi-Language Support - I18n for legal search (Enhancement 12 Phase 6)
 try:
-    from .multilanguage_support import (
-        MultiLanguageSupport,
-        LanguageConfig,
-        TranslationResult
-    )
+    from .multilanguage_support import MultiLanguageSupport, LanguageConfig, TranslationResult
+
     HAVE_MULTILANGUAGE_SUPPORT = True
 except Exception:
     MultiLanguageSupport = None
@@ -492,8 +500,9 @@ try:
     from .regulation_version_tracker import (
         RegulationVersionTracker,
         RegulationVersion,
-        RegulationChange
+        RegulationChange,
     )
+
     HAVE_REGULATION_VERSION_TRACKER = True
 except Exception:
     RegulationVersionTracker = None
@@ -507,8 +516,9 @@ try:
         LegalSearchReportGenerator,
         LegalSearchReport,
         ReportConfig,
-        ReportSection
+        ReportSection,
     )
+
     HAVE_LEGAL_REPORT_GENERATOR = True
 except Exception:
     LegalSearchReportGenerator = None
@@ -520,6 +530,7 @@ except Exception:
 # HuggingFace API search (Enhancement 11 Part 1)
 try:
     from .huggingface_api_search import HuggingFaceAPISearch
+
     HAVE_HF_API_SEARCH = True
 except Exception:
     HuggingFaceAPISearch = None
@@ -528,10 +539,12 @@ except Exception:
 # Verifier engines (new — extracted from MCP tool verification scripts)
 try:
     from .federal_register_verifier import FederalRegisterVerifier
+
     HAVE_FEDERAL_REGISTER_VERIFIER = True
 except Exception:
     try:
         from .federal_scrapers.federal_register_verifier import FederalRegisterVerifier
+
         HAVE_FEDERAL_REGISTER_VERIFIER = True
     except Exception:
         FederalRegisterVerifier = None  # type: ignore[assignment]
@@ -539,10 +552,12 @@ except Exception:
 
 try:
     from .us_code_verifier import USCodeVerifier
+
     HAVE_US_CODE_VERIFIER = True
 except Exception:
     try:
         from .federal_scrapers.us_code_verifier import USCodeVerifier
+
         HAVE_US_CODE_VERIFIER = True
     except Exception:
         USCodeVerifier = None  # type: ignore[assignment]
@@ -554,8 +569,9 @@ try:
         ParallelWebArchiver,
         ArchiveResult,
         ArchiveProgress,
-        archive_urls
+        archive_urls,
     )
+
     HAVE_PARALLEL_ARCHIVER = True
 except ImportError:
     ParallelWebArchiver = None
@@ -632,15 +648,12 @@ __all__ = [
     "store_dataset_to_ipfs",
     "retrieve_dataset_from_ipfs",
     "list_ipfs_datasets",
-
     # Scraping state
     "ScrapingState",
     "list_scraping_jobs",
     "delete_scraping_job",
-
     # Municipal codes orchestration
     "initialize_municipal_codes_job",
-
     # Parameter-driven APIs
     "scrape_recap_archive_from_parameters",
     "search_recap_documents_from_parameters",
@@ -693,7 +706,6 @@ __all__ = [
     "build_eu_country_corpus_onboarding_plan",
     "summarize_dataset_profile_coverage_by_branch",
     "summarize_dataset_profiles_by_country",
-    
     # Patent Engine
     "Patent",
     "PatentDatasetBuilder",
@@ -702,11 +714,9 @@ __all__ = [
     "search_patents_by_keyword",
     "search_patents_by_inventor",
     "search_patents_by_assignee",
-
     # Municipal Scraper Engine
     "MunicipalScraperFallbacks",
     "scrape_municipal_with_fallbacks",
-
     # State Laws Scheduler Engine
     "StateLawsUpdateScheduler",
     "create_schedule",
@@ -722,17 +732,14 @@ __all__ = [
     "run_state_laws_agentic_daemon",
     "run_state_admin_rules_agentic_daemon",
     "run_state_court_rules_agentic_daemon",
-
     # Incremental Updates Engine
     "IncrementalUpdateTracker",
     "calculate_update_parameters",
     "scrape_recap_incremental",
     "scrape_with_incremental_update",
-
     # HuggingFace Pipeline Engine
     "RateLimiter",
     "UploadToHuggingFaceInParallel",
-    
     # Brave Legal Search
     "BraveLegalSearch",
     "MultiEngineLegalSearch",  # Multi-engine search
@@ -749,68 +756,56 @@ __all__ = [
     "SearchTermGenerator",
     "SearchTerm",
     "SearchStrategy",
-    
     # Legal Web Archive Search (NEW)
     "LegalWebArchiveSearch",
     "HAVE_WEB_ARCHIVE_SEARCH",
-    
     # Common Crawl Index Loader (NEW)
     "CommonCrawlIndexLoader",
     "HAVE_CC_INDEX_LOADER",
-    
     # Shared components module (NEW - Enhancement 7)
     "common",
     "HAVE_COMMON_MODULE",
-    
     # Query Expander (NEW - Enhancement 9)
     "QueryExpander",
     "ExpandedQuery",
     "expand_query",
     "HAVE_QUERY_EXPANDER",
-    
     # Enhanced Query Expander (Enhancement 12 Phase 2)
     "EnhancedQueryExpander",
     "EnhancedExpandedQuery",
     "HAVE_ENHANCED_QUERY_EXPANDER",
-    
     # Result Filter (Enhancement 12 Phase 3)
     "ResultFilter",
     "FilterConfig",
     "FilteredResult",
     "HAVE_RESULT_FILTER",
-    
     # Search Result Citation Extractor (Enhancement 12 Phase 4)
     "SearchResultCitationExtractor",
     "SearchResultWithCitations",
     "CitationNetwork",
     "HAVE_SEARCH_RESULT_CITATION_EXTRACTOR",
-    
     # Legal GraphRAG (Enhancement 12 Phase 5)
     "LegalGraphRAG",
     "LegalEntity",
     "LegalRelationship",
     "LegalKnowledgeGraph",
     "HAVE_LEGAL_GRAPHRAG",
-    
     # Multi-Language Support (Enhancement 12 Phase 6)
     "MultiLanguageSupport",
     "LanguageConfig",
     "TranslationResult",
     "HAVE_MULTILANGUAGE_SUPPORT",
-    
     # Regulation Version Tracker (Enhancement 12 Phase 7)
     "RegulationVersionTracker",
     "RegulationVersion",
     "RegulationChange",
     "HAVE_REGULATION_VERSION_TRACKER",
-    
     # Legal Report Generator (Enhancement 12 Phase 8)
     "LegalSearchReportGenerator",
     "LegalSearchReport",
     "ReportConfig",
     "ReportSection",
     "HAVE_LEGAL_REPORT_GENERATOR",
-    
     # HuggingFace API search (Enhancement 11 Part 1)
     "HuggingFaceAPISearch",
     "HAVE_HF_API_SEARCH",
@@ -819,14 +814,12 @@ __all__ = [
     "HAVE_FEDERAL_REGISTER_VERIFIER",
     "USCodeVerifier",
     "HAVE_US_CODE_VERIFIER",
-    
     # Parallel web archiver (Enhancement 11 Part 2)
     "ParallelWebArchiver",
     "ArchiveResult",
     "ArchiveProgress",
     "archive_urls",
     "HAVE_PARALLEL_ARCHIVER",
-
     # Canonical engine functions (Phase E+F session 20)
     "create_legal_knowledge_graph",
     "search_legal_graph",

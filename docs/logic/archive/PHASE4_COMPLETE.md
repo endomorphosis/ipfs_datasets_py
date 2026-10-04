@@ -383,9 +383,9 @@ Employee must not share data.
 """
 
 result = rag.ingest_document(inconsistent, "doc2")
-if not result['is_consistent']:
+if not result["is_consistent"]:
     print("Inconsistencies found:")
-    for issue in result['inconsistencies']:
+    for issue in result["inconsistencies"]:
         print(f"  - {issue}")
 ```
 

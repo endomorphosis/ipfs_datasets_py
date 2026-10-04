@@ -11,7 +11,8 @@ import traceback
 from datetime import datetime
 
 # Add project root to path
-sys.path.insert(0, '/home/barberb/ipfs_datasets_py')
+sys.path.insert(0, "/home/barberb/ipfs_datasets_py")
+
 
 def _codex_routing_enabled() -> bool:
     return os.getenv("IPFS_DATASETS_PY_USE_CODEX_FOR_SYMAI", "").strip().lower() in {
@@ -21,54 +22,61 @@ def _codex_routing_enabled() -> bool:
         "on",
     }
 
+
 def _resolved_model() -> str:
     if _codex_routing_enabled():
         return f"codex:{os.getenv('IPFS_DATASETS_PY_CODEX_MODEL', 'gpt-5.2')}"
-    return os.getenv('NEUROSYMBOLIC_ENGINE_MODEL') or ""
+    return os.getenv("NEUROSYMBOLIC_ENGINE_MODEL") or ""
+
 
 def test_environment_config():
     """Test environment configuration"""
     print("=== Environment Configuration ===")
-    
-    api_key = os.getenv('NEUROSYMBOLIC_ENGINE_API_KEY')
+
+    api_key = os.getenv("NEUROSYMBOLIC_ENGINE_API_KEY")
     model = _resolved_model()
-    max_tokens = os.getenv('NEUROSYMBOLIC_ENGINE_MAX_TOKENS')
-    temperature = os.getenv('NEUROSYMBOLIC_ENGINE_TEMPERATURE')
+    max_tokens = os.getenv("NEUROSYMBOLIC_ENGINE_MAX_TOKENS")
+    temperature = os.getenv("NEUROSYMBOLIC_ENGINE_TEMPERATURE")
     use_codex = _codex_routing_enabled()
-    
+
     if use_codex:
         print("Codex Routing: ✓ Enabled")
     print(f"API Key: {'✓ Set' if api_key else '✗ Missing'}")
     print(f"Model: {model if model else '✗ Not set'}")
     print(f"Max Tokens: {max_tokens if max_tokens else '✗ Not set'}")
     print(f"Temperature: {temperature if temperature else '✗ Not set'}")
-    
+
     if api_key:
         print(f"API Key (partial): {api_key[:20]}...{api_key[-10:]}")
-    
+
     if use_codex:
         return bool(model)
     return bool(api_key and model)
 
+
 def test_config_file():
     """Test SymbolicAI config file"""
     print("\n=== SymbolicAI Config File ===")
-    
-    config_path = '.venv/.symai/symai.config.json'
+
+    config_path = ".venv/.symai/symai.config.json"
     try:
-        with open(config_path, 'r') as f:
+        with open(config_path, "r") as f:
             config = json.load(f)
-        
+
         print(f"✓ Config file found: {config_path}")
-        print(f"API Key in config: {'✓ Set' if config.get('NEUROSYMBOLIC_ENGINE_API_KEY') else '✗ Missing'}")
+        print(
+            f"API Key in config: {'✓ Set' if config.get('NEUROSYMBOLIC_ENGINE_API_KEY') else '✗ Missing'}"
+        )
         print(f"Model in config: {config.get('NEUROSYMBOLIC_ENGINE_MODEL', '✗ Not set')}")
         print(f"Max Tokens: {config.get('NEUROSYMBOLIC_ENGINE_MAX_TOKENS', '✗ Not set')}")
         print(f"Temperature: {config.get('NEUROSYMBOLIC_ENGINE_TEMPERATURE', '✗ Not set')}")
-        
+
         if _codex_routing_enabled():
-            return bool(config.get('NEUROSYMBOLIC_ENGINE_MODEL'))
-        return bool(config.get('NEUROSYMBOLIC_ENGINE_API_KEY') and config.get('NEUROSYMBOLIC_ENGINE_MODEL'))
-        
+            return bool(config.get("NEUROSYMBOLIC_ENGINE_MODEL"))
+        return bool(
+            config.get("NEUROSYMBOLIC_ENGINE_API_KEY") and config.get("NEUROSYMBOLIC_ENGINE_MODEL")
+        )
+
     except FileNotFoundError:
         print(f"✗ Config file not found: {config_path}")
         return False
@@ -76,53 +84,57 @@ def test_config_file():
         print(f"✗ Config file invalid JSON: {e}")
         return False
 
+
 def test_symai_basic():
     """Test basic SymbolicAI functionality"""
     print("\n=== Basic SymbolicAI Test ===")
-    
+
     try:
         if _codex_routing_enabled():
             from symai import Expression
+
             print("✓ SymbolicAI imported successfully")
             result = Expression.prompt("Reply with OK only.")
             print(f"✓ Codex prompt result: {result}")
         else:
             from symai import Symbol
+
             print("✓ SymbolicAI imported successfully")
-            
+
             # Test basic symbol creation
             symbol = Symbol("Hello World")
             print(f"✓ Basic symbol created: {symbol}")
-            
+
             # Test semantic symbol creation (this should use the configured model)
             semantic_symbol = Symbol("Test semantic symbol", semantic=True)
             print(f"✓ Semantic symbol created: {semantic_symbol}")
-        
+
         return True
-        
+
     except Exception as e:
         print(f"✗ SymbolicAI test failed: {e}")
         traceback.print_exc()
         return False
 
+
 def test_api_connection():
     """Test actual API connection with the configured model"""
     print("\n=== API Connection Test ===")
-    
+
     try:
         use_codex = _codex_routing_enabled()
         if use_codex:
             from symai import Expression
         else:
             from symai import Symbol
-        
+
         # Create a semantic symbol for API testing
         if use_codex:
             print("✓ Codex routing enabled for API test")
         else:
             symbol = Symbol("What is 2 + 2?", semantic=True)
             print("✓ Created semantic symbol for API test")
-        
+
         # Test a simple query that should use the OpenAI API
         print("Testing API call (this may take a moment)...")
         try:
@@ -134,7 +146,7 @@ def test_api_connection():
             print(f"✓ API call successful!")
             print(f"  Question: What is 2 + 2?")
             print(f"  Response: {result}")
-            
+
             # Test logic-related query
             if use_codex:
                 logic_result = Expression.prompt(
@@ -146,9 +158,9 @@ def test_api_connection():
             print(f"✓ Logic query successful!")
             print(f"  Statement: All cats are animals")
             print(f"  FOL Response: {logic_result}")
-            
+
             return True
-            
+
         except Exception as api_error:
             print(f"✗ API call failed: {api_error}")
             print("This might indicate:")
@@ -157,31 +169,32 @@ def test_api_connection():
             print("  - Network issues")
             print("  - Rate limiting")
             return False
-            
+
     except Exception as e:
         print(f"✗ API connection test setup failed: {e}")
         traceback.print_exc()
         return False
 
+
 def test_model_capabilities():
     """Test specific model capabilities for logic tasks"""
     print("\n=== Model Capabilities Test ===")
-    
+
     try:
         use_codex = _codex_routing_enabled()
         if use_codex:
             from symai import Expression
         else:
             from symai import Symbol
-        
+
         # Test various logic-related tasks
         test_cases = [
             "All birds can fly",
-            "Some cats are black", 
+            "Some cats are black",
             "If it rains, then the ground gets wet",
-            "No student failed the exam"
+            "No student failed the exam",
         ]
-        
+
         results = []
         for test_case in test_cases:
             try:
@@ -192,86 +205,81 @@ def test_model_capabilities():
                 else:
                     symbol = Symbol(test_case, semantic=True)
                     fol_result = symbol.query("Convert this to first-order logic formula")
-                results.append({
-                    "input": test_case,
-                    "output": fol_result,
-                    "success": True
-                })
+                results.append({"input": test_case, "output": fol_result, "success": True})
                 print(f"✓ Processed: {test_case}")
             except Exception as e:
-                results.append({
-                    "input": test_case,
-                    "output": str(e),
-                    "success": False
-                })
+                results.append({"input": test_case, "output": str(e), "success": False})
                 print(f"✗ Failed: {test_case} - {e}")
-        
+
         success_rate = sum(1 for r in results if r["success"]) / len(results)
-        print(f"\nSuccess Rate: {success_rate:.1%} ({sum(1 for r in results if r['success'])}/{len(results)})")
-        
+        print(
+            f"\nSuccess Rate: {success_rate:.1%} ({sum(1 for r in results if r['success'])}/{len(results)})"
+        )
+
         return success_rate > 0.5
-        
+
     except Exception as e:
         print(f"✗ Model capabilities test failed: {e}")
         traceback.print_exc()
         return False
+
 
 def main():
     """Run all configuration and API tests"""
     print("🔧 OpenAI Model Configuration Test for SymbolicAI")
     print("=" * 60)
     print(f"Test started at: {datetime.now()}")
-    
+
     results = {}
-    
+
     # Run tests
-    results['environment'] = test_environment_config()
-    results['config_file'] = test_config_file()
-    results['basic'] = test_symai_basic()
-    results['api'] = test_api_connection()
-    results['capabilities'] = test_model_capabilities()
-    
+    results["environment"] = test_environment_config()
+    results["config_file"] = test_config_file()
+    results["basic"] = test_symai_basic()
+    results["api"] = test_api_connection()
+    results["capabilities"] = test_model_capabilities()
+
     # Summary
     print("\n" + "=" * 60)
     print("CONFIGURATION TEST RESULTS")
     print("=" * 60)
-    
+
     for test_name, result in results.items():
         status = "✓ PASS" if result else "✗ FAIL"
         print(f"{test_name.upper():15} {status}")
-    
+
     passed = sum(results.values())
     total = len(results)
-    
+
     print(f"\nOverall: {passed}/{total} tests passed")
-    
+
     # Recommendations
     print("\n" + "=" * 60)
     print("RECOMMENDATIONS")
     print("=" * 60)
-    
-    if results['environment'] and results['config_file']:
+
+    if results["environment"] and results["config_file"]:
         print("✓ Configuration is properly set up")
     else:
         print("⚠ Configuration needs attention - check API key and model settings")
-    
-    if results['api']:
+
+    if results["api"]:
         print("✓ OpenAI API is working correctly with gpt-4o model")
         print("✓ Ready for SymbolicAI logic integration tasks")
     else:
         print("⚠ API connection issues - verify API key and model access")
-    
-    if results['capabilities']:
+
+    if results["capabilities"]:
         print("✓ Model capabilities are sufficient for logic tasks")
     else:
         print("⚠ Model may need adjustment for complex logic tasks")
-    
+
     # Model information
     print(f"\nConfigured Model: {_resolved_model() or 'not set'}")
     print("Recommended for: Complex reasoning, logic conversion, semantic understanding")
     print(f"Max Tokens: 4096 (optimal for logic formulas)")
     print(f"Temperature: 0.1 (low for consistent logical reasoning)")
-    
+
     if passed >= 4:
         print("\n🎉 SymbolicAI is properly configured and ready to use!")
         return 0
@@ -281,6 +289,7 @@ def main():
     else:
         print("\n❌ Configuration issues need to be resolved")
         return 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

@@ -103,7 +103,7 @@ async def faceted_search_from_parameters(
             "metadata": {
                 "category": f"category_{i % 3}",
                 "tags": [f"tag_{j}" for j in range(i % 2 + 1)],
-                "date": f"2024-01-{i+1:02d}",
+                "date": f"2024-01-{i + 1:02d}",
             },
         }
         for i in range(min(top_k, 10))

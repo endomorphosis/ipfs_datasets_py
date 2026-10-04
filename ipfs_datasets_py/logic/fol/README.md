@@ -38,15 +38,15 @@ The FOL converter provides:
 
 ```python
 converter = FOLConverter(
-    use_cache=True,          # Enable caching (default: True)
-    cache_maxsize=1000,      # Max cache entries (default: 1000)
-    cache_ttl=3600,          # Cache TTL in seconds (default: 3600 = 1 hour)
-    use_ml=True,             # ML confidence scoring (default: True)
-    use_nlp=True,            # spaCy NLP extraction (default: True)
-    use_ipfs=False,          # IPFS distributed caching (default: False)
+    use_cache=True,  # Enable caching (default: True)
+    cache_maxsize=1000,  # Max cache entries (default: 1000)
+    cache_ttl=3600,  # Cache TTL in seconds (default: 3600 = 1 hour)
+    use_ml=True,  # ML confidence scoring (default: True)
+    use_nlp=True,  # spaCy NLP extraction (default: True)
+    use_ipfs=False,  # IPFS distributed caching (default: False)
     enable_monitoring=True,  # Operation monitoring (default: True)
-    output_format="json",    # Output format: json, prolog, tptp (default: "json")
-    confidence_threshold=0.7 # Minimum confidence (default: 0.7)
+    output_format="json",  # Output format: json, prolog, tptp (default: "json")
+    confidence_threshold=0.7,  # Minimum confidence (default: 0.7)
 )
 ```
 
@@ -54,11 +54,7 @@ converter = FOLConverter(
 
 ```python
 # Convert multiple texts efficiently
-texts = [
-    "All humans are mortal",
-    "Socrates is a human",
-    "Therefore, Socrates is mortal"
-]
+texts = ["All humans are mortal", "Socrates is a human", "Therefore, Socrates is mortal"]
 
 results = converter.convert_batch(texts, max_workers=4)
 
@@ -207,10 +203,12 @@ If you're using the old `text_to_fol` function:
 ```python
 # Old way (deprecated)
 from ipfs_datasets_py.logic.fol.text_to_fol import text_to_fol
+
 result = text_to_fol("text")
 
 # New way (recommended)
 from ipfs_datasets_py.logic.fol import FOLConverter
+
 converter = FOLConverter()
 result = converter.convert("text")
 ```

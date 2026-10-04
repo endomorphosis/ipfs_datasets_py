@@ -42,8 +42,12 @@ def _make_mediator():
 
 def _make_score(c=0.8, con=0.7, cl=0.6, g=0.5, da=0.9) -> CriticScore:
     return CriticScore(
-        completeness=c, consistency=con, clarity=cl, granularity=g, relationship_coherence=da
-    , domain_alignment=da
+        completeness=c,
+        consistency=con,
+        clarity=cl,
+        granularity=g,
+        relationship_coherence=da,
+        domain_alignment=da,
     )
 
 
@@ -186,21 +190,25 @@ class TestApplyActionBulk:
 
     def test_accepts_action_args_pairs(self):
         med = _make_mediator()
-        n = med.apply_action_bulk([
-            ("add_entity", {"id": "e1"}),
-            ("add_entity", {"id": "e2"}),
-            ("remove_rel", {"id": "r1"}),
-        ])
+        n = med.apply_action_bulk(
+            [
+                ("add_entity", {"id": "e1"}),
+                ("add_entity", {"id": "e2"}),
+                ("remove_rel", {"id": "r1"}),
+            ]
+        )
         assert n == 3
         assert med.action_count_for("add_entity") == 2
         assert med.action_count_for("remove_rel") == 1
 
     def test_accepts_dict_entries(self):
         med = _make_mediator()
-        n = med.apply_action_bulk([
-            {"action": "normalize_names", "args": {}},
-            {"action": "normalize_names"},
-        ])
+        n = med.apply_action_bulk(
+            [
+                {"action": "normalize_names", "args": {}},
+                {"action": "normalize_names"},
+            ]
+        )
         assert n == 2
         assert med.action_count_for("normalize_names") == 2
 

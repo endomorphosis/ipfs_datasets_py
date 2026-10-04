@@ -16,14 +16,21 @@ import tempfile
 from typing import Dict, List, Any, Optional, Union, Tuple
 
 from ipfs_datasets_py.ipld import (
-    IPLDStorage, IPLDVectorStore, SearchResult,
-    IPLDKnowledgeGraph, Entity, Relationship
+    IPLDStorage,
+    IPLDVectorStore,
+    SearchResult,
+    IPLDKnowledgeGraph,
+    Entity,
+    Relationship,
 )
 from ipfs_datasets_py.logic.integrations.graphrag_integration import (
-    GraphRAGFactory, HybridVectorGraphSearch, GraphRAGQueryEngine,
-    CrossDocumentReasoner
+    GraphRAGFactory,
+    HybridVectorGraphSearch,
+    GraphRAGQueryEngine,
+    CrossDocumentReasoner,
 )
 from ipfs_datasets_py.rag.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer
+
 
 class GraphRAGDemo:
     """
@@ -54,16 +61,12 @@ class GraphRAGDemo:
 
         # Initialize vector store
         self.vector_store = IPLDVectorStore(
-            dimension=dimension,
-            metric="cosine",
-            storage=self.storage
+            dimension=dimension, metric="cosine", storage=self.storage
         )
 
         # Initialize knowledge graph
         self.kg = IPLDKnowledgeGraph(
-            name="demo_graph",
-            storage=self.storage,
-            vector_store=self.vector_store
+            name="demo_graph", storage=self.storage, vector_store=self.vector_store
         )
 
         # Initialize query optimizer
@@ -80,7 +83,7 @@ class GraphRAGDemo:
         title: str,
         content: str,
         metadata: Optional[Dict[str, Any]] = None,
-        vector: Optional[np.ndarray] = None
+        vector: Optional[np.ndarray] = None,
     ) -> Entity:
         """
         Add a document to the system.
@@ -103,10 +106,7 @@ class GraphRAGDemo:
             vector = vector / np.linalg.norm(vector)
 
         # Create document properties
-        doc_properties = {
-            "title": title,
-            "content": content
-        }
+        doc_properties = {"title": title, "content": content}
 
         # Add metadata if provided
         if metadata:
@@ -114,10 +114,7 @@ class GraphRAGDemo:
 
         # Add document entity to knowledge graph
         document = self.kg.add_entity(
-            entity_type="document",
-            name=title,
-            properties=doc_properties,
-            vector=vector
+            entity_type="document", name=title, properties=doc_properties, vector=vector
         )
 
         # Track the document
@@ -126,10 +123,7 @@ class GraphRAGDemo:
         return document
 
     def add_concept(
-        self,
-        name: str,
-        description: str,
-        vector: Optional[np.ndarray] = None
+        self, name: str, description: str, vector: Optional[np.ndarray] = None
     ) -> Entity:
         """
         Add a concept to the knowledge graph.
@@ -151,10 +145,7 @@ class GraphRAGDemo:
 
         # Add concept entity to knowledge graph
         concept = self.kg.add_entity(
-            entity_type="concept",
-            name=name,
-            properties={"description": description},
-            vector=vector
+            entity_type="concept", name=name, properties={"description": description}, vector=vector
         )
 
         # Track the entity
@@ -163,10 +154,7 @@ class GraphRAGDemo:
         return concept
 
     def add_document_concept_relation(
-        self,
-        document: Entity,
-        concept: Entity,
-        confidence: float = 1.0
+        self, document: Entity, concept: Entity, confidence: float = 1.0
     ) -> Relationship:
         """
         Add a relationship between a document and a concept.
@@ -185,7 +173,7 @@ class GraphRAGDemo:
             source=document,
             target=concept,
             properties={"confidence": confidence},
-            confidence=confidence
+            confidence=confidence,
         )
 
         # Track the relationship
@@ -199,7 +187,7 @@ class GraphRAGDemo:
         target_concept: Entity,
         relationship_type: str = "related_to",
         properties: Optional[Dict[str, Any]] = None,
-        confidence: float = 1.0
+        confidence: float = 1.0,
     ) -> Relationship:
         """
         Add a relationship between two concepts.
@@ -220,7 +208,7 @@ class GraphRAGDemo:
             source=source_concept,
             target=target_concept,
             properties=properties or {},
-            confidence=confidence
+            confidence=confidence,
         )
 
         # Track the relationship
@@ -237,10 +225,7 @@ class GraphRAGDemo:
         """
         # Create hybrid search
         hybrid_search = HybridVectorGraphSearch(
-            self.kg,
-            vector_weight=0.6,
-            graph_weight=0.4,
-            max_graph_hops=2
+            self.kg, vector_weight=0.6, graph_weight=0.4, max_graph_hops=2
         )
 
         # Create GraphRAG query engine
@@ -252,7 +237,7 @@ class GraphRAGDemo:
             hybrid_search=hybrid_search,
             enable_cross_document_reasoning=True,
             enable_query_rewriting=True,
-            enable_budget_management=True
+            enable_budget_management=True,
         )
 
         return query_engine
@@ -263,7 +248,7 @@ class GraphRAGDemo:
         query_vector: Optional[np.ndarray] = None,
         include_graph_results: bool = True,
         include_cross_document_reasoning: bool = True,
-        reasoning_depth: str = "moderate"
+        reasoning_depth: str = "moderate",
     ) -> Dict[str, Any]:
         """
         Execute a GraphRAG query.
@@ -305,7 +290,7 @@ class GraphRAGDemo:
             min_relevance=0.5,
             max_graph_hops=2,
             reasoning_depth=reasoning_depth,
-            return_trace=True
+            return_trace=True,
         )
 
         return results
@@ -354,16 +339,13 @@ class GraphRAGDemo:
             "vector_store": vector_store_path,
             "knowledge_graph": kg_path,
             "vector_store_cid": vector_store_cid,
-            "knowledge_graph_cid": kg_cid
+            "knowledge_graph_cid": kg_cid,
         }
 
     @classmethod
     def from_car_files(
-        cls,
-        vector_store_path: str,
-        knowledge_graph_path: str,
-        dimension: int = 768
-    ) -> 'GraphRAGDemo':
+        cls, vector_store_path: str, knowledge_graph_path: str, dimension: int = 768
+    ) -> "GraphRAGDemo":
         """
         Create a GraphRAG demo from CAR files.
 
@@ -386,9 +368,7 @@ class GraphRAGDemo:
 
         # Import knowledge graph
         demo.kg = IPLDKnowledgeGraph.from_car(
-            knowledge_graph_path,
-            storage=demo.storage,
-            vector_store=demo.vector_store
+            knowledge_graph_path, storage=demo.storage, vector_store=demo.vector_store
         )
 
         # Rebuild demo.documents and demo.entities lists
@@ -439,22 +419,22 @@ class GraphRAGDemo:
         # Add concepts
         ipfs = self.add_concept(
             name="IPFS",
-            description="InterPlanetary File System, a protocol and network for distributed content addressing"
+            description="InterPlanetary File System, a protocol and network for distributed content addressing",
         )
 
         content_addressing = self.add_concept(
             name="Content Addressing",
-            description="Method of identifying data by its content rather than location"
+            description="Method of identifying data by its content rather than location",
         )
 
         cid = self.add_concept(
             name="CID",
-            description="Content Identifier, a self-describing content-addressed identifier"
+            description="Content Identifier, a self-describing content-addressed identifier",
         )
 
         ipld = self.add_concept(
             name="IPLD",
-            description="InterPlanetary Linked Data, a data model for content-addressed data"
+            description="InterPlanetary Linked Data, a data model for content-addressed data",
         )
 
         # Add document-concept relationships
@@ -469,10 +449,16 @@ class GraphRAGDemo:
         self.add_document_concept_relation(doc3, ipfs, 0.5)
 
         # Add concept-concept relationships
-        self.add_concept_concept_relation(ipfs, content_addressing, "uses", {"importance": "high"}, 0.9)
-        self.add_concept_concept_relation(content_addressing, cid, "implements_as", {"in_context": "IPFS"}, 0.8)
+        self.add_concept_concept_relation(
+            ipfs, content_addressing, "uses", {"importance": "high"}, 0.9
+        )
+        self.add_concept_concept_relation(
+            content_addressing, cid, "implements_as", {"in_context": "IPFS"}, 0.8
+        )
         self.add_concept_concept_relation(ipld, ipfs, "used_by", {"as": "data model"}, 0.9)
-        self.add_concept_concept_relation(ipld, content_addressing, "uses", {"for": "addressing blocks"}, 0.8)
+        self.add_concept_concept_relation(
+            ipld, content_addressing, "uses", {"for": "addressing blocks"}, 0.8
+        )
 
 
 def run_example():
@@ -484,8 +470,10 @@ def run_example():
     print("Creating sample knowledge graph...")
     demo.create_sample_graph()
 
-    print(f"Created {len(demo.documents)} documents, {len(demo.entities)} concepts, "
-          f"and {len(demo.relationships)} relationships")
+    print(
+        f"Created {len(demo.documents)} documents, {len(demo.entities)} concepts, "
+        f"and {len(demo.relationships)} relationships"
+    )
 
     # Create a sample query
     query_text = "How does IPFS use content addressing?"
@@ -501,7 +489,7 @@ def run_example():
         query_vector=query_vector,
         include_graph_results=True,
         include_cross_document_reasoning=True,
-        reasoning_depth="moderate"
+        reasoning_depth="moderate",
     )
 
     # Display results
@@ -517,7 +505,7 @@ def run_example():
         print("\nTop 3 Hybrid Results:")
         for i, result in enumerate(results["hybrid_results"][:3]):
             entity = result["entity"]
-            print(f"  {i+1}. {entity.name} (Type: {entity.type})")
+            print(f"  {i + 1}. {entity.name} (Type: {entity.type})")
             if "path" in result and result["path"]:
                 path_str = " → ".join([p.get("relationship", "related") for p in result["path"]])
                 print(f"     Path: {path_str}")
@@ -545,21 +533,18 @@ def run_example():
     # Reload from CAR files
     print("\nReloading from CAR files...")
     reloaded_demo = GraphRAGDemo.from_car_files(
-        car_files["vector_store"],
-        car_files["knowledge_graph"],
-        dimension=128
+        car_files["vector_store"], car_files["knowledge_graph"], dimension=128
     )
 
-    print(f"Reloaded {len(reloaded_demo.documents)} documents, "
-          f"{len(reloaded_demo.entities)} concepts, and "
-          f"{len(reloaded_demo.relationships)} relationships")
+    print(
+        f"Reloaded {len(reloaded_demo.documents)} documents, "
+        f"{len(reloaded_demo.entities)} concepts, and "
+        f"{len(reloaded_demo.relationships)} relationships"
+    )
 
     # Execute the same query on the reloaded system
     print("\nExecuting query on reloaded system...")
-    reloaded_results = reloaded_demo.execute_query(
-        query_text=query_text,
-        query_vector=query_vector
-    )
+    reloaded_results = reloaded_demo.execute_query(query_text=query_text, query_vector=query_vector)
 
     if "reasoning_result" in reloaded_results and "answer" in reloaded_results["reasoning_result"]:
         print("\nReloaded Reasoning Result:")

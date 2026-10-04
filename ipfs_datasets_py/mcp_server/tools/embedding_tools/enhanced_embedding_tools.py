@@ -7,6 +7,7 @@ lives in ipfs_datasets_py.embeddings.embeddings_engine.
 Stand-alone embedding functions (generate_embedding, generate_batch_embeddings,
 generate_embeddings_from_file) live in ipfs_datasets_py.embeddings.generation_engine.
 """
+
 from __future__ import annotations
 
 import logging
@@ -20,6 +21,7 @@ try:
         EmbeddingConfig,
         ChunkingConfig,
     )
+
     EMBEDDINGS_AVAILABLE = True
 except ImportError:
     EMBEDDINGS_AVAILABLE = False
@@ -43,7 +45,11 @@ async def chunk_text(text: str, **kwargs: Any) -> Dict[str, Any]:
     """Chunk text using AdvancedIPFSEmbeddings.chunk_text."""
     if not EMBEDDINGS_AVAILABLE:
         return {"status": "error", "error": "Embeddings engine not available"}
-    from ipfs_datasets_py.embeddings.embeddings_engine import AdvancedIPFSEmbeddings as _AE, ChunkingConfig as _CC
+    from ipfs_datasets_py.embeddings.embeddings_engine import (
+        AdvancedIPFSEmbeddings as _AE,
+        ChunkingConfig as _CC,
+    )
+
     eng = _AE()
     cfg = _CC(
         chunk_size=kwargs.get("chunk_size", 512),
@@ -66,6 +72,7 @@ async def manage_endpoints(action: str, model: str, endpoint: str, **kwargs: Any
     if not EMBEDDINGS_AVAILABLE:
         return {"status": "error", "error": "Embeddings engine not available"}
     from ipfs_datasets_py.embeddings.embeddings_engine import AdvancedIPFSEmbeddings as _AE
+
     eng = _AE()
     endpoint_type = kwargs.get("endpoint_type", "tei")
     context_length = kwargs.get("context_length", 512)
@@ -77,5 +84,9 @@ async def manage_endpoints(action: str, model: str, endpoint: str, **kwargs: Any
         available = await eng.test_endpoint(endpoint, model)
         return {"status": "success", "action": "tested", "model": model, "available": available}
     if action in ("list", "status"):
-        return {"status": "success", "action": action, "endpoints": eng.get_endpoints(model, endpoint_type)}
+        return {
+            "status": "success",
+            "action": action,
+            "endpoints": eng.get_endpoints(model, endpoint_type),
+        }
     return {"status": "error", "error": f"Unknown action: {action}"}

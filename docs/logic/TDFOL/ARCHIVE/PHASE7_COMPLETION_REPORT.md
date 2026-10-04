@@ -274,7 +274,7 @@ from ipfs_datasets_py.logic.TDFOL.nl import parse_natural_language_batch
 texts = [
     "All contractors must pay taxes.",
     "Employees may request vacation.",
-    "Disclosure is forbidden."
+    "Disclosure is forbidden.",
 ]
 results = parse_natural_language_batch(texts)
 ```

@@ -98,7 +98,9 @@ def test_run_cli_command_preserves_prompt_with_quotes_in_template(monkeypatch) -
     assert captured["cmd"][-1] == 'He said "notice denied" and then filed a grievance.'
 
 
-def test_mistral_vibe_provider_passes_model_and_auth_without_prompt_interpolation(monkeypatch) -> None:
+def test_mistral_vibe_provider_passes_model_and_auth_without_prompt_interpolation(
+    monkeypatch,
+) -> None:
     captured = {}
 
     def fake_run(cmd, **kwargs):

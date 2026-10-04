@@ -50,7 +50,7 @@ class TestSrlNpadvmodDeadCodeRemoved:
         """
         src = _SRL_PY.read_text()
         assert 'elif dep in ("npadvmod",)' not in src, (
-            "srl.py still contains the dead `elif dep in (\"npadvmod\",):` branch"
+            'srl.py still contains the dead `elif dep in ("npadvmod",):` branch'
         )
 
     def test_srl_source_has_exactly_one_npadvmod_occurrence(self):
@@ -61,9 +61,7 @@ class TestSrlNpadvmodDeadCodeRemoved:
         """
         src = _SRL_PY.read_text()
         count = src.count("npadvmod")
-        assert count == 1, (
-            f"Expected exactly 1 occurrence of 'npadvmod' in srl.py, found {count}"
-        )
+        assert count == 1, f"Expected exactly 1 occurrence of 'npadvmod' in srl.py, found {count}"
 
     def test_srl_source_npadvmod_in_combined_elif(self):
         """
@@ -72,9 +70,7 @@ class TestSrlNpadvmodDeadCodeRemoved:
         THEN it lives on a line that also contains ``prep`` and ``advmod``.
         """
         src = _SRL_PY.read_text()
-        line = next(
-            line for line in src.splitlines() if "npadvmod" in line
-        )
+        line = next(line for line in src.splitlines() if "npadvmod" in line)
         assert "prep" in line and "advmod" in line, (
             f"The only npadvmod line should also contain 'prep' and 'advmod', got: {line!r}"
         )
@@ -96,12 +92,11 @@ class TestSrlNpadvmodDeadCodeRemoved:
                 continue
             # extract all "dep_tag" strings from the line
             import re as _re
+
             for token in _re.findall(r'"([a-z_]+)"', stripped):
                 dep_mentions[token] = dep_mentions.get(token, 0) + 1
         duplicates = {k: v for k, v in dep_mentions.items() if v > 1}
-        assert not duplicates, (
-            f"Some dep-values appear in multiple elif branches: {duplicates}"
-        )
+        assert not duplicates, f"Some dep-values appear in multiple elif branches: {duplicates}"
 
     def test_srl_extract_spacy_npadvmod_token_yields_time_role(self):
         """
@@ -252,9 +247,7 @@ class TestIpldExtrasMultiformats:
         assert start != -1, "pyproject.toml missing 'ipld = [' section"
         end = src.find("]", start)
         block = src[start : end + 1]
-        assert "multiformats" in block, (
-            "pyproject.toml 'ipld' extras must include multiformats"
-        )
+        assert "multiformats" in block, "pyproject.toml 'ipld' extras must include multiformats"
 
     def test_pyproject_toml_ipld_consistent_with_setup_py(self):
         """
@@ -294,6 +287,7 @@ class TestIpldCarImportErrorBranch:
         sys.modules[dep] = None  # type: ignore[assignment]
         try:
             import importlib
+
             fresh = importlib.import_module(self._IPLD_MOD)
             return fresh
         finally:

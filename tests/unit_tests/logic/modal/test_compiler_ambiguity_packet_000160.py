@@ -93,8 +93,7 @@ def test_compiler_surfaces_packet_000160_explicit_adaptive_ambiguity(
         family_margin=family_margin,
     )
     family_shares = {
-        str(candidate["family"]): float(candidate["share_raw"])
-        for candidate in ranking
+        str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
     }
     text = f"Synthetic packet 000160 {predicted_family} ambiguity evidence."
     encoding = SpaCyLegalEncoding(
@@ -153,9 +152,7 @@ def test_compiler_surfaces_packet_000160_explicit_adaptive_ambiguity(
     )
 
     policy_pair = f"{predicted_family}->{target_family}"
-    expected_type = (
-        f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
-    )
+    expected_type = f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
     explicit_ambiguity = next(
         ambiguity
         for ambiguity in ambiguities
@@ -171,7 +168,4 @@ def test_compiler_surfaces_packet_000160_explicit_adaptive_ambiguity(
     assert explicit_ambiguity.metadata["has_target_signal_evidence"] is True
     assert explicit_ambiguity.metadata["signal_free_pair_policy_applied"] is False
     assert explicit_ambiguity.metadata["is_explicit_adaptive_ambiguity"] is True
-    assert (
-        abs(float(explicit_ambiguity.metadata["family_margin_raw"]) - family_margin)
-        < 1e-12
-    )
+    assert abs(float(explicit_ambiguity.metadata["family_margin_raw"]) - family_margin) < 1e-12

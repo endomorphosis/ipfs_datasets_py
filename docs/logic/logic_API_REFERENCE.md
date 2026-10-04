@@ -115,7 +115,10 @@ from ipfs_datasets_py.logic.TDFOL.zkp_integration import ZKPTDFOLProver, Unified
 ### 4.2 CEC
 
 ```python
-from ipfs_datasets_py.logic.CEC.native.cec_zkp_integration import ZKPCECProver, UnifiedCECProofResult
+from ipfs_datasets_py.logic.CEC.native.cec_zkp_integration import (
+    ZKPCECProver,
+    UnifiedCECProofResult,
+)
 ```
 
 - Hybrid CEC proving with optional private-axiom handling.

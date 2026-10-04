@@ -1,6 +1,7 @@
 """
 Test suite for core/content_sanitizer/_sanitized_content.py converted from unittest to pytest.
 """
+
 import pytest
 from unittest.mock import MagicMock, patch
 import copy
@@ -19,7 +20,7 @@ from core.content_sanitizer import ContentSanitizer, SanitizedContent
 
 
 def make_constants_resources():
-    constants_resources = { # NOTE: Since these are constants, we can directly use them without mocking.
+    constants_resources = {  # NOTE: Since these are constants, we can directly use them without mocking.
         "dangerous_patterns": Constants.ContentSanitizer.DANGEROUS_PATTERNS_REGEX,
         "executable_extensions": Constants.ContentSanitizer.EXECUTABLE_EXTENSIONS,
         "file_size_limits_in_bytes": Constants.ContentSanitizer.FILE_SIZE_LIMITS_IN_BYTES,
@@ -45,22 +46,22 @@ def temp_dir():
 def test_files(temp_dir):
     """Create test files in temporary directory."""
     test_file_path = os.path.join(temp_dir, "test_file.txt")
-    with open(test_file_path, 'w') as f:
+    with open(test_file_path, "w") as f:
         f.write("Test content")
-    
+
     large_file_path = os.path.join(temp_dir, "large_file.txt")
-    with open(large_file_path, 'w') as f:
+    with open(large_file_path, "w") as f:
         f.write("A" * (15 * 1024 * 1024))  # 15 MB file (exceeds text limit)
-    
+
     executable_file_path = os.path.join(temp_dir, "test_script.sh")
-    with open(executable_file_path, 'w') as f:
+    with open(executable_file_path, "w") as f:
         f.write("#!/bin/sh\necho 'Hello, world!'")
 
     # Make it executable
     os.chmod(executable_file_path, 0o755)
 
     # Check if the file is executable
-    if os.name == 'nt':
+    if os.name == "nt":
         pass
     else:
         # On Unix-like systems, we can check if the file is executable
@@ -68,9 +69,9 @@ def test_files(temp_dir):
             raise PermissionError(f"File {executable_file_path} is not executable")
 
     return {
-        'test_file_path': test_file_path,
-        'large_file_path': large_file_path,
-        'executable_file_path': executable_file_path
+        "test_file_path": test_file_path,
+        "large_file_path": large_file_path,
+        "executable_file_path": executable_file_path,
     }
 
 
@@ -134,9 +135,9 @@ class TestSanitizedContent:
         sanitized = SanitizedContent(
             content=mock_content,
             sanitization_applied=["remove_scripts", "remove_personal_data"],
-            removed_content={"scripts": 2, "personal_data": 3}
+            removed_content={"scripts": 2, "personal_data": 3},
         )
-        
+
         assert sanitized.content.text == "Test text"
         assert sanitized.content.metadata["format"] == "txt"
         assert len(sanitized.content.sections) == 1
@@ -148,27 +149,27 @@ class TestSanitizedContent:
 
     def test_sanitized_content_to_dict(self, test_files):
         """Test SanitizedContent.to_dict()."""
-        mock_content = Content( # Use Content class with mock data
+        mock_content = Content(  # Use Content class with mock data
             text="Test text",
             metadata={"format": "txt"},
             sections=[{"title": "Section 1", "content": "Content 1"}],
             source_format="txt",
-            source_path=test_files['test_file_path']
+            source_path=test_files["test_file_path"],
         )
         sanitized = SanitizedContent(
             content=mock_content,
             sanitization_applied=["remove_scripts", "remove_personal_data"],
-            removed_content={"scripts": 2, "personal_data": 3}
+            removed_content={"scripts": 2, "personal_data": 3},
         )
-        
+
         result_dict = sanitized.to_dict()
         debug_logger.debug(f"Sanitized content dict: {result_dict}")
-        
+
         assert result_dict["text"] == "Test text"
         assert result_dict["metadata"]["format"] == "txt"
         assert len(result_dict["sections"]) == 1
         assert result_dict["source_format"] == "txt"
-        assert str(result_dict["source_path"]) == test_files['test_file_path']
+        assert str(result_dict["source_path"]) == test_files["test_file_path"]
         assert len(result_dict["sanitization_applied"]) == 2
         assert result_dict["removed_content"]["scripts"] == 2
         assert result_dict["removed_content"]["personal_data"] == 3

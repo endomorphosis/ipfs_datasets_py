@@ -19,17 +19,17 @@ from .storage_tools import (
     CompressionType,
     StorageItem,
     Collection,
-    MockStorageManager
+    MockStorageManager,
 )
 
 __all__ = [
     "store_data",
     "retrieve_data",
-    "manage_collections", 
+    "manage_collections",
     "query_storage",
     "StorageType",
     "CompressionType",
     "StorageItem",
     "Collection",
-    "MockStorageManager"
+    "MockStorageManager",
 ]

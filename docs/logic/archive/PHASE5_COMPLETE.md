@@ -43,16 +43,11 @@ from ipfs_datasets_py.logic.integration.neurosymbolic_graphrag import Neurosymbo
 
 # Initialize unified pipeline
 pipeline = NeurosymbolicGraphRAG(
-    use_neural=True,
-    enable_proof_caching=True,
-    proving_strategy="AUTO"
+    use_neural=True, enable_proof_caching=True, proving_strategy="AUTO"
 )
 
 # Process document
-result = pipeline.process_document(
-    "Alice must pay Bob within 30 days.",
-    "contract_001"
-)
+result = pipeline.process_document("Alice must pay Bob within 30 days.", "contract_001")
 
 # Query with reasoning
 query_result = pipeline.query("What are Alice's obligations?")
@@ -281,7 +276,7 @@ for step in result.reasoning_chain:
 documents = {
     "sla_001": "Provider must maintain 99.9% uptime.",
     "sla_002": "Provider must respond within 2 hours.",
-    "terms_001": "Customer must pay within 30 days."
+    "terms_001": "Customer must pay within 30 days.",
 }
 
 for doc_id, text in documents.items():

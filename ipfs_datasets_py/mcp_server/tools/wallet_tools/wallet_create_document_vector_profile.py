@@ -44,4 +44,7 @@ async def wallet_create_document_vector_profile(
             "snapshot_path": str(snapshot_path),
         }
     except Exception as exc:
-        return {"status": "error", "message": f"wallet_create_document_vector_profile failed: {exc}"}
+        return {
+            "status": "error",
+            "message": f"wallet_create_document_vector_profile failed: {exc}",
+        }

@@ -2,6 +2,7 @@
 ```python
 import unittest
 
+
 class TestErrorMonitorInitialization(unittest.TestCase):
     """Test ErrorMonitor initialization and configuration."""
 
@@ -77,6 +78,7 @@ class TestErrorMonitorInitialization(unittest.TestCase):
         THEN expect KeyError to be raised
         """
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()
 ```

@@ -5,7 +5,7 @@ from ..dependencies import dependencies
 from ..utils import load_sql_file
 
 
-def setup_error_database(error_db_path: Path, read_only: bool = False):  # -> DatabaseConnection  
+def setup_error_database(error_db_path: Path, read_only: bool = False):  # -> DatabaseConnection
     """Connect to DuckDB database for storing validation errors."""
 
     error_db_schema_path = Path(__file__).parent / "_error_db_schema.sql"

@@ -67,11 +67,14 @@ def test_execution_request_respects_global_opt_out(monkeypatch) -> None:
     )
     monkeypatch.setattr(lazy_installer, "find_executable", lambda _name: None)
 
-    assert lazy_installer.ensure_prover_executable(
-        "tamarin",
-        reason="Xaman protocol execution",
-        progress=events.append,
-    ) is None
+    assert (
+        lazy_installer.ensure_prover_executable(
+            "tamarin",
+            reason="Xaman protocol execution",
+            progress=events.append,
+        )
+        is None
+    )
     assert calls == []
     assert events[-1].phase == "disabled"
 
@@ -90,7 +93,9 @@ def test_ergoai_explicit_binary_is_resolved_without_install(monkeypatch, tmp_pat
     ) == str(executable)
 
 
-def test_cvc5_cli_installer_uses_user_local_launcher_without_network(monkeypatch, tmp_path: Path) -> None:
+def test_cvc5_cli_installer_uses_user_local_launcher_without_network(
+    monkeypatch, tmp_path: Path
+) -> None:
     from ipfs_datasets_py.logic.integration.bridges import prover_installer
 
     root = tmp_path / "provers"
@@ -184,7 +189,9 @@ def test_coq_opam_fallback_uses_isolated_user_local_root(monkeypatch, tmp_path: 
 
     monkeypatch.setattr(prover_installer, "_which", fake_which)
     monkeypatch.setattr(prover_installer, "_run", fake_run)
-    monkeypatch.setattr(prover_installer, "_run_custom_solver_installer", lambda *_args, **_kwargs: False)
+    monkeypatch.setattr(
+        prover_installer, "_run_custom_solver_installer", lambda *_args, **_kwargs: False
+    )
     monkeypatch.setattr(prover_installer, "_package_names_for", lambda *_args: [])
 
     assert prover_installer.ensure_coq(yes=True, strict=True)
@@ -232,9 +239,9 @@ def test_optional_packaging_and_installation_documentation_are_present() -> None
     setup = (root / "setup.py").read_text(encoding="utf-8")
     pyproject = (root / "pyproject.toml").read_text(encoding="utf-8")
     requirements = (root / "requirements-theorem-provers.txt").read_text(encoding="utf-8")
-    documentation = (root / "docs/security_verification/lazy_theorem_prover_installation.md").read_text(
-        encoding="utf-8"
-    )
+    documentation = (
+        root / "docs/security_verification/lazy_theorem_prover_installation.md"
+    ).read_text(encoding="utf-8")
 
     assert "theorem-provers" in setup
     assert "theorem-provers" in pyproject

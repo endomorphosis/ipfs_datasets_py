@@ -27,15 +27,18 @@ try:
     import numpy as np
     import pandas as pd
     import matplotlib
-    matplotlib.use('Agg')  # Non-interactive backend
+
+    matplotlib.use("Agg")  # Non-interactive backend
     import matplotlib.pyplot as plt
     import matplotlib.dates as mdates
     from matplotlib.ticker import MaxNLocator
+
     try:
         import seaborn as sns
     except ImportError:
         sns = None
     from matplotlib.figure import Figure
+
     VISUALIZATION_AVAILABLE = True
 except ImportError:
     logger.warning("Matplotlib/Seaborn not available. Visualization functions will not work.")
@@ -45,6 +48,7 @@ try:
     import plotly.graph_objects as go
     import plotly.express as px
     from plotly.subplots import make_subplots
+
     INTERACTIVE_VISUALIZATION_AVAILABLE = True
 except ImportError:
     logger.warning("Plotly not available. Interactive visualization functions will not work.")
@@ -54,9 +58,15 @@ except ImportError:
 class LearningMetrics:
     """Container for aggregated learning metrics."""
 
-    def __init__(self, total_learning_cycles=0, total_analyzed_queries=0,
-                total_patterns_identified=0, total_parameters_adjusted=0,
-                average_cycle_time=0.0, total_optimizations=0):
+    def __init__(
+        self,
+        total_learning_cycles=0,
+        total_analyzed_queries=0,
+        total_patterns_identified=0,
+        total_parameters_adjusted=0,
+        average_cycle_time=0.0,
+        total_optimizations=0,
+    ):
         """Initialize with metrics values."""
         self.total_learning_cycles = total_learning_cycles
         self.total_analyzed_queries = total_analyzed_queries
@@ -120,10 +130,17 @@ class OptimizerLearningMetricsCollector:
             self.learning_cycles.items(),
             key=lambda item: item[1].get("timestamp", 0),
         )
-        self.learning_cycles = dict(sorted_items[-self.max_history_size:])
+        self.learning_cycles = dict(sorted_items[-self.max_history_size :])
 
-    def record_learning_cycle(self, cycle_id, analyzed_queries, patterns_identified,
-                             parameters_adjusted, execution_time, timestamp=None):
+    def record_learning_cycle(
+        self,
+        cycle_id,
+        analyzed_queries,
+        patterns_identified,
+        parameters_adjusted,
+        execution_time,
+        timestamp=None,
+    ):
         """
         Record metrics from a completed learning cycle.
 
@@ -143,7 +160,7 @@ class OptimizerLearningMetricsCollector:
                 "analyzed_queries": analyzed_queries,
                 "patterns_identified": patterns_identified,
                 "parameters_adjusted": parameters_adjusted,
-                "execution_time": execution_time
+                "execution_time": execution_time,
             }
 
             self.total_analyzed_queries += analyzed_queries
@@ -154,10 +171,13 @@ class OptimizerLearningMetricsCollector:
             # Save metrics if directory is specified
             self._maybe_save_learning_metrics()
 
-            logger.info(f"Recorded learning cycle {cycle_id} with {analyzed_queries} queries analyzed")
+            logger.info(
+                f"Recorded learning cycle {cycle_id} with {analyzed_queries} queries analyzed"
+            )
 
-    def record_parameter_adaptation(self, parameter_name, old_value, new_value,
-                                   adaptation_reason, confidence, timestamp=None):
+    def record_parameter_adaptation(
+        self, parameter_name, old_value, new_value, adaptation_reason, confidence, timestamp=None
+    ):
         """
         Record a parameter adaptation from the learning process.
 
@@ -173,9 +193,9 @@ class OptimizerLearningMetricsCollector:
             timestamp = time.time() if timestamp is None else timestamp
 
             # Handle numpy/pandas data types for JSON serialization
-            if hasattr(old_value, 'tolist'):
+            if hasattr(old_value, "tolist"):
                 old_value = old_value.tolist()
-            if hasattr(new_value, 'tolist'):
+            if hasattr(new_value, "tolist"):
                 new_value = new_value.tolist()
 
             adaptation = {
@@ -184,22 +204,30 @@ class OptimizerLearningMetricsCollector:
                 "old_value": old_value,
                 "new_value": new_value,
                 "adaptation_reason": adaptation_reason,
-                "confidence": confidence
+                "confidence": confidence,
             }
 
             self.parameter_adaptations.append(adaptation)
 
             # Trim if necessary
             if len(self.parameter_adaptations) > self.max_history_size:
-                self.parameter_adaptations = self.parameter_adaptations[-self.max_history_size:]
+                self.parameter_adaptations = self.parameter_adaptations[-self.max_history_size :]
 
             self._maybe_save_learning_metrics()
 
-            logger.info(f"Recorded parameter adaptation: {parameter_name} changed from {old_value} to {new_value}")
+            logger.info(
+                f"Recorded parameter adaptation: {parameter_name} changed from {old_value} to {new_value}"
+            )
 
-    def record_strategy_effectiveness(self, strategy_name, query_type,
-                                     effectiveness_score, execution_time, result_count,
-                                     timestamp=None):
+    def record_strategy_effectiveness(
+        self,
+        strategy_name,
+        query_type,
+        effectiveness_score,
+        execution_time,
+        result_count,
+        timestamp=None,
+    ):
         """
         Record the effectiveness of a search strategy.
 
@@ -220,21 +248,30 @@ class OptimizerLearningMetricsCollector:
                 "query_type": query_type,
                 "effectiveness_score": effectiveness_score,
                 "execution_time": execution_time,
-                "result_count": result_count
+                "result_count": result_count,
             }
 
             self.strategy_effectiveness.append(effectiveness)
 
             # Trim if necessary
             if len(self.strategy_effectiveness) > self.max_history_size:
-                self.strategy_effectiveness = self.strategy_effectiveness[-self.max_history_size:]
+                self.strategy_effectiveness = self.strategy_effectiveness[-self.max_history_size :]
 
             self._maybe_save_learning_metrics()
 
-            logger.info(f"Recorded strategy effectiveness: {strategy_name} for {query_type} with score {effectiveness_score:.2f}")
+            logger.info(
+                f"Recorded strategy effectiveness: {strategy_name} for {query_type} with score {effectiveness_score:.2f}"
+            )
 
-    def record_query_pattern(self, pattern_id, pattern_type, matching_queries,
-                            average_performance, parameters, timestamp=None):
+    def record_query_pattern(
+        self,
+        pattern_id,
+        pattern_type,
+        matching_queries,
+        average_performance,
+        parameters,
+        timestamp=None,
+    ):
         """
         Record a query pattern identified by the optimizer.
 
@@ -255,18 +292,20 @@ class OptimizerLearningMetricsCollector:
                 "pattern_type": pattern_type,
                 "matching_queries": matching_queries,
                 "average_performance": average_performance,
-                "parameters": parameters
+                "parameters": parameters,
             }
 
             self.query_patterns.append(pattern)
 
             # Trim if necessary
             if len(self.query_patterns) > self.max_history_size:
-                self.query_patterns = self.query_patterns[-self.max_history_size:]
+                self.query_patterns = self.query_patterns[-self.max_history_size :]
 
             self._maybe_save_learning_metrics()
 
-            logger.info(f"Recorded query pattern: {pattern_id} of type {pattern_type} matching {matching_queries} queries")
+            logger.info(
+                f"Recorded query pattern: {pattern_id} of type {pattern_type} matching {matching_queries} queries"
+            )
 
     def get_learning_metrics(self) -> LearningMetrics:
         """
@@ -281,8 +320,12 @@ class OptimizerLearningMetricsCollector:
             if cycle_count == 0:
                 return LearningMetrics()
 
-            total_analyzed_queries = sum(cycle["analyzed_queries"] for cycle in self.learning_cycles.values())
-            total_patterns_identified = sum(cycle["patterns_identified"] for cycle in self.learning_cycles.values())
+            total_analyzed_queries = sum(
+                cycle["analyzed_queries"] for cycle in self.learning_cycles.values()
+            )
+            total_patterns_identified = sum(
+                cycle["patterns_identified"] for cycle in self.learning_cycles.values()
+            )
 
             # Count total parameter adjustments
             def _count_adjusted(value: Any) -> int:
@@ -305,7 +348,9 @@ class OptimizerLearningMetricsCollector:
             )
 
             # Calculate average cycle time
-            total_cycle_time = sum(cycle["execution_time"] for cycle in self.learning_cycles.values())
+            total_cycle_time = sum(
+                cycle["execution_time"] for cycle in self.learning_cycles.values()
+            )
             avg_cycle_time = total_cycle_time / cycle_count if cycle_count > 0 else 0
 
             return LearningMetrics(
@@ -314,7 +359,7 @@ class OptimizerLearningMetricsCollector:
                 total_patterns_identified=total_patterns_identified,
                 total_parameters_adjusted=total_parameters_adjusted,
                 average_cycle_time=avg_cycle_time,
-                total_optimizations=self.total_optimized_queries
+                total_optimizations=self.total_optimized_queries,
             )
 
     def get_effectiveness_by_strategy(self) -> Dict[str, Dict[str, Any]]:
@@ -340,7 +385,7 @@ class OptimizerLearningMetricsCollector:
                         "total_results": 0,
                         "avg_score": 0.0,
                         "avg_time": 0.0,
-                        "avg_results": 0
+                        "avg_results": 0,
                     }
 
                 result[strategy]["count"] += 1
@@ -380,7 +425,7 @@ class OptimizerLearningMetricsCollector:
                         "total_time": 0.0,
                         "avg_score": 0.0,
                         "avg_time": 0.0,
-                        "strategies": set()
+                        "strategies": set(),
                     }
 
                 result[query_type]["count"] += 1
@@ -420,7 +465,7 @@ class OptimizerLearningMetricsCollector:
                         "count": 0,
                         "total_queries": 0,
                         "avg_performance": 0.0,
-                        "patterns": []
+                        "patterns": [],
                     }
 
                 result[pattern_type]["count"] += 1
@@ -428,9 +473,13 @@ class OptimizerLearningMetricsCollector:
                 result[pattern_type]["patterns"].append(pattern["pattern_id"])
 
                 # Update average performance (weighted by matching queries)
-                total_performance = result[pattern_type]["avg_performance"] * (result[pattern_type]["total_queries"] - pattern["matching_queries"])
+                total_performance = result[pattern_type]["avg_performance"] * (
+                    result[pattern_type]["total_queries"] - pattern["matching_queries"]
+                )
                 total_performance += pattern["average_performance"] * pattern["matching_queries"]
-                result[pattern_type]["avg_performance"] = total_performance / result[pattern_type]["total_queries"]
+                result[pattern_type]["avg_performance"] = (
+                    total_performance / result[pattern_type]["total_queries"]
+                )
 
             return result
 
@@ -461,8 +510,9 @@ class OptimizerLearningMetricsCollector:
             parameters_adjusted = []
             execution_times = []
 
-            for cycle_id, cycle in sorted(self.learning_cycles.items(),
-                                         key=lambda x: x[1]["timestamp"]):
+            for cycle_id, cycle in sorted(
+                self.learning_cycles.items(), key=lambda x: x[1]["timestamp"]
+            ):
                 timestamps.append(datetime.datetime.fromtimestamp(cycle["timestamp"]))
                 analyzed_queries.append(cycle["analyzed_queries"])
                 patterns_identified.append(cycle["patterns_identified"])
@@ -475,43 +525,43 @@ class OptimizerLearningMetricsCollector:
 
             # Plot 1: Analyzed queries per cycle
             ax1 = axes[0, 0]
-            ax1.plot(timestamps, analyzed_queries, 'b-', marker='o')
-            ax1.set_title('Queries Analyzed per Learning Cycle')
-            ax1.set_xlabel('Time')
-            ax1.set_ylabel('Number of Queries')
+            ax1.plot(timestamps, analyzed_queries, "b-", marker="o")
+            ax1.set_title("Queries Analyzed per Learning Cycle")
+            ax1.set_xlabel("Time")
+            ax1.set_ylabel("Number of Queries")
             ax1.grid(True, alpha=0.3)
 
             # Plot 2: Patterns identified per cycle
             ax2 = axes[0, 1]
-            ax2.plot(timestamps, patterns_identified, 'g-', marker='o')
-            ax2.set_title('Patterns Identified per Learning Cycle')
-            ax2.set_xlabel('Time')
-            ax2.set_ylabel('Number of Patterns')
+            ax2.plot(timestamps, patterns_identified, "g-", marker="o")
+            ax2.set_title("Patterns Identified per Learning Cycle")
+            ax2.set_xlabel("Time")
+            ax2.set_ylabel("Number of Patterns")
             ax2.grid(True, alpha=0.3)
 
             # Plot 3: Parameters adjusted per cycle
             ax3 = axes[1, 0]
-            ax3.plot(timestamps, parameters_adjusted, 'r-', marker='o')
-            ax3.set_title('Parameters Adjusted per Learning Cycle')
-            ax3.set_xlabel('Time')
-            ax3.set_ylabel('Number of Parameters')
+            ax3.plot(timestamps, parameters_adjusted, "r-", marker="o")
+            ax3.set_title("Parameters Adjusted per Learning Cycle")
+            ax3.set_xlabel("Time")
+            ax3.set_ylabel("Number of Parameters")
             ax3.grid(True, alpha=0.3)
 
             # Plot 4: Execution time per cycle
             ax4 = axes[1, 1]
-            ax4.plot(timestamps, execution_times, 'm-', marker='o')
-            ax4.set_title('Execution Time per Learning Cycle')
-            ax4.set_xlabel('Time')
-            ax4.set_ylabel('Time (seconds)')
+            ax4.plot(timestamps, execution_times, "m-", marker="o")
+            ax4.set_title("Execution Time per Learning Cycle")
+            ax4.set_xlabel("Time")
+            ax4.set_ylabel("Time (seconds)")
             ax4.grid(True, alpha=0.3)
 
             # Format x-axis for all subplots
             for ax in axes.flat:
-                ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+                ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
                 plt.setp(ax.xaxis.get_majorticklabels(), rotation=45)
 
             # Add overall title
-            fig.suptitle('Learning Cycle Metrics Over Time', fontsize=16)
+            fig.suptitle("Learning Cycle Metrics Over Time", fontsize=16)
 
             # Adjust layout
             plt.tight_layout(rect=[0, 0, 1, 0.95])
@@ -551,11 +601,7 @@ class OptimizerLearningMetricsCollector:
             for adaptation in sorted(self.parameter_adaptations, key=lambda x: x["timestamp"]):
                 param_name = adaptation["parameter_name"]
                 if param_name not in parameters:
-                    parameters[param_name] = {
-                        "timestamps": [],
-                        "values": [],
-                        "confidence": []
-                    }
+                    parameters[param_name] = {"timestamps": [], "values": [], "confidence": []}
 
                 parameters[param_name]["timestamps"].append(
                     datetime.datetime.fromtimestamp(adaptation["timestamp"])
@@ -568,7 +614,9 @@ class OptimizerLearningMetricsCollector:
             if num_params == 0:
                 return None
 
-            fig, axes = plt.subplots(nrows=num_params, ncols=2, figsize=(14, 4 * num_params), dpi=100)
+            fig, axes = plt.subplots(
+                nrows=num_params, ncols=2, figsize=(14, 4 * num_params), dpi=100
+            )
 
             # Handle single parameter case
             if num_params == 1:
@@ -580,31 +628,31 @@ class OptimizerLearningMetricsCollector:
             for i, (param_name, param_data) in enumerate(parameters.items()):
                 # Plot parameter values
                 ax1 = axes[i][0]
-                ax1.plot(param_data["timestamps"], param_data["values"], 'b-', marker='o')
-                ax1.set_title(f'Parameter: {param_name} Value Over Time')
-                ax1.set_xlabel('Time')
-                ax1.set_ylabel('Value')
+                ax1.plot(param_data["timestamps"], param_data["values"], "b-", marker="o")
+                ax1.set_title(f"Parameter: {param_name} Value Over Time")
+                ax1.set_xlabel("Time")
+                ax1.set_ylabel("Value")
                 ax1.grid(True, alpha=0.3)
 
                 # Format x-axis
-                ax1.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+                ax1.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
                 plt.setp(ax1.xaxis.get_majorticklabels(), rotation=45)
 
                 # Plot confidence levels
                 ax2 = axes[i][1]
-                ax2.plot(param_data["timestamps"], param_data["confidence"], 'g-', marker='o')
-                ax2.set_title(f'Parameter: {param_name} Confidence Level')
-                ax2.set_xlabel('Time')
-                ax2.set_ylabel('Confidence')
+                ax2.plot(param_data["timestamps"], param_data["confidence"], "g-", marker="o")
+                ax2.set_title(f"Parameter: {param_name} Confidence Level")
+                ax2.set_xlabel("Time")
+                ax2.set_ylabel("Confidence")
                 ax2.set_ylim(0, 1.05)
                 ax2.grid(True, alpha=0.3)
 
                 # Format x-axis
-                ax2.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+                ax2.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
                 plt.setp(ax2.xaxis.get_majorticklabels(), rotation=45)
 
             # Add overall title
-            fig.suptitle('Parameter Adaptation Metrics', fontsize=16)
+            fig.suptitle("Parameter Adaptation Metrics", fontsize=16)
 
             # Adjust layout
             plt.tight_layout(rect=[0, 0, 1, 0.97])
@@ -636,7 +684,9 @@ class OptimizerLearningMetricsCollector:
 
         with self._lock:
             if not self.strategy_effectiveness:
-                logger.warning("No strategy effectiveness data recorded. Cannot generate visualization.")
+                logger.warning(
+                    "No strategy effectiveness data recorded. Cannot generate visualization."
+                )
                 return None
 
             # Get strategy metrics
@@ -656,75 +706,91 @@ class OptimizerLearningMetricsCollector:
             strategies = list(strategy_metrics.keys())
             avg_scores = [metrics["avg_score"] for metrics in strategy_metrics.values()]
 
-            bars = ax1.bar(strategies, avg_scores, color='blue', alpha=0.7)
-            ax1.set_title('Average Effectiveness Score by Strategy')
-            ax1.set_xlabel('Strategy')
-            ax1.set_ylabel('Effectiveness Score')
+            bars = ax1.bar(strategies, avg_scores, color="blue", alpha=0.7)
+            ax1.set_title("Average Effectiveness Score by Strategy")
+            ax1.set_xlabel("Strategy")
+            ax1.set_ylabel("Effectiveness Score")
             ax1.set_ylim(0, 1.05)
-            ax1.grid(True, alpha=0.3, axis='y')
+            ax1.grid(True, alpha=0.3, axis="y")
 
             # Add value labels on bars
             for bar in bars:
                 height = bar.get_height()
-                ax1.text(bar.get_x() + bar.get_width()/2., height,
-                        f'{height:.2f}',
-                        ha='center', va='bottom')
+                ax1.text(
+                    bar.get_x() + bar.get_width() / 2.0,
+                    height,
+                    f"{height:.2f}",
+                    ha="center",
+                    va="bottom",
+                )
 
             # Plot 2: Average execution time by strategy
             ax2 = axes[0, 1]
             avg_times = [metrics["avg_time"] for metrics in strategy_metrics.values()]
 
-            bars = ax2.bar(strategies, avg_times, color='green', alpha=0.7)
-            ax2.set_title('Average Execution Time by Strategy')
-            ax2.set_xlabel('Strategy')
-            ax2.set_ylabel('Time (seconds)')
-            ax2.grid(True, alpha=0.3, axis='y')
+            bars = ax2.bar(strategies, avg_times, color="green", alpha=0.7)
+            ax2.set_title("Average Execution Time by Strategy")
+            ax2.set_xlabel("Strategy")
+            ax2.set_ylabel("Time (seconds)")
+            ax2.grid(True, alpha=0.3, axis="y")
 
             # Add value labels on bars
             for bar in bars:
                 height = bar.get_height()
-                ax2.text(bar.get_x() + bar.get_width()/2., height,
-                        f'{height:.2f}s',
-                        ha='center', va='bottom')
+                ax2.text(
+                    bar.get_x() + bar.get_width() / 2.0,
+                    height,
+                    f"{height:.2f}s",
+                    ha="center",
+                    va="bottom",
+                )
 
             # Plot 3: Average number of results by strategy
             ax3 = axes[1, 0]
             avg_results = [metrics["avg_results"] for metrics in strategy_metrics.values()]
 
-            bars = ax3.bar(strategies, avg_results, color='red', alpha=0.7)
-            ax3.set_title('Average Number of Results by Strategy')
-            ax3.set_xlabel('Strategy')
-            ax3.set_ylabel('Number of Results')
-            ax3.grid(True, alpha=0.3, axis='y')
+            bars = ax3.bar(strategies, avg_results, color="red", alpha=0.7)
+            ax3.set_title("Average Number of Results by Strategy")
+            ax3.set_xlabel("Strategy")
+            ax3.set_ylabel("Number of Results")
+            ax3.grid(True, alpha=0.3, axis="y")
 
             # Add value labels on bars
             for bar in bars:
                 height = bar.get_height()
-                ax3.text(bar.get_x() + bar.get_width()/2., height,
-                        f'{height:.1f}',
-                        ha='center', va='bottom')
+                ax3.text(
+                    bar.get_x() + bar.get_width() / 2.0,
+                    height,
+                    f"{height:.1f}",
+                    ha="center",
+                    va="bottom",
+                )
 
             # Plot 4: Effectiveness by query type
             ax4 = axes[1, 1]
             query_types = list(query_type_metrics.keys())
             query_type_scores = [metrics["avg_score"] for metrics in query_type_metrics.values()]
 
-            bars = ax4.bar(query_types, query_type_scores, color='purple', alpha=0.7)
-            ax4.set_title('Average Effectiveness by Query Type')
-            ax4.set_xlabel('Query Type')
-            ax4.set_ylabel('Effectiveness Score')
+            bars = ax4.bar(query_types, query_type_scores, color="purple", alpha=0.7)
+            ax4.set_title("Average Effectiveness by Query Type")
+            ax4.set_xlabel("Query Type")
+            ax4.set_ylabel("Effectiveness Score")
             ax4.set_ylim(0, 1.05)
-            ax4.grid(True, alpha=0.3, axis='y')
+            ax4.grid(True, alpha=0.3, axis="y")
 
             # Add value labels on bars
             for bar in bars:
                 height = bar.get_height()
-                ax4.text(bar.get_x() + bar.get_width()/2., height,
-                        f'{height:.2f}',
-                        ha='center', va='bottom')
+                ax4.text(
+                    bar.get_x() + bar.get_width() / 2.0,
+                    height,
+                    f"{height:.2f}",
+                    ha="center",
+                    va="bottom",
+                )
 
             # Add overall title
-            fig.suptitle('Strategy Effectiveness Metrics', fontsize=16)
+            fig.suptitle("Strategy Effectiveness Metrics", fontsize=16)
 
             # Adjust layout
             plt.tight_layout(rect=[0, 0, 1, 0.95])
@@ -775,38 +841,46 @@ class OptimizerLearningMetricsCollector:
             pattern_types = list(pattern_metrics.keys())
             pattern_counts = [metrics["count"] for metrics in pattern_metrics.values()]
 
-            bars = ax1.bar(pattern_types, pattern_counts, color='blue', alpha=0.7)
-            ax1.set_title('Number of Patterns by Type')
-            ax1.set_xlabel('Pattern Type')
-            ax1.set_ylabel('Number of Patterns')
-            ax1.grid(True, alpha=0.3, axis='y')
+            bars = ax1.bar(pattern_types, pattern_counts, color="blue", alpha=0.7)
+            ax1.set_title("Number of Patterns by Type")
+            ax1.set_xlabel("Pattern Type")
+            ax1.set_ylabel("Number of Patterns")
+            ax1.grid(True, alpha=0.3, axis="y")
 
             # Add value labels on bars
             for bar in bars:
                 height = bar.get_height()
-                ax1.text(bar.get_x() + bar.get_width()/2., height,
-                        f'{int(height)}',
-                        ha='center', va='bottom')
+                ax1.text(
+                    bar.get_x() + bar.get_width() / 2.0,
+                    height,
+                    f"{int(height)}",
+                    ha="center",
+                    va="bottom",
+                )
 
             # Plot 2: Matching queries by pattern type
             ax2 = axes[1]
             matching_queries = [metrics["total_queries"] for metrics in pattern_metrics.values()]
 
-            bars = ax2.bar(pattern_types, matching_queries, color='green', alpha=0.7)
-            ax2.set_title('Total Queries Matching Each Pattern Type')
-            ax2.set_xlabel('Pattern Type')
-            ax2.set_ylabel('Number of Matching Queries')
-            ax2.grid(True, alpha=0.3, axis='y')
+            bars = ax2.bar(pattern_types, matching_queries, color="green", alpha=0.7)
+            ax2.set_title("Total Queries Matching Each Pattern Type")
+            ax2.set_xlabel("Pattern Type")
+            ax2.set_ylabel("Number of Matching Queries")
+            ax2.grid(True, alpha=0.3, axis="y")
 
             # Add value labels on bars
             for bar in bars:
                 height = bar.get_height()
-                ax2.text(bar.get_x() + bar.get_width()/2., height,
-                        f'{int(height)}',
-                        ha='center', va='bottom')
+                ax2.text(
+                    bar.get_x() + bar.get_width() / 2.0,
+                    height,
+                    f"{int(height)}",
+                    ha="center",
+                    va="bottom",
+                )
 
             # Add overall title
-            fig.suptitle('Query Pattern Analysis', fontsize=16)
+            fig.suptitle("Query Pattern Analysis", fontsize=16)
 
             # Adjust layout
             plt.tight_layout(rect=[0, 0, 1, 0.95])
@@ -847,21 +921,26 @@ class OptimizerLearningMetricsCollector:
             patterns_per_query = []
             parameters_per_pattern = []
 
-            for cycle_id, cycle in sorted(self.learning_cycles.items(),
-                                         key=lambda x: x[1]["timestamp"]):
+            for cycle_id, cycle in sorted(
+                self.learning_cycles.items(), key=lambda x: x[1]["timestamp"]
+            ):
                 timestamp = datetime.datetime.fromtimestamp(cycle["timestamp"])
                 timestamps.append(timestamp)
                 execution_times.append(cycle["execution_time"])
 
                 # Calculate patterns identified per query
                 if cycle["analyzed_queries"] > 0:
-                    patterns_per_query.append(cycle["patterns_identified"] / cycle["analyzed_queries"])
+                    patterns_per_query.append(
+                        cycle["patterns_identified"] / cycle["analyzed_queries"]
+                    )
                 else:
                     patterns_per_query.append(0)
 
                 # Calculate parameters adjusted per pattern
                 if cycle["patterns_identified"] > 0:
-                    parameters_per_pattern.append(len(cycle["parameters_adjusted"]) / cycle["patterns_identified"])
+                    parameters_per_pattern.append(
+                        len(cycle["parameters_adjusted"]) / cycle["patterns_identified"]
+                    )
                 else:
                     parameters_per_pattern.append(0)
 
@@ -871,10 +950,10 @@ class OptimizerLearningMetricsCollector:
 
             # Plot 1: Learning cycle execution time trend
             ax1 = axes[0, 0]
-            ax1.plot(timestamps, execution_times, 'b-', marker='o')
-            ax1.set_title('Learning Cycle Execution Time Trend')
-            ax1.set_xlabel('Time')
-            ax1.set_ylabel('Execution Time (seconds)')
+            ax1.plot(timestamps, execution_times, "b-", marker="o")
+            ax1.set_title("Learning Cycle Execution Time Trend")
+            ax1.set_xlabel("Time")
+            ax1.set_ylabel("Execution Time (seconds)")
             ax1.grid(True, alpha=0.3)
 
             # Add trendline using numpy's polyfit
@@ -882,55 +961,65 @@ class OptimizerLearningMetricsCollector:
                 timestamp_nums = mdates.date2num(timestamps)
                 z = np.polyfit(timestamp_nums, execution_times, 1)
                 p = np.poly1d(z)
-                ax1.plot(timestamps, p(timestamp_nums), "r--", alpha=0.8,
-                        label=f"Trend: {z[0]:.3f}x + {z[1]:.3f}")
+                ax1.plot(
+                    timestamps,
+                    p(timestamp_nums),
+                    "r--",
+                    alpha=0.8,
+                    label=f"Trend: {z[0]:.3f}x + {z[1]:.3f}",
+                )
                 ax1.legend()
 
             # Format x-axis
-            ax1.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+            ax1.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
             plt.setp(ax1.xaxis.get_majorticklabels(), rotation=45)
 
             # Plot 2: Patterns identified per query
             ax2 = axes[0, 1]
-            ax2.plot(timestamps, patterns_per_query, 'g-', marker='o')
-            ax2.set_title('Patterns Identified Per Query')
-            ax2.set_xlabel('Time')
-            ax2.set_ylabel('Patterns per Query')
+            ax2.plot(timestamps, patterns_per_query, "g-", marker="o")
+            ax2.set_title("Patterns Identified Per Query")
+            ax2.set_xlabel("Time")
+            ax2.set_ylabel("Patterns per Query")
             ax2.grid(True, alpha=0.3)
 
             # Format x-axis
-            ax2.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+            ax2.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
             plt.setp(ax2.xaxis.get_majorticklabels(), rotation=45)
 
             # Plot 3: Parameters adjusted per pattern
             ax3 = axes[1, 0]
-            ax3.plot(timestamps, parameters_per_pattern, 'r-', marker='o')
-            ax3.set_title('Parameters Adjusted Per Pattern')
-            ax3.set_xlabel('Time')
-            ax3.set_ylabel('Parameters per Pattern')
+            ax3.plot(timestamps, parameters_per_pattern, "r-", marker="o")
+            ax3.set_title("Parameters Adjusted Per Pattern")
+            ax3.set_xlabel("Time")
+            ax3.set_ylabel("Parameters per Pattern")
             ax3.grid(True, alpha=0.3)
 
             # Format x-axis
-            ax3.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+            ax3.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
             plt.setp(ax3.xaxis.get_majorticklabels(), rotation=45)
 
             # Plot 4: Cumulative patterns identified
             ax4 = axes[1, 1]
-            cumulative_patterns = np.cumsum([cycle["patterns_identified"]
-                                         for _, cycle in sorted(self.learning_cycles.items(),
-                                                             key=lambda x: x[1]["timestamp"])])
-            ax4.plot(timestamps, cumulative_patterns, 'm-', marker='o')
-            ax4.set_title('Cumulative Patterns Identified')
-            ax4.set_xlabel('Time')
-            ax4.set_ylabel('Total Patterns')
+            cumulative_patterns = np.cumsum(
+                [
+                    cycle["patterns_identified"]
+                    for _, cycle in sorted(
+                        self.learning_cycles.items(), key=lambda x: x[1]["timestamp"]
+                    )
+                ]
+            )
+            ax4.plot(timestamps, cumulative_patterns, "m-", marker="o")
+            ax4.set_title("Cumulative Patterns Identified")
+            ax4.set_xlabel("Time")
+            ax4.set_ylabel("Total Patterns")
             ax4.grid(True, alpha=0.3)
 
             # Format x-axis
-            ax4.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+            ax4.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
             plt.setp(ax4.xaxis.get_majorticklabels(), rotation=45)
 
             # Add overall title
-            fig.suptitle('Learning Performance Metrics', fontsize=16)
+            fig.suptitle("Learning Performance Metrics", fontsize=16)
 
             # Adjust layout
             plt.tight_layout(rect=[0, 0, 1, 0.95])
@@ -956,7 +1045,9 @@ class OptimizerLearningMetricsCollector:
             str: Path to the generated HTML file, or HTML string if no path provided
         """
         if not INTERACTIVE_VISUALIZATION_AVAILABLE:
-            logger.warning("Interactive visualization libraries not available. Cannot generate dashboard.")
+            logger.warning(
+                "Interactive visualization libraries not available. Cannot generate dashboard."
+            )
             return None
 
         with self._lock:
@@ -966,27 +1057,30 @@ class OptimizerLearningMetricsCollector:
 
             # Create figure with subplots
             fig = make_subplots(
-                rows=3, cols=2,
+                rows=3,
+                cols=2,
                 subplot_titles=(
-                    'Learning Cycle Metrics',
-                    'Parameter Adaptations Over Time',
-                    'Strategy Effectiveness',
-                    'Query Patterns by Type',
-                    'Learning Performance Trends',
-                    'Cumulative Learning Metrics'
+                    "Learning Cycle Metrics",
+                    "Parameter Adaptations Over Time",
+                    "Strategy Effectiveness",
+                    "Query Patterns by Type",
+                    "Learning Performance Trends",
+                    "Cumulative Learning Metrics",
                 ),
                 specs=[
                     [{"type": "scatter"}, {"type": "scatter"}],
                     [{"type": "bar"}, {"type": "bar"}],
-                    [{"type": "scatter"}, {"type": "pie"}]
-                ]
+                    [{"type": "scatter"}, {"type": "pie"}],
+                ],
             )
 
             # Prepare data for plots
 
             # 1. Learning Cycle Metrics
             cycle_data = sorted(self.learning_cycles.items(), key=lambda x: x[1]["timestamp"])
-            timestamps = [datetime.datetime.fromtimestamp(cycle["timestamp"]) for _, cycle in cycle_data]
+            timestamps = [
+                datetime.datetime.fromtimestamp(cycle["timestamp"]) for _, cycle in cycle_data
+            ]
             analyzed_queries = [cycle["analyzed_queries"] for _, cycle in cycle_data]
             patterns_identified = [cycle["patterns_identified"] for _, cycle in cycle_data]
 
@@ -995,28 +1089,32 @@ class OptimizerLearningMetricsCollector:
                 go.Scatter(
                     x=timestamps,
                     y=analyzed_queries,
-                    mode='lines+markers',
-                    name='Queries Analyzed',
-                    line=dict(color='blue')
+                    mode="lines+markers",
+                    name="Queries Analyzed",
+                    line=dict(color="blue"),
                 ),
-                row=1, col=1
+                row=1,
+                col=1,
             )
 
             fig.add_trace(
                 go.Scatter(
                     x=timestamps,
                     y=patterns_identified,
-                    mode='lines+markers',
-                    name='Patterns Identified',
-                    line=dict(color='green')
+                    mode="lines+markers",
+                    name="Patterns Identified",
+                    line=dict(color="green"),
                 ),
-                row=1, col=1
+                row=1,
+                col=1,
             )
 
             # 2. Parameter Adaptations
             if self.parameter_adaptations:
                 param_data = sorted(self.parameter_adaptations, key=lambda x: x["timestamp"])
-                param_timestamps = [datetime.datetime.fromtimestamp(adapt["timestamp"]) for adapt in param_data]
+                param_timestamps = [
+                    datetime.datetime.fromtimestamp(adapt["timestamp"]) for adapt in param_data
+                ]
                 param_names = [adapt["parameter_name"] for adapt in param_data]
                 confidences = [adapt["confidence"] for adapt in param_data]
 
@@ -1024,30 +1122,31 @@ class OptimizerLearningMetricsCollector:
                 hover_texts = []
                 for adapt in param_data:
                     hover_texts.append(
-                        f"Parameter: {adapt['parameter_name']}<br>" +
-                        f"Old value: {adapt['old_value']}<br>" +
-                        f"New value: {adapt['new_value']}<br>" +
-                        f"Reason: {adapt['adaptation_reason']}<br>" +
-                        f"Confidence: {adapt['confidence']:.2f}"
+                        f"Parameter: {adapt['parameter_name']}<br>"
+                        + f"Old value: {adapt['old_value']}<br>"
+                        + f"New value: {adapt['new_value']}<br>"
+                        + f"Reason: {adapt['adaptation_reason']}<br>"
+                        + f"Confidence: {adapt['confidence']:.2f}"
                     )
 
                 fig.add_trace(
                     go.Scatter(
                         x=param_timestamps,
                         y=confidences,
-                        mode='markers',
+                        mode="markers",
                         marker=dict(
                             size=10,
                             color=confidences,
-                            colorscale='Viridis',
+                            colorscale="Viridis",
                             showscale=True,
-                            colorbar=dict(title="Confidence")
+                            colorbar=dict(title="Confidence"),
                         ),
                         text=hover_texts,
-                        hoverinfo='text',
-                        name='Parameter Adaptations'
+                        hoverinfo="text",
+                        name="Parameter Adaptations",
                     ),
-                    row=1, col=2
+                    row=1,
+                    col=2,
                 )
 
             # 3. Strategy Effectiveness
@@ -1060,10 +1159,11 @@ class OptimizerLearningMetricsCollector:
                     go.Bar(
                         x=strategies,
                         y=avg_scores,
-                        name='Effectiveness Score',
-                        marker_color='purple'
+                        name="Effectiveness Score",
+                        marker_color="purple",
                     ),
-                    row=2, col=1
+                    row=2,
+                    col=1,
                 )
 
             # 4. Query Patterns
@@ -1071,26 +1171,27 @@ class OptimizerLearningMetricsCollector:
                 pattern_metrics = self.get_patterns_by_type()
                 pattern_types = list(pattern_metrics.keys())
                 pattern_counts = [metrics["count"] for metrics in pattern_metrics.values()]
-                matching_queries = [metrics["total_queries"] for metrics in pattern_metrics.values()]
+                matching_queries = [
+                    metrics["total_queries"] for metrics in pattern_metrics.values()
+                ]
 
                 fig.add_trace(
                     go.Bar(
-                        x=pattern_types,
-                        y=pattern_counts,
-                        name='Pattern Count',
-                        marker_color='blue'
+                        x=pattern_types, y=pattern_counts, name="Pattern Count", marker_color="blue"
                     ),
-                    row=2, col=2
+                    row=2,
+                    col=2,
                 )
 
                 fig.add_trace(
                     go.Bar(
                         x=pattern_types,
                         y=matching_queries,
-                        name='Matching Queries',
-                        marker_color='green'
+                        name="Matching Queries",
+                        marker_color="green",
                     ),
-                    row=2, col=2
+                    row=2,
+                    col=2,
                 )
 
             # 5. Learning Performance Trends
@@ -1101,15 +1202,17 @@ class OptimizerLearningMetricsCollector:
                     go.Scatter(
                         x=timestamps,
                         y=execution_times,
-                        mode='lines+markers',
-                        name='Execution Time',
-                        line=dict(color='red')
+                        mode="lines+markers",
+                        name="Execution Time",
+                        line=dict(color="red"),
                     ),
-                    row=3, col=1
+                    row=3,
+                    col=1,
                 )
 
                 # Add trendline
                 import numpy as np
+
                 timestamp_nums = [ts.timestamp() for ts in timestamps]
                 z = np.polyfit(timestamp_nums, execution_times, 1)
                 p = np.poly1d(z)
@@ -1119,11 +1222,12 @@ class OptimizerLearningMetricsCollector:
                     go.Scatter(
                         x=timestamps,
                         y=trend_y,
-                        mode='lines',
-                        name='Trend',
-                        line=dict(color='red', dash='dash')
+                        mode="lines",
+                        name="Trend",
+                        line=dict(color="red", dash="dash"),
                     ),
-                    row=3, col=1
+                    row=3,
+                    col=1,
                 )
 
             # 6. Cumulative Metrics as Pie Chart
@@ -1131,14 +1235,17 @@ class OptimizerLearningMetricsCollector:
 
             fig.add_trace(
                 go.Pie(
-                    labels=['Learning Cycles', 'Parameters Adjusted', 'Patterns Identified'],
-                    values=[metrics.total_learning_cycles,
-                           metrics.total_parameters_adjusted,
-                           metrics.total_patterns_identified],
-                    hole=.3,
-                    marker_colors=['#FFA15A', '#19D3F3', '#FF6692']
+                    labels=["Learning Cycles", "Parameters Adjusted", "Patterns Identified"],
+                    values=[
+                        metrics.total_learning_cycles,
+                        metrics.total_parameters_adjusted,
+                        metrics.total_patterns_identified,
+                    ],
+                    hole=0.3,
+                    marker_colors=["#FFA15A", "#19D3F3", "#FF6692"],
                 ),
-                row=3, col=2
+                row=3,
+                col=2,
             )
 
             # Update layout
@@ -1147,13 +1254,7 @@ class OptimizerLearningMetricsCollector:
                 height=900,
                 width=1200,
                 showlegend=True,
-                legend=dict(
-                    orientation="h",
-                    yanchor="bottom",
-                    y=1.02,
-                    xanchor="right",
-                    x=1
-                )
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
             )
 
             # Save or return HTML
@@ -1173,7 +1274,7 @@ class OptimizerLearningMetricsCollector:
             metrics_file = os.path.join(self.metrics_dir, "learning_metrics.json")
             base_dir = Path(metrics_file).parent if Path(metrics_file).is_absolute() else None
             safe_path = validate_output_path(metrics_file, allow_overwrite=True, base_dir=base_dir)
-            with open(safe_path, 'w') as f:
+            with open(safe_path, "w") as f:
                 f.write(self.to_json())
 
             logger.debug(f"Learning metrics saved to {metrics_file}")
@@ -1202,7 +1303,7 @@ class OptimizerLearningMetricsCollector:
             # Handle numpy/pandas data types for JSON serialization
             class NumpyEncoder(json.JSONEncoder):
                 def default(self, obj):
-                    if hasattr(obj, 'tolist'):
+                    if hasattr(obj, "tolist"):
                         return obj.tolist()
                     elif isinstance(obj, datetime.datetime):
                         return obj.isoformat()
@@ -1213,13 +1314,15 @@ class OptimizerLearningMetricsCollector:
             except TypeError as e:
                 logger.error(f"Error serializing metrics data: {str(e)}")
                 # Fallback to basic serialization
-                return json.dumps({
-                    "learning_cycles": len(self.learning_cycles),
-                    "parameter_adaptations": len(self.parameter_adaptations),
-                    "strategy_effectiveness": len(self.strategy_effectiveness),
-                    "query_patterns": len(self.query_patterns),
-                    "error": str(e)
-                })
+                return json.dumps(
+                    {
+                        "learning_cycles": len(self.learning_cycles),
+                        "parameter_adaptations": len(self.parameter_adaptations),
+                        "strategy_effectiveness": len(self.strategy_effectiveness),
+                        "query_patterns": len(self.query_patterns),
+                        "error": str(e),
+                    }
+                )
 
     @classmethod
     def from_json(cls, json_data):

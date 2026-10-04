@@ -37,6 +37,7 @@ Requirements
 Both are declared in the ``ucan`` extras group in ``setup.py`` and
 ``__pyproject.toml``.
 """
+
 from __future__ import annotations
 
 import json
@@ -52,6 +53,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 try:
     import ucan as _ucan_lib  # type: ignore[import-not-found]
+
     _UCAN_AVAILABLE = True
 except ImportError:  # pragma: no cover
     _ucan_lib = None  # type: ignore[assignment]
@@ -67,6 +69,7 @@ _KEY_FILE_ENV = "IPFS_DATASETS_DID_KEY_FILE"
 # ---------------------------------------------------------------------------
 # DIDKeyManager
 # ---------------------------------------------------------------------------
+
 
 class DIDKeyManager:
     """Manage a persistent Ed25519 DID:key pair and mint UCAN delegations.
@@ -172,7 +175,9 @@ class DIDKeyManager:
         except Exception as exc:
             logger.error(
                 "Failed to load DID key from %s (%s: %s) — regenerating",
-                self._key_file, type(exc).__name__, exc,
+                self._key_file,
+                type(exc).__name__,
+                exc,
             )
             self._generate_and_save()
 
@@ -340,8 +345,7 @@ class DIDKeyManager:
         aud = audience_did or getattr(token, "audience", None) or self._did
         # Build capability list from the stub token
         caps: List[Tuple[str, str]] = [
-            (c.resource, c.ability)
-            for c in getattr(token, "capabilities", [])
+            (c.resource, c.ability) for c in getattr(token, "capabilities", [])
         ]
 
         if _UCAN_AVAILABLE and self._keypair is not None:
@@ -363,9 +367,11 @@ class DIDKeyManager:
             "exp": int(__import__("time").time()) + lifetime_seconds,
             "cid": getattr(token, "cid", "stub"),
         }
-        b64 = base64.urlsafe_b64encode(
-            _json.dumps(payload, separators=(",", ":")).encode()
-        ).rstrip(b"=").decode()
+        b64 = (
+            base64.urlsafe_b64encode(_json.dumps(payload, separators=(",", ":")).encode())
+            .rstrip(b"=")
+            .decode()
+        )
         return f"stub:{b64}"
 
     async def verify_signed_token(
@@ -384,6 +390,7 @@ class DIDKeyManager:
             # Stub path — just check it decodes
             import base64
             import json as _json
+
             try:
                 b64 = signed_token[5:] + "=="
                 _json.loads(base64.urlsafe_b64decode(b64).decode())

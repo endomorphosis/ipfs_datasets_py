@@ -8,6 +8,7 @@ import math
 import subprocess
 import tempfile
 
+
 class test_fio:
     def __init__(self, resources, meta=None):
         pass
@@ -71,7 +72,6 @@ class test_fio:
                 return capacity
         return None
 
-
     def disk_device_avail_capacity(self, device):
         command = "df -h"
         df = subprocess.check_output(command, shell=True)
@@ -100,7 +100,7 @@ class test_fio:
             command3 = "rm " + temp_file.name
             return read_speed, write_speed
 
-    def stats(self,location, **kwargs):
+    def stats(self, location, **kwargs):
         disk_device = self.disk_device_name_from_location(location)
         disk_capacity = self.disk_device_total_capacity(disk_device)
         disk_used = self.disk_device_used_capacity(disk_device)
@@ -112,11 +112,12 @@ class test_fio:
             "disk_used": disk_used,
             "disk_avail": disk_avail,
             "disk_write_speed": disk_write_speed,
-            "disk_read_speed": disk_read_speed
+            "disk_read_speed": disk_read_speed,
         }
         return results
 
-#if __name__ == "__main__":
+
+# if __name__ == "__main__":
 #    this_test = test_fio(None)
 #    results = this_test.test("/tmp/")
 #    print(results)

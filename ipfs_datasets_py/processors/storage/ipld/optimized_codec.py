@@ -22,22 +22,27 @@ from typing import Dict, List, Optional, Tuple, Union, Any, Set, Generator, Byte
 
 try:
     from ipld_dag_pb import encode as dag_pb_encode, decode as dag_pb_decode, PBNode, PBLink
+
     HAVE_IPLD_DAG_PB = True
 except ImportError:
     from .dag_pb import encode as dag_pb_encode, decode as dag_pb_decode, PBNode, PBLink
+
     HAVE_IPLD_DAG_PB = False
 
 try:
     import ipld_car
+
     HAVE_IPLD_CAR = True
 except ImportError:
     HAVE_IPLD_CAR = False
 
 try:
     from multiformats import CID
+
     HAVE_MULTIFORMATS = True
 except ImportError:
     HAVE_MULTIFORMATS = False
+
     # Simple CID class for compatibility
     class CID:
         @staticmethod
@@ -91,7 +96,11 @@ class PerformanceStats:
         avg_decode_time = sum(self.decode_times) / decode_count if decode_count > 0 else 0
 
         throughput = self.total_bytes_processed / elapsed if elapsed > 0 else 0
-        cache_hit_rate = self.cache_hits / (self.cache_hits + self.cache_misses) if (self.cache_hits + self.cache_misses) > 0 else 0
+        cache_hit_rate = (
+            self.cache_hits / (self.cache_hits + self.cache_misses)
+            if (self.cache_hits + self.cache_misses) > 0
+            else 0
+        )
 
         return {
             "total_operations": encode_count + decode_count,
@@ -102,7 +111,7 @@ class PerformanceStats:
             "throughput_mb_per_sec": throughput / (1024 * 1024),
             "total_bytes_processed": self.total_bytes_processed,
             "cache_hit_rate": cache_hit_rate,
-            "elapsed_time_sec": elapsed
+            "elapsed_time_sec": elapsed,
         }
 
 
@@ -196,11 +205,13 @@ class OptimizedEncoder:
     - Performance monitoring
     """
 
-    def __init__(self,
-                use_cache: bool = True,
-                cache_size: int = 1000,
-                max_workers: Optional[int] = None,
-                collect_stats: bool = True):
+    def __init__(
+        self,
+        use_cache: bool = True,
+        cache_size: int = 1000,
+        max_workers: Optional[int] = None,
+        collect_stats: bool = True,
+    ):
         """
         Initialize an optimized IPLD encoder.
 
@@ -231,12 +242,15 @@ class OptimizedEncoder:
         # Convert dict to PBNode if needed
         if isinstance(node, dict):
             pb_node = PBNode(
-                data=node.get('data'),
-                links=[PBLink(
-                    name=link.get('name'),
-                    cid=link.get('cid') or link.get('Hash'),
-                    tsize=link.get('tsize') or link.get('Tsize')
-                ) for link in node.get('links', [])]
+                data=node.get("data"),
+                links=[
+                    PBLink(
+                        name=link.get("name"),
+                        cid=link.get("cid") or link.get("Hash"),
+                        tsize=link.get("tsize") or link.get("Tsize"),
+                    )
+                    for link in node.get("links", [])
+                ],
             )
         else:
             pb_node = node
@@ -336,7 +350,7 @@ class OptimizedEncoder:
         json_bytes = []
         for obj in objects:
             json_str = json.dumps(obj)
-            json_bytes.append(json_str.encode('utf-8'))
+            json_bytes.append(json_str.encode("utf-8"))
 
         # Create nodes with the JSON bytes as data
         nodes = [PBNode(data=data) for data in json_bytes]
@@ -344,8 +358,9 @@ class OptimizedEncoder:
         # Encode the nodes
         return self.encode_batch(nodes)
 
-    def encode_json_stream(self, objects_iter: Generator[Any, None, None],
-                           batch_size: int = 100) -> Generator[Tuple[bytes, str], None, None]:
+    def encode_json_stream(
+        self, objects_iter: Generator[Any, None, None], batch_size: int = 100
+    ) -> Generator[Tuple[bytes, str], None, None]:
         """
         Stream-encode JSON objects in batches.
 
@@ -387,11 +402,13 @@ class OptimizedDecoder:
     - Performance monitoring
     """
 
-    def __init__(self,
-                use_cache: bool = True,
-                cache_size: int = 1000,
-                max_workers: Optional[int] = None,
-                collect_stats: bool = True):
+    def __init__(
+        self,
+        use_cache: bool = True,
+        cache_size: int = 1000,
+        max_workers: Optional[int] = None,
+        collect_stats: bool = True,
+    ):
         """
         Initialize an optimized IPLD decoder.
 
@@ -507,7 +524,7 @@ class OptimizedDecoder:
             raise ValueError("Block does not contain data")
 
         try:
-            return json.loads(node.data.decode('utf-8'))
+            return json.loads(node.data.decode("utf-8"))
         except json.JSONDecodeError as e:
             raise ValueError(f"Error decoding JSON: {e}")
 
@@ -532,7 +549,7 @@ class OptimizedDecoder:
                 continue
 
             try:
-                json_data = json.loads(node.data.decode('utf-8'))
+                json_data = json.loads(node.data.decode("utf-8"))
                 results.append(json_data)
             except json.JSONDecodeError:
                 results.append(None)
@@ -551,12 +568,14 @@ class BatchProcessor:
     - Memory-efficient handling of large data structures
     """
 
-    def __init__(self,
-                batch_size: int = 100,
-                max_workers: Optional[int] = None,
-                use_cache: bool = True,
-                cache_size: int = 1000,
-                collect_stats: bool = True):
+    def __init__(
+        self,
+        batch_size: int = 100,
+        max_workers: Optional[int] = None,
+        use_cache: bool = True,
+        cache_size: int = 1000,
+        collect_stats: bool = True,
+    ):
         """
         Initialize a batch processor for IPLD operations.
 
@@ -573,16 +592,18 @@ class BatchProcessor:
             use_cache=use_cache,
             cache_size=cache_size,
             max_workers=max_workers,
-            collect_stats=collect_stats
+            collect_stats=collect_stats,
         )
         self.decoder = OptimizedDecoder(
             use_cache=use_cache,
             cache_size=cache_size,
             max_workers=max_workers,
-            collect_stats=collect_stats
+            collect_stats=collect_stats,
         )
 
-    def process_file(self, input_path: str, process_func: Callable, output_path: Optional[str] = None) -> List[Any]:
+    def process_file(
+        self, input_path: str, process_func: Callable, output_path: Optional[str] = None
+    ) -> List[Any]:
         """
         Process a file in batches.
 
@@ -597,7 +618,7 @@ class BatchProcessor:
         all_results = []
 
         # Open the file and process in chunks
-        with open(input_path, 'rb') as f:
+        with open(input_path, "rb") as f:
             while True:
                 batch = []
                 for _ in range(self.batch_size):
@@ -623,9 +644,9 @@ class BatchProcessor:
 
                 # Write results to output file if specified
                 if output_path:
-                    with open(output_path, 'a') as out:
+                    with open(output_path, "a") as out:
                         for result in results:
-                            out.write(str(result) + '\n')
+                            out.write(str(result) + "\n")
 
         return all_results
 
@@ -669,7 +690,9 @@ class BatchProcessor:
         except Exception as e:
             raise ValueError(f"Error encoding CAR data: {e}")
 
-    def process_car_file(self, car_path: str, process_func: Callable[[str, bytes], Tuple[str, bytes]]) -> Tuple[List[str], Dict[str, bytes]]:
+    def process_car_file(
+        self, car_path: str, process_func: Callable[[str, bytes], Tuple[str, bytes]]
+    ) -> Tuple[List[str], Dict[str, bytes]]:
         """
         Process blocks in a CAR file.
 
@@ -684,7 +707,7 @@ class BatchProcessor:
             raise ImportError("ipld_car module is required for this operation")
 
         # Read the CAR file
-        with open(car_path, 'rb') as f:
+        with open(car_path, "rb") as f:
             car_data = f.read()
 
         # Decode the CAR file
@@ -702,7 +725,10 @@ class BatchProcessor:
             if len(batch) >= self.batch_size:
                 # Process the batch
                 with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-                    futures = [executor.submit(process_func, cid, data) for cid, data in zip(batch_cids, batch)]
+                    futures = [
+                        executor.submit(process_func, cid, data)
+                        for cid, data in zip(batch_cids, batch)
+                    ]
                     results = [future.result() for future in futures]
 
                 # Store the results
@@ -715,7 +741,9 @@ class BatchProcessor:
         # Process any remaining blocks
         if batch:
             with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-                futures = [executor.submit(process_func, cid, data) for cid, data in zip(batch_cids, batch)]
+                futures = [
+                    executor.submit(process_func, cid, data) for cid, data in zip(batch_cids, batch)
+                ]
                 results = [future.result() for future in futures]
 
             for new_cid, new_data in results:
@@ -732,11 +760,12 @@ class BatchProcessor:
         """
         return {
             "encoder": self.encoder.stats.get_summary() if self.encoder.stats else {},
-            "decoder": self.decoder.stats.get_summary() if self.decoder.stats else {}
+            "decoder": self.decoder.stats.get_summary() if self.decoder.stats else {},
         }
 
 
 # Utility functions
+
 
 def optimize_node_structure(node: PBNode) -> PBNode:
     """
@@ -773,9 +802,9 @@ def optimize_node_structure(node: PBNode) -> PBNode:
     if data:
         try:
             # Check if it's JSON data and optimize it
-            json_data = json.loads(data.decode('utf-8'))
+            json_data = json.loads(data.decode("utf-8"))
             # Use more compact JSON encoding
-            data = json.dumps(json_data, separators=(',', ':')).encode('utf-8')
+            data = json.dumps(json_data, separators=(",", ":")).encode("utf-8")
         except (json.JSONDecodeError, UnicodeDecodeError):
             # Not JSON data, leave as is
             pass
@@ -840,7 +869,9 @@ def estimate_memory_usage(nodes: List[PBNode]) -> int:
 
 
 # Factory function for creating optimized processor
-def create_batch_processor(batch_size=100, optimize_memory=True, collect_stats=True) -> BatchProcessor:
+def create_batch_processor(
+    batch_size=100, optimize_memory=True, collect_stats=True
+) -> BatchProcessor:
     """
     Create a batch processor with optimized settings.
 
@@ -869,5 +900,5 @@ def create_batch_processor(batch_size=100, optimize_memory=True, collect_stats=T
         max_workers=max_workers,
         use_cache=True,
         cache_size=cache_size,
-        collect_stats=collect_stats
+        collect_stats=collect_stats,
     )

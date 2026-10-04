@@ -26,7 +26,7 @@ prover = OptimizedProver(kb)
 result = prover.prove(formula)
 
 # Record metrics
-dashboard.record_proof(result, metadata={'strategy': 'forward'})
+dashboard.record_proof(result, metadata={"strategy": "forward"})
 
 # Get statistics
 stats = dashboard.get_statistics()
@@ -34,10 +34,10 @@ print(f"Cache hit rate: {stats['cache_hit_rate']:.1%}")
 print(f"Avg proof time: {stats['timing']['avg_ms']:.2f}ms")
 
 # Generate HTML dashboard
-dashboard.generate_html('dashboard.html')
+dashboard.generate_html("dashboard.html")
 
 # Export to JSON
-dashboard.export_json('metrics.json')
+dashboard.export_json("metrics.json")
 ```
 
 ## 📋 Features
@@ -48,12 +48,7 @@ Record proof attempts with comprehensive metadata:
 
 ```python
 dashboard.record_proof(
-    proof_result,
-    metadata={
-        'strategy': 'forward',
-        'cache_hit': False,
-        'memory_mb': 256.5
-    }
+    proof_result, metadata={"strategy": "forward", "cache_hit": False, "memory_mb": 256.5}
 )
 ```
 
@@ -72,9 +67,9 @@ Captured metrics include:
 Record arbitrary metrics for monitoring:
 
 ```python
-dashboard.record_metric('cpu_usage_percent', 45.2, tags={'process': 'prover'})
-dashboard.record_metric('memory_usage_mb', 512.0, tags={'process': 'prover'})
-dashboard.record_metric('disk_io_mb', 128.5, tags={'operation': 'cache_write'})
+dashboard.record_metric("cpu_usage_percent", 45.2, tags={"process": "prover"})
+dashboard.record_metric("memory_usage_mb", 512.0, tags={"process": "prover"})
+dashboard.record_metric("disk_io_mb", 128.5, tags={"operation": "cache_write"})
 ```
 
 ### 3. Statistics Aggregation
@@ -99,9 +94,9 @@ print(f"P99: {stats['timing']['p99_ms']:.2f}ms")
 print(f"Cache speedup: {stats['avg_speedup_from_cache']:.1f}x")
 
 # Strategy breakdown
-for strategy, count in stats['strategies']['counts'].items():
-    success_rate = stats['strategies']['success_rates'][strategy]
-    avg_time = stats['strategies']['avg_times_ms'][strategy]
+for strategy, count in stats["strategies"]["counts"].items():
+    success_rate = stats["strategies"]["success_rates"][strategy]
+    avg_time = stats["strategies"]["avg_times_ms"][strategy]
     print(f"{strategy}: {count} proofs, {success_rate:.1%} success, {avg_time:.1f}ms avg")
 ```
 
@@ -112,7 +107,7 @@ Compare performance across strategies:
 ```python
 comparison = dashboard.compare_strategies()
 
-for strategy, metrics in comparison['strategies'].items():
+for strategy, metrics in comparison["strategies"].items():
     print(f"{strategy}:")
     print(f"  Count: {metrics['count']}")
     print(f"  Success rate: {metrics['success_rate']:.1%}")
@@ -126,7 +121,7 @@ for strategy, metrics in comparison['strategies'].items():
 Generate beautiful, interactive dashboards:
 
 ```python
-dashboard.generate_html('performance_dashboard.html')
+dashboard.generate_html("performance_dashboard.html")
 ```
 
 The HTML dashboard includes:
@@ -148,7 +143,7 @@ Features:
 Export all metrics for external tools:
 
 ```python
-dashboard.export_json('metrics.json')
+dashboard.export_json("metrics.json")
 ```
 
 JSON structure:
@@ -191,15 +186,15 @@ dashboard = PerformanceDashboard()
 # Run proofs
 for formula in formulas:
     result = prover.prove(formula)
-    dashboard.record_proof(result, metadata={'strategy': prover.strategy})
-    
+    dashboard.record_proof(result, metadata={"strategy": prover.strategy})
+
     # Check performance every 10 proofs
     if len(dashboard.proof_metrics) % 10 == 0:
         stats = dashboard.get_statistics()
         print(f"Avg time: {stats['timing']['avg_ms']:.1f}ms")
 
 # Generate final report
-dashboard.generate_html('final_report.html')
+dashboard.generate_html("final_report.html")
 ```
 
 ### Strategy Selection
@@ -209,19 +204,18 @@ Find the best strategy for your workload:
 ```python
 dashboard = PerformanceDashboard()
 
-strategies = ['forward', 'backward', 'bidirectional', 'tableaux']
+strategies = ["forward", "backward", "bidirectional", "tableaux"]
 
 for formula in test_set:
     for strategy in strategies:
         result = prover.prove(formula, strategy=strategy)
-        dashboard.record_proof(result, metadata={'strategy': strategy})
+        dashboard.record_proof(result, metadata={"strategy": strategy})
 
 # Compare strategies
 comparison = dashboard.compare_strategies()
 
 # Find best strategy
-best = min(comparison['strategies'].items(), 
-           key=lambda x: x[1]['avg_time_ms'])
+best = min(comparison["strategies"].items(), key=lambda x: x[1]["avg_time_ms"])
 
 print(f"Best strategy: {best[0]}")
 print(f"Avg time: {best[1]['avg_time_ms']:.2f}ms")
@@ -240,19 +234,23 @@ dashboard = PerformanceDashboard()
 run_test_suite(dashboard)
 
 # Export metrics
-dashboard.export_json(f'metrics_{version}.json')
+dashboard.export_json(f"metrics_{version}.json")
 
 # Compare with baseline
-with open('metrics_baseline.json') as f:
+with open("metrics_baseline.json") as f:
     baseline = json.load(f)
 
 current = dashboard.get_statistics()
 
 print("Performance comparison:")
-print(f"  Avg time: {current['timing']['avg_ms']:.1f}ms "
-      f"(baseline: {baseline['statistics']['timing']['avg_ms']:.1f}ms)")
-print(f"  P95 time: {current['timing']['p95_ms']:.1f}ms "
-      f"(baseline: {baseline['statistics']['timing']['p95_ms']:.1f}ms)")
+print(
+    f"  Avg time: {current['timing']['avg_ms']:.1f}ms "
+    f"(baseline: {baseline['statistics']['timing']['avg_ms']:.1f}ms)"
+)
+print(
+    f"  P95 time: {current['timing']['p95_ms']:.1f}ms "
+    f"(baseline: {baseline['statistics']['timing']['p95_ms']:.1f}ms)"
+)
 ```
 
 ## 🔧 Integration with Prover
@@ -274,9 +272,9 @@ result = prover.prove(formula)
 
 # Extract metadata from prover state
 metadata = {
-    'strategy': prover.default_strategy.value,
-    'cache_hit': hasattr(result, '_from_cache') and result._from_cache,
-    'memory_mb': prover.get_memory_usage() if hasattr(prover, 'get_memory_usage') else 0.0,
+    "strategy": prover.default_strategy.value,
+    "cache_hit": hasattr(result, "_from_cache") and result._from_cache,
+    "memory_mb": prover.get_memory_usage() if hasattr(prover, "get_memory_usage") else 0.0,
 }
 
 dashboard.record_proof(result, metadata)
@@ -288,23 +286,25 @@ dashboard.record_proof(result, metadata)
 def batch_prove_with_monitoring(formulas, prover, dashboard):
     """Prove multiple formulas with monitoring."""
     results = []
-    
+
     for i, formula in enumerate(formulas):
         result = prover.prove(formula)
-        
-        dashboard.record_proof(result, metadata={
-            'strategy': prover.default_strategy.value,
-            'batch_index': i,
-        })
-        
+
+        dashboard.record_proof(
+            result,
+            metadata={
+                "strategy": prover.default_strategy.value,
+                "batch_index": i,
+            },
+        )
+
         results.append(result)
-        
+
         # Progress update every 10 proofs
         if (i + 1) % 10 == 0:
             stats = dashboard.get_statistics()
-            print(f"Progress: {i+1}/{len(formulas)} "
-                  f"(avg: {stats['timing']['avg_ms']:.1f}ms)")
-    
+            print(f"Progress: {i + 1}/{len(formulas)} (avg: {stats['timing']['avg_ms']:.1f}ms)")
+
     return results
 ```
 
@@ -485,18 +485,18 @@ The demonstration includes:
 3. **Add Metadata**: Include as much context as possible
    ```python
    metadata = {
-       'strategy': 'forward',
-       'cache_hit': False,
-       'memory_mb': 256.0,
-       'formula_source': 'test_suite',
-       'worker_id': 'worker_1',
+       "strategy": "forward",
+       "cache_hit": False,
+       "memory_mb": 256.0,
+       "formula_source": "test_suite",
+       "worker_id": "worker_1",
    }
    ```
 
 4. **Regular Exports**: Export metrics periodically for long-running sessions
    ```python
    if dashboard.proof_metrics % 100 == 0:
-       dashboard.export_json(f'metrics_{time.time()}.json')
+       dashboard.export_json(f"metrics_{time.time()}.json")
    ```
 
 5. **Monitor Trends**: Generate HTML dashboard regularly to spot trends

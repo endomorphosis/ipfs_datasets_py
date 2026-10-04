@@ -12,7 +12,12 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional
 
-from .analytics import aggregate_count, aggregate_count_by_fields, contribution_nullifier, make_contribution
+from .analytics import (
+    aggregate_count,
+    aggregate_count_by_fields,
+    contribution_nullifier,
+    make_contribution,
+)
 from .audit import append_audit_event
 from .crypto import (
     ENCRYPTION_SUITE,
@@ -81,7 +86,12 @@ from .multisig import (
     operation_requires_approval,
     verify_approval,
 )
-from .proofs import ProofBackend, SimulatedProofBackend, create_simulated_proof_receipt, verifier_digest
+from .proofs import (
+    ProofBackend,
+    SimulatedProofBackend,
+    create_simulated_proof_receipt,
+    verifier_digest,
+)
 from .storage import EncryptedBlobStore, LocalEncryptedBlobStore
 from .ucan import (
     assert_grant_allows,
@@ -191,7 +201,6 @@ class DataWalletService:
         "health": ("medical", "doctor", "clinic", "medicaid", "medicare", "prescription"),
         "income": ("benefit", "unemployment", "income", "job", "wage", "ssi", "disability"),
     }
-
 
     def _safe_document_profile_public_inputs(public_inputs: Mapping[str, Any]) -> Dict[str, Any]:
         allowed_keys = {
@@ -351,10 +360,14 @@ class DataWalletService:
 
     @classmethod
     def _normalize_service_plan_share_scopes(cls, scopes: List[str] | None) -> List[str]:
-        normalized = cls._unique_nonempty_strings(list(SERVICE_PLAN_SHARE_DEFAULT_SCOPES if scopes is None else scopes))
+        normalized = cls._unique_nonempty_strings(
+            list(SERVICE_PLAN_SHARE_DEFAULT_SCOPES if scopes is None else scopes)
+        )
         if not normalized:
             raise ValueError("at least one service plan share scope is required")
-        unsupported = [scope for scope in normalized if scope not in SERVICE_PLAN_SHARE_SCOPE_FIELDS]
+        unsupported = [
+            scope for scope in normalized if scope not in SERVICE_PLAN_SHARE_SCOPE_FIELDS
+        ]
         if unsupported:
             raise ValueError(f"unsupported service plan share scope: {unsupported[0]}")
         return normalized
@@ -531,7 +544,9 @@ class DataWalletService:
         if contacts:
             normalized_threshold = int(threshold)
             if normalized_threshold < 1:
-                raise ValueError("Recovery threshold must be at least 1 when contacts are configured")
+                raise ValueError(
+                    "Recovery threshold must be at least 1 when contacts are configured"
+                )
             if normalized_threshold > len(contacts):
                 raise ValueError("Recovery threshold cannot exceed recovery contact count")
             for contact_did in contacts:
@@ -543,7 +558,9 @@ class DataWalletService:
 
         policy = dict(wallet.governance_policy)
         sensitive_operations = set(policy.get("sensitive_operations") or [])
-        sensitive_operations.update({"wallet/recovery_policy_set", *self.RECOVERY_APPROVAL_OPERATIONS})
+        sensitive_operations.update(
+            {"wallet/recovery_policy_set", *self.RECOVERY_APPROVAL_OPERATIONS}
+        )
         policy["sensitive_operations"] = sorted(sensitive_operations)
         policy["recovery_policy"] = {
             "contact_dids": contacts,
@@ -598,7 +615,10 @@ class DataWalletService:
             resources=[resource_for_wallet(wallet_id)],
             abilities=["wallet/admin"],
         )
-        if set(approval.approver_dids) != set(contact_dids) or approval.threshold != recovery_policy["threshold"]:
+        if (
+            set(approval.approver_dids) != set(contact_dids)
+            or approval.threshold != recovery_policy["threshold"]
+        ):
             raise ApprovalRequiredError("Recovery approval does not match active recovery policy")
 
         if controller_secret is not None:
@@ -661,7 +681,9 @@ class DataWalletService:
         normalized_environment = self._required_world_id_string(environment, "environment").lower()
         if normalized_environment not in {"staging", "production"}:
             raise ValueError("environment must be staging or production")
-        normalized_status = self._required_world_id_string(verification_status, "verification_status")
+        normalized_status = self._required_world_id_string(
+            verification_status, "verification_status"
+        )
         normalized_schema_ids = self._normalize_world_id_schema_ids(issuer_schema_ids)
         normalized_expires_at_min = self._normalize_world_id_expires_at_min(expires_at_min)
         normalized_raw_nullifier = str(raw_nullifier or "").strip()
@@ -695,7 +717,9 @@ class DataWalletService:
                     return existing
                 raise ValueError("World ID raw nullifier is already bound")
         else:
-            normalized_nullifier_ref = self._required_world_id_string(nullifier_ref or "", "nullifier_ref")
+            normalized_nullifier_ref = self._required_world_id_string(
+                nullifier_ref or "", "nullifier_ref"
+            )
 
         existing_id = self.world_id_binding_ids_by_nullifier.get(normalized_nullifier_ref)
         if existing_id:
@@ -876,7 +900,11 @@ class DataWalletService:
                 raise ValueError("bundle is required when missing-person dead drop is enabled")
         armed_at = ""
         if enabled:
-            armed_at = current.armed_at if current is not None and current.enabled and current.armed_at else now
+            armed_at = (
+                current.armed_at
+                if current is not None and current.enabled and current.armed_at
+                else now
+            )
         record = MissingPersonDeadDropRecord(
             wallet_id=wallet_id,
             actor_did=actor,
@@ -890,10 +918,14 @@ class DataWalletService:
             due_at=str(due_at or ""),
             last_check_in_at=str(last_check_in_at or ""),
             last_sent_at=str(current.last_sent_at if current is not None else ""),
-            last_sent_for_check_in_at=str(current.last_sent_for_check_in_at if current is not None else ""),
+            last_sent_for_check_in_at=str(
+                current.last_sent_for_check_in_at if current is not None else ""
+            ),
             last_message_id=str(current.last_message_id if current is not None else ""),
             last_error="",
-            last_dispatched_reason=str(current.last_dispatched_reason if current is not None else ""),
+            last_dispatched_reason=str(
+                current.last_dispatched_reason if current is not None else ""
+            ),
             updated_at=now,
         )
         self.missing_person_dead_drops[wallet_id] = record
@@ -996,12 +1028,18 @@ class DataWalletService:
         )
         return record
 
-    def list_saved_services(self, wallet_id: str, *, status: str | None = None) -> List[SavedServiceRecord]:
+    def list_saved_services(
+        self, wallet_id: str, *, status: str | None = None
+    ) -> List[SavedServiceRecord]:
         self._wallet(wallet_id)
-        records = [record for record in self.saved_services.values() if record.wallet_id == wallet_id]
+        records = [
+            record for record in self.saved_services.values() if record.wallet_id == wallet_id
+        ]
         if status is not None:
             records = [record for record in records if record.status == status]
-        return sorted(records, key=lambda item: (item.updated_at or item.created_at, item.saved_service_id))
+        return sorted(
+            records, key=lambda item: (item.updated_at or item.created_at, item.saved_service_id)
+        )
 
     def save_service_for_wallet(
         self,
@@ -1043,7 +1081,11 @@ class DataWalletService:
             None,
         )
         record = SavedServiceRecord(
-            saved_service_id=(existing.saved_service_id if existing is not None else f"saved-service-{uuid.uuid4().hex}"),
+            saved_service_id=(
+                existing.saved_service_id
+                if existing is not None
+                else f"saved-service-{uuid.uuid4().hex}"
+            ),
             wallet_id=wallet_id,
             service_doc_id=service_doc,
             source_content_cid=content_cid,
@@ -1135,8 +1177,12 @@ class DataWalletService:
             next_action=str(next_action or ""),
             next_follow_up_at=str(next_follow_up_at or ""),
             source_action_url=str(source_action_url or ""),
-            related_grant_ids=[str(item) for item in (related_grant_ids or []) if str(item).strip()],
-            related_record_ids=[str(item) for item in (related_record_ids or []) if str(item).strip()],
+            related_grant_ids=[
+                str(item) for item in (related_grant_ids or []) if str(item).strip()
+            ],
+            related_record_ids=[
+                str(item) for item in (related_record_ids or []) if str(item).strip()
+            ],
             privacy_level=str(privacy_level or "private"),
             created_at=now,
             updated_at=now,
@@ -1167,14 +1213,18 @@ class DataWalletService:
         status: str | None = None,
     ) -> List[ServiceInteractionRecord]:
         self._wallet(wallet_id)
-        records = [record for record in self.service_interactions.values() if record.wallet_id == wallet_id]
+        records = [
+            record for record in self.service_interactions.values() if record.wallet_id == wallet_id
+        ]
         if service_doc_id is not None:
             records = [record for record in records if record.service_doc_id == service_doc_id]
         if interaction_type is not None:
             records = [record for record in records if record.interaction_type == interaction_type]
         if status is not None:
             records = [record for record in records if record.status == status]
-        return sorted(records, key=lambda item: (item.timestamp or item.created_at, item.interaction_id))
+        return sorted(
+            records, key=lambda item: (item.timestamp or item.created_at, item.interaction_id)
+        )
 
     def create_service_plan(
         self,
@@ -1223,7 +1273,9 @@ class DataWalletService:
             travel_target=str(travel_target or ""),
             assigned_worker_recipient_id=str(assigned_worker_recipient_id or ""),
             status=str(status or "active"),
-            related_interaction_ids=[str(item) for item in (related_interaction_ids or []) if str(item).strip()],
+            related_interaction_ids=[
+                str(item) for item in (related_interaction_ids or []) if str(item).strip()
+            ],
             private_notes_record_id=str(private_notes_record_id or ""),
             created_at=now,
             updated_at=now,
@@ -1322,12 +1374,15 @@ class DataWalletService:
         status: str | None = None,
     ) -> List[ServicePlanRecord]:
         self._wallet(wallet_id)
-        records = [record for record in self.service_plans.values() if record.wallet_id == wallet_id]
+        records = [
+            record for record in self.service_plans.values() if record.wallet_id == wallet_id
+        ]
         if service_doc_id is not None:
             records = [record for record in records if record.service_doc_id == service_doc_id]
         if status is not None:
             records = [record for record in records if record.status == status]
         return sorted(records, key=lambda item: (item.updated_at or item.created_at, item.plan_id))
+
     def create_service_plan_share_grant(
         self,
         wallet_id: str,
@@ -1423,7 +1478,9 @@ class DataWalletService:
             },
         )
         self.service_interactions[interaction.interaction_id] = interaction
-        plan.assigned_worker_recipient_id = str(worker_recipient_id or plan.assigned_worker_recipient_id or audience)
+        plan.assigned_worker_recipient_id = str(
+            worker_recipient_id or plan.assigned_worker_recipient_id or audience
+        )
         plan.related_interaction_ids = self._unique_nonempty_strings(
             [*plan.related_interaction_ids, interaction.interaction_id]
         )
@@ -1806,9 +1863,7 @@ class DataWalletService:
     ) -> List[AccessRequest]:
         self._wallet(wallet_id)
         requests = [
-            request
-            for request in self.access_requests.values()
-            if request.wallet_id == wallet_id
+            request for request in self.access_requests.values() if request.wallet_id == wallet_id
         ]
         if status is not None:
             requests = [request for request in requests if request.status == status]
@@ -2072,7 +2127,9 @@ class DataWalletService:
 
         metadata_ref = None
         if private_metadata:
-            encrypted_metadata = encrypt_bytes(canonical_bytes(private_metadata), dek, payload_aad | {"kind": "metadata"})
+            encrypted_metadata = encrypt_bytes(
+                canonical_bytes(private_metadata), dek, payload_aad | {"kind": "metadata"}
+            )
             metadata_ref = self.storage.put(canonical_bytes(encrypted_metadata.to_dict()))
 
         wrap_aad = self._wrap_aad(wallet_id, record_id, version_id, actor)
@@ -2214,9 +2271,7 @@ class DataWalletService:
     ) -> List[GrantReceipt]:
         self._wallet(wallet_id)
         receipts = [
-            receipt
-            for receipt in self.grant_receipts.values()
-            if receipt.wallet_id == wallet_id
+            receipt for receipt in self.grant_receipts.values() if receipt.wallet_id == wallet_id
         ]
         if audience_did is not None:
             receipts = [receipt for receipt in receipts if receipt.audience_did == audience_did]
@@ -2330,7 +2385,11 @@ class DataWalletService:
             if receipt.wallet_id == wallet_id and receipt.grant_id in revoked_grant_ids:
                 receipt.status = "revoked"
         for request in self.access_requests.values():
-            if request.wallet_id == wallet_id and request.grant_id in revoked_grant_ids and request.status == "approved":
+            if (
+                request.wallet_id == wallet_id
+                and request.grant_id in revoked_grant_ids
+                and request.status == "approved"
+            ):
                 request.status = "revoked"
                 request.decided_at = utc_now()
                 request.decided_by = actor_did
@@ -2385,17 +2444,26 @@ class DataWalletService:
             if receipt.wallet_id == wallet_id and receipt.grant_id in revoked_grant_id_set:
                 receipt.status = "revoked"
         for request in self.access_requests.values():
-            if request.wallet_id == wallet_id and request.grant_id in revoked_grant_id_set and request.status == "approved":
+            if (
+                request.wallet_id == wallet_id
+                and request.grant_id in revoked_grant_id_set
+                and request.status == "approved"
+            ):
                 request.status = "revoked"
                 request.decided_at = utc_now()
                 request.decided_by = actor_did
-                request.details = {**request.details, "revocation_reason": reason or "emergency_revoke"}
+                request.details = {
+                    **request.details,
+                    "revocation_reason": reason or "emergency_revoke",
+                }
 
         rotated_record_ids: List[str] = []
         rotation_errors: Dict[str, str] = {}
         if rotate_keys:
             for record_id in sorted(
-                record.record_id for record in self.records.values() if record.wallet_id == wallet_id
+                record.record_id
+                for record in self.records.values()
+                if record.wallet_id == wallet_id
             ):
                 try:
                     self.rotate_record_key(
@@ -2444,7 +2512,9 @@ class DataWalletService:
         if actor_secret is not None:
             self.set_principal_secret(actor_did, actor_secret)
         if actor_did != self._wallet(wallet_id).owner_did:
-            operation_caveats = self._operation_caveats(invocation_caveats, output_types=["plaintext"])
+            operation_caveats = self._operation_caveats(
+                invocation_caveats, output_types=["plaintext"]
+            )
             if grant_id is None:
                 raise AccessDeniedError("Non-owner decrypt requires a grant")
             grant = self.grants[grant_id]
@@ -2530,14 +2600,18 @@ class DataWalletService:
             record.data_type,
         )
         plaintext = decrypt_bytes(
-            EncryptedBlob.from_dict(json.loads(self.storage.get(old_version.encrypted_payload_ref).decode("utf-8"))),
+            EncryptedBlob.from_dict(
+                json.loads(self.storage.get(old_version.encrypted_payload_ref).decode("utf-8"))
+            ),
             old_dek,
             old_payload_aad,
         )
         metadata_plaintext = None
         if old_version.encrypted_metadata_ref is not None:
             metadata_plaintext = decrypt_bytes(
-                EncryptedBlob.from_dict(json.loads(self.storage.get(old_version.encrypted_metadata_ref).decode("utf-8"))),
+                EncryptedBlob.from_dict(
+                    json.loads(self.storage.get(old_version.encrypted_metadata_ref).decode("utf-8"))
+                ),
                 old_dek,
                 old_payload_aad | {"kind": "metadata"},
             )
@@ -2936,14 +3010,18 @@ class DataWalletService:
         target_caveat = grant.caveats.get("target_id")
         if target_caveat is None:
             target_caveat = grant.caveats.get("target_ids")
-        if target_caveat is not None and str(target_id) not in self._caveat_value_set(target_caveat):
+        if target_caveat is not None and str(target_id) not in self._caveat_value_set(
+            target_caveat
+        ):
             raise AccessDeniedError("Grant target_id caveat does not cover requested target")
 
         max_distance_caveat = grant.caveats.get("max_distance_km")
         if max_distance_caveat is None:
             max_distance_caveat = grant.caveats.get("distance_km")
         if max_distance_caveat is not None and float(max_distance_km) > float(max_distance_caveat):
-            raise AccessDeniedError("Grant max_distance_km caveat does not cover requested threshold")
+            raise AccessDeniedError(
+                "Grant max_distance_km caveat does not cover requested threshold"
+            )
 
     def analyze_record_summary(
         self,
@@ -2959,7 +3037,9 @@ class DataWalletService:
         if actor_secret is not None:
             self.set_principal_secret(actor_did, actor_secret)
         if actor_did != self._wallet(wallet_id).owner_did:
-            operation_caveats = self._operation_caveats(invocation_caveats, output_types=["summary"])
+            operation_caveats = self._operation_caveats(
+                invocation_caveats, output_types=["summary"]
+            )
             if grant_id is None:
                 raise AccessDeniedError("Analysis requires a grant")
             self._assert_grant_allows(
@@ -2972,11 +3052,15 @@ class DataWalletService:
             )
         record = self._record(wallet_id, record_id)
         if actor_did == self._wallet(wallet_id).owner_did:
-            plaintext = self.decrypt_record(wallet_id, record_id, actor_did=actor_did, actor_secret=actor_secret)
+            plaintext = self.decrypt_record(
+                wallet_id, record_id, actor_did=actor_did, actor_secret=actor_secret
+            )
         else:
             version = self.versions[record.current_version_id]
             dek = self._unwrap_dek(version, wallet_id, actor_did)
-            payload_data = json.loads(self.storage.get(version.encrypted_payload_ref).decode("utf-8"))
+            payload_data = json.loads(
+                self.storage.get(version.encrypted_payload_ref).decode("utf-8")
+            )
             plaintext = decrypt_bytes(
                 EncryptedBlob.from_dict(payload_data),
                 dek,
@@ -2985,7 +3069,11 @@ class DataWalletService:
         text = plaintext.decode("utf-8", errors="replace")
         summary = {"summary": text[:max_chars], "truncated": len(text) > max_chars}
         artifact_key = random_key()
-        encrypted = encrypt_bytes(canonical_bytes(summary), artifact_key, {"wallet_id": wallet_id, "record_id": record_id, "kind": "derived"})
+        encrypted = encrypt_bytes(
+            canonical_bytes(summary),
+            artifact_key,
+            {"wallet_id": wallet_id, "record_id": record_id, "kind": "derived"},
+        )
         ref = self.storage.put(canonical_bytes(encrypted.to_dict()))
         artifact = DerivedArtifact(
             artifact_id=f"artifact-{uuid.uuid4().hex}",
@@ -2996,7 +3084,9 @@ class DataWalletService:
             encrypted_payload_ref=ref,
         )
         self.derived_artifacts[artifact.artifact_id] = artifact
-        self.versions[self._record(wallet_id, record_id).current_version_id].derived_artifact_ids.append(artifact.artifact_id)
+        self.versions[
+            self._record(wallet_id, record_id).current_version_id
+        ].derived_artifact_ids.append(artifact.artifact_id)
         append_audit_event(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
@@ -3042,11 +3132,15 @@ class DataWalletService:
         if record.data_type != "document":
             raise ValueError("Redacted document analysis requires a document record")
         if actor_did == self._wallet(wallet_id).owner_did:
-            plaintext = self.decrypt_record(wallet_id, record_id, actor_did=actor_did, actor_secret=actor_secret)
+            plaintext = self.decrypt_record(
+                wallet_id, record_id, actor_did=actor_did, actor_secret=actor_secret
+            )
         else:
             version = self.versions[record.current_version_id]
             dek = self._unwrap_dek(version, wallet_id, actor_did)
-            payload_data = json.loads(self.storage.get(version.encrypted_payload_ref).decode("utf-8"))
+            payload_data = json.loads(
+                self.storage.get(version.encrypted_payload_ref).decode("utf-8")
+            )
             plaintext = decrypt_bytes(
                 EncryptedBlob.from_dict(payload_data),
                 dek,
@@ -3157,11 +3251,15 @@ class DataWalletService:
         if chunk_size_words < 1:
             raise ValueError("chunk_size_words must be at least 1")
         if actor_did == self._wallet(wallet_id).owner_did:
-            plaintext = self.decrypt_record(wallet_id, record_id, actor_did=actor_did, actor_secret=actor_secret)
+            plaintext = self.decrypt_record(
+                wallet_id, record_id, actor_did=actor_did, actor_secret=actor_secret
+            )
         else:
             version = self.versions[record.current_version_id]
             dek = self._unwrap_dek(version, wallet_id, actor_did)
-            payload_data = json.loads(self.storage.get(version.encrypted_payload_ref).decode("utf-8"))
+            payload_data = json.loads(
+                self.storage.get(version.encrypted_payload_ref).decode("utf-8")
+            )
             plaintext = decrypt_bytes(
                 EncryptedBlob.from_dict(payload_data),
                 dek,
@@ -3260,11 +3358,15 @@ class DataWalletService:
             if record.data_type != "document":
                 raise ValueError("Cross-record redacted analysis requires document records")
             if actor_did == wallet.owner_did:
-                plaintext = self.decrypt_record(wallet_id, record_id, actor_did=actor_did, actor_secret=actor_secret)
+                plaintext = self.decrypt_record(
+                    wallet_id, record_id, actor_did=actor_did, actor_secret=actor_secret
+                )
             else:
                 version = self.versions[record.current_version_id]
                 dek = self._unwrap_dek(version, wallet_id, actor_did)
-                payload_data = json.loads(self.storage.get(version.encrypted_payload_ref).decode("utf-8"))
+                payload_data = json.loads(
+                    self.storage.get(version.encrypted_payload_ref).decode("utf-8")
+                )
                 plaintext = decrypt_bytes(
                     EncryptedBlob.from_dict(payload_data),
                     dek,
@@ -3298,7 +3400,11 @@ class DataWalletService:
             },
             "contains_contact_redactions": any(count > 0 for count in combined_counts.values()),
         }
-        category_text = ", ".join(derived_facts["need_categories"]) if derived_facts["need_categories"] else "none"
+        category_text = (
+            ", ".join(derived_facts["need_categories"])
+            if derived_facts["need_categories"]
+            else "none"
+        )
         output = {
             "summary": f"Detected need categories across authorized records: {category_text}.",
             "redaction_counts": combined_counts,
@@ -3313,7 +3419,11 @@ class DataWalletService:
         encrypted = encrypt_bytes(
             canonical_bytes(output),
             artifact_key,
-            {"wallet_id": wallet_id, "record_ids": ordered_record_ids, "kind": "redacted_cross_record"},
+            {
+                "wallet_id": wallet_id,
+                "record_ids": ordered_record_ids,
+                "kind": "redacted_cross_record",
+            },
         )
         ref = self.storage.put(canonical_bytes(encrypted.to_dict()))
         artifact = DerivedArtifact(
@@ -3326,15 +3436,17 @@ class DataWalletService:
         )
         self.derived_artifacts[artifact.artifact_id] = artifact
         for record_id in ordered_record_ids:
-            self.versions[self._record(wallet_id, record_id).current_version_id].derived_artifact_ids.append(
-                artifact.artifact_id
-            )
+            self.versions[
+                self._record(wallet_id, record_id).current_version_id
+            ].derived_artifact_ids.append(artifact.artifact_id)
         append_audit_event(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=actor_did,
             action="record/analyze_redacted_batch",
-            resource=",".join(resource_for_record(wallet_id, record_id) for record_id in ordered_record_ids),
+            resource=",".join(
+                resource_for_record(wallet_id, record_id) for record_id in ordered_record_ids
+            ),
             decision="allow",
             details={
                 "artifact_id": artifact.artifact_id,
@@ -3670,15 +3782,17 @@ class DataWalletService:
         )
         self.derived_artifacts[artifact.artifact_id] = artifact
         for record_id in ordered_record_ids:
-            self.versions[self._record(wallet_id, record_id).current_version_id].derived_artifact_ids.append(
-                artifact.artifact_id
-            )
+            self.versions[
+                self._record(wallet_id, record_id).current_version_id
+            ].derived_artifact_ids.append(artifact.artifact_id)
         append_audit_event(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
             actor_did=actor_did,
             action="record/graphrag_redacted",
-            resource=",".join(resource_for_record(wallet_id, record_id) for record_id in ordered_record_ids),
+            resource=",".join(
+                resource_for_record(wallet_id, record_id) for record_id in ordered_record_ids
+            ),
             decision="allow",
             details={
                 "artifact_id": artifact.artifact_id,
@@ -3692,7 +3806,9 @@ class DataWalletService:
         )
         return {"artifact": artifact, "output": output}
 
-    def _derive_vector_profile(self, redacted_text: str, *, chunk_size_words: int) -> Dict[str, Any]:
+    def _derive_vector_profile(
+        self, redacted_text: str, *, chunk_size_words: int
+    ) -> Dict[str, Any]:
         words = re.findall(r"[A-Za-z][A-Za-z'-]*|\[REDACTED_[A-Z_]+\]", redacted_text)
         chunks = [
             " ".join(words[index : index + chunk_size_words])
@@ -3746,12 +3862,16 @@ class DataWalletService:
             self.set_principal_secret(actor_did, actor_secret)
         version = self.versions[record.current_version_id]
         dek = self._unwrap_dek(version, wallet_id, actor_did)
-        payload_aad = self._payload_aad(wallet_id, record.record_id, version.version_id, record.data_type)
+        payload_aad = self._payload_aad(
+            wallet_id, record.record_id, version.version_id, record.data_type
+        )
         payload_data = json.loads(self.storage.get(version.encrypted_payload_ref).decode("utf-8"))
         plaintext = decrypt_bytes(EncryptedBlob.from_dict(payload_data), dek, payload_aad)
         metadata: Dict[str, Any] = {}
         if version.encrypted_metadata_ref is not None:
-            metadata_data = json.loads(self.storage.get(version.encrypted_metadata_ref).decode("utf-8"))
+            metadata_data = json.loads(
+                self.storage.get(version.encrypted_metadata_ref).decode("utf-8")
+            )
             metadata_plaintext = decrypt_bytes(
                 EncryptedBlob.from_dict(metadata_data),
                 dek,
@@ -3796,7 +3916,11 @@ class DataWalletService:
                     "confidence": 0.0,
                     "error": str(exc),
                 }
-        if result.get("text") or result.get("method") not in {"unsupported", "missing", "extractor-error"}:
+        if result.get("text") or result.get("method") not in {
+            "unsupported",
+            "missing",
+            "extractor-error",
+        }:
             return result
 
         fallback_text = plaintext[:max_bytes].decode("utf-8", errors="replace")
@@ -3825,7 +3949,9 @@ class DataWalletService:
                 temp_path = Path(temp_dir) / f"{record_id}.pdf"
                 temp_path.write_bytes(plaintext)
                 try:
-                    return self._analyze_pdf_form_path(temp_path, max_fields=max_fields, use_ocr=use_ocr)
+                    return self._analyze_pdf_form_path(
+                        temp_path, max_fields=max_fields, use_ocr=use_ocr
+                    )
                 except Exception as exc:
                     text_result = self._extract_document_text_from_bytes(
                         plaintext,
@@ -3859,7 +3985,9 @@ class DataWalletService:
             error=text_result.get("error"),
         )
 
-    def _analyze_pdf_form_path(self, pdf_path: Path, *, max_fields: int, use_ocr: bool) -> Dict[str, Any]:
+    def _analyze_pdf_form_path(
+        self, pdf_path: Path, *, max_fields: int, use_ocr: bool
+    ) -> Dict[str, Any]:
         from ipfs_datasets_py.processors.pdf_form_filler import analyze_pdf_form, classify_pdf
 
         ocr_provider = None
@@ -3934,7 +4062,9 @@ class DataWalletService:
             "raw_text_chars": len(text),
         }
 
-    def _infer_form_fields_from_text(self, redacted_text: str, *, max_fields: int) -> List[Dict[str, Any]]:
+    def _infer_form_fields_from_text(
+        self, redacted_text: str, *, max_fields: int
+    ) -> List[Dict[str, Any]]:
         fields: List[Dict[str, Any]] = []
         seen: set[str] = set()
         for raw_line in redacted_text.splitlines():
@@ -3947,7 +4077,9 @@ class DataWalletService:
             label = match.group(1).strip(" -*\t")
             if not label:
                 continue
-            normalized = re.sub(r"[^a-z0-9]+", "_", label.lower()).strip("_") or f"field_{len(fields) + 1}"
+            normalized = (
+                re.sub(r"[^a-z0-9]+", "_", label.lower()).strip("_") or f"field_{len(fields) + 1}"
+            )
             if normalized in seen:
                 continue
             seen.add(normalized)
@@ -3957,7 +4089,9 @@ class DataWalletService:
                     "label": label,
                     "page_index": None,
                     "data_type": self._infer_form_data_type(label),
-                    "required": bool(re.search(r"\b(required|must|mandatory)\b|\*", line, re.IGNORECASE)),
+                    "required": bool(
+                        re.search(r"\b(required|must|mandatory)\b|\*", line, re.IGNORECASE)
+                    ),
                     "max_chars": None,
                     "multiline": False,
                     "options": [],
@@ -3981,7 +4115,9 @@ class DataWalletService:
     def _safe_form_field(self, field: Dict[str, Any]) -> Dict[str, Any]:
         redacted_name, _ = self._redact_text(str(field.get("name") or ""))
         redacted_label, _ = self._redact_text(str(field.get("label") or ""))
-        redacted_options = [self._redact_text(str(option))[0] for option in field.get("options") or []]
+        redacted_options = [
+            self._redact_text(str(option))[0] for option in field.get("options") or []
+        ]
         redacted_dependencies = [
             self._redact_text(str(dependency))[0] for dependency in field.get("dependencies") or []
         ]
@@ -4041,7 +4177,9 @@ class DataWalletService:
         except Exception:
             return {}
         if getattr(integrator, "use_real_models", False):
-            raise RuntimeError("wallet redacted GraphRAG must not use model-backed entity extraction")
+            raise RuntimeError(
+                "wallet redacted GraphRAG must not use model-backed entity extraction"
+            )
         try:
             entities = integrator.extract_entities(redacted_text)
         except Exception:
@@ -4142,7 +4280,9 @@ class DataWalletService:
                 }
             )
 
-        categories = [category for category, count in sorted(category_record_counts.items()) if count > 0]
+        categories = [
+            category for category, count in sorted(category_record_counts.items()) if count > 0
+        ]
         for left_index, left in enumerate(categories):
             for right in categories[left_index + 1 :]:
                 cooccurrence = sum(
@@ -4247,19 +4387,31 @@ class DataWalletService:
                 raise AccessDeniedError("Analytics consent fields exceed template policy")
             policy = dict(template.aggregation_policy)
             if aggregation_policy:
-                requested_min = int(aggregation_policy.get("min_cohort_size", policy.get("min_cohort_size", 10)))
+                requested_min = int(
+                    aggregation_policy.get("min_cohort_size", policy.get("min_cohort_size", 10))
+                )
                 template_min = int(policy.get("min_cohort_size", 10))
                 if requested_min < template_min:
-                    raise AccessDeniedError("Analytics consent cannot lower template min_cohort_size")
-                requested_budget = float(aggregation_policy.get("epsilon_budget", policy.get("epsilon_budget", 1.0)))
+                    raise AccessDeniedError(
+                        "Analytics consent cannot lower template min_cohort_size"
+                    )
+                requested_budget = float(
+                    aggregation_policy.get("epsilon_budget", policy.get("epsilon_budget", 1.0))
+                )
                 template_budget = float(policy.get("epsilon_budget", 1.0))
                 if requested_budget > template_budget:
-                    raise AccessDeniedError("Analytics consent cannot exceed template epsilon_budget")
+                    raise AccessDeniedError(
+                        "Analytics consent cannot exceed template epsilon_budget"
+                    )
                 policy.update(aggregation_policy)
         else:
             policy = aggregation_policy or {
-                "min_cohort_size": wallet.default_privacy_policy.get("analytics_min_cohort_size", 10),
-                "epsilon_budget": wallet.default_privacy_policy.get("analytics_epsilon_budget", 1.0),
+                "min_cohort_size": wallet.default_privacy_policy.get(
+                    "analytics_min_cohort_size", 10
+                ),
+                "epsilon_budget": wallet.default_privacy_policy.get(
+                    "analytics_epsilon_budget", 1.0
+                ),
                 "duplicate_policy": "reject_by_nullifier",
             }
         consent = AnalyticsConsent(
@@ -4318,11 +4470,15 @@ class DataWalletService:
         self.analytics_templates[template_id] = template
         return template
 
-    def list_analytics_templates(self, *, include_inactive: bool = False) -> List[AnalyticsTemplate]:
+    def list_analytics_templates(
+        self, *, include_inactive: bool = False
+    ) -> List[AnalyticsTemplate]:
         templates = sorted(self.analytics_templates.values(), key=lambda item: item.template_id)
         if include_inactive:
             return templates
-        return [template for template in templates if self._analytics_template_is_approved(template)]
+        return [
+            template for template in templates if self._analytics_template_is_approved(template)
+        ]
 
     def set_analytics_template_status(
         self,
@@ -4339,9 +4495,13 @@ class DataWalletService:
         return template
 
     def retire_analytics_template(self, template_id: str, *, actor_did: str) -> AnalyticsTemplate:
-        return self.set_analytics_template_status(template_id, actor_did=actor_did, status="retired")
+        return self.set_analytics_template_status(
+            template_id, actor_did=actor_did, status="retired"
+        )
 
-    def revoke_analytics_consent(self, wallet_id: str, consent_id: str, *, actor_did: str) -> AnalyticsConsent:
+    def revoke_analytics_consent(
+        self, wallet_id: str, consent_id: str, *, actor_did: str
+    ) -> AnalyticsConsent:
         wallet = self._wallet(wallet_id)
         self._assert_controller(wallet, actor_did)
         consent = self._analytics_consent(wallet_id, consent_id)
@@ -4469,7 +4629,9 @@ class DataWalletService:
             self._assert_active_analytics_template(template)
         if min_cohort_size is None:
             matching_consents = [
-                consent for consent in self.analytics_consents.values() if consent.template_id == template_id
+                consent
+                for consent in self.analytics_consents.values()
+                if consent.template_id == template_id
             ]
             policy_sizes = [
                 int(consent.aggregation_policy.get("min_cohort_size", 10))
@@ -4528,7 +4690,9 @@ class DataWalletService:
             self._assert_analytics_group_by_fields(template, group_by)
         if min_cohort_size is None:
             matching_consents = [
-                consent for consent in self.analytics_consents.values() if consent.template_id == template_id
+                consent
+                for consent in self.analytics_consents.values()
+                if consent.template_id == template_id
             ]
             policy_sizes = [
                 int(consent.aggregation_policy.get("min_cohort_size", 10))
@@ -4578,36 +4742,50 @@ class DataWalletService:
         ]
         return {
             "wallet": wallet.to_dict(),
-            "records": [record.to_dict() for record in sorted(records, key=lambda item: item.record_id)],
+            "records": [
+                record.to_dict() for record in sorted(records, key=lambda item: item.record_id)
+            ],
             "versions": versions,
             "grants": [
                 grant.to_dict()
                 for grant in sorted(self.grants.values(), key=lambda item: item.grant_id)
-                if any(resource.startswith(f"wallet://{wallet_id}/") for resource in grant.resources)
+                if any(
+                    resource.startswith(f"wallet://{wallet_id}/") for resource in grant.resources
+                )
             ],
             "grant_receipts": [
                 receipt.to_dict()
-                for receipt in sorted(self.grant_receipts.values(), key=lambda item: item.receipt_id)
+                for receipt in sorted(
+                    self.grant_receipts.values(), key=lambda item: item.receipt_id
+                )
                 if receipt.wallet_id == wallet_id
             ],
             "invocations": [
                 invocation.to_dict()
-                for invocation in sorted(self.invocations.values(), key=lambda item: item.invocation_id)
+                for invocation in sorted(
+                    self.invocations.values(), key=lambda item: item.invocation_id
+                )
                 if invocation.resource.startswith(f"wallet://{wallet_id}/")
             ],
             "approvals": [
                 approval.to_dict()
-                for approval in sorted(self.approval_requests.values(), key=lambda item: item.approval_id)
+                for approval in sorted(
+                    self.approval_requests.values(), key=lambda item: item.approval_id
+                )
                 if approval.wallet_id == wallet_id
             ],
             "access_requests": [
                 request.to_dict()
-                for request in sorted(self.access_requests.values(), key=lambda item: item.request_id)
+                for request in sorted(
+                    self.access_requests.values(), key=lambda item: item.request_id
+                )
                 if request.wallet_id == wallet_id
             ],
             "world_id_bindings": [
                 binding.to_dict()
-                for binding in sorted(self.list_world_id_bindings(wallet_id), key=lambda item: item.binding_id)
+                for binding in sorted(
+                    self.list_world_id_bindings(wallet_id), key=lambda item: item.binding_id
+                )
             ],
         }
 
@@ -4663,9 +4841,7 @@ class DataWalletService:
             if record.wallet_id == wallet_id
         )
         record_metadata_ids = sorted(
-            key
-            for key, record in self.record_metadata.items()
-            if record.wallet_id == wallet_id
+            key for key, record in self.record_metadata.items() if record.wallet_id == wallet_id
         )
         saved_service_ids = sorted(
             saved_service.saved_service_id
@@ -4678,9 +4854,7 @@ class DataWalletService:
             if interaction.wallet_id == wallet_id
         )
         plan_ids = sorted(
-            plan.plan_id
-            for plan in self.service_plans.values()
-            if plan.wallet_id == wallet_id
+            plan.plan_id for plan in self.service_plans.values() if plan.wallet_id == wallet_id
         )
         world_id_binding_ids = sorted(
             binding.binding_id
@@ -4714,7 +4888,9 @@ class DataWalletService:
             ],
             "analytics_templates": [
                 template.to_dict()
-                for template in sorted(self.analytics_templates.values(), key=lambda item: item.template_id)
+                for template in sorted(
+                    self.analytics_templates.values(), key=lambda item: item.template_id
+                )
             ],
             "analytics_contributions": [
                 contribution.to_dict()
@@ -4725,37 +4901,37 @@ class DataWalletService:
             ],
             "aggregate_results": [
                 result.to_dict()
-                for result in sorted(self.aggregate_results.values(), key=lambda item: item.result_id)
+                for result in sorted(
+                    self.aggregate_results.values(), key=lambda item: item.result_id
+                )
             ],
             "analytics_query_budget_spent": dict(sorted(self.analytics_query_budget_spent.items())),
-            "approvals": [self.approval_requests[approval_id].to_dict() for approval_id in approval_ids],
+            "approvals": [
+                self.approval_requests[approval_id].to_dict() for approval_id in approval_ids
+            ],
             "access_requests": [
                 self.access_requests[request_id].to_dict() for request_id in access_request_ids
             ],
             "recovery_bundles": [
                 self.recovery_bundles[bundle_id].to_dict() for bundle_id in recovery_bundle_ids
             ],
-            "record_metadata": [
-                self.record_metadata[key].to_dict() for key in record_metadata_ids
-            ],
+            "record_metadata": [self.record_metadata[key].to_dict() for key in record_metadata_ids],
             "saved_services": [
-                self.saved_services[saved_service_id].to_dict() for saved_service_id in saved_service_ids
+                self.saved_services[saved_service_id].to_dict()
+                for saved_service_id in saved_service_ids
             ],
             "service_interactions": [
-                self.service_interactions[interaction_id].to_dict() for interaction_id in interaction_ids
+                self.service_interactions[interaction_id].to_dict()
+                for interaction_id in interaction_ids
             ],
-            "service_plans": [
-                self.service_plans[plan_id].to_dict() for plan_id in plan_ids
-            ],
+            "service_plans": [self.service_plans[plan_id].to_dict() for plan_id in plan_ids],
             "world_id_bindings": [
                 self.world_id_bindings[binding_id].to_dict() for binding_id in world_id_binding_ids
             ],
             "missing_person_dead_drop": (
                 missing_person_dead_drop.to_dict() if missing_person_dead_drop is not None else None
             ),
-            "audit_events": [
-                event.to_dict() for event in self.audit_events.get(wallet_id, [])
-            ],
+            "audit_events": [event.to_dict() for event in self.audit_events.get(wallet_id, [])],
             "principal_secret_dids": principal_secret_dids,
             "principal_secrets": {
                 did: self._principal_secrets[did].hex() for did in principal_secret_dids
@@ -4767,22 +4943,26 @@ class DataWalletService:
 
         consents = [
             consent.to_dict()
-            for consent in sorted(self.analytics_consents.values(), key=lambda item: item.consent_id)
+            for consent in sorted(
+                self.analytics_consents.values(), key=lambda item: item.consent_id
+            )
         ]
         if redact_subjects:
             consents = [self._redacted_analytics_consent(consent) for consent in consents]
 
         ledger = {
             "ledger_type": "wallet_analytics_ledger_v1",
-            "subject_count": len({consent.wallet_id for consent in self.analytics_consents.values()}),
+            "subject_count": len(
+                {consent.wallet_id for consent in self.analytics_consents.values()}
+            ),
             "subject_id_policy": (
-                "redacted-consent-subject-v1"
-                if redact_subjects
-                else "private-wallet-id"
+                "redacted-consent-subject-v1" if redact_subjects else "private-wallet-id"
             ),
             "analytics_templates": [
                 template.to_dict()
-                for template in sorted(self.analytics_templates.values(), key=lambda item: item.template_id)
+                for template in sorted(
+                    self.analytics_templates.values(), key=lambda item: item.template_id
+                )
             ],
             "analytics_consents": consents,
             "analytics_contributions": [
@@ -4794,7 +4974,9 @@ class DataWalletService:
             ],
             "aggregate_results": [
                 result.to_dict()
-                for result in sorted(self.aggregate_results.values(), key=lambda item: item.result_id)
+                for result in sorted(
+                    self.aggregate_results.values(), key=lambda item: item.result_id
+                )
             ],
             "analytics_query_budget_spent": dict(sorted(self.analytics_query_budget_spent.items())),
         }
@@ -4808,7 +4990,9 @@ class DataWalletService:
         if ledger.get("ledger_type") not in {None, "wallet_analytics_ledger_v1"}:
             raise ValueError("Unsupported analytics ledger type")
         for template_data in ledger.get("analytics_templates", []):
-            self.analytics_templates[template_data["template_id"]] = AnalyticsTemplate(**template_data)
+            self.analytics_templates[template_data["template_id"]] = AnalyticsTemplate(
+                **template_data
+            )
         for consent_data in ledger.get("analytics_consents", []):
             consent_id = consent_data["consent_id"]
             incoming = AnalyticsConsent(**consent_data)
@@ -4819,13 +5003,16 @@ class DataWalletService:
             ):
                 self.analytics_consents[consent_id] = incoming
         for contribution_data in ledger.get("analytics_contributions", []):
-            self.analytics_contributions[contribution_data["contribution_id"]] = AnalyticsContribution(
-                **contribution_data
+            self.analytics_contributions[contribution_data["contribution_id"]] = (
+                AnalyticsContribution(**contribution_data)
             )
         for result_data in ledger.get("aggregate_results", []):
             self.aggregate_results[result_data["result_id"]] = AggregateResult(**result_data)
         self.analytics_query_budget_spent.update(
-            {str(key): float(value) for key, value in ledger.get("analytics_query_budget_spent", {}).items()}
+            {
+                str(key): float(value)
+                for key, value in ledger.get("analytics_query_budget_spent", {}).items()
+            }
         )
 
     def create_export_bundle(
@@ -4888,7 +5075,8 @@ class DataWalletService:
         artifact_ids = sorted(
             artifact.artifact_id
             for artifact in self.derived_artifacts.values()
-            if artifact.wallet_id == wallet_id and any(record_id in record_id_set for record_id in artifact.source_record_ids)
+            if artifact.wallet_id == wallet_id
+            and any(record_id in record_id_set for record_id in artifact.source_record_ids)
         )
         proof_ids = sorted(
             proof.proof_id
@@ -4926,7 +5114,9 @@ class DataWalletService:
             wallet_id=wallet_id,
             actor_did=actor_did,
             action="export/create",
-            resource=",".join(resource_for_record(wallet_id, record_id) for record_id in requested_ids),
+            resource=",".join(
+                resource_for_record(wallet_id, record_id) for record_id in requested_ids
+            ),
             decision="allow",
             details={
                 "record_ids": requested_ids,
@@ -4986,7 +5176,10 @@ class DataWalletService:
             self.wallets[wallet_id] = Wallet(
                 wallet_id=wallet_id,
                 owner_did=str(wallet_data.get("owner_did") or "did:unknown:owner"),
-                controller_dids=list(wallet_data.get("controller_dids") or [wallet_data.get("owner_did") or "did:unknown:owner"]),
+                controller_dids=list(
+                    wallet_data.get("controller_dids")
+                    or [wallet_data.get("owner_did") or "did:unknown:owner"]
+                ),
                 device_dids=list(wallet_data.get("device_dids") or []),
                 default_privacy_policy=dict(wallet_data.get("default_privacy_policy") or {}),
                 governance_policy=dict(wallet_data.get("governance_policy") or {}),
@@ -5009,7 +5202,9 @@ class DataWalletService:
                 version_id=version_data["version_id"],
                 record_id=version_data["record_id"],
                 encrypted_payload_ref=self._storage_ref_from_dict(payload_ref),
-                encrypted_metadata_ref=self._storage_ref_from_dict(metadata_ref) if metadata_ref else None,
+                encrypted_metadata_ref=self._storage_ref_from_dict(metadata_ref)
+                if metadata_ref
+                else None,
                 ciphertext_hash=version_data["ciphertext_hash"],
                 encryption_suite=version_data["encryption_suite"],
                 key_wraps=[KeyWrap(**wrap) for wrap in version_data.get("key_wraps", [])],
@@ -5027,7 +5222,9 @@ class DataWalletService:
                 source_record_ids=list(artifact_data.get("source_record_ids", [])),
                 artifact_type=artifact_data["artifact_type"],
                 output_policy=artifact_data["output_policy"],
-                encrypted_payload_ref=self._storage_ref_from_dict(artifact_data["encrypted_payload_ref"]),
+                encrypted_payload_ref=self._storage_ref_from_dict(
+                    artifact_data["encrypted_payload_ref"]
+                ),
                 created_at=artifact_data.get("created_at", utc_now()),
             )
             imported_artifacts += 1
@@ -5139,7 +5336,9 @@ class DataWalletService:
     def _public_export_proof_receipt(self, proof: ProofReceipt) -> Dict[str, Any]:
         return self._public_export_proof_receipt_from_mapping(proof.to_dict())
 
-    def _public_export_proof_receipt_from_mapping(self, proof_data: Mapping[str, Any]) -> Dict[str, Any]:
+    def _public_export_proof_receipt_from_mapping(
+        self, proof_data: Mapping[str, Any]
+    ) -> Dict[str, Any]:
         proof_type = str(proof_data.get("proof_type") or "")
         sanitized: Dict[str, Any] = {}
         for key in PUBLIC_EXPORT_PROOF_KEYS:
@@ -5147,7 +5346,9 @@ class DataWalletService:
                 continue
             value = proof_data[key]
             if key == "statement":
-                sanitized[key] = self._sanitize_public_export_proof_mapping(value, proof_type=proof_type)
+                sanitized[key] = self._sanitize_public_export_proof_mapping(
+                    value, proof_type=proof_type
+                )
             elif key == "public_inputs":
                 sanitized[key] = self._sanitize_public_export_proof_public_inputs(value)
             elif key == "metadata":
@@ -5188,7 +5389,9 @@ class DataWalletService:
                 sanitized[normalized_key] = safe_value
         return sanitized
 
-    def _sanitize_public_export_proof_mapping(self, value: Any, *, proof_type: str = "") -> Dict[str, Any]:
+    def _sanitize_public_export_proof_mapping(
+        self, value: Any, *, proof_type: str = ""
+    ) -> Dict[str, Any]:
         if not isinstance(value, Mapping):
             return {}
         sanitized: Dict[str, Any] = {}
@@ -5222,15 +5425,23 @@ class DataWalletService:
             return value
         return str(value)
 
-    def _assert_public_export_proof_is_sanitized(self, value: Any, *, top_level: bool = False) -> None:
+    def _assert_public_export_proof_is_sanitized(
+        self, value: Any, *, top_level: bool = False
+    ) -> None:
         if isinstance(value, Mapping):
             for key, entry in value.items():
                 normalized_key = str(key)
                 lowered = normalized_key.lower()
                 if lowered == "nullifier_ref":
-                    raise ValueError("Export proof metadata must use nullifier_commitment, not nullifier_ref")
-                if not (top_level and lowered == "witness_record_ids") and self._private_public_export_proof_key(normalized_key):
-                    raise ValueError(f"Export proof metadata contains private field: {normalized_key}")
+                    raise ValueError(
+                        "Export proof metadata must use nullifier_commitment, not nullifier_ref"
+                    )
+                if not (
+                    top_level and lowered == "witness_record_ids"
+                ) and self._private_public_export_proof_key(normalized_key):
+                    raise ValueError(
+                        f"Export proof metadata contains private field: {normalized_key}"
+                    )
                 self._assert_public_export_proof_is_sanitized(entry)
             return
         if isinstance(value, (list, tuple)):
@@ -5243,11 +5454,19 @@ class DataWalletService:
     @staticmethod
     def _private_public_export_proof_key(key: str) -> bool:
         lowered = str(key or "").lower()
-        if lowered in {"proof_hash", "proof_id", "proof_system", "proof_type", "proof_artifact_ref"}:
+        if lowered in {
+            "proof_hash",
+            "proof_id",
+            "proof_system",
+            "proof_type",
+            "proof_artifact_ref",
+        }:
             return False
         if lowered == "nullifier_ref":
             return True
-        return lowered in PUBLIC_EXPORT_PROOF_PRIVATE_KEYS or bool(PUBLIC_EXPORT_PROOF_PRIVATE_KEY_PATTERN.search(lowered))
+        return lowered in PUBLIC_EXPORT_PROOF_PRIVATE_KEYS or bool(
+            PUBLIC_EXPORT_PROOF_PRIVATE_KEY_PATTERN.search(lowered)
+        )
 
     def _private_public_export_proof_string(self, value: str) -> bool:
         lowered = value.lower()
@@ -5369,7 +5588,9 @@ class DataWalletService:
         for request_data in snapshot.get("access_requests", []):
             self.access_requests[request_data["request_id"]] = AccessRequest(**request_data)
         for bundle_data in snapshot.get("recovery_bundles", []):
-            self.recovery_bundles[bundle_data["bundle_id"]] = WalletRecoveryBundleRecord(**bundle_data)
+            self.recovery_bundles[bundle_data["bundle_id"]] = WalletRecoveryBundleRecord(
+                **bundle_data
+            )
         for metadata_data in snapshot.get("record_metadata", []):
             key = self._record_metadata_key(metadata_data["wallet_id"], metadata_data["record_id"])
             self.record_metadata[key] = WalletRecordMetadataRecord(**metadata_data)
@@ -5378,8 +5599,8 @@ class DataWalletService:
                 **saved_service_data
             )
         for interaction_data in snapshot.get("service_interactions", []):
-            self.service_interactions[interaction_data["interaction_id"]] = ServiceInteractionRecord(
-                **interaction_data
+            self.service_interactions[interaction_data["interaction_id"]] = (
+                ServiceInteractionRecord(**interaction_data)
             )
         for plan_data in snapshot.get("service_plans", []):
             self.service_plans[plan_data["plan_id"]] = ServicePlanRecord(**plan_data)
@@ -5387,8 +5608,8 @@ class DataWalletService:
             self._store_world_id_binding(WorldIdBinding(**binding_data))
         dead_drop_data = snapshot.get("missing_person_dead_drop")
         if isinstance(dead_drop_data, dict) and dead_drop_data.get("wallet_id"):
-            self.missing_person_dead_drops[dead_drop_data["wallet_id"]] = MissingPersonDeadDropRecord(
-                **dead_drop_data
+            self.missing_person_dead_drops[dead_drop_data["wallet_id"]] = (
+                MissingPersonDeadDropRecord(**dead_drop_data)
             )
         return wallet
 
@@ -5408,7 +5629,9 @@ class DataWalletService:
     ) -> StorageHealthReport:
         """Verify encrypted payload and metadata replicas without decrypting."""
 
-        report = self._record_storage_report(wallet_id, record_id, include_metadata=include_metadata)
+        report = self._record_storage_report(
+            wallet_id, record_id, include_metadata=include_metadata
+        )
         append_audit_event(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
@@ -5473,7 +5696,9 @@ class DataWalletService:
 
         wallet = self._wallet(wallet_id)
         self._assert_controller(wallet, actor_did)
-        report = self._record_storage_repair_report(wallet_id, record_id, include_metadata=include_metadata)
+        report = self._record_storage_repair_report(
+            wallet_id, record_id, include_metadata=include_metadata
+        )
         self._touch_wallet(wallet)
         append_audit_event(
             self.audit_events[wallet_id],
@@ -5509,7 +5734,9 @@ class DataWalletService:
             wallet_id=wallet_id,
             record_count=len(record_ids),
             reports=[
-                self._record_storage_repair_report(wallet_id, record_id, include_metadata=include_metadata)
+                self._record_storage_repair_report(
+                    wallet_id, record_id, include_metadata=include_metadata
+                )
                 for record_id in record_ids
             ],
         )
@@ -5705,7 +5932,9 @@ class DataWalletService:
             "credential_identifiers": list(binding.credential_identifiers),
             "issuer_schema_ids": list(binding.issuer_schema_ids),
             "nullifier_ref": binding.nullifier_ref,
-            "nullifier_commitment": DataWalletService._world_id_public_nullifier_commitment(binding.nullifier_ref),
+            "nullifier_commitment": DataWalletService._world_id_public_nullifier_commitment(
+                binding.nullifier_ref
+            ),
             "signal_hash": binding.signal_hash_ref,
             "session_present": bool(binding.session_id),
             "verification_status": binding.verification_status,
@@ -5721,7 +5950,9 @@ class DataWalletService:
             payload["expires_at_min"] = binding.expires_at_min
         verification = binding.metadata.get("verification")
         if verification:
-            payload["verification_result_hash"] = f"sha256:{sha256_hex(canonical_bytes(verification))}"
+            payload["verification_result_hash"] = (
+                f"sha256:{sha256_hex(canonical_bytes(verification))}"
+            )
         return payload
 
     @staticmethod
@@ -5817,15 +6048,18 @@ class DataWalletService:
         return self.records[record_id]
 
     def _access_request(self, wallet_id: str, request_id: str) -> AccessRequest:
-        if request_id not in self.access_requests or self.access_requests[request_id].wallet_id != wallet_id:
+        if (
+            request_id not in self.access_requests
+            or self.access_requests[request_id].wallet_id != wallet_id
+        ):
             raise MissingRecordError(f"Access request not found: {request_id}")
         return self.access_requests[request_id]
 
     def _create_grant_receipt(self, wallet_id: str, grant: Grant) -> GrantReceipt:
         access_request_id = str(grant.caveats.get("access_request_id") or "") or None
-        approval_id = str(
-            grant.caveats.get("approval_id") or grant.caveats.get("approval_ref") or ""
-        ) or None
+        approval_id = (
+            str(grant.caveats.get("approval_id") or grant.caveats.get("approval_ref") or "") or None
+        )
         payload = {
             "wallet_id": wallet_id,
             "grant_id": grant.grant_id,
@@ -5879,7 +6113,9 @@ class DataWalletService:
         if parent.audience_did != issuer_did:
             raise AccessDeniedError("Delegating issuer must be the parent grant audience")
         self._assert_delegation_depth(parent)
-        if not self._grant_has_ability(parent, "record/share") and not self._grant_has_ability(parent, "document/share"):
+        if not self._grant_has_ability(parent, "record/share") and not self._grant_has_ability(
+            parent, "document/share"
+        ):
             raise AccessDeniedError("Parent grant does not allow re-delegation")
         if not all(self._grant_covers_resource(parent, resource) for resource in resources):
             raise AccessDeniedError("Delegated resources exceed parent grant")
@@ -5918,7 +6154,9 @@ class DataWalletService:
     @staticmethod
     def _grant_references_wallet(wallet_id: str, grant: Grant) -> bool:
         prefix = f"wallet://{wallet_id}"
-        return "*" in grant.resources or any(str(resource).startswith(prefix) for resource in grant.resources)
+        return "*" in grant.resources or any(
+            str(resource).startswith(prefix) for resource in grant.resources
+        )
 
     def _assert_grant_allows(
         self,
@@ -5960,7 +6198,9 @@ class DataWalletService:
         for parent_grant_id in grant.proof_chain:
             parent = self.grants.get(parent_grant_id)
             if parent is None:
-                raise AccessDeniedError(f"Delegation proof is missing parent grant: {parent_grant_id}")
+                raise AccessDeniedError(
+                    f"Delegation proof is missing parent grant: {parent_grant_id}"
+                )
             chain.append(parent)
         chain.append(grant)
 
@@ -5982,7 +6222,9 @@ class DataWalletService:
         if parent.audience_did != child.issuer_did:
             raise AccessDeniedError("Delegated grant issuer must be the parent grant audience")
         self._assert_delegation_depth(parent)
-        if not self._grant_has_ability(parent, "record/share") and not self._grant_has_ability(parent, "document/share"):
+        if not self._grant_has_ability(parent, "record/share") and not self._grant_has_ability(
+            parent, "document/share"
+        ):
             raise AccessDeniedError("Parent grant does not allow re-delegation")
         if not all(self._grant_covers_resource(parent, resource) for resource in child.resources):
             raise AccessDeniedError("Delegated resources exceed parent grant")
@@ -6026,10 +6268,20 @@ class DataWalletService:
                 raise AccessDeniedError("Delegated record_ids exceed parent grant")
         self._assert_delegated_subset_caveat(parent, caveats, "data_types")
         self._assert_delegated_subset_caveat(parent, caveats, "output_types")
-        if parent.caveats.get("user_presence_required") is True and caveats.get("user_presence_required") is not True:
-            raise AccessDeniedError("Delegated grant must preserve parent user_presence_required caveat")
-        if parent.caveats.get("require_user_presence") is True and caveats.get("require_user_presence") is not True:
-            raise AccessDeniedError("Delegated grant must preserve parent require_user_presence caveat")
+        if (
+            parent.caveats.get("user_presence_required") is True
+            and caveats.get("user_presence_required") is not True
+        ):
+            raise AccessDeniedError(
+                "Delegated grant must preserve parent user_presence_required caveat"
+            )
+        if (
+            parent.caveats.get("require_user_presence") is True
+            and caveats.get("require_user_presence") is not True
+        ):
+            raise AccessDeniedError(
+                "Delegated grant must preserve parent require_user_presence caveat"
+            )
         if "max_delegation_depth" in caveats:
             parent_depth = int(parent.caveats.get("max_delegation_depth", 1))
             child_depth = int(caveats["max_delegation_depth"])
@@ -6044,8 +6296,16 @@ class DataWalletService:
         child_values = caveats.get(key)
         if child_values is None:
             raise AccessDeniedError(f"Delegated grant must preserve parent {key} caveat")
-        parent_set = {str(value) for value in parent_values} if not isinstance(parent_values, str) else {parent_values}
-        child_set = {str(value) for value in child_values} if not isinstance(child_values, str) else {child_values}
+        parent_set = (
+            {str(value) for value in parent_values}
+            if not isinstance(parent_values, str)
+            else {parent_values}
+        )
+        child_set = (
+            {str(value) for value in child_values}
+            if not isinstance(child_values, str)
+            else {child_values}
+        )
         if not child_set.issubset(parent_set):
             raise AccessDeniedError(f"Delegated {key} exceed parent grant")
 
@@ -6076,7 +6336,10 @@ class DataWalletService:
         return sorted(matches, key=lambda item: item.created_at)[-1] if matches else None
 
     def _analytics_consent(self, wallet_id: str, consent_id: str) -> AnalyticsConsent:
-        if consent_id not in self.analytics_consents or self.analytics_consents[consent_id].wallet_id != wallet_id:
+        if (
+            consent_id not in self.analytics_consents
+            or self.analytics_consents[consent_id].wallet_id != wallet_id
+        ):
             raise MissingRecordError(f"Analytics consent not found: {consent_id}")
         return self.analytics_consents[consent_id]
 
@@ -6090,7 +6353,9 @@ class DataWalletService:
         invocation_caveats: Optional[Dict[str, Any]] = None,
     ) -> None:
         export_resource = resource_for_export(wallet_id)
-        if self._grant_has_ability(grant, "export/create") and self._grant_covers_resource(grant, export_resource):
+        if self._grant_has_ability(grant, "export/create") and self._grant_covers_resource(
+            grant, export_resource
+        ):
             self._assert_grant_allows(
                 grant,
                 wallet_id=wallet_id,
@@ -6131,14 +6396,18 @@ class DataWalletService:
             if is_expired(template.expires_at):
                 raise AccessDeniedError(f"Analytics template {template.template_id} has expired")
 
-    def _assert_analytics_group_by_fields(self, template: AnalyticsTemplate, group_by: List[str]) -> None:
+    def _assert_analytics_group_by_fields(
+        self, template: AnalyticsTemplate, group_by: List[str]
+    ) -> None:
         if not group_by:
             raise ValueError("group_by must include at least one field")
         if len(set(group_by)) != len(group_by):
             raise ValueError("group_by fields must be unique")
         disallowed = set(group_by) - set(template.allowed_derived_fields)
         if disallowed:
-            raise AccessDeniedError(f"Analytics group_by fields exceed template policy: {sorted(disallowed)}")
+            raise AccessDeniedError(
+                f"Analytics group_by fields exceed template policy: {sorted(disallowed)}"
+            )
 
     @staticmethod
     def _analytics_template_is_approved(template: AnalyticsTemplate) -> bool:
@@ -6150,7 +6419,9 @@ class DataWalletService:
         if normalized == "active":
             return "approved"
         if normalized not in {"draft", "approved", "paused", "retired"}:
-            raise ValueError("analytics template status must be draft, approved, paused, or retired")
+            raise ValueError(
+                "analytics template status must be draft, approved, paused, or retired"
+            )
         return normalized
 
     def _validate_analytics_template_policy(self, policy: Dict[str, Any]) -> None:
@@ -6166,7 +6437,9 @@ class DataWalletService:
         else:
             template_limit = 1.0
         matching_consents = [
-            consent for consent in self.analytics_consents.values() if consent.template_id == template_id
+            consent
+            for consent in self.analytics_consents.values()
+            if consent.template_id == template_id
         ]
         limits = [
             float(consent.aggregation_policy["epsilon_budget"])
@@ -6198,15 +6471,18 @@ class DataWalletService:
     @staticmethod
     def _redacted_analytics_consent(consent: Dict[str, Any]) -> Dict[str, Any]:
         redacted = dict(consent)
-        redacted["wallet_id"] = "analytics-subject:" + sha256_hex(
-            canonical_bytes(
-                {
-                    "domain": "wallet-analytics-subject-v1",
-                    "template_id": consent.get("template_id"),
-                    "consent_id": consent.get("consent_id"),
-                }
-            )
-        )[:32]
+        redacted["wallet_id"] = (
+            "analytics-subject:"
+            + sha256_hex(
+                canonical_bytes(
+                    {
+                        "domain": "wallet-analytics-subject-v1",
+                        "template_id": consent.get("template_id"),
+                        "consent_id": consent.get("consent_id"),
+                    }
+                )
+            )[:32]
+        )
         return redacted
 
     @staticmethod
@@ -6275,7 +6551,9 @@ class DataWalletService:
 
     def _active_recovery_policy(self, wallet: Wallet) -> Dict[str, Any]:
         policy = dict(wallet.governance_policy.get("recovery_policy") or {})
-        contact_dids = self._unique_dids(list(policy.get("contact_dids") or []), field_name="contact_dids")
+        contact_dids = self._unique_dids(
+            list(policy.get("contact_dids") or []), field_name="contact_dids"
+        )
         threshold = int(policy.get("threshold") or 0)
         if policy.get("status") != "active" or not contact_dids or threshold < 1:
             raise AccessDeniedError("Wallet recovery policy is not active")
@@ -6302,7 +6580,9 @@ class DataWalletService:
         contact_dids = list(recovery_policy["contact_dids"])
         if requested_by not in set(contact_dids):
             raise AccessDeniedError(f"{requested_by} is not a wallet recovery contact")
-        if set(resources) != {resource_for_wallet(wallet.wallet_id)} or set(abilities) != {"wallet/admin"}:
+        if set(resources) != {resource_for_wallet(wallet.wallet_id)} or set(abilities) != {
+            "wallet/admin"
+        }:
             raise AccessDeniedError("Recovery approval must target wallet/admin for this wallet")
         return ApprovalRequest(
             approval_id=f"approval-{uuid.uuid4().hex}",
@@ -6322,7 +6602,9 @@ class DataWalletService:
 
     def _touch_wallet(self, wallet: Wallet) -> None:
         wallet.updated_at = utc_now()
-        wallet.manifest_head = sha256_hex(canonical_bytes(self.get_wallet_manifest(wallet.wallet_id)))
+        wallet.manifest_head = sha256_hex(
+            canonical_bytes(self.get_wallet_manifest(wallet.wallet_id))
+        )
 
     def _verify_wallet_admin_approval(
         self,
@@ -6353,7 +6635,9 @@ class DataWalletService:
         policy = dict(wallet.governance_policy)
         current_approvers = list(policy.get("approver_dids") or wallet.controller_dids)
         approvers = [
-            did for did in wallet.controller_dids if did in set(current_approvers) or did == wallet.owner_did
+            did
+            for did in wallet.controller_dids
+            if did in set(current_approvers) or did == wallet.owner_did
         ]
         for did in wallet.controller_dids:
             if did not in approvers:
@@ -6374,7 +6658,9 @@ class DataWalletService:
             raise ValueError("principal secret must be 32 bytes")
         self._principal_secrets[did] = secret
 
-    def _payload_aad(self, wallet_id: str, record_id: str, version_id: str, data_type: str) -> Dict[str, str]:
+    def _payload_aad(
+        self, wallet_id: str, record_id: str, version_id: str, data_type: str
+    ) -> Dict[str, str]:
         return {
             "wallet_id": wallet_id,
             "record_id": record_id,
@@ -6382,7 +6668,9 @@ class DataWalletService:
             "data_type": data_type,
         }
 
-    def _wrap_aad(self, wallet_id: str, record_id: str, version_id: str, recipient_did: str) -> Dict[str, str]:
+    def _wrap_aad(
+        self, wallet_id: str, record_id: str, version_id: str, recipient_did: str
+    ) -> Dict[str, str]:
         return {
             "wallet_id": wallet_id,
             "record_id": record_id,
@@ -6409,7 +6697,9 @@ class DataWalletService:
         grant: Grant,
     ) -> None:
         record_ids: set[str] = set()
-        caveat_record_ids = grant.caveats.get("record_ids") or grant.caveats.get("allowed_record_ids")
+        caveat_record_ids = grant.caveats.get("record_ids") or grant.caveats.get(
+            "allowed_record_ids"
+        )
         for resource in grant.resources:
             record_id = self._record_id_from_resource(wallet_id, resource)
             if record_id is not None:
@@ -6420,12 +6710,16 @@ class DataWalletService:
                     record_ids.update(str(record_id) for record_id in caveat_record_ids)
                 else:
                     record_ids.update(
-                        record.record_id for record in self.records.values() if record.wallet_id == wallet_id
+                        record.record_id
+                        for record in self.records.values()
+                        if record.wallet_id == wallet_id
                     )
         for record_id in sorted(record_ids):
             record = self._record(wallet_id, record_id)
             record_resource = resource_for_record(wallet_id, record_id)
-            if not self._grant_has_wrappable_record_ability(grant, audience_did, record_resource, record):
+            if not self._grant_has_wrappable_record_ability(
+                grant, audience_did, record_resource, record
+            ):
                 continue
             version = self.versions[record.current_version_id]
             dek = self._unwrap_dek(version, wallet_id, issuer_did)
@@ -6455,22 +6749,31 @@ class DataWalletService:
         for ability in ("record/decrypt", "record/analyze"):
             if not self._grant_has_ability(grant, ability):
                 continue
-            if grant.audience_did != audience_did or not self._grant_covers_resource(grant, resource):
+            if grant.audience_did != audience_did or not self._grant_covers_resource(
+                grant, resource
+            ):
                 continue
-            allowed_record_ids = grant.caveats.get("record_ids") or grant.caveats.get("allowed_record_ids")
-            if allowed_record_ids is not None and record.record_id not in {str(item) for item in allowed_record_ids}:
+            allowed_record_ids = grant.caveats.get("record_ids") or grant.caveats.get(
+                "allowed_record_ids"
+            )
+            if allowed_record_ids is not None and record.record_id not in {
+                str(item) for item in allowed_record_ids
+            }:
                 continue
-            allowed_data_types = grant.caveats.get("data_types") or grant.caveats.get("allowed_data_types")
-            if allowed_data_types is not None and record.data_type not in {str(item) for item in allowed_data_types}:
+            allowed_data_types = grant.caveats.get("data_types") or grant.caveats.get(
+                "allowed_data_types"
+            )
+            if allowed_data_types is not None and record.data_type not in {
+                str(item) for item in allowed_data_types
+            }:
                 continue
             return True
         return False
 
     def _active_key_wrap_grant_id(self, version: DataVersion, recipient_did: str) -> Optional[str]:
         for key_wrap in version.key_wraps:
-            if (
-                key_wrap.recipient_did == recipient_did
-                and self._key_wrap_is_active_authorized(key_wrap)
+            if key_wrap.recipient_did == recipient_did and self._key_wrap_is_active_authorized(
+                key_wrap
             ):
                 return key_wrap.grant_id
         return None

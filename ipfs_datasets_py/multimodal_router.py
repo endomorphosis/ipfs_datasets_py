@@ -152,13 +152,17 @@ def generate_multimodal_text(
     normalized_image_paths = [str(Path(path).expanduser()) for path in image_paths or ()]
     normalized_image_urls = [str(url) for url in image_urls or ()]
 
-    resolved_messages = list(messages) if messages is not None else build_multimodal_messages(
-        prompt=prompt,
-        image_paths=normalized_image_paths,
-        image_urls=normalized_image_urls,
-        system_prompt=system_prompt,
-        additional_text_blocks=additional_text_blocks,
-        image_detail=image_detail,
+    resolved_messages = (
+        list(messages)
+        if messages is not None
+        else build_multimodal_messages(
+            prompt=prompt,
+            image_paths=normalized_image_paths,
+            image_urls=normalized_image_urls,
+            system_prompt=system_prompt,
+            additional_text_blocks=additional_text_blocks,
+            image_detail=image_detail,
+        )
     )
     backend = provider_instance or llm_router.get_llm_provider(provider, deps=deps)
 

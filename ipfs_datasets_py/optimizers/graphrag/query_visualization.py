@@ -18,13 +18,14 @@ else:
     class Axes:  # pragma: no cover
         pass
 
+
 logger = logging.getLogger(__name__)
 
 
 class QueryVisualizationHelper:
     """
     Helper class for query visualization delegation.
-    
+
     Provides clean delegation interface between UnifiedGraphRAGQueryOptimizer
     and the underlying QueryVisualizer, handling common setup patterns.
     """
@@ -128,7 +129,11 @@ class QueryVisualizationHelper:
             return None
 
         # Set default output file if not provided
-        if not output_file and hasattr(metrics_collector, "metrics_dir") and metrics_collector.metrics_dir:
+        if (
+            not output_file
+            and hasattr(metrics_collector, "metrics_dir")
+            and metrics_collector.metrics_dir
+        ):
             timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
             output_file = os.path.join(metrics_collector.metrics_dir, f"dashboard_{timestamp}.html")
 

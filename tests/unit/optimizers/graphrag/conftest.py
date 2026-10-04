@@ -8,12 +8,13 @@ import pytest
 @pytest.fixture
 def make_entity():
     """Factory fixture for creating Entity objects with defaults.
-    
+
     Usage:
         def test_foo(make_entity):
             e1 = make_entity("e1")
             e2 = make_entity("e2", confidence=0.9, entity_type="Person")
     """
+
     def _make(
         entity_id: str,
         confidence: float = 0.8,
@@ -25,6 +26,7 @@ def make_entity():
         last_seen: Optional[float] = None,
     ):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
         if text is None:
             text = entity_id
         return Entity(
@@ -36,18 +38,20 @@ def make_entity():
             source_span=source_span,
             last_seen=last_seen,
         )
+
     return _make
 
 
 @pytest.fixture
 def make_relationship():
     """Factory fixture for creating Relationship objects with defaults.
-    
+
     Usage:
         def test_foo(make_relationship):
             r1 = make_relationship("e1", "e2")
             r2 = make_relationship("e1", "e3", rel_type="knows", confidence=0.95)
     """
+
     def _make(
         source_id: str,
         target_id: str,
@@ -59,6 +63,7 @@ def make_relationship():
         direction: str = "unknown",
     ):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Relationship
+
         if rel_id is None:
             rel_id = f"rel_{source_id}_{target_id}"
         return Relationship(
@@ -70,17 +75,19 @@ def make_relationship():
             properties=properties,
             direction=direction,
         )
+
     return _make
 
 
 @pytest.fixture
 def make_extraction_result():
     """Factory fixture for creating EntityExtractionResult objects.
-    
+
     Usage:
         def test_foo(make_extraction_result, make_entity):
             result = make_extraction_result([make_entity("e1"), make_entity("e2")])
     """
+
     def _make(
         entities: Optional[List] = None,
         relationships: Optional[List] = None,
@@ -89,6 +96,7 @@ def make_extraction_result():
         errors: Optional[List[str]] = None,
     ):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
         return EntityExtractionResult(
             entities=entities or [],
             relationships=relationships or [],
@@ -96,18 +104,20 @@ def make_extraction_result():
             metadata=metadata or {},
             errors=errors or [],
         )
+
     return _make
 
 
 @pytest.fixture
 def make_critic_score():
     """Factory fixture for creating CriticScore objects with defaults.
-    
+
     Usage:
         def test_foo(make_critic_score):
             score = make_critic_score()  # All dimensions 0.5
             score2 = make_critic_score(completeness=0.9, consistency=0.8)
     """
+
     def _make(
         completeness: float = 0.5,
         consistency: float = 0.5,
@@ -120,6 +130,7 @@ def make_critic_score():
         recommendations: Optional[List[str]] = None,
     ):
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+
         return CriticScore(
             completeness=completeness,
             consistency=consistency,
@@ -130,6 +141,7 @@ def make_critic_score():
             metadata=metadata or {},
             recommendations=recommendations or [],
         )
+
     return _make
 
 

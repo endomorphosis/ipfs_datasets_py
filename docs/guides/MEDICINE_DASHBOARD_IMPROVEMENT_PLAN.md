@@ -170,7 +170,7 @@ MedicalTheorem(
     antecedent=MedicalEntity("substance", "tide pods", {"route": "ingestion"}),
     consequent=MedicalEntity("condition", "poisoning", {"severity": "severe"}),
     confidence=ConfidenceLevel.VERY_HIGH,
-    temporal_constraint=TemporalConstraint(time_to_effect=timedelta(hours=1))
+    temporal_constraint=TemporalConstraint(time_to_effect=timedelta(hours=1)),
 )
 ```
 

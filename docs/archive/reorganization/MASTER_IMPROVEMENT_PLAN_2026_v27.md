@@ -71,10 +71,10 @@ zero failures = perfect rate.
 ```python
 def subscribe(self, topic, handler, *, priority=0) -> int:
     ...
-    return sid   # monotonically-increasing integer
+    return sid  # monotonically-increasing integer
 
-def unsubscribe_by_id(self, sid: int) -> bool:
-    ...
+
+def unsubscribe_by_id(self, sid: int) -> bool: ...
 ```
 
 `subscribe()` now returns an integer subscription ID.  The ID is stored in

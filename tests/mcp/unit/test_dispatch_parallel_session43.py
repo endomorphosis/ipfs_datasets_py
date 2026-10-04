@@ -30,6 +30,7 @@ from ipfs_datasets_py.mcp_server.hierarchical_tool_manager import (
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_manager(tmp_path: Path) -> HierarchicalToolManager:
     """Return a HierarchicalToolManager pre-configured for dispatch tests."""
     mgr = HierarchicalToolManager(tmp_path)
@@ -54,6 +55,7 @@ def _register_async_tool(mgr: HierarchicalToolManager, cat_name: str, tool_name:
 # ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------
+
 
 class TestDispatchParallelEmptyInput:
     """Verify the empty-input fast-path (line 875-876)."""
@@ -83,16 +85,16 @@ class TestDispatchParallelAllSucceed:
 
         for i in range(5):
             idx = i  # capture loop variable for closure
+
             def make_tool(n):
                 def tool() -> Dict[str, Any]:
                     return {"status": "success", "value": n}
+
                 return tool
+
             _register_sync_tool(mgr, f"cat{i}", f"tool{i}", make_tool(i))
 
-        calls = [
-            {"category": f"cat{i}", "tool": f"tool{i}", "params": {}}
-            for i in range(5)
-        ]
+        calls = [{"category": f"cat{i}", "tool": f"tool{i}", "params": {}} for i in range(5)]
 
         # WHEN
         results = await mgr.dispatch_parallel(calls)
@@ -113,17 +115,17 @@ class TestDispatchParallelAllSucceed:
         mgr = _make_manager(tmp_path)
 
         for i in range(5):
+
             def make_async_tool(n):
                 async def tool() -> Dict[str, Any]:
                     await asyncio.sleep(0)
                     return {"status": "success", "idx": n}
+
                 return tool
+
             _register_async_tool(mgr, f"acat{i}", f"atool{i}", make_async_tool(i))
 
-        calls = [
-            {"category": f"acat{i}", "tool": f"atool{i}"}
-            for i in range(5)
-        ]
+        calls = [{"category": f"acat{i}", "tool": f"atool{i}"} for i in range(5)]
 
         # WHEN
         results = await mgr.dispatch_parallel(calls)
@@ -182,10 +184,7 @@ class TestDispatchParallelReturnExceptionsTrue:
         for i in range(5):
             _register_sync_tool(mgr, f"fcat{i}", f"ftool{i}", boom)
 
-        calls = [
-            {"category": f"fcat{i}", "tool": f"ftool{i}"}
-            for i in range(5)
-        ]
+        calls = [{"category": f"fcat{i}", "tool": f"ftool{i}"} for i in range(5)]
 
         # WHEN
         results = await mgr.dispatch_parallel(calls, return_exceptions=True)
@@ -277,6 +276,7 @@ class TestDispatchParallelReturnExceptionsFalse:
 
         # Patch the instance's dispatch so it always raises
         from unittest.mock import AsyncMock
+
         mgr.dispatch = AsyncMock(side_effect=RuntimeError("must propagate"))
 
         calls = [{"category": "pcat", "tool": "pfail"}]

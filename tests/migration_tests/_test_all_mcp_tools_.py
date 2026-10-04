@@ -38,18 +38,21 @@ class TestWebArchiveTools(unittest.TestCase):
         self.temp_dir = tempfile.mkdtemp()
         self.test_warc_path = os.path.join(self.temp_dir, "test.warc")
         # Create a dummy WARC file
-        with open(self.test_warc_path, 'w') as f:
+        with open(self.test_warc_path, "w") as f:
             f.write("WARC/1.0\nWARC-Type: response\n\nTest content")
 
     def tearDown(self):
         """Clean up test fixtures."""
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_extract_text_from_warc(self):
         """Test extracting text from WARC files."""
         try:
-            from ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_text_from_warc import extract_text_from_warc
+            from ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_text_from_warc import (
+                extract_text_from_warc,
+            )
 
             result = extract_text_from_warc(self.test_warc_path)
 
@@ -68,7 +71,9 @@ class TestWebArchiveTools(unittest.TestCase):
     async def test_extract_metadata_from_warc(self):
         """Test extracting metadata from WARC files."""
         try:
-            from ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_metadata_from_warc import extract_metadata_from_warc
+            from ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_metadata_from_warc import (
+                extract_metadata_from_warc,
+            )
 
             result = await extract_metadata_from_warc(self.test_warc_path)
 
@@ -86,7 +91,9 @@ class TestWebArchiveTools(unittest.TestCase):
     async def test_extract_links_from_warc(self):
         """Test extracting links from WARC files."""
         try:
-            from ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_links_from_warc import extract_links_from_warc
+            from ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_links_from_warc import (
+                extract_links_from_warc,
+            )
 
             result = await extract_links_from_warc(self.test_warc_path)
 
@@ -144,12 +151,16 @@ class TestWebArchiveTools(unittest.TestCase):
     def test_extract_dataset_from_cdxj(self):
         """Test extracting dataset from CDXJ files."""
         try:
-            from ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_dataset_from_cdxj import extract_dataset_from_cdxj
+            from ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_dataset_from_cdxj import (
+                extract_dataset_from_cdxj,
+            )
 
             # Create a test CDXJ file
             cdxj_path = os.path.join(self.temp_dir, "test.cdxj")
-            with open(cdxj_path, 'w') as f:
-                f.write('com,example)/ 20240101000000 {"url": "https://example.com/", "mime": "text/html"}\n')
+            with open(cdxj_path, "w") as f:
+                f.write(
+                    'com,example)/ 20240101000000 {"url": "https://example.com/", "mime": "text/html"}\n'
+                )
 
             result = extract_dataset_from_cdxj(cdxj_path)
 
@@ -172,7 +183,9 @@ class TestVectorTools(unittest.TestCase):
         """Test creating vector indexes."""
         try:
             # Import the tool
-            sys.path.append(str(project_root / "ipfs_datasets_py" / "mcp_server" / "tools" / "vector_tools"))
+            sys.path.append(
+                str(project_root / "ipfs_datasets_py" / "mcp_server" / "tools" / "vector_tools")
+            )
             from ipfs_datasets_py.mcp_server.tools.vector_tools import create_vector_index
 
             # Test data
@@ -197,7 +210,9 @@ class TestVectorTools(unittest.TestCase):
     def test_search_vector_index(self):
         """Test searching vector indexes."""
         try:
-            from ipfs_datasets_py.mcp_server.tools.vector_tools.search_vector_index import search_vector_index
+            from ipfs_datasets_py.mcp_server.tools.vector_tools.search_vector_index import (
+                search_vector_index,
+            )
 
             # Test data
             query_vector = [1.0, 0.0, 0.0]
@@ -223,13 +238,17 @@ class TestGraphTools(unittest.TestCase):
     def test_query_knowledge_graph(self):
         """Test querying knowledge graphs."""
         try:
-            from ipfs_datasets_py.mcp_server.tools.graph_tools.query_knowledge_graph import query_knowledge_graph
+            from ipfs_datasets_py.mcp_server.tools.graph_tools.query_knowledge_graph import (
+                query_knowledge_graph,
+            )
 
-            result = anyio.run(query_knowledge_graph(
-                graph_id="test_graph",
-                query="SELECT * WHERE { ?s ?p ?o } LIMIT 10",
-                query_type="sparql"
-            ))
+            result = anyio.run(
+                query_knowledge_graph(
+                    graph_id="test_graph",
+                    query="SELECT * WHERE { ?s ?p ?o } LIMIT 10",
+                    query_type="sparql",
+                )
+            )
 
             self.assertIsInstance(result, dict)
             self.assertIn("status", result)
@@ -253,6 +272,7 @@ class TestDatasetTools(unittest.TestCase):
     def tearDown(self):
         """Clean up test fixtures."""
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_load_dataset(self):
@@ -297,7 +317,9 @@ class TestDatasetTools(unittest.TestCase):
     def test_process_dataset(self):
         """Test processing datasets."""
         try:
-            from ipfs_datasets_py.mcp_server.tools.dataset_tools.process_dataset import process_dataset
+            from ipfs_datasets_py.mcp_server.tools.dataset_tools.process_dataset import (
+                process_dataset,
+            )
 
             test_data = {"data": [1, 2, 3]}
             operations = ["normalize", "filter"]
@@ -318,13 +340,15 @@ class TestDatasetTools(unittest.TestCase):
     def test_convert_dataset_format(self):
         """Test converting dataset formats."""
         try:
-            from ipfs_datasets_py.mcp_server.tools.dataset_tools.convert_dataset_format import convert_dataset_format
+            from ipfs_datasets_py.mcp_server.tools.dataset_tools.convert_dataset_format import (
+                convert_dataset_format,
+            )
 
             input_path = os.path.join(self.temp_dir, "input.json")
             output_path = os.path.join(self.temp_dir, "output.csv")
 
             # Create test input file
-            with open(input_path, 'w') as f:
+            with open(input_path, "w") as f:
                 json.dump({"data": [{"a": 1, "b": 2}]}, f)
 
             result = anyio.run(convert_dataset_format(input_path, output_path, "json", "csv"))
@@ -387,13 +411,15 @@ class TestAuditTools(unittest.TestCase):
     def test_record_audit_event(self):
         """Test recording audit events."""
         try:
-            from ipfs_datasets_py.mcp_server.tools.audit_tools.record_audit_event import record_audit_event
+            from ipfs_datasets_py.mcp_server.tools.audit_tools.record_audit_event import (
+                record_audit_event,
+            )
 
             event_data = {
                 "user": "test_user",
                 "action": "test_action",
                 "resource": "test_resource",
-                "timestamp": "2024-01-01T00:00:00Z"
+                "timestamp": "2024-01-01T00:00:00Z",
             }
 
             result = anyio.run(record_audit_event(event_data))
@@ -412,12 +438,13 @@ class TestAuditTools(unittest.TestCase):
     def test_generate_audit_report(self):
         """Test generating audit reports."""
         try:
-            from ipfs_datasets_py.mcp_server.tools.audit_tools.generate_audit_report import generate_audit_report
+            from ipfs_datasets_py.mcp_server.tools.audit_tools.generate_audit_report import (
+                generate_audit_report,
+            )
 
-            result = anyio.run(generate_audit_report(
-                start_date="2024-01-01",
-                end_date="2024-01-02"
-            ))
+            result = anyio.run(
+                generate_audit_report(start_date="2024-01-01", end_date="2024-01-02")
+            )
 
             self.assertIsInstance(result, dict)
             self.assertIn("status", result)
@@ -437,14 +464,16 @@ class TestProvenanceTools(unittest.TestCase):
     def test_record_provenance(self):
         """Test recording provenance information."""
         try:
-            from ipfs_datasets_py.mcp_server.tools.provenance_tools.record_provenance import record_provenance
+            from ipfs_datasets_py.mcp_server.tools.provenance_tools.record_provenance import (
+                record_provenance,
+            )
 
             provenance_data = {
                 "dataset_id": "test_dataset",
                 "operation": "transformation",
                 "input_sources": ["source1", "source2"],
                 "output": "result",
-                "timestamp": "2024-01-01T00:00:00Z"
+                "timestamp": "2024-01-01T00:00:00Z",
             }
 
             result = anyio.run(record_provenance(provenance_data))
@@ -467,13 +496,15 @@ class TestSecurityTools(unittest.TestCase):
     def test_check_access_permission(self):
         """Test checking access permissions."""
         try:
-            from ipfs_datasets_py.mcp_server.tools.security_tools.check_access_permission import check_access_permission
+            from ipfs_datasets_py.mcp_server.tools.security_tools.check_access_permission import (
+                check_access_permission,
+            )
 
-            result = anyio.run(check_access_permission(
-                user_id="test_user",
-                resource="test_resource",
-                operation="read"
-            ))
+            result = anyio.run(
+                check_access_permission(
+                    user_id="test_user", resource="test_resource", operation="read"
+                )
+            )
 
             self.assertIsInstance(result, dict)
             self.assertIn("status", result)
@@ -515,7 +546,9 @@ class TestFunctionTools(unittest.TestCase):
     def test_execute_python_snippet(self):
         """Test executing Python code snippets."""
         try:
-            from ipfs_datasets_py.mcp_server.tools.functions.execute_python_snippet import execute_python_snippet
+            from ipfs_datasets_py.mcp_server.tools.functions.execute_python_snippet import (
+                execute_python_snippet,
+            )
 
             code = "result = 2 + 2\nprint(f'Result: {result}')"
 
@@ -548,7 +581,7 @@ def run_all_tests():
         TestProvenanceTools,
         TestSecurityTools,
         TestCLITools,
-        TestFunctionTools
+        TestFunctionTools,
     ]
 
     total_tests = 0
@@ -559,15 +592,15 @@ def run_all_tests():
         print("-" * 30)
 
         suite = unittest.TestLoader().loadTestsFromTestCase(test_class)
-        runner = unittest.TextTestRunner(verbosity=0, stream=open(os.devnull, 'w'))
+        runner = unittest.TextTestRunner(verbosity=0, stream=open(os.devnull, "w"))
 
         # Run individual test methods manually to get better control
         test_instance = test_class()
-        if hasattr(test_instance, 'setUp'):
+        if hasattr(test_instance, "setUp"):
             test_instance.setUp()
 
         for method_name in dir(test_instance):
-            if method_name.startswith('test_'):
+            if method_name.startswith("test_"):
                 total_tests += 1
                 try:
                     method = getattr(test_instance, method_name)
@@ -576,7 +609,7 @@ def run_all_tests():
                 except Exception as e:
                     print(f"✗ {method_name} failed: {e}")
 
-        if hasattr(test_instance, 'tearDown'):
+        if hasattr(test_instance, "tearDown"):
             test_instance.tearDown()
 
     print(f"\n" + "=" * 50)

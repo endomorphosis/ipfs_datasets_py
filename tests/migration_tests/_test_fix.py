@@ -10,28 +10,36 @@ from collections import defaultdict
 
 # Import the module
 sys.path.append(os.getcwd())
-from ipfs_datasets_py.rag.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer, GraphRAGQueryOptimizer, GraphRAGQueryStats
+from ipfs_datasets_py.rag.rag_query_optimizer import (
+    UnifiedGraphRAGQueryOptimizer,
+    GraphRAGQueryOptimizer,
+    GraphRAGQueryStats,
+)
+
 
 class NoneReturningOptimizer(GraphRAGQueryOptimizer):
     """A test optimizer that returns None from optimize_query."""
 
     def optimize_query(self, *args, **kwargs):
-        print('NoneReturningOptimizer.optimize_query called - returning None')
+        print("NoneReturningOptimizer.optimize_query called - returning None")
         return None  # This will trigger our safety check
+
 
 class MockMetricsCollector:
     """Mock metrics collector for testing."""
 
     def start_query_tracking(self, *args, **kwargs):
         print("start_query_tracking called")
-        return 'test-id-123'
+        return "test-id-123"
 
     def time_phase(self, *args, **kwargs):
         class TimerContext:
             def __enter__(self):
                 return self
+
             def __exit__(self, *args):
                 pass
+
         return TimerContext()
 
     def record_additional_metric(self, *args, **kwargs):
@@ -40,22 +48,25 @@ class MockMetricsCollector:
     def end_query_tracking(self, *args, **kwargs):
         pass
 
+
 class MockBudgetManager:
     """Mock budget manager for testing."""
 
     def allocate_budget(self, *args, **kwargs):
         return {
-            'vector_search_ms': 500,
-            'graph_traversal_ms': 1000,
-            'ranking_ms': 100,
-            'max_nodes': 100
+            "vector_search_ms": 500,
+            "graph_traversal_ms": 1000,
+            "ranking_ms": 100,
+            "max_nodes": 100,
         }
+
 
 class MockRewriter:
     """Mock query rewriter for testing."""
 
     def rewrite_query(self, query, *args, **kwargs):
         return query
+
 
 class FixedOptimizer(UnifiedGraphRAGQueryOptimizer):
     """A fixed version of UnifiedGraphRAGQueryOptimizer that never returns None."""
@@ -72,7 +83,9 @@ class FixedOptimizer(UnifiedGraphRAGQueryOptimizer):
         # Mock implementation
         return "medium"
 
-    def optimize_query(self, query: Dict[str, Any], priority: str = "normal", graph_processor: Any = None) -> Dict[str, Any]:
+    def optimize_query(
+        self, query: Dict[str, Any], priority: str = "normal", graph_processor: Any = None
+    ) -> Dict[str, Any]:
         """Fixed version of optimize_query that never returns None."""
         try:
             # Start with basic query identity
@@ -83,10 +96,10 @@ class FixedOptimizer(UnifiedGraphRAGQueryOptimizer):
                 "graph_type": "general",
                 "statistics": {
                     "avg_query_time": self.query_stats.avg_query_time,
-                    "cache_hit_rate": self.query_stats.cache_hit_rate
+                    "cache_hit_rate": self.query_stats.cache_hit_rate,
                 },
                 "caching": {"enabled": True},
-                "traversal_strategy": "default"
+                "traversal_strategy": "default",
             }
 
             # Get the None-returning optimizer
@@ -101,7 +114,7 @@ class FixedOptimizer(UnifiedGraphRAGQueryOptimizer):
                     max_vector_results=query.get("max_vector_results", 5),
                     max_traversal_depth=query.get("traversal", {}).get("max_depth", 2),
                     edge_types=query.get("traversal", {}).get("edge_types"),
-                    min_similarity=query.get("min_similarity", 0.5)
+                    min_similarity=query.get("min_similarity", 0.5),
                 )
                 print(f"optimizer.optimize_query returned: {optimized_params}")
 
@@ -109,9 +122,7 @@ class FixedOptimizer(UnifiedGraphRAGQueryOptimizer):
                 if optimized_params is None:
                     print("Creating fallback because optimizer returned None")
                     fallback_plan = self._create_fallback_plan(
-                        query=query,
-                        priority=priority,
-                        error="Optimizer returned None"
+                        query=query, priority=priority, error="Optimizer returned None"
                     )
                     print(f"Fallback plan: {fallback_plan}")
                     return fallback_plan
@@ -121,13 +132,10 @@ class FixedOptimizer(UnifiedGraphRAGQueryOptimizer):
         except Exception as e:
             error_msg = f"Error in optimize_query: {str(e)}"
             print(error_msg)
-            fallback = self._create_fallback_plan(
-                query=query,
-                priority=priority,
-                error=error_msg
-            )
+            fallback = self._create_fallback_plan(query=query, priority=priority, error=error_msg)
             print(f"Exception fallback: {fallback}")
             return fallback
+
 
 def test_fixed_optimizer():
     """Test the fixed optimizer implementation."""
@@ -145,16 +153,16 @@ def test_fixed_optimizer():
     none_optimizer = NoneReturningOptimizer()
     optimizer.base_optimizer = none_optimizer
     optimizer._specific_optimizers = {
-        'general': none_optimizer,
-        'wikipedia': none_optimizer,
-        'ipld': none_optimizer
+        "general": none_optimizer,
+        "wikipedia": none_optimizer,
+        "ipld": none_optimizer,
     }
 
     # Create a test query with vector
     test_query = {
-        'query_text': 'test query',
-        'query_vector': np.array([0.1, 0.2, 0.3]),
-        'traversal': {'max_depth': 2}
+        "query_text": "test query",
+        "query_vector": np.array([0.1, 0.2, 0.3]),
+        "traversal": {"max_depth": 2},
     }
 
     # Call optimize_query - should return fallback plan, not None
@@ -173,6 +181,7 @@ def test_fixed_optimizer():
         print("FAILURE: optimize_query returned None")
 
     return success
+
 
 if __name__ == "__main__":
     # Run the test

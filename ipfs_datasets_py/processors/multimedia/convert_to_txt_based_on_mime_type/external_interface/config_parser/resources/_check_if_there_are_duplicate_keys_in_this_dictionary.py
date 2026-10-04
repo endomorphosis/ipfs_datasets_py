@@ -1,5 +1,3 @@
-
-
 from typing import Never
 
 
@@ -29,4 +27,6 @@ def _check_if_there_are_duplicate_keys_in_this_dictionary(configs_dict: dict) ->
     duplicate_keys = [k for k, v in key_counts.items() if v > 1]
     print(f"duplicate_keys: {duplicate_keys}")
     if len(duplicate_keys) != 0:
-        raise ValueError(f"Multiple keys with the same name found in config file: {', '.join(duplicate_keys)}")
+        raise ValueError(
+            f"Multiple keys with the same name found in config file: {', '.join(duplicate_keys)}"
+        )

@@ -6,6 +6,7 @@ Tests cover:
 - similarity_search: vector similarity lookup
 - faceted_search: filtered/faceted search
 """
+
 from __future__ import annotations
 
 import pytest
@@ -29,6 +30,7 @@ class TestSemanticSearch:
         from ipfs_datasets_py.mcp_server.tools.search_tools.search_tools import (
             semantic_search,
         )
+
         result = await semantic_search("machine learning")
         assert isinstance(result, dict)
         assert "results" in result
@@ -43,6 +45,7 @@ class TestSemanticSearch:
         from ipfs_datasets_py.mcp_server.tools.search_tools.search_tools import (
             semantic_search,
         )
+
         result = await semantic_search("neural networks", top_k=2)
         assert isinstance(result.get("results"), list)
         assert len(result["results"]) <= 2
@@ -57,6 +60,7 @@ class TestSemanticSearch:
         from ipfs_datasets_py.mcp_server.tools.search_tools.search_tools import (
             semantic_search,
         )
+
         result = await semantic_search("deep learning", top_k=3)
         for item in result.get("results", []):
             assert "id" in item
@@ -72,6 +76,7 @@ class TestSemanticSearch:
         from ipfs_datasets_py.mcp_server.tools.search_tools.search_tools import (
             semantic_search,
         )
+
         result = await semantic_search("")
         assert isinstance(result, dict)
 
@@ -94,6 +99,7 @@ class TestSimilaritySearch:
         from ipfs_datasets_py.mcp_server.tools.search_tools.search_tools import (
             similarity_search,
         )
+
         result = await similarity_search([0.1, 0.2, 0.3], top_k=3)
         assert isinstance(result, dict)
         assert "results" in result
@@ -108,6 +114,7 @@ class TestSimilaritySearch:
         from ipfs_datasets_py.mcp_server.tools.search_tools.search_tools import (
             similarity_search,
         )
+
         result = await similarity_search([0.5, 0.5], top_k=2)
         for item in result.get("results", []):
             assert "id" in item
@@ -122,6 +129,7 @@ class TestSimilaritySearch:
         from ipfs_datasets_py.mcp_server.tools.search_tools.search_tools import (
             similarity_search,
         )
+
         result = await similarity_search([0.1, 0.2, 0.3, 0.4], top_k=2)
         assert result.get("embedding_dimension") == 4
 
@@ -144,6 +152,7 @@ class TestFacetedSearch:
         from ipfs_datasets_py.mcp_server.tools.search_tools.search_tools import (
             faceted_search,
         )
+
         result = await faceted_search("climate change", facets={"topic": "environment"})
         assert isinstance(result, dict)
         assert "results" in result
@@ -158,6 +167,7 @@ class TestFacetedSearch:
         from ipfs_datasets_py.mcp_server.tools.search_tools.search_tools import (
             faceted_search,
         )
+
         result = await faceted_search("energy", facets={"category": "physics"})
         assert "facet_counts" in result
 
@@ -171,6 +181,7 @@ class TestFacetedSearch:
         from ipfs_datasets_py.mcp_server.tools.search_tools.search_tools import (
             faceted_search,
         )
+
         result = await faceted_search("quantum physics")
         assert isinstance(result, dict)
         assert "results" in result

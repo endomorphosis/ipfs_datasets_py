@@ -18,17 +18,19 @@ from .download_url import download_url_tool
 from .file_info import file_info_tool
 
 __all__ = [
-    'convert_file_tool',
-    'batch_convert_tool',
-    'extract_knowledge_graph_tool',
-    'generate_summary_tool',
-    'generate_embeddings_tool',
-    'extract_archive_tool',
-    'download_url_tool',
-    'file_info_tool',
+    "convert_file_tool",
+    "batch_convert_tool",
+    "extract_knowledge_graph_tool",
+    "generate_summary_tool",
+    "generate_embeddings_tool",
+    "extract_archive_tool",
+    "download_url_tool",
+    "file_info_tool",
 ]
 
 # Category metadata
 CATEGORY_NAME = "file_converter_tools"
-CATEGORY_DESCRIPTION = "File conversion, knowledge graphs, summaries, embeddings, archives, and URLs"
+CATEGORY_DESCRIPTION = (
+    "File conversion, knowledge graphs, summaries, embeddings, archives, and URLs"
+)
 TOOL_COUNT = 8

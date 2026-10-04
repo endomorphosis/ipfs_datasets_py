@@ -16,7 +16,13 @@ def test_merge_tracks_extension_provenance_for_new_items():
     }
     extension = {
         "entities": [
-            {"id": "e2", "type": "Organization", "text": "Acme", "confidence": 0.8, "properties": {}},
+            {
+                "id": "e2",
+                "type": "Organization",
+                "text": "Acme",
+                "confidence": 0.8,
+                "properties": {},
+            },
         ],
         "relationships": [
             {
@@ -48,14 +54,26 @@ def test_merge_appends_provenance_for_existing_entity():
 
     base = {
         "entities": [
-            {"id": "e1", "type": "Person", "text": "Alice", "confidence": 0.5, "properties": {"role": "staff"}},
+            {
+                "id": "e1",
+                "type": "Person",
+                "text": "Alice",
+                "confidence": 0.5,
+                "properties": {"role": "staff"},
+            },
         ],
         "relationships": [],
         "metadata": {},
     }
     extension = {
         "entities": [
-            {"id": "e1", "type": "Person", "text": "Alice", "confidence": 0.9, "properties": {"team": "legal"}},
+            {
+                "id": "e1",
+                "type": "Person",
+                "text": "Alice",
+                "confidence": 0.9,
+                "properties": {"team": "legal"},
+            },
         ],
         "relationships": [],
         "metadata": {"source": "doc2"},

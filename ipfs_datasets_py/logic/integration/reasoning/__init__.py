@@ -14,7 +14,7 @@ from .deontological_reasoning import DeontologicalReasoningEngine
 from .logic_verification import LogicVerifier
 
 __all__ = [
-    'ProofExecutionEngine',
-    'DeontologicalReasoningEngine',
-    'LogicVerifier',
+    "ProofExecutionEngine",
+    "DeontologicalReasoningEngine",
+    "LogicVerifier",
 ]

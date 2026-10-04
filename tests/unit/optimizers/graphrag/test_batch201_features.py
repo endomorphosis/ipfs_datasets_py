@@ -11,11 +11,13 @@ Methods under test:
   - OntologyPipeline.run_score_above_first()
   - OntologyLearningAdapter.feedback_recent_positive_count(n, threshold)
 """
+
 import pytest
 from unittest.mock import MagicMock
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────
+
 
 class _FakeEntry:
     def __init__(self, avg):
@@ -28,11 +30,13 @@ def _push_opt(o, avg):
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
 def _make_entity(eid, confidence=1.0, properties=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
     return Entity(id=eid, type="T", text=eid, confidence=confidence, properties=properties or {})
 
 
@@ -46,6 +50,7 @@ def _make_rel_mock(rel_type="is_a"):
 
 def _make_result(entities=None, relationships=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
     return EntityExtractionResult(
         entities=entities or [],
         relationships=relationships or [],
@@ -55,16 +60,19 @@ def _make_result(entities=None, relationships=None):
 
 def _make_generator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
     return OntologyGenerator()
 
 
 def _make_validator():
     from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
     return LogicValidator()
 
 
 def _make_pipeline():
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     return OntologyPipeline()
 
 
@@ -75,16 +83,21 @@ def _push_run(p, score_val):
 
 
 def _make_adapter():
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter()
 
 
 def _push_feedback(a, score):
     from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import FeedbackRecord
+
     a._feedback.append(FeedbackRecord(final_score=score))
 
 
 # ── OntologyOptimizer.history_above_threshold_streak ─────────────────────────
+
 
 class TestHistoryAboveThresholdStreak:
     def test_empty_returns_zero(self):
@@ -116,6 +129,7 @@ class TestHistoryAboveThresholdStreak:
 
 # ── OntologyOptimizer.score_above_threshold_longest_streak ───────────────────
 
+
 class TestScoreAboveThresholdLongestStreak:
     def test_empty_returns_zero(self):
         o = _make_optimizer()
@@ -136,6 +150,7 @@ class TestScoreAboveThresholdLongestStreak:
 
 # ── OntologyGenerator.entity_max_property_count ──────────────────────────────
 
+
 class TestEntityMaxPropertyCount:
     def test_empty_returns_zero(self):
         g = _make_generator()
@@ -149,15 +164,18 @@ class TestEntityMaxPropertyCount:
 
     def test_max_across_entities(self):
         g = _make_generator()
-        r = _make_result([
-            _make_entity("a", properties={"x": 1}),
-            _make_entity("b", properties={"x": 1, "y": 2, "z": 3}),
-            _make_entity("c", properties={"x": 1, "y": 2}),
-        ])
+        r = _make_result(
+            [
+                _make_entity("a", properties={"x": 1}),
+                _make_entity("b", properties={"x": 1, "y": 2, "z": 3}),
+                _make_entity("c", properties={"x": 1, "y": 2}),
+            ]
+        )
         assert g.entity_max_property_count(r) == 3
 
 
 # ── OntologyGenerator.entity_min_confidence_above ────────────────────────────
+
 
 class TestEntityMinConfidenceAbove:
     def test_empty_returns_zero(self):
@@ -172,15 +190,18 @@ class TestEntityMinConfidenceAbove:
 
     def test_returns_min_of_qualifying(self):
         g = _make_generator()
-        r = _make_result([
-            _make_entity("a", confidence=0.6),
-            _make_entity("b", confidence=0.8),
-            _make_entity("c", confidence=0.3),
-        ])
+        r = _make_result(
+            [
+                _make_entity("a", confidence=0.6),
+                _make_entity("b", confidence=0.8),
+                _make_entity("c", confidence=0.3),
+            ]
+        )
         assert g.entity_min_confidence_above(r, threshold=0.5) == pytest.approx(0.6)
 
 
 # ── OntologyGenerator.relationship_avg_type_length ───────────────────────────
+
 
 class TestRelationshipAvgTypeLength:
     def test_empty_returns_zero(self):
@@ -195,14 +216,17 @@ class TestRelationshipAvgTypeLength:
 
     def test_average_of_two(self):
         g = _make_generator()
-        r = _make_result(relationships=[
-            _make_rel_mock("ab"),
-            _make_rel_mock("abcd"),
-        ])
+        r = _make_result(
+            relationships=[
+                _make_rel_mock("ab"),
+                _make_rel_mock("abcd"),
+            ]
+        )
         assert g.relationship_avg_type_length(r) == pytest.approx(3.0)
 
 
 # ── LogicValidator.node_in_degree ─────────────────────────────────────────────
+
 
 class TestNodeInDegree:
     def test_empty_returns_empty_dict(self):
@@ -211,26 +235,31 @@ class TestNodeInDegree:
 
     def test_in_degrees_correct(self):
         v = _make_validator()
-        onto = {"relationships": [
-            {"source": "a", "target": "b"},
-            {"source": "a", "target": "b"},
-            {"source": "c", "target": "b"},
-        ]}
+        onto = {
+            "relationships": [
+                {"source": "a", "target": "b"},
+                {"source": "a", "target": "b"},
+                {"source": "c", "target": "b"},
+            ]
+        }
         result = v.node_in_degree(onto)
         assert result == {"b": 3}
 
     def test_multiple_targets(self):
         v = _make_validator()
-        onto = {"relationships": [
-            {"source": "a", "target": "b"},
-            {"source": "b", "target": "c"},
-        ]}
+        onto = {
+            "relationships": [
+                {"source": "a", "target": "b"},
+                {"source": "b", "target": "c"},
+            ]
+        }
         result = v.node_in_degree(onto)
         assert result["b"] == 1
         assert result["c"] == 1
 
 
 # ── LogicValidator.node_out_degree ─────────────────────────────────────────────
+
 
 class TestNodeOutDegree:
     def test_empty_returns_empty_dict(self):
@@ -239,17 +268,20 @@ class TestNodeOutDegree:
 
     def test_out_degrees_correct(self):
         v = _make_validator()
-        onto = {"relationships": [
-            {"source": "a", "target": "b"},
-            {"source": "a", "target": "c"},
-            {"source": "b", "target": "c"},
-        ]}
+        onto = {
+            "relationships": [
+                {"source": "a", "target": "b"},
+                {"source": "a", "target": "c"},
+                {"source": "b", "target": "c"},
+            ]
+        }
         result = v.node_out_degree(onto)
         assert result["a"] == 2
         assert result["b"] == 1
 
 
 # ── OntologyPipeline.run_score_above_first ────────────────────────────────────
+
 
 class TestRunScoreAboveFirst:
     def test_empty_returns_zero(self):
@@ -276,6 +308,7 @@ class TestRunScoreAboveFirst:
 
 
 # ── OntologyLearningAdapter.feedback_recent_positive_count ───────────────────
+
 
 class TestFeedbackRecentPositiveCount:
     def test_empty_returns_zero(self):

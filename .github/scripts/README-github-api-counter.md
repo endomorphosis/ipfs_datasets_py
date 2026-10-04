@@ -54,13 +54,13 @@ from github_api_counter import GitHubAPICounter
 
 # Use as context manager
 with GitHubAPICounter() as counter:
-    counter.run_gh_command(['gh', 'pr', 'list'])
-    counter.run_gh_command(['gh', 'issue', 'create', '--title', 'Test'])
+    counter.run_gh_command(["gh", "pr", "list"])
+    counter.run_gh_command(["gh", "issue", "create", "--title", "Test"])
 # Metrics auto-saved on exit
 
 # Or use manually
 counter = GitHubAPICounter()
-counter.run_gh_command(['gh', 'pr', 'list'])
+counter.run_gh_command(["gh", "pr", "list"])
 counter.save_metrics()
 ```
 
@@ -74,7 +74,7 @@ from github_api_counter_helper import tracked_subprocess
 # result = subprocess.run(['gh', 'pr', 'list'], ...)
 
 # Use:
-result = tracked_subprocess.run(['gh', 'pr', 'list'], ...)
+result = tracked_subprocess.run(["gh", "pr", "list"], ...)
 # Metrics auto-saved on script exit
 ```
 
@@ -83,11 +83,13 @@ result = tracked_subprocess.run(['gh', 'pr', 'list'], ...)
 ```python
 # At the top of your script
 from github_api_counter_helper import patch_subprocess
+
 patch_subprocess()
 
 # Now all subprocess calls are automatically tracked
 import subprocess
-subprocess.run(['gh', 'pr', 'list'])  # Automatically counted!
+
+subprocess.run(["gh", "pr", "list"])  # Automatically counted!
 ```
 
 ### Method 4: Use Shell Wrapper
@@ -149,7 +151,7 @@ jobs:
 ```python
 import subprocess
 
-result = subprocess.run(['gh', 'pr', 'list'], capture_output=True)
+result = subprocess.run(["gh", "pr", "list"], capture_output=True)
 print(result.stdout)
 ```
 
@@ -157,7 +159,7 @@ print(result.stdout)
 ```python
 from github_api_counter_helper import tracked_subprocess
 
-result = tracked_subprocess.run(['gh', 'pr', 'list'], capture_output=True)
+result = tracked_subprocess.run(["gh", "pr", "list"], capture_output=True)
 print(result.stdout)
 # Metrics automatically saved on exit
 ```
@@ -167,7 +169,7 @@ print(result.stdout)
 from github_api_counter import GitHubAPICounter
 
 counter = GitHubAPICounter()
-result = counter.run_gh_command(['gh', 'pr', 'list'], capture_output=True)
+result = counter.run_gh_command(["gh", "pr", "list"], capture_output=True)
 print(result.stdout)
 counter.save_metrics()
 ```
@@ -179,6 +181,7 @@ For existing scripts like `invoke_copilot_on_pr.py`, add this at the top:
 ```python
 # Add import at the top
 from github_api_counter_helper import patch_subprocess
+
 patch_subprocess()
 
 # Rest of your code stays the same!
@@ -190,14 +193,15 @@ Or use the context manager approach:
 ```python
 from github_api_counter import GitHubAPICounter
 
+
 class CopilotAgentInvoker:
     def __init__(self):
         self.api_counter = GitHubAPICounter()
-    
+
     def run_command(self, cmd):
         # Use counter to run commands
         return self.api_counter.run_gh_command(cmd)
-    
+
     def cleanup(self):
         # Save metrics
         self.api_counter.save_metrics()

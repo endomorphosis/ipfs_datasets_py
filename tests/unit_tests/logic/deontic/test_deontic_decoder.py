@@ -219,9 +219,7 @@ def test_decoder_preserves_unresolved_reference_exception_without_clearing_repai
         "The Secretary shall publish the notice except as provided in section 552."
     )
 
-    assert decoded.text == (
-        "Secretary shall publish the notice except as provided in section 552."
-    )
+    assert decoded.text == ("Secretary shall publish the notice except as provided in section 552.")
     assert "cross_reference_requires_resolution" in decoded.parser_warnings
     assert "exception_requires_scope_review" in decoded.parser_warnings
     assert norm.proof_ready is False
@@ -244,14 +242,10 @@ def test_decoder_preserves_precedence_override_with_provenance():
         "Notwithstanding section 5.01.020, the Director may issue a variance."
     )
 
-    assert decoded.text == (
-        "Notwithstanding section 5.01.020, Director may issue a variance."
-    )
+    assert decoded.text == ("Notwithstanding section 5.01.020, Director may issue a variance.")
     assert norm.proof_ready is False
     assert element["llm_repair"]["required"] is False
-    assert element["llm_repair"]["deterministic_resolution"]["type"] == (
-        "pure_precedence_override"
-    )
+    assert element["llm_repair"]["deterministic_resolution"]["type"] == ("pure_precedence_override")
 
     override_phrase = next(phrase for phrase in decoded.phrases if phrase.slot == "overrides")
     assert override_phrase.text == "section 5.01.020"
@@ -360,17 +354,10 @@ def test_decoder_renders_penalty_clauses_without_duplicate_condition_or_deadline
         ]
         assert decoded.phrases[1].fixed is True
         assert decoded.phrases[2].spans == [element["field_spans"]["action"]]
-        assert all(
-            phrase.provenance_only is True
-            for phrase in decoded.phrases[3:]
-        )
+        assert all(phrase.provenance_only is True for phrase in decoded.phrases[3:])
         assert decoded_phrase_slot_text_map(decoded) == {
             "actor": ["violation"],
-            "action": [
-                expected_decoded.removeprefix(
-                    "Violation is subject to "
-                ).removesuffix(".")
-            ],
+            "action": [expected_decoded.removeprefix("Violation is subject to ").removesuffix(".")],
             **expected_provenance,
         }
         for phrase in decoded.phrases[3:]:
@@ -409,9 +396,7 @@ def test_decoder_exposes_cross_reference_provenance_without_reconstruction_text_
         assert reference_phrase.spans == [element["cross_reference_details"][0]["span"]]
         assert reference_phrase.fixed is False
         assert reference_phrase.provenance_only is True
-        assert decoded.text.count(expected_reference) == expected_decoded.count(
-            expected_reference
-        )
+        assert decoded.text.count(expected_reference) == expected_decoded.count(expected_reference)
 
     blocked = extract_normative_elements(
         "The Secretary shall publish the notice except as provided in section 552."
@@ -442,9 +427,7 @@ def test_decoder_renders_multiple_conditions_with_deterministic_connectors():
         "temporal_connector",
         "temporal_constraints",
     ]
-    assert [
-        phrase.text for phrase in decoded.phrases if phrase.slot == "condition_connector"
-    ] == [
+    assert [phrase.text for phrase in decoded.phrases if phrase.slot == "condition_connector"] == [
         "if",
         "and if",
     ]
@@ -456,9 +439,7 @@ def test_decoder_renders_multiple_conditions_with_deterministic_connectors():
         "and",
     ]
     assert decoded.phrases[-1].text == "within 10 days after application"
-    assert decoded.phrases[-1].spans == [
-        element["temporal_constraint_details"][0]["span"]
-    ]
+    assert decoded.phrases[-1].spans == [element["temporal_constraint_details"][0]["span"]]
     assert norm.conditions[1]["clause_type"] == "if"
 
 
@@ -498,9 +479,7 @@ def test_decoder_strips_duplicate_condition_and_exception_connectors_from_ir_det
         "Director shall issue a permit provided that the application is complete "
         "and when fees are paid unless approval is denied and except as provided in this section."
     )
-    assert [
-        phrase.text for phrase in decoded.phrases if phrase.slot == "condition_connector"
-    ] == [
+    assert [phrase.text for phrase in decoded.phrases if phrase.slot == "condition_connector"] == [
         "provided that",
         "and when",
     ]
@@ -508,9 +487,7 @@ def test_decoder_strips_duplicate_condition_and_exception_connectors_from_ir_det
         "the application is complete",
         "fees are paid",
     ]
-    assert [
-        phrase.text for phrase in decoded.phrases if phrase.slot == "exception_connector"
-    ] == [
+    assert [phrase.text for phrase in decoded.phrases if phrase.slot == "exception_connector"] == [
         "unless",
         "and except",
     ]
@@ -550,15 +527,11 @@ def test_decoder_renders_temporal_chains_without_losing_each_span():
         "Clerk shall file the order before approval and after hearing and "
         "within 10 days after service."
     )
-    assert [
-        phrase.text for phrase in decoded.phrases if phrase.slot == "temporal_connector"
-    ] == [
+    assert [phrase.text for phrase in decoded.phrases if phrase.slot == "temporal_connector"] == [
         "and",
         "and",
     ]
-    assert [
-        phrase.text for phrase in decoded.phrases if phrase.slot == "temporal_constraints"
-    ] == [
+    assert [phrase.text for phrase in decoded.phrases if phrase.slot == "temporal_constraints"] == [
         "before approval",
         "after hearing",
         "within 10 days after service",
@@ -663,13 +636,15 @@ def test_decoder_renders_structured_procedure_event_chains_from_ir():
 
         assert decoded.text == expected_text
         assert decoded.missing_slots == []
-        assert [phrase.text for phrase in decoded.phrases if phrase.slot == "procedure"] == expected_phrases
+        assert [
+            phrase.text for phrase in decoded.phrases if phrase.slot == "procedure"
+        ] == expected_phrases
         assert [phrase.spans for phrase in decoded.phrases if phrase.slot == "procedure"] == [
             [span] for span in expected_spans
         ]
-        assert [phrase.text for phrase in decoded.phrases if phrase.slot == "procedure_connector"] == [
-            "and"
-        ]
+        assert [
+            phrase.text for phrase in decoded.phrases if phrase.slot == "procedure_connector"
+        ] == ["and"]
         assert decoded.text.count(" and ") == 1
 
 
@@ -770,17 +745,17 @@ def test_decoder_derives_structured_procedure_phrases_without_raw_text():
 
         assert decoded.text == expected_text
         assert decoded.missing_slots == []
-        assert [phrase.text for phrase in decoded.phrases if phrase.slot == "procedure"] == expected_phrases
+        assert [
+            phrase.text for phrase in decoded.phrases if phrase.slot == "procedure"
+        ] == expected_phrases
         assert [phrase.spans for phrase in decoded.phrases if phrase.slot == "procedure"] == [
             [span] for span in expected_spans
         ]
-        assert [phrase.text for phrase in decoded.phrases if phrase.slot == "procedure_connector"] == [
-            "and"
-        ]
+        assert [
+            phrase.text for phrase in decoded.phrases if phrase.slot == "procedure_connector"
+        ] == ["and"]
         assert all(
-            phrase.fixed is False
-            for phrase in decoded.phrases
-            if phrase.slot == "procedure"
+            phrase.fixed is False for phrase in decoded.phrases if phrase.slot == "procedure"
         )
 
 

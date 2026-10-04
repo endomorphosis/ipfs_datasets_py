@@ -10,7 +10,8 @@ import sys
 from pathlib import Path
 
 # Add the project root to the Python path
-sys.path.insert(0, '.')
+sys.path.insert(0, ".")
+
 
 def generate_test_for_vector_tool(tool_name):
     """Generate a test file for a vector tool."""
@@ -30,7 +31,7 @@ sys.path.insert(0, '.')
 
 from ipfs_datasets_py.mcp_server.tools.{category} import {tool_name}
 
-class Test{tool_name.title().replace('_', '')}(unittest.TestCase):
+class Test{tool_name.title().replace("_", "")}(unittest.TestCase):
     \"\"\"Test case for the {tool_name} MCP tool.\"\"\"
 
     def setUp(self):
@@ -100,11 +101,12 @@ if __name__ == '__main__':
     test_file_path.parent.mkdir(parents=True, exist_ok=True)
 
     # Write the test file
-    with open(test_file_path, 'w') as f:
+    with open(test_file_path, "w") as f:
         f.write(test_file_content)
 
     print(f"Generated test file: {test_file_path}")
     return test_file_path
+
 
 def main():
     """Generate tests for all vector tools."""
@@ -115,8 +117,9 @@ def main():
         return
 
     # Find all vector tool modules
-    tool_files = [f for f in vector_tools_dir.glob('*.py')
-                 if f.is_file() and not f.name.startswith('__')]
+    tool_files = [
+        f for f in vector_tools_dir.glob("*.py") if f.is_file() and not f.name.startswith("__")
+    ]
 
     print(f"Found {len(tool_files)} vector tool files:")
     for tool_file in tool_files:
@@ -130,6 +133,7 @@ def main():
         else:
             # Generate a test file
             generate_test_for_vector_tool(tool_name)
+
 
 if __name__ == "__main__":
     main()

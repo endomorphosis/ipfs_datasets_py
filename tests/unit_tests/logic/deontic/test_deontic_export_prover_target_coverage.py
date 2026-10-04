@@ -83,8 +83,7 @@ def test_prover_syntax_target_coverage_reports_failed_and_skipped_targets():
 
 def test_prover_syntax_target_coverage_passes_when_all_required_targets_pass():
     records = [
-        {"prover_target": target, "syntax_valid": True}
-        for target in LOCAL_PROVER_SYNTAX_TARGETS
+        {"prover_target": target, "syntax_valid": True} for target in LOCAL_PROVER_SYNTAX_TARGETS
     ]
 
     summary = summarize_prover_syntax_target_coverage(records)
@@ -105,8 +104,7 @@ def test_prover_syntax_target_coverage_passes_when_all_required_targets_pass():
 
 def test_prover_syntax_target_coverage_matrix_reports_duplicate_records():
     records = [
-        {"prover_target": target, "syntax_valid": True}
-        for target in LOCAL_PROVER_SYNTAX_TARGETS
+        {"prover_target": target, "syntax_valid": True} for target in LOCAL_PROVER_SYNTAX_TARGETS
     ]
     records.append({"prover_target": "fol", "syntax_valid": True})
 
@@ -177,9 +175,7 @@ def test_prover_syntax_target_corpus_coverage_groups_raw_rows_by_source():
         "deontic_fol",
         "deontic_temporal_fol",
     ]
-    assert summary["source_failed_targets_by_source"]["deontic:partial"] == [
-        "deontic_cec"
-    ]
+    assert summary["source_failed_targets_by_source"]["deontic:partial"] == ["deontic_cec"]
     assert summary["source_skipped_targets_by_source"]["deontic:partial"] == ["fol"]
     assert summary["source_duplicate_targets_by_source"]["deontic:partial"] == []
     assert summary["source_target_record_count_by_source"]["deontic:partial"] == {
@@ -203,17 +199,11 @@ def test_prover_syntax_target_corpus_coverage_groups_raw_rows_by_source():
 def test_prover_syntax_target_corpus_coverage_accepts_persisted_coverage_rows():
     complete = build_prover_syntax_target_coverage_record(
         "deontic:complete",
-        [
-            {"target": target, "syntax_valid": True}
-            for target in LOCAL_PROVER_SYNTAX_TARGETS
-        ],
+        [{"target": target, "syntax_valid": True} for target in LOCAL_PROVER_SYNTAX_TARGETS],
     )
     duplicate = build_prover_syntax_target_coverage_record(
         "deontic:duplicate",
-        [
-            {"target": target, "syntax_valid": True}
-            for target in LOCAL_PROVER_SYNTAX_TARGETS
-        ]
+        [{"target": target, "syntax_valid": True} for target in LOCAL_PROVER_SYNTAX_TARGETS]
         + [{"target": "fol", "syntax_valid": True}],
     )
 
@@ -230,9 +220,7 @@ def test_prover_syntax_target_corpus_coverage_accepts_persisted_coverage_rows():
     assert summary["target_pass_distribution"] == {
         target: 2 for target in sorted(LOCAL_PROVER_SYNTAX_TARGETS)
     }
-    assert summary["source_duplicate_targets_by_source"]["deontic:duplicate"] == [
-        "fol"
-    ]
+    assert summary["source_duplicate_targets_by_source"]["deontic:duplicate"] == ["fol"]
     assert summary["source_failed_targets_by_source"]["deontic:duplicate"] == []
     assert summary["source_skipped_targets_by_source"]["deontic:duplicate"] == []
     assert summary["source_target_record_count_by_source"]["deontic:duplicate"] == {
@@ -270,12 +258,8 @@ def test_prover_syntax_target_corpus_coverage_marks_missing_source_ids_incomplet
     assert summary["source_identity_complete"] is False
     assert summary["complete_source_count"] == 0
     assert summary["sources_requiring_validation"] == ["unknown"]
-    assert summary["source_blockers_by_source"]["unknown"] == [
-        "missing_prover_syntax_source_id"
-    ]
-    assert summary["coverage_blocker_distribution"] == {
-        "missing_prover_syntax_source_id": 1
-    }
+    assert summary["source_blockers_by_source"]["unknown"] == ["missing_prover_syntax_source_id"]
+    assert summary["coverage_blocker_distribution"] == {"missing_prover_syntax_source_id": 1}
     assert summary["all_sources_complete"] is False
     assert summary["all_sources_required_targets_passed"] is True
 
@@ -283,10 +267,7 @@ def test_prover_syntax_target_corpus_coverage_marks_missing_source_ids_incomplet
 def test_prover_syntax_target_corpus_coverage_marks_persisted_row_missing_source_id():
     coverage = build_prover_syntax_target_coverage_record(
         "",
-        [
-            {"target": target, "syntax_valid": True}
-            for target in LOCAL_PROVER_SYNTAX_TARGETS
-        ],
+        [{"target": target, "syntax_valid": True} for target in LOCAL_PROVER_SYNTAX_TARGETS],
     )
 
     summary = summarize_prover_syntax_target_corpus_coverage([coverage])
@@ -298,9 +279,7 @@ def test_prover_syntax_target_corpus_coverage_marks_persisted_row_missing_source
         target: "passed" for target in LOCAL_PROVER_SYNTAX_TARGETS
     }
     assert summary["source_missing_targets_by_source"]["unknown"] == []
-    assert summary["source_blockers_by_source"]["unknown"] == [
-        "missing_prover_syntax_source_id"
-    ]
+    assert summary["source_blockers_by_source"]["unknown"] == ["missing_prover_syntax_source_id"]
     assert summary["complete_source_count"] == 0
     assert summary["formal_syntax_valid_source_rate"] == 1.0
 

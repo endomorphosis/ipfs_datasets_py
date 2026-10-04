@@ -179,7 +179,7 @@ from ipfs_datasets_py.error_reporting import ErrorReporter
 
 reporter = ErrorReporter(
     enabled=True,
-    min_report_interval=3600  # 1 hour between duplicate reports
+    min_report_interval=3600,  # 1 hour between duplicate reports
 )
 ```
 

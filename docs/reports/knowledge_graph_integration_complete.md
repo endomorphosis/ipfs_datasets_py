@@ -41,13 +41,10 @@ Converts any file format to knowledge graphs with optional IPFS storage.
 from ipfs_datasets_py.processors.file_converter import UniversalKnowledgeGraphPipeline
 
 pipeline = UniversalKnowledgeGraphPipeline(
-    backend='native',
-    enable_ipfs=True,
-    enable_acceleration=True,
-    enable_rag=True
+    backend="native", enable_ipfs=True, enable_acceleration=True, enable_rag=True
 )
 
-result = await pipeline.process('document.pdf')
+result = await pipeline.process("document.pdf")
 
 print(f"Text: {result.text}")
 print(f"Entities: {result.entities}")
@@ -72,12 +69,10 @@ Generates intelligent summaries from any file format.
 from ipfs_datasets_py.processors.file_converter import TextSummarizationPipeline
 
 pipeline = TextSummarizationPipeline(
-    llm_model='gpt-3.5-turbo',
-    enable_ipfs=True,
-    max_summary_length=500
+    llm_model="gpt-3.5-turbo", enable_ipfs=True, max_summary_length=500
 )
 
-result = await pipeline.summarize('long_report.pdf')
+result = await pipeline.summarize("long_report.pdf")
 
 print(f"Summary: {result.summary}")
 print(f"Key entities: {result.entities}")
@@ -100,17 +95,16 @@ Process multiple files concurrently with knowledge graph extraction.
 from ipfs_datasets_py.processors.file_converter import BatchKnowledgeGraphProcessor
 
 processor = BatchKnowledgeGraphProcessor(
-    enable_ipfs=True,
-    enable_acceleration=True,
-    max_concurrent=5
+    enable_ipfs=True, enable_acceleration=True, max_concurrent=5
 )
+
 
 def on_progress(completed, total, success):
     print(f"Progress: {completed}/{total} ({success})")
 
+
 results = await processor.process_batch(
-    file_list=['doc1.pdf', 'doc2.docx', 'doc3.html'],
-    progress_callback=on_progress
+    file_list=["doc1.pdf", "doc2.docx", "doc3.html"], progress_callback=on_progress
 )
 
 for result in results:
@@ -214,14 +208,12 @@ ipfs_datasets_py/
 ```python
 from ipfs_datasets_py.processors.file_converter import BatchKnowledgeGraphProcessor
 
-processor = BatchKnowledgeGraphProcessor(
-    enable_ipfs=True,
-    max_concurrent=10
-)
+processor = BatchKnowledgeGraphProcessor(enable_ipfs=True, max_concurrent=10)
 
 # Process entire directory
 import glob
-files = glob.glob('/path/to/documents/**/*.pdf', recursive=True)
+
+files = glob.glob("/path/to/documents/**/*.pdf", recursive=True)
 
 results = await processor.process_batch(files)
 
@@ -243,32 +235,30 @@ import asyncio
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
+
 class DocumentHandler(FileSystemEventHandler):
     def __init__(self, pipeline):
         self.pipeline = pipeline
-    
+
     def on_created(self, event):
         if not event.is_directory:
             asyncio.create_task(self.process_file(event.src_path))
-    
+
     async def process_file(self, file_path):
-        result = await self.pipeline.process(
-            file_path,
-            store_on_ipfs=True,
-            generate_summary=True
-        )
-        
+        result = await self.pipeline.process(file_path, store_on_ipfs=True, generate_summary=True)
+
         if result.success:
             print(f"✅ Processed: {file_path}")
             print(f"   IPFS CID: {result.ipfs_cid}")
             print(f"   Entities: {len(result.entities)}")
+
 
 # Setup
 pipeline = UniversalKnowledgeGraphPipeline(enable_ipfs=True)
 handler = DocumentHandler(pipeline)
 
 observer = Observer()
-observer.schedule(handler, path='/path/to/watch', recursive=True)
+observer.schedule(handler, path="/path/to/watch", recursive=True)
 observer.start()
 ```
 
@@ -279,38 +269,33 @@ observer.start()
 ```python
 from ipfs_datasets_py.processors.file_converter import UniversalKnowledgeGraphPipeline
 
-pipeline = UniversalKnowledgeGraphPipeline(
-    enable_ipfs=True,
-    enable_rag=True
-)
+pipeline = UniversalKnowledgeGraphPipeline(enable_ipfs=True, enable_rag=True)
 
 # Process different formats
 formats = {
-    'PDF': 'research_paper.pdf',
-    'DOCX': 'project_spec.docx',
-    'HTML': 'documentation.html',
-    'Markdown': 'notes.md',
-    'TXT': 'report.txt'
+    "PDF": "research_paper.pdf",
+    "DOCX": "project_spec.docx",
+    "HTML": "documentation.html",
+    "Markdown": "notes.md",
+    "TXT": "report.txt",
 }
 
-knowledge_base = {
-    'entities': [],
-    'relationships': [],
-    'documents': []
-}
+knowledge_base = {"entities": [], "relationships": [], "documents": []}
 
 for format_type, file_path in formats.items():
     result = await pipeline.process(file_path, generate_summary=True)
-    
+
     if result.success:
-        knowledge_base['entities'].extend(result.entities)
-        knowledge_base['relationships'].extend(result.relationships)
-        knowledge_base['documents'].append({
-            'format': format_type,
-            'path': file_path,
-            'summary': result.summary,
-            'ipfs_cid': result.ipfs_cid
-        })
+        knowledge_base["entities"].extend(result.entities)
+        knowledge_base["relationships"].extend(result.relationships)
+        knowledge_base["documents"].append(
+            {
+                "format": format_type,
+                "path": file_path,
+                "summary": result.summary,
+                "ipfs_cid": result.ipfs_cid,
+            }
+        )
 
 # Now query the unified knowledge base
 print(f"Knowledge Base Statistics:")
@@ -328,28 +313,26 @@ from fastapi import FastAPI, UploadFile
 from ipfs_datasets_py.processors.file_converter import TextSummarizationPipeline
 
 app = FastAPI()
-pipeline = TextSummarizationPipeline(
-    llm_model='gpt-3.5-turbo',
-    enable_ipfs=True
-)
+pipeline = TextSummarizationPipeline(llm_model="gpt-3.5-turbo", enable_ipfs=True)
+
 
 @app.post("/summarize")
 async def summarize_document(file: UploadFile):
     # Save uploaded file
     temp_path = f"/tmp/{file.filename}"
-    with open(temp_path, 'wb') as f:
+    with open(temp_path, "wb") as f:
         f.write(await file.read())
-    
+
     # Summarize
     result = await pipeline.summarize(temp_path)
-    
+
     # Return results
     return {
-        'success': result.success,
-        'summary': result.summary,
-        'entities': result.entities,
-        'ipfs_cid': result.ipfs_cid,
-        'metadata': result.metadata
+        "success": result.success,
+        "summary": result.summary,
+        "entities": result.entities,
+        "ipfs_cid": result.ipfs_cid,
+        "metadata": result.metadata,
     }
 ```
 
@@ -363,27 +346,27 @@ from ipfs_datasets_py.processors.file_converter import UniversalKnowledgeGraphPi
 
 # Load dataset
 manager = DatasetManager()
-dataset = manager.load_dataset('squad')
+dataset = manager.load_dataset("squad")
 
 # Process dataset documents
 pipeline = UniversalKnowledgeGraphPipeline(enable_ipfs=True)
 
-for item in dataset['train']:
-    context = item['context']
-    
+for item in dataset["train"]:
+    context = item["context"]
+
     # Create temporary file
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
         f.write(context)
         temp_file = f.name
-    
+
     # Extract knowledge graph
     result = await pipeline.process(temp_file)
-    
+
     # Store with IPFS
-    item['knowledge_graph'] = {
-        'entities': result.entities,
-        'relationships': result.relationships,
-        'ipfs_cid': result.ipfs_cid
+    item["knowledge_graph"] = {
+        "entities": result.entities,
+        "relationships": result.relationships,
+        "ipfs_cid": result.ipfs_cid,
     }
 ```
 
@@ -393,12 +376,9 @@ for item in dataset['train']:
 from ipfs_datasets_py.processors.file_converter import IPFSAcceleratedConverter
 
 # Use IPFS for distributed storage
-converter = IPFSAcceleratedConverter(
-    enable_ipfs=True,
-    auto_pin=True
-)
+converter = IPFSAcceleratedConverter(enable_ipfs=True, auto_pin=True)
 
-result = await converter.convert('document.pdf', store_on_ipfs=True)
+result = await converter.convert("document.pdf", store_on_ipfs=True)
 
 # File is now on IPFS
 print(f"IPFS CID: {result.ipfs_cid}")
@@ -464,7 +444,7 @@ for file in large_file_list:
 All pipelines have comprehensive error handling:
 
 ```python
-result = await pipeline.process('document.pdf')
+result = await pipeline.process("document.pdf")
 
 if result.success:
     # Process successful

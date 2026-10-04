@@ -733,10 +733,12 @@ def sample_pdf():
     """Provides sample PDF for testing."""
     return Path(__file__).parent / "data" / "sample.pdf"
 
+
 @pytest.fixture
 def mock_ipfs_client():
     """Mocked IPFS client for testing."""
     return MockIPFSClient()
+
 
 @pytest.fixture
 def processor_registry():
@@ -812,7 +814,7 @@ from ipfs_datasets_py.processors.website_graphrag_processor import WebsiteGraphR
 from ipfs_datasets_py.processors.specialized.graphrag import (
     UnifiedGraphRAGProcessor,
     GraphRAGIntegration,
-    WebsiteGraphRAGSystem
+    WebsiteGraphRAGSystem,
 )
 ```
 
@@ -833,9 +835,13 @@ from ipfs_datasets_py.processors.llm_optimizer import LLMOptimizer
 
 # NEW
 from ipfs_datasets_py.processors.engines.llm import LLMOptimizer
+
 # Or specific components:
 from ipfs_datasets_py.processors.engines.llm import (
-    Chunker, Tokenizer, EmbeddingGenerator, ContextManager
+    Chunker,
+    Tokenizer,
+    EmbeddingGenerator,
+    ContextManager,
 )
 ```
 
@@ -867,28 +873,27 @@ from pathlib import Path
 
 # Migration mappings
 MIGRATIONS = {
-    'from ipfs_datasets_py.processors.graphrag_processor': 
-        'from ipfs_datasets_py.processors.specialized.graphrag',
-    'from ipfs_datasets_py.processors.pdf_processor':
-        'from ipfs_datasets_py.processors.specialized.pdf',
-    'from ipfs_datasets_py.processors.llm_optimizer':
-        'from ipfs_datasets_py.processors.engines.llm',
+    "from ipfs_datasets_py.processors.graphrag_processor": "from ipfs_datasets_py.processors.specialized.graphrag",
+    "from ipfs_datasets_py.processors.pdf_processor": "from ipfs_datasets_py.processors.specialized.pdf",
+    "from ipfs_datasets_py.processors.llm_optimizer": "from ipfs_datasets_py.processors.engines.llm",
     # ... more mappings
 }
+
 
 def migrate_file(filepath: Path) -> None:
     """Migrate imports in a single file."""
     content = filepath.read_text()
     modified = False
-    
+
     for old, new in MIGRATIONS.items():
         if old in content:
             content = content.replace(old, new)
             modified = True
-    
+
     if modified:
         filepath.write_text(content)
         print(f"✓ Migrated {filepath}")
+
 
 # ... rest of implementation
 ```
@@ -1289,21 +1294,21 @@ docs/processors/
 ```python
 # Complete migration reference
 OLD_TO_NEW = {
-    'processors.registry': 'processors.core.registry',
-    'processors.graphrag_processor': 'processors.specialized.graphrag',
-    'processors.pdf_processor': 'processors.specialized.pdf',
-    'processors.batch_processor': 'processors.specialized.batch',
-    'processors.multimodal_processor': 'processors.specialized.multimodal',
-    'processors.llm_optimizer': 'processors.engines.llm',
-    'processors.query_engine': 'processors.engines.query',
-    'processors.relationship_analyzer': 'processors.engines.relationship',
-    'processors.advanced_media_processing': 'processors.specialized.media',
-    'processors.advanced_web_archiving': 'processors.specialized.web_archive',
-    'processors.caching': 'processors.infrastructure.caching',
-    'processors.monitoring': 'processors.infrastructure.monitoring',
-    'processors.patent_scraper': 'processors.domains.patent',
-    'processors.geospatial_analysis': 'processors.domains.geospatial',
-    'processors.classify_with_llm': 'processors.domains.ml',
+    "processors.registry": "processors.core.registry",
+    "processors.graphrag_processor": "processors.specialized.graphrag",
+    "processors.pdf_processor": "processors.specialized.pdf",
+    "processors.batch_processor": "processors.specialized.batch",
+    "processors.multimodal_processor": "processors.specialized.multimodal",
+    "processors.llm_optimizer": "processors.engines.llm",
+    "processors.query_engine": "processors.engines.query",
+    "processors.relationship_analyzer": "processors.engines.relationship",
+    "processors.advanced_media_processing": "processors.specialized.media",
+    "processors.advanced_web_archiving": "processors.specialized.web_archive",
+    "processors.caching": "processors.infrastructure.caching",
+    "processors.monitoring": "processors.infrastructure.monitoring",
+    "processors.patent_scraper": "processors.domains.patent",
+    "processors.geospatial_analysis": "processors.domains.geospatial",
+    "processors.classify_with_llm": "processors.domains.ml",
 }
 ```
 

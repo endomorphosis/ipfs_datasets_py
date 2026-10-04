@@ -33,7 +33,7 @@ Session 62 implements all five "Next Steps" from the v17 plan:
 return {
     "delegation_count": len(self._store),
     "revoked_cid_count": len(self._revocation),
-    "max_chain_depth": self._max_chain_depth,   # NEW — 0 = unlimited
+    "max_chain_depth": self._max_chain_depth,  # NEW — 0 = unlimited
 }
 ```
 

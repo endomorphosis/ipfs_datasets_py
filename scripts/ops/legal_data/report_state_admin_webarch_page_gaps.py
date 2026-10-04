@@ -106,7 +106,9 @@ def build_payload(rows: List[Dict[str, Any]], top_states: int, top_pages: int) -
         blocked = sum(1 for r in srows if r["page_category"] == "blocked_or_transport")
         thin = sum(1 for r in srows if r["page_category"] == "thin_success")
         non_sub = sum(1 for r in srows if r["page_category"] == "non_substantive_success")
-        landing_non_sub = sum(1 for r in srows if r["page_category"] == "landing_like_non_substantive")
+        landing_non_sub = sum(
+            1 for r in srows if r["page_category"] == "landing_like_non_substantive"
+        )
         landing_candidate = sum(1 for r in srows if r["page_category"] == "candidate_landing_page")
         candidate = sum(1 for r in srows if r["page_category"] == "candidate_substantive")
         success = sum(1 for r in srows if bool(r.get("success")))
@@ -121,14 +123,24 @@ def build_payload(rows: List[Dict[str, Any]], top_states: int, top_pages: int) -
                 "non_substantive_pages": non_sub,
                 "candidate_landing_pages": landing_candidate,
                 "candidate_substantive_pages": candidate,
-                "problem_score": blocked * 4 + landing_non_sub * 3 + non_sub * 2 + thin * 2 + landing_candidate - candidate,
+                "problem_score": blocked * 4
+                + landing_non_sub * 3
+                + non_sub * 2
+                + thin * 2
+                + landing_candidate
+                - candidate,
                 "problem_pages": _sort_pages(srows)[:top_pages],
             }
         )
 
     weak_states = sorted(
         state_rows,
-        key=lambda r: (-r["problem_score"], -r["blocked_pages"], -r["non_substantive_pages"], r["state"]),
+        key=lambda r: (
+            -r["problem_score"],
+            -r["blocked_pages"],
+            -r["non_substantive_pages"],
+            r["state"],
+        ),
     )[: max(1, top_states)]
 
     summary = {
@@ -137,10 +149,14 @@ def build_payload(rows: List[Dict[str, Any]], top_states: int, top_pages: int) -
         "pages_total": sum(r["pages_total"] for r in state_rows),
         "blocked_pages_total": sum(r["blocked_pages"] for r in state_rows),
         "thin_success_pages_total": sum(r["thin_success_pages"] for r in state_rows),
-        "landing_like_non_substantive_pages_total": sum(r["landing_like_non_substantive_pages"] for r in state_rows),
+        "landing_like_non_substantive_pages_total": sum(
+            r["landing_like_non_substantive_pages"] for r in state_rows
+        ),
         "non_substantive_pages_total": sum(r["non_substantive_pages"] for r in state_rows),
         "candidate_landing_pages_total": sum(r["candidate_landing_pages"] for r in state_rows),
-        "candidate_substantive_pages_total": sum(r["candidate_substantive_pages"] for r in state_rows),
+        "candidate_substantive_pages_total": sum(
+            r["candidate_substantive_pages"] for r in state_rows
+        ),
         "weak_states": [r["state"] for r in weak_states],
     }
     return {"summary": summary, "states": state_rows, "weak_states": weak_states}
@@ -159,15 +175,21 @@ def to_markdown(payload: Dict[str, Any]) -> str:
     lines.append(f"- Pages total: **{summary['pages_total']}**")
     lines.append(f"- Blocked pages: **{summary['blocked_pages_total']}**")
     lines.append(f"- Thin success pages: **{summary['thin_success_pages_total']}**")
-    lines.append(f"- Landing-like non-substantive pages: **{summary['landing_like_non_substantive_pages_total']}**")
+    lines.append(
+        f"- Landing-like non-substantive pages: **{summary['landing_like_non_substantive_pages_total']}**"
+    )
     lines.append(f"- Non-substantive success pages: **{summary['non_substantive_pages_total']}**")
     lines.append(f"- Candidate landing pages: **{summary['candidate_landing_pages_total']}**")
-    lines.append(f"- Candidate substantive pages: **{summary['candidate_substantive_pages_total']}**")
+    lines.append(
+        f"- Candidate substantive pages: **{summary['candidate_substantive_pages_total']}**"
+    )
     lines.append(f"- Weak states: `{', '.join(summary['weak_states'])}`")
     lines.append("")
     lines.append("## Weak States")
     lines.append("")
-    lines.append("| State | Pages | Success | Blocked | Thin | Landing Non-sub | Non-substantive | Candidate Landing | Candidate Substantive |")
+    lines.append(
+        "| State | Pages | Success | Blocked | Thin | Landing Non-sub | Non-substantive | Candidate Landing | Candidate Substantive |"
+    )
     lines.append("|---|---:|---:|---:|---:|---:|---:|---:|---:|")
     for st in weak_states:
         lines.append(
@@ -181,7 +203,7 @@ def to_markdown(payload: Dict[str, Any]) -> str:
         lines.append("|---|---|---|---:|:---:|:---:|:---:|")
         for row in st.get("problem_pages") or []:
             lines.append(
-                f"| {row['page_category']} | {row.get('url','')} | {str(row.get('title') or '').replace('|',' ')} | {int(row.get('text_len') or 0)} | {'Yes' if row.get('in_existing_corpus') else 'No'} | {'Yes' if row.get('rule_body_signals') else 'No'} | {'Yes' if row.get('landing_like_admin_page') else 'No'} |"
+                f"| {row['page_category']} | {row.get('url', '')} | {str(row.get('title') or '').replace('|', ' ')} | {int(row.get('text_len') or 0)} | {'Yes' if row.get('in_existing_corpus') else 'No'} | {'Yes' if row.get('rule_body_signals') else 'No'} | {'Yes' if row.get('landing_like_admin_page') else 'No'} |"
             )
     return "\n".join(lines) + "\n"
 
@@ -190,7 +212,9 @@ def main() -> int:
     args = parse_args()
     paths = [Path(p).expanduser().resolve() for p in args.per_page_jsonl]
     rows = _load_rows(paths)
-    payload = build_payload(rows, top_states=max(1, int(args.top_states)), top_pages=max(1, int(args.top_pages)))
+    payload = build_payload(
+        rows, top_states=max(1, int(args.top_states)), top_pages=max(1, int(args.top_pages))
+    )
 
     out_json = Path(args.output_json).expanduser().resolve()
     out_md = Path(args.output_md).expanduser().resolve()
@@ -199,7 +223,13 @@ def main() -> int:
     out_json.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     out_md.write_text(to_markdown(payload), encoding="utf-8")
 
-    print(json.dumps({"summary": payload["summary"], "output_json": str(out_json), "output_md": str(out_md)}, indent=2, sort_keys=True))
+    print(
+        json.dumps(
+            {"summary": payload["summary"], "output_json": str(out_json), "output_md": str(out_md)},
+            indent=2,
+            sort_keys=True,
+        )
+    )
     return 0
 
 

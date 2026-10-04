@@ -87,10 +87,10 @@ Represents boolean logic circuits (AND, OR, NOT gates).
 ```python
 class BooleanCircuit:
     def __init__(self):
-        self.gates = []          # List of gate operations
-        self.wire_count = 0      # Number of wires
+        self.gates = []  # List of gate operations
+        self.wire_count = 0  # Number of wires
         self.public_inputs = []  # Public input indices
-        self.private_inputs = [] # Private input indices
+        self.private_inputs = []  # Private input indices
 ```
 
 **Key Methods:**
@@ -105,9 +105,12 @@ Represents arithmetic circuits over finite fields (R1CS format).
 
 ```python
 class ArithmeticCircuit:
-    def __init__(self, field_size=21888242871839275222246405745257275088548364400416034343698204186575808495617):
-        self.constraints = []    # R1CS constraints
-        self.variables = {}      # Variable assignments
+    def __init__(
+        self,
+        field_size=21888242871839275222246405745257275088548364400416034343698204186575808495617,
+    ):
+        self.constraints = []  # R1CS constraints
+        self.variables = {}  # Variable assignments
         self.field_size = field_size
 ```
 
@@ -164,17 +167,17 @@ def generate_proof(self, witness: Dict[str, Any], public_inputs: List[Any]) -> D
 
 ```python
 proof = {
-    'proof_a': (int, int),           # Simulated G1 point
-    'proof_b': ((int, int), (int, int)),  # Simulated G2 point
-    'proof_c': (int, int),           # Simulated G1 point
-    'public_inputs': [values],       # Public inputs
-    'circuit_hash': 'hash_string',   # Circuit identifier
-    'timestamp': float,              # Proof generation time
-    'metadata': {                    # Additional info
-        'circuit_type': 'boolean|arithmetic',
-        'num_constraints': int,
-        'field_size': int
-    }
+    "proof_a": (int, int),  # Simulated G1 point
+    "proof_b": ((int, int), (int, int)),  # Simulated G2 point
+    "proof_c": (int, int),  # Simulated G1 point
+    "public_inputs": [values],  # Public inputs
+    "circuit_hash": "hash_string",  # Circuit identifier
+    "timestamp": float,  # Proof generation time
+    "metadata": {  # Additional info
+        "circuit_type": "boolean|arithmetic",
+        "num_constraints": int,
+        "field_size": int,
+    },
 }
 ```
 
@@ -304,7 +307,7 @@ w1 = circuit.add_wire()  # Private: secret bit
 w2 = circuit.add_wire()  # Private: another secret
 w3 = circuit.add_wire()  # Public: result
 
-circuit.add_gate('AND', [w1, w2], w3)
+circuit.add_gate("AND", [w1, w2], w3)
 circuit.set_private_input(w1)
 circuit.set_private_input(w2)
 circuit.set_public_input(w3)
@@ -381,10 +384,10 @@ else:
    ```python
    # Bad: Many redundant gates
    for i in range(100):
-       circuit.add_gate('AND', [w1, w2], w3)
-   
+       circuit.add_gate("AND", [w1, w2], w3)
+
    # Good: Single gate
-   circuit.add_gate('AND', [w1, w2], w3)
+   circuit.add_gate("AND", [w1, w2], w3)
    ```
 
 2. **Batch Processing**
@@ -477,14 +480,15 @@ See [PRODUCTION_UPGRADE_PATH.md](PRODUCTION_UPGRADE_PATH.md) for complete upgrad
 ```python
 from ipfs_datasets_py.logic.zkp.circuits import BooleanCircuit
 
+
 class CustomCircuit(BooleanCircuit):
     """Custom circuit for specific use case."""
-    
+
     def __init__(self, num_inputs):
         super().__init__()
         self.num_inputs = num_inputs
         self._build_circuit()
-    
+
     def _build_circuit(self):
         # Add custom gates
         # Define public/private inputs
@@ -497,26 +501,27 @@ class CustomCircuit(BooleanCircuit):
 ```python
 from ipfs_datasets_py.logic.zkp.zkp_verifier import ZKPVerifier
 
+
 class StrictVerifier(ZKPVerifier):
     """Verifier with additional checks."""
-    
+
     def verify_proof(self, proof, public_inputs):
         # Standard verification
         if not super().verify_proof(proof, public_inputs):
             return False
-        
+
         # Custom validation
         if not self._check_timestamp_freshness(proof):
             return False
-        
+
         if not self._verify_metadata(proof):
             return False
-        
+
         return True
-    
+
     def _check_timestamp_freshness(self, proof):
         # Proof must be < 60 seconds old
-        age = time.time() - proof['timestamp']
+        age = time.time() - proof["timestamp"]
         return age < 60
 ```
 
@@ -582,9 +587,9 @@ except ValueError as e:
 **Solution:**
 ```python
 # Debug verification
-print("Proof public inputs:", proof['public_inputs'])
+print("Proof public inputs:", proof["public_inputs"])
 print("Expected inputs:", public_inputs)
-print("Match:", proof['public_inputs'] == public_inputs)
+print("Match:", proof["public_inputs"] == public_inputs)
 
 # Check verification key
 print("Verifier key:", verifier.verification_key)
@@ -609,7 +614,7 @@ start = time.time()
 proof = prover.generate_proof(witness, public_inputs)
 duration = time.time() - start
 
-print(f"Proof generation: {duration*1000:.2f}ms")
+print(f"Proof generation: {duration * 1000:.2f}ms")
 print(f"Circuit gates: {len(circuit.gates)}")
 print(f"Witness size: {len(witness)}")
 
@@ -622,6 +627,7 @@ print(f"Witness size: {len(witness)}")
 ```python
 # Enable detailed logging
 import logging
+
 logging.basicConfig(level=logging.DEBUG)
 
 # ZKP module will log:
@@ -639,30 +645,30 @@ logging.basicConfig(level=logging.DEBUG)
 import unittest
 from ipfs_datasets_py.logic.zkp import BooleanCircuit, ZKPProver, ZKPVerifier
 
+
 class TestZKPModule(unittest.TestCase):
-    
     def test_simple_proof(self):
         """Test basic proof generation and verification."""
         circuit = BooleanCircuit()
         w1, w2, w3 = [circuit.add_wire() for _ in range(3)]
-        circuit.add_gate('AND', [w1, w2], w3)
+        circuit.add_gate("AND", [w1, w2], w3)
         circuit.set_private_input(w1)
         circuit.set_private_input(w2)
         circuit.set_public_input(w3)
-        
+
         prover = ZKPProver(circuit)
         verifier = ZKPVerifier(prover.get_verification_key())
-        
+
         witness = {w1: True, w2: True}
         proof = prover.generate_proof(witness, [True])
-        
+
         self.assertTrue(verifier.verify_proof(proof, [True]))
-    
+
     def test_invalid_witness(self):
         """Test proof fails with invalid witness."""
         # Circuit expects w1 AND w2 = w3
         witness = {w1: True, w2: False}  # AND = False
-        
+
         with self.assertRaises(ValueError):
             proof = prover.generate_proof(witness, [True])  # Expects True!
 ```
@@ -695,13 +701,14 @@ def test_fol_integration():
 ```python
 from hypothesis import given, strategies as st
 
+
 @given(st.booleans(), st.booleans())
 def test_and_gate_property(a, b):
     """Property: AND gate always correct."""
     circuit = BooleanCircuit()
     w1, w2, w3 = [circuit.add_wire() for _ in range(3)]
-    circuit.add_gate('AND', [w1, w2], w3)
-    
+    circuit.add_gate("AND", [w1, w2], w3)
+
     result = circuit.evaluate({w1: a, w2: b})
     assert result[w3] == (a and b)
 ```
@@ -711,23 +718,24 @@ def test_and_gate_property(a, b):
 ```python
 import time
 
+
 def benchmark_proof_generation(num_trials=1000):
     """Benchmark proof generation performance."""
     circuit = BooleanCircuit()
     # ... build circuit ...
-    
+
     prover = ZKPProver(circuit)
     witness = {...}
-    
+
     times = []
     for _ in range(num_trials):
         start = time.time()
         proof = prover.generate_proof(witness, [True])
         times.append(time.time() - start)
-    
-    print(f"Mean: {np.mean(times)*1000:.2f}ms")
-    print(f"Std: {np.std(times)*1000:.2f}ms")
-    print(f"P95: {np.percentile(times, 95)*1000:.2f}ms")
+
+    print(f"Mean: {np.mean(times) * 1000:.2f}ms")
+    print(f"Std: {np.std(times) * 1000:.2f}ms")
+    print(f"P95: {np.percentile(times, 95) * 1000:.2f}ms")
 ```
 
 ## Next Steps

@@ -22,6 +22,7 @@ NL compilation + UCAN token assembly in one call.
 
 No external dependencies.
 """
+
 from __future__ import annotations
 
 import logging
@@ -34,9 +35,11 @@ logger = logging.getLogger(__name__)
 
 # ── marker for prohibited capabilities ───────────────────────────────────────
 
+
 @dataclass
 class DenyCapability:
     """Represents an *explicit denial* derived from a PROHIBITION formula."""
+
     resource: str
     ability: str
     actor: Optional[str] = None
@@ -44,6 +47,7 @@ class DenyCapability:
 
 
 # ── capability builder ────────────────────────────────────────────────────────
+
 
 def _ability_for_operator(op_name: str, action: str) -> Tuple[str, str]:
     """Return ``(ability, resource)`` for a deontic operator name and action."""
@@ -96,11 +100,13 @@ def _extract_action_from_formula(formula) -> str:
 
 # ── core bridge class ─────────────────────────────────────────────────────────
 
+
 @dataclass
 class DCECToUCANMapping:
     """Result of mapping a single DCEC formula to UCAN primitives."""
+
     formula: Any  # original DCEC formula
-    capability: Any = None    # Capability | DenyCapability | None
+    capability: Any = None  # Capability | DenyCapability | None
     actor: Optional[str] = None
     action: Optional[str] = None
     operator: Optional[str] = None
@@ -141,8 +147,12 @@ class DCECToUCANBridge:
 
     def _get_ucan_types(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import (
-            Capability, DelegationToken, DelegationChain, DelegationEvaluator
+            Capability,
+            DelegationToken,
+            DelegationChain,
+            DelegationEvaluator,
         )
+
         return Capability, DelegationToken, DelegationChain, DelegationEvaluator
 
     def map_formula(self, formula) -> DCECToUCANMapping:
@@ -158,7 +168,9 @@ class DCECToUCANBridge:
                 error=f"Not a DeonticFormula: {type(formula).__name__}",
             )
 
-        op_name = formula.operator.name if hasattr(formula.operator, "name") else str(formula.operator)
+        op_name = (
+            formula.operator.name if hasattr(formula.operator, "name") else str(formula.operator)
+        )
         actor = _extract_actor_from_formula(formula)
         action = _extract_action_from_formula(formula)
         ability, resource = _ability_for_operator(op_name, action)
@@ -199,11 +211,7 @@ class DCECToUCANBridge:
         audience = audience_did or (
             f"did:key:{mapping.actor}" if mapping.actor else "did:key:anonymous"
         )
-        expiry = (
-            time.time() + self.expiry_offset
-            if self.expiry_offset is not None
-            else None
-        )
+        expiry = time.time() + self.expiry_offset if self.expiry_offset is not None else None
         return DelegationToken(
             issuer=self.issuer_did,
             audience=audience,
@@ -243,7 +251,8 @@ class DCECToUCANBridge:
 @dataclass
 class BridgeResult:
     """Result of bridging a set of DCEC formulas to UCAN tokens."""
-    tokens: List[Any] = field(default_factory=list)    # List[DelegationToken]
+
+    tokens: List[Any] = field(default_factory=list)  # List[DelegationToken]
     denials: List[DenyCapability] = field(default_factory=list)
     mappings: List[DCECToUCANMapping] = field(default_factory=list)
     errors: List[str] = field(default_factory=list)
@@ -254,4 +263,5 @@ class BridgeResult:
         if not self.tokens:
             return None
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationChain
+
         return DelegationChain(self.tokens)

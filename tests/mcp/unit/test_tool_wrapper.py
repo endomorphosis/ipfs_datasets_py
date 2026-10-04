@@ -5,6 +5,7 @@ wrap_function_with_metadata, wrap_tools_from_module, caching, performance stats)
 The bug fixed in session 32 (missing `return function` + `return decorator` in
 wrap_function_as_tool decorator form) is also regression-tested here.
 """
+
 import asyncio
 import unittest
 from unittest.mock import patch
@@ -52,7 +53,6 @@ def _plain_return(n: int) -> int:
 # TestFunctionToolWrapperInit
 # ---------------------------------------------------------------------------
 class TestFunctionToolWrapperInit(unittest.TestCase):
-
     def test_name_is_set(self):
         w = FunctionToolWrapper(_sync_tool, "sync_sum")
         self.assertEqual(w.name, "sync_sum")
@@ -97,7 +97,6 @@ class TestFunctionToolWrapperInit(unittest.TestCase):
 # TestFunctionToolWrapperExecute
 # ---------------------------------------------------------------------------
 class TestFunctionToolWrapperExecute(unittest.TestCase):
-
     def test_execute_sync_function(self):
         w = FunctionToolWrapper(_sync_tool, "sync_sum")
         result = _run(w.execute({"x": 3, "y": 4}))
@@ -128,6 +127,7 @@ class TestFunctionToolWrapperExecute(unittest.TestCase):
     def test_execute_exception_returns_error_dict(self):
         def _bad():
             raise RuntimeError("boom")
+
         w = FunctionToolWrapper(_bad, "broken")
         result = _run(w.execute({}))
         self.assertFalse(result.get("success"))
@@ -138,7 +138,6 @@ class TestFunctionToolWrapperExecute(unittest.TestCase):
 # TestFunctionToolWrapperPerformanceStats
 # ---------------------------------------------------------------------------
 class TestFunctionToolWrapperPerformanceStats(unittest.TestCase):
-
     def test_initial_usage_count_zero(self):
         w = FunctionToolWrapper(_sync_tool, "t")
         stats = w.get_performance_stats()
@@ -166,7 +165,6 @@ class TestFunctionToolWrapperPerformanceStats(unittest.TestCase):
 # TestFunctionToolWrapperCaching
 # ---------------------------------------------------------------------------
 class TestFunctionToolWrapperCaching(unittest.TestCase):
-
     def test_caching_disabled_by_default(self):
         w = FunctionToolWrapper(_sync_tool, "t")
         self.assertFalse(w.cache_enabled)
@@ -194,7 +192,6 @@ class TestFunctionToolWrapperCaching(unittest.TestCase):
 # TestWrapFunctionAsTool — helper style
 # ---------------------------------------------------------------------------
 class TestWrapFunctionAsToolHelperStyle(unittest.TestCase):
-
     def test_returns_function_tool_wrapper(self):
         w = wrap_function_as_tool(_sync_tool, "helper_sum")
         self.assertIsInstance(w, FunctionToolWrapper)
@@ -217,29 +214,32 @@ class TestWrapFunctionAsToolHelperStyle(unittest.TestCase):
 # TestWrapFunctionAsTool — decorator style  (session 32 bug fix regression)
 # ---------------------------------------------------------------------------
 class TestWrapFunctionAsToolDecoratorStyle(unittest.TestCase):
-
     def test_decorator_returns_callable(self):
         @wrap_function_as_tool(name="deco_tool")
         async def _deco(n: int) -> dict:
             return {"n": n}
+
         self.assertTrue(callable(_deco))
 
     def test_decorator_sets_mcp_name_attribute(self):
         @wrap_function_as_tool(name="named_deco")
         async def _deco2():
             pass
+
         self.assertEqual(_deco2.__mcp_tool_name__, "named_deco")
 
     def test_decorator_sets_category_attribute(self):
         @wrap_function_as_tool(name="cat_deco", category="math")
         async def _deco3():
             pass
+
         self.assertEqual(_deco3.__mcp_tool_category__, "math")
 
     def test_decorated_function_still_callable(self):
         @wrap_function_as_tool(name="exec_deco")
         async def _deco4(x: int) -> dict:
             return {"v": x}
+
         result = _run(_deco4(42))
         self.assertEqual(result["v"], 42)
 
@@ -248,7 +248,6 @@ class TestWrapFunctionAsToolDecoratorStyle(unittest.TestCase):
 # TestWrapFunctionWithMetadata
 # ---------------------------------------------------------------------------
 class TestWrapFunctionWithMetadata(unittest.TestCase):
-
     def test_returns_function_tool_wrapper(self):
         md = {"name": "meta_tool", "category": "test", "description": "desc"}
         w = wrap_function_with_metadata(_sync_tool, md)
@@ -275,9 +274,9 @@ class TestWrapFunctionWithMetadata(unittest.TestCase):
 # TestWrapToolsFromModule
 # ---------------------------------------------------------------------------
 class TestWrapToolsFromModule(unittest.TestCase):
-
     def test_returns_dict(self):
         import types
+
         mod = types.ModuleType("fake_mod")
         mod._sync_tool = _sync_tool
         mappings = {"_sync_tool": {"name": "sync_sum", "category": "math"}}
@@ -286,6 +285,7 @@ class TestWrapToolsFromModule(unittest.TestCase):
 
     def test_wraps_listed_functions(self):
         import types
+
         mod = types.ModuleType("fake_mod")
         mod._sync_tool = _sync_tool
         mod._async_tool = _async_tool
@@ -299,6 +299,7 @@ class TestWrapToolsFromModule(unittest.TestCase):
 
     def test_missing_function_skipped(self):
         import types
+
         mod = types.ModuleType("fake_mod")
         mappings = {"nonexistent_fn": {"name": "ghost"}}
         result = wrap_tools_from_module(mod, mappings)

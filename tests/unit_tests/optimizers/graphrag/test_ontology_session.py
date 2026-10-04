@@ -11,24 +11,22 @@ from typing import Dict, List, Any
 
 # Test imports - gracefully handle missing dependencies
 try:
-    from ipfs_datasets_py.optimizers.graphrag.ontology_session import (
-        SessionResult,
-        OntologySession
-    )
-    from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
-        OntologyGenerationContext
-    )
+    from ipfs_datasets_py.optimizers.graphrag.ontology_session import SessionResult, OntologySession
+    from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerationContext
+
     IMPORTS_AVAILABLE = True
 except ImportError as e:
     IMPORTS_AVAILABLE = False
     SKIP_REASON = f"Required dependencies not available: {e}"
 
-pytestmark = pytest.mark.skipif(not IMPORTS_AVAILABLE, reason=SKIP_REASON if not IMPORTS_AVAILABLE else "")
+pytestmark = pytest.mark.skipif(
+    not IMPORTS_AVAILABLE, reason=SKIP_REASON if not IMPORTS_AVAILABLE else ""
+)
 
 
 class TestSessionResult:
     """Test SessionResult dataclass"""
-    
+
     def test_session_result_creation(self):
         """
         GIVEN: Session result data
@@ -39,7 +37,7 @@ class TestSessionResult:
         ontology = {"entities": [], "relationships": []}
         critic_score = MagicMock(overall=0.85)
         validation_result = MagicMock(is_consistent=True)
-        
+
         # WHEN
         result = SessionResult(
             ontology=ontology,
@@ -49,7 +47,7 @@ class TestSessionResult:
             converged=True,
             time_elapsed=1.5,
         )
-        
+
         # THEN
         assert result.ontology == ontology
         assert result.critic_score is critic_score
@@ -57,7 +55,7 @@ class TestSessionResult:
         assert result.num_rounds == 3
         assert result.converged is True
         assert result.time_elapsed == 1.5
-    
+
     def test_session_result_minimal(self):
         """
         GIVEN: Minimal session result data
@@ -73,7 +71,7 @@ class TestSessionResult:
             converged=False,
             time_elapsed=0.1,
         )
-        
+
         # THEN
         assert result.ontology == {}
         assert result.num_rounds == 1
@@ -85,12 +83,12 @@ class TestOntologySessionInitialization:
     @pytest.fixture
     def mock_components(self):
         return {
-            'generator': Mock(),
-            'mediator': Mock(),
-            'critic': Mock(),
-            'validator': Mock(),
+            "generator": Mock(),
+            "mediator": Mock(),
+            "critic": Mock(),
+            "validator": Mock(),
         }
-    
+
     def test_session_initialization_default(self, mock_components):
         """
         GIVEN: Mock components
@@ -99,14 +97,14 @@ class TestOntologySessionInitialization:
         """
         # GIVEN / WHEN
         session = OntologySession(**mock_components)
-        
+
         # THEN
         assert session is not None
-        assert hasattr(session, 'generator')
-        assert hasattr(session, 'mediator')
-        assert hasattr(session, 'critic')
-        assert hasattr(session, 'validator')
-    
+        assert hasattr(session, "generator")
+        assert hasattr(session, "mediator")
+        assert hasattr(session, "critic")
+        assert hasattr(session, "validator")
+
     def test_session_initialization_with_configs(self, mock_components):
         """
         GIVEN: Mock components
@@ -115,13 +113,13 @@ class TestOntologySessionInitialization:
         """
         # WHEN
         session = OntologySession(**mock_components)
-        
+
         # THEN
         assert session is not None
-        assert session.generator is mock_components['generator']
-        assert session.critic is mock_components['critic']
-        assert session.validator is mock_components['validator']
-    
+        assert session.generator is mock_components["generator"]
+        assert session.critic is mock_components["critic"]
+        assert session.validator is mock_components["validator"]
+
     def test_session_max_rounds_configuration(self, mock_components):
         """
         GIVEN: Custom max_rounds setting
@@ -130,10 +128,10 @@ class TestOntologySessionInitialization:
         """
         # GIVEN
         max_rounds = 10
-        
+
         # WHEN
         session = OntologySession(**mock_components, max_rounds=max_rounds)
-        
+
         # THEN
         assert session.max_rounds == max_rounds
 
@@ -162,8 +160,8 @@ class TestSessionOrchestration:
         validation_result.prover_used = "mock"
         validation_result.time_ms = 10.0
         validator.check_consistency.return_value = validation_result
-        return {'generator': gen, 'mediator': mediator, 'critic': critic, 'validator': validator}
-    
+        return {"generator": gen, "mediator": mediator, "critic": critic, "validator": validator}
+
     def test_run_session_basic_workflow(self, mock_components):
         """
         GIVEN: Session with mocked components
@@ -172,17 +170,17 @@ class TestSessionOrchestration:
         """
         # GIVEN
         session = OntologySession(**mock_components)
-        
+
         # WHEN
         result = session.run(
             data="Test data",
-            context=OntologyGenerationContext(data_source="test", data_type="text", domain="test")
+            context=OntologyGenerationContext(data_source="test", data_type="text", domain="test"),
         )
-        
+
         # THEN
         assert result is not None
-        assert mock_components['mediator'].run_refinement_cycle.called
-    
+        assert mock_components["mediator"].run_refinement_cycle.called
+
     def test_run_session_convergence(self, mock_components):
         """
         GIVEN: Session that converges
@@ -191,17 +189,17 @@ class TestSessionOrchestration:
         """
         # GIVEN
         session = OntologySession(**mock_components, max_rounds=10)
-        
+
         # WHEN
         result = session.run(
             data="Test data",
-            context=OntologyGenerationContext(data_source="test", data_type="text", domain="test")
+            context=OntologyGenerationContext(data_source="test", data_type="text", domain="test"),
         )
-        
+
         # THEN
         assert result is not None
         assert result.converged is True
-    
+
     def test_run_session_no_convergence(self, mock_components):
         """
         GIVEN: Session that doesn't converge
@@ -209,21 +207,21 @@ class TestSessionOrchestration:
         THEN: Session stops at max rounds
         """
         # GIVEN
-        mock_components['mediator'].run_refinement_cycle.return_value.converged = False
-        mock_components['mediator'].run_refinement_cycle.return_value.current_round = 3
+        mock_components["mediator"].run_refinement_cycle.return_value.converged = False
+        mock_components["mediator"].run_refinement_cycle.return_value.current_round = 3
         session = OntologySession(**mock_components, max_rounds=3)
-        
+
         # WHEN
         result = session.run(
             data="Test data",
-            context=OntologyGenerationContext(data_source="test", data_type="text", domain="test")
+            context=OntologyGenerationContext(data_source="test", data_type="text", domain="test"),
         )
-        
+
         # THEN
         assert result is not None
         assert result.converged is False
         assert result.num_rounds == 3
-    
+
     def test_run_session_with_domain(self, mock_components):
         """
         GIVEN: Session with specific domain
@@ -232,17 +230,17 @@ class TestSessionOrchestration:
         """
         # GIVEN
         session = OntologySession(**mock_components)
-        
+
         # WHEN
         result = session.run(
             data="Legal document",
-            context=OntologyGenerationContext(data_source="test", data_type="text", domain="legal")
+            context=OntologyGenerationContext(data_source="test", data_type="text", domain="legal"),
         )
-        
+
         # THEN
         assert result is not None
-        assert mock_components['mediator'].run_refinement_cycle.called
-    
+        assert mock_components["mediator"].run_refinement_cycle.called
+
     def test_run_session_empty_data(self, mock_components):
         """
         GIVEN: Empty data
@@ -251,13 +249,15 @@ class TestSessionOrchestration:
         """
         # GIVEN
         session = OntologySession(**mock_components)
-        
+
         # WHEN
         result = session.run(
             data="",
-            context=OntologyGenerationContext(data_source="test", data_type="text", domain="general")
+            context=OntologyGenerationContext(
+                data_source="test", data_type="text", domain="general"
+            ),
         )
-        
+
         # THEN
         assert result is not None
         assert result.num_rounds >= 0
@@ -285,8 +285,8 @@ class TestValidationRetry:
         validation_result.prover_used = "mock"
         validation_result.time_ms = 5.0
         validator.check_consistency.return_value = validation_result
-        return {'generator': gen, 'mediator': mediator, 'critic': critic, 'validator': validator}
-    
+        return {"generator": gen, "mediator": mediator, "critic": critic, "validator": validator}
+
     def test_validation_retry_on_failure(self, mock_components):
         """
         GIVEN: Session with mocked components
@@ -295,17 +295,17 @@ class TestValidationRetry:
         """
         # GIVEN
         session = OntologySession(**mock_components)
-        
+
         # WHEN
         result = session.run(
             data="Test data",
-            context=OntologyGenerationContext(data_source="test", data_type="text", domain="test")
+            context=OntologyGenerationContext(data_source="test", data_type="text", domain="test"),
         )
-        
+
         # THEN
         assert result is not None
-        assert mock_components['mediator'].run_refinement_cycle.called
-    
+        assert mock_components["mediator"].run_refinement_cycle.called
+
     def test_validation_max_retries(self, mock_components):
         """
         GIVEN: Session with mocked components
@@ -314,13 +314,13 @@ class TestValidationRetry:
         """
         # GIVEN
         session = OntologySession(**mock_components)
-        
+
         # WHEN
         result = session.run(
             data="Test data",
-            context=OntologyGenerationContext(data_source="test", data_type="text", domain="test")
+            context=OntologyGenerationContext(data_source="test", data_type="text", domain="test"),
         )
-        
+
         # THEN
         assert result is not None
 
@@ -331,12 +331,12 @@ class TestConfigurationValidation:
     @pytest.fixture
     def mock_components(self):
         return {
-            'generator': Mock(),
-            'mediator': Mock(),
-            'critic': Mock(),
-            'validator': Mock(),
+            "generator": Mock(),
+            "mediator": Mock(),
+            "critic": Mock(),
+            "validator": Mock(),
         }
-    
+
     def test_validate_max_rounds(self, mock_components):
         """
         GIVEN: Invalid max_rounds configuration
@@ -346,7 +346,7 @@ class TestConfigurationValidation:
         # GIVEN / WHEN / THEN
         with pytest.raises(ValueError):
             OntologySession(**mock_components, max_rounds=-1)
-    
+
     def test_validate_max_rounds_zero(self, mock_components):
         """
         GIVEN: Zero max_rounds
@@ -355,7 +355,7 @@ class TestConfigurationValidation:
         """
         with pytest.raises(ValueError):
             OntologySession(**mock_components, max_rounds=0)
-    
+
     def test_validate_component_configs(self, mock_components):
         """
         GIVEN: Mock components
@@ -364,7 +364,7 @@ class TestConfigurationValidation:
         """
         # WHEN
         session = OntologySession(**mock_components)
-        
+
         # THEN
         assert session is not None
         assert session.generator is not None
@@ -393,8 +393,8 @@ class TestSessionEdgeCases:
         validation_result.time_ms = 1.0
         validator.check_consistency.return_value = validation_result
         critic.evaluate_ontology.return_value = MagicMock(overall=0.5)
-        return {'generator': gen, 'mediator': mediator, 'critic': critic, 'validator': validator}
-    
+        return {"generator": gen, "mediator": mediator, "critic": critic, "validator": validator}
+
     def test_session_with_none_context(self, mock_components):
         """
         GIVEN: None context
@@ -403,14 +403,14 @@ class TestSessionEdgeCases:
         """
         # GIVEN
         session = OntologySession(**mock_components)
-        
+
         # WHEN / THEN
         try:
             result = session.run(data="Test", context=None)
             assert result is not None
         except Exception:
             pass  # AttributeError expected since context=None
-    
+
     def test_session_with_very_long_data(self, mock_components):
         """
         GIVEN: Very long input data
@@ -420,16 +420,16 @@ class TestSessionEdgeCases:
         # GIVEN
         session = OntologySession(**mock_components)
         long_data = "Test " * 10000
-        
+
         # WHEN
         result = session.run(
             data=long_data,
-            context=OntologyGenerationContext(data_source="test", data_type="text", domain="test")
+            context=OntologyGenerationContext(data_source="test", data_type="text", domain="test"),
         )
-        
+
         # THEN
         assert result is not None
-    
+
     def test_session_component_error_handling(self, mock_components):
         """
         GIVEN: Component that raises an error
@@ -437,34 +437,34 @@ class TestSessionEdgeCases:
         THEN: Error is handled gracefully via partial result
         """
         # GIVEN
-        mock_components['mediator'].run_refinement_cycle.side_effect = RuntimeError("Test error")
+        mock_components["mediator"].run_refinement_cycle.side_effect = RuntimeError("Test error")
         session = OntologySession(**mock_components)
-        
+
         # WHEN
         result = session.run(
             data="Test",
-            context=OntologyGenerationContext(data_source="test", data_type="text", domain="test")
+            context=OntologyGenerationContext(data_source="test", data_type="text", domain="test"),
         )
-        
+
         # THEN - partial result returned, not re-raised
         assert result is not None
         assert result.converged is False
-        assert result.metadata.get('failed') is True
+        assert result.metadata.get("failed") is True
 
 
 class TestElapsedMs:
     """Test elapsed_ms() timing method"""
-    
+
     @pytest.fixture
     def mock_components(self):
         """Create mock components for OntologySession"""
         return {
-            'generator': Mock(),
-            'mediator': Mock(),
-            'critic': Mock(),
-            'validator': Mock(),
+            "generator": Mock(),
+            "mediator": Mock(),
+            "critic": Mock(),
+            "validator": Mock(),
         }
-    
+
     def test_elapsed_ms_before_run(self, mock_components):
         """
         GIVEN: Fresh session
@@ -473,14 +473,14 @@ class TestElapsedMs:
         """
         # GIVEN
         session = OntologySession(**mock_components)
-        
+
         # WHEN
         elapsed = session.elapsed_ms()
-        
+
         # THEN
         assert elapsed == 0.0
         assert isinstance(elapsed, float)
-    
+
     def test_elapsed_ms_after_run_started(self, mock_components):
         """
         GIVEN: Session with mocked components
@@ -489,29 +489,27 @@ class TestElapsedMs:
         """
         # GIVEN
         session = OntologySession(**mock_components)
-        session.generator.extract_ontology = Mock(return_value=MagicMock(
-            ontology={"entities": ["E1"]},
-            confidence=0.8
-        ))
-        
-        session.mediator.orchestrate_refinement = Mock(return_value=MagicMock(
-            final_ontology={"entities": ["E1"]},
-            final_score=0.8,
-            num_rounds=1,
-            converged=True
-        ))
-        
+        session.generator.extract_ontology = Mock(
+            return_value=MagicMock(ontology={"entities": ["E1"]}, confidence=0.8)
+        )
+
+        session.mediator.orchestrate_refinement = Mock(
+            return_value=MagicMock(
+                final_ontology={"entities": ["E1"]}, final_score=0.8, num_rounds=1, converged=True
+            )
+        )
+
         # WHEN
         result = session.run(
             data="Test",
-            context=OntologyGenerationContext(data_source="test", data_type="text", domain="test")
+            context=OntologyGenerationContext(data_source="test", data_type="text", domain="test"),
         )
         elapsed = session.elapsed_ms()
-        
+
         # THEN
         assert elapsed > 0.0
         assert isinstance(elapsed, float)
-    
+
     def test_elapsed_ms_reflects_runtime(self, mock_components):
         """
         GIVEN: Session with elapsed time tracked
@@ -520,21 +518,22 @@ class TestElapsedMs:
         """
         # GIVEN
         import time
+
         session = OntologySession(**mock_components)
-        
+
         # Simulate a session that started 100ms ago
         session.start_time = time.time() - 0.1  # 0.1 seconds = 100ms
         time.sleep(0.02)  # Add slight additional time
-        
+
         # WHEN
         elapsed = session.elapsed_ms()
-        
+
         # THEN
         # Should be at least ~100ms, allowing for some overhead
         assert elapsed >= 80.0  # 80ms to account for overhead variance
         assert elapsed < 10000.0  # Should be less than 10 seconds
         assert isinstance(elapsed, float)
-    
+
     def test_elapsed_ms_multiple_calls(self):
         """
         GIVEN: Session already running
@@ -543,24 +542,25 @@ class TestElapsedMs:
         """
         # GIVEN
         import time
+
         mock_components = {
-            'generator': Mock(),
-            'mediator': Mock(),
-            'critic': Mock(),
-            'validator': Mock(),
+            "generator": Mock(),
+            "mediator": Mock(),
+            "critic": Mock(),
+            "validator": Mock(),
         }
         session = OntologySession(**mock_components)
-        
+
         # Manually set start_time to an earlier point
         session.start_time = time.time() - 1.0  # Simulate 1 second ago
-        
+
         # WHEN
         elapsed1 = session.elapsed_ms()
         time.sleep(0.1)
         elapsed2 = session.elapsed_ms()
         time.sleep(0.1)
         elapsed3 = session.elapsed_ms()
-        
+
         # THEN
         assert elapsed1 > 0
         assert elapsed2 > elapsed1
@@ -569,7 +569,7 @@ class TestElapsedMs:
         assert 950 < elapsed1 < 1100
         assert 1050 < elapsed2 < 1200
         assert 1150 < elapsed3 < 1300
-    
+
     def test_elapsed_ms_returns_float(self, mock_components):
         """
         GIVEN: Session after run
@@ -578,25 +578,26 @@ class TestElapsedMs:
         """
         # GIVEN
         session = OntologySession(**mock_components)
-        session.generator.extract_ontology = Mock(return_value=MagicMock(
-            ontology={},
-            confidence=0.5
-        ))
-        
-        session.mediator.orchestrate_refinement = Mock(return_value=MagicMock(
-            final_ontology={},
-            final_score=0.5,
-            num_rounds=1,
-            converged=False
-        ))
-        
+        session.generator.extract_ontology = Mock(
+            return_value=MagicMock(ontology={}, confidence=0.5)
+        )
+
+        session.mediator.orchestrate_refinement = Mock(
+            return_value=MagicMock(
+                final_ontology={}, final_score=0.5, num_rounds=1, converged=False
+            )
+        )
+
         # WHEN
-        session.run(data="Test", context=OntologyGenerationContext(data_source="test", data_type="text", domain="test"))
+        session.run(
+            data="Test",
+            context=OntologyGenerationContext(data_source="test", data_type="text", domain="test"),
+        )
         elapsed = session.elapsed_ms()
-        
+
         # THEN
         assert isinstance(elapsed, float)
-    
+
     def test_elapsed_ms_rounded_precision(self):
         """
         GIVEN: Session tracking milliseconds
@@ -605,19 +606,20 @@ class TestElapsedMs:
         """
         # GIVEN
         import time
+
         mock_components = {
-            'generator': Mock(),
-            'mediator': Mock(),
-            'critic': Mock(),
-            'validator': Mock(),
+            "generator": Mock(),
+            "mediator": Mock(),
+            "critic": Mock(),
+            "validator": Mock(),
         }
         session = OntologySession(**mock_components)
         session.start_time = time.time()
         time.sleep(0.05)  # Sleep 50ms
-        
+
         # WHEN
         elapsed = session.elapsed_ms()
-        
+
         # THEN
         # Should be ~50ms, allow 25-100ms tolerance for system variance
         assert 25 < elapsed < 100
@@ -629,7 +631,7 @@ class TestElapsedMs:
 @pytest.mark.slow
 class TestSessionPerformance:
     """Test session performance characteristics"""
-    
+
     def test_session_execution_time(self):
         """
         GIVEN: Session with mocked components
@@ -658,17 +660,20 @@ class TestSessionPerformance:
             critic=Mock(),
             validator=validator,
         )
-        
+
         # WHEN
         import time
+
         start = time.time()
         for _ in range(10):
             session.run(
                 data="Test data",
-                context=OntologyGenerationContext(data_source="test", data_type="text", domain="test")
+                context=OntologyGenerationContext(
+                    data_source="test", data_type="text", domain="test"
+                ),
             )
         duration = time.time() - start
-        
+
         # THEN
         # Should be reasonably fast with mocks
         assert duration < 5.0  # 5 seconds for 10 sessions

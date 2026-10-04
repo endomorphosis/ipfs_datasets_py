@@ -12,20 +12,28 @@ import logging
 from typing import Dict, List, Any, Optional, Union, Set, Callable
 from dataclasses import asdict
 
-from ipfs_datasets_py.audit.audit_logger import (
-    AuditLogger, AuditEvent, AuditCategory, AuditLevel
-)
+from ipfs_datasets_py.audit.audit_logger import AuditLogger, AuditEvent, AuditCategory, AuditLevel
 from ipfs_datasets_py.audit.compliance import (
-    ComplianceReporter, ComplianceReport, ComplianceRequirement, ComplianceStandard
+    ComplianceReporter,
+    ComplianceReport,
+    ComplianceRequirement,
+    ComplianceStandard,
 )
 
 # Try to import provenance module for integration
 try:
     from ipfs_datasets_py.data_provenance_enhanced import (
-        EnhancedProvenanceManager, ProvenanceContext,
-        SourceRecord, TransformationRecord, VerificationRecord, AnnotationRecord,
-        ModelTrainingRecord, ModelInferenceRecord, IPLDProvenanceStorage
+        EnhancedProvenanceManager,
+        ProvenanceContext,
+        SourceRecord,
+        TransformationRecord,
+        VerificationRecord,
+        AnnotationRecord,
+        ModelTrainingRecord,
+        ModelInferenceRecord,
+        IPLDProvenanceStorage,
     )
+
     PROVENANCE_MODULE_AVAILABLE = True
 except ImportError:
     PROVENANCE_MODULE_AVAILABLE = False
@@ -53,7 +61,9 @@ class AuditProvenanceIntegrator:
         self.logger = logging.getLogger(__name__)
 
         if not PROVENANCE_MODULE_AVAILABLE:
-            self.logger.warning("Data provenance module not available. Some features will be disabled.")
+            self.logger.warning(
+                "Data provenance module not available. Some features will be disabled."
+            )
 
     def initialize_provenance_manager(self):
         """Initialize the provenance manager if not already done."""
@@ -70,7 +80,9 @@ class AuditProvenanceIntegrator:
 
         return True
 
-    def audit_from_provenance_record(self, record: Any, additional_details: Dict[str, Any] = None) -> Optional[str]:
+    def audit_from_provenance_record(
+        self, record: Any, additional_details: Dict[str, Any] = None
+    ) -> Optional[str]:
         """
         Generate an audit event from a provenance record.
 
@@ -148,7 +160,7 @@ class AuditProvenanceIntegrator:
                 action=action,
                 resource_id=resource_id,
                 resource_type=resource_type,
-                details=details
+                details=details,
             )
 
             return event_id
@@ -174,7 +186,11 @@ class AuditProvenanceIntegrator:
             record_id = None
 
             # Map audit category/action to provenance record type
-            if event.category == AuditCategory.DATA_ACCESS and event.action in ["read", "load", "import"]:
+            if event.category == AuditCategory.DATA_ACCESS and event.action in [
+                "read",
+                "load",
+                "import",
+            ]:
                 # Create a source record
                 record_id = self.provenance_manager.record_source(
                     source_id=event.resource_id,
@@ -184,11 +200,15 @@ class AuditProvenanceIntegrator:
                         "audit_event_id": event.event_id,
                         "user": event.user,
                         "timestamp": event.timestamp,
-                        **event.details
-                    }
+                        **event.details,
+                    },
                 )
 
-            elif event.category == AuditCategory.DATA_MODIFICATION and event.action in ["transform", "process", "convert"]:
+            elif event.category == AuditCategory.DATA_MODIFICATION and event.action in [
+                "transform",
+                "process",
+                "convert",
+            ]:
                 # Create a transformation record
                 input_ids = event.details.get("input_ids", [])
                 if isinstance(input_ids, str):
@@ -202,11 +222,14 @@ class AuditProvenanceIntegrator:
                     metadata={
                         "audit_event_id": event.event_id,
                         "user": event.user,
-                        "timestamp": event.timestamp
-                    }
+                        "timestamp": event.timestamp,
+                    },
                 )
 
-            elif event.category == AuditCategory.COMPLIANCE and event.action in ["verify", "validate"]:
+            elif event.category == AuditCategory.COMPLIANCE and event.action in [
+                "verify",
+                "validate",
+            ]:
                 # Create a verification record
                 record_id = self.provenance_manager.record_verification(
                     data_id=event.resource_id,
@@ -215,8 +238,8 @@ class AuditProvenanceIntegrator:
                     metadata={
                         "audit_event_id": event.event_id,
                         "user": event.user,
-                        "timestamp": event.timestamp
-                    }
+                        "timestamp": event.timestamp,
+                    },
                 )
 
             return record_id
@@ -242,8 +265,7 @@ class AuditProvenanceIntegrator:
         try:
             # Add audit event reference to provenance record
             self.provenance_manager.add_metadata_to_record(
-                record_id=provenance_record_id,
-                metadata={"linked_audit_event_id": audit_event_id}
+                record_id=provenance_record_id, metadata={"linked_audit_event_id": audit_event_id}
             )
 
             # Log the link in audit logs
@@ -253,8 +275,8 @@ class AuditProvenanceIntegrator:
                 action="link_audit_provenance",
                 details={
                     "audit_event_id": audit_event_id,
-                    "provenance_record_id": provenance_record_id
-                }
+                    "provenance_record_id": provenance_record_id,
+                },
             )
 
             return True
@@ -280,8 +302,11 @@ class AuditProvenanceIntegrator:
             # Create a handler for the audit logger
             def audit_to_provenance_handler(event: AuditEvent):
                 # Filter events that should generate provenance records
-                if event.category in [AuditCategory.DATA_ACCESS, AuditCategory.DATA_MODIFICATION,
-                                      AuditCategory.COMPLIANCE]:
+                if event.category in [
+                    AuditCategory.DATA_ACCESS,
+                    AuditCategory.DATA_MODIFICATION,
+                    AuditCategory.COMPLIANCE,
+                ]:
                     # Generate provenance record from audit event
                     record_id = self.provenance_from_audit_event(event)
 
@@ -290,8 +315,11 @@ class AuditProvenanceIntegrator:
                         self.link_audit_to_provenance(event.event_id, record_id)
 
             # Add the handler as an event listener for relevant categories
-            for category in [AuditCategory.DATA_ACCESS, AuditCategory.DATA_MODIFICATION,
-                          AuditCategory.COMPLIANCE]:
+            for category in [
+                AuditCategory.DATA_ACCESS,
+                AuditCategory.DATA_MODIFICATION,
+                AuditCategory.COMPLIANCE,
+            ]:
                 self.audit_logger.add_event_listener(audit_to_provenance_handler, category)
 
             return True
@@ -319,8 +347,13 @@ class AuditDatasetIntegrator:
         self.audit_logger = audit_logger or AuditLogger.get_instance()
         self.logger = logging.getLogger(__name__)
 
-    def record_dataset_load(self, dataset_name: str, dataset_id: Optional[str] = None,
-                           source: Optional[str] = None, user: Optional[str] = None) -> Optional[str]:
+    def record_dataset_load(
+        self,
+        dataset_name: str,
+        dataset_id: Optional[str] = None,
+        source: Optional[str] = None,
+        user: Optional[str] = None,
+    ) -> Optional[str]:
         """
         Record dataset loading operation in audit log.
 
@@ -339,18 +372,20 @@ class AuditDatasetIntegrator:
                 user=user,
                 resource_id=dataset_id or dataset_name,
                 resource_type="dataset",
-                details={
-                    "dataset_name": dataset_name,
-                    "source": source or "unknown"
-                }
+                details={"dataset_name": dataset_name, "source": source or "unknown"},
             )
         except Exception as e:
             self.logger.error(f"Error recording dataset load: {str(e)}")
             return None
 
-    def record_dataset_save(self, dataset_name: str, dataset_id: Optional[str] = None,
-                           destination: Optional[str] = None, format: Optional[str] = None,
-                           user: Optional[str] = None) -> Optional[str]:
+    def record_dataset_save(
+        self,
+        dataset_name: str,
+        dataset_id: Optional[str] = None,
+        destination: Optional[str] = None,
+        format: Optional[str] = None,
+        user: Optional[str] = None,
+    ) -> Optional[str]:
         """
         Record dataset saving operation in audit log.
 
@@ -373,16 +408,21 @@ class AuditDatasetIntegrator:
                 details={
                     "dataset_name": dataset_name,
                     "destination": destination or "unknown",
-                    "format": format or "unknown"
-                }
+                    "format": format or "unknown",
+                },
             )
         except Exception as e:
             self.logger.error(f"Error recording dataset save: {str(e)}")
             return None
 
-    def record_dataset_transform(self, input_dataset: str, output_dataset: str,
-                              transformation_type: str, parameters: Optional[Dict[str, Any]] = None,
-                              user: Optional[str] = None) -> Optional[str]:
+    def record_dataset_transform(
+        self,
+        input_dataset: str,
+        output_dataset: str,
+        transformation_type: str,
+        parameters: Optional[Dict[str, Any]] = None,
+        user: Optional[str] = None,
+    ) -> Optional[str]:
         """
         Record dataset transformation operation in audit log.
 
@@ -405,16 +445,20 @@ class AuditDatasetIntegrator:
                 details={
                     "input_dataset": input_dataset,
                     "transformation_type": transformation_type,
-                    "parameters": parameters or {}
-                }
+                    "parameters": parameters or {},
+                },
             )
         except Exception as e:
             self.logger.error(f"Error recording dataset transformation: {str(e)}")
             return None
 
-    def record_dataset_query(self, dataset_name: str, query: str,
-                          query_type: Optional[str] = None,
-                          user: Optional[str] = None) -> Optional[str]:
+    def record_dataset_query(
+        self,
+        dataset_name: str,
+        query: str,
+        query_type: Optional[str] = None,
+        user: Optional[str] = None,
+    ) -> Optional[str]:
         """
         Record dataset query operation in audit log.
 
@@ -433,10 +477,7 @@ class AuditDatasetIntegrator:
                 user=user,
                 resource_id=dataset_name,
                 resource_type="dataset",
-                details={
-                    "query": query,
-                    "query_type": query_type or "unknown"
-                }
+                details={"query": query, "query_type": query_type or "unknown"},
             )
         except Exception as e:
             self.logger.error(f"Error recording dataset query: {str(e)}")
@@ -452,8 +493,7 @@ class IntegratedComplianceReporter:
     analysis for regulatory compliance.
     """
 
-    def __init__(self, standard: ComplianceStandard,
-                audit_logger=None, provenance_manager=None):
+    def __init__(self, standard: ComplianceStandard, audit_logger=None, provenance_manager=None):
         """
         Initialize the integrated compliance reporter.
 
@@ -485,8 +525,9 @@ class IntegratedComplianceReporter:
         """
         self.base_reporter.add_requirement(requirement)
 
-    def get_audit_events(self, start_time: Optional[str] = None,
-                     end_time: Optional[str] = None) -> List[AuditEvent]:
+    def get_audit_events(
+        self, start_time: Optional[str] = None, end_time: Optional[str] = None
+    ) -> List[AuditEvent]:
         """
         Get audit events for a specific time period.
 
@@ -504,8 +545,9 @@ class IntegratedComplianceReporter:
         # For now, just return an empty list as a placeholder
         return []
 
-    def get_provenance_records(self, start_time: Optional[str] = None,
-                            end_time: Optional[str] = None) -> List[Any]:
+    def get_provenance_records(
+        self, start_time: Optional[str] = None, end_time: Optional[str] = None
+    ) -> List[Any]:
         """
         Get provenance records for a specific time period.
 
@@ -525,25 +567,27 @@ class IntegratedComplianceReporter:
             end_dt = None
 
             if start_time:
-                start_dt = datetime.datetime.fromisoformat(start_time.rstrip('Z'))
+                start_dt = datetime.datetime.fromisoformat(start_time.rstrip("Z"))
 
             if end_time:
-                end_dt = datetime.datetime.fromisoformat(end_time.rstrip('Z'))
+                end_dt = datetime.datetime.fromisoformat(end_time.rstrip("Z"))
 
             # Query provenance records
             return self.provenance_manager.query_records(
-                start_timestamp=start_dt,
-                end_timestamp=end_dt
+                start_timestamp=start_dt, end_timestamp=end_dt
             )
 
         except Exception as e:
             self.logger.error(f"Error retrieving provenance records: {str(e)}")
             return []
 
-    def generate_report(self, start_time: Optional[str] = None,
-                      end_time: Optional[str] = None,
-                      include_cross_document_analysis: bool = True,
-                      include_lineage_metrics: bool = True) -> ComplianceReport:
+    def generate_report(
+        self,
+        start_time: Optional[str] = None,
+        end_time: Optional[str] = None,
+        include_cross_document_analysis: bool = True,
+        include_lineage_metrics: bool = True,
+    ) -> ComplianceReport:
         """
         Generate an integrated compliance report using both audit and provenance data.
 
@@ -561,8 +605,8 @@ class IntegratedComplianceReporter:
             # Default to last 30 days
             end = datetime.datetime.utcnow()
             start = end - datetime.timedelta(days=30)
-            end_time = end_time or end.isoformat() + 'Z'
-            start_time = start_time or start.isoformat() + 'Z'
+            end_time = end_time or end.isoformat() + "Z"
+            start_time = start_time or start.isoformat() + "Z"
 
         # Get audit events
         events = self.get_audit_events(start_time, end_time)
@@ -588,9 +632,9 @@ class IntegratedComplianceReporter:
 
         return report
 
-    def _add_cross_document_analysis(self, report: ComplianceReport,
-                                  records: List[Any],
-                                  include_lineage_metrics: bool = True) -> None:
+    def _add_cross_document_analysis(
+        self, report: ComplianceReport, records: List[Any], include_lineage_metrics: bool = True
+    ) -> None:
         """
         Add cross-document lineage analysis to the compliance report.
 
@@ -614,7 +658,7 @@ class IntegratedComplianceReporter:
                 return
 
             # Extract record IDs
-            record_ids = [record.record_id for record in records if hasattr(record, 'record_id')]
+            record_ids = [record.record_id for record in records if hasattr(record, "record_id")]
 
             if not record_ids:
                 return
@@ -628,13 +672,17 @@ class IntegratedComplianceReporter:
 
             # For GDPR, focus on PII-related links
             elif self.standard == ComplianceStandard.GDPR:
-                link_types = ["contains_pii", "processes_pii", "transfers_pii", "anonymizes", "shares"]
+                link_types = [
+                    "contains_pii",
+                    "processes_pii",
+                    "transfers_pii",
+                    "anonymizes",
+                    "shares",
+                ]
 
             # Build enhanced cross-document lineage graph with link type filtering
             lineage_graph = storage.build_cross_document_lineage_graph(
-                record_ids=record_ids,
-                max_depth=3,
-                link_types=link_types
+                record_ids=record_ids, max_depth=3, link_types=link_types
             )
 
             # Analyze the lineage graph
@@ -648,7 +696,7 @@ class IntegratedComplianceReporter:
                 "document_count": analysis.get("document_count", 0),
                 "critical_paths": analysis.get("critical_paths_count", 0),
                 "hub_records": len(analysis.get("hub_records", [])),
-                "cross_document_connections": analysis.get("cross_document_connections", 0)
+                "cross_document_connections": analysis.get("cross_document_connections", 0),
             }
 
             # Add enhanced document boundary analysis
@@ -656,7 +704,7 @@ class IntegratedComplianceReporter:
                 report.details["cross_document_lineage"]["document_boundaries"] = {
                     "count": len(analysis["document_boundaries"]),
                     "boundary_types": analysis.get("boundary_types", {}),
-                    "cross_boundary_flow_count": analysis.get("cross_boundary_flow_count", 0)
+                    "cross_boundary_flow_count": analysis.get("cross_boundary_flow_count", 0),
                 }
 
             # Add document relationship analysis
@@ -664,16 +712,20 @@ class IntegratedComplianceReporter:
                 report.details["cross_document_lineage"]["document_relationships"] = {
                     "relationship_count": len(analysis["document_relationships"]),
                     "relationship_types": analysis.get("relationship_types", {}),
-                    "high_risk_relationships": analysis.get("high_risk_relationships", 0)
+                    "high_risk_relationships": analysis.get("high_risk_relationships", 0),
                 }
 
             # Add enhanced data flow metrics
             if "data_flow_metrics" in analysis:
                 report.details["cross_document_lineage"]["data_flow_metrics"] = {
                     "total_flows": analysis["data_flow_metrics"].get("total_flows", 0),
-                    "cross_document_flows": analysis["data_flow_metrics"].get("cross_document_flows", 0),
+                    "cross_document_flows": analysis["data_flow_metrics"].get(
+                        "cross_document_flows", 0
+                    ),
                     "flow_density": analysis["data_flow_metrics"].get("flow_density", 0),
-                    "average_path_length": analysis["data_flow_metrics"].get("average_path_length", 0)
+                    "average_path_length": analysis["data_flow_metrics"].get(
+                        "average_path_length", 0
+                    ),
                 }
 
             # Add full metrics if requested
@@ -682,10 +734,9 @@ class IntegratedComplianceReporter:
 
             # Generate document boundary visualization URL if available
             try:
-                if hasattr(storage, 'visualize_cross_document_clusters'):
+                if hasattr(storage, "visualize_cross_document_clusters"):
                     vis_data = storage.visualize_cross_document_clusters(
-                        lineage_graph=lineage_graph,
-                        format="json"
+                        lineage_graph=lineage_graph, format="json"
                     )
                     if vis_data and isinstance(vis_data, dict):
                         report.details["cross_document_lineage"]["visualization_data"] = vis_data
@@ -698,8 +749,7 @@ class IntegratedComplianceReporter:
         except Exception as e:
             self.logger.error(f"Error performing cross-document analysis: {str(e)}")
 
-    def _add_compliance_insights(self, report: ComplianceReport,
-                              analysis: Dict[str, Any]) -> None:
+    def _add_compliance_insights(self, report: ComplianceReport, analysis: Dict[str, Any]) -> None:
         """
         Add compliance-specific insights based on provenance analysis.
 
@@ -740,7 +790,9 @@ class IntegratedComplianceReporter:
                     )
 
                 # Check for international transfers
-                if "boundary_types" in analysis and "international_transfer" in analysis.get("boundary_types", {}):
+                if "boundary_types" in analysis and "international_transfer" in analysis.get(
+                    "boundary_types", {}
+                ):
                     intl_transfers = analysis["boundary_types"].get("international_transfer", 0)
                     insights.append(
                         f"Detected {intl_transfers} international data transfers that require "
@@ -763,7 +815,10 @@ class IntegratedComplianceReporter:
                         "requiring processor agreements under GDPR Article 28"
                     )
 
-                if "high_risk_relationships" in analysis and analysis["high_risk_relationships"] > 0:
+                if (
+                    "high_risk_relationships" in analysis
+                    and analysis["high_risk_relationships"] > 0
+                ):
                     insights.append(
                         f"Found {analysis['high_risk_relationships']} high-risk data relationships "
                         "that may require Data Protection Impact Assessment (DPIA) under GDPR Article 35"
@@ -798,7 +853,9 @@ class IntegratedComplianceReporter:
                     )
 
                 # Check for PHI-specific boundaries
-                if "boundary_types" in analysis and "phi_boundary" in analysis.get("boundary_types", {}):
+                if "boundary_types" in analysis and "phi_boundary" in analysis.get(
+                    "boundary_types", {}
+                ):
                     phi_boundaries = analysis["boundary_types"].get("phi_boundary", 0)
                     insights.append(
                         f"Detected {phi_boundaries} boundaries between PHI and non-PHI data, "
@@ -821,7 +878,10 @@ class IntegratedComplianceReporter:
                         "that should be audited for compliance with HIPAA Safe Harbor or Expert Determination methods"
                     )
 
-            if "disconnected_subgraphs" in analysis and analysis.get("disconnected_subgraphs", 0) > 0:
+            if (
+                "disconnected_subgraphs" in analysis
+                and analysis.get("disconnected_subgraphs", 0) > 0
+            ):
                 insights.append(
                     f"Detected {analysis['disconnected_subgraphs']} disconnected data flows "
                     "which could indicate gaps in PHI tracking and may violate "
@@ -904,8 +964,7 @@ class IntegratedComplianceReporter:
                     if relevant_insights:
                         report.remediation_suggestions[req_id].extend(relevant_insights)
 
-    def _filter_relevant_insights(self, requirement_id: str,
-                               insights: List[str]) -> List[str]:
+    def _filter_relevant_insights(self, requirement_id: str, insights: List[str]) -> List[str]:
         """
         Filter insights relevant to a specific compliance requirement.
 
@@ -924,14 +983,12 @@ class IntegratedComplianceReporter:
             "GDPR-Art33": ["breach", "incident", "unauthorized"],
             "GDPR-Art15": ["access", "subject access"],
             "GDPR-Art17": ["erasure", "deletion"],
-
             # HIPAA
             "HIPAA-164.312.a.1": ["access", "identification", "authentication"],
             "HIPAA-164.312.b": ["audit", "controls", "trail"],
             "HIPAA-164.312.c.1": ["integrity", "validation"],
             "HIPAA-164.312.d": ["authentication", "verification"],
             "HIPAA-164.312.e.1": ["transmission", "transfer", "security"],
-
             # SOC2
             "SOC2-CC1.1": ["organizational", "responsibility"],
             "SOC2-CC5.1": ["access", "security", "cybersecurity"],
@@ -940,7 +997,7 @@ class IntegratedComplianceReporter:
             "SOC2-A1.1": ["availability", "monitoring"],
             "SOC2-PI1.1": ["processing", "integrity", "validation"],
             "SOC2-C1.1": ["confidentiality", "protection"],
-            "SOC2-P1.1": ["privacy", "personal information"]
+            "SOC2-P1.1": ["privacy", "personal information"],
         }
 
         # Get relevant keywords for this requirement
@@ -963,9 +1020,16 @@ class AuditContextManager:
     of operations, including timing information and exceptions.
     """
 
-    def __init__(self, category: AuditCategory, action: str, resource_id: Optional[str] = None,
-                 resource_type: Optional[str] = None, level: AuditLevel = AuditLevel.INFO,
-                 details: Optional[Dict[str, Any]] = None, audit_logger=None):
+    def __init__(
+        self,
+        category: AuditCategory,
+        action: str,
+        resource_id: Optional[str] = None,
+        resource_type: Optional[str] = None,
+        level: AuditLevel = AuditLevel.INFO,
+        details: Optional[Dict[str, Any]] = None,
+        audit_logger=None,
+    ):
         """
         Initialize the audit context manager.
 
@@ -999,7 +1063,7 @@ class AuditContextManager:
             action=f"{self.action}_start",
             resource_id=self.resource_id,
             resource_type=self.resource_type,
-            details=self.details
+            details=self.details,
         )
 
         return self
@@ -1024,11 +1088,7 @@ class AuditContextManager:
                 resource_id=self.resource_id,
                 resource_type=self.resource_type,
                 status="failure",
-                details={
-                    **details,
-                    "error_type": exc_type.__name__,
-                    "error_message": str(exc_val)
-                }
+                details={**details, "error_type": exc_type.__name__, "error_message": str(exc_val)},
             )
         else:
             # Log operation completion
@@ -1039,16 +1099,21 @@ class AuditContextManager:
                 resource_id=self.resource_id,
                 resource_type=self.resource_type,
                 status="success",
-                details=details
+                details=details,
             )
 
         # Don't suppress exceptions
         return False
 
 
-def audit_function(category: AuditCategory, action: str, resource_id_arg: Optional[str] = None,
-                 resource_type: Optional[str] = None, level: AuditLevel = AuditLevel.INFO,
-                 details_extractor: Optional[Callable] = None):
+def audit_function(
+    category: AuditCategory,
+    action: str,
+    resource_id_arg: Optional[str] = None,
+    resource_type: Optional[str] = None,
+    level: AuditLevel = AuditLevel.INFO,
+    details_extractor: Optional[Callable] = None,
+):
     """
     Decorator for auditing function calls.
 
@@ -1066,6 +1131,7 @@ def audit_function(category: AuditCategory, action: str, resource_id_arg: Option
     Returns:
         Callable: Decorated function
     """
+
     def decorator(func):
         def wrapper(*args, **kwargs):
             # Get audit logger
@@ -1079,6 +1145,7 @@ def audit_function(category: AuditCategory, action: str, resource_id_arg: Option
                 elif args and len(args) > 0:
                     # Try to get from function signature
                     import inspect
+
                     sig = inspect.signature(func)
                     param_names = list(sig.parameters.keys())
 
@@ -1107,7 +1174,7 @@ def audit_function(category: AuditCategory, action: str, resource_id_arg: Option
                 resource_type=resource_type,
                 level=level,
                 details=details,
-                audit_logger=audit_logger
+                audit_logger=audit_logger,
             ):
                 # Execute the function
                 return func(*args, **kwargs)
@@ -1147,11 +1214,14 @@ class ProvenanceAuditSearchIntegrator:
             except Exception as e:
                 self.logger.warning(f"Could not initialize provenance manager: {str(e)}")
 
-    def search(self, query: Dict[str, Any],
-             include_audit: bool = True,
-             include_provenance: bool = True,
-             correlation_mode: str = "auto",
-             include_cross_document: bool = False) -> Dict[str, Any]:
+    def search(
+        self,
+        query: Dict[str, Any],
+        include_audit: bool = True,
+        include_provenance: bool = True,
+        correlation_mode: str = "auto",
+        include_cross_document: bool = False,
+    ) -> Dict[str, Any]:
         """
         Perform a unified search across audit logs and provenance records.
 
@@ -1185,10 +1255,10 @@ class ProvenanceAuditSearchIntegrator:
         """
         results = {
             "query": query,
-            "timestamp": datetime.datetime.utcnow().isoformat() + 'Z',
+            "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
             "audit_events": [],
             "provenance_records": [],
-            "correlations": []
+            "correlations": [],
         }
 
         # Extract common query parameters
@@ -1225,7 +1295,7 @@ class ProvenanceAuditSearchIntegrator:
                         max_depth=max_depth,
                         link_types=link_types,
                         start_time=start_time,
-                        end_time=end_time
+                        end_time=end_time,
                     )
 
                     # Merge and deduplicate records
@@ -1240,7 +1310,7 @@ class ProvenanceAuditSearchIntegrator:
                         document_id or resource_id,
                         provenance_records,
                         max_depth=max_depth,
-                        link_types=link_types
+                        link_types=link_types,
                     )
 
                 results["provenance_records"] = provenance_records[:max_results]
@@ -1253,9 +1323,7 @@ class ProvenanceAuditSearchIntegrator:
         if include_audit and include_provenance and correlation_mode != "none":
             try:
                 correlations = self._correlate_results(
-                    results["audit_events"],
-                    results["provenance_records"],
-                    correlation_mode
+                    results["audit_events"], results["provenance_records"], correlation_mode
                 )
                 results["correlations"] = correlations
                 results["correlation_count"] = len(correlations)
@@ -1306,16 +1374,13 @@ class ProvenanceAuditSearchIntegrator:
             end_dt = None
 
             if start_time:
-                start_dt = datetime.datetime.fromisoformat(start_time.rstrip('Z'))
+                start_dt = datetime.datetime.fromisoformat(start_time.rstrip("Z"))
 
             if end_time:
-                end_dt = datetime.datetime.fromisoformat(end_time.rstrip('Z'))
+                end_dt = datetime.datetime.fromisoformat(end_time.rstrip("Z"))
 
             # Build query parameters for provenance manager
-            query_params = {
-                "start_timestamp": start_dt,
-                "end_timestamp": end_dt
-            }
+            query_params = {"start_timestamp": start_dt, "end_timestamp": end_dt}
 
             if resource_id:
                 query_params["resource_id"] = resource_id
@@ -1347,21 +1412,20 @@ class ProvenanceAuditSearchIntegrator:
                 records = filtered_records
 
             # Convert to dictionaries for the response
-            return [
-                self._provenance_record_to_dict(record)
-                for record in records
-            ]
+            return [self._provenance_record_to_dict(record) for record in records]
 
         except Exception as e:
             self.logger.error(f"Error querying provenance records: {str(e)}")
             return []
 
-    def _search_cross_document_provenance(self,
-                                      resource_id: str,
-                                      max_depth: int = 2,
-                                      link_types: Optional[List[str]] = None,
-                                      start_time: Optional[str] = None,
-                                      end_time: Optional[str] = None) -> List[Dict[str, Any]]:
+    def _search_cross_document_provenance(
+        self,
+        resource_id: str,
+        max_depth: int = 2,
+        link_types: Optional[List[str]] = None,
+        start_time: Optional[str] = None,
+        end_time: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
         """
         Search for provenance records across document boundaries.
 
@@ -1384,14 +1448,12 @@ class ProvenanceAuditSearchIntegrator:
         try:
             storage = self.provenance_manager.storage
 
-            if not hasattr(storage, 'build_cross_document_lineage_graph'):
+            if not hasattr(storage, "build_cross_document_lineage_graph"):
                 return []
 
             # Build cross-document lineage graph
             lineage_graph = storage.build_cross_document_lineage_graph(
-                record_ids=resource_id,
-                max_depth=max_depth,
-                link_types=link_types
+                record_ids=resource_id, max_depth=max_depth, link_types=link_types
             )
 
             # Extract all record IDs from the graph
@@ -1411,12 +1473,12 @@ class ProvenanceAuditSearchIntegrator:
                         record_time = record.timestamp
 
                         if start_time:
-                            start_dt = datetime.datetime.fromisoformat(start_time.rstrip('Z'))
+                            start_dt = datetime.datetime.fromisoformat(start_time.rstrip("Z"))
                             if record_time < start_dt:
                                 continue
 
                         if end_time:
-                            end_dt = datetime.datetime.fromisoformat(end_time.rstrip('Z'))
+                            end_dt = datetime.datetime.fromisoformat(end_time.rstrip("Z"))
                             if record_time > end_dt:
                                 continue
 
@@ -1425,9 +1487,13 @@ class ProvenanceAuditSearchIntegrator:
 
                     # Add cross-document relationship information
                     record_dict["cross_document_info"] = {
-                        "distance_from_source": self._get_distance_from_source(lineage_graph, resource_id, record_id),
+                        "distance_from_source": self._get_distance_from_source(
+                            lineage_graph, resource_id, record_id
+                        ),
                         "document_id": self._get_document_id_for_record(record),
-                        "relationship_path": self._get_relationship_path(lineage_graph, resource_id, record_id)
+                        "relationship_path": self._get_relationship_path(
+                            lineage_graph, resource_id, record_id
+                        ),
                     }
 
                     records.append(record_dict)
@@ -1441,6 +1507,7 @@ class ProvenanceAuditSearchIntegrator:
     def _get_distance_from_source(self, graph, source_id, target_id) -> int:
         """Get shortest path length between source and target in the graph."""
         import networkx as nx
+
         try:
             return nx.shortest_path_length(graph, source=source_id, target=target_id)
         except (nx.NetworkXNoPath, nx.NodeNotFound):
@@ -1455,6 +1522,7 @@ class ProvenanceAuditSearchIntegrator:
     def _get_relationship_path(self, graph, source_id, target_id) -> List[Dict[str, str]]:
         """Get the relationship path from source to target in the graph."""
         import networkx as nx
+
         try:
             path = nx.shortest_path(graph, source=source_id, target=target_id)
 
@@ -1462,7 +1530,7 @@ class ProvenanceAuditSearchIntegrator:
             relationships = []
             for i in range(len(path) - 1):
                 from_id = path[i]
-                to_id = path[i+1]
+                to_id = path[i + 1]
 
                 # Get edge data if it exists
                 if graph.has_edge(from_id, to_id):
@@ -1471,21 +1539,19 @@ class ProvenanceAuditSearchIntegrator:
                 else:
                     rel_type = "unknown"
 
-                relationships.append({
-                    "from": from_id,
-                    "to": to_id,
-                    "type": rel_type
-                })
+                relationships.append({"from": from_id, "to": to_id, "type": rel_type})
 
             return relationships
         except (nx.NetworkXNoPath, nx.NodeNotFound):
             return []
 
-    def _analyze_cross_document_records(self,
-                                    source_id: str,
-                                    records: List[Dict[str, Any]],
-                                    max_depth: int = 2,
-                                    link_types: Optional[List[str]] = None) -> Dict[str, Any]:
+    def _analyze_cross_document_records(
+        self,
+        source_id: str,
+        records: List[Dict[str, Any]],
+        max_depth: int = 2,
+        link_types: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
         """
         Analyze cross-document relationships in the search results.
 
@@ -1502,14 +1568,18 @@ class ProvenanceAuditSearchIntegrator:
             # Extract document IDs from records
             document_ids = set()
             for record in records:
-                if "cross_document_info" in record and record["cross_document_info"].get("document_id"):
+                if "cross_document_info" in record and record["cross_document_info"].get(
+                    "document_id"
+                ):
                     document_ids.add(record["cross_document_info"]["document_id"])
 
             # Count records by document
             records_by_document = {}
             for record in records:
                 doc_id = None
-                if "cross_document_info" in record and record["cross_document_info"].get("document_id"):
+                if "cross_document_info" in record and record["cross_document_info"].get(
+                    "document_id"
+                ):
                     doc_id = record["cross_document_info"]["document_id"]
 
                 if doc_id:
@@ -1520,7 +1590,10 @@ class ProvenanceAuditSearchIntegrator:
             # Count relationship types
             relationship_types = {}
             for record in records:
-                if "cross_document_info" in record and "relationship_path" in record["cross_document_info"]:
+                if (
+                    "cross_document_info" in record
+                    and "relationship_path" in record["cross_document_info"]
+                ):
                     for relationship in record["cross_document_info"]["relationship_path"]:
                         rel_type = relationship.get("type", "unknown")
                         if rel_type not in relationship_types:
@@ -1531,9 +1604,9 @@ class ProvenanceAuditSearchIntegrator:
             distances = [
                 record["cross_document_info"]["distance_from_source"]
                 for record in records
-                if "cross_document_info" in record and
-                "distance_from_source" in record["cross_document_info"] and
-                record["cross_document_info"]["distance_from_source"] > 0
+                if "cross_document_info" in record
+                and "distance_from_source" in record["cross_document_info"]
+                and record["cross_document_info"]["distance_from_source"] > 0
             ]
 
             avg_distance = sum(distances) / len(distances) if distances else 0
@@ -1547,7 +1620,7 @@ class ProvenanceAuditSearchIntegrator:
                 "max_depth_used": max_depth,
                 "link_types_filter": link_types,
                 "average_distance": avg_distance,
-                "max_distance": max(distances) if distances else 0
+                "max_distance": max(distances) if distances else 0,
             }
 
         except Exception as e:
@@ -1599,9 +1672,12 @@ class ProvenanceAuditSearchIntegrator:
 
         return result
 
-    def _correlate_results(self, audit_events: List[Dict[str, Any]],
-                       provenance_records: List[Dict[str, Any]],
-                       mode: str = "auto") -> List[Dict[str, Any]]:
+    def _correlate_results(
+        self,
+        audit_events: List[Dict[str, Any]],
+        provenance_records: List[Dict[str, Any]],
+        mode: str = "auto",
+    ) -> List[Dict[str, Any]]:
         """
         Correlate audit events and provenance records.
 
@@ -1642,12 +1718,14 @@ class ProvenanceAuditSearchIntegrator:
             # Check for explicit provenance links
             provenance_id = details.get("provenance_record_id")
             if provenance_id and provenance_id in provenance_by_id:
-                correlations.append({
-                    "type": "explicit",
-                    "audit_event_id": event_id,
-                    "provenance_record_id": provenance_id,
-                    "confidence": 1.0
-                })
+                correlations.append(
+                    {
+                        "type": "explicit",
+                        "audit_event_id": event_id,
+                        "provenance_record_id": provenance_id,
+                        "confidence": 1.0,
+                    }
+                )
 
         # Look for explicit links in provenance records
         for record_id, record in provenance_by_id.items():
@@ -1657,14 +1735,18 @@ class ProvenanceAuditSearchIntegrator:
             audit_id = metadata.get("audit_event_id")
             if audit_id and audit_id in audit_by_id:
                 # Check if we already have this correlation
-                if not any(c["audit_event_id"] == audit_id and c["provenance_record_id"] == record_id
-                        for c in correlations):
-                    correlations.append({
-                        "type": "explicit",
-                        "audit_event_id": audit_id,
-                        "provenance_record_id": record_id,
-                        "confidence": 1.0
-                    })
+                if not any(
+                    c["audit_event_id"] == audit_id and c["provenance_record_id"] == record_id
+                    for c in correlations
+                ):
+                    correlations.append(
+                        {
+                            "type": "explicit",
+                            "audit_event_id": audit_id,
+                            "provenance_record_id": record_id,
+                            "confidence": 1.0,
+                        }
+                    )
 
         # If auto mode, look for implicit correlations
         if mode == "auto":
@@ -1677,7 +1759,7 @@ class ProvenanceAuditSearchIntegrator:
                 if not event_resource:
                     continue
 
-                event_time = datetime.datetime.fromisoformat(event["timestamp"].rstrip('Z'))
+                event_time = datetime.datetime.fromisoformat(event["timestamp"].rstrip("Z"))
 
                 # First try exact resource matches
                 for record_id, record in provenance_by_id.items():
@@ -1695,19 +1777,23 @@ class ProvenanceAuditSearchIntegrator:
 
                     if event_resource in record_resources:
                         # Check timestamp proximity (within 5 seconds)
-                        record_time = datetime.datetime.fromisoformat(record["timestamp"].rstrip('Z'))
+                        record_time = datetime.datetime.fromisoformat(
+                            record["timestamp"].rstrip("Z")
+                        )
                         time_diff = abs((event_time - record_time).total_seconds())
 
                         if time_diff <= 5:
                             # Add implicit correlation with confidence based on time proximity
                             confidence = 1.0 - (time_diff / 5.0) * 0.5  # 0.5-1.0 based on time diff
-                            correlations.append({
-                                "type": "implicit",
-                                "audit_event_id": event_id,
-                                "provenance_record_id": record_id,
-                                "confidence": confidence,
-                                "match_reason": "resource_id_and_time"
-                            })
+                            correlations.append(
+                                {
+                                    "type": "implicit",
+                                    "audit_event_id": event_id,
+                                    "provenance_record_id": record_id,
+                                    "confidence": confidence,
+                                    "match_reason": "resource_id_and_time",
+                                }
+                            )
 
                 # Then try document-level matching for events without direct resource matches
                 if not any(c["audit_event_id"] == event_id for c in correlations):
@@ -1717,14 +1803,16 @@ class ProvenanceAuditSearchIntegrator:
 
                         # Find the closest record by timestamp
                         best_record_id = None
-                        best_time_diff = float('inf')
+                        best_time_diff = float("inf")
 
                         for record_id in record_ids:
                             if any(c["provenance_record_id"] == record_id for c in correlations):
                                 continue  # Skip if already correlated
 
                             record = provenance_by_id[record_id]
-                            record_time = datetime.datetime.fromisoformat(record["timestamp"].rstrip('Z'))
+                            record_time = datetime.datetime.fromisoformat(
+                                record["timestamp"].rstrip("Z")
+                            )
                             time_diff = abs((event_time - record_time).total_seconds())
 
                             if time_diff < best_time_diff and time_diff <= 60:  # Within 1 minute
@@ -1734,22 +1822,26 @@ class ProvenanceAuditSearchIntegrator:
                         if best_record_id:
                             # Add document-level correlation
                             confidence = 0.7  # Lower confidence for document-level match
-                            correlations.append({
-                                "type": "implicit",
-                                "audit_event_id": event_id,
-                                "provenance_record_id": best_record_id,
-                                "confidence": confidence,
-                                "match_reason": "document_level_match"
-                            })
+                            correlations.append(
+                                {
+                                    "type": "implicit",
+                                    "audit_event_id": event_id,
+                                    "provenance_record_id": best_record_id,
+                                    "confidence": confidence,
+                                    "match_reason": "document_level_match",
+                                }
+                            )
 
         return correlations
 
 
-def generate_integrated_compliance_report(standard_name: str,
-                                       start_time: Optional[str] = None,
-                                       end_time: Optional[str] = None,
-                                       output_format: str = "json",
-                                       output_path: Optional[str] = None) -> Optional[Union[str, Dict[str, Any]]]:
+def generate_integrated_compliance_report(
+    standard_name: str,
+    start_time: Optional[str] = None,
+    end_time: Optional[str] = None,
+    output_format: str = "json",
+    output_path: Optional[str] = None,
+) -> Optional[Union[str, Dict[str, Any]]]:
     """
     Generate an integrated compliance report combining audit and provenance data.
 
@@ -1777,7 +1869,7 @@ def generate_integrated_compliance_report(standard_name: str,
             "CCPA": ComplianceStandard.CCPA,
             "NIST_800_53": ComplianceStandard.NIST_800_53,
             "ISO_27001": ComplianceStandard.ISO_27001,
-            "CUSTOM": ComplianceStandard.CUSTOM
+            "CUSTOM": ComplianceStandard.CUSTOM,
         }
 
         standard = standard_map.get(standard_name.upper())
@@ -1787,15 +1879,19 @@ def generate_integrated_compliance_report(standard_name: str,
         # Create reporter based on standard
         if standard == ComplianceStandard.GDPR:
             from ipfs_datasets_py.audit.compliance import GDPRComplianceReporter
+
             base_reporter = GDPRComplianceReporter()
         elif standard == ComplianceStandard.HIPAA:
             from ipfs_datasets_py.audit.compliance import HIPAAComplianceReporter
+
             base_reporter = HIPAAComplianceReporter()
         elif standard == ComplianceStandard.SOC2:
             from ipfs_datasets_py.audit.compliance import SOC2ComplianceReporter
+
             base_reporter = SOC2ComplianceReporter()
         else:
             from ipfs_datasets_py.audit.compliance import ComplianceReporter
+
             base_reporter = ComplianceReporter(standard)
 
         # Create the integrated reporter
@@ -1810,7 +1906,7 @@ def generate_integrated_compliance_report(standard_name: str,
             start_time=start_time,
             end_time=end_time,
             include_cross_document_analysis=True,
-            include_lineage_metrics=True
+            include_lineage_metrics=True,
         )
 
         # Output based on format

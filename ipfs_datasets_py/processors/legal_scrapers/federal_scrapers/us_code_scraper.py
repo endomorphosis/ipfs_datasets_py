@@ -39,22 +39,56 @@ SUBSEC_TOKEN_RE = re.compile(r"\(([0-9]+|[A-Za-z]{1,6})\)")
 ROMAN_LOWER_RE = re.compile(r"^[ivxlcdm]+$")
 ROMAN_UPPER_RE = re.compile(r"^[IVXLCDM]+$")
 COMMON_ROMAN_LOWER = {
-    "i", "ii", "iii", "iv", "v", "vi", "vii", "viii", "ix", "x", "xi", "xii", "xiii", "xiv", "xv"
+    "i",
+    "ii",
+    "iii",
+    "iv",
+    "v",
+    "vi",
+    "vii",
+    "viii",
+    "ix",
+    "x",
+    "xi",
+    "xii",
+    "xiii",
+    "xiv",
+    "xv",
 }
 COMMON_ROMAN_UPPER = {token.upper() for token in COMMON_ROMAN_LOWER}
-CHAPTER_RE = re.compile(r"\b(CHAPTER\s+[A-Z0-9\-]+)\s*[\-—]\s*(.+?)(?=\s+Sec\.|\s+§|$)", re.IGNORECASE)
-SUBCHAPTER_RE = re.compile(r"\b(SUBCHAPTER\s+[A-Z0-9\-]+)\s*[\-—]\s*(.+?)(?=\s+Sec\.|\s+§|$)", re.IGNORECASE)
+CHAPTER_RE = re.compile(
+    r"\b(CHAPTER\s+[A-Z0-9\-]+)\s*[\-—]\s*(.+?)(?=\s+Sec\.|\s+§|$)", re.IGNORECASE
+)
+SUBCHAPTER_RE = re.compile(
+    r"\b(SUBCHAPTER\s+[A-Z0-9\-]+)\s*[\-—]\s*(.+?)(?=\s+Sec\.|\s+§|$)", re.IGNORECASE
+)
 PART_RE = re.compile(r"\b(PART\s+[A-Z0-9\-]+)\s*[\-—]\s*(.+?)(?=\s+Sec\.|\s+§|$)", re.IGNORECASE)
-PUBLIC_LAW_CITATION_RE = re.compile(r"Pub\.?\s*L\.?\s*(?:No\.?\s*)?\d+\s*[–—−‑-]\s*\d+", re.IGNORECASE)
-PUBLIC_LAW_LONGFORM_RE = re.compile(r"Public\s+Law\s+(?:No\.?\s*)?\d+\s*[–—−‑-]\s*\d+", re.IGNORECASE)
-PUBLIC_LAW_CONGRESS_RE = re.compile(r"Public\s+Law\s+\d+\s*,\s*[A-Za-z][A-Za-z\-\s]{1,80}\s+Congress", re.IGNORECASE)
+PUBLIC_LAW_CITATION_RE = re.compile(
+    r"Pub\.?\s*L\.?\s*(?:No\.?\s*)?\d+\s*[–—−‑-]\s*\d+", re.IGNORECASE
+)
+PUBLIC_LAW_LONGFORM_RE = re.compile(
+    r"Public\s+Law\s+(?:No\.?\s*)?\d+\s*[–—−‑-]\s*\d+", re.IGNORECASE
+)
+PUBLIC_LAW_CONGRESS_RE = re.compile(
+    r"Public\s+Law\s+\d+\s*,\s*[A-Za-z][A-Za-z\-\s]{1,80}\s+Congress", re.IGNORECASE
+)
 STAT_CITATION_RE = re.compile(r"\b\d+\s+Stat\.?\s+\d+\b", re.IGNORECASE)
-USC_CITATION_RE = re.compile(r"\b\d+\s+U\.?\s*S\.?\s*C\.?\s*(?:§+\s*|sec(?:tion)?\.?\s*)?\d[\w\-\.()]*", re.IGNORECASE)
-TITLE_SECTION_CITATION_RE = re.compile(r"\bsection\s+[\w\-.()]+\s+of\s+Title\s+\d+\b", re.IGNORECASE)
-THIS_TITLE_SECTION_CITATION_RE = re.compile(r"\bsection\s+[\w\-.(),\sand]+\s+of\s+this\s+title\b", re.IGNORECASE)
-THIS_CHAPTER_SECTION_CITATION_RE = re.compile(r"\bsection\s+[\w\-.(),\sand]+\s+of\s+this\s+chapter\b", re.IGNORECASE)
+USC_CITATION_RE = re.compile(
+    r"\b\d+\s+U\.?\s*S\.?\s*C\.?\s*(?:§+\s*|sec(?:tion)?\.?\s*)?\d[\w\-\.()]*", re.IGNORECASE
+)
+TITLE_SECTION_CITATION_RE = re.compile(
+    r"\bsection\s+[\w\-.()]+\s+of\s+Title\s+\d+\b", re.IGNORECASE
+)
+THIS_TITLE_SECTION_CITATION_RE = re.compile(
+    r"\bsection\s+[\w\-.(),\sand]+\s+of\s+this\s+title\b", re.IGNORECASE
+)
+THIS_CHAPTER_SECTION_CITATION_RE = re.compile(
+    r"\bsection\s+[\w\-.(),\sand]+\s+of\s+this\s+chapter\b", re.IGNORECASE
+)
 ACT_CITATION_RE = re.compile(r"\bAct\s+[A-Z][a-z]{2,9}\.?\s+\d{1,2},\s+\d{4}\b", re.IGNORECASE)
-CHAPTER_STAT_CITATION_RE = re.compile(r"\bch\.?\s*\d+[A-Za-z\-]*,\s*\d+\s+Stat\.?\s+\d+\b", re.IGNORECASE)
+CHAPTER_STAT_CITATION_RE = re.compile(
+    r"\bch\.?\s*\d+[A-Za-z\-]*,\s*\d+\s+Stat\.?\s+\d+\b", re.IGNORECASE
+)
 DOCID_COMMENT_RE = re.compile(r"<!--\s*documentid:[^>]*-->", re.IGNORECASE)
 DOCID_SECTION_KEY_RE = re.compile(r"documentid:\s*[0-9A-Za-z]+_([0-9A-Za-z._\-]+)", re.IGNORECASE)
 USHOUSE_RELEASE_LINK_RE = re.compile(
@@ -162,8 +196,7 @@ def _govinfo_zip_url(year: int, title_num: str) -> str:
 
 def _govinfo_section_url(year: int, title_num: str, html_name: str) -> str:
     return (
-        f"https://www.govinfo.gov/content/pkg/USCODE-{int(year)}-title{title_num}/"
-        f"html/{html_name}"
+        f"https://www.govinfo.gov/content/pkg/USCODE-{int(year)}-title{title_num}/html/{html_name}"
     )
 
 
@@ -554,7 +587,9 @@ def _extract_section_number_and_heading(heading_text: str) -> tuple[str, str]:
     if not text:
         return "", ""
 
-    m = re.match(r"^§+\s*([0-9A-Za-z.\-]+(?:\s+to\s+[0-9A-Za-z.\-]+)?)\.?\s*(.*)$", text, re.IGNORECASE)
+    m = re.match(
+        r"^§+\s*([0-9A-Za-z.\-]+(?:\s+to\s+[0-9A-Za-z.\-]+)?)\.?\s*(.*)$", text, re.IGNORECASE
+    )
     if m:
         section_number = _norm_space(m.group(1)).strip()
         heading = _norm_space(m.group(2)).strip(" .")
@@ -655,7 +690,11 @@ def _extract_sections_from_zip(
             except Exception:
                 html_text = str(raw)
 
-            if "documentid:" in html_text and "section-head" in html_text and "-sec" not in html_name.lower():
+            if (
+                "documentid:" in html_text
+                and "section-head" in html_text
+                and "-sec" not in html_name.lower()
+            ):
                 sections.extend(_extract_consolidated_sections(html_text, html_name))
                 continue
 
@@ -746,7 +785,11 @@ def _classify_subsec_kind(token: str, prev_kind: Optional[str]) -> str:
         return "numeric"
 
     if token.islower():
-        if token in COMMON_ROMAN_LOWER and prev_kind in {"alpha_upper", "roman_lower", "roman_upper"}:
+        if token in COMMON_ROMAN_LOWER and prev_kind in {
+            "alpha_upper",
+            "roman_lower",
+            "roman_upper",
+        }:
             return "roman_lower"
         if len(token) > 1 and ROMAN_LOWER_RE.match(token):
             return "roman_lower"
@@ -858,7 +901,7 @@ def _parse_subsections(text: str) -> List[Dict[str, Any]]:
     def _is_chained(current: Dict[str, Any], previous: Optional[Dict[str, Any]]) -> bool:
         if previous is None:
             return False
-        gap = text[int(previous["end"]):int(current["start"])]
+        gap = text[int(previous["end"]) : int(current["start"])]
         return gap.strip() == ""
 
     for item in items:
@@ -989,12 +1032,12 @@ def _extract_section_body(text: str, section_number: str, heading: str) -> str:
     for pattern in section_patterns:
         match = re.search(pattern, core, flags=re.IGNORECASE)
         if match:
-            body = core[match.end():]
+            body = core[match.end() :]
             break
 
     heading_clean = _norm_space(heading)
     if heading_clean and body.lower().startswith(heading_clean.lower()):
-        body = body[len(heading_clean):].lstrip(" -:;,.\t")
+        body = body[len(heading_clean) :].lstrip(" -:;,.\t")
 
     return _norm_space(body)
 
@@ -1032,10 +1075,11 @@ def _extract_citations(text: str, core_text: str = "") -> Dict[str, List[str]]:
     usc_citations = [
         item
         for item in usc_citations
-        if "united states code" not in item.lower()
-        and "u.s.c. title" not in item.lower()
+        if "united states code" not in item.lower() and "u.s.c. title" not in item.lower()
     ]
-    session_laws = _dedupe_keep_order(ACT_CITATION_RE.findall(base) + CHAPTER_STAT_CITATION_RE.findall(base))
+    session_laws = _dedupe_keep_order(
+        ACT_CITATION_RE.findall(base) + CHAPTER_STAT_CITATION_RE.findall(base)
+    )
     if not public_laws:
         public_laws = _dedupe_keep_order(session_laws + statutes_at_large)
     return {
@@ -1052,7 +1096,9 @@ def _extract_legislative_history(full_text: str, core_text: str) -> Dict[str, An
         block = _norm_space(match.group(1))
         if not block:
             continue
-        if re.search(r"(Pub\.?\s*L\.?|\b\d+\s+Stat\.?\s+\d+\b|\bch\.\s*\d+)", block, flags=re.IGNORECASE):
+        if re.search(
+            r"(Pub\.?\s*L\.?|\b\d+\s+Stat\.?\s+\d+\b|\bch\.\s*\d+)", block, flags=re.IGNORECASE
+        ):
             enactment_blocks.append(block)
 
     nonparen_pattern = re.compile(
@@ -1067,7 +1113,7 @@ def _extract_legislative_history(full_text: str, core_text: str) -> Dict[str, An
     editorial_excerpt = ""
     editorial_idx = str(full_text or "").find("Editorial Notes")
     if editorial_idx >= 0:
-        editorial_excerpt = _norm_space(str(full_text or "")[editorial_idx: editorial_idx + 3000])
+        editorial_excerpt = _norm_space(str(full_text or "")[editorial_idx : editorial_idx + 3000])
 
     amendment_mentions = []
     if editorial_excerpt:
@@ -1104,10 +1150,17 @@ def _validate_subsection_tree(nodes: List[Dict[str, Any]], *, max_depth: int = 6
                     issues.append(f"duplicate sibling label {label} at {path or 'root'}")
 
             if not text and not children:
-                issues.append(f"empty leaf node {label or '#'+str(index)} at {path or 'root'}")
+                issues.append(f"empty leaf node {label or '#' + str(index)} at {path or 'root'}")
 
-            if kind not in {"numeric", "alpha_lower", "alpha_upper", "roman_lower", "roman_upper", "other"}:
-                issues.append(f"unknown kind {kind} for {label or '#'+str(index)}")
+            if kind not in {
+                "numeric",
+                "alpha_lower",
+                "alpha_upper",
+                "roman_lower",
+                "roman_upper",
+                "other",
+            }:
+                issues.append(f"unknown kind {kind} for {label or '#' + str(index)}")
 
             child_path = f"{path}/{label}" if path else label
             if isinstance(children, list) and children:
@@ -1202,13 +1255,13 @@ async def fetch_us_code_title(
     download_retries: int = DEFAULT_USCODE_DOWNLOAD_RETRIES,
 ) -> Dict[str, Any]:
     """Fetch a US Code title from GovInfo package ZIP content.
-    
+
     Args:
         title_num: Title number (e.g., "18")
         title_name: Title name (e.g., "Crimes and Criminal Procedure")
         include_metadata: Include metadata like effective dates
         rate_limit_delay: Delay between requests
-        
+
     Returns:
         Dict with title data and sections
     """
@@ -1380,13 +1433,13 @@ async def search_us_code(
     index_path: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Search US Code for sections matching a query.
-    
+
     Args:
         query: Search query string
         titles: Optional list of title numbers to search within
         max_results: Maximum number of results to return
         limit: Alias for max_results (for compatibility)
-        
+
     Returns:
         Dict with search results
     """
@@ -1403,7 +1456,9 @@ async def search_us_code(
             }
 
         title_filter = set(_normalize_titles(titles)) if titles else None
-        resolved_index_path = Path(index_path).expanduser().resolve() if index_path else DEFAULT_USCODE_INDEX_PATH
+        resolved_index_path = (
+            Path(index_path).expanduser().resolve() if index_path else DEFAULT_USCODE_INDEX_PATH
+        )
         rows = _load_index_jsonl(resolved_index_path)
         if not rows:
             return {
@@ -1461,7 +1516,7 @@ async def search_us_code(
 
 async def get_us_code_titles() -> Dict[str, Any]:
     """Get list of all US Code titles.
-    
+
     Returns:
         Dict containing:
             - status: "success" or "error"
@@ -1474,16 +1529,11 @@ async def get_us_code_titles() -> Dict[str, Any]:
             "status": "success",
             "titles": US_CODE_TITLES,
             "count": len(US_CODE_TITLES),
-            "source": "US Code - GovInfo package titles"
+            "source": "US Code - GovInfo package titles",
         }
     except Exception as e:
         logger.error(f"Failed to get US Code titles: {e}")
-        return {
-            "status": "error",
-            "error": str(e),
-            "titles": {},
-            "count": 0
-        }
+        return {"status": "error", "error": str(e), "titles": {}, "count": 0}
 
 
 async def scrape_us_code(
@@ -1502,15 +1552,15 @@ async def scrape_us_code(
     continue_on_error: bool = True,
 ) -> Dict[str, Any]:
     """Scrape US Code sections and build a structured dataset.
-    
+
     Args:
-        titles: List of title numbers to scrape (e.g., ["1", "15", "18"]). 
+        titles: List of title numbers to scrape (e.g., ["1", "15", "18"]).
                 If None or ["all"], scrapes all titles.
         output_format: Output format - "json" or "parquet"
         include_metadata: Include section metadata (effective dates, amendments, etc.)
         rate_limit_delay: Delay between requests in seconds (default 1.0)
         max_sections: Maximum number of sections to scrape (for testing/limiting)
-    
+
     Returns:
         Dict containing:
             - status: "success" or "error"
@@ -1542,7 +1592,9 @@ async def scrape_us_code(
 
         output_root = _resolve_output_dir(output_dir)
         output_root.mkdir(parents=True, exist_ok=True)
-        cache_root = Path(cache_dir).expanduser().resolve() if cache_dir else (output_root / "cache")
+        cache_root = (
+            Path(cache_dir).expanduser().resolve() if cache_dir else (output_root / "cache")
+        )
         index_path = output_root / "uscode_index_latest.jsonl"
         jsonld_paths: List[str] = []
         scraped_titles: List[Dict[str, Any]] = []
@@ -1585,7 +1637,9 @@ async def scrape_us_code(
                     break
                 continue
 
-            sections = list(title_data.get("sections") or []) if isinstance(title_data, dict) else []
+            sections = (
+                list(title_data.get("sections") or []) if isinstance(title_data, dict) else []
+            )
             if max_sections is not None and sections:
                 remaining = int(max_sections) - int(sections_count)
                 if remaining <= 0:
@@ -1666,7 +1720,9 @@ async def scrape_us_code(
             "jsonld_files": jsonld_paths,
         }
 
-        logger.info("Completed US Code scraping: %s sections in %.2fs", sections_count, elapsed_time)
+        logger.info(
+            "Completed US Code scraping: %s sections in %.2fs", sections_count, elapsed_time
+        )
 
         if not scraped_titles:
             return {
@@ -1683,7 +1739,7 @@ async def scrape_us_code(
             "data": scraped_titles,
             "metadata": metadata,
             "output_format": output_format,
-            "note": "Comprehensive title-package ingestion from GovInfo USCODE ZIP sources."
+            "note": "Comprehensive title-package ingestion from GovInfo USCODE ZIP sources.",
         }
 
     except Exception as e:

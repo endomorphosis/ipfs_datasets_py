@@ -106,9 +106,7 @@ def test_compiler_exposes_packet_002330_explicit_frame_temporal_ambiguities() ->
 
     threshold = 0.15
     for sample_id, family_margin in evidence_cases:
-        compiler = DeterministicModalCompiler(
-            config=ModalCompilerConfig(parser_backend="spacy")
-        )
+        compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
         ranking = _mock_adaptive_ranking(
             predicted_family=ModalLogicFamily.FRAME.value,
             target_family=ModalLogicFamily.TEMPORAL.value,

@@ -13,7 +13,9 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.formula_translation imp
 def test_translate_to_tdfol_returns_failure_on_reasoner_error() -> None:
     translator = TDFOLFormulaTranslator()
     translator.reasoner_available = True
-    translator.reasoner = SimpleNamespace(parse=lambda *_a, **_k: (_ for _ in ()).throw(ValueError("bad parse")))
+    translator.reasoner = SimpleNamespace(
+        parse=lambda *_a, **_k: (_ for _ in ()).throw(ValueError("bad parse"))
+    )
 
     result = translator.translate_to_tdfol("All employees must complete training")
 
@@ -26,7 +28,9 @@ def test_translate_from_tdfol_falls_back_to_string_on_nl_error() -> None:
     translator = TDFOLFormulaTranslator()
     translator.reasoner_available = True
     translator.reasoner = SimpleNamespace(
-        nl_interface=SimpleNamespace(generate=lambda _f: (_ for _ in ()).throw(TypeError("no generator")))
+        nl_interface=SimpleNamespace(
+            generate=lambda _f: (_ for _ in ()).throw(TypeError("no generator"))
+        )
     )
 
     rendered = translator.translate_from_tdfol({"f": "x"})

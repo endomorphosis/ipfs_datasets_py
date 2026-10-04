@@ -16,9 +16,13 @@ from dataclasses import dataclass, field
 # Try to import audit components
 try:
     from ipfs_datasets_py.audit.audit_logger import (
-        AuditLogger, AuditEvent, AuditLevel, AuditCategory
+        AuditLogger,
+        AuditEvent,
+        AuditLevel,
+        AuditCategory,
     )
     from ipfs_datasets_py.audit.integration import AuditProvenanceIntegrator
+
     AUDIT_AVAILABLE = True
 except ImportError:
     AUDIT_AVAILABLE = False
@@ -26,9 +30,12 @@ except ImportError:
 # Try to import provenance components
 try:
     from ipfs_datasets_py.data_provenance_enhanced import (
-        EnhancedProvenanceManager, ProvenanceRecord,
-        SourceRecord, TransformationRecord
+        EnhancedProvenanceManager,
+        ProvenanceRecord,
+        SourceRecord,
+        TransformationRecord,
     )
+
     PROVENANCE_AVAILABLE = True
 except ImportError:
     PROVENANCE_AVAILABLE = False
@@ -42,6 +49,7 @@ class IntegratedProvenanceRecord:
     This class combines data from both the provenance system and audit logging
     system into a single record for easier consumption by applications.
     """
+
     # Core identity
     record_id: str
     record_type: str
@@ -86,7 +94,7 @@ class IntegratedProvenanceRecord:
             "signature": self.signature,
             "is_verified": self.is_verified,
             "impact_score": self.impact_score,
-            "complexity_score": self.complexity_score
+            "complexity_score": self.complexity_score,
         }
 
     def to_json(self, pretty=False) -> str:
@@ -108,7 +116,7 @@ class ProvenanceConsumer:
         self,
         provenance_manager: Optional[Any] = None,
         audit_logger: Optional[Any] = None,
-        integrator: Optional[Any] = None
+        integrator: Optional[Any] = None,
     ):
         """
         Initialize the provenance consumer.
@@ -141,8 +149,7 @@ class ProvenanceConsumer:
 
         if AUDIT_AVAILABLE and PROVENANCE_AVAILABLE and not self.integrator:
             self.integrator = AuditProvenanceIntegrator(
-                audit_logger=self.audit_logger,
-                provenance_manager=self.provenance_manager
+                audit_logger=self.audit_logger, provenance_manager=self.provenance_manager
             )
 
     def get_integrated_record(self, record_id: str) -> Optional[IntegratedProvenanceRecord]:
@@ -168,38 +175,40 @@ class ProvenanceConsumer:
         # Create base integrated record
         integrated_record = IntegratedProvenanceRecord(
             record_id=record.id,
-            record_type=record.record_type.value if hasattr(record.record_type, 'value') else str(record.record_type),
+            record_type=record.record_type.value
+            if hasattr(record.record_type, "value")
+            else str(record.record_type),
             timestamp=record.timestamp,
-            input_ids=record.input_ids if hasattr(record, 'input_ids') else [],
-            output_ids=record.output_ids if hasattr(record, 'output_ids') else [],
+            input_ids=record.input_ids if hasattr(record, "input_ids") else [],
+            output_ids=record.output_ids if hasattr(record, "output_ids") else [],
             description=record.description,
             agent_id=record.agent_id,
-            metadata=record.metadata
+            metadata=record.metadata,
         )
 
         # Add parameters if available
-        if hasattr(record, 'parameters'):
+        if hasattr(record, "parameters"):
             integrated_record.parameters = record.parameters
 
         # Add signature if available
-        if hasattr(record, 'signature'):
+        if hasattr(record, "signature"):
             integrated_record.signature = record.signature
 
             # Add verification status if available
-            if hasattr(self.provenance_manager, 'verify_record'):
+            if hasattr(self.provenance_manager, "verify_record"):
                 integrated_record.is_verified = self.provenance_manager.verify_record(record_id)
 
         # Add lineage metrics if available
-        if hasattr(self.provenance_manager, 'calculate_data_metrics'):
+        if hasattr(self.provenance_manager, "calculate_data_metrics"):
             for output_id in integrated_record.output_ids:
                 try:
                     metrics = self.provenance_manager.calculate_data_metrics(output_id)
-                    integrated_record.impact_score = metrics.get('impact', None)
+                    integrated_record.impact_score = metrics.get("impact", None)
 
-                    if 'complexity' in metrics:
-                        complexity = metrics['complexity']
-                        if isinstance(complexity, dict) and 'node_count' in complexity:
-                            integrated_record.complexity_score = complexity['node_count']
+                    if "complexity" in metrics:
+                        complexity = metrics["complexity"]
+                        if isinstance(complexity, dict) and "node_count" in complexity:
+                            integrated_record.complexity_score = complexity["node_count"]
 
                     break  # Just use the first output for metrics
                 except:
@@ -207,8 +216,8 @@ class ProvenanceConsumer:
 
         # Find linked audit events if integrator is available
         if AUDIT_AVAILABLE and self.integrator:
-            if hasattr(record, 'metadata') and 'linked_audit_event_id' in record.metadata:
-                integrated_record.audit_events.append(record.metadata['linked_audit_event_id'])
+            if hasattr(record, "metadata") and "linked_audit_event_id" in record.metadata:
+                integrated_record.audit_events.append(record.metadata["linked_audit_event_id"])
 
                 # Try to get user from audit event
                 try:
@@ -227,7 +236,7 @@ class ProvenanceConsumer:
         start_time: Optional[float] = None,
         end_time: Optional[float] = None,
         data_ids: Optional[List[str]] = None,
-        limit: int = 100
+        limit: int = 100,
     ) -> List[IntegratedProvenanceRecord]:
         """
         Search for integrated provenance records.
@@ -250,25 +259,25 @@ class ProvenanceConsumer:
         results = []
 
         # Use semantic search if query is provided
-        if query and hasattr(self.provenance_manager, 'semantic_search'):
+        if query and hasattr(self.provenance_manager, "semantic_search"):
             search_results = self.provenance_manager.semantic_search(query, limit=limit)
             for result in search_results:
-                record_id = result['record_id']
+                record_id = result["record_id"]
                 integrated_record = self.get_integrated_record(record_id)
                 if integrated_record:
                     results.append(integrated_record)
 
         # Use temporal query if time range is provided
-        elif (start_time or end_time) and hasattr(self.provenance_manager, 'temporal_query'):
+        elif (start_time or end_time) and hasattr(self.provenance_manager, "temporal_query"):
             temporal_results = self.provenance_manager.temporal_query(
                 start_time=start_time,
                 end_time=end_time,
                 time_bucket="daily",
-                record_types=record_types
+                record_types=record_types,
             )
 
             for result in temporal_results[:limit]:
-                record_id = result['record_id']
+                record_id = result["record_id"]
                 integrated_record = self.get_integrated_record(record_id)
                 if integrated_record:
                     results.append(integrated_record)
@@ -291,7 +300,7 @@ class ProvenanceConsumer:
             for record_id in sorted(
                 self.provenance_manager.records.keys(),
                 key=lambda x: self.provenance_manager.records[x].timestamp,
-                reverse=True
+                reverse=True,
             ):
                 if count >= limit:
                     break
@@ -315,7 +324,7 @@ class ProvenanceConsumer:
         results: List[IntegratedProvenanceRecord],
         limit: int,
         depth: int = 0,
-        visited: Optional[Set[str]] = None
+        visited: Optional[Set[str]] = None,
     ) -> None:
         """
         Helper method to add lineage records recursively.
@@ -345,7 +354,7 @@ class ProvenanceConsumer:
         record = self.provenance_manager.records[record_id]
 
         # Add input records (following lineage backwards)
-        if hasattr(record, 'input_ids'):
+        if hasattr(record, "input_ids"):
             for input_id in record.input_ids:
                 if input_id in self.provenance_manager.entity_latest_record:
                     input_record_id = self.provenance_manager.entity_latest_record[input_id]
@@ -362,10 +371,7 @@ class ProvenanceConsumer:
                             )
 
     def get_lineage_graph(
-        self,
-        data_id: str,
-        max_depth: int = 5,
-        include_audit_events: bool = True
+        self, data_id: str, max_depth: int = 5, include_audit_events: bool = True
     ) -> Dict[str, Any]:
         """
         Get lineage graph for a data entity.
@@ -397,10 +403,7 @@ class ProvenanceConsumer:
             record_id, nodes, edges, visited, 0, max_depth, include_audit_events
         )
 
-        return {
-            "nodes": nodes,
-            "edges": edges
-        }
+        return {"nodes": nodes, "edges": edges}
 
     def _build_lineage_graph(
         self,
@@ -410,7 +413,7 @@ class ProvenanceConsumer:
         visited: Set[str],
         depth: int,
         max_depth: int,
-        include_audit_events: bool
+        include_audit_events: bool,
     ) -> None:
         """
         Helper method to build lineage graph recursively.
@@ -438,54 +441,59 @@ class ProvenanceConsumer:
         # Add node for this record
         integrated_record = self.get_integrated_record(record_id)
         if integrated_record:
-            nodes.append({
-                "id": record_id,
-                "type": integrated_record.record_type,
-                "label": integrated_record.description or integrated_record.record_type,
-                "timestamp": integrated_record.timestamp,
-                "data": integrated_record.to_dict()
-            })
+            nodes.append(
+                {
+                    "id": record_id,
+                    "type": integrated_record.record_type,
+                    "label": integrated_record.description or integrated_record.record_type,
+                    "timestamp": integrated_record.timestamp,
+                    "data": integrated_record.to_dict(),
+                }
+            )
 
             # Add audit event nodes if requested
             if include_audit_events and integrated_record.audit_events:
                 for event_id in integrated_record.audit_events:
                     # Add audit event node
-                    nodes.append({
-                        "id": event_id,
-                        "type": "audit_event",
-                        "label": f"Audit: {event_id}",
-                        "timestamp": integrated_record.timestamp,
-                        "data": {"event_id": event_id}
-                    })
+                    nodes.append(
+                        {
+                            "id": event_id,
+                            "type": "audit_event",
+                            "label": f"Audit: {event_id}",
+                            "timestamp": integrated_record.timestamp,
+                            "data": {"event_id": event_id},
+                        }
+                    )
 
                     # Add edge from record to audit event
-                    edges.append({
-                        "source": record_id,
-                        "target": event_id,
-                        "type": "has_audit_event"
-                    })
+                    edges.append(
+                        {"source": record_id, "target": event_id, "type": "has_audit_event"}
+                    )
 
             # Add edges for inputs
-            if hasattr(record, 'input_ids'):
+            if hasattr(record, "input_ids"):
                 for input_id in record.input_ids:
                     if input_id in self.provenance_manager.entity_latest_record:
                         input_record_id = self.provenance_manager.entity_latest_record[input_id]
 
                         # Add edge from input record to this record
-                        edges.append({
-                            "source": input_record_id,
-                            "target": record_id,
-                            "type": "input"
-                        })
+                        edges.append(
+                            {"source": input_record_id, "target": record_id, "type": "input"}
+                        )
 
                         # Recursively build graph for input record
                         self._build_lineage_graph(
-                            input_record_id, nodes, edges, visited,
-                            depth + 1, max_depth, include_audit_events
+                            input_record_id,
+                            nodes,
+                            edges,
+                            visited,
+                            depth + 1,
+                            max_depth,
+                            include_audit_events,
                         )
 
             # Add edges for outputs
-            if hasattr(record, 'output_ids'):
+            if hasattr(record, "output_ids"):
                 for output_id in record.output_ids:
                     if output_id in self.provenance_manager.entity_latest_record:
                         output_record_id = self.provenance_manager.entity_latest_record[output_id]
@@ -493,11 +501,9 @@ class ProvenanceConsumer:
                         # Only add edges to records we haven't already processed
                         if output_record_id not in visited:
                             # Add edge from this record to output record
-                            edges.append({
-                                "source": record_id,
-                                "target": output_record_id,
-                                "type": "output"
-                            })
+                            edges.append(
+                                {"source": record_id, "target": output_record_id, "type": "output"}
+                            )
 
     def verify_data_lineage(self, data_id: str) -> Dict[str, Any]:
         """
@@ -513,7 +519,7 @@ class ProvenanceConsumer:
             self.logger.warning("Provenance system not available")
             return {"verified": False, "reason": "Provenance system not available"}
 
-        if not hasattr(self.provenance_manager, 'verify_record'):
+        if not hasattr(self.provenance_manager, "verify_record"):
             return {"verified": False, "reason": "Verification not supported"}
 
         # Find the latest record for the data entity
@@ -544,21 +550,18 @@ class ProvenanceConsumer:
                     "record_count": len(verification_results),
                     "verified_count": sum(1 for v in verification_results.values() if v),
                     "unverified_count": sum(1 for v in verification_results.values() if not v),
-                    "results": verification_results
-                }
+                    "results": verification_results,
+                },
             }
         except Exception as e:
-            return {
-                "verified": False,
-                "reason": f"Verification error: {str(e)}"
-            }
+            return {"verified": False, "reason": f"Verification error: {str(e)}"}
 
     def export_provenance(
         self,
         data_id: str,
         format: str = "json",
         include_audit_events: bool = True,
-        max_depth: int = 10
+        max_depth: int = 10,
     ) -> Union[str, Dict[str, Any]]:
         """
         Export provenance information for a data entity.
@@ -597,7 +600,7 @@ class ProvenanceConsumer:
             "max_depth": max_depth,
             "include_audit_events": include_audit_events,
             "records": records,
-            "lineage_graph": graph
+            "lineage_graph": graph,
         }
 
         # Return in requested format

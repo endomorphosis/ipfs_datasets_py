@@ -1,4 +1,5 @@
 """Tests for OntologyOptimizer metrics collector wiring."""
+
 from __future__ import annotations
 
 import json
@@ -27,6 +28,7 @@ class TestMetricsCollectorWiring:
     def test_default_no_metrics_when_module_missing(self, monkeypatch):
         """If HAVE_LEARNING_METRICS is False, _metrics is None."""
         import ipfs_datasets_py.optimizers.graphrag.ontology_optimizer as mod
+
         monkeypatch.setattr(mod, "HAVE_LEARNING_METRICS", False)
         monkeypatch.setattr(mod, "OptimizerLearningMetricsCollector", None)
         opt = OntologyOptimizer()
@@ -59,11 +61,7 @@ class TestMetricsCollectorWiring:
         collector.record_learning_cycle.assert_called_once()
         call_args = collector.record_learning_cycle.call_args
         # cycle_id may be positional or keyword
-        cycle_id = (
-            call_args.args[0]
-            if call_args.args
-            else call_args.kwargs.get("cycle_id", "")
-        )
+        cycle_id = call_args.args[0] if call_args.args else call_args.kwargs.get("cycle_id", "")
         assert "ontology_parallel_batch_" in cycle_id
 
     def test_collector_exception_doesnt_propagate(self):
@@ -78,6 +76,7 @@ class TestMetricsCollectorWiring:
     def test_auto_collector_created_when_module_available(self, monkeypatch):
         """When HAVE_LEARNING_METRICS is True, a default collector is created."""
         import ipfs_datasets_py.optimizers.graphrag.ontology_optimizer as mod
+
         fake_cls = MagicMock(return_value=MagicMock())
         monkeypatch.setattr(mod, "HAVE_LEARNING_METRICS", True)
         monkeypatch.setattr(mod, "OptimizerLearningMetricsCollector", fake_cls)

@@ -148,14 +148,12 @@ print(f"Agreement rate: {score.metadata.get('agreement_rate', 0):.2%}")
 
 ```python
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.prover_integration import (
-    ProverIntegrationAdapter
+    ProverIntegrationAdapter,
 )
 
 # Initialize adapter
 adapter = ProverIntegrationAdapter(
-    enabled_provers=['z3', 'cvc5', 'lean'],
-    cache_ttl=3600,
-    timeout=30
+    enabled_provers=["z3", "cvc5", "lean"], cache_ttl=3600, timeout=30
 )
 
 # Verify a formula
@@ -245,29 +243,26 @@ Tests cover:
 
 ```python
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.formula_translation import (
-    UnifiedFormulaTranslator
+    UnifiedFormulaTranslator,
 )
 
 translator = UnifiedFormulaTranslator()
 
 # TDFOL translation
 formula = translator.translate_to_logic(
-    "All employees must complete training within 30 days",
-    formalism="TDFOL"
+    "All employees must complete training within 30 days", formalism="TDFOL"
 )
 # Output: ∀x (Employee(x) → ◇≤30 O(Completed(x, training)))
 
 # CEC translation
 formula = translator.translate_to_logic(
-    "Opening the door causes the light to turn on",
-    formalism="CEC"
+    "Opening the door causes the light to turn on", formalism="CEC"
 )
 # Output: initiates(open(door), light_on, t)
 
 # Modal logic translation
 formula = translator.translate_to_logic(
-    "It is necessary that all contracts must be signed",
-    formalism="Modal"
+    "It is necessary that all contracts must be signed", formalism="Modal"
 )
 # Output: □(∀x (Contract(x) → Signed(x)))
 ```
@@ -277,8 +272,7 @@ formula = translator.translate_to_logic(
 ```python
 # Reverse translation
 nl = translator.translate_to_natural_language(
-    "∀x (Employee(x) → ◇≤30 O(Completed(x, training)))",
-    formalism="TDFOL"
+    "∀x (Employee(x) → ◇≤30 O(Completed(x, training)))", formalism="TDFOL"
 )
 # Output: "All employees are obligated to complete training within 30 days"
 ```
@@ -287,14 +281,10 @@ nl = translator.translate_to_natural_language(
 
 ```python
 # Automatic detection based on text patterns
-formalism = translator.detect_formalism(
-    "All users must verify their email before logging in"
-)
+formalism = translator.detect_formalism("All users must verify their email before logging in")
 # Output: "TDFOL" (contains obligation + temporal constraint)
 
-formalism = translator.detect_formalism(
-    "Pressing the button causes the alarm to sound"
-)
+formalism = translator.detect_formalism("Pressing the button causes the alarm to sound")
 # Output: "CEC" (contains causal event relationship)
 ```
 
@@ -304,10 +294,7 @@ formalism = translator.detect_formalism(
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer import LogicExtractor
 
 # Enable formula translation
-extractor = LogicExtractor(
-    model="gpt-4",
-    enable_formula_translation=True
-)
+extractor = LogicExtractor(model="gpt-4", enable_formula_translation=True)
 
 # Extraction automatically uses translation
 result = extractor.extract(context)
@@ -376,13 +363,14 @@ The translator integrates with existing inference rule systems:
 
 ```python
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.llm_backend import (
-    LLMBackendAdapter, LLMRequest
+    LLMBackendAdapter,
+    LLMRequest,
 )
 
 # Initialize with ipfs_accelerate_py
 adapter = LLMBackendAdapter(
     backend_type="accelerate",  # Use ipfs_accelerate_py
-    cache_enabled=True
+    cache_enabled=True,
 )
 
 # Generate response
@@ -390,7 +378,7 @@ request = LLMRequest(
     model="gpt-4",
     prompt="Extract logical statements from: All users must verify email",
     max_tokens=500,
-    temperature=0.7
+    temperature=0.7,
 )
 
 response = adapter.generate(request)
@@ -412,7 +400,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer import LogicExtractor
 # Enable ipfs_accelerate_py backend
 extractor = LogicExtractor(
     model="gpt-4",
-    use_ipfs_accelerate=True  # Uses ipfs_accelerate_py for inference
+    use_ipfs_accelerate=True,  # Uses ipfs_accelerate_py for inference
 )
 
 # Extraction uses real LLM instead of mock
@@ -438,7 +426,7 @@ response = adapter.generate(request)
 requests = [
     LLMRequest(model="gpt-4", prompt="Extract logic from: ..."),
     LLMRequest(model="gpt-4", prompt="Extract logic from: ..."),
-    LLMRequest(model="gpt-4", prompt="Extract logic from: ...")
+    LLMRequest(model="gpt-4", prompt="Extract logic from: ..."),
 ]
 
 responses = adapter.generate_batch(requests)
@@ -500,7 +488,7 @@ responses = adapter.generate_batch(requests)
 
 ```python
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.kg_integration import (
-    KnowledgeGraphIntegration
+    KnowledgeGraphIntegration,
 )
 
 # Initialize integration
@@ -531,15 +519,15 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer import LogicExtractor
 # Enable KG integration
 extractor = LogicExtractor(
     model="gpt-4",
-    enable_kg_integration=True  # Enriches extraction with KG context
+    enable_kg_integration=True,  # Enriches extraction with KG context
 )
 
 # Extraction uses KG context automatically
 result = extractor.extract(context)
 
 # Result includes KG-enriched metadata
-print(result.metadata.get('entities_used', []))
-print(result.metadata.get('ontology_aligned', False))
+print(result.metadata.get("entities_used", []))
+print(result.metadata.get("ontology_aligned", False))
 ```
 
 ### Ontology Loading
@@ -625,9 +613,7 @@ if result.success:
 The RAG integration provides few-shot examples based on the query type:
 
 ```python
-from ipfs_datasets_py.optimizers.logic_theorem_optimizer.rag_integration import (
-    RAGIntegration
-)
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.rag_integration import RAGIntegration
 
 # Initialize RAG integration
 rag = RAGIntegration()
@@ -652,27 +638,27 @@ The system includes default examples for common patterns:
 **Obligation Examples**:
 ```python
 {
-    'input': 'All employees must complete training',
-    'output': '∀x (Employee(x) → O(CompleteTraining(x)))',
-    'type': 'obligation'
+    "input": "All employees must complete training",
+    "output": "∀x (Employee(x) → O(CompleteTraining(x)))",
+    "type": "obligation",
 }
 ```
 
 **Permission Examples**:
 ```python
 {
-    'input': 'Users may access the dashboard',
-    'output': '∀x (User(x) → P(Access(x, dashboard)))',
-    'type': 'permission'
+    "input": "Users may access the dashboard",
+    "output": "∀x (User(x) → P(Access(x, dashboard)))",
+    "type": "permission",
 }
 ```
 
 **Prohibition Examples**:
 ```python
 {
-    'input': 'Guests must not enter restricted areas',
-    'output': '∀x (Guest(x) → F(Enter(x, restricted)))',
-    'type': 'prohibition'
+    "input": "Guests must not enter restricted areas",
+    "output": "∀x (Guest(x) → F(Enter(x, restricted)))",
+    "type": "prohibition",
 }
 ```
 
@@ -684,7 +670,7 @@ prompt = rag.build_prompt_with_context(
     task="Extract logical statements",
     text="All employees must complete safety training within 30 days",
     examples=context.examples,
-    ontology=context.ontology
+    ontology=context.ontology,
 )
 
 # Prompt includes:
@@ -703,7 +689,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer import LogicExtractor
 # Enable RAG integration
 extractor = LogicExtractor(
     model="gpt-4",
-    enable_rag_integration=True  # Uses RAG context for extraction
+    enable_rag_integration=True,  # Uses RAG context for extraction
 )
 
 # Extraction uses few-shot examples automatically
@@ -724,12 +710,14 @@ result = extractor.extract(context)
 
 if result.success and result.quality_score > 0.8:
     # Automatically added to RAG example library
-    rag.add_example({
-        'input': context.data,
-        'output': result.formulas[0],
-        'quality': result.quality_score,
-        'type': result.detected_pattern
-    })
+    rag.add_example(
+        {
+            "input": context.data,
+            "output": result.formulas[0],
+            "quality": result.quality_score,
+            "type": result.detected_pattern,
+        }
+    )
 ```
 
 ### Performance Characteristics
@@ -846,28 +834,28 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
     LogicExtractor,
     LogicCritic,
     LogicExtractionContext,
-    ExtractionMode
+    ExtractionMode,
 )
 
 # Create extractor with all Phase 2 features enabled
 extractor = LogicExtractor(
     model="gpt-4",
-    use_ipfs_accelerate=True,          # Phase 2.3: Real LLM
-    enable_formula_translation=True,    # Phase 2.2: TDFOL/CEC
-    enable_kg_integration=True,         # Phase 2.4: KG context
-    enable_rag_integration=True         # Phase 2.5: Few-shot
+    use_ipfs_accelerate=True,  # Phase 2.3: Real LLM
+    enable_formula_translation=True,  # Phase 2.2: TDFOL/CEC
+    enable_kg_integration=True,  # Phase 2.4: KG context
+    enable_rag_integration=True,  # Phase 2.5: Few-shot
 )
 
 # Create critic with real provers
 critic = LogicCritic(
-    enable_prover_integration=True      # Phase 2.1: Real provers
+    enable_prover_integration=True  # Phase 2.1: Real provers
 )
 
 # Extract with full integration
 context = LogicExtractionContext(
     data="All employees must complete safety training within 30 days",
     extraction_mode=ExtractionMode.TDFOL,
-    domain="legal"
+    domain="legal",
 )
 
 result = extractor.extract(context)
@@ -888,19 +876,16 @@ print(f"✓ KG entities: {result.metadata.get('entities_used', [])}")
 ### Example 2: Batch Processing with Parallel Integration
 
 ```python
-from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
-    LogicHarness,
-    HarnessConfig
-)
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer import LogicHarness, HarnessConfig
 
 # Create harness with all integrations
 harness = LogicHarness(
     extractor=extractor,  # With all Phase 2 features
-    critic=critic,         # With real provers
+    critic=critic,  # With real provers
     config=HarnessConfig(
-        parallelism=4,     # Process 4 at a time
-        max_retries=3
-    )
+        parallelism=4,  # Process 4 at a time
+        max_retries=3,
+    ),
 )
 
 # Batch data
@@ -928,14 +913,14 @@ print(f"✓ Total time: {result.total_time:.1f}s")
 # Start with Phase 2.1 only (provers)
 extractor_phase1 = LogicExtractor(
     model="mock",
-    enable_prover_integration=True  # Only Phase 2.1
+    enable_prover_integration=True,  # Only Phase 2.1
 )
 
 # Add Phase 2.2 (translation)
 extractor_phase2 = LogicExtractor(
     model="mock",
     enable_prover_integration=True,
-    enable_formula_translation=True  # Phase 2.1 + 2.2
+    enable_formula_translation=True,  # Phase 2.1 + 2.2
 )
 
 # Add Phase 2.3 (LLM)
@@ -943,7 +928,7 @@ extractor_phase3 = LogicExtractor(
     model="gpt-4",
     use_ipfs_accelerate=True,
     enable_prover_integration=True,
-    enable_formula_translation=True  # Phase 2.1 + 2.2 + 2.3
+    enable_formula_translation=True,  # Phase 2.1 + 2.2 + 2.3
 )
 
 # Add Phase 2.4 (KG)
@@ -952,7 +937,7 @@ extractor_phase4 = LogicExtractor(
     use_ipfs_accelerate=True,
     enable_prover_integration=True,
     enable_formula_translation=True,
-    enable_kg_integration=True  # Phase 2.1-2.4
+    enable_kg_integration=True,  # Phase 2.1-2.4
 )
 
 # Full integration (all phases)
@@ -962,7 +947,7 @@ extractor_full = LogicExtractor(
     enable_prover_integration=True,
     enable_formula_translation=True,
     enable_kg_integration=True,
-    enable_rag_integration=True  # All Phase 2 features
+    enable_rag_integration=True,  # All Phase 2 features
 )
 ```
 
@@ -970,9 +955,7 @@ extractor_full = LogicExtractor(
 
 ```python
 # Get comprehensive statistics from all integrations
-from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
-    get_integration_statistics
-)
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer import get_integration_statistics
 
 stats = get_integration_statistics()
 
@@ -1084,19 +1067,24 @@ With `parallelism=4`:
 ```python
 def test_prover_adapter_initialization():
     """Test adapter initialization with multiple provers"""
-    
+
+
 def test_single_prover_verification():
     """Test verification with single prover"""
-    
+
+
 def test_multi_prover_verification():
     """Test verification with multiple provers and aggregation"""
-    
+
+
 def test_proof_caching():
     """Test CID-based proof caching"""
-    
+
+
 def test_prover_timeout():
     """Test timeout handling"""
-    
+
+
 def test_prover_error_recovery():
     """Test graceful error handling"""
 ```
@@ -1106,13 +1094,16 @@ def test_prover_error_recovery():
 ```python
 def test_full_integration_pipeline():
     """Test complete integration across all phases"""
-    
+
+
 def test_phased_integration():
     """Test progressive integration phase by phase"""
-    
+
+
 def test_fallback_behavior():
     """Test fallback when integrations unavailable"""
-    
+
+
 def test_cache_effectiveness():
     """Test cache hit rates across integrations"""
 ```
@@ -1122,10 +1113,12 @@ def test_cache_effectiveness():
 ```python
 def test_parallel_performance():
     """Test batch processing performance"""
-    
+
+
 def test_cache_performance():
     """Test cache hit impact on performance"""
-    
+
+
 def test_memory_usage():
     """Test memory footprint"""
 ```
@@ -1158,6 +1151,7 @@ pytest tests/unit_tests/optimizers/test_prover_integration.py --cov=ipfs_dataset
 # Check if ipfs_accelerate_py is installed
 try:
     import ipfs_accelerate_py
+
     print("✓ ipfs_accelerate_py available")
 except ImportError:
     print("✗ ipfs_accelerate_py not installed")
@@ -1172,7 +1166,7 @@ except ImportError:
 ```python
 # Check prover availability
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.prover_integration import (
-    check_prover_availability
+    check_prover_availability,
 )
 
 availability = check_prover_availability()
@@ -1212,15 +1206,15 @@ except Exception as e:
 # Check cache statistics
 stats = get_integration_statistics()
 
-if stats['prover']['cache_hit_rate'] < 0.5:
+if stats["prover"]["cache_hit_rate"] < 0.5:
     print("⚠ Low proof cache hit rate")
     print("Consider: Increase cache size or TTL")
 
-if stats['llm']['cache_hit_rate'] < 0.3:
+if stats["llm"]["cache_hit_rate"] < 0.3:
     print("⚠ Low LLM cache hit rate")
     print("Consider: More consistent prompts or larger cache")
 
-if stats['rag']['cache_hit_rate'] < 0.5:
+if stats["rag"]["cache_hit_rate"] < 0.5:
     print("⚠ Low RAG cache hit rate")
     print("Consider: More similar queries or better indexing")
 ```
@@ -1234,13 +1228,13 @@ if stats['rag']['cache_hit_rate'] < 0.5:
 # Reduce parallelism
 config = HarnessConfig(
     parallelism=2,  # Reduce from 4 to 2
-    max_retries=2
+    max_retries=2,
 )
 
 # Or process in smaller batches
 batch_size = 25
 for i in range(0, len(data_samples), batch_size):
-    batch = data_samples[i:i+batch_size]
+    batch = data_samples[i : i + batch_size]
     result = harness.run_sessions(batch)
 ```
 
@@ -1252,13 +1246,13 @@ for i in range(0, len(data_samples), batch_size):
 # Increase cache sizes
 adapter = ProverIntegrationAdapter(
     cache_size=10000,  # Default: 5000
-    cache_ttl=7200     # Default: 3600
+    cache_ttl=7200,  # Default: 3600
 )
 
 # Use consistent prompts
 extractor = LogicExtractor(
     model="gpt-4",
-    prompt_template="consistent_template"  # Use same template
+    prompt_template="consistent_template",  # Use same template
 )
 ```
 
@@ -1267,11 +1261,12 @@ extractor = LogicExtractor(
 ```python
 # Tune parallelism based on CPU/memory
 import os
+
 cpu_count = os.cpu_count()
 
 config = HarnessConfig(
     parallelism=cpu_count // 2,  # Use half of CPUs
-    max_retries=3
+    max_retries=3,
 )
 ```
 

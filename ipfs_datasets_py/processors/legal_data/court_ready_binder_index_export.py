@@ -14,8 +14,12 @@ from reportlab.lib.units import inch
 from reportlab.pdfgen import canvas
 
 
-DEFAULT_SRC = Path("/home/barberb/HACC/workspace/evidence_binder_exhibit_and_cover_sheet_index_2026-04-09.md")
-DEFAULT_OUT = Path("/home/barberb/HACC/workspace/evidence_binder_exhibit_and_cover_sheet_index_court_ready_2026-04-09.pdf")
+DEFAULT_SRC = Path(
+    "/home/barberb/HACC/workspace/evidence_binder_exhibit_and_cover_sheet_index_2026-04-09.md"
+)
+DEFAULT_OUT = Path(
+    "/home/barberb/HACC/workspace/evidence_binder_exhibit_and_cover_sheet_index_court_ready_2026-04-09.pdf"
+)
 DEFAULT_COURT_LINES = [
     "IN THE CIRCUIT COURT OF THE STATE OF OREGON",
     "FOR THE COUNTY OF CLACKAMAS",
@@ -52,7 +56,9 @@ def cover_metadata(cover_path: str, fallback: str) -> dict[str, str]:
     return {"title": title}
 
 
-def parse_tables(lines: list[str], *, used_in_map: dict[str, str], used_in_default: str) -> list[dict[str, Any]]:
+def parse_tables(
+    lines: list[str], *, used_in_map: dict[str, str], used_in_default: str
+) -> list[dict[str, Any]]:
     families: list[dict[str, Any]] = []
     current: dict[str, Any] | None = None
     in_table = False
@@ -91,7 +97,15 @@ def parse_tables(lines: list[str], *, used_in_map: dict[str, str], used_in_defau
     return [family for family in families if family["rows"]]
 
 
-def draw_case_caption(c: canvas.Canvas, top_y: float, width: float, *, court_lines: list[str], case_no: str, matter_lines: list[str]) -> float:
+def draw_case_caption(
+    c: canvas.Canvas,
+    top_y: float,
+    width: float,
+    *,
+    court_lines: list[str],
+    case_no: str,
+    matter_lines: list[str],
+) -> float:
     left = 0.65 * inch
     right = width - 0.65 * inch
     split_x = width * 0.60
@@ -207,7 +221,14 @@ def build_court_ready_binder_index(
     for page_num, page in enumerate(pages, start=1):
         if page_num > 1:
             c.showPage()
-        y = draw_case_caption(c, height - 0.75 * inch, width, court_lines=court_lines, case_no=case_no, matter_lines=matter_lines)
+        y = draw_case_caption(
+            c,
+            height - 0.75 * inch,
+            width,
+            court_lines=court_lines,
+            case_no=case_no,
+            matter_lines=matter_lines,
+        )
         c.setFont("Times-Bold", 15)
         c.drawCentredString(width / 2, y, document_title)
         c.setFont("Times-Bold", 11)
@@ -266,8 +287,13 @@ def build_court_ready_binder_index_from_config(path: str | Path) -> dict[str, An
         out_path=out,
         court_lines=[str(item) for item in list(payload.get("court_lines") or DEFAULT_COURT_LINES)],
         case_no=str(payload.get("case_no") or DEFAULT_CASE_NO),
-        matter_lines=[str(item) for item in list(payload.get("matter_lines") or DEFAULT_MATTER_LINES)],
-        used_in_map={str(key): str(value) for key, value in dict(payload.get("used_in_map") or DEFAULT_USED_IN_MAP).items()},
+        matter_lines=[
+            str(item) for item in list(payload.get("matter_lines") or DEFAULT_MATTER_LINES)
+        ],
+        used_in_map={
+            str(key): str(value)
+            for key, value in dict(payload.get("used_in_map") or DEFAULT_USED_IN_MAP).items()
+        },
         used_in_default=str(payload.get("used_in_default") or "Supplemental or support appendix"),
         document_title=str(payload.get("document_title") or "EVIDENCE BINDER INDEX"),
         document_subtitle=str(payload.get("document_subtitle") or "EXHIBIT REGISTER"),

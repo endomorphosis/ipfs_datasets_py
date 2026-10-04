@@ -78,10 +78,7 @@ from ipfs_datasets_py.knowledge_graphs.core import IRExecutor
 from ipfs_datasets_py.knowledge_graphs.core.ir import IRNode
 
 # Build IR tree
-ir_node = IRNode(
-    operation="MATCH",
-    pattern={"label": "Person", "properties": {"age": {"$gt": 30}}}
-)
+ir_node = IRNode(operation="MATCH", pattern={"label": "Person", "properties": {"age": {"$gt": 30}}})
 
 # Execute IR
 executor = IRExecutor(graph_engine=engine)
@@ -106,18 +103,13 @@ from ipfs_datasets_py.knowledge_graphs.core import ExpressionEvaluator
 evaluator = ExpressionEvaluator()
 
 # Evaluate simple expression
-result = evaluator.evaluate("age > 30 AND name STARTS WITH 'A'", context={
-    "age": 35,
-    "name": "Alice"
-})
+result = evaluator.evaluate(
+    "age > 30 AND name STARTS WITH 'A'", context={"age": 35, "name": "Alice"}
+)
 print(f"Expression result: {result}")  # True
 
 # Evaluate aggregation
-avg_age = evaluator.evaluate("AVG(age)", records=[
-    {"age": 25},
-    {"age": 30},
-    {"age": 35}
-])
+avg_age = evaluator.evaluate("AVG(age)", records=[{"age": 25}, {"age": 30}, {"age": 35}])
 print(f"Average age: {avg_age}")  # 30
 ```
 
@@ -189,18 +181,14 @@ for record in result:
 
 ```python
 from ipfs_datasets_py.knowledge_graphs.core import IRExecutor
-from ipfs_datasets_py.knowledge_graphs.core.ir import (
-    IRMatch, IRFilter, IRProject, IRLimit
-)
+from ipfs_datasets_py.knowledge_graphs.core.ir import IRMatch, IRFilter, IRProject, IRLimit
 
 # Build IR programmatically
 ir_query = IRMatch(
     pattern={"label": "Person", "properties": {}},
-    filters=[
-        IRFilter(expression="age > 30")
-    ],
+    filters=[IRFilter(expression="age > 30")],
     project=IRProject(columns=["name", "age"]),
-    limit=IRLimit(count=10)
+    limit=IRLimit(count=10),
 )
 
 # Execute
@@ -229,11 +217,7 @@ records = [
     {"dept": "Sales", "salary": 80000},
 ]
 
-avg_by_dept = evaluator.group_aggregate(
-    records, 
-    group_by="dept",
-    aggregate="AVG(salary)"
-)
+avg_by_dept = evaluator.group_aggregate(records, group_by="dept", aggregate="AVG(salary)")
 print(avg_by_dept)  # {"Engineering": 110000, "Sales": 80000}
 ```
 
@@ -392,11 +376,7 @@ from ipfs_datasets_py.knowledge_graphs.core import GraphEngine
 from ipfs_datasets_py.knowledge_graphs.storage import IPLDBackend
 
 storage = IPLDBackend(ipfs_client=ipfs_client)
-engine = GraphEngine(
-    storage_backend=storage,
-    cache_size=10000,
-    enable_metrics=True
-)
+engine = GraphEngine(storage_backend=storage, cache_size=10000, enable_metrics=True)
 ```
 
 ---

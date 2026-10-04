@@ -18,10 +18,7 @@ pip install -e .
 ## ✅ Verify Installation
 
 ```python
-from ipfs_datasets_py.accelerate_integration import (
-    is_accelerate_available,
-    get_accelerate_status
-)
+from ipfs_datasets_py.accelerate_integration import is_accelerate_available, get_accelerate_status
 
 print(f"Accelerate available: {is_accelerate_available()}")
 print(f"Status: {get_accelerate_status()}")
@@ -39,9 +36,7 @@ manager = AccelerateManager()
 
 # Run inference (falls back to local if accelerate unavailable)
 result = manager.run_inference(
-    model_name="bert-base-uncased",
-    input_data="Hello world, this is a test!",
-    task_type="embedding"
+    model_name="bert-base-uncased", input_data="Hello world, this is a test!", task_type="embedding"
 )
 
 print(f"Status: {result['status']}")
@@ -52,9 +47,7 @@ print(f"Backend: {result['backend']}")
 
 ```python
 from ipfs_datasets_py.accelerate_integration import get_compute_backend
-from ipfs_datasets_py.accelerate_integration.compute_backend import (
-    detect_available_hardware
-)
+from ipfs_datasets_py.accelerate_integration.compute_backend import detect_available_hardware
 
 # See what hardware is available
 available = detect_available_hardware()
@@ -68,9 +61,7 @@ print(f"Selected: {backend.hardware_type.value}")
 ### 3. Distributed Processing
 
 ```python
-from ipfs_datasets_py.accelerate_integration import (
-    DistributedComputeCoordinator
-)
+from ipfs_datasets_py.accelerate_integration import DistributedComputeCoordinator
 
 # Initialize coordinator
 coordinator = DistributedComputeCoordinator()
@@ -81,7 +72,7 @@ task = coordinator.submit_task(
     task_id="my-task-001",
     model_name="bert-base-uncased",
     input_data="Process this text",
-    task_type="embedding"
+    task_type="embedding",
 )
 
 print(f"Task submitted: {task.task_id}")
@@ -146,15 +137,13 @@ manager = AccelerateManager()
 texts = [
     "Machine learning is fascinating",
     "Deep learning powers modern AI",
-    "Neural networks are everywhere"
+    "Neural networks are everywhere",
 ]
 
 results = []
 for text in texts:
     result = manager.run_inference(
-        model_name="sentence-transformers/all-MiniLM-L6-v2",
-        input_data=text,
-        task_type="embedding"
+        model_name="sentence-transformers/all-MiniLM-L6-v2", input_data=text, task_type="embedding"
     )
     results.append(result)
 
@@ -164,9 +153,7 @@ print(f"Generated {len(results)} embeddings")
 ### Use Case 2: Batch Processing
 
 ```python
-from ipfs_datasets_py.accelerate_integration import (
-    DistributedComputeCoordinator
-)
+from ipfs_datasets_py.accelerate_integration import DistributedComputeCoordinator
 
 coordinator = DistributedComputeCoordinator()
 coordinator.initialize()
@@ -177,10 +164,7 @@ tasks = []
 
 for i, item in enumerate(items):
     task = coordinator.submit_task(
-        task_id=f"batch-{i}",
-        model_name="bert-base-uncased",
-        input_data=item,
-        task_type="inference"
+        task_id=f"batch-{i}", model_name="bert-base-uncased", input_data=item, task_type="inference"
     )
     tasks.append(task)
 
@@ -225,10 +209,12 @@ RUN pytest tests/
 
 ```python
 import os
-os.environ['IPFS_ACCELERATE_ENABLED'] = '0'
+
+os.environ["IPFS_ACCELERATE_ENABLED"] = "0"
 
 # Now import - accelerate will be disabled
 from ipfs_datasets_py.accelerate_integration import is_accelerate_available
+
 assert not is_accelerate_available()
 ```
 
@@ -239,6 +225,7 @@ assert not is_accelerate_available()
 **Check status:**
 ```python
 from ipfs_datasets_py.accelerate_integration import get_accelerate_status
+
 print(get_accelerate_status())
 ```
 
@@ -259,6 +246,7 @@ pip install -e ".[accelerate]"
 **Check CUDA:**
 ```python
 import torch
+
 print(f"CUDA available: {torch.cuda.is_available()}")
 ```
 

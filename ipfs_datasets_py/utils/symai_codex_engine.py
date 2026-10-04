@@ -31,7 +31,9 @@ def _dry_run_contract_json(prompt: str) -> str:
     # If the contract expects different keys, this is still structured JSON and
     # tends to stop SyMAI from repeatedly asking for "valid JSON".
     base: Dict[str, Any] = {
-        "fol_formula": "∀x (Student(x) → Studies(x))" if "student" in prompt.lower() else "∀x (Cat(x) → Animal(x))",
+        "fol_formula": "∀x (Student(x) → Studies(x))"
+        if "student" in prompt.lower()
+        else "∀x (Cat(x) → Animal(x))",
         "confidence": 0.9,
         "logical_components": {
             "quantifiers": ["∀"],
@@ -81,7 +83,9 @@ class CodexExecNeurosymbolicEngine(Engine):
         self.backoff_base = float(os.environ.get("IPFS_DATASETS_PY_CODEX_BACKOFF_BASE", "1.0"))
 
         # Allow forcing the llm_router provider; default to codex_cli when this engine is active.
-        self.provider = (os.environ.get("IPFS_DATASETS_PY_LLM_PROVIDER") or "").strip() or "codex_cli"
+        self.provider = (
+            os.environ.get("IPFS_DATASETS_PY_LLM_PROVIDER") or ""
+        ).strip() or "codex_cli"
 
     def _call_llm_router(self, prompt: str, *, model_name: Optional[str]) -> str:
         # Import lazily to avoid import-time side effects.
@@ -97,7 +101,9 @@ class CodexExecNeurosymbolicEngine(Engine):
         if not stderr:
             return False
         lowered = stderr.lower()
-        return any(token in lowered for token in ["429", "too many requests", "rate limit", "usage_limit"]) 
+        return any(
+            token in lowered for token in ["429", "too many requests", "rate limit", "usage_limit"]
+        )
 
     def _is_unsupported_model(self, stderr: str) -> bool:
         if not stderr:
@@ -161,8 +167,15 @@ class CodexExecNeurosymbolicEngine(Engine):
             # requests a plain-text response. This prevents SyMAI's contract
             # validation strategy from entering long retry loops.
             if _looks_like_json_contract(prompt_text):
-                return [_dry_run_contract_json(prompt_text)], {"backend": "dry_run", "format": "json"}
-            return [_dry_run_contract_json(prompt_text)], {"backend": "dry_run", "format": "json", "fallback": True}
+                return [_dry_run_contract_json(prompt_text)], {
+                    "backend": "dry_run",
+                    "format": "json",
+                }
+            return [_dry_run_contract_json(prompt_text)], {
+                "backend": "dry_run",
+                "format": "json",
+                "fallback": True,
+            }
 
         last_error: str = ""
         last_metadata: Dict[str, Any] = {}

@@ -21,18 +21,18 @@ async def example_basic_conversion():
     print("=" * 60)
     print("Example 1: Basic File Conversion")
     print("=" * 60)
-    
+
     from ipfs_datasets_py.processors.file_converter import FileConverter
-    
+
     # Create a test file
     with tempfile.TemporaryDirectory() as tmpdir:
         test_file = Path(tmpdir) / "sample.txt"
         test_file.write_text("Hello from FileConverter!\nThis is a test document.")
-        
+
         # Convert with auto backend selection
         converter = FileConverter()
         result = await converter.convert(test_file)
-        
+
         if result.success:
             print(f"✓ Conversion successful!")
             print(f"  Backend used: {result.backend}")
@@ -41,7 +41,7 @@ async def example_basic_conversion():
             print(f"  Metadata: {result.metadata}")
         else:
             print(f"✗ Conversion failed: {result.error}")
-    
+
     print()
 
 
@@ -50,29 +50,29 @@ async def example_backend_selection():
     print("=" * 60)
     print("Example 2: Backend Selection")
     print("=" * 60)
-    
+
     from ipfs_datasets_py.processors.file_converter import FileConverter
-    
+
     with tempfile.TemporaryDirectory() as tmpdir:
         test_file = Path(tmpdir) / "data.json"
         test_data = {"name": "FileConverter", "version": "0.1.0", "status": "active"}
         test_file.write_text(json.dumps(test_data, indent=2))
-        
+
         # Try each backend
-        backends = ['native', 'markitdown', 'omni']
-        
+        backends = ["native", "markitdown", "omni"]
+
         for backend_name in backends:
             try:
                 converter = FileConverter(backend=backend_name)
                 result = await converter.convert(test_file)
-                
+
                 if result.success:
                     print(f"✓ {backend_name:12} - Success ({len(result.text)} chars)")
                 else:
                     print(f"✗ {backend_name:12} - Failed: {result.error[:50]}")
             except (ImportError, Exception) as e:
                 print(f"⊗ {backend_name:12} - Not available: {str(e)[:50]}")
-    
+
     print()
 
 
@@ -81,11 +81,11 @@ async def example_multiple_formats():
     print("=" * 60)
     print("Example 3: Multiple File Formats")
     print("=" * 60)
-    
+
     from ipfs_datasets_py.processors.file_converter import FileConverter
-    
+
     converter = FileConverter()
-    
+
     with tempfile.TemporaryDirectory() as tmpdir:
         # Create various file types
         files = {
@@ -95,19 +95,19 @@ async def example_multiple_formats():
             "table.csv": "name,age\nAlice,30\nBob,25",
             "page.html": "<html><body><h1>Title</h1></body></html>",
         }
-        
+
         for filename, content in files.items():
             file_path = Path(tmpdir) / filename
             file_path.write_text(content)
-        
+
         # Convert each file
         for filename in files.keys():
             file_path = Path(tmpdir) / filename
             result = await converter.convert(file_path)
-            
+
             status = "✓" if result.success else "✗"
             print(f"{status} {filename:15} - {result.backend:10} - {len(result.text):4} chars")
-    
+
     print()
 
 
@@ -116,11 +116,11 @@ async def example_batch_processing():
     print("=" * 60)
     print("Example 4: Batch Processing")
     print("=" * 60)
-    
+
     from ipfs_datasets_py.processors.file_converter import FileConverter
-    
+
     converter = FileConverter()
-    
+
     with tempfile.TemporaryDirectory() as tmpdir:
         # Create multiple files
         files = []
@@ -128,21 +128,21 @@ async def example_batch_processing():
             file_path = Path(tmpdir) / f"document_{i:02d}.txt"
             file_path.write_text(f"Document {i}\n" + ("Content " * 10))
             files.append(file_path)
-        
+
         print(f"Converting {len(files)} files in batch...")
-        
+
         # Convert in batch with concurrency limit
         results = await converter.convert_batch(files, max_concurrent=3)
-        
+
         # Summarize results
         successful = sum(1 for r in results if r.success)
         failed = len(results) - successful
         total_chars = sum(len(r.text) for r in results if r.success)
-        
+
         print(f"✓ Successful: {successful}/{len(results)}")
         print(f"✗ Failed: {failed}/{len(results)}")
         print(f"📊 Total characters: {total_chars:,}")
-    
+
     print()
 
 
@@ -151,24 +151,24 @@ async def example_sync_wrapper():
     print("=" * 60)
     print("Example 5: Synchronous Wrapper")
     print("=" * 60)
-    
+
     from ipfs_datasets_py.processors.file_converter import FileConverter
-    
+
     with tempfile.TemporaryDirectory() as tmpdir:
         test_file = Path(tmpdir) / "sync_test.txt"
         test_file.write_text("Testing synchronous conversion")
-        
+
         converter = FileConverter()
-        
+
         # Use sync wrapper (no await needed)
         result = converter.convert_sync(test_file)
-        
+
         if result.success:
             print(f"✓ Sync conversion successful!")
             print(f"  Text: {result.text}")
         else:
             print(f"✗ Sync conversion failed: {result.error}")
-    
+
     print()
 
 
@@ -177,26 +177,28 @@ async def example_error_handling():
     print("=" * 60)
     print("Example 6: Error Handling")
     print("=" * 60)
-    
+
     from ipfs_datasets_py.processors.file_converter import FileConverter
-    
-    converter = FileConverter(backend='native')
-    
+
+    converter = FileConverter(backend="native")
+
     with tempfile.TemporaryDirectory() as tmpdir:
         # Test various error conditions
-        
+
         # 1. Nonexistent file
         result1 = await converter.convert(Path(tmpdir) / "nonexistent.txt")
         print(f"Nonexistent file: {'✓ Handled' if not result1.success else '✗ Unexpected success'}")
         print(f"  Error: {result1.error}")
-        
+
         # 2. Unsupported format (for native backend)
         unsupported_file = Path(tmpdir) / "test.xyz"
         unsupported_file.write_text("content")
         result2 = await converter.convert(unsupported_file)
-        print(f"Unsupported format: {'✓ Handled' if not result2.success else '✗ Unexpected success'}")
+        print(
+            f"Unsupported format: {'✓ Handled' if not result2.success else '✗ Unexpected success'}"
+        )
         print(f"  Error: {result2.error[:60]}...")
-    
+
     print()
 
 
@@ -205,43 +207,43 @@ async def example_graphrag_integration():
     print("=" * 60)
     print("Example 7: Logic-Enhanced RAG Integration")
     print("=" * 60)
-    
+
     try:
         from ipfs_datasets_py.processors.file_converter import FileConverter
         from ipfs_datasets_py.search.logic_integration import LogicEnhancedRAG
-        
+
         print("Logic-Enhanced RAG available - demonstrating integration...")
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create sample documents
             doc1 = Path(tmpdir) / "doc1.txt"
             doc1.write_text("Artificial Intelligence is transforming technology.")
-            
+
             doc2 = Path(tmpdir) / "doc2.txt"
             doc2.write_text("Machine Learning is a subset of AI.")
-            
+
             # Convert and add to knowledge graph
             converter = FileConverter()
-            
+
             result1 = await converter.convert(doc1)
             result2 = await converter.convert(doc2)
-            
+
             if result1.success and result2.success:
                 print(f"✓ Converted {len([result1, result2])} documents")
                 print(f"  Doc 1: {len(result1.text)} chars")
                 print(f"  Doc 2: {len(result2.text)} chars")
                 print("  Ready for Logic-Enhanced RAG processing")
-                
+
                 # Note: Actual Logic-Enhanced RAG integration would require initialization
                 # rag = LogicEnhancedRAG()
                 # rag.ingest_document(result1.text, doc_id="doc1")
                 # rag.ingest_document(result2.text, doc_id="doc2")
             else:
                 print("✗ Conversion failed")
-        
+
     except ImportError as e:
         print(f"⊗ Logic-Enhanced RAG not available: {e}")
-    
+
     print()
 
 
@@ -250,23 +252,23 @@ async def example_backend_info():
     print("=" * 60)
     print("Example 8: Backend Information")
     print("=" * 60)
-    
+
     from ipfs_datasets_py.processors.file_converter import FileConverter
-    
+
     converter = FileConverter()
-    
+
     # Get backend info
     info = converter.get_backend_info()
     print(f"Backend: {info['name']}")
     print(f"Type: {info['backend_type']}")
     print(f"Supported formats: {info['supported_formats']}")
-    
+
     # Get format list
     formats = converter.get_supported_formats()
     print(f"\nFormats ({len(formats)}): {', '.join(formats[:15])}")
     if len(formats) > 15:
         print(f"             ... and {len(formats) - 15} more")
-    
+
     print()
 
 
@@ -277,7 +279,7 @@ async def main():
     print("║" + " " * 10 + "FileConverter Usage Examples" + " " * 20 + "║")
     print("╚" + "═" * 58 + "╝")
     print()
-    
+
     examples = [
         example_basic_conversion,
         example_backend_selection,
@@ -288,16 +290,17 @@ async def main():
         example_backend_info,
         example_graphrag_integration,
     ]
-    
+
     for example in examples:
         try:
             await example()
         except Exception as e:
             print(f"✗ Example failed: {e}")
             import traceback
+
             traceback.print_exc()
             print()
-    
+
     print("=" * 60)
     print("All examples completed!")
     print("=" * 60)

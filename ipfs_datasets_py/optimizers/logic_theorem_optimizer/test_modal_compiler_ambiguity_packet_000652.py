@@ -92,12 +92,8 @@ def test_packet_000652_pairs_are_registered_across_compiler_ambiguity_policies()
             target_family,
         )
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
 
 
@@ -110,8 +106,7 @@ def test_compiler_preserves_packet_000652_explicit_ambiguity_margins() -> None:
             "family_margin": -0.022288403734,
             "expected_type": "adaptive_temporal_deontic_outvoted_margin_low",
             "text": (
-                "Before the deadline, the Secretary shall carry out the program "
-                "under this section."
+                "Before the deadline, the Secretary shall carry out the program under this section."
             ),
         },
         {
@@ -121,8 +116,7 @@ def test_compiler_preserves_packet_000652_explicit_ambiguity_margins() -> None:
             "family_margin": -0.128299548355,
             "expected_type": "adaptive_frame_temporal_outvoted_margin_low",
             "text": (
-                "For purposes of this chapter, the authority applies after the "
-                "effective date."
+                "For purposes of this chapter, the authority applies after the effective date."
             ),
         },
         {
@@ -143,16 +137,13 @@ def test_compiler_preserves_packet_000652_explicit_ambiguity_margins() -> None:
             "family_margin": -0.213371974749,
             "expected_type": "adaptive_frame_temporal_outvoted_margin_low",
             "text": (
-                "For purposes of this subtitle, the rule applies within 30 days "
-                "after enactment."
+                "For purposes of this subtitle, the rule applies within 30 days after enactment."
             ),
         },
     )
 
     for case in evidence_cases:
-        compiler = DeterministicModalCompiler(
-            config=ModalCompilerConfig(parser_backend="spacy")
-        )
+        compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
         predicted_family = str(case["predicted_family"])
         target_family = str(case["target_family"])
         family_margin = float(case["family_margin"])
@@ -185,14 +176,8 @@ def test_compiler_preserves_packet_000652_explicit_ambiguity_margins() -> None:
         assert ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
         assert ambiguity.metadata.get("is_compiler_required_policy_pair") is True
         assert ambiguity.metadata.get("is_priority_policy_pair") is True
-        assert (
-            abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin)
-            <= 1e-12
-        )
-        assert (
-            abs(float(ambiguity.metadata.get("priority", 0.0)) - expected_priority)
-            <= 1e-12
-        )
+        assert abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin) <= 1e-12
+        assert abs(float(ambiguity.metadata.get("priority", 0.0)) - expected_priority) <= 1e-12
         assert (
             abs(float(ambiguity.metadata.get("adaptive_priority", 0.0)) - expected_priority)
             <= 1e-12

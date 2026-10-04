@@ -11,7 +11,9 @@ def _normalize(value: Any) -> Any:
     if is_dataclass(value):
         return _normalize(asdict(value))
     if isinstance(value, dict):
-        return {str(k): _normalize(v) for k, v in sorted(value.items(), key=lambda item: str(item[0]))}
+        return {
+            str(k): _normalize(v) for k, v in sorted(value.items(), key=lambda item: str(item[0]))
+        }
     if isinstance(value, (list, tuple)):
         return [_normalize(v) for v in value]
     return value
