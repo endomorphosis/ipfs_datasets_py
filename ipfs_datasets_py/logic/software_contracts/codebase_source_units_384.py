@@ -20,7 +20,7 @@ from ...duckdb_control.codebase_catalog import CodebaseHead
 from ...duckdb_control import autoencoder_registry
 from ..formalization.autoencoder import source_function_units as units
 from . import codebase_source_384 as shared
-from .codebase_resources import acquire_codebase_resources
+from .codebase_resources import acquire_codebase_resources, codebase_admission_timeout
 
 SCHEMA = "codebase-source-unit-inference@1"
 PREPARATION_SCHEMA = "codebase-source-unit-preparation@1"
@@ -231,7 +231,7 @@ def infer_shared_parent_units(index,repository,*,expected_head,registry,version_
     shared._owners(index,registry);shared._limits(timeout_seconds,memory_mb,'source-unit-inference')
     deadline=time.monotonic()+timeout_seconds
     with acquire_codebase_resources(scheduler=scheduler,parent_lease=parent_lease,cancel_event=cancel_event,
-            timeout_seconds=min(30.,timeout_seconds),memory_mb=memory_mb) as lease:
+            timeout_seconds=codebase_admission_timeout(remaining_seconds=max(0.,deadline-time.monotonic())),memory_mb=memory_mb) as lease:
         signal=lease.combined_cancellation_signal(cancel_event)
         def remaining():
             require(not signal.is_set() and time.monotonic()<deadline,'source-unit inference cancelled or deadline expired')
@@ -287,7 +287,7 @@ def validate_shared_parent_units(index,repository,report,*,registry,embedding_sn
     saved=report['report'];head=CodebaseHead.from_dict(saved['key']['source_head'])
     deadline=time.monotonic()+timeout_seconds
     with acquire_codebase_resources(scheduler=scheduler,parent_lease=parent_lease,cancel_event=cancel_event,
-            timeout_seconds=min(30.,timeout_seconds),memory_mb=memory_mb) as lease:
+            timeout_seconds=codebase_admission_timeout(remaining_seconds=max(0.,deadline-time.monotonic())),memory_mb=memory_mb) as lease:
         signal=lease.combined_cancellation_signal(cancel_event)
         def observe():
             left=deadline-time.monotonic()

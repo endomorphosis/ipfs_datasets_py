@@ -52,6 +52,8 @@ DEFAULT_GPU_MEMORY_ENV = "IPFS_DATASETS_RESOURCE_GPU_MEMORY_MB"
 DEFAULT_UNIFIED_MEMORY_ENV = "IPFS_DATASETS_RESOURCE_UNIFIED_MEMORY_MB"
 DEFAULT_CHILD_PROCESS_ENV = "IPFS_DATASETS_RESOURCE_CHILD_PROCESS_SLOTS"
 DEFAULT_PROOF_RECOVERY_ENV = "IPFS_DATASETS_PROOF_RESOURCE_RECOVERY"
+DEFAULT_PROOF_PROFILE_ENV = "IPFS_DATASETS_PROOF_RESOURCE_PROFILE"
+LOCAL_BENCHMARK_PROOF_PROFILE = "local-benchmark@1"
 
 # Admission estimates, not kernel-enforced task ceilings. Linux PID limits
 # include JVM/ML service threads; process reservations cannot be compared 1:1.
@@ -422,6 +424,7 @@ class ResourceSchedulerConfig:
         repr=False,
     )
     proof_safety_enabled: bool = False
+    proof_resource_profile: Optional[str] = None
     proof_memory_headroom_mb: int = 0
     proof_memory_stall_percent: float = 2.0
     proof_cpu_stall_percent: float = 50.0
@@ -470,6 +473,19 @@ class ResourceSchedulerConfig:
         return _normalise_reservations(self.lane_reservations)
 
     def validate(self) -> None:
+        if self.proof_resource_profile not in (None, LOCAL_BENCHMARK_PROOF_PROFILE):
+            raise ResourceConfigurationError("unknown proof resource profile")
+        if self.proof_resource_profile == LOCAL_BENCHMARK_PROOF_PROFILE and (
+            not self.proof_safety_enabled or not self.proof_recovery_enabled
+            or self.proof_memory_stall_percent != 10.0
+            or self.proof_cpu_stall_percent != 50.0 or self.proof_io_stall_percent != 10.0
+            or self.proof_recovery_samples != 2 or self.proof_recovery_grants != 1
+            or self.proof_recovery_interval_seconds != 0.25
+            or type(self.proof_memory_headroom_mb) is not int
+            or type(self.total_memory_mb) is not int
+            or self.proof_memory_headroom_mb * 4 < self.total_memory_mb
+        ):
+            raise ResourceConfigurationError("local benchmark proof policy differs from its declared profile")
         if not isinstance(self.proof_recovery_enabled, bool):
             raise ResourceConfigurationError("proof_recovery_enabled must be a bool")
         if self.proof_recovery_enabled and not self.proof_safety_enabled:
@@ -579,6 +595,7 @@ class ResourceSchedulerConfig:
         return {
             "max_waiting_requests": self.max_waiting_requests,
             "proof_safety_enabled": self.proof_safety_enabled,
+            "proof_resource_profile": self.proof_resource_profile,
             "proof_memory_headroom_mb": self.proof_memory_headroom_mb,
             "proof_memory_stall_percent": self.proof_memory_stall_percent,
             "proof_cpu_stall_percent": self.proof_cpu_stall_percent,
@@ -990,6 +1007,7 @@ class GlobalResourceScheduler:
         stored.setdefault("total_child_process_slots", 64)
         stored.setdefault("max_waiting_requests", None)
         stored.setdefault("proof_safety_enabled", False)
+        stored.setdefault("proof_resource_profile", None)
         stored.setdefault("proof_memory_headroom_mb", 0)
         stored.setdefault("proof_memory_stall_percent", 2.0)
         stored.setdefault("proof_cpu_stall_percent", 50.0)
@@ -2168,15 +2186,44 @@ _GLOBAL_SCHEDULERS: Dict[str, GlobalResourceScheduler] = {}
 _GLOBAL_SCHEDULERS_LOCK = threading.Lock()
 
 
+def selected_proof_resource_profile() -> Optional[str]:
+    """Return an explicit operator profile; unknown or empty values fail closed."""
+    value = os.environ.get(DEFAULT_PROOF_PROFILE_ENV)
+    if value not in (None, LOCAL_BENCHMARK_PROOF_PROFILE):
+        raise ResourceConfigurationError(f"unknown {DEFAULT_PROOF_PROFILE_ENV}")
+    return value
+
+
+def default_proof_admission_timeout_seconds() -> float:
+    """Profile default only; callers must still cap waits by their work deadline."""
+    return 90.0 if selected_proof_resource_profile() == LOCAL_BENCHMARK_PROOF_PROFILE else 30.0
+
+
 def default_resource_scheduler_config() -> ResourceSchedulerConfig:
     """Use conservative admission unless an operator explicitly opts out."""
-    recovery = os.environ.get(DEFAULT_PROOF_RECOVERY_ENV, "0")
+    profile = selected_proof_resource_profile()
+    recovery = os.environ.get(DEFAULT_PROOF_RECOVERY_ENV, "1" if profile else "0")
     if recovery not in {"0", "1"}:
         raise ResourceConfigurationError(f"{DEFAULT_PROOF_RECOVERY_ENV} must be exactly 0 or 1")
     if os.environ.get("IPFS_DATASETS_PROOF_RESOURCE_SAFETY", "1") == "0":
+        if profile:
+            raise ResourceConfigurationError("local benchmark profile requires proof safety")
         if recovery == "1":
             raise ResourceConfigurationError("proof recovery requires proof safety")
         return ResourceSchedulerConfig()
+    if profile:
+        # Never select the account-wide default ledger implicitly. A benchmark
+        # controller owns a run-local path and passes the same profile to every
+        # worker; persisted identity rejects clients using a different policy.
+        state_path = os.environ.get(DEFAULT_STATE_ENV)
+        if not state_path or not Path(state_path).is_absolute():
+            raise ResourceConfigurationError("local benchmark profile requires an explicit absolute scheduler path")
+        if recovery != "1":
+            raise ResourceConfigurationError("local benchmark profile requires proof recovery")
+        return ResourceSchedulerConfig.for_proof_host(
+            proof_resource_profile=profile, proof_memory_stall_percent=10.0,
+            proof_recovery_enabled=True, proof_recovery_grants=1,
+        )
     return ResourceSchedulerConfig.for_proof_host(proof_recovery_enabled=recovery == "1")
 
 
@@ -2219,6 +2266,8 @@ def acquire_resource_lease(lane: Union[str, ResourceLane], **kwargs: Any) -> Res
 
 __all__ = [
     "RESOURCE_SCHEDULER_SCHEMA_VERSION",
+    "DEFAULT_PROOF_PROFILE_ENV",
+    "LOCAL_BENCHMARK_PROOF_PROFILE",
     "DEFAULT_LANE_CPU_RESERVATIONS",
     "ResourceLane",
     "LaneReservation",
@@ -2235,6 +2284,8 @@ __all__ = [
     "LeaseNotFoundError",
     "SchedulerStateError",
     "default_scheduler_state_path",
+    "selected_proof_resource_profile",
+    "default_proof_admission_timeout_seconds",
     "get_global_resource_scheduler",
     "configure_global_resource_scheduler",
     "acquire_resource_lease",

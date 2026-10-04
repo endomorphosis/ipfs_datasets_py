@@ -550,3 +550,36 @@ def test_observation_rejects_invalidation_during_chunk_cas_reads(repository, cur
     with pytest.raises(DuckDBASTStoreIntegrityError, match="no longer active"):
         index.observe_current(repository, expected_head=head, scheduler=owner)
     assert index.current(VIEW) == head
+
+
+@pytest.mark.parametrize('profile,explicit,work,expected', [
+    (None, None, 120, 30), ('local-benchmark@1', None, 120, 90),
+    ('local-benchmark@1', 0, 120, 0), ('local-benchmark@1', .01, 120, .01),
+    ('local-benchmark@1', None, 7, 7),
+])
+def test_profile_admission_defaults_reach_prepare_and_observe_without_expanding_work(
+    repository, current_index, scheduler, monkeypatch, profile, explicit, work, expected,
+):
+    """Real index/catalog operations must forward the selected bounded wait."""
+    index, _, _ = current_index
+    owner, _, _ = scheduler
+    if profile is None:
+        monkeypatch.delenv(schedulers.DEFAULT_PROOF_PROFILE_ENV, raising=False)
+    else:
+        monkeypatch.setenv(schedulers.DEFAULT_PROOF_PROFILE_ENV, profile)
+    acquired = []
+    native_acquire = owner.acquire
+    def acquire(*args, **kwargs):
+        acquired.append(kwargs['timeout'])
+        return native_acquire(*args, **kwargs)
+    monkeypatch.setattr(owner, 'acquire', acquire)
+    controls = dict(scheduler=owner, admission_timeout_seconds=explicit, timeout_seconds=work)
+    receipt = index.prepare_current(repository, repository_id=VIEW, operation_id='profile-default',
+                                    expected_head=None, **controls)
+    observation = index.observe_current(repository, expected_head=receipt.head, **controls)
+    assert observation.manifest.cid == receipt.head.manifest_cid
+    assert len(acquired) == 2
+    if expected == work:
+        assert all(0 < wait <= work for wait in acquired)
+    else:
+        assert acquired == [expected, expected]

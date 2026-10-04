@@ -24,7 +24,7 @@ from ..security_ir import code_header_derivation as header
 from ..security_ir import doctor_header_contracts as contracts
 from .cache import ImmutableCAS
 from .codebase_ir import RepositoryCodebaseIndex
-from .codebase_resources import acquire_codebase_resources
+from .codebase_resources import acquire_codebase_resources, codebase_admission_timeout
 from .content import canonical_dag_json_bytes, cid_for_structured
 
 SCHEMA = "codebase-captured-header-context@1"
@@ -93,7 +93,7 @@ def _operation(*, scheduler, parent_lease, cancel_event, timeout_seconds, memory
              "explicit bounded header memory reservation required")
     deadline = started + timeout_seconds
     with acquire_codebase_resources(scheduler=scheduler, parent_lease=parent_lease,
-            cancel_event=cancel_event, timeout_seconds=min(30., timeout_seconds), memory_mb=memory_mb) as lease:
+            cancel_event=cancel_event, timeout_seconds=codebase_admission_timeout(remaining_seconds=max(0.,deadline-time.monotonic())), memory_mb=memory_mb) as lease:
         signal = lease.combined_cancellation_signal(cancel_event)
         def remaining():
             if signal.is_set():

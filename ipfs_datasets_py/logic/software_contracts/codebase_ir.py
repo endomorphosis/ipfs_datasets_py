@@ -780,7 +780,7 @@ class RepositoryCodebaseIndex:
         limits: CodebaseScanLimits | None = None,
         exclusions: Sequence[str] | None = None,
         scheduler: Any = None, parent_lease: Any = None, cancel_event: Any = None,
-        admission_timeout_seconds: float = 30.0, timeout_seconds: float = 120.0,
+        admission_timeout_seconds: float | None = None, timeout_seconds: float = 120.0,
         memory_mb: int = 512,
     ) -> CodebaseIRManifest:
         """Prepare a historical structural manifest without changing a catalog head."""
@@ -800,7 +800,7 @@ class RepositoryCodebaseIndex:
         limits: CodebaseScanLimits | None = None,
         exclusions: Sequence[str] | None = None,
         scheduler: Any = None, parent_lease: Any = None, cancel_event: Any = None,
-        admission_timeout_seconds: float = 30.0, timeout_seconds: float = 120.0,
+        admission_timeout_seconds: float | None = None, timeout_seconds: float = 120.0,
         memory_mb: int = 512,
     ) -> CodebasePublicationReceipt:
         """Atomically publish a structural head and its complete AST projection.
@@ -857,7 +857,7 @@ class RepositoryCodebaseIndex:
         limits: CodebaseScanLimits | None = None,
         exclusions: Sequence[str] | None = None,
         scheduler: Any = None, parent_lease: Any = None, cancel_event: Any = None,
-        admission_timeout_seconds: float = 30.0, timeout_seconds: float = 120.0,
+        admission_timeout_seconds: float | None = None, timeout_seconds: float = 120.0,
         memory_mb: int = 512, publisher: Any = None,
     ) -> CodebaseIRManifest:
         """Capture, extract, persist and return an exact structural manifest.
@@ -869,7 +869,7 @@ class RepositoryCodebaseIndex:
         re-extracted: content identity alone does not authenticate a producer.
         Parser-context-bound AST shards retain their own incremental reuse.
         """
-        from .codebase_resources import acquire_codebase_resources
+        from .codebase_resources import acquire_codebase_resources, codebase_admission_timeout
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler import (
             LeaseCancelledError, LeaseTimeoutError,
         )
@@ -880,14 +880,16 @@ class RepositoryCodebaseIndex:
         bounds.validate_reservation(memory_mb)
         if type(timeout_seconds) not in {int, float} or not math.isfinite(timeout_seconds) or timeout_seconds <= 0:
             raise CodebaseIRError("timeout_seconds must be finite and positive")
-        if type(admission_timeout_seconds) not in {int, float} or not math.isfinite(admission_timeout_seconds) or admission_timeout_seconds < 0:
+        if admission_timeout_seconds is not None and (type(admission_timeout_seconds) not in {int, float}
+                or not math.isfinite(admission_timeout_seconds) or admission_timeout_seconds < 0):
             raise CodebaseIRError("admission_timeout_seconds must be finite and nonnegative")
         if previous is not None and type(previous) is not CodebaseIRManifest:
             raise CodebaseIRError("previous must be a CodebaseIRManifest")
         deadline = time.monotonic() + timeout_seconds
         with acquire_codebase_resources(
             scheduler=scheduler, parent_lease=parent_lease, cancel_event=cancel_event,
-            timeout_seconds=min(admission_timeout_seconds, timeout_seconds), memory_mb=memory_mb,
+            timeout_seconds=codebase_admission_timeout(admission_timeout_seconds,
+                remaining_seconds=max(0.0, deadline - time.monotonic())), memory_mb=memory_mb,
         ) as lease:
             cancelled = lease.combined_cancellation_signal(cancel_event)
 
@@ -967,7 +969,7 @@ class RepositoryCodebaseIndex:
     def observe_current(
         self, repository: str | Path, *, expected_head: CodebaseHead,
         scheduler: Any = None, parent_lease: Any = None, cancel_event: Any = None,
-        admission_timeout_seconds: float = 30.0, timeout_seconds: float = 120.0,
+        admission_timeout_seconds: float | None = None, timeout_seconds: float = 120.0,
         memory_mb: int = 512,
     ) -> CodebaseObservation:
         """Verify head, immutable evidence, active ASTs and current admitted bytes.
@@ -977,7 +979,7 @@ class RepositoryCodebaseIndex:
         remain unknown; excluded source remains outside the observation scope.
         """
         from ipfs_datasets_py.duckdb_control.codebase_catalog import CodebaseHead
-        from .codebase_resources import acquire_codebase_resources
+        from .codebase_resources import acquire_codebase_resources, codebase_admission_timeout
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler import (
             LeaseCancelledError, LeaseTimeoutError,
         )
@@ -985,12 +987,14 @@ class RepositoryCodebaseIndex:
             raise CodebaseIRError("observation requires a catalog head and artifact owner")
         if type(timeout_seconds) not in {int, float} or not math.isfinite(timeout_seconds) or timeout_seconds <= 0:
             raise CodebaseIRError("timeout_seconds must be finite and positive")
-        if type(admission_timeout_seconds) not in {int, float} or not math.isfinite(admission_timeout_seconds) or admission_timeout_seconds < 0:
+        if admission_timeout_seconds is not None and (type(admission_timeout_seconds) not in {int, float}
+                or not math.isfinite(admission_timeout_seconds) or admission_timeout_seconds < 0):
             raise CodebaseIRError("admission_timeout_seconds must be finite and nonnegative")
         deadline = time.monotonic() + timeout_seconds
         with acquire_codebase_resources(
             scheduler=scheduler, parent_lease=parent_lease, cancel_event=cancel_event,
-            timeout_seconds=min(admission_timeout_seconds, timeout_seconds), memory_mb=memory_mb,
+            timeout_seconds=codebase_admission_timeout(admission_timeout_seconds,
+                remaining_seconds=max(0.0, deadline - time.monotonic())), memory_mb=memory_mb,
         ) as lease:
             cancelled = lease.combined_cancellation_signal(cancel_event)
 
