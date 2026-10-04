@@ -1,1 +1,0 @@
-"""Operational scripts package."""
