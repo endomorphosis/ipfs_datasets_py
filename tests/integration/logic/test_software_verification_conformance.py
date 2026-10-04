@@ -397,9 +397,7 @@ def expand_cases() -> list[ConformanceCase]:
     # Authority-boundary cases target the declared candidate adapter once.
     boundary = recipes["authority_boundary"]
     candidate_id = boundary["candidate_adapter_id"]
-    candidate = next(
-        item for item in MANIFEST["adapters"] if item["adapter_id"] == candidate_id
-    )
+    candidate = next(item for item in MANIFEST["adapters"] if item["adapter_id"] == candidate_id)
     cases.append(
         ConformanceCase(
             case_id=f"{candidate_id}:authority_boundary",
@@ -632,21 +630,24 @@ def test_metamorphic_pairs_preserve_or_diverge_as_declared() -> None:
         if pair["expect_same_verdict"]:
             # Alpha-renamed / commuted forms still produce distinct digests but
             # the harness maps them to the same verdict.
-            assert left.obligation_digest != right.obligation_digest or pair["left"] == pair[
-                "right"
-            ]
-        # Ensure runner still accepts the statements offline.
-        assert runner.run(
-            ConformanceCase(
-                case_id=left.case_id + ":run",
-                case_kind="positive",
-                adapter_id="z3",
-                attempt_family="solver",
-                result_authority=authority,
-                statement=pair["left"],
-                expected_status=_POSITIVE_STATUS[authority],
+            assert (
+                left.obligation_digest != right.obligation_digest or pair["left"] == pair["right"]
             )
-        ).status is _POSITIVE_STATUS[authority]
+        # Ensure runner still accepts the statements offline.
+        assert (
+            runner.run(
+                ConformanceCase(
+                    case_id=left.case_id + ":run",
+                    case_kind="positive",
+                    adapter_id="z3",
+                    attempt_family="solver",
+                    result_authority=authority,
+                    statement=pair["left"],
+                    expected_status=_POSITIVE_STATUS[authority],
+                )
+            ).status
+            is _POSITIVE_STATUS[authority]
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -742,9 +743,7 @@ def test_disagreement_quarantines_via_portfolio() -> None:
     # Order independence.
     reversed_selection = portfolio.select(plan, list(reversed(outcomes)))
     assert reversed_selection.verdict is PortfolioVerdict.QUARANTINED
-    assert set(reversed_selection.quarantined_attempt_ids) == set(
-        selection.quarantined_attempt_ids
-    )
+    assert set(reversed_selection.quarantined_attempt_ids) == set(selection.quarantined_attempt_ids)
 
 
 def test_smt_differential_disagreement_vocabulary_is_closed() -> None:
@@ -777,9 +776,7 @@ def test_counterexamples_replay_deterministically() -> None:
         for case in expand_cases()
         if case.case_kind == "negative"
         and next(
-            item
-            for item in MANIFEST["adapters"]
-            if item["adapter_id"] == case.adapter_id
+            item for item in MANIFEST["adapters"] if item["adapter_id"] == case.adapter_id
         ).get("supports_counterexample")
     ]
     assert negative_cases
@@ -910,7 +907,8 @@ def test_malformed_and_timeout_never_look_like_success() -> None:
     cases = [
         case
         for case in expand_cases()
-        if case.case_kind in {"malformed_output", "timeout"} and case.adapter_id in {"z3", "lean", "tamarin"}
+        if case.case_kind in {"malformed_output", "timeout"}
+        and case.adapter_id in {"z3", "lean", "tamarin"}
     ]
     assert cases
     for case in cases:

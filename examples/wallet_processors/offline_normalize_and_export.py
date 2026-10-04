@@ -150,8 +150,7 @@ def main(argv: list[str] | None = None) -> int:
             "partition_path": str(part_path),
             "record_ids": [r.record_id for r in records],
             "note": (
-                "Synthetic fixture addresses only; no signing or broadcast; "
-                "no live provider calls."
+                "Synthetic fixture addresses only; no signing or broadcast; no live provider calls."
             ),
             "identity_reminders": {
                 "World ID": "protocol — not exported as ledger rows here",

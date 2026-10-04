@@ -34,11 +34,7 @@ def format_datetime(value: datetime) -> str:
 
     if value.tzinfo is None or value.utcoffset() is None:
         raise CanonicalEncodingError("datetimes must be timezone-aware")
-    return (
-        value.astimezone(timezone.utc)
-        .isoformat(timespec="microseconds")
-        .replace("+00:00", "Z")
-    )
+    return value.astimezone(timezone.utc).isoformat(timespec="microseconds").replace("+00:00", "Z")
 
 
 def canonical_value(value: Any) -> Any:
@@ -47,13 +43,9 @@ def canonical_value(value: Any) -> Any:
     if value is None or isinstance(value, (str, bool, int)):
         return value
     if isinstance(value, float):
-        raise CanonicalEncodingError(
-            "binary floats are forbidden; use exact base-unit integers"
-        )
+        raise CanonicalEncodingError("binary floats are forbidden; use exact base-unit integers")
     if isinstance(value, (bytes, bytearray, memoryview)):
-        raise CanonicalEncodingError(
-            "raw bytes are forbidden; use a digest or CID reference"
-        )
+        raise CanonicalEncodingError("raw bytes are forbidden; use a digest or CID reference")
     if isinstance(value, datetime):
         return format_datetime(value)
     if isinstance(value, Enum):
@@ -61,9 +53,7 @@ def canonical_value(value: Any) -> Any:
     if hasattr(value, "to_dict") and callable(value.to_dict):
         return canonical_value(value.to_dict())
     if is_dataclass(value):
-        return canonical_value(
-            {item.name: getattr(value, item.name) for item in fields(value)}
-        )
+        return canonical_value({item.name: getattr(value, item.name) for item in fields(value)})
     if isinstance(value, Mapping):
         result: dict[str, Any] = {}
         for key, item in value.items():
@@ -73,9 +63,7 @@ def canonical_value(value: Any) -> Any:
         return result
     if isinstance(value, Sequence) and not isinstance(value, str):
         return [canonical_value(item) for item in value]
-    raise CanonicalEncodingError(
-        f"unsupported canonical JSON value: {type(value).__name__}"
-    )
+    raise CanonicalEncodingError(f"unsupported canonical JSON value: {type(value).__name__}")
 
 
 def canonical_json_bytes(value: Any) -> bytes:
@@ -133,9 +121,7 @@ def freeze_json(value: Any) -> Any:
 
     canonical = canonical_value(value)
     if isinstance(canonical, dict):
-        return MappingProxyType(
-            {key: freeze_json(item) for key, item in canonical.items()}
-        )
+        return MappingProxyType({key: freeze_json(item) for key, item in canonical.items()})
     if isinstance(canonical, list):
         return tuple(freeze_json(item) for item in canonical)
     return canonical

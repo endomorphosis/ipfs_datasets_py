@@ -49,8 +49,7 @@ class GraphSnapshotStore(Protocol):
         """Return sorted snapshot identifiers."""
         ...
 
-    def contains(self, snapshot_id: str) -> bool:
-        ...
+    def contains(self, snapshot_id: str) -> bool: ...
 
 
 @dataclass
@@ -85,9 +84,7 @@ class InMemoryGraphSnapshotStore:
         # Materialize an independent copy for store isolation.
         stored = GraphSnapshot.from_dict(snapshot.to_dict())
         if stored.identity.digest != snapshot.identity.digest:
-            raise CryptoFlowValidationError(
-                "snapshot round-trip changed content identity"
-            )
+            raise CryptoFlowValidationError("snapshot round-trip changed content identity")
         self._by_id[stored.snapshot_id] = stored
         self._by_digest[stored.graph_digest] = stored.snapshot_id
         self._emit_shadow(stored, overwrite=overwrite)
@@ -134,9 +131,7 @@ class InMemoryGraphSnapshotStore:
         try:
             snapshot_id = self._by_digest[graph_digest]
         except KeyError as exc:
-            raise SnapshotStoreError(
-                f"no snapshot for graph_digest: {graph_digest}"
-            ) from exc
+            raise SnapshotStoreError(f"no snapshot for graph_digest: {graph_digest}") from exc
         return self.get(snapshot_id)
 
     def list_ids(self) -> tuple[str, ...]:
@@ -152,9 +147,7 @@ class InMemoryGraphSnapshotStore:
 
     def completeness_index(self) -> Mapping[str, str]:
         """Map snapshot_id -> completeness status value."""
-        return {
-            sid: snap.completeness.value for sid, snap in sorted(self._by_id.items())
-        }
+        return {sid: snap.completeness.value for sid, snap in sorted(self._by_id.items())}
 
 
 @dataclass

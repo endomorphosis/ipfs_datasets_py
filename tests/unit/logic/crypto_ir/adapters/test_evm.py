@@ -60,9 +60,7 @@ ADDR_TO = "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed"
 ADDR_TOKEN = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
 TX_HASH = "0x" + ("ab" * 32)
 BLOCK_HASH = "0x" + ("cd" * 32)
-TRANSFER_TOPIC = (
-    "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
-)
+TRANSFER_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
 
 
 def _full_observation(**overrides: Any) -> dict[str, Any]:
@@ -160,9 +158,7 @@ def test_import_evm_adapter_has_no_network_side_effects(
     monkeypatch.setattr(socket, "create_connection", _blocked)
 
     for name in list(sys.modules):
-        if name.endswith(".crypto_ir.adapters.evm") or name.endswith(
-            "crypto_ir.adapters.evm"
-        ):
+        if name.endswith(".crypto_ir.adapters.evm") or name.endswith("crypto_ir.adapters.evm"):
             del sys.modules[name]
 
     from ipfs_datasets_py.logic.crypto_ir.adapters import evm as evm_mod
@@ -381,10 +377,7 @@ def test_world_chain_is_distinct_from_ethereum_mainnet() -> None:
     assert eth_chain["network"] != world_chain["network"]
     assert eth_chain["genesis_digest"] != world_chain["genesis_digest"]
     assert world_chain["network"] == "world-chain-mainnet"
-    assert (
-        world_chain["attributes"]["genesis_hash"]
-        == WORLD_CHAIN_MAINNET_GENESIS_HASH.lower()
-    )
+    assert world_chain["attributes"]["genesis_hash"] == WORLD_CHAIN_MAINNET_GENESIS_HASH.lower()
 
     sepolia = resolve_network(chain_id=WORLD_CHAIN_SEPOLIA_CHAIN_ID)
     assert sepolia.chain_id == WORLD_CHAIN_SEPOLIA_CHAIN_ID
@@ -431,14 +424,10 @@ def test_call_intent_conversion_preserves_calldata_and_addresses() -> None:
     assert payload["record_type"] == "evm_call_intent"
     assert payload["calldata"] == "0xa9059cbb"
     assert payload["calldata_digest"].startswith("sha256:")
-    assert payload["addresses"]["from"]["checksummed"] == eip55_checksum_address(
-        ADDR_FROM.lower()
-    )
+    assert payload["addresses"]["from"]["checksummed"] == eip55_checksum_address(ADDR_FROM.lower())
     assert payload["addresses"]["to"]["normalized"] == ADDR_TO.lower()
 
-    unsigned = UnsignedTransactionIntent.from_dict(
-        payload["unsigned_transaction_intent"]
-    )
+    unsigned = UnsignedTransactionIntent.from_dict(payload["unsigned_transaction_intent"])
     assert unsigned.intent_id == "intent-1"
     assert unsigned.chain.chain_id == "1"
     assert len(unsigned.calls) == 1

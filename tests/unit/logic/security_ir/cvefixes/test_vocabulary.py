@@ -73,10 +73,7 @@ def test_terms_are_typed_versioned_canonical_and_round_trip() -> None:
 
     assert action.kind is CVEfixesTermKind.ACTION
     assert action.schema_version == CVEFIXES_VOCABULARY_SCHEMA_VERSION
-    assert action.canonical == (
-        "security.cvefixes/v1/action/"
-        "construct_path_from_untrusted_input"
-    )
+    assert action.canonical == ("security.cvefixes/v1/action/construct_path_from_untrusted_input")
     assert parse_cvefixes_term(action.canonical) == action
     assert CVEfixesTerm.from_dict(action.to_dict()) == action
     assert action.policy_role is CVEfixesPolicyRole.MATCH_CONSTRAINT
@@ -91,9 +88,7 @@ def test_policy_attributes_are_canonical_security_ir_values() -> None:
     assert list(payload["preconditions"]) == sorted(payload["preconditions"])
     assert wrapped == {CVEFIXES_POLICY_ATTRIBUTES_KEY: payload}
     assert (
-        validate_cvefixes_policy_attributes(
-            wrapped, require_exact_policy_constraints=True
-        )
+        validate_cvefixes_policy_attributes(wrapped, require_exact_policy_constraints=True)
         == attributes
     )
     assert CVEfixesPolicyAttributes.from_dict(payload) == attributes
@@ -145,24 +140,16 @@ def test_unknown_and_wildcard_broadened_terms_fail_closed(
 
 def test_version_category_and_payload_shape_drift_fail_closed() -> None:
     canonical = _term(CVEfixesTermKind.LANGUAGE, "python")
-    with pytest.raises(
-        CVEfixesVocabularyError, match="unsupported CVEfixes vocabulary version"
-    ):
+    with pytest.raises(CVEfixesVocabularyError, match="unsupported CVEfixes vocabulary version"):
         parse_cvefixes_term(canonical.replace("/v1/", "/v2/"))
     with pytest.raises(CVEfixesVocabularyError, match="expected a scope term"):
-        parse_cvefixes_term(
-            canonical, expected_kind=CVEfixesTermKind.SCOPE
-        )
+        parse_cvefixes_term(canonical, expected_kind=CVEfixesTermKind.SCOPE)
 
     payload = _exact_attributes().to_dict()
     with pytest.raises(CVEfixesVocabularyError, match="fields are not canonical"):
         CVEfixesPolicyAttributes.from_dict({**payload, "vendor": "magic"})
-    with pytest.raises(
-        CVEfixesVocabularyError, match="unsupported CVEfixes policy"
-    ):
-        CVEfixesPolicyAttributes.from_dict(
-            {**payload, "schema_version": "security.cvefixes/v2"}
-        )
+    with pytest.raises(CVEfixesVocabularyError, match="unsupported CVEfixes policy"):
+        CVEfixesPolicyAttributes.from_dict({**payload, "schema_version": "security.cvefixes/v2"})
     with pytest.raises(CVEfixesVocabularyError, match="must be unique"):
         replace(
             _exact_attributes(),
@@ -220,9 +207,7 @@ def test_scoped_aliases_preserve_scope_and_cannot_broaden() -> None:
         ),
     }
     with pytest.raises(CVEfixesVocabularyError, match="requires an exact scope"):
-        resolve_cvefixes_term(
-            CVEfixesTermKind.ACTION, "build_tainted_path"
-        )
+        resolve_cvefixes_term(CVEfixesTermKind.ACTION, "build_tainted_path")
     with pytest.raises(CVEfixesVocabularyError, match="not valid in scope"):
         resolve_cvefixes_term(
             CVEfixesTermKind.ACTION,

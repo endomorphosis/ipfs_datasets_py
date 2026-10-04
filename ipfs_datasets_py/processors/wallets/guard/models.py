@@ -27,19 +27,13 @@ from .errors import GuardForbiddenSurfaceError, GuardValidationError
 # ---------------------------------------------------------------------------
 
 TRANSACTION_INTENT_SCHEMA_VERSION: Final = "wallet-guard.transaction-intent/v1"
-TRANSACTION_CANDIDATE_SCHEMA_VERSION: Final = (
-    "wallet-guard.transaction-candidate/v1"
-)
+TRANSACTION_CANDIDATE_SCHEMA_VERSION: Final = "wallet-guard.transaction-candidate/v1"
 TRANSACTION_PREFLIGHT_REQUEST_SCHEMA_VERSION: Final = (
     "wallet-guard.transaction-preflight-request/v1"
 )
-ADMISSIBILITY_CAPABILITY_SCHEMA_VERSION: Final = (
-    "wallet-guard.admissibility-capability/v1"
-)
+ADMISSIBILITY_CAPABILITY_SCHEMA_VERSION: Final = "wallet-guard.admissibility-capability/v1"
 PREFLIGHT_RESULT_SCHEMA_VERSION: Final = "wallet-guard.preflight-result/v1"
-PREFLIGHT_CONSUMPTION_SCHEMA_VERSION: Final = (
-    "wallet-guard.preflight-consumption/v1"
-)
+PREFLIGHT_CONSUMPTION_SCHEMA_VERSION: Final = "wallet-guard.preflight-consumption/v1"
 
 TRANSACTION_INTENT_INTERFACE: Final = "TransactionIntent@1"
 TRANSACTION_CANDIDATE_INTERFACE: Final = "TransactionCandidate@1"
@@ -135,9 +129,7 @@ def _digest(value: Any, name: str) -> str:
 def _timestamp(value: Any, name: str) -> str:
     text = _text(value, name, max_chars=64)
     if not _ISO8601_RE.fullmatch(text):
-        raise GuardValidationError(
-            f"{name} must be an ISO-8601 UTC/offset timestamp"
-        )
+        raise GuardValidationError(f"{name} must be an ISO-8601 UTC/offset timestamp")
     return text
 
 
@@ -148,9 +140,7 @@ def _amount(value: Any, name: str) -> str:
         return str(value)
     text = _text(value, name, max_chars=128)
     if not _DECIMAL_AMOUNT_RE.fullmatch(text):
-        raise GuardValidationError(
-            f"{name} must be a non-negative decimal integer string"
-        )
+        raise GuardValidationError(f"{name} must be a non-negative decimal integer string")
     return text
 
 
@@ -168,22 +158,17 @@ def _mapping(value: Any, name: str) -> Mapping[str, Any]:
     return value
 
 
-def _reject_unknown(
-    value: Mapping[str, Any], allowed: frozenset[str], record_name: str
-) -> None:
+def _reject_unknown(value: Mapping[str, Any], allowed: frozenset[str], record_name: str) -> None:
     unknown = sorted(set(value) - allowed)
     if unknown:
-        raise GuardValidationError(
-            f"unknown {record_name} field(s): {', '.join(unknown)}"
-        )
+        raise GuardValidationError(f"unknown {record_name} field(s): {', '.join(unknown)}")
 
 
 def _reject_forbidden(value: Mapping[str, Any], record_name: str) -> None:
     hit = sorted(set(value) & _FORBIDDEN_REQUEST_FIELDS)
     if hit:
         raise GuardForbiddenSurfaceError(
-            f"{record_name} contains forbidden custody/approval field(s): "
-            f"{', '.join(hit)}",
+            f"{record_name} contains forbidden custody/approval field(s): {', '.join(hit)}",
             details={"fields": hit},
         )
 
@@ -196,9 +181,7 @@ def _unique_ids(
 ) -> tuple[str, ...]:
     if values is None:
         items: tuple[str, ...] = ()
-    elif isinstance(values, (str, bytes, bytearray)) or not isinstance(
-        values, Sequence
-    ):
+    elif isinstance(values, (str, bytes, bytearray)) or not isinstance(values, Sequence):
         raise GuardValidationError(f"{name} must be a sequence of strings")
     else:
         if len(values) > MAX_COLLECTION_ITEMS:
@@ -245,9 +228,7 @@ class AssetAmount:
             "asset_namespace",
             _identifier(self.asset_namespace, "asset_namespace"),
         )
-        object.__setattr__(
-            self, "symbol", _optional_text(self.symbol, "symbol", max_chars=64)
-        )
+        object.__setattr__(self, "symbol", _optional_text(self.symbol, "symbol", max_chars=64))
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -285,9 +266,7 @@ class FeeSpec:
     def __post_init__(self) -> None:
         object.__setattr__(self, "amount", _amount(self.amount, "amount"))
         object.__setattr__(self, "asset_id", _identifier(self.asset_id, "asset_id"))
-        object.__setattr__(
-            self, "payer", _optional_text(self.payer, "payer", max_chars=256)
-        )
+        object.__setattr__(self, "payer", _optional_text(self.payer, "payer", max_chars=256))
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -300,9 +279,7 @@ class FeeSpec:
     def from_dict(cls, value: Mapping[str, Any]) -> "FeeSpec":
         value = _mapping(value, "FeeSpec")
         _reject_forbidden(value, "FeeSpec")
-        _reject_unknown(
-            value, frozenset({"amount", "asset_id", "payer"}), "FeeSpec"
-        )
+        _reject_unknown(value, frozenset({"amount", "asset_id", "payer"}), "FeeSpec")
         return cls(
             amount=value.get("amount", ""),
             asset_id=value.get("asset_id", "native"),
@@ -324,9 +301,7 @@ class UtxoRef:
         if self.script_digest in (None, ""):
             object.__setattr__(self, "script_digest", "")
         else:
-            object.__setattr__(
-                self, "script_digest", _digest(self.script_digest, "script_digest")
-            )
+            object.__setattr__(self, "script_digest", _digest(self.script_digest, "script_digest"))
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -339,9 +314,7 @@ class UtxoRef:
     def from_dict(cls, value: Mapping[str, Any]) -> "UtxoRef":
         value = _mapping(value, "UtxoRef")
         _reject_forbidden(value, "UtxoRef")
-        _reject_unknown(
-            value, frozenset({"outpoint", "amount", "script_digest"}), "UtxoRef"
-        )
+        _reject_unknown(value, frozenset({"outpoint", "amount", "script_digest"}), "UtxoRef")
         return cls(
             outpoint=value.get("outpoint", ""),
             amount=value.get("amount", ""),
@@ -358,13 +331,9 @@ class ExpectedEffect:
     summary: str = ""
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "effect_id", _identifier(self.effect_id, "effect_id")
-        )
+        object.__setattr__(self, "effect_id", _identifier(self.effect_id, "effect_id"))
         object.__setattr__(self, "kind", _identifier(self.kind, "kind"))
-        object.__setattr__(
-            self, "summary", _optional_text(self.summary, "summary")
-        )
+        object.__setattr__(self, "summary", _optional_text(self.summary, "summary"))
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -377,9 +346,7 @@ class ExpectedEffect:
     def from_dict(cls, value: Mapping[str, Any]) -> "ExpectedEffect":
         value = _mapping(value, "ExpectedEffect")
         _reject_forbidden(value, "ExpectedEffect")
-        _reject_unknown(
-            value, frozenset({"effect_id", "kind", "summary"}), "ExpectedEffect"
-        )
+        _reject_unknown(value, frozenset({"effect_id", "kind", "summary"}), "ExpectedEffect")
         return cls(
             effect_id=value.get("effect_id", ""),
             kind=value.get("kind", ""),
@@ -419,9 +386,7 @@ class TransactionIntent:
     schema_version: str = TRANSACTION_INTENT_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "intent_id", _identifier(self.intent_id, "intent_id")
-        )
+        object.__setattr__(self, "intent_id", _identifier(self.intent_id, "intent_id"))
         object.__setattr__(self, "network", _identifier(self.network, "network"))
         object.__setattr__(self, "sender", _text(self.sender, "sender", max_chars=256))
         object.__setattr__(
@@ -463,12 +428,8 @@ class TransactionIntent:
             ),
         )
         if not self.expected_effects:
-            raise GuardValidationError(
-                "intent requires at least one expected effect"
-            )
-        object.__setattr__(
-            self, "expires_at", _timestamp(self.expires_at, "expires_at")
-        )
+            raise GuardValidationError("intent requires at least one expected effect")
+        object.__setattr__(self, "expires_at", _timestamp(self.expires_at, "expires_at"))
         object.__setattr__(
             self,
             "utxos",
@@ -481,12 +442,8 @@ class TransactionIntent:
         )
         if not isinstance(self.attributes, FrozenMap):
             object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(
-            self, "interface", _text(self.interface, "interface")
-        )
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "interface", _text(self.interface, "interface"))
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.interface != TRANSACTION_INTENT_INTERFACE:
             raise GuardValidationError(
                 f"unsupported transaction intent interface: {self.interface!r}"
@@ -564,9 +521,7 @@ class TransactionIntent:
             chain_namespace=value.get("chain_namespace", ""),
             attributes=value.get("attributes", {}),
             interface=value.get("interface", TRANSACTION_INTENT_INTERFACE),
-            schema_version=value.get(
-                "schema_version", TRANSACTION_INTENT_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", TRANSACTION_INTENT_SCHEMA_VERSION),
         )
 
 
@@ -585,36 +540,22 @@ class TransactionCandidate:
     schema_version: str = TRANSACTION_CANDIDATE_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "candidate_id", _identifier(self.candidate_id, "candidate_id")
-        )
-        object.__setattr__(
-            self, "intent_id", _identifier(self.intent_id, "intent_id")
-        )
+        object.__setattr__(self, "candidate_id", _identifier(self.candidate_id, "candidate_id"))
+        object.__setattr__(self, "intent_id", _identifier(self.intent_id, "intent_id"))
         object.__setattr__(
             self,
             "serialized_digest",
             _digest(self.serialized_digest, "serialized_digest"),
         )
-        object.__setattr__(
-            self, "encoding", _identifier(self.encoding, "encoding")
-        )
-        object.__setattr__(
-            self, "byte_length", _non_negative_int(self.byte_length, "byte_length")
-        )
+        object.__setattr__(self, "encoding", _identifier(self.encoding, "encoding"))
+        object.__setattr__(self, "byte_length", _non_negative_int(self.byte_length, "byte_length"))
         if self.byte_length == 0:
             raise GuardValidationError("candidate byte_length must be positive")
-        object.__setattr__(
-            self, "network", _optional_text(self.network, "network", max_chars=128)
-        )
+        object.__setattr__(self, "network", _optional_text(self.network, "network", max_chars=128))
         if not isinstance(self.attributes, FrozenMap):
             object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(
-            self, "interface", _text(self.interface, "interface")
-        )
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "interface", _text(self.interface, "interface"))
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.interface != TRANSACTION_CANDIDATE_INTERFACE:
             raise GuardValidationError(
                 f"unsupported transaction candidate interface: {self.interface!r}"
@@ -671,9 +612,7 @@ class TransactionCandidate:
             network=value.get("network", ""),
             attributes=value.get("attributes", {}),
             interface=value.get("interface", TRANSACTION_CANDIDATE_INTERFACE),
-            schema_version=value.get(
-                "schema_version", TRANSACTION_CANDIDATE_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", TRANSACTION_CANDIDATE_SCHEMA_VERSION),
         )
 
 
@@ -707,14 +646,10 @@ class TransactionPreflightRequest:
     schema_version: str = TRANSACTION_PREFLIGHT_REQUEST_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "request_id", _identifier(self.request_id, "request_id")
-        )
+        object.__setattr__(self, "request_id", _identifier(self.request_id, "request_id"))
         if not isinstance(self.intent, TransactionIntent):
             if isinstance(self.intent, Mapping):
-                object.__setattr__(
-                    self, "intent", TransactionIntent.from_dict(self.intent)
-                )
+                object.__setattr__(self, "intent", TransactionIntent.from_dict(self.intent))
             else:
                 raise GuardValidationError("intent must be a TransactionIntent")
         if not isinstance(self.candidate, TransactionCandidate):
@@ -725,27 +660,15 @@ class TransactionPreflightRequest:
                     TransactionCandidate.from_dict(self.candidate),
                 )
             else:
-                raise GuardValidationError(
-                    "candidate must be a TransactionCandidate"
-                )
+                raise GuardValidationError("candidate must be a TransactionCandidate")
         if self.candidate.intent_id != self.intent.intent_id:
-            raise GuardValidationError(
-                "candidate.intent_id must match intent.intent_id"
-            )
+            raise GuardValidationError("candidate.intent_id must match intent.intent_id")
         if self.candidate.network and self.candidate.network != self.intent.network:
-            raise GuardValidationError(
-                "candidate.network must match intent.network when provided"
-            )
-        object.__setattr__(
-            self, "tenant_id", _identifier(self.tenant_id, "tenant_id")
-        )
+            raise GuardValidationError("candidate.network must match intent.network when provided")
+        object.__setattr__(self, "tenant_id", _identifier(self.tenant_id, "tenant_id"))
         object.__setattr__(self, "actor_id", _identifier(self.actor_id, "actor_id"))
-        object.__setattr__(
-            self, "audience_id", _identifier(self.audience_id, "audience_id")
-        )
-        object.__setattr__(
-            self, "policy_id", _identifier(self.policy_id, "policy_id")
-        )
+        object.__setattr__(self, "audience_id", _identifier(self.audience_id, "audience_id"))
+        object.__setattr__(self, "policy_id", _identifier(self.policy_id, "policy_id"))
         object.__setattr__(
             self,
             "security_requirement_ids",
@@ -754,16 +677,10 @@ class TransactionPreflightRequest:
         object.__setattr__(
             self,
             "compliance_requirement_ids",
-            _unique_ids(
-                self.compliance_requirement_ids, "compliance_requirement_ids"
-            ),
+            _unique_ids(self.compliance_requirement_ids, "compliance_requirement_ids"),
         )
-        object.__setattr__(
-            self, "issued_at", _timestamp(self.issued_at, "issued_at")
-        )
-        object.__setattr__(
-            self, "deadline", _timestamp(self.deadline, "deadline")
-        )
+        object.__setattr__(self, "issued_at", _timestamp(self.issued_at, "issued_at"))
+        object.__setattr__(self, "deadline", _timestamp(self.deadline, "deadline"))
         object.__setattr__(self, "expiry", _timestamp(self.expiry, "expiry"))
         if self.deadline < self.issued_at:
             raise GuardValidationError("deadline must not precede issued_at")
@@ -772,9 +689,7 @@ class TransactionPreflightRequest:
         if self.expiry < self.deadline:
             raise GuardValidationError("expiry must not precede deadline")
         if self.intent.expires_at < self.expiry:
-            raise GuardValidationError(
-                "intent.expires_at must not precede request expiry"
-            )
+            raise GuardValidationError("intent.expires_at must not precede request expiry")
         object.__setattr__(
             self,
             "environment_id",
@@ -791,9 +706,7 @@ class TransactionPreflightRequest:
         object.__setattr__(
             self, "nonce", _text(self.nonce or self.request_id, "nonce", max_chars=128)
         )
-        object.__setattr__(
-            self, "profile_id", _identifier(self.profile_id, "profile_id")
-        )
+        object.__setattr__(self, "profile_id", _identifier(self.profile_id, "profile_id"))
         if self.roots is not None and not isinstance(self.roots, BoundRoots):
             if isinstance(self.roots, Mapping):
                 object.__setattr__(self, "roots", BoundRoots.from_dict(self.roots))
@@ -801,12 +714,8 @@ class TransactionPreflightRequest:
                 raise GuardValidationError("roots must be BoundRoots or mapping")
         if not isinstance(self.attributes, FrozenMap):
             object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(
-            self, "interface", _text(self.interface, "interface")
-        )
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "interface", _text(self.interface, "interface"))
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.interface != TRANSACTION_PREFLIGHT_REQUEST_INTERFACE:
             raise GuardValidationError(
                 f"unsupported preflight request interface: {self.interface!r}"
@@ -894,12 +803,8 @@ class TransactionPreflightRequest:
             actor_id=value.get("actor_id", ""),
             audience_id=value.get("audience_id", ""),
             policy_id=value.get("policy_id", ""),
-            security_requirement_ids=tuple(
-                value.get("security_requirement_ids", ())
-            ),
-            compliance_requirement_ids=tuple(
-                value.get("compliance_requirement_ids", ())
-            ),
+            security_requirement_ids=tuple(value.get("security_requirement_ids", ())),
+            compliance_requirement_ids=tuple(value.get("compliance_requirement_ids", ())),
             issued_at=value.get("issued_at", ""),
             deadline=value.get("deadline", ""),
             expiry=value.get("expiry", ""),
@@ -909,9 +814,7 @@ class TransactionPreflightRequest:
             profile_id=value.get("profile_id", "profile:wallet-guard"),
             roots=value.get("roots"),
             attributes=value.get("attributes", {}),
-            interface=value.get(
-                "interface", TRANSACTION_PREFLIGHT_REQUEST_INTERFACE
-            ),
+            interface=value.get("interface", TRANSACTION_PREFLIGHT_REQUEST_INTERFACE),
             schema_version=value.get(
                 "schema_version", TRANSACTION_PREFLIGHT_REQUEST_SCHEMA_VERSION
             ),
@@ -947,30 +850,18 @@ class AdmissibilityCapability:
     schema_version: str = ADMISSIBILITY_CAPABILITY_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "capability_id", _identifier(self.capability_id, "capability_id")
-        )
-        object.__setattr__(
-            self, "request_digest", _digest(self.request_digest, "request_digest")
-        )
-        object.__setattr__(
-            self, "intent_digest", _digest(self.intent_digest, "intent_digest")
-        )
+        object.__setattr__(self, "capability_id", _identifier(self.capability_id, "capability_id"))
+        object.__setattr__(self, "request_digest", _digest(self.request_digest, "request_digest"))
+        object.__setattr__(self, "intent_digest", _digest(self.intent_digest, "intent_digest"))
         object.__setattr__(
             self,
             "candidate_digest",
             _digest(self.candidate_digest, "candidate_digest"),
         )
         object.__setattr__(self, "network", _identifier(self.network, "network"))
-        object.__setattr__(
-            self, "intent_id", _identifier(self.intent_id, "intent_id")
-        )
-        object.__setattr__(
-            self, "candidate_id", _identifier(self.candidate_id, "candidate_id")
-        )
-        object.__setattr__(
-            self, "tenant_id", _identifier(self.tenant_id, "tenant_id")
-        )
+        object.__setattr__(self, "intent_id", _identifier(self.intent_id, "intent_id"))
+        object.__setattr__(self, "candidate_id", _identifier(self.candidate_id, "candidate_id"))
+        object.__setattr__(self, "tenant_id", _identifier(self.tenant_id, "tenant_id"))
         if not isinstance(self.authorization, AuthorizationCapability):
             if isinstance(self.authorization, Mapping):
                 object.__setattr__(
@@ -979,42 +870,29 @@ class AdmissibilityCapability:
                     AuthorizationCapability.from_dict(self.authorization),
                 )
             else:
-                raise GuardValidationError(
-                    "authorization must be an AuthorizationCapability"
-                )
+                raise GuardValidationError("authorization must be an AuthorizationCapability")
         if not self.authorization.one_time:
-            raise GuardValidationError(
-                "admissibility capabilities must be one-time"
-            )
+            raise GuardValidationError("admissibility capabilities must be one-time")
         if self.authorization.request_digest != self.request_digest:
             raise GuardValidationError(
                 "authorization.request_digest must match capability request_digest"
             )
         if self.authorization.capability_id != self.capability_id:
-            raise GuardValidationError(
-                "authorization.capability_id must match capability_id"
-            )
+            raise GuardValidationError("authorization.capability_id must match capability_id")
         object.__setattr__(self, "phase", _identifier(self.phase, "phase"))
         if self.phase not in {"pre_sign", "pre_broadcast"}:
-            raise GuardValidationError(
-                "phase must be 'pre_sign' or 'pre_broadcast'"
-            )
+            raise GuardValidationError("phase must be 'pre_sign' or 'pre_broadcast'")
         if not isinstance(self.attributes, FrozenMap):
             object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(
-            self, "interface", _text(self.interface, "interface")
-        )
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "interface", _text(self.interface, "interface"))
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.interface != ADMISSIBILITY_CAPABILITY_INTERFACE:
             raise GuardValidationError(
                 f"unsupported admissibility capability interface: {self.interface!r}"
             )
         if self.schema_version != ADMISSIBILITY_CAPABILITY_SCHEMA_VERSION:
             raise GuardValidationError(
-                f"unsupported admissibility capability schema: "
-                f"{self.schema_version!r}"
+                f"unsupported admissibility capability schema: {self.schema_version!r}"
             )
 
     @property
@@ -1086,9 +964,7 @@ class AdmissibilityCapability:
             phase=value.get("phase", "pre_sign"),
             attributes=value.get("attributes", {}),
             interface=value.get("interface", ADMISSIBILITY_CAPABILITY_INTERFACE),
-            schema_version=value.get(
-                "schema_version", ADMISSIBILITY_CAPABILITY_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", ADMISSIBILITY_CAPABILITY_SCHEMA_VERSION),
         )
 
 
@@ -1125,18 +1001,12 @@ class PreflightResult:
     schema_version: str = PREFLIGHT_RESULT_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "request_digest", _digest(self.request_digest, "request_digest")
-        )
+        object.__setattr__(self, "request_digest", _digest(self.request_digest, "request_digest"))
         if isinstance(self.outcome, str):
             try:
-                object.__setattr__(
-                    self, "outcome", TransactionVerdictOutcome(self.outcome)
-                )
+                object.__setattr__(self, "outcome", TransactionVerdictOutcome(self.outcome))
             except ValueError as exc:
-                raise GuardValidationError(
-                    f"unsupported outcome: {self.outcome!r}"
-                ) from exc
+                raise GuardValidationError(f"unsupported outcome: {self.outcome!r}") from exc
         if not isinstance(self.outcome, TransactionVerdictOutcome):
             raise GuardValidationError("outcome must be a TransactionVerdictOutcome")
         if not isinstance(self.blocks_automation, bool):
@@ -1145,45 +1015,28 @@ class PreflightResult:
         # only then with a one-use capability.
         if self.outcome is TransactionVerdictOutcome.ALLOW:
             if self.blocks_automation:
-                raise GuardValidationError(
-                    "ALLOW outcome cannot set blocks_automation=True"
-                )
+                raise GuardValidationError("ALLOW outcome cannot set blocks_automation=True")
             if self.capability is None:
-                raise GuardValidationError(
-                    "ALLOW outcome requires an AdmissibilityCapability"
-                )
+                raise GuardValidationError("ALLOW outcome requires an AdmissibilityCapability")
         else:
             if not self.blocks_automation:
-                raise GuardValidationError(
-                    "non-ALLOW outcome must set blocks_automation=True"
-                )
+                raise GuardValidationError("non-ALLOW outcome must set blocks_automation=True")
             if self.capability is not None:
-                raise GuardValidationError(
-                    "non-ALLOW outcome must not carry a capability"
-                )
-        object.__setattr__(
-            self, "reason_codes", _unique_ids(self.reason_codes, "reason_codes")
-        )
+                raise GuardValidationError("non-ALLOW outcome must not carry a capability")
+        object.__setattr__(self, "reason_codes", _unique_ids(self.reason_codes, "reason_codes"))
         object.__setattr__(
             self,
             "reasons",
-            tuple(
-                _text(item, "reasons item", max_chars=512)
-                for item in (self.reasons or ())
-            ),
+            tuple(_text(item, "reasons item", max_chars=512) for item in (self.reasons or ())),
         )
-        object.__setattr__(
-            self, "receipt_id", _optional_text(self.receipt_id, "receipt_id")
-        )
+        object.__setattr__(self, "receipt_id", _optional_text(self.receipt_id, "receipt_id"))
         if self.receipt_digest in (None, ""):
             object.__setattr__(self, "receipt_digest", "")
         else:
             object.__setattr__(
                 self, "receipt_digest", _digest(self.receipt_digest, "receipt_digest")
             )
-        if self.capability is not None and not isinstance(
-            self.capability, AdmissibilityCapability
-        ):
+        if self.capability is not None and not isinstance(self.capability, AdmissibilityCapability):
             if isinstance(self.capability, Mapping):
                 object.__setattr__(
                     self,
@@ -1191,20 +1044,12 @@ class PreflightResult:
                     AdmissibilityCapability.from_dict(self.capability),
                 )
             else:
-                raise GuardValidationError(
-                    "capability must be AdmissibilityCapability or None"
-                )
+                raise GuardValidationError("capability must be AdmissibilityCapability or None")
         if not isinstance(self.security_results, FrozenMap):
-            object.__setattr__(
-                self, "security_results", _attributes(self.security_results)
-            )
+            object.__setattr__(self, "security_results", _attributes(self.security_results))
         if not isinstance(self.compliance_results, FrozenMap):
-            object.__setattr__(
-                self, "compliance_results", _attributes(self.compliance_results)
-            )
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+            object.__setattr__(self, "compliance_results", _attributes(self.compliance_results))
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
 
     @property
     def is_allow(self) -> bool:
@@ -1217,9 +1062,7 @@ class PreflightResult:
     def to_dict(self) -> dict[str, Any]:
         return {
             "blocks_automation": self.blocks_automation,
-            "capability": (
-                None if self.capability is None else self.capability.to_dict()
-            ),
+            "capability": (None if self.capability is None else self.capability.to_dict()),
             "compliance_results": self.compliance_results.to_dict(),
             "outcome": self.outcome.value,
             "reason_codes": list(self.reason_codes),
@@ -1248,23 +1091,13 @@ class PreflightConsumptionResult:
     def __post_init__(self) -> None:
         if not isinstance(self.allowed, bool):
             raise GuardValidationError("allowed must be a bool")
-        object.__setattr__(
-            self, "reason_code", _identifier(self.reason_code, "reason_code")
-        )
+        object.__setattr__(self, "reason_code", _identifier(self.reason_code, "reason_code"))
         object.__setattr__(self, "reason", _text(self.reason, "reason", max_chars=512))
-        object.__setattr__(
-            self, "capability_id", _identifier(self.capability_id, "capability_id")
-        )
-        object.__setattr__(
-            self, "request_digest", _digest(self.request_digest, "request_digest")
-        )
+        object.__setattr__(self, "capability_id", _identifier(self.capability_id, "capability_id"))
+        object.__setattr__(self, "request_digest", _digest(self.request_digest, "request_digest"))
         object.__setattr__(self, "phase", _identifier(self.phase, "phase"))
-        object.__setattr__(
-            self, "consumed_at", _optional_text(self.consumed_at, "consumed_at")
-        )
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "consumed_at", _optional_text(self.consumed_at, "consumed_at"))
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -1303,9 +1136,7 @@ def _sequence_of(
         elif isinstance(item, Mapping):
             items.append(from_dict(item))
         else:
-            raise GuardValidationError(
-                f"{name}[{index}] must be {item_type.__name__} or mapping"
-            )
+            raise GuardValidationError(f"{name}[{index}] must be {item_type.__name__} or mapping")
     return tuple(items)
 
 

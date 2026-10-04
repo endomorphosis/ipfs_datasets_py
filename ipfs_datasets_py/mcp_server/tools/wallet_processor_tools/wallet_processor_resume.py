@@ -18,8 +18,7 @@ from ._helpers import (
 @tool_metadata(
     category="wallet_processor_tools",
     mcp_description=(
-        "Resume a prior bounded wallet/ledger ingest job by job_id. "
-        "Does not sign or broadcast."
+        "Resume a prior bounded wallet/ledger ingest job by job_id. Does not sign or broadcast."
     ),
     timeout_seconds=120.0,
     io_intensive=True,

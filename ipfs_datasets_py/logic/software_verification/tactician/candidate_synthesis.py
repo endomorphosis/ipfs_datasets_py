@@ -62,9 +62,7 @@ PORTFOLIO_ALGORITHM_VERSION: Final = "proof-candidate-portfolio/1.0.0"
 
 # Legal tactician compatibility surface (import-path adapter; no ownership).
 LEGAL_TACTICIAN_ADAPTER_ID: Final = "adapter:legal-proof-tactician"
-LEGAL_TACTICIAN_MODULE: Final = (
-    "ipfs_datasets_py.processors.legal_data.proof_tactician"
-)
+LEGAL_TACTICIAN_MODULE: Final = "ipfs_datasets_py.processors.legal_data.proof_tactician"
 LEGAL_TACTICIAN_CLASS: Final = "ProofTactician"
 
 DEFAULT_BUDGET: Final = ResourceBounds(
@@ -231,9 +229,7 @@ def _text(
     if not optional and not text:
         raise CandidateSynthesisError(f"{label} is required")
     if len(text) > maximum:
-        raise CandidateSynthesisError(
-            f"{label} exceeds maximum length of {maximum}"
-        )
+        raise CandidateSynthesisError(f"{label} exceeds maximum length of {maximum}")
     return text
 
 
@@ -245,9 +241,7 @@ def _enum(value: object, enum_type: type[StrEnum], label: str) -> Any:
             return enum_type(value.strip())
         except ValueError as error:
             allowed = ", ".join(item.value for item in enum_type)
-            raise CandidateSynthesisError(
-                f"{label} must be one of: {allowed}"
-            ) from error
+            raise CandidateSynthesisError(f"{label} must be one of: {allowed}") from error
     raise CandidateSynthesisError(f"{label} must be a {enum_type.__name__}")
 
 
@@ -262,12 +256,9 @@ def _string_tuple(
         items: tuple[str, ...] = ()
     elif isinstance(values, str):
         items = (_text(values, label, maximum=512),)
-    elif isinstance(values, Sequence) and not isinstance(
-        values, (bytes, bytearray, memoryview)
-    ):
+    elif isinstance(values, Sequence) and not isinstance(values, (bytes, bytearray, memoryview)):
         items = tuple(
-            _text(item, f"{label}[{index}]", maximum=512)
-            for index, item in enumerate(values)
+            _text(item, f"{label}[{index}]", maximum=512) for index, item in enumerate(values)
         )
     else:
         raise CandidateSynthesisError(f"{label} must be a sequence of strings")
@@ -353,10 +344,10 @@ def is_proposal_only_provider(provider_id: str) -> bool:
     """True when a provider id is reserved for proposal-only learned sources."""
 
     text = _text(provider_id, "provider_id", maximum=256).lower()
-    return any(text == prefix or text.startswith(prefix + ":") or text.startswith(prefix + "/")
-               for prefix in PROPOSAL_ONLY_PROVIDER_PREFIXES) or text in {
-        p.lower() for p in PROPOSAL_ONLY_PROVIDER_PREFIXES
-    }
+    return any(
+        text == prefix or text.startswith(prefix + ":") or text.startswith(prefix + "/")
+        for prefix in PROPOSAL_ONLY_PROVIDER_PREFIXES
+    ) or text in {p.lower() for p in PROPOSAL_ONLY_PROVIDER_PREFIXES}
 
 
 def is_legal_hole(hole: ProofHole) -> bool:
@@ -384,9 +375,7 @@ def is_legal_hole(hole: ProofHole) -> bool:
 
 
 def _stable_candidate_id(*parts: str) -> str:
-    digest = hashlib.sha256(
-        "|".join(parts).encode("utf-8", errors="replace")
-    ).hexdigest()[:16]
+    digest = hashlib.sha256("|".join(parts).encode("utf-8", errors="replace")).hexdigest()[:16]
     return f"candidate:{parts[0]}:{digest}"
 
 
@@ -451,12 +440,8 @@ class CandidateSourceHit:
             "source_kind",
             _enum(self.source_kind, CandidateSourceKind, "source_kind"),
         )
-        object.__setattr__(
-            self, "hole_id", _text(self.hole_id, "hole_id", maximum=256)
-        )
-        object.__setattr__(
-            self, "statement", _text(self.statement, "statement", maximum=8192)
-        )
+        object.__setattr__(self, "hole_id", _text(self.hole_id, "hole_id", maximum=256))
+        object.__setattr__(self, "statement", _text(self.statement, "statement", maximum=8192))
         default_provider = _SOURCE_DEFAULT_PROVIDER[self.source_kind]
         provider = _text(
             self.provider_id or default_provider,
@@ -464,9 +449,7 @@ class CandidateSourceHit:
             maximum=256,
         )
         object.__setattr__(self, "provider_id", provider)
-        object.__setattr__(
-            self, "provenance", _mapping(self.provenance, "provenance")
-        )
+        object.__setattr__(self, "provenance", _mapping(self.provenance, "provenance"))
         trust = self.trust
         if trust is None:
             trust = _SOURCE_DEFAULT_TRUST[self.source_kind]
@@ -486,11 +469,7 @@ class CandidateSourceHit:
             _string_tuple(self.new_assumption_ids, "new_assumption_ids"),
         )
         base = _SOURCE_RANK_BASE.get(self.source_kind, 100_000)
-        score = (
-            self.rank_score_millionths
-            if self.rank_score_millionths
-            else base
-        )
+        score = self.rank_score_millionths if self.rank_score_millionths else base
         object.__setattr__(
             self,
             "rank_score_millionths",
@@ -516,13 +495,8 @@ class CandidateSourceHit:
                 f"{self.source_kind.value} hits must remain proposal-only"
             )
         object.__setattr__(self, "proposal_only", proposal_only)
-        delegated = _text(
-            self.delegated_to, "delegated_to", optional=True, maximum=256
-        )
-        if (
-            self.source_kind is CandidateSourceKind.LEGAL_EVIDENCE_ROUTING
-            and not delegated
-        ):
+        delegated = _text(self.delegated_to, "delegated_to", optional=True, maximum=256)
+        if self.source_kind is CandidateSourceKind.LEGAL_EVIDENCE_ROUTING and not delegated:
             delegated = LEGAL_TACTICIAN_ADAPTER_ID
         object.__setattr__(self, "delegated_to", delegated)
 
@@ -612,38 +586,24 @@ class CandidateProposal:
             "provider_id",
             _text(self.provider_id, "provider_id", maximum=256),
         )
-        object.__setattr__(
-            self, "provenance", _mapping(self.provenance, "provenance")
-        )
-        object.__setattr__(
-            self, "trust", _enum(self.trust, CandidateTrust, "trust")
-        )
+        object.__setattr__(self, "provenance", _mapping(self.provenance, "provenance"))
+        object.__setattr__(self, "trust", _enum(self.trust, CandidateTrust, "trust"))
         object.__setattr__(self, "budget", _bounds(self.budget, "budget"))
-        holes = _string_tuple(
-            self.targeted_hole_ids, "targeted_hole_ids", required=True
-        )
+        holes = _string_tuple(self.targeted_hole_ids, "targeted_hole_ids", required=True)
         object.__setattr__(self, "targeted_hole_ids", holes)
         if not isinstance(self.step, CandidateProofStep):
             if isinstance(self.step, Mapping):
                 try:
                     step = CandidateProofStep.from_dict(self.step)
                 except TacticianContractError as error:
-                    raise CandidateSynthesisError(
-                        f"step: {error}"
-                    ) from error
+                    raise CandidateSynthesisError(f"step: {error}") from error
                 object.__setattr__(self, "step", step)
             else:
-                raise CandidateSynthesisError(
-                    "step must be a CandidateProofStep"
-                )
+                raise CandidateSynthesisError("step must be a CandidateProofStep")
         if self.step.proof_claimed or self.step.completion_claimed:
-            raise CandidateSynthesisError(
-                "CandidateProposal cannot claim proof or completion"
-            )
+            raise CandidateSynthesisError("CandidateProposal cannot claim proof or completion")
         if self.step.hole_id not in holes:
-            raise CandidateSynthesisError(
-                "step.hole_id must be listed in targeted_hole_ids"
-            )
+            raise CandidateSynthesisError("step.hole_id must be listed in targeted_hole_ids")
         proposal_only = _bool(self.proposal_only, "proposal_only")
         if is_proposal_only_source(self.source_kind) and not proposal_only:
             raise CandidateSynthesisError(
@@ -663,10 +623,7 @@ class CandidateProposal:
             "delegated_to",
             _text(self.delegated_to, "delegated_to", optional=True, maximum=256),
         )
-        if (
-            self.source_kind is CandidateSourceKind.LEGAL_EVIDENCE_ROUTING
-            and not self.delegated_to
-        ):
+        if self.source_kind is CandidateSourceKind.LEGAL_EVIDENCE_ROUTING and not self.delegated_to:
             raise CandidateSynthesisError(
                 "legal evidence candidates must record delegated_to adapter"
             )
@@ -701,26 +658,22 @@ class CandidateProposal:
     def from_dict(cls, payload: Mapping[str, Any]) -> "CandidateProposal":
         if not isinstance(payload, Mapping):
             raise CandidateSynthesisError("proposal payload must be an object")
-        if payload.get("proof_claimed") is True or payload.get(
-            "completion_claimed"
-        ) is True:
-            raise CandidateSynthesisError(
-                "CandidateProposal cannot claim proof or completion"
-            )
+        if payload.get("proof_claimed") is True or payload.get("completion_claimed") is True:
+            raise CandidateSynthesisError("CandidateProposal cannot claim proof or completion")
         budget_raw = payload.get("budget")
         step_raw = payload.get("step") or {}
         return cls(
             candidate_id=payload.get("candidate_id", ""),
-            source_kind=payload.get(
-                "source_kind", CandidateSourceKind.REVIEWED_TEMPLATE
-            ),
+            source_kind=payload.get("source_kind", CandidateSourceKind.REVIEWED_TEMPLATE),
             provider_id=payload.get("provider_id", ""),
             provenance=payload.get("provenance") or {},
             trust=payload.get("trust", CandidateTrust.UNKNOWN),
             budget=(
                 ResourceBounds.from_dict(budget_raw)
                 if isinstance(budget_raw, Mapping)
-                else budget_raw if budget_raw is not None else DEFAULT_BUDGET
+                else budget_raw
+                if budget_raw is not None
+                else DEFAULT_BUDGET
             ),
             targeted_hole_ids=tuple(payload.get("targeted_hole_ids") or ()),
             step=(
@@ -775,9 +728,7 @@ class CandidatePortfolioResult:
             if isinstance(item, Mapping):
                 item = CandidateProposal.from_dict(item)
             elif not isinstance(item, CandidateProposal):
-                raise CandidateSynthesisError(
-                    f"proposals[{index}] must be a CandidateProposal"
-                )
+                raise CandidateSynthesisError(f"proposals[{index}] must be a CandidateProposal")
             if item.step.proof_claimed or item.step.completion_claimed:
                 raise CandidateSynthesisError(
                     "portfolio proposals cannot claim proof or completion"
@@ -797,9 +748,7 @@ class CandidatePortfolioResult:
         object.__setattr__(
             self,
             "proposal_only_candidate_ids",
-            _string_tuple(
-                self.proposal_only_candidate_ids, "proposal_only_candidate_ids"
-            ),
+            _string_tuple(self.proposal_only_candidate_ids, "proposal_only_candidate_ids"),
         )
         object.__setattr__(
             self,
@@ -832,17 +781,11 @@ class CandidatePortfolioResult:
         return tuple(item.step for item in self.proposals)
 
     def proposals_for_hole(self, hole_id: str) -> tuple[CandidateProposal, ...]:
-        return tuple(
-            item for item in self.proposals if hole_id in item.targeted_hole_ids
-        )
+        return tuple(item for item in self.proposals if hole_id in item.targeted_hole_ids)
 
-    def proposals_of_source(
-        self, kind: CandidateSourceKind | str
-    ) -> tuple[CandidateProposal, ...]:
+    def proposals_of_source(self, kind: CandidateSourceKind | str) -> tuple[CandidateProposal, ...]:
         resolved = _enum(kind, CandidateSourceKind, "kind")
-        return tuple(
-            item for item in self.proposals if item.source_kind is resolved
-        )
+        return tuple(item for item in self.proposals if item.source_kind is resolved)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -853,12 +796,8 @@ class CandidatePortfolioResult:
             "proposals": [item.to_dict() for item in self.proposals],
             "targeted_hole_ids": list(self.targeted_hole_ids),
             "source_kinds_used": list(self.source_kinds_used),
-            "proposal_only_candidate_ids": list(
-                self.proposal_only_candidate_ids
-            ),
-            "legal_delegated_candidate_ids": list(
-                self.legal_delegated_candidate_ids
-            ),
+            "proposal_only_candidate_ids": list(self.proposal_only_candidate_ids),
+            "legal_delegated_candidate_ids": list(self.legal_delegated_candidate_ids),
             "algorithm_version": self.algorithm_version,
             "budget": self.budget.to_dict(),
             "proof_claimed": False,
@@ -873,9 +812,7 @@ class CandidatePortfolioResult:
     def from_dict(cls, payload: Mapping[str, Any]) -> "CandidatePortfolioResult":
         if not isinstance(payload, Mapping):
             raise CandidateSynthesisError("portfolio result payload must be an object")
-        if payload.get("proof_claimed") is True or payload.get(
-            "completion_claimed"
-        ) is True:
+        if payload.get("proof_claimed") is True or payload.get("completion_claimed") is True:
             raise CandidateSynthesisError(
                 "CandidatePortfolioResult cannot claim proof or completion"
             )
@@ -886,19 +823,15 @@ class CandidatePortfolioResult:
             proposals=tuple(payload.get("proposals") or ()),
             targeted_hole_ids=tuple(payload.get("targeted_hole_ids") or ()),
             source_kinds_used=tuple(payload.get("source_kinds_used") or ()),
-            proposal_only_candidate_ids=tuple(
-                payload.get("proposal_only_candidate_ids") or ()
-            ),
-            legal_delegated_candidate_ids=tuple(
-                payload.get("legal_delegated_candidate_ids") or ()
-            ),
-            algorithm_version=payload.get(
-                "algorithm_version", PORTFOLIO_ALGORITHM_VERSION
-            ),
+            proposal_only_candidate_ids=tuple(payload.get("proposal_only_candidate_ids") or ()),
+            legal_delegated_candidate_ids=tuple(payload.get("legal_delegated_candidate_ids") or ()),
+            algorithm_version=payload.get("algorithm_version", PORTFOLIO_ALGORITHM_VERSION),
             budget=(
                 ResourceBounds.from_dict(budget_raw)
                 if isinstance(budget_raw, Mapping)
-                else budget_raw if budget_raw is not None else DEFAULT_BUDGET
+                else budget_raw
+                if budget_raw is not None
+                else DEFAULT_BUDGET
             ),
             proof_claimed=False,
             completion_claimed=False,
@@ -931,8 +864,8 @@ class StaticCandidateSource:
     """Deterministic injected hit list keyed by hole id (test / fixture adapter)."""
 
     source_kind: CandidateSourceKind
-    hits_by_hole: Mapping[str, Sequence[CandidateSourceHit | Mapping[str, Any]]] = (
-        field(default_factory=dict)
+    hits_by_hole: Mapping[str, Sequence[CandidateSourceHit | Mapping[str, Any]]] = field(
+        default_factory=dict
     )
     default_provider_id: str = ""
 
@@ -960,9 +893,7 @@ class StaticCandidateSource:
                     items.append(CandidateSourceHit.from_dict(payload))
                 elif isinstance(hit, CandidateSourceHit):
                     if hit.hole_id != key:
-                        items.append(
-                            replace(hit, hole_id=key, source_kind=self.source_kind)
-                        )
+                        items.append(replace(hit, hole_id=key, source_kind=self.source_kind))
                     else:
                         items.append(hit)
                 else:
@@ -1046,9 +977,7 @@ class LegalEvidenceRoutingAdapter:
         if self.plan_builder is not None:
             built = self.plan_builder(hole)
             if not isinstance(built, Mapping):
-                raise CandidateSynthesisError(
-                    "legal plan_builder must return a mapping"
-                )
+                raise CandidateSynthesisError("legal plan_builder must return a mapping")
             plan = dict(built)
         statement = (
             f"Delegate evidence routing for {hole.hole_id} to "
@@ -1084,11 +1013,7 @@ class LegalEvidenceRoutingAdapter:
                 trust=CandidateTrust.LEGAL_DELEGATED,
                 budget=budget,
                 source=hole.source,
-                evidence_ids=tuple(
-                    str(item)
-                    for item in (plan.get("evidence_ids") or ())
-                    if item
-                ),
+                evidence_ids=tuple(str(item) for item in (plan.get("evidence_ids") or ()) if item),
                 kind="legal_evidence_delegation",
                 metadata={
                     "compatibility_adapter": True,
@@ -1123,13 +1048,10 @@ class ReviewedTemplateSource:
                 stmts = (values,)
             elif isinstance(values, Sequence):
                 stmts = tuple(
-                    _text(item, f"templates[{kind_key}]", maximum=8192)
-                    for item in values
+                    _text(item, f"templates[{kind_key}]", maximum=8192) for item in values
                 )
             else:
-                raise CandidateSynthesisError(
-                    f"templates[{kind_key}] must be a string or sequence"
-                )
+                raise CandidateSynthesisError(f"templates[{kind_key}] must be a string or sequence")
             normalized[kind_key] = stmts
         object.__setattr__(self, "templates", normalized)
         object.__setattr__(
@@ -1201,16 +1123,12 @@ class ProofCandidatePortfolio:
                     f"sources[{index}] must provide propose(hole, budget=...)"
                 )
             if not hasattr(source, "source_kind"):
-                raise CandidateSynthesisError(
-                    f"sources[{index}] must expose source_kind"
-                )
+                raise CandidateSynthesisError(f"sources[{index}] must expose source_kind")
             normalized.append(source)
         if self.include_builtin_legal_adapter:
             has_legal = any(
-                getattr(item, "source_kind", None)
-                is CandidateSourceKind.LEGAL_EVIDENCE_ROUTING
-                or getattr(item, "source_kind", None)
-                == CandidateSourceKind.LEGAL_EVIDENCE_ROUTING
+                getattr(item, "source_kind", None) is CandidateSourceKind.LEGAL_EVIDENCE_ROUTING
+                or getattr(item, "source_kind", None) == CandidateSourceKind.LEGAL_EVIDENCE_ROUTING
                 for item in normalized
             )
             if not has_legal:
@@ -1228,9 +1146,7 @@ class ProofCandidatePortfolio:
         object.__setattr__(
             self,
             "max_candidates_per_hole",
-            _nonnegative_int(
-                self.max_candidates_per_hole, "max_candidates_per_hole"
-            ),
+            _nonnegative_int(self.max_candidates_per_hole, "max_candidates_per_hole"),
         )
         if self.max_candidates_per_hole == 0:
             # Fall back to budget max_candidates or a small default.
@@ -1269,9 +1185,7 @@ class ProofCandidatePortfolio:
         for index, raw in enumerate(holes):
             hole = _proof_hole(raw, f"holes[{index}]")
             if hole.hole_id in seen_ids:
-                raise CandidateSynthesisError(
-                    f"duplicate hole id {hole.hole_id!r}"
-                )
+                raise CandidateSynthesisError(f"duplicate hole id {hole.hole_id!r}")
             seen_ids.add(hole.hole_id)
             # Non-proof diagnostics are not candidate targets.
             if hole.status in {
@@ -1289,13 +1203,9 @@ class ProofCandidatePortfolio:
                 continue
             resolved_holes.append(hole)
 
-        active_budget = _bounds(
-            budget if budget is not None else self.budget, "budget"
-        )
+        active_budget = _bounds(budget if budget is not None else self.budget, "budget")
         goal_id = _text(
-            formal_goal_id
-            if formal_goal_id is not None
-            else self.formal_goal_id,
+            formal_goal_id if formal_goal_id is not None else self.formal_goal_id,
             "formal_goal_id",
             optional=True,
             maximum=256,
@@ -1317,9 +1227,7 @@ class ProofCandidatePortfolio:
                     ) from error
                 if hits is None:
                     continue
-                if not isinstance(hits, Sequence) or isinstance(
-                    hits, (str, bytes)
-                ):
+                if not isinstance(hits, Sequence) or isinstance(hits, (str, bytes)):
                     raise CandidateSynthesisError(
                         f"source {source.source_kind!r} must return a sequence of hits"
                     )
@@ -1348,9 +1256,7 @@ class ProofCandidatePortfolio:
             elif isinstance(raw_hit, CandidateSourceHit):
                 all_hits.append(raw_hit)
             else:
-                raise CandidateSynthesisError(
-                    f"extra_hits[{index}] must be a CandidateSourceHit"
-                )
+                raise CandidateSynthesisError(f"extra_hits[{index}] must be a CandidateSourceHit")
 
         hole_by_id = {hole.hole_id: hole for hole in resolved_holes}
         proposals: list[CandidateProposal] = []
@@ -1401,19 +1307,14 @@ class ProofCandidatePortfolio:
             )
         )
 
-        source_kinds = tuple(
-            sorted({item.source_kind.value for item in proposals_sorted})
-        )
+        source_kinds = tuple(sorted({item.source_kind.value for item in proposals_sorted}))
         proposal_only_ids = tuple(
-            item.candidate_id
-            for item in proposals_sorted
-            if item.proposal_only
+            item.candidate_id for item in proposals_sorted if item.proposal_only
         )
         legal_ids = tuple(
             item.candidate_id
             for item in proposals_sorted
-            if item.source_kind is CandidateSourceKind.LEGAL_EVIDENCE_ROUTING
-            or item.delegated_to
+            if item.source_kind is CandidateSourceKind.LEGAL_EVIDENCE_ROUTING or item.delegated_to
         )
         targeted = tuple(hole.hole_id for hole in resolved_holes)
         portfolio_id = (
@@ -1423,9 +1324,7 @@ class ProofCandidatePortfolio:
                     {
                         "formal_goal_id": goal_id,
                         "hole_ids": list(targeted),
-                        "candidate_ids": [
-                            item.candidate_id for item in proposals_sorted
-                        ],
+                        "candidate_ids": [item.candidate_id for item in proposals_sorted],
                         "algorithm": self.ALGORITHM_VERSION,
                     },
                     sort_keys=True,
@@ -1457,12 +1356,8 @@ class ProofCandidatePortfolio:
         hit: CandidateSourceHit,
         hole: ProofHole,
     ) -> CandidateProposal:
-        proposal_only = bool(hit.proposal_only) or is_proposal_only_source(
-            hit.source_kind
-        )
-        authority = _cap_authority_for_source(
-            hit.source_kind, AuthorityCeiling.CANDIDATE
-        )
+        proposal_only = bool(hit.proposal_only) or is_proposal_only_source(hit.source_kind)
+        authority = _cap_authority_for_source(hit.source_kind, AuthorityCeiling.CANDIDATE)
         if proposal_only:
             authority = AuthorityCeiling.CANDIDATE
 
@@ -1491,9 +1386,7 @@ class ProofCandidatePortfolio:
             hit.statement,
         )
         # Prefer readable prefix when short enough.
-        readable = (
-            f"candidate:{hit.source_kind.value}:{hole.hole_id}"
-        )
+        readable = f"candidate:{hit.source_kind.value}:{hole.hole_id}"
         if len(readable) <= 256:
             # Still content-stabilize with digest suffix for uniqueness.
             candidate_id = f"{readable}:{candidate_id.rsplit(':', 1)[-1]}"

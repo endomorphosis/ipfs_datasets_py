@@ -158,9 +158,7 @@ class PSBTInputBinding:
     schema_version: str = FRONTEND_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "input_index", _non_negative(self.input_index, "input_index")
-        )
+        object.__setattr__(self, "input_index", _non_negative(self.input_index, "input_index"))
         if self.prevout is not None and not isinstance(self.prevout, PrevoutBinding):
             raise InvalidRequestError("prevout must be a PrevoutBinding or None")
         for name, value in (
@@ -191,9 +189,7 @@ class PSBTInputBinding:
         object.__setattr__(self, "complete", _bool(self.complete, "complete"))
         if self.complete:
             if self.prevout is None or not self.prevout.known:
-                raise InvalidRequestError(
-                    "PSBT input complete requires known prevout binding"
-                )
+                raise InvalidRequestError("PSBT input complete requires known prevout binding")
         object.__setattr__(self, "attributes", _freeze_mapping(self.attributes))
         object.__setattr__(
             self,
@@ -211,17 +207,13 @@ class PSBTInputBinding:
             "is_final": self.is_final,
             "partial_sigs_count": self.partial_sigs_count,
             "prevout": self.prevout.to_dict() if self.prevout else None,
-            "redeem_script": self.redeem_script.to_dict()
-            if self.redeem_script
-            else None,
+            "redeem_script": self.redeem_script.to_dict() if self.redeem_script else None,
             "schema_version": self.schema_version,
             "sequence": self.sequence,
             "sighash": self.sighash.to_dict() if self.sighash else None,
             "taproot": self.taproot.to_dict() if self.taproot else None,
             "witness": self.witness.to_dict() if self.witness else None,
-            "witness_script": self.witness_script.to_dict()
-            if self.witness_script
-            else None,
+            "witness_script": self.witness_script.to_dict() if self.witness_script else None,
         }
 
     def content_digest(self) -> str:
@@ -246,9 +238,7 @@ class PSBTBinding:
         inputs = tuple(self.inputs)
         for index, item in enumerate(inputs):
             if not isinstance(item, PSBTInputBinding):
-                raise InvalidRequestError(
-                    f"inputs[{index}] must be a PSBTInputBinding"
-                )
+                raise InvalidRequestError(f"inputs[{index}] must be a PSBTInputBinding")
         object.__setattr__(self, "inputs", inputs)
         if self.locktime is not None:
             if (
@@ -258,14 +248,10 @@ class PSBTBinding:
             ):
                 raise InvalidRequestError("locktime must be a uint32 integer")
         if self.version is not None:
-            object.__setattr__(
-                self, "version", _non_negative(self.version, "version")
-            )
+            object.__setattr__(self, "version", _non_negative(self.version, "version"))
         role = self.role if isinstance(self.role, PSBTRole) else PSBTRole(str(self.role))
         object.__setattr__(self, "role", role)
-        all_known = bool(inputs) and all(
-            i.prevout is not None and i.prevout.known for i in inputs
-        )
+        all_known = bool(inputs) and all(i.prevout is not None and i.prevout.known for i in inputs)
         object.__setattr__(self, "all_prevouts_known", all_known)
         weak = any(i.sighash is not None and i.sighash.is_weak for i in inputs)
         object.__setattr__(self, "has_weak_sighash", weak)
@@ -378,14 +364,10 @@ class BitcoinNormalizationResult:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "chain_id", _required_text(self.chain_id, "chain_id"))
-        object.__setattr__(
-            self, "network", self.network.strip() if self.network else ""
-        )
+        object.__setattr__(self, "network", self.network.strip() if self.network else "")
         if self.prevout is not None and not isinstance(self.prevout, PrevoutBinding):
             raise InvalidRequestError("prevout must be a PrevoutBinding or None")
-        if self.primary_program is not None and not isinstance(
-            self.primary_program, ScriptProgram
-        ):
+        if self.primary_program is not None and not isinstance(self.primary_program, ScriptProgram):
             raise InvalidRequestError("primary_program must be a ScriptProgram or None")
         if self.stack is not None and not isinstance(self.stack, StackSemanticRecord):
             raise InvalidRequestError("stack must be a StackSemanticRecord or None")
@@ -393,18 +375,14 @@ class BitcoinNormalizationResult:
             raise InvalidRequestError("taproot must be a TaprootCommitment or None")
         if self.policy is not None and not isinstance(self.policy, MiniscriptPolicy):
             raise InvalidRequestError("policy must be a MiniscriptPolicy or None")
-        if self.descriptor is not None and not isinstance(
-            self.descriptor, OutputDescriptor
-        ):
+        if self.descriptor is not None and not isinstance(self.descriptor, OutputDescriptor):
             raise InvalidRequestError("descriptor must be an OutputDescriptor or None")
         if self.psbt is not None and not isinstance(self.psbt, PSBTBinding):
             raise InvalidRequestError("psbt must be a PSBTBinding or None")
         paths = tuple(self.spending_paths)
         for index, path in enumerate(paths):
             if not isinstance(path, SpendingPathRecord):
-                raise InvalidRequestError(
-                    f"spending_paths[{index}] must be a SpendingPathRecord"
-                )
+                raise InvalidRequestError(f"spending_paths[{index}] must be a SpendingPathRecord")
         object.__setattr__(self, "spending_paths", paths)
         mode = (
             self.analysis_mode
@@ -462,9 +440,7 @@ class BitcoinNormalizationResult:
             "policy": self.policy.to_dict() if self.policy else None,
             "policy_equivalence": self.policy_equivalence.value,
             "prevout": self.prevout.to_dict() if self.prevout else None,
-            "primary_program": self.primary_program.to_dict()
-            if self.primary_program
-            else None,
+            "primary_program": self.primary_program.to_dict() if self.primary_program else None,
             "psbt": self.psbt.to_dict() if self.psbt else None,
             "schema_version": self.schema_version,
             "semantic_pass_status": self.semantic_pass_status.value,
@@ -879,8 +855,7 @@ class BitcoinScriptFrontend:
                     policy=None,
                     available=True,
                     pass_status=alt_stack.pass_status,
-                    diagnostics=alt_stack.diagnostics
-                    + ("alternative spend path",),
+                    diagnostics=alt_stack.diagnostics + ("alternative spend path",),
                 )
             )
             diagnostics.append(f"alternate spend path {index} recorded")
@@ -896,8 +871,7 @@ class BitcoinScriptFrontend:
                     else b"",
                     revealed_leaves=taproot.revealed_leaves,
                     control_block=taproot.control_block,
-                    hidden_branch_digests=list(taproot.hidden_branches)
-                    + list(hidden_tap_branches),
+                    hidden_branch_digests=list(taproot.hidden_branches) + list(hidden_tap_branches),
                     spend_path=taproot.spend_path,
                     attributes=dict(taproot.attributes),
                 )
@@ -937,9 +911,7 @@ class BitcoinScriptFrontend:
                         pass_status=leaf_status
                         if not leaf.is_hidden
                         else SemanticPassStatus.INCOMPLETE,
-                        diagnostics=()
-                        if not leaf.is_hidden
-                        else ("leaf hidden or unavailable",),
+                        diagnostics=() if not leaf.is_hidden else ("leaf hidden or unavailable",),
                     )
                 )
             if tap_status is not SemanticPassStatus.PASS:
@@ -964,9 +936,7 @@ class BitcoinScriptFrontend:
                     if policy_eq is PolicyEquivalenceStatus.PROVEN_UNEQUAL:
                         diagnostics.append("descriptor/miniscript policy mismatch")
                     elif policy_eq is PolicyEquivalenceStatus.UNKNOWN:
-                        diagnostics.append(
-                            "descriptor/miniscript policy equality unknown"
-                        )
+                        diagnostics.append("descriptor/miniscript policy equality unknown")
 
         # Analysis mode.
         if taproot is not None and taproot.spend_path is SpendPathKind.KEY_PATH:
@@ -985,9 +955,7 @@ class BitcoinScriptFrontend:
             status = stack.pass_status
         else:
             status = incomplete_spend_never_passes(
-                fully_decoded=bool(effective and effective.fully_decoded)
-                if effective
-                else False,
+                fully_decoded=bool(effective and effective.fully_decoded) if effective else False,
                 unsupported_opcodes=effective.unsupported_opcodes if effective else (),
                 prevout_known=bool(prevout and prevout.known),
                 weak_sighash=weak,
@@ -1058,12 +1026,8 @@ class BitcoinScriptFrontend:
             network=network,
             script_pubkey=script_hex,
             prevout=first.prevout,
-            redeem_script=first.redeem_script.script_hex
-            if first.redeem_script
-            else None,
-            witness_script=first.witness_script.script_hex
-            if first.witness_script
-            else None,
+            redeem_script=first.redeem_script.script_hex if first.redeem_script else None,
+            witness_script=first.witness_script.script_hex if first.witness_script else None,
             witness_items=first.witness.items if first.witness else None,
             sighash_type=first.sighash.sighash_type if first.sighash else None,
             sequence=first.sequence,

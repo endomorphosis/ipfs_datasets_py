@@ -49,11 +49,7 @@ from ipfs_datasets_py.processors.wallets.ethereum.transaction_guard import (
 
 
 FIXTURE_PATH = (
-    Path(__file__).resolve().parents[4]
-    / "fixtures"
-    / "wallets"
-    / "ethereum"
-    / "rpc_session.json"
+    Path(__file__).resolve().parents[4] / "fixtures" / "wallets" / "ethereum" / "rpc_session.json"
 )
 
 _ISSUED = "2026-07-28T12:00:00Z"
@@ -88,9 +84,7 @@ def _transfer_data(to: str, amount: int = 1000) -> str:
     return SELECTOR_TRANSFER + _pad_addr(to) + _pad_uint(amount)
 
 
-def _permit_data(
-    owner: str, spender: str, amount: int = 500, deadline: int = 9_999_999_999
-) -> str:
+def _permit_data(owner: str, spender: str, amount: int = 500, deadline: int = 9_999_999_999) -> str:
     # permit(owner, spender, value, deadline, v, r, s) — pad dummy sig words.
     return (
         SELECTOR_PERMIT
@@ -129,7 +123,9 @@ def _candidate(rpc: dict[str, Any], **overrides: Any) -> dict[str, Any]:
     return payload
 
 
-def _code_epoch(rpc: dict[str, Any], address: str | None = None, **overrides: Any) -> CodeProxyEpoch:
+def _code_epoch(
+    rpc: dict[str, Any], address: str | None = None, **overrides: Any
+) -> CodeProxyEpoch:
     addrs = _addrs(rpc)
     base = {
         "contract_address": address or addrs["erc20"],
@@ -218,9 +214,7 @@ def test_no_signing_or_broadcast_surface() -> None:
     }
     public = {name for name in dir(mod) if not name.startswith("_")}
     assert not (public & forbidden)
-    methods = {
-        name for name in dir(EthereumTransactionGuard) if not name.startswith("_")
-    }
+    methods = {name for name in dir(EthereumTransactionGuard) if not name.startswith("_")}
     assert not (methods & forbidden)
 
 
@@ -404,9 +398,7 @@ def test_evaluate_stale_compliance_blocks(rpc_session: dict[str, Any]) -> None:
         binding,
         request=request,
         security_results={req: "pass" for req in request.security_requirement_ids},
-        compliance_results={
-            req: "stale" for req in request.compliance_requirement_ids
-        },
+        compliance_results={req: "stale" for req in request.compliance_requirement_ids},
         now=_NOW_OK,
     )
     assert decision.outcome is TransactionVerdictOutcome.STALE
@@ -461,17 +453,20 @@ def test_evaluate_convenience_function(rpc_session: dict[str, Any]) -> None:
         deadline=_DEADLINE,
         expiry=_EXPIRY,
         now=_NOW_OK,
-        security_results={req: "pass" for req in (
-            "sec:evm-chain-identity",
-            "sec:evm-nonce-fee",
-            "sec:evm-calldata-effects",
-            "sec:evm-approvals",
-            "sec:evm-internal-token-effects",
-            "sec:evm-code-proxy-epoch",
-            "sec:evm-sender-recovery",
-            "sec:evm-exact-candidate",
-            "sec:evm-list-graph-freshness",
-        )},
+        security_results={
+            req: "pass"
+            for req in (
+                "sec:evm-chain-identity",
+                "sec:evm-nonce-fee",
+                "sec:evm-calldata-effects",
+                "sec:evm-approvals",
+                "sec:evm-internal-token-effects",
+                "sec:evm-code-proxy-epoch",
+                "sec:evm-sender-recovery",
+                "sec:evm-exact-candidate",
+                "sec:evm-list-graph-freshness",
+            )
+        },
         compliance_results={
             "comp:direct-sanctions": "pass",
             "comp:bounded-exposure": "pass",
@@ -530,10 +525,7 @@ def test_permit_substitution_at_consumption(rpc_session: dict[str, Any]) -> None
             live_code_proxy_epochs={addrs["erc20"].lower(): epoch},
             live_approvals=substituted,
         )
-    assert (
-        "permit" in str(excinfo.value).lower()
-        or "permit" in excinfo.value.reason_code
-    )
+    assert "permit" in str(excinfo.value).lower() or "permit" in excinfo.value.reason_code
 
 
 def test_nonce_mutation_at_consumption(rpc_session: dict[str, Any]) -> None:
@@ -661,10 +653,7 @@ def test_hidden_transfer_blocks_consumption(rpc_session: dict[str, Any]) -> None
             live_code_proxy_epochs={addrs["erc20"].lower(): epoch},
             live_internal_effects=hidden,
         )
-    assert (
-        "hidden" in str(excinfo.value).lower()
-        or "hidden" in excinfo.value.reason_code
-    )
+    assert "hidden" in str(excinfo.value).lower() or "hidden" in excinfo.value.reason_code
 
 
 def test_stale_list_revision_at_consumption(rpc_session: dict[str, Any]) -> None:
@@ -702,10 +691,7 @@ def test_live_candidate_field_substitution(rpc_session: dict[str, Any]) -> None:
             now=_NOW_OK,
             live_candidate=mutated,
         )
-    assert (
-        "substituted" in str(excinfo.value).lower()
-        or "candidate" in excinfo.value.reason_code
-    )
+    assert "substituted" in str(excinfo.value).lower() or "candidate" in excinfo.value.reason_code
 
 
 def test_successful_consumption_with_matching_epoch(

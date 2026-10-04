@@ -123,9 +123,7 @@ def _intent(**overrides: Any) -> TransactionIntent:
     return TransactionIntent(**base)
 
 
-def _candidate(
-    intent: TransactionIntent | None = None, **overrides: Any
-) -> TransactionCandidate:
+def _candidate(intent: TransactionIntent | None = None, **overrides: Any) -> TransactionCandidate:
     intent = intent or _intent()
     base: dict[str, Any] = {
         "candidate_id": "candidate:tx-transfer-001",
@@ -200,9 +198,7 @@ def _passing_request(**overrides: Any) -> ComplianceGateRequest:
     intent = overrides.pop("intent", None) or _intent()
     candidate = overrides.pop("candidate", None) or _candidate(intent)
     extra = overrides.pop("extra", ())
-    cps = overrides.pop("counterparties", None) or _counterparties(
-        intent, candidate, extra=extra
-    )
+    cps = overrides.pop("counterparties", None) or _counterparties(intent, candidate, extra=extra)
     sanctions = overrides.pop("sanctions_decisions", None)
     if sanctions is None:
         sanctions = tuple(_clear_sanctions(p) for p in cps.counterparties)
@@ -253,8 +249,7 @@ def test_policy_outcome_mapping() -> None:
         is TransactionVerdictOutcome.ALLOW
     )
     assert (
-        policy_outcome_to_transaction(SanctionsPolicyOutcome.DENY)
-        is TransactionVerdictOutcome.DENY
+        policy_outcome_to_transaction(SanctionsPolicyOutcome.DENY) is TransactionVerdictOutcome.DENY
     )
     assert (
         policy_outcome_to_transaction(SanctionsPolicyOutcome.STALE)
@@ -326,9 +321,7 @@ def test_gate_class_evaluate() -> None:
 def test_exact_listed_match_hard_denies() -> None:
     request = _passing_request()
     recipient = next(
-        p
-        for p in request.counterparties.counterparties
-        if p.role is CounterpartyRole.RECIPIENT
+        p for p in request.counterparties.counterparties if p.role is CounterpartyRole.RECIPIENT
     )
     sanctions = []
     for p in request.counterparties.counterparties:
@@ -356,9 +349,7 @@ def test_exact_listed_match_hard_denies() -> None:
 def test_named_designated_party_hard_denies_when_reviewed() -> None:
     request = _passing_request()
     recipient = next(
-        p
-        for p in request.counterparties.counterparties
-        if p.role is CounterpartyRole.RECIPIENT
+        p for p in request.counterparties.counterparties if p.role is CounterpartyRole.RECIPIENT
     )
     sanctions = tuple(
         _clear_sanctions(
@@ -386,9 +377,7 @@ def test_named_designated_party_hard_denies_when_reviewed() -> None:
 def test_owned_entity_without_reviewed_evidence_blocks() -> None:
     request = _passing_request()
     recipient = next(
-        p
-        for p in request.counterparties.counterparties
-        if p.role is CounterpartyRole.RECIPIENT
+        p for p in request.counterparties.counterparties if p.role is CounterpartyRole.RECIPIENT
     )
     sanctions = tuple(
         _clear_sanctions(
@@ -407,17 +396,13 @@ def test_owned_entity_without_reviewed_evidence_blocks() -> None:
     )
     assert decision.blocks_automation
     assert decision.outcome is TransactionVerdictOutcome.INCONCLUSIVE
-    assert any(
-        v == "unreviewed_party_ownership" for v in decision.sanctions_results.values()
-    )
+    assert any(v == "unreviewed_party_ownership" for v in decision.sanctions_results.values())
 
 
 def test_owned_entity_with_reviewed_evidence_denies() -> None:
     request = _passing_request()
     recipient = next(
-        p
-        for p in request.counterparties.counterparties
-        if p.role is CounterpartyRole.RECIPIENT
+        p for p in request.counterparties.counterparties if p.role is CounterpartyRole.RECIPIENT
     )
     sanctions = tuple(
         _clear_sanctions(
@@ -445,9 +430,7 @@ def test_owned_entity_with_reviewed_evidence_denies() -> None:
 def test_indirect_exposure_review_blocks_automation() -> None:
     request = _passing_request()
     sender = next(
-        p
-        for p in request.counterparties.counterparties
-        if p.role is CounterpartyRole.SENDER
+        p for p in request.counterparties.counterparties if p.role is CounterpartyRole.SENDER
     )
     exposure = tuple(
         _clear_exposure(
@@ -461,9 +444,7 @@ def test_indirect_exposure_review_blocks_automation() -> None:
         else _clear_exposure(p)
         for p in request.counterparties.counterparties
     )
-    decision = evaluate_compliance_gate(
-        _passing_request(exposure_decisions=exposure), now=_NOW_OK
-    )
+    decision = evaluate_compliance_gate(_passing_request(exposure_decisions=exposure), now=_NOW_OK)
     assert decision.outcome is TransactionVerdictOutcome.REVIEW
     assert decision.blocks_automation
     assert any(v == "indirect_exposure" for v in decision.exposure_results.values())
@@ -488,12 +469,9 @@ def test_indirect_exposure_cannot_map_to_allow() -> None:
 def test_bounds_mismatch_denies() -> None:
     request = _passing_request()
     exposure = tuple(
-        _clear_exposure(p, bounds_digest=_DIGEST_C)
-        for p in request.counterparties.counterparties
+        _clear_exposure(p, bounds_digest=_DIGEST_C) for p in request.counterparties.counterparties
     )
-    decision = evaluate_compliance_gate(
-        _passing_request(exposure_decisions=exposure), now=_NOW_OK
-    )
+    decision = evaluate_compliance_gate(_passing_request(exposure_decisions=exposure), now=_NOW_OK)
     assert decision.outcome is TransactionVerdictOutcome.DENY
     assert any(v == "bounds_mismatch" for v in decision.exposure_results.values())
 
@@ -519,8 +497,7 @@ def test_stale_sanctions_list_blocks() -> None:
 def test_incomplete_list_blocks() -> None:
     request = _passing_request()
     sanctions = tuple(
-        _clear_sanctions(p, list_complete=False)
-        for p in request.counterparties.counterparties
+        _clear_sanctions(p, list_complete=False) for p in request.counterparties.counterparties
     )
     decision = evaluate_compliance_gate(
         _passing_request(sanctions_decisions=sanctions), now=_NOW_OK
@@ -540,9 +517,7 @@ def test_truncated_exposure_blocks() -> None:
         )
         for p in request.counterparties.counterparties
     )
-    decision = evaluate_compliance_gate(
-        _passing_request(exposure_decisions=exposure), now=_NOW_OK
-    )
+    decision = evaluate_compliance_gate(_passing_request(exposure_decisions=exposure), now=_NOW_OK)
     assert decision.outcome is TransactionVerdictOutcome.INCONCLUSIVE
     assert any(v == "truncated" for v in decision.exposure_results.values())
 
@@ -558,9 +533,7 @@ def test_incomplete_frontier_blocks() -> None:
         )
         for p in request.counterparties.counterparties
     )
-    decision = evaluate_compliance_gate(
-        _passing_request(exposure_decisions=exposure), now=_NOW_OK
-    )
+    decision = evaluate_compliance_gate(_passing_request(exposure_decisions=exposure), now=_NOW_OK)
     assert decision.outcome is TransactionVerdictOutcome.INCONCLUSIVE
     assert any(v == "incomplete_frontier" for v in decision.exposure_results.values())
 
@@ -645,13 +618,9 @@ def test_missing_fee_recipient_role_cannot_bypass() -> None:
         (CounterpartyRole.BENEFICIARY, "destination_indirection"),
     ],
 )
-def test_effect_kind_requires_role_or_denies(
-    role: CounterpartyRole, kind: str
-) -> None:
+def test_effect_kind_requires_role_or_denies(role: CounterpartyRole, kind: str) -> None:
     intent = _intent(
-        expected_effects=(
-            ExpectedEffect(effect_id=f"effect:{kind}", kind=kind, summary=kind),
-        ),
+        expected_effects=(ExpectedEffect(effect_id=f"effect:{kind}", kind=kind, summary=kind),),
         fees=(FeeSpec(amount="1", asset_id="asset:eth-native"),),
     )
     # Only sender + recipient — missing the role required by *kind*.
@@ -716,9 +685,7 @@ def test_bridge_leg_screened_when_present() -> None:
     decision = evaluate_compliance_gate(request, now=_NOW_OK)
     assert decision.permits_automation()
     assert CounterpartyRole.BRIDGE_LEG.value in decision.screened_roles
-    assert any(
-        "bridge_leg" in key for key in decision.sanctions_results
-    )
+    assert any("bridge_leg" in key for key in decision.sanctions_results)
 
 
 def test_token_router_proxy_swap_effects_require_roles() -> None:
@@ -802,12 +769,8 @@ def test_token_router_proxy_swap_effects_require_roles() -> None:
             intent=intent,
             candidate=_candidate(intent),
             counterparties=full,
-            sanctions_decisions=tuple(
-                _clear_sanctions(p) for p in full.counterparties
-            ),
-            exposure_decisions=tuple(
-                _clear_exposure(p) for p in full.counterparties
-            ),
+            sanctions_decisions=tuple(_clear_sanctions(p) for p in full.counterparties),
+            exposure_decisions=tuple(_clear_exposure(p) for p in full.counterparties),
             tenant_id="tenant:alpha",
             actor_id="actor:policy-engine",
             policy_id=_POLICY_ID,
@@ -839,9 +802,7 @@ def test_fee_recipient_listed_is_screened_not_only_to() -> None:
 
     request = _passing_request()
     fee_party = next(
-        p
-        for p in request.counterparties.counterparties
-        if p.role is CounterpartyRole.FEE_RECIPIENT
+        p for p in request.counterparties.counterparties if p.role is CounterpartyRole.FEE_RECIPIENT
     )
     sanctions = tuple(
         _clear_sanctions(
@@ -874,9 +835,7 @@ def test_fee_recipient_listed_is_screened_not_only_to() -> None:
 def test_scoped_active_license_downgrades_exact_deny_to_review() -> None:
     request = _passing_request()
     recipient = next(
-        p
-        for p in request.counterparties.counterparties
-        if p.role is CounterpartyRole.RECIPIENT
+        p for p in request.counterparties.counterparties if p.role is CounterpartyRole.RECIPIENT
     )
     sanctions = tuple(
         _clear_sanctions(
@@ -902,9 +861,7 @@ def test_scoped_active_license_downgrades_exact_deny_to_review() -> None:
 def test_expired_license_does_not_override_exact_deny() -> None:
     request = _passing_request()
     recipient = next(
-        p
-        for p in request.counterparties.counterparties
-        if p.role is CounterpartyRole.RECIPIENT
+        p for p in request.counterparties.counterparties if p.role is CounterpartyRole.RECIPIENT
     )
     sanctions = tuple(
         _clear_sanctions(
@@ -923,17 +880,13 @@ def test_expired_license_does_not_override_exact_deny() -> None:
         _passing_request(sanctions_decisions=sanctions), now=_NOW_OK
     )
     assert decision.outcome is TransactionVerdictOutcome.DENY
-    assert any(
-        v == "expired_or_unscoped_license" for v in decision.sanctions_results.values()
-    )
+    assert any(v == "expired_or_unscoped_license" for v in decision.sanctions_results.values())
 
 
 def test_license_wrong_activity_scope_does_not_override() -> None:
     request = _passing_request()
     recipient = next(
-        p
-        for p in request.counterparties.counterparties
-        if p.role is CounterpartyRole.RECIPIENT
+        p for p in request.counterparties.counterparties if p.role is CounterpartyRole.RECIPIENT
     )
     sanctions = tuple(
         _clear_sanctions(
@@ -977,9 +930,7 @@ def test_revalidate_detects_candidate_change() -> None:
     request = _passing_request()
     decision = gate.evaluate(request, now=_NOW_OK)
     assert decision.permits_automation()
-    altered = _passing_request(
-        candidate=_candidate(request.intent, serialized_digest=_DIGEST_B)
-    )
+    altered = _passing_request(candidate=_candidate(request.intent, serialized_digest=_DIGEST_B))
     revalidated = gate.revalidate(decision, altered, now=_NOW_OK)
     assert revalidated.blocks_automation
     assert revalidated.outcome is TransactionVerdictOutcome.STALE

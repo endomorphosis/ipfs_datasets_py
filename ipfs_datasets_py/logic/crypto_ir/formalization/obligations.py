@@ -130,9 +130,7 @@ def _as_mapping(value: Any, name: str) -> Mapping[str, Any]:
     return value
 
 
-def _known_fields(
-    value: Mapping[str, Any], allowed: frozenset[str], name: str
-) -> None:
+def _known_fields(value: Mapping[str, Any], allowed: frozenset[str], name: str) -> None:
     unknown = sorted(set(value) - allowed)
     if unknown:
         raise FormalizationError(f"unknown {name} field(s): {', '.join(unknown)}")
@@ -290,18 +288,10 @@ class FormalObligation:
     LAYER: ClassVar[AuthorityKind] = AuthorityKind.DECLARATION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "obligation_id", _identifier(self.obligation_id, "obligation_id")
-        )
-        object.__setattr__(
-            self, "category", _enum(ObligationCategory, self.category, "category")
-        )
-        object.__setattr__(
-            self, "statement", assert_not_universal_secure(self.statement)
-        )
-        object.__setattr__(
-            self, "formal_target", _text(self.formal_target, "formal_target")
-        )
+        object.__setattr__(self, "obligation_id", _identifier(self.obligation_id, "obligation_id"))
+        object.__setattr__(self, "category", _enum(ObligationCategory, self.category, "category"))
+        object.__setattr__(self, "statement", assert_not_universal_secure(self.statement))
+        object.__setattr__(self, "formal_target", _text(self.formal_target, "formal_target"))
         object.__setattr__(
             self,
             "formal_target_kind",
@@ -314,15 +304,11 @@ class FormalObligation:
             _unique_ids(self.required_fact_ids, "required_fact_ids"),
         )
         if not self.required_fact_ids:
-            raise FormalizationError(
-                "formal obligation must declare at least one required fact"
-            )
+            raise FormalizationError("formal obligation must declare at least one required fact")
         object.__setattr__(
             self,
             "required_semantic_dimensions",
-            _unique_ids(
-                self.required_semantic_dimensions, "required_semantic_dimensions"
-            ),
+            _unique_ids(self.required_semantic_dimensions, "required_semantic_dimensions"),
         )
         if not self.required_semantic_dimensions:
             raise FormalizationError(
@@ -330,18 +316,14 @@ class FormalObligation:
             )
         kind = _enum(ObligationPayloadKind, self.payload_kind, "payload_kind")
         if kind is ObligationPayloadKind.EMPTY:
-            kind = detect_payload_kind(
-                self.payload, formal_target_kind=self.formal_target_kind
-            )
+            kind = detect_payload_kind(self.payload, formal_target_kind=self.formal_target_kind)
         object.__setattr__(self, "payload_kind", kind)
         object.__setattr__(
             self,
             "trusted_assumption_ids",
             _unique_ids(self.trusted_assumption_ids, "trusted_assumption_ids"),
         )
-        object.__setattr__(
-            self, "policy_id", _text(self.policy_id, "policy_id", allow_empty=True)
-        )
+        object.__setattr__(self, "policy_id", _text(self.policy_id, "policy_id", allow_empty=True))
         object.__setattr__(
             self,
             "policy_revision",
@@ -363,18 +345,12 @@ class FormalObligation:
                     ViolationWitness.from_dict(self.violation_witness),
                 )
             else:
-                raise FormalizationError(
-                    "violation_witness must be ViolationWitness or mapping"
-                )
-        object.__setattr__(
-            self, "summary", _text(self.summary, "summary", allow_empty=True)
-        )
+                raise FormalizationError("violation_witness must be ViolationWitness or mapping")
+        object.__setattr__(self, "summary", _text(self.summary, "summary", allow_empty=True))
         if self.summary:
             assert_not_universal_secure(self.summary, field="summary")
         object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
 
     @classmethod
     def from_proof_obligation(
@@ -467,9 +443,7 @@ class FormalObligation:
             "summary": self.summary,
             "trusted_assumption_ids": list(self.trusted_assumption_ids),
             "violation_witness": (
-                self.violation_witness.to_dict()
-                if self.violation_witness is not None
-                else None
+                self.violation_witness.to_dict() if self.violation_witness is not None else None
             ),
         }
 
@@ -508,14 +482,10 @@ class FormalObligation:
             category=value.get("category", ObligationCategory.AUTHORIZATION),
             statement=value.get("statement", ""),
             formal_target=value.get("formal_target", ""),
-            formal_target_kind=value.get(
-                "formal_target_kind", FormalTargetKind.DETERMINISTIC
-            ),
+            formal_target_kind=value.get("formal_target_kind", FormalTargetKind.DETERMINISTIC),
             model_digest=value.get("model_digest", ""),
             required_fact_ids=tuple(value.get("required_fact_ids", ())),
-            required_semantic_dimensions=tuple(
-                value.get("required_semantic_dimensions", ())
-            ),
+            required_semantic_dimensions=tuple(value.get("required_semantic_dimensions", ())),
             payload=value.get("payload", ""),
             payload_kind=value.get("payload_kind", ObligationPayloadKind.EMPTY),
             trusted_assumption_ids=tuple(value.get("trusted_assumption_ids", ())),
@@ -526,9 +496,7 @@ class FormalObligation:
             violation_witness=value.get("violation_witness"),
             summary=value.get("summary", ""),
             attributes=value.get("attributes", {}),
-            schema_version=value.get(
-                "schema_version", FORMAL_OBLIGATION_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", FORMAL_OBLIGATION_SCHEMA_VERSION),
         )
 
     def canonical_bytes(self) -> bytes:

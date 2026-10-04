@@ -58,12 +58,7 @@ class CapabilityAvailability(StrEnum):
 def _text(value: object, field_name: str, *, optional: bool = False) -> str:
     if optional and value == "":
         return ""
-    if (
-        not isinstance(value, str)
-        or not value
-        or value != value.strip()
-        or "\x00" in value
-    ):
+    if not isinstance(value, str) or not value or value != value.strip() or "\x00" in value:
         qualifier = "an empty or " if optional else "a "
         raise KernelCapabilityError(
             f"{field_name} must be {qualifier}non-empty trimmed string without NUL bytes"
@@ -92,9 +87,7 @@ def _enum(value: object, enum_type: type[StrEnum], field_name: str) -> Any:
         return value if isinstance(value, enum_type) else enum_type(value)
     except (TypeError, ValueError) as error:
         choices = ", ".join(repr(item.value) for item in enum_type)
-        raise KernelCapabilityError(
-            f"{field_name} must be one of {choices}"
-        ) from error
+        raise KernelCapabilityError(f"{field_name} must be one of {choices}") from error
 
 
 def content_digest(content: str) -> str:
@@ -181,18 +174,10 @@ class KernelCapabilityState:
             _enum(self.availability, CapabilityAvailability, "availability"),
         )
         object.__setattr__(self, "kernel_id", _text(self.kernel_id, "kernel_id"))
-        object.__setattr__(
-            self, "reason", _text(self.reason, "reason", optional=True)
-        )
-        object.__setattr__(
-            self, "executable", _text(self.executable, "executable", optional=True)
-        )
-        object.__setattr__(
-            self, "module_id", _text(self.module_id, "module_id", optional=True)
-        )
-        object.__setattr__(
-            self, "version", _text(self.version, "version", optional=True)
-        )
+        object.__setattr__(self, "reason", _text(self.reason, "reason", optional=True))
+        object.__setattr__(self, "executable", _text(self.executable, "executable", optional=True))
+        object.__setattr__(self, "module_id", _text(self.module_id, "module_id", optional=True))
+        object.__setattr__(self, "version", _text(self.version, "version", optional=True))
         object.__setattr__(self, "metadata", _frozen(self.metadata, "metadata"))
         if self.schema_version != KERNEL_CAPABILITY_STATE_VERSION:
             raise KernelCapabilityError(
@@ -337,14 +322,14 @@ class DualPlaneCapability:
         if self.wasm.plane is not CapabilityPlane.WASM:
             raise KernelCapabilityError("wasm plane state must use plane=wasm")
         if self.native.kernel_id != self.kernel_id or self.wasm.kernel_id != self.kernel_id:
-            raise KernelCapabilityError("capability plane kernel_id must match dual-plane kernel_id")
+            raise KernelCapabilityError(
+                "capability plane kernel_id must match dual-plane kernel_id"
+            )
         if self.browser is not None:
             if not isinstance(self.browser, KernelCapabilityState):
                 raise KernelCapabilityError("browser must be a KernelCapabilityState")
             if self.browser.plane is not CapabilityPlane.BROWSER:
-                raise KernelCapabilityError(
-                    "browser plane state must use plane=browser"
-                )
+                raise KernelCapabilityError("browser plane state must use plane=browser")
             if self.browser.kernel_id != self.kernel_id:
                 raise KernelCapabilityError(
                     "browser plane kernel_id must match dual-plane kernel_id"
@@ -364,8 +349,10 @@ class DualPlaneCapability:
 
     @property
     def any_available(self) -> bool:
-        return self.native_available or self.wasm_available or (
-            self.browser is not None and self.browser.available
+        return (
+            self.native_available
+            or self.wasm_available
+            or (self.browser is not None and self.browser.available)
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -503,9 +490,7 @@ class WasmCapabilityProbe:
 
         last: KernelCapabilityState | None = None
         for module_id in preferred_module_ids:
-            state = self.probe(
-                kernel_id=kernel_id, module_id=module_id, plane=plane
-            )
+            state = self.probe(kernel_id=kernel_id, module_id=module_id, plane=plane)
             if state.available:
                 return state
             last = state
@@ -531,20 +516,14 @@ class KernelTranslationBinding:
     metadata: FrozenMap = field(default_factory=FrozenMap)
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "translation_id", _text(self.translation_id, "translation_id")
-        )
+        object.__setattr__(self, "translation_id", _text(self.translation_id, "translation_id"))
         object.__setattr__(
             self,
             "translation_digest",
             _digest(self.translation_digest, "translation_digest"),
         )
-        object.__setattr__(
-            self, "source_family", _text(self.source_family, "source_family")
-        )
-        object.__setattr__(
-            self, "target_family", _text(self.target_family, "target_family")
-        )
+        object.__setattr__(self, "source_family", _text(self.source_family, "source_family"))
+        object.__setattr__(self, "target_family", _text(self.target_family, "target_family"))
         object.__setattr__(self, "fidelity", _text(self.fidelity, "fidelity"))
         object.__setattr__(self, "metadata", _frozen(self.metadata, "metadata"))
 
@@ -570,22 +549,16 @@ class KernelSourceTreeBinding:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "tree_id", _text(self.tree_id, "tree_id"))
-        object.__setattr__(
-            self, "root_digest", _digest(self.root_digest, "root_digest")
-        )
+        object.__setattr__(self, "root_digest", _digest(self.root_digest, "root_digest"))
         object.__setattr__(self, "files", _frozen(self.files, "files"))
         if not self.files:
             raise KernelCapabilityError("source tree must list at least one file digest")
         for path, digest in self.files.to_dict().items():
             _text(path, "source tree path")
             _digest(digest, f"source tree digest for {path}")
-        object.__setattr__(
-            self, "primary_path", _text(self.primary_path, "primary_path")
-        )
+        object.__setattr__(self, "primary_path", _text(self.primary_path, "primary_path"))
         if self.primary_path not in self.files:
-            raise KernelCapabilityError(
-                "primary_path must be present in the source tree file map"
-            )
+            raise KernelCapabilityError("primary_path must be present in the source tree file map")
 
     @classmethod
     def from_files(
@@ -630,20 +603,12 @@ class KernelToolchainBinding:
     metadata: FrozenMap = field(default_factory=FrozenMap)
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "toolchain_id", _text(self.toolchain_id, "toolchain_id")
-        )
+        object.__setattr__(self, "toolchain_id", _text(self.toolchain_id, "toolchain_id"))
         object.__setattr__(self, "kernel_id", _text(self.kernel_id, "kernel_id"))
         object.__setattr__(self, "plane", _enum(self.plane, CapabilityPlane, "plane"))
-        object.__setattr__(
-            self, "executable", _text(self.executable, "executable", optional=True)
-        )
-        object.__setattr__(
-            self, "module_id", _text(self.module_id, "module_id", optional=True)
-        )
-        object.__setattr__(
-            self, "version", _text(self.version, "version", optional=True)
-        )
+        object.__setattr__(self, "executable", _text(self.executable, "executable", optional=True))
+        object.__setattr__(self, "module_id", _text(self.module_id, "module_id", optional=True))
+        object.__setattr__(self, "version", _text(self.version, "version", optional=True))
         object.__setattr__(
             self,
             "command_template",
@@ -651,12 +616,8 @@ class KernelToolchainBinding:
         )
         object.__setattr__(self, "metadata", _frozen(self.metadata, "metadata"))
         if self.plane is CapabilityPlane.NATIVE and not self.executable:
-            raise KernelCapabilityError(
-                "native toolchain binding requires an executable"
-            )
-        if self.plane is not CapabilityPlane.NATIVE and not (
-            self.module_id or self.executable
-        ):
+            raise KernelCapabilityError("native toolchain binding requires an executable")
+        if self.plane is not CapabilityPlane.NATIVE and not (self.module_id or self.executable):
             raise KernelCapabilityError(
                 "non-native toolchain binding requires module_id or executable"
             )

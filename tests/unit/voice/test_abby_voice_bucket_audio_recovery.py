@@ -66,9 +66,7 @@ class _DownloadClient:
         expected_size_bytes: int,
     ) -> int:
         payload = self.payloads[path]
-        self.calls.append(
-            (bucket_id, path, expected_xet_hash, expected_size_bytes)
-        )
+        self.calls.append((bucket_id, path, expected_xet_hash, expected_size_bytes))
         assert len(payload) == expected_size_bytes
         return destination.write_bytes(payload)
 
@@ -88,9 +86,7 @@ class _FailSelectedDownloadClient(_DownloadClient):
         expected_size_bytes: int,
     ) -> int:
         if path == self.selected_path:
-            self.calls.append(
-                (bucket_id, path, expected_xet_hash, expected_size_bytes)
-            )
+            self.calls.append((bucket_id, path, expected_xet_hash, expected_size_bytes))
             raise FileNotFoundError(path)
         return super().download_bucket_file(
             bucket_id=bucket_id,
@@ -218,9 +214,9 @@ def test_recovery_is_canary_limited_resumable_and_emits_exact_contracts(
     assert first.summary()["plan_complete"] is False
     assert "complete" not in first.summary()
     assert not first.failures
-    assert bucket_audio_cache_path(cache, record.xet_hash).read_bytes() == payloads[
-        record.bucket_path
-    ]
+    assert (
+        bucket_audio_cache_path(cache, record.xet_hash).read_bytes() == payloads[record.bucket_path]
+    )
     assert read_verified_bucket_audio_jsonl(ledger) == first.records
     assert AbbyVoiceBucketAudioRecovery.from_json(first.to_json()) == first
     assert VerifiedBucketAudioRecord.from_json(record.to_json()) == record
@@ -276,8 +272,7 @@ def test_jsonl_is_strict_and_stale_plan_binding_is_rejected(
     payload["unknown"] = True
     with pytest.raises(BucketAudioRecoveryError, match="unknown fields"):
         parse_verified_bucket_audio_jsonl(
-            json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
-            + b"\n"
+            json.dumps(payload, sort_keys=True, separators=(",", ":")).encode() + b"\n"
         )
 
     stale = replace(
@@ -374,9 +369,7 @@ def test_one_unrecoverable_row_is_disposed_and_later_rows_continue(
     tmp_path: Path,
 ) -> None:
     plan, payloads = _fixture()
-    missing_selection = sorted(
-        plan.selections, key=lambda item: item.response_id
-    )[0]
+    missing_selection = sorted(plan.selections, key=lambda item: item.response_id)[0]
     payloads.pop(missing_selection.selected.path)
     client = _DownloadClient(payloads)
 
@@ -402,9 +395,7 @@ def test_one_unrecoverable_row_is_disposed_and_later_rows_continue(
     assert result.summary()["pending_candidate_count"] == 1
     assert BucketAudioRecoveryFailure.from_json(failure.to_json()) == failure
     assert AbbyVoiceBucketAudioRecovery.from_json(result.to_json()) == result
-    assert read_verified_bucket_audio_jsonl(
-        tmp_path / "verified.jsonl"
-    ) == result.records
+    assert read_verified_bucket_audio_jsonl(tmp_path / "verified.jsonl") == result.records
 
 
 def test_missing_xet_is_a_row_local_failure_disposition(
@@ -419,9 +410,7 @@ def test_missing_xet_is_a_row_local_failure_disposition(
     plan = replace(
         plan,
         selections=tuple(
-            missing_xet_target
-            if item.response_id == target.response_id
-            else item
+            missing_xet_target if item.response_id == target.response_id else item
             for item in plan.selections
         ),
         plan_id="",
@@ -513,9 +502,7 @@ def test_selected_path_failure_uses_only_an_exact_xet_and_size_alternative(
     assert [call[1] for call in client.calls] == [selected.path, alternative_path]
     assert result.records[0].bucket_path == alternative_path
     assert result.records[0].xet_hash == selected.xet_hash
-    assert result.records[0].raw_sha256 == sha256(
-        payloads[alternative_path]
-    ).hexdigest()
+    assert result.records[0].raw_sha256 == sha256(payloads[alternative_path]).hexdigest()
 
 
 def test_checkpoint_interval_is_batched_validated_and_always_finishes(
@@ -524,9 +511,7 @@ def test_checkpoint_interval_is_batched_validated_and_always_finishes(
     import ipfs_datasets_py.voice.bucket_audio_recovery as recovery_module
 
     plan, payloads = _fixture()
-    store = HuggingFaceBucketStore(
-        plan.bucket_id, client=_DownloadClient(payloads)
-    )
+    store = HuggingFaceBucketStore(plan.bucket_id, client=_DownloadClient(payloads))
     with pytest.raises(BucketAudioRecoveryError, match="positive integer"):
         recover_abby_voice_bucket_audio(
             plan=plan,
@@ -542,9 +527,7 @@ def test_checkpoint_interval_is_batched_validated_and_always_finishes(
         writes.append(Path(path))
         return original(path, records)
 
-    monkeypatch.setattr(
-        recovery_module, "write_verified_bucket_audio_jsonl", observed_write
-    )
+    monkeypatch.setattr(recovery_module, "write_verified_bucket_audio_jsonl", observed_write)
     ledger = tmp_path / "checkpointed.jsonl"
     result = recover_abby_voice_bucket_audio(
         plan=plan,

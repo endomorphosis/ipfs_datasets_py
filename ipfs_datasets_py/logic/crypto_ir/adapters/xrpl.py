@@ -109,12 +109,8 @@ TF_LIMIT_QUALITY: Final[int] = 0x00040000
 TF_NO_DIRECT_RIPPLE: Final[int] = 0x00010000
 
 # XRPL base58 alphabet (Ripple alphabet, not Bitcoin)
-_XRPL_B58_ALPHABET: Final[str] = (
-    "rpshnaf39wBUDNEGHJKLM4PQRST7VWXYZ2bcdeCg65jkm8oFqi1tuvAxyz"
-)
-_XRPL_B58_INDEX: Final[dict[str, int]] = {
-    ch: i for i, ch in enumerate(_XRPL_B58_ALPHABET)
-}
+_XRPL_B58_ALPHABET: Final[str] = "rpshnaf39wBUDNEGHJKLM4PQRST7VWXYZ2bcdeCg65jkm8oFqi1tuvAxyz"
+_XRPL_B58_INDEX: Final[dict[str, int]] = {ch: i for i, ch in enumerate(_XRPL_B58_ALPHABET)}
 
 # Classic address: starts with 'r', length typically 25–35 base58 chars
 _CLASSIC_ADDRESS_RE: Final[re.Pattern[str]] = re.compile(r"^r[1-9A-HJ-NP-Za-km-z]{24,34}$")
@@ -454,9 +450,7 @@ class XRPLNetworkAnchor:
             "display_name",
             _text(self.display_name, "display_name", allow_empty=True),
         )
-        object.__setattr__(
-            self, "native_symbol", _text(self.native_symbol, "native_symbol")
-        )
+        object.__setattr__(self, "native_symbol", _text(self.native_symbol, "native_symbol"))
         if (
             isinstance(self.native_decimals, bool)
             or not isinstance(self.native_decimals, int)
@@ -585,9 +579,7 @@ def resolve_network(
     if resolved_id is None:
         raise XRPLAdapterError("chain_id or network is required for XRPL conversion")
     if not genesis_hash:
-        raise XRPLAdapterError(
-            "unknown XRPL chain_id requires an explicit genesis_hash"
-        )
+        raise XRPLAdapterError("unknown XRPL chain_id requires an explicit genesis_hash")
     net_name = network or f"xrpl-{resolved_id}"
     return XRPLNetworkAnchor(
         chain_id=resolved_id,
@@ -621,9 +613,7 @@ class XRPLAccountIdentity:
     attributes: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        classic = normalize_classic_address(
-            self.classic_address, field="classic_address"
-        )
+        classic = normalize_classic_address(self.classic_address, field="classic_address")
         object.__setattr__(self, "classic_address", classic)
         tag = self.destination_tag
         if tag is not None:
@@ -634,13 +624,9 @@ class XRPLAccountIdentity:
         if self.x_address:
             decoded_classic, decoded_tag, is_test = decode_x_address(self.x_address)
             if decoded_classic != classic:
-                raise XRPLAdapterError(
-                    "x_address does not match classic_address"
-                )
+                raise XRPLAdapterError("x_address does not match classic_address")
             if tag is not None and decoded_tag is not None and tag != decoded_tag:
-                raise XRPLAdapterError(
-                    "destination_tag does not match tag encoded in x_address"
-                )
+                raise XRPLAdapterError("destination_tag does not match tag encoded in x_address")
             if tag is None and decoded_tag is not None:
                 object.__setattr__(self, "destination_tag", decoded_tag)
             object.__setattr__(self, "is_test_network", is_test)
@@ -662,9 +648,7 @@ class XRPLAccountIdentity:
                 "address_original",
                 _text(self.address_original, "address_original"),
             )
-        object.__setattr__(
-            self, "account_kind", _text(self.account_kind, "account_kind")
-        )
+        object.__setattr__(self, "account_kind", _text(self.account_kind, "account_kind"))
         object.__setattr__(self, "attributes", _attributes(self.attributes))
 
     @property
@@ -755,9 +739,7 @@ class XRPLAccountIdentity:
         if _X_ADDRESS_RE.fullmatch(text):
             classic, tag, is_test = decode_x_address(text)
             if destination_tag is not None and tag is not None and destination_tag != tag:
-                raise XRPLAdapterError(
-                    "destination_tag conflicts with tag encoded in x_address"
-                )
+                raise XRPLAdapterError("destination_tag conflicts with tag encoded in x_address")
             return cls(
                 classic_address=classic,
                 destination_tag=destination_tag if destination_tag is not None else tag,
@@ -796,15 +778,9 @@ class IssuedAsset:
         currency = _text(self.currency, "currency")
         # Reject bare XRP as issued currency — prevents collision with native.
         if currency.upper() == "XRP":
-            raise XRPLAdapterError(
-                "XRP is the native asset and cannot be an IssuedAsset"
-            )
-        if not (
-            _CURRENCY_STANDARD.fullmatch(currency) or _CURRENCY_HEX.fullmatch(currency)
-        ):
-            raise XRPLAdapterError(
-                "currency must be a 3-char code or 40-hex nonstandard currency"
-            )
+            raise XRPLAdapterError("XRP is the native asset and cannot be an IssuedAsset")
+        if not (_CURRENCY_STANDARD.fullmatch(currency) or _CURRENCY_HEX.fullmatch(currency)):
+            raise XRPLAdapterError("currency must be a 3-char code or 40-hex nonstandard currency")
         # Normalize hex currencies to uppercase; leave standard codes as given.
         if _CURRENCY_HEX.fullmatch(currency):
             object.__setattr__(self, "currency", currency.upper())
@@ -911,13 +887,9 @@ def parse_amount(
         issuer = value.get("issuer", "")
         amount_value = value.get("value", value.get("amount"))
         if currency is None or issuer is None or amount_value is None:
-            raise XRPLAdapterError(
-                f"{field} issued amount requires currency, issuer, and value"
-            )
+            raise XRPLAdapterError(f"{field} issued amount requires currency, issuer, and value")
         if str(currency).upper() == "XRP":
-            raise XRPLAdapterError(
-                f"{field}: XRP must be a drops string, not an issued object"
-            )
+            raise XRPLAdapterError(f"{field}: XRP must be a drops string, not an issued object")
         if isinstance(amount_value, float):
             raise XRPLAdapterError(f"{field}.value rejects binary floats")
         if type(amount_value) is int and not isinstance(amount_value, bool):
@@ -926,9 +898,7 @@ def parse_amount(
             value_str = _text(str(amount_value), f"{field}.value")
         # Allow decimal fractional issued amounts (e.g. "1.5") as exact strings.
         if not re.fullmatch(r"-?(0|[1-9][0-9]*)(\.[0-9]+)?", value_str):
-            raise XRPLAdapterError(
-                f"{field}.value must be a decimal string without exponent"
-            )
+            raise XRPLAdapterError(f"{field}.value must be a decimal string without exponent")
         issued = IssuedAsset(issuer=str(issuer), currency=str(currency))
         return "issued", value_str, issued
     raise XRPLAdapterError(f"{field} must be XRP drops string or issued currency object")
@@ -1066,9 +1036,7 @@ class LedgerTransition:
     raw: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "transition_id", _identifier(self.transition_id, "transition_id")
-        )
+        object.__setattr__(self, "transition_id", _identifier(self.transition_id, "transition_id"))
         if not isinstance(self.transaction_type, XRPLTransitionKind):
             object.__setattr__(
                 self,
@@ -1086,9 +1054,7 @@ class LedgerTransition:
                 if isinstance(self.account, (str, Mapping))
                 else self.account,
             )
-        if self.destination is not None and not isinstance(
-            self.destination, XRPLAccountIdentity
-        ):
+        if self.destination is not None and not isinstance(self.destination, XRPLAccountIdentity):
             object.__setattr__(
                 self,
                 "destination",
@@ -1106,9 +1072,7 @@ class LedgerTransition:
             "transaction_hash",
             "engine_result",
         ):
-            object.__setattr__(
-                self, name, _text(getattr(self, name), name, allow_empty=True)
-            )
+            object.__setattr__(self, name, _text(getattr(self, name), name, allow_empty=True))
         if self.ledger_hash:
             object.__setattr__(
                 self,
@@ -1127,9 +1091,7 @@ class LedgerTransition:
             object.__setattr__(self, "partial_payment", True)
         elif not isinstance(self.partial_payment, bool):
             raise XRPLAdapterError("partial_payment must be a bool")
-        object.__setattr__(
-            self, "sequence", _optional_non_negative_int(self.sequence, "sequence")
-        )
+        object.__setattr__(self, "sequence", _optional_non_negative_int(self.sequence, "sequence"))
         object.__setattr__(
             self,
             "ticket_sequence",
@@ -1138,9 +1100,7 @@ class LedgerTransition:
         object.__setattr__(
             self,
             "last_ledger_sequence",
-            _optional_non_negative_int(
-                self.last_ledger_sequence, "last_ledger_sequence"
-            ),
+            _optional_non_negative_int(self.last_ledger_sequence, "last_ledger_sequence"),
         )
         object.__setattr__(
             self,
@@ -1158,13 +1118,9 @@ class LedgerTransition:
             _optional_non_negative_int(self.signer_quorum, "signer_quorum"),
         )
         if self.fee_drops:
-            if not _DECIMAL_INTEGER.fullmatch(self.fee_drops) or self.fee_drops.startswith(
-                "-"
-            ):
+            if not _DECIMAL_INTEGER.fullmatch(self.fee_drops) or self.fee_drops.startswith("-"):
                 raise XRPLAdapterError("fee_drops must be a non-negative integer string")
-        if self.issued_asset is not None and not isinstance(
-            self.issued_asset, IssuedAsset
-        ):
+        if self.issued_asset is not None and not isinstance(self.issued_asset, IssuedAsset):
             object.__setattr__(
                 self,
                 "issued_asset",
@@ -1189,9 +1145,7 @@ class LedgerTransition:
             "signers",
             tuple(_attributes(_as_mapping(s, "signer")) for s in self.signers),
         )
-        if isinstance(self.memos, (str, bytes, bytearray)) or not isinstance(
-            self.memos, Sequence
-        ):
+        if isinstance(self.memos, (str, bytes, bytearray)) or not isinstance(self.memos, Sequence):
             raise XRPLAdapterError("memos must be a sequence")
         object.__setattr__(
             self,
@@ -1205,9 +1159,7 @@ class LedgerTransition:
         object.__setattr__(
             self,
             "hooks_effects",
-            tuple(
-                _attributes(_as_mapping(h, "hook_effect")) for h in self.hooks_effects
-            ),
+            tuple(_attributes(_as_mapping(h, "hook_effect")) for h in self.hooks_effects),
         )
         if self.trust_line is not None:
             object.__setattr__(
@@ -1242,9 +1194,7 @@ class LedgerTransition:
             "flags": self.flags,
             "hooks_capability_present": self.hooks_capability_present,
             "hooks_effects": [thaw_json(h) for h in self.hooks_effects],
-            "issued_asset": None
-            if self.issued_asset is None
-            else self.issued_asset.to_dict(),
+            "issued_asset": None if self.issued_asset is None else self.issued_asset.to_dict(),
             "last_ledger_sequence": self.last_ledger_sequence,
             "ledger_hash": self.ledger_hash,
             "ledger_index": self.ledger_index,
@@ -1274,9 +1224,7 @@ class LedgerTransition:
             transition_id=value.get(
                 "transition_id", value.get("observation_id", value.get("id", ""))
             ),
-            transaction_type=value.get(
-                "transaction_type", value.get("TransactionType", "Unknown")
-            ),
+            transaction_type=value.get("transaction_type", value.get("TransactionType", "Unknown")),
             account=account_raw
             if isinstance(account_raw, XRPLAccountIdentity)
             else XRPLAccountIdentity.parse(account_raw, field="account"),
@@ -1303,30 +1251,29 @@ class LedgerTransition:
             else (
                 del_issued_raw
                 if isinstance(del_issued_raw, IssuedAsset)
-                else IssuedAsset.from_dict(
-                    _as_mapping(del_issued_raw, "delivered_issued_asset")
-                )
+                else IssuedAsset.from_dict(_as_mapping(del_issued_raw, "delivered_issued_asset"))
             ),
             fee_drops=str(value.get("fee_drops", value.get("Fee", "")) or ""),
             flags=value.get("flags", value.get("Flags", 0)),
             partial_payment=bool(value.get("partial_payment", False)),
             sequence=value.get("sequence", value.get("Sequence")),
             ticket_sequence=value.get("ticket_sequence", value.get("TicketSequence")),
-            last_ledger_sequence=value.get(
-                "last_ledger_sequence", value.get("LastLedgerSequence")
-            ),
+            last_ledger_sequence=value.get("last_ledger_sequence", value.get("LastLedgerSequence")),
             signers=tuple(value.get("signers", value.get("Signers", ())) or ()),
             signer_quorum=value.get("signer_quorum", value.get("SignerQuorum")),
             ledger_index=value.get("ledger_index", value.get("ledger_index")),
             ledger_hash=value.get("ledger_hash", value.get("ledger_hash", "")),
-            transaction_index=value.get(
-                "transaction_index", value.get("transaction_index")
-            ),
+            transaction_index=value.get("transaction_index", value.get("transaction_index")),
             transaction_hash=value.get(
                 "transaction_hash", value.get("hash", value.get("tx_hash", ""))
             ),
             validated=value.get("validated"),
-            engine_result=value.get("engine_result", value.get("meta", {}).get("TransactionResult", "") if isinstance(value.get("meta"), Mapping) else value.get("engine_result", "")),
+            engine_result=value.get(
+                "engine_result",
+                value.get("meta", {}).get("TransactionResult", "")
+                if isinstance(value.get("meta"), Mapping)
+                else value.get("engine_result", ""),
+            ),
             memos=tuple(value.get("memos", value.get("Memos", ())) or ()),
             hooks_capability_present=bool(value.get("hooks_capability_present", False)),
             hooks_effects=tuple(value.get("hooks_effects", ()) or ()),
@@ -1415,9 +1362,7 @@ class XRPLTransactionObservation:
             "wallet_source",
             "xaman_payload_id",
         ):
-            object.__setattr__(
-                self, name, _text(getattr(self, name), name, allow_empty=True)
-            )
+            object.__setattr__(self, name, _text(getattr(self, name), name, allow_empty=True))
         if self.ledger_hash:
             object.__setattr__(
                 self,
@@ -1428,9 +1373,7 @@ class XRPLTransactionObservation:
             self, "destination_tag", _optional_uint32(self.destination_tag, "destination_tag")
         )
         object.__setattr__(self, "flags", parse_flags(self.flags))
-        object.__setattr__(
-            self, "sequence", _optional_non_negative_int(self.sequence, "sequence")
-        )
+        object.__setattr__(self, "sequence", _optional_non_negative_int(self.sequence, "sequence"))
         object.__setattr__(
             self,
             "ticket_sequence",
@@ -1439,9 +1382,7 @@ class XRPLTransactionObservation:
         object.__setattr__(
             self,
             "last_ledger_sequence",
-            _optional_non_negative_int(
-                self.last_ledger_sequence, "last_ledger_sequence"
-            ),
+            _optional_non_negative_int(self.last_ledger_sequence, "last_ledger_sequence"),
         )
         object.__setattr__(
             self,
@@ -1459,9 +1400,7 @@ class XRPLTransactionObservation:
             _optional_non_negative_int(self.signer_quorum, "signer_quorum"),
         )
         if self.fee_drops:
-            if not _DECIMAL_INTEGER.fullmatch(self.fee_drops) or self.fee_drops.startswith(
-                "-"
-            ):
+            if not _DECIMAL_INTEGER.fullmatch(self.fee_drops) or self.fee_drops.startswith("-"):
                 raise XRPLAdapterError("fee_drops must be a non-negative integer string")
         if self.signers is not None:
             if isinstance(self.signers, (str, bytes, bytearray)) or not isinstance(
@@ -1491,10 +1430,7 @@ class XRPLTransactionObservation:
             object.__setattr__(
                 self,
                 "hooks_effects",
-                tuple(
-                    _attributes(_as_mapping(h, "hook_effect"))
-                    for h in self.hooks_effects
-                ),
+                tuple(_attributes(_as_mapping(h, "hook_effect")) for h in self.hooks_effects),
             )
         if self.meta is not None:
             object.__setattr__(self, "meta", _attributes(_as_mapping(self.meta, "meta")))
@@ -1552,9 +1488,7 @@ class XRPLTransactionObservation:
             "retraction": self.retraction,
             "sequence": self.sequence,
             "signer_quorum": self.signer_quorum,
-            "signers": None
-            if self.signers is None
-            else [thaw_json(s) for s in self.signers],
+            "signers": None if self.signers is None else [thaw_json(s) for s in self.signers],
             "ticket_sequence": self.ticket_sequence,
             "transaction_hash": self.transaction_hash,
             "transaction_index": self.transaction_index,
@@ -1597,9 +1531,7 @@ class XRPLTransactionObservation:
             ),
             amount=value.get("amount", value.get("Amount", tx.get("Amount"))),
             delivered_amount=delivered,
-            fee_drops=str(
-                value.get("fee_drops", value.get("Fee", tx.get("Fee", ""))) or ""
-            ),
+            fee_drops=str(value.get("fee_drops", value.get("Fee", tx.get("Fee", ""))) or ""),
             flags=value.get("flags", value.get("Flags", tx.get("Flags", 0))),
             sequence=value.get("sequence", value.get("Sequence", tx.get("Sequence"))),
             ticket_sequence=value.get(
@@ -1680,14 +1612,10 @@ class XRPLPaymentIntent:
             self, "destination_tag", _optional_uint32(self.destination_tag, "destination_tag")
         )
         object.__setattr__(self, "flags", parse_flags(self.flags))
-        object.__setattr__(
-            self, "fee_drops", _text(str(self.fee_drops), "fee_drops")
-        )
+        object.__setattr__(self, "fee_drops", _text(str(self.fee_drops), "fee_drops"))
         if not _DECIMAL_INTEGER.fullmatch(self.fee_drops) or self.fee_drops.startswith("-"):
             raise XRPLAdapterError("fee_drops must be a non-negative integer string")
-        object.__setattr__(
-            self, "sequence", _optional_non_negative_int(self.sequence, "sequence")
-        )
+        object.__setattr__(self, "sequence", _optional_non_negative_int(self.sequence, "sequence"))
         object.__setattr__(
             self,
             "ticket_sequence",
@@ -1696,9 +1624,7 @@ class XRPLPaymentIntent:
         object.__setattr__(
             self,
             "last_ledger_sequence",
-            _optional_non_negative_int(
-                self.last_ledger_sequence, "last_ledger_sequence"
-            ),
+            _optional_non_negative_int(self.last_ledger_sequence, "last_ledger_sequence"),
         )
         for name in (
             "transaction_type",
@@ -1707,9 +1633,7 @@ class XRPLPaymentIntent:
             "wallet_source",
             "xaman_payload_id",
         ):
-            object.__setattr__(
-                self, name, _text(getattr(self, name), name, allow_empty=True)
-            )
+            object.__setattr__(self, name, _text(getattr(self, name), name, allow_empty=True))
         object.__setattr__(self, "attributes", _attributes(self.attributes))
         object.__setattr__(self, "raw", _attributes(self.raw))
 
@@ -1745,21 +1669,13 @@ class XRPLPaymentIntent:
             account=value.get("account", value.get("Account", "")),
             destination=value.get("destination", value.get("Destination", "")),
             amount=value.get("amount", value.get("Amount")),
-            destination_tag=value.get(
-                "destination_tag", value.get("DestinationTag")
-            ),
+            destination_tag=value.get("destination_tag", value.get("DestinationTag")),
             fee_drops=str(value.get("fee_drops", value.get("Fee", "12")) or "12"),
             flags=value.get("flags", value.get("Flags", 0)),
             sequence=value.get("sequence", value.get("Sequence")),
-            ticket_sequence=value.get(
-                "ticket_sequence", value.get("TicketSequence")
-            ),
-            last_ledger_sequence=value.get(
-                "last_ledger_sequence", value.get("LastLedgerSequence")
-            ),
-            transaction_type=value.get(
-                "transaction_type", value.get("TransactionType", "Payment")
-            ),
+            ticket_sequence=value.get("ticket_sequence", value.get("TicketSequence")),
+            last_ledger_sequence=value.get("last_ledger_sequence", value.get("LastLedgerSequence")),
+            transaction_type=value.get("transaction_type", value.get("TransactionType", "Payment")),
             network=value.get("network", ""),
             genesis_hash=value.get("genesis_hash", ""),
             wallet_source=value.get("wallet_source", "xrpl"),
@@ -1801,9 +1717,7 @@ def default_xrpl_capability() -> CapabilityDescriptor:
             "xaman",
             "hooks_capability_gated",
         ),
-        summary=(
-            "XRPL/Xaman native-ledger observation and payment conversion into Crypto IR"
-        ),
+        summary=("XRPL/Xaman native-ledger observation and payment conversion into Crypto IR"),
         attributes={
             "known_chain_ids": sorted(KNOWN_NETWORKS),
             "preserves_raw_evidence": True,
@@ -1870,9 +1784,7 @@ class XRPLWalletAdapter:
         elif isinstance(payload, Mapping):
             payload_map = payload
         else:
-            raise XRPLAdapterError(
-                "payload must be a mapping or XRPL structured record"
-            )
+            raise XRPLAdapterError("payload must be a mapping or XRPL structured record")
 
         source_digest = f"sha256:{content_sha256_hex(dict(payload_map))}"
         provenance_dict: dict[str, Any] = {}
@@ -1900,8 +1812,8 @@ class XRPLWalletAdapter:
             result_authority = source_authority
 
             if kind is XRPLPayloadKind.TRANSACTION_OBSERVATION:
-                result_payload, unsupported, diagnostics, status = (
-                    self._convert_observation(payload_map)
+                result_payload, unsupported, diagnostics, status = self._convert_observation(
+                    payload_map
                 )
             elif kind is XRPLPayloadKind.XAMAN_PAYLOAD:
                 # Xaman wraps XRPL facts; share observation conversion.
@@ -1911,18 +1823,16 @@ class XRPLWalletAdapter:
                     # Promote nested tx into observation fields via from_dict.
                     pass
                 merged["kind"] = XRPLPayloadKind.TRANSACTION_OBSERVATION.value
-                result_payload, unsupported, diagnostics, status = (
-                    self._convert_observation(merged)
-                )
+                result_payload, unsupported, diagnostics, status = self._convert_observation(merged)
                 result_payload["record_type"] = "xaman_payload_observation"
                 result_payload["wallet_source"] = "xaman"
             elif kind is XRPLPayloadKind.PAYMENT_INTENT:
-                result_payload, unsupported, diagnostics, status = (
-                    self._convert_payment_intent(payload_map)
+                result_payload, unsupported, diagnostics, status = self._convert_payment_intent(
+                    payload_map
                 )
             elif kind is XRPLPayloadKind.LEDGER_TRANSITION:
-                result_payload, unsupported, diagnostics, status = (
-                    self._convert_ledger_transition(payload_map)
+                result_payload, unsupported, diagnostics, status = self._convert_ledger_transition(
+                    payload_map
                 )
             elif kind is XRPLPayloadKind.SERIALIZED_CANDIDATE:
                 result_payload, unsupported, diagnostics, status = (
@@ -1992,9 +1902,7 @@ class XRPLWalletAdapter:
             else:
                 kind = default
             return data, kind
-        raise XRPLAdapterError(
-            "source_provenance must be CryptoIRProvenance or mapping"
-        )
+        raise XRPLAdapterError("source_provenance must be CryptoIRProvenance or mapping")
 
     def _detect_kind(self, payload: Mapping[str, Any]) -> XRPLPayloadKind:
         kind_raw = payload.get("kind", payload.get("payload_kind", ""))
@@ -2058,9 +1966,7 @@ class XRPLWalletAdapter:
             # Placeholder fails closed via ERROR if account required for Payment
             raise XRPLAdapterError("account is required for XRPL observation")
 
-        account = XRPLAccountIdentity.parse(
-            obs.account, is_test_network=is_test, field="account"
-        )
+        account = XRPLAccountIdentity.parse(obs.account, is_test_network=is_test, field="account")
         destination: XRPLAccountIdentity | None = None
         if obs.destination:
             destination = XRPLAccountIdentity.parse(
@@ -2160,9 +2066,7 @@ class XRPLWalletAdapter:
             if obs.hooks_effects:
                 hooks_effects = tuple(obs.hooks_effects)
             else:
-                diagnostics.append(
-                    "hooks_capability_present but hooks_effects empty"
-                )
+                diagnostics.append("hooks_capability_present but hooks_effects empty")
         else:
             if obs.hooks_effects:
                 unsupported.append(
@@ -2181,15 +2085,11 @@ class XRPLWalletAdapter:
                 )
 
         if not obs.evm_sidechain_capability_present:
-            diagnostics.append(
-                "EVM sidechain behavior not inferred; capability evidence required"
-            )
+            diagnostics.append("EVM sidechain behavior not inferred; capability evidence required")
 
         tx_type = map_transaction_type(obs.transaction_type)
         if tx_type is XRPLTransitionKind.SET_HOOK and not hooks_present:
-            diagnostics.append(
-                "SetHook transaction observed without hooks capability evidence"
-            )
+            diagnostics.append("SetHook transaction observed without hooks capability evidence")
             unsupported.append(
                 UnsupportedField(
                     path="hooks_capability_present",
@@ -2265,11 +2165,7 @@ class XRPLWalletAdapter:
         else:
             finality = FinalityStatus.UNKNOWN
 
-        retraction = (
-            map_retraction(obs.retraction)
-            if obs.retraction
-            else RetractionStatus.UNKNOWN
-        )
+        retraction = map_retraction(obs.retraction) if obs.retraction else RetractionStatus.UNKNOWN
         if not obs.retraction:
             missing_coverage.append("retraction")
 
@@ -2308,9 +2204,7 @@ class XRPLWalletAdapter:
             else sha256_digest_tag("0" * 64)
         )
         if not transition.transaction_hash:
-            diagnostics.append(
-                "transaction_hash absent; zero digest placeholder for schema only"
-            )
+            diagnostics.append("transaction_hash absent; zero digest placeholder for schema only")
 
         observed = ObservedTransaction(
             observation_id=obs.observation_id,
@@ -2319,9 +2213,7 @@ class XRPLWalletAdapter:
             coordinate=coordinate,
             finality=finality,
             retraction=retraction,
-            validity=ValidityWindow(
-                start=obs.validity_start, end=obs.validity_end
-            ),
+            validity=ValidityWindow(start=obs.validity_start, end=obs.validity_end),
             from_account=from_account,
             to_account=to_account,
             provenance=provenance,
@@ -2394,9 +2286,7 @@ class XRPLWalletAdapter:
             and transition.delivered_issued_asset is not None
         ):
             delivered_record = {
-                "asset": transition.delivered_issued_asset.to_asset_identity(
-                    chain
-                ).to_dict(),
+                "asset": transition.delivered_issued_asset.to_asset_identity(chain).to_dict(),
                 "amount": {
                     "base_units": transition.delivered_amount_value,
                     "decimals": 0,
@@ -2432,16 +2322,8 @@ class XRPLWalletAdapter:
         )
 
         # Explicit Hooks / EVM unsupported semantics
-        hooks_status = (
-            "supported"
-            if transition.hooks_capability_present
-            else "UNSUPPORTED"
-        )
-        evm_status = (
-            "supported"
-            if transition.evm_sidechain_capability_present
-            else "UNSUPPORTED"
-        )
+        hooks_status = "supported" if transition.hooks_capability_present else "UNSUPPORTED"
+        evm_status = "supported" if transition.evm_sidechain_capability_present else "UNSUPPORTED"
 
         result_payload = {
             "record_type": "xrpl_transaction_observation",
@@ -2497,12 +2379,9 @@ class XRPLWalletAdapter:
             else AdapterConversionStatus.PARTIAL
         )
         if missing_coverage:
-            diagnostics.append(
-                "missing_coverage=" + ",".join(sorted(set(missing_coverage)))
-            )
+            diagnostics.append("missing_coverage=" + ",".join(sorted(set(missing_coverage))))
         diagnostics.append(
-            f"chain_id={network.chain_id};network={network.network};"
-            f"genesis={network.genesis_hash}"
+            f"chain_id={network.chain_id};network={network.network};genesis={network.genesis_hash}"
         )
         return result_payload, tuple(unsupported), tuple(diagnostics), status
 
@@ -2536,9 +2415,7 @@ class XRPLWalletAdapter:
         if not transition.hooks_capability_present:
             diagnostics.append("Hooks status=UNSUPPORTED without capability evidence")
         if not transition.evm_sidechain_capability_present:
-            diagnostics.append(
-                "EVM sidechain status=UNSUPPORTED without capability evidence"
-            )
+            diagnostics.append("EVM sidechain status=UNSUPPORTED without capability evidence")
 
         result_payload = {
             "record_type": "xrpl_ledger_transition",
@@ -2556,18 +2433,12 @@ class XRPLWalletAdapter:
             else transition.issued_asset.to_dict(),
             "native_xrp_asset": native_xrp_asset(chain).to_dict(),
             "hooks": {
-                "status": (
-                    "supported"
-                    if transition.hooks_capability_present
-                    else "UNSUPPORTED"
-                ),
+                "status": ("supported" if transition.hooks_capability_present else "UNSUPPORTED"),
                 "capability_present": transition.hooks_capability_present,
             },
             "evm_sidechain": {
                 "status": (
-                    "supported"
-                    if transition.evm_sidechain_capability_present
-                    else "UNSUPPORTED"
+                    "supported" if transition.evm_sidechain_capability_present else "UNSUPPORTED"
                 ),
                 "capability_present": transition.evm_sidechain_capability_present,
             },
@@ -2584,9 +2455,7 @@ class XRPLWalletAdapter:
             if not unsupported
             else AdapterConversionStatus.PARTIAL
         )
-        diagnostics.append(
-            f"chain_id={network.chain_id};network={network.network}"
-        )
+        diagnostics.append(f"chain_id={network.chain_id};network={network.network}")
         return result_payload, tuple(unsupported), tuple(diagnostics), status
 
     def _convert_payment_intent(
@@ -2740,9 +2609,7 @@ class XRPLWalletAdapter:
             if not unsupported
             else AdapterConversionStatus.PARTIAL
         )
-        diagnostics.append(
-            f"chain_id={network.chain_id};network={network.network}"
-        )
+        diagnostics.append(f"chain_id={network.chain_id};network={network.network}")
         return result_payload, tuple(unsupported), tuple(diagnostics), status
 
     def _convert_serialized_candidate(
@@ -2766,9 +2633,7 @@ class XRPLWalletAdapter:
         unsupported: list[UnsupportedField] = []
         diagnostics: list[str] = []
 
-        raw_blob = payload.get(
-            "tx_blob", payload.get("serialized", payload.get("blob"))
-        )
+        raw_blob = payload.get("tx_blob", payload.get("serialized", payload.get("blob")))
         payload_digest = payload.get("payload_digest", "")
         encoding = _text(payload.get("encoding", "xrpl-binary"), "encoding")
         byte_length = payload.get("byte_length")
@@ -2788,9 +2653,7 @@ class XRPLWalletAdapter:
         else:
             raw_hex = None
             if not payload_digest:
-                raise XRPLAdapterError(
-                    "serialized candidate requires tx_blob or payload_digest"
-                )
+                raise XRPLAdapterError("serialized candidate requires tx_blob or payload_digest")
             if byte_length is None:
                 unsupported.append(
                     UnsupportedField(
@@ -2840,26 +2703,19 @@ class XRPLWalletAdapter:
             if not unsupported
             else AdapterConversionStatus.PARTIAL
         )
-        diagnostics.append(
-            f"chain_id={network.chain_id};network={network.network}"
-        )
+        diagnostics.append(f"chain_id={network.chain_id};network={network.network}")
         return result_payload, tuple(unsupported), tuple(diagnostics), status
 
 
 def convert_xrpl_payload(
-    payload: Mapping[str, Any]
-    | XRPLTransactionObservation
-    | XRPLPaymentIntent
-    | LedgerTransition,
+    payload: Mapping[str, Any] | XRPLTransactionObservation | XRPLPaymentIntent | LedgerTransition,
     *,
     source_provenance: CryptoIRProvenance | Mapping[str, Any] | None = None,
     adapter: XRPLWalletAdapter | None = None,
 ) -> AdapterConversionResult:
     """Module-level helper around :class:`XRPLWalletAdapter.convert`."""
 
-    return (adapter or XRPLWalletAdapter()).convert(
-        payload, source_provenance=source_provenance
-    )
+    return (adapter or XRPLWalletAdapter()).convert(payload, source_provenance=source_provenance)
 
 
 __all__ = [

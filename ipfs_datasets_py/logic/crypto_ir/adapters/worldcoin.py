@@ -79,9 +79,7 @@ WORLDCOIN_ADAPTER_SEMANTIC_VERSION: Final[str] = "1.0.0"
 
 # Official World Chain WLD ERC-20 (mainnet chain id 480).
 # Source: https://docs.world.org/world-chain/reference/useful-contracts
-WLD_WORLD_CHAIN_MAINNET_ADDRESS: Final[str] = (
-    "0x2cFc85d8E48F8EAB294be644d9E25C3030863003"
-)
+WLD_WORLD_CHAIN_MAINNET_ADDRESS: Final[str] = "0x2cFc85d8E48F8EAB294be644d9E25C3030863003"
 WLD_DECIMALS: Final[int] = 18
 WLD_SYMBOL: Final[str] = "WLD"
 
@@ -92,9 +90,7 @@ WORLD_ID_NULLIFIER_REF_PREFIX: Final[str] = "worldid-nullifier-ref:v1:"
 WORLD_CHAIN_MAINNET_SETTLEMENT: Final[str] = "ethereum-mainnet"
 WORLD_CHAIN_SEPOLIA_SETTLEMENT: Final[str] = "ethereum-sepolia"
 
-_ID_RE: Final[re.Pattern[str]] = re.compile(
-    r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
-)
+_ID_RE: Final[re.Pattern[str]] = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$")
 _HEX_COMMITMENT_RE: Final[re.Pattern[str]] = re.compile(
     r"^(?:0x)?[0-9a-fA-F]{64}$|^(?:sha256|keccak256|hmac-sha256):[0-9a-fA-F]{64}$"
 )
@@ -244,9 +240,7 @@ def _reject_private_fields(payload: Mapping[str, Any], *, path: str = "") -> Non
             )
         if isinstance(item, Mapping):
             _reject_private_fields(item, path=full)
-        elif isinstance(item, Sequence) and not isinstance(
-            item, (str, bytes, bytearray)
-        ):
+        elif isinstance(item, Sequence) and not isinstance(item, (str, bytes, bytearray)):
             for index, child in enumerate(item):
                 if isinstance(child, Mapping):
                     _reject_private_fields(child, path=f"{full}[{index}]")
@@ -262,9 +256,7 @@ def _protocol_version(value: Any) -> str:
 def _environment(value: Any) -> str:
     text = _text(value, "environment").lower()
     if text not in {"production", "staging", "development", "test"}:
-        raise WorldcoinAdapterError(
-            "environment must be production, staging, development, or test"
-        )
+        raise WorldcoinAdapterError("environment must be production, staging, development, or test")
     return text
 
 
@@ -275,9 +267,7 @@ def world_chain_settlement_layer(chain_id: int) -> str:
         return WORLD_CHAIN_MAINNET_SETTLEMENT
     if chain_id == WORLD_CHAIN_SEPOLIA_CHAIN_ID:
         return WORLD_CHAIN_SEPOLIA_SETTLEMENT
-    raise WorldcoinAdapterError(
-        f"chain_id {chain_id} is not a known World Chain network"
-    )
+    raise WorldcoinAdapterError(f"chain_id {chain_id} is not a known World Chain network")
 
 
 def is_world_chain_id(chain_id: int) -> bool:
@@ -327,9 +317,7 @@ class WorldChainIdentity:
         object.__setattr__(self, "network", anchor.network)
         object.__setattr__(self, "genesis_hash", anchor.genesis_hash)
         settlement = self.settlement_layer or world_chain_settlement_layer(chain_id)
-        object.__setattr__(
-            self, "settlement_layer", _text(settlement, "settlement_layer")
-        )
+        object.__setattr__(self, "settlement_layer", _text(settlement, "settlement_layer"))
         object.__setattr__(
             self,
             "display_name",
@@ -399,9 +387,7 @@ class NullifierBinding:
     attributes: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "binding_id", _identifier(self.binding_id, "binding_id")
-        )
+        object.__setattr__(self, "binding_id", _identifier(self.binding_id, "binding_id"))
         object.__setattr__(
             self,
             "nullifier_commitment",
@@ -410,12 +396,8 @@ class NullifierBinding:
         object.__setattr__(self, "rp_id", _text(self.rp_id, "rp_id"))
         object.__setattr__(self, "action", _text(self.action, "action"))
         object.__setattr__(self, "environment", _environment(self.environment))
-        object.__setattr__(
-            self, "app_id", _text(self.app_id, "app_id", allow_empty=True)
-        )
-        object.__setattr__(
-            self, "protocol_version", _protocol_version(self.protocol_version)
-        )
+        object.__setattr__(self, "app_id", _text(self.app_id, "app_id", allow_empty=True))
+        object.__setattr__(self, "protocol_version", _protocol_version(self.protocol_version))
         object.__setattr__(
             self,
             "nullifier_ref",
@@ -446,9 +428,7 @@ class NullifierBinding:
         # Domain binding is mandatory: rp + action + environment form the
         # external-nullifier / replay domain.
         if not self.rp_id or not self.action:
-            raise WorldcoinAdapterError(
-                "NullifierBinding requires rp_id and action domain binding"
-            )
+            raise WorldcoinAdapterError("NullifierBinding requires rp_id and action domain binding")
 
     @property
     def replay_domain(self) -> dict[str, str]:
@@ -483,9 +463,7 @@ class NullifierBinding:
         value = _as_mapping(value, "NullifierBinding")
         return cls(
             binding_id=value.get("binding_id", value.get("id", "")),
-            nullifier_commitment=value.get(
-                "nullifier_commitment", value.get("nullifier_ref", "")
-            ),
+            nullifier_commitment=value.get("nullifier_commitment", value.get("nullifier_ref", "")),
             rp_id=value.get("rp_id", ""),
             action=value.get("action", ""),
             environment=value.get("environment", "production"),
@@ -544,12 +522,8 @@ class WorldIDObservation:
             "nullifier_commitment",
             _commitment(self.nullifier_commitment, "nullifier_commitment"),
         )
-        object.__setattr__(
-            self, "app_id", _text(self.app_id, "app_id", allow_empty=True)
-        )
-        object.__setattr__(
-            self, "protocol_version", _protocol_version(self.protocol_version)
-        )
+        object.__setattr__(self, "app_id", _text(self.app_id, "app_id", allow_empty=True))
+        object.__setattr__(self, "protocol_version", _protocol_version(self.protocol_version))
         object.__setattr__(
             self, "verifier_id", _text(self.verifier_id, "verifier_id", allow_empty=True)
         )
@@ -600,9 +574,7 @@ class WorldIDObservation:
             object.__setattr__(self, "network", anchor.network)
             object.__setattr__(self, "genesis_hash", anchor.genesis_hash)
         else:
-            object.__setattr__(
-                self, "network", _text(self.network, "network", allow_empty=True)
-            )
+            object.__setattr__(self, "network", _text(self.network, "network", allow_empty=True))
             object.__setattr__(
                 self,
                 "genesis_hash",
@@ -663,9 +635,7 @@ class WorldIDObservation:
             rp_id=value.get("rp_id", ""),
             action=value.get("action", ""),
             environment=value.get("environment", "production"),
-            nullifier_commitment=value.get(
-                "nullifier_commitment", value.get("nullifier_ref", "")
-            ),
+            nullifier_commitment=value.get("nullifier_commitment", value.get("nullifier_ref", "")),
             app_id=value.get("app_id", ""),
             protocol_version=value.get("protocol_version", "4.0"),
             verifier_id=value.get("verifier_id", ""),
@@ -751,9 +721,7 @@ class WorldcoinAdapter:
         if not isinstance(capability, CapabilityDescriptor):
             raise WorldcoinAdapterError("capability must be a CapabilityDescriptor")
         if not capability.side_effect_free:
-            raise WorldcoinAdapterError(
-                "Worldcoin adapter capability must be side-effect-free"
-            )
+            raise WorldcoinAdapterError("Worldcoin adapter capability must be side-effect-free")
         self._capability = capability
         self._evm = evm_adapter or EVMWalletAdapter()
 
@@ -770,10 +738,7 @@ class WorldcoinAdapter:
 
     def convert(
         self,
-        payload: Mapping[str, Any]
-        | WorldIDObservation
-        | NullifierBinding
-        | WorldChainIdentity,
+        payload: Mapping[str, Any] | WorldIDObservation | NullifierBinding | WorldChainIdentity,
         *,
         source_provenance: CryptoIRProvenance | Mapping[str, Any] | None = None,
     ) -> AdapterConversionResult:
@@ -788,9 +753,7 @@ class WorldcoinAdapter:
         elif isinstance(payload, Mapping):
             payload_map = payload
         else:
-            raise WorldcoinAdapterError(
-                "payload must be a mapping or Worldcoin structured record"
-            )
+            raise WorldcoinAdapterError("payload must be a mapping or Worldcoin structured record")
 
         source_digest = f"sha256:{content_sha256_hex(dict(payload_map))}"
         provenance_dict: dict[str, Any] = {}
@@ -900,9 +863,11 @@ class WorldcoinAdapter:
             else:
                 kind_value = data.get("authority_kind", default.value)
             try:
-                kind = AuthorityKind(kind_value) if not isinstance(
-                    kind_value, AuthorityKind
-                ) else kind_value
+                kind = (
+                    AuthorityKind(kind_value)
+                    if not isinstance(kind_value, AuthorityKind)
+                    else kind_value
+                )
             except (TypeError, ValueError) as exc:
                 raise WorldcoinAdapterError(
                     f"unsupported source authority: {kind_value!r}"
@@ -947,9 +912,7 @@ class WorldcoinAdapter:
             return WorldcoinPayloadKind.ACTION_DOMAIN
         if "components" in payload:
             return WorldcoinPayloadKind.COMPOSITION
-        raise WorldcoinAdapterError(
-            "unable to detect Worldcoin payload kind; set kind explicitly"
-        )
+        raise WorldcoinAdapterError("unable to detect Worldcoin payload kind; set kind explicitly")
 
     # ------------------------------------------------------------------
     # Kind converters
@@ -996,8 +959,7 @@ class WorldcoinAdapter:
             )
             chain_dict = identity.to_chain_identity().to_dict()
             diagnostics.append(
-                f"chain_bound=true;chain_id={observation.chain_id};"
-                f"network={observation.network}"
+                f"chain_bound=true;chain_id={observation.chain_id};network={observation.network}"
             )
         else:
             diagnostics.append("chain_bound=false;off_chain_proof_domain")
@@ -1150,9 +1112,7 @@ class WorldcoinAdapter:
 
         chain_id = payload.get("chain_id")
         if chain_id is None:
-            raise WorldcoinAdapterError(
-                "world_chain_transaction requires chain_id (480 or 4801)"
-            )
+            raise WorldcoinAdapterError("world_chain_transaction requires chain_id (480 or 4801)")
         resolved_id = _positive_int(chain_id, "chain_id")
         if not is_world_chain_id(resolved_id):
             raise WorldcoinAdapterError(
@@ -1193,9 +1153,7 @@ class WorldcoinAdapter:
                 "adapter_id": evm_result.adapter_id,
                 "status": evm_result.status.value,
                 "result_payload": thaw_json(evm_result.result_payload),
-                "unsupported_fields": [
-                    item.to_dict() for item in evm_result.unsupported_fields
-                ],
+                "unsupported_fields": [item.to_dict() for item in evm_result.unsupported_fields],
                 "diagnostics": list(evm_result.diagnostics),
             },
             # Composition markers: ledger observation is not a World ID proof.
@@ -1348,9 +1306,7 @@ class WorldcoinAdapter:
         protocol_version = _protocol_version(payload.get("protocol_version", "4.0"))
         external_nullifier_domain = payload.get("external_nullifier_domain") or {}
         if not isinstance(external_nullifier_domain, Mapping):
-            raise WorldcoinAdapterError(
-                "external_nullifier_domain must be a mapping when provided"
-            )
+            raise WorldcoinAdapterError("external_nullifier_domain must be a mapping when provided")
         domain = {
             "rp_id": _optional_text(external_nullifier_domain.get("rp_id"), "rp_id"),
             "app_id": _optional_text(external_nullifier_domain.get("app_id"), "app_id"),
@@ -1391,9 +1347,11 @@ class WorldcoinAdapter:
                 "bridge_observation",
             ],
             "attributes": thaw_json(
-                _attributes(payload.get("attributes") if isinstance(
-                    payload.get("attributes"), Mapping
-                ) else {})
+                _attributes(
+                    payload.get("attributes")
+                    if isinstance(payload.get("attributes"), Mapping)
+                    else {}
+                )
             ),
         }
         status = (
@@ -1420,9 +1378,7 @@ class WorldcoinAdapter:
         )
         dest_chain_id = payload.get("destination_chain_id")
         if dest_chain_id is None:
-            raise WorldcoinAdapterError(
-                "bridge_observation requires destination_chain_id"
-            )
+            raise WorldcoinAdapterError("bridge_observation requires destination_chain_id")
         dest_id = _positive_int(dest_chain_id, "destination_chain_id")
         # At least one side must be World Chain for this composition adapter.
         if not (is_world_chain_id(source_chain_id) or is_world_chain_id(dest_id)):
@@ -1520,9 +1476,7 @@ class WorldcoinAdapter:
             "action": action,
             "app_id": _optional_text(payload.get("app_id"), "app_id"),
             "session_ref": _optional_text(payload.get("session_ref"), "session_ref"),
-            "evidence_digest": _optional_text(
-                payload.get("evidence_digest"), "evidence_digest"
-            ),
+            "evidence_digest": _optional_text(payload.get("evidence_digest"), "evidence_digest"),
             "implies_world_id_proof": False,
             "implies_transaction_authorization": False,
             "implies_legal_identity": False,
@@ -1616,9 +1570,7 @@ class WorldcoinAdapter:
             "composition_id",
         )
         components = payload.get("components")
-        if not isinstance(components, Sequence) or isinstance(
-            components, (str, bytes, bytearray)
-        ):
+        if not isinstance(components, Sequence) or isinstance(components, (str, bytes, bytearray)):
             raise WorldcoinAdapterError("composition.components must be a sequence")
         if not components:
             raise WorldcoinAdapterError("composition.components must not be empty")
@@ -1631,24 +1583,18 @@ class WorldcoinAdapter:
 
         for index, component in enumerate(components):
             if not isinstance(component, Mapping):
-                raise WorldcoinAdapterError(
-                    f"composition.components[{index}] must be a mapping"
-                )
+                raise WorldcoinAdapterError(f"composition.components[{index}] must be a mapping")
             # Prevent recursive unbounded composition nesting without kind.
             if (
                 component.get("kind") == WorldcoinPayloadKind.COMPOSITION.value
                 or "components" in component
             ):
-                raise WorldcoinAdapterError(
-                    "nested composition components are not supported"
-                )
+                raise WorldcoinAdapterError("nested composition components are not supported")
             child = self.convert(component)
             statuses.append(child.status)
             child_payload = thaw_json(child.result_payload)
             record_type = (
-                child_payload.get("record_type")
-                if isinstance(child_payload, Mapping)
-                else None
+                child_payload.get("record_type") if isinstance(child_payload, Mapping) else None
             )
             if record_type:
                 record_types.append(str(record_type))
@@ -1728,19 +1674,14 @@ class WorldcoinAdapter:
 
 
 def convert_worldcoin_payload(
-    payload: Mapping[str, Any]
-    | WorldIDObservation
-    | NullifierBinding
-    | WorldChainIdentity,
+    payload: Mapping[str, Any] | WorldIDObservation | NullifierBinding | WorldChainIdentity,
     *,
     source_provenance: CryptoIRProvenance | Mapping[str, Any] | None = None,
     adapter: WorldcoinAdapter | None = None,
 ) -> AdapterConversionResult:
     """Module-level helper around :class:`WorldcoinAdapter.convert`."""
 
-    return (adapter or WorldcoinAdapter()).convert(
-        payload, source_provenance=source_provenance
-    )
+    return (adapter or WorldcoinAdapter()).convert(payload, source_provenance=source_provenance)
 
 
 # Alias matching AST query / registry naming.

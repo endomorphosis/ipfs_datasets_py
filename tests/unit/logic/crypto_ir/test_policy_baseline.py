@@ -183,9 +183,8 @@ def evaluate_fixture(policy: dict[str, Any], fixture: dict[str, Any]) -> dict[st
             if verdict_id == "ALLOW":
                 violations.append("heuristic_sole_allow")
         # Heuristics never create designation-grade blocked-party conclusions.
-        if (
-            fixture.get("treats_as_designation")
-            or (verdict_id == "DENY" and not fixture.get("exact_designation_hit"))
+        if fixture.get("treats_as_designation") or (
+            verdict_id == "DENY" and not fixture.get("exact_designation_hit")
         ):
             violations.append("heuristic_cannot_become_designation")
 
@@ -297,10 +296,7 @@ def test_policy_is_versioned_normative_json(policy: dict[str, Any]) -> None:
     if "acceptance" in policy:
         acceptance = policy["acceptance"]
         assert acceptance.get("objective_validation_repair") is True
-        assert (
-            acceptance.get("objective_validation_evidence")
-            == OBJECTIVE_VALIDATION_EVIDENCE
-        )
+        assert acceptance.get("objective_validation_evidence") == OBJECTIVE_VALIDATION_EVIDENCE
         assert acceptance.get("repair_task_id") == REPAIR_TASK_ID
         assert acceptance.get("goal_id") == GOAL_ID
 
@@ -373,9 +369,7 @@ def test_analysis_outcome_vocabulary(policy: dict[str, Any]) -> None:
     assert set(by_id) == ANALYSIS_OUTCOMES
     assert all(item["terminal"] is True for item in outcomes)
     fail_closed = {
-        outcome_id
-        for outcome_id, definition in by_id.items()
-        if definition["fail_closed"]
+        outcome_id for outcome_id, definition in by_id.items() if definition["fail_closed"]
     }
     assert fail_closed == FAIL_CLOSED_ANALYSIS
     assert by_id["PROVED"]["fail_closed"] is False
@@ -463,12 +457,8 @@ def test_all_decision_fixtures_match_policy_evaluator(
 
 
 @pytest.mark.parametrize("fixture_id", sorted(REQUIRED_REJECTION_FIXTURES))
-def test_required_rejection_fixture_fails_closed(
-    policy: dict[str, Any], fixture_id: str
-) -> None:
-    fixture = next(
-        item for item in policy["decision_fixtures"] if item["id"] == fixture_id
-    )
+def test_required_rejection_fixture_fails_closed(policy: dict[str, Any], fixture_id: str) -> None:
+    fixture = next(item for item in policy["decision_fixtures"] if item["id"] == fixture_id)
     result = evaluate_fixture(policy, fixture)
     assert fixture["expected_satisfies_allow"] is False
     assert result["satisfies_allow"] is False
@@ -665,9 +655,7 @@ def test_objective_validation_repair_proves_g010_acceptance(
     assert positive_result["blocks_automation"] is False
 
     for fixture_id in REQUIRED_REJECTION_FIXTURES:
-        fixture = next(
-            item for item in policy["decision_fixtures"] if item["id"] == fixture_id
-        )
+        fixture = next(item for item in policy["decision_fixtures"] if item["id"] == fixture_id)
         result = evaluate_fixture(policy, fixture)
         assert result["satisfies_allow"] is False, fixture_id
         assert result["blocks_automation"] is True, fixture_id
@@ -699,9 +687,6 @@ def test_objective_validation_repair_proves_g010_acceptance(
     acceptance = policy.get("acceptance") or {}
     if acceptance:
         assert acceptance.get("objective_validation_repair") is True
-        assert (
-            acceptance.get("objective_validation_evidence")
-            == OBJECTIVE_VALIDATION_EVIDENCE
-        )
+        assert acceptance.get("objective_validation_evidence") == OBJECTIVE_VALIDATION_EVIDENCE
         assert acceptance.get("repair_task_id") == REPAIR_TASK_ID
         assert acceptance.get("goal_id") == GOAL_ID

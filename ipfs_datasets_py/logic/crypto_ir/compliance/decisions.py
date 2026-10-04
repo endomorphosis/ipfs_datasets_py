@@ -46,12 +46,8 @@ from .models import (
 )
 
 
-COMPLIANCE_DECISION_SCHEMA_VERSION: Final[str] = (
-    "ipfs-datasets.crypto-ir.compliance-decision@1.0.0"
-)
-POLICY_COMBINER_SCHEMA_VERSION: Final[str] = (
-    "ipfs-datasets.crypto-ir.policy-combiner@1.0.0"
-)
+COMPLIANCE_DECISION_SCHEMA_VERSION: Final[str] = "ipfs-datasets.crypto-ir.compliance-decision@1.0.0"
+POLICY_COMBINER_SCHEMA_VERSION: Final[str] = "ipfs-datasets.crypto-ir.policy-combiner@1.0.0"
 
 # Fail-closed severity: higher always wins when combining factors so a
 # permissive outcome cannot downgrade a harder one.
@@ -190,13 +186,9 @@ class DecisionReason:
     human_detail: str = ""
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "reason_id", _identifier(self.reason_id, "reason_id")
-        )
+        object.__setattr__(self, "reason_id", _identifier(self.reason_id, "reason_id"))
         object.__setattr__(self, "code", _identifier(self.code, "code"))
-        object.__setattr__(
-            self, "channel", _enum(EvidenceChannel, self.channel, "channel")
-        )
+        object.__setattr__(self, "channel", _enum(EvidenceChannel, self.channel, "channel"))
         object.__setattr__(self, "outcome", _outcome(self.outcome))
         if self.match_level is not None:
             object.__setattr__(
@@ -204,9 +196,7 @@ class DecisionReason:
                 "match_level",
                 _enum(SanctionsMatchLevel, self.match_level, "match_level"),
             )
-        object.__setattr__(
-            self, "evidence_ids", _ids(self.evidence_ids, "evidence_ids")
-        )
+        object.__setattr__(self, "evidence_ids", _ids(self.evidence_ids, "evidence_ids"))
         object.__setattr__(self, "path_ids", _ids(self.path_ids, "path_ids"))
         object.__setattr__(
             self, "counterparty_ids", _ids(self.counterparty_ids, "counterparty_ids")
@@ -251,9 +241,7 @@ class DecisionReason:
             "human_detail": self.human_detail,
             "is_heuristic": self.is_heuristic,
             "machine_detail": self.machine_detail,
-            "match_level": (
-                None if self.match_level is None else self.match_level.value
-            ),
+            "match_level": (None if self.match_level is None else self.match_level.value),
             "may_declare_designation": self.may_declare_designation,
             "notes": list(self.notes),
             "outcome": self.outcome.value,
@@ -316,12 +304,8 @@ class PolicyFactor:
     attributes: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "factor_id", _identifier(self.factor_id, "factor_id")
-        )
-        object.__setattr__(
-            self, "channel", _enum(EvidenceChannel, self.channel, "channel")
-        )
+        object.__setattr__(self, "factor_id", _identifier(self.factor_id, "factor_id"))
+        object.__setattr__(self, "channel", _enum(EvidenceChannel, self.channel, "channel"))
         object.__setattr__(self, "outcome", _outcome(self.outcome))
         reasons = tuple(
             item
@@ -350,33 +334,23 @@ class PolicyFactor:
         )
         if heuristic:
             if self.authority_claim is AuthorityClaim.DESIGNATION:
-                raise DecisionError(
-                    "heuristic evidence cannot claim designation authority"
-                )
+                raise DecisionError("heuristic evidence cannot claim designation authority")
             if self.authority_claim is AuthorityClaim.ALLOW:
-                raise DecisionError(
-                    "heuristic evidence cannot claim allow authority"
-                )
+                raise DecisionError("heuristic evidence cannot claim allow authority")
             if self.outcome is SanctionsPolicyOutcome.ALLOW and not any(
                 r.channel is not EvidenceChannel.HEURISTIC and not r.is_heuristic
                 for r in self.reasons
             ):
                 # Pure heuristic factor may not alone yield ALLOW.
                 if not self.reasons or all(r.is_heuristic for r in self.reasons):
-                    raise DecisionError(
-                        "heuristic evidence cannot alone produce ALLOW"
-                    )
+                    raise DecisionError("heuristic evidence cannot alone produce ALLOW")
             if self.authority_claim is AuthorityClaim.NONE:
-                object.__setattr__(
-                    self, "authority_claim", AuthorityClaim.REVIEW_ONLY
-                )
+                object.__setattr__(self, "authority_claim", AuthorityClaim.REVIEW_ONLY)
         if (
             self.channel.value in _NON_DESIGNATING_CHANNELS
             and self.authority_claim is AuthorityClaim.DESIGNATION
         ):
-            raise DecisionError(
-                f"channel {self.channel.value} cannot claim designation authority"
-            )
+            raise DecisionError(f"channel {self.channel.value} cannot claim designation authority")
 
     @property
     def is_heuristic(self) -> bool:
@@ -416,10 +390,7 @@ class PolicyFactor:
             factor_id=value.get("factor_id", ""),
             channel=value.get("channel", ""),
             outcome=value.get("outcome", ""),
-            reasons=tuple(
-                DecisionReason.from_dict(item)
-                for item in value.get("reasons", ())
-            ),
+            reasons=tuple(DecisionReason.from_dict(item) for item in value.get("reasons", ())),
             authority_claim=value.get("authority_claim", AuthorityClaim.NONE.value),
             uncertainty=bool(value.get("uncertainty", False)),
             attributes=value.get("attributes", {}),
@@ -450,13 +421,9 @@ class PolicyCombiner:
     LAYER: ClassVar[AuthorityKind] = AuthorityKind.DECLARATION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "combiner_id", _identifier(self.combiner_id, "combiner_id")
-        )
+        object.__setattr__(self, "combiner_id", _identifier(self.combiner_id, "combiner_id"))
         object.__setattr__(self, "revision", _identifier(self.revision, "revision"))
-        precedence = tuple(
-            _outcome(item, "outcome_precedence") for item in self.outcome_precedence
-        )
+        precedence = tuple(_outcome(item, "outcome_precedence") for item in self.outcome_precedence)
         if len(precedence) != len(set(precedence)):
             raise DecisionError("outcome_precedence values must be unique")
         if set(precedence) != set(SanctionsPolicyOutcome):
@@ -467,9 +434,7 @@ class PolicyCombiner:
         if type(self.refuse_permissive_downgrade) is not bool:
             raise DecisionError("refuse_permissive_downgrade must be a boolean")
         if self.schema_version != POLICY_COMBINER_SCHEMA_VERSION:
-            raise DecisionError(
-                f"unsupported policy combiner schema: {self.schema_version}"
-            )
+            raise DecisionError(f"unsupported policy combiner schema: {self.schema_version}")
 
     @property
     def rules_digest(self) -> str:
@@ -526,18 +491,14 @@ class PolicyCombiner:
                     )
 
         # Heuristic-only inputs cannot alone produce ALLOW after combination.
-        non_heuristic = [
-            f for f in normalized if not f.is_heuristic
-        ]
+        non_heuristic = [f for f in normalized if not f.is_heuristic]
         if selected is SanctionsPolicyOutcome.ALLOW and not non_heuristic:
             # Only heuristic factors present — force REVIEW.
             selected = SanctionsPolicyOutcome.REVIEW
 
         # Uncertainty without a harder hit fails closed to INCONCLUSIVE
         # when any factor marks uncertainty and selected would be ALLOW.
-        if selected is SanctionsPolicyOutcome.ALLOW and any(
-            f.uncertainty for f in normalized
-        ):
+        if selected is SanctionsPolicyOutcome.ALLOW and any(f.uncertainty for f in normalized):
             selected = SanctionsPolicyOutcome.INCONCLUSIVE
 
         return selected, normalized
@@ -590,12 +551,8 @@ class PolicyCombiner:
                     [o.value for o in _DEFAULT_PRECEDENCE],
                 )
             ),
-            refuse_permissive_downgrade=bool(
-                value.get("refuse_permissive_downgrade", True)
-            ),
-            schema_version=value.get(
-                "schema_version", POLICY_COMBINER_SCHEMA_VERSION
-            ),
+            refuse_permissive_downgrade=bool(value.get("refuse_permissive_downgrade", True)),
+            schema_version=value.get("schema_version", POLICY_COMBINER_SCHEMA_VERSION),
         )
 
     @classmethod
@@ -715,10 +672,7 @@ class EvidenceBindings:
     def is_fresh(self) -> bool:
         """True when age is within the configured maximum (if both set)."""
 
-        if (
-            self.max_snapshot_age_seconds is None
-            or self.snapshot_age_seconds is None
-        ):
+        if self.max_snapshot_age_seconds is None or self.snapshot_age_seconds is None:
             return True
         return self.snapshot_age_seconds <= self.max_snapshot_age_seconds
 
@@ -848,9 +802,7 @@ class ComplianceDecision:
     LAYER: ClassVar[AuthorityKind] = AuthorityKind.RESULT
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "decision_id", _identifier(self.decision_id, "decision_id")
-        )
+        object.__setattr__(self, "decision_id", _identifier(self.decision_id, "decision_id"))
         object.__setattr__(self, "outcome", _outcome(self.outcome))
         reasons = tuple(
             item
@@ -873,9 +825,7 @@ class ComplianceDecision:
                 EvidenceBindings.from_dict(_mapping(self.bindings, "bindings")),
             )
         for name in ("combiner_id", "combiner_revision"):
-            object.__setattr__(
-                self, name, _identifier(getattr(self, name), name)
-            )
+            object.__setattr__(self, name, _identifier(getattr(self, name), name))
         object.__setattr__(
             self,
             "combiner_rules_digest",
@@ -885,9 +835,7 @@ class ComplianceDecision:
             if type(getattr(self, name)) is not bool:
                 raise DecisionError(f"{name} must be a boolean")
         if self.schema_version != COMPLIANCE_DECISION_SCHEMA_VERSION:
-            raise DecisionError(
-                f"unsupported compliance decision schema: {self.schema_version}"
-            )
+            raise DecisionError(f"unsupported compliance decision schema: {self.schema_version}")
         # Structural authority invariants.
         if self.declares_designation:
             raise DecisionError(
@@ -895,9 +843,7 @@ class ComplianceDecision:
                 "designation authority remains with list evidence only"
             )
         if self.heuristic_only and self.outcome is SanctionsPolicyOutcome.ALLOW:
-            raise DecisionError(
-                "heuristic-only decisions cannot produce ALLOW"
-            )
+            raise DecisionError("heuristic-only decisions cannot produce ALLOW")
         if (
             self.heuristic_only
             and self.outcome is SanctionsPolicyOutcome.DENY
@@ -905,8 +851,7 @@ class ComplianceDecision:
         ):
             # Pure heuristic cannot hard-deny as designation; REVIEW only.
             raise DecisionError(
-                "heuristic-only evidence cannot alone produce DENY "
-                "(use REVIEW for prioritization)"
+                "heuristic-only evidence cannot alone produce DENY (use REVIEW for prioritization)"
             )
 
     @property
@@ -997,21 +942,15 @@ class ComplianceDecision:
         return cls(
             decision_id=value.get("decision_id", ""),
             outcome=value.get("outcome", ""),
-            reasons=tuple(
-                DecisionReason.from_dict(item) for item in value.get("reasons", ())
-            ),
-            factors=tuple(
-                PolicyFactor.from_dict(item) for item in value.get("factors", ())
-            ),
+            reasons=tuple(DecisionReason.from_dict(item) for item in value.get("reasons", ())),
+            factors=tuple(PolicyFactor.from_dict(item) for item in value.get("factors", ())),
             bindings=EvidenceBindings.from_dict(value.get("bindings", {})),
             combiner_id=value.get("combiner_id", ""),
             combiner_revision=value.get("combiner_revision", ""),
             combiner_rules_digest=value.get("combiner_rules_digest", ""),
             declares_designation=bool(value.get("declares_designation", False)),
             heuristic_only=bool(value.get("heuristic_only", False)),
-            schema_version=value.get(
-                "schema_version", COMPLIANCE_DECISION_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", COMPLIANCE_DECISION_SCHEMA_VERSION),
         )
 
 
@@ -1099,8 +1038,7 @@ def emit_compliance_decision(
                 outcome=SanctionsPolicyOutcome.INCONCLUSIVE,
                 notes=bindings.uncertainty_codes,
                 human_detail="Uncertainty prevents an automated allow.",
-                machine_detail="uncertainty_codes="
-                + ",".join(bindings.uncertainty_codes),
+                machine_detail="uncertainty_codes=" + ",".join(bindings.uncertainty_codes),
             ),
         )
 
@@ -1115,8 +1053,7 @@ def emit_compliance_decision(
                 channel=EvidenceChannel.HEURISTIC,
                 outcome=SanctionsPolicyOutcome.REVIEW,
                 human_detail=(
-                    "Heuristic evidence requested review; it cannot alone deny "
-                    "or designate."
+                    "Heuristic evidence requested review; it cannot alone deny or designate."
                 ),
                 machine_detail="heuristic_only_deny_downgraded_to_review",
             ),

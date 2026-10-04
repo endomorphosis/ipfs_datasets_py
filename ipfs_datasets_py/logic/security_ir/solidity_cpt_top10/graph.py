@@ -187,29 +187,19 @@ def _cid(value: Any, label: str) -> str:
         or not value.startswith("b")
         or any(character not in _CID_ALPHABET for character in value)
     ):
-        raise GraphValidationError(
-            f"{label} must be an ir_core raw/sha2-256 CIDv1"
-        )
+        raise GraphValidationError(f"{label} must be an ir_core raw/sha2-256 CIDv1")
     try:
         encoded = value[1:].upper()
         raw = base64.b32decode(encoded + ("=" * ((-len(encoded)) % 8)))
     except (ValueError, base64.binascii.Error) as exc:
-        raise GraphValidationError(
-            f"{label} must be an ir_core raw/sha2-256 CIDv1"
-        ) from exc
+        raise GraphValidationError(f"{label} must be an ir_core raw/sha2-256 CIDv1") from exc
     if len(raw) != 36 or not raw.startswith(_IR_CORE_CID_HEADER):
-        raise GraphValidationError(
-            f"{label} must be an ir_core raw/sha2-256 CIDv1"
-        )
+        raise GraphValidationError(f"{label} must be an ir_core raw/sha2-256 CIDv1")
     return value
 
 
-def _cid_tuple(
-    value: Any, label: str, *, nonempty: bool = True
-) -> tuple[str, ...]:
-    if isinstance(value, (str, bytes, bytearray)) or not isinstance(
-        value, Sequence
-    ):
+def _cid_tuple(value: Any, label: str, *, nonempty: bool = True) -> tuple[str, ...]:
+    if isinstance(value, (str, bytes, bytearray)) or not isinstance(value, Sequence):
         raise GraphValidationError(f"{label} must be a sequence of CIDs")
     result = tuple(sorted(_cid(item, f"{label} item") for item in value))
     if nonempty and not result:
@@ -231,13 +221,9 @@ class GraphOntology:
         if self.version != GRAPH_ONTOLOGY_VERSION:
             raise GraphValidationError("unsupported graph ontology version")
         if self.node_types != tuple(item.value for item in GraphNodeType):
-            raise GraphValidationError(
-                "node_types must exactly match the reviewed vocabulary"
-            )
+            raise GraphValidationError("node_types must exactly match the reviewed vocabulary")
         if self.edge_types != tuple(item.value for item in GraphEdgeType):
-            raise GraphValidationError(
-                "edge_types must exactly match the reviewed vocabulary"
-            )
+            raise GraphValidationError("edge_types must exactly match the reviewed vocabulary")
 
     def validate_edge(
         self,
@@ -259,9 +245,7 @@ class GraphOntology:
         else:
             expected_class = GraphEdgeClass.STRUCTURAL
         if category is not expected_class:
-            raise GraphValidationError(
-                f"{edge.value} must be classified as {expected_class.value}"
-            )
+            raise GraphValidationError(f"{edge.value} must be classified as {expected_class.value}")
 
         declaration_nodes = {
             GraphNodeType.SOURCE_UNIT,
@@ -303,12 +287,16 @@ class GraphOntology:
                 GraphNodeType.QUALITY_SCORE,
             }
         elif edge is GraphEdgeType.DECLARES:
-            valid = source in {
-                GraphNodeType.SOURCE_UNIT,
-                GraphNodeType.CONTRACT,
-                GraphNodeType.LIBRARY,
-                GraphNodeType.INTERFACE,
-            } and target in declaration_nodes
+            valid = (
+                source
+                in {
+                    GraphNodeType.SOURCE_UNIT,
+                    GraphNodeType.CONTRACT,
+                    GraphNodeType.LIBRARY,
+                    GraphNodeType.INTERFACE,
+                }
+                and target in declaration_nodes
+            )
         elif edge is GraphEdgeType.INHERITS:
             valid = source in {
                 GraphNodeType.CONTRACT,
@@ -352,10 +340,14 @@ class GraphOntology:
                 GraphNodeType.STATE_ACCESS,
             }
         elif edge is GraphEdgeType.EMITS:
-            valid = source in {
-                GraphNodeType.FUNCTION,
-                GraphNodeType.CONTRACT,
-            } and target is GraphNodeType.EVENT
+            valid = (
+                source
+                in {
+                    GraphNodeType.FUNCTION,
+                    GraphNodeType.CONTRACT,
+                }
+                and target is GraphNodeType.EVENT
+            )
         elif edge is GraphEdgeType.GUARDS:
             valid = source in {
                 GraphNodeType.FUNCTION,
@@ -366,11 +358,15 @@ class GraphOntology:
                 GraphNodeType.CANDIDATE_CLAIM,
             }
         elif edge is GraphEdgeType.MAY_EFFECT:
-            valid = source in {
-                GraphNodeType.FUNCTION,
-                GraphNodeType.CALL_SITE,
-                GraphNodeType.EFFECT_SUMMARY,
-            } and target is GraphNodeType.EFFECT_SUMMARY
+            valid = (
+                source
+                in {
+                    GraphNodeType.FUNCTION,
+                    GraphNodeType.CALL_SITE,
+                    GraphNodeType.EFFECT_SUMMARY,
+                }
+                and target is GraphNodeType.EFFECT_SUMMARY
+            )
         elif edge is GraphEdgeType.DERIVED_FROM:
             valid = target is GraphNodeType.SOURCE
         elif edge is GraphEdgeType.GROUNDED_IN:
@@ -423,8 +419,7 @@ class GraphOntology:
             valid = source is target and source is not GraphNodeType.SOURCE
         if not valid:
             raise GraphValidationError(
-                f"{edge.value} does not permit "
-                f"{source.value} -> {target.value}"
+                f"{edge.value} does not permit {source.value} -> {target.value}"
             )
 
     def to_dict(self) -> dict[str, Any]:
@@ -466,9 +461,7 @@ class GraphConfig:
 
     @property
     def cid(self) -> str:
-        return canonical_config_cid(
-            self.to_dict(), schema_version=self.schema_version
-        )
+        return canonical_config_cid(self.to_dict(), schema_version=self.schema_version)
 
 
 @dataclass(frozen=True, slots=True)
@@ -493,9 +486,7 @@ class SimilarityObservation:
         ):
             object.__setattr__(self, name, _cid(getattr(self, name), name))
         if self.source_record_cid == self.target_record_cid:
-            raise GraphValidationError(
-                "similarity observation endpoints must be distinct"
-            )
+            raise GraphValidationError("similarity observation endpoints must be distinct")
         object.__setattr__(
             self,
             "evidence_cids",
@@ -503,12 +494,7 @@ class SimilarityObservation:
         )
         for name in ("model_id", "model_revision", "metric"):
             value = getattr(self, name)
-            if (
-                not isinstance(value, str)
-                or not value
-                or value != value.strip()
-                or "\x00" in value
-            ):
+            if not isinstance(value, str) or not value or value != value.strip() or "\x00" in value:
                 raise GraphValidationError(f"{name} must be clean non-empty text")
         if (
             isinstance(self.score, bool)
@@ -519,9 +505,7 @@ class SimilarityObservation:
         object.__setattr__(self, "score", float(self.score))
         edge = _enum_value(GraphEdgeType, self.edge_type, "edge_type")
         if edge not in _SIMILARITY_EDGES:
-            raise GraphValidationError(
-                "similarity observation edge_type must be a similarity edge"
-            )
+            raise GraphValidationError("similarity observation edge_type must be a similarity edge")
         object.__setattr__(self, "edge_type", edge)
 
     def to_dict(self) -> dict[str, Any]:
@@ -585,9 +569,7 @@ def _freeze_adjacency(
     result: dict[str, tuple[str, ...]] = {}
     for key, edge_ids in value.items():
         node_cid = _cid(key, f"{label} node")
-        result[node_cid] = _cid_tuple(
-            edge_ids, f"{label}[{node_cid}]", nonempty=False
-        )
+        result[node_cid] = _cid_tuple(edge_ids, f"{label}[{node_cid}]", nonempty=False)
     return MappingProxyType(dict(sorted(result.items())))
 
 
@@ -641,14 +623,10 @@ class SoliditySecurityGraph:
             if node.config_cid != self.config_cid:
                 raise GraphValidationError("node config binding mismatch")
             if node.payload.get("grants_execution_authority") is not False:
-                raise GraphValidationError(
-                    "graph nodes must explicitly deny execution authority"
-                )
+                raise GraphValidationError("graph nodes must explicitly deny execution authority")
             if node.node_type == GraphNodeType.QUALITY_SCORE.value:
                 if node.payload.get("is_security_label") is not False:
-                    raise GraphValidationError(
-                        "quality_score nodes must not be security labels"
-                    )
+                    raise GraphValidationError("quality_score nodes must not be security labels")
             # Authority-type nodes must declare the matching authority_type.
             if node.node_type in {item.value for item in _AUTHORITY_NODE_TYPES}:
                 declared = node.payload.get("authority_type")
@@ -668,9 +646,7 @@ class SoliditySecurityGraph:
             if edge.config_cid != self.config_cid:
                 raise GraphValidationError("edge config binding mismatch")
             if edge.payload.get("grants_execution_authority") is not False:
-                raise GraphValidationError(
-                    "graph edges must explicitly deny execution authority"
-                )
+                raise GraphValidationError("graph edges must explicitly deny execution authority")
             category = _edge_class(edge)
             GRAPH_ONTOLOGY.validate_edge(
                 edge.edge_type,
@@ -682,9 +658,7 @@ class SoliditySecurityGraph:
                 edge.payload.get("authority") != "non_authoritative"
                 or edge.payload.get("authoritative") is not False
             ):
-                raise GraphValidationError(
-                    "similarity edges must be explicitly non-authoritative"
-                )
+                raise GraphValidationError("similarity edges must be explicitly non-authoritative")
 
         expected_outgoing, expected_incoming = _build_adjacency(nodes, edges)
         outgoing = (
@@ -710,12 +684,8 @@ class SoliditySecurityGraph:
         )
         computed_adjacency_root = _identity_root(
             {
-                "incoming": {
-                    key: list(value) for key, value in incoming.items()
-                },
-                "outgoing": {
-                    key: list(value) for key, value in outgoing.items()
-                },
+                "incoming": {key: list(value) for key, value in incoming.items()},
+                "outgoing": {key: list(value) for key, value in outgoing.items()},
             },
             "adjacency-index",
         )
@@ -741,9 +711,7 @@ class SoliditySecurityGraph:
             "root",
         )
         if self.graph_root and self.graph_root != computed_graph_root:
-            raise GraphValidationError(
-                "graph_root does not match canonical graph tables"
-            )
+            raise GraphValidationError("graph_root does not match canonical graph tables")
         object.__setattr__(self, "graph_root", computed_graph_root)
 
     @property
@@ -753,25 +721,15 @@ class SoliditySecurityGraph:
     @property
     def semantic_edges(self) -> tuple[GraphEdge, ...]:
         return tuple(
-            item
-            for item in self.edges
-            if _edge_class(item) is not GraphEdgeClass.SIMILARITY
+            item for item in self.edges if _edge_class(item) is not GraphEdgeClass.SIMILARITY
         )
 
     @property
     def similarity_edges(self) -> tuple[GraphEdge, ...]:
-        return tuple(
-            item
-            for item in self.edges
-            if _edge_class(item) is GraphEdgeClass.SIMILARITY
-        )
+        return tuple(item for item in self.edges if _edge_class(item) is GraphEdgeClass.SIMILARITY)
 
     def nodes_by_type(self, node_type: GraphNodeType | str) -> tuple[GraphNode, ...]:
-        value = (
-            node_type.value
-            if isinstance(node_type, GraphNodeType)
-            else str(node_type)
-        )
+        value = node_type.value if isinstance(node_type, GraphNodeType) else str(node_type)
         return tuple(item for item in self.nodes if item.node_type == value)
 
     def edge_ids_from(self, node_cid: str) -> tuple[str, ...]:
@@ -793,15 +751,11 @@ class SoliditySecurityGraph:
             "edge_table_root": self.edge_table_root,
             "edges": [item.to_dict() for item in self.edges],
             "graph_root": self.graph_root,
-            "incoming": {
-                key: list(value) for key, value in self.incoming.items()
-            },
+            "incoming": {key: list(value) for key, value in self.incoming.items()},
             "node_table_root": self.node_table_root,
             "nodes": [item.to_dict() for item in self.nodes],
             "ontology_version": self.ontology_version,
-            "outgoing": {
-                key: list(value) for key, value in self.outgoing.items()
-            },
+            "outgoing": {key: list(value) for key, value in self.outgoing.items()},
             "projection_cids": list(self.projection_cids),
             "schema_version": self.schema_version,
             "source_cids": list(self.source_cids),
@@ -865,9 +819,7 @@ class SoliditySecurityGraph:
             raise GraphValidationError(f"invalid graph artifact: {exc}") from exc
 
     @classmethod
-    def from_json(
-        cls, value: str | bytes | bytearray
-    ) -> "SoliditySecurityGraph":
+    def from_json(cls, value: str | bytes | bytearray) -> "SoliditySecurityGraph":
         if not isinstance(value, (str, bytes, bytearray)):
             raise GraphValidationError("graph JSON must be text or bytes")
 
@@ -875,16 +827,12 @@ class SoliditySecurityGraph:
             result: dict[str, Any] = {}
             for key, item in items:
                 if key in result:
-                    raise GraphValidationError(
-                        f"graph JSON contains duplicate field {key!r}"
-                    )
+                    raise GraphValidationError(f"graph JSON contains duplicate field {key!r}")
                 result[key] = item
             return result
 
         def reject_constant(constant: str) -> None:
-            raise GraphValidationError(
-                f"graph JSON contains non-finite number {constant}"
-            )
+            raise GraphValidationError(f"graph JSON contains non-finite number {constant}")
 
         try:
             decoded = json.loads(
@@ -973,17 +921,12 @@ class SolidityGraphBuilder:
             raise GraphBuildError("at least one projection is required")
         if not all(isinstance(item, ProjectionResult) for item in projections):
             raise TypeError("every projection must be ProjectionResult")
-        if isinstance(
-            similarity_observations, (str, bytes, bytearray)
-        ) or not isinstance(similarity_observations, Sequence):
-            raise TypeError("similarity_observations must be a sequence")
-        if not all(
-            isinstance(item, SimilarityObservation)
-            for item in similarity_observations
+        if isinstance(similarity_observations, (str, bytes, bytearray)) or not isinstance(
+            similarity_observations, Sequence
         ):
-            raise TypeError(
-                "every similarity observation must be SimilarityObservation"
-            )
+            raise TypeError("similarity_observations must be a sequence")
+        if not all(isinstance(item, SimilarityObservation) for item in similarity_observations):
+            raise TypeError("every similarity observation must be SimilarityObservation")
 
         ordered = tuple(sorted(projections, key=lambda item: item.cid))
         if len({item.cid for item in ordered}) != len(ordered):
@@ -1019,17 +962,13 @@ class SolidityGraphBuilder:
                 spec.payload = clean_payload
                 specs[identity] = spec
             elif spec.payload != clean_payload:
-                raise GraphBuildError(
-                    f"conflicting payload for {node_type.value} node {key!r}"
-                )
+                raise GraphBuildError(f"conflicting payload for {node_type.value} node {key!r}")
             spec.source_cids.update(source_cids)
             spec.parent_cids.update(parent_cids)
             if record_cid:
                 previous = record_keys.setdefault(record_cid, identity)
                 if previous != identity:
-                    raise GraphBuildError(
-                        "record maps to conflicting graph nodes"
-                    )
+                    raise GraphBuildError("record maps to conflicting graph nodes")
             return identity
 
         for projection in ordered:
@@ -1047,16 +986,12 @@ class SolidityGraphBuilder:
                 parent_cids=(projection.cid,),
                 payload={"config_cid": projection.config_cid},
             )
-            relations.add(
-                (GraphEdgeType.DERIVED_FROM, config_key, source_key)
-            )
+            relations.add((GraphEdgeType.DERIVED_FROM, config_key, source_key))
 
             units_by_cid = {item.cid: item for item in projection.code_units}
             unit_keys: dict[str, tuple[GraphNodeType, str]] = {}
             for unit in projection.code_units:
-                node_type = _UNIT_KIND_TO_NODE.get(
-                    unit.unit_kind, GraphNodeType.SOURCE_UNIT
-                )
+                node_type = _UNIT_KIND_TO_NODE.get(unit.unit_kind, GraphNodeType.SOURCE_UNIT)
                 unit_key = add_node(
                     node_type,
                     unit.cid,
@@ -1075,13 +1010,9 @@ class SolidityGraphBuilder:
                     record_cid=unit.cid,
                 )
                 unit_keys[unit.cid] = unit_key
-                relations.add(
-                    (GraphEdgeType.DERIVED_FROM, unit_key, source_key)
-                )
+                relations.add((GraphEdgeType.DERIVED_FROM, unit_key, source_key))
                 if unit.unit_kind == UnitKind.SOURCE_UNIT.value:
-                    relations.add(
-                        (GraphEdgeType.CONTAINS, source_key, unit_key)
-                    )
+                    relations.add((GraphEdgeType.CONTAINS, source_key, unit_key))
 
             # Link declaration hierarchy from parent_cids among code units.
             for unit in projection.code_units:
@@ -1099,17 +1030,11 @@ class SolidityGraphBuilder:
                             UnitKind.LIBRARY.value,
                             UnitKind.INTERFACE.value,
                         }:
-                            relations.add(
-                                (GraphEdgeType.DECLARES, parent_key, unit_key)
-                            )
+                            relations.add((GraphEdgeType.DECLARES, parent_key, unit_key))
                         else:
-                            relations.add(
-                                (GraphEdgeType.CONTAINS, parent_key, unit_key)
-                            )
+                            relations.add((GraphEdgeType.CONTAINS, parent_key, unit_key))
                     elif parent_cid == projection.source_cid:
-                        relations.add(
-                            (GraphEdgeType.DERIVED_FROM, unit_key, source_key)
-                        )
+                        relations.add((GraphEdgeType.DERIVED_FROM, unit_key, source_key))
 
             # Structural call/state edges among concrete declaration nodes.
             functions = [
@@ -1144,35 +1069,23 @@ class SolidityGraphBuilder:
             ]
             for call_key in call_sites:
                 for function_key in functions[:1]:
-                    relations.add(
-                        (GraphEdgeType.CALLS, function_key, call_key)
-                    )
+                    relations.add((GraphEdgeType.CALLS, function_key, call_key))
             for access_key, access_kind in state_accesses:
                 for variable_key in variables[:1]:
                     if access_kind == "read":
-                        relations.add(
-                            (GraphEdgeType.READS, access_key, variable_key)
-                        )
+                        relations.add((GraphEdgeType.READS, access_key, variable_key))
                     elif access_kind == "write":
-                        relations.add(
-                            (GraphEdgeType.WRITES, access_key, variable_key)
-                        )
+                        relations.add((GraphEdgeType.WRITES, access_key, variable_key))
             for effect_key in effects:
                 for function_key in functions[:1]:
-                    relations.add(
-                        (GraphEdgeType.MAY_EFFECT, function_key, effect_key)
-                    )
+                    relations.add((GraphEdgeType.MAY_EFFECT, function_key, effect_key))
             for event_key in events:
                 for function_key in functions[:1]:
-                    relations.add(
-                        (GraphEdgeType.EMITS, function_key, event_key)
-                    )
+                    relations.add((GraphEdgeType.EMITS, function_key, event_key))
 
             for fact in projection.structural_facts:
                 if fact.code_unit_cid not in units_by_cid:
-                    raise GraphBuildError(
-                        "structural fact references an unknown code unit"
-                    )
+                    raise GraphBuildError("structural fact references an unknown code unit")
                 unit_key = unit_keys[fact.code_unit_cid]
                 fact_type = _fact_node_type(fact)
                 fact_key = add_node(
@@ -1190,24 +1103,15 @@ class SolidityGraphBuilder:
                     },
                     record_cid=fact.cid,
                 )
-                relations.add(
-                    (GraphEdgeType.GROUNDED_IN, fact_key, unit_key)
-                )
+                relations.add((GraphEdgeType.GROUNDED_IN, fact_key, unit_key))
                 if fact.kind is FactKind.LICENSE:
-                    relations.add(
-                        (GraphEdgeType.HAS_LICENSE, source_key, fact_key)
-                    )
+                    relations.add((GraphEdgeType.HAS_LICENSE, source_key, fact_key))
                 elif fact.kind is FactKind.COMPILER:
-                    relations.add(
-                        (GraphEdgeType.HAS_COMPILER, source_key, fact_key)
-                    )
+                    relations.add((GraphEdgeType.HAS_COMPILER, source_key, fact_key))
                 elif fact.kind is FactKind.SECURITY_CONCEPT or (
-                    fact.authority_type
-                    is SolidityAuthorityType.INFERRED_CANDIDATE
+                    fact.authority_type is SolidityAuthorityType.INFERRED_CANDIDATE
                 ):
-                    relations.add(
-                        (GraphEdgeType.CANDIDATE_FOR, unit_key, fact_key)
-                    )
+                    relations.add((GraphEdgeType.CANDIDATE_FOR, unit_key, fact_key))
 
             if projection.quality_score is not None:
                 quality_key = add_node(
@@ -1220,14 +1124,11 @@ class SolidityGraphBuilder:
                         "score": projection.quality_score,
                     },
                 )
-                relations.add(
-                    (GraphEdgeType.CONTAINS, source_key, quality_key)
-                )
+                relations.add((GraphEdgeType.CONTAINS, source_key, quality_key))
 
         if len(specs) > self.config.max_nodes:
             raise GraphBuildError(
-                f"graph has {len(specs)} nodes; max_nodes is "
-                f"{self.config.max_nodes}"
+                f"graph has {len(specs)} nodes; max_nodes is {self.config.max_nodes}"
             )
         nodes: list[GraphNode] = []
         node_by_key: dict[tuple[GraphNodeType, str], GraphNode] = {}
@@ -1282,9 +1183,7 @@ class SolidityGraphBuilder:
                     "similarity endpoint is outside the supplied projections"
                 ) from exc
             if source.node_type != target.node_type:
-                raise GraphBuildError(
-                    "similarity endpoints must have the same node type"
-                )
+                raise GraphBuildError("similarity endpoints must have the same node type")
             edges.append(
                 self._edge(
                     observation.edge_type,
@@ -1296,19 +1195,14 @@ class SolidityGraphBuilder:
             )
         if len(edges) > self.config.max_edges:
             raise GraphBuildError(
-                f"graph has {len(edges)} edges; max_edges is "
-                f"{self.config.max_edges}"
+                f"graph has {len(edges)} edges; max_edges is {self.config.max_edges}"
             )
         return SoliditySecurityGraph(
             nodes=tuple(nodes),
             edges=tuple(edges),
             source_cids=tuple(
                 sorted(
-                    {
-                        source
-                        for projection in ordered
-                        for source in (projection.source_cid,)
-                    }
+                    {source for projection in ordered for source in (projection.source_cid,)}
                     | {
                         evidence
                         for observation in similarity_observations
@@ -1354,11 +1248,7 @@ class SolidityGraphBuilder:
             edge_payload.setdefault("authority", "non_authoritative")
         return GraphEdge(
             source_cids=tuple(
-                sorted(
-                    set(source.source_cids)
-                    | set(target.source_cids)
-                    | set(extra_source_cids)
-                )
+                sorted(set(source.source_cids) | set(target.source_cids) | set(extra_source_cids))
             ),
             parent_cids=(source.cid, target.cid),
             config_cid=self.config_cid,

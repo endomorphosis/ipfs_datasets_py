@@ -78,12 +78,8 @@ def _policy(
 ) -> InformationFlowPolicy:
     labels = (
         SecurityLabel("label:user", "user_id", SecurityLevel.LOW, ObservationKind.INPUT),
-        SecurityLabel(
-            "label:secret", "secret", SecurityLevel.HIGH, ObservationKind.INPUT
-        ),
-        SecurityLabel(
-            "label:status", "status", SecurityLevel.LOW, ObservationKind.OUTPUT
-        ),
+        SecurityLabel("label:secret", "secret", SecurityLevel.HIGH, ObservationKind.INPUT),
+        SecurityLabel("label:status", "status", SecurityLevel.LOW, ObservationKind.OUTPUT),
         SecurityLabel(
             "label:token",
             "public_token",
@@ -145,8 +141,7 @@ def _alternating_document(
     """Build a general multi-trace formula with the requested quantifier prefix."""
 
     variables = tuple(
-        TraceVariable(f"var:pi{index + 1}", f"pi{index + 1}")
-        for index in range(len(signature))
+        TraceVariable(f"var:pi{index + 1}", f"pi{index + 1}") for index in range(len(signature))
     )
     prefix = tuple(
         QuantifierBinding(
@@ -163,8 +158,7 @@ def _alternating_document(
         variables=variables,
         quantifier_prefix=prefix,
         matrix_statement=" ".join(
-            f"{item.quantifier.value} {variables[index].name}."
-            for index, item in enumerate(prefix)
+            f"{item.quantifier.value} {variables[index].name}." for index, item in enumerate(prefix)
         )
         + " true",
     )
@@ -805,9 +799,7 @@ def test_absent_tool_returns_unavailable_without_fallback():
 
 def test_unsupported_alternation_returns_non_success():
     # AutoHyper rejects forall-exists prefixes.
-    document = _alternating_document(
-        signature=(TraceQuantifier.FORALL, TraceQuantifier.EXISTS)
-    )
+    document = _alternating_document(signature=(TraceQuantifier.FORALL, TraceQuantifier.EXISTS))
     backend = AutoHyperBackend(
         which=lambda name: "/bin/autohyper" if "auto" in name.lower() else None,
         executable="/bin/autohyper",
@@ -818,9 +810,7 @@ def test_unsupported_alternation_returns_non_success():
     assert "forall-exists" in outcome.receipt.reason
 
     # MCHyper rejects exists-forall prefixes.
-    document_ef = _alternating_document(
-        signature=(TraceQuantifier.EXISTS, TraceQuantifier.FORALL)
-    )
+    document_ef = _alternating_document(signature=(TraceQuantifier.EXISTS, TraceQuantifier.FORALL))
     mc = MCHyperBackend(executable="/bin/mchyper")
     outcome_ef = mc.check(document_ef)
     assert outcome_ef.result.status is ResultStatus.UNSUPPORTED

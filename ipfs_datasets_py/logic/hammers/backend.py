@@ -112,8 +112,7 @@ class SolverProvider(Protocol):
 
     provider_id: str
 
-    def is_available(self) -> bool:
-        ...
+    def is_available(self) -> bool: ...
 
     def search(
         self,
@@ -134,8 +133,7 @@ class ReconstructorProvider(Protocol):
     provider_id: str
     itp: str
 
-    def is_available(self) -> bool:
-        ...
+    def is_available(self) -> bool: ...
 
     def reconstruct(
         self,
@@ -143,8 +141,7 @@ class ReconstructorProvider(Protocol):
         candidate: Mapping[str, Any],
         native_source: str,
         bounds: ExecutionBounds,
-    ) -> Mapping[str, Any]:
-        ...
+    ) -> Mapping[str, Any]: ...
 
 
 @dataclass(frozen=True, slots=True)
@@ -160,9 +157,7 @@ class HammerProviderSpec:
         if not isinstance(self.provider_id, str) or not self.provider_id.strip():
             raise HammerBackendError("provider_id must be a non-empty string")
         if self.kind not in {"solver", "reconstructor", "kernel"}:
-            raise HammerBackendError(
-                "kind must be one of 'solver', 'reconstructor', 'kernel'"
-            )
+            raise HammerBackendError("kind must be one of 'solver', 'reconstructor', 'kernel'")
         if not isinstance(self.available, bool):
             raise HammerBackendError("available must be a boolean")
 
@@ -265,8 +260,7 @@ class HammerStageReceipt:
                     "theorem authority requires kernel_receipts status=verified"
                 )
         if (
-            self.stage is HammerStage.SMT_ATP_SEARCH
-            or self.stage is HammerStage.PROOF_CANDIDATES
+            self.stage is HammerStage.SMT_ATP_SEARCH or self.stage is HammerStage.PROOF_CANDIDATES
         ) and self.authority is not ResultAuthority.CANDIDATE:
             raise HammerBackendError(
                 "search and proof-candidate stages are candidate authority only"
@@ -308,8 +302,7 @@ class HammerSearchCandidate:
     def __post_init__(self) -> None:
         if self.reconstructed:
             raise HammerBackendError(
-                "HammerSearchCandidate cannot be marked reconstructed; "
-                "use the reconstruction stage"
+                "HammerSearchCandidate cannot be marked reconstructed; use the reconstruction stage"
             )
         if not self.candidate_id or not str(self.candidate_id).strip():
             raise HammerBackendError("candidate_id must be non-empty")
@@ -374,23 +367,17 @@ class HammerBackendOutcome:
             "candidates": [item.to_dict() for item in self.candidates],
             "interface_version": self.interface_version,
             "kernel_outcome": (
-                self.kernel_outcome.to_dict()
-                if self.kernel_outcome is not None
-                else None
+                self.kernel_outcome.to_dict() if self.kernel_outcome is not None else None
             ),
             "premises": [
                 item.to_dict() if hasattr(item, "to_dict") else dict(item)  # type: ignore[arg-type]
                 for item in self.premises
             ],
             "provider_registry": (
-                self.provider_registry.to_dict()
-                if self.provider_registry is not None
-                else None
+                self.provider_registry.to_dict() if self.provider_registry is not None else None
             ),
             "reconstruction": (
-                self.reconstruction.to_dict()
-                if self.reconstruction is not None
-                else None
+                self.reconstruction.to_dict() if self.reconstruction is not None else None
             ),
             "request_digest": self.request_digest,
             "result": self.result.to_dict(),
@@ -400,9 +387,7 @@ class HammerBackendOutcome:
 
 def _text(value: object, field_name: str) -> str:
     if not isinstance(value, str) or not value.strip() or "\x00" in value:
-        raise HammerBackendError(
-            f"{field_name} must be a non-empty string without NUL bytes"
-        )
+        raise HammerBackendError(f"{field_name} must be a non-empty string without NUL bytes")
     return value.strip()
 
 
@@ -442,9 +427,7 @@ class _CallableSolverProvider:
         premises: Sequence[PremiseRecord],
         bounds: ExecutionBounds,
     ) -> Mapping[str, Any]:
-        return self._runner(
-            translation=translation, premises=premises, bounds=bounds
-        )
+        return self._runner(translation=translation, premises=premises, bounds=bounds)
 
 
 class _CallableReconstructorProvider:
@@ -473,9 +456,7 @@ class _CallableReconstructorProvider:
         native_source: str,
         bounds: ExecutionBounds,
     ) -> Mapping[str, Any]:
-        return self._runner(
-            candidate=candidate, native_source=native_source, bounds=bounds
-        )
+        return self._runner(candidate=candidate, native_source=native_source, bounds=bounds)
 
 
 class HammerBackend:
@@ -489,9 +470,7 @@ class HammerBackend:
 
     interface_version: Final = HAMMER_BACKEND_VERSION
     backend_id: Final = "hammer"
-    aliases: Final = frozenset(
-        {"hammer-backend", "itp-hammer", "sledgehammer-compat"}
-    )
+    aliases: Final = frozenset({"hammer-backend", "itp-hammer", "sledgehammer-compat"})
     stage_order: Final = _STAGE_ORDER
 
     def __init__(
@@ -499,8 +478,7 @@ class HammerBackend:
         *,
         backend_version: str = "hammer",
         solver_providers: Sequence[SolverProvider | str] | None = None,
-        reconstructor_providers: Sequence[ReconstructorProvider | str]
-        | None = None,
+        reconstructor_providers: Sequence[ReconstructorProvider | str] | None = None,
         isabelle_kernel: IsabelleKernelBackend | None = None,
         corpus: CorpusManifest | None = None,
         policy: HammerPolicy | None = None,
@@ -572,15 +550,11 @@ class HammerBackend:
                 }
 
             runner = _unavailable
-        self.register_solver(
-            _CallableSolverProvider(provider_id, runner, available=available)
-        )
+        self.register_solver(_CallableSolverProvider(provider_id, runner, available=available))
 
     def register_reconstructor(self, provider: ReconstructorProvider) -> None:
         if not isinstance(provider, ReconstructorProvider):
-            raise HammerBackendError(
-                "provider must implement ReconstructorProvider"
-            )
+            raise HammerBackendError("provider must implement ReconstructorProvider")
         self._reconstructors[_text(provider.provider_id, "provider_id")] = provider
 
     def register_reconstructor_id(
@@ -604,9 +578,7 @@ class HammerBackend:
 
             runner = _unavailable
         self.register_reconstructor(
-            _CallableReconstructorProvider(
-                provider_id, resolved_itp, runner, available=available
-            )
+            _CallableReconstructorProvider(provider_id, resolved_itp, runner, available=available)
         )
 
     def provider_registry(self) -> HammerProviderRegistry:
@@ -750,11 +722,7 @@ class HammerBackend:
 
         bounds = bounds or ExecutionBounds(timeout_ms=1000, max_steps=32)
         translation = dict(translation or {"target": "smtlib", "status": "supported"})
-        requested = (
-            tuple(provider_ids)
-            if provider_ids is not None
-            else tuple(self._solvers.keys())
-        )
+        requested = tuple(provider_ids) if provider_ids is not None else tuple(self._solvers.keys())
         candidates: list[HammerSearchCandidate] = []
         diagnostics: list[str] = []
         used: list[str] = []
@@ -768,16 +736,12 @@ class HammerBackend:
                 diagnostics.append(f"solver provider unavailable: {provider_id}")
                 continue
             used.append(provider_id)
-            raw = provider.search(
-                translation=translation, premises=premises, bounds=bounds
-            )
+            raw = provider.search(translation=translation, premises=premises, bounds=bounds)
             verdict = str(raw.get("verdict", "unknown")).lower()
             # Hard gate: never promote search success.
             if verdict in {"proved", "unsat", "theorem", "verified"}:
                 verdict_label = (
-                    "proved"
-                    if verdict in {"proved", "theorem", "verified"}
-                    else verdict
+                    "proved" if verdict in {"proved", "theorem", "verified"} else verdict
                 )
             else:
                 verdict_label = verdict
@@ -789,10 +753,7 @@ class HammerBackend:
                 )
             )
             premise_ids = tuple(
-                str(item)
-                for item in (
-                    raw.get("premise_ids") or [p.premise_id for p in premises]
-                )
+                str(item) for item in (raw.get("premise_ids") or [p.premise_id for p in premises])
             )
             candidates.append(
                 HammerSearchCandidate(
@@ -802,13 +763,9 @@ class HammerBackend:
                     premise_ids=premise_ids,
                     evidence_digest=str(
                         raw.get("evidence_digest")
-                        or stable_digest(
-                            {"raw": dict(raw), "provider": provider_id}
-                        )
+                        or stable_digest({"raw": dict(raw), "provider": provider_id})
                     ),
-                    raw_excerpt=str(
-                        raw.get("raw_excerpt") or raw.get("stdout") or ""
-                    )[:512],
+                    raw_excerpt=str(raw.get("raw_excerpt") or raw.get("stdout") or "")[:512],
                 )
             )
 
@@ -839,11 +796,7 @@ class HammerBackend:
         )
         candidate_receipt = HammerStageReceipt(
             stage=HammerStage.PROOF_CANDIDATES,
-            status=(
-                HammerStageStatus.CANDIDATE_ONLY
-                if candidates
-                else HammerStageStatus.SKIPPED
-            ),
+            status=(HammerStageStatus.CANDIDATE_ONLY if candidates else HammerStageStatus.SKIPPED),
             provider_ids=tuple(used),
             authority=ResultAuthority.CANDIDATE,
             payload=FrozenMap(
@@ -870,9 +823,7 @@ class HammerBackend:
 
         bounds = bounds or ExecutionBounds(timeout_ms=5000, max_steps=64)
         candidate_map = (
-            candidate.to_dict()
-            if isinstance(candidate, HammerSearchCandidate)
-            else dict(candidate)
+            candidate.to_dict() if isinstance(candidate, HammerSearchCandidate) else dict(candidate)
         )
         resolved_provider = provider_id or itp
         provider = self._reconstructors.get(resolved_provider)
@@ -905,11 +856,7 @@ class HammerBackend:
             bounds=bounds,
         )
         kernel_accepted = bool(raw.get("kernel_accepted", False))
-        status = (
-            HammerStageStatus.COMPLETED
-            if kernel_accepted
-            else HammerStageStatus.FAILED
-        )
+        status = HammerStageStatus.COMPLETED if kernel_accepted else HammerStageStatus.FAILED
         # Reconstruction stage itself does not grant theorem authority —
         # that is reserved for the kernel_receipts stage.
         receipt = HammerStageReceipt(
@@ -922,14 +869,10 @@ class HammerBackend:
                     "candidate_id": candidate_map.get("candidate_id", ""),
                     "kernel_accepted": kernel_accepted,
                     "itp": itp,
-                    "checked_source_digest": str(
-                        raw.get("checked_source_digest") or ""
-                    ),
+                    "checked_source_digest": str(raw.get("checked_source_digest") or ""),
                 }
             ),
-            diagnostics=tuple(
-                str(item) for item in (raw.get("diagnostics") or ()) if item
-            ),
+            diagnostics=tuple(str(item) for item in (raw.get("diagnostics") or ()) if item),
         )
         return dict(raw), receipt
 
@@ -1021,10 +964,7 @@ class HammerBackend:
         self._validate_request(request)
         payload = self._payload(request)
         selected_stages = (
-            tuple(
-                s if isinstance(s, HammerStage) else HammerStage(s)
-                for s in stages
-            )
+            tuple(s if isinstance(s, HammerStage) else HammerStage(s) for s in stages)
             if stages is not None
             else tuple(HammerStage(name) for name in self.stage_order)
         )
@@ -1037,16 +977,10 @@ class HammerBackend:
         usage = ResourceUsage()
 
         goal_statement = str(
-            payload.get("goal_statement")
-            or payload.get("goal")
-            or payload.get("source")
-            or "goal"
+            payload.get("goal_statement") or payload.get("goal") or payload.get("source") or "goal"
         )
         native_source = str(
-            payload.get("native_source")
-            or payload.get("source")
-            or payload.get("isabelle")
-            or ""
+            payload.get("native_source") or payload.get("source") or payload.get("isabelle") or ""
         )
         top_k = int(payload.get("top_k", 8))
         itp = str(payload.get("itp") or payload.get("target_itp") or "isabelle")
@@ -1092,9 +1026,7 @@ class HammerBackend:
                     stage=HammerStage.RECONSTRUCTION,
                     status=HammerStageStatus.SKIPPED,
                     authority=ResultAuthority.RECONSTRUCTION,
-                    diagnostics=(
-                        "reconstruction skipped: missing candidate or native_source",
-                    ),
+                    diagnostics=("reconstruction skipped: missing candidate or native_source",),
                 )
             stage_receipts.append(recon_receipt)
 
@@ -1111,11 +1043,7 @@ class HammerBackend:
                 kernel_payload = {
                     "encoding": "isabelle",
                     "source": native_source,
-                    "path": str(
-                        payload.get("path")
-                        or payload.get("file_name")
-                        or "Goal.thy"
-                    ),
+                    "path": str(payload.get("path") or payload.get("file_name") or "Goal.thy"),
                 }
                 if isinstance(payload.get("translation"), Mapping):
                     kernel_payload["translation"] = dict(payload["translation"])

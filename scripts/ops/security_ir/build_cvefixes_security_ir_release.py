@@ -113,23 +113,17 @@ MODEL_REVISION: Final = "1110a243fdf4706b3f48f1d95db1a4f5529b4d41"
 MODEL_DIMENSION: Final = 384
 SENTENCE_TRANSFORMERS_VERSION: Final = "5.4.1"
 CUDA_IMAGE: Final = "nvcr.io/nvidia/pytorch:25.11-py3"
-CUDA_IMAGE_DIGEST: Final = (
-    "sha256:417cbf33f87b5378849df37983552cd1f8bc8b62fe1ceabe004de816a55dff21"
-)
+CUDA_IMAGE_DIGEST: Final = "sha256:417cbf33f87b5378849df37983552cd1f8bc8b62fe1ceabe004de816a55dff21"
 BUILD_SCHEMA_VERSION: Final = "cvefixes-complete-hf-build/v1"
 CORPUS_SCHEMA_VERSION: Final = "cvefixes-hf-corpus/v1"
 META_SCHEMA_VERSION: Final = "cvefixes-hf-shard-meta/v1"
-ORIGINAL_ROW_INDEX_SCHEMA_VERSION: Final = (
-    "cvefixes-hf-original-row-index/v1"
-)
+ORIGINAL_ROW_INDEX_SCHEMA_VERSION: Final = "cvefixes-hf-original-row-index/v1"
 ORIGINAL_MIRROR_PROFILE: Final = "cvefixes-byte-preserving-mirror/v1"
 EMBEDDING_MODEL_CONFIG_VERSION: Final = "cvefixes-embedding-model-config/v1"
 # ``dataset_infos.json`` is reserved by Hugging Face Datasets/Viewer.  Keep the
 # content-addressed release binding in a separate, ordinary Hub artifact.
 RELEASE_METADATA_FILENAME: Final = "release-metadata.json"
-SOURCE_URI: Final = (
-    f"hf://datasets/{CVEFIXES_DATASET_ID}@{CVEFIXES_REVISION}"
-)
+SOURCE_URI: Final = f"hf://datasets/{CVEFIXES_DATASET_ID}@{CVEFIXES_REVISION}"
 MAX_TEXT_CHARS: Final = 4_096
 _CID_RE: Final = re.compile(r"b[a-z2-7]{58}")
 _SHA256_RE: Final = re.compile(r"[0-9a-f]{64}")
@@ -168,14 +162,10 @@ VIEWER_CONFIG_PATHS: Final[dict[str, str]] = {
     "corpus_chunk_index": "indexes/corpus_chunks.parquet",
     "graph_edges": "data/graph/edges/*.parquet",
     "graph_incoming_adjacency": "data/graph/adjacency/incoming/*.parquet",
-    "graph_incoming_adjacency_index": (
-        "indexes/graph_incoming_adjacency.parquet"
-    ),
+    "graph_incoming_adjacency_index": ("indexes/graph_incoming_adjacency.parquet"),
     "graph_nodes": "data/graph/nodes/*.parquet",
     "graph_outgoing_adjacency": "data/graph/adjacency/outgoing/*.parquet",
-    "graph_outgoing_adjacency_index": (
-        "indexes/graph_outgoing_adjacency.parquet"
-    ),
+    "graph_outgoing_adjacency_index": ("indexes/graph_outgoing_adjacency.parquet"),
     "original_data": "data/original/*.parquet",
     "original_row_index": "indexes/original_rows.parquet",
     "vector_meta_index": "indexes/vector_chunks.parquet",
@@ -207,13 +197,9 @@ INDEX_CONFIGS: Final[dict[str, str]] = {
     "indexes/bm25_keyword_shards.parquet": "bm25_keyword_index",
     "indexes/corpus_chunks.parquet": "corpus_chunk_index",
     "indexes/graph_edge_chunks.parquet": "graph_edge_chunk_index",
-    "indexes/graph_incoming_adjacency.parquet": (
-        "graph_incoming_adjacency_index"
-    ),
+    "indexes/graph_incoming_adjacency.parquet": ("graph_incoming_adjacency_index"),
     "indexes/graph_node_chunks.parquet": "graph_node_chunk_index",
-    "indexes/graph_outgoing_adjacency.parquet": (
-        "graph_outgoing_adjacency_index"
-    ),
+    "indexes/graph_outgoing_adjacency.parquet": ("graph_outgoing_adjacency_index"),
     "indexes/original_rows.parquet": "original_row_index",
     "indexes/vector_chunks.parquet": "vector_meta_index",
 }
@@ -234,9 +220,7 @@ def _canonical_json(value: Any) -> bytes:
 
 
 def _log(event: str, **values: Any) -> None:
-    sys.stdout.write(
-        _canonical_json({"event": event, **values}).decode("ascii") + "\n"
-    )
+    sys.stdout.write(_canonical_json({"event": event, **values}).decode("ascii") + "\n")
     sys.stdout.flush()
 
 
@@ -414,11 +398,7 @@ def _record_entry(
         shard_key=_shard_key(record.cid),
         kind=kind,
         text=_bounded_text((text,)),
-        source_cids=(
-            tuple(source_cids)
-            if source_cids is not None
-            else record.source_cids
-        ),
+        source_cids=(tuple(source_cids) if source_cids is not None else record.source_cids),
         authority=authority,
         cwes=tuple(sorted(set(cwes))),
         languages=tuple(sorted(set(languages))),
@@ -468,9 +448,7 @@ def _materialize_source(source_root: Path) -> Materialization:
         for batch in parquet.iter_batches(batch_size=16):
             for raw in batch.to_pylist():
                 if not isinstance(raw, Mapping):
-                    raise CompleteReleaseBuildError(
-                        f"source row {row_index} is not a mapping"
-                    )
+                    raise CompleteReleaseBuildError(f"source row {row_index} is not a mapping")
                 try:
                     row = adapt_cvefixes_row(raw, row_index=row_index)
                 except Exception as exc:
@@ -543,9 +521,7 @@ def _materialize_source(source_root: Path) -> Materialization:
                     projection = _without_semantic_facts(projection)
                     counts["personal_data_fact_omissions"] += 1
                 materialized = materialize_classification(row, projection)
-                source_record = _valid_source_record(
-                    row, projection, admission
-                )
+                source_record = _valid_source_record(row, projection, admission)
                 projections.append(projection)
                 records.extend(
                     (
@@ -578,11 +554,7 @@ def _materialize_source(source_root: Path) -> Materialization:
                             kind="security_ir_source_record",
                             text=compact_source_text,
                             cwes=(row.cwe_id,) if row.cwe_id else (),
-                            languages=(
-                                (projection.language,)
-                                if projection.language
-                                else ()
-                            ),
+                            languages=((projection.language,) if projection.language else ()),
                         ),
                         _record_entry(
                             materialized.candidate,
@@ -596,11 +568,7 @@ def _materialize_source(source_root: Path) -> Materialization:
                                 )
                             ),
                             cwes=(row.cwe_id,) if row.cwe_id else (),
-                            languages=(
-                                (projection.language,)
-                                if projection.language
-                                else ()
-                            ),
+                            languages=((projection.language,) if projection.language else ()),
                             policies=(
                                 "classification_only",
                                 "forbidden_constraints_unresolved",
@@ -622,9 +590,7 @@ def _materialize_source(source_root: Path) -> Materialization:
                 counts["code_units"] += len(projection.code_units)
                 counts["pairs"] += len(projection.pairs)
                 counts["semantic_facts"] += len(projection.semantic_facts)
-                counts["projection_diagnostics"] += len(
-                    projection.diagnostics
-                )
+                counts["projection_diagnostics"] += len(projection.diagnostics)
                 row_index += 1
                 if row_index % 250 == 0:
                     _log(
@@ -641,13 +607,8 @@ def _materialize_source(source_root: Path) -> Materialization:
         )
     if counts["admitted_rows"] + counts["rejected_rows"] != CVEFIXES_ROW_COUNT:
         raise CompleteReleaseBuildError("source coverage is incomplete")
-    if (
-        len(source_row_cids) != CVEFIXES_ROW_COUNT
-        or len(source_row_statuses) != CVEFIXES_ROW_COUNT
-    ):
-        raise CompleteReleaseBuildError(
-            "ordered source-row lineage inventory is incomplete"
-        )
+    if len(source_row_cids) != CVEFIXES_ROW_COUNT or len(source_row_statuses) != CVEFIXES_ROW_COUNT:
+        raise CompleteReleaseBuildError("ordered source-row lineage inventory is incomplete")
     if not projections:
         raise CompleteReleaseBuildError("no source rows passed admission")
 
@@ -664,9 +625,7 @@ def _materialize_source(source_root: Path) -> Materialization:
     counts["graph_edges"] = len(graph.edges)
 
     evaluation = EvaluationRecord(
-        source_cids=tuple(
-            sorted(set(source_row_cids))
-        ),
+        source_cids=tuple(sorted(set(source_row_cids))),
         parent_cids=(graph.graph_root,),
         config_cid=canonical_config_cid(
             {
@@ -733,9 +692,7 @@ def _license_provenance() -> LicenseProvenance:
         dataset_id=CVEFIXES_DATASET_ID,
         source_revision=CVEFIXES_REVISION,
         license_expression="Apache-2.0",
-        evidence_url=(
-            "https://huggingface.co/datasets/hitoshura25/cvefixes"
-        ),
+        evidence_url=("https://huggingface.co/datasets/hitoshura25/cvefixes"),
         review_status=LicenseReviewStatus.REVIEWED,
         reviewed_by="Publicus Security IR release review",
         reviewed_at="2026-07-29T00:00:00Z",
@@ -746,9 +703,7 @@ def _license_provenance() -> LicenseProvenance:
 def _ordered_unembedded_entries(
     materialization: Materialization,
 ) -> tuple[RetrievalEntry, ...]:
-    partition = {
-        node.cid: "train" for node in materialization.graph.nodes
-    }
+    partition = {node.cid: "train" for node in materialization.graph.nodes}
     base = graph_entries(
         materialization.graph,
         partition_by_node=partition,
@@ -757,9 +712,7 @@ def _ordered_unembedded_entries(
     combined = (*base, *materialization.extra_entries)
     node_cids = [item.node_cid for item in combined]
     if len(node_cids) != len(set(node_cids)):
-        raise CompleteReleaseBuildError(
-            "CUDA input requires unique graph/record node CIDs"
-        )
+        raise CompleteReleaseBuildError("CUDA input requires unique graph/record node CIDs")
     return combined
 
 
@@ -777,9 +730,7 @@ def _write_embedding_input(
                 "node_cid": entry.node_cid,
                 "position": position,
                 "text": entry.text,
-                "text_sha256": hashlib.sha256(
-                    entry.text.encode("utf-8")
-                ).hexdigest(),
+                "text_sha256": hashlib.sha256(entry.text.encode("utf-8")).hexdigest(),
             }
             handle.write(_canonical_json(value) + b"\n")
         handle.flush()
@@ -799,13 +750,9 @@ def _cuda_image_binding(
         or not isinstance(repo_digests, list)
         or any(not isinstance(item, str) for item in repo_digests)
     ):
-        raise CompleteReleaseBuildError(
-            "CUDA container inspection is malformed"
-        )
+        raise CompleteReleaseBuildError("CUDA container inspection is malformed")
     if image == CUDA_IMAGE:
-        reviewed_reference = (
-            f"nvcr.io/nvidia/pytorch@{CUDA_IMAGE_DIGEST}"
-        )
+        reviewed_reference = f"nvcr.io/nvidia/pytorch@{CUDA_IMAGE_DIGEST}"
         if reviewed_reference not in repo_digests:
             raise CompleteReleaseBuildError(
                 "CUDA container manifest digest differs from the reviewed pin"
@@ -829,18 +776,12 @@ def _resolve_cuda_image(image: str) -> tuple[str, str]:
     try:
         decoded = json.loads(inspect.stdout)
     except json.JSONDecodeError as exc:
-        raise CompleteReleaseBuildError(
-            "CUDA container inspection is unreadable"
-        ) from exc
+        raise CompleteReleaseBuildError("CUDA container inspection is unreadable") from exc
     if not isinstance(decoded, list) or len(decoded) != 1:
-        raise CompleteReleaseBuildError(
-            "CUDA container inspection must identify exactly one image"
-        )
+        raise CompleteReleaseBuildError("CUDA container inspection must identify exactly one image")
     inspection = decoded[0]
     if not isinstance(inspection, Mapping):
-        raise CompleteReleaseBuildError(
-            "CUDA container inspection is malformed"
-        )
+        raise CompleteReleaseBuildError("CUDA container inspection is malformed")
     return _cuda_image_binding(image, inspection)
 
 
@@ -928,21 +869,16 @@ def _validate_cuda_embedding_artifacts(
     try:
         receipt = json.loads(receipt_json.read_text(encoding="utf-8"))
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
-        raise CompleteReleaseBuildError(
-            "CUDA embedding receipt is unreadable"
-        ) from exc
+        raise CompleteReleaseBuildError("CUDA embedding receipt is unreadable") from exc
     if (
         not isinstance(receipt, Mapping)
         or receipt.get("cuda_required") is not True
         or receipt.get("model_id") != MODEL_ID
         or receipt.get("model_revision") != MODEL_REVISION
         or receipt.get("embedding_dimension") != MODEL_DIMENSION
-        or receipt.get("sentence_transformers_version")
-        != SENTENCE_TRANSFORMERS_VERSION
+        or receipt.get("sentence_transformers_version") != SENTENCE_TRANSFORMERS_VERSION
     ):
-        raise CompleteReleaseBuildError(
-            "CUDA embedding receipt differs from build contract"
-        )
+        raise CompleteReleaseBuildError("CUDA embedding receipt differs from build contract")
     try:
         artifacts_match = (
             receipt.get("input_sha256") == _file_sha256(input_jsonl)
@@ -950,13 +886,9 @@ def _validate_cuda_embedding_artifacts(
             and receipt.get("output_size_bytes") == output_npy.stat().st_size
         )
     except OSError as exc:
-        raise CompleteReleaseBuildError(
-            "CUDA embedding artifacts are unreadable"
-        ) from exc
+        raise CompleteReleaseBuildError("CUDA embedding artifacts are unreadable") from exc
     if not artifacts_match:
-        raise CompleteReleaseBuildError(
-            "CUDA embedding artifacts differ from their receipt"
-        )
+        raise CompleteReleaseBuildError("CUDA embedding artifacts differ from their receipt")
     return {**dict(receipt), "container_image": container_identity}
 
 
@@ -968,26 +900,17 @@ class _PrecomputedEmbeddingPort(EmbeddingAcceleratorPort):
     ) -> None:
         self.matrix = np.load(matrix_path, mmap_mode="r", allow_pickle=False)
         self.expected_hashes = tuple(
-            hashlib.sha256(item.text.encode("utf-8")).hexdigest()
-            for item in expected_entries
+            hashlib.sha256(item.text.encode("utf-8")).hexdigest() for item in expected_entries
         )
         if (
             self.matrix.dtype != np.float32
-            or self.matrix.shape
-            != (len(expected_entries), MODEL_DIMENSION)
+            or self.matrix.shape != (len(expected_entries), MODEL_DIMENSION)
             or not np.isfinite(self.matrix).all()
         ):
-            raise CompleteReleaseBuildError(
-                "precomputed CUDA embedding matrix is malformed"
-            )
+            raise CompleteReleaseBuildError("precomputed CUDA embedding matrix is malformed")
 
-    def embed_documents(
-        self, texts: Sequence[str]
-    ) -> Sequence[Sequence[float]]:
-        hashes = tuple(
-            hashlib.sha256(item.encode("utf-8")).hexdigest()
-            for item in texts
-        )
+    def embed_documents(self, texts: Sequence[str]) -> Sequence[Sequence[float]]:
+        hashes = tuple(hashlib.sha256(item.encode("utf-8")).hexdigest() for item in texts)
         if hashes != self.expected_hashes:
             raise CompleteReleaseBuildError(
                 "retrieval builder requested a different embedding order"
@@ -996,9 +919,7 @@ class _PrecomputedEmbeddingPort(EmbeddingAcceleratorPort):
 
     def embed_query(self, text: str) -> Sequence[float]:
         del text
-        raise CompleteReleaseBuildError(
-            "build-time embedding port does not embed queries"
-        )
+        raise CompleteReleaseBuildError("build-time embedding port does not embed queries")
 
 
 def _build_embedded_index(
@@ -1006,9 +927,7 @@ def _build_embedded_index(
     unembedded_entries: Sequence[RetrievalEntry],
     matrix_path: Path,
 ) -> RetrievalIndex:
-    partition = {
-        node.cid: "train" for node in materialization.graph.nodes
-    }
+    partition = {node.cid: "train" for node in materialization.graph.nodes}
     port = _PrecomputedEmbeddingPort(matrix_path, unembedded_entries)
     model_config = {
         "cuda_required": True,
@@ -1033,11 +952,7 @@ def _build_embedded_index(
 
 
 def _corpus_rows(index: RetrievalIndex) -> list[dict[str, Any]]:
-    pairs = [
-        (entry, shard.shard_id)
-        for shard in index.shards
-        for entry in shard.entries
-    ]
+    pairs = [(entry, shard.shard_id) for shard in index.shards for entry in shard.entries]
     pairs.sort(key=lambda item: item[0].entry_id)
     rows: list[dict[str, Any]] = []
     for document_index, (entry, shard_id) in enumerate(pairs):
@@ -1068,9 +983,7 @@ def _corpus_rows(index: RetrievalIndex) -> list[dict[str, Any]]:
                 "policies": list(entry.policies),
                 "graph_node": entry.graph_node,
                 "grants_execution_authority": False,
-                "text_sha256": hashlib.sha256(
-                    entry.text.encode("utf-8")
-                ).hexdigest(),
+                "text_sha256": hashlib.sha256(entry.text.encode("utf-8")).hexdigest(),
                 "schema_version": CORPUS_SCHEMA_VERSION,
             }
         )
@@ -1104,9 +1017,7 @@ def _install_original_data(
         relative_path = f"data/original/part-{shard_id:06d}.parquet"
         target_path = release_root / relative_path
         if target_path.exists() or target_path.is_symlink():
-            raise CompleteReleaseBuildError(
-                f"original-data target already exists: {relative_path}"
-            )
+            raise CompleteReleaseBuildError(f"original-data target already exists: {relative_path}")
         try:
             shutil.copyfile(source_path, target_path)
             target_path.chmod(0o644)
@@ -1115,18 +1026,13 @@ def _install_original_data(
                 f"cannot install original-data shard: {relative_path}"
             ) from exc
         observed_sha256 = _file_sha256(target_path)
-        if (
-            target_path.stat().st_size != shard.size_bytes
-            or observed_sha256 != shard.sha256
-        ):
+        if target_path.stat().st_size != shard.size_bytes or observed_sha256 != shard.sha256:
             raise CompleteReleaseBuildError(
                 f"installed original-data shard differs: {relative_path}"
             )
         installed.append(
             {
-                "content_id": cid_v1_from_digest(
-                    bytes.fromhex(shard.sha256)
-                ),
+                "content_id": cid_v1_from_digest(bytes.fromhex(shard.sha256)),
                 "release_path": relative_path,
                 "row_count": shard.row_count,
                 "sha256": shard.sha256,
@@ -1148,9 +1054,7 @@ def _write_original_row_index(
         import pyarrow as pa
         import pyarrow.parquet as pq
     except ImportError as exc:
-        raise CompleteReleaseBuildError(
-            "pyarrow is required for the original-row index"
-        ) from exc
+        raise CompleteReleaseBuildError("pyarrow is required for the original-row index") from exc
     if len(materialization.source_row_cids) != CVEFIXES_ROW_COUNT:
         raise CompleteReleaseBuildError(
             "original-row CID inventory differs from the pinned row count"
@@ -1160,13 +1064,9 @@ def _write_original_row_index(
             "original-row status inventory differs from the pinned row count"
         )
     if len(set(materialization.source_row_cids)) != CVEFIXES_ROW_COUNT:
-        raise CompleteReleaseBuildError(
-            "original-row CID inventory is not unique"
-        )
+        raise CompleteReleaseBuildError("original-row CID inventory is not unique")
     if len(original_shards) != len(PINNED_CVEFIXES_SOURCE.shards):
-        raise CompleteReleaseBuildError(
-            "original-data shard inventory is incomplete"
-        )
+        raise CompleteReleaseBuildError("original-data shard inventory is incomplete")
 
     rows: list[dict[str, Any]] = []
     source_row_index = 0
@@ -1175,27 +1075,17 @@ def _write_original_row_index(
         for source_shard_row_index in range(row_count):
             rows.append(
                 {
-                    "security_ir_source_cid": materialization.source_row_cids[
-                        source_row_index
-                    ],
+                    "security_ir_source_cid": materialization.source_row_cids[source_row_index],
                     "source_row_index": source_row_index,
-                    "source_status": materialization.source_row_statuses[
-                        source_row_index
-                    ],
+                    "source_status": materialization.source_row_statuses[source_row_index],
                     "source_identity_domain": (
                         "cvefixes-security-ir/pinned-source-row"
-                        if materialization.source_row_statuses[
-                            source_row_index
-                        ]
-                        == "admitted"
+                        if materialization.source_row_statuses[source_row_index] == "admitted"
                         else "cvefixes-security-ir/rejected-source-row"
                     ),
                     "source_identity_schema_version": (
                         "cvefixes-pinned-source-row/v1"
-                        if materialization.source_row_statuses[
-                            source_row_index
-                        ]
-                        == "admitted"
+                        if materialization.source_row_statuses[source_row_index] == "admitted"
                         else "cvefixes-rejected-source-row/v1"
                     ),
                     "source_shard_cid": str(shard["content_id"]),
@@ -1230,9 +1120,7 @@ def _write_original_row_index(
         ],
         metadata={
             b"primary_key": b"security_ir_source_cid",
-            b"schema_version": ORIGINAL_ROW_INDEX_SCHEMA_VERSION.encode(
-                "ascii"
-            ),
+            b"schema_version": ORIGINAL_ROW_INDEX_SCHEMA_VERSION.encode("ascii"),
         },
     )
     table = pa.Table.from_pylist(rows, schema=schema)
@@ -1252,9 +1140,7 @@ def _write_original_row_index(
         )
         index_path.chmod(0o644)
     except OSError as exc:
-        raise CompleteReleaseBuildError(
-            "cannot write original-row index"
-        ) from exc
+        raise CompleteReleaseBuildError("cannot write original-row index") from exc
     return index_path
 
 
@@ -1264,24 +1150,18 @@ def _parquet_config(path: str) -> str:
     for prefix, config in PATH_CONFIGS:
         if path.startswith(prefix):
             return config
-    raise CompleteReleaseBuildError(
-        f"unexpected complete-layout Parquet path: {path}"
-    )
+    raise CompleteReleaseBuildError(f"unexpected complete-layout Parquet path: {path}")
 
 
 def _artifact_descriptor(path: Path, root: Path) -> dict[str, Any]:
     relative = path.relative_to(root).as_posix()
     try:
         if path.is_symlink() or not path.is_file():
-            raise CompleteReleaseBuildError(
-                f"release artifact is not a regular file: {relative}"
-            )
+            raise CompleteReleaseBuildError(f"release artifact is not a regular file: {relative}")
         byte_length = path.stat().st_size
         sha256 = _file_sha256(path)
     except OSError as exc:
-        raise CompleteReleaseBuildError(
-            f"cannot inspect release artifact: {relative}"
-        ) from exc
+        raise CompleteReleaseBuildError(f"cannot inspect release artifact: {relative}") from exc
     descriptor: dict[str, Any] = {
         "byte_length": byte_length,
         "content_id": cid_v1_from_digest(bytes.fromhex(sha256)),
@@ -1289,9 +1169,7 @@ def _artifact_descriptor(path: Path, root: Path) -> dict[str, Any]:
             "application/vnd.apache.parquet"
             if relative.endswith(".parquet")
             else (
-                "application/json"
-                if relative.endswith(".json")
-                else "text/markdown; charset=utf-8"
+                "application/json" if relative.endswith(".json") else "text/markdown; charset=utf-8"
             )
         ),
         "path": relative,
@@ -1303,13 +1181,9 @@ def _artifact_descriptor(path: Path, root: Path) -> dict[str, Any]:
 
             row_count = pq.ParquetFile(path).metadata.num_rows
         except Exception as exc:
-            raise CompleteReleaseBuildError(
-                f"cannot inspect Parquet artifact {relative}"
-            ) from exc
+            raise CompleteReleaseBuildError(f"cannot inspect Parquet artifact {relative}") from exc
         if row_count <= 0:
-            raise CompleteReleaseBuildError(
-                f"Parquet artifact is empty: {relative}"
-            )
+            raise CompleteReleaseBuildError(f"Parquet artifact is empty: {relative}")
         descriptor["config_name"] = _parquet_config(relative)
         descriptor["row_count"] = row_count
     return descriptor
@@ -1321,17 +1195,12 @@ def _features_for_artifact(path: Path) -> dict[str, dict[str, str]]:
 
         schema = pq.ParquetFile(path).schema_arrow
     except Exception as exc:
-        raise CompleteReleaseBuildError(
-            f"cannot read feature schema for {path}"
-        ) from exc
+        raise CompleteReleaseBuildError(f"cannot read feature schema for {path}") from exc
     # This is ordinary release metadata, not Hugging Face's reserved
     # dataset_infos.json.  Preserve the exact Arrow type text so remote
     # consumers do not mistake integer, floating, boolean, list, or fixed-size
     # vector columns for strings.
-    return {
-        field.name: {"dtype": str(field.type)}
-        for field in schema
-    }
+    return {field.name: {"dtype": str(field.type)} for field in schema}
 
 
 def _release_metadata(
@@ -1342,25 +1211,16 @@ def _release_metadata(
 ) -> dict[str, Any]:
     configs: dict[str, Any] = {}
     for config_name in sorted(VIEWER_CONFIG_PATHS):
-        selected = [
-            item for item in descriptors
-            if item.get("config_name") == config_name
-        ]
+        selected = [item for item in descriptors if item.get("config_name") == config_name]
         if not selected:
-            raise CompleteReleaseBuildError(
-                f"Viewer config has no artifact: {config_name}"
-            )
+            raise CompleteReleaseBuildError(f"Viewer config has no artifact: {config_name}")
         first_path = root / str(selected[0]["path"])
         configs[config_name] = {
             "features": _features_for_artifact(first_path),
             "splits": {
                 "train": {
-                    "num_bytes": sum(
-                        int(item["byte_length"]) for item in selected
-                    ),
-                    "num_examples": sum(
-                        int(item["row_count"]) for item in selected
-                    ),
+                    "num_bytes": sum(int(item["byte_length"]) for item in selected),
+                    "num_examples": sum(int(item["row_count"]) for item in selected),
                 }
             },
         }
@@ -1429,8 +1289,7 @@ def _dataset_card(
             "",
             f"- Source rows represented: `{CVEFIXES_ROW_COUNT}`",
             f"- Original rows packaged: `{CVEFIXES_ROW_COUNT}`",
-            f"- Byte-identical original shards: "
-            f"`{len(PINNED_CVEFIXES_SOURCE.shards)}`",
+            f"- Byte-identical original shards: `{len(PINNED_CVEFIXES_SOURCE.shards)}`",
             f"- Admitted rows: `{counts.get('admitted_rows', 0)}`",
             f"- Rejection tombstones: `{counts.get('rejected_rows', 0)}`",
             f"- Graph nodes: `{counts.get('graph_nodes', 0)}`",
@@ -1467,8 +1326,7 @@ def _dataset_card(
 
 def _source_shard_cids() -> tuple[str, ...]:
     return tuple(
-        cid_v1_from_digest(bytes.fromhex(shard.sha256))
-        for shard in PINNED_CVEFIXES_SOURCE.shards
+        cid_v1_from_digest(bytes.fromhex(shard.sha256)) for shard in PINNED_CVEFIXES_SOURCE.shards
     )
 
 
@@ -1487,19 +1345,14 @@ def _assemble_release(
 ) -> Mapping[str, Any]:
     # The layout builders have already written every Parquet file.
     parquet_paths = sorted(release_root_path.rglob("*.parquet"))
-    parquet_descriptors = [
-        _artifact_descriptor(path, release_root_path)
-        for path in parquet_paths
-    ]
+    parquet_descriptors = [_artifact_descriptor(path, release_root_path) for path in parquet_paths]
     observed_indexes = {
         str(item["path"])
         for item in parquet_descriptors
         if str(item["path"]).startswith("indexes/")
     }
     if observed_indexes != set(INDEX_CONFIGS):
-        raise CompleteReleaseBuildError(
-            "complete layout does not contain every physical index"
-        )
+        raise CompleteReleaseBuildError("complete layout does not contain every physical index")
 
     derived_dataset_root = canonical_identity(
         {
@@ -1525,9 +1378,7 @@ def _assemble_release(
             "fraction": 1.0,
         },
     }
-    (release_root_path / "evaluation-report.json").write_bytes(
-        _canonical_json(evaluation_report)
-    )
+    (release_root_path / "evaluation-report.json").write_bytes(_canonical_json(evaluation_report))
     (release_root_path / "README.md").write_bytes(
         _dataset_card(
             counts=materialization.counts,
@@ -1554,9 +1405,7 @@ def _assemble_release(
         preliminary,
         derived_dataset_root=derived_dataset_root,
     )
-    (release_root_path / RELEASE_METADATA_FILENAME).write_bytes(
-        _canonical_json(release_metadata)
-    )
+    (release_root_path / RELEASE_METADATA_FILENAME).write_bytes(_canonical_json(release_metadata))
     artifact_descriptors = sorted(
         (
             *preliminary,
@@ -1635,12 +1484,8 @@ def _assemble_release(
         **dict(bm25_summary.counts),
         "corpus_rows": len(corpus_rows),
         "graph_data_shards": len(graph_layout.data_artifacts),
-        "original_data_bytes": sum(
-            int(item["size_bytes"]) for item in original_shards
-        ),
-        "original_data_rows": sum(
-            int(item["row_count"]) for item in original_shards
-        ),
+        "original_data_bytes": sum(int(item["size_bytes"]) for item in original_shards),
+        "original_data_rows": sum(int(item["row_count"]) for item in original_shards),
         "original_data_shards": len(original_shards),
         "original_row_index_rows": len(materialization.source_row_cids),
         "vector_chunks": vector_summary.vector_chunks,
@@ -1670,9 +1515,7 @@ def _assemble_release(
                 "source_profile_sha256": PINNED_CVEFIXES_SOURCE.sha256,
                 "source_revision": CVEFIXES_REVISION,
             },
-            "source_verification": dict(
-                materialization.source_verification
-            ),
+            "source_verification": dict(materialization.source_verification),
         },
         "configs": dict(sorted(ALL_CONFIG_PATHS.items())),
         "counts": counts,
@@ -1697,9 +1540,7 @@ def _assemble_release(
     }
     manifest_content = _canonical_json(manifest)
     if len(manifest_content) > 8 * 1024 * 1024:
-        raise CompleteReleaseBuildError(
-            "manifest exceeds the publisher's 8 MiB safety bound"
-        )
+        raise CompleteReleaseBuildError("manifest exceeds the publisher's 8 MiB safety bound")
     (release_root_path / "manifest.json").write_bytes(manifest_content)
     return manifest
 
@@ -1708,13 +1549,9 @@ def _fresh_directory(path: Path) -> Path:
     path = Path(os.path.abspath(os.fspath(path.expanduser())))
     if path.exists():
         if path.is_symlink() or not path.is_dir():
-            raise CompleteReleaseBuildError(
-                f"owned output path is unsafe: {path}"
-            )
+            raise CompleteReleaseBuildError(f"owned output path is unsafe: {path}")
         if any(path.iterdir()):
-            raise CompleteReleaseBuildError(
-                f"owned output directory is not empty: {path}"
-            )
+            raise CompleteReleaseBuildError(f"owned output directory is not empty: {path}")
     else:
         path.mkdir(parents=True)
     return path
@@ -1753,17 +1590,11 @@ def build_complete_release(
     for path in (input_jsonl, output_npy, receipt_json):
         if path.exists():
             if path.is_symlink() or not path.is_file():
-                raise CompleteReleaseBuildError(
-                    f"embedding output path is unsafe: {path}"
-                )
+                raise CompleteReleaseBuildError(f"embedding output path is unsafe: {path}")
             if path == input_jsonl or not reuse_cuda_embeddings:
                 path.unlink()
-    if reuse_cuda_embeddings and (
-        not output_npy.is_file() or not receipt_json.is_file()
-    ):
-        raise CompleteReleaseBuildError(
-            "reusable CUDA embedding artifacts are incomplete"
-        )
+    if reuse_cuda_embeddings and (not output_npy.is_file() or not receipt_json.is_file()):
+        raise CompleteReleaseBuildError("reusable CUDA embedding artifacts are incomplete")
     _write_embedding_input(unembedded_entries, input_jsonl)
     if reuse_cuda_embeddings:
         cuda_receipt = _validate_cuda_embedding_artifacts(
@@ -1790,18 +1621,14 @@ def build_complete_release(
             batch_size=cuda_batch_size,
         )
     if cuda_receipt.get("record_count") != len(unembedded_entries):
-        raise CompleteReleaseBuildError(
-            "CUDA receipt row count differs from retrieval input"
-        )
+        raise CompleteReleaseBuildError("CUDA receipt row count differs from retrieval input")
     index = _build_embedded_index(
         materialization,
         unembedded_entries,
         output_npy,
     )
     if index.embedding_dimension != MODEL_DIMENSION:
-        raise CompleteReleaseBuildError(
-            "retrieval index embedding dimension differs"
-        )
+        raise CompleteReleaseBuildError("retrieval index embedding dimension differs")
     _log(
         "retrieval_index_complete",
         dimension=index.embedding_dimension,
@@ -1871,9 +1698,7 @@ def build_complete_release(
     _log(
         "release_complete",
         artifacts=len(manifest["artifacts"]),
-        manifest_sha256=_file_sha256(
-            release_root_path / "manifest.json"
-        ),
+        manifest_sha256=_file_sha256(release_root_path / "manifest.json"),
         release_directory=str(release_root_path),
         release_root=manifest["release_root"],
     )

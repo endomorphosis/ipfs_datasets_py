@@ -278,9 +278,7 @@ class Z3SoftwareVerificationBackend(SoftwareVerificationSmtBackend):
             executable=exe,
         )
 
-    def _default_runner(
-        self, smtlib: str, bounds: ExecutionBounds
-    ) -> SmtRawSolverOutput:
+    def _default_runner(self, smtlib: str, bounds: ExecutionBounds) -> SmtRawSolverOutput:
         return _z3_software_verification_runner(self._executable)(smtlib, bounds)
 
 

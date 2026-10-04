@@ -137,9 +137,7 @@ class XRPLNormalizationResult:
             # Sidechain must never claim XRPL mainnet identity.
             cid = _required_text(str(self.chain_id), "chain_id")
             if cid == XRPL_MAINNET_CHAIN_ID or cid in {"0", "mainnet", "xrpl-mainnet"}:
-                raise InvalidRequestError(
-                    "EVM sidechain result must not use XRPL mainnet chain_id"
-                )
+                raise InvalidRequestError("EVM sidechain result must not use XRPL mainnet chain_id")
             object.__setattr__(self, "chain_id", cid)
             object.__setattr__(
                 self,
@@ -150,44 +148,28 @@ class XRPLNormalizationResult:
             resolved = resolve_xrpl_chain_id(self.chain_id)
             anchor = xrpl_network_anchor(resolved)
             object.__setattr__(self, "chain_id", resolved)
-            object.__setattr__(
-                self, "network", self.network.strip() or anchor["network"]
-            )
+            object.__setattr__(self, "network", self.network.strip() or anchor["network"])
         else:
-            object.__setattr__(
-                self, "chain_id", _required_text(str(self.chain_id), "chain_id")
-            )
-            object.__setattr__(
-                self, "network", _optional_text(self.network, "network")
-            )
+            object.__setattr__(self, "chain_id", _required_text(str(self.chain_id), "chain_id"))
+            object.__setattr__(self, "network", _optional_text(self.network, "network"))
 
         transitions = tuple(self.transitions)
         for index, item in enumerate(transitions):
             if not isinstance(item, LedgerObjectTransition):
-                raise InvalidRequestError(
-                    f"transitions[{index}] must be a LedgerObjectTransition"
-                )
+                raise InvalidRequestError(f"transitions[{index}] must be a LedgerObjectTransition")
         object.__setattr__(self, "transitions", transitions)
 
         if self.ledger_epoch is not None and not isinstance(
             self.ledger_epoch, ValidatedLedgerEpoch
         ):
-            raise InvalidRequestError(
-                "ledger_epoch must be ValidatedLedgerEpoch or None"
-            )
-        if self.issuer_policy is not None and not isinstance(
-            self.issuer_policy, IssuerPolicy
-        ):
+            raise InvalidRequestError("ledger_epoch must be ValidatedLedgerEpoch or None")
+        if self.issuer_policy is not None and not isinstance(self.issuer_policy, IssuerPolicy):
             raise InvalidRequestError("issuer_policy must be IssuerPolicy or None")
         if self.hooks_capability is not None and not isinstance(
             self.hooks_capability, HookCapability
         ):
-            raise InvalidRequestError(
-                "hooks_capability must be HookCapability or None"
-            )
-        if self.signer_quorum is not None and not isinstance(
-            self.signer_quorum, SignerQuorum
-        ):
+            raise InvalidRequestError("hooks_capability must be HookCapability or None")
+        if self.signer_quorum is not None and not isinstance(self.signer_quorum, SignerQuorum):
             raise InvalidRequestError("signer_quorum must be SignerQuorum or None")
 
         status = (
@@ -199,31 +181,20 @@ class XRPLNormalizationResult:
         # Invariant: incomplete coverage never passes.
         if status is SemanticPassStatus.PASS:
             if routing is SidechainRouting.XRPL_NATIVE and not transitions:
-                raise InvalidRequestError(
-                    "semantic pass forbidden without at least one transition"
-                )
-            if (
-                routing is SidechainRouting.EVM_SIDECHAIN
-                and self.evm_delegation is None
-            ):
-                raise InvalidRequestError(
-                    "EVM sidechain pass requires a delegated EVM result"
-                )
+                raise InvalidRequestError("semantic pass forbidden without at least one transition")
+            if routing is SidechainRouting.EVM_SIDECHAIN and self.evm_delegation is None:
+                raise InvalidRequestError("EVM sidechain pass requires a delegated EVM result")
         object.__setattr__(self, "semantic_pass_status", status)
 
         object.__setattr__(
             self,
             "diagnostics",
-            tuple(
-                _required_text(item, "diagnostics item") for item in self.diagnostics
-            ),
+            tuple(_required_text(item, "diagnostics item") for item in self.diagnostics),
         )
         if self.evm_delegation is not None:
             if not isinstance(self.evm_delegation, Mapping):
                 raise InvalidRequestError("evm_delegation must be a mapping or None")
-            object.__setattr__(
-                self, "evm_delegation", _freeze_mapping(self.evm_delegation)
-            )
+            object.__setattr__(self, "evm_delegation", _freeze_mapping(self.evm_delegation))
         object.__setattr__(self, "attributes", _freeze_mapping(self.attributes))
         object.__setattr__(
             self,
@@ -253,9 +224,7 @@ class XRPLNormalizationResult:
             "issuer_policy": self.issuer_policy.to_dict()
             if self.issuer_policy is not None
             else None,
-            "ledger_epoch": self.ledger_epoch.to_dict()
-            if self.ledger_epoch is not None
-            else None,
+            "ledger_epoch": self.ledger_epoch.to_dict() if self.ledger_epoch is not None else None,
             "network": self.network,
             "routing": self.routing.value
             if isinstance(self.routing, SidechainRouting)
@@ -298,11 +267,7 @@ class XRPLLedgerFrontend:
             or max_transitions <= 0
         ):
             raise InvalidRequestError("max_transitions must be a positive integer")
-        if (
-            isinstance(max_objects, bool)
-            or not isinstance(max_objects, int)
-            or max_objects <= 0
-        ):
+        if isinstance(max_objects, bool) or not isinstance(max_objects, int) or max_objects <= 0:
             raise InvalidRequestError("max_objects must be a positive integer")
         self._provider = provider
         self._max_transitions = max_transitions
@@ -415,22 +380,16 @@ class XRPLLedgerFrontend:
         # Explicit overrides win when provided.
         return IssuerPolicy(
             issuer=policy.issuer,
-            require_auth=policy.require_auth
-            if require_auth is None
-            else bool(require_auth),
+            require_auth=policy.require_auth if require_auth is None else bool(require_auth),
             default_ripple=policy.default_ripple
             if default_ripple is None
             else bool(default_ripple),
-            global_freeze=policy.global_freeze
-            if global_freeze is None
-            else bool(global_freeze),
+            global_freeze=policy.global_freeze if global_freeze is None else bool(global_freeze),
             no_freeze=policy.no_freeze if no_freeze is None else bool(no_freeze),
             allow_trustline_clawback=policy.allow_trustline_clawback
             if allow_trustline_clawback is None
             else bool(allow_trustline_clawback),
-            deposit_auth=policy.deposit_auth
-            if deposit_auth is None
-            else bool(deposit_auth),
+            deposit_auth=policy.deposit_auth if deposit_auth is None else bool(deposit_auth),
             account_flags=policy.account_flags,
             enabled_amendments=policy.enabled_amendments,
             attributes=dict(policy.attributes),
@@ -524,11 +483,7 @@ class XRPLLedgerFrontend:
         """Bind one native ledger object transition from typed facts."""
 
         tx = map_transaction_type(transaction_type)
-        kind = (
-            default_object_kind_for_tx(tx)
-            if object_kind is None
-            else object_kind
-        )
+        kind = default_object_kind_for_tx(tx) if object_kind is None else object_kind
         issued: IssuedAsset | None = None
         if isinstance(issued_asset, IssuedAsset):
             issued = issued_asset
@@ -542,9 +497,7 @@ class XRPLLedgerFrontend:
 
         flags_i = _non_negative(flags, "flags")
         partial = (
-            partial_payment_flag_set(flags_i)
-            if partial_payment is None
-            else bool(partial_payment)
+            partial_payment_flag_set(flags_i) if partial_payment is None else bool(partial_payment)
         )
         if partial_payment_flag_set(flags_i):
             partial = True
@@ -664,9 +617,7 @@ class XRPLLedgerFrontend:
             statuses.append(SemanticPassStatus.INCOMPLETE)
 
         if hooks.state is not HookCapabilityState.PROVEN:
-            diagnostics.append(
-                "Hooks not proven; Hook claims return UNSUPPORTED"
-            )
+            diagnostics.append("Hooks not proven; Hook claims return UNSUPPORTED")
 
         # Aggregate status: worst-case fail-closed among transitions.
         status = SemanticPassStatus.PASS
@@ -683,9 +634,7 @@ class XRPLLedgerFrontend:
 
         mode = AnalysisMode.NATIVE_LEDGER
         if any(
-            t.transaction_type is XRPLTransactionType.SET_HOOK
-            or t.hooks_effects
-            for t in bound
+            t.transaction_type is XRPLTransactionType.SET_HOOK or t.hooks_effects for t in bound
         ):
             mode = AnalysisMode.HOOKS_GATED
             if hooks.state is not HookCapabilityState.PROVEN:
@@ -862,9 +811,7 @@ class XRPLLedgerFrontend:
 
         sidechain_id = str(chain_id).strip() or RIPPLE_EVM_SIDECHAIN_CHAIN_ID
         if sidechain_id == XRPL_MAINNET_CHAIN_ID:
-            raise InvalidRequestError(
-                "EVM sidechain chain_id must not equal XRPL mainnet"
-            )
+            raise InvalidRequestError("EVM sidechain chain_id must not equal XRPL mainnet")
 
         diagnostics: list[str] = [
             "Ripple EVM sidechain delegated to EVM frontend",
@@ -898,9 +845,7 @@ class XRPLLedgerFrontend:
 
         # Prefer full normalize_contract when bytecode present; else bind_code_epoch.
         runtime = runtime_bytecode if isinstance(runtime_bytecode, (bytes, str)) else b""
-        creation = (
-            creation_bytecode if isinstance(creation_bytecode, (bytes, str)) else b""
-        )
+        creation = creation_bytecode if isinstance(creation_bytecode, (bytes, str)) else b""
         try:
             if hasattr(frontend, "normalize_contract") and (runtime or creation):
                 result = frontend.normalize_contract(
@@ -912,23 +857,15 @@ class XRPLLedgerFrontend:
                     code_epoch=code_epoch,
                     network=network or RIPPLE_EVM_SIDECHAIN_NETWORK,
                 )
-                evm_payload = (
-                    result.to_dict() if hasattr(result, "to_dict") else dict(result)
-                )
+                evm_payload = result.to_dict() if hasattr(result, "to_dict") else dict(result)
                 raw_status = getattr(result, "semantic_pass_status", None)
                 if raw_status is not None:
                     status = SemanticPassStatus(
-                        str(
-                            raw_status.value
-                            if hasattr(raw_status, "value")
-                            else raw_status
-                        )
+                        str(raw_status.value if hasattr(raw_status, "value") else raw_status)
                     )
                 else:
                     status = (
-                        SemanticPassStatus.PASS
-                        if evm_payload
-                        else SemanticPassStatus.INCOMPLETE
+                        SemanticPassStatus.PASS if evm_payload else SemanticPassStatus.INCOMPLETE
                     )
             elif hasattr(frontend, "bind_code_epoch") and runtime:
                 epoch = frontend.bind_code_epoch(
@@ -1016,14 +953,10 @@ class XRPLLedgerFrontend:
     ) -> XRPLNormalizationResult:
         """Route and normalize an XRPL-native or EVM-sidechain observation."""
 
-        routing = self.classify_routing(
-            chain_id=chain_id, network=network, namespace=namespace
-        )
+        routing = self.classify_routing(chain_id=chain_id, network=network, namespace=namespace)
         if routing is SidechainRouting.EVM_SIDECHAIN:
             if not address:
-                raise InvalidRequestError(
-                    "EVM sidechain normalization requires address"
-                )
+                raise InvalidRequestError("EVM sidechain normalization requires address")
             return self.delegate_evm_sidechain(
                 chain_id=chain_id,
                 address=address,

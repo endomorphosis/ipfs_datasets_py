@@ -191,9 +191,7 @@ def test_private_artifacts_are_digest_and_retention_only() -> None:
 
 
 def test_unknown_fields_fail_closed_on_decode() -> None:
-    envelope = project_public_counterexample(
-        {"model": {"x": 1}, "violated_property": "p"}
-    )
+    envelope = project_public_counterexample({"model": {"x": 1}, "violated_property": "p"})
     forged = envelope.to_dict()
     forged["unexpected_channel"] = "leak"
     with pytest.raises(CounterexampleBoundaryError, match="unknown fields"):
@@ -201,9 +199,7 @@ def test_unknown_fields_fail_closed_on_decode() -> None:
 
 
 def test_forged_identities_fail_closed() -> None:
-    envelope = project_public_counterexample(
-        {"model": {"x": 1}, "violated_property": "p"}
-    )
+    envelope = project_public_counterexample({"model": {"x": 1}, "violated_property": "p"})
     forged_id = envelope.to_dict()
     forged_id["counterexample_id"] = "forged-identity"
     with pytest.raises(CounterexampleBoundaryError, match="identity"):

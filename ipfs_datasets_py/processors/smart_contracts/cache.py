@@ -196,13 +196,8 @@ class ContractArtifactCache:
                         "CAS collision: digest already bound to different bytes"
                     )
                 # Metadata mismatch on identical bytes is schema drift.
-                if (
-                    existing.kind != artifact.kind
-                    or existing.media_type != artifact.media_type
-                ):
-                    raise ArtifactPoisonedError(
-                        "CAS metadata drift for existing content digest"
-                    )
+                if existing.kind != artifact.kind or existing.media_type != artifact.media_type:
+                    raise ArtifactPoisonedError("CAS metadata drift for existing content digest")
                 return existing
             if len(self._objects) >= self._max_objects:
                 raise ResourceLimitError("artifact cache object count exceeded")
@@ -240,9 +235,7 @@ class ContractArtifactCache:
     def get(self, content_digest: str) -> StoredArtifact:
         """Return stored bytes after re-validating the digest binding."""
 
-        if not isinstance(content_digest, str) or not content_digest.startswith(
-            "sha256:"
-        ):
+        if not isinstance(content_digest, str) or not content_digest.startswith("sha256:"):
             raise InvalidRequestError("content_digest must be a tagged sha256 digest")
         with self._lock:
             artifact = self._objects.get(content_digest)
@@ -273,9 +266,7 @@ class ContractArtifactCache:
             existing = self._manifests.get(digest)
             if existing is not None:
                 if existing.to_dict() != manifest.to_dict():
-                    raise ArtifactPoisonedError(
-                        "manifest CAS collision with differing content"
-                    )
+                    raise ArtifactPoisonedError("manifest CAS collision with differing content")
                 return existing
             if len(self._manifests) >= self._max_objects:
                 raise ResourceLimitError("artifact cache manifest count exceeded")
@@ -288,9 +279,7 @@ class ContractArtifactCache:
             return manifest
 
     def get_manifest(self, manifest_digest: str) -> ArtifactManifest:
-        if not isinstance(manifest_digest, str) or not manifest_digest.startswith(
-            "sha256:"
-        ):
+        if not isinstance(manifest_digest, str) or not manifest_digest.startswith("sha256:"):
             raise InvalidRequestError("manifest_digest must be a tagged sha256 digest")
         with self._lock:
             manifest = self._manifests.get(manifest_digest)

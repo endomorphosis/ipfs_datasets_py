@@ -45,11 +45,7 @@ from ipfs_datasets_py.processors.wallets.solana.transaction_guard import (
 
 
 FIXTURE_PATH = (
-    Path(__file__).resolve().parents[4]
-    / "fixtures"
-    / "wallets"
-    / "solana"
-    / "rpc_session.json"
+    Path(__file__).resolve().parents[4] / "fixtures" / "wallets" / "solana" / "rpc_session.json"
 )
 
 _ISSUED = "2026-07-28T12:00:00Z"
@@ -368,9 +364,7 @@ def test_evaluate_stale_compliance_blocks(rpc_session: dict[str, Any]) -> None:
         binding,
         request=request,
         security_results={req: "pass" for req in request.security_requirement_ids},
-        compliance_results={
-            req: "stale" for req in request.compliance_requirement_ids
-        },
+        compliance_results={req: "stale" for req in request.compliance_requirement_ids},
         now=_NOW_OK,
     )
     assert decision.outcome is TransactionVerdictOutcome.STALE
@@ -396,9 +390,7 @@ def test_evaluate_stale_blockhash_blocks(rpc_session: dict[str, Any]) -> None:
         binding,
         request=request,
         now=_NOW_OK,
-        compliance_results={
-            req: "pass" for req in request.compliance_requirement_ids
-        },
+        compliance_results={req: "pass" for req in request.compliance_requirement_ids},
     )
     assert decision.outcome is TransactionVerdictOutcome.STALE
     assert any("blockhash" in c for c in decision.reason_codes)
@@ -503,9 +495,7 @@ def test_program_upgrade_blocks_consumption(rpc_session: dict[str, Any]) -> None
     payload = _legacy_message(rpc_session)
     payload["message"] = dict(payload["message"])
     payload["message"]["accountKeys"] = [addrs["alice"], addrs["bob"], custom]
-    payload["message"]["instructions"] = [
-        {"programId": custom, "accounts": [0, 1], "data": "ab"}
-    ]
+    payload["message"]["instructions"] = [{"programId": custom, "accounts": [0, 1], "data": "ab"}]
     epoch = _program_epoch(custom, code_epoch="code:v1", binary_digest="b" * 64)
     binding = guard.bind_message(payload, program_epochs=[epoch])
     request = guard.to_preflight_request(
@@ -530,9 +520,7 @@ def test_program_upgrade_blocks_consumption(rpc_session: dict[str, Any]) -> None
     assert decision.allowed
     capability = decision.preflight.capability  # type: ignore[union-attr]
 
-    upgraded = _program_epoch(
-        custom, code_epoch="code:v2-upgraded", binary_digest="c" * 64
-    )
+    upgraded = _program_epoch(custom, code_epoch="code:v2-upgraded", binary_digest="c" * 64)
     with pytest.raises(GuardCapabilityError) as excinfo:
         guard.revalidate_and_consume(
             capability,
@@ -625,9 +613,7 @@ def test_hidden_cpi_blocks_evaluation(rpc_session: dict[str, Any]) -> None:
         },
     )
     data = binding.to_dict()
-    data["instructions"] = [i.to_dict() for i in binding.instructions] + [
-        inner.to_dict()
-    ]
+    data["instructions"] = [i.to_dict() for i in binding.instructions] + [inner.to_dict()]
     data["cpi_effects"] = []  # deliberately empty → hidden CPI
     data["binding_digest"] = ""  # recompute
     adversarial = SolanaMessageBinding.from_dict(data)
@@ -647,9 +633,7 @@ def test_hidden_cpi_blocks_evaluation(rpc_session: dict[str, Any]) -> None:
         adversarial,
         request=request,
         now=_NOW_OK,
-        compliance_results={
-            req: "pass" for req in request.compliance_requirement_ids
-        },
+        compliance_results={req: "pass" for req in request.compliance_requirement_ids},
     )
     assert decision.allowed is False
     assert decision.blocks_automation is True
@@ -672,9 +656,7 @@ def test_consumption_re_resolves_matching_epochs(
     payload = _legacy_message(rpc_session)
     payload["message"] = dict(payload["message"])
     payload["message"]["accountKeys"] = [addrs["alice"], addrs["bob"], custom]
-    payload["message"]["instructions"] = [
-        {"programId": custom, "accounts": [0, 1], "data": "ab"}
-    ]
+    payload["message"]["instructions"] = [{"programId": custom, "accounts": [0, 1], "data": "ab"}]
     epoch = _program_epoch(custom)
     binding = guard.bind_message(payload, program_epochs=[epoch])
     request = guard.to_preflight_request(
@@ -732,9 +714,7 @@ def test_unresolved_program_epoch_at_consumption_blocks(
     payload = _legacy_message(rpc_session)
     payload["message"] = dict(payload["message"])
     payload["message"]["accountKeys"] = [addrs["alice"], addrs["bob"], custom]
-    payload["message"]["instructions"] = [
-        {"programId": custom, "accounts": [0, 1], "data": "ab"}
-    ]
+    payload["message"]["instructions"] = [{"programId": custom, "accounts": [0, 1], "data": "ab"}]
     epoch = _program_epoch(custom)
     binding = guard.bind_message(payload, program_epochs=[epoch])
     request = guard.to_preflight_request(
@@ -851,9 +831,5 @@ def test_no_signing_or_broadcast_surface() -> None:
     }
     public = {name for name in dir(mod) if not name.startswith("_")}
     assert not (public & forbidden)
-    methods = {
-        name
-        for name in dir(SolanaTransactionGuard)
-        if not name.startswith("_")
-    }
+    methods = {name for name in dir(SolanaTransactionGuard) if not name.startswith("_")}
     assert not (methods & forbidden)

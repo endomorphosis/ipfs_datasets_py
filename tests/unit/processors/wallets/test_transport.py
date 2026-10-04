@@ -94,9 +94,7 @@ class FakeDelegate:
         self.outcomes = list(outcomes)
         self.requests: list[object] = []
 
-    async def request(
-        self, request: HttpRequest, *, context: OperationContext
-    ) -> HttpResponse:
+    async def request(self, request: HttpRequest, *, context: OperationContext) -> HttpResponse:
         context.check_active()
         self.requests.append(request)
         if not self.outcomes:
@@ -112,9 +110,7 @@ class HangingDelegate:
     def __init__(self) -> None:
         self.calls = 0
 
-    async def request(
-        self, request: HttpRequest, *, context: OperationContext
-    ) -> HttpResponse:
+    async def request(self, request: HttpRequest, *, context: OperationContext) -> HttpResponse:
         self.calls += 1
         await asyncio.Event().wait()
         raise AssertionError("unreachable")
@@ -170,9 +166,7 @@ def transport(
     return HttpTransport(
         delegate,  # type: ignore[arg-type]
         endpoint=ProviderEndpoint(BASE_URL, "fixture"),
-        endpoint_policy=EndpointPolicy(
-            allowed_hosts=frozenset({"rpc.provider.example"})
-        ),
+        endpoint_policy=EndpointPolicy(allowed_hosts=frozenset({"rpc.provider.example"})),
         address_resolver=resolver or FakeResolver(),
         auth=auth,
         secret_resolver=secret_resolver,
@@ -238,9 +232,7 @@ def test_success_validates_dns_and_returns_bounded_response() -> None:
     delegate = FakeDelegate(response(body=b'{"ok":true}'))
     resolver = FakeResolver()
     value = asyncio.run(
-        transport(delegate, resolver=resolver).request_json(
-            request(), context=context()
-        )
+        transport(delegate, resolver=resolver).request_json(request(), context=context())
     )
     assert value == {"ok": True}
     assert resolver.calls == [("rpc.provider.example", 443)]
@@ -343,10 +335,13 @@ def test_retry_policy_handles_http_dates_and_deterministic_jitter_bounds() -> No
         max_retry_after_seconds=3,
         jitter_fraction=0.5,
     )
-    assert retry.retry_after_seconds(
-        {"retry-after": email.utils.format_datetime(now + timedelta(seconds=20))},
-        now=now,
-    ) == 3
+    assert (
+        retry.retry_after_seconds(
+            {"retry-after": email.utils.format_datetime(now + timedelta(seconds=20))},
+            now=now,
+        )
+        == 3
+    )
     assert retry.delay_seconds(1, random_value=0) == 1
     assert retry.delay_seconds(1, random_value=1) == 3
 
@@ -360,27 +355,21 @@ def test_transient_errors_retry_but_permanent_errors_do_not() -> None:
     )
     transient_delegate = FakeDelegate(response(503), response())
     asyncio.run(
-        transport(transient_delegate, retry_policy=retry).request(
-            request(), context=context()
-        )
+        transport(transient_delegate, retry_policy=retry).request(request(), context=context())
     )
     assert len(transient_delegate.requests) == 2
 
     permanent_delegate = FakeDelegate(response(401), response())
     with pytest.raises(PermanentProviderError, match="permanent HTTP error"):
         asyncio.run(
-            transport(permanent_delegate, retry_policy=retry).request(
-                request(), context=context()
-            )
+            transport(permanent_delegate, retry_policy=retry).request(request(), context=context())
         )
     assert len(permanent_delegate.requests) == 1
 
     redirect_delegate = FakeDelegate(response(302, headers={"location": BASE_URL}))
     with pytest.raises(PermanentProviderError):
         asyncio.run(
-            transport(redirect_delegate, retry_policy=retry).request(
-                request(), context=context()
-            )
+            transport(redirect_delegate, retry_policy=retry).request(request(), context=context())
         )
     assert len(redirect_delegate.requests) == 1
 
@@ -388,9 +377,7 @@ def test_transient_errors_retry_but_permanent_errors_do_not() -> None:
 def test_oversized_request_and_response_fail_closed() -> None:
     wrapper = transport(FakeDelegate(response(body=b"x" * 9)))
     with pytest.raises(ResourceLimitError, match="response exceeded") as caught:
-        asyncio.run(
-            wrapper.request(request(max_bytes=8), context=context())
-        )
+        asyncio.run(wrapper.request(request(max_bytes=8), context=context()))
     assert BASE_URL not in str(caught.value)
 
     large_body = HttpRequest(
@@ -467,9 +454,7 @@ def test_pagination_detects_cursor_loops_and_page_limits() -> None:
 def test_unsafe_endpoints_are_rejected_before_delegate_io(unsafe_url: str) -> None:
     delegate = FakeDelegate(response())
     with pytest.raises(InvalidRequestError) as caught:
-        asyncio.run(
-            transport(delegate).request(request(unsafe_url), context=context())
-        )
+        asyncio.run(transport(delegate).request(request(unsafe_url), context=context()))
     assert unsafe_url not in str(caught.value)
     assert delegate.requests == []
 
@@ -616,9 +601,7 @@ def test_secret_resolution_failures_do_not_echo_reference_or_upstream_error() ->
 
 def test_untrusted_delegate_errors_are_redacted_and_not_chained() -> None:
     secret = "delegate-leaked-secret"
-    wrapper = transport(
-        FakeDelegate(RuntimeError(f"{BASE_URL}: Authorization: Bearer {secret}"))
-    )
+    wrapper = transport(FakeDelegate(RuntimeError(f"{BASE_URL}: Authorization: Bearer {secret}")))
     with pytest.raises(PermanentProviderError, match="delegate failed") as caught:
         asyncio.run(wrapper.request(request(), context=context()))
     rendered = "".join(
@@ -636,8 +619,7 @@ def test_untrusted_delegate_errors_are_redacted_and_not_chained() -> None:
 def test_every_budget_is_finite_and_range_is_bounded() -> None:
     limits = TransportLimits()
     assert all(
-        isinstance(getattr(limits, name), (int, float))
-        and getattr(limits, name) > 0
+        isinstance(getattr(limits, name), (int, float)) and getattr(limits, name) > 0
         for name in limits.__dataclass_fields__
     )
     wrapper = transport(FakeDelegate(response()))

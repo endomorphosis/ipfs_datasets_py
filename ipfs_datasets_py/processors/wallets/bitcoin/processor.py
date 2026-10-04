@@ -49,9 +49,7 @@ class BitcoinWalletProcessor:
         if not isinstance(self.network, BitcoinNetwork):
             raise InvalidRequestError("network must be a BitcoinNetwork")
         self._chain = chain_ref_for(self.network)
-        self._finality = self.finality_policy or BitcoinFinalityPolicy(
-            network=self.network
-        )
+        self._finality = self.finality_policy or BitcoinFinalityPolicy(network=self.network)
         self._normalizer = self.normalizer or BitcoinNormalizer(
             network=self.network,
             finality_policy=self._finality,
@@ -202,13 +200,9 @@ class BitcoinWalletProcessor:
             elif isinstance(item, Mapping):
                 from .normalizer import parse_esplora_transaction
 
-                native.append(
-                    parse_esplora_transaction(item, network=self.network)
-                )
+                native.append(parse_esplora_transaction(item, network=self.network))
             else:
-                raise InvalidRequestError(
-                    f"unsupported transaction type: {type(item)!r}"
-                )
+                raise InvalidRequestError(f"unsupported transaction type: {type(item)!r}")
         if apply_utxos:
             for tx in native:
                 if tx.status is TxStatus.REPLACED:

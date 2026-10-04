@@ -114,9 +114,7 @@ def test_candidate_materializes_as_append_only_hf_dry_run(tmp_path) -> None:
 
     release_root = tmp_path / "release"
     manifest = candidate.materialize(release_root)
-    publisher = HuggingFaceReleasePublisher(
-        repository_id="Publicus/211-abby-tts"
-    )
+    publisher = HuggingFaceReleasePublisher(repository_id="Publicus/211-abby-tts")
     plan = publisher.plan_dry_run(manifest, local_root=release_root)
 
     assert plan.dry_run is True

@@ -88,29 +88,22 @@ class BackendDescriptor:
     attributes: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "backend_id", _identifier(self.backend_id, "backend_id")
-        )
+        object.__setattr__(self, "backend_id", _identifier(self.backend_id, "backend_id"))
         object.__setattr__(self, "family", _identifier(self.family, "family"))
         families = tuple(
-            _enum(LogicFamily, item, "logic_families")
-            for item in (self.logic_families or ())
+            _enum(LogicFamily, item, "logic_families") for item in (self.logic_families or ())
         )
         if not families:
             raise FormalizationError("logic_families must be non-empty")
         object.__setattr__(self, "logic_families", families)
-        theories = tuple(
-            _enum(TheoryFragment, item, "theories") for item in (self.theories or ())
-        )
+        theories = tuple(_enum(TheoryFragment, item, "theories") for item in (self.theories or ()))
         object.__setattr__(self, "theories", theories)
         object.__setattr__(
             self,
             "capability_id",
             _text(self.capability_id, "capability_id", allow_empty=True),
         )
-        object.__setattr__(
-            self, "tool_name", _text(self.tool_name, "tool_name", allow_empty=True)
-        )
+        object.__setattr__(self, "tool_name", _text(self.tool_name, "tool_name", allow_empty=True))
         object.__setattr__(
             self,
             "tool_version",
@@ -143,9 +136,7 @@ class BackendDescriptor:
             "logic_families": [
                 f.value if isinstance(f, LogicFamily) else f for f in self.logic_families
             ],
-            "theories": [
-                t.value if isinstance(t, TheoryFragment) else t for t in self.theories
-            ],
+            "theories": [t.value if isinstance(t, TheoryFragment) else t for t in self.theories],
             "tool_name": self.tool_name,
             "tool_version": self.tool_version,
         }
@@ -174,12 +165,8 @@ class BackendResult:
     schema_version: str = BACKEND_RESULT_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "backend_id", _identifier(self.backend_id, "backend_id")
-        )
-        object.__setattr__(
-            self, "status", _enum(BackendStatus, self.status, "status")
-        )
+        object.__setattr__(self, "backend_id", _identifier(self.backend_id, "backend_id"))
+        object.__setattr__(self, "status", _enum(BackendStatus, self.status, "status"))
         if not isinstance(self.executed, bool):
             raise FormalizationError("executed must be a bool")
         object.__setattr__(
@@ -199,14 +186,10 @@ class BackendResult:
             "reason",
             "raw_status",
         ):
-            object.__setattr__(
-                self, name, _text(getattr(self, name), name, allow_empty=True)
-            )
+            object.__setattr__(self, name, _text(getattr(self, name), name, allow_empty=True))
         object.__setattr__(self, "counterexample", _attributes(self.counterexample))
         object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         # A non-executed result cannot claim proved/disproved.
         if not self.executed and self.status in {
             BackendStatus.PROVED,
@@ -214,9 +197,7 @@ class BackendResult:
             BackendStatus.SATISFIABLE,
             BackendStatus.UNSATISFIABLE,
         }:
-            raise FormalizationError(
-                "non-executed backend result cannot claim solver outcomes"
-            )
+            raise FormalizationError("non-executed backend result cannot claim solver outcomes")
 
     @property
     def is_proof_candidate(self) -> bool:
@@ -271,9 +252,7 @@ class ProverBackend(Protocol):
 
     def is_available(self) -> bool: ...
 
-    def execute(
-        self, form: LoweredForm, *, timeout_ms: int
-    ) -> BackendResult: ...
+    def execute(self, form: LoweredForm, *, timeout_ms: int) -> BackendResult: ...
 
 
 def _base_result(
@@ -645,9 +624,7 @@ class Z3SmtBackend:
             else:
                 for body in asserts:
                     try:
-                        formulas = z3.parse_smt2_string(
-                            f"(assert {body})\n(check-sat)\n"
-                        )
+                        formulas = z3.parse_smt2_string(f"(assert {body})\n(check-sat)\n")
                         for formula in formulas:
                             solver.add(formula)
                     except Exception:
@@ -659,9 +636,7 @@ class Z3SmtBackend:
                             solver.add(z3.BoolVal(False))
                         elif re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", atom):
                             solver.add(z3.Bool(atom))
-                        elif re.fullmatch(
-                            r"\(\s*not\s+[A-Za-z_][A-Za-z0-9_]*\s*\)", atom, re.I
-                        ):
+                        elif re.fullmatch(r"\(\s*not\s+[A-Za-z_][A-Za-z0-9_]*\s*\)", atom, re.I):
                             name = re.findall(r"[A-Za-z_][A-Za-z0-9_]*", atom)[-1]
                             solver.add(z3.Not(z3.Bool(name)))
                         else:
@@ -712,7 +687,9 @@ class Z3SmtBackend:
                     counterexample=cex,
                 )
             # unknown — may be timeout
-            reason = str(solver.reason_unknown()) if hasattr(solver, "reason_unknown") else "unknown"
+            reason = (
+                str(solver.reason_unknown()) if hasattr(solver, "reason_unknown") else "unknown"
+            )
             status = (
                 BackendStatus.TIMEOUT
                 if "timeout" in reason.lower() or elapsed >= timeout_ms
@@ -848,9 +825,7 @@ class CVC5SmtBackend:
                     solver.assertFormula(solver.mkFalse())
                 elif re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", atom):
                     solver.assertFormula(solver.mkConst(bool_sort, atom))
-                elif re.fullmatch(
-                    r"\(\s*not\s+[A-Za-z_][A-Za-z0-9_]*\s*\)", atom, re.I
-                ):
+                elif re.fullmatch(r"\(\s*not\s+[A-Za-z_][A-Za-z0-9_]*\s*\)", atom, re.I):
                     name = re.findall(r"[A-Za-z_][A-Za-z0-9_]*", atom)[-1]
                     solver.assertFormula(
                         solver.mkTerm(cvc5.Kind.NOT, solver.mkConst(bool_sort, name))
@@ -903,11 +878,7 @@ class CVC5SmtBackend:
                     reason="cvc5 returned sat",
                     raw_status="sat",
                 )
-            status = (
-                BackendStatus.TIMEOUT
-                if elapsed >= timeout_ms
-                else BackendStatus.UNKNOWN
-            )
+            status = BackendStatus.TIMEOUT if elapsed >= timeout_ms else BackendStatus.UNKNOWN
             return _base_result(
                 self,
                 form,
@@ -1143,9 +1114,7 @@ class PortfolioRun:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "form_id", _identifier(self.form_id, "form_id"))
-        object.__setattr__(
-            self, "obligation_id", _identifier(self.obligation_id, "obligation_id")
-        )
+        object.__setattr__(self, "obligation_id", _identifier(self.obligation_id, "obligation_id"))
         object.__setattr__(self, "results", tuple(self.results))
         object.__setattr__(
             self,
@@ -1259,9 +1228,7 @@ class ProverPortfolio:
         virtual result without calling any backend ``execute``.
         """
 
-        budget = (
-            self._default_timeout_ms if timeout_ms is None else int(timeout_ms)
-        )
+        budget = self._default_timeout_ms if timeout_ms is None else int(timeout_ms)
         if budget < 0:
             raise FormalizationError("timeout_ms must be non-negative")
 
@@ -1284,10 +1251,7 @@ class ProverPortfolio:
                 model_digest=form.model_digest,
                 obligation_id=form.obligation_id,
                 form_id=form.form_id,
-                reason=(
-                    form.reason
-                    or "portfolio refused non-submittable / non-compiled form"
-                ),
+                reason=(form.reason or "portfolio refused non-submittable / non-compiled form"),
             )
             return PortfolioRun(
                 form_id=form.form_id,
@@ -1301,11 +1265,7 @@ class ProverPortfolio:
             )
 
         selected = self.select_backends(form)
-        refused = [
-            b.descriptor.backend_id
-            for b in self._backends
-            if b not in selected
-        ]
+        refused = [b.descriptor.backend_id for b in self._backends if b not in selected]
         results: list[BackendResult] = []
         if not selected:
             results.append(

@@ -70,13 +70,8 @@ _CANDIDATE_SUPERPROJECTS = [
 EVIDENCE_REPO_ROOT = None
 EVIDENCE_COVERAGE = None
 for _candidate in _CANDIDATE_SUPERPROJECTS:
-    _repo = (
-        _candidate
-        / "data/datasets_contract_analysis/manifests/repository-root.json"
-    )
-    _cov = (
-        _candidate / "data/datasets_contract_analysis/manifests/coverage.json"
-    )
+    _repo = _candidate / "data/datasets_contract_analysis/manifests/repository-root.json"
+    _cov = _candidate / "data/datasets_contract_analysis/manifests/coverage.json"
     if _repo.is_file() and _cov.is_file():
         EVIDENCE_REPO_ROOT = _repo
         EVIDENCE_COVERAGE = _cov
@@ -84,12 +79,10 @@ for _candidate in _CANDIDATE_SUPERPROJECTS:
 if EVIDENCE_REPO_ROOT is None:
     # Default location relative to 211-AI superproject layout.
     EVIDENCE_REPO_ROOT = (
-        PACKAGE_ROOT.parent
-        / "data/datasets_contract_analysis/manifests/repository-root.json"
+        PACKAGE_ROOT.parent / "data/datasets_contract_analysis/manifests/repository-root.json"
     )
     EVIDENCE_COVERAGE = (
-        PACKAGE_ROOT.parent
-        / "data/datasets_contract_analysis/manifests/coverage.json"
+        PACKAGE_ROOT.parent / "data/datasets_contract_analysis/manifests/coverage.json"
     )
 
 
@@ -225,13 +218,8 @@ def test_snapshot_counts_once_and_is_cycle_safe() -> None:
     assert len(set(paths)) == len(paths)
 
     # Mirror cycle recorded, nested non-package also recorded, neither rescanned.
-    assert any(
-        g.disposition == "mirror_cycle_recorded_without_rescan"
-        for g in snap.gitlinks
-    )
-    assert any(
-        g.disposition == "nested_gitlink_recorded" for g in snap.gitlinks
-    )
+    assert any(g.disposition == "mirror_cycle_recorded_without_rescan" for g in snap.gitlinks)
+    assert any(g.disposition == "nested_gitlink_recorded" for g in snap.gitlinks)
     assert all(g.rescan is False for g in snap.gitlinks)
     assert snap.mirror_cycles
 
@@ -344,9 +332,7 @@ def test_shard_counts_sum_to_root_and_two_runs_match(tmp_path: Path) -> None:
     root_b = snap_b.to_repository_root_manifest()
     assert root_a["root_cid"] == root_b["root_cid"]
     assert root_a["shard_count_sum"] == root_a["totals"]["tracked_objects"]
-    assert root_a["shard_count_sum"] == sum(
-        s["count"] for s in root_a["shards"]
-    )
+    assert root_a["shard_count_sum"] == sum(s["count"] for s in root_a["shards"])
     assert root_a["totals"]["tracked_objects"] == len(snap_a.blobs)
 
     errors = validate_repository_root_manifest(root_a)
@@ -714,9 +700,7 @@ def test_objective_validation_repair_proves_g020_acceptance() -> None:
     }:
         assert required in present
 
-    unsupported = [
-        b for b in snap_a.blobs if b.parser_disposition == DISPOSITION_UNSUPPORTED
-    ]
+    unsupported = [b for b in snap_a.blobs if b.parser_disposition == DISPOSITION_UNSUPPORTED]
     assert unsupported
     for blob in unsupported:
         assert blob.cid  # hashed
@@ -731,10 +715,7 @@ def test_objective_validation_repair_proves_g020_acceptance() -> None:
     assert validate_repository_root_manifest(root_a) == []
 
     assert root_a["acceptance"]["objective_validation_repair"] is True
-    assert (
-        root_a["acceptance"]["objective_validation_evidence"]
-        == "objective validation repair"
-    )
+    assert root_a["acceptance"]["objective_validation_evidence"] == "objective validation repair"
     assert root_a["acceptance"]["repair_task_id"] == "DSCON-067"
     assert root_a["policy"]["hash_unsupported_without_parse"] is True
 
@@ -745,8 +726,7 @@ def test_objective_validation_repair_proves_g020_acceptance() -> None:
     receipt_doc = receipt.to_dict()
     assert receipt_doc["acceptance"]["objective_validation_repair"] is True
     assert (
-        receipt_doc["acceptance"]["objective_validation_evidence"]
-        == OBJECTIVE_VALIDATION_EVIDENCE
+        receipt_doc["acceptance"]["objective_validation_evidence"] == OBJECTIVE_VALIDATION_EVIDENCE
     )
 
     # Dirty or missing inputs yield INCOMPLETE_SCAN.
@@ -807,9 +787,5 @@ def test_evidence_manifests_are_valid_and_bound() -> None:
     assert coverage["shard_count_sum"] == coverage["total_objects"]
     assert set(coverage["disposition_counts"]) >= set(ALL_DISPOSITIONS)
     # Identity recompute for root
-    identity = {
-        k: v
-        for k, v in root.items()
-        if k not in {"root_cid", "acceptance", "blob_sample"}
-    }
+    identity = {k: v for k, v in root.items() if k not in {"root_cid", "acceptance", "blob_sample"}}
     assert cid_for_structured(identity) == root["root_cid"]

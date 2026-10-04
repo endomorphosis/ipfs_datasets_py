@@ -16,9 +16,7 @@ import pytest
 
 PACKAGE_ROOT = Path(__file__).resolve().parents[4]
 POLICY_PATH = PACKAGE_ROOT / "docs/software_contracts/verdict-policy-v1.json"
-THREAT_MODEL_PATH = (
-    PACKAGE_ROOT / "docs/software_contracts/SOUNDNESS_AND_THREAT_MODEL.md"
-)
+THREAT_MODEL_PATH = PACKAGE_ROOT / "docs/software_contracts/SOUNDNESS_AND_THREAT_MODEL.md"
 
 CONCEPTUAL_INTERFACES = {
     "VerificationVerdict",
@@ -84,9 +82,7 @@ def _fixture_satisfies(policy: dict[str, Any], fixture: dict[str, Any]) -> bool:
 
 
 def test_policy_is_versioned_normative_json(policy: dict[str, Any]) -> None:
-    assert policy["schema_version"] == (
-        "ipfs-datasets.software-contract-verdict-policy.v1"
-    )
+    assert policy["schema_version"] == ("ipfs-datasets.software-contract-verdict-policy.v1")
     assert policy["policy_id"] == "software-contract-verdict-policy-v1"
     assert policy["policy_version"] == "1.0.0"
     assert policy["normative"] is True
@@ -104,9 +100,7 @@ def test_policy_defines_exact_terminal_verdict_vocabulary(
     assert set(by_id) == EXPECTED_VERDICTS
     assert all(item["terminal"] is True for item in verdicts)
     assert {
-        verdict_id
-        for verdict_id, definition in by_id.items()
-        if definition["fail_closed"]
+        verdict_id for verdict_id, definition in by_id.items() if definition["fail_closed"]
     } == FAIL_CLOSED_VERDICTS
     assert by_id["PROVED_WITHIN_MODEL"]["fail_closed"] is False
     assert by_id["VIOLATED_WITH_COUNTEREXAMPLE"]["fail_closed"] is False
@@ -146,13 +140,8 @@ def test_conceptual_interfaces_are_structured_and_bound(
     assert "proof_required" in proof_iface["non_escalation"]
     for kind in PROOF_ATTESTATION_KINDS:
         assert kind in policy["evidence_authority"]
-    assert (
-        "proof_required"
-        not in policy["evidence_authority"]["ZK_ATTESTATION"]["may_satisfy"]
-    )
-    assert policy["evidence_authority"]["FORMAL_PROOF_RECEIPT"]["may_satisfy"] == [
-        "proof_required"
-    ]
+    assert "proof_required" not in policy["evidence_authority"]["ZK_ATTESTATION"]["may_satisfy"]
+    assert policy["evidence_authority"]["FORMAL_PROOF_RECEIPT"]["may_satisfy"] == ["proof_required"]
     assert policy["evidence_authority"]["SIMULATED_PROOF"]["may_satisfy"] == []
 
 
@@ -183,12 +172,8 @@ def test_evidence_authority_is_non_substitutable_and_bounded(
 
     assert set(authority) >= BOUNDED_EVIDENCE
     assert authority["TEST_RESULT"]["may_satisfy"] == ["test_required"]
-    assert authority["TYPE_CHECK_RESULT"]["may_satisfy"] == [
-        "type_check_required"
-    ]
-    assert authority["ZK_ATTESTATION"]["may_satisfy"] == [
-        "attestation_integrity_required"
-    ]
+    assert authority["TYPE_CHECK_RESULT"]["may_satisfy"] == ["type_check_required"]
+    assert authority["ZK_ATTESTATION"]["may_satisfy"] == ["attestation_integrity_required"]
     for evidence_kind in (
         "GRAPHRAG_RETRIEVAL",
         "SIMULATED_PROOF",
@@ -198,9 +183,7 @@ def test_evidence_authority_is_non_substitutable_and_bounded(
 
     assert policy["assurance_levels"]["not_totally_ordered"] is True
     non_escalation = policy["assurance_levels"]["non_escalation_rule"]
-    assert "CRYPTOGRAPHIC_INTEGRITY does not imply FORMAL_WITHIN_MODEL" in (
-        non_escalation
-    )
+    assert "CRYPTOGRAPHIC_INTEGRITY does not imply FORMAL_WITHIN_MODEL" in (non_escalation)
     completion_rule = policy["completion_non_escalation_rule"]
     assert "does not satisfy proof_required" in completion_rule
     assert "does not upgrade" in completion_rule
@@ -218,9 +201,7 @@ def test_dynamic_behavior_and_absent_findings_fail_conservatively(
     assert "UNKNOWN" in rule
     assert "Never infer PROVED_WITHIN_MODEL" in rule
     assert scan["unsupported_is_explicitly_counted"] is True
-    assert "cannot establish behavioral proof" in (
-        scan["unsupported_disposition_limit"]
-    )
+    assert "cannot establish behavioral proof" in (scan["unsupported_disposition_limit"])
     assert "not evidence of safety" in scan["absence_rule"]
 
 
@@ -287,9 +268,9 @@ def test_all_normative_decision_fixtures_match_completion_matrix(
     assert any(item["expected_satisfies_completion"] for item in fixtures)
     assert any(not item["expected_satisfies_completion"] for item in fixtures)
     for fixture in fixtures:
-        assert _fixture_satisfies(policy, fixture) is (
-            fixture["expected_satisfies_completion"]
-        ), fixture["id"]
+        assert _fixture_satisfies(policy, fixture) is (fixture["expected_satisfies_completion"]), (
+            fixture["id"]
+        )
 
 
 @pytest.mark.parametrize(
@@ -309,12 +290,8 @@ def test_all_normative_decision_fixtures_match_completion_matrix(
         "reject_unbound_assumptions",
     ],
 )
-def test_required_rejection_fixture_fails_closed(
-    policy: dict[str, Any], fixture_id: str
-) -> None:
-    fixture = next(
-        item for item in policy["decision_fixtures"] if item["id"] == fixture_id
-    )
+def test_required_rejection_fixture_fails_closed(policy: dict[str, Any], fixture_id: str) -> None:
+    fixture = next(item for item in policy["decision_fixtures"] if item["id"] == fixture_id)
     assert fixture["expected_satisfies_completion"] is False
     assert _fixture_satisfies(policy, fixture) is False
 
@@ -344,8 +321,6 @@ def test_human_threat_model_covers_normative_policy(policy: dict[str, Any]) -> N
         "proof_required",
     ):
         assert phrase.casefold() in document.casefold()
-    assert policy["claim_rule"] in document or (
-        "Narrow provable claims are preferable" in document
-    )
+    assert policy["claim_rule"] in document or ("Narrow provable claims are preferable" in document)
     assert "verdict-policy-v1.json" in document
     assert policy["policy_version"] in document

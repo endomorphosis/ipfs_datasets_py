@@ -118,21 +118,15 @@ def test_aliases_are_normalized_but_collisions_are_rejected() -> None:
     with pytest.raises(AliasCollisionError, match="collides"):
         registry.register_family(_family("beta", aliases=("alpha_logic",)))
     with pytest.raises(AliasCollisionError, match="colliding aliases"):
-        registry.register_family(
-            _family("gamma", aliases=("Gamma Logic", "gamma-logic"))
-        )
+        registry.register_family(_family("gamma", aliases=("Gamma Logic", "gamma-logic")))
 
 
 def test_semantic_equivalence_must_be_explicit() -> None:
     registry = LogicFamilyRegistry()
-    registry.register_family(
-        _family("canonical", semantic_identity="shared-semantics/v1")
-    )
+    registry.register_family(_family("canonical", semantic_identity="shared-semantics/v1"))
 
     with pytest.raises(SemanticEquivalenceError, match="silently duplicates"):
-        registry.register_family(
-            _family("silent_copy", semantic_identity="shared-semantics/v1")
-        )
+        registry.register_family(_family("silent_copy", semantic_identity="shared-semantics/v1"))
 
     explicit = registry.register_family(
         _family(
@@ -173,9 +167,7 @@ def test_provider_capability_declares_all_support_modes_without_execution() -> N
                 operation_ids=("check_satisfiability", "prove"),
                 translation_ids=("propositional_to_first_order",),
             ),
-            FamilySupportDescriptor(
-                "mu_calculus", SupportLevel.DECLARATION_ONLY
-            ),
+            FamilySupportDescriptor("mu_calculus", SupportLevel.DECLARATION_ONLY),
             FamilySupportDescriptor("dcec", SupportLevel.UNSUPPORTED),
         ),
         runtime_ids=("native_process",),
@@ -196,10 +188,7 @@ def test_provider_capability_declares_all_support_modes_without_execution() -> N
     assert descriptor.support_for("temporal").level is SupportLevel.UNSUPPORTED
     assert not descriptor.supports("mu_calculus")
     assert descriptor.supports("mu_calculus", include_declarations=True)
-    assert (
-        registry.capability("example_solver", "2.1.0").capability_id
-        == "example_solver@2.1.0"
-    )
+    assert registry.capability("example_solver", "2.1.0").capability_id == "example_solver@2.1.0"
 
 
 def test_capability_validation_rejects_overclaiming_and_dangling_references() -> None:
@@ -232,9 +221,7 @@ def test_support_and_translation_models_reject_semantic_contradictions() -> None
     with pytest.raises(TaxonomyError, match="translated support"):
         FamilySupportDescriptor("first_order", SupportLevel.TRANSLATED)
     with pytest.raises(TaxonomyError, match="unsupported"):
-        FamilySupportDescriptor(
-            "first_order", SupportLevel.UNSUPPORTED, operation_ids=("prove",)
-        )
+        FamilySupportDescriptor("first_order", SupportLevel.UNSUPPORTED, operation_ids=("prove",))
     with pytest.raises(TaxonomyError, match="lossless"):
         TranslationDescriptor(
             "bad_translation",
@@ -244,9 +231,7 @@ def test_support_and_translation_models_reject_semantic_contradictions() -> None
             loses_property_ids=("validity",),
         )
     with pytest.raises(TaxonomyError, match="at least one limit"):
-        BoundednessDescriptor(
-            "bad_bound", "Bad bound", BoundednessKind.STEP_BOUNDED
-        )
+        BoundednessDescriptor("bad_bound", "Bad bound", BoundednessKind.STEP_BOUNDED)
 
 
 def test_registration_rejects_dangling_family_vocabulary() -> None:
@@ -261,9 +246,7 @@ def test_registration_rejects_dangling_family_vocabulary() -> None:
             )
         )
 
-    registry.register_property(
-        LogicPropertyDescriptor("known", "Known", "test-property/known/v1")
-    )
+    registry.register_property(LogicPropertyDescriptor("known", "Known", "test-property/known/v1"))
     with pytest.raises(UnknownDescriptorError, match="unknown properties"):
         registry.register_operation(
             LogicOperationDescriptor(
@@ -282,12 +265,8 @@ def test_registry_serialization_is_deterministic_and_round_trips() -> None:
             LogicFragmentDescriptor("alpha", "Alpha", "fragment/alpha/v1"),
         ),
         families=(
-            LogicFamilyDescriptor(
-                "zeta", "Zeta", "family/zeta/v1", fragment_ids=("zeta",)
-            ),
-            LogicFamilyDescriptor(
-                "alpha", "Alpha", "family/alpha/v1", fragment_ids=("alpha",)
-            ),
+            LogicFamilyDescriptor("zeta", "Zeta", "family/zeta/v1", fragment_ids=("zeta",)),
+            LogicFamilyDescriptor("alpha", "Alpha", "family/alpha/v1", fragment_ids=("alpha",)),
         ),
     )
     second = LogicFamilyRegistry(

@@ -63,9 +63,7 @@ def _extra_marker_pagination(suite: WalletProcessorConformance) -> None:
         account=data["account"],
         ledger_head=data["ledger_head"],
     )
-    provider = XRPLLedgerProvider(
-        network=XRPLNetwork.MAINNET, backend=backend, page_size=2
-    )
+    provider = XRPLLedgerProvider(network=XRPLNetwork.MAINNET, backend=backend, page_size=2)
     request = BoundedRequest(scope=data["account"], context=_context())
 
     async def _collect():

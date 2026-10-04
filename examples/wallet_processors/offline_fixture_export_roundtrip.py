@@ -27,7 +27,9 @@ def _repo_fixtures() -> Path:
     # examples/wallet_processors -> examples -> ipfs_datasets_py -> repo? or package root
     # Path: ipfs_datasets_py/examples/wallet_processors/this_file
     package_root = Path(__file__).resolve().parents[2]
-    fixtures = package_root / "tests" / "fixtures" / "wallets" / "_shared" / "export_sample_records.json"
+    fixtures = (
+        package_root / "tests" / "fixtures" / "wallets" / "_shared" / "export_sample_records.json"
+    )
     if not fixtures.is_file():
         raise FileNotFoundError(f"Missing fixture file: {fixtures}")
     return fixtures
@@ -112,12 +114,8 @@ def _records_from_fixture(payload: dict):
                 transfer_index=int(tr["transfer_index"]),
                 asset=asset,
                 amount=ExactAmount.from_int(int(tr["base_units"]), decimals=asset.decimals),
-                source_account=AccountRef(
-                    chain, tr["from_address"], AccountKind.ADDRESS
-                ),
-                destination_account=AccountRef(
-                    chain, tr["to_address"], AccountKind.ADDRESS
-                ),
+                source_account=AccountRef(chain, tr["from_address"], AccountKind.ADDRESS),
+                destination_account=AccountRef(chain, tr["to_address"], AccountKind.ADDRESS),
                 transfer_kind=TransferKind(tr.get("kind", "native")),
             )
         )

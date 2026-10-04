@@ -74,9 +74,7 @@ def _process_runner(
 
     def execute(invocation, _cancellation):
         invocations.append(invocation)
-        assert (invocation.cwd / "problem.p").read_text() == (
-            "fof(goal, conjecture, p)."
-        )
+        assert (invocation.cwd / "problem.p").read_text() == ("fof(goal, conjecture, p).")
         return RawProcessResult(
             returncode=returncode,
             stdout=stdout,
@@ -97,9 +95,7 @@ def test_vampire_is_bounded_source_bound_and_unreconstructed_proof_is_candidate(
     )
     request = _request(backend_id="vampire")
 
-    outcome = VampireBackend(
-        runner=runner, backend_version="4.9"
-    ).run(request)
+    outcome = VampireBackend(runner=runner, backend_version="4.9").run(request)
 
     assert isinstance(outcome.result, CandidateResult)
     assert outcome.result.authority is ResultAuthority.CANDIDATE
@@ -107,8 +103,9 @@ def test_vampire_is_bounded_source_bound_and_unreconstructed_proof_is_candidate(
     assert outcome.result.witness["candidate_kind"] == "unreconstructed_atp_proof"
     assert outcome.proof_object is not None
     assert outcome.proof_object.verified is False
-    assert outcome.proof_object.content_digest == (
-        outcome.result.witness["proof_object"]["content_digest"]
+    assert (
+        outcome.proof_object.content_digest
+        == (outcome.result.witness["proof_object"]["content_digest"])
     )
     assert outcome.source_binding.request_digest == request.digest
     assert (
@@ -131,9 +128,7 @@ def test_exact_szs_status_replaces_legacy_substring_heuristics():
     assert "no SZS status" in outcome.result.reason
 
     with pytest.raises(MalformedATPOutput, match="conflicting"):
-        parse_szs_status(
-            "% SZS status Theorem for x\n% SZS status CounterSatisfiable for x"
-        )
+        parse_szs_status("% SZS status Theorem for x\n% SZS status CounterSatisfiable for x")
     assert parse_szs_status("% SZS status CounterSatisfiable for x") is (
         SZSStatus.COUNTER_SATISFIABLE
     )
@@ -165,9 +160,7 @@ def test_verified_reconstruction_can_produce_typed_theorem_proof():
     assert outcome.result.authority is ResultAuthority.THEOREM
     assert outcome.proof_object is not None
     assert outcome.proof_object.verified is True
-    assert outcome.result.witness["content_digest"] == (
-        outcome.proof_object.content_digest
-    )
+    assert outcome.result.witness["content_digest"] == (outcome.proof_object.content_digest)
 
 
 def test_validated_countermodel_is_typed_for_theorem_and_sat_queries():
@@ -182,22 +175,16 @@ def test_validated_countermodel_is_typed_for_theorem_and_sat_queries():
             validator_id="tptp-model-validator:v1",
         )
 
-    theorem_runner, _ = _process_runner(
-        "% SZS status CounterSatisfiable for canonical"
-    )
-    theorem = EProverBackend(
-        runner=theorem_runner, countermodel_parser=parse_model
-    ).run(_request())
+    theorem_runner, _ = _process_runner("% SZS status CounterSatisfiable for canonical")
+    theorem = EProverBackend(runner=theorem_runner, countermodel_parser=parse_model).run(_request())
     assert isinstance(theorem.result, TheoremResult)
     assert theorem.result.status is ResultStatus.DISPROVED
     assert theorem.countermodel is not None
 
-    sat_runner, _ = _process_runner(
-        "% SZS status CounterSatisfiable for canonical"
+    sat_runner, _ = _process_runner("% SZS status CounterSatisfiable for canonical")
+    sat = EProverBackend(runner=sat_runner, countermodel_parser=parse_model).run(
+        _request(query_kind=QueryKind.SATISFIABILITY)
     )
-    sat = EProverBackend(
-        runner=sat_runner, countermodel_parser=parse_model
-    ).run(_request(query_kind=QueryKind.SATISFIABILITY))
     assert isinstance(sat.result, SatisfiabilityResult)
     assert sat.result.status is ResultStatus.SATISFIABLE
 
@@ -206,9 +193,7 @@ def test_validated_countermodel_is_typed_for_theorem_and_sat_queries():
     ("raw", "expected"),
     [
         (
-            RawProcessResult(
-                returncode=None, timed_out=True, process_tree_terminated=True
-            ),
+            RawProcessResult(returncode=None, timed_out=True, process_tree_terminated=True),
             ResultStatus.TIMEOUT,
         ),
         (
@@ -221,9 +206,7 @@ def test_external_operational_failures_are_explicit(raw, expected):
     def execute(_invocation, _cancellation):
         return raw
 
-    outcome = VampireBackend(
-        runner=BoundedToolRunner(executor=execute)
-    ).run(_request())
+    outcome = VampireBackend(runner=BoundedToolRunner(executor=execute)).run(_request())
     assert isinstance(outcome.result, TheoremResult)
     assert outcome.result.status is expected
 
@@ -265,22 +248,18 @@ def test_native_dcec_tdfol_results_are_typed_bounded_and_compatible(
         source="p",
         backend_id=family,
     )
-    outcome = backend_factory(
-        _verified_native_proof, backend_version="legacy-reviewed-1"
-    ).run(request)
+    outcome = backend_factory(_verified_native_proof, backend_version="legacy-reviewed-1").run(
+        request
+    )
 
     assert isinstance(outcome.result, TheoremResult)
     assert outcome.result.status is ResultStatus.PROVED
     assert outcome.result.usage.steps == 1
     assert outcome.compatibility_receipt is not None
     assert outcome.compatibility_receipt.reviewed_behavior is True
-    assert outcome.compatibility_receipt.canonical_result_digest == (
-        outcome.result.digest
-    )
+    assert outcome.compatibility_receipt.canonical_result_digest == (outcome.result.digest)
     assert outcome.compatibility_receipt.request_digest == request.digest
-    assert outcome.compatibility_receipt.receipt_id.startswith(
-        "legacy-compatibility:"
-    )
+    assert outcome.compatibility_receipt.receipt_id.startswith("legacy-compatibility:")
 
 
 @dataclass
@@ -305,9 +284,7 @@ def test_unverified_native_success_is_candidate_not_proof():
             native_result_type="TDFOL.ProofResult",
         )
 
-    outcome = TDFOLBackend(native).run(
-        _request(family="tdfol", encoding="tdfol", source="p")
-    )
+    outcome = TDFOLBackend(native).run(_request(family="tdfol", encoding="tdfol", source="p"))
     assert isinstance(outcome.result, CandidateResult)
     assert outcome.result.status is ResultStatus.CANDIDATE
     assert outcome.compatibility_receipt is not None
@@ -336,9 +313,7 @@ def test_native_result_cannot_cross_request_or_source_binding():
         )
 
     with pytest.raises(ATPAdapterError, match="not bound"):
-        DCECBackend(forged).run(
-            _request(family="dcec", encoding="dcec", source="p")
-        )
+        DCECBackend(forged).run(_request(family="dcec", encoding="dcec", source="p"))
 
 
 def test_native_usage_overrun_cannot_be_promoted_to_proof():
@@ -360,9 +335,7 @@ def test_native_usage_overrun_cannot_be_promoted_to_proof():
             proof_object=proof,
         )
 
-    outcome = DCECBackend(overrun).run(
-        _request(family="dcec", encoding="dcec", source="p")
-    )
+    outcome = DCECBackend(overrun).run(_request(family="dcec", encoding="dcec", source="p"))
     assert isinstance(outcome.result, TheoremResult)
     assert outcome.result.status is ResultStatus.ERROR
     assert "max_steps" in outcome.result.reason
@@ -370,9 +343,9 @@ def test_native_usage_overrun_cannot_be_promoted_to_proof():
 
 def test_wrong_encoding_and_wrong_artifact_binding_fail_closed():
     with pytest.raises(ATPAdapterError, match="encoding"):
-        VampireBackend(
-            runner=_process_runner("% SZS status Theorem for x")[0]
-        ).run(_request(encoding="smtlib2"))
+        VampireBackend(runner=_process_runner("% SZS status Theorem for x")[0]).run(
+            _request(encoding="smtlib2")
+        )
 
     runner, _ = _process_runner("% SZS status Theorem for x")
 
@@ -387,6 +360,4 @@ def test_wrong_encoding_and_wrong_artifact_binding_fail_closed():
         )
 
     with pytest.raises(ATPAdapterError, match="another source"):
-        VampireBackend(
-            runner=runner, proof_reconstructor=forged_proof
-        ).run(_request())
+        VampireBackend(runner=runner, proof_reconstructor=forged_proof).run(_request())

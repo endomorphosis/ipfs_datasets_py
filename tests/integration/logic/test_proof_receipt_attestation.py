@@ -388,9 +388,7 @@ def test_cryptographic_execution_succeeds_and_projects_attestation_authority() -
     assert projection.metadata["underlying_status"] == "proved"
 
     source = verification.envelope.statement.receipt
-    assert (
-        preserve_underlying_authority(source, projection) is ResultAuthority.THEOREM
-    )
+    assert preserve_underlying_authority(source, projection) is ResultAuthority.THEOREM
     assert preserve_underlying_authority(source, record) is ResultAuthority.THEOREM
     assert preserve_underlying_authority(source, verification) is ResultAuthority.THEOREM
 
@@ -618,9 +616,10 @@ def test_statement_and_record_round_trip() -> None:
     payload = record.to_public_artifact()
     assert payload["underlying_authority"] == "theorem"
     assert payload["receipt_id"] == record.receipt_id
-    assert AttestationEnvelope.from_dict(
-        verification.envelope.to_public_artifact()
-    ).envelope_id == verification.envelope.envelope_id
+    assert (
+        AttestationEnvelope.from_dict(verification.envelope.to_public_artifact()).envelope_id
+        == verification.envelope.envelope_id
+    )
 
 
 def test_request_repr_redacts_witness() -> None:

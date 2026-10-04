@@ -107,15 +107,9 @@ class LeanSourceBinding:
     schema_version: str = LEAN_SOURCE_BINDING_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "request_digest", _digest(self.request_digest, "request_digest")
-        )
-        object.__setattr__(
-            self, "source_digest", _digest(self.source_digest, "source_digest")
-        )
-        object.__setattr__(
-            self, "source_format", _text(self.source_format, "source_format")
-        )
+        object.__setattr__(self, "request_digest", _digest(self.request_digest, "request_digest"))
+        object.__setattr__(self, "source_digest", _digest(self.source_digest, "source_digest"))
+        object.__setattr__(self, "source_format", _text(self.source_format, "source_format"))
         if self.schema_version != LEAN_SOURCE_BINDING_VERSION:
             raise LeanKernelError(
                 f"unsupported Lean source binding schema: {self.schema_version!r}"
@@ -151,9 +145,7 @@ class LeanAxiomReport:
     schema_version: str = LEAN_AXIOM_REPORT_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "declaration", _text(self.declaration, "declaration")
-        )
+        object.__setattr__(self, "declaration", _text(self.declaration, "declaration"))
         object.__setattr__(
             self, "report_text", _text(self.report_text, "report_text", optional=True)
         )
@@ -164,9 +156,7 @@ class LeanAxiomReport:
         if not isinstance(self.contains_sorry_ax, bool):
             raise LeanKernelError("contains_sorry_ax must be a boolean")
         if self.schema_version != LEAN_AXIOM_REPORT_VERSION:
-            raise LeanKernelError(
-                f"unsupported axiom report schema: {self.schema_version!r}"
-            )
+            raise LeanKernelError(f"unsupported axiom report schema: {self.schema_version!r}")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -200,19 +190,13 @@ class LeanKernelReceipt:
     schema_version: str = LEAN_KERNEL_RECEIPT_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "request_digest", _digest(self.request_digest, "request_digest")
-        )
+        object.__setattr__(self, "request_digest", _digest(self.request_digest, "request_digest"))
         if not isinstance(self.source_binding, LeanSourceBinding):
             raise LeanKernelError("source_binding must be a LeanSourceBinding")
         if self.request_digest != self.source_binding.request_digest:
             raise LeanKernelError("receipt request does not match source binding")
-        object.__setattr__(
-            self, "theorem_name", _text(self.theorem_name, "theorem_name")
-        )
-        object.__setattr__(
-            self, "theorem_digest", _digest(self.theorem_digest, "theorem_digest")
-        )
+        object.__setattr__(self, "theorem_name", _text(self.theorem_name, "theorem_name"))
+        object.__setattr__(self, "theorem_digest", _digest(self.theorem_digest, "theorem_digest"))
         imports = tuple(_text(item, "imports item") for item in self.imports)
         if len(imports) != len(set(imports)):
             raise LeanKernelError("imports must not contain duplicates")
@@ -235,9 +219,7 @@ class LeanKernelReceipt:
             self.translation, KernelTranslationBinding
         ):
             raise LeanKernelError("translation must be a KernelTranslationBinding")
-        if self.axiom_report is not None and not isinstance(
-            self.axiom_report, LeanAxiomReport
-        ):
+        if self.axiom_report is not None and not isinstance(self.axiom_report, LeanAxiomReport):
             raise LeanKernelError("axiom_report must be a LeanAxiomReport")
         object.__setattr__(self, "plane", _enum(self.plane, CapabilityPlane, "plane"))
         if not isinstance(self.accepted, bool):
@@ -251,18 +233,14 @@ class LeanKernelReceipt:
                 "authority_disposition",
             ),
         )
-        object.__setattr__(
-            self, "diagnostics", bound_diagnostics(self.diagnostics)
-        )
+        object.__setattr__(self, "diagnostics", bound_diagnostics(self.diagnostics))
         if self.schema_version != LEAN_KERNEL_RECEIPT_VERSION:
             raise LeanKernelError(
                 f"unsupported Lean kernel receipt schema: {self.schema_version!r}"
             )
         if self.accepted and self.authority_disposition is not LeanAuthorityDisposition.REJECT:
             if self.axiom_report is None or self.axiom_report.contains_sorry_ax:
-                raise LeanKernelError(
-                    "accepted Lean receipts require a sorry-free axiom report"
-                )
+                raise LeanKernelError("accepted Lean receipts require a sorry-free axiom report")
 
     def _payload(self) -> dict[str, Any]:
         return {
@@ -283,9 +261,7 @@ class LeanKernelReceipt:
             "theorem_digest": self.theorem_digest,
             "theorem_name": self.theorem_name,
             "toolchain": self.toolchain.to_dict(),
-            "translation": (
-                self.translation.to_dict() if self.translation is not None else None
-            ),
+            "translation": (self.translation.to_dict() if self.translation is not None else None),
         }
 
     @property
@@ -310,9 +286,7 @@ class LeanKernelOutcome:
     interface_version: str = LEAN_KERNEL_BACKEND_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "request_digest", _digest(self.request_digest, "request_digest")
-        )
+        object.__setattr__(self, "request_digest", _digest(self.request_digest, "request_digest"))
         if not isinstance(self.source_binding, LeanSourceBinding):
             raise LeanKernelError("source_binding must be a LeanSourceBinding")
         if not isinstance(self.result, TypedBackendResult):
@@ -326,13 +300,8 @@ class LeanKernelOutcome:
         if self.request_digest != self.receipt.request_digest:
             raise LeanKernelError("outcome request does not match receipt")
         if self.interface_version != LEAN_KERNEL_BACKEND_VERSION:
-            raise LeanKernelError(
-                f"unsupported Lean kernel interface: {self.interface_version!r}"
-            )
-        if (
-            self.result.status is ResultStatus.PROVED
-            and not self.receipt.accepted
-        ):
+            raise LeanKernelError(f"unsupported Lean kernel interface: {self.interface_version!r}")
+        if self.result.status is ResultStatus.PROVED and not self.receipt.accepted:
             raise LeanKernelError("proved results require an accepted kernel receipt")
 
     def to_dict(self) -> dict[str, Any]:
@@ -349,12 +318,7 @@ class LeanKernelOutcome:
 def _text(value: object, field_name: str, *, optional: bool = False) -> str:
     if optional and value == "":
         return ""
-    if (
-        not isinstance(value, str)
-        or not value
-        or value != value.strip()
-        or "\x00" in value
-    ):
+    if not isinstance(value, str) or not value or value != value.strip() or "\x00" in value:
         qualifier = "an empty or " if optional else "a "
         raise LeanKernelError(
             f"{field_name} must be {qualifier}non-empty trimmed string without NUL bytes"
@@ -392,9 +356,7 @@ def extract_lean_imports(source: str) -> tuple[str, ...]:
 def extract_lean_theorem_name(source: str) -> str:
     match = _DECL.search(source)
     if match is None:
-        raise LeanKernelError(
-            "Lean source must contain a theorem/lemma declaration to check"
-        )
+        raise LeanKernelError("Lean source must contain a theorem/lemma declaration to check")
     return match.group(1).rstrip(".")
 
 
@@ -444,19 +406,14 @@ def parse_lean_json_messages(stdout: str) -> list[dict[str, Any]]:
     return messages
 
 
-def parse_lean_axiom_report(
-    stdout: str, declaration: str
-) -> LeanAxiomReport | None:
+def parse_lean_axiom_report(stdout: str, declaration: str) -> LeanAxiomReport | None:
     messages = parse_lean_json_messages(stdout)
     marker = f"'{declaration}'"
     for message in messages:
         data = str(message.get("data", ""))
         if marker not in data:
             continue
-        if (
-            "depends on axioms" not in data
-            and "does not depend on any axioms" not in data
-        ):
+        if "depends on axioms" not in data and "does not depend on any axioms" not in data:
             continue
         axioms: list[str] = []
         if "depends on axioms:" in data:
@@ -465,9 +422,7 @@ def parse_lean_axiom_report(
                 token = token.strip(" .")
                 if token:
                     axioms.append(token)
-        contains_sorry = "sorryAx" in data or any(
-            axiom == "sorryAx" for axiom in axioms
-        )
+        contains_sorry = "sorryAx" in data or any(axiom == "sorryAx" for axiom in axioms)
         return LeanAxiomReport(
             declaration=declaration,
             report_text=sanitize_diagnostic(data, max_chars=1024),
@@ -526,8 +481,7 @@ def evaluate_lean_kernel_output(
     error_messages = [m for m in messages if m.get("severity") == "error"]
     if error_messages:
         excerpt = "; ".join(
-            sanitize_diagnostic(str(m.get("data", "")), max_chars=200)
-            for m in error_messages[:4]
+            sanitize_diagnostic(str(m.get("data", "")), max_chars=200) for m in error_messages[:4]
         )
         diagnostics.append(f"lean reported error diagnostics: {excerpt}")
         return False, None, bound_diagnostics(diagnostics)
@@ -582,9 +536,7 @@ def evaluate_lean_kernel_output(
 
 
 def _usage_from_process(process: ToolRunResult) -> ResourceUsage:
-    output_bytes = len(process.stdout.encode("utf-8")) + len(
-        process.stderr.encode("utf-8")
-    )
+    output_bytes = len(process.stdout.encode("utf-8")) + len(process.stderr.encode("utf-8"))
     return ResourceUsage(
         elapsed_ms=max(0, round(process.elapsed_seconds * 1000)),
         output_bytes=output_bytes,
@@ -771,9 +723,7 @@ class LeanKernelBackend:
                 "LEAN_MAIN_USE_THREAD": "0"}
 
     def _tool_request(self, source: str, bounds: ExecutionBounds) -> ToolRunRequest:
-        instrumented = instrument_lean_source_for_axioms(
-            source, extract_lean_theorem_name(source)
-        )
+        instrumented = instrument_lean_source_for_axioms(source, extract_lean_theorem_name(source))
         max_workspace_bytes = max(
             bounds.max_output_bytes * 2,
             len(instrumented.encode("utf-8")) + bounds.max_output_bytes + 1024,
@@ -858,14 +808,10 @@ class LeanKernelBackend:
                 "source_tree": receipt.source_tree.to_dict(),
                 "toolchain": receipt.toolchain.to_dict(),
                 "translation": (
-                    receipt.translation.to_dict()
-                    if receipt.translation is not None
-                    else None
+                    receipt.translation.to_dict() if receipt.translation is not None else None
                 ),
                 "axiom_report": (
-                    receipt.axiom_report.to_dict()
-                    if receipt.axiom_report is not None
-                    else None
+                    receipt.axiom_report.to_dict() if receipt.axiom_report is not None else None
                 ),
             },
             **common,
@@ -933,7 +879,9 @@ class LeanKernelBackend:
         diagnostics: list[str] = list(incomplete)
 
         if not plane_state.available:
-            reason = plane_state.reason or f"Lean kernel plane {resolved_plane.value} is unavailable"
+            reason = (
+                plane_state.reason or f"Lean kernel plane {resolved_plane.value} is unavailable"
+            )
             receipt = LeanKernelReceipt(
                 request_digest=request.digest,
                 source_binding=binding,
@@ -1130,9 +1078,7 @@ class LeanKernelBackend:
             reason=reason,
             diagnostics=receipt.diagnostics,
             candidate_kind=(
-                "incomplete_or_unsafe_lean_proof"
-                if status is ResultStatus.CANDIDATE
-                else ""
+                "incomplete_or_unsafe_lean_proof" if status is ResultStatus.CANDIDATE else ""
             ),
         )
         return LeanKernelOutcome(

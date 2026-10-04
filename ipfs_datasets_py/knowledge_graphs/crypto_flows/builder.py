@@ -77,10 +77,7 @@ class CryptoFlowGraphBuilder:
     def _track_asset(self, asset: AssetIdentity | None) -> None:
         if asset is None:
             return
-        key = (
-            f"{asset.chain.chain_namespace}:{asset.asset_namespace}:"
-            f"{asset.asset_reference}"
-        )
+        key = f"{asset.chain.chain_namespace}:{asset.asset_namespace}:{asset.asset_reference}"
         self._asset_ids.add(key)
 
     def _track_providers(self, provider_ids: Sequence[str]) -> None:
@@ -116,13 +113,9 @@ class CryptoFlowGraphBuilder:
                 f"duplicate edge_id without replace_existing: {edge.edge_id}"
             )
         if edge.source_node_id not in self._nodes:
-            raise CryptoFlowValidationError(
-                f"edge source node missing: {edge.source_node_id}"
-            )
+            raise CryptoFlowValidationError(f"edge source node missing: {edge.source_node_id}")
         if edge.target_node_id not in self._nodes:
-            raise CryptoFlowValidationError(
-                f"edge target node missing: {edge.target_node_id}"
-            )
+            raise CryptoFlowValidationError(f"edge target node missing: {edge.target_node_id}")
         src = self._nodes[edge.source_node_id]
         tgt = self._nodes[edge.target_node_id]
         if edge.plane is not src.plane or edge.plane is not tgt.plane:
@@ -133,15 +126,11 @@ class CryptoFlowGraphBuilder:
         self._track_providers(edge.provider_ids)
         return self
 
-    def add_completeness_receipt(
-        self, receipt: CompletenessReceipt
-    ) -> "CryptoFlowGraphBuilder":
+    def add_completeness_receipt(self, receipt: CompletenessReceipt) -> "CryptoFlowGraphBuilder":
         """Attach a CompletenessReceipt for provider/range/asset coverage."""
         self._assert_open()
         if not isinstance(receipt, CompletenessReceipt):
-            raise CryptoFlowValidationError(
-                "receipt must be a CompletenessReceipt"
-            )
+            raise CryptoFlowValidationError("receipt must be a CompletenessReceipt")
         self._receipts[receipt.receipt_id] = receipt
         self._track_chain(receipt.chain)
         self._track_providers(receipt.provider_ids)
@@ -175,9 +164,7 @@ class CryptoFlowGraphBuilder:
         model = ledger_model if ledger_model is not None else default_ledger_model(chain)
         assert_ledger_model_chain_correct(chain, model)
         if kind is NodeKind.ENTITY:
-            raise CryptoFlowValidationError(
-                "ENTITY nodes belong on the asserted_entity plane"
-            )
+            raise CryptoFlowValidationError("ENTITY nodes belong on the asserted_entity plane")
         node = FlowNode(
             node_id=node_id,
             kind=kind,
@@ -331,11 +318,7 @@ class CryptoFlowGraphBuilder:
             raise CryptoFlowValidationError(
                 "ambiguous service edges must declare a non-NONE AmbiguityKind"
             )
-        ledger = (
-            default_ledger_model(chain)
-            if chain is not None
-            else LedgerModel.UNKNOWN
-        )
+        ledger = default_ledger_model(chain) if chain is not None else LedgerModel.UNKNOWN
         # Heuristic / GraphRAG derivations cannot claim unit confidence; direct
         # observation of a service hop may, while still preserving ambiguity
         # about multi-party customer linkage inside the service.
@@ -526,9 +509,7 @@ class CryptoFlowGraphBuilder:
         self._edges[edge_id] = reorged
         if replacement is not None:
             if replacement.edge_id == edge_id:
-                raise CryptoFlowValidationError(
-                    "replacement edge must use a new edge_id"
-                )
+                raise CryptoFlowValidationError("replacement edge must use a new edge_id")
             self.add_edge(replacement)
         return reorged
 
@@ -536,9 +517,7 @@ class CryptoFlowGraphBuilder:
         """Mark an edge as retracted."""
         self._assert_open()
         if edge_id not in self._edges:
-            raise CryptoFlowValidationError(
-                f"unknown edge_id for retraction: {edge_id}"
-            )
+            raise CryptoFlowValidationError(f"unknown edge_id for retraction: {edge_id}")
         prior = self._edges[edge_id]
         retracted = replace(
             prior,

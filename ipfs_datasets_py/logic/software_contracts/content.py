@@ -46,17 +46,12 @@ STRUCTURED_CODEC: Final[str] = "dag-json"
 
 # Durable golden-vector fixture path relative to the ipfs_datasets_py package
 # root (the directory that contains ``docs/`` and ``tests/``).
-CID_VECTORS_FIXTURE_RELPATH: Final[str] = (
-    "tests/fixtures/software_contracts/cid_vectors.json"
-)
+CID_VECTORS_FIXTURE_RELPATH: Final[str] = "tests/fixtures/software_contracts/cid_vectors.json"
 
 _ALLOWED_SOURCE_CODECS: Final[frozenset[str]] = frozenset({SOURCE_CODEC})
-_ALLOWED_STRUCTURED_CODECS: Final[frozenset[str]] = frozenset(
-    {STRUCTURED_CODEC}
-)
-_ALLOWED_READ_CODECS: Final[frozenset[str]] = frozenset(
-    {SOURCE_CODEC, STRUCTURED_CODEC}
-)
+_ALLOWED_STRUCTURED_CODECS: Final[frozenset[str]] = frozenset({STRUCTURED_CODEC})
+_ALLOWED_READ_CODECS: Final[frozenset[str]] = frozenset({SOURCE_CODEC, STRUCTURED_CODEC})
+
 
 # Only pure, small encoding/validation results are retained. Payloads and
 # structured values never enter either cache; every read still hashes its body.
@@ -294,9 +289,7 @@ def validate_structured_value(value: Any, *, path: str = "$") -> None:
 
     if value_type is float:
         if not math.isfinite(value):
-            raise StructuredIdentityError(
-                f"{path} rejects non-finite float ({value!r})"
-            )
+            raise StructuredIdentityError(f"{path} rejects non-finite float ({value!r})")
         raise StructuredIdentityError(
             f"{path} rejects float; use int or encode as a reviewed string"
         )
@@ -321,17 +314,12 @@ def validate_structured_value(value: Any, *, path: str = "$") -> None:
             f"{path} rejects binary types; use source-byte identity instead"
         )
     if value_type in {set, frozenset, tuple}:
-        raise StructuredIdentityError(
-            f"{path} rejects {value_type.__name__}; use list or map"
-        )
+        raise StructuredIdentityError(f"{path} rejects {value_type.__name__}; use list or map")
     if isinstance(value, Path):
-        raise StructuredIdentityError(
-            f"{path} rejects Path host objects; use a string path or CID"
-        )
+        raise StructuredIdentityError(f"{path} rejects Path host objects; use a string path or CID")
 
     raise StructuredIdentityError(
-        f"{path} is not a reviewed structured-identity type: "
-        f"{value_type.__name__}"
+        f"{path} is not a reviewed structured-identity type: {value_type.__name__}"
     )
 
 
@@ -367,9 +355,7 @@ def _cid_from_digest_bytes(
     from multiformats import multihash
 
     if codec not in _ALLOWED_READ_CODECS:
-        raise ContentIdentityError(
-            f"codec {codec!r} is outside the software-contract CID profile"
-        )
+        raise ContentIdentityError(f"codec {codec!r} is outside the software-contract CID profile")
     digest = multihash.digest(data, MULTIHASH_TYPE)
     return _encode_digest(digest, codec=codec)
 
@@ -437,8 +423,7 @@ def validate_cid(
     allowed = frozenset(codecs) if codecs is not None else _ALLOWED_READ_CODECS
     if not allowed or not allowed.issubset(_ALLOWED_READ_CODECS):
         raise ContentIdentityError(
-            "CID validation codecs must be a non-empty subset of "
-            f"{sorted(_ALLOWED_READ_CODECS)}"
+            f"CID validation codecs must be a non-empty subset of {sorted(_ALLOWED_READ_CODECS)}"
         )
 
     # Preserve the historical isinstance(str) API and the original returned
@@ -476,16 +461,12 @@ def _validate_cid_uncached(value: str, allowed: frozenset[str]) -> str:
         parsed.version != CID_VERSION
         or parsed.codec.name not in allowed
         or parsed.hashfun.name != MULTIHASH_TYPE
-        or (
-            expected_digest_size is not None
-            and len(parsed.raw_digest) != expected_digest_size
-        )
+        or (expected_digest_size is not None and len(parsed.raw_digest) != expected_digest_size)
         or parsed.base.name != CID_BASE
         or str(parsed) != value
     ):
         raise ContentIdentityError(
-            "CID must use CIDv1 / base32 / sha2-256 and an allowed codec "
-            f"from {sorted(allowed)}"
+            f"CID must use CIDv1 / base32 / sha2-256 and an allowed codec from {sorted(allowed)}"
         )
     return value
 
@@ -624,8 +605,7 @@ def cid_vectors_document() -> dict[str, Any]:
                 "javascript": {
                     "api": "cidForBytes",
                     "note": (
-                        "Hash the exact byte sequence; do not UTF-8 round-trip "
-                        "binary payloads."
+                        "Hash the exact byte sequence; do not UTF-8 round-trip binary payloads."
                     ),
                 },
             }
@@ -671,18 +651,13 @@ def cid_vectors_document() -> dict[str, Any]:
         }
     }
     if len(simple_cids) != 1:
-        raise RuntimeError(
-            "profile invariant broken: key order must not affect structured CID"
-        )
+        raise RuntimeError("profile invariant broken: key order must not affect structured CID")
 
     return {
         "schema": "ipfs-datasets.software-contract-cid-vectors.v1",
         "profile": profile_descriptor(),
         "notes": [
-            (
-                "Python and JavaScript must produce identical expected_cid "
-                "values for every case."
-            ),
+            ("Python and JavaScript must produce identical expected_cid values for every case."),
             (
                 "Structured identity rejects floats, bytes, sets, paths, "
                 "NaN, host objects, and repr fallbacks."

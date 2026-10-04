@@ -87,7 +87,11 @@ def _wallet_marker(context: Any) -> dict[str, Any]:
         or "capabilities"
     )
 
-    source_str = str(source).strip() if source is not None and not isinstance(source, (bytes, bytearray)) else ""
+    source_str = (
+        str(source).strip()
+        if source is not None and not isinstance(source, (bytes, bytearray))
+        else ""
+    )
     if source_str.lower().startswith("wallet://"):
         # wallet://{family}[/{network}]
         rest = source_str[9:]
@@ -178,13 +182,14 @@ class WalletProcessorProtocolAdapter:
         marker = _wallet_marker(context)
         if marker["domain"] not in {None, "wallet", "wallets", "ledger"}:
             return False
-        if marker["domain"] is None and marker["family"] is None and marker["chain_namespace"] is None:
+        if (
+            marker["domain"] is None
+            and marker["family"] is None
+            and marker["chain_namespace"] is None
+        ):
             # Require an explicit wallet marker; do not claim all inputs.
             source = getattr(context, "source", None)
-            if not (
-                isinstance(source, str)
-                and source.strip().lower().startswith("wallet://")
-            ):
+            if not (isinstance(source, str) and source.strip().lower().startswith("wallet://")):
                 return False
 
         try:
@@ -330,9 +335,7 @@ class WalletProcessorProtocolAdapter:
             if hasattr(processor, "validate_address"):
                 result = processor.validate_address(address.strip())
                 return {"family": family, "validation": result}
-            raise InvalidRequestError(
-                f"family {family!r} does not expose validate_address"
-            )
+            raise InvalidRequestError(f"family {family!r} does not expose validate_address")
 
         # Default safe operation: never sign, broadcast, or open ambient I/O.
         if operation not in {"capabilities", "status", "describe", "noop", "identity"}:

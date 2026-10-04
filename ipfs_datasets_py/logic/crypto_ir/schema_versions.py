@@ -14,9 +14,7 @@ from typing import Any, Final, Mapping
 
 
 SCHEMA_REGISTRY_SCHEMA: Final[str] = "ipfs-datasets.crypto-ir.schema-registry@1"
-_SCHEMA_NAME_RE: Final[re.Pattern[str]] = re.compile(
-    r"^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$"
-)
+_SCHEMA_NAME_RE: Final[re.Pattern[str]] = re.compile(r"^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$")
 _MAX_SAFE_INTEGER: Final[int] = (1 << 53) - 1
 
 
@@ -32,9 +30,7 @@ def _exact_text(value: Any, field: str) -> str:
     if unicodedata.normalize("NFC", value) != value:
         raise SchemaVersionError(f"{field} must be NFC-normalized")
     if any(not character.isprintable() or character.isspace() for character in value):
-        raise SchemaVersionError(
-            f"{field} must contain only printable non-whitespace characters"
-        )
+        raise SchemaVersionError(f"{field} must contain only printable non-whitespace characters")
     return value
 
 
@@ -42,9 +38,7 @@ def _component(value: Any, field: str) -> int:
     if type(value) is not int or isinstance(value, bool):
         raise SchemaVersionError(f"{field} must be an integer")
     if not 0 <= value <= _MAX_SAFE_INTEGER:
-        raise SchemaVersionError(
-            f"{field} must be an integer in 0..{_MAX_SAFE_INTEGER}"
-        )
+        raise SchemaVersionError(f"{field} must be an integer in 0..{_MAX_SAFE_INTEGER}")
     return value
 
 
@@ -60,9 +54,7 @@ class SchemaVersion:
     def __post_init__(self) -> None:
         name = _exact_text(self.name, "name")
         if not _SCHEMA_NAME_RE.fullmatch(name):
-            raise SchemaVersionError(
-                "name must be a lowercase dot/dash-separated schema name"
-            )
+            raise SchemaVersionError("name must be a lowercase dot/dash-separated schema name")
         object.__setattr__(self, "name", name)
         object.__setattr__(self, "major", _component(self.major, "major"))
         object.__setattr__(self, "minor", _component(self.minor, "minor"))
@@ -105,9 +97,7 @@ class SchemaVersion:
             patch=value["patch"],
         )
         if type(value["identifier"]) is not str or value["identifier"] != result.identifier:
-            raise SchemaVersionError(
-                "schema version identifier does not match components"
-            )
+            raise SchemaVersionError("schema version identifier does not match components")
         return result
 
 

@@ -408,9 +408,7 @@ def test_role_mismatches_and_missing_initial_fail_closed() -> None:
     with pytest.raises(TransitionValidationError, match="initial predicate"):
         StateTransitionIR(
             schema=document.schema,
-            predicates=(
-                _predicate("pred:only-inv", PredicateRole.INVARIANT, "true"),
-            ),
+            predicates=(_predicate("pred:only-inv", PredicateRole.INVARIANT, "true"),),
             actions=document.actions,
             labels=document.labels,
         )
@@ -418,9 +416,7 @@ def test_role_mismatches_and_missing_initial_fail_closed() -> None:
     with pytest.raises(TransitionValidationError, match="actions or transition"):
         StateTransitionIR(
             schema=document.schema,
-            predicates=(
-                _predicate("pred:init-only", PredicateRole.INITIAL, "Init"),
-            ),
+            predicates=(_predicate("pred:init-only", PredicateRole.INITIAL, "Init"),),
         )
 
 

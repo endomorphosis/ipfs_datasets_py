@@ -21,12 +21,7 @@ MATRIX_PATH = (
     / "software_verification"
     / "capability_matrix.json"
 )
-DOC_PATH = (
-    DATASETS_ROOT
-    / "docs"
-    / "logic"
-    / "software_verification_capability_inventory.md"
-)
+DOC_PATH = DATASETS_ROOT / "docs" / "logic" / "software_verification_capability_inventory.md"
 MATRIX = json.loads(MATRIX_PATH.read_text(encoding="utf-8"))
 
 EXPECTED_CATEGORIES = {
@@ -302,15 +297,11 @@ def _matrix_errors(matrix: Any, *, check_files: bool = True) -> list[str]:
 
         authoritative_for = states.get("authoritative_for")
         if not _is_sorted_unique_strings(authoritative_for):
-            errors.append(
-                f"{prefix}: states.authoritative_for must be sorted unique strings"
-            )
+            errors.append(f"{prefix}: states.authoritative_for must be sorted unique strings")
             authoritative_for = []
         unknown_claims = set(authoritative_for) - set(authority_claims)
         if unknown_claims:
-            errors.append(
-                f"{prefix}: unknown authority claims {sorted(unknown_claims)!r}"
-            )
+            errors.append(f"{prefix}: unknown authority claims {sorted(unknown_claims)!r}")
         if states.get("shadow") and authoritative_for:
             errors.append(f"{prefix}: shadow rows must not claim authority")
         if states.get("canary") and set(authoritative_for) & PROOF_AUTHORITY_CLAIMS:
@@ -323,9 +314,7 @@ def _matrix_errors(matrix: Any, *, check_files: bool = True) -> list[str]:
         for evidence_name in EVIDENCE_KEYS:
             evidence_paths = evidence.get(evidence_name)
             if not _is_sorted_unique_strings(evidence_paths):
-                errors.append(
-                    f"{prefix}: evidence.{evidence_name} must be sorted unique paths"
-                )
+                errors.append(f"{prefix}: evidence.{evidence_name} must be sorted unique paths")
                 evidence[evidence_name] = []
         for state_name, evidence_name in (
             ("smoke_tested", "smoke_tests"),
@@ -335,8 +324,7 @@ def _matrix_errors(matrix: Any, *, check_files: bool = True) -> list[str]:
             has_evidence = bool(evidence.get(evidence_name))
             if states.get(state_name) is not has_evidence:
                 errors.append(
-                    f"{prefix}: states.{state_name} disagrees with "
-                    f"evidence.{evidence_name}"
+                    f"{prefix}: states.{state_name} disagrees with evidence.{evidence_name}"
                 )
 
         access = entry.get("access")
@@ -370,11 +358,7 @@ def _matrix_errors(matrix: Any, *, check_files: bool = True) -> list[str]:
 
         all_paths = [
             *paths,
-            *(
-                path
-                for evidence_name in EVIDENCE_KEYS
-                for path in evidence.get(evidence_name, ())
-            ),
+            *(path for evidence_name in EVIDENCE_KEYS for path in evidence.get(evidence_name, ())),
             *(route.get("path") for route in access if isinstance(route, dict)),
         ]
         for raw_path in all_paths:
@@ -408,9 +392,7 @@ def _statically_defined_names(path: Path) -> set[str]:
             names.update(alias.asname or alias.name.rpartition(".")[2] for alias in node.names)
         elif isinstance(node, (ast.Assign, ast.AnnAssign)):
             targets = node.targets if isinstance(node, ast.Assign) else [node.target]
-            names.update(
-                target.id for target in targets if isinstance(target, ast.Name)
-            )
+            names.update(target.id for target in targets if isinstance(target, ast.Name))
     return names
 
 
@@ -446,9 +428,7 @@ def test_documentation_is_complete_and_tracks_every_matrix_row() -> None:
     [
         (
             "provider.learned_proposals",
-            lambda entry: entry["states"].update(
-                {"authoritative_for": ["kernel_checked_proof"]}
-            ),
+            lambda entry: entry["states"].update({"authoritative_for": ["kernel_checked_proof"]}),
             "shadow rows must not claim authority",
         ),
         (
@@ -478,11 +458,7 @@ def test_inconsistent_metadata_is_rejected(
 
 def test_stale_paths_are_rejected_even_when_metadata_is_otherwise_valid() -> None:
     mutated = deepcopy(MATRIX)
-    entry = next(
-        item for item in mutated["entries"] if item["id"] == "family.fol"
-    )
-    entry["repository_paths"] = [
-        "ipfs_datasets_py/ipfs_datasets_py/logic/fol/stale.py"
-    ]
+    entry = next(item for item in mutated["entries"] if item["id"] == "family.fol")
+    entry["repository_paths"] = ["ipfs_datasets_py/ipfs_datasets_py/logic/fol/stale.py"]
     errors = _matrix_errors(mutated)
     assert any("stale repository path" in error for error in errors)

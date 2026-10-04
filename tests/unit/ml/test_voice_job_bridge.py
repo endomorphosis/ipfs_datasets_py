@@ -393,9 +393,7 @@ def test_receipt_ingestion_accepts_verified_worker_result_envelope():
         def cancel(self, **_kwargs):
             return False
 
-    ingested = VoiceJobBridge(queue=WorkerEnvelopeQueue()).ingest_receipt(
-        job.task_id
-    )
+    ingested = VoiceJobBridge(queue=WorkerEnvelopeQueue()).ingest_receipt(job.task_id)
     assert ingested.to_payload() == canonical
 
 
@@ -501,9 +499,7 @@ def test_receipt_ingestion_rejects_mismatched_worker_envelope_bindings(binding):
             return False
 
     with pytest.raises(VoiceJobReceiptError, match="invalid voice receipt"):
-        VoiceJobBridge(queue=MismatchedWorkerEnvelopeQueue()).ingest_receipt(
-            job.task_id
-        )
+        VoiceJobBridge(queue=MismatchedWorkerEnvelopeQueue()).ingest_receipt(job.task_id)
 
 
 @pytest.mark.parametrize(

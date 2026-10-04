@@ -36,9 +36,7 @@ from ipfs_datasets_py.logic.security_ir.cvefixes.schemas import (
 
 
 def _cid(label: str) -> str:
-    return canonical_identity(
-        {"label": label}, domain="test", schema_version="test/v1"
-    ).cid
+    return canonical_identity({"label": label}, domain="test", schema_version="test/v1").cid
 
 
 def _graph(*, with_edges: bool = True) -> CVEfixesGraph:
@@ -129,9 +127,7 @@ def _rows(layout, config_name: str) -> list[dict[str, object]]:
     rows: list[dict[str, object]] = []
     for artifact in layout.artifacts:
         if artifact.config_name == config_name:
-            rows.extend(
-                pq.read_table(io.BytesIO(artifact.content)).to_pylist()
-            )
+            rows.extend(pq.read_table(io.BytesIO(artifact.content)).to_pylist())
     return rows
 
 
@@ -155,10 +151,7 @@ def test_adjacency_validation_indexes_edges_once_per_direction() -> None:
     _validate_adjacency_rows(
         _rows(layout, "graph_outgoing_adjacency"),
         direction="outgoing",
-        node_types={
-            str(row["node_cid"]): str(row["node_type"])
-            for row in node_rows
-        },
+        node_types={str(row["node_cid"]): str(row["node_type"]) for row in node_rows},
         edge_ids=set(edge_rows),
         edge_rows=edge_rows,
         config=config,
@@ -195,9 +188,7 @@ def test_layout_matches_skillcenter_paths_and_meta_pointer_contract() -> None:
     assert validation.valid
     assert validation.node_count == len(graph.nodes)
     assert validation.edge_count == len(graph.edges)
-    assert {item.config_name for item in layout.artifacts} == set(
-        GRAPH_HF_CONFIG_PATHS
-    )
+    assert {item.config_name for item in layout.artifacts} == set(GRAPH_HF_CONFIG_PATHS)
     assert {item.path for item in layout.index_artifacts} == {
         "indexes/graph_edge_chunks.parquet",
         "indexes/graph_incoming_adjacency.parquet",
@@ -209,10 +200,7 @@ def test_layout_matches_skillcenter_paths_and_meta_pointer_contract() -> None:
     for index in layout.index_artifacts:
         table = pq.read_table(io.BytesIO(index.content))
         metadata = table.schema.metadata or {}
-        assert (
-            metadata[b"schema_version"].decode()
-            == CVEFIXES_HF_SHARD_META_SCHEMA_VERSION
-        )
+        assert metadata[b"schema_version"].decode() == CVEFIXES_HF_SHARD_META_SCHEMA_VERSION
         expected_columns = [
             "cid",
             "end_document_index",
@@ -255,8 +243,7 @@ def test_layout_matches_skillcenter_paths_and_meta_pointer_contract() -> None:
 def test_graph_node_rows_can_bind_the_shared_corpus_entry_cids() -> None:
     graph = _graph()
     entry_cids = {
-        node.cid: _cid(f"retrieval-entry-{index}")
-        for index, node in enumerate(graph.nodes)
+        node.cid: _cid(f"retrieval-entry-{index}") for index, node in enumerate(graph.nodes)
     }
 
     layout = build_cvefixes_hf_graph_layout(
@@ -268,32 +255,23 @@ def test_graph_node_rows_can_bind_the_shared_corpus_entry_cids() -> None:
 
     assert validation.valid
     assert {
-        str(row["node_cid"]): str(row["entry_cid"])
-        for row in _rows(layout, "graph_nodes")
+        str(row["node_cid"]): str(row["entry_cid"]) for row in _rows(layout, "graph_nodes")
     } == entry_cids
 
 
 def test_adjacency_is_paged_aligned_and_covers_edges_and_isolated_nodes() -> None:
     graph = _graph()
     layout = build_cvefixes_hf_graph_layout(graph, config=_config())
-    isolated_cid = next(
-        node.cid for node in graph.nodes if node.node_type == "language"
-    )
+    isolated_cid = next(node.cid for node in graph.nodes if node.node_type == "language")
 
     for direction in ("outgoing", "incoming"):
         rows = _rows(layout, f"graph_{direction}_adjacency")
-        assert {row["node_cid"] for row in rows} == {
-            node.cid for node in graph.nodes
+        assert {row["node_cid"] for row in rows} == {node.cid for node in graph.nodes}
+        assert {edge_cid for row in rows for edge_cid in row["edge_cids"]} == {
+            edge.cid for edge in graph.edges
         }
-        assert {
-            edge_cid
-            for row in rows
-            for edge_cid in row["edge_cids"]
-        } == {edge.cid for edge in graph.edges}
         assert all(
-            row["schema_version"]
-            == CVEFIXES_HF_GRAPH_ADJACENCY_SCHEMA_VERSION
-            for row in rows
+            row["schema_version"] == CVEFIXES_HF_GRAPH_ADJACENCY_SCHEMA_VERSION for row in rows
         )
         for row in rows:
             lengths = {
@@ -309,21 +287,15 @@ def test_adjacency_is_paged_aligned_and_covers_edges_and_isolated_nodes() -> Non
             }
             assert lengths == {row["neighbor_count"]}
 
-        isolated_rows = [
-            row for row in rows if row["node_cid"] == isolated_cid
-        ]
+        isolated_rows = [row for row in rows if row["node_cid"] == isolated_cid]
         assert len(isolated_rows) == 1
         assert isolated_rows[0]["neighbor_count"] == 0
         assert isolated_rows[0]["page_count"] == 1
         assert isolated_rows[0]["page_index"] == 0
 
-    cve_cid = next(
-        node.cid for node in graph.nodes if node.node_type == "cve"
-    )
+    cve_cid = next(node.cid for node in graph.nodes if node.node_type == "cve")
     cve_outgoing = [
-        row
-        for row in _rows(layout, "graph_outgoing_adjacency")
-        if row["node_cid"] == cve_cid
+        row for row in _rows(layout, "graph_outgoing_adjacency") if row["node_cid"] == cve_cid
     ]
     assert [row["page_index"] for row in cve_outgoing] == [0, 1]
     assert {row["page_count"] for row in cve_outgoing} == {2}
@@ -336,12 +308,8 @@ def test_build_is_byte_deterministic() -> None:
     second = build_cvefixes_hf_graph_layout(graph, config=_config())
 
     assert first.graph_root == second.graph_root
-    assert [
-        (item.path, item.cid, item.sha256, item.content)
-        for item in first.artifacts
-    ] == [
-        (item.path, item.cid, item.sha256, item.content)
-        for item in second.artifacts
+    assert [(item.path, item.cid, item.sha256, item.content) for item in first.artifacts] == [
+        (item.path, item.cid, item.sha256, item.content) for item in second.artifacts
     ]
 
 
@@ -361,8 +329,7 @@ def test_meta_pointer_tampering_fails_closed() -> None:
     modified = replace(
         layout,
         artifacts=tuple(
-            tampered if item.path == target.path else item
-            for item in layout.artifacts
+            tampered if item.path == target.path else item for item in layout.artifacts
         ),
     )
 
@@ -380,11 +347,7 @@ def test_zero_edge_graph_still_has_remote_configs_and_node_adjacency() -> None:
 
     assert validation.node_count == 1
     assert validation.edge_count == 0
-    edge_shards = [
-        item
-        for item in layout.data_artifacts
-        if item.config_name == "graph_edges"
-    ]
+    edge_shards = [item for item in layout.data_artifacts if item.config_name == "graph_edges"]
     assert len(edge_shards) == 1
     assert edge_shards[0].row_count == 0
     for direction in ("outgoing", "incoming"):

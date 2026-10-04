@@ -89,15 +89,9 @@ G018_REQUIRED_EVIDENCE_TERMS: Final[tuple[str, ...]] = (
     "byte-identical rebuild",
     f"authoritative evidence map: {G018_AUTHORITATIVE_EVIDENCE_MAP}",
 )
-DETERMINISTIC_RELEASE_CONSTRUCTION_EVIDENCE_TERM: Final = (
-    "deterministic release construction"
-)
-FIVE_FLAT_CONFIGS_EVIDENCE_TERM: Final = (
-    "five flat Abby configs including evaluation"
-)
-SHARDED_ZSTD_PARQUET_DESCRIPTORS_EVIDENCE_TERM: Final = (
-    "sharded ZSTD Parquet descriptors"
-)
+DETERMINISTIC_RELEASE_CONSTRUCTION_EVIDENCE_TERM: Final = "deterministic release construction"
+FIVE_FLAT_CONFIGS_EVIDENCE_TERM: Final = "five flat Abby configs including evaluation"
+SHARDED_ZSTD_PARQUET_DESCRIPTORS_EVIDENCE_TERM: Final = "sharded ZSTD Parquet descriptors"
 BYTE_IDENTICAL_REBUILD_EVIDENCE_TERM: Final = "byte-identical rebuild"
 
 FIVE_FLAT_ABBY_CONFIGS: Final[tuple[str, ...]] = (
@@ -183,8 +177,7 @@ def _release_license_id(value: Any) -> str:
         or license_id.upper() in {"NOASSERTION", "UNKNOWN"}
     ):
         raise AbbyVoiceHFReleaseError(
-            "release license_id must be one publication-ready SPDX-style "
-            "identifier"
+            "release license_id must be one publication-ready SPDX-style identifier"
         )
     return license_id
 
@@ -212,9 +205,7 @@ class AbbyVoiceReleaseSupportSource:
             allowed_roots=("manifests", "metadata"),
         )
         digest = str(self.expected_sha256 or "").strip().lower()
-        if len(digest) != 64 or any(
-            character not in "0123456789abcdef" for character in digest
-        ):
+        if len(digest) != 64 or any(character not in "0123456789abcdef" for character in digest):
             raise AbbyVoiceHFReleaseError(
                 "support expected_sha256 must be a full lower-case SHA-256"
             )
@@ -223,9 +214,7 @@ class AbbyVoiceReleaseSupportSource:
             or isinstance(self.row_count, bool)
             or self.row_count < 0
         ):
-            raise AbbyVoiceHFReleaseError(
-                "support row_count must be a non-negative integer"
-            )
+            raise AbbyVoiceHFReleaseError("support row_count must be a non-negative integer")
         metadata = json.loads(canonical_json_bytes(dict(self.metadata or {})))
         _reject_mutable_hf_references(metadata, label=f"support:{relative}:metadata")
         object.__setattr__(self, "relative_path", relative)
@@ -252,30 +241,20 @@ class AbbyVoiceResponseDAGDryRunReceipt:
         if not candidate_id:
             raise AbbyVoiceHFReleaseError("candidate_id is required")
         if "/" not in repository_id:
-            raise AbbyVoiceHFReleaseError(
-                "repository_id must have the form namespace/repository"
-            )
+            raise AbbyVoiceHFReleaseError("repository_id must have the form namespace/repository")
         manifest = json.loads(canonical_json_bytes(self.release_manifest))
         plan = json.loads(canonical_json_bytes(self.publication_plan))
         if manifest.get("publication_status") != "local_only":
-            raise AbbyVoiceHFReleaseError(
-                "response-DAG manifest must remain local_only"
-            )
+            raise AbbyVoiceHFReleaseError("response-DAG manifest must remain local_only")
         if manifest.get("remote_writes") is not False:
-            raise AbbyVoiceHFReleaseError(
-                "response-DAG manifest must prohibit remote writes"
-            )
+            raise AbbyVoiceHFReleaseError("response-DAG manifest must prohibit remote writes")
         if plan.get("dry_run") is not True:
             raise AbbyVoiceHFReleaseError("publication plan must be a dry run")
         if plan.get("remote_write_contacted") is not False:
-            raise AbbyVoiceHFReleaseError(
-                "dry-run receipt must not contact a remote writer"
-            )
+            raise AbbyVoiceHFReleaseError("dry-run receipt must not contact a remote writer")
         plan_digest = sha256(canonical_json_bytes(plan)).hexdigest()
         if self.publication_plan_sha256 != plan_digest:
-            raise AbbyVoiceHFReleaseError(
-                "publication_plan_sha256 does not match publication plan"
-            )
+            raise AbbyVoiceHFReleaseError("publication_plan_sha256 does not match publication plan")
         identity = {
             "candidate_id": candidate_id,
             "publication_plan_sha256": plan_digest,
@@ -285,9 +264,7 @@ class AbbyVoiceResponseDAGDryRunReceipt:
         }
         computed = sha256(canonical_json_bytes(identity)).hexdigest()
         if self.receipt_sha256 and self.receipt_sha256 != computed:
-            raise AbbyVoiceHFReleaseError(
-                "receipt_sha256 does not match local dry-run identity"
-            )
+            raise AbbyVoiceHFReleaseError("receipt_sha256 does not match local dry-run identity")
         object.__setattr__(self, "candidate_id", candidate_id)
         object.__setattr__(self, "repository_id", repository_id)
         object.__setattr__(self, "local_root", str(self.local_root))
@@ -345,9 +322,7 @@ class AbbyVoiceHFReleaseResult:
             "policy_digest": self.policy_digest,
             "release_cid": self.release_cid,
             "release_id": self.release_id,
-            "row_counts": {
-                config: dict(splits) for config, splits in self.row_counts.items()
-            },
+            "row_counts": {config: dict(splits) for config, splits in self.row_counts.items()},
         }
 
 
@@ -374,9 +349,7 @@ class AbbyVoiceHFReleasePolicy:
             raise AbbyVoiceHFReleaseError("shard_rows must be a positive integer")
         repo = str(self.dataset_repo_id or "").strip()
         if "/" not in repo or repo.startswith("/") or repo.endswith("/"):
-            raise AbbyVoiceHFReleaseError(
-                "dataset_repo_id must have the form namespace/repository"
-            )
+            raise AbbyVoiceHFReleaseError("dataset_repo_id must have the form namespace/repository")
         object.__setattr__(self, "dataset_repo_id", repo)
 
     def to_dict(self) -> dict[str, Any]:
@@ -513,8 +486,7 @@ class AbbyVoiceHFReleaseBuilder:
             directory = _CONFIG_DIRECTORY[config_name]
             by_split = config_rows[config_name]
             row_counts[config_name] = {
-                split: len(by_split.get(split, ()))
-                for split in _CONFIG_SPLITS[config_name]
+                split: len(by_split.get(split, ())) for split in _CONFIG_SPLITS[config_name]
             }
             schema = (
                 get_evaluation_pyarrow_schema()
@@ -529,18 +501,19 @@ class AbbyVoiceHFReleaseBuilder:
                 # has zero rows total so Dataset Viewer can load the schema.
                 if not rows and any(by_split.values()):
                     continue
-                if not rows and not any(by_split.values()) and split != _CONFIG_SPLITS[config_name][0]:
+                if (
+                    not rows
+                    and not any(by_split.values())
+                    and split != _CONFIG_SPLITS[config_name][0]
+                ):
                     continue
                 for shard_id, shard_rows in enumerate(shards):
                     relative = (
-                        f"{directory}/{split}/"
-                        f"{split}-{shard_id:05d}-of-{len(shards):05d}.parquet"
+                        f"{directory}/{split}/{split}-{shard_id:05d}-of-{len(shards):05d}.parquet"
                     )
                     path = root / relative
                     table = _rows_to_table(shard_rows, schema=schema)
-                    write_zstd_parquet(
-                        path, table, max_rows=self.policy.shard_rows
-                    )
+                    write_zstd_parquet(path, table, max_rows=self.policy.shard_rows)
                     validate_zstd_parquet(
                         path,
                         max_rows=self.policy.shard_rows,
@@ -647,11 +620,7 @@ class AbbyVoiceHFReleaseBuilder:
                 target,
                 root=root,
                 media_type=next(
-                    (
-                        row.mime_type
-                        for row in bundle.audio
-                        if row.uri == relative
-                    ),
+                    (row.mime_type for row in bundle.audio if row.uri == relative),
                     "application/octet-stream",
                 ),
                 schema_type="abby_voice_audio_asset_v1",
@@ -694,9 +663,7 @@ class AbbyVoiceHFReleaseBuilder:
             retained_support_bytes += descriptor.size_bytes
             descriptors.append(descriptor)
 
-        descriptors = tuple(
-            sorted(descriptors, key=lambda item: item.relative_path)
-        )
+        descriptors = tuple(sorted(descriptors, key=lambda item: item.relative_path))
         release_body = {
             "configs": list(FIVE_FLAT_ABBY_CONFIGS),
             "dataset_repo_id": self.policy.dataset_repo_id,
@@ -727,14 +694,10 @@ class AbbyVoiceHFReleaseBuilder:
                 "audio_asset_prefix": "assets/audio",
                 "retained_support_bytes": retained_support_bytes,
                 "retained_support_count": len(prepared_support_sources),
-                "retained_support_paths": [
-                    item.relative_path for item in prepared_support_sources
-                ],
+                "retained_support_paths": [item.relative_path for item in prepared_support_sources],
             }
         reject_identity_contamination(release_body, label="release_manifest")
-        release_cid = cid_v1_from_digest(
-            sha256(canonical_json_bytes(release_body)).digest()
-        )
+        release_cid = cid_v1_from_digest(sha256(canonical_json_bytes(release_body)).digest())
         release_body["release_cid"] = release_cid
 
         artifact_manifest = self._artifact_manifest(
@@ -773,9 +736,7 @@ class AbbyVoiceHFReleaseBuilder:
         ]
         release_body.pop("release_cid", None)
         reject_identity_contamination(release_body, label="release_manifest")
-        release_cid = cid_v1_from_digest(
-            sha256(canonical_json_bytes(release_body)).digest()
-        )
+        release_cid = cid_v1_from_digest(sha256(canonical_json_bytes(release_body)).digest())
         release_body["release_cid"] = release_cid
 
         manifest_path = root / "release-manifest.json"
@@ -791,9 +752,7 @@ class AbbyVoiceHFReleaseBuilder:
             release_cid=release_cid,
             configs=FIVE_FLAT_ABBY_CONFIGS,
             descriptors=descriptors,
-            row_counts={
-                config: dict(splits) for config, splits in row_counts.items()
-            },
+            row_counts={config: dict(splits) for config, splits in row_counts.items()},
             graph_cid=index.graph_cid,
             index_cid=index.index_cid,
             artifact_manifest=artifact_manifest,
@@ -857,10 +816,7 @@ class AbbyVoiceHFReleaseBuilder:
                         salt=self.policy.split_salt,
                     )
                 buckets[split].append(dict(row))
-            return {
-                split: tuple(buckets.get(split, ()))
-                for split in _CONFIG_SPLITS[config_name]
-            }
+            return {split: tuple(buckets.get(split, ())) for split in _CONFIG_SPLITS[config_name]}
 
         return {
             ABBY_VOICE_RESPONSE_V2: assign(
@@ -932,14 +888,11 @@ class AbbyVoiceHFReleaseBuilder:
                 if descriptor.relative_path.endswith(".parquet")
                 else ArtifactRole.DIAGNOSTIC
             )
-            path_identity = sha256(
-                descriptor.relative_path.encode("utf-8")
-            ).hexdigest()[:16]
+            path_identity = sha256(descriptor.relative_path.encode("utf-8")).hexdigest()[:16]
             artifacts.append(
                 Artifact(
                     artifact_id=(
-                        f"artifact:abby-voice-release:{path_identity}:"
-                        f"{descriptor.sha256}"
+                        f"artifact:abby-voice-release:{path_identity}:{descriptor.sha256}"
                     ),
                     role=role,
                     content_sha256=descriptor.sha256,
@@ -982,21 +935,15 @@ class AbbyVoiceHFReleaseBuilder:
                     metadata=self.policy.to_dict(),
                 ),
             ),
-            schema_versions={
-                name: name for name in FIVE_FLAT_ABBY_CONFIGS
-            },
+            schema_versions={name: name for name in FIVE_FLAT_ABBY_CONFIGS},
             tool_versions={"abby-voice-hf-release": "1.0.0"},
             deterministic_metadata={
                 "byte_identical_rebuild": True,
                 "deterministic_release_construction": True,
-                "five_flat_abby_configs_including_evaluation": list(
-                    FIVE_FLAT_ABBY_CONFIGS
-                ),
+                "five_flat_abby_configs_including_evaluation": list(FIVE_FLAT_ABBY_CONFIGS),
                 "graph_cid": graph_cid,
                 "index_cid": index_cid,
-                "pre_artifact_release_body_cid": (
-                    pre_artifact_release_body_cid
-                ),
+                "pre_artifact_release_body_cid": (pre_artifact_release_body_cid),
                 "release_id": release_id,
                 "sharded_zstd_parquet_descriptors": True,
             },
@@ -1016,14 +963,10 @@ def _safe_additional_release_path(
         or raw.startswith("/")
         or any(part in {"", ".", ".."} for part in path.parts)
     ):
-        raise AbbyVoiceHFReleaseError(
-            f"unsafe additional release path: {value!r}"
-        )
+        raise AbbyVoiceHFReleaseError(f"unsafe additional release path: {value!r}")
     relative = path.as_posix()
     if relative in _RESERVED_RELEASE_PATHS:
-        raise AbbyVoiceHFReleaseError(
-            f"additional release path is reserved: {relative}"
-        )
+        raise AbbyVoiceHFReleaseError(f"additional release path is reserved: {relative}")
     if path.parts[0] in _CONFIG_DIRECTORIES:
         raise AbbyVoiceHFReleaseError(
             f"additional files cannot enter row-config directories: {relative}"
@@ -1054,8 +997,7 @@ def _reject_mutable_hf_references(value: Any, *, label: str) -> None:
     visit(value, label)
     if offenders:
         raise AbbyVoiceHFReleaseError(
-            "mutable Hugging Face references are prohibited: "
-            + ", ".join(sorted(set(offenders)))
+            "mutable Hugging Face references are prohibited: " + ", ".join(sorted(set(offenders)))
         )
 
 
@@ -1076,9 +1018,7 @@ def _source_path_for_release(
     except ValueError:
         pass
     else:
-        raise AbbyVoiceHFReleaseError(
-            f"{label} must not be inside the output directory: {source}"
-        )
+        raise AbbyVoiceHFReleaseError(f"{label} must not be inside the output directory: {source}")
     return source
 
 
@@ -1111,20 +1051,14 @@ def _prepare_embedded_audio_assets(
         size_bytes, digest = file_digest(source)
         actual_sha256 = digest.hex()
         if actual_sha256 != row.content_sha256:
-            raise AbbyVoiceHFReleaseError(
-                f"audio source SHA-256 mismatch for {row.audio_id}"
-            )
+            raise AbbyVoiceHFReleaseError(f"audio source SHA-256 mismatch for {row.audio_id}")
         if row.byte_length is not None and row.byte_length != size_bytes:
-            raise AbbyVoiceHFReleaseError(
-                f"audio source byte length mismatch for {row.audio_id}"
-            )
+            raise AbbyVoiceHFReleaseError(f"audio source byte length mismatch for {row.audio_id}")
         extension = _AUDIO_EXTENSION_BY_MEDIA_TYPE.get(row.mime_type.casefold())
         if extension is None:
             suffix = source.suffix.casefold()
             if not suffix or len(suffix) > 10:
-                raise AbbyVoiceHFReleaseError(
-                    f"cannot derive safe extension for {row.audio_id}"
-                )
+                raise AbbyVoiceHFReleaseError(f"cannot derive safe extension for {row.audio_id}")
             extension = suffix
         relative = _safe_additional_release_path(
             f"assets/audio/{row.audio_id}{extension}",
@@ -1152,13 +1086,9 @@ def _prepare_support_sources(
     seen: set[str] = set()
     for source in sources:
         if not isinstance(source, AbbyVoiceReleaseSupportSource):
-            raise TypeError(
-                "support_sources entries must be AbbyVoiceReleaseSupportSource"
-            )
+            raise TypeError("support_sources entries must be AbbyVoiceReleaseSupportSource")
         if source.relative_path in seen:
-            raise AbbyVoiceHFReleaseError(
-                f"duplicate support release path: {source.relative_path}"
-            )
+            raise AbbyVoiceHFReleaseError(f"duplicate support release path: {source.relative_path}")
         seen.add(source.relative_path)
         source_path = _source_path_for_release(
             source.source_path,
@@ -1191,9 +1121,7 @@ def _copy_verified_release_source(
             target_handle.flush()
             os.fsync(target_handle.fileno())
         if digest.hexdigest() != expected_sha256:
-            raise AbbyVoiceHFReleaseError(
-                f"source changed while copying release file: {source}"
-            )
+            raise AbbyVoiceHFReleaseError(f"source changed while copying release file: {source}")
         os.replace(temporary, target)
     finally:
         if temporary.exists():
@@ -1220,13 +1148,11 @@ def _validate_support_file_content(
     lowered = text.casefold()
     if any(marker in lowered for marker in _MUTABLE_HF_REF_MARKERS):
         raise AbbyVoiceHFReleaseError(
-            f"support file contains a mutable Hugging Face ref: "
-            f"{source.relative_path}"
+            f"support file contains a mutable Hugging Face ref: {source.relative_path}"
         )
     if any(marker in lowered for marker in _LOCAL_SUPPORT_PATH_MARKERS):
         raise AbbyVoiceHFReleaseError(
-            f"support file contains a local execution path: "
-            f"{source.relative_path}"
+            f"support file contains a local execution path: {source.relative_path}"
         )
     if path.suffix.casefold() == ".json":
         try:
@@ -1244,13 +1170,11 @@ def _validate_support_file_content(
                 value = json.loads(raw)
             except json.JSONDecodeError as exc:
                 raise AbbyVoiceHFReleaseError(
-                    f"support JSONL is malformed at "
-                    f"{source.relative_path}:{line_number}"
+                    f"support JSONL is malformed at {source.relative_path}:{line_number}"
                 ) from exc
             if not isinstance(value, Mapping):
                 raise AbbyVoiceHFReleaseError(
-                    f"support JSONL row must be an object at "
-                    f"{source.relative_path}:{line_number}"
+                    f"support JSONL row must be an object at {source.relative_path}:{line_number}"
                 )
             rows += 1
         if source.row_count is not None and rows != source.row_count:
@@ -1271,9 +1195,7 @@ def validate_abby_voice_hf_release(release_dir: str | Path) -> dict[str, Any]:
     root = Path(release_dir).expanduser().resolve()
     manifest_path = root / "release-manifest.json"
     if not manifest_path.is_file():
-        raise AbbyVoiceHFReleaseError(
-            f"release-manifest.json is missing under {root}"
-        )
+        raise AbbyVoiceHFReleaseError(f"release-manifest.json is missing under {root}")
     try:
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
@@ -1302,9 +1224,7 @@ def validate_abby_voice_hf_release(release_dir: str | Path) -> dict[str, Any]:
     for descriptor in descriptors:
         verify_file_descriptor(root, descriptor)
     selected_license_id = _release_license_id(manifest.get("license_id"))
-    descriptor_license_ids = {
-        item.license_id for item in descriptors if item.license_id
-    }
+    descriptor_license_ids = {item.license_id for item in descriptors if item.license_id}
     if descriptor_license_ids != {selected_license_id}:
         raise AbbyVoiceHFReleaseError(
             "release descriptor licenses do not match manifest license_id"
@@ -1316,22 +1236,17 @@ def validate_abby_voice_hf_release(release_dir: str | Path) -> dict[str, Any]:
             "README dataset-card license does not match manifest license_id"
         )
 
-    config_rows: dict[str, list[dict[str, Any]]] = {
-        name: [] for name in FIVE_FLAT_ABBY_CONFIGS
-    }
+    config_rows: dict[str, list[dict[str, Any]]] = {name: [] for name in FIVE_FLAT_ABBY_CONFIGS}
     for descriptor in descriptors:
         if not descriptor.relative_path.endswith(".parquet"):
             continue
         if descriptor.config_name not in FIVE_FLAT_ABBY_CONFIGS:
-            raise AbbyVoiceHFReleaseError(
-                f"unknown parquet config {descriptor.config_name!r}"
-            )
+            raise AbbyVoiceHFReleaseError(f"unknown parquet config {descriptor.config_name!r}")
         # Support artifacts must not live under config directories.
         directory = _CONFIG_DIRECTORY[descriptor.config_name]
         if not descriptor.relative_path.startswith(f"{directory}/"):
             raise AbbyVoiceHFReleaseError(
-                f"parquet descriptor path not under config directory: "
-                f"{descriptor.relative_path}"
+                f"parquet descriptor path not under config directory: {descriptor.relative_path}"
             )
         schema = (
             get_evaluation_pyarrow_schema()
@@ -1359,22 +1274,21 @@ def validate_abby_voice_hf_release(release_dir: str | Path) -> dict[str, Any]:
         for row in rows:
             identity = str(row.get(id_field) or "")
             if not identity:
-                raise AbbyVoiceHFReleaseError(
-                    f"{config_name} row missing {id_field}"
-                )
+                raise AbbyVoiceHFReleaseError(f"{config_name} row missing {id_field}")
             if identity in seen:
-                raise AbbyVoiceHFReleaseError(
-                    f"duplicate {id_field} in {config_name}: {identity}"
-                )
+                raise AbbyVoiceHFReleaseError(f"duplicate {id_field} in {config_name}: {identity}")
             seen.add(identity)
 
     # Exact bundle references among the four voice configs.
-    if any(config_rows[name] for name in (
-        ABBY_VOICE_RESPONSE_V2,
-        ABBY_VOICE_TEMPLATE_V2,
-        ABBY_VOICE_AUDIO_V2,
-        ABBY_VOICE_PROVENANCE_V2,
-    )):
+    if any(
+        config_rows[name]
+        for name in (
+            ABBY_VOICE_RESPONSE_V2,
+            ABBY_VOICE_TEMPLATE_V2,
+            ABBY_VOICE_AUDIO_V2,
+            ABBY_VOICE_PROVENANCE_V2,
+        )
+    ):
         validate_bundle(
             responses=config_rows[ABBY_VOICE_RESPONSE_V2],
             templates=config_rows[ABBY_VOICE_TEMPLATE_V2],
@@ -1393,9 +1307,7 @@ def validate_abby_voice_hf_release(release_dir: str | Path) -> dict[str, Any]:
             for row in config_rows[name]
         }
         if row_license_ids != {selected_license_id}:
-            raise AbbyVoiceHFReleaseError(
-                "release row licenses do not match manifest license_id"
-            )
+            raise AbbyVoiceHFReleaseError("release row licenses do not match manifest license_id")
     if config_rows[ABBY_VOICE_EVALUATION_V2]:
         validate_evaluation_rows(config_rows[ABBY_VOICE_EVALUATION_V2], strict=True)
     _reject_mutable_hf_references(config_rows, label="release_rows")
@@ -1404,9 +1316,7 @@ def validate_abby_voice_hf_release(release_dir: str | Path) -> dict[str, Any]:
     if embedded_assets is not None:
         if not isinstance(embedded_assets, Mapping):
             raise AbbyVoiceHFReleaseError("embedded_assets must be an object")
-        descriptors_by_path = {
-            item.relative_path: item for item in descriptors
-        }
+        descriptors_by_path = {item.relative_path: item for item in descriptors}
         audio_rows = config_rows[ABBY_VOICE_AUDIO_V2]
         audio_asset_paths: set[str] = set()
         audio_asset_bytes = 0
@@ -1432,9 +1342,7 @@ def validate_abby_voice_hf_release(release_dir: str | Path) -> dict[str, Any]:
             audio_asset_paths.add(relative)
             audio_asset_bytes += descriptor.size_bytes
         described_audio_paths = {
-            item.relative_path
-            for item in descriptors
-            if item.metadata.get("role") == "audio_asset"
+            item.relative_path for item in descriptors if item.metadata.get("role") == "audio_asset"
         }
         if audio_asset_paths != described_audio_paths:
             raise AbbyVoiceHFReleaseError(
@@ -1444,27 +1352,19 @@ def validate_abby_voice_hf_release(release_dir: str | Path) -> dict[str, Any]:
             embedded_assets.get("audio_asset_count") != len(audio_rows)
             or embedded_assets.get("audio_asset_bytes") != audio_asset_bytes
         ):
-            raise AbbyVoiceHFReleaseError(
-                "embedded audio counts do not match release descriptors"
-            )
+            raise AbbyVoiceHFReleaseError("embedded audio counts do not match release descriptors")
 
         retained_descriptors = tuple(
-            item
-            for item in descriptors
-            if item.metadata.get("role") == "retained_support"
+            item for item in descriptors if item.metadata.get("role") == "retained_support"
         )
         retained_paths = [item.relative_path for item in retained_descriptors]
         if (
-            embedded_assets.get("retained_support_count")
-            != len(retained_descriptors)
+            embedded_assets.get("retained_support_count") != len(retained_descriptors)
             or embedded_assets.get("retained_support_bytes")
             != sum(item.size_bytes for item in retained_descriptors)
-            or embedded_assets.get("retained_support_paths")
-            != retained_paths
+            or embedded_assets.get("retained_support_paths") != retained_paths
         ):
-            raise AbbyVoiceHFReleaseError(
-                "retained support inventory does not match descriptors"
-            )
+            raise AbbyVoiceHFReleaseError("retained support inventory does not match descriptors")
         for descriptor in retained_descriptors:
             source = AbbyVoiceReleaseSupportSource(
                 relative_path=descriptor.relative_path,
@@ -1474,9 +1374,7 @@ def validate_abby_voice_hf_release(release_dir: str | Path) -> dict[str, Any]:
                 schema_type=descriptor.schema_type,
                 row_count=descriptor.row_count,
                 metadata={
-                    key: value
-                    for key, value in descriptor.metadata.items()
-                    if key != "role"
+                    key: value for key, value in descriptor.metadata.items() if key != "role"
                 },
             )
             _validate_support_file_content(
@@ -1512,9 +1410,7 @@ def validate_abby_voice_hf_release(release_dir: str | Path) -> dict[str, Any]:
             "artifact manifest is malformed or internally inconsistent"
         ) from exc
     if artifact_manifest.manifest_id != manifest.get("artifact_manifest_id"):
-        raise AbbyVoiceHFReleaseError(
-            "artifact_manifest_id does not match artifact manifest"
-        )
+        raise AbbyVoiceHFReleaseError("artifact_manifest_id does not match artifact manifest")
     preliminary_body = dict(manifest)
     preliminary_body.pop("release_cid", None)
     preliminary_body.pop("artifact_manifest_id", None)
@@ -1547,18 +1443,12 @@ def validate_abby_voice_hf_release(release_dir: str | Path) -> dict[str, Any]:
             continue
         relative = path.relative_to(root).as_posix()
         parts = relative.split("/")
-        if parts[0] in set(_CONFIG_DIRECTORY.values()) and not relative.endswith(
-            ".parquet"
-        ):
+        if parts[0] in set(_CONFIG_DIRECTORY.values()) and not relative.endswith(".parquet"):
             raise AbbyVoiceHFReleaseError(
                 f"non-parquet artifact inside config directory: {relative}"
             )
 
-    actual_files = {
-        path.relative_to(root).as_posix()
-        for path in root.rglob("*")
-        if path.is_file()
-    }
+    actual_files = {path.relative_to(root).as_posix() for path in root.rglob("*") if path.is_file()}
     expected_files = set(descriptor_paths) | {"release-manifest.json"}
     if actual_files != expected_files:
         raise AbbyVoiceHFReleaseError(
@@ -1579,9 +1469,7 @@ def validate_abby_voice_hf_release(release_dir: str | Path) -> dict[str, Any]:
         "index_cid": index.index_cid,
         "release_cid": manifest.get("release_cid"),
         "release_id": manifest.get("release_id"),
-        "row_counts": {
-            name: len(rows) for name, rows in config_rows.items()
-        },
+        "row_counts": {name: len(rows) for name, rows in config_rows.items()},
         "valid": True,
     }
 
@@ -1601,9 +1489,7 @@ def build_abby_voice_hf_release(
 ) -> AbbyVoiceHFReleaseResult:
     """Module-level convenience wrapper around the release builder."""
 
-    builder = AbbyVoiceHFReleaseBuilder(
-        policy=policy, repository_commit=repository_commit
-    )
+    builder = AbbyVoiceHFReleaseBuilder(policy=policy, repository_commit=repository_commit)
     return builder.build(
         output_dir=output_dir,
         release_id=release_id,
@@ -1643,9 +1529,7 @@ def materialize_response_dag_dry_run(
         existing_remote_digests=existing_remote_digests,
     )
     if not plan.dry_run or plan.remote_write_contacted:
-        raise AbbyVoiceHFReleaseError(
-            "response-DAG publication boundary produced a non-local plan"
-        )
+        raise AbbyVoiceHFReleaseError("response-DAG publication boundary produced a non-local plan")
     # Local absolute paths are execution details rather than receipt identity.
     # The manifest digests still prove the exact bytes at those paths.
     plan_payload = plan.to_dict()
@@ -1680,9 +1564,7 @@ def _read_parquet_rows(path: Path) -> list[dict[str, Any]]:
     try:
         import pyarrow.parquet as pq
     except ImportError as exc:  # pragma: no cover
-        raise ImportError(
-            "_read_parquet_rows requires the optional 'pyarrow' package"
-        ) from exc
+        raise ImportError("_read_parquet_rows requires the optional 'pyarrow' package") from exc
     table = pq.read_table(path)
     rows: list[dict[str, Any]] = []
     for batch in table.to_pylist():
@@ -1704,9 +1586,7 @@ def _dataset_card_license(path: Path) -> str:
     except (OSError, UnicodeError) as exc:
         raise AbbyVoiceHFReleaseError("release README.md is not UTF-8") from exc
     if not lines or lines[0].strip() != "---":
-        raise AbbyVoiceHFReleaseError(
-            "release README.md lacks dataset-card frontmatter"
-        )
+        raise AbbyVoiceHFReleaseError("release README.md lacks dataset-card frontmatter")
     licenses: list[str] = []
     for line in lines[1:]:
         stripped = line.strip()
@@ -1742,9 +1622,7 @@ def _release_readme(
         lines.append("  data_files:")
         for split in _CONFIG_SPLITS[config_name]:
             lines.append(f"  - split: {split}")
-            lines.append(
-                f"    path: {directory}/{split}/{split}-*.parquet"
-            )
+            lines.append(f"    path: {directory}/{split}/{split}-*.parquet")
     lines.extend(
         [
             "---",

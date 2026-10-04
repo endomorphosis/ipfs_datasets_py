@@ -103,9 +103,7 @@ def _freeze_mapping(value: Mapping[str, Any] | None) -> Mapping[str, Any]:
 def _require_world_chain(chain_id: str | int, name: str = "chain_id") -> str:
     text = _required_text(str(chain_id), name)
     if not is_world_chain_id(text):
-        raise InvalidRequestError(
-            f"{name} must be World Chain 480 or 4801 (got {text!r})"
-        )
+        raise InvalidRequestError(f"{name} must be World Chain 480 or 4801 (got {text!r})")
     return text
 
 
@@ -138,57 +136,41 @@ class WorldcoinNormalizationResult:
         chain = _require_world_chain(self.chain_id)
         anchor = world_chain_anchor(chain)
         object.__setattr__(self, "chain_id", chain)
-        object.__setattr__(
-            self, "network", self.network.strip() or anchor["network"]
-        )
+        object.__setattr__(self, "network", self.network.strip() or anchor["network"])
         object.__setattr__(
             self,
             "settlement_layer",
             self.settlement_layer.strip() or anchor["settlement_layer"],
         )
-        if self.evm_result is not None and not isinstance(
-            self.evm_result, EVMNormalizationResult
-        ):
+        if self.evm_result is not None and not isinstance(self.evm_result, EVMNormalizationResult):
             raise InvalidRequestError("evm_result must be EVMNormalizationResult or None")
         if self.verifier_binding is not None and not isinstance(
             self.verifier_binding, WorldIDVerifierBinding
         ):
-            raise InvalidRequestError(
-                "verifier_binding must be WorldIDVerifierBinding or None"
-            )
+            raise InvalidRequestError("verifier_binding must be WorldIDVerifierBinding or None")
         if self.external_nullifier is not None and not isinstance(
             self.external_nullifier, ExternalNullifier
         ):
-            raise InvalidRequestError(
-                "external_nullifier must be ExternalNullifier or None"
-            )
-        if self.replay_domain is not None and not isinstance(
-            self.replay_domain, ReplayDomain
-        ):
+            raise InvalidRequestError("external_nullifier must be ExternalNullifier or None")
+        if self.replay_domain is not None and not isinstance(self.replay_domain, ReplayDomain):
             raise InvalidRequestError("replay_domain must be ReplayDomain or None")
         if self.proof_consumer is not None and not isinstance(
             self.proof_consumer, ProofConsumerBehavior
         ):
-            raise InvalidRequestError(
-                "proof_consumer must be ProofConsumerBehavior or None"
-            )
+            raise InvalidRequestError("proof_consumer must be ProofConsumerBehavior or None")
         if self.bridge is not None and not isinstance(self.bridge, BridgeBinding):
             raise InvalidRequestError("bridge must be BridgeBinding or None")
 
         v_trust = tuple(self.verifier_trust)
         for index, item in enumerate(v_trust):
             if not isinstance(item, TrustAssumption):
-                raise InvalidRequestError(
-                    f"verifier_trust[{index}] must be a TrustAssumption"
-                )
+                raise InvalidRequestError(f"verifier_trust[{index}] must be a TrustAssumption")
         object.__setattr__(self, "verifier_trust", v_trust)
 
         b_trust = tuple(self.bridge_trust)
         for index, item in enumerate(b_trust):
             if not isinstance(item, TrustAssumption):
-                raise InvalidRequestError(
-                    f"bridge_trust[{index}] must be a TrustAssumption"
-                )
+                raise InvalidRequestError(f"bridge_trust[{index}] must be a TrustAssumption")
         object.__setattr__(self, "bridge_trust", b_trust)
 
         status = self.pass_status
@@ -198,9 +180,7 @@ class WorldcoinNormalizationResult:
         object.__setattr__(
             self,
             "diagnostics",
-            tuple(
-                _required_text(item, "diagnostics item") for item in self.diagnostics
-            ),
+            tuple(_required_text(item, "diagnostics item") for item in self.diagnostics),
         )
         object.__setattr__(self, "attributes", _freeze_mapping(self.attributes))
         object.__setattr__(
@@ -212,17 +192,11 @@ class WorldcoinNormalizationResult:
         # Hard invariants: proof never elevates to payment / legal / safety.
         if self.proof_consumer is not None:
             if self.proof_consumer.implies_payment:
-                raise InvalidRequestError(
-                    "proof_consumer must not imply payment authority"
-                )
+                raise InvalidRequestError("proof_consumer must not imply payment authority")
             if self.proof_consumer.implies_legal_identity:
-                raise InvalidRequestError(
-                    "proof_consumer must not imply legal identity"
-                )
+                raise InvalidRequestError("proof_consumer must not imply legal identity")
             if self.proof_consumer.implies_contract_safety:
-                raise InvalidRequestError(
-                    "proof_consumer must not imply contract safety"
-                )
+                raise InvalidRequestError("proof_consumer must not imply contract safety")
         ensure_secret_safe(self.to_dict())
 
     @property
@@ -244,9 +218,7 @@ class WorldcoinNormalizationResult:
             if isinstance(self.composition_mode, CompositionMode)
             else str(self.composition_mode),
             "diagnostics": list(self.diagnostics),
-            "evm_result": self.evm_result.to_dict()
-            if self.evm_result is not None
-            else None,
+            "evm_result": self.evm_result.to_dict() if self.evm_result is not None else None,
             "external_nullifier": self.external_nullifier.to_dict()
             if self.external_nullifier is not None
             else None,
@@ -446,9 +418,7 @@ class WorldcoinContractFrontend:
                 trust_ids.append(item.assumption_id)
         for item in extra_trust:
             if not isinstance(item, TrustAssumption):
-                raise InvalidRequestError(
-                    "extra_trust items must be TrustAssumption instances"
-                )
+                raise InvalidRequestError("extra_trust items must be TrustAssumption instances")
             trust_ids.append(item.assumption_id)
 
         # Align external nullifier chain when unbound.
@@ -516,9 +486,7 @@ class WorldcoinContractFrontend:
             settlement = settlement_layer or WORLD_CHAIN_MAINNET_SETTLEMENT
 
         direction_enum = (
-            direction
-            if isinstance(direction, BridgeDirection)
-            else BridgeDirection(str(direction))
+            direction if isinstance(direction, BridgeDirection) else BridgeDirection(str(direction))
         )
         return BridgeBinding(
             bridge_id=bridge_id,
@@ -529,9 +497,7 @@ class WorldcoinContractFrontend:
             amount_base_units=amount_base_units,
             tx_hash_ref=tx_hash_ref,
             code_epoch=code_epoch,
-            trusted_assumptions=default_bridge_trust_assumptions(
-                settlement_layer=settlement
-            ),
+            trusted_assumptions=default_bridge_trust_assumptions(settlement_layer=settlement),
             attributes=dict(attributes or {}),
         )
 
@@ -568,38 +534,28 @@ class WorldcoinContractFrontend:
         }
         if not verified:
             status = SemanticPassStatus.FAIL_CLOSED
-            diagnostics.append(
-                f"verification_status={verification_status!r} is not verified"
-            )
+            diagnostics.append(f"verification_status={verification_status!r} is not verified")
         else:
             status = SemanticPassStatus.PASS
             diagnostics.append("world_id_proof_verified")
 
         if claim_payment_authorization:
             status = SemanticPassStatus.FAIL_CLOSED
-            diagnostics.append(
-                "rejected: valid identity proof never implies payment authority"
-            )
+            diagnostics.append("rejected: valid identity proof never implies payment authority")
         if claim_legal_identity:
             status = SemanticPassStatus.FAIL_CLOSED
-            diagnostics.append(
-                "rejected: valid identity proof never implies legal identity"
-            )
+            diagnostics.append("rejected: valid identity proof never implies legal identity")
         if claim_contract_safety:
             status = SemanticPassStatus.FAIL_CLOSED
-            diagnostics.append(
-                "rejected: valid identity proof never implies contract safety"
-            )
+            diagnostics.append("rejected: valid identity proof never implies contract safety")
 
         if verifier_binding is not None:
             # Domain must match.
             if not (
-                verifier_binding.external_nullifier.domain_key
-                == external_nullifier.domain_key
+                verifier_binding.external_nullifier.domain_key == external_nullifier.domain_key
                 or (
                     verifier_binding.external_nullifier.rp_id == external_nullifier.rp_id
-                    and verifier_binding.external_nullifier.action
-                    == external_nullifier.action
+                    and verifier_binding.external_nullifier.action == external_nullifier.action
                     and verifier_binding.external_nullifier.environment
                     == external_nullifier.environment
                 )
@@ -632,9 +588,7 @@ class WorldcoinContractFrontend:
             elif "worldcoin.proof_not_payment_authority" not in set(
                 verifier_binding.trusted_assumptions
             ):
-                diagnostics.append(
-                    "missing worldcoin.proof_not_payment_authority assumption"
-                )
+                diagnostics.append("missing worldcoin.proof_not_payment_authority assumption")
                 if status is SemanticPassStatus.PASS:
                     status = SemanticPassStatus.TRUST_UNSTATED
             _ = trust_status  # surface required; status already derived above
@@ -732,20 +686,15 @@ class WorldcoinContractFrontend:
             RedeploymentRisk.SELFDESTRUCT_PRESENT,
             RedeploymentRisk.CODE_EPOCH_CHANGED,
         }:
-            diagnostics.append(
-                f"redeployment_risk={evm_result.proxy.redeployment_risk.value}"
-            )
+            diagnostics.append(f"redeployment_risk={evm_result.proxy.redeployment_risk.value}")
             if pass_status is SemanticPassStatus.PASS:
                 pass_status = SemanticPassStatus.FAIL_CLOSED
 
         # Bridge trust is always stated for World Chain composition even when
         # no bridge observation is present — settlement depends on OP-stack.
-        bridge_trust = default_bridge_trust_assumptions(
-            settlement_layer=anchor["settlement_layer"]
-        )
+        bridge_trust = default_bridge_trust_assumptions(settlement_layer=anchor["settlement_layer"])
         diagnostics.append(
-            "stated_bridge_trust="
-            + ",".join(item.assumption_id for item in bridge_trust)
+            "stated_bridge_trust=" + ",".join(item.assumption_id for item in bridge_trust)
         )
 
         return WorldcoinNormalizationResult(
@@ -815,9 +764,13 @@ class WorldcoinContractFrontend:
                 else str(evm_result.proxy.kind)
             )
 
-        epoch_label = code_epoch.strip() if code_epoch else (
-            evm_result.code_epoch.code_epoch
-            or f"code:{evm_result.code_epoch.runtime_bytecode_digest}"
+        epoch_label = (
+            code_epoch.strip()
+            if code_epoch
+            else (
+                evm_result.code_epoch.code_epoch
+                or f"code:{evm_result.code_epoch.runtime_bytecode_digest}"
+            )
         )
 
         binding = self.bind_verifier(
@@ -848,14 +801,10 @@ class WorldcoinContractFrontend:
             upgrade_status = check_verifier_upgrade(previous_verifier, binding)
             if upgrade_status is SemanticPassStatus.FAIL_CLOSED:
                 pass_status = SemanticPassStatus.FAIL_CLOSED
-                diagnostics.append(
-                    "verifier implementation code epoch changed; re-bind required"
-                )
+                diagnostics.append("verifier implementation code epoch changed; re-bind required")
             elif upgrade_status is SemanticPassStatus.DOMAIN_MISMATCH:
                 pass_status = SemanticPassStatus.DOMAIN_MISMATCH
-                diagnostics.append(
-                    "verifier address or chain mismatch vs previous binding"
-                )
+                diagnostics.append("verifier address or chain mismatch vs previous binding")
             else:
                 diagnostics.append("verifier code epoch continuous with previous binding")
 
@@ -864,8 +813,7 @@ class WorldcoinContractFrontend:
             code_epoch_pinned=True,
         )
         diagnostics.append(
-            "stated_verifier_trust="
-            + ",".join(item.assumption_id for item in verifier_trust)
+            "stated_verifier_trust=" + ",".join(item.assumption_id for item in verifier_trust)
         )
 
         proof_consumer: ProofConsumerBehavior | None = None

@@ -40,12 +40,8 @@ from .models import (
 )
 
 
-COMPLIANCE_RULE_SCHEMA_VERSION: Final[str] = (
-    "ipfs-datasets.crypto-ir.compliance-rule@1.0.0"
-)
-COMPLIANCE_RULE_SET_SCHEMA_VERSION: Final[str] = (
-    "ipfs-datasets.crypto-ir.compliance-rule-set@1.0.0"
-)
+COMPLIANCE_RULE_SCHEMA_VERSION: Final[str] = "ipfs-datasets.crypto-ir.compliance-rule@1.0.0"
+COMPLIANCE_RULE_SET_SCHEMA_VERSION: Final[str] = "ipfs-datasets.crypto-ir.compliance-rule-set@1.0.0"
 
 
 class ComplianceRuleError(ComplianceModelError):
@@ -157,9 +153,7 @@ class ComplianceRule:
             self, "predicate", _enum(CompliancePredicate, self.predicate, "predicate")
         )
         object.__setattr__(self, "outcome", _outcome(self.outcome, "outcome"))
-        object.__setattr__(
-            self, "reason_code", _identifier(self.reason_code, "reason_code")
-        )
+        object.__setattr__(self, "reason_code", _identifier(self.reason_code, "reason_code"))
         if self.match_level is not None:
             object.__setattr__(
                 self,
@@ -176,9 +170,7 @@ class ComplianceRule:
             object.__setattr__(
                 self,
                 "max_snapshot_age_seconds",
-                _non_negative_int(
-                    self.max_snapshot_age_seconds, "max_snapshot_age_seconds"
-                ),
+                _non_negative_int(self.max_snapshot_age_seconds, "max_snapshot_age_seconds"),
             )
         if self.ownership_threshold_basis_points is not None:
             value = _non_negative_int(
@@ -186,24 +178,18 @@ class ComplianceRule:
                 "ownership_threshold_basis_points",
             )
             if value > 10_000:
-                raise ComplianceRuleError(
-                    "ownership_threshold_basis_points must be in 0..10000"
-                )
+                raise ComplianceRuleError("ownership_threshold_basis_points must be in 0..10000")
             object.__setattr__(self, "ownership_threshold_basis_points", value)
         if type(self.requires_completeness) is not bool:
             raise ComplianceRuleError("requires_completeness must be a boolean")
         if type(self.elevates_to_designation) is not bool:
             raise ComplianceRuleError("elevates_to_designation must be a boolean")
         if self.kind in _NON_DESIGNATING_KINDS and self.elevates_to_designation:
-            raise ComplianceRuleError(
-                f"{self.kind.value} rules must never elevate to designation"
-            )
+            raise ComplianceRuleError(f"{self.kind.value} rules must never elevate to designation")
         # Direct sanctions exact may hard-deny but still does not *create* a
         # designation — it applies an existing list fact.
         if self.elevates_to_designation:
-            raise ComplianceRuleError(
-                "compliance rules never mint designation authority"
-            )
+            raise ComplianceRuleError("compliance rules never mint designation authority")
         object.__setattr__(self, "program_ids", _ids(self.program_ids, "program_ids"))
         object.__setattr__(
             self, "jurisdiction_codes", _ids(self.jurisdiction_codes, "jurisdiction_codes")
@@ -212,9 +198,7 @@ class ComplianceRule:
             raise ComplianceRuleError("attributes must be a mapping")
         object.__setattr__(self, "attributes", dict(self.attributes))
         if self.schema_version != COMPLIANCE_RULE_SCHEMA_VERSION:
-            raise ComplianceRuleError(
-                f"unsupported rule schema: {self.schema_version}"
-            )
+            raise ComplianceRuleError(f"unsupported rule schema: {self.schema_version}")
         self._assert_kind_predicate_coherence()
 
     def _assert_kind_predicate_coherence(self) -> None:
@@ -244,9 +228,7 @@ class ComplianceRule:
                     CompliancePredicate.FORBIDDEN,
                 }
             ),
-            ComplianceRuleKind.FRESHNESS: frozenset(
-                {CompliancePredicate.EVIDENCE_FRESH}
-            ),
+            ComplianceRuleKind.FRESHNESS: frozenset({CompliancePredicate.EVIDENCE_FRESH}),
             ComplianceRuleKind.RISK_POLICY: frozenset(
                 {
                     CompliancePredicate.REQUIRES_REVIEW,
@@ -254,18 +236,13 @@ class ComplianceRule:
                     CompliancePredicate.BOUNDED_EXPOSURE,
                 }
             ),
-            ComplianceRuleKind.COMPLETENESS: frozenset(
-                {CompliancePredicate.COMPLETENESS_FRONTIER}
-            ),
-            ComplianceRuleKind.HEURISTIC_SIGNAL: frozenset(
-                {CompliancePredicate.REQUIRES_REVIEW}
-            ),
+            ComplianceRuleKind.COMPLETENESS: frozenset({CompliancePredicate.COMPLETENESS_FRONTIER}),
+            ComplianceRuleKind.HEURISTIC_SIGNAL: frozenset({CompliancePredicate.REQUIRES_REVIEW}),
         }
         allowed = expected[self.kind]
         if self.predicate not in allowed:
             raise ComplianceRuleError(
-                f"predicate {self.predicate.value} incompatible with kind "
-                f"{self.kind.value}"
+                f"predicate {self.predicate.value} incompatible with kind {self.kind.value}"
             )
 
     def to_dict(self) -> dict[str, Any]:
@@ -326,17 +303,13 @@ class ComplianceRule:
             enabled=bool(value.get("enabled", True)),
             description=value.get("description", ""),
             max_snapshot_age_seconds=value.get("max_snapshot_age_seconds"),
-            ownership_threshold_basis_points=value.get(
-                "ownership_threshold_basis_points"
-            ),
+            ownership_threshold_basis_points=value.get("ownership_threshold_basis_points"),
             requires_completeness=bool(value.get("requires_completeness", False)),
             elevates_to_designation=bool(value.get("elevates_to_designation", False)),
             program_ids=tuple(value.get("program_ids", ())),
             jurisdiction_codes=tuple(value.get("jurisdiction_codes", ())),
             attributes=value.get("attributes", {}),
-            schema_version=value.get(
-                "schema_version", COMPLIANCE_RULE_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", COMPLIANCE_RULE_SCHEMA_VERSION),
         )
 
 
@@ -361,9 +334,7 @@ class RuleHit:
             self, "predicate", _enum(CompliancePredicate, self.predicate, "predicate")
         )
         object.__setattr__(self, "outcome", _outcome(self.outcome))
-        object.__setattr__(
-            self, "reason_code", _identifier(self.reason_code, "reason_code")
-        )
+        object.__setattr__(self, "reason_code", _identifier(self.reason_code, "reason_code"))
         if self.match_level is not None:
             object.__setattr__(
                 self,
@@ -372,9 +343,7 @@ class RuleHit:
             )
         object.__setattr__(self, "evidence_ids", _ids(self.evidence_ids, "evidence_ids"))
         object.__setattr__(self, "path_ids", _ids(self.path_ids, "path_ids"))
-        object.__setattr__(
-            self, "notes", tuple(_text(n, "notes") for n in self.notes)
-        )
+        object.__setattr__(self, "notes", tuple(_text(n, "notes") for n in self.notes))
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -437,9 +406,7 @@ class ComplianceRuleSet:
     LAYER: ClassVar[AuthorityKind] = AuthorityKind.DECLARATION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "rule_set_id", _identifier(self.rule_set_id, "rule_set_id")
-        )
+        object.__setattr__(self, "rule_set_id", _identifier(self.rule_set_id, "rule_set_id"))
         object.__setattr__(self, "revision", _identifier(self.revision, "revision"))
         rules = tuple(
             item
@@ -453,20 +420,14 @@ class ComplianceRuleSet:
         if len(rule_ids) != len(set(rule_ids)):
             raise ComplianceRuleError("rule_id values must be unique")
         object.__setattr__(self, "rules", rules)
-        precedence = tuple(
-            _outcome(item, "outcome_precedence") for item in self.outcome_precedence
-        )
+        precedence = tuple(_outcome(item, "outcome_precedence") for item in self.outcome_precedence)
         if len(precedence) != len(set(precedence)):
             raise ComplianceRuleError("outcome_precedence values must be unique")
         if set(precedence) != set(SanctionsPolicyOutcome):
-            raise ComplianceRuleError(
-                "outcome_precedence must list every SanctionsPolicyOutcome"
-            )
+            raise ComplianceRuleError("outcome_precedence must list every SanctionsPolicyOutcome")
         object.__setattr__(self, "outcome_precedence", precedence)
         if self.schema_version != COMPLIANCE_RULE_SET_SCHEMA_VERSION:
-            raise ComplianceRuleError(
-                f"unsupported rule set schema: {self.schema_version}"
-            )
+            raise ComplianceRuleError(f"unsupported rule set schema: {self.schema_version}")
 
     @property
     def rules_digest(self) -> str:
@@ -535,9 +496,7 @@ class ComplianceRuleSet:
         return cls(
             rule_set_id=value.get("rule_set_id", ""),
             revision=value.get("revision", ""),
-            rules=tuple(
-                ComplianceRule.from_dict(item) for item in value.get("rules", ())
-            ),
+            rules=tuple(ComplianceRule.from_dict(item) for item in value.get("rules", ())),
             outcome_precedence=tuple(
                 value.get(
                     "outcome_precedence",
@@ -551,9 +510,7 @@ class ComplianceRuleSet:
                     ),
                 )
             ),
-            schema_version=value.get(
-                "schema_version", COMPLIANCE_RULE_SET_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", COMPLIANCE_RULE_SET_SCHEMA_VERSION),
         )
 
 
@@ -578,9 +535,7 @@ class RuleEvaluationResult:
             "rule_set_revision",
         ):
             object.__setattr__(self, name, _identifier(getattr(self, name), name))
-        object.__setattr__(
-            self, "rules_digest", _digest(self.rules_digest, "rules_digest")
-        )
+        object.__setattr__(self, "rules_digest", _digest(self.rules_digest, "rules_digest"))
         object.__setattr__(self, "outcome", _outcome(self.outcome))
         hits = tuple(
             item if isinstance(item, RuleHit) else RuleHit.from_dict(_mapping(item, "hits"))
@@ -594,9 +549,7 @@ class RuleEvaluationResult:
         if type(self.declares_designation) is not bool:
             raise ComplianceRuleError("declares_designation must be a boolean")
         if self.declares_designation:
-            raise ComplianceRuleError(
-                "rule evaluation must never declare designation"
-            )
+            raise ComplianceRuleError("rule evaluation must never declare designation")
         if not isinstance(self.attributes, Mapping):
             raise ComplianceRuleError("attributes must be a mapping")
         object.__setattr__(self, "attributes", dict(self.attributes))
@@ -682,9 +635,7 @@ def default_compliance_rules(
             reason_code="bounded_indirect_exposure",
             match_level=SanctionsMatchLevel.BOUNDED_INDIRECT_EXPOSURE,
             priority=50,
-            description=(
-                "Bounded-indirect path under path policy; never a designation."
-            ),
+            description=("Bounded-indirect path under path policy; never a designation."),
             elevates_to_designation=False,
         ),
         ComplianceRule(
@@ -801,9 +752,7 @@ def evaluate_compliance_rules(
             if exposure is not None and exposure.has_direct_hit:
                 # depth-0 self-list or depth-1 direct path.
                 direct_paths = tuple(
-                    p.path_id
-                    for p in exposure.paths
-                    if p.is_direct or p.depth == 0
+                    p.path_id for p in exposure.paths if p.is_direct or p.depth == 0
                 )
                 if rule.predicate in (
                     CompliancePredicate.LISTED_IDENTIFIER,
@@ -820,10 +769,7 @@ def evaluate_compliance_rules(
                             path_ids=direct_paths,
                         )
                     )
-            if (
-                snapshot is not None
-                and rule.predicate is CompliancePredicate.DESIGNATED_PARTY
-            ):
+            if snapshot is not None and rule.predicate is CompliancePredicate.DESIGNATED_PARTY:
                 # Party-level evaluation requires association evidence of named party;
                 # exact identifier paths are handled above.
                 continue
@@ -863,9 +809,7 @@ def evaluate_compliance_rules(
 
         if rule.kind is ComplianceRuleKind.BOUNDED_INDIRECT_EXPOSURE:
             if exposure is not None and exposure.has_indirect_exposure:
-                indirect_paths = tuple(
-                    p.path_id for p in exposure.paths if p.is_indirect
-                )
+                indirect_paths = tuple(p.path_id for p in exposure.paths if p.is_indirect)
                 hits.append(
                     RuleHit(
                         rule_id=rule.rule_id,
@@ -879,10 +823,7 @@ def evaluate_compliance_rules(
                     )
                 )
             for evidence in association_evidence:
-                if (
-                    evidence.match_level
-                    is SanctionsMatchLevel.BOUNDED_INDIRECT_EXPOSURE
-                ):
+                if evidence.match_level is SanctionsMatchLevel.BOUNDED_INDIRECT_EXPOSURE:
                     hits.append(
                         RuleHit(
                             rule_id=rule.rule_id,
@@ -906,9 +847,7 @@ def evaluate_compliance_rules(
                     continue
                 if at_time and not evidence.is_effective_at(at_time):
                     continue
-                total = sum(
-                    interest.ownership_basis_points for interest in evidence.interests
-                )
+                total = sum(interest.ownership_basis_points for interest in evidence.interests)
                 if total >= threshold:
                     hits.append(
                         RuleHit(

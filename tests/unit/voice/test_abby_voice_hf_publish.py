@@ -167,9 +167,7 @@ class _FakeHfApi:
             path = getattr(op, "path_in_repo", None) or op.get("path_in_repo")
             assert path and not path.startswith("/")
             assert ".." not in path
-            source = getattr(op, "path_or_fileobj", None) or op.get(
-                "path_or_fileobj"
-            )
+            source = getattr(op, "path_or_fileobj", None) or op.get("path_or_fileobj")
             assert not isinstance(source, (bytes, bytearray))
             position = source.tell()
             source.seek(0)
@@ -254,9 +252,7 @@ def test_canonical_plan_includes_and_binds_release_manifest_bytes(
         audited_parent_commit=AUDITED_PARENT,
     )
     manifest_operations = [
-        item
-        for item in plan.operations
-        if item.relative_path == "release-manifest.json"
+        item for item in plan.operations if item.relative_path == "release-manifest.json"
     ]
 
     assert all(
@@ -265,17 +261,12 @@ def test_canonical_plan_includes_and_binds_release_manifest_bytes(
     )
     assert len(manifest_operations) == 1
     manifest_operation = manifest_operations[0]
-    assert manifest_operation.sha256 == sha256(
-        manifest_path.read_bytes()
-    ).hexdigest()
+    assert manifest_operation.sha256 == sha256(manifest_path.read_bytes()).hexdigest()
     assert manifest_operation.size_bytes == manifest_path.stat().st_size
     assert plan.release_sha256 == manifest_operation.sha256
     assert len(plan.operations) == len(manifest["descriptors"]) + 1
     assert plan.metadata["canonical_release_manifest_included"] is True
-    assert (
-        plan.metadata["canonical_release_manifest_sha256"]
-        == manifest_operation.sha256
-    )
+    assert plan.metadata["canonical_release_manifest_sha256"] == manifest_operation.sha256
 
     receipt = publish_abby_voice_release(
         manifest=manifest_path,
@@ -602,9 +593,7 @@ def test_post_publication_verification(tmp_path: Path):
         "commit_sha": commit.commit_sha,
     }
     with pytest.raises(HuggingFacePublicationError, match="digest mismatch"):
-        publisher.verify_post_publication(
-            commit_receipt=commit, plan=plan, remote_objects=bad
-        )
+        publisher.verify_post_publication(commit_receipt=commit, plan=plan, remote_objects=bad)
 
 
 def test_pinned_redownload_validation(tmp_path: Path):
@@ -620,9 +609,7 @@ def test_pinned_redownload_validation(tmp_path: Path):
         local_root=root,
         audited_parent_commit=AUDITED_PARENT,
     )
-    payloads = {
-        op.remote_path: (root / op.relative_path).read_bytes() for op in plan.operations
-    }
+    payloads = {op.remote_path: (root / op.relative_path).read_bytes() for op in plan.operations}
     cache = tmp_path / "empty-cache"
     result = publisher.redownload_and_validate_pinned(
         commit_sha="f" * 40,
@@ -685,10 +672,7 @@ def test_pinned_redownload_runs_exhaustive_canonical_release_validation(
     receipt = result.to_dict()
     assert receipt["canonical_release_validation_performed"] is True
     assert receipt["canonical_release_validation"]["valid"] is True
-    assert (
-        receipt["canonical_release_validation"]["release_id"]
-        == "canonical-publisher-fixture"
-    )
+    assert receipt["canonical_release_validation"]["release_id"] == "canonical-publisher-fixture"
     assert len(receipt["canonical_release_validation_sha256"]) == 64
 
     import ipfs_datasets_py.voice.hf_release as hf_release_module
@@ -887,9 +871,7 @@ def test_publish_abby_voice_release_execute_runs_verification_gates(tmp_path: Pa
     assert receipt["pinned_redownload_validation"]["empty_cache_before_fetch"] is True
     assert receipt["pinned_redownload_validation"]["commit_sha"] == "3" * 40
     assert receipt["pinned_redownload_validation"]["network_fetch_performed"] is True
-    pinned_reads = [
-        call for call in api.read_calls if call == ("hf_hub_download", "3" * 40)
-    ]
+    pinned_reads = [call for call in api.read_calls if call == ("hf_hub_download", "3" * 40)]
     assert len(pinned_reads) == len(plan.operations) + 1
     assert all(
         (cache / op.remote_path).is_file() and not (cache / op.remote_path).is_symlink()
@@ -1004,9 +986,7 @@ def test_g021_auto_030_residual_evidence_terms_are_discoverable():
     assert G021_RESIDUAL_SCAN_CLOSURE_AUTO_030.endswith(
         "2026-07-26-abby-voice-auto-030-objective-validation-repair.md"
     )
-    assert repair_path.is_file(), (
-        "package-owned AUTO-030 residual scan closure evidence must exist"
-    )
+    assert repair_path.is_file(), "package-owned AUTO-030 residual scan closure evidence must exist"
     repair_text = repair_path.read_text(encoding="utf-8")
     combined = "\n".join((publisher_text, test_text, repair_text))
     for term in G021_AUTO_030_RESIDUAL_EVIDENCE_TERMS:
@@ -1060,22 +1040,20 @@ def test_evidence_phrases_are_discoverable_in_implementation_modules():
 
     publisher_text = Path(publisher_mod.__file__).read_text(encoding="utf-8")
     hf_release_text = Path(hf_release_mod.__file__).read_text(encoding="utf-8")
-    script_path = (
-        Path(__file__).resolve().parents[4]
-        / "scripts"
-        / "publish_abby_voice_release.py"
-    )
+    script_path = Path(__file__).resolve().parents[4] / "scripts" / "publish_abby_voice_release.py"
     if not script_path.is_file():
         # Workspace layout: repo_root/ipfs_datasets_py/tests/unit/voice → parents[4] is repo root.
         script_path = (
-            Path(__file__).resolve().parents[5]
-            / "scripts"
-            / "publish_abby_voice_release.py"
+            Path(__file__).resolve().parents[5] / "scripts" / "publish_abby_voice_release.py"
         )
     # Resolve relative to package path more robustly.
     repo_candidates = [
-        Path(publisher_mod.__file__).resolve().parents[3] / "scripts" / "publish_abby_voice_release.py",
-        Path(publisher_mod.__file__).resolve().parents[4] / "scripts" / "publish_abby_voice_release.py",
+        Path(publisher_mod.__file__).resolve().parents[3]
+        / "scripts"
+        / "publish_abby_voice_release.py",
+        Path(publisher_mod.__file__).resolve().parents[4]
+        / "scripts"
+        / "publish_abby_voice_release.py",
         Path.cwd() / "scripts" / "publish_abby_voice_release.py",
     ]
     script_text = ""

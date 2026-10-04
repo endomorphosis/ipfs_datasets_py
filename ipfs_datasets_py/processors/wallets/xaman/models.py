@@ -223,9 +223,7 @@ class XamanPayload:
             object.__setattr__(self, "account", self.account.strip() or None)
         if self.destination is not None:
             object.__setattr__(self, "destination", self.destination.strip() or None)
-        object.__setattr__(
-            self, "request_summary", MappingProxyType(dict(self.request_summary))
-        )
+        object.__setattr__(self, "request_summary", MappingProxyType(dict(self.request_summary)))
         object.__setattr__(self, "raw", MappingProxyType(dict(self.raw)))
 
     @property

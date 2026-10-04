@@ -36,9 +36,7 @@ from ipfs_datasets_py.huggingface.protected_repo_guard import (
 )
 
 DEFAULT_TARGET_REPO: Final = "Publicus/cvefixes-security-ir-graphrag"
-PUBLICATION_RECEIPT_VERSION: Final = (
-    "cvefixes-security-ir-publication-receipt/v1"
-)
+PUBLICATION_RECEIPT_VERSION: Final = "cvefixes-security-ir-publication-receipt/v1"
 RELEASE_SCHEMA_VERSION: Final = "cvefixes-huggingface-release/v1"
 PARQUET_SCHEMA_VERSION: Final = "cvefixes-huggingface-parquet/v1"
 # Complete releases use README config declarations, like SkillCenter.  The
@@ -46,9 +44,7 @@ PARQUET_SCHEMA_VERSION: Final = "cvefixes-huggingface-parquet/v1"
 COMPLETE_RELEASE_METADATA_PATH: Final = "release-metadata.json"
 LEGACY_RELEASE_METADATA_PATH: Final = "dataset_infos.json"
 ORIGINAL_MIRROR_PROFILE: Final = "cvefixes-byte-preserving-mirror/v1"
-ORIGINAL_ROW_INDEX_SCHEMA_VERSION: Final = (
-    "cvefixes-hf-original-row-index/v1"
-)
+ORIGINAL_ROW_INDEX_SCHEMA_VERSION: Final = "cvefixes-hf-original-row-index/v1"
 PINNED_SOURCE_DATASET_ID: Final = "hitoshura25/cvefixes"
 PINNED_SOURCE_REVISION: Final = "d4f5c4ea65329d9ccbb8a3b3149e5d06eda5edb2"
 PINNED_SOURCE_PROFILE_SHA256: Final = (
@@ -302,8 +298,7 @@ COMPLETE_DATA_CONFIG_PATHS: Final[Mapping[str, str]] = {
     "vectors": "data/vectors/",
 }
 COMPLETE_INDEX_PATHS: Final[Mapping[str, str]] = {
-    f"indexes/{name}.parquet": config
-    for name, config in META_INDEX_CONFIGS.items()
+    f"indexes/{name}.parquet": config for name, config in META_INDEX_CONFIGS.items()
 }
 COMPLETE_VIEWER_CONFIGS: Final[frozenset[str]] = frozenset(
     {
@@ -329,12 +324,8 @@ _COMPLETE_INDEX_FAMILY: Final[Mapping[str, str]] = {
     "indexes/bm25_keyword_shards.parquet": "bm25_postings",
     "indexes/graph_node_chunks.parquet": "graph_nodes",
     "indexes/graph_edge_chunks.parquet": "graph_edges",
-    "indexes/graph_outgoing_adjacency.parquet": (
-        "graph_outgoing_adjacency"
-    ),
-    "indexes/graph_incoming_adjacency.parquet": (
-        "graph_incoming_adjacency"
-    ),
+    "indexes/graph_outgoing_adjacency.parquet": ("graph_outgoing_adjacency"),
+    "indexes/graph_incoming_adjacency.parquet": ("graph_incoming_adjacency"),
     "indexes/original_rows.parquet": "original_data",
     "indexes/vector_chunks.parquet": "vectors",
 }
@@ -508,11 +499,7 @@ def _raw_sha256_cid(digest: bytes) -> str:
 
 def _original_contract(path: str) -> OriginalShardContract | None:
     return next(
-        (
-            contract
-            for contract in PINNED_ORIGINAL_SHARDS
-            if contract.release_path == path
-        ),
+        (contract for contract in PINNED_ORIGINAL_SHARDS if contract.release_path == path),
         None,
     )
 
@@ -556,9 +543,7 @@ def _stream_file_sha256(
 
 def _complete_data_config(path: str) -> str | None:
     for config_name, prefix in COMPLETE_DATA_CONFIG_PATHS.items():
-        if path.startswith(prefix) and re.fullmatch(
-            r"part-\d{6}\.parquet", path[len(prefix) :]
-        ):
+        if path.startswith(prefix) and re.fullmatch(r"part-\d{6}\.parquet", path[len(prefix) :]):
             return config_name
     return None
 
@@ -574,9 +559,7 @@ def _expected_artifact_config(path: str) -> str | None:
         len(parsed.parts) == 3
         and parsed.parts[0] == "data"
         and _CONFIG_RE.fullmatch(parsed.parts[1])
-        and re.fullmatch(
-            r"train-\d{5}-of-\d{5}\.parquet", parsed.parts[2]
-        )
+        and re.fullmatch(r"train-\d{5}-of-\d{5}\.parquet", parsed.parts[2])
     ):
         return parsed.parts[1]
     return None
@@ -612,14 +595,10 @@ def _safe_public_value(value: Any, *, location: str = "$") -> None:
             if not isinstance(raw_key, str):
                 raise LocalReleaseError(f"non-string key at {location}")
             if raw_key.casefold() in _SECRET_KEYS:
-                raise LocalReleaseError(
-                    f"credential-like field is forbidden at {location}"
-                )
+                raise LocalReleaseError(f"credential-like field is forbidden at {location}")
             _safe_public_value(item, location=f"{location}.{raw_key}")
         return
-    if isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         for index, item in enumerate(value):
             _safe_public_value(item, location=f"{location}[{index}]")
         return
@@ -688,12 +667,9 @@ class ArtifactDescriptor:
                 or byte_length != original_contract.size_bytes
                 or row_count != original_contract.row_count
                 or sha256 != original_contract.sha256
-                or content_id
-                != _raw_sha256_cid(bytes.fromhex(original_contract.sha256))
+                or content_id != _raw_sha256_cid(bytes.fromhex(original_contract.sha256))
             ):
-                raise LocalReleaseError(
-                    "pinned original-data descriptor is invalid"
-                )
+                raise LocalReleaseError("pinned original-data descriptor is invalid")
         elif media_type not in _JSON_MEDIA_TYPES:
             raise LocalReleaseError("release artifact media type is unexpected")
         return cls(
@@ -737,11 +713,7 @@ class LocalRelease:
         return tuple(item for item in self.artifacts if item.config_name)
 
     def columns_for_config(self, config_name: str) -> tuple[str, ...]:
-        paths = {
-            item.path
-            for item in self.parquet_artifacts
-            if item.config_name == config_name
-        }
+        paths = {item.path for item in self.parquet_artifacts if item.config_name == config_name}
         if not paths:
             raise LocalReleaseError("dataset config has no Parquet artifacts")
         is_meta = {path.startswith("indexes/") for path in paths}
@@ -879,33 +851,24 @@ def _validate_field_types(schema: Any, config_name: str, pa: Any) -> None:
             "float64": pa.types.is_float64(field.type),
             "bool": pa.types.is_boolean(field.type),
             "list_string": (
-                pa.types.is_list(field.type)
-                and pa.types.is_string(field.type.value_type)
+                pa.types.is_list(field.type) and pa.types.is_string(field.type.value_type)
             ),
             "list_int32": (
-                pa.types.is_list(field.type)
-                and pa.types.is_int32(field.type.value_type)
+                pa.types.is_list(field.type) and pa.types.is_int32(field.type.value_type)
             ),
             "list_float32": (
-                pa.types.is_list(field.type)
-                and pa.types.is_float32(field.type.value_type)
+                pa.types.is_list(field.type) and pa.types.is_float32(field.type.value_type)
             ),
             "list_float64": (
-                pa.types.is_list(field.type)
-                and pa.types.is_float64(field.type.value_type)
+                pa.types.is_list(field.type) and pa.types.is_float64(field.type.value_type)
             ),
             "fixed_or_list_float32": (
-                (
-                    pa.types.is_list(field.type)
-                    or pa.types.is_fixed_size_list(field.type)
-                )
+                (pa.types.is_list(field.type) or pa.types.is_fixed_size_list(field.type))
                 and pa.types.is_float32(field.type.value_type)
             ),
         }[kind]
         if not valid:
-            raise LocalReleaseError(
-                f"Parquet field type mismatch: {config_name}.{field.name}"
-            )
+            raise LocalReleaseError(f"Parquet field type mismatch: {config_name}.{field.name}")
 
 
 def _validate_parquet(
@@ -918,78 +881,56 @@ def _validate_parquet(
         import pyarrow as pa
         import pyarrow.parquet as pq
     except ImportError as exc:  # pragma: no cover - release dependency in CI
-        raise LocalReleaseError(
-            "pyarrow is required to validate release shards"
-        ) from exc
+        raise LocalReleaseError("pyarrow is required to validate release shards") from exc
     try:
         parquet = pq.ParquetFile(path)
         schema = parquet.schema_arrow
     except Exception as exc:
-        raise LocalReleaseError(
-            f"Parquet shard is unreadable: {descriptor.path}"
-        ) from exc
+        raise LocalReleaseError(f"Parquet shard is unreadable: {descriptor.path}") from exc
     expected_columns = _CONFIG_COLUMNS.get(descriptor.config_name)
     if expected_columns is None:
         expected_columns = (
-            META_INDEX_COLUMNS
-            if descriptor.path.startswith("indexes/")
-            else EXPECTED_COLUMNS
+            META_INDEX_COLUMNS if descriptor.path.startswith("indexes/") else EXPECTED_COLUMNS
         )
     if tuple(schema.names) != expected_columns:
-        raise LocalReleaseError(
-            f"Parquet schema mismatch: {descriptor.path}"
-        )
+        raise LocalReleaseError(f"Parquet schema mismatch: {descriptor.path}")
     if descriptor.config_name in _CONFIG_COLUMNS:
         _validate_field_types(schema, descriptor.config_name, pa)
     if complete_layout:
         compressions = {
             parquet.metadata.row_group(group).column(column).compression
             for group in range(parquet.num_row_groups)
-            for column in range(
-                parquet.metadata.row_group(group).num_columns
-            )
+            for column in range(parquet.metadata.row_group(group).num_columns)
         }
         original_data = descriptor.config_name == "original_data"
         expected_compression = {"SNAPPY"} if original_data else {"ZSTD"}
         if compressions != expected_compression:
             raise LocalReleaseError(
-                "complete-layout Parquet compression mismatch: "
-                f"{descriptor.path}"
+                f"complete-layout Parquet compression mismatch: {descriptor.path}"
             )
         if original_data:
             if b"schema_version" in (schema.metadata or {}):
-                raise LocalReleaseError(
-                    "original-data Parquet must retain its unversioned schema"
-                )
+                raise LocalReleaseError("original-data Parquet must retain its unversioned schema")
         else:
             expected_version = _CONFIG_SCHEMA_VERSIONS[descriptor.config_name]
             metadata = schema.metadata or {}
             if metadata.get(b"schema_version") != expected_version.encode("ascii"):
-                raise LocalReleaseError(
-                    f"Parquet schema version mismatch: {descriptor.path}"
-                )
+                raise LocalReleaseError(f"Parquet schema version mismatch: {descriptor.path}")
             if (
                 descriptor.config_name == "original_row_index"
-                and metadata.get(b"primary_key")
-                != b"security_ir_source_cid"
+                and metadata.get(b"primary_key") != b"security_ir_source_cid"
             ):
-                raise LocalReleaseError(
-                    "original-row index primary key is invalid"
-                )
+                raise LocalReleaseError("original-row index primary key is invalid")
             try:
                 versions = set(
-                    parquet.read(columns=["schema_version"])[
-                        "schema_version"
-                    ].to_pylist()
+                    parquet.read(columns=["schema_version"])["schema_version"].to_pylist()
                 )
             except Exception as exc:
                 raise LocalReleaseError(
                     f"cannot validate schema-version rows: {descriptor.path}"
                 ) from exc
             if versions != {expected_version}:
-                raise LocalReleaseError(
-                    f"Parquet row schema version mismatch: {descriptor.path}"
-                )
+                raise LocalReleaseError(f"Parquet row schema version mismatch: {descriptor.path}")
     if descriptor.path.startswith("indexes/"):
         if parquet.metadata.num_rows != descriptor.row_count:
             raise LocalReleaseError("Parquet row count does not match manifest")
@@ -1009,8 +950,7 @@ def _validate_parquet(
         if field.name in scalar_columns and not pa.types.is_string(field.type):
             raise LocalReleaseError("Parquet scalar columns must be strings")
         if field.name in {"source_cids", "parent_cids"} and not (
-            pa.types.is_list(field.type)
-            and pa.types.is_string(field.type.value_type)
+            pa.types.is_list(field.type) and pa.types.is_string(field.type.value_type)
         ):
             raise LocalReleaseError("Parquet lineage columns must be string lists")
     if parquet.metadata.num_rows != descriptor.row_count:
@@ -1032,21 +972,15 @@ def _validate_parquet(
                     or record_type != descriptor.config_name
                     or not isinstance(record_json, str)
                 ):
-                    raise LocalReleaseError(
-                        "Parquet row identity columns are invalid"
-                    )
-                record = _json_bytes(
-                    record_json.encode("utf-8"), "Parquet record_json"
-                )
+                    raise LocalReleaseError("Parquet row identity columns are invalid")
+                record = _json_bytes(record_json.encode("utf-8"), "Parquet record_json")
                 _safe_public_value(record, location="$.record_json")
                 if (
                     record.get("record_id") != record_id
                     or record.get("record_type") != record_type
                     or _canonical_json(record).decode("utf-8") != record_json
                 ):
-                    raise LocalReleaseError(
-                        "Parquet canonical row identity is invalid"
-                    )
+                    raise LocalReleaseError("Parquet canonical row identity is invalid")
                 rows_seen += 1
     except LocalReleaseError:
         raise
@@ -1081,18 +1015,12 @@ def _validate_original_data_manifest(
     source_dataset_id: str,
     source_revision: str,
 ) -> bool:
-    original_artifacts = tuple(
-        item for item in artifacts if item.config_name == "original_data"
-    )
+    original_artifacts = tuple(item for item in artifacts if item.config_name == "original_data")
     if tuple(item.path for item in original_artifacts) != tuple(
         contract.release_path for contract in PINNED_ORIGINAL_SHARDS
     ):
-        raise LocalReleaseError(
-            "complete original-data shard inventory is invalid"
-        )
-    row_indexes = tuple(
-        item for item in artifacts if item.config_name == "original_row_index"
-    )
+        raise LocalReleaseError("complete original-data shard inventory is invalid")
+    row_indexes = tuple(item for item in artifacts if item.config_name == "original_row_index")
     if (
         len(row_indexes) != 1
         or row_indexes[0].path != "indexes/original_rows.parquet"
@@ -1101,22 +1029,15 @@ def _validate_original_data_manifest(
     ):
         raise LocalReleaseError("original-row index inventory is invalid")
 
-    release_manifest = _object(
-        manifest.get("release_manifest"), "canonical release manifest"
-    )
-    release_payload = _object(
-        release_manifest.get("payload"), "release manifest payload"
-    )
+    release_manifest = _object(manifest.get("release_manifest"), "canonical release manifest")
+    release_payload = _object(release_manifest.get("payload"), "release manifest payload")
     if (
         release_manifest.get("profile") != ORIGINAL_MIRROR_PROFILE
-        or release_payload.get("derived_security_ir_profile")
-        != "public-metadata-and-body-digests"
+        or release_payload.get("derived_security_ir_profile") != "public-metadata-and-body-digests"
     ):
         raise LocalReleaseError("original-data release profile is invalid")
 
-    build_runtime = _object(
-        manifest.get("build_runtime"), "manifest build_runtime"
-    )
+    build_runtime = _object(manifest.get("build_runtime"), "manifest build_runtime")
     original = _object(
         build_runtime.get("original_data"),
         "manifest original-data runtime",
@@ -1128,8 +1049,7 @@ def _validate_original_data_manifest(
         or original.get("operator_acknowledgement_required") is not True
         or original.get("row_index_config_name") != "original_row_index"
         or original.get("source_dataset_id") != PINNED_SOURCE_DATASET_ID
-        or original.get("source_profile_sha256")
-        != PINNED_SOURCE_PROFILE_SHA256
+        or original.get("source_profile_sha256") != PINNED_SOURCE_PROFILE_SHA256
         or original.get("source_revision") != PINNED_SOURCE_REVISION
         or _canonical_json(original.get("shards"))
         != _canonical_json(_expected_original_runtime_shards())
@@ -1141,8 +1061,7 @@ def _validate_original_data_manifest(
     configs = _object(manifest.get("configs"), "manifest configs")
     if (
         configs.get("original_data") != "data/original/*.parquet"
-        or configs.get("original_row_index")
-        != "indexes/original_rows.parquet"
+        or configs.get("original_row_index") != "indexes/original_rows.parquet"
     ):
         raise LocalReleaseError("original-data config routing is invalid")
     counts = _object(manifest.get("counts"), "manifest counts")
@@ -1166,9 +1085,7 @@ def _validate_original_data_manifest(
     ):
         raise LocalReleaseError("original-data manifest counts are invalid")
     parquet = _object(manifest.get("parquet"), "manifest parquet")
-    compression = _object(
-        parquet.get("compression"), "manifest parquet compression"
-    )
+    compression = _object(parquet.get("compression"), "manifest parquet compression")
     if (
         compression.get("derived_and_indexes") != "zstd"
         or compression.get("original_data") != "upstream_byte_exact"
@@ -1233,9 +1150,7 @@ def _validate_original_row_index(
                     or positions_seen[source_row_index]
                     or source_status not in statuses
                 ):
-                    raise LocalReleaseError(
-                        "original-row index identity coverage is invalid"
-                    )
+                    raise LocalReleaseError("original-row index identity coverage is invalid")
                 contract, shard_offset = expected_positions[source_row_index]
                 expected_domain = (
                     "cvefixes-security-ir/pinned-source-row"
@@ -1249,22 +1164,17 @@ def _validate_original_row_index(
                 )
                 if (
                     row.get("source_identity_domain") != expected_domain
-                    or row.get("source_identity_schema_version")
-                    != expected_identity_schema_version
+                    or row.get("source_identity_schema_version") != expected_identity_schema_version
                     or row.get("source_shard_cid")
                     != _raw_sha256_cid(bytes.fromhex(contract.sha256))
                     or row.get("source_shard_path") != contract.source_path
                     or row.get("source_shard_row_index") != shard_offset
                     or row.get("relative_path") != contract.release_path
-                    or row.get("source_dataset_id")
-                    != PINNED_SOURCE_DATASET_ID
+                    or row.get("source_dataset_id") != PINNED_SOURCE_DATASET_ID
                     or row.get("source_revision") != PINNED_SOURCE_REVISION
-                    or row.get("schema_version")
-                    != ORIGINAL_ROW_INDEX_SCHEMA_VERSION
+                    or row.get("schema_version") != ORIGINAL_ROW_INDEX_SCHEMA_VERSION
                 ):
-                    raise LocalReleaseError(
-                        "original-row index shard binding is invalid"
-                    )
+                    raise LocalReleaseError("original-row index shard binding is invalid")
                 positions_seen[source_row_index] = 1
                 source_cids.add(source_cid)
                 statuses[source_status] += 1
@@ -1289,29 +1199,21 @@ def _validate_original_row_index(
         ),
         "evaluation-report.json",
     )
-    evaluation = _object(
-        report.get("evaluation"), "evaluation report record"
-    )
+    evaluation = _object(report.get("evaluation"), "evaluation report record")
     evaluated_source_cids = evaluation.get("source_cids")
     if (
         not isinstance(evaluated_source_cids, list)
         or len(evaluated_source_cids) != len(source_cids)
         or set(evaluated_source_cids) != source_cids
     ):
-        raise LocalReleaseError(
-            "original-row index differs from evaluation provenance"
-        )
+        raise LocalReleaseError("original-row index differs from evaluation provenance")
     counts = _object(manifest.get("counts"), "manifest counts")
-    if (
-        not _exact_integer(
-            counts.get("admitted_rows"),
-            statuses["admitted"],
-        )
-        or not _exact_integer(
-            counts.get("rejected_rows"),
-            statuses["adaptation_rejected"]
-            + statuses["publication_rejected"],
-        )
+    if not _exact_integer(
+        counts.get("admitted_rows"),
+        statuses["admitted"],
+    ) or not _exact_integer(
+        counts.get("rejected_rows"),
+        statuses["adaptation_rejected"] + statuses["publication_rejected"],
     ):
         raise LocalReleaseError("original-row status counts are invalid")
 
@@ -1326,50 +1228,33 @@ def _validate_meta_index_bindings(
     try:
         import pyarrow.parquet as pq
     except ImportError as exc:  # pragma: no cover - release dependency in CI
-        raise LocalReleaseError(
-            "pyarrow is required to validate release indexes"
-        ) from exc
+        raise LocalReleaseError("pyarrow is required to validate release indexes") from exc
 
     data = {
-        item.path: item
-        for item in artifacts
-        if item.path.startswith("data/") and item.config_name
+        item.path: item for item in artifacts if item.path.startswith("data/") and item.config_name
     }
-    indexes = {
-        item.path: item
-        for item in artifacts
-        if item.path.startswith("indexes/")
-    }
+    indexes = {item.path: item for item in artifacts if item.path.startswith("indexes/")}
     if not indexes:
         return
 
     if complete_layout:
         if set(indexes) != set(COMPLETE_INDEX_PATHS):
-            raise LocalReleaseError(
-                "complete layout must contain every physical index"
-            )
+            raise LocalReleaseError("complete layout must contain every physical index")
         if manifest is None:
             raise LocalReleaseError("complete manifest binding is unavailable")
         grouped: dict[str, tuple[ArtifactDescriptor, ...]] = {
             config: tuple(
                 sorted(
-                    (
-                        item
-                        for item in data.values()
-                        if item.config_name == config
-                    ),
+                    (item for item in data.values() if item.config_name == config),
                     key=lambda item: item.path,
                 )
             )
             for config in COMPLETE_DATA_CONFIG_PATHS
         }
         if any(not shards for shards in grouped.values()):
-            raise LocalReleaseError(
-                "complete layout must contain every indexed data family"
-            )
+            raise LocalReleaseError("complete layout must contain every indexed data family")
         expected_families = {
-            index_path: grouped[family]
-            for index_path, family in _COMPLETE_INDEX_FAMILY.items()
+            index_path: grouped[family] for index_path, family in _COMPLETE_INDEX_FAMILY.items()
         }
     else:
         unsupported = set(indexes) - {
@@ -1378,44 +1263,29 @@ def _validate_meta_index_bindings(
             "indexes/graph_edge_chunks.parquet",
         }
         if unsupported:
-            raise LocalReleaseError(
-                "legacy release contains complete-layout-only indexes"
-            )
+            raise LocalReleaseError("legacy release contains complete-layout-only indexes")
         expected_families = {}
         for path in indexes:
             stem = PurePosixPath(path).stem
             if stem == "graph_node_chunks":
-                selected = (
-                    item for item in data.values()
-                    if item.config_name == "graph_node"
-                )
+                selected = (item for item in data.values() if item.config_name == "graph_node")
             elif stem == "graph_edge_chunks":
-                selected = (
-                    item for item in data.values()
-                    if item.config_name == "graph_edge"
-                )
+                selected = (item for item in data.values() if item.config_name == "graph_edge")
             else:
                 selected = (
-                    item for item in data.values()
+                    item
+                    for item in data.values()
                     if item.config_name not in {"graph_node", "graph_edge"}
                 )
-            expected_families[path] = tuple(
-                sorted(selected, key=lambda item: item.path)
-            )
+            expected_families[path] = tuple(sorted(selected, key=lambda item: item.path))
 
     covered: set[str] = set()
     for index_path, shards in sorted(expected_families.items()):
         descriptor = indexes[index_path]
-        family = (
-            _COMPLETE_INDEX_FAMILY[index_path]
-            if complete_layout
-            else ""
-        )
+        family = _COMPLETE_INDEX_FAMILY[index_path] if complete_layout else ""
         if family == "original_data":
             if manifest is None:
-                raise LocalReleaseError(
-                    "complete manifest binding is unavailable"
-                )
+                raise LocalReleaseError("complete manifest binding is unavailable")
             _validate_original_row_index(
                 root,
                 descriptor,
@@ -1430,57 +1300,39 @@ def _validate_meta_index_bindings(
         except Exception as exc:
             raise LocalReleaseError("cannot read release meta-index") from exc
         if len(rows) != len(shards):
-            raise LocalReleaseError(
-                "meta-index row inventory differs from its data family"
-            )
+            raise LocalReleaseError("meta-index row inventory differs from its data family")
         next_document_index = 0
-        for shard_id, (row, target) in enumerate(
-            zip(rows, shards, strict=True)
-        ):
+        for shard_id, (row, target) in enumerate(zip(rows, shards, strict=True)):
             if not isinstance(row, Mapping):
                 raise LocalReleaseError("meta-index row must be an object")
             relative_path = row.get("relative_path")
             if relative_path != target.path or relative_path in covered:
-                raise LocalReleaseError(
-                    "meta-index pointers must cover unique data shards"
-                )
+                raise LocalReleaseError("meta-index pointers must cover unique data shards")
             try:
                 table = pq.read_table(root / target.path)
             except Exception as exc:
-                raise LocalReleaseError(
-                    "cannot read indexed release data shard"
-                ) from exc
+                raise LocalReleaseError("cannot read indexed release data shard") from exc
             table_rows = table.to_pylist()
-            key_column = (
-                _DATA_KEY_COLUMNS[family]
-                if complete_layout
-                else "record_id"
-            )
+            key_column = _DATA_KEY_COLUMNS[family] if complete_layout else "record_id"
             keys = [str(item[key_column]) for item in table_rows]
             if not keys or any(not key for key in keys):
                 raise LocalReleaseError("indexed shard keys are invalid")
             expected_start: int
             expected_end: int
             if family in {"corpus", "bm25_documents"}:
-                documents = [
-                    int(item["document_index"]) for item in table_rows
-                ]
+                documents = [int(item["document_index"]) for item in table_rows]
                 if documents != list(
                     range(
                         next_document_index,
                         next_document_index + len(documents),
                     )
                 ):
-                    raise LocalReleaseError(
-                        "document-indexed shard is not dense and contiguous"
-                    )
+                    raise LocalReleaseError("document-indexed shard is not dense and contiguous")
                 expected_start = documents[0]
                 expected_end = documents[-1]
                 next_document_index = expected_end + 1
             elif family == "vectors":
-                documents = [
-                    int(item["document_index"]) for item in table_rows
-                ]
+                documents = [int(item["document_index"]) for item in table_rows]
                 expected_start = min(documents)
                 expected_end = max(documents)
             elif complete_layout:
@@ -1490,12 +1342,8 @@ def _validate_meta_index_bindings(
                 expected_start = next_document_index
                 expected_end = expected_start + target.row_count - 1
                 next_document_index = expected_end + 1
-            expected_first = (
-                keys[0] if complete_layout else min(keys)
-            )
-            expected_last = (
-                keys[-1] if complete_layout else max(keys)
-            )
+            expected_first = keys[0] if complete_layout else min(keys)
+            expected_last = keys[-1] if complete_layout else max(keys)
             if (
                 row.get("cid") != target.content_id
                 or row.get("sha256") != target.sha256
@@ -1514,9 +1362,7 @@ def _validate_meta_index_bindings(
                 _validate_complete_meta_stats(row, table_rows, family)
             covered.add(relative_path)
     if covered != set(data):
-        raise LocalReleaseError(
-            "meta-index pointers do not cover data shards exactly"
-        )
+        raise LocalReleaseError("meta-index pointers do not cover data shards exactly")
     if complete_layout:
         _validate_complete_document_coverage(root, data.values(), pq)
 
@@ -1528,9 +1374,7 @@ def _validate_complete_meta_stats(
 ) -> None:
     if family == "bm25_postings":
         terms = {str(item["term"]) for item in table_rows}
-        posting_count = sum(
-            len(item["document_indices"]) for item in table_rows
-        )
+        posting_count = sum(len(item["document_indices"]) for item in table_rows)
         token_instances = sum(
             sum(int(value) for value in item["title_frequencies"])
             + sum(int(value) for value in item["body_frequencies"])
@@ -1546,20 +1390,14 @@ def _validate_complete_meta_stats(
         "graph_outgoing_adjacency",
         "graph_incoming_adjacency",
     }:
-        direction = (
-            "outgoing"
-            if family == "graph_outgoing_adjacency"
-            else "incoming"
-        )
+        direction = "outgoing" if family == "graph_outgoing_adjacency" else "incoming"
         pages = [int(item["page_index"]) for item in table_rows]
         if (
-            row.get("adjacency_count")
-            != sum(int(item["neighbor_count"]) for item in table_rows)
+            row.get("adjacency_count") != sum(int(item["neighbor_count"]) for item in table_rows)
             or row.get("direction") != direction
             or row.get("first_page_index") != pages[0]
             or row.get("last_page_index") != pages[-1]
-            or row.get("node_count")
-            != len({str(item["node_cid"]) for item in table_rows})
+            or row.get("node_count") != len({str(item["node_cid"]) for item in table_rows})
         ):
             raise LocalReleaseError("graph adjacency meta statistics differ")
     elif family == "vectors":
@@ -1590,11 +1428,7 @@ def _validate_complete_document_coverage(
     for config_name in ("corpus", "bm25_documents", "vectors"):
         observed: dict[int, str] = {}
         for descriptor in sorted(
-            (
-                item
-                for item in artifacts
-                if item.config_name == config_name
-            ),
+            (item for item in artifacts if item.config_name == config_name),
             key=lambda item: item.path,
         ):
             rows = pq.read_table(
@@ -1605,9 +1439,7 @@ def _validate_complete_document_coverage(
                 document_index = int(row["document_index"])
                 entry_cid = str(row["entry_cid"])
                 if document_index in observed:
-                    raise LocalReleaseError(
-                        f"{config_name} repeats a document index"
-                    )
+                    raise LocalReleaseError(f"{config_name} repeats a document index")
                 observed[document_index] = entry_cid
         coverage[config_name] = observed
     corpus = coverage["corpus"]
@@ -1616,9 +1448,7 @@ def _validate_complete_document_coverage(
         or coverage["bm25_documents"] != corpus
         or coverage["vectors"] != corpus
     ):
-        raise LocalReleaseError(
-            "corpus, BM25, and vector document coverage differs"
-        )
+        raise LocalReleaseError("corpus, BM25, and vector document coverage differs")
 
 
 def _card_config_names(content: bytes) -> tuple[str, ...]:
@@ -1632,11 +1462,7 @@ def _card_config_names(content: bytes) -> tuple[str, ...]:
     names = tuple(
         match.group(1)
         for line in front_matter.splitlines()
-        if (
-            match := re.fullmatch(
-                r"- config_name: ([a-z][a-z0-9_]{0,63})", line
-            )
-        )
+        if (match := re.fullmatch(r"- config_name: ([a-z][a-z0-9_]{0,63})", line))
     )
     if len(names) != len(set(names)):
         raise LocalReleaseError("dataset card repeats a config name")
@@ -1648,9 +1474,7 @@ def _parquet_feature_metadata(
     artifacts: Sequence[ArtifactDescriptor],
     config_name: str,
 ) -> dict[str, dict[str, str]]:
-    descriptors = tuple(
-        item for item in artifacts if item.config_name == config_name
-    )
+    descriptors = tuple(item for item in artifacts if item.config_name == config_name)
     if not descriptors:
         raise LocalReleaseError("dataset config has no Parquet artifact")
     expected: dict[str, dict[str, str]] | None = None
@@ -1659,22 +1483,15 @@ def _parquet_feature_metadata(
 
         for descriptor in descriptors:
             schema = pq.ParquetFile(root / descriptor.path).schema_arrow
-            observed = {
-                field.name: {"dtype": str(field.type)}
-                for field in schema
-            }
+            observed = {field.name: {"dtype": str(field.type)} for field in schema}
             if expected is None:
                 expected = observed
             elif observed != expected:
-                raise LocalReleaseError(
-                    f"dataset config shard schemas differ: {config_name}"
-                )
+                raise LocalReleaseError(f"dataset config shard schemas differ: {config_name}")
     except LocalReleaseError:
         raise
     except Exception as exc:
-        raise LocalReleaseError(
-            f"cannot inspect dataset config schema: {config_name}"
-        ) from exc
+        raise LocalReleaseError(f"cannot inspect dataset config schema: {config_name}") from exc
     if expected is None:
         raise LocalReleaseError("dataset config has no Parquet schema")
     return expected
@@ -1695,9 +1512,7 @@ def _validate_manifest_index_inventory(
     if set(indexes) != set(indexed_artifacts):
         raise LocalReleaseError("manifest meta-index inventory is invalid")
     if complete_layout and set(indexes) != set(META_INDEX_CONFIGS):
-        raise LocalReleaseError(
-            "complete manifest must bind every physical index"
-        )
+        raise LocalReleaseError("complete manifest must bind every physical index")
     allowed = {
         "byte_length",
         "cid",
@@ -1713,9 +1528,7 @@ def _validate_manifest_index_inventory(
     for name, raw in indexes.items():
         item = _object(raw, f"manifest index {name}")
         if not set(item) <= allowed:
-            raise LocalReleaseError(
-                "manifest index descriptor has unexpected fields"
-            )
+            raise LocalReleaseError("manifest index descriptor has unexpected fields")
         artifact = indexed_artifacts[name]
         path = item.get("path", item.get("relative_path"))
         cid = item.get("content_id", item.get("cid"))
@@ -1725,22 +1538,11 @@ def _validate_manifest_index_inventory(
             or cid != artifact.content_id
             or item.get("sha256") != artifact.sha256
             or size != artifact.byte_length
-            or (
-                "row_count" in item
-                and item["row_count"] != artifact.row_count
-            )
-            or (
-                "config_name" in item
-                and item["config_name"] != artifact.config_name
-            )
-            or (
-                "media_type" in item
-                and item["media_type"] != artifact.media_type
-            )
+            or ("row_count" in item and item["row_count"] != artifact.row_count)
+            or ("config_name" in item and item["config_name"] != artifact.config_name)
+            or ("media_type" in item and item["media_type"] != artifact.media_type)
         ):
-            raise LocalReleaseError(
-                f"manifest index descriptor differs: {name}"
-            )
+            raise LocalReleaseError(f"manifest index descriptor differs: {name}")
 
 
 def load_local_release(
@@ -1775,8 +1577,7 @@ def load_local_release(
     manifest_fields = frozenset(manifest)
     if (
         not required_manifest_fields <= manifest_fields
-        or not manifest_fields
-        <= required_manifest_fields | _MANIFEST_OPTIONAL_FIELDS
+        or not manifest_fields <= required_manifest_fields | _MANIFEST_OPTIONAL_FIELDS
     ):
         raise LocalReleaseError("manifest fields are not canonical")
     _safe_public_value(manifest)
@@ -1807,9 +1608,7 @@ def load_local_release(
     ):
         raise LocalReleaseError("manifest source binding is invalid")
 
-    release_manifest = _object(
-        manifest.get("release_manifest"), "canonical release manifest"
-    )
+    release_manifest = _object(manifest.get("release_manifest"), "canonical release manifest")
     payload = _object(release_manifest.get("payload"), "release manifest payload")
     if (
         release_manifest.get("dataset_id") != dataset_id
@@ -1825,57 +1624,36 @@ def load_local_release(
         or len(raw_artifacts) > MAX_ARTIFACTS
     ):
         raise LocalReleaseError("manifest artifact inventory is invalid")
-    artifacts = tuple(
-        ArtifactDescriptor.from_dict(item) for item in raw_artifacts
-    )
+    artifacts = tuple(ArtifactDescriptor.from_dict(item) for item in raw_artifacts)
     paths = tuple(item.path for item in artifacts)
     if paths != tuple(sorted(paths)) or len(set(paths)) != len(paths):
         raise LocalReleaseError("artifact inventory must be sorted and unique")
     complete_data = tuple(
-        item
-        for item in artifacts
-        if _complete_data_config(item.path) is not None
+        item for item in artifacts if _complete_data_config(item.path) is not None
     )
     legacy_data = tuple(
         item
         for item in artifacts
-        if item.path.startswith("data/")
-        and _complete_data_config(item.path) is None
+        if item.path.startswith("data/") and _complete_data_config(item.path) is None
     )
     complete_layout = bool(complete_data)
     if complete_layout and legacy_data:
-        raise LocalReleaseError(
-            "complete and legacy data layouts cannot be mixed"
-        )
+        raise LocalReleaseError("complete and legacy data layouts cannot be mixed")
     if complete_layout and LEGACY_RELEASE_METADATA_PATH in paths:
-        raise LocalReleaseError(
-            "complete release cannot contain reserved dataset_infos.json"
-        )
+        raise LocalReleaseError("complete release cannot contain reserved dataset_infos.json")
     metadata_path = (
-        COMPLETE_RELEASE_METADATA_PATH
-        if complete_layout
-        else LEGACY_RELEASE_METADATA_PATH
+        COMPLETE_RELEASE_METADATA_PATH if complete_layout else LEGACY_RELEASE_METADATA_PATH
     )
     required = {"README.md", metadata_path, "evaluation-report.json"}
     if not required <= set(paths) or not any(item.config_name for item in artifacts):
         raise LocalReleaseError("release artifact inventory is incomplete")
     if complete_layout:
-        observed_data_configs = {
-            item.config_name for item in complete_data
-        }
+        observed_data_configs = {item.config_name for item in complete_data}
         if observed_data_configs != set(COMPLETE_DATA_CONFIG_PATHS):
-            raise LocalReleaseError(
-                "complete data-family inventory is incomplete"
-            )
-        observed_indexes = {
-            item.path
-            for item in artifacts
-            if item.path.startswith("indexes/")
-        }
+            raise LocalReleaseError("complete data-family inventory is incomplete")
+        observed_indexes = {item.path for item in artifacts if item.path.startswith("indexes/")}
         if observed_indexes != set(COMPLETE_INDEX_PATHS):
-            raise LocalReleaseError(
-                "complete physical index inventory is incomplete"
-            )
+            raise LocalReleaseError("complete physical index inventory is incomplete")
     _validate_manifest_index_inventory(
         manifest.get("indexes", {}),
         artifacts,
@@ -1901,26 +1679,17 @@ def load_local_release(
         "configs",
         "build_runtime",
     } <= set(manifest):
-        raise LocalReleaseError(
-            "complete manifest metadata inventory is incomplete"
-        )
+        raise LocalReleaseError("complete manifest metadata inventory is incomplete")
     original_data_acknowledgement_required = False
     if complete_layout:
-        original_data_acknowledgement_required = (
-            _validate_original_data_manifest(
-                manifest,
-                artifacts,
-                source_dataset_id=source_dataset_id,
-                source_revision=source_revision,
-            )
+        original_data_acknowledgement_required = _validate_original_data_manifest(
+            manifest,
+            artifacts,
+            source_dataset_id=source_dataset_id,
+            source_revision=source_revision,
         )
-    if (
-        "primary_key" in manifest
-        and manifest["primary_key"] != "entry_cid"
-    ):
-        raise LocalReleaseError(
-            "release primary_key must be entry_cid"
-        )
+    if "primary_key" in manifest and manifest["primary_key"] != "entry_cid":
+        raise LocalReleaseError("release primary_key must be entry_cid")
 
     actual_files: set[str] = set()
     for candidate in root.rglob("*"):
@@ -1951,26 +1720,16 @@ def load_local_release(
             )
             observed_size = len(content)
             digest = hashlib.sha256(content).digest()
-        if (
-            observed_size != descriptor.byte_length
-            or digest.hex() != descriptor.sha256
-        ):
-            raise LocalReleaseError(
-                f"artifact content mismatch: {descriptor.path}"
-            )
+        if observed_size != descriptor.byte_length or digest.hex() != descriptor.sha256:
+            raise LocalReleaseError(f"artifact content mismatch: {descriptor.path}")
         if (
             complete_layout
             and descriptor.path.endswith(".parquet")
-            and descriptor.content_id
-            != _raw_sha256_cid(digest)
+            and descriptor.content_id != _raw_sha256_cid(digest)
         ):
-            raise LocalReleaseError(
-                f"artifact raw SHA-256 CID mismatch: {descriptor.path}"
-            )
+            raise LocalReleaseError(f"artifact raw SHA-256 CID mismatch: {descriptor.path}")
         if descriptor.config_name:
-            _validate_parquet(
-                path, descriptor, complete_layout=complete_layout
-            )
+            _validate_parquet(path, descriptor, complete_layout=complete_layout)
         elif descriptor.path.endswith(".json"):
             if content is None:
                 raise LocalReleaseError("JSON artifact content is unavailable")
@@ -1986,9 +1745,7 @@ def load_local_release(
             except UnicodeDecodeError as exc:
                 raise LocalReleaseError("README.md must be valid UTF-8") from exc
             if _SECRET_VALUE_RE.search(text):
-                raise LocalReleaseError(
-                    "secret-like value is forbidden in README.md"
-                )
+                raise LocalReleaseError("secret-like value is forbidden in README.md")
     _validate_meta_index_bindings(
         root,
         artifacts,
@@ -2007,8 +1764,7 @@ def load_local_release(
     configs = _object(release_metadata.get("configs"), "dataset configs")
     if (
         release_metadata.get("dataset_id") != dataset_id
-        or release_metadata.get("derived_dataset_root")
-        != manifest.get("derived_dataset_root")
+        or release_metadata.get("derived_dataset_root") != manifest.get("derived_dataset_root")
         or release_metadata.get("schema_version") != PARQUET_SCHEMA_VERSION
         or not configs
     ):
@@ -2025,15 +1781,11 @@ def load_local_release(
     if complete_layout:
         all_complete_configs = frozenset(all_shard_counts)
         if (
-            frozenset(info_config_names)
-            not in {COMPLETE_VIEWER_CONFIGS, all_complete_configs}
+            frozenset(info_config_names) not in {COMPLETE_VIEWER_CONFIGS, all_complete_configs}
             or not COMPLETE_VIEWER_CONFIGS <= all_complete_configs
-            or all_complete_configs
-            != COMPLETE_VIEWER_CONFIGS | _HIDDEN_INDEX_CONFIGS
+            or all_complete_configs != COMPLETE_VIEWER_CONFIGS | _HIDDEN_INDEX_CONFIGS
         ):
-            raise LocalReleaseError(
-                "complete dataset config inventory is invalid"
-            )
+            raise LocalReleaseError("complete dataset config inventory is invalid")
         config_names = tuple(sorted(COMPLETE_VIEWER_CONFIGS))
         card_configs = _card_config_names(
             _bounded_bytes(
@@ -2043,15 +1795,11 @@ def load_local_release(
             )
         )
         if set(card_configs) != COMPLETE_VIEWER_CONFIGS:
-            raise LocalReleaseError(
-                "dataset card must expose the complete Viewer config inventory"
-            )
+            raise LocalReleaseError("dataset card must expose the complete Viewer config inventory")
     else:
         config_names = info_config_names
         if tuple(sorted(all_shard_counts)) != config_names:
-            raise LocalReleaseError(
-                "dataset configs do not match Parquet shards"
-            )
+            raise LocalReleaseError("dataset configs do not match Parquet shards")
     for name in info_config_names:
         config = _object(configs[name], f"dataset config {name}")
         features = _object(config.get("features"), f"dataset config {name} features")
@@ -2070,39 +1818,18 @@ def load_local_release(
             )
         if set(features) != set(expected_columns):
             raise LocalReleaseError("dataset config feature schema is invalid")
-        if (
-            complete_layout
-            and dict(features)
-            != _parquet_feature_metadata(root, artifacts, name)
-        ):
-            raise LocalReleaseError(
-                "dataset config feature types differ from Parquet"
-            )
-        expected_rows = sum(
-            item.row_count for item in artifacts if item.config_name == name
-        )
-        expected_bytes = sum(
-            item.byte_length for item in artifacts if item.config_name == name
-        )
-        if (
-            train.get("num_examples") != expected_rows
-            or train.get("num_bytes") != expected_bytes
-        ):
+        if complete_layout and dict(features) != _parquet_feature_metadata(root, artifacts, name):
+            raise LocalReleaseError("dataset config feature types differ from Parquet")
+        expected_rows = sum(item.row_count for item in artifacts if item.config_name == name)
+        expected_bytes = sum(item.byte_length for item in artifacts if item.config_name == name)
+        if train.get("num_examples") != expected_rows or train.get("num_bytes") != expected_bytes:
             raise LocalReleaseError("dataset config row inventory is invalid")
-    shard_counts = {
-        name: all_shard_counts[name] for name in config_names
-    }
+    shard_counts = {name: all_shard_counts[name] for name in config_names}
 
     declared_shards = release_manifest.get("shard_cids")
-    if (
-        not isinstance(declared_shards, list)
-        or set(declared_shards)
-        != {
-            item.content_id
-            for item in artifacts
-            if item.config_name and item.path.startswith("data/")
-        }
-    ):
+    if not isinstance(declared_shards, list) or set(declared_shards) != {
+        item.content_id for item in artifacts if item.config_name and item.path.startswith("data/")
+    }:
         raise LocalReleaseError("release manifest shard inventory is invalid")
 
     return LocalRelease(
@@ -2117,9 +1844,7 @@ def load_local_release(
         config_names=config_names,
         config_shard_counts=tuple(sorted(shard_counts.items())),
         complete_layout=complete_layout,
-        original_data_acknowledgement_required=(
-            original_data_acknowledgement_required
-        ),
+        original_data_acknowledgement_required=(original_data_acknowledgement_required),
     )
 
 
@@ -2130,13 +1855,9 @@ class HubGateway(Protocol):
 
     def head(self, repo_id: str, token: str | None) -> str: ...
 
-    def revisions(
-        self, repo_id: str, token: str | None, *, limit: int
-    ) -> Sequence[str]: ...
+    def revisions(self, repo_id: str, token: str | None, *, limit: int) -> Sequence[str]: ...
 
-    def read_file(
-        self, repo_id: str, revision: str, path: str, token: str | None
-    ) -> bytes: ...
+    def read_file(self, repo_id: str, revision: str, path: str, token: str | None) -> bytes: ...
 
     def upload(
         self,
@@ -2205,13 +1926,9 @@ class HuggingFaceHubGateway:
             raise RemoteVerificationError("Hub dataset head is not immutable")
         return commit
 
-    def revisions(
-        self, repo_id: str, token: str | None, *, limit: int
-    ) -> Sequence[str]:
+    def revisions(self, repo_id: str, token: str | None, *, limit: int) -> Sequence[str]:
         try:
-            commits = self._api().list_repo_commits(
-                repo_id, repo_type="dataset", token=token
-            )
+            commits = self._api().list_repo_commits(repo_id, repo_type="dataset", token=token)
         except Exception as exc:
             raise RemoteVerificationError("cannot inspect Hub dataset history") from exc
         result: list[str] = []
@@ -2221,9 +1938,7 @@ class HuggingFaceHubGateway:
                 result.append(commit)
         return tuple(result)
 
-    def _read_url(
-        self, url: str, token: str | None, *, maximum: int
-    ) -> bytes:
+    def _read_url(self, url: str, token: str | None, *, maximum: int) -> bytes:
         headers = {"Accept": "application/json", "User-Agent": "cvefixes-security-ir-publisher/1"}
         if token:
             headers["Authorization"] = f"Bearer {token}"
@@ -2242,9 +1957,7 @@ class HuggingFaceHubGateway:
             raise RemoteVerificationError("remote response exceeds byte limit")
         return content
 
-    def read_file(
-        self, repo_id: str, revision: str, path: str, token: str | None
-    ) -> bytes:
+    def read_file(self, repo_id: str, revision: str, path: str, token: str | None) -> bytes:
         if not _DATASET_ID_RE.fullmatch(repo_id) or not _COMMIT_RE.fullmatch(revision):
             raise RemoteVerificationError("unsafe Hub file binding")
         safe_path = _safe_artifact_path(path) if path != "manifest.json" else path
@@ -2253,9 +1966,7 @@ class HuggingFaceHubGateway:
             f"{quote(revision, safe='')}/{quote(safe_path, safe='/')}"
         )
         maximum = (
-            MAX_MANIFEST_BYTES
-            if path.endswith((".json", ".md"))
-            else _artifact_byte_limit(path)
+            MAX_MANIFEST_BYTES if path.endswith((".json", ".md")) else _artifact_byte_limit(path)
         )
         return self._read_url(url, token, maximum=maximum)
 
@@ -2310,9 +2021,7 @@ class HuggingFaceHubGateway:
         if endpoint not in {"is-valid", "splits", "parquet", "first-rows"}:
             raise RemoteVerificationError("unsupported Dataset Viewer endpoint")
         url = f"{self._viewer_base_url}/{endpoint}?{urlencode(params)}"
-        content = self._read_url(
-            url, token, maximum=MAX_VIEWER_RESPONSE_BYTES
-        )
+        content = self._read_url(url, token, maximum=MAX_VIEWER_RESPONSE_BYTES)
         try:
             value = json.loads(content)
         except (UnicodeDecodeError, json.JSONDecodeError) as exc:
@@ -2350,9 +2059,7 @@ def find_existing_revision(
     revisions = [head]
     revisions.extend(
         revision
-        for revision in gateway.revisions(
-            release.dataset_id, token, limit=MAX_HISTORY_COMMITS
-        )
+        for revision in gateway.revisions(release.dataset_id, token, limit=MAX_HISTORY_COMMITS)
         if revision != head
     )
     expected = (
@@ -2362,13 +2069,9 @@ def find_existing_revision(
     )
     for revision in revisions[:MAX_HISTORY_COMMITS]:
         if not isinstance(revision, str) or not _COMMIT_RE.fullmatch(revision):
-            raise RemoteVerificationError(
-                "Hub history returned a non-immutable revision"
-            )
+            raise RemoteVerificationError("Hub history returned a non-immutable revision")
         try:
-            remote = gateway.read_file(
-                release.dataset_id, revision, "manifest.json", token
-            )
+            remote = gateway.read_file(release.dataset_id, revision, "manifest.json", token)
         except RemoteVerificationError:
             continue
         if _remote_tuple(remote) == expected:
@@ -2399,36 +2102,26 @@ def verify_dataset_viewer(
 ) -> dict[str, Any]:
     """Verify Viewer validity, configs/splits, shard counts, and row schema."""
 
-    validity = gateway.viewer(
-        "is-valid", {"dataset": release.dataset_id}, token
-    )
+    validity = gateway.viewer("is-valid", {"dataset": release.dataset_id}, token)
     if validity.get("viewer") is not True:
         raise ViewerNotReadyError("Dataset Viewer does not mark the dataset valid")
 
-    splits_response = gateway.viewer(
-        "splits", {"dataset": release.dataset_id}, token
-    )
+    splits_response = gateway.viewer("splits", {"dataset": release.dataset_id}, token)
     raw_splits = splits_response.get("splits")
     if not isinstance(raw_splits, list):
         raise ViewerNotReadyError("Dataset Viewer splits are unavailable")
     actual_splits = {
-        (item.get("config"), item.get("split"))
-        for item in raw_splits
-        if isinstance(item, Mapping)
+        (item.get("config"), item.get("split")) for item in raw_splits if isinstance(item, Mapping)
     }
     expected_splits = {(name, "train") for name in release.config_names}
     if actual_splits != expected_splits:
         raise ViewerNotReadyError("Dataset Viewer split inventory mismatch")
 
-    parquet_response = gateway.viewer(
-        "parquet", {"dataset": release.dataset_id}, token
-    )
+    parquet_response = gateway.viewer("parquet", {"dataset": release.dataset_id}, token)
     raw_parquet = parquet_response.get("parquet_files")
     if not isinstance(raw_parquet, list):
         raise ViewerNotReadyError("Dataset Viewer Parquet inventory is unavailable")
-    viewer_shards: dict[str, list[dict[str, Any]]] = {
-        name: [] for name in release.config_names
-    }
+    viewer_shards: dict[str, list[dict[str, Any]]] = {name: [] for name in release.config_names}
     for item in raw_parquet:
         if not isinstance(item, Mapping):
             raise ViewerNotReadyError("Dataset Viewer Parquet item is malformed")
@@ -2441,9 +2134,7 @@ def verify_dataset_viewer(
             or item["size"] <= 0
         ):
             raise ViewerNotReadyError("Dataset Viewer Parquet binding is invalid")
-        viewer_shards[config].append(
-            {"filename": item["filename"], "size": item["size"]}
-        )
+        viewer_shards[config].append({"filename": item["filename"], "size": item["size"]})
     for config, expected_count in release.config_shard_counts:
         if len(viewer_shards[config]) != expected_count:
             raise ViewerNotReadyError("Dataset Viewer shard count mismatch")
@@ -2480,20 +2171,15 @@ def verify_dataset_viewer(
                 or not isinstance(row.get("hash"), str)
                 or not _GIT_HASH_RE.fullmatch(row["hash"])
             ):
-                raise ViewerNotReadyError(
-                    "Dataset Viewer original-data identity mismatch"
-                )
+                raise ViewerNotReadyError("Dataset Viewer original-data identity mismatch")
             continue
         if config == "original_row_index":
             if (
                 not isinstance(row.get("security_ir_source_cid"), str)
                 or not _CID_RE.fullmatch(row["security_ir_source_cid"])
-                or row.get("schema_version")
-                != ORIGINAL_ROW_INDEX_SCHEMA_VERSION
+                or row.get("schema_version") != ORIGINAL_ROW_INDEX_SCHEMA_VERSION
             ):
-                raise ViewerNotReadyError(
-                    "Dataset Viewer original-row index binding mismatch"
-                )
+                raise ViewerNotReadyError("Dataset Viewer original-row index binding mismatch")
             continue
         if expected_columns[: len(META_INDEX_COLUMNS)] == META_INDEX_COLUMNS:
             if (
@@ -2503,9 +2189,7 @@ def verify_dataset_viewer(
                 or not isinstance(row.get("cid"), str)
                 or not _CID_RE.fullmatch(row["cid"])
             ):
-                raise ViewerNotReadyError(
-                    "Dataset Viewer meta-index row binding mismatch"
-                )
+                raise ViewerNotReadyError("Dataset Viewer meta-index row binding mismatch")
             continue
         if config in COMPLETE_DATA_CONFIG_PATHS:
             key_column = _DATA_KEY_COLUMNS[config]
@@ -2516,18 +2200,14 @@ def verify_dataset_viewer(
                 or not isinstance(row.get("schema_version"), str)
                 or not row["schema_version"]
             ):
-                raise ViewerNotReadyError(
-                    "Dataset Viewer indexed data row is malformed"
-                )
+                raise ViewerNotReadyError("Dataset Viewer indexed data row is malformed")
             continue
         if row.get("record_type") != config:
             raise ViewerNotReadyError("Dataset Viewer row crossed configurations")
         try:
             canonical_record = json.loads(row["record_json"])
         except (KeyError, TypeError, json.JSONDecodeError) as exc:
-            raise ViewerNotReadyError(
-                "Dataset Viewer row lacks canonical record JSON"
-            ) from exc
+            raise ViewerNotReadyError("Dataset Viewer row lacks canonical record JSON") from exc
         if (
             not isinstance(canonical_record, Mapping)
             or canonical_record.get("record_id") != row.get("record_id")
@@ -2536,20 +2216,14 @@ def verify_dataset_viewer(
             raise ViewerNotReadyError("Dataset Viewer row identity mismatch")
 
     return {
-        "columns": {
-            name: list(release.columns_for_config(name))
-            for name in release.config_names
-        },
+        "columns": {name: list(release.columns_for_config(name)) for name in release.config_names},
         "index_columns": list(META_INDEX_COLUMNS),
         "configs": list(release.config_names),
         "shards": {
             key: sorted(value, key=lambda item: item["filename"])
             for key, value in sorted(viewer_shards.items())
         },
-        "splits": [
-            {"config": config, "split": split}
-            for config, split in sorted(actual_splits)
-        ],
+        "splits": [{"config": config, "split": split} for config, split in sorted(actual_splits)],
         "verified": True,
     }
 
@@ -2573,12 +2247,8 @@ def verify_remote_release(
     ):
         raise PublicationError("Dataset Viewer retry bounds are invalid")
     if gateway.head(release.dataset_id, token) != revision:
-        raise RemoteVerificationError(
-            "target head does not match the release revision"
-        )
-    remote_manifest = gateway.read_file(
-        release.dataset_id, revision, "manifest.json", token
-    )
+        raise RemoteVerificationError("target head does not match the release revision")
+    remote_manifest = gateway.read_file(release.dataset_id, revision, "manifest.json", token)
     if (
         remote_manifest != release.manifest_bytes
         or hashlib.sha256(remote_manifest).hexdigest() != release.manifest_sha256
@@ -2587,16 +2257,12 @@ def verify_remote_release(
 
     remote_artifacts: list[dict[str, Any]] = []
     for artifact in release.artifacts:
-        content = gateway.read_file(
-            release.dataset_id, revision, artifact.path, token
-        )
+        content = gateway.read_file(release.dataset_id, revision, artifact.path, token)
         if (
             len(content) != artifact.byte_length
             or hashlib.sha256(content).hexdigest() != artifact.sha256
         ):
-            raise RemoteVerificationError(
-                f"remote artifact verification failed: {artifact.path}"
-            )
+            raise RemoteVerificationError(f"remote artifact verification failed: {artifact.path}")
         remote_artifacts.append(artifact.receipt_dict())
 
     viewer_result: dict[str, Any] | None = None
@@ -2610,13 +2276,9 @@ def verify_remote_release(
             if attempt + 1 < viewer_attempts and viewer_delay_seconds:
                 time.sleep(viewer_delay_seconds)
     if viewer_result is None:
-        raise last_error or ViewerNotReadyError(
-            "Dataset Viewer verification did not complete"
-        )
+        raise last_error or ViewerNotReadyError("Dataset Viewer verification did not complete")
     if gateway.head(release.dataset_id, token) != revision:
-        raise RemoteVerificationError(
-            "target head changed during remote verification"
-        )
+        raise RemoteVerificationError("target head changed during remote verification")
     return {
         "artifacts": remote_artifacts,
         "dataset_viewer": viewer_result,
@@ -2680,20 +2342,14 @@ def publish_release(
     if type(execute) is not bool:
         raise PublicationError("execute must be boolean")
     if type(acknowledge_original_data_mirror) is not bool:
-        raise PublicationError(
-            "original-data mirror acknowledgement must be boolean"
-        )
+        raise PublicationError("original-data mirror acknowledgement must be boolean")
     if acknowledge_original_data_mirror and not execute:
-        raise PublicationError(
-            "original-data mirror acknowledgement requires execute"
-        )
+        raise PublicationError("original-data mirror acknowledgement requires execute")
     if not _DATASET_ID_RE.fullmatch(target_repo):
         raise PublicationError("target repo must be owner/name")
     if not _ENV_RE.fullmatch(token_env):
         raise PublicationError("token environment variable name is invalid")
-    release = load_local_release(
-        release_directory, expected_target=target_repo
-    )
+    release = load_local_release(release_directory, expected_target=target_repo)
     plan = {
         "artifact_count": len(release.artifacts) + 1,
         "dry_run": True,
@@ -2711,40 +2367,27 @@ def publish_release(
     }
     if not execute:
         return plan
-    if (
-        release.original_data_acknowledgement_required
-        and not acknowledge_original_data_mirror
-    ):
-        raise PublicationError(
-            "execute requires --acknowledge-original-data-mirror"
-        )
+    if release.original_data_acknowledgement_required and not acknowledge_original_data_mirror:
+        raise PublicationError("execute requires --acknowledge-original-data-mirror")
 
     token = os.environ.get(token_env)
     if not isinstance(token, str) or not token:
-        raise AuthenticationError(
-            f"execute requires a token in environment variable {token_env}"
-        )
+        raise AuthenticationError(f"execute requires a token in environment variable {token_env}")
     client = gateway or HuggingFaceHubGateway()
     principal = client.authenticate(token)
     head = client.head(release.dataset_id, token)
-    existing = find_existing_revision(
-        client, release, token, head=head
-    )
+    existing = find_existing_revision(client, release, token, head=head)
     if existing is not None:
         revision = existing
         operation = "verified_existing"
         if existing != head:
-            raise RemoteVerificationError(
-                "matching historical release is not the target head"
-            )
+            raise RemoteVerificationError("matching historical release is not the target head")
     else:
         revision = client.upload(
             release,
             token,
             parent_commit=head,
-            commit_message=(
-                f"Publish CVEfixes Security IR {release.release_root}"
-            ),
+            commit_message=(f"Publish CVEfixes Security IR {release.release_root}"),
             commit_description=(
                 f"Idempotency-Key: {release.idempotency_key}\n"
                 f"Source-Revision: {release.source_revision}"
@@ -2843,11 +2486,9 @@ def _receipt_release(receipt: Mapping[str, Any]) -> LocalRelease:
         elif item["row_count"] != 0:
             raise LocalReleaseError("receipt non-shard row count is invalid")
         artifacts.append(ArtifactDescriptor.from_dict(descriptor_value))
-    if (
-        tuple(item.path for item in artifacts)
-        != tuple(sorted(item.path for item in artifacts))
-        or len({item.path for item in artifacts}) != len(artifacts)
-    ):
+    if tuple(item.path for item in artifacts) != tuple(
+        sorted(item.path for item in artifacts)
+    ) or len({item.path for item in artifacts}) != len(artifacts):
         raise LocalReleaseError("receipt artifact inventory is not canonical")
     viewer = _object(verification.get("dataset_viewer"), "receipt Dataset Viewer")
     configs = viewer.get("configs")
@@ -2860,32 +2501,21 @@ def _receipt_release(receipt: Mapping[str, Any]) -> LocalRelease:
         or not configs
         or configs != sorted(set(configs))
         or any(
-            not isinstance(config, str) or not _CONFIG_RE.fullmatch(config)
-            for config in configs
+            not isinstance(config, str) or not _CONFIG_RE.fullmatch(config) for config in configs
         )
     ):
         raise LocalReleaseError("receipt Dataset Viewer proof is invalid")
     receipt_columns = viewer.get("columns")
     if isinstance(receipt_columns, list):
         if receipt_columns != list(EXPECTED_COLUMNS):
-            raise LocalReleaseError(
-                "receipt Dataset Viewer columns are invalid"
-            )
+            raise LocalReleaseError("receipt Dataset Viewer columns are invalid")
     elif isinstance(receipt_columns, Mapping):
         if set(receipt_columns) != set(configs):
-            raise LocalReleaseError(
-                "receipt Dataset Viewer columns are incomplete"
-            )
+            raise LocalReleaseError("receipt Dataset Viewer columns are incomplete")
         for config in configs:
-            paths = {
-                item.path
-                for item in artifacts
-                if item.config_name == config
-            }
+            paths = {item.path for item in artifacts if item.config_name == config}
             if not paths:
-                raise LocalReleaseError(
-                    "receipt Viewer config has no artifact"
-                )
+                raise LocalReleaseError("receipt Viewer config has no artifact")
             expected_columns = _CONFIG_COLUMNS.get(config)
             if expected_columns is None:
                 expected_columns = (
@@ -2894,13 +2524,9 @@ def _receipt_release(receipt: Mapping[str, Any]) -> LocalRelease:
                     else EXPECTED_COLUMNS
                 )
             if receipt_columns.get(config) != list(expected_columns):
-                raise LocalReleaseError(
-                    "receipt Dataset Viewer columns differ"
-                )
+                raise LocalReleaseError("receipt Dataset Viewer columns differ")
     else:
-        raise LocalReleaseError(
-            "receipt Dataset Viewer columns are invalid"
-        )
+        raise LocalReleaseError("receipt Dataset Viewer columns are invalid")
     shard_counts = tuple(
         sorted(
             (
@@ -2928,15 +2554,18 @@ def _receipt_release(receipt: Mapping[str, Any]) -> LocalRelease:
         or not _SHA256_RE.fullmatch(manifest_sha)
     ):
         raise LocalReleaseError("receipt release binding is invalid")
-    expected_key = "cvefixes-publication:" + hashlib.sha256(
-        _canonical_json(
-            {
-                "release_root": release_root,
-                "source_revision": source_revision,
-                "target_repo": dataset_id,
-            }
-        )
-    ).hexdigest()
+    expected_key = (
+        "cvefixes-publication:"
+        + hashlib.sha256(
+            _canonical_json(
+                {
+                    "release_root": release_root,
+                    "source_revision": source_revision,
+                    "target_repo": dataset_id,
+                }
+            )
+        ).hexdigest()
+    )
     if binding.get("key") != expected_key:
         raise LocalReleaseError("receipt idempotency key is invalid")
     return LocalRelease(
@@ -2950,10 +2579,7 @@ def _receipt_release(receipt: Mapping[str, Any]) -> LocalRelease:
         artifacts=tuple(artifacts),
         config_names=tuple(configs),
         config_shard_counts=shard_counts,
-        complete_layout=any(
-            _complete_data_config(item.path) is not None
-            for item in artifacts
-        ),
+        complete_layout=any(_complete_data_config(item.path) is not None for item in artifacts),
     )
 
 
@@ -2981,9 +2607,7 @@ def verify_receipt(
     client = gateway or HuggingFaceHubGateway()
     if client.head(release.dataset_id, token) != revision:
         raise RemoteVerificationError("receipt commit is not the target head")
-    manifest = client.read_file(
-        release.dataset_id, revision, "manifest.json", token
-    )
+    manifest = client.read_file(release.dataset_id, revision, "manifest.json", token)
     if hashlib.sha256(manifest).hexdigest() != release.manifest_sha256:
         raise RemoteVerificationError("receipt remote manifest digest mismatch")
     if _remote_tuple(manifest) != (
@@ -2993,16 +2617,12 @@ def verify_receipt(
     ):
         raise RemoteVerificationError("receipt remote manifest binding mismatch")
     for artifact in release.artifacts:
-        remote = client.read_file(
-            release.dataset_id, revision, artifact.path, token
-        )
+        remote = client.read_file(release.dataset_id, revision, artifact.path, token)
         if (
             len(remote) != artifact.byte_length
             or hashlib.sha256(remote).hexdigest() != artifact.sha256
         ):
-            raise RemoteVerificationError(
-                f"receipt remote artifact mismatch: {artifact.path}"
-            )
+            raise RemoteVerificationError(f"receipt remote artifact mismatch: {artifact.path}")
     viewer = verify_dataset_viewer(client, release, token)
     return {
         "hub_commit": revision,
@@ -3019,9 +2639,7 @@ def verify_receipt(
     }
 
 
-def write_receipt(
-    receipt: Mapping[str, Any], destination: str | os.PathLike[str]
-) -> None:
+def write_receipt(receipt: Mapping[str, Any], destination: str | os.PathLike[str]) -> None:
     """Atomically create a receipt without overwriting operator evidence."""
 
     path = Path(destination)
@@ -3100,9 +2718,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 raise PublicationError(
                     "--verify-receipt cannot be combined with publication arguments"
                 )
-            result = verify_receipt(
-                args.verify_receipt, token_env=args.token_env
-            )
+            result = verify_receipt(args.verify_receipt, token_env=args.token_env)
         else:
             if not args.release_directory:
                 raise PublicationError("release_directory is required")
@@ -3110,9 +2726,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 args.release_directory,
                 target_repo=args.target_repo,
                 execute=args.execute,
-                acknowledge_original_data_mirror=(
-                    args.acknowledge_original_data_mirror
-                ),
+                acknowledge_original_data_mirror=(args.acknowledge_original_data_mirror),
                 token_env=args.token_env,
                 viewer_attempts=args.viewer_attempts,
                 viewer_delay_seconds=args.viewer_delay_seconds,

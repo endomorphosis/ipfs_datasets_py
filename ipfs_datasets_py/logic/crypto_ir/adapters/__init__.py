@@ -79,9 +79,7 @@ def _as_mapping(value: Any, name: str) -> Mapping[str, Any]:
     return value
 
 
-def _known_fields(
-    value: Mapping[str, Any], allowed: frozenset[str], name: str
-) -> None:
+def _known_fields(value: Mapping[str, Any], allowed: frozenset[str], name: str) -> None:
     unknown = sorted(set(value) - allowed)
     if unknown:
         raise CryptoIRAdapterError(f"unknown {name} field(s): {', '.join(unknown)}")
@@ -178,16 +176,10 @@ class AdapterConversionResult:
     schema_version: str = "ipfs-datasets.crypto-ir.adapter-conversion@1.0.0"
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "conversion_id", _text(self.conversion_id, "conversion_id")
-        )
+        object.__setattr__(self, "conversion_id", _text(self.conversion_id, "conversion_id"))
         object.__setattr__(self, "adapter_id", _text(self.adapter_id, "adapter_id"))
-        object.__setattr__(
-            self, "capability_id", _text(self.capability_id, "capability_id")
-        )
-        object.__setattr__(
-            self, "status", _enum(AdapterConversionStatus, self.status, "status")
-        )
+        object.__setattr__(self, "capability_id", _text(self.capability_id, "capability_id"))
+        object.__setattr__(self, "status", _enum(AdapterConversionStatus, self.status, "status"))
         if not isinstance(self.source_authority, AuthorityKind):
             try:
                 object.__setattr__(
@@ -220,9 +212,7 @@ class AdapterConversionResult:
         except CryptoIRProvenanceError as exc:
             raise CryptoIRAdapterError(str(exc)) from exc
         for name in ("source_digest", "result_digest"):
-            object.__setattr__(
-                self, name, _text(getattr(self, name), name, allow_empty=True)
-            )
+            object.__setattr__(self, name, _text(getattr(self, name), name, allow_empty=True))
         object.__setattr__(self, "result_payload", _payload(self.result_payload))
         if isinstance(self.unsupported_fields, (str, bytes, bytearray)) or not isinstance(
             self.unsupported_fields, Sequence
@@ -239,16 +229,10 @@ class AdapterConversionResult:
                     "unsupported_fields items must be UnsupportedField or mappings"
                 )
         object.__setattr__(self, "unsupported_fields", tuple(normalized_fields))
-        object.__setattr__(
-            self, "preserved_provenance", _attributes(self.preserved_provenance)
-        )
-        object.__setattr__(
-            self, "diagnostics", _unique_texts(self.diagnostics, "diagnostics")
-        )
+        object.__setattr__(self, "preserved_provenance", _attributes(self.preserved_provenance))
+        object.__setattr__(self, "diagnostics", _unique_texts(self.diagnostics, "diagnostics"))
         object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
 
     @property
     def identity(self):

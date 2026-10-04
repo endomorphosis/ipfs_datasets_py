@@ -275,9 +275,7 @@ def test_differential_agreement_on_reviewed_theorem_fixture() -> None:
         availability_probe=lambda: True,
     )
     cvc5 = CVC5SoftwareVerificationBackend(
-        runner=_fixed_runner(
-            "unsat\n(\nassume_ge_one\n)\n", solver_version="cvc5-mock"
-        ),
+        runner=_fixed_runner("unsat\n(\nassume_ge_one\n)\n", solver_version="cvc5-mock"),
         availability_probe=lambda: True,
     )
     report = run_z3_cvc5_differential(

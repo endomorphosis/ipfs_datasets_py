@@ -137,9 +137,7 @@ def _records(chain: ChainRef) -> list[TransactionRecord | TransferRecord]:
     return [tx, transfer]
 
 
-def test_write_and_read_jsonl_round_trip_preserves_ids(
-    chain: ChainRef, tmp_path: Path
-) -> None:
+def test_write_and_read_jsonl_round_trip_preserves_ids(chain: ChainRef, tmp_path: Path) -> None:
     records = _records(chain)
     path = tmp_path / "part.jsonl"
     partition = write_jsonl(records, path)
@@ -155,9 +153,7 @@ def test_write_and_read_jsonl_round_trip_preserves_ids(
     assert loaded[1]["amount"]["base_units"] == str(10**18)
 
 
-def test_write_and_read_parquet_round_trip_preserves_ids(
-    chain: ChainRef, tmp_path: Path
-) -> None:
+def test_write_and_read_parquet_round_trip_preserves_ids(chain: ChainRef, tmp_path: Path) -> None:
     records = _records(chain)
     path = tmp_path / "part.parquet"
     partition = write_parquet(records, path)
@@ -171,9 +167,7 @@ def test_write_and_read_parquet_round_trip_preserves_ids(
 
 def test_round_trip_helper_jsonl_and_parquet(chain: ChainRef, tmp_path: Path) -> None:
     records = _records(chain)
-    jsonl_rows = round_trip_records(
-        records, format=ExportFormat.JSONL, directory=tmp_path / "j"
-    )
+    jsonl_rows = round_trip_records(records, format=ExportFormat.JSONL, directory=tmp_path / "j")
     parquet_rows = round_trip_records(
         records, format=ExportFormat.PARQUET, directory=tmp_path / "p"
     )
@@ -354,9 +348,7 @@ def test_export_wallet_protocol_path(
     assert loaded[0]["record_id"] == records[0].record_id
 
 
-def test_build_export_manifest_accounting(
-    chain: ChainRef, provenance: Provenance
-) -> None:
+def test_build_export_manifest_accounting(chain: ChainRef, provenance: Provenance) -> None:
     records = _records(chain)
     partition = ExportPartition(
         path="part.jsonl",

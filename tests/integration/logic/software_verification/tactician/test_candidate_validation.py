@@ -214,9 +214,7 @@ def _request(**overrides: Any) -> ValidationRequest:
 
 
 def test_validator_interface_constant() -> None:
-    assert (
-        ProofCandidateValidator.INTERFACE == PROOF_CANDIDATE_VALIDATOR_INTERFACE
-    )
+    assert ProofCandidateValidator.INTERFACE == PROOF_CANDIDATE_VALIDATOR_INTERFACE
     assert PROOF_CANDIDATE_VALIDATOR_INTERFACE == "ProofCandidateValidator@1"
     assert VALIDATOR_ALGORITHM_VERSION.startswith("proof-candidate-validator/")
     assert default_pipeline_stages() == PIPELINE_STAGES
@@ -344,9 +342,7 @@ def test_unbound_assumption_rejects() -> None:
         backends=(_backend(),),
     )
     assert result.validation.verdict is ValidationVerdict.REJECTED
-    detail = next(
-        c.detail for c in result.checks if c.stage == "exact_binding"
-    )
+    detail = next(c.detail for c in result.checks if c.stage == "exact_binding")
     assert "not bound" in detail
 
 
@@ -358,9 +354,7 @@ def test_hermetic_policy_rejects_network_bounds() -> None:
         backends=(_backend(),),
     )
     assert result.validation.verdict is ValidationVerdict.REJECTED
-    detail = next(
-        c.detail for c in result.checks if c.stage == "exact_binding"
-    )
+    detail = next(c.detail for c in result.checks if c.stage == "exact_binding")
     assert "network" in detail.lower() or "hermetic" in detail.lower()
 
 
@@ -415,13 +409,16 @@ def test_stale_candidate_cannot_discharge() -> None:
     assert result.validation.verdict is ValidationVerdict.REJECTED
     assert result.discharge_eligibility is DischargeEligibility.STALE
     assert result.may_discharge is False
-    assert may_discharge_graph_node(
-        verdict=result.validation.verdict,
-        eligibility=result.discharge_eligibility,
-        validated=result.validated,
-        stale=result.stale,
-        quarantined=result.quarantined,
-    ) is False
+    assert (
+        may_discharge_graph_node(
+            verdict=result.validation.verdict,
+            eligibility=result.discharge_eligibility,
+            validated=result.validated,
+            stale=result.stale,
+            quarantined=result.quarantined,
+        )
+        is False
+    )
 
 
 def test_unvalidated_flags_never_discharge() -> None:
@@ -699,9 +696,7 @@ def test_local_minimality_deletion_breaks_each_premise() -> None:
     result = validate_candidate(
         _candidate(),
         _hole(),
-        _binding(
-            selected_premise_ids=("premise:owner_holds", "premise:bound_pos")
-        ),
+        _binding(selected_premise_ids=("premise:owner_holds", "premise:bound_pos")),
         backends=(backend,),
     )
     assert result.minimality_report is not None
@@ -731,9 +726,7 @@ def test_provider_verdict_disagreement_is_quarantined() -> None:
     assert result.discharge_eligibility is DischargeEligibility.QUARANTINED
     assert result.may_discharge is False
     assert result.disagreement is not None
-    assert (
-        result.disagreement.reason is QuarantineReason.PROVIDER_DISAGREEMENT
-    )
+    assert result.disagreement.reason is QuarantineReason.PROVIDER_DISAGREEMENT
 
 
 def test_replay_backend_disagreement_is_quarantined() -> None:
@@ -780,12 +773,8 @@ def test_candidate_set_disagreement_quarantines_both() -> None:
     )
     set_result = validate_candidate_set(
         [
-            ValidationRequest(
-                candidate=accept_cand, hole=hole, binding=binding
-            ),
-            ValidationRequest(
-                candidate=reject_cand, hole=hole, binding=binding
-            ),
+            ValidationRequest(candidate=accept_cand, hole=hole, binding=binding),
+            ValidationRequest(candidate=reject_cand, hole=hole, binding=binding),
         ],
         backends=backends,
     )
@@ -842,16 +831,12 @@ def test_validation_record_cannot_claim_proof() -> None:
     assert payload["validation"]["proof_claimed"] is False
     assert payload["validation"]["completion_claimed"] is False
     with pytest.raises(CandidateValidationError, match="cannot claim"):
-        CandidateValidationResult.from_dict(
-            {**payload, "proof_claimed": True}
-        )
+        CandidateValidationResult.from_dict({**payload, "proof_claimed": True})
 
 
 def test_cap_validation_authority() -> None:
     assert (
-        cap_validation_authority(
-            AuthorityCeiling.THEOREM, verdict=ValidationVerdict.ACCEPTED
-        )
+        cap_validation_authority(AuthorityCeiling.THEOREM, verdict=ValidationVerdict.ACCEPTED)
         is AuthorityCeiling.SATISFIABILITY
     )
     assert (
@@ -862,9 +847,7 @@ def test_cap_validation_authority() -> None:
         is AuthorityCeiling.SATISFIABILITY
     )
     assert (
-        cap_validation_authority(
-            AuthorityCeiling.THEOREM, verdict=ValidationVerdict.REJECTED
-        )
+        cap_validation_authority(AuthorityCeiling.THEOREM, verdict=ValidationVerdict.REJECTED)
         is AuthorityCeiling.CANDIDATE
     )
 

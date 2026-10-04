@@ -163,9 +163,7 @@ class ExportReceipt:
             _required_str(self.processor_version, "processor_version"),
         )
         _positive_int(self.normalized_schema_major, "normalized_schema_major")
-        object.__setattr__(
-            self, "provider_capabilities", tuple(self.provider_capabilities)
-        )
+        object.__setattr__(self, "provider_capabilities", tuple(self.provider_capabilities))
         object.__setattr__(self, "warnings", tuple(self.warnings))
         _ensure_export_safe(
             {
@@ -971,9 +969,7 @@ def build_export_manifest(
         # primary partition set should be passed here. Multi-format exporters
         # call this once per format group or pass an explicit record_count via
         # partitions that already sum correctly.
-        raise ExportError(
-            "partition record counts must equal the number of exported records"
-        )
+        raise ExportError("partition record counts must equal the number of exported records")
     return ExportManifest(
         chain=chain,
         provenance=provenance,

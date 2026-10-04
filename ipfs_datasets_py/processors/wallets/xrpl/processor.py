@@ -50,9 +50,7 @@ class XRPLWalletProcessor:
             raise InvalidRequestError("network must be an XRPLNetwork")
         self._chain = chain_ref_for(self.network)
         self._privacy = self.privacy or MemoPrivacyPolicy()
-        self._finality = self.finality_policy or XRPLFinalityPolicy(
-            network=self.network
-        )
+        self._finality = self.finality_policy or XRPLFinalityPolicy(network=self.network)
         self._normalizer = self.normalizer or XRPLNormalizer(
             network=self.network,
             finality_policy=self._finality,
@@ -119,14 +117,10 @@ class XRPLWalletProcessor:
                 native.append(item)
             elif isinstance(item, Mapping):
                 native.append(
-                    parse_account_tx_entry(
-                        item, network=self.network, privacy=self._privacy
-                    )
+                    parse_account_tx_entry(item, network=self.network, privacy=self._privacy)
                 )
             else:
-                raise InvalidRequestError(
-                    f"unsupported transaction type: {type(item)!r}"
-                )
+                raise InvalidRequestError(f"unsupported transaction type: {type(item)!r}")
         normalized = self._normalizer.normalize(native, context=context)
         return tuple(normalized)
 
@@ -178,9 +172,7 @@ class XRPLWalletProcessor:
         request.context.check_active()
         async for batch in self._provider.ingest_wallet(request):
             request.context.check_active()
-            normalized = self.normalize_transactions(
-                batch.records, context=request.context
-            )
+            normalized = self.normalize_transactions(batch.records, context=request.context)
             out = RecordBatch(
                 records=tuple(normalized),
                 next_cursor=batch.next_cursor,
@@ -198,9 +190,7 @@ class XRPLWalletProcessor:
         request.context.check_active()
         async for batch in self._provider.ingest_ledger(request):
             request.context.check_active()
-            normalized = self.normalize_transactions(
-                batch.records, context=request.context
-            )
+            normalized = self.normalize_transactions(batch.records, context=request.context)
             out = RecordBatch(
                 records=tuple(normalized),
                 next_cursor=batch.next_cursor,

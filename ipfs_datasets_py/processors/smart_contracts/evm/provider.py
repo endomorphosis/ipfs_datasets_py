@@ -135,20 +135,14 @@ class EVMContractFixture:
                 or self.block_number < 0
             ):
                 raise InvalidRequestError("block_number must be a non-negative integer")
-        object.__setattr__(
-            self, "code_epoch", self.code_epoch.strip() if self.code_epoch else ""
-        )
-        object.__setattr__(
-            self, "compiler", self.compiler.strip() if self.compiler else ""
-        )
+        object.__setattr__(self, "code_epoch", self.code_epoch.strip() if self.code_epoch else "")
+        object.__setattr__(self, "compiler", self.compiler.strip() if self.compiler else "")
         object.__setattr__(
             self,
             "compiler_version",
             self.compiler_version.strip() if self.compiler_version else "",
         )
-        object.__setattr__(
-            self, "compiler_flags", _freeze_mapping(self.compiler_flags)
-        )
+        object.__setattr__(self, "compiler_flags", _freeze_mapping(self.compiler_flags))
         libraries = {
             _required_text(k, "library name"): normalize_address(v)
             for k, v in dict(self.libraries).items()
@@ -184,16 +178,13 @@ class EVMContractFixture:
             if self.creation_bytecode
             else "",
             "libraries": dict(self.libraries),
-            "metadata_digest": bytes_digest(self.metadata_json)
-            if self.metadata_json
-            else "",
+            "metadata_digest": bytes_digest(self.metadata_json) if self.metadata_json else "",
             "metadata_policy": self.metadata_policy,
             "runtime_bytecode_digest": bytes_digest(self.runtime_bytecode)
             if self.runtime_bytecode
             else "",
             "source_digests": {
-                path: bytes_digest(payload)
-                for path, payload in self.source_files.items()
+                path: bytes_digest(payload) for path, payload in self.source_files.items()
             },
             "storage": dict(self.storage),
         }
@@ -305,9 +296,7 @@ class OfflineEVMProvider:
                 fixture.fixture_key,
             }
             if fixture.block_number is not None:
-                keys.add(
-                    f"{fixture.chain_id}:{fixture.address}@{fixture.block_number}"
-                )
+                keys.add(f"{fixture.chain_id}:{fixture.address}@{fixture.block_number}")
             for key in keys:
                 if key in index and index[key] is not fixture:
                     raise InvalidRequestError(f"duplicate EVM fixture key: {key}")
@@ -399,9 +388,7 @@ class OfflineEVMProvider:
             return _required_text(chain_part, "chain_id"), normalize_address(addr_part), block
         if text.startswith(("0x", "0X")):
             if not chain_id:
-                raise InvalidRequestError(
-                    "bare address locator requires request chain_id"
-                )
+                raise InvalidRequestError("bare address locator requires request chain_id")
             return _required_text(chain_id, "chain_id"), normalize_address(text), None
         raise InvalidRequestError("unsupported EVM locator form")
 
@@ -420,9 +407,7 @@ class OfflineEVMProvider:
             return ContractAcquisitionResult(
                 request_id=request.request_id,
                 status=AcquisitionStatus.UNSUPPORTED,
-                diagnostics=(
-                    f"provider {self._provider_id!r} is not allowlisted",
-                ),
+                diagnostics=(f"provider {self._provider_id!r} is not allowlisted",),
             )
 
         # Reject signing surfaces even if they leak into attributes.
@@ -435,9 +420,7 @@ class OfflineEVMProvider:
 
         chain_id = request.chain.chain_id or request.chain.namespace or ""
         try:
-            parsed_chain, address, block = self.parse_locator(
-                request.locator, chain_id=chain_id
-            )
+            parsed_chain, address, block = self.parse_locator(request.locator, chain_id=chain_id)
         except InvalidRequestError as exc:
             return ContractAcquisitionResult(
                 request_id=request.request_id,
@@ -445,16 +428,12 @@ class OfflineEVMProvider:
                 diagnostics=(str(exc),),
             )
 
-        fixture = self.get_fixture(
-            chain_id=parsed_chain, address=address, block_number=block
-        )
+        fixture = self.get_fixture(chain_id=parsed_chain, address=address, block_number=block)
         if fixture is None:
             return ContractAcquisitionResult(
                 request_id=request.request_id,
                 status=AcquisitionStatus.UNAVAILABLE,
-                diagnostics=(
-                    f"no offline fixture for {parsed_chain}:{address}",
-                ),
+                diagnostics=(f"no offline fixture for {parsed_chain}:{address}",),
             )
 
         kind = (
@@ -490,9 +469,7 @@ class OfflineEVMProvider:
             request_digest=bytes_digest(
                 f"{request.request_id}:{request.locator}:{kind.value}".encode("utf-8")
             ),
-            response_digest=bytes_digest(
-                b"".join(item.raw_bytes for _, item in stored_entries)
-            ),
+            response_digest=bytes_digest(b"".join(item.raw_bytes for _, item in stored_entries)),
             final_url_digest=bytes_digest(
                 f"offline://{self._provider_id}/{parsed_chain}/{address}".encode("utf-8")
             ),

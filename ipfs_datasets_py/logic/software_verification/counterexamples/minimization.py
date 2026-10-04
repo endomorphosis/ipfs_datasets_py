@@ -28,12 +28,8 @@ from types import MappingProxyType
 from typing import Any, Final, Protocol, runtime_checkable
 
 SEMANTIC_COUNTEREXAMPLE_MINIMIZER_INTERFACE: Final = "SemanticCounterexampleMinimizer@1"
-MINIMIZATION_RECEIPT_SCHEMA: Final = (
-    "ipfs_datasets_py/logic/counterexample-minimization-receipt@1"
-)
-MINIMIZATION_RESULT_SCHEMA: Final = (
-    "ipfs_datasets_py/logic/counterexample-minimization-result@1"
-)
+MINIMIZATION_RECEIPT_SCHEMA: Final = "ipfs_datasets_py/logic/counterexample-minimization-receipt@1"
+MINIMIZATION_RESULT_SCHEMA: Final = "ipfs_datasets_py/logic/counterexample-minimization-result@1"
 ALGORITHM_VERSION: Final = "semantic-minimizer/1.0.0"
 
 DEFAULT_MAX_ORACLE_CALLS: Final = 256
@@ -141,8 +137,7 @@ class SemanticCounterexampleMinimizerProtocol(Protocol):
         property_snapshot_id: str = "",
         assumption_ids: Sequence[str] | None = None,
         finite_bounds: Mapping[str, Any] | None = None,
-    ) -> "MinimizationResult":
-        ...
+    ) -> "MinimizationResult": ...
 
 
 @dataclass(frozen=True, slots=True)
@@ -183,14 +178,10 @@ class MinimizationBudget:
         if not isinstance(value, Mapping):
             raise MinimizationError("budget must be a mapping")
         return cls(
-            max_oracle_calls=int(
-                value.get("max_oracle_calls", DEFAULT_MAX_ORACLE_CALLS)
-            ),
+            max_oracle_calls=int(value.get("max_oracle_calls", DEFAULT_MAX_ORACLE_CALLS)),
             max_reductions=int(value.get("max_reductions", DEFAULT_MAX_REDUCTIONS)),
             max_wall_ms=int(value.get("max_wall_ms", DEFAULT_MAX_WALL_MS)),
-            max_exhaustive_size=int(
-                value.get("max_exhaustive_size", DEFAULT_MAX_EXHAUSTIVE_SIZE)
-            ),
+            max_exhaustive_size=int(value.get("max_exhaustive_size", DEFAULT_MAX_EXHAUSTIVE_SIZE)),
         )
 
 
@@ -206,11 +197,7 @@ class ReductionLogEntry:
     detail: str = ""
 
     def to_dict(self) -> dict[str, Any]:
-        action = (
-            self.action.value
-            if isinstance(self.action, ReductionAction)
-            else str(self.action)
-        )
+        action = self.action.value if isinstance(self.action, ReductionAction) else str(self.action)
         return {
             "accepted": bool(self.accepted),
             "action": action,
@@ -247,9 +234,7 @@ class MinimizationReceipt:
     interface: str = SEMANTIC_COUNTEREXAMPLE_MINIMIZER_INTERFACE
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "budget", MappingProxyType(dict(self.budget or {}))
-        )
+        object.__setattr__(self, "budget", MappingProxyType(dict(self.budget or {})))
         object.__setattr__(
             self,
             "finite_bounds",
@@ -262,12 +247,12 @@ class MinimizationReceipt:
         )
         object.__setattr__(self, "reduction_log", tuple(self.reduction_log))
         if not self.receipt_id:
-            object.__setattr__(self, "receipt_id", _content_id("min-receipt", self.to_dict(identity=False)))
+            object.__setattr__(
+                self, "receipt_id", _content_id("min-receipt", self.to_dict(identity=False))
+            )
 
     def to_dict(self, *, identity: bool = True) -> dict[str, Any]:
-        family = (
-            self.family.value if isinstance(self.family, WitnessFamily) else str(self.family)
-        )
+        family = self.family.value if isinstance(self.family, WitnessFamily) else str(self.family)
         guarantee = (
             self.guarantee.value
             if isinstance(self.guarantee, MinimizationGuarantee)
@@ -469,9 +454,7 @@ class SemanticCounterexampleMinimizer:
             for item in (
                 assumption_ids
                 if assumption_ids is not None
-                else original.get("assumption_ids")
-                or original.get("assumptions")
-                or ()
+                else original.get("assumption_ids") or original.get("assumptions") or ()
             )
             if str(item)
         )
@@ -1222,9 +1205,7 @@ def _resolve_family(
     return WitnessFamily.GENERIC
 
 
-def _normalize_witness(
-    witness: dict[str, Any], family: WitnessFamily
-) -> dict[str, Any]:
+def _normalize_witness(witness: dict[str, Any], family: WitnessFamily) -> dict[str, Any]:
     current = _json_ready(witness)
     assert isinstance(current, dict)
     # Drop empty optional collections and sort assignment keys.
@@ -1365,9 +1346,7 @@ def _element_label(value: Any, index: int) -> str:
     return str(index)
 
 
-def _discrete_elements(
-    witness: Mapping[str, Any], family: WitnessFamily
-) -> list[Any]:
+def _discrete_elements(witness: Mapping[str, Any], family: WitnessFamily) -> list[Any]:
     if family is WitnessFamily.SMT_CORE:
         return list(_extract_core(witness))
     if family in {WitnessFamily.TRACE, WitnessFamily.PROTOCOL_ATTACK}:

@@ -49,12 +49,8 @@ COMPLIANCE_GATE_SCHEMA_VERSION: Final = "wallet-guard.compliance-gate/v1"
 COUNTERPARTY_SET_SCHEMA_VERSION: Final = "wallet-guard.counterparty-set/v1"
 SANCTIONS_DECISION_SCHEMA_VERSION: Final = "wallet-guard.sanctions-decision/v1"
 EXPOSURE_DECISION_SCHEMA_VERSION: Final = "wallet-guard.exposure-decision/v1"
-COMPLIANCE_GATE_REQUEST_SCHEMA_VERSION: Final = (
-    "wallet-guard.compliance-gate-request/v1"
-)
-COMPLIANCE_GATE_DECISION_SCHEMA_VERSION: Final = (
-    "wallet-guard.compliance-gate-decision/v1"
-)
+COMPLIANCE_GATE_REQUEST_SCHEMA_VERSION: Final = "wallet-guard.compliance-gate-request/v1"
+COMPLIANCE_GATE_DECISION_SCHEMA_VERSION: Final = "wallet-guard.compliance-gate-decision/v1"
 
 DEFAULT_PRODUCER_ID: Final = "producer:wallet-guard-compliance-v1"
 
@@ -229,9 +225,7 @@ def _digest(value: Any, name: str, *, allow_empty: bool = False) -> str:
 def _timestamp(value: Any, name: str) -> str:
     text = _text(value, name, max_chars=64)
     if not _ISO8601_RE.fullmatch(text):
-        raise GuardValidationError(
-            f"{name} must be an ISO-8601 UTC/offset timestamp"
-        )
+        raise GuardValidationError(f"{name} must be an ISO-8601 UTC/offset timestamp")
     return text
 
 
@@ -241,22 +235,17 @@ def _mapping(value: Any, name: str) -> Mapping[str, Any]:
     return value
 
 
-def _reject_unknown(
-    value: Mapping[str, Any], allowed: frozenset[str], record_name: str
-) -> None:
+def _reject_unknown(value: Mapping[str, Any], allowed: frozenset[str], record_name: str) -> None:
     unknown = sorted(set(value) - allowed)
     if unknown:
-        raise GuardValidationError(
-            f"unknown {record_name} field(s): {', '.join(unknown)}"
-        )
+        raise GuardValidationError(f"unknown {record_name} field(s): {', '.join(unknown)}")
 
 
 def _reject_forbidden(value: Mapping[str, Any], record_name: str) -> None:
     hit = sorted(set(value) & _FORBIDDEN_FIELDS)
     if hit:
         raise GuardForbiddenSurfaceError(
-            f"{record_name} contains forbidden custody/approval field(s): "
-            f"{', '.join(hit)}",
+            f"{record_name} contains forbidden custody/approval field(s): {', '.join(hit)}",
             details={"fields": hit},
         )
 
@@ -269,9 +258,7 @@ def _unique_ids(
 ) -> tuple[str, ...]:
     if values is None:
         items: tuple[str, ...] = ()
-    elif isinstance(values, (str, bytes, bytearray)) or not isinstance(
-        values, Sequence
-    ):
+    elif isinstance(values, (str, bytes, bytearray)) or not isinstance(values, Sequence):
         raise GuardValidationError(f"{name} must be a sequence of strings")
     else:
         if len(values) > MAX_COLLECTION_ITEMS:
@@ -294,12 +281,7 @@ def _enum(enum_type: type[Enum], value: Any, name: str) -> Enum:
 
 
 def _iso_now() -> str:
-    return (
-        datetime.now(timezone.utc)
-        .replace(microsecond=0)
-        .isoformat()
-        .replace("+00:00", "Z")
-    )
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
 def _is_expired(expiry: str, now: str) -> bool:
@@ -328,9 +310,7 @@ def policy_outcome_to_transaction(
     """
 
     value = (
-        outcome
-        if isinstance(outcome, SanctionsPolicyOutcome)
-        else SanctionsPolicyOutcome(outcome)
+        outcome if isinstance(outcome, SanctionsPolicyOutcome) else SanctionsPolicyOutcome(outcome)
     )
     mapping = {
         SanctionsPolicyOutcome.ALLOW: TransactionVerdictOutcome.ALLOW,
@@ -397,9 +377,7 @@ class Counterparty:
             "effect_id": self.effect_id,
             "network": self.network,
             "party_id": self.party_id,
-            "role": (
-                self.role.value if isinstance(self.role, CounterpartyRole) else self.role
-            ),
+            "role": (self.role.value if isinstance(self.role, CounterpartyRole) else self.role),
             "screening_key": self.screening_key,
         }
 
@@ -457,9 +435,7 @@ class CounterpartySet:
             raise GuardValidationError("CounterpartySet requires at least one party")
         keys = [item.screening_key for item in items]
         if len(keys) != len(set(keys)):
-            raise GuardValidationError(
-                "counterparties screening_key values must be unique"
-            )
+            raise GuardValidationError("counterparties screening_key values must be unique")
         object.__setattr__(self, "counterparties", items)
         object.__setattr__(
             self,
@@ -484,9 +460,7 @@ class CounterpartySet:
             raise GuardValidationError("attributes must be a mapping")
         _reject_forbidden(self.attributes, "CounterpartySet.attributes")
         object.__setattr__(self, "attributes", dict(self.attributes))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != COUNTERPARTY_SET_SCHEMA_VERSION:
             raise GuardValidationError(
                 f"unsupported CounterpartySet schema: {self.schema_version!r}"
@@ -508,9 +482,7 @@ class CounterpartySet:
         )
 
     def parties_for_role(self, role: CounterpartyRole | str) -> tuple[Counterparty, ...]:
-        role_value = (
-            role if isinstance(role, CounterpartyRole) else CounterpartyRole(role)
-        )
+        role_value = role if isinstance(role, CounterpartyRole) else CounterpartyRole(role)
         return tuple(c for c in self.counterparties if c.role is role_value)
 
     def to_dict(self) -> dict[str, Any]:
@@ -554,9 +526,7 @@ class CounterpartySet:
             candidate_id=value.get("candidate_id", ""),
             network=value.get("network", ""),
             attributes=value.get("attributes", {}),
-            schema_version=value.get(
-                "schema_version", COUNTERPARTY_SET_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", COUNTERPARTY_SET_SCHEMA_VERSION),
         )
 
     @classmethod
@@ -626,9 +596,7 @@ class CounterpartySet:
             elif isinstance(item, Mapping):
                 parties.append(Counterparty.from_dict(item))
             else:
-                raise GuardValidationError(
-                    "extra counterparties must be Counterparty or mappings"
-                )
+                raise GuardValidationError("extra counterparties must be Counterparty or mappings")
 
         # De-duplicate by screening_key while preserving first occurrence.
         seen: set[str] = set()
@@ -660,9 +628,7 @@ def _sequence_of_counterparties(values: Any) -> tuple[Counterparty, ...]:
         elif isinstance(item, Mapping):
             out.append(Counterparty.from_dict(item))
         else:
-            raise GuardValidationError(
-                "counterparties items must be Counterparty or mappings"
-            )
+            raise GuardValidationError("counterparties items must be Counterparty or mappings")
     return tuple(out)
 
 
@@ -700,9 +666,7 @@ class SanctionsDecision:
     schema_version: str = SANCTIONS_DECISION_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "decision_id", _identifier(self.decision_id, "decision_id")
-        )
+        object.__setattr__(self, "decision_id", _identifier(self.decision_id, "decision_id"))
         object.__setattr__(self, "party_id", _identifier(self.party_id, "party_id"))
         object.__setattr__(
             self,
@@ -721,9 +685,7 @@ class SanctionsDecision:
             "snapshot_revision",
         ):
             object.__setattr__(self, name, _identifier(getattr(self, name), name))
-        object.__setattr__(
-            self, "reason_codes", _unique_ids(self.reason_codes, "reason_codes")
-        )
+        object.__setattr__(self, "reason_codes", _unique_ids(self.reason_codes, "reason_codes"))
         for name in ("reviewed_evidence", "list_complete"):
             if not isinstance(getattr(self, name), bool):
                 raise GuardValidationError(f"{name} must be a bool")
@@ -735,9 +697,7 @@ class SanctionsDecision:
             )
         else:
             object.__setattr__(self, "freshness_expires_at", "")
-        object.__setattr__(
-            self, "license_ids", _unique_ids(self.license_ids, "license_ids")
-        )
+        object.__setattr__(self, "license_ids", _unique_ids(self.license_ids, "license_ids"))
         if self.license_expires_at:
             object.__setattr__(
                 self,
@@ -765,9 +725,7 @@ class SanctionsDecision:
             raise GuardValidationError("attributes must be a mapping")
         _reject_forbidden(self.attributes, "SanctionsDecision.attributes")
         object.__setattr__(self, "attributes", dict(self.attributes))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
 
     def is_stale(self, now: str) -> bool:
         if not self.freshness_expires_at:
@@ -865,9 +823,7 @@ class SanctionsDecision:
             license_scoped_activity=value.get("license_scoped_activity", ""),
             screening_key=value.get("screening_key", ""),
             attributes=value.get("attributes", {}),
-            schema_version=value.get(
-                "schema_version", SANCTIONS_DECISION_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", SANCTIONS_DECISION_SCHEMA_VERSION),
         )
 
 
@@ -904,22 +860,16 @@ class ExposureDecision:
     schema_version: str = EXPOSURE_DECISION_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "decision_id", _identifier(self.decision_id, "decision_id")
-        )
+        object.__setattr__(self, "decision_id", _identifier(self.decision_id, "decision_id"))
         object.__setattr__(
             self,
             "origin_party_id",
             _identifier(self.origin_party_id, "origin_party_id"),
         )
-        object.__setattr__(
-            self, "verdict", _enum(ExposureVerdict, self.verdict, "verdict")
-        )
+        object.__setattr__(self, "verdict", _enum(ExposureVerdict, self.verdict, "verdict"))
         for name in ("policy_id", "policy_revision", "graph_snapshot_id", "list_revision"):
             object.__setattr__(self, name, _identifier(getattr(self, name), name))
-        object.__setattr__(
-            self, "bounds_digest", _digest(self.bounds_digest, "bounds_digest")
-        )
+        object.__setattr__(self, "bounds_digest", _digest(self.bounds_digest, "bounds_digest"))
         if not isinstance(self.max_depth, int) or isinstance(self.max_depth, bool):
             raise GuardValidationError("max_depth must be an integer")
         if self.max_depth < 0:
@@ -946,28 +896,20 @@ class ExposureDecision:
             "screening_key",
             _text(self.screening_key, "screening_key", allow_empty=True, max_chars=512),
         )
-        object.__setattr__(
-            self, "reason_codes", _unique_ids(self.reason_codes, "reason_codes")
-        )
+        object.__setattr__(self, "reason_codes", _unique_ids(self.reason_codes, "reason_codes"))
         if not isinstance(self.attributes, Mapping):
             raise GuardValidationError("attributes must be a mapping")
         _reject_forbidden(self.attributes, "ExposureDecision.attributes")
         object.__setattr__(self, "attributes", dict(self.attributes))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         # Indirect exposure never elevates to designation hard-deny by default;
         # policy outcome must be REVIEW or DENY when a path exists.
         if self.verdict is ExposureVerdict.INDIRECT_EXPOSURE:
             if self.outcome is SanctionsPolicyOutcome.ALLOW:
-                raise GuardPolicyError(
-                    "indirect exposure cannot map to ALLOW; use REVIEW or DENY"
-                )
+                raise GuardPolicyError("indirect exposure cannot map to ALLOW; use REVIEW or DENY")
         if self.verdict is ExposureVerdict.DIRECT_HIT:
             if self.outcome is SanctionsPolicyOutcome.ALLOW:
-                raise GuardPolicyError(
-                    "direct exposure hit cannot map to ALLOW"
-                )
+                raise GuardPolicyError("direct exposure hit cannot map to ALLOW")
 
     def is_stale(self, now: str) -> bool:
         if self.verdict is ExposureVerdict.STALE:
@@ -1000,9 +942,7 @@ class ExposureDecision:
             "screening_key": self.screening_key,
             "truncated": self.truncated,
             "verdict": (
-                self.verdict.value
-                if isinstance(self.verdict, ExposureVerdict)
-                else self.verdict
+                self.verdict.value if isinstance(self.verdict, ExposureVerdict) else self.verdict
             ),
         }
 
@@ -1054,9 +994,7 @@ class ExposureDecision:
             screening_key=value.get("screening_key", ""),
             reason_codes=tuple(value.get("reason_codes", ())),
             attributes=value.get("attributes", {}),
-            schema_version=value.get(
-                "schema_version", EXPOSURE_DECISION_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", EXPOSURE_DECISION_SCHEMA_VERSION),
         )
 
 
@@ -1094,14 +1032,10 @@ class ComplianceGateRequest:
     schema_version: str = COMPLIANCE_GATE_REQUEST_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "request_id", _identifier(self.request_id, "request_id")
-        )
+        object.__setattr__(self, "request_id", _identifier(self.request_id, "request_id"))
         if not isinstance(self.intent, TransactionIntent):
             if isinstance(self.intent, Mapping):
-                object.__setattr__(
-                    self, "intent", TransactionIntent.from_dict(self.intent)
-                )
+                object.__setattr__(self, "intent", TransactionIntent.from_dict(self.intent))
             else:
                 raise GuardValidationError("intent must be a TransactionIntent")
         if not isinstance(self.candidate, TransactionCandidate):
@@ -1112,17 +1046,11 @@ class ComplianceGateRequest:
                     TransactionCandidate.from_dict(self.candidate),
                 )
             else:
-                raise GuardValidationError(
-                    "candidate must be a TransactionCandidate"
-                )
+                raise GuardValidationError("candidate must be a TransactionCandidate")
         if self.candidate.intent_id != self.intent.intent_id:
-            raise GuardValidationError(
-                "candidate.intent_id must match intent.intent_id"
-            )
+            raise GuardValidationError("candidate.intent_id must match intent.intent_id")
         if self.candidate.network and self.candidate.network != self.intent.network:
-            raise GuardValidationError(
-                "candidate.network must match intent.network when provided"
-            )
+            raise GuardValidationError("candidate.network must match intent.network when provided")
         if not isinstance(self.counterparties, CounterpartySet):
             if isinstance(self.counterparties, Mapping):
                 object.__setattr__(
@@ -1131,9 +1059,7 @@ class ComplianceGateRequest:
                     CounterpartySet.from_dict(self.counterparties),
                 )
             else:
-                raise GuardValidationError(
-                    "counterparties must be a CounterpartySet"
-                )
+                raise GuardValidationError("counterparties must be a CounterpartySet")
         object.__setattr__(
             self,
             "sanctions_decisions",
@@ -1144,22 +1070,14 @@ class ComplianceGateRequest:
             "exposure_decisions",
             _sequence_of_exposure(self.exposure_decisions),
         )
-        object.__setattr__(
-            self, "tenant_id", _identifier(self.tenant_id, "tenant_id")
-        )
+        object.__setattr__(self, "tenant_id", _identifier(self.tenant_id, "tenant_id"))
         object.__setattr__(self, "actor_id", _identifier(self.actor_id, "actor_id"))
-        object.__setattr__(
-            self, "policy_id", _identifier(self.policy_id, "policy_id")
-        )
-        object.__setattr__(
-            self, "issued_at", _timestamp(self.issued_at, "issued_at")
-        )
+        object.__setattr__(self, "policy_id", _identifier(self.policy_id, "policy_id"))
+        object.__setattr__(self, "issued_at", _timestamp(self.issued_at, "issued_at"))
         object.__setattr__(self, "expiry", _timestamp(self.expiry, "expiry"))
         if self.expiry < self.issued_at:
             raise GuardValidationError("expiry must not precede issued_at")
-        object.__setattr__(
-            self, "activity_id", _identifier(self.activity_id, "activity_id")
-        )
+        object.__setattr__(self, "activity_id", _identifier(self.activity_id, "activity_id"))
         if not isinstance(self.require_exposure, bool):
             raise GuardValidationError("require_exposure must be a bool")
         object.__setattr__(
@@ -1186,17 +1104,13 @@ class ComplianceGateRequest:
         object.__setattr__(
             self,
             "list_revision",
-            _text(
-                self.list_revision, "list_revision", allow_empty=True, max_chars=128
-            ),
+            _text(self.list_revision, "list_revision", allow_empty=True, max_chars=128),
         )
         if not isinstance(self.attributes, Mapping):
             raise GuardValidationError("attributes must be a mapping")
         _reject_forbidden(self.attributes, "ComplianceGateRequest.attributes")
         object.__setattr__(self, "attributes", dict(self.attributes))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
 
     @property
     def intent_digest(self) -> str:
@@ -1280,9 +1194,7 @@ class ComplianceGateRequest:
             list_snapshot_id=value.get("list_snapshot_id", ""),
             list_revision=value.get("list_revision", ""),
             attributes=value.get("attributes", {}),
-            schema_version=value.get(
-                "schema_version", COMPLIANCE_GATE_REQUEST_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", COMPLIANCE_GATE_REQUEST_SCHEMA_VERSION),
         )
 
 
@@ -1292,9 +1204,7 @@ def _sequence_of_sanctions(values: Any) -> tuple[SanctionsDecision, ...]:
     if isinstance(values, (str, bytes, bytearray)) or not isinstance(values, Sequence):
         raise GuardValidationError("sanctions_decisions must be a sequence")
     if len(values) > MAX_COLLECTION_ITEMS:
-        raise GuardValidationError(
-            "sanctions_decisions exceeds maximum collection size"
-        )
+        raise GuardValidationError("sanctions_decisions exceeds maximum collection size")
     out: list[SanctionsDecision] = []
     for item in values:
         if isinstance(item, SanctionsDecision):
@@ -1314,9 +1224,7 @@ def _sequence_of_exposure(values: Any) -> tuple[ExposureDecision, ...]:
     if isinstance(values, (str, bytes, bytearray)) or not isinstance(values, Sequence):
         raise GuardValidationError("exposure_decisions must be a sequence")
     if len(values) > MAX_COLLECTION_ITEMS:
-        raise GuardValidationError(
-            "exposure_decisions exceeds maximum collection size"
-        )
+        raise GuardValidationError("exposure_decisions exceeds maximum collection size")
     out: list[ExposureDecision] = []
     for item in values:
         if isinstance(item, ExposureDecision):
@@ -1364,12 +1272,8 @@ class ComplianceGateDecision:
     schema_version: str = COMPLIANCE_GATE_DECISION_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "decision_id", _identifier(self.decision_id, "decision_id")
-        )
-        object.__setattr__(
-            self, "request_digest", _digest(self.request_digest, "request_digest")
-        )
+        object.__setattr__(self, "decision_id", _identifier(self.decision_id, "decision_id"))
+        object.__setattr__(self, "request_digest", _digest(self.request_digest, "request_digest"))
         object.__setattr__(
             self,
             "outcome",
@@ -1380,17 +1284,11 @@ class ComplianceGateDecision:
         expected_block = transaction_blocks_automation(self.outcome)  # type: ignore[arg-type]
         if self.outcome is TransactionVerdictOutcome.ALLOW:
             if self.blocks_automation:
-                raise GuardValidationError(
-                    "ALLOW decisions must set blocks_automation=False"
-                )
+                raise GuardValidationError("ALLOW decisions must set blocks_automation=False")
         elif not self.blocks_automation:
-            raise GuardValidationError(
-                f"non-ALLOW outcome {self.outcome} must block automation"
-            )
+            raise GuardValidationError(f"non-ALLOW outcome {self.outcome} must block automation")
         if expected_block and not self.blocks_automation:
-            raise GuardValidationError(
-                "blocks_automation inconsistent with outcome"
-            )
+            raise GuardValidationError("blocks_automation inconsistent with outcome")
         object.__setattr__(
             self,
             "reason_codes",
@@ -1409,9 +1307,7 @@ class ComplianceGateDecision:
             if self.reasons
             else ("compliance gate decision",),
         )
-        object.__setattr__(
-            self, "intent_digest", _digest(self.intent_digest, "intent_digest")
-        )
+        object.__setattr__(self, "intent_digest", _digest(self.intent_digest, "intent_digest"))
         object.__setattr__(
             self,
             "candidate_digest",
@@ -1439,9 +1335,7 @@ class ComplianceGateDecision:
             self,
             "sanctions_results",
             {
-                _identifier(k, "sanctions_results key"): _text(
-                    v, f"sanctions_results[{k}]"
-                )
+                _identifier(k, "sanctions_results key"): _text(v, f"sanctions_results[{k}]")
                 for k, v in self.sanctions_results.items()
             },
         )
@@ -1451,9 +1345,7 @@ class ComplianceGateDecision:
             self,
             "exposure_results",
             {
-                _identifier(k, "exposure_results key"): _text(
-                    v, f"exposure_results[{k}]"
-                )
+                _identifier(k, "exposure_results key"): _text(v, f"exposure_results[{k}]")
                 for k, v in self.exposure_results.items()
             },
         )
@@ -1480,34 +1372,23 @@ class ComplianceGateDecision:
         object.__setattr__(
             self,
             "list_revision",
-            _text(
-                self.list_revision, "list_revision", allow_empty=True, max_chars=128
-            ),
+            _text(self.list_revision, "list_revision", allow_empty=True, max_chars=128),
         )
-        object.__setattr__(
-            self, "issued_at", _timestamp(self.issued_at, "issued_at")
-        )
+        object.__setattr__(self, "issued_at", _timestamp(self.issued_at, "issued_at"))
         object.__setattr__(self, "expiry", _timestamp(self.expiry, "expiry"))
-        object.__setattr__(
-            self, "producer_id", _identifier(self.producer_id, "producer_id")
-        )
+        object.__setattr__(self, "producer_id", _identifier(self.producer_id, "producer_id"))
         if not isinstance(self.attributes, Mapping):
             raise GuardValidationError("attributes must be a mapping")
         _reject_forbidden(self.attributes, "ComplianceGateDecision.attributes")
         object.__setattr__(self, "attributes", dict(self.attributes))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
 
     @property
     def digest(self) -> str:
         return stable_digest(self.to_dict())
 
     def permits_automation(self) -> bool:
-        return (
-            self.outcome is TransactionVerdictOutcome.ALLOW
-            and not self.blocks_automation
-        )
+        return self.outcome is TransactionVerdictOutcome.ALLOW and not self.blocks_automation
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -1598,9 +1479,7 @@ class ComplianceGateDecision:
             expiry=value.get("expiry", ""),
             producer_id=value.get("producer_id", DEFAULT_PRODUCER_ID),
             attributes=value.get("attributes", {}),
-            schema_version=value.get(
-                "schema_version", COMPLIANCE_GATE_DECISION_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", COMPLIANCE_GATE_DECISION_SCHEMA_VERSION),
         )
 
 
@@ -1698,19 +1577,13 @@ def _evaluate_sanctions_decision(
         return (
             TransactionVerdictOutcome.DENY,
             "snapshot_mismatch",
-            (
-                f"sanctions snapshot for {party.party_id} does not match "
-                "request-bound list revision"
-            ),
+            (f"sanctions snapshot for {party.party_id} does not match request-bound list revision"),
         )
     if list_revision and decision.snapshot_revision != list_revision:
         return (
             TransactionVerdictOutcome.DENY,
             "revision_mismatch",
-            (
-                f"sanctions revision for {party.party_id} does not match "
-                "request-bound list revision"
-            ),
+            (f"sanctions revision for {party.party_id} does not match request-bound list revision"),
         )
 
     level = decision.match_level
@@ -1731,10 +1604,7 @@ def _evaluate_sanctions_decision(
         return (
             TransactionVerdictOutcome.INCONCLUSIVE,
             "unreviewed_party_ownership",
-            (
-                f"party/ownership decision for {party.party_id} lacks "
-                "reviewed evidence"
-            ),
+            (f"party/ownership decision for {party.party_id} lacks reviewed evidence"),
         )
 
     # Exact listed / named designated: hard-deny unless scoped active license.
@@ -1748,16 +1618,11 @@ def _evaluate_sanctions_decision(
                     "scoped unexpired license; requires review"
                 ),
             )
-        if decision.license_ids and not decision.license_active(
-            clock, activity_id=activity_id
-        ):
+        if decision.license_ids and not decision.license_active(clock, activity_id=activity_id):
             return (
                 TransactionVerdictOutcome.DENY,
                 "expired_or_unscoped_license",
-                (
-                    f"license for {party.party_id} is expired or not scoped "
-                    "to this activity"
-                ),
+                (f"license for {party.party_id} is expired or not scoped to this activity"),
             )
         return (
             TransactionVerdictOutcome.DENY,
@@ -1819,31 +1684,19 @@ def _evaluate_exposure_decision(
         return (
             TransactionVerdictOutcome.DENY,
             "bounds_mismatch",
-            (
-                f"exposure bounds for {party.party_id} do not match the "
-                "configured named bounds"
-            ),
+            (f"exposure bounds for {party.party_id} do not match the configured named bounds"),
         )
     if decision.truncated or decision.verdict is ExposureVerdict.TRUNCATED:
         return (
             TransactionVerdictOutcome.INCONCLUSIVE,
             "truncated",
-            (
-                f"exposure search truncated for {party.party_id}; "
-                "cannot prove absence"
-            ),
+            (f"exposure search truncated for {party.party_id}; cannot prove absence"),
         )
-    if (
-        decision.incomplete_frontier
-        or decision.verdict is ExposureVerdict.INCOMPLETE_FRONTIER
-    ):
+    if decision.incomplete_frontier or decision.verdict is ExposureVerdict.INCOMPLETE_FRONTIER:
         return (
             TransactionVerdictOutcome.INCONCLUSIVE,
             "incomplete_frontier",
-            (
-                f"exposure completeness frontier incomplete for "
-                f"{party.party_id}"
-            ),
+            (f"exposure completeness frontier incomplete for {party.party_id}"),
         )
     if decision.verdict is ExposureVerdict.ERROR:
         return (
@@ -1910,16 +1763,12 @@ class ComplianceGate:
 
     def __post_init__(self) -> None:
         if self.interface != COMPLIANCE_GATE_INTERFACE:
-            raise GuardValidationError(
-                f"unsupported compliance gate interface: {self.interface!r}"
-            )
+            raise GuardValidationError(f"unsupported compliance gate interface: {self.interface!r}")
         if self.schema_version != COMPLIANCE_GATE_SCHEMA_VERSION:
             raise GuardValidationError(
                 f"unsupported compliance gate schema: {self.schema_version!r}"
             )
-        object.__setattr__(
-            self, "producer_id", _identifier(self.producer_id, "producer_id")
-        )
+        object.__setattr__(self, "producer_id", _identifier(self.producer_id, "producer_id"))
 
     def evaluate(
         self,
@@ -1933,9 +1782,7 @@ class ComplianceGate:
             if isinstance(request, Mapping):
                 request = ComplianceGateRequest.from_dict(request)
             else:
-                raise GuardValidationError(
-                    "request must be a ComplianceGateRequest"
-                )
+                raise GuardValidationError("request must be a ComplianceGateRequest")
 
         clock = now or _iso_now()
         reason_codes: list[str] = []
@@ -1944,9 +1791,7 @@ class ComplianceGate:
         exposure_results: dict[str, str] = {}
         blocking: TransactionVerdictOutcome | None = None
 
-        def _block(
-            outcome: TransactionVerdictOutcome, code: str, reason: str
-        ) -> None:
+        def _block(outcome: TransactionVerdictOutcome, code: str, reason: str) -> None:
             nonlocal blocking
             reason_codes.append(code)
             reasons.append(reason)
@@ -2051,21 +1896,23 @@ class ComplianceGate:
             if not reason_codes:
                 reason_codes.append("compliance.allow")
                 reasons.append(
-                    "all counterparties clear under direct sanctions and "
-                    "bounded-flow policy"
+                    "all counterparties clear under direct sanctions and bounded-flow policy"
                 )
             blocks = False
         else:
             outcome = blocking
             blocks = True
 
-        decision_id = "decision:" + stable_digest(
-            {
-                "request": request.request_digest,
-                "producer": self.producer_id,
-                "outcome": outcome.value,
-            }
-        )[:32]
+        decision_id = (
+            "decision:"
+            + stable_digest(
+                {
+                    "request": request.request_digest,
+                    "producer": self.producer_id,
+                    "outcome": outcome.value,
+                }
+            )[:32]
+        )
 
         return ComplianceGateDecision(
             decision_id=decision_id,
@@ -2082,12 +1929,8 @@ class ComplianceGate:
             screened_roles=tuple(sorted(present_roles)),
             sanctions_results=sanctions_results,
             exposure_results=exposure_results,
-            sanctions_decision_ids=tuple(
-                d.decision_id for d in request.sanctions_decisions
-            ),
-            exposure_decision_ids=tuple(
-                d.decision_id for d in request.exposure_decisions
-            ),
+            sanctions_decision_ids=tuple(d.decision_id for d in request.sanctions_decisions),
+            exposure_decision_ids=tuple(d.decision_id for d in request.exposure_decisions),
             list_snapshot_id=request.list_snapshot_id,
             list_revision=request.list_revision,
             issued_at=request.issued_at,
@@ -2112,16 +1955,12 @@ class ComplianceGate:
             if isinstance(decision, Mapping):
                 decision = ComplianceGateDecision.from_dict(decision)
             else:
-                raise GuardValidationError(
-                    "decision must be a ComplianceGateDecision"
-                )
+                raise GuardValidationError("decision must be a ComplianceGateDecision")
         if not isinstance(request, ComplianceGateRequest):
             if isinstance(request, Mapping):
                 request = ComplianceGateRequest.from_dict(request)
             else:
-                raise GuardValidationError(
-                    "request must be a ComplianceGateRequest"
-                )
+                raise GuardValidationError("request must be a ComplianceGateRequest")
 
         mismatches: list[str] = []
         if decision.request_digest != request.request_digest:
@@ -2161,10 +2000,7 @@ class ComplianceGate:
                 outcome=TransactionVerdictOutcome.STALE,
                 blocks_automation=True,
                 reason_codes=("compliance.revalidate_mismatch",),
-                reasons=(
-                    "prior compliance permission invalidated: "
-                    + ", ".join(mismatches),
-                ),
+                reasons=("prior compliance permission invalidated: " + ", ".join(mismatches),),
                 intent_digest=request.intent_digest,
                 candidate_digest=request.candidate_digest,
                 network=request.intent.network,
@@ -2173,12 +2009,8 @@ class ComplianceGate:
                 screened_roles=tuple(sorted(request.counterparties.roles)),
                 sanctions_results=dict(decision.sanctions_results),
                 exposure_results=dict(decision.exposure_results),
-                sanctions_decision_ids=tuple(
-                    d.decision_id for d in request.sanctions_decisions
-                ),
-                exposure_decision_ids=tuple(
-                    d.decision_id for d in request.exposure_decisions
-                ),
+                sanctions_decision_ids=tuple(d.decision_id for d in request.sanctions_decisions),
+                exposure_decision_ids=tuple(d.decision_id for d in request.exposure_decisions),
                 list_snapshot_id=request.list_snapshot_id,
                 list_revision=request.list_revision,
                 issued_at=request.issued_at,

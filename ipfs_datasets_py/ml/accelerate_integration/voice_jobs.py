@@ -589,24 +589,14 @@ class VoiceJobBridge:
 
 
 def _canonical_envelope_text(value: Any, *, field_name: str) -> str:
-    if (
-        not isinstance(value, str)
-        or not value
-        or value.strip() != value
-    ):
+    if not isinstance(value, str) or not value or value.strip() != value:
         raise ValueError(f"{field_name} must be a non-empty canonical string")
     return value
 
 
 def _finite_non_negative_number(value: Any, *, field_name: str) -> None:
-    valid = (
-        isinstance(value, int)
-        and not isinstance(value, bool)
-        and value >= 0
-    ) or (
-        isinstance(value, float)
-        and math.isfinite(value)
-        and value >= 0
+    valid = (isinstance(value, int) and not isinstance(value, bool) and value >= 0) or (
+        isinstance(value, float) and math.isfinite(value) and value >= 0
     )
     if not valid:
         raise ValueError(f"{field_name} must be a finite non-negative number")
@@ -673,9 +663,7 @@ def _extract_canonical_result_payload(
                 )
                 != request.task_type
             ):
-                raise ValueError(
-                    "result.progress.task_type does not match the requested task type"
-                )
+                raise ValueError("result.progress.task_type does not match the requested task type")
         progress_worker = progress.get("worker_id")
         if progress_worker is not None:
             progress_worker_id = _canonical_envelope_text(
@@ -683,9 +671,7 @@ def _extract_canonical_result_payload(
                 field_name="result.progress.worker_id",
             )
             if bound_worker_id and progress_worker_id != bound_worker_id:
-                raise ValueError(
-                    "result.progress.worker_id does not match executor_worker_id"
-                )
+                raise ValueError("result.progress.worker_id does not match executor_worker_id")
         for field_name in (
             "cancelled_at",
             "heartbeat_ts",
@@ -702,9 +688,7 @@ def _extract_canonical_result_payload(
             or not isinstance(progress["release_count"], int)
             or progress["release_count"] < 0
         ):
-            raise ValueError(
-                "result.progress.release_count must be a non-negative integer"
-            )
+            raise ValueError("result.progress.release_count must be a non-negative integer")
         if "mesh" in progress and not isinstance(progress["mesh"], bool):
             raise ValueError("result.progress.mesh must be a boolean")
         for field_name in (
@@ -724,9 +708,7 @@ def _extract_canonical_result_payload(
             raise ValueError("result.logs must be a bounded list")
         for index, entry in enumerate(logs):
             if not isinstance(entry, Mapping) or set(entry) != _LOG_ENVELOPE_FIELDS:
-                raise ValueError(
-                    f"result.logs[{index}] must match the canonical log envelope"
-                )
+                raise ValueError(f"result.logs[{index}] must match the canonical log envelope")
             _finite_non_negative_number(
                 entry["ts"],
                 field_name=f"result.logs[{index}].ts",
@@ -745,9 +727,7 @@ def _extract_canonical_result_payload(
     }
     lineage = canonical.get("lineage")
     if isinstance(lineage, Mapping):
-        unknown_lineage = set(lineage) - (
-            _CANONICAL_LINEAGE_FIELDS | _LINEAGE_ENVELOPE_FIELDS
-        )
+        unknown_lineage = set(lineage) - (_CANONICAL_LINEAGE_FIELDS | _LINEAGE_ENVELOPE_FIELDS)
         if unknown_lineage:
             names = ", ".join(sorted(repr(item) for item in unknown_lineage))
             raise ValueError(f"unknown voice lineage envelope fields: {names}")
@@ -759,9 +739,7 @@ def _extract_canonical_result_payload(
             )
             != request.model_name
         ):
-            raise ValueError(
-                "result.lineage.model_id does not match the requested model"
-            )
+            raise ValueError("result.lineage.model_id does not match the requested model")
         canonical["lineage"] = {
             field_name: lineage[field_name]
             for field_name in _CANONICAL_LINEAGE_FIELDS

@@ -59,9 +59,7 @@ PROOF_HOLE_EMISSION_SCHEMA: Final = (
 COMPILATION_SURFACE_SCHEMA: Final = (
     "ipfs_datasets_py/logic/software_verification/compilation-surface@1"
 )
-ANNOTATION_SITE_SCHEMA: Final = (
-    "ipfs_datasets_py/logic/software_verification/annotation-site@1"
-)
+ANNOTATION_SITE_SCHEMA: Final = "ipfs_datasets_py/logic/software_verification/annotation-site@1"
 EMITTER_ALGORITHM_VERSION: Final = "typed-proof-hole-emitter/1.0.0"
 
 DEFAULT_PROVIDER_IDS: Final[tuple[str, ...]] = ("provider:z3",)
@@ -166,9 +164,7 @@ _ROLE_TO_HOLE_KIND: Final[Mapping[AnnotationRole, HoleKind]] = {
     AnnotationRole.UNSUPPORTED_SEMANTICS: HoleKind.UNSUPPORTED_SEMANTICS,
     AnnotationRole.UNAVAILABLE_TOOL: HoleKind.UNAVAILABLE_TOOL,
     AnnotationRole.UNAVAILABLE_RECONSTRUCTION: HoleKind.UNAVAILABLE_RECONSTRUCTION,
-    AnnotationRole.REQUIRED_IMPLEMENTATION_CHANGE: (
-        HoleKind.REQUIRED_IMPLEMENTATION_CHANGE
-    ),
+    AnnotationRole.REQUIRED_IMPLEMENTATION_CHANGE: (HoleKind.REQUIRED_IMPLEMENTATION_CHANGE),
 }
 
 # Roles that represent non-proof gaps (semantics / tools / false goals).
@@ -268,9 +264,7 @@ _ROLE_CHECKER: Final[Mapping[AnnotationRole, str]] = {
     AnnotationRole.UNSUPPORTED_SEMANTICS: "semantics_support_probe",
     AnnotationRole.UNAVAILABLE_TOOL: "tool_availability_probe",
     AnnotationRole.UNAVAILABLE_RECONSTRUCTION: "reconstruction_probe",
-    AnnotationRole.REQUIRED_IMPLEMENTATION_CHANGE: (
-        "implementation_conformance_check"
-    ),
+    AnnotationRole.REQUIRED_IMPLEMENTATION_CHANGE: ("implementation_conformance_check"),
 }
 
 _ROLE_RECIPE_STEPS: Final[Mapping[AnnotationRole, tuple[str, ...]]] = {
@@ -357,9 +351,7 @@ def _enum(value: object, enum_type: type[StrEnum], label: str) -> StrEnum:
         try:
             return enum_type(value.strip())
         except ValueError as error:
-            raise ProofHoleEmissionError(
-                f"{label} must be a valid {enum_type.__name__}"
-            ) from error
+            raise ProofHoleEmissionError(f"{label} must be a valid {enum_type.__name__}") from error
     raise ProofHoleEmissionError(f"{label} must be a {enum_type.__name__}")
 
 
@@ -386,7 +378,9 @@ def _string_tuple(
     return tuple(items)
 
 
-def _role_set(values: Sequence[AnnotationRole | str] | None, label: str) -> frozenset[AnnotationRole]:
+def _role_set(
+    values: Sequence[AnnotationRole | str] | None, label: str
+) -> frozenset[AnnotationRole]:
     if values is None:
         return frozenset()
     if not isinstance(values, Sequence) or isinstance(values, (str, bytes)):
@@ -409,9 +403,7 @@ def _source_binding(value: object, label: str = "source") -> SourceSpanBinding:
 
 
 def _stable_hole_id(*parts: str) -> str:
-    digest = hashlib.sha256(
-        "|".join(parts).encode("utf-8", errors="replace")
-    ).hexdigest()[:16]
+    digest = hashlib.sha256("|".join(parts).encode("utf-8", errors="replace")).hexdigest()[:16]
     return f"hole:{parts[0]}:{digest}"
 
 
@@ -498,12 +490,8 @@ class AnnotationSite:
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "site_id", _text(self.site_id, "site_id", maximum=256)
-        )
-        object.__setattr__(
-            self, "site_kind", _enum(self.site_kind, SiteKind, "site_kind")
-        )
+        object.__setattr__(self, "site_id", _text(self.site_id, "site_id", maximum=256))
+        object.__setattr__(self, "site_kind", _enum(self.site_kind, SiteKind, "site_kind"))
         object.__setattr__(self, "source", _source_binding(self.source, "source"))
         object.__setattr__(
             self,
@@ -560,9 +548,7 @@ class AnnotationSite:
             )
         if self.bounds is not None and not isinstance(self.bounds, ResourceBounds):
             if isinstance(self.bounds, Mapping):
-                object.__setattr__(
-                    self, "bounds", ResourceBounds.from_dict(self.bounds)
-                )
+                object.__setattr__(self, "bounds", ResourceBounds.from_dict(self.bounds))
             else:
                 raise ProofHoleEmissionError("bounds must be a ResourceBounds")
         if not isinstance(self.metadata, Mapping):
@@ -606,13 +592,9 @@ class AnnotationSite:
             "provider_ids": list(self.provider_ids),
             "formal_goal_id": self.formal_goal_id,
             "expected_authority": (
-                None
-                if self.expected_authority is None
-                else self.expected_authority.value
+                None if self.expected_authority is None else self.expected_authority.value
             ),
-            "property_class": (
-                None if self.property_class is None else self.property_class.value
-            ),
+            "property_class": (None if self.property_class is None else self.property_class.value),
             "bounds": None if self.bounds is None else self.bounds.to_dict(),
             "metadata": dict(self.metadata),
             "missing_roles": sorted(role.value for role in self.missing_roles),
@@ -662,9 +644,7 @@ class CompilationSurface:
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "surface_id", _text(self.surface_id, "surface_id", maximum=256)
-        )
+        object.__setattr__(self, "surface_id", _text(self.surface_id, "surface_id", maximum=256))
         object.__setattr__(
             self,
             "formal_goal_id",
@@ -679,13 +659,9 @@ class CompilationSurface:
             if isinstance(site, Mapping):
                 site = AnnotationSite.from_dict(site)
             elif not isinstance(site, AnnotationSite):
-                raise ProofHoleEmissionError(
-                    f"sites[{index}] must be an AnnotationSite"
-                )
+                raise ProofHoleEmissionError(f"sites[{index}] must be an AnnotationSite")
             if site.site_id in seen:
-                raise ProofHoleEmissionError(
-                    f"duplicate annotation site id {site.site_id!r}"
-                )
+                raise ProofHoleEmissionError(f"duplicate annotation site id {site.site_id!r}")
             seen.add(site.site_id)
             if self.tree_id and not site.source.tree_id:
                 site = replace(
@@ -766,16 +742,16 @@ class CompilationSurface:
             formal_goal_id=payload.get("formal_goal_id", ""),
             tree_id=payload.get("tree_id", ""),
             sites=tuple(
-                AnnotationSite.from_dict(item)
-                if isinstance(item, Mapping)
-                else item
+                AnnotationSite.from_dict(item) if isinstance(item, Mapping) else item
                 for item in (payload.get("sites") or ())
             ),
             provider_ids=tuple(payload.get("provider_ids") or ()),
             bounds=(
                 ResourceBounds.from_dict(bounds_raw)
                 if isinstance(bounds_raw, Mapping)
-                else bounds_raw if bounds_raw is not None else DEFAULT_BOUNDS
+                else bounds_raw
+                if bounds_raw is not None
+                else DEFAULT_BOUNDS
             ),
             metadata=payload.get("metadata") or {},
         )
@@ -823,8 +799,7 @@ def loop_site(
         + (" and variant" if require_variant else ""),
         rationale=rationale
         or (
-            "Loop verification conditions need an explicit invariant; "
-            "defaults are never invented."
+            "Loop verification conditions need an explicit invariant; defaults are never invented."
         ),
         formal_goal_id=formal_goal_id,
     )
@@ -897,11 +872,7 @@ def fairness_site(
 ) -> AnnotationSite:
     """Build a temporal fairness premise site."""
 
-    present = (
-        frozenset({AnnotationRole.TEMPORAL_FAIRNESS})
-        if has_fairness_premise
-        else frozenset()
-    )
+    present = frozenset({AnnotationRole.TEMPORAL_FAIRNESS}) if has_fairness_premise else frozenset()
     return AnnotationSite(
         site_id=site_id,
         site_kind=SiteKind.TEMPORAL,
@@ -931,9 +902,7 @@ def bridge_lemma_site(
 ) -> AnnotationSite:
     """Build a bridge-lemma obligation site between logic/IR fragments."""
 
-    present = (
-        frozenset({AnnotationRole.BRIDGE_LEMMA}) if has_bridge_lemma else frozenset()
-    )
+    present = frozenset({AnnotationRole.BRIDGE_LEMMA}) if has_bridge_lemma else frozenset()
     return AnnotationSite(
         site_id=site_id,
         site_kind=SiteKind.BRIDGE,
@@ -995,9 +964,7 @@ def unavailable_tool_site(
         present_roles=frozenset(),
         dependency_ids=tuple(dependency_ids),
         statement=f"tool {tool_id} is unavailable",
-        rationale=(
-            "Tool absence is an operational non-success state, not missing proof."
-        ),
+        rationale=("Tool absence is an operational non-success state, not missing proof."),
         formal_goal_id=formal_goal_id,
         metadata={"tool_id": tool_id},
     )
@@ -1025,12 +992,8 @@ class ProofHoleEmission:
     invented_defaults: bool = False
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "emission_id", _text(self.emission_id, "emission_id", maximum=256)
-        )
-        object.__setattr__(
-            self, "surface_id", _text(self.surface_id, "surface_id", maximum=256)
-        )
+        object.__setattr__(self, "emission_id", _text(self.emission_id, "emission_id", maximum=256))
+        object.__setattr__(self, "surface_id", _text(self.surface_id, "surface_id", maximum=256))
         object.__setattr__(
             self,
             "formal_goal_id",
@@ -1042,15 +1005,11 @@ class ProofHoleEmission:
                 try:
                     hole = ProofHole.from_dict(hole)
                 except TacticianContractError as error:
-                    raise ProofHoleEmissionError(
-                        f"holes[{index}]: {error}"
-                    ) from error
+                    raise ProofHoleEmissionError(f"holes[{index}]: {error}") from error
             elif not isinstance(hole, ProofHole):
                 raise ProofHoleEmissionError(f"holes[{index}] must be a ProofHole")
             if hole.proof_claimed or hole.completion_claimed:
-                raise ProofHoleEmissionError(
-                    "emitted ProofHole cannot claim proof or completion"
-                )
+                raise ProofHoleEmissionError("emitted ProofHole cannot claim proof or completion")
             normalized.append(hole)
         object.__setattr__(self, "holes", tuple(normalized))
         object.__setattr__(
@@ -1091,9 +1050,7 @@ class ProofHoleEmission:
         resolved = kind if isinstance(kind, HoleKind) else HoleKind(kind)
         return tuple(hole for hole in self.holes if hole.kind is resolved)
 
-    def hole_for_site_role(
-        self, site_id: str, role: AnnotationRole | str
-    ) -> ProofHole | None:
+    def hole_for_site_role(self, site_id: str, role: AnnotationRole | str) -> ProofHole | None:
         resolved = _enum(role, AnnotationRole, "role")
         kind = _ROLE_TO_HOLE_KIND[resolved]
         prefix = f"hole:{site_id}:"
@@ -1145,9 +1102,7 @@ class ProofHoleEmission:
             holes=tuple(payload.get("holes") or ()),
             missing_proof_hole_ids=tuple(payload.get("missing_proof_hole_ids") or ()),
             non_proof_hole_ids=tuple(payload.get("non_proof_hole_ids") or ()),
-            algorithm_version=payload.get(
-                "algorithm_version", EMITTER_ALGORITHM_VERSION
-            ),
+            algorithm_version=payload.get("algorithm_version", EMITTER_ALGORITHM_VERSION),
             invented_defaults=False,
         )
 
@@ -1249,9 +1204,7 @@ class TypedProofHoleEmitter:
                 hole.hole_id for hole in holes_sorted if hole.hole_id in set(missing_ids)
             ),
             non_proof_hole_ids=tuple(
-                hole.hole_id
-                for hole in holes_sorted
-                if hole.hole_id in set(non_proof_ids)
+                hole.hole_id for hole in holes_sorted if hole.hole_id in set(non_proof_ids)
             ),
             algorithm_version=self.ALGORITHM_VERSION,
             invented_defaults=False,
@@ -1358,9 +1311,7 @@ def emit_typed_proof_holes(
 ) -> ProofHoleEmission:
     """Convenience entry point for ``TypedProofHoleEmitter@1``."""
 
-    return TypedProofHoleEmitter(
-        require_source_spans=require_source_spans
-    ).emit(surface)
+    return TypedProofHoleEmitter(require_source_spans=require_source_spans).emit(surface)
 
 
 __all__ = [

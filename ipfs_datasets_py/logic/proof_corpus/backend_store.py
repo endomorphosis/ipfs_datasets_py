@@ -111,12 +111,7 @@ _NEGATIVE_STATUSES: Final = frozenset(
 def _text(value: object, field_name: str, *, optional: bool = False) -> str:
     if optional and value == "":
         return ""
-    if (
-        not isinstance(value, str)
-        or not value
-        or value != value.strip()
-        or "\x00" in value
-    ):
+    if not isinstance(value, str) or not value or value != value.strip() or "\x00" in value:
         qualifier = "an empty or " if optional else "a "
         raise BackendProofCorpusError(
             f"{field_name} must be {qualifier}non-empty trimmed string without NUL"
@@ -129,9 +124,7 @@ def _enum(value: object, enum_type: type[Any], field_name: str) -> Any:
         return value if isinstance(value, enum_type) else enum_type(value)
     except (TypeError, ValueError) as error:
         choices = ", ".join(repr(item.value) for item in enum_type)
-        raise BackendProofCorpusError(
-            f"{field_name} must be one of {choices}"
-        ) from error
+        raise BackendProofCorpusError(f"{field_name} must be one of {choices}") from error
 
 
 def _json_ready(value: Any) -> Any:
@@ -279,18 +272,12 @@ class BackendCorpusRecord:
             "source_entry_digest",
             _text(self.source_entry_digest, "source_entry_digest", optional=True),
         )
-        object.__setattr__(
-            self, "result_id", _text(self.result_id, "result_id", optional=True)
-        )
-        diagnostics = tuple(
-            _text(item, "diagnostics item") for item in (self.diagnostics or ())
-        )
+        object.__setattr__(self, "result_id", _text(self.result_id, "result_id", optional=True))
+        diagnostics = tuple(_text(item, "diagnostics item") for item in (self.diagnostics or ()))
         if len(diagnostics) != len(set(diagnostics)):
             raise BackendProofCorpusError("diagnostics must not contain duplicates")
         object.__setattr__(self, "diagnostics", diagnostics)
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != BACKEND_PROOF_CORPUS_RECORD_SCHEMA_VERSION:
             raise BackendProofCorpusError(
                 f"unsupported backend corpus record schema: {self.schema_version!r}"
@@ -310,9 +297,7 @@ class BackendCorpusRecord:
                 f"backend-receipt:{self.content_digest}",
             )
         else:
-            object.__setattr__(
-                self, "content_cid", _text(self.content_cid, "content_cid")
-            )
+            object.__setattr__(self, "content_cid", _text(self.content_cid, "content_cid"))
 
     def identity_payload(self) -> dict[str, Any]:
         return {
@@ -335,14 +320,10 @@ class BackendCorpusRecord:
     def verify_integrity(self) -> BackendCorpusRecord:
         computed = self.compute_content_digest()
         if computed != self.content_digest:
-            raise BackendProofCorpusIntegrityError(
-                "backend corpus record failed integrity rehash"
-            )
+            raise BackendProofCorpusIntegrityError("backend corpus record failed integrity rehash")
         return self
 
-    def require_authority_at_most(
-        self, ceiling: EvidenceAuthority | str
-    ) -> BackendCorpusRecord:
+    def require_authority_at_most(self, ceiling: EvidenceAuthority | str) -> BackendCorpusRecord:
         limit = _enum(ceiling, EvidenceAuthority, "evidence_authority ceiling")
         if authority_rank(self.evidence_authority) > authority_rank(limit):
             raise BackendProofCorpusAuthorityError(
@@ -378,9 +359,7 @@ class BackendCorpusRecord:
             kind=payload.get("kind", BackendReceiptKind.ATTEMPT.value),
             result_authority=payload.get("result_authority", ""),
             status=payload.get("status", ""),
-            evidence_authority=payload.get(
-                "evidence_authority", EvidenceAuthority.NONE.value
-            ),
+            evidence_authority=payload.get("evidence_authority", EvidenceAuthority.NONE.value),
             result_payload=FrozenMap(payload.get("result_payload") or {}),
             content_digest=str(payload.get("content_digest") or ""),
             content_cid=str(payload.get("content_cid") or ""),
@@ -403,9 +382,7 @@ class BackendCorpusRecord:
         """Admit a validated cache entry into an immutable corpus record."""
 
         if not isinstance(entry, VerificationCacheEntry):
-            raise BackendProofCorpusError(
-                "from_cache_entry requires a VerificationCacheEntry"
-            )
+            raise BackendProofCorpusError("from_cache_entry requires a VerificationCacheEntry")
         entry = entry.verify_integrity()
         if kind is None:
             if entry.polarity is CachePolarity.NEGATIVE:
@@ -440,9 +417,7 @@ class BackendCorpusRecord:
         """Admit a typed backend result under an exact cache key."""
 
         if not isinstance(result, TypedBackendResult):
-            raise BackendProofCorpusError(
-                "from_typed_result requires a TypedBackendResult"
-            )
+            raise BackendProofCorpusError("from_typed_result requires a TypedBackendResult")
         entry = VerificationCacheEntry.from_typed_result(
             key,
             result,
@@ -487,9 +462,7 @@ class BackendProofCorpusStoreProtocol(Protocol):
 
     def get_by_key(self, key: VerificationCacheKey) -> BackendCorpusRecord | None: ...
 
-    def put_from_cache_entry(
-        self, entry: VerificationCacheEntry
-    ) -> BackendCorpusRecord: ...
+    def put_from_cache_entry(self, entry: VerificationCacheEntry) -> BackendCorpusRecord: ...
 
     def put_from_result(
         self,
@@ -645,9 +618,7 @@ class BackendProofCorpusStore:
             )
         return record
 
-    def put_from_cache_entry(
-        self, entry: VerificationCacheEntry
-    ) -> BackendCorpusRecord:
+    def put_from_cache_entry(self, entry: VerificationCacheEntry) -> BackendCorpusRecord:
         """Bridge a validated exact-cache entry into the immutable corpus."""
 
         try:
@@ -709,9 +680,7 @@ class BackendProofCorpusStore:
 
         active_cache = cache if cache is not None else self._cache
         if active_cache is None:
-            raise BackendProofCorpusError(
-                "bridge_cache_hit requires a VerificationCacheProtocol"
-            )
+            raise BackendProofCorpusError("bridge_cache_hit requires a VerificationCacheProtocol")
         lookup = active_cache.lookup(
             key,
             require_result_authority=require_result_authority,
@@ -753,9 +722,7 @@ class BackendProofCorpusStore:
 
         kind = receipt_kind_for_status(result.status)
         if kind is not BackendReceiptKind.PROOF:
-            raise BackendProofCorpusError(
-                f"status {result.status.value!r} is not a proof receipt"
-            )
+            raise BackendProofCorpusError(f"status {result.status.value!r} is not a proof receipt")
         return self.put_from_result(
             key,
             result,

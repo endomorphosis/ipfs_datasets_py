@@ -129,12 +129,7 @@ class ConformanceStatus(StrEnum):
 def _text(value: object, field_name: str, *, optional: bool = False) -> str:
     if optional and value == "":
         return ""
-    if (
-        not isinstance(value, str)
-        or not value
-        or value != value.strip()
-        or "\x00" in value
-    ):
+    if not isinstance(value, str) or not value or value != value.strip() or "\x00" in value:
         qualifier = "an empty or " if optional else "a "
         raise AuthorizationBackendError(
             f"{field_name} must be {qualifier}non-empty trimmed string without NUL bytes"
@@ -145,9 +140,7 @@ def _text(value: object, field_name: str, *, optional: bool = False) -> str:
 def _digest(value: object, field_name: str) -> str:
     result = _text(value, field_name)
     if not _DIGEST.fullmatch(result):
-        raise AuthorizationBackendError(
-            f"{field_name} must be a lowercase SHA-256 digest"
-        )
+        raise AuthorizationBackendError(f"{field_name} must be a lowercase SHA-256 digest")
     return result
 
 
@@ -165,9 +158,7 @@ def _enum(value: object, enum_type: type[StrEnum], field_name: str) -> Any:
         return value if isinstance(value, enum_type) else enum_type(value)
     except (TypeError, ValueError) as error:
         choices = ", ".join(repr(item.value) for item in enum_type)
-        raise AuthorizationBackendError(
-            f"{field_name} must be one of {choices}"
-        ) from error
+        raise AuthorizationBackendError(f"{field_name} must be one of {choices}") from error
 
 
 def _sanitize_diagnostic(text: str) -> str:
@@ -225,12 +216,9 @@ def parse_engine_outcome(stdout: str, stderr: str = "") -> DecisionOutcome | Non
             return DecisionOutcome.DENY
         return None
     has_allow = any(
-        token in {"permit", "allowed", "authorized", "allow", "true"}
-        for token in tokens
+        token in {"permit", "allowed", "authorized", "allow", "true"} for token in tokens
     )
-    has_deny = any(
-        token in {"deny", "denied", "unauthorized", "false"} for token in tokens
-    )
+    has_deny = any(token in {"deny", "denied", "unauthorized", "false"} for token in tokens)
     has_conflict = any(token == "conflict" for token in tokens)
     has_unknown = any(token == "unknown" for token in tokens)
     if has_conflict or (has_allow and has_deny):
@@ -255,16 +243,12 @@ class AuthorizationSourceBinding:
     schema_version: str = SOURCE_BINDING_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "request_digest", _digest(self.request_digest, "request_digest")
-        )
+        object.__setattr__(self, "request_digest", _digest(self.request_digest, "request_digest"))
         object.__setattr__(
             self, "document_digest", _digest(self.document_digest, "document_digest")
         )
         object.__setattr__(self, "query_id", _text(self.query_id, "query_id"))
-        object.__setattr__(
-            self, "source_format", _text(self.source_format, "source_format")
-        )
+        object.__setattr__(self, "source_format", _text(self.source_format, "source_format"))
         if self.schema_version != SOURCE_BINDING_VERSION:
             raise AuthorizationBackendError(
                 f"unsupported source binding schema: {self.schema_version!r}"
@@ -315,18 +299,14 @@ class EngineConformanceReceipt:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "engine", _enum(self.engine, EngineKind, "engine"))
-        object.__setattr__(
-            self, "status", _enum(self.status, ConformanceStatus, "status")
+        object.__setattr__(self, "status", _enum(self.status, ConformanceStatus, "status"))
+        checked = tuple(
+            _text(item, "checked_fixture_ids item") for item in self.checked_fixture_ids
         )
-        checked = tuple(_text(item, "checked_fixture_ids item") for item in self.checked_fixture_ids)
         object.__setattr__(self, "checked_fixture_ids", checked)
-        disagreements = tuple(
-            _text(item, "disagreements item") for item in self.disagreements
-        )
+        disagreements = tuple(_text(item, "disagreements item") for item in self.disagreements)
         object.__setattr__(self, "disagreements", disagreements)
-        object.__setattr__(
-            self, "reason", _text(self.reason, "reason", optional=True)
-        )
+        object.__setattr__(self, "reason", _text(self.reason, "reason", optional=True))
         if self.schema_version != ENGINE_RECEIPT_VERSION:
             raise AuthorizationBackendError(
                 f"unsupported engine receipt schema: {self.schema_version!r}"
@@ -354,9 +334,7 @@ class EvaluationReceipt:
     request_digest: str
     source_binding: AuthorizationSourceBinding
     outcome: DecisionOutcome | str
-    authority: AuthorizationEvidenceAuthority | str = (
-        AuthorizationEvidenceAuthority.AUTHORIZATION
-    )
+    authority: AuthorizationEvidenceAuthority | str = AuthorizationEvidenceAuthority.AUTHORIZATION
     generated_code_correctness: GeneratedCodeCorrectness | str = (
         GeneratedCodeCorrectness.NOT_ESTABLISHED
     )
@@ -370,29 +348,19 @@ class EvaluationReceipt:
     schema_version: str = EVALUATION_RECEIPT_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "request_digest", _digest(self.request_digest, "request_digest")
-        )
+        object.__setattr__(self, "request_digest", _digest(self.request_digest, "request_digest"))
         if not isinstance(self.source_binding, AuthorizationSourceBinding):
-            raise AuthorizationBackendError(
-                "source_binding must be AuthorizationSourceBinding"
-            )
+            raise AuthorizationBackendError("source_binding must be AuthorizationSourceBinding")
         if self.request_digest != self.source_binding.request_digest:
-            raise AuthorizationBackendError(
-                "receipt request does not match source binding"
-            )
-        object.__setattr__(
-            self, "outcome", _enum(self.outcome, DecisionOutcome, "outcome")
-        )
+            raise AuthorizationBackendError("receipt request does not match source binding")
+        object.__setattr__(self, "outcome", _enum(self.outcome, DecisionOutcome, "outcome"))
         authority = _enum(
             self.authority,
             AuthorizationEvidenceAuthority,
             "authority",
         )
         if authority is not AuthorizationEvidenceAuthority.AUTHORIZATION:
-            raise AuthorizationBackendError(
-                "authorization receipts cannot claim theorem authority"
-            )
+            raise AuthorizationBackendError("authorization receipts cannot claim theorem authority")
         object.__setattr__(self, "authority", authority)
         correctness = _enum(
             self.generated_code_correctness,
@@ -406,12 +374,8 @@ class EvaluationReceipt:
         object.__setattr__(self, "generated_code_correctness", correctness)
         if self.decision is not None and not isinstance(self.decision, PolicyDecision):
             raise AuthorizationBackendError("decision must be a PolicyDecision")
-        if self.explanation is not None and not isinstance(
-            self.explanation, DecisionExplanation
-        ):
-            raise AuthorizationBackendError(
-                "explanation must be a DecisionExplanation"
-            )
+        if self.explanation is not None and not isinstance(self.explanation, DecisionExplanation):
+            raise AuthorizationBackendError("explanation must be a DecisionExplanation")
         object.__setattr__(self, "engine", _enum(self.engine, EngineKind, "engine"))
         if self.engine_outcome is not None:
             object.__setattr__(
@@ -423,9 +387,7 @@ class EvaluationReceipt:
             raise AuthorizationBackendError("engine_agreed must be a boolean")
         if not isinstance(self.bounds_exhausted, bool):
             raise AuthorizationBackendError("bounds_exhausted must be a boolean")
-        object.__setattr__(
-            self, "diagnostics", bound_diagnostics(self.diagnostics)
-        )
+        object.__setattr__(self, "diagnostics", bound_diagnostics(self.diagnostics))
         if self.schema_version != EVALUATION_RECEIPT_VERSION:
             raise AuthorizationBackendError(
                 f"unsupported evaluation receipt schema: {self.schema_version!r}"
@@ -447,14 +409,8 @@ class EvaluationReceipt:
             "diagnostics": list(self.diagnostics),
             "engine": self.engine.value,
             "engine_agreed": self.engine_agreed,
-            "engine_outcome": (
-                None
-                if self.engine_outcome is None
-                else self.engine_outcome.value
-            ),
-            "explanation": (
-                None if self.explanation is None else self.explanation.to_dict()
-            ),
+            "engine_outcome": (None if self.engine_outcome is None else self.engine_outcome.value),
+            "explanation": (None if self.explanation is None else self.explanation.to_dict()),
             "generated_code_correctness": self.generated_code_correctness.value,
             "outcome": self.outcome.value,
             "request_digest": self.request_digest,
@@ -481,9 +437,7 @@ class AuthorizationBackendOutcome:
         if not isinstance(self.receipt, EvaluationReceipt):
             raise AuthorizationBackendError("receipt must be an EvaluationReceipt")
         if not isinstance(self.source_binding, AuthorizationSourceBinding):
-            raise AuthorizationBackendError(
-                "source_binding must be AuthorizationSourceBinding"
-            )
+            raise AuthorizationBackendError("source_binding must be AuthorizationSourceBinding")
 
 
 @dataclass(frozen=True, slots=True)
@@ -497,9 +451,7 @@ class AuthorizationFixture:
     expected_outcome: DecisionOutcome | str
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "fixture_id", _text(self.fixture_id, "fixture_id")
-        )
+        object.__setattr__(self, "fixture_id", _text(self.fixture_id, "fixture_id"))
         object.__setattr__(self, "category", _text(self.category, "category"))
         if not isinstance(self.document, AuthorizationIR):
             raise AuthorizationBackendError("document must be an AuthorizationIR")
@@ -554,9 +506,7 @@ class EvaluationState:
     derivation_steps: int = 0
     bounds_exhausted: bool = False
     first_effect: EffectKind | None = None
-    provenance: dict[tuple[str, GroundTuple], DerivedEvidence] = field(
-        default_factory=dict
-    )
+    provenance: dict[tuple[str, GroundTuple], DerivedEvidence] = field(default_factory=dict)
 
 
 class ReferenceAuthorizationEvaluator:
@@ -597,9 +547,7 @@ class ReferenceAuthorizationEvaluator:
             deny,
             first_effect=state.first_effect,
         )
-        explanation = self._build_explanation(
-            document, selected, outcome, state, allow, deny
-        )
+        explanation = self._build_explanation(document, selected, outcome, state, allow, deny)
         decision = PolicyDecision(
             decision_id=f"decision:{selected.query_id}",
             query_id=selected.query_id,
@@ -658,9 +606,7 @@ class ReferenceAuthorizationEvaluator:
         state.provenance[(predicate_id, args)] = evidence
         return True
 
-    def _seed_edb(
-        self, document: AuthorizationIR, state: EvaluationState, budget: int
-    ) -> None:
+    def _seed_edb(self, document: AuthorizationIR, state: EvaluationState, budget: int) -> None:
         for fact in document.facts:
             args = tuple(term.value for term in fact.atom.arguments)
             self._record(
@@ -702,9 +648,7 @@ class ReferenceAuthorizationEvaluator:
                 if state.bounds_exhausted:
                     return
 
-    def _predicate_by_name(
-        self, document: AuthorizationIR, name: str
-    ) -> str | None:
+    def _predicate_by_name(self, document: AuthorizationIR, name: str) -> str | None:
         for predicate in document.predicates:
             if predicate.name == name:
                 return predicate.predicate_id
@@ -775,9 +719,7 @@ class ReferenceAuthorizationEvaluator:
                     if state.bounds_exhausted:
                         return
 
-    def _resource_in_scope(
-        self, resource: str, scopes: Sequence[str]
-    ) -> bool:
+    def _resource_in_scope(self, resource: str, scopes: Sequence[str]) -> bool:
         if not scopes:
             return True
         for scope in scopes:
@@ -921,15 +863,11 @@ class ReferenceAuthorizationEvaluator:
         if constraint.kind is ConstraintKind.EQUALITY:
             left = expression.get("left")
             right = expression.get("right")
-            return binding.get(str(left), str(left)) == binding.get(
-                str(right), str(right)
-            )
+            return binding.get(str(left), str(left)) == binding.get(str(right), str(right))
         if constraint.kind is ConstraintKind.INEQUALITY:
             left = expression.get("left")
             right = expression.get("right")
-            return binding.get(str(left), str(left)) != binding.get(
-                str(right), str(right)
-            )
+            return binding.get(str(left), str(left)) != binding.get(str(right), str(right))
         if constraint.kind is ConstraintKind.MEMBERSHIP:
             value = binding.get(str(expression.get("value", "")), str(expression.get("value", "")))
             members = expression.get("members") or expression.get("set") or ()
@@ -945,9 +883,7 @@ class ReferenceAuthorizationEvaluator:
             # Resource ids that are not path-like are exempt from path_prefix scopes.
             if resource.startswith("resource:"):
                 return True
-            return bool(resource) and (
-                resource == prefix or resource.startswith(prefix)
-            )
+            return bool(resource) and (resource == prefix or resource.startswith(prefix))
         if constraint.kind is ConstraintKind.TEMPORAL_WINDOW:
             now = 0
             if query is not None:
@@ -1102,9 +1038,7 @@ class ReferenceAuthorizationEvaluator:
             if not bindings:
                 return False
         for candidate in bindings:
-            if self._constraint_holds(
-                document, rule.constraint_ids, candidate, query=query
-            ):
+            if self._constraint_holds(document, rule.constraint_ids, candidate, query=query):
                 return True
         return False
 
@@ -1121,9 +1055,7 @@ class ReferenceAuthorizationEvaluator:
         head_binding = self._head_binding_for_query(rule.head, query)
         if head_binding is None:
             return False
-        if not self._body_satisfied(
-            document, rule, state, head_binding, query, budget
-        ):
+        if not self._body_satisfied(document, rule, state, head_binding, query, budget):
             return False
         ground = self._instantiate_head(rule.head, head_binding)
         if ground is None:
@@ -1199,9 +1131,7 @@ class ReferenceAuthorizationEvaluator:
                 return False
         changed = False
         for binding in bindings:
-            if not self._constraint_holds(
-                document, rule.constraint_ids, binding, query=None
-            ):
+            if not self._constraint_holds(document, rule.constraint_ids, binding, query=None):
                 continue
             ground = self._instantiate_head(rule.head, binding)
             if ground is None:
@@ -1259,9 +1189,7 @@ class ReferenceAuthorizationEvaluator:
     def _query_ground(self, query: DecisionQuery) -> GroundTuple:
         return (query.principal_id, query.action, query.resource)
 
-    def _atom_matches_query(
-        self, atom_args: GroundTuple, query: DecisionQuery
-    ) -> bool:
+    def _atom_matches_query(self, atom_args: GroundTuple, query: DecisionQuery) -> bool:
         if len(atom_args) == 0:
             return True
         if len(atom_args) == 1:
@@ -1274,9 +1202,7 @@ class ReferenceAuthorizationEvaluator:
             return (
                 atom_args[0] == query.principal_id
                 and atom_args[1] in {query.action, query.resource}
-            ) or (
-                atom_args[0] == query.principal_id and atom_args[1] == query.action
-            )
+            ) or (atom_args[0] == query.principal_id and atom_args[1] == query.action)
         # Ternary may/denied style.
         principal, action, resource = atom_args[0], atom_args[1], atom_args[2]
         if principal != query.principal_id:
@@ -1453,9 +1379,7 @@ class ReferenceAuthorizationEvaluator:
 # ---------------------------------------------------------------------------
 
 
-def render_datalog_program(
-    document: AuthorizationIR, query: DecisionQuery
-) -> str:
+def render_datalog_program(document: AuthorizationIR, query: DecisionQuery) -> str:
     """Render a deterministic finite Soufflé program for the same query."""
 
     lines = [
@@ -1515,9 +1439,7 @@ def render_datalog_program(
     # Encode the reference decision as a fixture anchor for shadow engines.
     evaluator = ReferenceAuthorizationEvaluator()
     decision, _, _ = evaluator.evaluate(document, query)
-    lines.append(
-        f"authz_result({_quote_atom(decision.outcome.value.upper())})."
-    )
+    lines.append(f"authz_result({_quote_atom(decision.outcome.value.upper())}).")
     # Mention query symbols so programs remain query-bound and deterministic.
     lines.append(
         f"// query {_safe_symbol(query.query_id)} "
@@ -1526,9 +1448,7 @@ def render_datalog_program(
     return "\n".join(lines) + "\n"
 
 
-def render_secpal_program(
-    document: AuthorizationIR, query: DecisionQuery
-) -> str:
+def render_secpal_program(document: AuthorizationIR, query: DecisionQuery) -> str:
     """Render a canonical SecPAL-style assertion document."""
 
     lines = [
@@ -1540,17 +1460,11 @@ def render_secpal_program(
     for fact in document.facts:
         args = ", ".join(term.value for term in fact.atom.arguments)
         issuer = fact.issuer_principal_id or "system"
-        lines.append(
-            f'"{issuer}" says {fact.atom.predicate_id}({args});'
-        )
+        lines.append(f'"{issuer}" says {fact.atom.predicate_id}({args});')
     for rule in document.rules:
         issuer = rule.issuer_principal_id or "system"
         head_args = ", ".join(
-            (
-                term.value
-                if term.kind is TermKind.CONSTANT
-                else f"?{term.value}"
-            )
+            (term.value if term.kind is TermKind.CONSTANT else f"?{term.value}")
             for term in rule.head.arguments
         )
         body = " and ".join(
@@ -1558,11 +1472,7 @@ def render_secpal_program(
                 ("not " if atom.is_negative else "")
                 + f"{atom.predicate_id}("
                 + ", ".join(
-                    (
-                        t.value
-                        if t.kind is TermKind.CONSTANT
-                        else f"?{t.value}"
-                    )
+                    (t.value if t.kind is TermKind.CONSTANT else f"?{t.value}")
                     for t in atom.arguments
                 )
                 + ")"
@@ -1581,9 +1491,7 @@ def render_secpal_program(
             )
     for delegation in document.delegations:
         parent = (
-            f' under "{delegation.parent_delegation_id}"'
-            if delegation.parent_delegation_id
-            else ""
+            f' under "{delegation.parent_delegation_id}"' if delegation.parent_delegation_id else ""
         )
         lines.append(
             f'"{delegation.issuer_principal_id}" says '
@@ -1647,18 +1555,10 @@ def build_authorization_fixtures() -> tuple[AuthorizationFixture, ...]:
         return AuthorizationAtom(predicate_id, args, polarity)
 
     base_principals = (
-        AuthorizationPrincipal(
-            "principal:root", "Root", PrincipalKind.SYSTEM, **mapped
-        ),
-        AuthorizationPrincipal(
-            "principal:alice", "Alice", PrincipalKind.USER, **mapped
-        ),
-        AuthorizationPrincipal(
-            "principal:bob", "Bob", PrincipalKind.USER, **mapped
-        ),
-        AuthorizationPrincipal(
-            "principal:carol", "Carol", PrincipalKind.USER, **mapped
-        ),
+        AuthorizationPrincipal("principal:root", "Root", PrincipalKind.SYSTEM, **mapped),
+        AuthorizationPrincipal("principal:alice", "Alice", PrincipalKind.USER, **mapped),
+        AuthorizationPrincipal("principal:bob", "Bob", PrincipalKind.USER, **mapped),
+        AuthorizationPrincipal("principal:carol", "Carol", PrincipalKind.USER, **mapped),
     )
     roles = (
         AuthorizationRole(
@@ -1812,8 +1712,7 @@ def build_authorization_fixtures() -> tuple[AuthorizationFixture, ...]:
                 max_stratum=8,
                 universe_size=64,
             ),
-            precedence=precedence
-            or PrecedencePolicy(resolution="deny_overrides"),
+            precedence=precedence or PrecedencePolicy(resolution="deny_overrides"),
             queries=queries,
             metadata={"fixture_set": "authorization-backends"},
         )
@@ -1980,9 +1879,7 @@ class SupervisorPolicyView:
         if not roots:
             raise AuthorizationBackendError("trusted_roots must be non-empty")
         object.__setattr__(self, "trusted_roots", roots)
-        statements = tuple(
-            _text(item, "statement_ids item") for item in self.statement_ids
-        )
+        statements = tuple(_text(item, "statement_ids item") for item in self.statement_ids)
         object.__setattr__(self, "statement_ids", statements)
         if self.schema_version != SUPERVISOR_ADAPTER_VERSION:
             raise AuthorizationBackendError(
@@ -2011,28 +1908,18 @@ class UcanCapabilityView:
     action: str
     resource: str
     outcome: DecisionOutcome | str
-    authority: AuthorizationEvidenceAuthority | str = (
-        AuthorizationEvidenceAuthority.AUTHORIZATION
-    )
+    authority: AuthorizationEvidenceAuthority | str = AuthorizationEvidenceAuthority.AUTHORIZATION
     schema_version: str = UCAN_ADAPTER_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "capability_id", _text(self.capability_id, "capability_id")
-        )
+        object.__setattr__(self, "capability_id", _text(self.capability_id, "capability_id"))
         object.__setattr__(self, "audience", _text(self.audience, "audience"))
         object.__setattr__(self, "action", _text(self.action, "action"))
         object.__setattr__(self, "resource", _text(self.resource, "resource"))
-        object.__setattr__(
-            self, "outcome", _enum(self.outcome, DecisionOutcome, "outcome")
-        )
-        authority = _enum(
-            self.authority, AuthorizationEvidenceAuthority, "authority"
-        )
+        object.__setattr__(self, "outcome", _enum(self.outcome, DecisionOutcome, "outcome"))
+        authority = _enum(self.authority, AuthorizationEvidenceAuthority, "authority")
         if authority is not AuthorizationEvidenceAuthority.AUTHORIZATION:
-            raise AuthorizationBackendError(
-                "UCAN capability views cannot claim theorem authority"
-            )
+            raise AuthorizationBackendError("UCAN capability views cannot claim theorem authority")
         object.__setattr__(self, "authority", authority)
         if self.schema_version != UCAN_ADAPTER_VERSION:
             raise AuthorizationBackendError(
@@ -2085,11 +1972,11 @@ def _extract_document_and_query(
     request: BackendRequest,
 ) -> tuple[AuthorizationIR, DecisionQuery, str]:
     payload = request.payload.to_dict()
-    encoding = str(
-        payload.get("encoding")
-        or payload.get("source_format")
-        or "authorization-ir"
-    ).strip().lower()
+    encoding = (
+        str(payload.get("encoding") or payload.get("source_format") or "authorization-ir")
+        .strip()
+        .lower()
+    )
 
     raw_document = (
         payload.get("authorization_ir")
@@ -2103,13 +1990,9 @@ def _extract_document_and_query(
         try:
             document = AuthorizationIR.from_dict(raw_document)
         except (AuthorizationValidationError, TypeError, ValueError) as error:
-            raise AuthorizationBackendError(
-                f"invalid authorization_ir payload: {error}"
-            ) from error
+            raise AuthorizationBackendError(f"invalid authorization_ir payload: {error}") from error
     else:
-        raise AuthorizationBackendError(
-            "authorization request payload requires authorization_ir"
-        )
+        raise AuthorizationBackendError("authorization request payload requires authorization_ir")
 
     raw_query = payload.get("query")
     query_id = payload.get("query_id")
@@ -2160,9 +2043,7 @@ class _AuthorizationBackendBase:
         ),
     ) -> None:
         self.backend_version = _text(backend_version, "backend_version")
-        self.executable = _text(
-            executable or self.executable_name, "executable"
-        )
+        self.executable = _text(executable or self.executable_name, "executable")
         self._runner = runner or BoundedToolRunner()
         if not isinstance(self._runner, BoundedToolRunner):
             raise AuthorizationBackendError("runner must be a BoundedToolRunner")
@@ -2205,8 +2086,7 @@ class _AuthorizationBackendBase:
             *self.aliases,
         }:
             raise AuthorizationBackendError(
-                f"request targets {request.requested_backend_id!r}, "
-                f"not {self.backend_id!r}"
+                f"request targets {request.requested_backend_id!r}, not {self.backend_id!r}"
             )
         if not self.capabilities.supports(request.logic_family, request.query_kind):
             raise AuthorizationBackendError(
@@ -2252,11 +2132,7 @@ class _AuthorizationBackendBase:
             output_bytes=len(tool_result.stdout.encode("utf-8", errors="replace")),
         )
         diagnostics = bound_diagnostics(
-            [
-                item
-                for item in (tool_result.stderr, tool_result.error)
-                if item
-            ]
+            [item for item in (tool_result.stderr, tool_result.error) if item]
         )
         if (
             tool_result.timed_out
@@ -2285,9 +2161,7 @@ class _AuthorizationBackendBase:
         self,
         fixtures: Sequence[AuthorizationFixture] | None = None,
         *,
-        engine_runner: Callable[
-            [AuthorizationIR, DecisionQuery], DecisionOutcome | None
-        ]
+        engine_runner: Callable[[AuthorizationIR, DecisionQuery], DecisionOutcome | None]
         | None = None,
     ) -> EngineConformanceReceipt:
         selected = tuple(fixtures or DEFAULT_AUTHORIZATION_FIXTURES)
@@ -2296,9 +2170,7 @@ class _AuthorizationBackendBase:
         errored = False
         for fixture in selected:
             checked.append(fixture.fixture_id)
-            reference, _, _ = self._evaluator.evaluate(
-                fixture.document, fixture.query
-            )
+            reference, _, _ = self._evaluator.evaluate(fixture.document, fixture.query)
             if reference.outcome is not fixture.expected_outcome:
                 disagreements.append(fixture.fixture_id)
                 continue
@@ -2391,9 +2263,7 @@ class _AuthorizationBackendBase:
             raise AuthorizationBackendError(
                 f"request encoding {encoding!r} is not supported by {self.backend_id}"
             )
-        binding = AuthorizationSourceBinding.bind(
-            request, document, query, source_format=encoding
-        )
+        binding = AuthorizationSourceBinding.bind(request, document, query, source_format=encoding)
         decision, explanation, bounds_exhausted = self._evaluator.evaluate(
             document,
             query,
@@ -2437,9 +2307,7 @@ class _AuthorizationBackendBase:
                     f"reference={decision.outcome.value} engine={engine_outcome.value}"
                 )
             else:
-                reason = (
-                    f"reference and {engine.value} engine agreed on {outcome.value}"
-                )
+                reason = f"reference and {engine.value} engine agreed on {outcome.value}"
 
         if bounds_exhausted and outcome is DecisionOutcome.UNKNOWN:
             reason = "authorization derivation bounds exhausted"

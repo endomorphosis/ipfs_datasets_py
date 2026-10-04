@@ -45,9 +45,7 @@ class ThrottledProviderError(TransientProviderError):
     def __init__(self, message: str, *, retry_after: float | None = None) -> None:
         super().__init__(message)
         self.retry_after = (
-            None
-            if retry_after is None
-            else _finite_nonnegative(retry_after, "retry_after")
+            None if retry_after is None else _finite_nonnegative(retry_after, "retry_after")
         )
 
 
@@ -90,20 +88,14 @@ class RetryPolicy:
             raise InvalidRequestError("max_attempts must be between 1 and 20")
         base = _finite_nonnegative(self.base_delay_seconds, "base_delay_seconds")
         maximum = _finite_nonnegative(self.max_delay_seconds, "max_delay_seconds")
-        retry_after = _finite_nonnegative(
-            self.max_retry_after_seconds, "max_retry_after_seconds"
-        )
+        retry_after = _finite_nonnegative(self.max_retry_after_seconds, "max_retry_after_seconds")
         jitter = _finite_nonnegative(self.jitter_fraction, "jitter_fraction")
         if maximum < base:
-            raise InvalidRequestError(
-                "max_delay_seconds must not be less than base_delay_seconds"
-            )
+            raise InvalidRequestError("max_delay_seconds must not be less than base_delay_seconds")
         if jitter > 1:
             raise InvalidRequestError("jitter_fraction must not exceed 1")
         if any(
-            isinstance(status, bool)
-            or not isinstance(status, int)
-            or not 100 <= status <= 599
+            isinstance(status, bool) or not isinstance(status, int) or not 100 <= status <= 599
             for status in self.retry_statuses
         ):
             raise InvalidRequestError("retry_statuses contains an invalid HTTP status")
@@ -200,14 +192,10 @@ class CircuitBreakerPolicy:
         object.__setattr__(
             self,
             "recovery_timeout_seconds",
-            _finite_nonnegative(
-                self.recovery_timeout_seconds, "recovery_timeout_seconds"
-            ),
+            _finite_nonnegative(self.recovery_timeout_seconds, "recovery_timeout_seconds"),
         )
         if self.recovery_timeout_seconds == 0:
-            raise InvalidRequestError(
-                "recovery_timeout_seconds must be greater than zero"
-            )
+            raise InvalidRequestError("recovery_timeout_seconds must be greater than zero")
 
 
 class CircuitBreaker:
@@ -240,8 +228,7 @@ class CircuitBreaker:
         if (
             self._state is CircuitState.OPEN
             and self._opened_at is not None
-            and self._clock() - self._opened_at
-            >= self._policy.recovery_timeout_seconds
+            and self._clock() - self._opened_at >= self._policy.recovery_timeout_seconds
         ):
             self._state = CircuitState.HALF_OPEN
             self._half_open_in_flight = False

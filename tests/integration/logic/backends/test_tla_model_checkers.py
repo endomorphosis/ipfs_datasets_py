@@ -208,12 +208,8 @@ def _concurrency_document() -> ConcurrencyIR:
     )
     return ConcurrencyIR(
         components=(
-            ConcurrentComponent(
-                "comp:a", ComponentKind.THREAD, "A", step_ids=("step:a",)
-            ),
-            ConcurrentComponent(
-                "comp:b", ComponentKind.THREAD, "B", step_ids=("step:b",)
-            ),
+            ConcurrentComponent("comp:a", ComponentKind.THREAD, "A", step_ids=("step:a",)),
+            ConcurrentComponent("comp:b", ComponentKind.THREAD, "B", step_ids=("step:b",)),
         ),
         steps=steps,
         shared_variable_ids=("var:shared",),
@@ -353,11 +349,12 @@ def test_state_concurrency_rely_guarantee_refinement_disclose_losses():
 
     state_art = compiler.compile_state(_counter_document(), module_name="S")
     assert any(loss.projection is ProjectionKind.STATE for loss in state_art.losses)
-    assert any("MaxSteps" in loss.statement or "finite" in loss.statement.lower() for loss in state_art.losses)
-
-    conc_art = compiler.compile_concurrency(
-        _concurrency_document(), module_name="C"
+    assert any(
+        "MaxSteps" in loss.statement or "finite" in loss.statement.lower()
+        for loss in state_art.losses
     )
+
+    conc_art = compiler.compile_concurrency(_concurrency_document(), module_name="C")
     assert conc_art.source_kind == "concurrency_ir"
     conc_kinds = {loss.projection for loss in conc_art.losses}
     assert ProjectionKind.CONCURRENCY in conc_kinds
@@ -365,9 +362,7 @@ def test_state_concurrency_rely_guarantee_refinement_disclose_losses():
         "interleaving" in loss.construct or "interleaving" in loss.statement
         for loss in conc_art.losses
     )
-    assert any(
-        loss.projection is ProjectionKind.RELY_GUARANTEE for loss in conc_art.losses
-    )
+    assert any(loss.projection is ProjectionKind.RELY_GUARANTEE for loss in conc_art.losses)
 
     rg = RelyGuaranteeContract(
         "rg:solo",
@@ -378,18 +373,14 @@ def test_state_concurrency_rely_guarantee_refinement_disclose_losses():
     )
     rg_art = compiler.compile_rely_guarantee(rg, module_name="RG")
     assert rg_art.source_kind == "rely_guarantee"
-    assert any(
-        loss.projection is ProjectionKind.RELY_GUARANTEE for loss in rg_art.losses
-    )
+    assert any(loss.projection is ProjectionKind.RELY_GUARANTEE for loss in rg_art.losses)
     assert any("rely" in loss.construct for loss in rg_art.losses)
 
     ref_art = compiler.compile_refinement(
         _refinement_document(), module_name="R", prefer="concrete"
     )
     assert ref_art.source_kind == "refinement_ir"
-    assert any(
-        loss.projection is ProjectionKind.REFINEMENT for loss in ref_art.losses
-    )
+    assert any(loss.projection is ProjectionKind.REFINEMENT for loss in ref_art.losses)
     assert any("simulation" in loss.construct for loss in ref_art.losses)
     # concrete states appear in the domain
     assert "st:c0" in ref_art.model_text or '"st:c0"' in ref_art.model_text
@@ -427,11 +418,11 @@ def test_counterexample_parse_and_replay():
     raw = (
         "Error: Invariant Safety is violated.\n"
         "State 1: <Initial predicate>\n"
-        "/\\ pc = \"idle\"\n"
+        '/\\ pc = "idle"\n'
         "/\\ count = 0\n"
         "/\\ step = 0\n"
         "State 2: <Action line 12, col 1 to line 20, col 12 of module Counter>\n"
-        "/\\ pc = \"busy\"\n"
+        '/\\ pc = "busy"\n'
         "/\\ count = 1\n"
         "/\\ step = 1\n"
     )
@@ -448,9 +439,7 @@ def test_counterexample_parse_and_replay():
 
 
 def test_tlc_passed_run_is_bounded_model_check_not_theorem():
-    runner, invocations = _process_runner(
-        "Model checking completed. No error has been found.\n"
-    )
+    runner, invocations = _process_runner("Model checking completed. No error has been found.\n")
     backend = TLCBackend(
         runner=runner,
         which=lambda name: "/usr/bin/tlc" if name in {"tlc", "tlc2"} else None,
@@ -530,9 +519,7 @@ def test_apalache_does_not_claim_liveness_and_passes_on_safety_markers():
     )
     backend = ApalacheBackend(
         runner=runner,
-        which=lambda name: (
-            "/usr/bin/apalache-mc" if name in {"apalache-mc", "apalache"} else None
-        ),
+        which=lambda name: "/usr/bin/apalache-mc" if name in {"apalache-mc", "apalache"} else None,
         jvm_probe=lambda: True,
     )
     artifacts = TLACompiler(bounds=TLACompileBounds(max_steps=4)).compile(
@@ -543,9 +530,7 @@ def test_apalache_does_not_claim_liveness_and_passes_on_safety_markers():
     assert outcome.result.status is ResultStatus.SATISFIED
     assert outcome.receipt.checked_liveness_properties == ()
     assert outcome.receipt.capability.checks_liveness is False
-    assert any(
-        "liveness" in item.lower() for item in outcome.receipt.fairness_limitations
-    )
+    assert any("liveness" in item.lower() for item in outcome.receipt.fairness_limitations)
     assert any("--length=" in arg for arg in outcome.receipt.command)
     assert invocations
 
@@ -555,10 +540,10 @@ def test_counterexample_status_parses_and_replays_via_tlc():
         "Error: Invariant Safety is violated.\n"
         "The following behavior constitutes a counter-example:\n"
         "State 1: <Initial predicate>\n"
-        "/\\ pc = \"idle\"\n"
+        '/\\ pc = "idle"\n'
         "/\\ count = 0\n"
         "State 2: <Next>\n"
-        "/\\ pc = \"busy\"\n"
+        '/\\ pc = "busy"\n'
         "/\\ count = 4\n"
     )
     runner, _ = _process_runner(stdout, returncode=12)
@@ -606,12 +591,8 @@ def test_absent_jvm_or_tools_return_unavailable():
 
 
 def test_facade_routes_tools_and_compile_and_check():
-    tlc_runner, tlc_inv = _process_runner(
-        "Model checking completed. No error has been found.\n"
-    )
-    apalache_runner, apa_inv = _process_runner(
-        "Checker reports no error\n"
-    )
+    tlc_runner, tlc_inv = _process_runner("Model checking completed. No error has been found.\n")
+    apalache_runner, apa_inv = _process_runner("Checker reports no error\n")
     facade = TLABackend(
         tlc=TLCBackend(
             runner=tlc_runner,

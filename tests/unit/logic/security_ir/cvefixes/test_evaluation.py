@@ -34,9 +34,7 @@ from ipfs_datasets_py.logic.security_ir.cvefixes.schemas import EvaluationRecord
 
 
 def _cid(label: str) -> str:
-    return canonical_identity(
-        {"label": label}, domain="test", schema_version="test/v1"
-    ).cid
+    return canonical_identity({"label": label}, domain="test", schema_version="test/v1").cid
 
 
 def _example(
@@ -95,9 +93,7 @@ def test_fixed_controls_cannot_inherit_vulnerable_labels() -> None:
 
 def test_split_builder_keeps_transitive_leakage_families_together() -> None:
     near_left = "dangerous parse user input without validation then execute command"
-    near_right = (
-        "dangerous parse user input without validation then execute commands"
-    )
+    near_right = "dangerous parse user input without validation then execute commands"
     examples = (
         _example(
             "repo-a",
@@ -210,9 +206,7 @@ def test_metrics_cover_both_polarities_strata_and_calibration() -> None:
 
 def test_threshold_is_measured_only_from_mixed_validation_controls() -> None:
     examples = _controls()
-    measurement = measure_threshold(
-        examples, _predictions(examples, (0.90, 0.70, 0.40, 0.20))
-    )
+    measurement = measure_threshold(examples, _predictions(examples, (0.90, 0.70, 0.40, 0.20)))
 
     assert measurement.source_split is EvaluationSplit.VALIDATION
     assert measurement.measured is True
@@ -220,9 +214,7 @@ def test_threshold_is_measured_only_from_mixed_validation_controls() -> None:
     assert measurement.balanced_accuracy == 1.0
 
     with pytest.raises(EvaluationError, match="vulnerable and fixed"):
-        measure_threshold(
-            examples[:2], _predictions(examples[:2], (0.90, 0.70))
-        )
+        measure_threshold(examples[:2], _predictions(examples[:2], (0.90, 0.70)))
 
 
 def test_predictions_must_exactly_cover_examples_and_be_probabilities() -> None:
@@ -272,9 +264,7 @@ def _passing_evidence():
     examples = _controls()
     predictions = _predictions(examples, (0.95, 0.90, 0.05, 0.10))
     threshold = measure_threshold(examples, predictions)
-    metrics = evaluate_predictions(
-        examples, predictions, threshold=threshold.threshold
-    )
+    metrics = evaluate_predictions(examples, predictions, threshold=threshold.threshold)
     adversarial = run_adversarial_injection_tests(
         (
             AdversarialInjectionCase(

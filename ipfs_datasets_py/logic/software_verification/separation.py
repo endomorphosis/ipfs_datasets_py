@@ -45,9 +45,7 @@ from .heap import (
 
 SEPARATION_LOGIC_IR_INTERFACE: Final = "SeparationLogicIR@1"
 SEPARATION_LOGIC_IR_SCHEMA_VERSION: Final = "separation-logic-ir/v1"
-SEPARATION_LOGIC_IR_IDENTITY_DOMAIN: Final = (
-    "logic.software-verification.separation"
-)
+SEPARATION_LOGIC_IR_IDENTITY_DOMAIN: Final = "logic.software-verification.separation"
 
 _ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$")
 _OBSERVATIONAL_KEYS = frozenset(
@@ -173,12 +171,7 @@ class OwnershipTransferKind(StrEnum):
 def _text(value: object, label: str, *, optional: bool = False) -> str:
     if optional and value == "":
         return ""
-    if (
-        not isinstance(value, str)
-        or not value
-        or value.strip() != value
-        or "\x00" in value
-    ):
+    if not isinstance(value, str) or not value or value.strip() != value or "\x00" in value:
         qualifier = "an empty or " if optional else "a "
         raise SeparationValidationError(
             f"{label} must be {qualifier}non-empty trimmed string without NUL bytes"
@@ -214,9 +207,7 @@ def _identifiers(
     sort: bool = True,
     allow_empty: bool = True,
 ) -> tuple[str, ...]:
-    result = tuple(
-        _identifier(item, f"{label} item") for item in _sequence(values, label)
-    )
+    result = tuple(_identifier(item, f"{label} item") for item in _sequence(values, label))
     if not allow_empty and not result:
         raise SeparationValidationError(f"{label} must not be empty")
     if len(result) != len(set(result)):
@@ -239,14 +230,10 @@ def _frozen(value: Mapping[str, Any] | FrozenMap, label: str) -> FrozenMap:
         ) from error
 
 
-def _reject_unknown(
-    value: Mapping[str, Any], allowed: frozenset[str], label: str
-) -> None:
+def _reject_unknown(value: Mapping[str, Any], allowed: frozenset[str], label: str) -> None:
     unknown = sorted(set(value) - allowed)
     if unknown:
-        raise SeparationValidationError(
-            f"unknown {label} field(s): {', '.join(unknown)}"
-        )
+        raise SeparationValidationError(f"unknown {label} field(s): {', '.join(unknown)}")
 
 
 def _source_map(
@@ -315,9 +302,7 @@ class SeparationFormula:
     attributes: FrozenMap = field(default_factory=FrozenMap)
 
     def __post_init__(self) -> None:
-        sources, spans = _source_map(
-            self.source_ref_ids, self.span_ids, owner="SeparationFormula"
-        )
+        sources, spans = _source_map(self.source_ref_ids, self.span_ids, owner="SeparationFormula")
         kind = _enum(self.kind, FormulaKind, "kind")
         operands = tuple(
             _identifier(item, "operand_ids item")
@@ -332,15 +317,9 @@ class SeparationFormula:
 
         location_id = _text(self.location_id, "location_id", optional=True)
         value_id = _text(self.value_id, "value_id", optional=True)
-        pure_expression = _text(
-            self.pure_expression, "pure_expression", optional=True
-        )
-        pure_expression_id = _text(
-            self.pure_expression_id, "pure_expression_id", optional=True
-        )
-        bound_variable = _text(
-            self.bound_variable, "bound_variable", optional=True
-        )
+        pure_expression = _text(self.pure_expression, "pure_expression", optional=True)
+        pure_expression_id = _text(self.pure_expression_id, "pure_expression_id", optional=True)
+        bound_variable = _text(self.bound_variable, "bound_variable", optional=True)
         bound_type = _text(self.bound_type, "bound_type", optional=True)
 
         permission: Permission | None
@@ -392,9 +371,7 @@ class SeparationFormula:
             FormulaKind.IMPLIES,
         }:
             if len(operands) < 2:
-                raise SeparationValidationError(
-                    f"{kind.value} requires at least two operand_ids"
-                )
+                raise SeparationValidationError(f"{kind.value} requires at least two operand_ids")
             if location_id or value_id or permission is not None:
                 raise SeparationValidationError(
                     f"{kind.value} must not carry points-to atom fields"
@@ -404,19 +381,13 @@ class SeparationFormula:
                 raise SeparationValidationError("not requires exactly one operand")
         elif kind in {FormulaKind.EXISTS, FormulaKind.FORALL}:
             if len(operands) != 1:
-                raise SeparationValidationError(
-                    f"{kind.value} requires exactly one body operand"
-                )
+                raise SeparationValidationError(f"{kind.value} requires exactly one body operand")
             if not bound_variable:
-                raise SeparationValidationError(
-                    f"{kind.value} requires bound_variable"
-                )
+                raise SeparationValidationError(f"{kind.value} requires bound_variable")
         else:  # pragma: no cover - enum exhaustiveness
             raise SeparationValidationError(f"unsupported formula kind {kind!r}")
 
-        object.__setattr__(
-            self, "formula_id", _identifier(self.formula_id, "formula_id")
-        )
+        object.__setattr__(self, "formula_id", _identifier(self.formula_id, "formula_id"))
         object.__setattr__(self, "kind", kind)
         object.__setattr__(self, "operand_ids", operands)
         object.__setattr__(self, "location_id", location_id)
@@ -451,9 +422,7 @@ class SeparationFormula:
             "kind": self.kind.value,
             "location_id": self.location_id,
             "operand_ids": list(self.operand_ids),
-            "permission": (
-                self.permission.to_dict() if self.permission is not None else None
-            ),
+            "permission": (self.permission.to_dict() if self.permission is not None else None),
             "pure_expression": self.pure_expression,
             "pure_expression_id": self.pure_expression_id,
             "source_ref_ids": list(self.source_ref_ids),
@@ -504,9 +473,7 @@ class SeparationFormula:
             bound_type=value.get("bound_type", ""),
             source_ref_ids=tuple(value.get("source_ref_ids", ())),
             span_ids=tuple(value.get("span_ids", ())),
-            attributes=_frozen(
-                _mapping(value.get("attributes", {}), "attributes"), "attributes"
-            ),
+            attributes=_frozen(_mapping(value.get("attributes", {}), "attributes"), "attributes"),
         )
 
 
@@ -532,20 +499,14 @@ class FrameObligation:
     attributes: FrozenMap = field(default_factory=FrozenMap)
 
     def __post_init__(self) -> None:
-        sources, spans = _source_map(
-            self.source_ref_ids, self.span_ids, owner="FrameObligation"
-        )
-        footprint = _identifiers(
-            self.footprint_location_ids, "footprint_location_ids"
-        )
+        sources, spans = _source_map(self.source_ref_ids, self.span_ids, owner="FrameObligation")
+        footprint = _identifiers(self.footprint_location_ids, "footprint_location_ids")
         modified = _identifiers(self.modified_location_ids, "modified_location_ids")
         if set(footprint) & set(modified):
             raise SeparationValidationError(
                 "frame footprint and modified locations must be disjoint"
             )
-        object.__setattr__(
-            self, "obligation_id", _identifier(self.obligation_id, "obligation_id")
-        )
+        object.__setattr__(self, "obligation_id", _identifier(self.obligation_id, "obligation_id"))
         object.__setattr__(self, "kind", _enum(self.kind, FrameObligationKind, "kind"))
         object.__setattr__(
             self,
@@ -559,12 +520,8 @@ class FrameObligation:
             "parent_formula_id",
             _text(self.parent_formula_id, "parent_formula_id", optional=True),
         )
-        object.__setattr__(
-            self, "command_id", _text(self.command_id, "command_id", optional=True)
-        )
-        object.__setattr__(
-            self, "statement", _text(self.statement, "statement", optional=True)
-        )
+        object.__setattr__(self, "command_id", _text(self.command_id, "command_id", optional=True))
+        object.__setattr__(self, "statement", _text(self.statement, "statement", optional=True))
         object.__setattr__(self, "attributes", _frozen(self.attributes, "attributes"))
         object.__setattr__(self, "source_ref_ids", sources)
         object.__setattr__(self, "span_ids", spans)
@@ -617,9 +574,7 @@ class FrameObligation:
             statement=value.get("statement", ""),
             source_ref_ids=tuple(value.get("source_ref_ids", ())),
             span_ids=tuple(value.get("span_ids", ())),
-            attributes=_frozen(
-                _mapping(value.get("attributes", {}), "attributes"), "attributes"
-            ),
+            attributes=_frozen(_mapping(value.get("attributes", {}), "attributes"), "attributes"),
         )
 
 
@@ -639,9 +594,7 @@ class OwnershipTransfer:
     attributes: FrozenMap = field(default_factory=FrozenMap)
 
     def __post_init__(self) -> None:
-        sources, spans = _source_map(
-            self.source_ref_ids, self.span_ids, owner="OwnershipTransfer"
-        )
+        sources, spans = _source_map(self.source_ref_ids, self.span_ids, owner="OwnershipTransfer")
         kind = _enum(self.kind, OwnershipTransferKind, "kind")
         permission = Permission.from_fraction(self.permission)
         if permission.is_empty:
@@ -649,9 +602,7 @@ class OwnershipTransfer:
                 "ownership transfers require a strictly positive permission"
             )
         if kind is OwnershipTransferKind.MOVE and not permission.is_full:
-            raise SeparationValidationError(
-                "move transfers require full permission"
-            )
+            raise SeparationValidationError("move transfers require full permission")
         if kind is OwnershipTransferKind.SHARE and permission.is_full:
             raise SeparationValidationError(
                 "share transfers require a fractional permission strictly less than 1"
@@ -659,22 +610,14 @@ class OwnershipTransfer:
         from_owner = _identifier(self.from_owner_id, "from_owner_id")
         to_owner = _identifier(self.to_owner_id, "to_owner_id")
         if from_owner == to_owner:
-            raise SeparationValidationError(
-                "ownership transfer principals must differ"
-            )
-        object.__setattr__(
-            self, "transfer_id", _identifier(self.transfer_id, "transfer_id")
-        )
+            raise SeparationValidationError("ownership transfer principals must differ")
+        object.__setattr__(self, "transfer_id", _identifier(self.transfer_id, "transfer_id"))
         object.__setattr__(self, "kind", kind)
-        object.__setattr__(
-            self, "location_id", _identifier(self.location_id, "location_id")
-        )
+        object.__setattr__(self, "location_id", _identifier(self.location_id, "location_id"))
         object.__setattr__(self, "from_owner_id", from_owner)
         object.__setattr__(self, "to_owner_id", to_owner)
         object.__setattr__(self, "permission", permission)
-        object.__setattr__(
-            self, "formula_id", _text(self.formula_id, "formula_id", optional=True)
-        )
+        object.__setattr__(self, "formula_id", _text(self.formula_id, "formula_id", optional=True))
         object.__setattr__(self, "attributes", _frozen(self.attributes, "attributes"))
         object.__setattr__(self, "source_ref_ids", sources)
         object.__setattr__(self, "span_ids", spans)
@@ -720,15 +663,11 @@ class OwnershipTransfer:
             location_id=value.get("location_id", ""),
             from_owner_id=value.get("from_owner_id", ""),
             to_owner_id=value.get("to_owner_id", ""),
-            permission=Permission.from_fraction(
-                value.get("permission", {"numerator": 1})
-            ),
+            permission=Permission.from_fraction(value.get("permission", {"numerator": 1})),
             formula_id=value.get("formula_id", ""),
             source_ref_ids=tuple(value.get("source_ref_ids", ())),
             span_ids=tuple(value.get("span_ids", ())),
-            attributes=_frozen(
-                _mapping(value.get("attributes", {}), "attributes"), "attributes"
-            ),
+            attributes=_frozen(_mapping(value.get("attributes", {}), "attributes"), "attributes"),
         )
 
 
@@ -857,9 +796,7 @@ class SeparationLogicIR:
                         item
                         if isinstance(item, FrameObligation)
                         else FrameObligation.from_dict(_mapping(item, "frame_obligation"))
-                        for item in _sequence(
-                            self.frame_obligations, "frame_obligations"
-                        )
+                        for item in _sequence(self.frame_obligations, "frame_obligations")
                     ),
                     key=lambda item: item.obligation_id,
                 )
@@ -873,12 +810,8 @@ class SeparationLogicIR:
                     (
                         item
                         if isinstance(item, OwnershipTransfer)
-                        else OwnershipTransfer.from_dict(
-                            _mapping(item, "ownership_transfer")
-                        )
-                        for item in _sequence(
-                            self.ownership_transfers, "ownership_transfers"
-                        )
+                        else OwnershipTransfer.from_dict(_mapping(item, "ownership_transfer"))
+                        for item in _sequence(self.ownership_transfers, "ownership_transfers")
                     ),
                     key=lambda item: item.transfer_id,
                 )
@@ -887,9 +820,7 @@ class SeparationLogicIR:
         object.__setattr__(
             self, "root_formula_id", _identifier(self.root_formula_id, "root_formula_id")
         )
-        object.__setattr__(
-            self, "heap_theory", _enum(self.heap_theory, HeapTheory, "heap_theory")
-        )
+        object.__setattr__(self, "heap_theory", _enum(self.heap_theory, HeapTheory, "heap_theory"))
         metadata = _frozen(self.metadata, "metadata")
         observations = _frozen(self.observations, "observations")
         _reject_observations(metadata, label="metadata")
@@ -897,9 +828,7 @@ class SeparationLogicIR:
         object.__setattr__(self, "observations", observations)
 
         if self.schema_version != SEPARATION_LOGIC_IR_SCHEMA_VERSION:
-            raise SeparationValidationError(
-                f"unsupported schema_version {self.schema_version!r}"
-            )
+            raise SeparationValidationError(f"unsupported schema_version {self.schema_version!r}")
 
         self.validate()
         computed = self._compute_identity()
@@ -937,14 +866,11 @@ class SeparationLogicIR:
 
         return {
             "formulas": [
-                item.to_dict()
-                for item in sorted(self.formulas, key=lambda item: item.formula_id)
+                item.to_dict() for item in sorted(self.formulas, key=lambda item: item.formula_id)
             ],
             "frame_obligations": [
                 item.to_dict()
-                for item in sorted(
-                    self.frame_obligations, key=lambda item: item.obligation_id
-                )
+                for item in sorted(self.frame_obligations, key=lambda item: item.obligation_id)
             ],
             "heap": self.heap.to_dict(),
             "heap_theory": self.heap_theory.value,
@@ -952,20 +878,14 @@ class SeparationLogicIR:
             "metadata": self.metadata.to_dict(),
             "ownership_transfers": [
                 item.to_dict()
-                for item in sorted(
-                    self.ownership_transfers, key=lambda item: item.transfer_id
-                )
+                for item in sorted(self.ownership_transfers, key=lambda item: item.transfer_id)
             ],
             "root_formula_id": self.root_formula_id,
             "schema_version": self.schema_version,
             "sources": [
-                item.to_dict()
-                for item in sorted(self.sources, key=lambda item: item.ref_id)
+                item.to_dict() for item in sorted(self.sources, key=lambda item: item.ref_id)
             ],
-            "spans": [
-                item.to_dict()
-                for item in sorted(self.spans, key=lambda item: item.span_id)
-            ],
+            "spans": [item.to_dict() for item in sorted(self.spans, key=lambda item: item.span_id)],
         }
 
     deterministic_dict = semantic_dict
@@ -994,19 +914,13 @@ class SeparationLogicIR:
         raise SeparationValidationError(f"unknown formula {formula_id!r}")
 
     def spatial_formula_ids(self) -> tuple[str, ...]:
-        return tuple(
-            sorted(item.formula_id for item in self.formulas if item.is_spatial)
-        )
+        return tuple(sorted(item.formula_id for item in self.formulas if item.is_spatial))
 
     def validate(self) -> None:
         if not self.sources:
-            raise SeparationValidationError(
-                "a source-grounded SeparationLogicIR requires sources"
-            )
+            raise SeparationValidationError("a source-grounded SeparationLogicIR requires sources")
         if not self.formulas:
-            raise SeparationValidationError(
-                "SeparationLogicIR requires at least one formula"
-            )
+            raise SeparationValidationError("SeparationLogicIR requires at least one formula")
 
         def unique(values: Sequence[object], attr: str, label: str) -> set[str]:
             ids = [getattr(item, attr) for item in values]
@@ -1032,8 +946,7 @@ class SeparationLogicIR:
             span.validate()
             if span.source_ref_id not in source_ids:
                 raise SeparationValidationError(
-                    f"span {span.span_id} references unknown source "
-                    f"{span.source_ref_id!r}"
+                    f"span {span.span_id} references unknown source {span.source_ref_id!r}"
                 )
 
         for item in (
@@ -1058,8 +971,7 @@ class SeparationLogicIR:
             for operand_id in formula.operand_ids:
                 if operand_id not in formula_ids:
                     raise SeparationValidationError(
-                        f"formula {formula.formula_id} references unknown operand "
-                        f"{operand_id!r}"
+                        f"formula {formula.formula_id} references unknown operand {operand_id!r}"
                     )
                 if operand_id == formula.formula_id:
                     raise SeparationValidationError(
@@ -1096,25 +1008,18 @@ class SeparationLogicIR:
                     f"frame obligation {obligation.obligation_id} references "
                     f"unknown frame formula {obligation.frame_formula_id!r}"
                 )
-            if (
-                obligation.parent_formula_id
-                and obligation.parent_formula_id not in formula_ids
-            ):
+            if obligation.parent_formula_id and obligation.parent_formula_id not in formula_ids:
                 raise SeparationValidationError(
                     f"frame obligation {obligation.obligation_id} references "
                     f"unknown parent formula {obligation.parent_formula_id!r}"
                 )
-            missing_fp = sorted(
-                set(obligation.footprint_location_ids) - location_ids
-            )
+            missing_fp = sorted(set(obligation.footprint_location_ids) - location_ids)
             if missing_fp:
                 raise SeparationValidationError(
                     f"frame obligation {obligation.obligation_id} has unknown "
                     f"footprint locations {missing_fp}"
                 )
-            missing_mod = sorted(
-                set(obligation.modified_location_ids) - location_ids
-            )
+            missing_mod = sorted(set(obligation.modified_location_ids) - location_ids)
             if missing_mod:
                 raise SeparationValidationError(
                     f"frame obligation {obligation.obligation_id} has unknown "
@@ -1152,9 +1057,7 @@ class SeparationLogicIR:
                             f"permission on formula {formula.formula_id}"
                         )
 
-    def _reject_formula_cycles(
-        self, formulas_by_id: Mapping[str, SeparationFormula]
-    ) -> None:
+    def _reject_formula_cycles(self, formulas_by_id: Mapping[str, SeparationFormula]) -> None:
         visiting: set[str] = set()
         visited: set[str] = set()
 
@@ -1162,9 +1065,7 @@ class SeparationLogicIR:
             if formula_id in visited:
                 return
             if formula_id in visiting:
-                raise SeparationValidationError(
-                    f"formula graph contains a cycle at {formula_id!r}"
-                )
+                raise SeparationValidationError(f"formula graph contains a cycle at {formula_id!r}")
             visiting.add(formula_id)
             formula = formulas_by_id[formula_id]
             for operand_id in formula.operand_ids:
@@ -1191,9 +1092,7 @@ class SeparationLogicIR:
             )
         missing_spans = sorted(set(span_ids) - set(spans))
         if missing_spans:
-            raise SeparationValidationError(
-                f"span_ids reference unknown spans {missing_spans}"
-            )
+            raise SeparationValidationError(f"span_ids reference unknown spans {missing_spans}")
         if sources:
             unlisted = sorted(
                 {
@@ -1224,9 +1123,7 @@ class SeparationLogicIR:
                 f"{sorted(item.value for item in _FOL_PARTIAL_THEORIES)}"
             )
         if theory is HeapTheory.CUSTOM:
-            raise SeparationLoweringError(
-                "custom heap theories cannot lower to plain FOL"
-            )
+            raise SeparationLoweringError("custom heap theories cannot lower to plain FOL")
 
         formulas_by_id = {item.formula_id: item for item in self.formulas}
         pure_atoms: list[dict[str, Any]] = []
@@ -1325,8 +1222,7 @@ class SeparationLogicIR:
             )
         if root is None:
             raise SeparationLoweringError(
-                "root formula cannot lower to plain FOL; residual formulas "
-                f"{sorted(set(residual))}"
+                f"root formula cannot lower to plain FOL; residual formulas {sorted(set(residual))}"
             )
         return {
             "encoding": "fol-sketch/v1",
@@ -1382,17 +1278,13 @@ class SeparationLogicIR:
             frame_obligations=tuple(value.get("frame_obligations", ())),
             ownership_transfers=tuple(value.get("ownership_transfers", ())),
             heap_theory=value.get("heap_theory", HeapTheory.CLASSICAL_SL.value),
-            metadata=_frozen(
-                _mapping(value.get("metadata", {}), "metadata"), "metadata"
-            ),
+            metadata=_frozen(_mapping(value.get("metadata", {}), "metadata"), "metadata"),
             observations=_frozen(
                 _mapping(value.get("observations", {}), "observations"),
                 "observations",
             ),
             document_id=value.get("document_id", ""),
-            schema_version=value.get(
-                "schema_version", SEPARATION_LOGIC_IR_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", SEPARATION_LOGIC_IR_SCHEMA_VERSION),
         )
 
     @classmethod
@@ -1400,13 +1292,9 @@ class SeparationLogicIR:
         try:
             decoded = json.loads(value)
         except (TypeError, UnicodeDecodeError, json.JSONDecodeError) as error:
-            raise SeparationValidationError(
-                "separation-logic JSON is malformed"
-            ) from error
+            raise SeparationValidationError("separation-logic JSON is malformed") from error
         if not isinstance(decoded, Mapping):
-            raise SeparationValidationError(
-                "separation-logic JSON must contain an object"
-            )
+            raise SeparationValidationError("separation-logic JSON must contain an object")
         return cls.from_dict(decoded)
 
 

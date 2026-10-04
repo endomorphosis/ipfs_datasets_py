@@ -213,9 +213,7 @@ def test_asserted_entity_plane_rejects_raw_address_kind() -> None:
 
 def test_edges_cannot_cross_planes() -> None:
     builder = CryptoFlowGraphBuilder("plane-test")
-    builder.add_observed_address(
-        "addr-1", chain=eth_chain(), address="0xaaa", provider_ids=("p1",)
-    )
+    builder.add_observed_address("addr-1", chain=eth_chain(), address="0xaaa", provider_ids=("p1",))
     builder.add_asserted_entity("ent-1", entity_ref="entity:alice")
     with pytest.raises(CryptoFlowValidationError, match="cross graph planes"):
         builder.add_edge(
@@ -231,9 +229,7 @@ def test_edges_cannot_cross_planes() -> None:
 
 def test_planes_remain_separate_in_built_graph() -> None:
     builder = CryptoFlowGraphBuilder("planes")
-    builder.add_observed_address(
-        "addr-1", chain=eth_chain(), address="0xaaa"
-    )
+    builder.add_observed_address("addr-1", chain=eth_chain(), address="0xaaa")
     builder.add_asserted_entity("ent-1", entity_ref="entity:alice")
     graph = builder.build()
     assert len(graph.nodes_on_plane(GraphPlane.OBSERVED_ADDRESS)) == 1
@@ -430,15 +426,9 @@ def test_multi_chain_utxo_and_account_ingestion() -> None:
         coordinate=LedgerCoordinate(sequence=250_000_000, hash="sol-slot"),
         provider_ids=("sol-rpc",),
     )
-    builder.add_completeness_receipt(
-        completeness("rcpt-eth", eth_chain(), providers=("erigon",))
-    )
-    builder.add_completeness_receipt(
-        completeness("rcpt-btc", btc_chain(), providers=("btc-node",))
-    )
-    builder.add_completeness_receipt(
-        completeness("rcpt-sol", sol_chain(), providers=("sol-rpc",))
-    )
+    builder.add_completeness_receipt(completeness("rcpt-eth", eth_chain(), providers=("erigon",)))
+    builder.add_completeness_receipt(completeness("rcpt-btc", btc_chain(), providers=("btc-node",)))
+    builder.add_completeness_receipt(completeness("rcpt-sol", sol_chain(), providers=("sol-rpc",)))
 
     snap = builder.snapshot(
         "snap-multi",
@@ -729,9 +719,7 @@ def test_immutable_store_round_trip_and_no_overwrite() -> None:
         coordinate=LedgerCoordinate(sequence=9, hash="0x9"),
         provider_ids=("prov",),
     )
-    builder.add_completeness_receipt(
-        completeness("r", eth_chain(), providers=("prov",))
-    )
+    builder.add_completeness_receipt(completeness("r", eth_chain(), providers=("prov",)))
     snap = builder.snapshot("snap-1")
 
     store = InMemoryGraphSnapshotStore()
@@ -863,9 +851,7 @@ def test_snapshot_from_dict_round_trip() -> None:
         coordinate=LedgerCoordinate(sequence=7, hash="0x7"),
         provider_ids=("p",),
     )
-    builder.add_completeness_receipt(
-        completeness("r", eth_chain(), providers=("p", "q"))
-    )
+    builder.add_completeness_receipt(completeness("r", eth_chain(), providers=("p", "q")))
     snap = builder.snapshot("snap-rt")
     restored = GraphSnapshot.from_dict(snap.to_dict())
     assert restored.graph_digest == snap.graph_digest

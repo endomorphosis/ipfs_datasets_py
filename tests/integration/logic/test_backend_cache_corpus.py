@@ -288,9 +288,7 @@ def test_lookup_rejects_when_stored_authority_exceeds_caller_ceiling() -> None:
         key,
         _theorem(translation_ceiling=EvidenceAuthority.INDEPENDENTLY_CHECKABLE),
     )
-    lookup = cache.lookup(
-        key, max_evidence_authority=EvidenceAuthority.BOUNDED
-    )
+    lookup = cache.lookup(key, max_evidence_authority=EvidenceAuthority.BOUNDED)
     assert lookup.hit
     assert not lookup.usable
     assert lookup.reason is CacheLookupReason.INSUFFICIENT_AUTHORITY
@@ -311,9 +309,7 @@ def test_result_authority_mismatch_is_unusable() -> None:
     cache = ExactVerificationCache()
     key = _key()
     cache.put_result(key, _theorem())
-    lookup = cache.lookup(
-        key, require_result_authority=ResultAuthority.SATISFIABILITY
-    )
+    lookup = cache.lookup(key, require_result_authority=ResultAuthority.SATISFIABILITY)
     assert lookup.hit
     assert not lookup.usable
     assert lookup.reason is CacheLookupReason.AUTHORITY_MISMATCH
@@ -398,9 +394,7 @@ def test_cache_rejects_tampered_in_memory_entry() -> None:
         # Reconstruct with matching digest field but wrong body via object.__setattr__
         # is hard on frozen dataclasses; instead replace with a forged dict path:
         # put a re-built entry that lies about digest by patching after construction.
-        forged = VerificationCacheEntry.from_typed_result(
-            key, _theorem(status=ResultStatus.PROVED)
-        )
+        forged = VerificationCacheEntry.from_typed_result(key, _theorem(status=ResultStatus.PROVED))
         object.__setattr__(forged, "status", ResultStatus.DISPROVED)
         cache._entries[key.digest] = forged  # noqa: SLF001
 
@@ -511,15 +505,11 @@ def test_corpus_stores_proof_and_counterexample_receipts() -> None:
 def test_corpus_stores_attempt_and_negative_receipts() -> None:
     store = BackendProofCorpusStore()
     key = _key()
-    attempt = store.put_attempt(
-        key, _theorem(status=ResultStatus.TIMEOUT)
-    )
+    attempt = store.put_attempt(key, _theorem(status=ResultStatus.TIMEOUT))
     # put_attempt forces ATTEMPT kind even for timeout statuses.
     assert attempt.kind is BackendReceiptKind.ATTEMPT
 
-    entry = VerificationCacheEntry.from_typed_result(
-        key, _theorem(status=ResultStatus.UNAVAILABLE)
-    )
+    entry = VerificationCacheEntry.from_typed_result(key, _theorem(status=ResultStatus.UNAVAILABLE))
     negative = store.put_from_cache_entry(entry)
     assert negative.kind is BackendReceiptKind.NEGATIVE
 
@@ -641,13 +631,8 @@ def test_end_to_end_get_or_compute_then_bridge() -> None:
 
 def test_receipt_kind_mapping() -> None:
     assert receipt_kind_for_status(ResultStatus.PROVED) is BackendReceiptKind.PROOF
-    assert (
-        receipt_kind_for_status(ResultStatus.DISPROVED)
-        is BackendReceiptKind.COUNTEREXAMPLE
-    )
-    assert (
-        receipt_kind_for_status(ResultStatus.TIMEOUT) is BackendReceiptKind.NEGATIVE
-    )
+    assert receipt_kind_for_status(ResultStatus.DISPROVED) is BackendReceiptKind.COUNTEREXAMPLE
+    assert receipt_kind_for_status(ResultStatus.TIMEOUT) is BackendReceiptKind.NEGATIVE
 
 
 def test_content_digest_helper_is_stable() -> None:

@@ -26,6 +26,7 @@ _mcp_catalog_path: Optional[str] = None
 
 
 
+
 def _get_global_manager():
     """Get or create the global index manager.
 
@@ -223,6 +224,7 @@ def mcp_vector_publication_document() -> Dict[str, Any]:
             "pickle_authority": False,
         }
     return catalog.publication_document()
+
 
 
 

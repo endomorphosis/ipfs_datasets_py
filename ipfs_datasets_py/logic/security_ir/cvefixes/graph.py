@@ -106,9 +106,7 @@ _SEMANTIC_NODE_TYPES: Final = frozenset(
 )
 
 
-def _enum_value(
-    enum_type: type[Enum], value: Enum | str, label: str
-) -> Any:
+def _enum_value(enum_type: type[Enum], value: Enum | str, label: str) -> Any:
     try:
         return value if isinstance(value, enum_type) else enum_type(value)
     except (TypeError, ValueError) as exc:
@@ -122,29 +120,19 @@ def _cid(value: Any, label: str) -> str:
         or not value.startswith("b")
         or any(character not in _CID_ALPHABET for character in value)
     ):
-        raise GraphValidationError(
-            f"{label} must be an ir_core raw/sha2-256 CIDv1"
-        )
+        raise GraphValidationError(f"{label} must be an ir_core raw/sha2-256 CIDv1")
     try:
         encoded = value[1:].upper()
         raw = base64.b32decode(encoded + ("=" * ((-len(encoded)) % 8)))
     except (ValueError, base64.binascii.Error) as exc:
-        raise GraphValidationError(
-            f"{label} must be an ir_core raw/sha2-256 CIDv1"
-        ) from exc
+        raise GraphValidationError(f"{label} must be an ir_core raw/sha2-256 CIDv1") from exc
     if len(raw) != 36 or not raw.startswith(_IR_CORE_CID_HEADER):
-        raise GraphValidationError(
-            f"{label} must be an ir_core raw/sha2-256 CIDv1"
-        )
+        raise GraphValidationError(f"{label} must be an ir_core raw/sha2-256 CIDv1")
     return value
 
 
-def _cid_tuple(
-    value: Any, label: str, *, nonempty: bool = True
-) -> tuple[str, ...]:
-    if isinstance(value, (str, bytes, bytearray)) or not isinstance(
-        value, Sequence
-    ):
+def _cid_tuple(value: Any, label: str, *, nonempty: bool = True) -> tuple[str, ...]:
+    if isinstance(value, (str, bytes, bytearray)) or not isinstance(value, Sequence):
         raise GraphValidationError(f"{label} must be a sequence of CIDs")
     result = tuple(sorted(_cid(item, f"{label} item") for item in value))
     if nonempty and not result:
@@ -166,13 +154,9 @@ class GraphOntology:
         if self.version != GRAPH_ONTOLOGY_VERSION:
             raise GraphValidationError("unsupported graph ontology version")
         if self.node_types != tuple(item.value for item in GraphNodeType):
-            raise GraphValidationError(
-                "node_types must exactly match the reviewed vocabulary"
-            )
+            raise GraphValidationError("node_types must exactly match the reviewed vocabulary")
         if self.edge_types != tuple(item.value for item in GraphEdgeType):
-            raise GraphValidationError(
-                "edge_types must exactly match the reviewed vocabulary"
-            )
+            raise GraphValidationError("edge_types must exactly match the reviewed vocabulary")
 
     def validate_edge(
         self,
@@ -197,59 +181,32 @@ class GraphOntology:
             )
         )
         if category is not expected_class:
-            raise GraphValidationError(
-                f"{edge.value} must be classified as {expected_class.value}"
-            )
+            raise GraphValidationError(f"{edge.value} must be classified as {expected_class.value}")
 
         valid = False
         if edge is GraphEdgeType.DESCRIBES:
-            valid = (
-                source is GraphNodeType.SOURCE
-                and target is GraphNodeType.CVE
-            )
+            valid = source is GraphNodeType.SOURCE and target is GraphNodeType.CVE
         elif edge is GraphEdgeType.AFFECTS:
-            valid = (
-                source is GraphNodeType.CVE
-                and target is GraphNodeType.REPOSITORY
-            )
+            valid = source is GraphNodeType.CVE and target is GraphNodeType.REPOSITORY
         elif edge is GraphEdgeType.FIXED_BY:
-            valid = (
-                source is GraphNodeType.CVE
-                and target is GraphNodeType.COMMIT
-            )
+            valid = source is GraphNodeType.CVE and target is GraphNodeType.COMMIT
         elif edge is GraphEdgeType.CLASSIFIED_AS:
-            valid = (
-                source is GraphNodeType.CVE
-                and target is GraphNodeType.CWE
-            )
+            valid = source is GraphNodeType.CVE and target is GraphNodeType.CWE
         elif edge is GraphEdgeType.CONTAINS:
-            valid = (
-                source is GraphNodeType.REPOSITORY
-                and target is GraphNodeType.COMMIT
-            )
+            valid = source is GraphNodeType.REPOSITORY and target is GraphNodeType.COMMIT
         elif edge is GraphEdgeType.CHANGES:
-            valid = (
-                source is GraphNodeType.COMMIT
-                and target is GraphNodeType.CODE_UNIT
-            )
+            valid = source is GraphNodeType.COMMIT and target is GraphNodeType.CODE_UNIT
         elif edge is GraphEdgeType.WRITTEN_IN:
-            valid = (
-                source is GraphNodeType.CODE_UNIT
-                and target is GraphNodeType.LANGUAGE
-            )
+            valid = source is GraphNodeType.CODE_UNIT and target is GraphNodeType.LANGUAGE
         elif edge is GraphEdgeType.OBSERVES:
-            valid = (
-                source is GraphNodeType.CODE_UNIT
-                and target in _SEMANTIC_NODE_TYPES
-            )
+            valid = source is GraphNodeType.CODE_UNIT and target in _SEMANTIC_NODE_TYPES
         elif edge is GraphEdgeType.PAIRS_WITH:
             valid = source is target is GraphNodeType.CODE_UNIT
         elif edge is GraphEdgeType.SIMILAR_TO:
             valid = source is target and source is not GraphNodeType.SOURCE
         if not valid:
             raise GraphValidationError(
-                f"{edge.value} does not permit "
-                f"{source.value} -> {target.value}"
+                f"{edge.value} does not permit {source.value} -> {target.value}"
             )
 
     def to_dict(self) -> dict[str, Any]:
@@ -291,9 +248,7 @@ class GraphConfig:
 
     @property
     def cid(self) -> str:
-        return canonical_config_cid(
-            self.to_dict(), schema_version=self.schema_version
-        )
+        return canonical_config_cid(self.to_dict(), schema_version=self.schema_version)
 
 
 @dataclass(frozen=True, slots=True)
@@ -317,9 +272,7 @@ class SimilarityObservation:
         ):
             object.__setattr__(self, name, _cid(getattr(self, name), name))
         if self.source_record_cid == self.target_record_cid:
-            raise GraphValidationError(
-                "similarity observation endpoints must be distinct"
-            )
+            raise GraphValidationError("similarity observation endpoints must be distinct")
         object.__setattr__(
             self,
             "evidence_cids",
@@ -327,12 +280,7 @@ class SimilarityObservation:
         )
         for name in ("model_id", "model_revision", "metric"):
             value = getattr(self, name)
-            if (
-                not isinstance(value, str)
-                or not value
-                or value != value.strip()
-                or "\x00" in value
-            ):
+            if not isinstance(value, str) or not value or value != value.strip() or "\x00" in value:
                 raise GraphValidationError(f"{name} must be clean non-empty text")
         if (
             isinstance(self.score, bool)
@@ -369,9 +317,7 @@ def _record_node_type(node: GraphNode) -> GraphNodeType:
     return _enum_value(GraphNodeType, node.node_type, "node_type")
 
 
-def _identity_root(
-    value: Mapping[str, Any], domain_suffix: str
-) -> str:
+def _identity_root(value: Mapping[str, Any], domain_suffix: str) -> str:
     return canonical_identity(
         value,
         domain=f"{GRAPH_IDENTITY_DOMAIN}/{domain_suffix}",
@@ -404,9 +350,7 @@ def _freeze_adjacency(
     result: dict[str, tuple[str, ...]] = {}
     for key, edge_ids in value.items():
         node_cid = _cid(key, f"{label} node")
-        result[node_cid] = _cid_tuple(
-            edge_ids, f"{label}[{node_cid}]", nonempty=False
-        )
+        result[node_cid] = _cid_tuple(edge_ids, f"{label}[{node_cid}]", nonempty=False)
     return MappingProxyType(dict(sorted(result.items())))
 
 
@@ -460,9 +404,7 @@ class CVEfixesGraph:
             if node.config_cid != self.config_cid:
                 raise GraphValidationError("node config binding mismatch")
             if node.payload.get("grants_execution_authority") is not False:
-                raise GraphValidationError(
-                    "graph nodes must explicitly deny execution authority"
-                )
+                raise GraphValidationError("graph nodes must explicitly deny execution authority")
         for edge in edges:
             if edge.source_node_cid not in node_by_id:
                 raise GraphValidationError("edge source endpoint is dangling")
@@ -475,9 +417,7 @@ class CVEfixesGraph:
             if edge.config_cid != self.config_cid:
                 raise GraphValidationError("edge config binding mismatch")
             if edge.payload.get("grants_execution_authority") is not False:
-                raise GraphValidationError(
-                    "graph edges must explicitly deny execution authority"
-                )
+                raise GraphValidationError("graph edges must explicitly deny execution authority")
             category = _edge_class(edge)
             GRAPH_ONTOLOGY.validate_edge(
                 edge.edge_type,
@@ -489,9 +429,7 @@ class CVEfixesGraph:
                 edge.authority.value != "non_authoritative"
                 or edge.payload.get("authoritative") is not False
             ):
-                raise GraphValidationError(
-                    "similarity edges must be explicitly non-authoritative"
-                )
+                raise GraphValidationError("similarity edges must be explicitly non-authoritative")
 
         expected_outgoing, expected_incoming = _build_adjacency(nodes, edges)
         outgoing = (
@@ -517,12 +455,8 @@ class CVEfixesGraph:
         )
         computed_adjacency_root = _identity_root(
             {
-                "incoming": {
-                    key: list(value) for key, value in incoming.items()
-                },
-                "outgoing": {
-                    key: list(value) for key, value in outgoing.items()
-                },
+                "incoming": {key: list(value) for key, value in incoming.items()},
+                "outgoing": {key: list(value) for key, value in outgoing.items()},
             },
             "adjacency-index",
         )
@@ -548,9 +482,7 @@ class CVEfixesGraph:
             "root",
         )
         if self.graph_root and self.graph_root != computed_graph_root:
-            raise GraphValidationError(
-                "graph_root does not match canonical graph tables"
-            )
+            raise GraphValidationError("graph_root does not match canonical graph tables")
         object.__setattr__(self, "graph_root", computed_graph_root)
 
     @property
@@ -560,18 +492,12 @@ class CVEfixesGraph:
     @property
     def semantic_edges(self) -> tuple[GraphEdge, ...]:
         return tuple(
-            item
-            for item in self.edges
-            if _edge_class(item) is not GraphEdgeClass.SIMILARITY
+            item for item in self.edges if _edge_class(item) is not GraphEdgeClass.SIMILARITY
         )
 
     @property
     def similarity_edges(self) -> tuple[GraphEdge, ...]:
-        return tuple(
-            item
-            for item in self.edges
-            if _edge_class(item) is GraphEdgeClass.SIMILARITY
-        )
+        return tuple(item for item in self.edges if _edge_class(item) is GraphEdgeClass.SIMILARITY)
 
     def edge_ids_from(self, node_cid: str) -> tuple[str, ...]:
         try:
@@ -592,15 +518,11 @@ class CVEfixesGraph:
             "edge_table_root": self.edge_table_root,
             "edges": [item.to_dict() for item in self.edges],
             "graph_root": self.graph_root,
-            "incoming": {
-                key: list(value) for key, value in self.incoming.items()
-            },
+            "incoming": {key: list(value) for key, value in self.incoming.items()},
             "node_table_root": self.node_table_root,
             "nodes": [item.to_dict() for item in self.nodes],
             "ontology_version": self.ontology_version,
-            "outgoing": {
-                key: list(value) for key, value in self.outgoing.items()
-            },
+            "outgoing": {key: list(value) for key, value in self.outgoing.items()},
             "projection_cids": list(self.projection_cids),
             "schema_version": self.schema_version,
             "source_cids": list(self.source_cids),
@@ -664,9 +586,7 @@ class CVEfixesGraph:
             raise GraphValidationError(f"invalid graph artifact: {exc}") from exc
 
     @classmethod
-    def from_json(
-        cls, value: str | bytes | bytearray
-    ) -> "CVEfixesGraph":
+    def from_json(cls, value: str | bytes | bytearray) -> "CVEfixesGraph":
         """Decode strict JSON and revalidate every record and table root."""
 
         if not isinstance(value, (str, bytes, bytearray)):
@@ -676,16 +596,12 @@ class CVEfixesGraph:
             result: dict[str, Any] = {}
             for key, item in items:
                 if key in result:
-                    raise GraphValidationError(
-                        f"graph JSON contains duplicate field {key!r}"
-                    )
+                    raise GraphValidationError(f"graph JSON contains duplicate field {key!r}")
                 result[key] = item
             return result
 
         def reject_constant(constant: str) -> None:
-            raise GraphValidationError(
-                f"graph JSON contains non-finite number {constant}"
-            )
+            raise GraphValidationError(f"graph JSON contains non-finite number {constant}")
 
         try:
             decoded = json.loads(
@@ -735,17 +651,12 @@ class CVEfixesGraphBuilder:
             raise GraphBuildError("at least one projection is required")
         if not all(isinstance(item, ProjectionResult) for item in projections):
             raise TypeError("every projection must be ProjectionResult")
-        if isinstance(
-            similarity_observations, (str, bytes, bytearray)
-        ) or not isinstance(similarity_observations, Sequence):
-            raise TypeError("similarity_observations must be a sequence")
-        if not all(
-            isinstance(item, SimilarityObservation)
-            for item in similarity_observations
+        if isinstance(similarity_observations, (str, bytes, bytearray)) or not isinstance(
+            similarity_observations, Sequence
         ):
-            raise TypeError(
-                "every similarity observation must be SimilarityObservation"
-            )
+            raise TypeError("similarity_observations must be a sequence")
+        if not all(isinstance(item, SimilarityObservation) for item in similarity_observations):
+            raise TypeError("every similarity observation must be SimilarityObservation")
         cwe_by_cve = cwe_by_cve or {}
         if not isinstance(cwe_by_cve, Mapping):
             raise TypeError("cwe_by_cve must be a mapping")
@@ -787,9 +698,7 @@ class CVEfixesGraphBuilder:
                 spec.payload = clean_payload
                 specs[identity] = spec
             elif spec.payload != clean_payload:
-                raise GraphBuildError(
-                    f"conflicting payload for {node_type.value} node {key!r}"
-                )
+                raise GraphBuildError(f"conflicting payload for {node_type.value} node {key!r}")
             spec.source_cids.update(source_cids)
             spec.parent_cids.update(parent_cids)
             if record_cid:
@@ -810,8 +719,7 @@ class CVEfixesGraphBuilder:
             cve_ids = {
                 item.payload.get("cve_id")
                 for item in projection.code_units
-                if isinstance(item.payload.get("cve_id"), str)
-                and item.payload.get("cve_id")
+                if isinstance(item.payload.get("cve_id"), str) and item.payload.get("cve_id")
             }
             repositories = {
                 item.payload.get("repository")
@@ -826,9 +734,7 @@ class CVEfixesGraphBuilder:
                 and item.payload.get("commit_hash")
             }
             if len(cve_ids) > 1 or len(repositories) > 1 or len(commits) > 1:
-                raise GraphBuildError(
-                    "one projection cannot describe conflicting CVE metadata"
-                )
+                raise GraphBuildError("one projection cannot describe conflicting CVE metadata")
             cve_key = (
                 add_node(
                     GraphNodeType.CVE,
@@ -884,13 +790,9 @@ class CVEfixesGraphBuilder:
                         parent_cids=(projection.cid,),
                         payload={"cwe_id": cwe_id},
                     )
-                    relations.add(
-                        (GraphEdgeType.CLASSIFIED_AS, cve_key, cwe_key)
-                    )
+                    relations.add((GraphEdgeType.CLASSIFIED_AS, cve_key, cwe_key))
             if repository_key is not None and commit_key is not None:
-                relations.add(
-                    (GraphEdgeType.CONTAINS, repository_key, commit_key)
-                )
+                relations.add((GraphEdgeType.CONTAINS, repository_key, commit_key))
 
             for unit in projection.code_units:
                 unit_key = add_node(
@@ -900,9 +802,7 @@ class CVEfixesGraphBuilder:
                     parent_cids=(unit.cid, projection.cid),
                     payload={
                         "code_unit_cid": unit.cid,
-                        "evidence_polarity": unit.payload.get(
-                            "evidence_polarity", ""
-                        ),
+                        "evidence_polarity": unit.payload.get("evidence_polarity", ""),
                         "path": unit.path,
                         "polarity": unit.polarity,
                         "unit_kind": unit.unit_kind,
@@ -911,15 +811,11 @@ class CVEfixesGraphBuilder:
                 )
                 if commit_key is not None:
                     relations.add((GraphEdgeType.CHANGES, commit_key, unit_key))
-                relations.add(
-                    (GraphEdgeType.WRITTEN_IN, unit_key, language_key)
-                )
+                relations.add((GraphEdgeType.WRITTEN_IN, unit_key, language_key))
             for fact in projection.semantic_facts:
                 unit_key = record_keys.get(fact.code_unit_cid)
                 if unit_key is None or fact.code_unit_cid not in units_by_cid:
-                    raise GraphBuildError(
-                        "semantic fact references an unknown code unit"
-                    )
+                    raise GraphBuildError("semantic fact references an unknown code unit")
                 fact_type = _semantic_node_type(fact)
                 fact_key = add_node(
                     fact_type,
@@ -941,8 +837,7 @@ class CVEfixesGraphBuilder:
 
         if len(specs) > self.config.max_nodes:
             raise GraphBuildError(
-                f"graph has {len(specs)} nodes; max_nodes is "
-                f"{self.config.max_nodes}"
+                f"graph has {len(specs)} nodes; max_nodes is {self.config.max_nodes}"
             )
         nodes: list[GraphNode] = []
         node_by_key: dict[tuple[GraphNodeType, str], GraphNode] = {}
@@ -995,9 +890,7 @@ class CVEfixesGraphBuilder:
                     "similarity endpoint is outside the supplied projections"
                 ) from exc
             if source.node_type != target.node_type:
-                raise GraphBuildError(
-                    "similarity endpoints must have the same node type"
-                )
+                raise GraphBuildError("similarity endpoints must have the same node type")
             edges.append(
                 self._edge(
                     GraphEdgeType.SIMILAR_TO,
@@ -1009,19 +902,14 @@ class CVEfixesGraphBuilder:
             )
         if len(edges) > self.config.max_edges:
             raise GraphBuildError(
-                f"graph has {len(edges)} edges; max_edges is "
-                f"{self.config.max_edges}"
+                f"graph has {len(edges)} edges; max_edges is {self.config.max_edges}"
             )
         return CVEfixesGraph(
             nodes=tuple(nodes),
             edges=tuple(edges),
             source_cids=tuple(
                 sorted(
-                    {
-                        source
-                        for projection in ordered
-                        for source in (projection.source_cid,)
-                    }
+                    {source for projection in ordered for source in (projection.source_cid,)}
                     | {
                         evidence
                         for observation in similarity_observations
@@ -1066,13 +954,11 @@ class CVEfixesGraphBuilder:
                 "retrieval_only": True,
             }
         )
-        source_evidence = (
-            set(source.source_cids) & set(target.source_cids)
-        ) | set(extra_source_cids)
+        source_evidence = (set(source.source_cids) & set(target.source_cids)) | set(
+            extra_source_cids
+        )
         if not source_evidence:
-            raise GraphBuildError(
-                "graph edge has no shared or explicit source evidence"
-            )
+            raise GraphBuildError("graph edge has no shared or explicit source evidence")
         return GraphEdge(
             # An edge is supported by evidence shared by both endpoints, plus
             # any explicit observation receipt.  Copying the union of

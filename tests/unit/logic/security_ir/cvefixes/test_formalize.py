@@ -44,9 +44,7 @@ from ipfs_datasets_py.logic.security_ir.formalization_adapter import (
 
 
 def _cid(label: str) -> str:
-    return canonical_identity(
-        {"label": label}, domain="test", schema_version="test/v1"
-    ).cid
+    return canonical_identity({"label": label}, domain="test", schema_version="test/v1").cid
 
 
 SOURCE_SNAPSHOT_CID = _cid("source-snapshot")
@@ -67,12 +65,8 @@ def _attributes() -> CVEfixesPolicyAttributes:
             _term(CVEfixesTermKind.PRECONDITION, "attacker_controls_path"),
             _term(CVEfixesTermKind.PRECONDITION, "missing_canonicalization"),
         ),
-        effects=(
-            _term(CVEfixesTermKind.EFFECT, "read_outside_allowed_root"),
-        ),
-        mitigations=(
-            _term(CVEfixesTermKind.MITIGATION, "canonicalize_and_confine"),
-        ),
+        effects=(_term(CVEfixesTermKind.EFFECT, "read_outside_allowed_root"),),
+        mitigations=(_term(CVEfixesTermKind.MITIGATION, "canonicalize_and_confine"),),
         language=_term(CVEfixesTermKind.LANGUAGE, "python"),
         scope=_term(CVEfixesTermKind.SCOPE, "filesystem"),
         cve_ids=("CVE-2024-12345",),
@@ -127,11 +121,7 @@ def _result(*, with_transition: bool = True) -> CVEfixesAdapterResult:
 
 
 def _policy_formula(artifact: FormalizationArtifact):
-    return next(
-        item
-        for item in artifact.formulas
-        if item.view_id == SECURITY_IR_POLICY_VIEW_ID
-    )
+    return next(item for item in artifact.formulas if item.view_id == SECURITY_IR_POLICY_VIEW_ID)
 
 
 def _all_authority_flags(value: object) -> list[object]:
@@ -156,9 +146,7 @@ def test_deny_candidate_maps_to_typed_exact_scope_prohibition() -> None:
     artifact = formalize_cvefixes_candidate(result)
     formula = _policy_formula(artifact)
     expression = formula.expression.to_dict()
-    symbols = {
-        item.symbol_id: item for item in artifact.symbol_table.symbols
-    }
+    symbols = {item.symbol_id: item for item in artifact.symbol_table.symbols}
 
     assert expression["kind"] == "deontic_prohibition"
     assert expression["deontic_operator"] == CVEFIXES_DEONTIC_OPERATOR
@@ -167,17 +155,14 @@ def test_deny_candidate_maps_to_typed_exact_scope_prohibition() -> None:
     assert expression["typed_scope"] == _attributes().to_dict()
     assert set(formula.symbol_ids) == set(expression["typed_symbol_ids"])
     assert all(identifier in symbols for identifier in formula.symbol_ids)
-    assert {
-        symbols[identifier].sort for identifier in formula.symbol_ids
-    } >= {
+    assert {symbols[identifier].sort for identifier in formula.symbol_ids} >= {
         "cvefixes_action",
         "cvefixes_effect",
         "cvefixes_precondition",
         "cvefixes_scope",
     }
     assert all(
-        symbols[identifier].metadata["exact_scope"]
-        == _attributes().scope.canonical
+        symbols[identifier].metadata["exact_scope"] == _attributes().scope.canonical
         for identifier in formula.symbol_ids
     )
     assert artifact.declaration_id == result.declaration.declaration_id
@@ -195,17 +180,18 @@ def test_shared_views_emit_threat_transition_claim_and_obligation_contracts() ->
         SECURITY_IR_TRANSITION_VIEW_ID,
     }
     assert set(CVEFIXES_FORMALIZATION_TARGET_VIEWS).issubset(emitted_views)
-    assert len(
-        [
-            item
-            for item in artifact.formulas
-            if item.metadata["security_construct"] == "assumption"
-        ]
-    ) == 2
+    assert (
+        len(
+            [
+                item
+                for item in artifact.formulas
+                if item.metadata["security_construct"] == "assumption"
+            ]
+        )
+        == 2
+    )
     transition = next(
-        item
-        for item in artifact.formulas
-        if item.metadata["security_construct"] == "transition"
+        item for item in artifact.formulas if item.metadata["security_construct"] == "transition"
     )
     assert transition.expression["transition"]["source_state"] == "vulnerable"
     assert transition.expression["transition"]["target_state"] == "fixed"
@@ -229,9 +215,7 @@ def test_missing_optional_transition_is_an_explicit_grounded_diagnostic() -> Non
     assert diagnostic.location.traceable
     assert diagnostic.code == "ir.feature.unsupported"
     assert "no construct" in diagnostic.message
-    assert SECURITY_IR_TRANSITION_VIEW_ID not in {
-        item.view_id for item in artifact.formulas
-    }
+    assert SECURITY_IR_TRANSITION_VIEW_ID not in {item.view_id for item in artifact.formulas}
 
 
 def test_formulas_and_obligations_are_explicitly_non_authoritative() -> None:
@@ -247,20 +231,13 @@ def test_formulas_and_obligations_are_explicitly_non_authoritative() -> None:
     assert artifact.metadata["grants_execution_authority"] is False
     assert _all_authority_flags(wire)
     assert all(value is False for value in _all_authority_flags(wire))
-    assert all(
-        item.metadata["proof_authoritative"] is False
-        for item in artifact.proof_obligations
-    )
+    assert all(item.metadata["proof_authoritative"] is False for item in artifact.proof_obligations)
 
 
 def test_vulnerable_and_fixed_controls_have_opposite_expected_polarity() -> None:
-    assert prohibition_expected_for_control(
-        CVEfixesControlPolarity.VULNERABLE_POSITIVE
-    )
+    assert prohibition_expected_for_control(CVEfixesControlPolarity.VULNERABLE_POSITIVE)
     assert prohibition_expected_for_control("vulnerable")
-    assert not prohibition_expected_for_control(
-        CVEfixesControlPolarity.FIXED_NEGATIVE
-    )
+    assert not prohibition_expected_for_control(CVEfixesControlPolarity.FIXED_NEGATIVE)
     assert not prohibition_expected_for_control("fixed")
 
     with pytest.raises(CVEfixesFormalizationError, match="unsupported"):

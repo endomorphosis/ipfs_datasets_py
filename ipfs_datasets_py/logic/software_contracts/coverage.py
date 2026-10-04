@@ -34,12 +34,8 @@ from ipfs_datasets_py.logic.software_contracts.repository import (
 )
 
 SCHEMA_COVERAGE: Final[str] = "datasets_contract_analysis/coverage@1"
-SCHEMA_COVERAGE_DISPOSITION: Final[str] = (
-    "datasets_contract_analysis/coverage-disposition@1"
-)
-SCHEMA_COVERAGE_RECEIPT: Final[str] = (
-    "datasets_contract_analysis/coverage-receipt@1"
-)
+SCHEMA_COVERAGE_DISPOSITION: Final[str] = "datasets_contract_analysis/coverage-disposition@1"
+SCHEMA_COVERAGE_RECEIPT: Final[str] = "datasets_contract_analysis/coverage-receipt@1"
 
 
 class CoverageError(ValueError):
@@ -134,8 +130,7 @@ class CoverageReceipt:
             "every_object_has_disposition": True,
             "shard_counts_sum_to_root": self.shard_count_sum == self.total_objects,
             "dispositions_explicit": sorted(ALL_DISPOSITIONS),
-            "incomplete_on_dirty_or_missing": self.status
-            == STATUS_INCOMPLETE_SCAN
+            "incomplete_on_dirty_or_missing": self.status == STATUS_INCOMPLETE_SCAN
             or self.complete,
             "bound_to_repository_root_cid": True,
             # Non-identity repair markers (excluded from receipt_cid identity).
@@ -159,8 +154,7 @@ class CoverageReceipt:
             "shard_count": self.shard_count,
             "shard_count_sum": self.shard_count_sum,
             "dispositions": [
-                d.to_dict()
-                for d in sorted(self.dispositions, key=lambda x: x.disposition)
+                d.to_dict() for d in sorted(self.dispositions, key=lambda x: x.disposition)
             ],
             "logical_root_counts": dict(sorted(self.logical_root_counts.items())),
             "language_counts": dict(sorted(self.language_counts.items())),
@@ -179,8 +173,7 @@ class CoverageReceipt:
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> "CoverageReceipt":
         dispositions = [
-            CoverageDisposition.from_dict(item)
-            for item in (data.get("dispositions") or [])
+            CoverageDisposition.from_dict(item) for item in (data.get("dispositions") or [])
         ]
         receipt = cls(
             repository_root_cid=str(data["repository_root_cid"]),
@@ -190,23 +183,17 @@ class CoverageReceipt:
             shard_count_sum=int(data.get("shard_count_sum") or 0),
             dispositions=dispositions,
             logical_root_counts={
-                str(k): int(v)
-                for k, v in (data.get("logical_root_counts") or {}).items()
+                str(k): int(v) for k, v in (data.get("logical_root_counts") or {}).items()
             },
             language_counts={
-                str(k): int(v)
-                for k, v in (data.get("language_counts") or {}).items()
+                str(k): int(v) for k, v in (data.get("language_counts") or {}).items()
             },
             blockers=list(data.get("blockers") or []),
             complete=bool(data.get("complete")),
             goal_id=str(data.get("goal_id") or GOAL_ID),
             task_id=str(data.get("task_id") or TASK_ID),
             schema=str(data.get("receipt_schema") or data.get("schema") or SCHEMA_COVERAGE_RECEIPT),
-            receipt_cid=(
-                None
-                if data.get("receipt_cid") is None
-                else str(data["receipt_cid"])
-            ),
+            receipt_cid=(None if data.get("receipt_cid") is None else str(data["receipt_cid"])),
         )
         return receipt
 
@@ -251,9 +238,7 @@ def build_coverage_dispositions(
                 count=int(counts.get(name, 0)),
                 coverage_status=_COVERAGE_STATUS_BY_DISPOSITION[name],
                 semantic=_SEMANTIC_BY_DISPOSITION[name],
-                sample_paths=_samples_for_disposition(
-                    blobs, name, limit=sample_limit
-                ),
+                sample_paths=_samples_for_disposition(blobs, name, limit=sample_limit),
             )
         )
     return out
@@ -293,9 +278,7 @@ def build_coverage_receipt(
     )
     logical_counts: dict[str, int] = {}
     for blob in snapshot.blobs:
-        logical_counts[blob.logical_root] = (
-            logical_counts.get(blob.logical_root, 0) + 1
-        )
+        logical_counts[blob.logical_root] = logical_counts.get(blob.logical_root, 0) + 1
 
     status = str(root_doc.get("status") or snapshot.status)
     blockers = list(root_doc.get("blockers") or snapshot.blockers)
@@ -306,10 +289,7 @@ def build_coverage_receipt(
         0,
     )
     complete = (
-        status == STATUS_COMPLETE
-        and missing_count == 0
-        and shard_sum == total
-        and not blockers
+        status == STATUS_COMPLETE and missing_count == 0 and shard_sum == total and not blockers
     )
     if not complete and status == STATUS_COMPLETE and (missing_count or blockers):
         status = STATUS_INCOMPLETE_SCAN
@@ -347,9 +327,7 @@ def build_coverage_receipt_from_root_document(
         status = STATUS_INCOMPLETE_SCAN
         blockers = list(errors)
     else:
-        status = str(
-            repository_root.get("status") or STATUS_COMPLETE
-        )
+        status = str(repository_root.get("status") or STATUS_COMPLETE)
         blockers = list(repository_root.get("blockers") or [])
 
     totals = repository_root.get("totals") or {}
@@ -375,11 +353,7 @@ def build_coverage_receipt_from_root_document(
     for root in repository_root.get("logical_roots") or []:
         if isinstance(root, dict):
             label = str(root.get("label") or root.get("path") or "")
-            logical_counts[label] = int(
-                root.get("blob_count")
-                or root.get("object_count")
-                or 0
-            )
+            logical_counts[label] = int(root.get("blob_count") or root.get("object_count") or 0)
 
     missing_count = int(disposition_counts.get("missing", 0))
     complete = (
@@ -402,8 +376,7 @@ def build_coverage_receipt_from_root_document(
         dispositions=dispositions,
         logical_root_counts=logical_counts,
         language_counts={
-            str(k): int(v)
-            for k, v in (repository_root.get("language_counts") or {}).items()
+            str(k): int(v) for k, v in (repository_root.get("language_counts") or {}).items()
         },
         blockers=blockers,
         complete=complete,
@@ -427,9 +400,7 @@ def validate_coverage_receipt(
     if data.get("schema") not in {SCHEMA_COVERAGE, SCHEMA_COVERAGE_RECEIPT}:
         # Accept either top-level coverage schema.
         if data.get("schema") != SCHEMA_COVERAGE:
-            errors.append(
-                f"schema must be {SCHEMA_COVERAGE} (got {data.get('schema')!r})"
-            )
+            errors.append(f"schema must be {SCHEMA_COVERAGE} (got {data.get('schema')!r})")
     if data.get("goal_id") != GOAL_ID:
         errors.append(f"goal_id must be {GOAL_ID}")
     if data.get("task_id") != TASK_ID:
@@ -438,9 +409,7 @@ def validate_coverage_receipt(
     total = int(data.get("total_objects") or 0)
     shard_sum = int(data.get("shard_count_sum") or 0)
     if shard_sum != total:
-        errors.append(
-            f"shard_count_sum ({shard_sum}) must equal total_objects ({total})"
-        )
+        errors.append(f"shard_count_sum ({shard_sum}) must equal total_objects ({total})")
 
     disposition_counts = data.get("disposition_counts")
     if not isinstance(disposition_counts, dict):
@@ -448,9 +417,7 @@ def validate_coverage_receipt(
         disposition_counts = {}
         for item in data.get("dispositions") or []:
             if isinstance(item, dict):
-                disposition_counts[str(item.get("disposition"))] = int(
-                    item.get("count") or 0
-                )
+                disposition_counts[str(item.get("disposition"))] = int(item.get("count") or 0)
     for name in ALL_DISPOSITIONS:
         if name not in disposition_counts:
             errors.append(f"disposition_counts missing {name}")
@@ -463,15 +430,11 @@ def validate_coverage_receipt(
 
     status = data.get("status")
     if status not in {STATUS_COMPLETE, STATUS_INCOMPLETE_SCAN}:
-        errors.append(
-            f"status must be {STATUS_COMPLETE!r} or {STATUS_INCOMPLETE_SCAN!r}"
-        )
+        errors.append(f"status must be {STATUS_COMPLETE!r} or {STATUS_INCOMPLETE_SCAN!r}")
 
     if int(disposition_counts.get("missing", 0) or 0) > 0:
         if status != STATUS_INCOMPLETE_SCAN:
-            errors.append(
-                "missing objects require status INCOMPLETE_SCAN"
-            )
+            errors.append("missing objects require status INCOMPLETE_SCAN")
 
     root_cid = data.get("repository_root_cid")
     if not isinstance(root_cid, str) or not root_cid:
@@ -482,24 +445,16 @@ def validate_coverage_receipt(
         errors.extend(f"repository_root: {err}" for err in root_errors)
         expected_cid = repository_root.get("root_cid")
         if expected_cid and expected_cid != root_cid:
-            errors.append(
-                "repository_root_cid does not match repository-root.json root_cid"
-            )
-        root_total = int(
-            (repository_root.get("totals") or {}).get("tracked_objects") or 0
-        )
+            errors.append("repository_root_cid does not match repository-root.json root_cid")
+        root_total = int((repository_root.get("totals") or {}).get("tracked_objects") or 0)
         if root_total != total:
-            errors.append(
-                "coverage total_objects must match repository-root tracked_objects"
-            )
+            errors.append("coverage total_objects must match repository-root tracked_objects")
 
     # Receipt CID integrity when present.
     receipt_cid = data.get("receipt_cid")
     if isinstance(receipt_cid, str) and receipt_cid:
         identity = {
-            key: value
-            for key, value in data.items()
-            if key not in {"receipt_cid", "acceptance"}
+            key: value for key, value in data.items() if key not in {"receipt_cid", "acceptance"}
         }
         # Normalize schema field for recompute: identity uses SCHEMA_COVERAGE.
         try:
@@ -509,9 +464,7 @@ def validate_coverage_receipt(
                 model = CoverageReceipt.from_dict(data)
                 recomputed = cid_for_structured(model.identity_payload())
                 if recomputed != receipt_cid:
-                    errors.append(
-                        "receipt_cid does not match recomputed identity payload"
-                    )
+                    errors.append("receipt_cid does not match recomputed identity payload")
         except Exception as exc:  # pragma: no cover
             errors.append(f"receipt_cid recompute failed: {exc}")
 
@@ -524,11 +477,7 @@ def write_coverage_manifest(
 ) -> dict[str, Any]:
     """Write coverage.json with sorted-key canonical JSON."""
 
-    document = (
-        receipt.to_dict()
-        if isinstance(receipt, CoverageReceipt)
-        else dict(receipt)
-    )
+    document = receipt.to_dict() if isinstance(receipt, CoverageReceipt) else dict(receipt)
     target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
     encoded = canonical_dag_json_bytes(document).decode("utf-8") + "\n"
@@ -547,17 +496,12 @@ def assert_coverage_complete(
 ) -> None:
     """Fail closed if coverage is incomplete or invalid."""
 
-    errors = validate_coverage_receipt(
-        receipt, repository_root=repository_root
-    )
+    errors = validate_coverage_receipt(receipt, repository_root=repository_root)
     data = receipt.to_dict() if isinstance(receipt, CoverageReceipt) else receipt
     if errors:
         raise CoverageError("; ".join(errors))
     if data.get("status") == STATUS_INCOMPLETE_SCAN:
-        raise CoverageError(
-            "coverage status is INCOMPLETE_SCAN; "
-            f"blockers={data.get('blockers')}"
-        )
+        raise CoverageError(f"coverage status is INCOMPLETE_SCAN; blockers={data.get('blockers')}")
     if not data.get("complete"):
         raise CoverageError("coverage receipt is not complete")
 

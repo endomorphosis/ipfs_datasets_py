@@ -121,9 +121,7 @@ class TLACompileBounds:
         if self.default_integer_upper < self.default_integer_lower:
             raise TLACompilerError("default integer upper bound must be >= lower bound")
         if self.schema_version != TLA_COMPILE_BOUNDS_SCHEMA_VERSION:
-            raise TLACompilerError(
-                f"unsupported compile bounds schema: {self.schema_version!r}"
-            )
+            raise TLACompilerError(f"unsupported compile bounds schema: {self.schema_version!r}")
 
     @property
     def label(self) -> str:
@@ -161,9 +159,7 @@ class TLACompileBounds:
             max_module_bytes=int(value.get("max_module_bytes", 1_048_576)),
             default_integer_lower=int(value.get("default_integer_lower", 0)),
             default_integer_upper=int(value.get("default_integer_upper", 7)),
-            schema_version=str(
-                value.get("schema_version", TLA_COMPILE_BOUNDS_SCHEMA_VERSION)
-            ),
+            schema_version=str(value.get("schema_version", TLA_COMPILE_BOUNDS_SCHEMA_VERSION)),
         )
 
 
@@ -183,13 +179,9 @@ class TLASourceMapEntry:
         object.__setattr__(self, "source_kind", _text(self.source_kind, "source_kind"))
         object.__setattr__(self, "tla_symbol", _tla_ident(self.tla_symbol, "tla_symbol"))
         object.__setattr__(self, "role", _text(self.role, "role"))
-        object.__setattr__(
-            self, "line_hint", _text(self.line_hint, "line_hint", optional=True)
-        )
+        object.__setattr__(self, "line_hint", _text(self.line_hint, "line_hint", optional=True))
         if self.schema_version != TLA_SOURCE_MAP_SCHEMA_VERSION:
-            raise TLACompilerError(
-                f"unsupported source-map schema: {self.schema_version!r}"
-            )
+            raise TLACompilerError(f"unsupported source-map schema: {self.schema_version!r}")
 
     def to_dict(self) -> dict[str, str]:
         return {
@@ -218,17 +210,11 @@ class ProjectionLoss:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "loss_id", _text(self.loss_id, "loss_id"))
-        object.__setattr__(
-            self, "projection", _enum(self.projection, ProjectionKind, "projection")
-        )
-        object.__setattr__(
-            self, "severity", _enum(self.severity, LossSeverity, "severity")
-        )
+        object.__setattr__(self, "projection", _enum(self.projection, ProjectionKind, "projection"))
+        object.__setattr__(self, "severity", _enum(self.severity, LossSeverity, "severity"))
         object.__setattr__(self, "construct", _text(self.construct, "construct"))
         object.__setattr__(self, "statement", _text(self.statement, "statement"))
-        object.__setattr__(
-            self, "handling", _enum(self.handling, UnsupportedHandling, "handling")
-        )
+        object.__setattr__(self, "handling", _enum(self.handling, UnsupportedHandling, "handling"))
         object.__setattr__(
             self,
             "preservation",
@@ -240,9 +226,7 @@ class ProjectionLoss:
             _enum(self.approximation, ApproximationDirection, "approximation"),
         )
         if self.schema_version != TLA_PROJECTION_LOSS_SCHEMA_VERSION:
-            raise TLACompilerError(
-                f"unsupported projection loss schema: {self.schema_version!r}"
-            )
+            raise TLACompilerError(f"unsupported projection loss schema: {self.schema_version!r}")
 
     def to_unsupported_construct(self) -> UnsupportedConstruct:
         kind = re.sub(r"[^A-Za-z0-9._:-]+", "_", self.construct).strip("._:-") or "construct"
@@ -288,9 +272,7 @@ class GeneratedTLAArtifacts:
     schema_version: str = TLA_ARTIFACT_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "module_name", _tla_ident(self.module_name, "module_name")
-        )
+        object.__setattr__(self, "module_name", _tla_ident(self.module_name, "module_name"))
         if not self.model_text.endswith("\n"):
             raise TLACompilerError("model_text must end with a newline")
         if not self.tlc_config_text.endswith("\n"):
@@ -315,25 +297,17 @@ class GeneratedTLAArtifacts:
         object.__setattr__(
             self,
             "liveness_properties",
-            tuple(
-                _tla_ident(item, "liveness property") for item in self.liveness_properties
-            ),
+            tuple(_tla_ident(item, "liveness property") for item in self.liveness_properties),
         )
         object.__setattr__(
             self,
             "fairness_limitations",
-            tuple(
-                _text(item, "fairness limitation") for item in self.fairness_limitations
-            ),
+            tuple(_text(item, "fairness limitation") for item in self.fairness_limitations),
         )
         if self.interface_version != TLA_BACKEND_VERSION:
-            raise TLACompilerError(
-                f"unsupported TLA backend interface: {self.interface_version!r}"
-            )
+            raise TLACompilerError(f"unsupported TLA backend interface: {self.interface_version!r}")
         if self.schema_version != TLA_ARTIFACT_SCHEMA_VERSION:
-            raise TLACompilerError(
-                f"unsupported artifact schema: {self.schema_version!r}"
-            )
+            raise TLACompilerError(f"unsupported artifact schema: {self.schema_version!r}")
         encoded = self.model_text.encode("utf-8")
         if len(encoded) > self.bounds.max_module_bytes:
             raise TLACompilerError("generated TLA module exceeds max_module_bytes")
@@ -370,9 +344,7 @@ class GeneratedTLAArtifacts:
             return self.apalache_config_text
         raise TLACompilerError(f"unknown model-checker tool: {tool!r}")
 
-    def to_dict(
-        self, *, include_text: bool = True, include_digest: bool = True
-    ) -> dict[str, Any]:
+    def to_dict(self, *, include_text: bool = True, include_digest: bool = True) -> dict[str, Any]:
         payload: dict[str, Any] = {
             "apalache_config_digest": self.apalache_config_digest,
             "bounded": True,
@@ -527,17 +499,11 @@ class TLACompiler:
         if isinstance(document, StateTransitionIR):
             return self.compile_state(document, module_name=module_name, bounds=finite)
         if isinstance(document, ConcurrencyIR):
-            return self.compile_concurrency(
-                document, module_name=module_name, bounds=finite
-            )
+            return self.compile_concurrency(document, module_name=module_name, bounds=finite)
         if isinstance(document, RefinementIR):
-            return self.compile_refinement(
-                document, module_name=module_name, bounds=finite
-            )
+            return self.compile_refinement(document, module_name=module_name, bounds=finite)
         if isinstance(document, RelyGuaranteeContract):
-            return self.compile_rely_guarantee(
-                document, module_name=module_name, bounds=finite
-            )
+            return self.compile_rely_guarantee(document, module_name=module_name, bounds=finite)
         raise TLACompilerError(
             "document must be StateTransitionIR, ConcurrencyIR, RefinementIR, "
             "or RelyGuaranteeContract"
@@ -614,9 +580,7 @@ class TLACompiler:
         lines.append("")
 
         # Type invariant
-        type_conjuncts = [
-            f"{symbol} \\in {symbol}Domain" for symbol in variable_symbols
-        ]
+        type_conjuncts = [f"{symbol} \\in {symbol}Domain" for symbol in variable_symbols]
         type_conjuncts.append("step \\in 0..MaxSteps")
         lines.append("TypeOK ==")
         for index, conjunct in enumerate(type_conjuncts):
@@ -651,9 +615,9 @@ class TLACompiler:
                 variables=document.schema,
                 primed=False,
             )
-            machine = bool(predicate.expression and predicate.expression.to_dict()) or _looks_like_tla(
-                predicate.statement
-            )
+            machine = bool(
+                predicate.expression and predicate.expression.to_dict()
+            ) or _looks_like_tla(predicate.statement)
             if machine and expr and expr != "TRUE":
                 init_has_machine_expr = True
                 lines.append(f"    /\\ {expr}  \\* {predicate.predicate_id}")
@@ -691,9 +655,7 @@ class TLACompiler:
         for action in sorted(document.actions, key=lambda item: item.action_id):
             symbol = _action_symbol(action)
             action_symbols.append(symbol)
-            action_lines, action_map, action_losses = self._render_action(
-                action, document, finite
-            )
+            action_lines, action_map, action_losses = self._render_action(action, document, finite)
             lines.extend(action_lines)
             lines.append("")
             source_map.extend(action_map)
@@ -705,10 +667,7 @@ class TLACompiler:
             if len(action_symbols) == 1:
                 lines.append(f"    /\\ {action_symbols[0]}")
             else:
-                lines.append(
-                    "    /\\ \\/ "
-                    + "\n       \\/ ".join(action_symbols)
-                )
+                lines.append("    /\\ \\/ " + "\n       \\/ ".join(action_symbols))
             lines.append("    /\\ step' = step + 1")
         else:
             # Relation-only systems: stuttering next with explicit loss.
@@ -941,9 +900,7 @@ class TLACompiler:
             "pred:conc:init",
             PredicateRole.INITIAL,
             "all components start idle",
-            expression={
-                var.variable_id: "idle" for var in schema_variables
-            },
+            expression={var.variable_id: "idle" for var in schema_variables},
             subject_variable_ids=tuple(var.variable_id for var in schema_variables),
         )
         inv = StatePredicate(
@@ -1000,9 +957,7 @@ class TLACompiler:
                 }
             ),
         )
-        artifacts = self.compile_state(
-            projected, module_name=module_name, bounds=finite
-        )
+        artifacts = self.compile_state(projected, module_name=module_name, bounds=finite)
         extra_losses = [
             ProjectionLoss(
                 loss_id="loss:concurrency:interleaving",
@@ -1109,9 +1064,7 @@ class TLACompiler:
         for index, shared_id in enumerate(shared_ids[: finite.max_variables]):
             variables.append(
                 StateVariable(
-                    variable_id=shared_id
-                    if shared_id.startswith("var:")
-                    else f"var:{shared_id}",
+                    variable_id=shared_id if shared_id.startswith("var:") else f"var:{shared_id}",
                     name=_variable_symbol_from_id(shared_id),
                     type_kind=StateTypeKind.INTEGER,
                     boundedness=Boundedness.FINITE,
@@ -1212,9 +1165,7 @@ class TLACompiler:
         if shared_state is not None:
             # Prefer the caller's richer state when supplied.
             projected = shared_state
-        artifacts = self.compile_state(
-            projected, module_name=module_name, bounds=finite
-        )
+        artifacts = self.compile_state(projected, module_name=module_name, bounds=finite)
         extra_losses = (
             ProjectionLoss(
                 loss_id=f"loss:rg:{document.contract_id}:rely",
@@ -1339,9 +1290,9 @@ class TLACompiler:
         )
         actions = []
         predicates: list[StatePredicate] = [init, inv]
-        for transition in sorted(
-            system.transitions, key=lambda item: item.transition_id
-        )[: finite.max_actions]:
+        for transition in sorted(system.transitions, key=lambda item: item.transition_id)[
+            : finite.max_actions
+        ]:
             guard = StatePredicate(
                 f"pred:guard:{transition.transition_id}",
                 PredicateRole.GUARD,
@@ -1414,9 +1365,7 @@ class TLACompiler:
             ),
         )
 
-        artifacts = self.compile_state(
-            projected, module_name=module_name, bounds=finite
-        )
+        artifacts = self.compile_state(projected, module_name=module_name, bounds=finite)
         extra_losses = (
             ProjectionLoss(
                 loss_id="loss:refinement:single-level",
@@ -1502,9 +1451,7 @@ class TLACompiler:
             return RelyGuaranteeContract.from_dict(value)
         raise TLACompilerError("unable to coerce mapping to a supported IR document")
 
-    def _validate_state_bounds(
-        self, document: StateTransitionIR, bounds: TLACompileBounds
-    ) -> None:
+    def _validate_state_bounds(self, document: StateTransitionIR, bounds: TLACompileBounds) -> None:
         if len(document.schema.variables) > bounds.max_variables:
             raise TLACompilerError("state schema exceeds max_variables")
         if len(document.actions) > bounds.max_actions:
@@ -1669,8 +1616,7 @@ class TLACompiler:
                         severity=LossSeverity.OVER_APPROXIMATION,
                         construct="opaque_guard",
                         statement=(
-                            f"Guard for action {action.action_id!r} is opaque and "
-                            "compiled as TRUE."
+                            f"Guard for action {action.action_id!r} is opaque and compiled as TRUE."
                         ),
                         handling=UnsupportedHandling.ABSTRACTED,
                         preservation=PreservationKind.BOUNDED,
@@ -1691,8 +1637,10 @@ class TLACompiler:
             lines.append("    /\\ TRUE")
 
         # Next-state effects
-        written = set(action.frame.writes) if not action.frame.allows_all_writes else set(
-            document.schema.variable_ids
+        written = (
+            set(action.frame.writes)
+            if not action.frame.allows_all_writes
+            else set(document.schema.variable_ids)
         )
         next_updates: dict[str, str] = {}
         if action.next_predicate_id and action.next_predicate_id in predicates:
@@ -1734,9 +1682,7 @@ class TLACompiler:
         for variable in sorted(document.schema.variables, key=lambda item: item.variable_id):
             var_symbol = _variable_symbol(variable)
             if var_symbol in next_updates:
-                lines.append(
-                    f"    /\\ {var_symbol}' = {next_updates[var_symbol]}"
-                )
+                lines.append(f"    /\\ {var_symbol}' = {next_updates[var_symbol]}")
             elif variable.variable_id in written or action.frame.allows_all_writes:
                 # written but no concrete value: stay in domain (non-deterministic)
                 lines.append(f"    /\\ {var_symbol}' \\in {var_symbol}Domain")
@@ -1770,9 +1716,7 @@ class TLACompiler:
         return text if text else "TRUE"
 
     @staticmethod
-    def _render_tlc_config(
-        safety: Sequence[str], liveness: Sequence[str]
-    ) -> str:
+    def _render_tlc_config(safety: Sequence[str], liveness: Sequence[str]) -> str:
         lines = ["SPECIFICATION Spec"]
         for name in safety:
             lines.append(f"INVARIANT {name}")
@@ -1806,9 +1750,7 @@ class TLACompiler:
                 continue
             if skipping:
                 if line == "" or (
-                    not line.startswith(" ")
-                    and not line.startswith("\\")
-                    and "==" in line
+                    not line.startswith(" ") and not line.startswith("\\") and "==" in line
                 ):
                     skipping = False
                     if line != header:

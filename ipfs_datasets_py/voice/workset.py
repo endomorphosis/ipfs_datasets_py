@@ -557,17 +557,13 @@ class VoiceAudioWorkset:
         return cls(
             tts_manifest=AudioWorkManifest.from_dict(payload["tts_manifest"]),
             asr_manifest=AudioWorkManifest.from_dict(payload["asr_manifest"]),
-            validation_manifest=AudioWorkManifest.from_dict(
-                payload["validation_manifest"]
-            ),
+            validation_manifest=AudioWorkManifest.from_dict(payload["validation_manifest"]),
             source_manifest_id=str(payload["source_manifest_id"]),
             policy_id=str(payload["policy_id"]),
             intentionally_text_only_subject_ids=tuple(
                 payload.get("intentionally_text_only_subject_ids") or ()
             ),
-            schema_version=str(
-                payload.get("schema_version") or VOICE_AUDIO_WORKSET_SCHEMA_VERSION
-            ),
+            schema_version=str(payload.get("schema_version") or VOICE_AUDIO_WORKSET_SCHEMA_VERSION),
             workset_id=str(payload.get("workset_id") or ""),
         )
 

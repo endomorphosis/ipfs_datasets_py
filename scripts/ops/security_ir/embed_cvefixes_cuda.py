@@ -37,9 +37,7 @@ OUTPUT_FORMAT: Final = "numpy-npy/v1"
 MAX_BATCH_SIZE: Final = 4096
 UNIT_NORM_ATOL: Final = 5e-4
 
-_INPUT_FIELDS: Final = frozenset(
-    {"position", "node_cid", "text_sha256", "text"}
-)
+_INPUT_FIELDS: Final = frozenset({"position", "node_cid", "text_sha256", "text"})
 _SHA256_RE: Final = re.compile(r"[0-9a-f]{64}")
 _CID_RE: Final = re.compile(r"b[a-z2-7]{58}")
 _REVISION_RE: Final = re.compile(r"[0-9a-f]{40}")
@@ -125,9 +123,7 @@ def _reject_json_constant(value: str) -> None:
 def _validate_model_id(value: str) -> str:
     model_id = str(value or "")
     if _MODEL_ID_RE.fullmatch(model_id) is None:
-        raise CUDAEmbeddingError(
-            "model-id must be a Hugging Face namespace/repository identifier"
-        )
+        raise CUDAEmbeddingError("model-id must be a Hugging Face namespace/repository identifier")
     return model_id
 
 
@@ -142,9 +138,7 @@ def _validate_revision(value: str) -> str:
 
 def _validate_batch_size(value: int) -> int:
     if type(value) is not int or not 1 <= value <= MAX_BATCH_SIZE:
-        raise CUDAEmbeddingError(
-            f"batch-size must be between 1 and {MAX_BATCH_SIZE}"
-        )
+        raise CUDAEmbeddingError(f"batch-size must be between 1 and {MAX_BATCH_SIZE}")
     return value
 
 
@@ -169,9 +163,7 @@ def _load_input(path: Path) -> LoadedInput:
             for line_number, raw_line in enumerate(handle, start=1):
                 raw_digest.update(raw_line)
                 if not raw_line.strip():
-                    raise CUDAEmbeddingError(
-                        f"input line {line_number} is blank"
-                    )
+                    raise CUDAEmbeddingError(f"input line {line_number} is blank")
                 try:
                     decoded = raw_line.decode("utf-8")
                     value = json.loads(
@@ -186,13 +178,9 @@ def _load_input(path: Path) -> LoadedInput:
                         f"input line {line_number} is not valid UTF-8 JSON"
                     ) from exc
                 if not isinstance(value, Mapping):
-                    raise CUDAEmbeddingError(
-                        f"input line {line_number} must be a JSON object"
-                    )
+                    raise CUDAEmbeddingError(f"input line {line_number} must be a JSON object")
                 if frozenset(value) != _INPUT_FIELDS:
-                    raise CUDAEmbeddingError(
-                        f"input line {line_number} has unexpected fields"
-                    )
+                    raise CUDAEmbeddingError(f"input line {line_number} has unexpected fields")
 
                 position = value["position"]
                 node_cid = value["node_cid"]
@@ -204,28 +192,16 @@ def _load_input(path: Path) -> LoadedInput:
                         "input positions must be contiguous and zero based; "
                         f"line {line_number} expected {expected_position}"
                     )
-                if (
-                    not isinstance(node_cid, str)
-                    or _CID_RE.fullmatch(node_cid) is None
-                ):
-                    raise CUDAEmbeddingError(
-                        f"input line {line_number} has an invalid node CID"
-                    )
+                if not isinstance(node_cid, str) or _CID_RE.fullmatch(node_cid) is None:
+                    raise CUDAEmbeddingError(f"input line {line_number} has an invalid node CID")
                 if node_cid in seen_node_cids:
-                    raise CUDAEmbeddingError(
-                        f"input line {line_number} repeats a node CID"
-                    )
-                if (
-                    not isinstance(text_sha256, str)
-                    or _SHA256_RE.fullmatch(text_sha256) is None
-                ):
+                    raise CUDAEmbeddingError(f"input line {line_number} repeats a node CID")
+                if not isinstance(text_sha256, str) or _SHA256_RE.fullmatch(text_sha256) is None:
                     raise CUDAEmbeddingError(
                         f"input line {line_number} has an invalid text SHA-256"
                     )
                 if not isinstance(text, str):
-                    raise CUDAEmbeddingError(
-                        f"input line {line_number} text must be a string"
-                    )
+                    raise CUDAEmbeddingError(f"input line {line_number} text must be a string")
                 try:
                     text_bytes = text.encode("utf-8")
                 except UnicodeEncodeError as exc:
@@ -233,9 +209,7 @@ def _load_input(path: Path) -> LoadedInput:
                         f"input line {line_number} text is not valid Unicode"
                     ) from exc
                 if hashlib.sha256(text_bytes).hexdigest() != text_sha256:
-                    raise CUDAEmbeddingError(
-                        f"input line {line_number} text SHA-256 differs"
-                    )
+                    raise CUDAEmbeddingError(f"input line {line_number} text SHA-256 differs")
 
                 record = InputRecord(
                     position=position,
@@ -275,14 +249,10 @@ def _load_dependencies() -> EmbeddingDependencies:
         import torch
         from sentence_transformers import SentenceTransformer
     except ImportError as exc:
-        raise CUDAEmbeddingError(
-            "torch and sentence-transformers are required"
-        ) from exc
+        raise CUDAEmbeddingError("torch and sentence-transformers are required") from exc
     return EmbeddingDependencies(
         torch=torch,
-        sentence_transformers_version=str(
-            getattr(sentence_transformers, "__version__", "")
-        ),
+        sentence_transformers_version=str(getattr(sentence_transformers, "__version__", "")),
         model_factory=SentenceTransformer,
     )
 
@@ -295,9 +265,7 @@ def _configure_cuda(torch: Any) -> tuple[int, str, int, int]:
     except Exception as exc:
         raise CUDAEmbeddingError("cannot query CUDA availability") from exc
     if not available:
-        raise CUDAEmbeddingError(
-            "CUDA is required; CPU embedding fallback is forbidden"
-        )
+        raise CUDAEmbeddingError("CUDA is required; CPU embedding fallback is forbidden")
 
     try:
         device_index = int(torch.cuda.current_device())
@@ -315,14 +283,10 @@ def _configure_cuda(torch: Any) -> tuple[int, str, int, int]:
         if hasattr(torch.backends, "cudnn"):
             torch.backends.cudnn.benchmark = False
             torch.backends.cudnn.allow_tf32 = False
-        if hasattr(torch.backends, "cuda") and hasattr(
-            torch.backends.cuda, "matmul"
-        ):
+        if hasattr(torch.backends, "cuda") and hasattr(torch.backends.cuda, "matmul"):
             torch.backends.cuda.matmul.allow_tf32 = False
     except Exception as exc:
-        raise CUDAEmbeddingError(
-            "cannot enable deterministic CUDA execution"
-        ) from exc
+        raise CUDAEmbeddingError("cannot enable deterministic CUDA execution") from exc
     return device_index, gpu_name, major, minor
 
 
@@ -335,22 +299,16 @@ def _validate_embeddings(
     try:
         embeddings = np.asarray(value)
     except Exception as exc:
-        raise CUDAEmbeddingError(
-            "embedding output cannot be converted to an array"
-        ) from exc
+        raise CUDAEmbeddingError("embedding output cannot be converted to an array") from exc
     if embeddings.ndim != 2:
         raise CUDAEmbeddingError("embedding output must be a rank-two matrix")
     count, dimension = embeddings.shape
     if count != expected_count:
-        raise CUDAEmbeddingError(
-            "embedding output row count differs from ordered input"
-        )
+        raise CUDAEmbeddingError("embedding output row count differs from ordered input")
     if dimension <= 0:
         raise CUDAEmbeddingError("embedding output dimension must be positive")
     if expected_dimension is not None and dimension != expected_dimension:
-        raise CUDAEmbeddingError(
-            "embedding output dimension differs from the model contract"
-        )
+        raise CUDAEmbeddingError("embedding output dimension differs from the model contract")
     if not np.issubdtype(embeddings.dtype, np.floating):
         raise CUDAEmbeddingError("embedding output must have a floating dtype")
 
@@ -364,9 +322,7 @@ def _validate_embeddings(
         rtol=0.0,
         atol=UNIT_NORM_ATOL,
     ):
-        raise CUDAEmbeddingError(
-            "embedding output rows are not unit normalized"
-        )
+        raise CUDAEmbeddingError("embedding output rows are not unit normalized")
     return embeddings
 
 
@@ -442,9 +398,7 @@ def _atomic_write_bytes(path: Path, content: bytes) -> None:
         temporary_name = None
         _fsync_directory(path.parent)
     except OSError as exc:
-        raise CUDAEmbeddingError(
-            "cannot atomically write embedding receipt"
-        ) from exc
+        raise CUDAEmbeddingError("cannot atomically write embedding receipt") from exc
     finally:
         if temporary_name is not None:
             try:
@@ -493,25 +447,17 @@ def run_worker(
         or _paths_alias(input_path, output_path)
         or _paths_alias(input_path, receipt_path)
     ):
-        raise CUDAEmbeddingError(
-            "input-jsonl, output-npy, and receipt-json must differ"
-        )
+        raise CUDAEmbeddingError("input-jsonl, output-npy, and receipt-json must differ")
     if receipt_path.suffix != ".json":
         raise CUDAEmbeddingError("receipt-json must end in .json")
 
     loaded = _load_input(input_path)
     runtime = dependencies or _load_dependencies()
     torch = runtime.torch
-    device_index, gpu_name, capability_major, capability_minor = (
-        _configure_cuda(torch)
-    )
+    device_index, gpu_name, capability_major, capability_minor = _configure_cuda(torch)
     torch_version = str(getattr(torch, "__version__", "")).strip()
-    cuda_version = str(
-        getattr(getattr(torch, "version", None), "cuda", "") or ""
-    ).strip()
-    sentence_transformers_version = str(
-        runtime.sentence_transformers_version
-    ).strip()
+    cuda_version = str(getattr(getattr(torch, "version", None), "cuda", "") or "").strip()
+    sentence_transformers_version = str(runtime.sentence_transformers_version).strip()
     if not torch_version or not cuda_version or not sentence_transformers_version:
         raise CUDAEmbeddingError("embedding runtime versions are incomplete")
 
@@ -526,17 +472,13 @@ def run_worker(
             )
             model_device = str(model.device)
             if not model_device.startswith("cuda"):
-                raise CUDAEmbeddingError(
-                    "embedding model was not materialized on CUDA"
-                )
+                raise CUDAEmbeddingError("embedding model was not materialized on CUDA")
             model.eval()
             declared_dimension = model.get_sentence_embedding_dimension()
             if declared_dimension is not None:
                 declared_dimension = int(declared_dimension)
                 if declared_dimension <= 0:
-                    raise CUDAEmbeddingError(
-                        "model reports an invalid embedding dimension"
-                    )
+                    raise CUDAEmbeddingError("model reports an invalid embedding dimension")
             encoded = model.encode(
                 [record.text for record in loaded.records],
                 batch_size=batch_size,
@@ -550,9 +492,7 @@ def run_worker(
             raise
         except Exception as exc:
             # Library exceptions may include URLs, credentials, or host paths.
-            raise CUDAEmbeddingError(
-                f"CUDA embedding failed ({type(exc).__name__})"
-            ) from None
+            raise CUDAEmbeddingError(f"CUDA embedding failed ({type(exc).__name__})") from None
         embeddings = _validate_embeddings(
             encoded,
             expected_count=len(loaded.records),
@@ -566,9 +506,7 @@ def run_worker(
         except Exception:
             pass
 
-    output_sha256, output_size_bytes = _atomic_write_npy(
-        output_path, embeddings
-    )
+    output_sha256, output_size_bytes = _atomic_write_npy(output_path, embeddings)
 
     receipt: dict[str, Any] = {
         "batch_size": batch_size,

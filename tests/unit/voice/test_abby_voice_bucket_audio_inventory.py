@@ -11,33 +11,48 @@ from ipfs_datasets_py.voice.bucket_audio_inventory import (
 
 
 def test_classify_response_linkable_and_orphan_paths():
-    assert classify_bucket_audio_object(
-        path=(
-            "runs/abby-full-preprocess-20260622T152102Z/phase4-residual/audio/"
-            "abby-tts-8b88893b24d09bf99fdf.mp3"
-        ),
-        size_bytes=100,
-    )[0] is BucketAudioObjectClass.RESPONSE_LINKABLE
+    assert (
+        classify_bucket_audio_object(
+            path=(
+                "runs/abby-full-preprocess-20260622T152102Z/phase4-residual/audio/"
+                "abby-tts-8b88893b24d09bf99fdf.mp3"
+            ),
+            size_bytes=100,
+        )[0]
+        is BucketAudioObjectClass.RESPONSE_LINKABLE
+    )
 
-    assert classify_bucket_audio_object(
-        path="spk_1779904536.wav",
-        size_bytes=100,
-    )[0] is BucketAudioObjectClass.SPEAKER_PROMPT
+    assert (
+        classify_bucket_audio_object(
+            path="spk_1779904536.wav",
+            size_bytes=100,
+        )[0]
+        is BucketAudioObjectClass.SPEAKER_PROMPT
+    )
 
-    assert classify_bucket_audio_object(
-        path="smoke-tests/example.wav",
-        size_bytes=100,
-    )[0] is BucketAudioObjectClass.DIAGNOSTIC_SMOKE
+    assert (
+        classify_bucket_audio_object(
+            path="smoke-tests/example.wav",
+            size_bytes=100,
+        )[0]
+        is BucketAudioObjectClass.DIAGNOSTIC_SMOKE
+    )
 
-    assert classify_bucket_audio_object(
-        path="spk_1779908396-item-1.wav",
-        size_bytes=0,
-    )[0] is BucketAudioObjectClass.EMPTY_PLACEHOLDER
+    assert (
+        classify_bucket_audio_object(
+            path="spk_1779908396-item-1.wav",
+            size_bytes=0,
+        )[0]
+        is BucketAudioObjectClass.EMPTY_PLACEHOLDER
+    )
 
-    assert classify_bucket_audio_object(
-        path="spk_1779904572-batch.zip",
-        size_bytes=70,
-    )[0] is BucketAudioObjectClass.ARCHIVE_BUNDLE
+    assert (
+        classify_bucket_audio_object(
+            path="spk_1779904572-batch.zip",
+            size_bytes=70,
+        )[0]
+        is BucketAudioObjectClass.ARCHIVE_BUNDLE
+    )
 
 
 def test_inventory_summarizes_all_discovered_objects_and_run_ids():

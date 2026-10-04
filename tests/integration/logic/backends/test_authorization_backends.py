@@ -121,16 +121,11 @@ def test_reference_evaluator_agrees_on_allow_deny_conflict_unknown():
         "fixture:delegation": DecisionOutcome.ALLOW,
     }
     for fixture in DEFAULT_AUTHORIZATION_FIXTURES:
-        decision, explanation, exhausted = evaluator.evaluate(
-            fixture.document, fixture.query
-        )
+        decision, explanation, exhausted = evaluator.evaluate(fixture.document, fixture.query)
         assert decision.outcome is expected[fixture.fixture_id]
         assert decision.outcome is fixture.expected_outcome
         assert decision.authority is AuthorizationEvidenceAuthority.AUTHORIZATION
-        assert (
-            decision.generated_code_correctness
-            is GeneratedCodeCorrectness.NOT_ESTABLISHED
-        )
+        assert decision.generated_code_correctness is GeneratedCodeCorrectness.NOT_ESTABLISHED
         assert decision.is_theorem_authority is False
         assert explanation.query_id == fixture.query.query_id
         assert explanation.outcome is decision.outcome
@@ -139,44 +134,28 @@ def test_reference_evaluator_agrees_on_allow_deny_conflict_unknown():
 
 def test_explanations_bind_concrete_rules_for_allow_and_deny():
     evaluator = ReferenceAuthorizationEvaluator()
-    allow = next(
-        item for item in DEFAULT_AUTHORIZATION_FIXTURES if item.category == "allow"
-    )
-    deny = next(
-        item for item in DEFAULT_AUTHORIZATION_FIXTURES if item.category == "deny"
-    )
+    allow = next(item for item in DEFAULT_AUTHORIZATION_FIXTURES if item.category == "allow")
+    deny = next(item for item in DEFAULT_AUTHORIZATION_FIXTURES if item.category == "deny")
 
     _, allow_explanation, _ = evaluator.evaluate(allow.document, allow.query)
     _, deny_explanation, _ = evaluator.evaluate(deny.document, deny.query)
 
     allow_rules = {
-        step.reference_id
-        for step in allow_explanation.steps
-        if step.kind.value == "rule"
+        step.reference_id for step in allow_explanation.steps if step.kind.value == "rule"
     }
-    deny_rules = {
-        step.reference_id
-        for step in deny_explanation.steps
-        if step.kind.value == "rule"
-    }
+    deny_rules = {step.reference_id for step in deny_explanation.steps if step.kind.value == "rule"}
     assert "rule:admin-may-read" in allow_rules
     assert "rule:deny-sensitive-non-admin" in deny_rules
 
 
 def test_delegation_is_depth_and_scope_bounded():
-    fixture = next(
-        item
-        for item in DEFAULT_AUTHORIZATION_FIXTURES
-        if item.category == "delegation"
-    )
+    fixture = next(item for item in DEFAULT_AUTHORIZATION_FIXTURES if item.category == "delegation")
     evaluator = ReferenceAuthorizationEvaluator()
     decision, explanation, _ = evaluator.evaluate(fixture.document, fixture.query)
 
     assert decision.outcome is DecisionOutcome.ALLOW
     delegation_ids = {
-        step.reference_id
-        for step in explanation.steps
-        if step.kind.value == "delegation"
+        step.reference_id for step in explanation.steps if step.kind.value == "delegation"
     }
     assert "delegation:alice-bob" in delegation_ids
 
@@ -194,9 +173,7 @@ def test_delegation_is_depth_and_scope_bounded():
 
 
 def test_derivation_resource_bounds_are_respected():
-    fixture = next(
-        item for item in DEFAULT_AUTHORIZATION_FIXTURES if item.category == "allow"
-    )
+    fixture = next(item for item in DEFAULT_AUTHORIZATION_FIXTURES if item.category == "allow")
     evaluator = ReferenceAuthorizationEvaluator()
     decision, explanation, exhausted = evaluator.evaluate(
         fixture.document, fixture.query, max_steps=1
@@ -210,9 +187,7 @@ def test_derivation_resource_bounds_are_respected():
 
 
 def test_datalog_backend_run_returns_authorization_authority_only():
-    fixture = next(
-        item for item in DEFAULT_AUTHORIZATION_FIXTURES if item.category == "allow"
-    )
+    fixture = next(item for item in DEFAULT_AUTHORIZATION_FIXTURES if item.category == "allow")
     backend = DatalogAuthorizationBackend()
     outcome = backend.run(_request(fixture.document, fixture.query))
 
@@ -237,9 +212,7 @@ def test_datalog_backend_run_returns_authorization_authority_only():
     ],
 )
 def test_datalog_backend_status_mapping_for_closed_outcomes(category, status):
-    fixture = next(
-        item for item in DEFAULT_AUTHORIZATION_FIXTURES if item.category == category
-    )
+    fixture = next(item for item in DEFAULT_AUTHORIZATION_FIXTURES if item.category == category)
     backend = DatalogAuthorizationBackend()
     outcome = backend.run(_request(fixture.document, fixture.query))
     assert outcome.result.status is status
@@ -262,9 +235,7 @@ def test_secpal_backend_agrees_with_reference_on_fixtures():
 
 
 def test_external_engine_agreement_and_disagreement_quarantine():
-    fixture = next(
-        item for item in DEFAULT_AUTHORIZATION_FIXTURES if item.category == "allow"
-    )
+    fixture = next(item for item in DEFAULT_AUTHORIZATION_FIXTURES if item.category == "allow")
     agree_runner, agree_invocations = _process_runner("authz_result\nALLOW\n")
     agree = DatalogAuthorizationBackend(
         runner=agree_runner,
@@ -291,9 +262,7 @@ def test_external_engine_agreement_and_disagreement_quarantine():
 
 
 def test_missing_external_engine_is_explicit_and_never_theorem():
-    fixture = next(
-        item for item in DEFAULT_AUTHORIZATION_FIXTURES if item.category == "allow"
-    )
+    fixture = next(item for item in DEFAULT_AUTHORIZATION_FIXTURES if item.category == "allow")
     backend = DatalogAuthorizationBackend(
         use_external_engine=True,
         available_probe=lambda: False,
@@ -325,9 +294,7 @@ def test_conformance_receipt_covers_fixture_set():
 
 
 def test_renderers_are_deterministic_and_query_bound():
-    fixture = next(
-        item for item in DEFAULT_AUTHORIZATION_FIXTURES if item.category == "allow"
-    )
+    fixture = next(item for item in DEFAULT_AUTHORIZATION_FIXTURES if item.category == "allow")
     datalog_a = render_datalog_program(fixture.document, fixture.query)
     datalog_b = render_datalog_program(fixture.document, fixture.query)
     secpal_a = render_secpal_program(fixture.document, fixture.query)
@@ -356,9 +323,7 @@ def test_outcome_status_mapping_never_proves_theorems():
 
 
 def test_evaluation_receipt_rejects_theorem_authority():
-    fixture = next(
-        item for item in DEFAULT_AUTHORIZATION_FIXTURES if item.category == "allow"
-    )
+    fixture = next(item for item in DEFAULT_AUTHORIZATION_FIXTURES if item.category == "allow")
     backend = DatalogAuthorizationBackend()
     request = _request(fixture.document, fixture.query)
     outcome = backend.run(request)
@@ -372,12 +337,8 @@ def test_evaluation_receipt_rejects_theorem_authority():
 
 
 def test_policy_decision_and_ucan_view_cannot_establish_code_correctness():
-    fixture = next(
-        item for item in DEFAULT_AUTHORIZATION_FIXTURES if item.category == "allow"
-    )
-    decision, _, _ = ReferenceAuthorizationEvaluator().evaluate(
-        fixture.document, fixture.query
-    )
+    fixture = next(item for item in DEFAULT_AUTHORIZATION_FIXTURES if item.category == "allow")
+    decision, _, _ = ReferenceAuthorizationEvaluator().evaluate(fixture.document, fixture.query)
     assert decision.is_theorem_authority is False
     with pytest.raises(Exception, match="not_established|generated-code|theorem"):
         PolicyDecision(
@@ -422,9 +383,7 @@ def test_supervisor_policy_view_is_thin_and_fail_closed():
 
 
 def test_backend_rejects_theorem_proof_query_kind():
-    fixture = next(
-        item for item in DEFAULT_AUTHORIZATION_FIXTURES if item.category == "allow"
-    )
+    fixture = next(item for item in DEFAULT_AUTHORIZATION_FIXTURES if item.category == "allow")
     request = BackendRequest(
         request_id="request:authz:bad-kind",
         claim_id="claim:authz:bad-kind",

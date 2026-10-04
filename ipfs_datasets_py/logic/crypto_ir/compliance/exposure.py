@@ -62,9 +62,7 @@ from .models import (
 
 
 EXPOSURE_SCHEMA_VERSION: Final[str] = "ipfs-datasets.crypto-ir.bounded-exposure@1.0.0"
-EXPOSURE_POLICY_SCHEMA_VERSION: Final[str] = (
-    "ipfs-datasets.crypto-ir.exposure-policy@1.0.0"
-)
+EXPOSURE_POLICY_SCHEMA_VERSION: Final[str] = "ipfs-datasets.crypto-ir.exposure-policy@1.0.0"
 
 # Finality ranks: higher means stronger settlement guarantee.
 _FINALITY_RANK: Final[Mapping[FinalityStatus, int]] = {
@@ -277,9 +275,7 @@ class ExposurePolicy:
         object.__setattr__(
             self,
             "latest_time",
-            _instant(self.latest_time, "latest_time", allow_empty=True)
-            if self.latest_time
-            else "",
+            _instant(self.latest_time, "latest_time", allow_empty=True) if self.latest_time else "",
         )
         object.__setattr__(
             self,
@@ -291,9 +287,7 @@ class ExposurePolicy:
             "required_provider_ids",
             _ids(self.required_provider_ids, "required_provider_ids"),
         )
-        object.__setattr__(
-            self, "min_finality", _finality_floor(self.min_finality, "min_finality")
-        )
+        object.__setattr__(self, "min_finality", _finality_floor(self.min_finality, "min_finality"))
         amount = _text(self.min_amount_base_units, "min_amount_base_units")
         if not amount.lstrip("-").isdigit():
             raise ExposureError("min_amount_base_units must be a decimal integer string")
@@ -301,9 +295,7 @@ class ExposurePolicy:
         object.__setattr__(
             self,
             "min_path_ratio_basis_points",
-            _basis_points(
-                self.min_path_ratio_basis_points, "min_path_ratio_basis_points"
-            ),
+            _basis_points(self.min_path_ratio_basis_points, "min_path_ratio_basis_points"),
         )
         object.__setattr__(
             self,
@@ -338,9 +330,7 @@ class ExposurePolicy:
             _text(self.list_revision, "list_revision", allow_empty=True),
         )
         if self.schema_version != EXPOSURE_POLICY_SCHEMA_VERSION:
-            raise ExposureError(
-                f"unsupported exposure policy schema: {self.schema_version}"
-            )
+            raise ExposureError(f"unsupported exposure policy schema: {self.schema_version}")
 
     @property
     def rules_digest(self) -> str:
@@ -364,9 +354,7 @@ class ExposurePolicy:
             "min_path_ratio_basis_points": self.min_path_ratio_basis_points,
             "plane": self.plane.value,
             "policy_id": self.policy_id,
-            "require_completeness_for_absence": (
-                self.require_completeness_for_absence
-            ),
+            "require_completeness_for_absence": (self.require_completeness_for_absence),
             "required_provider_ids": list(self.required_provider_ids),
             "revision": self.revision,
             "schema_version": self.schema_version,
@@ -396,9 +384,7 @@ class ExposurePolicy:
             "min_path_ratio_basis_points": self.min_path_ratio_basis_points,
             "plane": self.plane.value,
             "policy_id": self.policy_id,
-            "require_completeness_for_absence": (
-                self.require_completeness_for_absence
-            ),
+            "require_completeness_for_absence": (self.require_completeness_for_absence),
             "required_provider_ids": list(self.required_provider_ids),
             "revision": self.revision,
             "rules_digest": self.rules_digest,
@@ -453,26 +439,18 @@ class ExposurePolicy:
             min_finality=value.get("min_finality", FinalityStatus.CONFIRMED.value),
             min_amount_base_units=str(value.get("min_amount_base_units", "0")),
             min_path_ratio_basis_points=value.get("min_path_ratio_basis_points", 0),
-            indirect_outcome=value.get(
-                "indirect_outcome", SanctionsPolicyOutcome.REVIEW.value
-            ),
-            direct_outcome=value.get(
-                "direct_outcome", SanctionsPolicyOutcome.DENY.value
-            ),
+            indirect_outcome=value.get("indirect_outcome", SanctionsPolicyOutcome.REVIEW.value),
+            direct_outcome=value.get("direct_outcome", SanctionsPolicyOutcome.DENY.value),
             plane=value.get("plane", GraphPlane.OBSERVED_ADDRESS.value),
             allow_heuristic_edges=bool(value.get("allow_heuristic_edges", False)),
-            allow_ambiguous_service_edges=bool(
-                value.get("allow_ambiguous_service_edges", True)
-            ),
+            allow_ambiguous_service_edges=bool(value.get("allow_ambiguous_service_edges", True)),
             require_completeness_for_absence=bool(
                 value.get("require_completeness_for_absence", True)
             ),
             graph_snapshot_id=value.get("graph_snapshot_id", ""),
             list_snapshot_id=value.get("list_snapshot_id", ""),
             list_revision=value.get("list_revision", ""),
-            schema_version=value.get(
-                "schema_version", EXPOSURE_POLICY_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", EXPOSURE_POLICY_SCHEMA_VERSION),
         )
 
 
@@ -494,9 +472,7 @@ class ExposurePathStep:
     provider_ids: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "step_index", _non_negative_int(self.step_index, "step_index")
-        )
+        object.__setattr__(self, "step_index", _non_negative_int(self.step_index, "step_index"))
         for name in (
             "edge_id",
             "from_node_id",
@@ -507,20 +483,14 @@ class ExposurePathStep:
             "ambiguity",
         ):
             object.__setattr__(self, name, _text(getattr(self, name), name))
-        object.__setattr__(
-            self, "asset_id", _text(self.asset_id, "asset_id", allow_empty=True)
-        )
+        object.__setattr__(self, "asset_id", _text(self.asset_id, "asset_id", allow_empty=True))
         object.__setattr__(
             self,
             "amount_base_units",
             _text(self.amount_base_units, "amount_base_units", allow_empty=True),
         )
-        object.__setattr__(
-            self, "timestamp", _text(self.timestamp, "timestamp", allow_empty=True)
-        )
-        object.__setattr__(
-            self, "provider_ids", _ids(self.provider_ids, "provider_ids")
-        )
+        object.__setattr__(self, "timestamp", _text(self.timestamp, "timestamp", allow_empty=True))
+        object.__setattr__(self, "provider_ids", _ids(self.provider_ids, "provider_ids"))
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -631,9 +601,7 @@ class ExposurePath:
             "policy_rules_digest",
             "min_finality_observed",
         ):
-            object.__setattr__(
-                self, name, _text(getattr(self, name), name, allow_empty=True)
-            )
+            object.__setattr__(self, name, _text(getattr(self, name), name, allow_empty=True))
         kinds = tuple(_text(item, "ambiguity_kinds") for item in self.ambiguity_kinds)
         if len(kinds) != len(set(kinds)):
             raise ExposureError("ambiguity_kinds must be unique")
@@ -643,9 +611,7 @@ class ExposurePath:
                 raise ExposureError(f"{name} must be a boolean")
         # Hard invariant: exposure paths never mint designations.
         if self.claims_designation:
-            raise ExposureError(
-                "ExposurePath must never claim designation authority"
-            )
+            raise ExposureError("ExposurePath must never claim designation authority")
         if self.schema_version != EXPOSURE_SCHEMA_VERSION:
             raise ExposureError(f"unsupported path schema: {self.schema_version}")
 
@@ -743,9 +709,7 @@ class ExposurePath:
             target_node_id=value.get("target_node_id", ""),
             node_ids=tuple(value.get("node_ids", ())),
             edge_ids=tuple(value.get("edge_ids", ())),
-            steps=tuple(
-                ExposurePathStep.from_dict(item) for item in value.get("steps", ())
-            ),
+            steps=tuple(ExposurePathStep.from_dict(item) for item in value.get("steps", ())),
             depth=value.get("depth", 0),
             listed_identifier=value.get("listed_identifier", ""),
             designation_id=value.get("designation_id", ""),
@@ -757,9 +721,7 @@ class ExposurePath:
             policy_id=value.get("policy_id", ""),
             policy_revision=value.get("policy_revision", ""),
             policy_rules_digest=value.get("policy_rules_digest", ""),
-            min_finality_observed=value.get(
-                "min_finality_observed", FinalityStatus.UNKNOWN.value
-            ),
+            min_finality_observed=value.get("min_finality_observed", FinalityStatus.UNKNOWN.value),
             ambiguity_kinds=tuple(value.get("ambiguity_kinds", ())),
             contains_heuristic_hop=bool(value.get("contains_heuristic_hop", False)),
             claims_designation=bool(value.get("claims_designation", False)),
@@ -784,18 +746,12 @@ class CompletenessFrontier:
     notes: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "status", _enum(CompletenessStatus, self.status, "status")
-        )
+        object.__setattr__(self, "status", _enum(CompletenessStatus, self.status, "status"))
         object.__setattr__(
             self, "covered_providers", _ids(self.covered_providers, "covered_providers")
         )
-        object.__setattr__(
-            self, "covered_assets", _ids(self.covered_assets, "covered_assets")
-        )
-        object.__setattr__(
-            self, "covered_chains", _ids(self.covered_chains, "covered_chains")
-        )
+        object.__setattr__(self, "covered_assets", _ids(self.covered_assets, "covered_assets"))
+        object.__setattr__(self, "covered_chains", _ids(self.covered_chains, "covered_chains"))
         object.__setattr__(
             self, "missing_providers", _ids(self.missing_providers, "missing_providers")
         )
@@ -872,9 +828,7 @@ class BoundedExposure:
     LAYER: ClassVar[AuthorityKind] = AuthorityKind.RESULT
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "exposure_id", _identifier(self.exposure_id, "exposure_id")
-        )
+        object.__setattr__(self, "exposure_id", _identifier(self.exposure_id, "exposure_id"))
         object.__setattr__(
             self, "origin_node_id", _identifier(self.origin_node_id, "origin_node_id")
         )
@@ -884,9 +838,7 @@ class BoundedExposure:
                 "policy",
                 ExposurePolicy.from_dict(_mapping(self.policy, "policy")),
             )
-        object.__setattr__(
-            self, "verdict", _enum(ExposureVerdict, self.verdict, "verdict")
-        )
+        object.__setattr__(self, "verdict", _enum(ExposureVerdict, self.verdict, "verdict"))
         paths = tuple(
             item
             if isinstance(item, ExposurePath)
@@ -899,35 +851,27 @@ class BoundedExposure:
             "listed_target_node_ids",
             _ids(self.listed_target_node_ids, "listed_target_node_ids"),
         )
-        reasons = tuple(
-            _text(item, "truncation_reasons") for item in self.truncation_reasons
-        )
+        reasons = tuple(_text(item, "truncation_reasons") for item in self.truncation_reasons)
         if len(reasons) != len(set(reasons)):
             raise ExposureError("truncation_reasons must be unique")
         object.__setattr__(self, "truncation_reasons", reasons)
         if type(self.truncated) is not bool:
             raise ExposureError("truncated must be a boolean")
-        if self.frontier is not None and not isinstance(
-            self.frontier, CompletenessFrontier
-        ):
+        if self.frontier is not None and not isinstance(self.frontier, CompletenessFrontier):
             object.__setattr__(
                 self,
                 "frontier",
                 CompletenessFrontier.from_dict(_mapping(self.frontier, "frontier")),
             )
         for name in ("nodes_visited", "edges_visited", "runtime_ms"):
-            object.__setattr__(
-                self, name, _non_negative_int(getattr(self, name), name)
-            )
+            object.__setattr__(self, name, _non_negative_int(getattr(self, name), name))
         for name in (
             "graph_snapshot_id",
             "graph_digest",
             "list_snapshot_id",
             "list_revision",
         ):
-            object.__setattr__(
-                self, name, _text(getattr(self, name), name, allow_empty=True)
-            )
+            object.__setattr__(self, name, _text(getattr(self, name), name, allow_empty=True))
         codes = tuple(_identifier(item, "reason_codes") for item in self.reason_codes)
         if len(codes) != len(set(codes)):
             raise ExposureError("reason_codes must be unique")
@@ -939,9 +883,7 @@ class BoundedExposure:
             raise ExposureError(f"unsupported exposure schema: {self.schema_version}")
         # Structural fail-closed invariants.
         if self.truncated and self.verdict is ExposureVerdict.NO_PATH_WITHIN_BOUNDS:
-            raise ExposureError(
-                "truncated search cannot claim no_path_within_bounds"
-            )
+            raise ExposureError("truncated search cannot claim no_path_within_bounds")
         if self.proves_no_connection and self.paths:
             raise ExposureError("cannot prove absence while paths exist")
         if any(path.claims_designation for path in self.paths):
@@ -1073,9 +1015,7 @@ class BoundedExposure:
             origin_node_id=value.get("origin_node_id", ""),
             policy=ExposurePolicy.from_dict(_mapping(value.get("policy", {}), "policy")),
             verdict=value.get("verdict", ""),
-            paths=tuple(
-                ExposurePath.from_dict(item) for item in value.get("paths", ())
-            ),
+            paths=tuple(ExposurePath.from_dict(item) for item in value.get("paths", ())),
             listed_target_node_ids=tuple(value.get("listed_target_node_ids", ())),
             truncation_reasons=tuple(value.get("truncation_reasons", ())),
             truncated=bool(value.get("truncated", False)),
@@ -1112,9 +1052,7 @@ class ListedTarget:
     def __post_init__(self) -> None:
         object.__setattr__(self, "node_id", _identifier(self.node_id, "node_id"))
         for name in ("address_ref", "listed_identifier", "designation_id"):
-            object.__setattr__(
-                self, name, _text(getattr(self, name), name, allow_empty=True)
-            )
+            object.__setattr__(self, name, _text(getattr(self, name), name, allow_empty=True))
 
 
 def _asset_id(edge: FlowEdge) -> str:
@@ -1150,10 +1088,7 @@ def _edge_usable(
     if edge.derivation in _HEURISTIC_DERIVATIONS and not policy.allow_heuristic_edges:
         truncation.add(TruncationReason.HEURISTIC_BLOCKED.value)
         return False
-    if (
-        edge.kind in _AMBIGUOUS_EDGE_KINDS
-        and not policy.allow_ambiguous_service_edges
-    ):
+    if edge.kind in _AMBIGUOUS_EDGE_KINDS and not policy.allow_ambiguous_service_edges:
         truncation.add(TruncationReason.HEURISTIC_BLOCKED.value)
         return False
     if policy.allowed_asset_ids:
@@ -1189,9 +1124,7 @@ def _edge_usable(
     return True
 
 
-def _adjacency(
-    graph: CryptoFlowGraph, plane: GraphPlane
-) -> dict[str, list[tuple[FlowEdge, str]]]:
+def _adjacency(graph: CryptoFlowGraph, plane: GraphPlane) -> dict[str, list[tuple[FlowEdge, str]]]:
     """Undirected adjacency on the selected plane for exposure connectivity.
 
     Exposure cares about *connection* under observed flows.  Direction is
@@ -1246,9 +1179,7 @@ def _build_frontier(
             statuses.append(receipt.completeness)
             covered_providers.update(receipt.provider_ids)
 
-    missing_providers = tuple(
-        sorted(set(policy.required_provider_ids) - covered_providers)
-    )
+    missing_providers = tuple(sorted(set(policy.required_provider_ids) - covered_providers))
     if missing_providers:
         notes.append("required_providers_missing")
         status = CompletenessStatus.PARTIAL
@@ -1322,7 +1253,7 @@ def _make_path(
         (
             origin,
             target.node_id,
-            * (e.edge_id for e in edge_seq),
+            *(e.edge_id for e in edge_seq),
             policy.policy_id,
             policy.revision,
             graph_snapshot_id,
@@ -1403,9 +1334,7 @@ def compute_bounded_exposure(
         graph_digest = graph.identity.digest
 
     if policy.graph_snapshot_id and policy.graph_snapshot_id != graph_snapshot_id:
-        raise ExposureError(
-            "policy.graph_snapshot_id does not match the supplied snapshot"
-        )
+        raise ExposureError("policy.graph_snapshot_id does not match the supplied snapshot")
 
     node_map = graph.node_map()
     if origin_node_id not in node_map:
@@ -1676,8 +1605,10 @@ def replay_exposure_path(
         raise ExposureError("path must be an ExposurePath")
     if not isinstance(graph, CryptoFlowGraph):
         raise ExposureError("graph must be a CryptoFlowGraph")
-    if graph_snapshot_id and path.graph_snapshot_id and (
-        path.graph_snapshot_id != graph_snapshot_id
+    if (
+        graph_snapshot_id
+        and path.graph_snapshot_id
+        and (path.graph_snapshot_id != graph_snapshot_id)
     ):
         return False
     if graph_digest and path.graph_digest and path.graph_digest != graph_digest:

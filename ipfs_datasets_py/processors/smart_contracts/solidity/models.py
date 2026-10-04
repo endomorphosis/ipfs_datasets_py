@@ -207,24 +207,14 @@ class SourceSpan:
     end_column: int = 1
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "start_offset", _non_negative(self.start_offset, "start_offset")
-        )
-        object.__setattr__(
-            self, "end_offset", _non_negative(self.end_offset, "end_offset")
-        )
+        object.__setattr__(self, "start_offset", _non_negative(self.start_offset, "start_offset"))
+        object.__setattr__(self, "end_offset", _non_negative(self.end_offset, "end_offset"))
         if self.end_offset < self.start_offset:
             raise InvalidRequestError("end_offset must be >= start_offset")
-        object.__setattr__(
-            self, "start_line", _positive(self.start_line, "start_line")
-        )
-        object.__setattr__(
-            self, "start_column", _positive(self.start_column, "start_column")
-        )
+        object.__setattr__(self, "start_line", _positive(self.start_line, "start_line"))
+        object.__setattr__(self, "start_column", _positive(self.start_column, "start_column"))
         object.__setattr__(self, "end_line", _positive(self.end_line, "end_line"))
-        object.__setattr__(
-            self, "end_column", _positive(self.end_column, "end_column")
-        )
+        object.__setattr__(self, "end_column", _positive(self.end_column, "end_column"))
 
     @property
     def length(self) -> int:
@@ -274,12 +264,8 @@ class ParserBounds:
             _positive(self.max_source_bytes, "max_source_bytes"),
         )
         object.__setattr__(self, "max_nodes", _positive(self.max_nodes, "max_nodes"))
-        object.__setattr__(
-            self, "max_nesting", _positive(self.max_nesting, "max_nesting")
-        )
-        object.__setattr__(
-            self, "max_imports", _positive(self.max_imports, "max_imports")
-        )
+        object.__setattr__(self, "max_nesting", _positive(self.max_nesting, "max_nesting"))
+        object.__setattr__(self, "max_imports", _positive(self.max_imports, "max_imports"))
         object.__setattr__(
             self,
             "max_diagnostics",
@@ -310,18 +296,12 @@ class ParserBounds:
         if not isinstance(value, Mapping):
             raise InvalidRequestError("ParserBounds must be a mapping")
         return cls(
-            max_source_bytes=int(
-                value.get("max_source_bytes", DEFAULT_MAX_SOURCE_BYTES)
-            ),
+            max_source_bytes=int(value.get("max_source_bytes", DEFAULT_MAX_SOURCE_BYTES)),
             max_nodes=int(value.get("max_nodes", DEFAULT_MAX_NODES)),
             max_nesting=int(value.get("max_nesting", DEFAULT_MAX_NESTING)),
             max_imports=int(value.get("max_imports", DEFAULT_MAX_IMPORTS)),
-            max_diagnostics=int(
-                value.get("max_diagnostics", DEFAULT_MAX_DIAGNOSTICS)
-            ),
-            max_declarations=int(
-                value.get("max_declarations", DEFAULT_MAX_DECLARATIONS)
-            ),
+            max_diagnostics=int(value.get("max_diagnostics", DEFAULT_MAX_DIAGNOSTICS)),
+            max_declarations=int(value.get("max_declarations", DEFAULT_MAX_DECLARATIONS)),
             max_calls=int(value.get("max_calls", DEFAULT_MAX_CALLS)),
             max_facts=int(value.get("max_facts", DEFAULT_MAX_FACTS)),
         )
@@ -348,9 +328,7 @@ class ParserConfig:
     attributes: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "backend", _required_text(self.backend, "backend")
-        )
+        object.__setattr__(self, "backend", _required_text(self.backend, "backend"))
         if self.resolve_imports:
             raise InvalidRequestError(
                 "resolve_imports must be false; imports never resolve over the network"
@@ -402,9 +380,7 @@ class ParserIdentity:
     bounds_digest: str = ""
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "parser_id", _required_text(self.parser_id, "parser_id")
-        )
+        object.__setattr__(self, "parser_id", _required_text(self.parser_id, "parser_id"))
         object.__setattr__(
             self,
             "parser_version",
@@ -415,12 +391,8 @@ class ParserIdentity:
             "schema_version",
             _required_text(self.schema_version, "schema_version"),
         )
-        object.__setattr__(
-            self, "config_digest", _optional_text(self.config_digest)
-        )
-        object.__setattr__(
-            self, "bounds_digest", _optional_text(self.bounds_digest)
-        )
+        object.__setattr__(self, "config_digest", _optional_text(self.config_digest))
+        object.__setattr__(self, "bounds_digest", _optional_text(self.bounds_digest))
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -456,13 +428,9 @@ class ParseDiagnostic:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "code", _required_text(self.code, "code"))
-        object.__setattr__(
-            self, "message", _required_text(self.message, "message")
-        )
+        object.__setattr__(self, "message", _required_text(self.message, "message"))
         if not isinstance(self.severity, DiagnosticSeverity):
-            object.__setattr__(
-                self, "severity", DiagnosticSeverity(str(self.severity))
-            )
+            object.__setattr__(self, "severity", DiagnosticSeverity(str(self.severity)))
         object.__setattr__(self, "attributes", _freeze_mapping(self.attributes))
 
     def to_dict(self) -> dict[str, Any]:
@@ -502,9 +470,7 @@ class EvidenceClaim:
         if not isinstance(self.kind, ClaimKind):
             object.__setattr__(self, "kind", ClaimKind(str(self.kind)))
         object.__setattr__(self, "value", _optional_text(self.value) if self.value else "")
-        object.__setattr__(
-            self, "source_field", _optional_text(self.source_field)
-        )
+        object.__setattr__(self, "source_field", _optional_text(self.source_field))
         object.__setattr__(self, "attributes", _freeze_mapping(self.attributes))
 
     def to_dict(self) -> dict[str, Any]:
@@ -651,12 +617,8 @@ class ParameterFact:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "name", _optional_text(self.name))
-        object.__setattr__(
-            self, "type_name", _required_text(self.type_name, "type_name")
-        )
-        object.__setattr__(
-            self, "storage_location", _optional_text(self.storage_location)
-        )
+        object.__setattr__(self, "type_name", _required_text(self.type_name, "type_name"))
+        object.__setattr__(self, "storage_location", _optional_text(self.storage_location))
         object.__setattr__(self, "attributes", _freeze_mapping(self.attributes))
 
     def to_dict(self) -> dict[str, Any]:
@@ -704,9 +666,7 @@ class FunctionFact:
         object.__setattr__(self, "name", _optional_text(self.name))
         object.__setattr__(self, "kind", _required_text(self.kind, "kind"))
         if not isinstance(self.visibility, Visibility):
-            object.__setattr__(
-                self, "visibility", Visibility(str(self.visibility))
-            )
+            object.__setattr__(self, "visibility", Visibility(str(self.visibility)))
         if not isinstance(self.state_mutability, StateMutability):
             object.__setattr__(
                 self,
@@ -744,16 +704,9 @@ class FunctionFact:
             span=SourceSpan.from_dict(value.get("span", {})),
             kind=str(value.get("kind", "function")),
             visibility=Visibility(str(value.get("visibility", "default"))),
-            state_mutability=StateMutability(
-                str(value.get("state_mutability", "unknown"))
-            ),
-            parameters=tuple(
-                ParameterFact.from_dict(p)
-                for p in (value.get("parameters") or ())
-            ),
-            returns=tuple(
-                ParameterFact.from_dict(p) for p in (value.get("returns") or ())
-            ),
+            state_mutability=StateMutability(str(value.get("state_mutability", "unknown"))),
+            parameters=tuple(ParameterFact.from_dict(p) for p in (value.get("parameters") or ())),
+            returns=tuple(ParameterFact.from_dict(p) for p in (value.get("returns") or ())),
             modifiers=tuple(value.get("modifiers", ()) or ()),
             is_virtual=bool(value.get("is_virtual", False)),
             is_override=bool(value.get("is_override", False)),
@@ -776,13 +729,9 @@ class StateVariableFact:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "name", _required_text(self.name, "name"))
-        object.__setattr__(
-            self, "type_name", _required_text(self.type_name, "type_name")
-        )
+        object.__setattr__(self, "type_name", _required_text(self.type_name, "type_name"))
         if not isinstance(self.visibility, Visibility):
-            object.__setattr__(
-                self, "visibility", Visibility(str(self.visibility))
-            )
+            object.__setattr__(self, "visibility", Visibility(str(self.visibility)))
         object.__setattr__(self, "attributes", _freeze_mapping(self.attributes))
 
     def to_dict(self) -> dict[str, Any]:
@@ -839,10 +788,7 @@ class EventFact:
         return cls(
             name=str(value.get("name", "")),
             span=SourceSpan.from_dict(value.get("span", {})),
-            parameters=tuple(
-                ParameterFact.from_dict(p)
-                for p in (value.get("parameters") or ())
-            ),
+            parameters=tuple(ParameterFact.from_dict(p) for p in (value.get("parameters") or ())),
             is_anonymous=bool(value.get("is_anonymous", False)),
         )
 
@@ -873,10 +819,7 @@ class ErrorFact:
         return cls(
             name=str(value.get("name", "")),
             span=SourceSpan.from_dict(value.get("span", {})),
-            parameters=tuple(
-                ParameterFact.from_dict(p)
-                for p in (value.get("parameters") or ())
-            ),
+            parameters=tuple(ParameterFact.from_dict(p) for p in (value.get("parameters") or ())),
         )
 
 
@@ -896,9 +839,7 @@ class CallFact:
             object.__setattr__(self, "kind", CallKind(str(self.kind)))
         object.__setattr__(self, "callee", _required_text(self.callee, "callee"))
         object.__setattr__(self, "enclosing", _optional_text(self.enclosing))
-        object.__setattr__(
-            self, "value_expression", _optional_text(self.value_expression)
-        )
+        object.__setattr__(self, "value_expression", _optional_text(self.value_expression))
         object.__setattr__(self, "attributes", _freeze_mapping(self.attributes))
 
     def to_dict(self) -> dict[str, Any]:
@@ -936,9 +877,7 @@ class StorageAccessFact:
 
     def __post_init__(self) -> None:
         if not isinstance(self.kind, StorageAccessKind):
-            object.__setattr__(
-                self, "kind", StorageAccessKind(str(self.kind))
-            )
+            object.__setattr__(self, "kind", StorageAccessKind(str(self.kind)))
         object.__setattr__(self, "target", _required_text(self.target, "target"))
         object.__setattr__(self, "enclosing", _optional_text(self.enclosing))
 
@@ -974,9 +913,7 @@ class AuthGuardFact:
     def __post_init__(self) -> None:
         if not isinstance(self.kind, AuthGuardKind):
             object.__setattr__(self, "kind", AuthGuardKind(str(self.kind)))
-        object.__setattr__(
-            self, "expression", _required_text(self.expression, "expression")
-        )
+        object.__setattr__(self, "expression", _required_text(self.expression, "expression"))
         object.__setattr__(self, "enclosing", _optional_text(self.enclosing))
 
     def to_dict(self) -> dict[str, Any]:
@@ -1010,12 +947,8 @@ class ValueEffectFact:
 
     def __post_init__(self) -> None:
         if not isinstance(self.kind, ValueEffectKind):
-            object.__setattr__(
-                self, "kind", ValueEffectKind(str(self.kind))
-            )
-        object.__setattr__(
-            self, "expression", _required_text(self.expression, "expression")
-        )
+            object.__setattr__(self, "kind", ValueEffectKind(str(self.kind)))
+        object.__setattr__(self, "expression", _required_text(self.expression, "expression"))
         object.__setattr__(self, "enclosing", _optional_text(self.enclosing))
 
     def to_dict(self) -> dict[str, Any]:
@@ -1088,9 +1021,7 @@ class UnsupportedSyntaxFact:
     def __post_init__(self) -> None:
         object.__setattr__(self, "reason", _required_text(self.reason, "reason"))
         object.__setattr__(self, "construct", _optional_text(self.construct))
-        object.__setattr__(
-            self, "disposition", _required_text(self.disposition, "disposition")
-        )
+        object.__setattr__(self, "disposition", _required_text(self.disposition, "disposition"))
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -1180,49 +1111,28 @@ class SolidityTypeDefinition:
             kind=ContractKind(str(value.get("kind", "unknown"))),
             span=SourceSpan.from_dict(value.get("span", {})),
             inheritance=tuple(
-                InheritanceRef.from_dict(i)
-                for i in (value.get("inheritance") or ())
+                InheritanceRef.from_dict(i) for i in (value.get("inheritance") or ())
             ),
-            functions=tuple(
-                FunctionFact.from_dict(f)
-                for f in (value.get("functions") or ())
-            ),
-            modifiers=tuple(
-                FunctionFact.from_dict(m)
-                for m in (value.get("modifiers") or ())
-            ),
+            functions=tuple(FunctionFact.from_dict(f) for f in (value.get("functions") or ())),
+            modifiers=tuple(FunctionFact.from_dict(m) for m in (value.get("modifiers") or ())),
             state_variables=tuple(
-                StateVariableFact.from_dict(s)
-                for s in (value.get("state_variables") or ())
+                StateVariableFact.from_dict(s) for s in (value.get("state_variables") or ())
             ),
-            events=tuple(
-                EventFact.from_dict(e) for e in (value.get("events") or ())
-            ),
-            errors=tuple(
-                ErrorFact.from_dict(e) for e in (value.get("errors") or ())
-            ),
-            calls=tuple(
-                CallFact.from_dict(c) for c in (value.get("calls") or ())
-            ),
+            events=tuple(EventFact.from_dict(e) for e in (value.get("events") or ())),
+            errors=tuple(ErrorFact.from_dict(e) for e in (value.get("errors") or ())),
+            calls=tuple(CallFact.from_dict(c) for c in (value.get("calls") or ())),
             storage_accesses=tuple(
-                StorageAccessFact.from_dict(s)
-                for s in (value.get("storage_accesses") or ())
+                StorageAccessFact.from_dict(s) for s in (value.get("storage_accesses") or ())
             ),
-            auth_guards=tuple(
-                AuthGuardFact.from_dict(a)
-                for a in (value.get("auth_guards") or ())
-            ),
+            auth_guards=tuple(AuthGuardFact.from_dict(a) for a in (value.get("auth_guards") or ())),
             value_effects=tuple(
-                ValueEffectFact.from_dict(v)
-                for v in (value.get("value_effects") or ())
+                ValueEffectFact.from_dict(v) for v in (value.get("value_effects") or ())
             ),
             assembly_blocks=tuple(
-                AssemblyBlockFact.from_dict(a)
-                for a in (value.get("assembly_blocks") or ())
+                AssemblyBlockFact.from_dict(a) for a in (value.get("assembly_blocks") or ())
             ),
             unsupported=tuple(
-                UnsupportedSyntaxFact.from_dict(u)
-                for u in (value.get("unsupported") or ())
+                UnsupportedSyntaxFact.from_dict(u) for u in (value.get("unsupported") or ())
             ),
             attributes=value.get("attributes", {}),
         )
@@ -1249,9 +1159,7 @@ class SoliditySourceUnit:
             raise InvalidRequestError("source_digest must be a tagged sha256 digest")
         object.__setattr__(self, "source_digest", digest)
         object.__setattr__(self, "path", _optional_text(self.path))
-        object.__setattr__(
-            self, "byte_length", _non_negative(self.byte_length, "byte_length")
-        )
+        object.__setattr__(self, "byte_length", _non_negative(self.byte_length, "byte_length"))
         object.__setattr__(self, "pragmas", tuple(self.pragmas))
         object.__setattr__(self, "imports", tuple(self.imports))
         object.__setattr__(self, "type_definitions", tuple(self.type_definitions))
@@ -1286,30 +1194,19 @@ class SoliditySourceUnit:
             source_digest=str(value.get("source_digest", "")),
             path=str(value.get("path", "")),
             byte_length=int(value.get("byte_length", 0)),
-            pragmas=tuple(
-                SolidityPragma.from_dict(p)
-                for p in (value.get("pragmas") or ())
-            ),
-            imports=tuple(
-                SolidityImport.from_dict(i)
-                for i in (value.get("imports") or ())
-            ),
+            pragmas=tuple(SolidityPragma.from_dict(p) for p in (value.get("pragmas") or ())),
+            imports=tuple(SolidityImport.from_dict(i) for i in (value.get("imports") or ())),
             type_definitions=tuple(
-                SolidityTypeDefinition.from_dict(t)
-                for t in (value.get("type_definitions") or ())
+                SolidityTypeDefinition.from_dict(t) for t in (value.get("type_definitions") or ())
             ),
             evidence_claims=tuple(
-                EvidenceClaim.from_dict(c)
-                for c in (value.get("evidence_claims") or ())
+                EvidenceClaim.from_dict(c) for c in (value.get("evidence_claims") or ())
             ),
             unsupported=tuple(
-                UnsupportedSyntaxFact.from_dict(u)
-                for u in (value.get("unsupported") or ())
+                UnsupportedSyntaxFact.from_dict(u) for u in (value.get("unsupported") or ())
             ),
             attributes=value.get("attributes", {}),
-            schema_version=str(
-                value.get("schema_version", PARSER_SCHEMA_VERSION)
-            ),
+            schema_version=str(value.get("schema_version", PARSER_SCHEMA_VERSION)),
         )
 
     @property
@@ -1343,9 +1240,7 @@ class ParseUsage:
             "facts",
             "elapsed_ms",
         ):
-            object.__setattr__(
-                self, name, _non_negative(getattr(self, name), name)
-            )
+            object.__setattr__(self, name, _non_negative(getattr(self, name), name))
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -1428,9 +1323,7 @@ class SolidityParseResult:
             "notes": list(self.notes),
             "partial": self.partial,
             "schema_version": self.schema_version,
-            "source_unit": (
-                self.source_unit.to_dict() if self.source_unit is not None else None
-            ),
+            "source_unit": (self.source_unit.to_dict() if self.source_unit is not None else None),
             "status": self.status.value,
             "usage": self.usage.to_dict(),
         }
@@ -1446,19 +1339,14 @@ class SolidityParseResult:
             bounds=ParserBounds.from_dict(value.get("bounds", {})),
             config=ParserConfig.from_dict(value.get("config", {})),
             usage=ParseUsage.from_dict(value.get("usage", {})),
-            source_unit=(
-                SoliditySourceUnit.from_dict(unit_raw) if unit_raw else None
-            ),
+            source_unit=(SoliditySourceUnit.from_dict(unit_raw) if unit_raw else None),
             diagnostics=tuple(
-                ParseDiagnostic.from_dict(d)
-                for d in (value.get("diagnostics") or ())
+                ParseDiagnostic.from_dict(d) for d in (value.get("diagnostics") or ())
             ),
             partial=bool(value.get("partial", False)),
             notes=tuple(value.get("notes", ()) or ()),
             attributes=value.get("attributes", {}),
-            schema_version=str(
-                value.get("schema_version", PARSER_SCHEMA_VERSION)
-            ),
+            schema_version=str(value.get("schema_version", PARSER_SCHEMA_VERSION)),
         )
 
     @property

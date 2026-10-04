@@ -492,9 +492,7 @@ class _PythonVisitor(ast.NodeVisitor):
         self.visit(node)
         self._reference_context = previous
 
-    def _signature(
-        self, node: ast.FunctionDef | ast.AsyncFunctionDef
-    ) -> SignatureDefinition:
+    def _signature(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> SignatureDefinition:
         arguments = node.args
         positional = [*arguments.posonlyargs, *arguments.args]
         positional_defaults: list[ast.AST | None] = [
@@ -554,13 +552,9 @@ class _PythonVisitor(ast.NodeVisitor):
             is_generator=is_generator,
         )
 
-    def _visit_function(
-        self, node: ast.FunctionDef | ast.AsyncFunctionDef
-    ) -> None:
+    def _visit_function(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
         signature = self._signature(node)
-        raw_decorators = tuple(
-            _expression_name(item) for item in node.decorator_list
-        )
+        raw_decorators = tuple(_expression_name(item) for item in node.decorator_list)
         decorators = tuple(dict.fromkeys(raw_decorators))
         if len(decorators) != len(raw_decorators):
             self._add_unsupported(
@@ -639,9 +633,7 @@ class _PythonVisitor(ast.NodeVisitor):
         self._visit_function(node)
 
     def visit_ClassDef(self, node: ast.ClassDef) -> None:
-        raw_decorators = tuple(
-            _expression_name(item) for item in node.decorator_list
-        )
+        raw_decorators = tuple(_expression_name(item) for item in node.decorator_list)
         decorators = tuple(dict.fromkeys(raw_decorators))
         if len(decorators) != len(raw_decorators):
             self._add_unsupported(
@@ -804,10 +796,7 @@ class _PythonVisitor(ast.NodeVisitor):
         self.visit(node.value)
 
     def visit_Assign(self, node: ast.Assign) -> None:
-        if any(
-            isinstance(target, ast.Name) and target.id == "__all__"
-            for target in node.targets
-        ):
+        if any(isinstance(target, ast.Name) and target.id == "__all__" for target in node.targets):
             self._set_explicit_exports(node, node.value)
         if self._scope_kind_stack[-1] in {"module", "class"}:
             for target in node.targets:
@@ -827,10 +816,7 @@ class _PythonVisitor(ast.NodeVisitor):
     def visit_AnnAssign(self, node: ast.AnnAssign) -> None:
         if isinstance(node.target, ast.Name) and node.target.id == "__all__":
             self._set_explicit_exports(node, node.value)
-        if (
-            self._scope_kind_stack[-1] in {"module", "class"}
-            and isinstance(node.target, ast.Name)
-        ):
+        if self._scope_kind_stack[-1] in {"module", "class"} and isinstance(node.target, ast.Name):
             self._add_symbol(node.target, node.target.id, "variable")
             if self._scope_kind_stack[-1] == "module":
                 self._add_effect(
@@ -984,13 +970,9 @@ class _PythonVisitor(ast.NodeVisitor):
                 # it is not a closure captured by methods, comprehensions, or
                 # nested classes.
                 is_non_closure_class = (
-                    scope_id != reference.scope_id
-                    and self._scope_kinds.get(scope_id) == "class"
+                    scope_id != reference.scope_id and self._scope_kinds.get(scope_id) == "class"
                 )
-                if (
-                    not is_non_closure_class
-                    and root_name in self._defined_names[scope_id]
-                ):
+                if not is_non_closure_class and root_name in self._defined_names[scope_id]:
                     found = True
                     break
                 scope_id = self._parent_scope.get(scope_id)
@@ -1022,9 +1004,7 @@ class PythonASTExtractor:
         if type(max_source_bytes) is not int or max_source_bytes <= 0:
             raise ValueError("max_source_bytes must be a positive exact integer")
         if max_source_bytes > DEFAULT_MAX_SOURCE_BYTES:
-            raise ValueError(
-                f"max_source_bytes cannot exceed {DEFAULT_MAX_SOURCE_BYTES}"
-            )
+            raise ValueError(f"max_source_bytes cannot exceed {DEFAULT_MAX_SOURCE_BYTES}")
         if type(max_ast_nodes) is not int or max_ast_nodes <= 0:
             raise ValueError("max_ast_nodes must be a positive exact integer")
         if max_ast_nodes > DEFAULT_MAX_AST_NODES:
@@ -1174,10 +1154,7 @@ class PythonASTExtractor:
                 module_name=module_name,
                 code="python.resource_limit",
                 construct="source_size",
-                reason=(
-                    f"Source has {len(source_bytes)} bytes; limit is "
-                    f"{self.max_source_bytes}."
-                ),
+                reason=(f"Source has {len(source_bytes)} bytes; limit is {self.max_source_bytes}."),
             )
 
         source_map = _SourceMap(source_text)
@@ -1284,10 +1261,7 @@ class PythonASTExtractor:
                 module_name=module_name,
                 code="python.resource_limit",
                 construct="frontend_traversal",
-                reason=(
-                    f"{type(exc).__name__}: frontend traversal exceeded its "
-                    "resource budget."
-                ),
+                reason=(f"{type(exc).__name__}: frontend traversal exceeded its resource budget."),
             )
         provenance = SourceProvenance(
             source_cid=cid_for_bytes(source_bytes),
@@ -1329,9 +1303,7 @@ class PythonASTExtractor:
         source_path = Path(path)
         if logical_path is None:
             try:
-                selected_path = source_path.resolve().relative_to(
-                    Path.cwd().resolve()
-                ).as_posix()
+                selected_path = source_path.resolve().relative_to(Path.cwd().resolve()).as_posix()
             except ValueError:
                 selected_path = source_path.name
         else:

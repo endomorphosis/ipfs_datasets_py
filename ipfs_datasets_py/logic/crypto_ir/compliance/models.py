@@ -25,12 +25,8 @@ from ..verdicts import SanctionsMatchLevel
 
 
 COMPLIANCE_SCHEMA_VERSION: Final[str] = "ipfs-datasets.crypto-ir.compliance@1.0.0"
-SANCTIONS_POLICY_SCHEMA_VERSION: Final[str] = (
-    "ipfs-datasets.crypto-ir.sanctions-policy@1.0.0"
-)
-SANCTIONS_SNAPSHOT_SCHEMA_VERSION: Final[str] = (
-    "ipfs-datasets.crypto-ir.sanctions-snapshot@1.0.0"
-)
+SANCTIONS_POLICY_SCHEMA_VERSION: Final[str] = "ipfs-datasets.crypto-ir.sanctions-policy@1.0.0"
+SANCTIONS_SNAPSHOT_SCHEMA_VERSION: Final[str] = "ipfs-datasets.crypto-ir.sanctions-snapshot@1.0.0"
 CRYPTO_IR_COMPLIANCE_DOMAIN: Final[str] = "crypto-ir.compliance"
 
 _ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$")
@@ -134,9 +130,7 @@ def _tuple(values: Any, item_type: type[_T], name: str) -> tuple[_T, ...]:
         elif isinstance(item, Mapping) and hasattr(item_type, "from_dict"):
             result.append(item_type.from_dict(item))  # type: ignore[attr-defined]
         else:
-            raise ComplianceModelError(
-                f"{name} entries must be {item_type.__name__} records"
-            )
+            raise ComplianceModelError(f"{name} entries must be {item_type.__name__} records")
     return tuple(result)
 
 
@@ -168,9 +162,7 @@ def _window(effective_from: str, effective_until: str) -> None:
         start = _parse_instant(effective_from)
         end = _parse_instant(effective_until)
         if end <= start:
-            raise ComplianceModelError(
-                "effective_until must be later than effective_from"
-            )
+            raise ComplianceModelError("effective_until must be later than effective_from")
 
 
 def _parse_instant(value: str) -> datetime:
@@ -228,9 +220,7 @@ class SanctionsProgram:
     def __post_init__(self) -> None:
         object.__setattr__(self, "program_id", _identifier(self.program_id, "program_id"))
         object.__setattr__(self, "name", _text(self.name, "name"))
-        object.__setattr__(
-            self, "authority_id", _identifier(self.authority_id, "authority_id")
-        )
+        object.__setattr__(self, "authority_id", _identifier(self.authority_id, "authority_id"))
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -267,16 +257,12 @@ class SanctionsAuthority:
     LAYER: ClassVar[AuthorityKind] = AuthorityKind.EVIDENCE
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "authority_id", _identifier(self.authority_id, "authority_id")
-        )
+        object.__setattr__(self, "authority_id", _identifier(self.authority_id, "authority_id"))
         object.__setattr__(self, "name", _text(self.name, "name"))
         if not isinstance(self.jurisdiction, Jurisdiction):
             if not isinstance(self.jurisdiction, Mapping):
                 raise ComplianceModelError("jurisdiction must be a Jurisdiction")
-            object.__setattr__(
-                self, "jurisdiction", Jurisdiction.from_dict(self.jurisdiction)
-            )
+            object.__setattr__(self, "jurisdiction", Jurisdiction.from_dict(self.jurisdiction))
         object.__setattr__(self, "source_uri", _text(self.source_uri, "source_uri"))
         object.__setattr__(
             self,
@@ -302,9 +288,7 @@ class SanctionsAuthority:
         value = _mapping(value, "SanctionsAuthority")
         _known(
             value,
-            frozenset(
-                {"authority_id", "name", "jurisdiction", "source_uri", "schema_version"}
-            ),
+            frozenset({"authority_id", "name", "jurisdiction", "source_uri", "schema_version"}),
             "SanctionsAuthority",
         )
         return cls(
@@ -327,9 +311,7 @@ class SanctionsList:
     def __post_init__(self) -> None:
         object.__setattr__(self, "list_id", _identifier(self.list_id, "list_id"))
         object.__setattr__(self, "name", _text(self.name, "name"))
-        object.__setattr__(
-            self, "authority_id", _identifier(self.authority_id, "authority_id")
-        )
+        object.__setattr__(self, "authority_id", _identifier(self.authority_id, "authority_id"))
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -443,12 +425,8 @@ class DesignationRecord:
         jurisdiction_codes = tuple(
             _text(item, "jurisdiction_codes") for item in self.jurisdiction_codes
         )
-        if not jurisdiction_codes or len(jurisdiction_codes) != len(
-            set(jurisdiction_codes)
-        ):
-            raise ComplianceModelError(
-                "jurisdiction_codes must be a non-empty unique sequence"
-            )
+        if not jurisdiction_codes or len(jurisdiction_codes) != len(set(jurisdiction_codes)):
+            raise ComplianceModelError("jurisdiction_codes must be a non-empty unique sequence")
         if any(not _JURISDICTION_RE.fullmatch(item) for item in jurisdiction_codes):
             raise ComplianceModelError("jurisdiction_codes contains an invalid code")
         object.__setattr__(self, "jurisdiction_codes", jurisdiction_codes)
@@ -457,9 +435,7 @@ class DesignationRecord:
             "identifiers",
             _tuple(self.identifiers, DigitalCurrencyIdentifier, "identifiers"),
         )
-        if len({item.identifier_id for item in self.identifiers}) != len(
-            self.identifiers
-        ):
+        if len({item.identifier_id for item in self.identifiers}) != len(self.identifiers):
             raise ComplianceModelError("identifier ids must be unique")
         aliases = tuple(_text(item, "aliases") for item in self.aliases)
         if len(aliases) != len(set(aliases)):
@@ -576,17 +552,13 @@ class SanctionsSnapshot:
             )
         if self.sanctions_list.authority_id != self.authority.authority_id:
             raise ComplianceModelError("sanctions_list authority does not match authority")
-        object.__setattr__(
-            self, "programs", _tuple(self.programs, SanctionsProgram, "programs")
-        )
+        object.__setattr__(self, "programs", _tuple(self.programs, SanctionsProgram, "programs"))
         if not self.programs:
             raise ComplianceModelError("programs must not be empty")
         program_ids = [item.program_id for item in self.programs]
         if len(program_ids) != len(set(program_ids)):
             raise ComplianceModelError("program ids must be unique")
-        if any(
-            item.authority_id != self.authority.authority_id for item in self.programs
-        ):
+        if any(item.authority_id != self.authority.authority_id for item in self.programs):
             raise ComplianceModelError("program authority does not match snapshot")
         object.__setattr__(
             self,
@@ -594,9 +566,7 @@ class SanctionsSnapshot:
             _tuple(self.jurisdictions, Jurisdiction, "jurisdictions"),
         )
         jurisdiction_codes = [item.code for item in self.jurisdictions]
-        if not jurisdiction_codes or len(jurisdiction_codes) != len(
-            set(jurisdiction_codes)
-        ):
+        if not jurisdiction_codes or len(jurisdiction_codes) != len(set(jurisdiction_codes)):
             raise ComplianceModelError("jurisdictions must be non-empty and unique")
         if self.authority.jurisdiction.code not in jurisdiction_codes:
             raise ComplianceModelError(
@@ -607,9 +577,7 @@ class SanctionsSnapshot:
             object.__setattr__(self, name, _instant(getattr(self, name), name))
         if _parse_instant(self.retrieved_at) < _parse_instant(self.published_at):
             raise ComplianceModelError("retrieved_at must not precede published_at")
-        object.__setattr__(
-            self, "content_digest", _digest(self.content_digest, "content_digest")
-        )
+        object.__setattr__(self, "content_digest", _digest(self.content_digest, "content_digest"))
         object.__setattr__(
             self,
             "designations",
@@ -618,15 +586,9 @@ class SanctionsSnapshot:
         designation_ids = [item.designation_id for item in self.designations]
         if len(designation_ids) != len(set(designation_ids)):
             raise ComplianceModelError("designation ids must be unique")
-        if any(
-            item.authority_id != self.authority.authority_id
-            for item in self.designations
-        ):
+        if any(item.authority_id != self.authority.authority_id for item in self.designations):
             raise ComplianceModelError("designation authority does not match snapshot")
-        if any(
-            not set(item.program_ids).issubset(program_ids)
-            for item in self.designations
-        ):
+        if any(not set(item.program_ids).issubset(program_ids) for item in self.designations):
             raise ComplianceModelError("designation references an unknown program")
         if any(
             not set(item.jurisdiction_codes).issubset(jurisdiction_codes)
@@ -698,25 +660,17 @@ class SanctionsSnapshot:
             snapshot_id=value.get("snapshot_id", ""),
             authority=SanctionsAuthority.from_dict(value.get("authority", {})),
             sanctions_list=SanctionsList.from_dict(value.get("sanctions_list", {})),
-            programs=_tuple(
-                value.get("programs", ()), SanctionsProgram, "programs"
-            ),
-            jurisdictions=_tuple(
-                value.get("jurisdictions", ()), Jurisdiction, "jurisdictions"
-            ),
+            programs=_tuple(value.get("programs", ()), SanctionsProgram, "programs"),
+            jurisdictions=_tuple(value.get("jurisdictions", ()), Jurisdiction, "jurisdictions"),
             revision=value.get("revision", ""),
             published_at=value.get("published_at", ""),
             effective_at=value.get("effective_at", ""),
             retrieved_at=value.get("retrieved_at", ""),
             content_digest=value.get("content_digest", ""),
-            designations=_tuple(
-                value.get("designations", ()), DesignationRecord, "designations"
-            ),
+            designations=_tuple(value.get("designations", ()), DesignationRecord, "designations"),
             complete=value.get("complete"),
             supersedes_snapshot_id=value.get("supersedes_snapshot_id", ""),
-            schema_version=value.get(
-                "schema_version", SANCTIONS_SNAPSHOT_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", SANCTIONS_SNAPSHOT_SCHEMA_VERSION),
         )
 
 
@@ -754,9 +708,7 @@ class OwnershipInterest:
         value = _mapping(value, "OwnershipInterest")
         _known(
             value,
-            frozenset(
-                {"owner_party_id", "ownership_basis_points", "designation_ids"}
-            ),
+            frozenset({"owner_party_id", "ownership_basis_points", "designation_ids"}),
             "OwnershipInterest",
         )
         return cls(
@@ -803,17 +755,13 @@ class OwnershipEvidence:
         if self.kind is OwnershipKind.ENTITY and len(self.interests) != 1:
             raise ComplianceModelError("entity ownership evidence requires one owner")
         if sum(item.ownership_basis_points for item in self.interests) > 10_000:
-            raise ComplianceModelError(
-                "aggregate ownership basis points must not exceed 10000"
-            )
+            raise ComplianceModelError("aggregate ownership basis points must not exceed 10000")
         digests = tuple(_digest(item, "source_digests") for item in self.source_digests)
         if not digests or len(digests) != len(set(digests)):
             raise ComplianceModelError("source_digests must be non-empty and unique")
         object.__setattr__(self, "source_digests", digests)
         object.__setattr__(self, "observed_at", _instant(self.observed_at, "observed_at"))
-        object.__setattr__(
-            self, "effective_from", _instant(self.effective_from, "effective_from")
-        )
+        object.__setattr__(self, "effective_from", _instant(self.effective_from, "effective_from"))
         object.__setattr__(
             self,
             "effective_until",
@@ -871,9 +819,7 @@ class OwnershipEvidence:
             evidence_id=value.get("evidence_id", ""),
             subject_party_id=value.get("subject_party_id", ""),
             kind=value.get("kind", ""),
-            interests=_tuple(
-                value.get("interests", ()), OwnershipInterest, "interests"
-            ),
+            interests=_tuple(value.get("interests", ()), OwnershipInterest, "interests"),
             source_digests=tuple(value.get("source_digests", ())),
             observed_at=value.get("observed_at", ""),
             effective_from=value.get("effective_from", ""),
@@ -903,22 +849,14 @@ class LicenseRecord:
         for name in ("license_id", "authority_id", "license_type"):
             object.__setattr__(self, name, _identifier(getattr(self, name), name))
         for name in ("subject_party_ids", "program_ids", "activity_ids"):
-            object.__setattr__(
-                self, name, _ids(getattr(self, name), name, allow_empty=False)
-            )
-        jurisdictions = tuple(
-            _text(item, "jurisdiction_codes") for item in self.jurisdiction_codes
-        )
-        if not jurisdictions or any(
-            not _JURISDICTION_RE.fullmatch(item) for item in jurisdictions
-        ):
+            object.__setattr__(self, name, _ids(getattr(self, name), name, allow_empty=False))
+        jurisdictions = tuple(_text(item, "jurisdiction_codes") for item in self.jurisdiction_codes)
+        if not jurisdictions or any(not _JURISDICTION_RE.fullmatch(item) for item in jurisdictions):
             raise ComplianceModelError("jurisdiction_codes must be non-empty and valid")
         if len(jurisdictions) != len(set(jurisdictions)):
             raise ComplianceModelError("jurisdiction_codes must be unique")
         object.__setattr__(self, "jurisdiction_codes", jurisdictions)
-        object.__setattr__(
-            self, "effective_from", _instant(self.effective_from, "effective_from")
-        )
+        object.__setattr__(self, "effective_from", _instant(self.effective_from, "effective_from"))
         object.__setattr__(
             self, "effective_until", _instant(self.effective_until, "effective_until")
         )
@@ -944,9 +882,7 @@ class LicenseRecord:
             and bool(set(program_ids) & set(self.program_ids))
             and jurisdiction_code in self.jurisdiction_codes
             and activity_id in self.activity_ids
-            and _parse_instant(self.effective_from)
-            <= at
-            < _parse_instant(self.effective_until)
+            and _parse_instant(self.effective_from) <= at < _parse_instant(self.effective_until)
         )
 
     @property
@@ -1043,9 +979,7 @@ class AssociationEvidence:
     def match_level(self) -> SanctionsMatchLevel:
         return {
             AssociationKind.DIRECT: SanctionsMatchLevel.DIRECT_ASSOCIATION,
-            AssociationKind.BOUNDED_INDIRECT: (
-                SanctionsMatchLevel.BOUNDED_INDIRECT_EXPOSURE
-            ),
+            AssociationKind.BOUNDED_INDIRECT: (SanctionsMatchLevel.BOUNDED_INDIRECT_EXPOSURE),
             AssociationKind.HEURISTIC: SanctionsMatchLevel.HEURISTIC_ASSOCIATION,
         }[self.kind]
 
@@ -1122,18 +1056,14 @@ class SanctionsMatch:
         }:
             raise ComplianceModelError("SanctionsMatch must represent positive evidence")
         object.__setattr__(self, "level", level)
-        object.__setattr__(
-            self, "designation_ids", _ids(self.designation_ids, "designation_ids")
-        )
+        object.__setattr__(self, "designation_ids", _ids(self.designation_ids, "designation_ids"))
         for name in (
             "identifier_id",
             "ownership_evidence_id",
             "association_evidence_id",
         ):
             value = getattr(self, name)
-            object.__setattr__(
-                self, name, _identifier(value, name) if value else ""
-            )
+            object.__setattr__(self, name, _identifier(value, name) if value else "")
         if level is SanctionsMatchLevel.EXACT_LISTED_IDENTIFIER:
             if not self.identifier_id or not self.designation_ids:
                 raise ComplianceModelError(
@@ -1146,11 +1076,7 @@ class SanctionsMatch:
         elif level is SanctionsMatchLevel.NAMED_DESIGNATED_PARTY:
             if not self.designation_ids:
                 raise ComplianceModelError("named party needs designation_ids")
-            if (
-                self.identifier_id
-                or self.ownership_evidence_id
-                or self.association_evidence_id
-            ):
+            if self.identifier_id or self.ownership_evidence_id or self.association_evidence_id:
                 raise ComplianceModelError(
                     "named party cannot cite identifier, ownership, or association"
                 )
@@ -1165,9 +1091,7 @@ class SanctionsMatch:
                 )
         else:
             if not self.association_evidence_id:
-                raise ComplianceModelError(
-                    "association match needs association_evidence_id"
-                )
+                raise ComplianceModelError("association match needs association_evidence_id")
             if self.identifier_id or self.ownership_evidence_id:
                 raise ComplianceModelError(
                     "association cannot cite identifier or ownership evidence"
@@ -1226,12 +1150,8 @@ class PolicyRule:
         if level in {SanctionsMatchLevel.UNKNOWN, SanctionsMatchLevel.ERROR}:
             raise ComplianceModelError("UNKNOWN and ERROR are engine states, not rules")
         object.__setattr__(self, "level", level)
-        object.__setattr__(
-            self, "outcome", _enum(SanctionsPolicyOutcome, self.outcome, "outcome")
-        )
-        object.__setattr__(
-            self, "reason_code", _identifier(self.reason_code, "reason_code")
-        )
+        object.__setattr__(self, "outcome", _enum(SanctionsPolicyOutcome, self.outcome, "outcome"))
+        object.__setattr__(self, "reason_code", _identifier(self.reason_code, "reason_code"))
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -1291,9 +1211,7 @@ class LegalPolicyApproval:
             object.__setattr__(self, name, _identifier(getattr(self, name), name))
         object.__setattr__(self, "rules_digest", _digest(self.rules_digest, "rules_digest"))
         object.__setattr__(self, "approved_at", _instant(self.approved_at, "approved_at"))
-        object.__setattr__(
-            self, "effective_from", _instant(self.effective_from, "effective_from")
-        )
+        object.__setattr__(self, "effective_from", _instant(self.effective_from, "effective_from"))
         object.__setattr__(
             self, "effective_until", _instant(self.effective_until, "effective_until")
         )
@@ -1308,11 +1226,7 @@ class LegalPolicyApproval:
 
     def is_effective_at(self, instant: str) -> bool:
         at = _parse_instant(_instant(instant, "instant"))
-        return (
-            _parse_instant(self.effective_from)
-            <= at
-            < _parse_instant(self.effective_until)
-        )
+        return _parse_instant(self.effective_from) <= at < _parse_instant(self.effective_until)
 
     def can_authorize_transaction(self) -> bool:
         """This approval authorizes policy use, never a transaction."""
@@ -1396,9 +1310,7 @@ class SanctionsPolicy:
             raise ComplianceModelError("jurisdiction_code is invalid")
         object.__setattr__(self, "jurisdiction_code", jurisdiction)
         for name in ("authority_ids", "list_ids", "program_ids"):
-            object.__setattr__(
-                self, name, _ids(getattr(self, name), name, allow_empty=False)
-            )
+            object.__setattr__(self, name, _ids(getattr(self, name), name, allow_empty=False))
         object.__setattr__(self, "rules", _tuple(self.rules, PolicyRule, "rules"))
         levels = [rule.level for rule in self.rules]
         if len(levels) != len(set(levels)):
@@ -1407,16 +1319,13 @@ class SanctionsPolicy:
             missing = sorted(level.value for level in _REQUIRED_RULE_LEVELS - set(levels))
             extra = sorted(level.value for level in set(levels) - _REQUIRED_RULE_LEVELS)
             raise ComplianceModelError(
-                f"policy rules must cover every evidence level "
-                f"(missing={missing}, extra={extra})"
+                f"policy rules must cover every evidence level (missing={missing}, extra={extra})"
             )
         if (
             type(self.ownership_threshold_basis_points) is not int
             or not 1 <= self.ownership_threshold_basis_points <= 10_000
         ):
-            raise ComplianceModelError(
-                "ownership_threshold_basis_points must be in 1..10000"
-            )
+            raise ComplianceModelError("ownership_threshold_basis_points must be in 1..10000")
         if (
             type(self.maximum_snapshot_age_seconds) is not int
             or self.maximum_snapshot_age_seconds < 0
@@ -1445,16 +1354,12 @@ class SanctionsPolicy:
                 "outcome_precedence must order every screening outcome exactly once"
             )
         object.__setattr__(self, "outcome_precedence", precedence)
-        object.__setattr__(
-            self, "effective_from", _instant(self.effective_from, "effective_from")
-        )
+        object.__setattr__(self, "effective_from", _instant(self.effective_from, "effective_from"))
         object.__setattr__(
             self, "effective_until", _instant(self.effective_until, "effective_until")
         )
         _window(self.effective_from, self.effective_until)
-        if self.approval is not None and not isinstance(
-            self.approval, LegalPolicyApproval
-        ):
+        if self.approval is not None and not isinstance(self.approval, LegalPolicyApproval):
             object.__setattr__(
                 self,
                 "approval",
@@ -1487,11 +1392,7 @@ class SanctionsPolicy:
 
     def is_effective_at(self, instant: str) -> bool:
         at = _parse_instant(_instant(instant, "instant"))
-        return (
-            _parse_instant(self.effective_from)
-            <= at
-            < _parse_instant(self.effective_until)
-        )
+        return _parse_instant(self.effective_from) <= at < _parse_instant(self.effective_until)
 
     def approved_for_production_at(self, instant: str) -> bool:
         return bool(
@@ -1513,9 +1414,7 @@ class SanctionsPolicy:
             "license_outcome": self.license_outcome.value,
             "list_ids": list(self.list_ids),
             "maximum_snapshot_age_seconds": self.maximum_snapshot_age_seconds,
-            "ownership_threshold_basis_points": (
-                self.ownership_threshold_basis_points
-            ),
+            "ownership_threshold_basis_points": (self.ownership_threshold_basis_points),
             "outcome_precedence": [item.value for item in self.outcome_precedence],
             "policy_id": self.policy_id,
             "program_ids": list(self.program_ids),
@@ -1571,9 +1470,7 @@ class SanctionsPolicy:
             list_ids=tuple(value.get("list_ids", ())),
             program_ids=tuple(value.get("program_ids", ())),
             rules=_tuple(value.get("rules", ()), PolicyRule, "rules"),
-            ownership_threshold_basis_points=value.get(
-                "ownership_threshold_basis_points"
-            ),
+            ownership_threshold_basis_points=value.get("ownership_threshold_basis_points"),
             maximum_snapshot_age_seconds=value.get("maximum_snapshot_age_seconds"),
             license_disposition=value.get("license_disposition", ""),
             license_outcome=value.get("license_outcome", ""),
@@ -1585,9 +1482,7 @@ class SanctionsPolicy:
                 if approval_value is not None
                 else None
             ),
-            schema_version=value.get(
-                "schema_version", SANCTIONS_POLICY_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", SANCTIONS_POLICY_SCHEMA_VERSION),
         )
 
 

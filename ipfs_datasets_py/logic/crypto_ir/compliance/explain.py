@@ -31,9 +31,7 @@ from .decisions import (
 from .models import _known, _mapping, _text
 
 
-COMPLIANCE_EXPLAIN_SCHEMA_VERSION: Final[str] = (
-    "ipfs-datasets.crypto-ir.compliance-explain@1.0.0"
-)
+COMPLIANCE_EXPLAIN_SCHEMA_VERSION: Final[str] = "ipfs-datasets.crypto-ir.compliance-explain@1.0.0"
 
 _OUTCOME_HUMAN: Final[Mapping[SanctionsPolicyOutcome, str]] = {
     SanctionsPolicyOutcome.ALLOW: (
@@ -42,15 +40,11 @@ _OUTCOME_HUMAN: Final[Mapping[SanctionsPolicyOutcome, str]] = {
     SanctionsPolicyOutcome.REVIEW: (
         "Configured risk, license, or ambiguity requires human review."
     ),
-    SanctionsPolicyOutcome.DENY: (
-        "A hard compliance prohibition matched under the bound policy."
-    ),
+    SanctionsPolicyOutcome.DENY: ("A hard compliance prohibition matched under the bound policy."),
     SanctionsPolicyOutcome.INCONCLUSIVE: (
         "Required evidence, completeness, or capability is missing."
     ),
-    SanctionsPolicyOutcome.STALE: (
-        "Critical evidence or policy inputs exceeded freshness limits."
-    ),
+    SanctionsPolicyOutcome.STALE: ("Critical evidence or policy inputs exceeded freshness limits."),
     SanctionsPolicyOutcome.ERROR: (
         "Evaluation did not complete safely; automation must fail closed."
     ),
@@ -110,12 +104,8 @@ class EvidentiaryBoundaryExplanation:
             bound_fields=dict(value.get("bound_fields", {})),
             claims=tuple(value.get("claims", ())),
             non_claims=tuple(value.get("non_claims", ())),
-            substitution_invalidates=tuple(
-                value.get("substitution_invalidates", ())
-            ),
-            schema_version=value.get(
-                "schema_version", COMPLIANCE_EXPLAIN_SCHEMA_VERSION
-            ),
+            substitution_invalidates=tuple(value.get("substitution_invalidates", ())),
+            schema_version=value.get("schema_version", COMPLIANCE_EXPLAIN_SCHEMA_VERSION),
         )
 
 
@@ -176,13 +166,9 @@ class ComplianceExplanation:
             machine_summary=value.get("machine_summary", ""),
             reason_summaries=tuple(value.get("reason_summaries", ())),
             channel_summaries=tuple(value.get("channel_summaries", ())),
-            boundary=EvidentiaryBoundaryExplanation.from_dict(
-                value.get("boundary", {})
-            ),
+            boundary=EvidentiaryBoundaryExplanation.from_dict(value.get("boundary", {})),
             blocks_automation=bool(value.get("blocks_automation", True)),
-            schema_version=value.get(
-                "schema_version", COMPLIANCE_EXPLAIN_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", COMPLIANCE_EXPLAIN_SCHEMA_VERSION),
         )
 
 
@@ -206,9 +192,7 @@ def _reason_machine(reason: DecisionReason) -> str:
         "code": reason.code,
         "channel": reason.channel.value,
         "outcome": reason.outcome.value,
-        "match_level": (
-            None if reason.match_level is None else reason.match_level.value
-        ),
+        "match_level": (None if reason.match_level is None else reason.match_level.value),
         "evidence_ids": list(reason.evidence_ids),
         "path_ids": list(reason.path_ids),
         "counterparty_ids": list(reason.counterparty_ids),
@@ -236,9 +220,7 @@ def explain_evidentiary_boundary(
     if not isinstance(bindings, EvidenceBindings):
         raise DecisionError("bindings must be EvidenceBindings")
     if declares_designation:
-        raise DecisionError(
-            "explanations must not assert designation from composition"
-        )
+        raise DecisionError("explanations must not assert designation from composition")
 
     bound_fields = {
         "activity_id": bindings.activity_id,
@@ -270,9 +252,7 @@ def explain_evidentiary_boundary(
     }
 
     counterparties = (
-        ", ".join(bindings.counterparty_ids)
-        if bindings.counterparty_ids
-        else "(none bound)"
+        ", ".join(bindings.counterparty_ids) if bindings.counterparty_ids else "(none bound)"
     )
     list_ref = (
         f"{bindings.list_snapshot_id}@{bindings.list_revision}"
@@ -303,7 +283,9 @@ def explain_evidentiary_boundary(
         "Freshness is evaluated at the recorded check time against max age.",
     ]
     if outcome is not None:
-        claims.append(f"Selected outcome under these bounds: {_text(str(getattr(outcome, 'value', outcome)), 'outcome')}.")
+        claims.append(
+            f"Selected outcome under these bounds: {_text(str(getattr(outcome, 'value', outcome)), 'outcome')}."
+        )
     if heuristic_only:
         claims.append(
             "All contributing factors were heuristic; outcome is review prioritization only."
@@ -319,14 +301,10 @@ def explain_evidentiary_boundary(
     ]
     if bindings.has_uncertainty:
         non_claims.append(
-            "Does not resolve uncertainty codes: "
-            + ", ".join(bindings.uncertainty_codes)
-            + "."
+            "Does not resolve uncertainty codes: " + ", ".join(bindings.uncertainty_codes) + "."
         )
     if not bindings.is_fresh:
-        non_claims.append(
-            "Does not treat stale evidence as current for automated ALLOW."
-        )
+        non_claims.append("Does not treat stale evidence as current for automated ALLOW.")
 
     substitution_invalidates = [
         "counterparty_ids",
@@ -376,9 +354,7 @@ def explain_decision(decision: ComplianceDecision) -> ComplianceExplanation:
         reason_summaries = ("[no_match] no contributing reasons recorded",)
 
     channels = tuple(
-        dict.fromkeys(
-            _CHANNEL_HUMAN.get(r.channel, r.channel.value) for r in decision.reasons
-        )
+        dict.fromkeys(_CHANNEL_HUMAN.get(r.channel, r.channel.value) for r in decision.reasons)
     )
     if not channels:
         channels = ("(no channels)",)
@@ -391,9 +367,7 @@ def explain_decision(decision: ComplianceDecision) -> ComplianceExplanation:
         human_parts.append(
             "Heuristic-only inputs: may request review; cannot designate or alone allow."
         )
-    human_parts.append(
-        "Evidentiary boundary: " + decision.bindings.binding_digest()
-    )
+    human_parts.append("Evidentiary boundary: " + decision.bindings.binding_digest())
     human_summary = " ".join(human_parts)
 
     machine_parts = [

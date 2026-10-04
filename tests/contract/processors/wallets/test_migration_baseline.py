@@ -17,7 +17,9 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parents[5]
 WORLDCOIN_FIXTURES = REPO_ROOT / "ipfs_datasets_py" / "tests" / "fixtures" / "wallets" / "worldcoin"
 XAMAN_FIXTURES = REPO_ROOT / "ipfs_datasets_py" / "tests" / "fixtures" / "wallets" / "xaman"
-SECURITY_BASELINE = REPO_ROOT / "data" / "wallet_processor_migration" / "audit" / "security-baseline.json"
+SECURITY_BASELINE = (
+    REPO_ROOT / "data" / "wallet_processor_migration" / "audit" / "security-baseline.json"
+)
 
 REQUIRED_WORLDCOIN_FILES = {
     "manifest.json",
@@ -311,7 +313,9 @@ def test_verify_success_and_failure_fixtures() -> None:
     assert ok.success is True
     assert ok.nullifier == success["expected_normalization"]["nullifier"]
     assert ok.action == success["expected_normalization"]["action"]
-    assert len(ok.successful_results) == success["expected_normalization"]["successful_results_count"]
+    assert (
+        len(ok.successful_results) == success["expected_normalization"]["successful_results_count"]
+    )
 
     bad = normalize_world_id_verification_response(failure["raw_response"])
     assert bad.success is False
@@ -476,7 +480,9 @@ def test_security_baseline_marks_all_required_gaps_as_failures(
         assert finding["evidence"], finding_id
         assert finding["severity"] in {"low", "medium", "high", "critical"}
 
-    assert security_baseline["xaman_boundary"]["formal_assurance_is_not_runtime_correctness"] is True
+    assert (
+        security_baseline["xaman_boundary"]["formal_assurance_is_not_runtime_correctness"] is True
+    )
     assert security_baseline["freeze_status"] == "frozen"
 
 

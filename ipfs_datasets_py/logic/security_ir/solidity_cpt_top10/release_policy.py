@@ -45,9 +45,7 @@ SOLIDITY_CPT_COLUMN_TYPES: Final[tuple[tuple[str, str], ...]] = (
     ("path", "string"),
     ("n_chars", "int64"),
 )
-SOLIDITY_CPT_COLUMNS: Final[tuple[str, ...]] = tuple(
-    name for name, _ in SOLIDITY_CPT_COLUMN_TYPES
-)
+SOLIDITY_CPT_COLUMNS: Final[tuple[str, ...]] = tuple(name for name, _ in SOLIDITY_CPT_COLUMN_TYPES)
 
 # These capabilities require later, separately reviewed components and grants.
 # Unknown capabilities are denied too; this set records the acceptance-critical
@@ -214,9 +212,7 @@ class SourceProfile:
         )
         for field_name, observed, expected in exact_values:
             if observed != expected:
-                raise SourceProfileError(
-                    f"{field_name} differs from the reviewed Solidity CPT pin"
-                )
+                raise SourceProfileError(f"{field_name} differs from the reviewed Solidity CPT pin")
         if not _SHA1_RE.fullmatch(self.revision):
             raise SourceProfileError("revision must be a lowercase commit SHA")
         if not _SHA256_RE.fullmatch(self.shard_sha256):
@@ -246,10 +242,7 @@ class SourceProfile:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "columns": [
-                {"name": name, "type": data_type}
-                for name, data_type in self.columns
-            ],
+            "columns": [{"name": name, "type": data_type} for name, data_type in self.columns],
             "config_name": self.config_name,
             "content_trust": self.content_trust,
             "dataset_id": self.dataset_id,
@@ -312,9 +305,7 @@ class SourceProfile:
             mismatches.append("columns=malformed")
 
         if mismatches:
-            raise SourceProfileError(
-                "source profile verification failed: " + ", ".join(mismatches)
-            )
+            raise SourceProfileError("source profile verification failed: " + ", ".join(mismatches))
 
 
 @dataclass(frozen=True, slots=True)
@@ -347,9 +338,7 @@ class LicenseProvenance:
             "review_status",
             _enum(LicenseReviewStatus, self.review_status, "review_status"),
         )
-        object.__setattr__(
-            self, "use_class", _enum(LicenseUseClass, self.use_class, "use_class")
-        )
+        object.__setattr__(self, "use_class", _enum(LicenseUseClass, self.use_class, "use_class"))
         _optional_text(self.license_expression, "license_expression")
         _required_text(self.evidence_url, "evidence_url")
         _optional_text(self.reviewed_by, "reviewed_by")
@@ -358,14 +347,10 @@ class LicenseProvenance:
 
         if self.layer is LicenseLayer.DATASET:
             if self.row_index is not None or self.row_license_raw:
-                raise ReleasePolicyError(
-                    "dataset license evidence cannot contain per-row fields"
-                )
+                raise ReleasePolicyError("dataset license evidence cannot contain per-row fields")
         else:
             if type(self.row_index) is not int or self.row_index < 0:
-                raise ReleasePolicyError(
-                    "row license evidence requires a non-negative row_index"
-                )
+                raise ReleasePolicyError("row license evidence requires a non-negative row_index")
 
         if self.review_status is LicenseReviewStatus.REVIEWED:
             if not self.reviewed_by or not self.reviewed_at:
@@ -373,20 +358,16 @@ class LicenseProvenance:
                     "reviewed license evidence requires reviewer and timestamp"
                 )
         elif self.reviewed_by or self.reviewed_at:
-            raise ReleasePolicyError(
-                "unreviewed license evidence cannot name review authority"
-            )
+            raise ReleasePolicyError("unreviewed license evidence cannot name review authority")
 
         if self.use_class is LicenseUseClass.INTERNAL_SOURCE_FREE and (
-            self.raw_source_redistribution_allowed
-            or self.model_publication_allowed
+            self.raw_source_redistribution_allowed or self.model_publication_allowed
         ):
             raise ReleasePolicyError(
                 "internal/source-free evidence cannot authorize raw source or models"
             )
         if (
-            self.raw_source_redistribution_allowed
-            or self.model_publication_allowed
+            self.raw_source_redistribution_allowed or self.model_publication_allowed
         ) and self.review_status is not LicenseReviewStatus.REVIEWED:
             raise ReleasePolicyError(
                 "raw source or model publication requires reviewed license evidence"
@@ -399,9 +380,7 @@ class LicenseProvenance:
             "layer": self.layer.value,
             "license_expression": self.license_expression,
             "model_publication_allowed": self.model_publication_allowed,
-            "raw_source_redistribution_allowed": (
-                self.raw_source_redistribution_allowed
-            ),
+            "raw_source_redistribution_allowed": (self.raw_source_redistribution_allowed),
             "redistribution_allowed": self.redistribution_allowed,
             "review_status": self.review_status.value,
             "reviewed_at": self.reviewed_at,
@@ -480,8 +459,8 @@ def row_license_provenance(
     """
 
     status, default_use, normalized = classify_row_license(raw_license)
-    selected_use = default_use if use_class is None else _enum(
-        LicenseUseClass, use_class, "use_class"
+    selected_use = (
+        default_use if use_class is None else _enum(LicenseUseClass, use_class, "use_class")
     )
     if reviewed:
         status = LicenseReviewStatus.REVIEWED
@@ -491,9 +470,7 @@ def row_license_provenance(
         or raw_source_redistribution_allowed
         or model_publication_allowed
     ):
-        raise ReleasePolicyError(
-            "broader row use requires explicit license review"
-        )
+        raise ReleasePolicyError("broader row use requires explicit license review")
     return LicenseProvenance(
         dataset_id=SOLIDITY_CPT_DATASET_ID,
         source_revision=SOLIDITY_CPT_REVISION,
@@ -531,21 +508,15 @@ class PublicationAuthority:
             PublicationKind.RAW_SOURCE,
             PublicationKind.LEARNED_WEIGHTS,
         }:
-            raise ReleasePolicyError(
-                "publication authority is only valid for sensitive artifacts"
-            )
+            raise ReleasePolicyError("publication authority is only valid for sensitive artifacts")
         if self.source_revision != SOLIDITY_CPT_REVISION:
-            raise ReleasePolicyError(
-                "publication authority is not bound to the pinned revision"
-            )
+            raise ReleasePolicyError("publication authority is not bound to the pinned revision")
         for field_name, value in (
             ("license_review_id", self.license_review_id),
             ("operator_authority_id", self.operator_authority_id),
         ):
             if not isinstance(value, str) or not _APPROVAL_ID_RE.fullmatch(value):
-                raise ReleasePolicyError(
-                    f"{field_name} must be a stable, non-empty approval id"
-                )
+                raise ReleasePolicyError(f"{field_name} must be a stable, non-empty approval id")
         if self.license_review_id == self.operator_authority_id:
             raise ReleasePolicyError(
                 "license review and operator authority must be separate records"
@@ -577,9 +548,7 @@ class PublicationDecision:
 
     def __post_init__(self) -> None:
         if self.proof_authority is not False:
-            raise ReleasePolicyError(
-                "a corpus publication decision cannot have proof authority"
-            )
+            raise ReleasePolicyError("a corpus publication decision cannot have proof authority")
         if self.enforcement_authority is not False:
             raise ReleasePolicyError(
                 "a corpus publication decision cannot have enforcement authority"
@@ -587,9 +556,7 @@ class PublicationDecision:
 
     def require_admitted(self) -> "PublicationDecision":
         if not self.admitted:
-            raise PublicationRejectedError(
-                "publication rejected: " + ", ".join(self.reason_codes)
-            )
+            raise PublicationRejectedError("publication rejected: " + ", ".join(self.reason_codes))
         return self
 
     def to_dict(self) -> dict[str, Any]:
@@ -602,9 +569,7 @@ class PublicationDecision:
             "policy_sha256": self.policy_sha256,
             "proof_authority": self.proof_authority,
             "reason_codes": list(self.reason_codes),
-            "row_license": (
-                None if self.row_license is None else self.row_license.to_dict()
-            ),
+            "row_license": (None if self.row_license is None else self.row_license.to_dict()),
             "source_profile_sha256": self.source_profile_sha256,
         }
 
@@ -628,9 +593,7 @@ class SolidityCPTReleasePolicy:
         if not isinstance(self.forbidden_authorities, frozenset):
             raise ReleasePolicyError("forbidden_authorities must be a frozenset")
         if not DEFAULT_FORBIDDEN_AUTHORITIES <= self.forbidden_authorities:
-            raise ReleasePolicyError(
-                "release policy cannot remove default-denied authorities"
-            )
+            raise ReleasePolicyError("release policy cannot remove default-denied authorities")
         object.__setattr__(
             self,
             "ambiguous_row_default",
@@ -643,9 +606,7 @@ class SolidityCPTReleasePolicy:
         if not self.raw_source_requires_separate_review:
             raise ReleasePolicyError("raw source review requirement cannot be disabled")
         if not self.learned_weights_require_separate_review:
-            raise ReleasePolicyError(
-                "learned-weights review requirement cannot be disabled"
-            )
+            raise ReleasePolicyError("learned-weights review requirement cannot be disabled")
 
     def authority_allows(self, capability: str) -> bool:
         """Deny ambient authority, including unknown capability names."""
@@ -660,9 +621,7 @@ class SolidityCPTReleasePolicy:
             "learned_weights_require_separate_review": (
                 self.learned_weights_require_separate_review
             ),
-            "raw_source_requires_separate_review": (
-                self.raw_source_requires_separate_review
-            ),
+            "raw_source_requires_separate_review": (self.raw_source_requires_separate_review),
             "source_profile_sha256": self.source_profile.sha256,
             "version": self.version,
         }

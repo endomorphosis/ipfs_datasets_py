@@ -382,9 +382,7 @@ def test_reconcile_voice_job_result_promotes_passing_artifact_to_audio_row():
     serialized_quality_evidence = json.dumps(
         {
             "quality_report": report.quality_report,
-            "gates": [
-                gate.to_dict() for gate in report.dispositions[0].gates
-            ],
+            "gates": [gate.to_dict() for gate in report.dispositions[0].gates],
         },
         sort_keys=True,
     )
@@ -406,9 +404,7 @@ def test_reconciliation_models_strict_deserialization_round_trip():
 
     disposition = AudioDisposition.from_dict(report.dispositions[0].to_dict())
     from_dict = AudioReconciliationResult.from_dict(report.to_dict())
-    from_json = AudioReconciliationResult.from_json(
-        report.canonical_bytes() + b"\n"
-    )
+    from_json = AudioReconciliationResult.from_json(report.canonical_bytes() + b"\n")
 
     assert disposition == report.dispositions[0]
     assert from_dict == report
@@ -430,9 +426,7 @@ def test_reconciliation_strict_deserialization_rejects_tampering_and_shape_error
     disposition_payload = report.dispositions[0].to_dict()
 
     with pytest.raises(ValueError, match="unknown fields"):
-        AudioDisposition.from_dict(
-            {**disposition_payload, "unexpected": True}
-        )
+        AudioDisposition.from_dict({**disposition_payload, "unexpected": True})
     missing_disposition = dict(disposition_payload)
     missing_disposition.pop("status")
     with pytest.raises(ValueError, match="missing fields"):
@@ -462,9 +456,7 @@ def test_reconciliation_strict_deserialization_rejects_tampering_and_shape_error
     with pytest.raises(ValueError, match="must encode a mapping"):
         AudioReconciliationResult.from_json("[]\n")
     with pytest.raises(ValueError, match="duplicate JSON field"):
-        AudioReconciliationResult.from_json(
-            '{"schema_version":"first","schema_version":"second"}'
-        )
+        AudioReconciliationResult.from_json('{"schema_version":"first","schema_version":"second"}')
 
 
 def test_non_wav_promotion_requires_complete_audio_validation_metrics():

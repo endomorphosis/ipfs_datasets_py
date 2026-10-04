@@ -54,9 +54,7 @@ def _verified_transcript(
         len(transcript_bytes) != artifact.size_bytes
         or sha256(transcript_bytes).hexdigest() != artifact.sha256
     ):
-        raise BucketAudioRecoveryError(
-            "ASR transcript bytes do not match their result descriptor"
-        )
+        raise BucketAudioRecoveryError("ASR transcript bytes do not match their result descriptor")
     try:
         transcript = transcript_bytes.decode("utf-8")
     except UnicodeDecodeError as exc:
@@ -83,11 +81,7 @@ def _incomplete_disposition(
 ) -> AudioDisposition:
     """Emit one per-row disposition without aborting the admission batch."""
 
-    status = (
-        AudioDispositionStatus.RETRYABLE
-        if retryable
-        else AudioDispositionStatus.QUARANTINED
-    )
+    status = AudioDispositionStatus.RETRYABLE if retryable else AudioDispositionStatus.QUARANTINED
     return AudioDisposition(
         source_ref=_source_ref(record),
         source_sha256=record.raw_sha256,
@@ -311,9 +305,7 @@ def admit_bucket_audio_revalidation(
         dispositions.extend(item.dispositions)
         item_reports.append(
             {
-                "critical_fact_classification": (
-                    binding.critical_fact_classification.value
-                ),
+                "critical_fact_classification": (binding.critical_fact_classification.value),
                 "critical_slot_count": len(binding.slot_names),
                 "quality_report": dict(item.quality_report),
                 "reconciliation_id": item.reconciliation_id,
@@ -326,9 +318,7 @@ def admit_bucket_audio_revalidation(
         provenance=tuple(provenance),
         dispositions=tuple(dispositions),
         quality_report={
-            "item_reports": sorted(
-                item_reports, key=lambda item: str(item["response_id"])
-            ),
+            "item_reports": sorted(item_reports, key=lambda item: str(item["response_id"])),
             "recovery_id": recovery.recovery_id,
             "revalidation_plan_id": revalidation_plan.revalidation_plan_id,
         },

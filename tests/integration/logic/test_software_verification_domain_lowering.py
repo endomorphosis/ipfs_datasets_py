@@ -120,9 +120,7 @@ def test_javascript_and_typescript_source_lowers() -> None:
 
 
 def test_unsupported_python_constructs_are_retained() -> None:
-    result = adapt_source_to_software_verification(
-        UNSUPPORTED_PYTHON, path="unsupported.py"
-    )
+    result = adapt_source_to_software_verification(UNSUPPORTED_PYTHON, path="unsupported.py")
     assert result.status in {
         SourceAdapterStatus.PARTIAL,
         SourceAdapterStatus.UNSUPPORTED,
@@ -174,8 +172,10 @@ def test_intent_dynamic_hoare_and_vc_preserve_domain_identity() -> None:
     assert result.document.extensions.to_dict()["lfv.domain.identity"] == identity
     assert result.backend_requests
     assert result.fake_backend_success is False
-    assert any(item.kind.value in {"contract", "axiom"} or item.kind == "contract"
-               for item in result.document.declarations)
+    assert any(
+        item.kind.value in {"contract", "axiom"} or item.kind == "contract"
+        for item in result.document.declarations
+    )
 
     vc = adapt_intent_view(
         {
@@ -279,9 +279,7 @@ def test_security_view_can_attach_non_authoritative_code_facts() -> None:
             "domain_identity": "security:demo.open-read",
             "kind": "transition_system",
             "states": [{"state_id": "s0"}],
-            "transitions": [
-                {"transition_id": "t0", "source": "s0", "target": "s0"}
-            ],
+            "transitions": [{"transition_id": "t0", "source": "s0", "target": "s0"}],
         },
         changed_diff=changed,
     )

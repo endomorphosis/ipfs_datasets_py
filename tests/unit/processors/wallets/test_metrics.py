@@ -153,14 +153,10 @@ def test_ingest_run_receipt_is_payload_free() -> None:
 
 def test_rejects_address_like_labels_and_revisions() -> None:
     with pytest.raises(InvalidRequestError):
-        WalletProcessorMetrics(
-            labels={"wallet": "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0"}
-        )
+        WalletProcessorMetrics(labels={"wallet": "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0"})
     metrics = WalletProcessorMetrics()
     with pytest.raises(InvalidRequestError):
-        metrics.observe_checkpoint(
-            revision="0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0"
-        )
+        metrics.observe_checkpoint(revision="0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0")
     # Use a forbidden label fragment that is not a secret-assignment form
     # (avoids proposal-gate secret_change_forbidden false positives).
     with pytest.raises(InvalidRequestError):

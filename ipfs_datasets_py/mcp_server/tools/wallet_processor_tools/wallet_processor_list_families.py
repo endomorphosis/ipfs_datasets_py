@@ -12,8 +12,7 @@ from ._helpers import error_response, mcp_api, success_response
 @tool_metadata(
     category="wallet_processor_tools",
     mcp_description=(
-        "List registered wallet processor families without importing "
-        "optional chain packages."
+        "List registered wallet processor families without importing optional chain packages."
     ),
     timeout_seconds=15.0,
 )

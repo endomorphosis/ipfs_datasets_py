@@ -86,9 +86,7 @@ ACQUISITION_CAPABILITIES: frozenset[Capability] = frozenset(
 )
 
 PARSE_CAPABILITIES: frozenset[Capability] = frozenset({Capability.PARSE_ARTIFACT})
-ANALYZE_CAPABILITIES: frozenset[Capability] = frozenset(
-    {Capability.ANALYZE_ARTIFACT}
-)
+ANALYZE_CAPABILITIES: frozenset[Capability] = frozenset({Capability.ANALYZE_ARTIFACT})
 
 
 @dataclass(frozen=True, slots=True)
@@ -193,14 +191,10 @@ class OperationContext:
         """Fail before I/O if cancellation or the deadline forbids more work."""
 
         if self.cancellation is not None and self.cancellation.cancelled:
-            raise OperationCancelledError(
-                f"operation {self.request_id!r} was cancelled"
-            )
+            raise OperationCancelledError(f"operation {self.request_id!r} was cancelled")
         remaining = self.remaining_seconds(now=now)
         if remaining is not None and remaining <= 0:
-            raise DeadlineExceededError(
-                f"operation {self.request_id!r} exceeded its deadline"
-            )
+            raise DeadlineExceededError(f"operation {self.request_id!r} exceeded its deadline")
 
 
 @dataclass(frozen=True, slots=True)
@@ -358,9 +352,7 @@ def enforce_batch_limits(
     """Raise when a batch alone violates the declared operation limits."""
 
     if item_count > limits.max_items:
-        raise ResourceLimitError(
-            f"batch contains {item_count} items; limit is {limits.max_items}"
-        )
+        raise ResourceLimitError(f"batch contains {item_count} items; limit is {limits.max_items}")
     if response_bytes > limits.max_response_bytes:
         raise ResourceLimitError("batch response bytes exceed max_response_bytes")
 
@@ -368,9 +360,7 @@ def enforce_batch_limits(
 def reject_signing_surface(name: str) -> None:
     """Fail closed if a caller attempts to attach a signing/broadcast surface."""
 
-    raise SigningForbiddenError(
-        f"smart-contract processor forbids signing surface {name!r}"
-    )
+    raise SigningForbiddenError(f"smart-contract processor forbids signing surface {name!r}")
 
 
 __all__ = [

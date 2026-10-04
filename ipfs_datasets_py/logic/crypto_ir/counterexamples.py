@@ -160,12 +160,8 @@ class CounterexampleTrace:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "trace_id", _identifier(self.trace_id, "trace_id"))
-        object.__setattr__(
-            self, "obligation_id", _identifier(self.obligation_id, "obligation_id")
-        )
-        object.__setattr__(
-            self, "outcome", _enum(SimulationOutcome, self.outcome, "outcome")
-        )
+        object.__setattr__(self, "obligation_id", _identifier(self.obligation_id, "obligation_id"))
+        object.__setattr__(self, "outcome", _enum(SimulationOutcome, self.outcome, "outcome"))
         object.__setattr__(
             self,
             "authority",
@@ -177,12 +173,8 @@ class CounterexampleTrace:
                 f"authority {self.authority.value} inconsistent with outcome "
                 f"{self.outcome.value} (expected {expected.value})"
             )
-        object.__setattr__(
-            self, "snapshot_digest", _text(self.snapshot_digest, "snapshot_digest")
-        )
-        object.__setattr__(
-            self, "input_digest", _text(self.input_digest, "input_digest")
-        )
+        object.__setattr__(self, "snapshot_digest", _text(self.snapshot_digest, "snapshot_digest"))
+        object.__setattr__(self, "input_digest", _text(self.input_digest, "input_digest"))
         steps = tuple(
             item
             if isinstance(item, SimulationStep)
@@ -198,9 +190,7 @@ class CounterexampleTrace:
             "post_state_digest",
             "reason",
         ):
-            object.__setattr__(
-                self, name, _text(getattr(self, name), name, allow_empty=True)
-            )
+            object.__setattr__(self, name, _text(getattr(self, name), name, allow_empty=True))
         object.__setattr__(self, "call_input", _attributes(self.call_input))
         if self.snapshot is not None and not isinstance(self.snapshot, StateSnapshot):
             object.__setattr__(
@@ -213,9 +203,7 @@ class CounterexampleTrace:
         # Replayability requires snapshot + call_input binding.
         can_replay = self.snapshot is not None and bool(self.call_input)
         if self.replayable and not can_replay:
-            raise CounterexampleError(
-                "replayable counterexample requires snapshot and call_input"
-            )
+            raise CounterexampleError("replayable counterexample requires snapshot and call_input")
         object.__setattr__(
             self,
             "analysis_outcome",
@@ -227,27 +215,19 @@ class CounterexampleTrace:
             _enum(MonitorOutcome, self.monitor_outcome, "monitor_outcome"),
         )
         if self.analysis_outcome is AnalysisOutcome.PROVED:
-            raise CounterexampleError(
-                "counterexample cannot claim analysis PROVED"
-            )
+            raise CounterexampleError("counterexample cannot claim analysis PROVED")
         if (
             self.authority is CounterexampleAuthority.DISPROOF_WITNESS
             and self.analysis_outcome is not AnalysisOutcome.DISPROVED
         ):
-            raise CounterexampleError(
-                "disproof witness must project to analysis DISPROVED"
-            )
+            raise CounterexampleError("disproof witness must project to analysis DISPROVED")
         if (
             self.authority is not CounterexampleAuthority.DISPROOF_WITNESS
             and self.analysis_outcome is AnalysisOutcome.DISPROVED
         ):
-            raise CounterexampleError(
-                "analysis DISPROVED requires disproof_witness authority"
-            )
+            raise CounterexampleError("analysis DISPROVED requires disproof_witness authority")
         object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
 
     @property
     def disproves_obligation(self) -> bool:
@@ -287,9 +267,7 @@ class CounterexampleTrace:
             ),
             "obligation_id": self.obligation_id,
             "outcome": (
-                self.outcome.value
-                if isinstance(self.outcome, SimulationOutcome)
-                else self.outcome
+                self.outcome.value if isinstance(self.outcome, SimulationOutcome) else self.outcome
             ),
             "post_state_digest": self.post_state_digest,
             "reason": self.reason,
@@ -308,13 +286,10 @@ class CounterexampleTrace:
         value = _as_mapping(value, "CounterexampleTrace")
         snap_raw = value.get("snapshot")
         snapshot = (
-            None
-            if snap_raw is None
-            else StateSnapshot.from_dict(_as_mapping(snap_raw, "snapshot"))
+            None if snap_raw is None else StateSnapshot.from_dict(_as_mapping(snap_raw, "snapshot"))
         )
         steps = tuple(
-            SimulationStep.from_dict(_as_mapping(item, "steps"))
-            for item in value.get("steps", ())
+            SimulationStep.from_dict(_as_mapping(item, "steps")) for item in value.get("steps", ())
         )
         return cls(
             trace_id=value.get("trace_id", ""),
@@ -333,14 +308,10 @@ class CounterexampleTrace:
             post_state_digest=value.get("post_state_digest", ""),
             reason=value.get("reason", ""),
             replayable=value.get("replayable", False),
-            analysis_outcome=value.get(
-                "analysis_outcome", AnalysisOutcome.UNKNOWN
-            ),
+            analysis_outcome=value.get("analysis_outcome", AnalysisOutcome.UNKNOWN),
             monitor_outcome=value.get("monitor_outcome", MonitorOutcome.UNKNOWN),
             attributes=value.get("attributes", {}),
-            schema_version=value.get(
-                "schema_version", COUNTEREXAMPLE_TRACE_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", COUNTEREXAMPLE_TRACE_SCHEMA_VERSION),
         )
 
     @property
@@ -461,9 +432,7 @@ def replay_counterexample(
                 f"(got {receipt.outcome.value}): {receipt.reason}"
             )
         if receipt.analysis_outcome is not AnalysisOutcome.DISPROVED:
-            raise CounterexampleError(
-                "replay of disproof witness must project to DISPROVED"
-            )
+            raise CounterexampleError("replay of disproof witness must project to DISPROVED")
     elif receipt.outcome != trace.outcome:
         raise CounterexampleError(
             f"replay outcome mismatch: recorded={trace.outcome.value} "

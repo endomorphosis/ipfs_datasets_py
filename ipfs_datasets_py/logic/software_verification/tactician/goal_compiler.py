@@ -83,9 +83,7 @@ FORMAL_GOAL_COMPILER_SCHEMA: Final = (
 GOAL_COMPILATION_RESULT_SCHEMA: Final = (
     "ipfs_datasets_py/logic/software_verification/goal-compilation-result@1"
 )
-ROOT_OBLIGATION_SCHEMA: Final = (
-    "ipfs_datasets_py/logic/software_verification/root-obligation@1"
-)
+ROOT_OBLIGATION_SCHEMA: Final = "ipfs_datasets_py/logic/software_verification/root-obligation@1"
 
 SOURCE_FAMILY_ID: Final = "end_goal_spec"
 SOURCE_FAMILY_VERSION: Final = "1"
@@ -231,9 +229,7 @@ def _is_material_loss_token(token: str) -> bool:
     return bool(token.strip())
 
 
-def _authority_min(
-    left: EvidenceAuthority, right: EvidenceAuthority
-) -> EvidenceAuthority:
+def _authority_min(left: EvidenceAuthority, right: EvidenceAuthority) -> EvidenceAuthority:
     if _EVIDENCE_RANK[left] <= _EVIDENCE_RANK[right]:
         return left
     return right
@@ -274,7 +270,13 @@ def _selected_interpretation(goal: FormalGoal) -> EndGoalInterpretation | None:
 
 def _effective_property_fields(
     goal: FormalGoal,
-) -> tuple[PropertyClass, tuple[QuantifierKind, ...], Mapping[str, Any], Mapping[str, Any], Mapping[str, Any]]:
+) -> tuple[
+    PropertyClass,
+    tuple[QuantifierKind, ...],
+    Mapping[str, Any],
+    Mapping[str, Any],
+    Mapping[str, Any],
+]:
     """Resolve property/state fields from the selected interpretation when present."""
 
     end_goal = goal.end_goal
@@ -362,12 +364,8 @@ class RootObligation:
     backend_neutral: bool = True
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "obligation_id", _text(self.obligation_id, "obligation_id")
-        )
-        object.__setattr__(
-            self, "property_id", _text(self.property_id, "property_id")
-        )
+        object.__setattr__(self, "obligation_id", _text(self.obligation_id, "obligation_id"))
+        object.__setattr__(self, "property_id", _text(self.property_id, "property_id"))
         object.__setattr__(self, "statement", _text(self.statement, "statement"))
         kind = self.kind
         if isinstance(kind, PropertyKind):
@@ -426,9 +424,7 @@ class RootObligation:
         lowered = self.statement.casefold()
         for banned in ("(assert", "(check-sat", "smt-lib", "tla+", "```lean"):
             if banned in lowered:
-                raise GoalCompilerError(
-                    "root obligation statement must not embed provider syntax"
-                )
+                raise GoalCompilerError("root obligation statement must not embed provider syntax")
 
     @property
     def content_id(self) -> str:
@@ -494,12 +490,8 @@ class GoalCompilationResult:
     metadata: FrozenMap = field(default_factory=FrozenMap)
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "formal_goal_id", _text(self.formal_goal_id, "formal_goal_id")
-        )
-        object.__setattr__(
-            self, "root_goal_id", _text(self.root_goal_id, "root_goal_id")
-        )
+        object.__setattr__(self, "formal_goal_id", _text(self.formal_goal_id, "formal_goal_id"))
+        object.__setattr__(self, "root_goal_id", _text(self.root_goal_id, "root_goal_id"))
         object.__setattr__(
             self,
             "end_goal_content_id",
@@ -522,14 +514,10 @@ class GoalCompilationResult:
         if not isinstance(self.ir, SoftwareVerificationIR):
             raise GoalCompilerError("ir must be a SoftwareVerificationIR")
         if not isinstance(self.translation_receipt, LogicTranslationReceipt):
-            raise GoalCompilerError(
-                "translation_receipt must be a LogicTranslationReceipt"
-            )
+            raise GoalCompilerError("translation_receipt must be a LogicTranslationReceipt")
         obligations = tuple(self.root_obligations or ())
         if not obligations:
-            raise GoalCompilerError(
-                "compilation must emit at least one root obligation"
-            )
+            raise GoalCompilerError("compilation must emit at least one root obligation")
         normalized: list[RootObligation] = []
         for item in obligations:
             if isinstance(item, RootObligation):
@@ -537,9 +525,7 @@ class GoalCompilationResult:
             elif isinstance(item, Mapping):
                 normalized.append(RootObligation.from_dict(item))
             else:
-                raise GoalCompilerError(
-                    "root_obligations must contain RootObligation values"
-                )
+                raise GoalCompilerError("root_obligations must contain RootObligation values")
         object.__setattr__(self, "root_obligations", tuple(normalized))
         authority = self.assurance_ceiling
         if not isinstance(authority, EvidenceAuthority):
@@ -569,9 +555,7 @@ class GoalCompilationResult:
         # Cross-binding: receipt must point at the IR and formal goal identities.
         receipt = self.translation_receipt
         if receipt.target_identity != self.ir.document_id:
-            raise GoalCompilerError(
-                "translation receipt target_identity must equal IR document_id"
-            )
+            raise GoalCompilerError("translation receipt target_identity must equal IR document_id")
         if receipt.source_identity not in {
             self.formal_goal_content_id,
             self.end_goal_content_id,
@@ -586,9 +570,7 @@ class GoalCompilationResult:
         if not authority_at_most(
             self.assurance_ceiling, maximum_authority_for(self.preservation_kind)
         ):
-            raise GoalCompilerError(
-                "assurance_ceiling exceeds the preservation-class maximum"
-            )
+            raise GoalCompilerError("assurance_ceiling exceeds the preservation-class maximum")
 
     @property
     def content_id(self) -> str:
@@ -678,9 +660,7 @@ class FormalGoalCompiler:
         end_goal = goal.end_goal
         property_kind = map_property_kind(property_class)
 
-        source_ref_ids, span_ids, sources, spans = self._materialize_provenance(
-            end_goal
-        )
+        source_ref_ids, span_ids, sources, spans = self._materialize_provenance(end_goal)
         if not source_ref_ids:
             raise GoalCompilerError(
                 "compilation requires at least one source_ref_id on the EndGoalSpec"
@@ -760,11 +740,7 @@ class FormalGoalCompiler:
             end_goal=end_goal,
             bounds=bounds,
         )
-        requested = (
-            _text(requested_backend, "requested_backend")
-            if requested_backend
-            else ""
-        )
+        requested = _text(requested_backend, "requested_backend") if requested_backend else ""
         assurance_ceiling = self._assurance_ceiling(
             end_goal=end_goal,
             preservation_kind=preservation_kind,
@@ -810,9 +786,7 @@ class FormalGoalCompiler:
 
     # -- coercion / fail-closed gates -------------------------------------
 
-    def _coerce_formal_goal(
-        self, value: FormalGoal | Mapping[str, Any]
-    ) -> FormalGoal:
+    def _coerce_formal_goal(self, value: FormalGoal | Mapping[str, Any]) -> FormalGoal:
         if isinstance(value, FormalGoal):
             return value
         if isinstance(value, Mapping):
@@ -833,9 +807,7 @@ class FormalGoalCompiler:
                 "material ambiguity candidates remain; select an interpretation first"
             )
         if end_goal.ambiguity_status is AmbiguityStatus.UNSUPPORTED:
-            raise GoalCompilerError(
-                "unsupported ambiguity state cannot be compiled into shared IR"
-            )
+            raise GoalCompilerError("unsupported ambiguity state cannot be compiled into shared IR")
         if goal.status not in {"confirmed", "selected", "resolved"}:
             # Confirmed is the primary status; allow a small closed set.
             raise GoalCompilerError(
@@ -867,10 +839,7 @@ class FormalGoalCompiler:
             )
         if end_goal.property_class is PropertyClass.UNSPECIFIED:
             interpretation = _selected_interpretation(goal)
-            if (
-                interpretation is None
-                or interpretation.property_class is PropertyClass.UNSPECIFIED
-            ):
+            if interpretation is None or interpretation.property_class is PropertyClass.UNSPECIFIED:
                 raise GoalCompilerError(
                     "cannot compile an unspecified property class into shared IR"
                 )
@@ -957,10 +926,7 @@ class FormalGoalCompiler:
                     if candidate in known_refs:
                         return candidate
             for assumption in end_goal.assumptions:
-                if (
-                    span_id in assumption.source.span_ids
-                    and assumption.source.source_ref_ids
-                ):
+                if span_id in assumption.source.span_ids and assumption.source.source_ref_ids:
                     candidate = assumption.source.source_ref_ids[0]
                     if candidate in known_refs:
                         return candidate
@@ -1076,13 +1042,9 @@ class FormalGoalCompiler:
                     "transition_ids": transition_ids,
                     "environment_declaration_id": env_id,
                     "acceptance_evidence": list(end_goal.acceptance_evidence),
-                    "expected_receipt_classes": list(
-                        end_goal.expected_receipt_classes
-                    ),
+                    "expected_receipt_classes": list(end_goal.expected_receipt_classes),
                 },
-                depends_on=tuple(
-                    [state_id, env_id, *transition_ids]
-                ),
+                depends_on=tuple([state_id, env_id, *transition_ids]),
                 **source_kwargs,
             )
         )
@@ -1112,8 +1074,7 @@ class FormalGoalCompiler:
             results.append(
                 VerificationAssumption(
                     assumption_id=binding.assumption_id,
-                    statement=binding.statement
-                    or f"assumption {binding.assumption_id}",
+                    statement=binding.statement or f"assumption {binding.assumption_id}",
                     kind=kind,
                     expression={
                         "assumption_class": binding.assumption_class.value,
@@ -1185,9 +1146,7 @@ class FormalGoalCompiler:
         if interpretation is not None and interpretation.controlled_english:
             statement = interpretation.controlled_english
         else:
-            statement = (
-                f"{property_class.value}: {end_goal.caller_text}".strip()
-            )
+            statement = f"{property_class.value}: {end_goal.caller_text}".strip()
         expression = {
             "property_class": property_class.value,
             "quantifiers": [item.value for item in quantifiers],
@@ -1246,13 +1205,9 @@ class FormalGoalCompiler:
                 )
                 mutations.append(
                     SemanticMutation(
-                        mutation_id=_sanitize_id(
-                            f"{bound.bound_id}:introduced", prefix="mutation"
-                        ),
+                        mutation_id=_sanitize_id(f"{bound.bound_id}:introduced", prefix="mutation"),
                         kind=SemanticMutationKind.BOUND_INTRODUCED,
-                        description=(
-                            f"Compilation introduced finite bound {bound.bound_id}"
-                        ),
+                        description=(f"Compilation introduced finite bound {bound.bound_id}"),
                         target_construct_ids=(bound.bound_id,),
                         bound_ids=(bound.bound_id,),
                     )
@@ -1371,9 +1326,7 @@ def compile_formal_goal(
 ) -> GoalCompilationResult:
     """Module-level convenience wrapper around :class:`FormalGoalCompiler`."""
 
-    return FormalGoalCompiler().compile(
-        formal_goal, requested_backend=requested_backend
-    )
+    return FormalGoalCompiler().compile(formal_goal, requested_backend=requested_backend)
 
 
 __all__ = [
