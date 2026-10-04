@@ -248,6 +248,10 @@ def infer_shared_parent_units(index,repository,*,expected_head,registry,version_
         if previous is None:
             payload=dict(schema=WORKER_SCHEMA,key=key,checkpoint=checkpoint,rows=preparation['selected_inputs'])
             output,receipt=_worker(payload,lease=lease,signal=signal,timeout=remaining(),memory_mb=memory_mb)
+            # Numerical inputs are no longer needed while acquiring the next
+            # source fence. The selected checkpoint is independently reloaded
+            # and rebound by the context comparison and immutable replay below.
+            del payload,checkpoint
             _validate_output(output,key,preparation);observe()
             require(_context(index,registry,**options)[0]==key,'source-unit model or source changed during inference')
             saved=dict(schema=SCHEMA,key=key,preparation=preparation,output=output,worker_receipt=receipt,
@@ -256,6 +260,12 @@ def infer_shared_parent_units(index,repository,*,expected_head,registry,version_
             artifact=shared._stage(registry,saved)
             remaining();observe()
             previous=registry._mutate(operation,'IndexSourceUnitInference',dict(key=key),lambda cx:dict(artifact=artifact))
+            del output,receipt,saved
+        else:
+            del checkpoint
+        # The committed report is reconstructed independently. Do not overlap
+        # its bulk graphs with the completed construction context at that gate.
+        del key,preparation
         saved=load_source_unit_inference(index,registry,previous['artifact'],**options)
         observe();remaining()
         return dict(artifact=previous['artifact'],report=saved,native_worker_executed=executed,
