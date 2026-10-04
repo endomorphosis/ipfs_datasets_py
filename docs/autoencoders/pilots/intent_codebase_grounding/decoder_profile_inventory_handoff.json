@@ -1,0 +1,246 @@
+{
+  "schema": "ir-decoder-profile-inventory-handoff/v1",
+  "phase": "detached_profile_catalog",
+  "candidate": "/home/barberb/lift_coding/.worktrees/ir-decoder-profile-inventory-20261004",
+  "base": "376e672fc09c3bcf275f9e36de69f4a47862e170",
+  "branch": "codex/ir-decoder-profile-inventory-20261004",
+  "implementation": {
+    "path": "/home/barberb/lift_coding/.worktrees/ir-decoder-profile-inventory-20261004/ipfs_datasets_py/logic/formalization/autoencoder/ir_decoder_profile_inventory.py",
+    "bytes": 20396,
+    "sha256": "bc8aab1ba3a53b91c0e39fc813983657e52e07118a14c0d65c3c4e2aa660face"
+  },
+  "tests": {
+    "path": "/home/barberb/lift_coding/.worktrees/ir-decoder-profile-inventory-20261004/tests/unit/logic/formalization/autoencoder/test_ir_decoder_profile_inventory.py",
+    "bytes": 24982,
+    "sha256": "991acbeae8e6faf4e631de2eeb792db4b4fbe5e1e6903eab7c298e0026b1305e"
+  },
+  "catalog": {
+    "path": "/home/barberb/lift_coding/artifacts/ir-decoder-profile-inventory-20261004/controls/runs/actual-inventory-v3/profile-inventory.json",
+    "bytes": 125540,
+    "sha256": "7124e191e7f6decc204b449dd9d8db3720f123278ba2cf8b7d4f1517bf63d641"
+  },
+  "routes": {
+    "path": "/home/barberb/lift_coding/artifacts/ir-decoder-profile-inventory-20261004/controls/runs/actual-inventory-v3/profile-routes.json",
+    "bytes": 63275,
+    "sha256": "d55f3b865ac711d213c2fa0aeed9e28beef9efb94976fd43ff10be9ca760ba25"
+  },
+  "lane_views": [
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-decoder-profile-inventory-20261004/controls/runs/actual-inventory-v3/codebase_ir_8d-profile-inventory.json",
+      "bytes": 5849,
+      "sha256": "6a30d4f47925f397aa3b37b3de3fa05d70d31cceec7bb580c21a2325360924a3"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-decoder-profile-inventory-20261004/controls/runs/actual-inventory-v3/codebase_ir_384d-profile-inventory.json",
+      "bytes": 6382,
+      "sha256": "520fbeb52969775e421aedf821fb4440754ddd3d9c067b0e1b9715f76c76a398"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-decoder-profile-inventory-20261004/controls/runs/actual-inventory-v3/codebase_ir_768d-profile-inventory.json",
+      "bytes": 4097,
+      "sha256": "474c437caa42af665362f93e28f737dac2bbc5a7c4eeff994a0b11a092dec998"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-decoder-profile-inventory-20261004/controls/runs/actual-inventory-v3/intent_ir_8d-profile-inventory.json",
+      "bytes": 5051,
+      "sha256": "f26362a28013a60e07dcbba38c2227dfaf15cf77f661d35ac0fa0f9f24b498e5"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-decoder-profile-inventory-20261004/controls/runs/actual-inventory-v3/intent_ir_384d-profile-inventory.json",
+      "bytes": 7451,
+      "sha256": "1430b4267f3298d9e496367e9e1f59a8483541b7a7ad39847f29247c6b484e0e"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-decoder-profile-inventory-20261004/controls/runs/actual-inventory-v3/intent_ir_768d-profile-inventory.json",
+      "bytes": 4110,
+      "sha256": "cdcacc0880ec7f61283940e3dee59ee0b880eab2433abe434b769f018359968b"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-decoder-profile-inventory-20261004/controls/runs/actual-inventory-v3/legal_ir_8d-profile-inventory.json",
+      "bytes": 5108,
+      "sha256": "880ae0953a1e1e73f5c7f400448535f56bb4426abf3ca3f7dab03e2843a113a5"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-decoder-profile-inventory-20261004/controls/runs/actual-inventory-v3/legal_ir_384d-profile-inventory.json",
+      "bytes": 8961,
+      "sha256": "9ddd4f756d1037f5bab59749af1b18ef8bb7c86c8514b41a6733c621a9350c2d"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-decoder-profile-inventory-20261004/controls/runs/actual-inventory-v3/legal_ir_768d-profile-inventory.json",
+      "bytes": 4974,
+      "sha256": "04a589d0dae0a71eeb058db26011c8e8b51eec9037acc9fee7e32cc75608e6cf"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-decoder-profile-inventory-20261004/controls/runs/actual-inventory-v3/security_ir_8d-profile-inventory.json",
+      "bytes": 5092,
+      "sha256": "a41c06cd461ca104a5fc07efeff99835c70343ec615c41534ceb3ce35f66dfe2"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-decoder-profile-inventory-20261004/controls/runs/actual-inventory-v3/security_ir_384d-profile-inventory.json",
+      "bytes": 7504,
+      "sha256": "29001c770fd9762b8df2b10d0f8c2660b1756f18b213bfa8205283691a2a3099"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-decoder-profile-inventory-20261004/controls/runs/actual-inventory-v3/security_ir_768d-profile-inventory.json",
+      "bytes": 4147,
+      "sha256": "76070a514302fae8a0406e498fab3a08e8a899de4b38cccbf890a4f5f2c529ea"
+    }
+  ],
+  "original_inputs": {
+    "path": "/home/barberb/lift_coding/artifacts/ir-decoder-profile-inventory-20261004/controls/actual-inventory-build-options.json",
+    "bytes": 5381,
+    "sha256": "9addc1dbd62d2d79e47c44a47b90adee94b36972792457d0725142287412ef8a"
+  },
+  "controls": {
+    "metadata_cases_passed": 504,
+    "metadata_phase_reports_passed": 1512,
+    "existing_cases": 437,
+    "new_cases": 67,
+    "failed": 0,
+    "skipped": 0,
+    "deselected": 0,
+    "tests_result": {
+      "path": "/home/barberb/lift_coding/artifacts/ir-decoder-profile-inventory-20261004/controls/runs/profile-controls-v3/result.json",
+      "bytes": 532245,
+      "sha256": "ba175f28c66e60cf69a90746ac5fa42d549ac9f271ac7667d8a2d5bd155967bd"
+    },
+    "actual_result": {
+      "path": "/home/barberb/lift_coding/artifacts/ir-decoder-profile-inventory-20261004/controls/runs/actual-inventory-v3/result.json",
+      "bytes": 3012,
+      "sha256": "49b13fecc62d4ba0dfe64edd2c5185876041158ef1b3d820e3bc36567d0a288e"
+    },
+    "exact_routes": 2,
+    "foreign_selection_refusals": 14,
+    "original_targets_checked": [
+      16,
+      16
+    ]
+  },
+  "supported_bindings": [
+    {
+      "record_id": "ir-decoder-checkpoint-record/v1:621c037b4b8f04032afc4e7646f87faea94c83e9294fa7aaeda1289d4ad58907",
+      "format_id": "ir-decoder-format/v1:df36cf0c6f41e8ca2cd0c05bdcd1d64ac1ad5096e2e288c7e8450cf41f18628c",
+      "profile_id": "ir-decoder-profile/v1:c4f5f430aa8adb9876e344c0a38722c3e411e495e1fea460cffe57c887433274",
+      "run_id": "recorded-intent-ir-original-fit",
+      "run_id_provenance": "operator_assigned_inventory_alias",
+      "request": {
+        "checkpoint_sha256": "f031dc5a3dfb9b4fd9e7a8bfbe0f188393edd3afdcc3f18c06c84f4749c6db55",
+        "dimension": 384,
+        "dimension_role": "input_embedding",
+        "ir_family_id": "intent_ir",
+        "task_id": "source_to_native_ir"
+      },
+      "format_request": {
+        "schema_version": "intent-rich-grammar/v1",
+        "target_format_id": "intent_ir/intent_rich_ast",
+        "task_id": "source_to_native_ir"
+      },
+      "checkpoint_receipt": {
+        "path": "/home/barberb/lift_coding/artifacts/ir-384-hub-release-20261002/packages/intent_ir/checkpoint.json",
+        "bytes": 586049,
+        "sha256": "f031dc5a3dfb9b4fd9e7a8bfbe0f188393edd3afdcc3f18c06c84f4749c6db55"
+      },
+      "package_manifest_receipt": {
+        "bytes": 8126,
+        "path": "/home/barberb/lift_coding/artifacts/ir-384-hub-release-20261002/packages/intent_ir/manifest.json",
+        "sha256": "250b6bf9cd93e32ee2db77498432d4dc5c7d705f333f9d99e92de69cdf2c727f"
+      },
+      "corpus_receipt": {
+        "bytes": 321176,
+        "path": "/home/barberb/lift_coding/artifacts/ir-384-hub-release-20261002/packages/intent_ir/authored-corpus.json",
+        "sha256": "7cd0dbbbcfadf8a3a02ca307ff356e10a6090f5b2a1b9434abaa9ce7e50b6830"
+      }
+    },
+    {
+      "record_id": "ir-decoder-checkpoint-record/v1:e16e06219dce496201649a2389d9a5cc158edf789cc4c863a40a1f3ba2773f2c",
+      "format_id": "ir-decoder-format/v1:b7437ce983e9dad2182d50017caa3f806628646389381f5498a18210eea500f4",
+      "profile_id": "ir-decoder-profile/v1:01cc768632eed28f8170f84a0fed326398953066af599fd160066dd738f579c1",
+      "run_id": "recorded-security-ir-original-fit",
+      "run_id_provenance": "operator_assigned_inventory_alias",
+      "request": {
+        "checkpoint_sha256": "855b3d6d85bb59e165930785bd49711df0fcc8fbc8e11329e2f4b65125520441",
+        "dimension": 384,
+        "dimension_role": "input_embedding",
+        "ir_family_id": "security_ir",
+        "task_id": "source_to_native_ir"
+      },
+      "format_request": {
+        "schema_version": "program-ir/v1",
+        "target_format_id": "security_ir/program_expression",
+        "task_id": "source_to_native_ir"
+      },
+      "checkpoint_receipt": {
+        "path": "/home/barberb/lift_coding/artifacts/ir-384-hub-release-20261002/packages/security_ir/checkpoint.json",
+        "bytes": 597741,
+        "sha256": "855b3d6d85bb59e165930785bd49711df0fcc8fbc8e11329e2f4b65125520441"
+      },
+      "package_manifest_receipt": {
+        "bytes": 8156,
+        "path": "/home/barberb/lift_coding/artifacts/ir-384-hub-release-20261002/packages/security_ir/manifest.json",
+        "sha256": "d9fc241c7c6a039068681fab18b6a36fbcbd1752c2683ba1dc16423ce94aba2a"
+      },
+      "corpus_receipt": {
+        "bytes": 180619,
+        "path": "/home/barberb/lift_coding/artifacts/ir-384-hub-release-20261002/packages/security_ir/authored-corpus.json",
+        "sha256": "db7746b86c1149785a23802d545a9fdf329e209b175c625c8ce4e89d1361eb64"
+      }
+    }
+  ],
+  "model_manager": {
+    "audit": {
+      "path": "/home/barberb/lift_coding/artifacts/ir-decoder-profile-inventory-20261004/model_manager_registration_audit_v2.json",
+      "bytes": 45316,
+      "sha256": "2a659bff28b8deb73c63f5b442216b991744c3fd8bbe56a52f889cdd8dde14a8"
+    },
+    "observed_default_store": {
+      "bytes": 274432,
+      "path": "/home/barberb/lift_coding/external/ipfs_accelerate/model_manager.duckdb",
+      "sha256": "ae9246f2795270c4fa6779822a7a7a80a3324a632bb2f70ada6221fa50c14e87"
+    },
+    "observed_model_metadata_rows": 0,
+    "manager_instantiated": false,
+    "registration_calls_made": false,
+    "active_supervisor_alternate_store_contents_verified": false,
+    "status": "durable_registration_pending"
+  },
+  "compatibility": {
+    "format": "family_format_schema_task_scope_target_kind",
+    "profile": "format_dimension_role_architecture_ordered_codec_implementation_inference_configuration_declared_producer_token_policy",
+    "checkpoint_record": "exact_checkpoint_package_corpus_full_configuration_fitting_manifests_operator_run_alias",
+    "run_alias_authenticates_original_training_identity": false
+  },
+  "asset_reuse": {
+    "original_weights_overwritten": false,
+    "original_embeddings_replaced": false,
+    "unsupported_declared_checkpoint_payloads_loaded": false,
+    "legal_768": "retained_nonrandom_dual_donor_initialization_only_alignment_and_training_pending",
+    "codebase_384": "retained_recorded_security_payload_not_relabelled",
+    "physical_lane_count": 12
+  },
+  "qualification": {
+    "metadata_selection_controls": true,
+    "model_tensor_execution": false,
+    "new_numerical_quality": false,
+    "learned_original_text_reconstruction": false,
+    "teacher": false,
+    "proof": false,
+    "training": false,
+    "new_embeddings": false,
+    "model_manager_registration": false,
+    "physical_store_migration": false,
+    "huggingface_release": false,
+    "github_main_update": false,
+    "runtime_release": false,
+    "full_source_dependency_closure": false,
+    "native_shared_library_closure": false
+  },
+  "next_steps": [
+    "Bind exact declared records to the intended Accelerate ModelManager store and verify durable read-back with bounded hooks.",
+    "Add per-lane DuckDB/DuckLake format/profile/run foreign keys and retain provenance.",
+    "Preserve shared assets under explicit Hugging Face format/profile/checkpoint identities.",
+    "Admit Legal canonical-rule and Codebase structural contracts; train separate full-document and original-text reconstruction heads.",
+    "Use authentic same-source 768D vectors with explicit donor/alignment maps and predeclared acceptance metrics.",
+    "Bind Intent planning and codebase proof candidates to source revisions/spans and versioned verifiers."
+  ],
+  "consistency_scope": "Repeated file endpoint checks, not an atomic or continuing snapshot; run aliases are assigned inventory labels; profile equality does not qualify numerical geometry or source fidelity."
+}
