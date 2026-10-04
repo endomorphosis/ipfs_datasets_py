@@ -6,7 +6,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-001 Capture failing public lifecycle contracts
 
-- Status: completed
+- Status: todo
 - Priority: P0
 - Track: baseline
 - Depends on:
@@ -23,7 +23,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-002 Inventory graph producers, artifacts, schemas, and consumers
 
-- Status: completed
+- Status: todo
 - Priority: P0
 - Track: baseline
 - Depends on:
@@ -40,7 +40,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-003 Ratify the canonical API, identity, and compatibility ADR
 
-- Status: completed
+- Status: todo
 - Priority: P0
 - Track: architecture
 - Depends on: KGP-001, KGP-002
@@ -57,7 +57,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-004 Implement immutable graph revision manifests
 
-- Status: completed
+- Status: todo
 - Priority: P0
 - Track: architecture
 - Depends on: KGP-003
@@ -74,7 +74,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-005 Build a durable graph catalog with branch-head CAS
 
-- Status: completed
+- Status: todo
 - Priority: P0
 - Track: architecture
 - Depends on: KGP-004
@@ -91,7 +91,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-006 Introduce the long-lived GraphService
 
-- Status: completed
+- Status: todo
 - Priority: P0
 - Track: architecture
 - Depends on: KGP-005
@@ -108,7 +108,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-007 Specify and implement durable MVCC and WAL
 
-- Status: completed
+- Status: todo
 - Priority: P0
 - Track: durability
 - Depends on: KGP-006
@@ -125,7 +125,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-008 Prove multi-process concurrency and crash recovery
 
-- Status: completed
+- Status: todo
 - Priority: P0
 - Track: durability
 - Depends on: KGP-007, KGP-010
@@ -142,7 +142,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-009 Implement the versioned ParquetGraphStore
 
-- Status: completed
+- Status: todo
 - Priority: P0
 - Track: storage
 - Depends on: KGP-004
@@ -159,7 +159,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-010 Implement the direct IPFS/IPLD GraphStore
 
-- Status: completed
+- Status: todo
 - Priority: P0
 - Track: storage
 - Depends on: KGP-004
@@ -176,7 +176,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-011 Implement the ipfs_kit_py GraphStore adapter
 
-- Status: completed
+- Status: todo
 - Priority: P0
 - Track: storage
 - Depends on: KGP-010
@@ -193,7 +193,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-012 Add verified hybrid cache, reachability, pin, and GC policy
 
-- Status: completed
+- Status: todo
 - Priority: P0
 - Track: storage
 - Depends on: KGP-005, KGP-009, KGP-010, KGP-011
@@ -210,7 +210,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-013 Define the sharded graph manifest v2
 
-- Status: completed
+- Status: todo
 - Priority: P0
 - Track: query
 - Depends on: KGP-004, KGP-010
@@ -227,7 +227,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-014 Implement v2 routing, publishing, and cross-shard traversal
 
-- Status: completed
+- Status: todo
 - Priority: P0
 - Track: query
 - Depends on: KGP-013
@@ -244,7 +244,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-015 Consolidate one GraphQueryBackend and executor
 
-- Status: completed
+- Status: todo
 - Priority: P0
 - Track: query
 - Depends on: KGP-006, KGP-009, KGP-014
@@ -261,7 +261,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-016 Enforce query budgets, cursors, cancellation, and streaming
 
-- Status: completed
+- Status: todo
 - Priority: P0
 - Track: query
 - Depends on: KGP-015
@@ -278,7 +278,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-017 Publish the stable Python package API
 
-- Status: completed
+- Status: todo
 - Priority: P0
 - Track: interfaces
 - Depends on: KGP-006, KGP-016
@@ -295,7 +295,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-018 Replace the graph CLI with GraphService commands
 
-- Status: completed
+- Status: todo
 - Priority: P0
 - Track: interfaces
 - Depends on: KGP-017
@@ -312,7 +312,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-019 Route MCP and MCP++ graph tools through a persistent service
 
-- Status: completed
+- Status: todo
 - Priority: P0
 - Track: interfaces
 - Depends on: KGP-017
@@ -329,7 +329,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-020 Build exact cross-surface conformance vectors
 
-- Status: completed
+- Status: todo
 - Priority: P0
 - Track: interfaces
 - Depends on: KGP-018, KGP-019
@@ -346,7 +346,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-021 Define graph UCAN resources, abilities, and caveats
 
-- Status: completed
+- Status: todo
 - Priority: P0
 - Track: security
 - Depends on: KGP-003
@@ -363,7 +363,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-022 Enforce UCAN in GraphService and emit audit receipts
 
-- Status: completed
+- Status: todo
 - Priority: P0
 - Track: security
 - Depends on: KGP-006, KGP-021
@@ -380,7 +380,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-023 Prove negative authorization, revocation, and replay matrices
 
-- Status: completed
+- Status: todo
 - Priority: P0
 - Track: security
 - Depends on: KGP-019, KGP-022
@@ -397,7 +397,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-024 Add a read-only CVEfixes adapter and differential suite
 
-- Status: completed
+- Status: todo
 - Priority: P1
 - Track: compatibility
 - Depends on: KGP-002, KGP-015
@@ -414,7 +414,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-025 Add a read-only SkillCenter adapter and differential suite
 
-- Status: completed
+- Status: todo
 - Priority: P1
 - Track: compatibility
 - Depends on: KGP-002, KGP-015
@@ -431,7 +431,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-026 Add a read-only 211-AI adapter and differential suite
 
-- Status: completed
+- Status: todo
 - Priority: P1
 - Track: compatibility
 - Depends on: KGP-002, KGP-015
@@ -448,7 +448,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-027 Add code, objective, AST, conflict, and evidence graph adapters
 
-- Status: completed
+- Status: todo
 - Priority: P1
 - Track: compatibility
 - Depends on: KGP-002, KGP-015
@@ -465,7 +465,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-028 Build corpus differential and migration verification reports
 
-- Status: completed
+- Status: todo
 - Priority: P1
 - Track: compatibility
 - Depends on: KGP-024, KGP-025, KGP-026, KGP-027
@@ -482,7 +482,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-029 Build a reproducible graph load harness
 
-- Status: completed
+- Status: todo
 - Priority: P0
 - Track: reliability
 - Depends on: KGP-008, KGP-012, KGP-016, KGP-020
@@ -499,7 +499,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-030 Establish labelled baselines and ratify SLO gates
 
-- Status: completed
+- Status: todo
 - Priority: P0
 - Track: reliability
 - Depends on: KGP-028, KGP-029
@@ -516,7 +516,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-031 Prove soak, chaos, leak, and recovery behavior
 
-- Status: completed
+- Status: todo
 - Priority: P0
 - Track: reliability
 - Depends on: KGP-030
@@ -533,7 +533,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-032 Add observability, health, backup, restore, and repair tools
 
-- Status: completed
+- Status: todo
 - Priority: P0
 - Track: reliability
 - Depends on: KGP-012, KGP-016, KGP-022
@@ -550,7 +550,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-033 Implement shadow, canary, and rollback controls
 
-- Status: completed
+- Status: todo
 - Priority: P1
 - Track: adoption
 - Depends on: KGP-023, KGP-028, KGP-031, KGP-032
@@ -567,7 +567,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-034 Publish compatibility, migration, and deprecation runbooks
 
-- Status: completed
+- Status: todo
 - Priority: P1
 - Track: adoption
 - Depends on: KGP-033
@@ -584,7 +584,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-035 Enforce a production release evidence gate
 
-- Status: completed
+- Status: todo
 - Priority: P0
 - Track: adoption
 - Depends on: KGP-034
@@ -1261,7 +1261,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-046 Add the shared storage restart and corruption validator
 
-- Status: completed
+- Status: todo
 - Priority: P0
 - Track: storage
 - Depends on:
@@ -1278,7 +1278,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-047 Restore executable v1 sharded-CAR compatibility coverage
 
-- Status: completed
+- Status: todo
 - Priority: P0
 - Track: query
 - Depends on:
@@ -1296,7 +1296,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-048 Reconcile legacy lifecycle diagnostics with the canonical service
 
-- Status: completed
+- Status: todo
 - Priority: P0
 - Track: baseline
 - Depends on:
@@ -1313,7 +1313,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-049 Implement a fail-closed release evidence collector
 
-- Status: completed
+- Status: todo
 - Priority: P0
 - Track: adoption
 - Depends on: KGP-046, KGP-047, KGP-048
@@ -1330,7 +1330,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-050 Resolve validation retry-budget failure for KGP-047
 
-- Status: completed
+- Status: todo
 - Completion: manual
 - Priority: P1
 - Track: ops
