@@ -1,0 +1,427 @@
+{
+  "actual_SANY_checks": 9,
+  "admitted": false,
+  "candidate_sha256": {
+    "docs/autoencoders/training_readiness_parallel.md": "1a4d6ac86572b81bee2ecdef2ab9672e7cc3cda9c1ac9394f1ed8ec699a4017d",
+    "ipfs_datasets_py/logic/formalization/autoencoder/parallel_projection_checks.py": "36897759dae1f29c195635c508ccdf2ff8a3f6532c8bb96a0f6fadab858bcd31",
+    "ipfs_datasets_py/logic/formalization/autoencoder/training_readiness.py": "d2d84a34028580cba068b778a1a7d5e9446cdad8b91a50dd9c17c64dd029c0db",
+    "scripts/ops/autoencoder/audit_source_training_inventory.py": "305cc7ac979b9ed735bb3422b493062e98c0ec8ee9f065ce3260837f711e205d",
+    "scripts/ops/autoencoder/smoke_training_readiness_parallel.py": "a112dfe9f3b97c5d15a327a9fb36e5d0b1afade7c2cabd0f57559a023bb8e013",
+    "tests/unit/logic/formalization/autoencoder/test_parallel_projection_checks.py": "e4a4a7763ef39b1d2d22d3443dd8c890e6fc245a1d97e0836d6ec4fa42c4a137",
+    "tests/unit/logic/formalization/autoencoder/test_training_readiness.py": "616829cac74587db08c91d73e4e9cb9d8d7f3a1cd8d45bef53d7d1b49da828bd",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_source_training_inventory.py": "b280ee76aa0f334db5c53fe290a850cf8694825f6d3ed549e23b3acb12e14433"
+  },
+  "constitution_formalized": false,
+  "convergence_established": false,
+  "evidence_archive": "evidence.tar.gz",
+  "existing_source_readiness": {
+    "adaptation": {
+      "evaluation": "Only existing train/tuning rows are mapped. No model fit, no heldout score or newly sealed split claim.",
+      "intent": "Existing instruction, source/group/split and native Intent target preserved. Weak label origin explicit. No vector invented; original test split excluded from this audit panel.",
+      "language": "English is a caller declaration for these previously inspected diagnostic inputs.",
+      "legal": "Existing source text and384D vectors preserved; no formal target supplied; citation is explicitly declared document/group, not independently verified grouping.",
+      "security_ui": "Existing authored training/tuning source, vector, native target and group preserved. Source hashes checked; group used as conservative document identity. No independent embedding or semantic authentication inferred."
+    },
+    "admitted": false,
+    "domains": {
+      "intent_ir": {
+        "blocker_counts": {
+          "exact_decoder_target_to_native_projection_join_missing": 12,
+          "live_native_projection_gate_missing": 12,
+          "missing_embedding": 12,
+          "source_context_review_missing": 12,
+          "verified_embedding_producer_join_missing": 12
+        },
+        "native_target_shape_validated_rows": 12,
+        "ready_rows": 0,
+        "rows": 12
+      },
+      "legal_ir": {
+        "blocker_counts": {
+          "exact_decoder_target_to_native_projection_join_missing": 8,
+          "live_native_projection_gate_missing": 8,
+          "missing_reference_supervision": 8,
+          "native_source_decoder_target_not_validated": 8,
+          "source_context_review_missing": 8,
+          "verified_embedding_producer_join_missing": 8
+        },
+        "native_target_shape_validated_rows": 0,
+        "ready_rows": 0,
+        "rows": 8
+      },
+      "security_ir": {
+        "blocker_counts": {
+          "exact_decoder_target_to_native_projection_join_missing": 480,
+          "live_native_projection_gate_missing": 480,
+          "source_context_review_missing": 480,
+          "verified_embedding_producer_join_missing": 480
+        },
+        "native_target_shape_validated_rows": 480,
+        "ready_rows": 0,
+        "rows": 480
+      },
+      "ui_ux_ir": {
+        "blocker_counts": {
+          "exact_decoder_target_to_native_projection_join_missing": 480,
+          "live_native_projection_gate_missing": 480,
+          "source_context_review_missing": 480,
+          "verified_embedding_producer_join_missing": 480
+        },
+        "native_target_shape_validated_rows": 480,
+        "ready_rows": 0,
+        "rows": 480
+      }
+    },
+    "input_sha256": {
+      "/home/barberb/lift_coding/artifacts/intent-ir-open-vocab-20260930/coverage-01/public-paired-corpus.json": "d5e4676de2b1e910a04e9d9a344ddc44be9caaecf354e6535a171bdcb08e3b17",
+      "/home/barberb/lift_coding/artifacts/source-native-v3-20261001/run-02/security_ir/train.json": "99d856ef2a70f1a44c992f6f31dd35cd1f491db93f147065db51aa635d7c6876",
+      "/home/barberb/lift_coding/artifacts/source-native-v3-20261001/run-02/security_ir/validation.json": "e719430c2db18dde3d3e49ca831755a4569c975f2eff12bd1db7dba2c82cf8b3",
+      "/home/barberb/lift_coding/artifacts/source-native-v3-20261001/run-02/ui_ux_ir/train.json": "5522c6558ca5cb327c3c5716bc46a8b1a46b98a84fe8309320eeef2b1aace6e2",
+      "/home/barberb/lift_coding/artifacts/source-native-v3-20261001/run-02/ui_ux_ir/validation.json": "459e5e618b7ef429ee1b546a67c7bee2a7625948f69e3b33181e61791742ab36",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/parallel-training-campaign-20260929T042818Z/verified-embeddings-r1/training.jsonl": "8ed9584552747db9e461dd21e9095f4fc31622ec71aba86ffa47bbe4b4487860",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/parallel-training-campaign-20260929T042818Z/verified-embeddings-r1/tuning.jsonl": "a799ac706c35565ecb11bebfba696a65f40d0379c64eb940a829ee8b56f9512e"
+    },
+    "producer_sha256": "0b4bcbab17d812467b6327b9507052a29e61ae9380c683f37738b9072082e1fe",
+    "schema": "existing-source-readiness-exercise/v1",
+    "source_semantics_verified": false,
+    "training_executed": false
+  },
+  "inventory_validation": {
+    "artifacts": [
+      {
+        "artifact_id": "legal-split",
+        "rows": null,
+        "status": "available"
+      },
+      {
+        "artifact_id": "legal-training",
+        "rows": 6,
+        "status": "available"
+      },
+      {
+        "artifact_id": "legal-tuning",
+        "rows": 2,
+        "status": "available"
+      },
+      {
+        "artifact_id": "legal-canary",
+        "rows": 2,
+        "status": "available"
+      },
+      {
+        "artifact_id": "intent-public-source",
+        "rows": 99,
+        "status": "available"
+      },
+      {
+        "artifact_id": "intent-public-spans",
+        "rows": 20544,
+        "status": "available"
+      },
+      {
+        "artifact_id": "intent-public-weak-pairs",
+        "rows": 15,
+        "status": "available"
+      },
+      {
+        "artifact_id": "intent-rich-training",
+        "rows": 4003,
+        "status": "available"
+      },
+      {
+        "artifact_id": "security_ir-train",
+        "rows": 360,
+        "status": "available"
+      },
+      {
+        "artifact_id": "security_ir-validation",
+        "rows": 120,
+        "status": "available"
+      },
+      {
+        "artifact_id": "ui_ux_ir-train",
+        "rows": 360,
+        "status": "available"
+      },
+      {
+        "artifact_id": "ui_ux_ir-validation",
+        "rows": 120,
+        "status": "available"
+      }
+    ],
+    "authority_granted": false,
+    "available_artifacts": 12,
+    "command": [
+      "python3",
+      "scripts/ops/autoencoder/audit_source_training_inventory.py",
+      "--spec",
+      "workspace/test-logs/source-training-inventory-20261001/spec.json",
+      "--output",
+      "workspace/test-logs/source-training-inventory-20261001/report-r4.json",
+      "--max-json-nodes",
+      "2000000"
+    ],
+    "owned_files": {
+      "scripts/ops/autoencoder/audit_source_training_inventory.py": "305cc7ac979b9ed735bb3422b493062e98c0ec8ee9f065ce3260837f711e205d",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_source_training_inventory.py": "b280ee76aa0f334db5c53fe290a850cf8694825f6d3ed549e23b3acb12e14433"
+    },
+    "performance": "wall_seconds=0.74 peak_rss_kb=274024",
+    "report_sha256": "62b4aab71a81b75860a73b6181bdaf63bce83376f2acdc45751361e81fb0e0a4",
+    "schema": "source-training-inventory-validation/v1",
+    "tests_passed": 42
+  },
+  "local_diagnostic_checkpoints_not_in_archive": {
+    "native-r1/intent_ir/checkpoint/family_checkpoint.json": {
+      "bytes": 966945,
+      "sha256": "f50878fcfa374fd0b66d4104927bbb8b34f9dfbc23191b30fb0bc8e79c863d24"
+    },
+    "native-r1/legal_ir/checkpoint/family_checkpoint.json": {
+      "bytes": 551992,
+      "sha256": "1702f44c332844850da81897430b4f28ad004a698f2f82fa0ee7fd846e937132"
+    },
+    "native-r1/security_ir/checkpoint/family_checkpoint.json": {
+      "bytes": 759734,
+      "sha256": "b42b1c9089339b02cc5ba192aab14df2665fb257d990ef9b935e66e93e7a8727"
+    },
+    "native-r1/ui_ux_ir/checkpoint/family_checkpoint.json": {
+      "bytes": 963418,
+      "sha256": "b39f4523df5b2664cf3994ac332a7d977dacc6e1008f1b045fa4445fff1d810f"
+    }
+  },
+  "native_and_training_smoke": {
+    "actual_lake_builds": 12,
+    "actual_solver_attempts": 8,
+    "admitted": false,
+    "constitution_formalized": false,
+    "convergence_established": false,
+    "detached_receipt_rejected": true,
+    "domains": {
+      "intent_ir": {
+        "all_inference_projections_have_loss": true,
+        "before_tuning_objective": 0.0007063833560527163,
+        "epoch_tuning_objectives": [
+          0.0007199579114632533,
+          0.0007168804926119028,
+          0.0007295421244557417,
+          0.0007158280537955132,
+          0.0007263546335523058,
+          0.0007157047814791653,
+          0.0007094924787505515,
+          0.0007122108224285809,
+          0.000712169764196651,
+          0.0007098333038334346,
+          0.0007081542685773408,
+          0.0007075734496835289
+        ],
+        "independent_holdout_evaluated": false,
+        "optimizer_steps": 12,
+        "selected_epoch": 0,
+        "selected_tuning_objective": 0.0007063004818080111,
+        "source_decoder_trained": false,
+        "training_gate_passed": true,
+        "training_rows": 2,
+        "tuning_rows": 1
+      },
+      "legal_ir": {
+        "all_inference_projections_have_loss": true,
+        "before_tuning_objective": 0.0013347692618356746,
+        "epoch_tuning_objectives": [
+          0.0013453039784401925,
+          0.0013415755755912904,
+          0.0013425821837020275,
+          0.0013403739896454688,
+          0.0013465015714651675,
+          0.001338069185338757,
+          0.001330935547196577,
+          0.0013296108656893394,
+          0.0013286740310709643,
+          0.001328452574439194,
+          0.0013290839614327598,
+          0.0013299960594558985
+        ],
+        "independent_holdout_evaluated": false,
+        "optimizer_steps": 12,
+        "selected_epoch": 0,
+        "selected_tuning_objective": 0.001333891695050889,
+        "source_decoder_trained": false,
+        "training_gate_passed": true,
+        "training_rows": 2,
+        "tuning_rows": 1
+      },
+      "security_ir": {
+        "all_inference_projections_have_loss": true,
+        "before_tuning_objective": 0.0010871949355854835,
+        "epoch_tuning_objectives": [
+          0.0011002894317518302,
+          0.0011016842446212802,
+          0.0011184921348127116,
+          0.0011113007674291488,
+          0.0011187072914581326,
+          0.0011016215401742147,
+          0.0010884928376108786,
+          0.0010839455644539957,
+          0.0010786503184071303,
+          0.0010740059720683436,
+          0.0010713477369723946,
+          0.0010700231227821955
+        ],
+        "independent_holdout_evaluated": false,
+        "optimizer_steps": 12,
+        "selected_epoch": 0,
+        "selected_tuning_objective": 0.0010871949355854835,
+        "source_decoder_trained": false,
+        "training_gate_passed": true,
+        "training_rows": 2,
+        "tuning_rows": 1
+      },
+      "ui_ux_ir": {
+        "all_inference_projections_have_loss": true,
+        "before_tuning_objective": 0.0006724709406968538,
+        "epoch_tuning_objectives": [
+          0.0006826144019488534,
+          0.0006846408680278066,
+          0.0006937483726383617,
+          0.0006833386658645977,
+          0.0006888383728868839,
+          0.0006781332406277448,
+          0.0006710195342964074,
+          0.0006715689267767266,
+          0.0006719743402098331,
+          0.0006702754796383717,
+          0.0006686411489843371,
+          0.0006675529848111329
+        ],
+        "independent_holdout_evaluated": false,
+        "optimizer_steps": 12,
+        "selected_epoch": 0,
+        "selected_tuning_objective": 0.0006724709406968538,
+        "source_decoder_trained": false,
+        "training_gate_passed": true,
+        "training_rows": 2,
+        "tuning_rows": 1
+      }
+    },
+    "effective_workers": 2,
+    "emitted_projection_checks": 198,
+    "integration_passed": true,
+    "logic_tree_pin": {
+      "compiler": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/training-readiness-parallel-20261001/source/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+      "decompiler": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/training-readiness-parallel-20261001/source/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+      "parser": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/training-readiness-parallel-20261001/source/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"
+    },
+    "parallel_receipt_sha256": "1d4fc1042787359f2baf4421064247e301a5a4b40b944edca19526a8f08e8fb4",
+    "peak_overlapping_native_jobs": 2,
+    "production_corpus_ready": false,
+    "qualified": false,
+    "runner_sha256": "a112dfe9f3b97c5d15a327a9fb36e5d0b1afade7c2cabd0f57559a023bb8e013",
+    "schema": "training-readiness-parallel-smoke/v1",
+    "scope": "authored native structural reconstruction with declared applicability; supplemental propositional solver diagnostics",
+    "source_decoder_trained": false,
+    "source_semantics_verified": false,
+    "source_tree": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/training-readiness-parallel-20261001/source",
+    "wall_seconds": 175.25045205303468,
+    "weights_downloaded": false
+  },
+  "native_concurrency_measured": true,
+  "numerical_fits_parallelized": false,
+  "parallel_checks_wall_seconds": 83.53646553796716,
+  "production_corpus_ready": false,
+  "schema": "training-readiness-parallel-evidence/v1",
+  "selection_analysis": {
+    "intent_ir": {
+      "comparison_epsilon": 1e-12,
+      "independent_holdout": false,
+      "last_candidate_macro_improved": false,
+      "last_candidate_objective": 0.0007075734496835289,
+      "last_candidate_regressed_families": {
+        "deontic": {
+          "candidate": 0.0023049368700206784,
+          "delta": 1.518163544151404e-05,
+          "selected": 0.0022897552345791643
+        },
+        "intention_agency": {
+          "candidate": 0.0028978940698272345,
+          "delta": 2.5822504555268657e-05,
+          "selected": 0.002872071565271966
+        }
+      },
+      "optimizer_steps": 12,
+      "selected_epoch": 0,
+      "selected_objective": 0.0007063004818080111,
+      "selection_policy_unchanged": true,
+      "training_receipt_sha256": "8c7e54258173f21c2e7c10dd90a93fd607a835bdea660104bb4d30260ca4ce7a"
+    },
+    "legal_ir": {
+      "comparison_epsilon": 1e-12,
+      "independent_holdout": false,
+      "last_candidate_macro_improved": true,
+      "last_candidate_objective": 0.0013299960594558985,
+      "last_candidate_regressed_families": {
+        "frame_logic": {
+          "candidate": 0.003955915152334825,
+          "delta": 1.842019523080711e-05,
+          "selected": 0.003937494957104018
+        }
+      },
+      "optimizer_steps": 12,
+      "selected_epoch": 0,
+      "selected_objective": 0.001333891695050889,
+      "selection_policy_unchanged": true,
+      "training_receipt_sha256": "06cab18923fad85afc0b2ca0cde8d7cb48d9cf62114e7b6e9cc0d2faddb838f5"
+    },
+    "security_ir": {
+      "comparison_epsilon": 1e-12,
+      "independent_holdout": false,
+      "last_candidate_macro_improved": true,
+      "last_candidate_objective": 0.0010700231227821955,
+      "last_candidate_regressed_families": {
+        "hyperproperty": {
+          "candidate": 4.5700564101322106e-06,
+          "delta": 4.570056409910166e-06,
+          "selected": 2.220446049250313e-16
+        }
+      },
+      "optimizer_steps": 12,
+      "selected_epoch": 0,
+      "selected_objective": 0.0010871949355854835,
+      "selection_policy_unchanged": true,
+      "training_receipt_sha256": "d74fc812d4430a6cc490b11cbb0733fbff6266c2ccac18ed50266f3a72e41d58"
+    },
+    "ui_ux_ir": {
+      "comparison_epsilon": 1e-12,
+      "independent_holdout": false,
+      "last_candidate_macro_improved": true,
+      "last_candidate_objective": 0.0006675529848111329,
+      "last_candidate_regressed_families": {
+        "transition_system": {
+          "candidate": 9.095061293985748e-07,
+          "delta": 9.095061296650283e-07,
+          "selected": -2.664535259100376e-16
+        }
+      },
+      "optimizer_steps": 12,
+      "selected_epoch": 0,
+      "selected_objective": 0.0006724709406968538,
+      "selection_policy_unchanged": true,
+      "training_receipt_sha256": "339a199c489a64c18bd0e25bc8ce66dcc439a043dabed0b1f8f2ee42b99c61c6"
+    }
+  },
+  "solver_executable_sha256_observed_at_packaging": {
+    "/home/barberb/.local/bin/z3": "bbea82f99718e57d939db27db7a6e3afb2dfdee4bd11dd0858e5cfefbdf80fa1",
+    "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/bin/cvc5": "85827e46576d68570c520a2b2927fe1d260d0bfb2b93919f53f50ed29ee1e419"
+  },
+  "solver_hash_scope": "Post-run file observations only, not before/after execution attestation. Original portfolio commands and version strings are retained.",
+  "source_decoder_trained": false,
+  "source_semantics_verified": false,
+  "tested_base_revision": "4f8819460c7d4fcc08cb9e00b070f8c3ad6e905f",
+  "tests": {
+    "errors": "0",
+    "failures": "0",
+    "hostname": "spark-b271",
+    "name": "pytest",
+    "skipped": "0",
+    "tests": "105",
+    "time": "3.351",
+    "timestamp": "2026-10-01T21:45:32.068769+00:00"
+  }
+}

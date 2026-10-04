@@ -1,0 +1,1980 @@
+{
+  "admitted": false,
+  "allowed_library_discovery_subprocesses": [
+    {
+      "arguments": [
+        "-p"
+      ],
+      "executable": "/usr/sbin/ldconfig"
+    }
+  ],
+  "arrow_cpu_threads": 1,
+  "arrow_io_threads": 1,
+  "baseline_capture_artifact": {
+    "bytes": 160162,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-delivery-20260926-r3/capture-r3/audit-receipt.json",
+    "sha256": "8e26dfe36cc1e955cba9cf61e8d98a93c3061ddbf372cdbd048fe7f6fd2387ff"
+  },
+  "baseline_release_artifact": {
+    "bytes": 4681,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-delivery-20260926-r3/capture-r3/resource-release.json",
+    "sha256": "f551c036384f06c8507eb31f88a06d814273398129e2a858bbf356a44d646b41"
+  },
+  "bootstrap_library_discovery_before_process_guard": true,
+  "checks": {
+    "exact_collected_executed_membership": true,
+    "expected_collected_source_counts": true,
+    "expected_executed_source_counts": true,
+    "expected_focused_count": true,
+    "fixtures_within_external_charge": true,
+    "harness_unchanged": true,
+    "input_artifacts_unchanged": true,
+    "non_library_process_attempts_blocked_before_execution": true,
+    "nonexecuted_context_not_executed": true,
+    "nonexecuted_context_not_imported": true,
+    "protected_unchanged": true,
+    "pytest_argument_expansion_exact": true,
+    "pytest_exit_zero": true,
+    "qualified_dependencies_unchanged": true,
+    "qualified_package_source_unchanged": true,
+    "zero_failures_errors_skips": true
+  },
+  "collected_counts_by_source": {
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/integration/logic/test_canonical_semantic_roundtrip.py": 4,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_compiler.py": 1,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py": 17,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py": 69,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py": 38,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_lean_units.py": 3
+  },
+  "collected_test_membership": [
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_existing_v1_database_rejected_without_mutation",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_new_schema_reopens_and_uses_one_duckdb_thread",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_manifest_binding_is_exact_and_failed_rebind_does_not_mutate[digest]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_manifest_binding_is_exact_and_failed_rebind_does_not_mutate[size]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_manifest_binding_is_exact_and_failed_rebind_does_not_mutate[count]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_manifest_binding_is_exact_and_failed_rebind_does_not_mutate[dataset]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_manifest_binding_is_exact_and_failed_rebind_does_not_mutate[schema]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_manifest_binding_is_exact_and_failed_rebind_does_not_mutate[extra]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_manifest_binding_is_exact_and_failed_rebind_does_not_mutate[bool_count]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_resume_requires_exact_binding_and_explicit_existing_progress",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_unbound_rows_or_path_only_checkpoint_cannot_gain_source_authority",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_bound_plain_enqueue_cannot_bypass_cursor",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_source_batch_and_physical_cursor_rollback_then_resume",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_physical_source_cursor_cannot_skip_replay_or_miscount[0-1]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_physical_source_cursor_cannot_skip_replay_or_miscount[1-3]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_physical_source_cursor_cannot_skip_replay_or_miscount[True-2]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_physical_source_cursor_cannot_skip_replay_or_miscount[2-3]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_exact_duplicates_advance_physical_cursor_but_not_distinct_count",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_conflicting_entity_source_rolls_back_entire_physical_batch[label-Changed]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_conflicting_entity_source_rolls_back_entire_physical_batch[properties_json-{\"x\":1}]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_conflicting_entity_source_rolls_back_entire_physical_batch[type-section]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_containment_requires_complete_source_and_exact_relationship_count",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_complete_relationship_pass_is_order_independent_across_batches",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_conflicting_relationships_roll_back_before_context_mutation[IN_TITLE-first0-second0]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_conflicting_relationships_roll_back_before_context_mutation[HAS_SECTION-first1-second1]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_conflicting_relationships_roll_back_before_context_mutation[HAS_SECTION-first2-second2]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_current_claim_prevents_unsealed_context_replacement",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_relationship_callback_failure_rolls_back_context_and_preparation",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_sealed_containment_repeat_checks_inputs_and_preserves_enrichment",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_resume_stream_schema_full_closure_and_exact_false",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_remote_prepared_progress_is_atomic_and_does_not_import_agents",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_remote_claims_never_become_local_ownership",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_remote_prepared_observation_cannot_complete_existing_local_claim",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_remote_prepared_progress_requires_locally_sealed_context",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_remote_snapshot_validation_rejects_before_committing[authority]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_remote_snapshot_validation_rejects_before_committing[binding]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_remote_snapshot_validation_rejects_before_committing[properties]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_remote_snapshot_validation_rejects_before_committing[context]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_remote_snapshot_validation_rejects_before_committing[missing_board]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_remote_snapshot_validation_rejects_before_committing[duplicate_entity]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_remote_snapshot_validation_rejects_before_committing[agent_count]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_remote_snapshot_validation_rejects_before_committing[meta_cursor]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_remote_final_file_guard_failure_rolls_back_updates",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_export_and_import_use_bounded_arrow_batches",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_snapshot_limits_fail_without_publishing_partial_output[MAX_ENTITIES-1]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_snapshot_limits_fail_without_publishing_partial_output[MAX_RESUME_DECODED_BYTES-100]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_snapshot_limits_fail_without_publishing_partial_output[MAX_RESUME_FILE_BYTES-100]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_resume_output_cannot_overlap_cache_or_alias[db]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_resume_output_cannot_overlap_cache_or_alias[wal]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_resume_output_cannot_overlap_cache_or_alias[hardlink]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_resume_output_cannot_overlap_cache_or_alias[symlink]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_existing_snapshot_survives_failed_replacement",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_claim_token_fences_exact_batch_and_counts_only_current_matches",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_task_board_ids_bind_full_entity_identity_not_shared_prefix",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_definition_closure_is_two_edges_with_all_direct_targets_and_false_flags",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_bound_preparation_cannot_bypass_containment_seal[claim]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_bound_preparation_cannot_bypass_containment_seal[prepare_all]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_bound_preparation_cannot_bypass_containment_seal[prepare_claimed]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_context_mutators_cannot_change_active_claimed_section[spans]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_context_mutators_cannot_change_active_claimed_section[definitions]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_context_mutators_cannot_change_active_claimed_section[reopen]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_malformed_stored_context_is_never_replaced_by_empty_object[spans]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_malformed_stored_context_is_never_replaced_by_empty_object[definitions]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_malformed_stored_context_is_never_replaced_by_empty_object[inconsistencies]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_malformed_stored_context_is_never_replaced_by_empty_object[reopen]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_remote_preparation_rejects_stale_local_containment_seal",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_snapshot_commit_failure_preserves_old_complete_file",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_public_methods_reject_foreign_owner_before_database_access",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_changed_live_constraints_rejected_despite_exact_columns_and_marker",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_batch_bounds_are_strict_before_input_access[0]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_batch_bounds_are_strict_before_input_access[-1]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_batch_bounds_are_strict_before_input_access[513]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_batch_bounds_are_strict_before_input_access[True]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_batch_bounds_are_strict_before_input_access[1.5]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_batch_bounds_are_strict_before_input_access[2]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_exact_two_file_manifest_and_physical_duplicate_resume",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_corrupt_cursor_is_never_reset_or_adopted[-1]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_corrupt_cursor_is_never_reset_or_adopted[8]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_corrupt_cursor_is_never_reset_or_adopted[True]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_corrupt_cursor_is_never_reset_or_adopted[3]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_corrupt_cursor_is_never_reset_or_adopted[None]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_changed_pair_cannot_resume_or_poll[entities]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_changed_pair_cannot_resume_or_poll[relationships]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_input_aliases_are_rejected[symlink]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_input_aliases_are_rejected[hardlink]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_held_input_identity_detects_replacement_even_with_same_bytes[replace]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_held_input_identity_detects_replacement_even_with_same_bytes[truncate]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_held_input_identity_detects_replacement_even_with_same_bytes[symlink]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_later_relationship_mutation_rolls_back_current_batch_only",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_full_containment_uses_all_relationship_batches_and_preserves_enrichment",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_incomplete_queue_cannot_prepare",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_main_defaults_are_offline_without_claim_release[False]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_main_defaults_are_offline_without_claim_release[True]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_explicit_poll_runs_after_exact_binding_before_queue",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_no_resume_refuses_existing_progress",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_explicit_upload_uses_versioned_key_and_parent_revision",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_input_drift_during_export_blocks_remote_write",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_foreign_tree_is_rejected_before_cache_constructor",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_arrow_reader_uses_bounded_single_thread_batches[entities]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_arrow_reader_uses_bounded_single_thread_batches[relationships]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_decoded_batch_bound_fails_before_enqueue",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_snapshot_never_replaces_cache_or_wal[database]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_snapshot_never_replaces_cache_or_wal[wal]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_snapshot_never_replaces_cache_or_wal[hardlink]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_cache_factory_never_opens_a_source_as_database_or_wal[database]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_cache_factory_never_opens_a_source_as_database_or_wal[wal]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_oversized_remote_checkpoint_rejected_before_download",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_workspace_tree_pin_checks_all_three_components",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_deadline_and_exception_remain_nonrenderable",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_prohibition_remains_negative",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_minimum_retains_quantity_without_duplicate_temporal_text",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_minimum_requires_matching_integer_quantity[None]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_minimum_requires_matching_integer_quantity[20]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_minimum_requires_matching_integer_quantity[20.0]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_minimum_requires_matching_integer_quantity[0]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_minimum_requires_matching_integer_quantity[21]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_empty_vocabulary_abstains_without_compiler_fallback[Company A shall submit backup report within 10 days unless emergency.]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_empty_vocabulary_abstains_without_compiler_fallback[The agency shall not disclose records.]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_empty_vocabulary_abstains_without_compiler_fallback[The officer shall retain the file for at least 20 days.]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_no_parser_elements_skip_document_and_compiler",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_compile_span_preserves_stored_vocabulary[stored0]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_compile_span_preserves_stored_vocabulary[stored1]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_compile_span_extracts_vocabulary_once_for_exact_text",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_compile_span_uses_each_selected_clause_vocabulary_after_segmentation",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_pilot_cases_complete_with_measured_partial_disclosure",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/integration/logic/test_canonical_semantic_roundtrip.py"
+    },
+    {
+      "nodeid": "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_pilot_parity_is_noninferior_to_selected_replacement_arm",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/integration/logic/test_canonical_semantic_roundtrip.py"
+    },
+    {
+      "nodeid": "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_original_typed_deontic_pilot_keeps_forward_and_cycle_thresholds",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/integration/logic/test_canonical_semantic_roundtrip.py"
+    },
+    {
+      "nodeid": "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_checked_in_parity_snapshot_preserves_historical_integrity",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/integration/logic/test_canonical_semantic_roundtrip.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_lean_units.py::test_statute_lean_defines_identity_and_clause_locks",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_lean_units.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_lean_units.py::test_term_lean_defines_kind_value_and_using_statutes",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_lean_units.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_lean_units.py::test_cache_stores_statute_and_term_lean",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_lean_units.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/legal_ir/test_canonical_compiler.py::test_frozen_cases_reproduce_selected_adapter_l1_identity",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_compiler.py"
+    }
+  ],
+  "configured_pytest_addopts": [
+    "-v",
+    "--tb=short",
+    "--strict-markers",
+    "--import-mode=importlib",
+    "-p",
+    "no:anyio",
+    "-p",
+    "no:asyncio",
+    "-p",
+    "anyio.pytest_plugin",
+    "-p",
+    "pytest_asyncio.plugin"
+  ],
+  "constitution_formalized": false,
+  "deadline_historical_identity_case_selected": true,
+  "disabled_optional_git_cache_metadata_queries": [
+    [
+      "git",
+      "rev-parse",
+      "HEAD"
+    ],
+    [
+      "git",
+      "status",
+      "--porcelain"
+    ]
+  ],
+  "downloads_performed": false,
+  "excluded_context_deltas": [],
+  "excluded_context_paths": [
+    "ipfs_datasets_py/logic/autoformal/supervisor_loop.py",
+    "ipfs_datasets_py/logic/autoformal/meta_ontology.py",
+    "scripts/ops/legal_ir/run_autoformal_supervisor.py",
+    "scripts/ops/legal_ir/publish_kg_meta_ontology.py",
+    "tests/unit/logic/test_autoformal_supervisor_launch.py",
+    "tests/unit/logic/test_supervisor_loop.py",
+    "tests/unit/logic/test_meta_ontology.py"
+  ],
+  "executed_counts_by_source": {
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/integration/logic/test_canonical_semantic_roundtrip.py": 4,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_compiler.py": 1,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py": 17,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py": 69,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py": 38,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_lean_units.py": 3
+  },
+  "executed_test_membership": [
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_existing_v1_database_rejected_without_mutation",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_new_schema_reopens_and_uses_one_duckdb_thread",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_manifest_binding_is_exact_and_failed_rebind_does_not_mutate[digest]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_manifest_binding_is_exact_and_failed_rebind_does_not_mutate[size]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_manifest_binding_is_exact_and_failed_rebind_does_not_mutate[count]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_manifest_binding_is_exact_and_failed_rebind_does_not_mutate[dataset]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_manifest_binding_is_exact_and_failed_rebind_does_not_mutate[schema]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_manifest_binding_is_exact_and_failed_rebind_does_not_mutate[extra]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_manifest_binding_is_exact_and_failed_rebind_does_not_mutate[bool_count]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_resume_requires_exact_binding_and_explicit_existing_progress",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_unbound_rows_or_path_only_checkpoint_cannot_gain_source_authority",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_bound_plain_enqueue_cannot_bypass_cursor",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_source_batch_and_physical_cursor_rollback_then_resume",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_physical_source_cursor_cannot_skip_replay_or_miscount[0-1]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_physical_source_cursor_cannot_skip_replay_or_miscount[1-3]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_physical_source_cursor_cannot_skip_replay_or_miscount[True-2]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_physical_source_cursor_cannot_skip_replay_or_miscount[2-3]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_exact_duplicates_advance_physical_cursor_but_not_distinct_count",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_conflicting_entity_source_rolls_back_entire_physical_batch[label-Changed]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_conflicting_entity_source_rolls_back_entire_physical_batch[properties_json-{\"x\":1}]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_conflicting_entity_source_rolls_back_entire_physical_batch[type-section]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_containment_requires_complete_source_and_exact_relationship_count",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_complete_relationship_pass_is_order_independent_across_batches",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_conflicting_relationships_roll_back_before_context_mutation[IN_TITLE-first0-second0]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_conflicting_relationships_roll_back_before_context_mutation[HAS_SECTION-first1-second1]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_conflicting_relationships_roll_back_before_context_mutation[HAS_SECTION-first2-second2]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_current_claim_prevents_unsealed_context_replacement",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_relationship_callback_failure_rolls_back_context_and_preparation",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_sealed_containment_repeat_checks_inputs_and_preserves_enrichment",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_resume_stream_schema_full_closure_and_exact_false",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_remote_prepared_progress_is_atomic_and_does_not_import_agents",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_remote_claims_never_become_local_ownership",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_remote_prepared_observation_cannot_complete_existing_local_claim",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_remote_prepared_progress_requires_locally_sealed_context",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_remote_snapshot_validation_rejects_before_committing[authority]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_remote_snapshot_validation_rejects_before_committing[binding]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_remote_snapshot_validation_rejects_before_committing[properties]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_remote_snapshot_validation_rejects_before_committing[context]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_remote_snapshot_validation_rejects_before_committing[missing_board]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_remote_snapshot_validation_rejects_before_committing[duplicate_entity]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_remote_snapshot_validation_rejects_before_committing[agent_count]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_remote_snapshot_validation_rejects_before_committing[meta_cursor]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_remote_final_file_guard_failure_rolls_back_updates",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_export_and_import_use_bounded_arrow_batches",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_snapshot_limits_fail_without_publishing_partial_output[MAX_ENTITIES-1]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_snapshot_limits_fail_without_publishing_partial_output[MAX_RESUME_DECODED_BYTES-100]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_snapshot_limits_fail_without_publishing_partial_output[MAX_RESUME_FILE_BYTES-100]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_resume_output_cannot_overlap_cache_or_alias[db]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_resume_output_cannot_overlap_cache_or_alias[wal]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_resume_output_cannot_overlap_cache_or_alias[hardlink]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_resume_output_cannot_overlap_cache_or_alias[symlink]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_existing_snapshot_survives_failed_replacement",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_claim_token_fences_exact_batch_and_counts_only_current_matches",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_task_board_ids_bind_full_entity_identity_not_shared_prefix",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_definition_closure_is_two_edges_with_all_direct_targets_and_false_flags",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_bound_preparation_cannot_bypass_containment_seal[claim]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_bound_preparation_cannot_bypass_containment_seal[prepare_all]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_bound_preparation_cannot_bypass_containment_seal[prepare_claimed]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_context_mutators_cannot_change_active_claimed_section[spans]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_context_mutators_cannot_change_active_claimed_section[definitions]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_context_mutators_cannot_change_active_claimed_section[reopen]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_malformed_stored_context_is_never_replaced_by_empty_object[spans]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_malformed_stored_context_is_never_replaced_by_empty_object[definitions]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_malformed_stored_context_is_never_replaced_by_empty_object[inconsistencies]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_malformed_stored_context_is_never_replaced_by_empty_object[reopen]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_remote_preparation_rejects_stale_local_containment_seal",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_snapshot_commit_failure_preserves_old_complete_file",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_public_methods_reject_foreign_owner_before_database_access",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_entity_cache.py::test_changed_live_constraints_rejected_despite_exact_columns_and_marker",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_batch_bounds_are_strict_before_input_access[0]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_batch_bounds_are_strict_before_input_access[-1]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_batch_bounds_are_strict_before_input_access[513]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_batch_bounds_are_strict_before_input_access[True]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_batch_bounds_are_strict_before_input_access[1.5]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_batch_bounds_are_strict_before_input_access[2]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_exact_two_file_manifest_and_physical_duplicate_resume",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_corrupt_cursor_is_never_reset_or_adopted[-1]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_corrupt_cursor_is_never_reset_or_adopted[8]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_corrupt_cursor_is_never_reset_or_adopted[True]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_corrupt_cursor_is_never_reset_or_adopted[3]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_corrupt_cursor_is_never_reset_or_adopted[None]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_changed_pair_cannot_resume_or_poll[entities]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_changed_pair_cannot_resume_or_poll[relationships]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_input_aliases_are_rejected[symlink]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_input_aliases_are_rejected[hardlink]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_held_input_identity_detects_replacement_even_with_same_bytes[replace]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_held_input_identity_detects_replacement_even_with_same_bytes[truncate]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_held_input_identity_detects_replacement_even_with_same_bytes[symlink]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_later_relationship_mutation_rolls_back_current_batch_only",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_full_containment_uses_all_relationship_batches_and_preserves_enrichment",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_incomplete_queue_cannot_prepare",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_main_defaults_are_offline_without_claim_release[False]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_main_defaults_are_offline_without_claim_release[True]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_explicit_poll_runs_after_exact_binding_before_queue",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_no_resume_refuses_existing_progress",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_explicit_upload_uses_versioned_key_and_parent_revision",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_input_drift_during_export_blocks_remote_write",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_foreign_tree_is_rejected_before_cache_constructor",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_arrow_reader_uses_bounded_single_thread_batches[entities]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_arrow_reader_uses_bounded_single_thread_batches[relationships]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_decoded_batch_bound_fails_before_enqueue",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_snapshot_never_replaces_cache_or_wal[database]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_snapshot_never_replaces_cache_or_wal[wal]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_snapshot_never_replaces_cache_or_wal[hardlink]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_cache_factory_never_opens_a_source_as_database_or_wal[database]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_cache_factory_never_opens_a_source_as_database_or_wal[wal]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_ingest_ipfs_uscode_entities.py::test_oversized_remote_checkpoint_rejected_before_download",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_workspace_tree_pin_checks_all_three_components",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_deadline_and_exception_remain_nonrenderable",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_prohibition_remains_negative",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_minimum_retains_quantity_without_duplicate_temporal_text",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_minimum_requires_matching_integer_quantity[None]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_minimum_requires_matching_integer_quantity[20]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_minimum_requires_matching_integer_quantity[20.0]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_minimum_requires_matching_integer_quantity[0]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_minimum_requires_matching_integer_quantity[21]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_empty_vocabulary_abstains_without_compiler_fallback[Company A shall submit backup report within 10 days unless emergency.]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_empty_vocabulary_abstains_without_compiler_fallback[The agency shall not disclose records.]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_empty_vocabulary_abstains_without_compiler_fallback[The officer shall retain the file for at least 20 days.]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_no_parser_elements_skip_document_and_compiler",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_compile_span_preserves_stored_vocabulary[stored0]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_compile_span_preserves_stored_vocabulary[stored1]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_compile_span_extracts_vocabulary_once_for_exact_text",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_compile_span_uses_each_selected_clause_vocabulary_after_segmentation",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_pilot_cases_complete_with_measured_partial_disclosure",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/integration/logic/test_canonical_semantic_roundtrip.py"
+    },
+    {
+      "nodeid": "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_pilot_parity_is_noninferior_to_selected_replacement_arm",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/integration/logic/test_canonical_semantic_roundtrip.py"
+    },
+    {
+      "nodeid": "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_original_typed_deontic_pilot_keeps_forward_and_cycle_thresholds",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/integration/logic/test_canonical_semantic_roundtrip.py"
+    },
+    {
+      "nodeid": "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_checked_in_parity_snapshot_preserves_historical_integrity",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/integration/logic/test_canonical_semantic_roundtrip.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_lean_units.py::test_statute_lean_defines_identity_and_clause_locks",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_lean_units.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_lean_units.py::test_term_lean_defines_kind_value_and_using_statutes",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_lean_units.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_lean_units.py::test_cache_stores_statute_and_term_lean",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_lean_units.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/legal_ir/test_canonical_compiler.py::test_frozen_cases_reproduce_selected_adapter_l1_identity",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_compiler.py"
+    }
+  ],
+  "exit_code": 0,
+  "expanded_pytest_args": [
+    "-v",
+    "--tb=short",
+    "--strict-markers",
+    "--import-mode=importlib",
+    "-p",
+    "no:anyio",
+    "-p",
+    "no:asyncio",
+    "-p",
+    "anyio.pytest_plugin",
+    "-p",
+    "pytest_asyncio.plugin",
+    "-q",
+    "-c",
+    "/home/barberb/lift_coding/external/ipfs_datasets/pytest.ini",
+    "--rootdir=/home/barberb/lift_coding/external/ipfs_datasets",
+    "-p",
+    "jevops.pytest_seals",
+    "--test-seal=off",
+    "tests/unit/logic/test_entity_cache.py",
+    "tests/unit/logic/test_ingest_ipfs_uscode_entities.py",
+    "tests/unit/logic/test_autoformal_speed_semantics.py",
+    "tests/integration/logic/test_canonical_semantic_roundtrip.py",
+    "tests/unit/logic/test_lean_units.py",
+    "tests/unit/logic/legal_ir/test_canonical_compiler.py::test_frozen_cases_reproduce_selected_adapter_l1_identity",
+    "--tb=short",
+    "-o",
+    "cache_dir=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927-r6/capture-r6/tests/pytest-cache",
+    "-o",
+    "tmp_path_retention_policy=failed",
+    "--basetemp=/tmp/pytest-of-barberb/entity-v2-validation-20260927-r6",
+    "--junitxml=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927-r6/capture-r6/tests/tests.xml"
+  ],
+  "external_process_execution_attempts": [
+    {
+      "arguments": [
+        "gh",
+        "auth",
+        "token"
+      ],
+      "blocked_before_execution": true,
+      "callers": [
+        {
+          "function": "_import_module_using_spec",
+          "line": 716,
+          "path": "/home/barberb/.local/lib/python3.12/site-packages/_pytest/pathlib.py"
+        },
+        {
+          "function": "exec_module",
+          "line": 188,
+          "path": "/home/barberb/.local/lib/python3.12/site-packages/_pytest/assertion/rewrite.py"
+        },
+        {
+          "function": "<module>",
+          "line": 367,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/conftest.py"
+        },
+        {
+          "function": "_ensure_github_token",
+          "line": 356,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/conftest.py"
+        },
+        {
+          "function": "run",
+          "line": 548,
+          "path": "/usr/lib/python3.12/subprocess.py"
+        },
+        {
+          "function": "__init__",
+          "line": 1026,
+          "path": "/usr/lib/python3.12/subprocess.py"
+        },
+        {
+          "function": "_execute_child",
+          "line": 1823,
+          "path": "/usr/lib/python3.12/subprocess.py"
+        }
+      ],
+      "event": "subprocess.Popen",
+      "executable": "gh"
+    }
+  ],
+  "external_process_guard_scope": "all project and pytest imports and selected tests, after network isolation setup; only exact pinned ldconfig -p allowed for library discovery",
+  "five_case_pilot_included": true,
+  "fixture_directory": "/tmp/pytest-of-barberb/entity-v2-validation-20260927-r6",
+  "fixture_inventory": {
+    "apparent_bytes": 0,
+    "entry_count": 0,
+    "special_file_count": 0,
+    "symlink_count": 0
+  },
+  "fixture_inventory_scope": "current retained bytes, not cumulative generated bytes or continuous peak",
+  "fixtures_outside_strict_attempt": true,
+  "full_entity_corpus_ingestion_performed": false,
+  "full_provenance_observations": {
+    "dependencies_unchanged": true,
+    "full_dependencies_equal_to_frozen": true,
+    "full_package_source_equal_to_frozen": true,
+    "package_source_unchanged": true
+  },
+  "global_holdout_verified": false,
+  "input_artifacts": [
+    {
+      "bytes": 13127,
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/grok-entity-repair-20260926/live-compatibility-review.json",
+      "sha256": "e4b70a9b26bb0bc7deb9722fce7314718c8384108f1cd283e4abf63c1ce3b2e4"
+    },
+    {
+      "bytes": 71599,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-source-sizing-20260927/capture-r1/audit-receipt.json",
+      "sha256": "e91b69c1eeddf34ee53712a83ad8e15fd2efb391b85cabdafce28f1f8d160f65"
+    },
+    {
+      "bytes": 179626,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-source-sizing-20260927/capture-r1/dependencies-after.json",
+      "sha256": "10671a359e382c9baa74b413012d600b56a76172e49c2339bd2b26fb74945b85"
+    },
+    {
+      "bytes": 179626,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-source-sizing-20260927/capture-r1/dependencies-before.json",
+      "sha256": "10671a359e382c9baa74b413012d600b56a76172e49c2339bd2b26fb74945b85"
+    },
+    {
+      "bytes": 3777,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-source-sizing-20260927/capture-r1/resource-release.json",
+      "sha256": "b1c34df3adfb0036108cd7f504d9af6e45a948516879562ac95970888fceac6b"
+    },
+    {
+      "bytes": 179626,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-source-sizing-20260927/capture-r1/sizing/dependencies-after.json",
+      "sha256": "10671a359e382c9baa74b413012d600b56a76172e49c2339bd2b26fb74945b85"
+    },
+    {
+      "bytes": 179626,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-source-sizing-20260927/capture-r1/sizing/dependencies-before.json",
+      "sha256": "10671a359e382c9baa74b413012d600b56a76172e49c2339bd2b26fb74945b85"
+    },
+    {
+      "bytes": 8042,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-source-sizing-20260927/capture-r1/sizing/sizing-receipt.json",
+      "sha256": "da24eeae17d5394a9b735297cc25f81c7956abae9e2d9435d1f27ce85b96e6df"
+    },
+    {
+      "bytes": 1266194,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-source-sizing-20260927/capture-r1/sizing/sources-after.json",
+      "sha256": "da8942c093a1a71e7b9fe200032c0728c5f735c6d78c474a0cb13b88e8e193b8"
+    },
+    {
+      "bytes": 1266194,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-source-sizing-20260927/capture-r1/sizing/sources-before.json",
+      "sha256": "da8942c093a1a71e7b9fe200032c0728c5f735c6d78c474a0cb13b88e8e193b8"
+    },
+    {
+      "bytes": 1266194,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-source-sizing-20260927/capture-r1/sources-after.json",
+      "sha256": "da8942c093a1a71e7b9fe200032c0728c5f735c6d78c474a0cb13b88e8e193b8"
+    },
+    {
+      "bytes": 1266194,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-source-sizing-20260927/capture-r1/sources-before.json",
+      "sha256": "da8942c093a1a71e7b9fe200032c0728c5f735c6d78c474a0cb13b88e8e193b8"
+    },
+    {
+      "bytes": 2545,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-source-sizing-20260927/control_common.py",
+      "sha256": "d0a21f9e6cb2a3a36443397f284df707f525f265e5e6f7dc849a8c70af77108c"
+    },
+    {
+      "bytes": 1467509,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-source-sizing-20260927/frozen.json",
+      "sha256": "65362d8843cbc1c15a2ec80a8fc8fc3d864ae755062972edb1814157cdcb61f5"
+    },
+    {
+      "bytes": 14471,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-source-sizing-20260927/run_control.py",
+      "sha256": "dd3bdbec5730bdf508a427b733997ebb460517bf29125ae28bd6919319298be4"
+    },
+    {
+      "bytes": 7055,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-source-sizing-20260927/sizing_checks.py",
+      "sha256": "72882fcb9dd95b8812296f17fb55d57a7d06d99fa2a7b823f9155b6cce32d182"
+    },
+    {
+      "bytes": 1381,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/cap-increase-60gb-20260926.json",
+      "sha256": "bb3316c00de7161e710246aa0fc1a6a42d850898c70fbf791e47cb11bd0496fb"
+    },
+    {
+      "bytes": 92871,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.before-cap-60gb-20260926.json",
+      "sha256": "3dad515ba59e9494687f2bfa9c9b8be36479e80ced854cff6a415e7b8eb66b76"
+    },
+    {
+      "bytes": 117459,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-delivery-20260926/capture-r1/audit-receipt.json",
+      "sha256": "5e8c73c94234eb39fe6d6ddf58487e813a166108e27f2375a9d3a33615aeed9a"
+    },
+    {
+      "bytes": 565709,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-delivery-20260926/capture-r1/tests/tests-receipt.json",
+      "sha256": "37b277b0411d2e07cccd52499300e2b4f1bbd48ec4439ec54150deac22a10658"
+    },
+    {
+      "bytes": 125498,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-delivery-20260926-r2/capture-r2/audit-receipt.json",
+      "sha256": "4283417a574ccdc346cacb012c417413edc2c01a048594c7c776d11768a548e2"
+    },
+    {
+      "bytes": 572517,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-delivery-20260926-r2/capture-r2/tests/tests-receipt.json",
+      "sha256": "168c4b5a9d6214d772a3e88e4674551a26e7325b3feb8165e093227e9081212d"
+    },
+    {
+      "bytes": 160162,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-delivery-20260926-r3/capture-r3/audit-receipt.json",
+      "sha256": "8e26dfe36cc1e955cba9cf61e8d98a93c3061ddbf372cdbd048fe7f6fd2387ff"
+    },
+    {
+      "bytes": 52682,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-delivery-20260926-r3/capture-r3/delivery/delivery-receipt.json",
+      "sha256": "afcc9a673a1b5f08c61bb799c450ed82c1f5def9409a64154209d7346a99160a"
+    },
+    {
+      "bytes": 179626,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-delivery-20260926-r3/capture-r3/delivery/dependencies-after.json",
+      "sha256": "10671a359e382c9baa74b413012d600b56a76172e49c2339bd2b26fb74945b85"
+    },
+    {
+      "bytes": 179626,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-delivery-20260926-r3/capture-r3/delivery/dependencies-before.json",
+      "sha256": "10671a359e382c9baa74b413012d600b56a76172e49c2339bd2b26fb74945b85"
+    },
+    {
+      "bytes": 1266194,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-delivery-20260926-r3/capture-r3/delivery/sources-after.json",
+      "sha256": "da8942c093a1a71e7b9fe200032c0728c5f735c6d78c474a0cb13b88e8e193b8"
+    },
+    {
+      "bytes": 1266194,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-delivery-20260926-r3/capture-r3/delivery/sources-before.json",
+      "sha256": "da8942c093a1a71e7b9fe200032c0728c5f735c6d78c474a0cb13b88e8e193b8"
+    },
+    {
+      "bytes": 179626,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-delivery-20260926-r3/capture-r3/dependencies-after.json",
+      "sha256": "10671a359e382c9baa74b413012d600b56a76172e49c2339bd2b26fb74945b85"
+    },
+    {
+      "bytes": 179626,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-delivery-20260926-r3/capture-r3/dependencies-before.json",
+      "sha256": "10671a359e382c9baa74b413012d600b56a76172e49c2339bd2b26fb74945b85"
+    },
+    {
+      "bytes": 4681,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-delivery-20260926-r3/capture-r3/resource-release.json",
+      "sha256": "f551c036384f06c8507eb31f88a06d814273398129e2a858bbf356a44d646b41"
+    },
+    {
+      "bytes": 1266194,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-delivery-20260926-r3/capture-r3/sources-after.json",
+      "sha256": "da8942c093a1a71e7b9fe200032c0728c5f735c6d78c474a0cb13b88e8e193b8"
+    },
+    {
+      "bytes": 1266194,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-delivery-20260926-r3/capture-r3/sources-before.json",
+      "sha256": "da8942c093a1a71e7b9fe200032c0728c5f735c6d78c474a0cb13b88e8e193b8"
+    },
+    {
+      "bytes": 179626,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-delivery-20260926-r3/capture-r3/tests/dependencies-after.json",
+      "sha256": "10671a359e382c9baa74b413012d600b56a76172e49c2339bd2b26fb74945b85"
+    },
+    {
+      "bytes": 179626,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-delivery-20260926-r3/capture-r3/tests/dependencies-before.json",
+      "sha256": "10671a359e382c9baa74b413012d600b56a76172e49c2339bd2b26fb74945b85"
+    },
+    {
+      "bytes": 1266194,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-delivery-20260926-r3/capture-r3/tests/sources-after.json",
+      "sha256": "da8942c093a1a71e7b9fe200032c0728c5f735c6d78c474a0cb13b88e8e193b8"
+    },
+    {
+      "bytes": 1266194,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-delivery-20260926-r3/capture-r3/tests/sources-before.json",
+      "sha256": "da8942c093a1a71e7b9fe200032c0728c5f735c6d78c474a0cb13b88e8e193b8"
+    },
+    {
+      "bytes": 578062,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-delivery-20260926-r3/capture-r3/tests/tests-receipt.json",
+      "sha256": "f45aa3f23c4e3ab4aac1a4952f48faf1ea09727222424bbffb0d52f6ef72fb72"
+    },
+    {
+      "bytes": 14232,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-delivery-20260926-r3/control_common.py",
+      "sha256": "96f731defba1d6b1cc1b0950a1a99a7fd033ee7e9fcb164c6ccd8f7de80576c1"
+    },
+    {
+      "bytes": 8605,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-delivery-20260926-r3/delivery_checks.py",
+      "sha256": "15a50fc734037585b0189e8f977b4d61e180de610c3c014d97006303c164742a"
+    },
+    {
+      "bytes": 1715602,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-delivery-20260926-r3/frozen.json",
+      "sha256": "a934853fc7f4458a5696324fe56c510759706ed03800fbff3c8cb50f246f155b"
+    },
+    {
+      "bytes": 8655,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-delivery-20260926-r3/offline_checks.py",
+      "sha256": "fad57837531cf9d5eb07b39c7c92395a419d2e1eef68ce2471a746462e30dd60"
+    },
+    {
+      "bytes": 14597,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-delivery-20260926-r3/run_control.py",
+      "sha256": "0cfd710daa2c2e2bdf3b3452916311007a73be1380bdc82d2af0de72bbf90178"
+    },
+    {
+      "bytes": 10325,
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/grok-supervisor-review-20260927/context-observation.json",
+      "sha256": "e9f8afe3a9ff1ffc059f9f75896a2c3b3ce35ad764a1592976339d200e215661"
+    },
+    {
+      "bytes": 2569,
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/grok-entity-repair-20260927/application-receipt.json",
+      "sha256": "abfc746dfae7b98e6b60ab6e9dd5b33f40b4219813cc5993bf6fc6e0f756b4eb"
+    },
+    {
+      "bytes": 713,
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/grok-entity-repair-20260927/original-manifest.json",
+      "sha256": "43216e0cc883e79fee777c96d5362ff7f7ac3a531aae240d01eb4f8463d30e7d"
+    },
+    {
+      "bytes": 8484,
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/grok-entity-repair-20260927/context-observation-r2.json",
+      "sha256": "9c0b5c94d295c2e356f5508f2a2d88b63a10aa164e5a4cc675594e47459b22a1"
+    },
+    {
+      "bytes": 87819,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927/capture-r1/audit-receipt.json",
+      "sha256": "6d824c59e709e4bc3a176ace037d21bd126816c417155b5e0530915751a56fee"
+    },
+    {
+      "bytes": 1952,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927/capture-r1/tests.log",
+      "sha256": "20c28fbbbf6f84b33cb6237494867ae36cd77200a3fcd356005e6982883b5e55"
+    },
+    {
+      "bytes": 1671460,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927/frozen.json",
+      "sha256": "ebf1ee270b1c4eb02d552972a2d1ca37bc2cd54f493ce1eecd39fa95cd0ef82a"
+    },
+    {
+      "bytes": 15719,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927/control_common.py",
+      "sha256": "cd9f242366ee13aaa2eb1a9c851527fe0bf5e2b64d6fdd61b49f79e78459bbc4"
+    },
+    {
+      "bytes": 15362,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927/run_control.py",
+      "sha256": "60eadffac79b12f38c08e4052c0a4f24241e6f3dd5b7454db939a1074e361632"
+    },
+    {
+      "bytes": 9120,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927/offline_checks.py",
+      "sha256": "e5dd73922196e458ef311e08e087fe47d5a8b77a65057c18cc22b90e67493fe0"
+    },
+    {
+      "bytes": 387,
+      "path": "/usr/sbin/ldconfig",
+      "sha256": "bfd5df90c7f070feab584435f106f254ffffaa268a04de5b5c3bd61d59c092f3"
+    },
+    {
+      "bytes": 92062,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927-r2/capture-r2/audit-receipt.json",
+      "sha256": "7be9c105f22a9dbdf79e517d0a5c5bd3a9ead55e55bdd5e8a9c00911df346dd4"
+    },
+    {
+      "bytes": 8704,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927-r2/capture-r2/tests.log",
+      "sha256": "d5299dda11af55526f9375f3668376c4d8e8ec20c99190bc7f15382b98ffbc6e"
+    },
+    {
+      "bytes": 1675782,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927-r2/frozen.json",
+      "sha256": "a29a6cf920861274128285a2d31b830dd41fc6de0abf220ad4e0389a39d11589"
+    },
+    {
+      "bytes": 15722,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927-r2/control_common.py",
+      "sha256": "a1bb6dd7cd9eaab5f2c2f95777ed0ffe96d94c04d7c432df7d5f484e33307191"
+    },
+    {
+      "bytes": 15362,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927-r2/run_control.py",
+      "sha256": "60eadffac79b12f38c08e4052c0a4f24241e6f3dd5b7454db939a1074e361632"
+    },
+    {
+      "bytes": 9363,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927-r2/offline_checks.py",
+      "sha256": "444d08cc3a4f0720893ab05354bd28c62d661e3723bc09d623385e0d2297f39b"
+    },
+    {
+      "bytes": 865840,
+      "path": "/usr/sbin/ldconfig.real",
+      "sha256": "f2a4948219b81a153d8cafe85383acb2f734cdccac00b633891da1cc8532f8f9"
+    },
+    {
+      "bytes": 133608,
+      "path": "/usr/bin/dash",
+      "sha256": "c883d9c27228339580994a1d0ea960645368c7d1b960a712bd0c655860c2d0d7"
+    },
+    {
+      "bytes": 6986,
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/grok-supervisor-review-20260927/context-r3/observation.json",
+      "sha256": "632e79772f495b0aabce9752bc685829f500e11f31ebefcc3562a861e05f2f39"
+    },
+    {
+      "bytes": 1719,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927-r3/pre-admission-failure.json",
+      "sha256": "f1a9991faef60fee9ddda263d427c4efc546146c7d723c2732954842cfdc46da"
+    },
+    {
+      "bytes": 1680680,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927-r3/frozen.json",
+      "sha256": "879e0ef19e34596676bfa3c74d2c620ca8c1f1f523c55b32f65370e185778f38"
+    },
+    {
+      "bytes": 16344,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927-r3/control_common.py",
+      "sha256": "5a2e5ea5b890352f40ccdb0329da8e825b69da2046f981868377401b22946a8e"
+    },
+    {
+      "bytes": 15362,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927-r3/run_control.py",
+      "sha256": "60eadffac79b12f38c08e4052c0a4f24241e6f3dd5b7454db939a1074e361632"
+    },
+    {
+      "bytes": 9573,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927-r3/offline_checks.py",
+      "sha256": "d83da6ecffcdeaca718e43a40abd54f730f6ed8d7d25f297a8eb46b91c9667c7"
+    },
+    {
+      "bytes": 98404,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927-r4/capture-r4/audit-receipt.json",
+      "sha256": "b9e5841f554c637a084b35b2bf6c8a682b6bd2107a60bd215a759499713cfd95"
+    },
+    {
+      "bytes": 3235,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927-r4/capture-r4/tests.log",
+      "sha256": "78c4d71f44a9011217db8f066c4ed831e7645048ea2c4b3fe77c910cb3307c74"
+    },
+    {
+      "bytes": 102292,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927-r4/capture-r4/tests/tests-receipt.json",
+      "sha256": "0b3b25f062dea84fc34c7a8d01565933c00fcad009cb2c9a626b711d6b53e868"
+    },
+    {
+      "bytes": 19976,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927-r4/capture-r4/tests/tests.xml",
+      "sha256": "241f3fc19d693622114d60688b9dcedda368ddb06df2fa2d6bdbfa875d29a9c9"
+    },
+    {
+      "bytes": 1682549,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927-r4/frozen.json",
+      "sha256": "7afc8cfcebf592784a29eaad1da7f6322c7022603c14fd9ae604af83a0b6e417"
+    },
+    {
+      "bytes": 16963,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927-r4/control_common.py",
+      "sha256": "61457bb32310af75c735fa99b3725b8d460a18c51b72b7d0706cb7b80218411e"
+    },
+    {
+      "bytes": 15362,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927-r4/run_control.py",
+      "sha256": "60eadffac79b12f38c08e4052c0a4f24241e6f3dd5b7454db939a1074e361632"
+    },
+    {
+      "bytes": 9739,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927-r4/offline_checks.py",
+      "sha256": "c3a6d17a09ccc39c5871ff02892b349e5013323bf583506c80fb59606f3dbf71"
+    },
+    {
+      "bytes": 17436,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927-r5/control_common.py",
+      "sha256": "5795c1407f36d5346fe1fbba2b5ad343c6480c4cb0f2c44a031df2439f08693d"
+    },
+    {
+      "bytes": 15362,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927-r5/run_control.py",
+      "sha256": "60eadffac79b12f38c08e4052c0a4f24241e6f3dd5b7454db939a1074e361632"
+    },
+    {
+      "bytes": 9785,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927-r5/offline_checks.py",
+      "sha256": "cd18d51db72d169c4affd294a583f0eed084905b59997a0dda30040541c1ca54"
+    },
+    {
+      "bytes": 1687600,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927-r5/frozen.json",
+      "sha256": "3542868887267ef247a20351908e463111865589bd7807840e0874054bc4fd80"
+    },
+    {
+      "bytes": 103207,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927-r5/capture-r5/audit-receipt.json",
+      "sha256": "96fda96eee359e7126b34faa419e740fada2173c5fd6dd4e8f707c145ab2b25c"
+    },
+    {
+      "bytes": 3235,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927-r5/capture-r5/tests.log",
+      "sha256": "6fad185a994e6323dde4ea1d840b82c4dee9aa61f5ce8960b60071282907e89c"
+    },
+    {
+      "bytes": 1266194,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927-r5/capture-r5/sources-before.json",
+      "sha256": "fe877998d699c7babf1affa28eeec4e00fff0ef3bdb2f65a18553c1ead706805"
+    },
+    {
+      "bytes": 179874,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927-r5/capture-r5/dependencies-before.json",
+      "sha256": "b03cf85ad1799db0735092ca60770566cb29bca537e929a5c56599f018a55e9e"
+    },
+    {
+      "bytes": 105840,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927-r5/capture-r5/tests/tests-receipt.json",
+      "sha256": "06b84bbece07a1078559a4bcd7e0a4f0e4bce77b762e4b588e9dc67ebbd72b75"
+    },
+    {
+      "bytes": 19976,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927-r5/capture-r5/tests/tests.xml",
+      "sha256": "613da6a2c4766249ebaa775b40c685f4ed27aaa866fd09319dd7e34582f2b01d"
+    },
+    {
+      "bytes": 1266194,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927-r5/capture-r5/tests/sources-before.json",
+      "sha256": "fe877998d699c7babf1affa28eeec4e00fff0ef3bdb2f65a18553c1ead706805"
+    },
+    {
+      "bytes": 1266194,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927-r5/capture-r5/tests/sources-after.json",
+      "sha256": "fe877998d699c7babf1affa28eeec4e00fff0ef3bdb2f65a18553c1ead706805"
+    },
+    {
+      "bytes": 179874,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927-r5/capture-r5/tests/dependencies-before.json",
+      "sha256": "b03cf85ad1799db0735092ca60770566cb29bca537e929a5c56599f018a55e9e"
+    },
+    {
+      "bytes": 179874,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927-r5/capture-r5/tests/dependencies-after.json",
+      "sha256": "d031971326e60b97e3c8e0ded8d7aee816f468c3aba57d270d803d7ce834252a"
+    }
+  ],
+  "jevops_regressions_included": false,
+  "junit_totals": {
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0,
+    "tests": 132
+  },
+  "lake_execution_performed": false,
+  "live_accelerate_service_contacted": false,
+  "live_hub_calls": false,
+  "model_execution_performed": false,
+  "native_ducklake_storage_tests_selected": false,
+  "native_memory_improvement_claim": false,
+  "native_model_training_performed": false,
+  "native_or_pinned_checkpoint_execution": false,
+  "native_quack_listener_started": false,
+  "native_training_validation_deferred": true,
+  "native_worker_execution": false,
+  "network_guard": {
+    "denied_syscalls": [
+      "socket",
+      "connect",
+      "sendto",
+      "sendmsg",
+      "sendmmsg"
+    ],
+    "mechanism": "linux_seccomp",
+    "socket_denial_verified": true
+  },
+  "nonexecuted_context_delta": [
+    {
+      "bytes": 69939,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/supervisor_loop.py",
+      "sha256": "3c24de1f4747dcb168ecc139fc27f1cc0c931caee803ee19386ad429dee03c4b"
+    },
+    {
+      "bytes": 11020,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/meta_ontology.py",
+      "sha256": "741692543fdcac5580cbe1cb28149be5dcb0cce7204bab94b3f3d121fc5f07f7"
+    }
+  ],
+  "nonexecuted_dependency_delta": [
+    {
+      "bytes": 44243,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/run_autoformal_supervisor.py",
+      "sha256": "c512d12fd38ad444840b387c10d2f9e341dc264ae26cdaf39b80578d9f77c100"
+    },
+    {
+      "bytes": 30591,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_supervisor_launch.py",
+      "sha256": "f936937dc470450670421b4c8432070bd8dc4f19a2cf62546a73f89b66f2537f"
+    },
+    {
+      "bytes": 32348,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_supervisor_loop.py",
+      "sha256": "2f9ca1d3077cbba99cc3c01fd1eb598e948511551971a2a0f1bd6ad37b07e539"
+    },
+    {
+      "bytes": 2981,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_meta_ontology.py",
+      "sha256": "a501e4a25e0eb9eb8cfbe9548288382da33e2ed3625f37dfc1351a243835389d"
+    },
+    {
+      "bytes": 7072,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/publish_kg_meta_ontology.py",
+      "sha256": "2b6450f45ab55364d9a340f9caed481ace3ce114e0af3d4cd0229151e06bc063"
+    }
+  ],
+  "original_pytest_args": [
+    "-q",
+    "-c",
+    "/home/barberb/lift_coding/external/ipfs_datasets/pytest.ini",
+    "--rootdir=/home/barberb/lift_coding/external/ipfs_datasets",
+    "-p",
+    "jevops.pytest_seals",
+    "--test-seal=off",
+    "tests/unit/logic/test_entity_cache.py",
+    "tests/unit/logic/test_ingest_ipfs_uscode_entities.py",
+    "tests/unit/logic/test_autoformal_speed_semantics.py",
+    "tests/integration/logic/test_canonical_semantic_roundtrip.py",
+    "tests/unit/logic/test_lean_units.py",
+    "tests/unit/logic/legal_ir/test_canonical_compiler.py::test_frozen_cases_reproduce_selected_adapter_l1_identity",
+    "--tb=short",
+    "-o",
+    "cache_dir=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927-r6/capture-r6/tests/pytest-cache",
+    "-o",
+    "tmp_path_retention_policy=failed",
+    "--basetemp=/tmp/pytest-of-barberb/entity-v2-validation-20260927-r6",
+    "--junitxml=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927-r6/capture-r6/tests/tests.xml"
+  ],
+  "passed": true,
+  "prior_failed_fixture_cleanup_performed": false,
+  "prior_failed_r5_audit_artifact": {
+    "bytes": 103207,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927-r5/capture-r5/audit-receipt.json",
+    "sha256": "96fda96eee359e7126b34faa419e740fada2173c5fd6dd4e8f707c145ab2b25c"
+  },
+  "prior_failed_r5_tests_artifact": {
+    "bytes": 105840,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927-r5/capture-r5/tests/tests-receipt.json",
+    "sha256": "06b84bbece07a1078559a4bcd7e0a4f0e4bce77b762e4b588e9dc67ebbd72b75"
+  },
+  "produced_artifacts": [
+    {
+      "bytes": 19976,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927-r6/capture-r6/tests/tests.xml",
+      "sha256": "c01dd712960a88b6f18bb0d022b8b0d2fa1434a5a9bc0f0b6278714223185da6"
+    }
+  ],
+  "protected_artifacts": [
+    {
+      "bytes": 25895338,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/legal-ir-daemon-restart12-20260608T075001Z-best-8h-autoencoder.state.json",
+      "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+    },
+    {
+      "bytes": 25895897,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-one-step.state.json",
+      "sha256": "23fa2a50725fa5afe3f96da9ae84ea686df5fb49262aa1b6614321023a91799c"
+    },
+    {
+      "bytes": 8889,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-measurement.json",
+      "sha256": "bcc035a9a923ff0d60f70837a4604b3dd65092c04bc0c7afbd525a52f72b56b1"
+    },
+    {
+      "bytes": 1148,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-one-step.json",
+      "sha256": "f799be3ff83d48513bd6a23669d334b24c73f08564c7cfdc86841bc21b696535"
+    },
+    {
+      "bytes": 55254,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/constitution-on-restart12.json",
+      "sha256": "da3cbac63a44bdd1862bfe6809f0179b73db337f66a1051ee491c823789cd1a3"
+    }
+  ],
+  "provenance_scope": "all captured source and dependency entries except the fixed seven execution-denied context paths; full snapshots retained",
+  "prover_execution_performed": false,
+  "publication_performed": false,
+  "pytest_args": [
+    "-v",
+    "--tb=short",
+    "--strict-markers",
+    "--import-mode=importlib",
+    "-p",
+    "no:anyio",
+    "-p",
+    "no:asyncio",
+    "-p",
+    "anyio.pytest_plugin",
+    "-p",
+    "pytest_asyncio.plugin",
+    "-q",
+    "-c",
+    "/home/barberb/lift_coding/external/ipfs_datasets/pytest.ini",
+    "--rootdir=/home/barberb/lift_coding/external/ipfs_datasets",
+    "-p",
+    "jevops.pytest_seals",
+    "--test-seal=off",
+    "tests/unit/logic/test_entity_cache.py",
+    "tests/unit/logic/test_ingest_ipfs_uscode_entities.py",
+    "tests/unit/logic/test_autoformal_speed_semantics.py",
+    "tests/integration/logic/test_canonical_semantic_roundtrip.py",
+    "tests/unit/logic/test_lean_units.py",
+    "tests/unit/logic/legal_ir/test_canonical_compiler.py::test_frozen_cases_reproduce_selected_adapter_l1_identity",
+    "--tb=short",
+    "-o",
+    "cache_dir=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927-r6/capture-r6/tests/pytest-cache",
+    "-o",
+    "tmp_path_retention_policy=failed",
+    "--basetemp=/tmp/pytest-of-barberb/entity-v2-validation-20260927-r6",
+    "--junitxml=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927-r6/capture-r6/tests/tests.xml"
+  ],
+  "pytest_ini_artifact": {
+    "bytes": 1536,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/pytest.ini",
+    "sha256": "01737eaafcd2b7e7e1a8db2368a93d4a28053ba44e611a10b1c87d2155dc65ff"
+  },
+  "pytest_plugin_autoload_disabled": true,
+  "pytest_tmp_path_retention_policy": "failed",
+  "pytest_tmpdir_policy_module": {
+    "bytes": 13271,
+    "path": "/home/barberb/.local/lib/python3.12/site-packages/_pytest/tmpdir.py",
+    "sha256": "5099f71d89413191c9e7515c9d4fe9fc7083bb73306f2cf1f73a9f89c862ed90"
+  },
+  "resolved_logic_paths": {
+    "compiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+    "decompiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+    "parser": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"
+  },
+  "schema": "offline-entity-v2-regression-v1",
+  "sizing_capture_artifact": {
+    "bytes": 71599,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-source-sizing-20260927/capture-r1/audit-receipt.json",
+    "sha256": "e91b69c1eeddf34ee53712a83ad8e15fd2efb391b85cabdafce28f1f8d160f65"
+  },
+  "sizing_metadata_artifact": {
+    "bytes": 8042,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-source-sizing-20260927/capture-r1/sizing/sizing-receipt.json",
+    "sha256": "da24eeae17d5394a9b735297cc25f81c7956abae9e2d9435d1f27ce85b96e6df"
+  },
+  "sizing_release_artifact": {
+    "bytes": 3777,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-source-sizing-20260927/capture-r1/resource-release.json",
+    "sha256": "b1c34df3adfb0036108cd7f504d9af6e45a948516879562ac95970888fceac6b"
+  },
+  "source_artifacts": [
+    {
+      "bytes": 67895,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/entity_cache.py",
+      "sha256": "db140c5468cf4b9b22ce3c0132e06727a068972a77b0e55f004ce82f8411141f"
+    },
+    {
+      "bytes": 17309,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/ingest_ipfs_uscode_entities.py",
+      "sha256": "b90e0f2e9df108153c9d72da6df0cc03e28bcb4cde062c8a2b9da1c76fec949d"
+    }
+  ],
+  "source_authority_authenticated": false,
+  "speed_claim": false,
+  "successful_tmp_path_fixtures_ephemeral": true,
+  "synthetic_evaluator_calls_allowed": false,
+  "synthetic_lake_checker_injection_allowed": true,
+  "test_artifacts": [
+    {
+      "bytes": 27580,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py",
+      "sha256": "b185a7828e9d476ecf1ce4d903bef10662e1353bc1152b04e167f04cb98a96a4"
+    },
+    {
+      "bytes": 20468,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_ingest_ipfs_uscode_entities.py",
+      "sha256": "50d41c19037399f651d906a28ec4b0c2f4000cd4980f23341b6ea55d7b94ed80"
+    },
+    {
+      "bytes": 9617,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py",
+      "sha256": "c6d04bb31cdabab33348a28422ae4310c6366f3c8e6ec5d019b2c260f48b9a09"
+    },
+    {
+      "bytes": 9551,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/integration/logic/test_canonical_semantic_roundtrip.py",
+      "sha256": "8f6e80fd5230c59d378ee0e26ae274c05911be70a48d0e9d71808c0e5b7de011"
+    },
+    {
+      "bytes": 3061,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_lean_units.py",
+      "sha256": "d4e131e5161f278bbc22103bd54213c79d74fe67d70b1ca94e4a5de281a7eb2d"
+    },
+    {
+      "bytes": 17327,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_compiler.py",
+      "sha256": "7c4934b32f44755646e137704a0d6eeb4310127d99d1f584e3e2f1e1c23625d5"
+    }
+  ],
+  "test_counts_by_module": {
+    "tests.integration.logic.test_canonical_semantic_roundtrip": 4,
+    "tests.unit.logic.legal_ir.test_canonical_compiler": 1,
+    "tests.unit.logic.test_autoformal_speed_semantics": 17,
+    "tests.unit.logic.test_entity_cache": 69,
+    "tests.unit.logic.test_ingest_ipfs_uscode_entities": 38,
+    "tests.unit.logic.test_lean_units": 3
+  },
+  "test_seal_reuse_disabled": true,
+  "tiny_synthetic_state_construction_allowed": false,
+  "unqualified_context_execution_attempts": [],
+  "unqualified_context_imports": [],
+  "wall_seconds": 17.969192676013336
+}

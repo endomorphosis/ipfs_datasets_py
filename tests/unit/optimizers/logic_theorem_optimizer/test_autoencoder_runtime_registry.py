@@ -14,15 +14,21 @@ import pytest
 def test_every_runtime_exposes_unfulfilled_lake_and_logic_requirements():
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_runtime_registry
     descriptions = autoencoder_runtime_registry.list_runtimes()
-    assert {row["domain"] for row in descriptions} == {"legal_ir", "intent_ir", "security_ir", "ui_ux_ir"}
+    assert {row["domain"] for row in descriptions} == {"legal_ir", "intent_ir", "security_ir", "ui_ux_ir", "codebase_ir"}
     for row in descriptions:
         requirements = row["qualification_requirements"]
         assert requirements["domain"] == row["domain"]
+        if row["domain"] == "codebase_ir" and row["runtime_version"] == "codebase_feature_v1":
+            assert row["runtime_version"] not in {"native_v1", "native_v2", "native_formula_v1", "published_384_v1"}
+            assert row["formal_decoder"]["available"] is False
+            assert requirements["qualification_gaps"]
+            assert requirements["qualified"] is requirements["admitted"] is False
+            continue
         assert len(requirements["logic_floor"]) == 8
         assert requirements["lake_schema_requirement"]["required"]
         assert requirements["qualification_gaps"]
         assert requirements["qualified"] is requirements["admitted"] is False
-        if row["domain"] == "security_ir":
+        if row["domain"] in ("security_ir", "codebase_ir"):
             assert len(requirements["software_routes"]) == 14
 
 from ipfs_datasets_py.duckdb_control.autoencoder_registry import AutoencoderRegistry
@@ -68,7 +74,7 @@ def test_catalog_has_closed_versions_and_limited_source_identity():
     assert len({item["runtime_id"] for item in catalog}) == len(catalog)
     for domain in interface.NATIVE_DOMAINS:
         selected = {item["runtime_version"]: item for item in catalog if item["domain"] == domain}
-        assert set(selected) == {"native_v1", "native_v2", "native_formula_v1"}
+        assert set(selected) == {"native_v1", "native_v2", "native_formula_v1", "published_384_v1"}
         assert selected["native_formula_v1"]["integrated"]
         assert selected["native_formula_v1"]["formal_decoder"]["trained_neural_decoder"]
         assert selected["native_v1"]["integrated"]

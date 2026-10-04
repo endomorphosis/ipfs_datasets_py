@@ -11,6 +11,33 @@ An autoencoder inference call returns learned representations or reconstruction 
 
 The structural modality API needs its own contract, feature space and numerical state. It does not accept legal modal checkpoints, Arrow weight overlays or a legal shared-target bundle. See the [native feature quickstart](native_feature_quickstart.md) for its complete training/inference example.
 
+## Reuse the optimized Legal runtime
+
+The published Legal 384D loaders enable inference optimizations by default:
+
+```python
+from ipfs_datasets_py.logic.legal_ir import open_autoencoder
+
+runtime = open_autoencoder(local_files_only=True)
+result = runtime.infer_texts(["The agency shall retain records."])
+# Reuse runtime for subsequent calls; the private decoder and encoder are cached.
+original = open_autoencoder(local_files_only=True, optimized=False)
+```
+
+Both `checkpoint_hub.open_autoencoder("legal_ir", ...)` and
+`checkpoint_hub.open_local_autoencoder("legal_ir", ...)` accept the same
+`optimized=False` opt-out. The versioned `autoencoder_runtime_registry.open_runtime`
+also defaults to optimized learned-formula inference for `legacy_v1`,
+`legacy_v1_optimized` (8D), and `current_v2` (384D), when a formula head is attached.
+Pass `optimized=False` when opening that runtime to retain the original decoder.
+Metrics and compiler modes keep their existing evaluation behavior.
+
+Checkpoint bytes, source bindings, full core checks, and decoder tensor checks
+remain verified. Optimized results identify their inference implementation;
+batched float32 calculations can differ slightly in confidence margins. GTE-small
+uses CUDA when available and CPU otherwise. Timings with supplied embeddings
+exclude the cost of this encoder.
+
 ## A runnable, offline legal inference example
 
 This example uses a fresh small model and the deterministic **test** embedding supplied by `build_us_code_sample`. It demonstrates the inference gate without downloading a model, loading an archived checkpoint, generating bridge targets or running a prover. Its metrics are not semantic-embedding quality measurements and are not production training inputs.

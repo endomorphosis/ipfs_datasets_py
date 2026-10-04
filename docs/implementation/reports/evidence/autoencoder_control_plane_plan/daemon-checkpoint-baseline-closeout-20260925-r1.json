@@ -1,0 +1,129 @@
+{
+  "admitted": false,
+  "all_selected_tests_unchanged_since_capture": true,
+  "checkpoint_format_changed": false,
+  "constitution_formalized": false,
+  "default_storage_changed": false,
+  "disk_after": {
+    "charged_bytes": 36268880694,
+    "inventory": {
+      "apparent_bytes": 34268880694,
+      "entry_count": 68453,
+      "special_file_count": 12,
+      "symlink_count": 3092
+    },
+    "limit_bytes": 50000000000,
+    "retained_reservations": [
+      {
+        "reservation_id": "297afa219ed346c6b0e77ac2dcb04783",
+        "status": "retained",
+        "storage_bytes": 1000000000
+      },
+      {
+        "reservation_id": "8827ac316aae4ecbbfddf9dedf0332d7",
+        "status": "retained",
+        "storage_bytes": 1000000000
+      }
+    ]
+  },
+  "documents": [
+    {
+      "bytes": 7091,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/autoencoder_daemon_checkpoint_baselines.md",
+      "sha256": "fbc77c4a2f80f659c39c3dee0921a7eae0555d00c18073ea3ffbb03ebe2f1370"
+    },
+    {
+      "bytes": 66313,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "sha256": "78a6ff4f4251f63c00ab33d3398b3e5f86f7219bb68fe43c0e8607be166188c4"
+    },
+    {
+      "bytes": 74922,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "sha256": "517f6a49a7f9dad991e6412f631a5d6fd14d4e939ac20d81d9efbd731b15501a"
+    },
+    {
+      "bytes": 34337,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/plans/AUTOENCODER_DAEMON_OWNED_INVOCATION_PLAN.md",
+      "sha256": "4a70e7ce5f9d5b15e08379aeeb5c6ffc189784d1c4ba1352c5a6adad39d3ff68"
+    }
+  ],
+  "frozen_prechange_codec": {
+    "bytes": 84693,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/checkpoint-persistence-baseline-20260925/modal_autoencoder_checkpoint.before.py",
+    "sha256": "054f48d51309d6489c237bb18604ae9a6490c1597d00117dc5439cfd744bbba5"
+  },
+  "full_checkpoint_authoritative": true,
+  "junit_totals": {
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0,
+    "tests": 651
+  },
+  "native_cycle_performed": false,
+  "native_validation_deferred_by_user": true,
+  "owned_production_unchanged_since_capture": true,
+  "passed": true,
+  "performance_claim": false,
+  "pinned_inode": 57804548,
+  "pinned_links": 2,
+  "production": [
+    {
+      "bytes": 93366,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_checkpoint.py",
+      "sha256": "eead66d108709e6868f7c112ee8df5580b4cd38a756e997f276b775d7dacd021"
+    },
+    {
+      "bytes": 50159,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/async_artifact_writer.py",
+      "sha256": "35914a5c44d5e6e4905b1ac77c26eb236617d3e9fc92c376ab620a1b4ef0b934"
+    },
+    {
+      "bytes": 997574,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py",
+      "sha256": "1572c2f0ffa3dd18e5d7d8eb06f3935aa9dbc6fef68164ebf38d31ff0670652f"
+    }
+  ],
+  "production_activated": false,
+  "promotion_performed": false,
+  "protected_artifacts": [
+    {
+      "bytes": 25895338,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/legal-ir-daemon-restart12-20260608T075001Z-best-8h-autoencoder.state.json",
+      "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+    },
+    {
+      "bytes": 25895897,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-one-step.state.json",
+      "sha256": "23fa2a50725fa5afe3f96da9ae84ea686df5fb49262aa1b6614321023a91799c"
+    },
+    {
+      "bytes": 8889,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-measurement.json",
+      "sha256": "bcc035a9a923ff0d60f70837a4604b3dd65092c04bc0c7afbd525a52f72b56b1"
+    },
+    {
+      "bytes": 1148,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-one-step.json",
+      "sha256": "f799be3ff83d48513bd6a23669d334b24c73f08564c7cfdc86841bc21b696535"
+    },
+    {
+      "bytes": 55254,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/constitution-on-restart12.json",
+      "sha256": "da3cbac63a44bdd1862bfe6809f0179b73db337f66a1051ee491c823789cd1a3"
+    }
+  ],
+  "protected_unchanged": true,
+  "publication_performed": false,
+  "recorded_at": "2026-09-25T16:47:37.595771+00:00",
+  "regression": {
+    "bytes": 2561133,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/daemon-checkpoint-baseline-20260925/combined-r1-receipt.json",
+    "sha256": "3c2e82042db6cee8f4474f0ba040d358c87f2f10eb005813d06c02876e951037"
+  },
+  "relative_document_links_checked": 134,
+  "schema": "daemon-checkpoint-baseline-closeout-v1",
+  "source_changed_after_capture": [],
+  "source_files_during_capture": 7739,
+  "synthetic_persistence_fixtures": true
+}

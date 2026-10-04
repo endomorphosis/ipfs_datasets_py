@@ -1,0 +1,146 @@
+{
+  "admitted": false,
+  "all_selected_tests_unchanged_since_capture": true,
+  "checkpoint_format_changed": false,
+  "combined_source_guard_passed": true,
+  "combined_test_execution_passed": true,
+  "constitution_formalized": false,
+  "default_storage_changed": false,
+  "disk_after": {
+    "charged_bytes": 36328132778,
+    "inventory": {
+      "apparent_bytes": 34328132778,
+      "entry_count": 68468,
+      "special_file_count": 15,
+      "symlink_count": 3156
+    },
+    "limit_bytes": 50000000000,
+    "retained_reservations": [
+      {
+        "reservation_id": "297afa219ed346c6b0e77ac2dcb04783",
+        "status": "retained",
+        "storage_bytes": 1000000000
+      },
+      {
+        "reservation_id": "8827ac316aae4ecbbfddf9dedf0332d7",
+        "status": "retained",
+        "storage_bytes": 1000000000
+      }
+    ]
+  },
+  "documents": [
+    {
+      "bytes": 6238,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/autoencoder_checkpoint_field_validation.md",
+      "sha256": "2fc74e50b572d12334f7077ff7ec2236796e5c180f157a4312da3fe803a8287f"
+    },
+    {
+      "bytes": 69838,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "sha256": "0d7877753c2494e647de946a15da6933fa3f91d0a00be4ec326d49e500266abd"
+    },
+    {
+      "bytes": 78410,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "sha256": "fd71aec4f8dc9a83a88be75361be1ababc193bc87c41b9b96711cdd75da62b79"
+    }
+  ],
+  "end_to_end_performance_claim": false,
+  "frozen_prechange_sources": [
+    {
+      "bytes": 1356978,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/checkpoint-field-validation-20260925/modal_autoencoder.before.py",
+      "sha256": "b8cbb0c13cb6a3621f6807ebb9cc5ac28348c71caa992a8dff1fc5f9827a04d1"
+    },
+    {
+      "bytes": 74771,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/checkpoint-field-validation-20260925/autoencoder_training_worker.before.py",
+      "sha256": "5ccdfef80e2a839f535f338558cadd3ff4e1589ea23ba1f39a887cfa580fd925"
+    },
+    {
+      "bytes": 26377,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/checkpoint-field-validation-20260925/modal_autoencoder_sparse_checkpoint.before.py",
+      "sha256": "9fe1c3db314ddc170c5cec7861da1541d48b98992ec289d0cc053ef5f25e58f3"
+    }
+  ],
+  "full_checkpoint_authoritative": true,
+  "junit_totals": {
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0,
+    "tests": 812
+  },
+  "native_cycle_performed": false,
+  "native_listener_performed": false,
+  "native_validation_deferred_by_user": true,
+  "owned_production_unchanged_since_capture": true,
+  "passed": true,
+  "pinned_inode": 57804548,
+  "pinned_links": 2,
+  "production": [
+    {
+      "bytes": 1357352,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+      "sha256": "c24e2e4dd65313d32ed969b8250148410556e74a9316e94aa5adf1fce9877307"
+    },
+    {
+      "bytes": 26377,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_sparse_checkpoint.py",
+      "sha256": "dd974e0cbae003ff602104b7c2e2fea04c7fefcc9f9e1986e894d94450c49c73"
+    },
+    {
+      "bytes": 74884,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py",
+      "sha256": "de20abc4af457d822690b7178ecb7f905a951d6128bfb15ffae1ac18a6564865"
+    }
+  ],
+  "production_activated": false,
+  "profile_scope": "synthetic top-level field check; six observations per arm and representation; separate allocation tracing",
+  "promotion_performed": false,
+  "protected_artifacts": [
+    {
+      "bytes": 25895338,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/legal-ir-daemon-restart12-20260608T075001Z-best-8h-autoencoder.state.json",
+      "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+    },
+    {
+      "bytes": 25895897,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-one-step.state.json",
+      "sha256": "23fa2a50725fa5afe3f96da9ae84ea686df5fb49262aa1b6614321023a91799c"
+    },
+    {
+      "bytes": 8889,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-measurement.json",
+      "sha256": "bcc035a9a923ff0d60f70837a4604b3dd65092c04bc0c7afbd525a52f72b56b1"
+    },
+    {
+      "bytes": 1148,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-one-step.json",
+      "sha256": "f799be3ff83d48513bd6a23669d334b24c73f08564c7cfdc86841bc21b696535"
+    },
+    {
+      "bytes": 55254,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/constitution-on-restart12.json",
+      "sha256": "da3cbac63a44bdd1862bfe6809f0179b73db337f66a1051ee491c823789cd1a3"
+    }
+  ],
+  "protected_unchanged": true,
+  "publication_performed": false,
+  "recorded_at": "2026-09-25T20:39:53.000545+00:00",
+  "regression": {
+    "bytes": 2559780,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/checkpoint-field-validation-20260925/combined-r1-receipt.json",
+    "sha256": "421fe08ab0d8d4e9fa16fac2e8e4ea338ea22b2a1d4e5c1212b42f48666d9568"
+  },
+  "relative_document_links_checked": 102,
+  "schema": "checkpoint-field-validation-closeout-v1",
+  "source_changed_after_capture": [],
+  "source_changed_during_capture": [],
+  "source_files_during_capture": 7743,
+  "synthetic_field_validation_profile": {
+    "bytes": 9833,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/checkpoint-field-validation-20260925/field-profile-receipt.json",
+    "sha256": "45677918f5d0aa7e5c44e2fe80004db6d332092b2230950549078bc61dfd3261"
+  },
+  "synthetic_persistence_fixtures": true
+}

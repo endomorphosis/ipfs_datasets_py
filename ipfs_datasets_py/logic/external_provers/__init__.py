@@ -26,6 +26,7 @@ Usage:
     >>> result = router.prove(formula, strategy='auto')
 """
 
+import importlib
 from typing import List, Optional
 
 from .deterministic_router import (
@@ -91,17 +92,33 @@ except ImportError:
     CoqProverBridge = None
     COQ_AVAILABLE = False
 
-# Try to import neural provers (require LLM access)
-try:
-    from .neural.symbolicai_prover_bridge import (
-        SymbolicAIProverBridge,
-        SYMBOLICAI_AVAILABLE,
-        NeuralProofResult,
-    )
-except ImportError:
-    SymbolicAIProverBridge = None
-    SYMBOLICAI_AVAILABLE = False
-    NeuralProofResult = None
+# Native prover imports must not initialize optional LLM configuration. Resolve
+# these compatibility exports only when callers explicitly request them.
+_NEURAL_EXPORTS = frozenset({"SymbolicAIProverBridge", "SYMBOLICAI_AVAILABLE", "NeuralProofResult"})
+
+
+def _load_neural_exports() -> None:
+    if _NEURAL_EXPORTS.issubset(globals()):
+        return
+    try:
+        module = importlib.import_module(".neural.symbolicai_prover_bridge", __name__)
+    except ImportError:
+        exports = {"SymbolicAIProverBridge": None, "SYMBOLICAI_AVAILABLE": False,
+                   "NeuralProofResult": None}
+    else:
+        exports = {name: getattr(module, name) for name in _NEURAL_EXPORTS}
+    globals().update(exports)
+
+
+def __getattr__(name: str):
+    if name not in _NEURAL_EXPORTS:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    _load_neural_exports()
+    return globals()[name]
+
+
+def __dir__():
+    return sorted(set(globals()) | _NEURAL_EXPORTS)
 
 # Prover router
 try:
@@ -122,6 +139,9 @@ except ImportError:
 def get_available_provers() -> List[str]:
     """Get list of available external provers.
 
+    Requesting the complete list also resolves the optional neural bridge.
+    Importing this package or checking a native prover does not do so.
+
     Returns:
         List of prover names that are available on this system.
     """
@@ -134,7 +154,8 @@ def get_available_provers() -> List[str]:
         provers.append("Lean")
     if COQ_AVAILABLE:
         provers.append("Coq")
-    if SYMBOLICAI_AVAILABLE:
+    _load_neural_exports()
+    if globals()["SYMBOLICAI_AVAILABLE"]:
         provers.append("SymbolicAI")
     return provers
 
@@ -158,7 +179,8 @@ def check_prover_availability(prover_name: str) -> bool:
     elif prover_name == "COQ":
         return COQ_AVAILABLE
     elif prover_name == "SYMBOLICAI":
-        return SYMBOLICAI_AVAILABLE
+        _load_neural_exports()
+        return globals()["SYMBOLICAI_AVAILABLE"]
     return False
 
 

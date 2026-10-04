@@ -1,0 +1,166 @@
+{
+  "schema": "codebase-ir-lifecycle-restart-handoff/v1",
+  "captured_at_utc": "2026-10-02T23:48:13.268197+00:00",
+  "status": "persistent_worktree_recovered_99_tests_passed_local_commit_created",
+  "completion_scope": "Recovery of vanished temporary backend candidate from preserved staged index,post-restart focused qualification,durable local commit and incremental bundle,static proof-acquisition followup",
+  "persistent_worktree": "/home/barberb/lift_coding/.worktrees/backend-pipe-lifecycle-20261002",
+  "branch": "codex/backend-pipe-lifecycle-20261002",
+  "local_commit": "826d94979180dd36cf6b2867aae0b2a077b2838f",
+  "parent_commit": "8de37ba8d216cd21a5d7134292de01d9e12c9a56",
+  "committed_paths": [
+    "ipfs_datasets_py/logic/backends/process.py",
+    "tests/unit/logic/backends/test_process_descendant_sessions.py",
+    "tests/unit/logic/backends/test_process_exception_cleanup.py",
+    "tests/unit/logic/backends/test_process_file_limits.py",
+    "tests/unit/logic/backends/test_process_lifecycle.py",
+    "tests/unit/logic/backends/test_process_parallel_limits.py",
+    "tests/unit/logic/backends/test_process_pipe_workers.py"
+  ],
+  "worktree_clean": true,
+  "recovery_admission": {
+    "path": "/home/barberb/lift_coding/artifacts/codebase-ir-lifecycle-restart-recovery-20261002/recovery-admission.json",
+    "bytes": 2484,
+    "sha256": "2a17a5c8089ac00d0481577f423409ff1fb65e4d74252dfd778cbcb40a67fd0d"
+  },
+  "source_admission": {
+    "path": "/home/barberb/lift_coding/artifacts/codebase-ir-lifecycle-restart-recovery-20261002/admission.json",
+    "bytes": 15706,
+    "sha256": "ece5d7ef41b106c1163c2ef94e7b6dca466420e69386de988206db75f43bd1b7"
+  },
+  "test_result": {
+    "path": "/home/barberb/lift_coding/artifacts/codebase-ir-lifecycle-restart-recovery-20261002/runs/persistent-worktree-all-01/result.json",
+    "bytes": 82210,
+    "sha256": "e06344108ae191ae368cc8d172c6d5df9aca62586d603c75f5550f694f446c9f"
+  },
+  "test_counts": {
+    "passed": 99,
+    "failed": 0,
+    "skipped": 0,
+    "authored_python_launches": 69
+  },
+  "commit_record": {
+    "path": "/home/barberb/lift_coding/artifacts/codebase-ir-lifecycle-restart-recovery-20261002/commit.json",
+    "bytes": 1043,
+    "sha256": "ca98258590e37e5f2f9620652f5a13b461d3312a3176aaa3953d3f7379255b9c"
+  },
+  "bundle_record": {
+    "path": "/home/barberb/lift_coding/artifacts/codebase-ir-lifecycle-restart-recovery-20261002/bundle.json",
+    "bytes": 1100,
+    "sha256": "0413dd54d8ab9915704e455e6a79651925ae03926025c712cb4bb33b90ef33d6"
+  },
+  "incremental_bundle": {
+    "path": "/home/barberb/lift_coding/artifacts/codebase-ir-lifecycle-restart-recovery-20261002/backend-lifecycle.bundle",
+    "bytes": 21957,
+    "sha256": "9dcf87cfb729b7c5024910bc4930290eda28bedaf8df123edcea830fea173cc3"
+  },
+  "bundle_required_base_commit": "8de37ba8d216cd21a5d7134292de01d9e12c9a56",
+  "proof_source_followup": {
+    "path": "/home/barberb/lift_coding/artifacts/codebase-ir-lifecycle-restart-recovery-20261002/proof-source-followup.json",
+    "bytes": 155950,
+    "sha256": "774d19e22b9f36b742899dfb831f7b50605e8c4593c95c42a56f975f5ae5cd5e"
+  },
+  "static_source_snapshot_count": 23,
+  "static_snapshots_runtime_admitted": false,
+  "locally_observed_origin": "4cfe89de936696cdae8c0435e5526bc49c99d86d",
+  "fresh_remote_state_verified": false,
+  "released_integer_checker_process_owner": "backends/codebase_process.py",
+  "corrected_process_owner": "backends/process.py",
+  "released_proof_fork_qualified": false,
+  "proof_route_acquired": false,
+  "additional_helper_dependency_paths": [
+    "ipfs_datasets_py/logic/software_contracts/codebase_smt_execution.py",
+    "ipfs_datasets_py/logic/software_contracts/codebase_smt_protocol.py",
+    "ipfs_datasets_py/logic/software_contracts/codebase_smt_compat.py",
+    "ipfs_datasets_py/logic/parsers/smtlib.py",
+    "ipfs_datasets_py/logic/syntax_core/contracts.py"
+  ],
+  "observed_changed_owner_ids_since_previous_snapshot": [
+    "F007",
+    "F020",
+    "F061"
+  ],
+  "later_preflight_additional_difference_id": "F100",
+  "supervisor_policy": {
+    "integer_profile_default": true,
+    "revised_historical_2_verification_and_applicability_producers": false,
+    "operation_profiles_must_be_qualified_separately": true
+  },
+  "root_overrides": {
+    "path": "/home/barberb/lift_coding/artifacts/codebase-ir-lifecycle-restart-recovery-20261002/root-overrides.json",
+    "bytes": 94,
+    "sha256": "5d57f7e511103fa53715c0866c529d89897cef20155e723b899b19484144e4d8"
+  },
+  "relocated_preflight": {
+    "path": "/home/barberb/lift_coding/artifacts/codebase-ir-lifecycle-restart-recovery-20261002/relocated-release-preflight.json",
+    "bytes": 63974,
+    "sha256": "29d8128e1bc738c7ea73efff6b62e2d049d473850f8543890ef476b26e92a54a"
+  },
+  "preflight_exit_code": 2,
+  "original_declaration_files_matching": 264,
+  "original_declaration_difference_ids": [
+    "F007",
+    "F015",
+    "F020",
+    "F061",
+    "F062",
+    "F100"
+  ],
+  "inventory_cells_matching": 12,
+  "asset_associations_matching": 28,
+  "original_manifest_repinned": false,
+  "preservation": {
+    "path": "/home/barberb/lift_coding/artifacts/codebase-ir-lifecycle-restart-recovery-20261002/preservation.json",
+    "bytes": 456635,
+    "sha256": "39bf0bd8af03b3c797eef4942c8eebfed3d508f33d244dd053b91098e4bf98a6"
+  },
+  "prior_bound_file_counts_preserved": [
+    481,
+    17,
+    30,
+    82,
+    62
+  ],
+  "original_assets_unchanged": 26,
+  "original_inventory_documents_unchanged": 13,
+  "next_steps": [
+    "Freeze and review coherent typed-general owners plus newly identified helpers and tests",
+    "Complete source/dependency/import-origin and operation-specific supervisor admission",
+    "Run fresh native integer proof and aggregate resource qualification",
+    "Qualify cache/currentness/index/catalog transactions and intent-codebase grounding",
+    "Integrate accepted proof release and source/asset manifests separately"
+  ],
+  "restored_worktrees": 1,
+  "new_branches": 0,
+  "existing_branch_reused": true,
+  "local_commits": 1,
+  "merges": 0,
+  "pushes": 0,
+  "parent_gitlinks_changed": 0,
+  "other_worktrees_modified": false,
+  "raw_index_serialization_preserved": false,
+  "staged_payload_identity_preserved": true,
+  "source_dependency_closure_qualified": false,
+  "proof_profile_qualified": false,
+  "proof_authority": false,
+  "runtime_release_qualified": false,
+  "model_task_qualified": false,
+  "training_admitted": false,
+  "promotion_admitted": false,
+  "solver_executions": 0,
+  "model_executions": 0,
+  "database_operations": 0,
+  "training_runs": 0,
+  "new_embeddings_generated": 0,
+  "network_fetches": 0,
+  "installed_package_changes": 0,
+  "observations_are_atomic_or_continuous_closure": false,
+  "frozen_partial_proof_source_selection": {
+    "path": "/home/barberb/lift_coding/artifacts/codebase-ir-lifecycle-restart-recovery-20261002/frozen-proof-source-selection.json",
+    "bytes": 104853,
+    "sha256": "7014a61118ee6d68ab50f6f045b5e67eaf429f4352120c46fcff1e321f076bb6"
+  },
+  "frozen_partial_source_count": 27,
+  "qualification_slice_count": 5,
+  "partial_static_import_inventory_complete": true,
+  "complete_proof_dependency_selection_admitted": false
+}

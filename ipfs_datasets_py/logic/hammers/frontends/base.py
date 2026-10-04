@@ -141,6 +141,8 @@ def run_bounded_process(
     error = completed.error
     if completed.timed_out:
         error = f"timed out after {timeout}s"
+    elif completed.returncode in (126, 127) and not error:
+        error = f"native invocation failed (exit {completed.returncode}): {(completed.stderr or '')[-2000:]}"
     return BoundedProcessResult(
         command=list(command),
         returncode=completed.returncode,
