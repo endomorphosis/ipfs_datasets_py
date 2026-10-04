@@ -1,0 +1,108 @@
+diff --git a/ipfs_datasets_py/logic/software_contracts/codebase_inventory_lineage.py b/ipfs_datasets_py/logic/software_contracts/codebase_inventory_lineage.py
+index 46e34fa66e4e71529ad3baebff548712a6ecd7c7..6e9ce9a9fed13a23dcd2d4b9e132d04483bd04bb 100644
+--- a/ipfs_datasets_py/logic/software_contracts/codebase_inventory_lineage.py
++++ b/ipfs_datasets_py/logic/software_contracts/codebase_inventory_lineage.py
+@@ -31,6 +31,14 @@ REFERENCE_SHA256 = {
+     training.__name__: "aea5fa8803ae6b6dde7c4e71b81f68a7f95257b3a5d76cea693ee13e66710aa0",
+     runtimes.__name__: "ca31983a5f514c7f5cf8b1b9250ef92e1beb13c0a2305381aac575931e79b4ac",
+ }
++# The reviewed frozen 8D producer keeps the inherited lineage body unchanged,
++# and adds exact numerical diagnostic replay. Its runtime is independently
++# pinned; accepting the training file alone would leave its new import unbound.
++_REVIEWED_8D_PRODUCER_MIGRATION = (
++    "aea5fa8803ae6b6dde7c4e71b81f68a7f95257b3a5d76cea693ee13e66710aa0",
++    "e459766bed0c990660334eaf264b6c46fc29e229d49ae8c416bdfc7ca142c317",
++    "32dc798bfe81a587412c3d86431c368a5a83e27660870ca6de6f107a1e855146",
++)
+ _require = training._require
+ _wire = training._wire
+ 
+@@ -63,8 +71,18 @@ def _reference_guard(counters):
+     for module in (training, runtimes):
+         actual = hashlib.sha256(Path(module.__file__).read_bytes()).hexdigest()
+         counters.reference_guard_file_hashes += 1
+-        _require(actual == REFERENCE_SHA256[module.__name__],
++        expected = REFERENCE_SHA256[module.__name__]
++        migration = (module is training
++                     and expected == _REVIEWED_8D_PRODUCER_MIGRATION[0]
++                     and actual == _REVIEWED_8D_PRODUCER_MIGRATION[1])
++        _require(actual == expected or migration,
+                  "inventory lineage reuse requires the reviewed native reference producer")
++        if migration:
++            runtime_sha = hashlib.sha256(Path(training.runtimes.__file__).read_bytes()).hexdigest()
++            _require(training.runtimes.__name__ ==
++                     "ipfs_datasets_py.optimizers.logic_theorem_optimizer.codebase_runtime_8d"
++                     and runtime_sha == _REVIEWED_8D_PRODUCER_MIGRATION[2],
++                     "inventory lineage reuse requires the reviewed native reference runtime")
+ 
+ 
+ class InventoryLineageContext:
+diff --git a/tests/unit/logic/software_contracts/test_codebase_inventory_lineage.py b/tests/unit/logic/software_contracts/test_codebase_inventory_lineage.py
+index a5311a2bc7f98ced6bcc3151853fd18e666f4914..f1a685f96c88a4f877e927a0719e2ebb97db6ae6 100644
+--- a/tests/unit/logic/software_contracts/test_codebase_inventory_lineage.py
++++ b/tests/unit/logic/software_contracts/test_codebase_inventory_lineage.py
+@@ -296,3 +296,17 @@ def test_oversized_historical_inventory_is_not_retained(monkeypatch):
+         context.seal("past")
+     assert context._historical_seal is None
+     assert context.counters.historical_seal_retained_bytes == 0
++
++
++def test_reviewed_8d_migration_refuses_runtime_file_drift(monkeypatch, tmp_path):
++    changed = tmp_path / "runtime.py"
++    changed.write_text("# unreviewed runtime replacement\n")
++    monkeypatch.setattr(training.runtimes, "__file__", str(changed))
++    with pytest.raises(training.CodebaseFeatureTrainingError, match="reviewed native reference runtime"):
++        lineage._reference_guard(lineage.InventoryLineageCounters())
++
++
++def test_reviewed_8d_migration_refuses_runtime_module_substitution(monkeypatch):
++    monkeypatch.setattr(training.runtimes, "__name__", "foreign.runtime")
++    with pytest.raises(training.CodebaseFeatureTrainingError, match="reviewed native reference runtime"):
++        lineage._reference_guard(lineage.InventoryLineageCounters())
+diff --git a/tests/unit/logic/software_contracts/test_codebase_inventory_successor_model.py b/tests/unit/logic/software_contracts/test_codebase_inventory_successor_model.py
+index e5029caa434f54835b77a79f9fd7b1caf66617e5..9121d98b2f1f6072081bcf32dc800c79a96b5e3d 100644
+--- a/tests/unit/logic/software_contracts/test_codebase_inventory_successor_model.py
++++ b/tests/unit/logic/software_contracts/test_codebase_inventory_successor_model.py
+@@ -1,13 +1,14 @@
+ """Tiny native successor selection and receiving controls.
+ 
+ The module fixture explicitly trains one root and one direct child, one epoch
+-each. Coordinator/receiver scopes prohibit fitting and forward inference. Only
+-the ordinary page test runs numerical inference. These are tiny native owners
++each. Coordinator/receiver scopes prohibit fitting and page inference. Exact
++saved diagnostic replay remains required by the reviewed current producer. These are tiny native owners
+ and test scheduler resources, not a large-repository or execution attestation.
+ """
+ from contextlib import contextmanager
+ from copy import deepcopy
+ import hashlib
++import sys
+ from types import SimpleNamespace
+ 
+ import pytest
+@@ -32,10 +33,15 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler impo
+ def no_numerical_work():
+     def forbidden(*args, **kwargs):
+         pytest.fail("successor selection/receiving attempted fitting or forward inference")
++    infer = scan.features.infer_projection_features
++    def diagnostic_replay_only(*args, **kwargs):
++        if sys._getframe(1).f_code is not training._diagnostic.__code__:
++            pytest.fail("successor selection/receiving attempted non-diagnostic forward inference")
++        return infer(*args, **kwargs)
+     with pytest.MonkeyPatch.context() as patch:
++        patch.setattr(scan.features, "infer_projection_features", diagnostic_replay_only)
+         for owner, name in ((training, "train_current_codebase_features"), (training, "_worker"),
+                 (scan, "_worker"), (scan.features, "train_projection_features"),
+-                (scan.features, "infer_projection_features"),
+                 (runtimes.SourceBoundCodebaseFeatureRuntime, "train"),
+                 (runtimes.SourceBoundCodebaseFeatureRuntime, "infer")):
+             patch.setattr(owner, name, forbidden)
+@@ -175,7 +181,7 @@ def test_native_new_root_runs_ordinary_pages_and_complete_receiving_without_more
+     assert_idle(n)
+ 
+ 
+-def test_native_same_process_cold_owner_reopen_receives_without_fitting_inference_or_cas_writes(native):
++def test_native_same_process_cold_owner_reopen_receives_without_fitting_page_inference_or_cas_writes(native):
+     n = native
+     index, generation = n.index, n.registry.owner_generation
+     n.registry.close()

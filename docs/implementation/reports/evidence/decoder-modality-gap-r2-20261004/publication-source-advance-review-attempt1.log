@@ -1,0 +1,11 @@
+{
+  "passed": true,
+  "checks": 1747,
+  "finding_count": 0,
+  "findings": [],
+  "changed_paths": [
+    "ipfs_datasets_py/logic/software_contracts/codebase_inventory_lineage.py",
+    "tests/unit/logic/software_contracts/test_codebase_inventory_lineage.py",
+    "tests/unit/logic/software_contracts/test_codebase_inventory_successor_model.py"
+  ]
+}
