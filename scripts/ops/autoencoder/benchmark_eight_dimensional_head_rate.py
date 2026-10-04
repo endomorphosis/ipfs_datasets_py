@@ -125,7 +125,7 @@ def execute(args):
     args.output.mkdir(parents=True);save(args.output/'sealed-recipe.json',dict(plan=ctx['rate_plan'],manifest=ctx['rate_manifest'],**FALSE))
     lane=ctx['rate_parent'].prepare_lane(ctx);parent=ctx['parent_runs']['8'];choice=ctx['object_parent'].ENDPOINTS['8'];ref=parent['states'][choice['role']]
     parent_state=bound_json(ctx['rate_manifest'],ref['path'],ref['sha256'])
-    diagnosis=ctx['rate_helper'].diagnose_source_geometry(lane['source_contexts'],parent_state['model_state'])
+    diagnosis=ctx['rate_helper'].diagnose_source_geometry(lane['source_contexts'],parent_state['model_state'],input_transform=parent_state['input_transform'])
     save(args.output/'source-geometry.json',diagnosis)
     for name,value in [('preprocessing',lane['preparation']),('source-contexts',lane['source_contexts']),('training-rows',lane['rows'])]:save(args.output/'8'/(name+'.json'),value)
     runs=[];baseline_report=None

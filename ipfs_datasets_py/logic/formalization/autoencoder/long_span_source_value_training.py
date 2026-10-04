@@ -299,7 +299,7 @@ def train(student, training_rows, validation_rows, *, training_references, valid
           generated_source_margin_replay=False, auxiliary_source_modality_bank=None,
           auxiliary_source_modality_weight=0., generated_boundary_retry_on_mismatch=False,
           auxiliary_source_modality_sampler="independent", auxiliary_source_object_bank=None,
-          auxiliary_source_object_weight=0.):
+          auxiliary_source_object_weight=0., source_gradient_preconditioning=None):
     """Fresh reference-supervised fit; source fidelity gates experimental selection.
 
     The last complete attempt is retained as an explicitly unselected diagnostic.
@@ -329,10 +329,17 @@ def train(student, training_rows, validation_rows, *, training_references, valid
     stays equal. Early termination need not retain that full-budget equality.
     Optional boundary retry preserves the original collection batch and strict
     logit tolerance; a failed bulk graph never contributes a loss or update.
+    An explicit8D source-gradient preconditioner can transform the accumulated
+    non-action projection gradient before the unchanged global clip and AdamW.
+    Its fixed matrix uses unique TRAIN source features only. The None default
+    performs no preparation/import/gradient arithmetic for this experiment.
     """
     started = time.monotonic()
     core._require(config is None or type(config) is dict, "configuration must be a mapping")
     options = core._config({"alpha": 0., **(config or {})})
+    core._require(source_gradient_preconditioning is None or type(source_gradient_preconditioning) is str
+        and source_gradient_preconditioning in ("identity", "train_covariance_inverse"),
+        "unknown explicit source-gradient preconditioning policy")
     core._require(type(non_action_learning_rate_multiplier) in (int, float)
         and 1 <= non_action_learning_rate_multiplier <= 10 and math.isfinite(non_action_learning_rate_multiplier)
         and options["learning_rate"]*non_action_learning_rate_multiplier <= .1,
@@ -419,6 +426,10 @@ def train(student, training_rows, validation_rows, *, training_references, valid
             "ordered-clause-recurrent-source-decoder-development/v1", _ISOLATED_OBJECT_SCHEMA),
         "positive action-contrastive weight requires action-factorized clause model")
     core._require(contextual == (source_contexts is not None), "clause source model and explicit contexts must be paired")
+    core._require(source_gradient_preconditioning is None or contextual and student.dimension == 8
+        and head_specification.get("schema") == "ordered-clause-recurrent-source-decoder-development/v1"
+        and not (use_auxiliary_modality or use_auxiliary_object or use_source_margin or use_joint_generated_replay)
+        and order_augmentation is None, "preconditioning requires the explicit8D original-loss contextual experiment")
     contextual_boundary = bool(generated_boundary_weight and (contextual or generated_boundary_site_policy != "first_last"))
     core._require(not contextual_boundary or generated_boundary_gradient_scope == "all_trainable",
         "contextual or targeted boundary loss requires all-trainable gradients")
@@ -520,6 +531,13 @@ def train(student, training_rows, validation_rows, *, training_references, valid
         # Reject unsupported inventories before copying a private model.
         margin_owner.recurrent_auxiliary_parameters(student)
     stages = core._curriculum(curriculum, training_rows, options)
+    precondition_owner = precondition_cache = precondition_receipt = None
+    precondition_preparation_timed_out = False
+    if source_gradient_preconditioning is not None:
+        from . import source_gradient_preconditioning as precondition_owner
+        precondition_update_bound = min(options["max_optimizer_steps"], sum(
+            ((len(stage["training_ids"])+options["batch_size"]-1)//options["batch_size"])*stage["epochs"]
+            for stage in stages))
     if generated_boundary_retry_on_mismatch:
         boundary_retry_update_bound = min(options["max_optimizer_steps"], sum(
             ((len(stage["training_ids"])+options["batch_size"]-1)//options["batch_size"])*stage["epochs"]
@@ -607,6 +625,8 @@ def train(student, training_rows, validation_rows, *, training_references, valid
         estimate += parameter_bytes*3  # detached auxiliary grads and reverse-pass work
     if source_contexts is not None:
         estimate += 16*options["batch_size"]*8*student.dimension*4 + len(core._raw(source_contexts))
+    if precondition_owner is not None:
+        estimate += precondition_owner.estimate_training_work_bytes(max_optimizer_steps=precondition_update_bound)
     if action_contrastive_weight:
         # Unique source features/pair receipts plus a separate small feature
         # graph; this is a conservative tensor/retained-work estimate, not RSS.
@@ -648,6 +668,14 @@ def train(student, training_rows, validation_rows, *, training_references, valid
             factor=options["plateau_factor"], patience=options["plateau_patience"],
             min_lr=options["learning_rate"]*options["min_learning_rate_ratio"])
     generator = torch.Generator().manual_seed(options["seed"])
+    if precondition_owner is not None:
+        try:
+            precondition_cache = precondition_owner.prepare(torch, working,
+                [dict(id=row["id"], source_text=row["source_text"]) for row in training_rows], training_contexts,
+                input_transform=input_transform, policy=source_gradient_preconditioning, deadline=deadline)
+            precondition_receipt = precondition_cache.receipt
+        except TimeoutError:
+            precondition_preparation_timed_out = True
     if modality_owner is not None:
         preparation_started = time.monotonic()
         try:
@@ -673,7 +701,7 @@ def train(student, training_rows, validation_rows, *, training_references, valid
     evaluate = lambda: _evaluate(torch, working, validation_rows, validation_references, input_transform,
         options, codec, deadline, validate_rule, validator_id, validation_source_labels,
         **({} if validation_contexts is None else {"source_contexts": validation_contexts}))
-    baseline = None if modality_preparation_timed_out or object_preparation_timed_out else evaluate()
+    baseline = None if modality_preparation_timed_out or object_preparation_timed_out or precondition_preparation_timed_out else evaluate()
     selected = last_complete = baseline
     last_complete_step = 0 if baseline is not None else None
     selected_epoch = 0 if baseline is not None else None
@@ -685,6 +713,8 @@ def train(student, training_rows, validation_rows, *, training_references, valid
         stopped = "deadline_during_auxiliary_modality_preparation"
     if object_preparation_timed_out:
         stopped = "deadline_during_auxiliary_object_preparation"
+    if precondition_preparation_timed_out:
+        stopped = "deadline_during_source_gradient_preparation"
     by_id = {row["id"]: row for row in training_rows}
     count_presentations = 0
     count_by_class = {str(value+1): 0 for value in sorted(set(count_labels.values()))}
@@ -892,6 +922,15 @@ def train(student, training_rows, validation_rows, *, training_references, valid
                         break
                 if action_result is not None:
                     action_owner.record_feature_gradient(torch, action_result, weight=action_contrastive_weight)
+                precondition_step = None
+                if precondition_cache is not None:
+                    try:
+                        precondition_step = precondition_owner.apply(torch, working, precondition_cache,
+                            committed_step=steps, deadline=deadline)
+                    except TimeoutError:
+                        optimizer.zero_grad(set_to_none=True)
+                        stopped, complete = "deadline_during_source_gradient_preconditioning", False
+                        break
                 preclip_norm = torch.nn.utils.clip_grad_norm_(trainable, options["max_grad_norm"], error_if_nonfinite=True)
                 if time.monotonic() >= deadline:
                     optimizer.zero_grad(set_to_none=True)
@@ -915,6 +954,8 @@ def train(student, training_rows, validation_rows, *, training_references, valid
                     token_ce=float(plain.detach()), weighted_token_ce=float(weighted.detach()),
                     count_ce=float(count_loss.detach()), source_value_ce=float(source_loss.detach()),
                     raw_reconstruction_mse=float(mse.detach()), objective=float(objective.detach())))
+                if precondition_step is not None:
+                    committed_updates[-1]["source_gradient_preconditioning"] = precondition_step
                 if modality_result is not None:
                     committed_updates[-1]["auxiliary_source_modality"] = dict(
                         zero_based_committed_step=steps-1, weight=auxiliary_source_modality_weight,
@@ -1071,6 +1112,15 @@ def train(student, training_rows, validation_rows, *, training_references, valid
         tensor_work_estimate_bytes=estimate, memory_estimate_excludes_python_import_allocator_rss=True,
         deadline_cooperative=True, **FALSE)
     report["elapsed_seconds"] = time.monotonic()-started
+    if precondition_owner is not None:
+        report.update(source_gradient_preconditioning=source_gradient_preconditioning,
+            source_gradient_preconditioning_receipt=precondition_receipt,
+            source_gradient_preconditioning_committed_updates=sum("source_gradient_preconditioning" in u for u in committed_updates),
+            source_gradient_preconditioning_estimated_max_updates=precondition_update_bound,
+            source_gradient_preconditioning_used_for_selection=False,
+            source_gradient_preconditioning_changes_forward=False,
+            source_gradient_preconditioning_global_clip_may_change_other_updates=True,
+            source_gradient_preconditioning_convergence_guaranteed=False)
     if generated_boundary_retry_on_mismatch:
         report.update(generated_boundary_retry_on_mismatch=True,
             generated_boundary_retry_policy="bulk_then_original_batch_incremental_retry_on_logit_mismatch",

@@ -1,0 +1,1592 @@
+{
+  "admitted": false,
+  "archive": {
+    "bytes": 54158479,
+    "compression_level": 1,
+    "format": "ordered split gzip tar",
+    "members": 291,
+    "sha256": "55d9f127dcf20b69e4778ef18ecda72bacd2b0a9ad52b989af968e4761d1b91f"
+  },
+  "archive_parts": [
+    {
+      "bytes": 40000000,
+      "path": "evidence.tar.gz.part-001",
+      "sha256": "59d72baedb13db01c3bef30e8da230f8d4d8b9f3292a9b7e715259d742791519"
+    },
+    {
+      "bytes": 14158479,
+      "path": "evidence.tar.gz.part-002",
+      "sha256": "cd243885c97a86b058b3a5f032e960b52db43509e89c90cea31cbfb8d14090f0"
+    }
+  ],
+  "checkpoint_promoted": false,
+  "encoder_weights_trained": false,
+  "external_model_weights_included": false,
+  "inventory_member": "publication/archive-inventory.json",
+  "lake_executed": false,
+  "members": {
+    "documentation/four_width_training.md": {
+      "bytes": 50663,
+      "sha256": "c4dc7ac4cc0f7e39135b90aad53657b83cda61876d06dc811af824f7f78b2cb7"
+    },
+    "eight-preconditioning/analyze_results.py": {
+      "bytes": 7195,
+      "sha256": "db3c0dfa96b2d50fd71266c93c1c1a9e01f3b5194550f6ecf22af3fac2470c07"
+    },
+    "eight-preconditioning/code-files.json": {
+      "bytes": 703,
+      "sha256": "b0c8802775c020038d55f493c8e732c86eba2fceb92a90478386c57b6ad219d6"
+    },
+    "eight-preconditioning/correct_geometry.py": {
+      "bytes": 2696,
+      "sha256": "189f0e229c798cb56b4b5afa033b7b92b504c4ec55d4b045f683439f4c7f4dd0"
+    },
+    "eight-preconditioning/correction-tests.log": {
+      "bytes": 1190,
+      "sha256": "c785e63911fce9fc5b1de849df6238f2984f9d26b3c7bff085dc418745886779"
+    },
+    "eight-preconditioning/correction-tests.xml": {
+      "bytes": 7608,
+      "sha256": "7d704e9c76ed002173ef3a98dc55f9e5ef4fd484c282129a292ad45cf7b34edc"
+    },
+    "eight-preconditioning/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/eight_dimensional_head_rate_experiment.py": {
+      "bytes": 5946,
+      "sha256": "f6dcfead2e78a5939394b62eef65ac9a0fa203d5f45e0497973d1df43b791da1"
+    },
+    "eight-preconditioning/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/long_span_source_value_training.py": {
+      "bytes": 93180,
+      "sha256": "21f300fbc969c2b34be355b633c46a616d83d451207cc5f3bd56537d40bd0498"
+    },
+    "eight-preconditioning/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/source_gradient_preconditioning.py": {
+      "bytes": 10135,
+      "sha256": "687d575fd04a00f086894a05e92772bcf2b801cd17b1e5dabb75253826344742"
+    },
+    "eight-preconditioning/experiment-source/scripts/ops/autoencoder/benchmark_eight_dimensional_head_rate.py": {
+      "bytes": 14087,
+      "sha256": "ab5159d45fc57abc260c23b8611dbf550f13c6a88bb44964918c56d2d450252b"
+    },
+    "eight-preconditioning/experiment-source/scripts/ops/autoencoder/benchmark_eight_dimensional_preconditioning.py": {
+      "bytes": 16503,
+      "sha256": "b512506290eecb6704cc2f59148e76dd7ff2b673f358924e3ae667fe01187ed7"
+    },
+    "eight-preconditioning/experiment-source/tests/unit/logic/formalization/autoencoder/test_eight_dimensional_head_rate_experiment.py": {
+      "bytes": 7624,
+      "sha256": "dd3adfea52264045c31533297ba14d8dae10d663ca773f1795acc40d80dfc8af"
+    },
+    "eight-preconditioning/experiment-source/tests/unit/logic/formalization/autoencoder/test_eight_dimensional_preconditioning_runner.py": {
+      "bytes": 2189,
+      "sha256": "b2d7ba8491d432b8da607b5e091fb03d7e0ca0a45e3519b114c450a36f80566a"
+    },
+    "eight-preconditioning/experiment-source/tests/unit/logic/formalization/autoencoder/test_source_gradient_preconditioning.py": {
+      "bytes": 8722,
+      "sha256": "b20dd226992c3b50ee1d5925ad4aa0dbbf2428dcbf601d084ef405b4960cca30"
+    },
+    "eight-preconditioning/freeze-receipt.json": {
+      "bytes": 1735,
+      "sha256": "8d80a1a6f7705a4813c99de78e6913fd6d636cf55baf769d74e624383faa5563"
+    },
+    "eight-preconditioning/geometry-erratum.json": {
+      "bytes": 3938,
+      "sha256": "fc232434e18838e2e9d02b248ec0e04e2f8336226f83dd83a7d2f22984e35005"
+    },
+    "eight-preconditioning/independent-preconditioning-review-attempt1.json": {
+      "bytes": 314554,
+      "sha256": "a118bfb7590c9e94a88bb12ba26dd2bccb80a032571a92be5f5d07d66684706f"
+    },
+    "eight-preconditioning/independent-preconditioning-review.json": {
+      "bytes": 304101,
+      "sha256": "6bf4edf4c1fc7cdbcc5fe881facd9df16e5db895b93d2d7e32ba74f13074e0e4"
+    },
+    "eight-preconditioning/launch_phase.py": {
+      "bytes": 1234,
+      "sha256": "2c69785cf1b04d9f6ea054fb44ea87e878b6eece9f68b3f4f3a8e346300c5ec3"
+    },
+    "eight-preconditioning/next-384-768-paraphrase-comparison.txt": {
+      "bytes": 10378,
+      "sha256": "a946cb006ea3ce9be278db12df1b70528503f4d364ddd6e897ecefdff7d1173d"
+    },
+    "eight-preconditioning/owned-edit-preimages.json": {
+      "bytes": 1442,
+      "sha256": "5180d34369220d22ad29c2a8c79996dfb907591ca84528e468d146301e27be70"
+    },
+    "eight-preconditioning/owned-source-publication.json": {
+      "bytes": 3909,
+      "sha256": "4a8876cef49b5fbaf89d8d9bf8af7a0f7abece3adf7479fa48c831fcfd89dc91"
+    },
+    "eight-preconditioning/preconditioning-tests-attempt1.log": {
+      "bytes": 3363,
+      "sha256": "af6719b60403aed100fe786805173dfcc2ef40b53b2bf09fd7373c8630c8dbd4"
+    },
+    "eight-preconditioning/preconditioning-tests-attempt1.xml": {
+      "bytes": 8066,
+      "sha256": "8698128736f1354c1edbf167c755e2c5a74c58c3fbc945b21b2ae8eff6f8ff6f"
+    },
+    "eight-preconditioning/preflight-r1-guardian-exit.json": {
+      "bytes": 327,
+      "sha256": "59b367bbab35dddf668c9cfbcef9cc19928b6a87bca65dfc243a9a82373f5f06"
+    },
+    "eight-preconditioning/preflight-r1-guardian.log": {
+      "bytes": 5114,
+      "sha256": "e83280d5afd5de87c37a25628c1ad2a456e95c8959bd9b1ecf7acf10e23a90db"
+    },
+    "eight-preconditioning/preflight-r1-lease-observations.jsonl": {
+      "bytes": 23634,
+      "sha256": "4142a809d951f9220c6e3e9369631f8a563f9f6cd94ed54a728908bad4f72191"
+    },
+    "eight-preconditioning/preflight-r1-scheduler-adoption.json": {
+      "bytes": 4646,
+      "sha256": "e3d5e8b129ed9e0904958fdd2ee982cc9a78d4f14affa1396061e38eb6f77524"
+    },
+    "eight-preconditioning/preflight-r1/child-exit.json": {
+      "bytes": 322,
+      "sha256": "89f627fe4c160de62f47154d4a815173b4f1bf6b5938817ee11737c569ad1c0d"
+    },
+    "eight-preconditioning/preflight-r1/child-identity.json": {
+      "bytes": 44,
+      "sha256": "b83fdc1972328e75c7b6d8ed7b54a08afea07d47b69c48da5e02f67c636826df"
+    },
+    "eight-preconditioning/preflight-r1/child.log": {
+      "bytes": 1674,
+      "sha256": "80633b4fc45621a5a5c2203d00ea83a4412b2d1b0366cfea5b07cd2749289302"
+    },
+    "eight-preconditioning/preflight-r1/command.json": {
+      "bytes": 6480,
+      "sha256": "82fd86d9f19f458cfdaa033ba47d8b6098290a7eb6958e1a8b184d2562433f3e"
+    },
+    "eight-preconditioning/preflight-r1/lease-binding.json": {
+      "bytes": 694,
+      "sha256": "e1720d3a10f0f77d2fc3c72c3a4ef100f2acebd92654fc92c676899c82b24001"
+    },
+    "eight-preconditioning/preflight-r1/resources-final.json": {
+      "bytes": 5840,
+      "sha256": "f8d4fb8f4e3325907cf5d596b6f43ccdc6b945142ecaf96f3113e582b549a831"
+    },
+    "eight-preconditioning/preflight-r1/resources-start.json": {
+      "bytes": 3185,
+      "sha256": "7823cc3c3fb4af6b89b649655e40328f58c2b23347c29a3a30367e6ffac0e53b"
+    },
+    "eight-preconditioning/preflight-r1/results/identity-preconditioner/parent-validation.json": {
+      "bytes": 1615773,
+      "sha256": "23b8515b0568082edad7793a7cf39138fbcbdb9bf583b35f0fb319dd0298c860"
+    },
+    "eight-preconditioning/preflight-r1/results/identity-preconditioner/preconditioner.json": {
+      "bytes": 40994,
+      "sha256": "9d986fd09884d1f77bb58298738a348a68d28b1dc1d402ff01b05696b47575d5"
+    },
+    "eight-preconditioning/preflight-r1/results/summary.json": {
+      "bytes": 25976,
+      "sha256": "6dae9267e904ed1ee297cf29dce71d1c033139c42313cc2711e62aa0bfc3b5b5"
+    },
+    "eight-preconditioning/preflight-r1/results/train-covariance-preconditioner/parent-validation.json": {
+      "bytes": 1615773,
+      "sha256": "f79bfa4d9816dcfe8ea61bec8b2441bca17fd32ac37dac8643dccf152f09dc15"
+    },
+    "eight-preconditioning/preflight-r1/results/train-covariance-preconditioner/preconditioner.json": {
+      "bytes": 42170,
+      "sha256": "ddc879244ff3b119a28fd034fd94243e3aae3f4fcfd04f5a37574a89df5a2943"
+    },
+    "eight-preconditioning/preimage/benchmark_eight_dimensional_head_rate.py": {
+      "bytes": 14039,
+      "sha256": "74faa67aa9c9790871fadf442fce33ab9dafbc0d4e5d9cb01c8689e6fc8d2e04"
+    },
+    "eight-preconditioning/preimage/eight_dimensional_head_rate_experiment.py": {
+      "bytes": 4217,
+      "sha256": "72fda68e0151244d792ea1b909784d10a158cfad2dbe1a13e2729a287d3d8a86"
+    },
+    "eight-preconditioning/preimage/long_span_source_value_training.py": {
+      "bytes": 89472,
+      "sha256": "dcbb9bbb367c590c628674e83c71e7d9464bd3de7150e907cff7c96e4ae6fa73"
+    },
+    "eight-preconditioning/preimage/test_eight_dimensional_head_rate_experiment.py": {
+      "bytes": 5377,
+      "sha256": "ef141c3e007e6609ca513c5739d1c9ca09c9227242908b48cc4c4ef61a00aec0"
+    },
+    "eight-preconditioning/prepare_freeze.py": {
+      "bytes": 4156,
+      "sha256": "385d50e96fa28f7b55e57a159853bc64d484e05814f24d85ccf56745d54ed6be"
+    },
+    "eight-preconditioning/proposed-guide-append.md": {
+      "bytes": 5905,
+      "sha256": "6f54848acfccb34f5addb96d920d8cfa973e1add62e7a8f63c4e6baa6949e700"
+    },
+    "eight-preconditioning/results.json": {
+      "bytes": 192746,
+      "sha256": "e75da2f18521951c392c309f30b46a151ffeb87abb7e0d5fc9b115151362a100"
+    },
+    "eight-preconditioning/run_reserved.py": {
+      "bytes": 16719,
+      "sha256": "d61a621a420e2fcb787b9f258525040d626dc04d345174a748c5f7e15887f954"
+    },
+    "eight-preconditioning/runner-tests.log": {
+      "bytes": 1188,
+      "sha256": "e5b8c9617256282b498dd659f2890779bd3fac316f1780a5f761b869243cc3f6"
+    },
+    "eight-preconditioning/runner-tests.xml": {
+      "bytes": 3136,
+      "sha256": "938ec4d1cee557723330ba28370b2ef809d00a6be8cdb5640781cf6c4f3397bb"
+    },
+    "eight-preconditioning/test_lazy_scheduler_adoption.py": {
+      "bytes": 1638,
+      "sha256": "d13c6723544c68e8f42669c07bf10f9a44368f89a50004fed8008cea3d0e7370"
+    },
+    "eight-preconditioning/tests-focused-final.log": {
+      "bytes": 1711,
+      "sha256": "dc268cc0850db6dc51021bf5aaceef94481794020f76b662cdedcc3ad8a775fc"
+    },
+    "eight-preconditioning/tests-focused-final.xml": {
+      "bytes": 22504,
+      "sha256": "ed19aec9f6f329cb00fb37e5d320cef422a7b7362d387d8653d92fe183b3913b"
+    },
+    "eight-preconditioning/training-manifest.json": {
+      "bytes": 188414,
+      "sha256": "2ac0a3817312f157dcea4fceeb7a57c243c948190fb2506778b99d55f1deb3ef"
+    },
+    "eight-preconditioning/training-plan.json": {
+      "bytes": 188466,
+      "sha256": "1f28d8c11c875e3d26039648e71aae1301129e45c830c07c7080b9b44011aa8c"
+    },
+    "eight-preconditioning/training-r1-guardian-exit.json": {
+      "bytes": 325,
+      "sha256": "f0702b20610195ec86f891081a73347528c24fa4bf5494e3fe0bac4116c9ebfd"
+    },
+    "eight-preconditioning/training-r1-guardian.log": {
+      "bytes": 5124,
+      "sha256": "3228d05f9113d33b23b54b3e0ef57eda00ec7232dcd5e36f1e3b685e286f94c0"
+    },
+    "eight-preconditioning/training-r1-lease-observations.jsonl": {
+      "bytes": 105281,
+      "sha256": "e09d3a780a7aee1955848d7da9f3b76f4c4950e3b3f17e72e8be48efc921dd61"
+    },
+    "eight-preconditioning/training-r1-scheduler-adoption.json": {
+      "bytes": 4646,
+      "sha256": "a697eefddb1b7a7fe44f667d8b661cff1ca4e044df0957ba962164ce5fbac015"
+    },
+    "eight-preconditioning/training-r1/child-exit.json": {
+      "bytes": 324,
+      "sha256": "bda98971d333a88b5901aa43604393a98dbf647d140d5c517bec98ce489b60eb"
+    },
+    "eight-preconditioning/training-r1/child-identity.json": {
+      "bytes": 44,
+      "sha256": "b9ccca5336a2e15fd893ba324b2da7f63e8e0bb9bf66d69a4e0489f8f787828c"
+    },
+    "eight-preconditioning/training-r1/child.log": {
+      "bytes": 1928,
+      "sha256": "9941cfe54c68900b59f9cf0d5b4f663836cc6846f05216b133e5a8477d001340"
+    },
+    "eight-preconditioning/training-r1/command.json": {
+      "bytes": 6479,
+      "sha256": "9493d048df9571496e40b7811382424f76108d3295d491bce58d503ad25e416d"
+    },
+    "eight-preconditioning/training-r1/lease-binding.json": {
+      "bytes": 694,
+      "sha256": "afb2462db5a3c228cbeef4d36b24ab06a312e1ea6f943d6e94e7a36dd9af1748"
+    },
+    "eight-preconditioning/training-r1/resource-observations.json": {
+      "bytes": 3494,
+      "sha256": "cffd3c9bea469ee93b353a3601050d3c07ab2bf6c8678a3c3cb9fb8f20539216"
+    },
+    "eight-preconditioning/training-r1/resources-final.json": {
+      "bytes": 5849,
+      "sha256": "2e0393b8f4e898c4b1e748be77a6ae3f4cf8b138ac70bf058fe15b295c79299e"
+    },
+    "eight-preconditioning/training-r1/resources-start.json": {
+      "bytes": 3186,
+      "sha256": "280f3fa6fc6c13a1984c7734c08dc0c33d26bce3fc760124c91d4cde988e1b2e"
+    },
+    "eight-preconditioning/training-r1/results/8/preprocessing.json": {
+      "bytes": 204737,
+      "sha256": "ab3af09517154fcf074a21d4648fd4b672ad7c657153295edc363d36d337a8fb"
+    },
+    "eight-preconditioning/training-r1/results/8/source-contexts.json": {
+      "bytes": 148526,
+      "sha256": "7ebb38207fb90edfa378908fcc320e7afd5a62cc79e434d0c8d937876362e1fb"
+    },
+    "eight-preconditioning/training-r1/results/8/training-rows.json": {
+      "bytes": 73176,
+      "sha256": "a49125a8a934b61dbc71c5bef1bbfe7e75dafbcb958643b8d216242b33e039e1"
+    },
+    "eight-preconditioning/training-r1/results/identity-preconditioner/initial-state.json": {
+      "bytes": 866497,
+      "sha256": "cbb236a0895933fa3aa5e9b4c1de2d54534b9b61cb0f553bc4adf09db48879e2"
+    },
+    "eight-preconditioning/training-r1/results/identity-preconditioner/last-attempt-state.json": {
+      "bytes": 863574,
+      "sha256": "d17f0f6fc2b9ded9cb5799b8ca30a21a3c74a8dcbdbb6004d668cce6661c94bf"
+    },
+    "eight-preconditioning/training-r1/results/identity-preconditioner/last-attempt/evaluation-context-only-shuffle.json": {
+      "bytes": 1714176,
+      "sha256": "d1fa173725e4a13b7d418157a26eb8037b0bd94950b1909f2973c45fde43c8cf"
+    },
+    "eight-preconditioning/training-r1/results/identity-preconditioner/last-attempt/evaluation-context-reverse.json": {
+      "bytes": 1714160,
+      "sha256": "63a9c8f12dbd27eddd1326fb54a56aa6e3d266184f5eb1795d6806524adc7236"
+    },
+    "eight-preconditioning/training-r1/results/identity-preconditioner/last-attempt/evaluation-context-rotate.json": {
+      "bytes": 1714173,
+      "sha256": "441f938b9ded60e5338eb3aa875e714964239f398d8076d24937cd7c25d20097"
+    },
+    "eight-preconditioning/training-r1/results/identity-preconditioner/last-attempt/evaluation-cross-length-shuffle.json": {
+      "bytes": 1714160,
+      "sha256": "895b7db4acbc262d99d3e421f45060b68a100eab2555f4ea918babbb4cb7e18c"
+    },
+    "eight-preconditioning/training-r1/results/identity-preconditioner/last-attempt/evaluation-recurrent-residual-off.json": {
+      "bytes": 1620037,
+      "sha256": "464be08f39283be838521404fd8695d8d771b00f1c2193a38d8d3c5e6733e006"
+    },
+    "eight-preconditioning/training-r1/results/identity-preconditioner/last-attempt/evaluation-source-shuffle.json": {
+      "bytes": 1714101,
+      "sha256": "640c108c3f02c4c14ed8f59ffef591359171d9d9cf7c35cb437b925ace13b410"
+    },
+    "eight-preconditioning/training-r1/results/identity-preconditioner/last-attempt/evaluation-training.json": {
+      "bytes": 1705848,
+      "sha256": "a5301eb9cda9063ac4391d56f3d453c79b7cb57322534fb163c387870a74e9e8"
+    },
+    "eight-preconditioning/training-r1/results/identity-preconditioner/last-attempt/evaluation-validation.json": {
+      "bytes": 1713679,
+      "sha256": "fd7da6c529021fbb0bed9d1a7fd463d2e44787cf02547166d1c81fce83319e54"
+    },
+    "eight-preconditioning/training-r1/results/identity-preconditioner/last-attempt/evaluation-zero-condition.json": {
+      "bytes": 2390145,
+      "sha256": "82b2fbe2238afa46643acaec3fd46b85d5d9784a416b995bd6e610f6ceb49e0a"
+    },
+    "eight-preconditioning/training-r1/results/identity-preconditioner/parent-validation.json": {
+      "bytes": 1615772,
+      "sha256": "eb856fd1c4eae01e0ec78fb89e4947930ecbdca655a60dcdb7c70b133a000242"
+    },
+    "eight-preconditioning/training-r1/results/identity-preconditioner/selected-state.json": {
+      "bytes": 866497,
+      "sha256": "39eb112921c4cdb9fbbec10b275799234b86af45d73d445365f95083183f4e1d"
+    },
+    "eight-preconditioning/training-r1/results/identity-preconditioner/selected/evaluation-context-only-shuffle.json": {
+      "bytes": 1698366,
+      "sha256": "88770c1f40cd515339a29684eaff2fc3510a90359c47cb8c644b694b2b9bf9b2"
+    },
+    "eight-preconditioning/training-r1/results/identity-preconditioner/selected/evaluation-context-reverse.json": {
+      "bytes": 1698369,
+      "sha256": "3a377bef86f29efc1a9533f44b54469459b4f77e57263dcc25afc6fb154d295a"
+    },
+    "eight-preconditioning/training-r1/results/identity-preconditioner/selected/evaluation-context-rotate.json": {
+      "bytes": 1698379,
+      "sha256": "8e6bac38159aa48ed21cd402ad9bd213c491f7ceb0d87dd1708d62484a7cdcf6"
+    },
+    "eight-preconditioning/training-r1/results/identity-preconditioner/selected/evaluation-cross-length-shuffle.json": {
+      "bytes": 1698348,
+      "sha256": "8e1a96ba8d6026af5d4ff8f3f2abfb2cc56c191e4534d9e2e3fab7326f879bf4"
+    },
+    "eight-preconditioning/training-r1/results/identity-preconditioner/selected/evaluation-recurrent-residual-off.json": {
+      "bytes": 1608268,
+      "sha256": "7f6a22c2146788b789ad6a4322c900e9c97684a9c1df7e2822d3d4f349311cc3"
+    },
+    "eight-preconditioning/training-r1/results/identity-preconditioner/selected/evaluation-source-shuffle.json": {
+      "bytes": 1698295,
+      "sha256": "172cccfa7a8de5a92c575ce73dcc28f7a48ee7d92e591ed450a214a64d024d0c"
+    },
+    "eight-preconditioning/training-r1/results/identity-preconditioner/selected/evaluation-training.json": {
+      "bytes": 1693927,
+      "sha256": "9421465d61bfffb4d608c17db8bd4928354e045457498a2c3cb10f477704108f"
+    },
+    "eight-preconditioning/training-r1/results/identity-preconditioner/selected/evaluation-validation.json": {
+      "bytes": 1697949,
+      "sha256": "5098afd35a9d4c876a375b8c4d1859b7243141bdc0b635c9b1353aa274633457"
+    },
+    "eight-preconditioning/training-r1/results/identity-preconditioner/selected/evaluation-zero-condition.json": {
+      "bytes": 2356642,
+      "sha256": "04b6abd74e0317ae9de74eb1f2c4ead2e02ae6591ee33dbceb10dbeb61dc8b24"
+    },
+    "eight-preconditioning/training-r1/results/identity-preconditioner/summary.json": {
+      "bytes": 315494,
+      "sha256": "38c504555698b1270666912fe86d22038c53db2ec0eda8ae2569f28faccea4a6"
+    },
+    "eight-preconditioning/training-r1/results/identity-preconditioner/training.json": {
+      "bytes": 22695656,
+      "sha256": "88b63b325ca222230d6f57b3172f93cf77e38b1472ffc131ce6ef6acc2393df7"
+    },
+    "eight-preconditioning/training-r1/results/sealed-recipe.json": {
+      "bytes": 367949,
+      "sha256": "2eacc598898c2d4cad8613a04d0b410dd752c759287c0676c5a2d78c8dab72d8"
+    },
+    "eight-preconditioning/training-r1/results/source-geometry.json": {
+      "bytes": 1055,
+      "sha256": "ce1de814e96f96d876c5083a13837a7569205b25b91029df82d19ce8396815c8"
+    },
+    "eight-preconditioning/training-r1/results/summary.json": {
+      "bytes": 26282,
+      "sha256": "dfc43564b297a900ea45437aadfca74ec2bf23a00cab3c30f720cdc325a6fb8d"
+    },
+    "eight-preconditioning/training-r1/results/train-covariance-preconditioner/initial-state.json": {
+      "bytes": 866521,
+      "sha256": "3e12b26f436dbda0681136c4bcfa1c8d42981c83d19a3cfdeb4e7e8797247b7c"
+    },
+    "eight-preconditioning/training-r1/results/train-covariance-preconditioner/last-attempt-state.json": {
+      "bytes": 863861,
+      "sha256": "2a59c50213846ff7dc1b51e745416dcad4c2b00f55552ce83d7ce58eaa56ac87"
+    },
+    "eight-preconditioning/training-r1/results/train-covariance-preconditioner/last-attempt/evaluation-context-only-shuffle.json": {
+      "bytes": 1714131,
+      "sha256": "6d6c60a1a65cea267d7c90ebc0614856fd2e28085360a788e49401741808e0f0"
+    },
+    "eight-preconditioning/training-r1/results/train-covariance-preconditioner/last-attempt/evaluation-context-reverse.json": {
+      "bytes": 1713890,
+      "sha256": "db1c1351e3c2654d4fe0e81146d65bdf19e29411cd835613494b9232e8ccb43a"
+    },
+    "eight-preconditioning/training-r1/results/train-covariance-preconditioner/last-attempt/evaluation-context-rotate.json": {
+      "bytes": 1713866,
+      "sha256": "15b7cc94eb90b218ec6f5a84b615128b473763c02332a96d34c9db996a02ce2c"
+    },
+    "eight-preconditioning/training-r1/results/train-covariance-preconditioner/last-attempt/evaluation-cross-length-shuffle.json": {
+      "bytes": 1714099,
+      "sha256": "2b8d67fecf76bbefbe29400157fedc70114961170b273be4e584d20ddaf9f46a"
+    },
+    "eight-preconditioning/training-r1/results/train-covariance-preconditioner/last-attempt/evaluation-recurrent-residual-off.json": {
+      "bytes": 1620140,
+      "sha256": "164950ceffbba9ee2ecf1b0c963a8bc024867cb3181ed3c5a1017aa44db13d58"
+    },
+    "eight-preconditioning/training-r1/results/train-covariance-preconditioner/last-attempt/evaluation-source-shuffle.json": {
+      "bytes": 1714048,
+      "sha256": "290dffac0d4d55d32a2a4e2bfb0421e2726bd50294aef72fc42003f399aee66e"
+    },
+    "eight-preconditioning/training-r1/results/train-covariance-preconditioner/last-attempt/evaluation-training.json": {
+      "bytes": 1705197,
+      "sha256": "ed88ab6cdfbaf0e7e45b34a395f0d3d91b08ca57f6b66e78d80455f636bc4dd6"
+    },
+    "eight-preconditioning/training-r1/results/train-covariance-preconditioner/last-attempt/evaluation-validation.json": {
+      "bytes": 1713651,
+      "sha256": "7507a7f5af7f1481a512d7c92756f11e72edf0d7b6364719e740448f9955c20b"
+    },
+    "eight-preconditioning/training-r1/results/train-covariance-preconditioner/last-attempt/evaluation-zero-condition.json": {
+      "bytes": 2391764,
+      "sha256": "bd03d6d41f1256e1d431ea5907f168e9e73b528aee4acbf8a8b4952b5a9aa4ab"
+    },
+    "eight-preconditioning/training-r1/results/train-covariance-preconditioner/parent-validation.json": {
+      "bytes": 1615767,
+      "sha256": "ea9e54f3e9e15bdfad5a7145d0ef49bf6b3bdd6a48d3d9ec5318e5c3f8757f69"
+    },
+    "eight-preconditioning/training-r1/results/train-covariance-preconditioner/selected-state.json": {
+      "bytes": 866521,
+      "sha256": "5bd47cb6305b5b7b9d66004fea81820140388e1e9bf0f92a7929d3a6c682e63a"
+    },
+    "eight-preconditioning/training-r1/results/train-covariance-preconditioner/selected/evaluation-context-only-shuffle.json": {
+      "bytes": 1698364,
+      "sha256": "1fd1256d41fa98bcdeb580a28c5b02d1d203db5bd7593c0b89fdb43b6da80af9"
+    },
+    "eight-preconditioning/training-r1/results/train-covariance-preconditioner/selected/evaluation-context-reverse.json": {
+      "bytes": 1698366,
+      "sha256": "cab98d235b78db01cc8f1818a1e91837e87fbfee14a5ed23d914b0862afbdf41"
+    },
+    "eight-preconditioning/training-r1/results/train-covariance-preconditioner/selected/evaluation-context-rotate.json": {
+      "bytes": 1698378,
+      "sha256": "c34be959c6b20ca98e9e4b24c39fa51a066f096e9fc1fa80e57f626904ce6abb"
+    },
+    "eight-preconditioning/training-r1/results/train-covariance-preconditioner/selected/evaluation-cross-length-shuffle.json": {
+      "bytes": 1698348,
+      "sha256": "3c6c8bfb0342bedfed650f4ab68ab66eb07ce237203f32a189622eb67f67de1b"
+    },
+    "eight-preconditioning/training-r1/results/train-covariance-preconditioner/selected/evaluation-recurrent-residual-off.json": {
+      "bytes": 1608270,
+      "sha256": "041df675c9ab9591eae805c96e83e9a27234e8bf4e03a681c036d12fa9581e06"
+    },
+    "eight-preconditioning/training-r1/results/train-covariance-preconditioner/selected/evaluation-source-shuffle.json": {
+      "bytes": 1698295,
+      "sha256": "fb9a271f663c3f1e7f1a8c8225bf4d997b40c0942695465322dc2d0fbe252bce"
+    },
+    "eight-preconditioning/training-r1/results/train-covariance-preconditioner/selected/evaluation-training.json": {
+      "bytes": 1693924,
+      "sha256": "3e02a2c176ef46917a004e69ddd9ce860b5f9aa1af623d7c8b2eeadd6642c089"
+    },
+    "eight-preconditioning/training-r1/results/train-covariance-preconditioner/selected/evaluation-validation.json": {
+      "bytes": 1697948,
+      "sha256": "114146ec623fbc4dc90f79201018203754b1d6e593c8471adf7f334b31d03b31"
+    },
+    "eight-preconditioning/training-r1/results/train-covariance-preconditioner/selected/evaluation-zero-condition.json": {
+      "bytes": 2356643,
+      "sha256": "d9ec48dceec86517cbe37d83c1ef6d9e93ba46938cb5ec7a64f86c04f305f3db"
+    },
+    "eight-preconditioning/training-r1/results/train-covariance-preconditioner/summary.json": {
+      "bytes": 315711,
+      "sha256": "8fcb01264429147833220b8c1acb5509cc0cbb584c3177709b34b7d67319ffcf"
+    },
+    "eight-preconditioning/training-r1/results/train-covariance-preconditioner/training.json": {
+      "bytes": 22692539,
+      "sha256": "3e7f436636b5ddb01cff47c25b5970e3d5cab56f27768926cd67c6a5416ea77a"
+    },
+    "independent-review/audit_eight_preconditioning.py": {
+      "bytes": 12659,
+      "sha256": "86e7554277900e9e1ef6006aca468e0d7ba9b922a759f8dc29309cfea13e8ec8"
+    },
+    "independent-review/audit_geometry_correction.py": {
+      "bytes": 2967,
+      "sha256": "724f31587de2dffb86c935cc1a81ee532b1d6a112732e5b526fee6bdf2480107"
+    },
+    "independent-review/audit_native_balanced.py": {
+      "bytes": 28901,
+      "sha256": "60e68d217a7bdeb4075253749bcc9a25ac6e7363bd0610f8e51d4079de6cac42"
+    },
+    "independent-review/audit_preparation_failures.py": {
+      "bytes": 3782,
+      "sha256": "7ca7b842b81a4b0b6907683f0622298e198d142a90557bccd1639cd5657b1442"
+    },
+    "independent-review/audit_training_preparation.py": {
+      "bytes": 13373,
+      "sha256": "df205ad64daaf62f0718b392f3859b164b8d4ad8f3f04b9ebf5e69adc84e29a2"
+    },
+    "independent-review/build_eight_audit.py": {
+      "bytes": 6046,
+      "sha256": "1880b7e0752cee9bb72d9d02b11007f6697025fbfe8f17fd4ebbd92703b60f26"
+    },
+    "independent-review/build_native_audit.py": {
+      "bytes": 10875,
+      "sha256": "33ec98aa1e92e17b24886b6a3e94a9c689b27020368c2d5b7c419b575e35515d"
+    },
+    "independent-review/eight-preconditioning-design-review.json": {
+      "bytes": 4134,
+      "sha256": "ae822f0373e6c428a65fee1b81ca5a8aa9713d084b98f24d3e3092dd5307f819"
+    },
+    "independent-review/eight-preconditioning-freeze-review.json": {
+      "bytes": 2710,
+      "sha256": "f2d61b185651d32399b0ea4f62efa88ba5f592a22ca8a140282c7960a4552267"
+    },
+    "independent-review/geometry-erratum-review.json": {
+      "bytes": 1727,
+      "sha256": "1d46b0bddb5b93b154064c2cc1897326e9485f97961cfcd314e71e3b200c2219"
+    },
+    "independent-review/native-balanced-design-review.json": {
+      "bytes": 3060,
+      "sha256": "7569790062d002f1966b71920a0951f3c154b54cba05911a057b50676ed72bee"
+    },
+    "independent-review/native-balanced-freeze-review.json": {
+      "bytes": 1488,
+      "sha256": "4d894e327df63d9ae09676500efff7980ce2e4aa4f0248b4a53529b2b2e5d2f7"
+    },
+    "independent-review/normal-git-state.json": {
+      "bytes": 549,
+      "sha256": "71932548e5666c89997a3ec4cad1f7c499ffc8ac845d66b69b1d71acc25e9a5b"
+    },
+    "independent-review/preparation-failed-lifecycle-review.json": {
+      "bytes": 6478,
+      "sha256": "145a06b862f4eb50bebabc8decd455bacbf34f9e126ac313eeeccaf29053cd3d"
+    },
+    "independent-review/protected-checkpoint.json": {
+      "bytes": 343,
+      "sha256": "d496ac6631105cb5112ace5012468ada94ac51b56e042006f6b40c395f87a81b"
+    },
+    "independent-review/review_final_packet.py": {
+      "bytes": 11314,
+      "sha256": "08f7991b5d0219372b6188e8c458b7ae723751f7de351726819abb18a95f8c9c"
+    },
+    "independent-review/train-paraphrase-preparation-r2-review.json": {
+      "bytes": 5563,
+      "sha256": "85605c225937691fdbd0202d45a33171d9b15ada108ff335424c38493b41c1ec"
+    },
+    "independent-review/train-paraphrase-preparation-r3-review.json": {
+      "bytes": 6146,
+      "sha256": "f4b81f5f16c8bd220d33f3f43fb8fa76dce971acef4d1c0a8cded85827409ee1"
+    },
+    "independent-review/train-paraphrase-preparation-r4-review.json": {
+      "bytes": 6579,
+      "sha256": "5ee7af2f30c368f998388d49d04858ff06c41cb6d72d1d2c16d7c2ad2978d167"
+    },
+    "independent-review/train-paraphrase-preparation-review-superseded.json": {
+      "bytes": 1009,
+      "sha256": "a20eb072d67a9d502d8588694bec5ecab62f39d18b0a1e5507289eb787e20ef4"
+    },
+    "independent-review/train-paraphrase-preparation-review.json": {
+      "bytes": 4330,
+      "sha256": "e2603dbd6eecef31f8c9dde071cf43b4aa5751da8828c54e591ed65d0603b3a7"
+    },
+    "independent-review/upstream-source-review.json": {
+      "bytes": 2766,
+      "sha256": "82728e8f11574368794d072db42759c24ff437c3409805daf82c7039954261a1"
+    },
+    "native-balanced/adopt_shared_scheduler.py": {
+      "bytes": 11206,
+      "sha256": "4956baa1e41abe53fc83a2d4ae7709b3be13ebc1c775b44571a33903b8f70b1f"
+    },
+    "native-balanced/cohort.json": {
+      "bytes": 18225,
+      "sha256": "8f2c6d944d95d863ff16261b69b306be0016ed91d6f7939f3a136646988a4b92"
+    },
+    "native-balanced/combined-guide-addition-draft.md": {
+      "bytes": 6943,
+      "sha256": "5c8191098db193b8220ddc097b59c8eb400bbb197f4e5bf3eedad94d279fd23f"
+    },
+    "native-balanced/combined-public-results-draft.json": {
+      "bytes": 18655,
+      "sha256": "efab23ed7a02978730c429447d493c091e3f22faedeba2436d50befe5b9e1b3e"
+    },
+    "native-balanced/decoded-balanced-examples.json": {
+      "bytes": 25498,
+      "sha256": "cd1112e74196711da76bad101ff490f98a94648b7d09443381a314fc60af0f26"
+    },
+    "native-balanced/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment.py": {
+      "bytes": 37989,
+      "sha256": "76252ad397492762d4fc41915afd1051a93a11b74994655326fe56fa722e3b61"
+    },
+    "native-balanced/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment_v2.py": {
+      "bytes": 13794,
+      "sha256": "0352c392a518c9ea6ff215c32e5ddd6345d776e2bb32f22fd137b5e34d93c6c6"
+    },
+    "native-balanced/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/native4096_balanced_cohort_experiment.py": {
+      "bytes": 18572,
+      "sha256": "29bfdd2dca303352218ea54f8718f20cbce8b1c78efce5464ac404494f2efd06"
+    },
+    "native-balanced/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/native4096_conditioning_experiment.py": {
+      "bytes": 11646,
+      "sha256": "143ba73db720b186947e51daa569ac5ee505233894c3b880879bce7f93f4a0ad"
+    },
+    "native-balanced/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/native4096_formula_sidecar_experiment.py": {
+      "bytes": 13448,
+      "sha256": "d76e22e6ffa8459e579bc5795d9bb9b742cb679d34e937989f1565071941518a"
+    },
+    "native-balanced/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_4096_full_owner.py": {
+      "bytes": 52313,
+      "sha256": "326ab8504f16d0ec55d8635e620efbe47a826ddca35bb5d0aff1e05143dbb14e"
+    },
+    "native-balanced/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_4096_native_owner.py": {
+      "bytes": 21142,
+      "sha256": "9e7043dd47ead1a8ae8a39711690e5dafc314fa10b7bd74dc5bf33359b766ff3"
+    },
+    "native-balanced/experiment-source/scripts/ops/autoencoder/benchmark_native4096_balanced_cohort.py": {
+      "bytes": 12286,
+      "sha256": "d080dc182a709400042fe35edf3a7675616934d8055e53f2f7120f4a7d823927"
+    },
+    "native-balanced/experiment-source/tests/unit/logic/formalization/autoencoder/test_native4096_balanced_cohort_experiment.py": {
+      "bytes": 8558,
+      "sha256": "ca45685803ebb8f9ecab7e7cc0104097264d1198b0f871536b97e753b389be68"
+    },
+    "native-balanced/experiment-source/tests/unit/logic/formalization/autoencoder/test_native4096_balanced_cohort_runner.py": {
+      "bytes": 7140,
+      "sha256": "ac2b7e17aad956a24c9132e186a1be48adf5fc2df8a5f3db1ea3a14db35bffa3"
+    },
+    "native-balanced/experiment-source/tests/unit/logic/formalization/autoencoder/test_native4096_conditioning_experiment.py": {
+      "bytes": 6760,
+      "sha256": "db4ee5aa5dd287cd8ddb47dac280afc99133a9e6a7c7a671a88233f688d40b96"
+    },
+    "native-balanced/freeze.py": {
+      "bytes": 4624,
+      "sha256": "b79ce7e7c85e09cffd9d9057b8a9c844d9f2bf5cbeeafbf229763df639cc20a1"
+    },
+    "native-balanced/independent-balanced-audit.json": {
+      "bytes": 564482,
+      "sha256": "b423e99b4339ff8a8c2bb89ea311bc965080268c9decbfebd250451b290b215c"
+    },
+    "native-balanced/lazy_scheduler_adoption.py": {
+      "bytes": 1345,
+      "sha256": "42f31d8da1eb5b44274ca0b8c8180cd78bc083dfd0e93438e61f38223929d84a"
+    },
+    "native-balanced/owned-source-publication.json": {
+      "bytes": 894,
+      "sha256": "a0a4e2da8d94f3cb6ed890b3e08166ece641e79a8a3a3b20ba8db613fd476864"
+    },
+    "native-balanced/owned_lease_watchdog.py": {
+      "bytes": 20712,
+      "sha256": "f1b9f71e375cf5ed4004e023bbef2d6f7f61e1ecb588078a1094d7b1982609b3"
+    },
+    "native-balanced/prelaunch-review-binding.json": {
+      "bytes": 506,
+      "sha256": "e8bb3c04369eb6e5be964d143f46d5e251869fc39ee321935ebe6f794ffd1580"
+    },
+    "native-balanced/proposed-guide-append.md": {
+      "bytes": 4424,
+      "sha256": "bdac053766cbdb7f908ad63b6bc0ea9fba8f6ec920fe7bc97c92c5ae10964ffa"
+    },
+    "native-balanced/run_reserved.py": {
+      "bytes": 17276,
+      "sha256": "6110df7b01a52d0cdd75b66787da34228c41038b87af57a747a014ab96834453"
+    },
+    "native-balanced/same-author-balanced-review.json": {
+      "bytes": 25302,
+      "sha256": "a86877633fee3b105a46bb25f7db425781704118898c82be902a58e48cc71156"
+    },
+    "native-balanced/same-author-balanced-review.log": {
+      "bytes": 14856,
+      "sha256": "09d8ad2d92b51dadb76142610683bc1975f8d36d2958ce8eabc5a426aa8f0945"
+    },
+    "native-balanced/same-author-lifecycle-review.json": {
+      "bytes": 981,
+      "sha256": "2a85b7459c48a24f5b9a7292ed9354384ea27c5b5f3d9c0bb89d565092b4ef65"
+    },
+    "native-balanced/summarize_saved_balanced.py": {
+      "bytes": 7149,
+      "sha256": "6b4eba286ab1219223050108206955c64d0f77c6ec39ec75084ad358a6ecd87b"
+    },
+    "native-balanced/tests.json": {
+      "bytes": 1391,
+      "sha256": "988c04f3ea4c58b2b8307e0200b79de6d345daa4607fc97a0245759683442329"
+    },
+    "native-balanced/tests.log": {
+      "bytes": 1517,
+      "sha256": "fa848184166cbed13ebcf523350dcfcc359287cd4d692aa2b2bd080751818327"
+    },
+    "native-balanced/tests.xml": {
+      "bytes": 9269,
+      "sha256": "d8b43d4212ad4bad6b6e80745fcbca93b7fd73277ae45440c4a5de3570fb7edf"
+    },
+    "native-balanced/training-manifest.json": {
+      "bytes": 11212,
+      "sha256": "97502458227001ae2c1e15d161668d8f63eb3fa69347511fbbcbf5a3c5133c71"
+    },
+    "native-balanced/training-plan.json": {
+      "bytes": 14547,
+      "sha256": "56e9f9a7a04015ad3ef7ead309aa976a73f8717f66f538cb474f466e90bbcedd"
+    },
+    "native-balanced/training-r1-guardian-exit.json": {
+      "bytes": 315,
+      "sha256": "c46c3e81bea802d21ac74e91beabab0f7a0de16452f2efd5388cf653327e513c"
+    },
+    "native-balanced/training-r1-guardian.log": {
+      "bytes": 5102,
+      "sha256": "243e74c8a2739a0c8ebbd5b5eec539d153281637aeb7e0078674d5165f05d106"
+    },
+    "native-balanced/training-r1-lease-observations.jsonl": {
+      "bytes": 439641,
+      "sha256": "225c0e02302fbd7c717d4b83d6e6f3ed941d2fe889726a76f952eace52aee962"
+    },
+    "native-balanced/training-r1-scheduler-adoption.json": {
+      "bytes": 4646,
+      "sha256": "279cdee9e59082d58cbdbedb39a89c52bccb1c00590cbbdca0c0732f274fdb32"
+    },
+    "native-balanced/training-r1/child-exit.json": {
+      "bytes": 323,
+      "sha256": "69f1f461de7906015e134c5edcd6dbb7528d7435fc4580438c76e362a947e415"
+    },
+    "native-balanced/training-r1/child-identity.json": {
+      "bytes": 44,
+      "sha256": "95299315c029996dd35987cc60aaa54adc5def7a1102e2cbfe80797591fdcb0d"
+    },
+    "native-balanced/training-r1/child.log": {
+      "bytes": 123089,
+      "sha256": "46e9ca45cb1b3d67f89b73e5b4bb752863240c3f4b3cd4f0dbaec61b5b1a7d9d"
+    },
+    "native-balanced/training-r1/command.json": {
+      "bytes": 6781,
+      "sha256": "44539018f44c40130b03aa0dab1180036c51119aa91ee8a426a430d79392f8e9"
+    },
+    "native-balanced/training-r1/lease-binding.json": {
+      "bytes": 694,
+      "sha256": "63b80938a10f4aa5e5be8bb5e77075fd0ab3f317d489ac678016f690b2167f32"
+    },
+    "native-balanced/training-r1/resource-observations.json": {
+      "bytes": 15675,
+      "sha256": "c968eb302490ad765650c5b1e09185048d154b0693d10f2b30e6f6df47088b1f"
+    },
+    "native-balanced/training-r1/resources-final.json": {
+      "bytes": 5828,
+      "sha256": "1bf721686ef67885f1c2d9faf03f91aebb4d7f702d53f97a00f569e4b4947cf4"
+    },
+    "native-balanced/training-r1/resources-start.json": {
+      "bytes": 3173,
+      "sha256": "2cf8524e9b3b61391411af181c7a660b87754bde9a07306b88e6a86f8c9d89e4"
+    },
+    "native-balanced/training-r1/results/native/receipt.json": {
+      "bytes": 2399207,
+      "sha256": "a62a6aa7e0be25145f284759ad7ed1bb994f6eea8387cd19a20d47c94883fafb"
+    },
+    "native-balanced/training-r1/results/native/stderr.log": {
+      "bytes": 115270,
+      "sha256": "4205bd60b08110c83219003c623166d25eec5ff59ee8619f0d4d30eae450e2ff"
+    },
+    "native-balanced/training-r1/results/native/stdout.log": {
+      "bytes": 2427872,
+      "sha256": "8b7b99a47e0065d6e1c935ddbf8464c8c0ca956608dcb6601899665c76352731"
+    },
+    "native-balanced/training-r1/results/reset-control.json": {
+      "bytes": 88,
+      "sha256": "240a4d7f1d28f8c46322a47b299a83cb389f05e38cf5d2cb9876975aeb700549"
+    },
+    "native-balanced/training-r1/results/source-request.json": {
+      "bytes": 2649,
+      "sha256": "deafcf78daec498b5f0c9d7e5b0a97f5ee0664a1657f300e35ada12c81cc9602"
+    },
+    "native-balanced/training-r1/results/summary.json": {
+      "bytes": 579773,
+      "sha256": "f99c1b09cede1789d7168d64ad1e2fd8de0c25382e36e8ce2a935a1355417ef4"
+    },
+    "native-balanced/training-r1/results/training.json": {
+      "bytes": 15253544,
+      "sha256": "a98e61c59bed1ee0e95396ef61c610a2def4ad7c767fbbfaeb384ffdc29d4b59"
+    },
+    "paraphrase-pin-failed/experiment-source/scripts/ops/autoencoder/prepare_training_paraphrases.py": {
+      "bytes": 10311,
+      "sha256": "7d877c24794f0cbefde64e6f1d229bbc8fd0238825fb68adc462af561d2905ed"
+    },
+    "paraphrase-pin-failed/experiment-source/tests/unit/logic/formalization/autoencoder/test_authored_training_paraphrases.py": {
+      "bytes": 8469,
+      "sha256": "10727782cc9788c5651a66f286466b384cd24ad452ce870702aa198a556d45f6"
+    },
+    "paraphrase-pin-failed/owned-source-publication.json": {
+      "bytes": 813,
+      "sha256": "9eec90da4d4887f223707be50a41f26226b787994341fed9c7c67a4193157f63"
+    },
+    "paraphrase-pin-failed/preparation-manifest.json": {
+      "bytes": 258818,
+      "sha256": "a270dfdac492a90cd11356c8fc27f69fa65ae01d260a3d96d0b2729d552ddcdb"
+    },
+    "paraphrase-pin-failed/preparation-plan.json": {
+      "bytes": 195428,
+      "sha256": "ad8c102734acd5dabb9095b200dcdf5908479724a3ae0f910522ec05e5d94799"
+    },
+    "paraphrase-pin-failed/preparation-r1-guardian-exit.json": {
+      "bytes": 63,
+      "sha256": "724330163955b7ebd4b1feb5d5b613002b292ddc65f5b50f0ab1f30511eb6e5a"
+    },
+    "paraphrase-pin-failed/preparation-r1-lease-observations.jsonl": {
+      "bytes": 16860,
+      "sha256": "12d3c86c62ffc208c8cb18688a1053f3187687028f57ef5b67401e8fe9d2fc32"
+    },
+    "paraphrase-pin-failed/preparation-r1-scheduler-adoption.json": {
+      "bytes": 4645,
+      "sha256": "e828673ec67da64b2d2810ebd1cb79829b8f647b36a9d4a3c261ebed28a14da8"
+    },
+    "paraphrase-pin-failed/preparation-r1/child-exit.json": {
+      "bytes": 325,
+      "sha256": "4b12225407b7369b0714220a131530c1475801cbac0f7b6ad5d446e4e9041ae8"
+    },
+    "paraphrase-pin-failed/preparation-r1/child-identity.json": {
+      "bytes": 43,
+      "sha256": "c00a3ab6c1cacdfda3119b099febb5fa7ceef3bd9bcb2861d17310abd976e315"
+    },
+    "paraphrase-pin-failed/preparation-r1/child.log": {
+      "bytes": 3921,
+      "sha256": "87b1a84e9e72c9208f6a6baba3d9e1b8be7e239657486ed2c94b4a15c724a8c4"
+    },
+    "paraphrase-pin-failed/preparation-r1/command.json": {
+      "bytes": 6435,
+      "sha256": "01cf4079a40da1ea05b24dbf1cba3206bd961ce1a7c406e941f8af1204b30b90"
+    },
+    "paraphrase-pin-failed/preparation-r1/failure-primary.json": {
+      "bytes": 3166,
+      "sha256": "ebbddb191975ea3d4441bcadb178ef438b7a62fb14f2c9e748fd855e03345dac"
+    },
+    "paraphrase-pin-failed/preparation-r1/failure.json": {
+      "bytes": 4144,
+      "sha256": "5ad078b7bef429dcf2b58127dc658f022f90e54456a0a5ff98ed83144665132f"
+    },
+    "paraphrase-pin-failed/preparation-r1/lease-binding.json": {
+      "bytes": 693,
+      "sha256": "25997f43b5073b9da0a94dc5f61cbb650f468167d2a3241ecc7040c8d9f30ce6"
+    },
+    "paraphrase-pin-failed/preparation-r1/resources-start.json": {
+      "bytes": 3181,
+      "sha256": "dc1e307393d20e33af83e69022afada016213e4d82946682e9d0e1c2628c22de"
+    },
+    "paraphrase-pin-failed/tests.json": {
+      "bytes": 830,
+      "sha256": "296c86afef75fccf0a898601c80f82b2793814d5aa8f0dd0e772eac252c95440"
+    },
+    "paraphrase-pin-failed/tests.log": {
+      "bytes": 1165,
+      "sha256": "d5fe0b87f0001f3b79a5fdac98c457d3ee812448b7ce3bcbb1bc5b301146e8fa"
+    },
+    "paraphrase-pin-failed/tests.xml": {
+      "bytes": 8084,
+      "sha256": "dbeead03ba3a54d4ee000757b3ebde9615eda2d5eaedeabb33418be444f21ec9"
+    },
+    "paraphrase-preparation/freeze.py": {
+      "bytes": 4912,
+      "sha256": "60839d93fd8cbb70d45dd5640cc574654e5deb524582fc3fcf9339a562b87d2f"
+    },
+    "paraphrase-preparation/independent-preparation-review.json": {
+      "bytes": 239856,
+      "sha256": "c93ed1a3b098398f2b3b56c8a9de7c549d49ca701a99ba501a17c8544a300cda"
+    },
+    "paraphrase-preparation/preparation-manifest.json": {
+      "bytes": 259103,
+      "sha256": "2bd79a47f79b22a767180dc2e088b962461dc9a77077d848933bf238a7ca3f2d"
+    },
+    "paraphrase-preparation/preparation-plan.json": {
+      "bytes": 195428,
+      "sha256": "e384d2bc066ff356a0b9aeb8cc06d5c73212fc4ec4864f1dc89140d2585afce0"
+    },
+    "paraphrase-preparation/preparation-r1-guardian-exit.json": {
+      "bytes": 62,
+      "sha256": "5c85b47d285bb41d8f2aa7652dc4659c1fe1cbbb20574e245e922ba641f74938"
+    },
+    "paraphrase-preparation/preparation-r1-lease-observations.jsonl": {
+      "bytes": 57861,
+      "sha256": "e75a6252aacf9e288e85cb3e0b8cc5511ac7e6d32b418b23d93d6369cadb79d2"
+    },
+    "paraphrase-preparation/preparation-r1-scheduler-adoption.json": {
+      "bytes": 4645,
+      "sha256": "41b09937640cb0185492282ab5f6ef42e8554527111958e8e1247849860e6c11"
+    },
+    "paraphrase-preparation/preparation-r1/child-exit.json": {
+      "bytes": 323,
+      "sha256": "5e5389ff7f5842ca030565490099ea6882614105db0249ece76be24357831066"
+    },
+    "paraphrase-preparation/preparation-r1/child-identity.json": {
+      "bytes": 43,
+      "sha256": "c1dc837a9468ce715db28c5f5a5dd4da28a18d80dbe636eda743e20d3f9af1de"
+    },
+    "paraphrase-preparation/preparation-r1/child.log": {
+      "bytes": 2531,
+      "sha256": "b036dcae47fe5e3318c96e8cded34b62cc25f8e4721bd1d0fc7d87936083bbc9"
+    },
+    "paraphrase-preparation/preparation-r1/command.json": {
+      "bytes": 6435,
+      "sha256": "6ef33bc543878d4e3eb8eb4a8dea932394748326135995202be4f100f97e9c62"
+    },
+    "paraphrase-preparation/preparation-r1/lease-binding.json": {
+      "bytes": 693,
+      "sha256": "8e132490989d41e15b342c3260a984f03e9e42680500d78c0a0313d1cb25f449"
+    },
+    "paraphrase-preparation/preparation-r1/resource-observations.json": {
+      "bytes": 2620,
+      "sha256": "c91dfd063916ad7a2345af8fd540f21b0da98f646ea0e0bb6dddf58c23dcba01"
+    },
+    "paraphrase-preparation/preparation-r1/resources-final.json": {
+      "bytes": 5839,
+      "sha256": "6147e64be3f1e5ba87034f93835ffad7ceacd5c1ed05b2c662dd5f40db005238"
+    },
+    "paraphrase-preparation/preparation-r1/resources-start.json": {
+      "bytes": 3180,
+      "sha256": "765afd6e7b41b031a8c5a5366c213ac32e9a7bb7c9c0518d112cbf105889410b"
+    },
+    "paraphrase-preparation/preparation-r1/results/dimension-inputs-384.json": {
+      "bytes": 3406508,
+      "sha256": "6c7f6cf44140f6608b456c8117f845516edc60c0ff0e7248c9b1c321389899b3"
+    },
+    "paraphrase-preparation/preparation-r1/results/dimension-inputs-768.json": {
+      "bytes": 6723600,
+      "sha256": "355a379986f98c7908bf25e7d28a58c865565cbd9b7e8e7cc9fc65ee0b04361a"
+    },
+    "paraphrase-preparation/preparation-r1/results/original-training-bank-used.json": {
+      "bytes": 38792,
+      "sha256": "97a928de6fb124cf01ea24fefa7ac43c94352de748354422fdcdb35f34216b10"
+    },
+    "paraphrase-preparation/preparation-r1/results/prior-source-inventories.json": {
+      "bytes": 118378,
+      "sha256": "b9cdf4cb6526cf102656667a2b3ff3d78c21c39093c56beba3ecb1a4409dbf8f"
+    },
+    "paraphrase-preparation/preparation-r1/results/production-384.json": {
+      "bytes": 2766871,
+      "sha256": "8666ce6e1df0c8332a61d2519700f7f0ecfb2a1af80cb47531e885dfb06c791d"
+    },
+    "paraphrase-preparation/preparation-r1/results/production-768.json": {
+      "bytes": 7282243,
+      "sha256": "6002b29f9095a279691592e98ee7e717c41082bfe2e399f0ee3729f961a51b16"
+    },
+    "paraphrase-preparation/preparation-r1/results/source-plan.json": {
+      "bytes": 129499,
+      "sha256": "b4b08d2b1f054ff35eb0daad0ebe6475abf4efe7bf4f967042c38e04f6ff39a8"
+    },
+    "paraphrase-preparation/preparation-r1/results/source-rows.json": {
+      "bytes": 16724,
+      "sha256": "cc95f19cbc645a38e908baa02c521e3416f6c2b8775c523b5e7c871c13733727"
+    },
+    "paraphrase-preparation/preparation-r1/results/source384-artifacts/training-source-texts.txt": {
+      "bytes": 21604,
+      "sha256": "fd4402820aaf045da70de512235cc46e3ba9454aaa295c0668d06da7fcd11f4d"
+    },
+    "paraphrase-preparation/preparation-r1/results/summary.json": {
+      "bytes": 31087,
+      "sha256": "1da1dfdcd9417b5fc219a0fdf071720cafdddd17456e06067f1e658ab448c54d"
+    },
+    "paraphrase-preparation/preparation-r1/results/training-corpus-receipt.json": {
+      "bytes": 3624,
+      "sha256": "c61ca27f5d01fbc5d9e9449f8c32edee4d93dcf8034c6d1f4ca9eb7b9b112156"
+    },
+    "paraphrase-preparation/preparation-r1/results/training-references.json": {
+      "bytes": 206528,
+      "sha256": "bf390f9ec51085f6a8320c4186b189734b8449288321db9795ca3bc51c3716ee"
+    },
+    "paraphrase-preparation/test-reuse.json": {
+      "bytes": 280,
+      "sha256": "aee8ecdfd09e3bd0e654b1150edf24588e48cc462bb4bc568ce567245409053d"
+    },
+    "paraphrase-startup-failed/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/authored_training_paraphrases.py": {
+      "bytes": 9718,
+      "sha256": "9644f86159fecd0d9a1bb8599e06dacfcbba2581db98a990b0e224ebb8de8513"
+    },
+    "paraphrase-startup-failed/experiment-source/tests/unit/logic/formalization/autoencoder/test_authored_training_paraphrases.py": {
+      "bytes": 7127,
+      "sha256": "c1808804306992eecc54869a16b9c040b231dda48dd24570bdb623d6fac97547"
+    },
+    "paraphrase-startup-failed/owned-source-publication.json": {
+      "bytes": 813,
+      "sha256": "7ad8c7711e232a2f7d444f6a1db6c0d4b34418802cffa670140b165f5f9d510f"
+    },
+    "paraphrase-startup-failed/preparation-manifest.json": {
+      "bytes": 258818,
+      "sha256": "94c2b118139ac7b2a71563f0218dd423ed370510d7ea48163843255d5cb434da"
+    },
+    "paraphrase-startup-failed/preparation-plan.json": {
+      "bytes": 195428,
+      "sha256": "c85d24653368b6731b9f30b13c0a958138e080e9d952da82b959c8953d261ffb"
+    },
+    "paraphrase-startup-failed/preparation-r1-guardian-exit.json": {
+      "bytes": 62,
+      "sha256": "35f60e9ca41a35402b4246088d7dfe223de60837f215d1c349219a51b2afe98f"
+    },
+    "paraphrase-startup-failed/preparation-r1-guardian.log": {
+      "bytes": 477,
+      "sha256": "a145e573f47ed506f3b7a3ae8dd727560316eac3d18dafe5ecca852aa4928efd"
+    },
+    "paraphrase-startup-failed/preparation-r1-lease-observations.jsonl": {
+      "bytes": 16855,
+      "sha256": "a5896f8818684095c25a1fc31fff444531091f4ccf1ce74eda0d05e2fee0858c"
+    },
+    "paraphrase-startup-failed/preparation-r1-scheduler-adoption.json": {
+      "bytes": 4644,
+      "sha256": "a8ceda9bdaedf65621778384496618f4f71453f96ce82d531f74047830d69a28"
+    },
+    "paraphrase-startup-failed/preparation-r1/child-exit.json": {
+      "bytes": 325,
+      "sha256": "fcaaedc687ad1e52b5be688708aebb0c921d630f3413cbc5949526bb621956e0"
+    },
+    "paraphrase-startup-failed/preparation-r1/child-identity.json": {
+      "bytes": 42,
+      "sha256": "65b21c1fec72d21636c54c7e8640fe16b17b4b827bb3482381b5fcf8ea0f7013"
+    },
+    "paraphrase-startup-failed/preparation-r1/child.log": {
+      "bytes": 3447,
+      "sha256": "73e00285f1e572fe09e12d76d091c44f372269416aeee8df6e627148fda6b3d0"
+    },
+    "paraphrase-startup-failed/preparation-r1/command.json": {
+      "bytes": 6434,
+      "sha256": "7ab6da9b8b7cda449bfa591a7251b4b6414eb2813e649f6bbc26fe4b9df2e252"
+    },
+    "paraphrase-startup-failed/preparation-r1/failure-primary.json": {
+      "bytes": 3161,
+      "sha256": "fe511c441751e0f62efe3b2e5844d3627f2296e0488e8d3d346fcc582a46c7f5"
+    },
+    "paraphrase-startup-failed/preparation-r1/failure.json": {
+      "bytes": 4139,
+      "sha256": "7019a237fc758e9d9dad3dba923666bc8257a79991f4ba9b47eac983fd324e90"
+    },
+    "paraphrase-startup-failed/preparation-r1/lease-binding.json": {
+      "bytes": 692,
+      "sha256": "ba77c0ce4057154b14598db10422706b4b748c70ba43396c237eb54ed848b3b3"
+    },
+    "paraphrase-startup-failed/preparation-r1/resources-start.json": {
+      "bytes": 3177,
+      "sha256": "13778c774ae6bf5b109c9bbfea79fce783dfc5d28b33f6dd0a88d6d5228d0aca"
+    },
+    "paraphrase-startup-failed/tests.json": {
+      "bytes": 830,
+      "sha256": "36a556dc42f059e68e6c0be876339bc47280ebb7ad5bd26ea11187d366086187"
+    },
+    "paraphrase-startup-failed/tests.log": {
+      "bytes": 1165,
+      "sha256": "bbbfb60ba73b905ef2340aaa115487e5780f0b2bd06563df9b2965fd91db5822"
+    },
+    "paraphrase-startup-failed/tests.xml": {
+      "bytes": 7341,
+      "sha256": "2a79b4a27c1059684222c86e2e88bc763dd882ea5f0e3a177cbf897a9c47f9e3"
+    },
+    "paraphrase-unexecuted/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/authored_training_paraphrases.py": {
+      "bytes": 8567,
+      "sha256": "869fa13befff3ffc2a51c853ce8ac0e44f1b9be92de7ffd31ad30d6ef375edac"
+    },
+    "paraphrase-unexecuted/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/training_paraphrase_source_inputs.py": {
+      "bytes": 9145,
+      "sha256": "5c0d4571b87d4b3b82be3bae11ff08599f2a5d09c4465a8315641a05d1657649"
+    },
+    "paraphrase-unexecuted/experiment-source/scripts/ops/autoencoder/prepare_training_paraphrases.py": {
+      "bytes": 9891,
+      "sha256": "926368b87f499a29a4cbe1f1abb1e9581bbc03237ad04c67ed2c96955a305eee"
+    },
+    "paraphrase-unexecuted/experiment-source/tests/unit/logic/formalization/autoencoder/test_authored_training_paraphrases.py": {
+      "bytes": 6508,
+      "sha256": "8eafdb0d420ba2c4894b1df549e03d6f4edd8f7d0d5c8b05de57abf381b1f61b"
+    },
+    "paraphrase-unexecuted/freeze.py": {
+      "bytes": 4635,
+      "sha256": "ae3d41a5d98ff23567ce20833519a2f598a2b56611cc04787ccb8f90d05f6521"
+    },
+    "paraphrase-unexecuted/owned-source-publication.json": {
+      "bytes": 813,
+      "sha256": "3805685d68efc7b7330ba10bd3add18374a074a2e2d03e060c3fda4c4e511e55"
+    },
+    "paraphrase-unexecuted/preparation-manifest.json": {
+      "bytes": 258791,
+      "sha256": "b62a44f233e679e601c0c082f88c8177c90eb47022bd843f5287b80b857c4065"
+    },
+    "paraphrase-unexecuted/preparation-plan.json": {
+      "bytes": 195401,
+      "sha256": "69a1255d461bd0696a9722fd8a203cf6882a934d68a899654fc8f3074dc5b954"
+    },
+    "paraphrase-unexecuted/run_reserved.py": {
+      "bytes": 16671,
+      "sha256": "134d69200457393bdbfd80fd37d31688d99158356a8d1f0f4b1b71d880a8843d"
+    },
+    "paraphrase-unexecuted/tests.json": {
+      "bytes": 820,
+      "sha256": "a92afd99cd0d3e834694ac238fc9f7d02ba1073ab5b9ef7c70ccb5b21bfecb90"
+    },
+    "paraphrase-unexecuted/tests.log": {
+      "bytes": 1162,
+      "sha256": "7437a0e69745662e6f231911bee86bcd9f4b264baa5c6802c562e1ca7bae78ff"
+    },
+    "paraphrase-unexecuted/tests.xml": {
+      "bytes": 6586,
+      "sha256": "08752068bc83c1063fe0c5211efaa29b121653496f9431319ada069b197d08bb"
+    },
+    "paraphrase-unexecuted/unexecuted-superseded.json": {
+      "bytes": 474,
+      "sha256": "e91578a4d3aa185c5b7dd6c51b9746739557fc8366a7dc082d36f79bd22f4143"
+    },
+    "publication/archive-inventory.json": {
+      "bytes": 204510,
+      "sha256": "b68563b17e11a86fb07ea8647c055dcda0e34535cc8a962024d5f9fdf360f763"
+    },
+    "publication/archive_helpers.py": {
+      "bytes": 2822,
+      "sha256": "5613458f73112f935124c2a6cf85b6cf36a2e151b35c44afea023accb68e3f44"
+    },
+    "publication/build_evidence.py": {
+      "bytes": 9643,
+      "sha256": "9d78c8c6e4b739c156535c4bdd22fa839baf9d9bb3e953b944c925242fdef1de"
+    },
+    "publication/documentation-review.json": {
+      "bytes": 13786,
+      "sha256": "59b761361f0764a4e966140aae7f4a5433485c7d50960d684e96c53703b877c8"
+    },
+    "publication/inventory_evidence.py": {
+      "bytes": 6634,
+      "sha256": "1e002ab725dcd680def619398cf2cd4a53f745b131e8c21d1c811ed30356948a"
+    },
+    "publication/public-readme.txt": {
+      "bytes": 2175,
+      "sha256": "3023fc3094bbce35e5c71e4cf77222d80b46061e3c2ef54a7fbaf7f85a79d9c6"
+    },
+    "publication/publication-readiness.json": {
+      "bytes": 16466,
+      "sha256": "443a946eade39ce1c6808b9b2dd0c17e9eebe38c26d4ddce1d0ac745f4a911d4"
+    },
+    "publication/publish_results.py": {
+      "bytes": 6494,
+      "sha256": "de2c2784177197340332101e86fb2e600ab8f51c70f0535085636acef342bd55"
+    },
+    "publication/results-before-independent-preparation-binding.json": {
+      "bytes": 26046,
+      "sha256": "cfc0201a4f96349d0a15be9f8691b54cd5180db349be516e36ee277f5582a563"
+    },
+    "publication/results.json": {
+      "bytes": 26924,
+      "sha256": "2cca4ec7083e0719f8d71540849a9267e79d75c8db4b76c5665049f1b70b57f7"
+    },
+    "publication/source-review-r2.json": {
+      "bytes": 10572,
+      "sha256": "09e39e4756b9fe06d36368007439857d28554a1276ad4a0c801fa68e6cabd973"
+    },
+    "publication/source-review-r3.json": {
+      "bytes": 10712,
+      "sha256": "81261f98d1ef003ebc712c1f41c525dc4fee94bb362bd0c120e953cfee0b762a"
+    },
+    "publication/source-review.json": {
+      "bytes": 10456,
+      "sha256": "184d0da0b0522c99273d37562ae3c6f14b47256e1ed956520a11377d998ef710"
+    },
+    "publication/source-scope-final-r2.json": {
+      "bytes": 9828,
+      "sha256": "eaa7ffa0091fddb4bf2162a2dca3d2fd393c05017c946889fbd99ee8d4553ac0"
+    },
+    "publication/source-scope-final-r3.json": {
+      "bytes": 9828,
+      "sha256": "6bac8753d401e08ef6abbe82e173e5e433810897b0a9b01e51bd7fde5ef92c89"
+    },
+    "publication/source-scope-final.json": {
+      "bytes": 9828,
+      "sha256": "a291a7398814b649db55a6d05a17f2289bed41bf74ffada438abe40db2192166"
+    }
+  },
+  "native_external_identity_policy": "exact build/native owner manifests and source Git revisions retained; native binaries and pretrained model content remain external",
+  "numerical_source_policy": "all historical executed frozen snapshots retained; publication candidate source inventory is separate",
+  "original_artifact_archive_paths": {
+    "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/four_width_training.md": "documentation/four_width_training.md",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-generalization-review-20261004/audit_eight_preconditioning.py": "independent-review/audit_eight_preconditioning.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-generalization-review-20261004/audit_geometry_correction.py": "independent-review/audit_geometry_correction.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-generalization-review-20261004/audit_native_balanced.py": "independent-review/audit_native_balanced.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-generalization-review-20261004/audit_preparation_failures.py": "independent-review/audit_preparation_failures.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-generalization-review-20261004/audit_training_preparation.py": "independent-review/audit_training_preparation.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-generalization-review-20261004/build_eight_audit.py": "independent-review/build_eight_audit.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-generalization-review-20261004/build_native_audit.py": "independent-review/build_native_audit.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-generalization-review-20261004/eight-preconditioning-design-review.json": "independent-review/eight-preconditioning-design-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-generalization-review-20261004/eight-preconditioning-freeze-review.json": "independent-review/eight-preconditioning-freeze-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-generalization-review-20261004/geometry-erratum-review.json": "independent-review/geometry-erratum-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-generalization-review-20261004/native-balanced-design-review.json": "independent-review/native-balanced-design-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-generalization-review-20261004/native-balanced-freeze-review.json": "independent-review/native-balanced-freeze-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-generalization-review-20261004/normal-git-state.json": "independent-review/normal-git-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-generalization-review-20261004/preparation-failed-lifecycle-review.json": "independent-review/preparation-failed-lifecycle-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-generalization-review-20261004/protected-checkpoint.json": "independent-review/protected-checkpoint.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-generalization-review-20261004/review_final_packet.py": "independent-review/review_final_packet.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-generalization-review-20261004/train-paraphrase-preparation-r2-review.json": "independent-review/train-paraphrase-preparation-r2-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-generalization-review-20261004/train-paraphrase-preparation-r3-review.json": "independent-review/train-paraphrase-preparation-r3-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-generalization-review-20261004/train-paraphrase-preparation-r4-review.json": "independent-review/train-paraphrase-preparation-r4-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-generalization-review-20261004/train-paraphrase-preparation-review-superseded.json": "independent-review/train-paraphrase-preparation-review-superseded.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-generalization-review-20261004/train-paraphrase-preparation-review.json": "independent-review/train-paraphrase-preparation-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-generalization-review-20261004/upstream-source-review.json": "independent-review/upstream-source-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/adopt_shared_scheduler.py": "native-balanced/adopt_shared_scheduler.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/analyze_results.py": "eight-preconditioning/analyze_results.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/code-files.json": "eight-preconditioning/code-files.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/correct_geometry.py": "eight-preconditioning/correct_geometry.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/correction-tests.log": "eight-preconditioning/correction-tests.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/correction-tests.xml": "eight-preconditioning/correction-tests.xml",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/eight_dimensional_head_rate_experiment.py": "eight-preconditioning/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/eight_dimensional_head_rate_experiment.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/long_span_source_value_training.py": "eight-preconditioning/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/long_span_source_value_training.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/source_gradient_preconditioning.py": "eight-preconditioning/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/source_gradient_preconditioning.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/experiment-source/scripts/ops/autoencoder/benchmark_eight_dimensional_head_rate.py": "eight-preconditioning/experiment-source/scripts/ops/autoencoder/benchmark_eight_dimensional_head_rate.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/experiment-source/scripts/ops/autoencoder/benchmark_eight_dimensional_preconditioning.py": "eight-preconditioning/experiment-source/scripts/ops/autoencoder/benchmark_eight_dimensional_preconditioning.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/experiment-source/tests/unit/logic/formalization/autoencoder/test_eight_dimensional_head_rate_experiment.py": "eight-preconditioning/experiment-source/tests/unit/logic/formalization/autoencoder/test_eight_dimensional_head_rate_experiment.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/experiment-source/tests/unit/logic/formalization/autoencoder/test_eight_dimensional_preconditioning_runner.py": "eight-preconditioning/experiment-source/tests/unit/logic/formalization/autoencoder/test_eight_dimensional_preconditioning_runner.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/experiment-source/tests/unit/logic/formalization/autoencoder/test_source_gradient_preconditioning.py": "eight-preconditioning/experiment-source/tests/unit/logic/formalization/autoencoder/test_source_gradient_preconditioning.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/freeze-receipt.json": "eight-preconditioning/freeze-receipt.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/geometry-erratum.json": "eight-preconditioning/geometry-erratum.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/independent-preconditioning-review-attempt1.json": "eight-preconditioning/independent-preconditioning-review-attempt1.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/independent-preconditioning-review.json": "eight-preconditioning/independent-preconditioning-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/launch_phase.py": "eight-preconditioning/launch_phase.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/lazy_scheduler_adoption.py": "native-balanced/lazy_scheduler_adoption.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/next-384-768-paraphrase-comparison.txt": "eight-preconditioning/next-384-768-paraphrase-comparison.txt",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/owned-edit-preimages.json": "eight-preconditioning/owned-edit-preimages.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/owned-source-publication.json": "eight-preconditioning/owned-source-publication.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/owned_lease_watchdog.py": "native-balanced/owned_lease_watchdog.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/preconditioning-tests-attempt1.log": "eight-preconditioning/preconditioning-tests-attempt1.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/preconditioning-tests-attempt1.xml": "eight-preconditioning/preconditioning-tests-attempt1.xml",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/preflight-r1-guardian-exit.json": "eight-preconditioning/preflight-r1-guardian-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/preflight-r1-guardian.log": "eight-preconditioning/preflight-r1-guardian.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/preflight-r1-lease-observations.jsonl": "eight-preconditioning/preflight-r1-lease-observations.jsonl",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/preflight-r1-scheduler-adoption.json": "eight-preconditioning/preflight-r1-scheduler-adoption.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/preflight-r1/child-exit.json": "eight-preconditioning/preflight-r1/child-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/preflight-r1/child-identity.json": "eight-preconditioning/preflight-r1/child-identity.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/preflight-r1/child.log": "eight-preconditioning/preflight-r1/child.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/preflight-r1/command.json": "eight-preconditioning/preflight-r1/command.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/preflight-r1/lease-binding.json": "eight-preconditioning/preflight-r1/lease-binding.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/preflight-r1/resources-final.json": "eight-preconditioning/preflight-r1/resources-final.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/preflight-r1/resources-start.json": "eight-preconditioning/preflight-r1/resources-start.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/preflight-r1/results/8/preprocessing.json": "eight-preconditioning/training-r1/results/8/preprocessing.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/preflight-r1/results/8/source-contexts.json": "eight-preconditioning/training-r1/results/8/source-contexts.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/preflight-r1/results/8/training-rows.json": "eight-preconditioning/training-r1/results/8/training-rows.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/preflight-r1/results/identity-preconditioner/parent-validation.json": "eight-preconditioning/preflight-r1/results/identity-preconditioner/parent-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/preflight-r1/results/identity-preconditioner/preconditioner.json": "eight-preconditioning/preflight-r1/results/identity-preconditioner/preconditioner.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/preflight-r1/results/sealed-recipe.json": "eight-preconditioning/training-r1/results/sealed-recipe.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/preflight-r1/results/source-geometry.json": "eight-preconditioning/training-r1/results/source-geometry.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/preflight-r1/results/summary.json": "eight-preconditioning/preflight-r1/results/summary.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/preflight-r1/results/train-covariance-preconditioner/parent-validation.json": "eight-preconditioning/preflight-r1/results/train-covariance-preconditioner/parent-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/preflight-r1/results/train-covariance-preconditioner/preconditioner.json": "eight-preconditioning/preflight-r1/results/train-covariance-preconditioner/preconditioner.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/preimage/benchmark_eight_dimensional_head_rate.py": "eight-preconditioning/preimage/benchmark_eight_dimensional_head_rate.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/preimage/eight_dimensional_head_rate_experiment.py": "eight-preconditioning/preimage/eight_dimensional_head_rate_experiment.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/preimage/long_span_source_value_training.py": "eight-preconditioning/preimage/long_span_source_value_training.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/preimage/test_eight_dimensional_head_rate_experiment.py": "eight-preconditioning/preimage/test_eight_dimensional_head_rate_experiment.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/prepare_freeze.py": "eight-preconditioning/prepare_freeze.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/proposed-guide-append.md": "eight-preconditioning/proposed-guide-append.md",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/results.json": "eight-preconditioning/results.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/run_reserved.py": "eight-preconditioning/run_reserved.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/runner-tests.log": "eight-preconditioning/runner-tests.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/runner-tests.xml": "eight-preconditioning/runner-tests.xml",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/test_lazy_scheduler_adoption.py": "eight-preconditioning/test_lazy_scheduler_adoption.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/tests-focused-final.log": "eight-preconditioning/tests-focused-final.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/tests-focused-final.xml": "eight-preconditioning/tests-focused-final.xml",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-manifest.json": "eight-preconditioning/training-manifest.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-plan.json": "eight-preconditioning/training-plan.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1-guardian-exit.json": "eight-preconditioning/training-r1-guardian-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1-guardian.log": "eight-preconditioning/training-r1-guardian.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1-lease-observations.jsonl": "eight-preconditioning/training-r1-lease-observations.jsonl",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1-scheduler-adoption.json": "eight-preconditioning/training-r1-scheduler-adoption.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/child-exit.json": "eight-preconditioning/training-r1/child-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/child-identity.json": "eight-preconditioning/training-r1/child-identity.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/child.log": "eight-preconditioning/training-r1/child.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/command.json": "eight-preconditioning/training-r1/command.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/lease-binding.json": "eight-preconditioning/training-r1/lease-binding.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/resource-observations.json": "eight-preconditioning/training-r1/resource-observations.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/resources-final.json": "eight-preconditioning/training-r1/resources-final.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/resources-start.json": "eight-preconditioning/training-r1/resources-start.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/8/preprocessing.json": "eight-preconditioning/training-r1/results/8/preprocessing.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/8/source-contexts.json": "eight-preconditioning/training-r1/results/8/source-contexts.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/8/training-rows.json": "eight-preconditioning/training-r1/results/8/training-rows.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/identity-preconditioner/initial-state.json": "eight-preconditioning/training-r1/results/identity-preconditioner/initial-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/identity-preconditioner/last-attempt-state.json": "eight-preconditioning/training-r1/results/identity-preconditioner/last-attempt-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/identity-preconditioner/last-attempt/evaluation-context-only-shuffle.json": "eight-preconditioning/training-r1/results/identity-preconditioner/last-attempt/evaluation-context-only-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/identity-preconditioner/last-attempt/evaluation-context-reverse.json": "eight-preconditioning/training-r1/results/identity-preconditioner/last-attempt/evaluation-context-reverse.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/identity-preconditioner/last-attempt/evaluation-context-rotate.json": "eight-preconditioning/training-r1/results/identity-preconditioner/last-attempt/evaluation-context-rotate.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/identity-preconditioner/last-attempt/evaluation-cross-length-shuffle.json": "eight-preconditioning/training-r1/results/identity-preconditioner/last-attempt/evaluation-cross-length-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/identity-preconditioner/last-attempt/evaluation-recurrent-residual-off.json": "eight-preconditioning/training-r1/results/identity-preconditioner/last-attempt/evaluation-recurrent-residual-off.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/identity-preconditioner/last-attempt/evaluation-source-shuffle.json": "eight-preconditioning/training-r1/results/identity-preconditioner/last-attempt/evaluation-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/identity-preconditioner/last-attempt/evaluation-training.json": "eight-preconditioning/training-r1/results/identity-preconditioner/last-attempt/evaluation-training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/identity-preconditioner/last-attempt/evaluation-validation.json": "eight-preconditioning/training-r1/results/identity-preconditioner/last-attempt/evaluation-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/identity-preconditioner/last-attempt/evaluation-zero-condition.json": "eight-preconditioning/training-r1/results/identity-preconditioner/last-attempt/evaluation-zero-condition.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/identity-preconditioner/parent-validation.json": "eight-preconditioning/training-r1/results/identity-preconditioner/parent-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/identity-preconditioner/selected-state.json": "eight-preconditioning/training-r1/results/identity-preconditioner/selected-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/identity-preconditioner/selected/evaluation-context-only-shuffle.json": "eight-preconditioning/training-r1/results/identity-preconditioner/selected/evaluation-context-only-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/identity-preconditioner/selected/evaluation-context-reverse.json": "eight-preconditioning/training-r1/results/identity-preconditioner/selected/evaluation-context-reverse.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/identity-preconditioner/selected/evaluation-context-rotate.json": "eight-preconditioning/training-r1/results/identity-preconditioner/selected/evaluation-context-rotate.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/identity-preconditioner/selected/evaluation-cross-length-shuffle.json": "eight-preconditioning/training-r1/results/identity-preconditioner/selected/evaluation-cross-length-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/identity-preconditioner/selected/evaluation-recurrent-residual-off.json": "eight-preconditioning/training-r1/results/identity-preconditioner/selected/evaluation-recurrent-residual-off.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/identity-preconditioner/selected/evaluation-source-shuffle.json": "eight-preconditioning/training-r1/results/identity-preconditioner/selected/evaluation-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/identity-preconditioner/selected/evaluation-training.json": "eight-preconditioning/training-r1/results/identity-preconditioner/selected/evaluation-training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/identity-preconditioner/selected/evaluation-validation.json": "eight-preconditioning/training-r1/results/identity-preconditioner/selected/evaluation-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/identity-preconditioner/selected/evaluation-zero-condition.json": "eight-preconditioning/training-r1/results/identity-preconditioner/selected/evaluation-zero-condition.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/identity-preconditioner/summary.json": "eight-preconditioning/training-r1/results/identity-preconditioner/summary.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/identity-preconditioner/training.json": "eight-preconditioning/training-r1/results/identity-preconditioner/training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/sealed-recipe.json": "eight-preconditioning/training-r1/results/sealed-recipe.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/source-geometry.json": "eight-preconditioning/training-r1/results/source-geometry.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/summary.json": "eight-preconditioning/training-r1/results/summary.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/train-covariance-preconditioner/initial-state.json": "eight-preconditioning/training-r1/results/train-covariance-preconditioner/initial-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/train-covariance-preconditioner/last-attempt-state.json": "eight-preconditioning/training-r1/results/train-covariance-preconditioner/last-attempt-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/train-covariance-preconditioner/last-attempt/evaluation-context-only-shuffle.json": "eight-preconditioning/training-r1/results/train-covariance-preconditioner/last-attempt/evaluation-context-only-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/train-covariance-preconditioner/last-attempt/evaluation-context-reverse.json": "eight-preconditioning/training-r1/results/train-covariance-preconditioner/last-attempt/evaluation-context-reverse.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/train-covariance-preconditioner/last-attempt/evaluation-context-rotate.json": "eight-preconditioning/training-r1/results/train-covariance-preconditioner/last-attempt/evaluation-context-rotate.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/train-covariance-preconditioner/last-attempt/evaluation-cross-length-shuffle.json": "eight-preconditioning/training-r1/results/train-covariance-preconditioner/last-attempt/evaluation-cross-length-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/train-covariance-preconditioner/last-attempt/evaluation-recurrent-residual-off.json": "eight-preconditioning/training-r1/results/train-covariance-preconditioner/last-attempt/evaluation-recurrent-residual-off.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/train-covariance-preconditioner/last-attempt/evaluation-source-shuffle.json": "eight-preconditioning/training-r1/results/train-covariance-preconditioner/last-attempt/evaluation-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/train-covariance-preconditioner/last-attempt/evaluation-training.json": "eight-preconditioning/training-r1/results/train-covariance-preconditioner/last-attempt/evaluation-training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/train-covariance-preconditioner/last-attempt/evaluation-validation.json": "eight-preconditioning/training-r1/results/train-covariance-preconditioner/last-attempt/evaluation-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/train-covariance-preconditioner/last-attempt/evaluation-zero-condition.json": "eight-preconditioning/training-r1/results/train-covariance-preconditioner/last-attempt/evaluation-zero-condition.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/train-covariance-preconditioner/parent-validation.json": "eight-preconditioning/training-r1/results/train-covariance-preconditioner/parent-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/train-covariance-preconditioner/selected-state.json": "eight-preconditioning/training-r1/results/train-covariance-preconditioner/selected-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/train-covariance-preconditioner/selected/evaluation-context-only-shuffle.json": "eight-preconditioning/training-r1/results/train-covariance-preconditioner/selected/evaluation-context-only-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/train-covariance-preconditioner/selected/evaluation-context-reverse.json": "eight-preconditioning/training-r1/results/train-covariance-preconditioner/selected/evaluation-context-reverse.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/train-covariance-preconditioner/selected/evaluation-context-rotate.json": "eight-preconditioning/training-r1/results/train-covariance-preconditioner/selected/evaluation-context-rotate.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/train-covariance-preconditioner/selected/evaluation-cross-length-shuffle.json": "eight-preconditioning/training-r1/results/train-covariance-preconditioner/selected/evaluation-cross-length-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/train-covariance-preconditioner/selected/evaluation-recurrent-residual-off.json": "eight-preconditioning/training-r1/results/train-covariance-preconditioner/selected/evaluation-recurrent-residual-off.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/train-covariance-preconditioner/selected/evaluation-source-shuffle.json": "eight-preconditioning/training-r1/results/train-covariance-preconditioner/selected/evaluation-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/train-covariance-preconditioner/selected/evaluation-training.json": "eight-preconditioning/training-r1/results/train-covariance-preconditioner/selected/evaluation-training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/train-covariance-preconditioner/selected/evaluation-validation.json": "eight-preconditioning/training-r1/results/train-covariance-preconditioner/selected/evaluation-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/train-covariance-preconditioner/selected/evaluation-zero-condition.json": "eight-preconditioning/training-r1/results/train-covariance-preconditioner/selected/evaluation-zero-condition.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/train-covariance-preconditioner/summary.json": "eight-preconditioning/training-r1/results/train-covariance-preconditioner/summary.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-eight-source-preconditioning-20261004/training-r1/results/train-covariance-preconditioner/training.json": "eight-preconditioning/training-r1/results/train-covariance-preconditioner/training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-generalization-publication-20261004/archive-inventory.json": "publication/archive-inventory.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-generalization-publication-20261004/archive_helpers.py": "publication/archive_helpers.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-generalization-publication-20261004/build_evidence.py": "publication/build_evidence.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-generalization-publication-20261004/documentation-review.json": "publication/documentation-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-generalization-publication-20261004/inventory_evidence.py": "publication/inventory_evidence.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-generalization-publication-20261004/public-readme.txt": "publication/public-readme.txt",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-generalization-publication-20261004/publication-readiness.json": "publication/publication-readiness.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-generalization-publication-20261004/publish_results.py": "publication/publish_results.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-generalization-publication-20261004/results-before-independent-preparation-binding.json": "publication/results-before-independent-preparation-binding.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-generalization-publication-20261004/results.json": "publication/results.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-generalization-publication-20261004/source-review-r2.json": "publication/source-review-r2.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-generalization-publication-20261004/source-review-r3.json": "publication/source-review-r3.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-generalization-publication-20261004/source-review.json": "publication/source-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-generalization-publication-20261004/source-scope-final-r2.json": "publication/source-scope-final-r2.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-generalization-publication-20261004/source-scope-final-r3.json": "publication/source-scope-final-r3.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-generalization-publication-20261004/source-scope-final.json": "publication/source-scope-final.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-20261004/adopt_shared_scheduler.py": "native-balanced/adopt_shared_scheduler.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/authored_training_paraphrases.py": "paraphrase-unexecuted/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/authored_training_paraphrases.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/training_paraphrase_source_inputs.py": "paraphrase-unexecuted/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/training_paraphrase_source_inputs.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-20261004/experiment-source/scripts/ops/autoencoder/prepare_training_paraphrases.py": "paraphrase-unexecuted/experiment-source/scripts/ops/autoencoder/prepare_training_paraphrases.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-20261004/experiment-source/tests/unit/logic/formalization/autoencoder/test_authored_training_paraphrases.py": "paraphrase-unexecuted/experiment-source/tests/unit/logic/formalization/autoencoder/test_authored_training_paraphrases.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-20261004/freeze.py": "paraphrase-unexecuted/freeze.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-20261004/lazy_scheduler_adoption.py": "native-balanced/lazy_scheduler_adoption.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-20261004/owned-source-publication.json": "paraphrase-unexecuted/owned-source-publication.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-20261004/owned_lease_watchdog.py": "native-balanced/owned_lease_watchdog.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-20261004/preparation-manifest.json": "paraphrase-unexecuted/preparation-manifest.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-20261004/preparation-plan.json": "paraphrase-unexecuted/preparation-plan.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-20261004/run_reserved.py": "paraphrase-unexecuted/run_reserved.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-20261004/tests.json": "paraphrase-unexecuted/tests.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-20261004/tests.log": "paraphrase-unexecuted/tests.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-20261004/tests.xml": "paraphrase-unexecuted/tests.xml",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-20261004/unexecuted-superseded.json": "paraphrase-unexecuted/unexecuted-superseded.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r2-20261004/adopt_shared_scheduler.py": "native-balanced/adopt_shared_scheduler.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r2-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/authored_training_paraphrases.py": "paraphrase-startup-failed/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/authored_training_paraphrases.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r2-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/training_paraphrase_source_inputs.py": "paraphrase-unexecuted/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/training_paraphrase_source_inputs.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r2-20261004/experiment-source/scripts/ops/autoencoder/prepare_training_paraphrases.py": "paraphrase-unexecuted/experiment-source/scripts/ops/autoencoder/prepare_training_paraphrases.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r2-20261004/experiment-source/tests/unit/logic/formalization/autoencoder/test_authored_training_paraphrases.py": "paraphrase-startup-failed/experiment-source/tests/unit/logic/formalization/autoencoder/test_authored_training_paraphrases.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r2-20261004/freeze.py": "paraphrase-unexecuted/freeze.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r2-20261004/lazy_scheduler_adoption.py": "native-balanced/lazy_scheduler_adoption.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r2-20261004/owned-source-publication.json": "paraphrase-startup-failed/owned-source-publication.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r2-20261004/owned_lease_watchdog.py": "native-balanced/owned_lease_watchdog.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r2-20261004/preparation-manifest.json": "paraphrase-startup-failed/preparation-manifest.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r2-20261004/preparation-plan.json": "paraphrase-startup-failed/preparation-plan.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r2-20261004/preparation-r1-guardian-exit.json": "paraphrase-startup-failed/preparation-r1-guardian-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r2-20261004/preparation-r1-guardian.log": "paraphrase-startup-failed/preparation-r1-guardian.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r2-20261004/preparation-r1-lease-observations.jsonl": "paraphrase-startup-failed/preparation-r1-lease-observations.jsonl",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r2-20261004/preparation-r1-scheduler-adoption.json": "paraphrase-startup-failed/preparation-r1-scheduler-adoption.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r2-20261004/preparation-r1/child-exit.json": "paraphrase-startup-failed/preparation-r1/child-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r2-20261004/preparation-r1/child-identity.json": "paraphrase-startup-failed/preparation-r1/child-identity.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r2-20261004/preparation-r1/child.log": "paraphrase-startup-failed/preparation-r1/child.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r2-20261004/preparation-r1/command.json": "paraphrase-startup-failed/preparation-r1/command.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r2-20261004/preparation-r1/failure-primary.json": "paraphrase-startup-failed/preparation-r1/failure-primary.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r2-20261004/preparation-r1/failure.json": "paraphrase-startup-failed/preparation-r1/failure.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r2-20261004/preparation-r1/lease-binding.json": "paraphrase-startup-failed/preparation-r1/lease-binding.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r2-20261004/preparation-r1/resources-start.json": "paraphrase-startup-failed/preparation-r1/resources-start.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r2-20261004/run_reserved.py": "paraphrase-unexecuted/run_reserved.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r2-20261004/tests.json": "paraphrase-startup-failed/tests.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r2-20261004/tests.log": "paraphrase-startup-failed/tests.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r2-20261004/tests.xml": "paraphrase-startup-failed/tests.xml",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r3-20261004/adopt_shared_scheduler.py": "native-balanced/adopt_shared_scheduler.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r3-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/authored_training_paraphrases.py": "paraphrase-startup-failed/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/authored_training_paraphrases.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r3-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/training_paraphrase_source_inputs.py": "paraphrase-unexecuted/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/training_paraphrase_source_inputs.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r3-20261004/experiment-source/scripts/ops/autoencoder/prepare_training_paraphrases.py": "paraphrase-pin-failed/experiment-source/scripts/ops/autoencoder/prepare_training_paraphrases.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r3-20261004/experiment-source/tests/unit/logic/formalization/autoencoder/test_authored_training_paraphrases.py": "paraphrase-pin-failed/experiment-source/tests/unit/logic/formalization/autoencoder/test_authored_training_paraphrases.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r3-20261004/freeze.py": "paraphrase-unexecuted/freeze.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r3-20261004/lazy_scheduler_adoption.py": "native-balanced/lazy_scheduler_adoption.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r3-20261004/owned-source-publication.json": "paraphrase-pin-failed/owned-source-publication.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r3-20261004/owned_lease_watchdog.py": "native-balanced/owned_lease_watchdog.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r3-20261004/preparation-manifest.json": "paraphrase-pin-failed/preparation-manifest.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r3-20261004/preparation-plan.json": "paraphrase-pin-failed/preparation-plan.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r3-20261004/preparation-r1-guardian-exit.json": "paraphrase-pin-failed/preparation-r1-guardian-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r3-20261004/preparation-r1-lease-observations.jsonl": "paraphrase-pin-failed/preparation-r1-lease-observations.jsonl",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r3-20261004/preparation-r1-scheduler-adoption.json": "paraphrase-pin-failed/preparation-r1-scheduler-adoption.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r3-20261004/preparation-r1/child-exit.json": "paraphrase-pin-failed/preparation-r1/child-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r3-20261004/preparation-r1/child-identity.json": "paraphrase-pin-failed/preparation-r1/child-identity.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r3-20261004/preparation-r1/child.log": "paraphrase-pin-failed/preparation-r1/child.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r3-20261004/preparation-r1/command.json": "paraphrase-pin-failed/preparation-r1/command.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r3-20261004/preparation-r1/failure-primary.json": "paraphrase-pin-failed/preparation-r1/failure-primary.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r3-20261004/preparation-r1/failure.json": "paraphrase-pin-failed/preparation-r1/failure.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r3-20261004/preparation-r1/lease-binding.json": "paraphrase-pin-failed/preparation-r1/lease-binding.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r3-20261004/preparation-r1/resources-start.json": "paraphrase-pin-failed/preparation-r1/resources-start.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r3-20261004/run_reserved.py": "paraphrase-unexecuted/run_reserved.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r3-20261004/tests.json": "paraphrase-pin-failed/tests.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r3-20261004/tests.log": "paraphrase-pin-failed/tests.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r3-20261004/tests.xml": "paraphrase-pin-failed/tests.xml",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r4-20261004/adopt_shared_scheduler.py": "native-balanced/adopt_shared_scheduler.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r4-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/authored_training_paraphrases.py": "paraphrase-startup-failed/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/authored_training_paraphrases.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r4-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/training_paraphrase_source_inputs.py": "paraphrase-unexecuted/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/training_paraphrase_source_inputs.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r4-20261004/experiment-source/scripts/ops/autoencoder/prepare_training_paraphrases.py": "paraphrase-pin-failed/experiment-source/scripts/ops/autoencoder/prepare_training_paraphrases.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r4-20261004/experiment-source/tests/unit/logic/formalization/autoencoder/test_authored_training_paraphrases.py": "paraphrase-pin-failed/experiment-source/tests/unit/logic/formalization/autoencoder/test_authored_training_paraphrases.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r4-20261004/freeze.py": "paraphrase-preparation/freeze.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r4-20261004/independent-preparation-review.json": "paraphrase-preparation/independent-preparation-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r4-20261004/lazy_scheduler_adoption.py": "native-balanced/lazy_scheduler_adoption.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r4-20261004/owned-source-publication.json": "paraphrase-pin-failed/owned-source-publication.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r4-20261004/owned_lease_watchdog.py": "native-balanced/owned_lease_watchdog.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r4-20261004/preparation-manifest.json": "paraphrase-preparation/preparation-manifest.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r4-20261004/preparation-plan.json": "paraphrase-preparation/preparation-plan.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r4-20261004/preparation-r1-guardian-exit.json": "paraphrase-preparation/preparation-r1-guardian-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r4-20261004/preparation-r1-lease-observations.jsonl": "paraphrase-preparation/preparation-r1-lease-observations.jsonl",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r4-20261004/preparation-r1-scheduler-adoption.json": "paraphrase-preparation/preparation-r1-scheduler-adoption.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r4-20261004/preparation-r1/child-exit.json": "paraphrase-preparation/preparation-r1/child-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r4-20261004/preparation-r1/child-identity.json": "paraphrase-preparation/preparation-r1/child-identity.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r4-20261004/preparation-r1/child.log": "paraphrase-preparation/preparation-r1/child.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r4-20261004/preparation-r1/command.json": "paraphrase-preparation/preparation-r1/command.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r4-20261004/preparation-r1/lease-binding.json": "paraphrase-preparation/preparation-r1/lease-binding.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r4-20261004/preparation-r1/resource-observations.json": "paraphrase-preparation/preparation-r1/resource-observations.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r4-20261004/preparation-r1/resources-final.json": "paraphrase-preparation/preparation-r1/resources-final.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r4-20261004/preparation-r1/resources-start.json": "paraphrase-preparation/preparation-r1/resources-start.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r4-20261004/preparation-r1/results/dimension-inputs-384.json": "paraphrase-preparation/preparation-r1/results/dimension-inputs-384.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r4-20261004/preparation-r1/results/dimension-inputs-768.json": "paraphrase-preparation/preparation-r1/results/dimension-inputs-768.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r4-20261004/preparation-r1/results/original-training-bank-used.json": "paraphrase-preparation/preparation-r1/results/original-training-bank-used.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r4-20261004/preparation-r1/results/prior-source-inventories.json": "paraphrase-preparation/preparation-r1/results/prior-source-inventories.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r4-20261004/preparation-r1/results/production-384.json": "paraphrase-preparation/preparation-r1/results/production-384.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r4-20261004/preparation-r1/results/production-768.json": "paraphrase-preparation/preparation-r1/results/production-768.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r4-20261004/preparation-r1/results/source-plan.json": "paraphrase-preparation/preparation-r1/results/source-plan.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r4-20261004/preparation-r1/results/source-rows.json": "paraphrase-preparation/preparation-r1/results/source-rows.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r4-20261004/preparation-r1/results/source384-artifacts/training-source-texts.txt": "paraphrase-preparation/preparation-r1/results/source384-artifacts/training-source-texts.txt",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r4-20261004/preparation-r1/results/summary.json": "paraphrase-preparation/preparation-r1/results/summary.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r4-20261004/preparation-r1/results/training-corpus-receipt.json": "paraphrase-preparation/preparation-r1/results/training-corpus-receipt.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r4-20261004/preparation-r1/results/training-references.json": "paraphrase-preparation/preparation-r1/results/training-references.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r4-20261004/run_reserved.py": "paraphrase-unexecuted/run_reserved.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r4-20261004/test-reuse.json": "paraphrase-preparation/test-reuse.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r4-20261004/tests.json": "paraphrase-pin-failed/tests.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r4-20261004/tests.log": "paraphrase-pin-failed/tests.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r4-20261004/tests.xml": "paraphrase-pin-failed/tests.xml",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/adopt_shared_scheduler.py": "native-balanced/adopt_shared_scheduler.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/cohort.json": "native-balanced/cohort.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/combined-guide-addition-draft.md": "native-balanced/combined-guide-addition-draft.md",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/combined-public-results-draft.json": "native-balanced/combined-public-results-draft.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/decoded-balanced-examples.json": "native-balanced/decoded-balanced-examples.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment.py": "native-balanced/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment_v2.py": "native-balanced/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment_v2.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/native4096_balanced_cohort_experiment.py": "native-balanced/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/native4096_balanced_cohort_experiment.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/native4096_conditioning_experiment.py": "native-balanced/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/native4096_conditioning_experiment.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/native4096_formula_sidecar_experiment.py": "native-balanced/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/native4096_formula_sidecar_experiment.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_4096_full_owner.py": "native-balanced/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_4096_full_owner.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_4096_native_owner.py": "native-balanced/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_4096_native_owner.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/experiment-source/scripts/ops/autoencoder/benchmark_native4096_balanced_cohort.py": "native-balanced/experiment-source/scripts/ops/autoencoder/benchmark_native4096_balanced_cohort.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/experiment-source/tests/unit/logic/formalization/autoencoder/test_native4096_balanced_cohort_experiment.py": "native-balanced/experiment-source/tests/unit/logic/formalization/autoencoder/test_native4096_balanced_cohort_experiment.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/experiment-source/tests/unit/logic/formalization/autoencoder/test_native4096_balanced_cohort_runner.py": "native-balanced/experiment-source/tests/unit/logic/formalization/autoencoder/test_native4096_balanced_cohort_runner.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/experiment-source/tests/unit/logic/formalization/autoencoder/test_native4096_conditioning_experiment.py": "native-balanced/experiment-source/tests/unit/logic/formalization/autoencoder/test_native4096_conditioning_experiment.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/freeze.py": "native-balanced/freeze.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/independent-balanced-audit.json": "native-balanced/independent-balanced-audit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/lazy_scheduler_adoption.py": "native-balanced/lazy_scheduler_adoption.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/owned-source-publication.json": "native-balanced/owned-source-publication.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/owned_lease_watchdog.py": "native-balanced/owned_lease_watchdog.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/prelaunch-review-binding.json": "native-balanced/prelaunch-review-binding.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/proposed-guide-append.md": "native-balanced/proposed-guide-append.md",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/run_reserved.py": "native-balanced/run_reserved.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/same-author-balanced-review.json": "native-balanced/same-author-balanced-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/same-author-balanced-review.log": "native-balanced/same-author-balanced-review.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/same-author-lifecycle-review.json": "native-balanced/same-author-lifecycle-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/summarize_saved_balanced.py": "native-balanced/summarize_saved_balanced.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/tests.json": "native-balanced/tests.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/tests.log": "native-balanced/tests.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/tests.xml": "native-balanced/tests.xml",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/training-manifest.json": "native-balanced/training-manifest.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/training-plan.json": "native-balanced/training-plan.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/training-r1-guardian-exit.json": "native-balanced/training-r1-guardian-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/training-r1-guardian.log": "native-balanced/training-r1-guardian.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/training-r1-lease-observations.jsonl": "native-balanced/training-r1-lease-observations.jsonl",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/training-r1-scheduler-adoption.json": "native-balanced/training-r1-scheduler-adoption.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/training-r1/child-exit.json": "native-balanced/training-r1/child-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/training-r1/child-identity.json": "native-balanced/training-r1/child-identity.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/training-r1/child.log": "native-balanced/training-r1/child.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/training-r1/command.json": "native-balanced/training-r1/command.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/training-r1/lease-binding.json": "native-balanced/training-r1/lease-binding.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/training-r1/resource-observations.json": "native-balanced/training-r1/resource-observations.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/training-r1/resources-final.json": "native-balanced/training-r1/resources-final.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/training-r1/resources-start.json": "native-balanced/training-r1/resources-start.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/training-r1/results/cohort.json": "native-balanced/cohort.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/training-r1/results/native/receipt.json": "native-balanced/training-r1/results/native/receipt.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/training-r1/results/native/stderr.log": "native-balanced/training-r1/results/native/stderr.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/training-r1/results/native/stdout.log": "native-balanced/training-r1/results/native/stdout.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/training-r1/results/reset-control.json": "native-balanced/training-r1/results/reset-control.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/training-r1/results/source-request.json": "native-balanced/training-r1/results/source-request.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/training-r1/results/summary.json": "native-balanced/training-r1/results/summary.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-balanced-cohort-20261004/training-r1/results/training.json": "native-balanced/training-r1/results/training.json"
+  },
+  "prior_published_evidence": {
+    "commit": "d466db01a32c419a765e5cef046991ddedc3c279",
+    "path": "docs/implementation/reports/evidence/decoder-conditioning-20261004/manifest.json",
+    "sha256": "aed6f356bff020d30fdf13b8ed130b027683016d4219519098342ec6cbb007ce",
+    "transitive_dependencies_required": true
+  },
+  "private_native_backend_trees_or_binaries_included": false,
+  "publication_owned_source_sha256": {
+    "ipfs_datasets_py/logic/formalization/autoencoder/authored_training_paraphrases.py": "9644f86159fecd0d9a1bb8599e06dacfcbba2581db98a990b0e224ebb8de8513",
+    "ipfs_datasets_py/logic/formalization/autoencoder/eight_dimensional_head_rate_experiment.py": "f6dcfead2e78a5939394b62eef65ac9a0fa203d5f45e0497973d1df43b791da1",
+    "ipfs_datasets_py/logic/formalization/autoencoder/long_span_source_value_training.py": "21f300fbc969c2b34be355b633c46a616d83d451207cc5f3bd56537d40bd0498",
+    "ipfs_datasets_py/logic/formalization/autoencoder/native4096_balanced_cohort_experiment.py": "29bfdd2dca303352218ea54f8718f20cbce8b1c78efce5464ac404494f2efd06",
+    "ipfs_datasets_py/logic/formalization/autoencoder/source_gradient_preconditioning.py": "687d575fd04a00f086894a05e92772bcf2b801cd17b1e5dabb75253826344742",
+    "ipfs_datasets_py/logic/formalization/autoencoder/training_paraphrase_source_inputs.py": "5c0d4571b87d4b3b82be3bae11ff08599f2a5d09c4465a8315641a05d1657649",
+    "scripts/ops/autoencoder/benchmark_eight_dimensional_head_rate.py": "ab5159d45fc57abc260c23b8611dbf550f13c6a88bb44964918c56d2d450252b",
+    "scripts/ops/autoencoder/benchmark_eight_dimensional_preconditioning.py": "b512506290eecb6704cc2f59148e76dd7ff2b673f358924e3ae667fe01187ed7",
+    "scripts/ops/autoencoder/benchmark_native4096_balanced_cohort.py": "d080dc182a709400042fe35edf3a7675616934d8055e53f2f7120f4a7d823927",
+    "scripts/ops/autoencoder/prepare_training_paraphrases.py": "7d877c24794f0cbefde64e6f1d229bbc8fd0238825fb68adc462af561d2905ed",
+    "tests/unit/logic/formalization/autoencoder/test_authored_training_paraphrases.py": "10727782cc9788c5651a66f286466b384cd24ad452ce870702aa198a556d45f6",
+    "tests/unit/logic/formalization/autoencoder/test_eight_dimensional_head_rate_experiment.py": "dd3adfea52264045c31533297ba14d8dae10d663ca773f1795acc40d80dfc8af",
+    "tests/unit/logic/formalization/autoencoder/test_eight_dimensional_preconditioning_runner.py": "b2d7ba8491d432b8da607b5e091fb03d7e0ca0a45e3519b114c450a36f80566a",
+    "tests/unit/logic/formalization/autoencoder/test_native4096_balanced_cohort_experiment.py": "ca45685803ebb8f9ecab7e7cc0104097264d1198b0f871536b97e753b389be68",
+    "tests/unit/logic/formalization/autoencoder/test_native4096_balanced_cohort_runner.py": "ac2b7e17aad956a24c9132e186a1be48adf5fc2df8a5f3db1ea3a14db35bffa3",
+    "tests/unit/logic/formalization/autoencoder/test_source_gradient_preconditioning.py": "b20dd226992c3b50ee1d5925ad4aa0dbbf2428dcbf601d084ef405b4960cca30"
+  },
+  "qualified": false,
+  "schema": "decoder-generalization-evidence/v1",
+  "source_scope_member": "publication/source-scope-final-r3.json",
+  "terminal_phases": {
+    "eight-preconditioning/preflight-r1": {
+      "child_returncode": 0,
+      "failure_retained": false,
+      "released_receipt": true,
+      "terminal_source": "child-exit.json"
+    },
+    "eight-preconditioning/training-r1": {
+      "child_returncode": 0,
+      "failure_retained": false,
+      "released_receipt": true,
+      "terminal_source": "child-exit.json"
+    },
+    "native-balanced/training-r1": {
+      "child_returncode": 0,
+      "failure_retained": false,
+      "released_receipt": true,
+      "terminal_source": "child-exit.json"
+    },
+    "paraphrase-pin-failed/preparation-r1": {
+      "child_returncode": 1,
+      "failure_retained": true,
+      "released_receipt": false,
+      "terminal_source": "child-exit.json"
+    },
+    "paraphrase-preparation/preparation-r1": {
+      "child_returncode": 0,
+      "failure_retained": false,
+      "released_receipt": true,
+      "terminal_source": "child-exit.json"
+    },
+    "paraphrase-startup-failed/preparation-r1": {
+      "child_returncode": 1,
+      "failure_retained": true,
+      "released_receipt": false,
+      "terminal_source": "child-exit.json"
+    }
+  }
+}

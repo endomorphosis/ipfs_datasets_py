@@ -623,3 +623,183 @@ archive references the preceding published evidence for unchanged encoders and
 frozen dependencies. It includes no pretrained model weights. Only an actual
 `lake build <Lib>` can provide Lean admission; none is claimed here, and the
 Constitution remains unformalized.
+
+
+## Balanced development and source optimization follow-up
+
+This follow-up completes 740 decoder-head updates: 340 across two 8D arms and
+400 across two 4096D arms. Source encoders and the historical 8D linguistic
+teacher stay frozen. These are authored-fixture experiments, with different
+cohorts and head architectures; their scores do not rank the widths against one
+another. No new 384D or 768D head fit is included in this update count.
+
+### Corrected 8D geometry and rejected covariance candidate
+
+The previous geometry diagnostic omitted the frozen input center/RMS transform
+before clause normalization. Actual training and inference already used the
+correct preprocessing, so predictions, losses and selected weights are
+unaffected. The corrected diagnostic follows the input transform, verified
+identity residual projection, clause normalization, source affine projection
+and tanh in their real order. Maximum absolute preactivation is 2.07906 on
+training clauses and 1.90407 on development clauses. Both still have zero tanh
+activations with absolute value at least 0.99. Old evidence is preserved; the
+correction is recorded in `geometry-erratum.json`.
+
+The historical codec maps both `lemma:archive` and `lemma:notice` to bucket 2,
+with different positive contributions, before normalizing the complete feature
+sum. Their complete vectors remain distinct, but the object difference is
+small. This observation concerns this preserved feature representation, not
+all possible 8D models or the fidelity of the historical linguistic decoder.
+
+The new optional preconditioner computes an inverse covariance using only the
+113 original TRAIN clause features after the real preprocessing path. Its trace
+is normalized to 8 and its condition number is bounded by 32; the observed
+condition number is 21.0394. It transforms only the source-projection gradient
+before the existing global clip and AdamW step. It changes no forward function,
+loss or selection gate, and the default training path remains unchanged.
+
+| 8D gradient policy | Updates | Final TRAIN exact / 48 | Final development exact / 48 | Development token CE | Development objects / 180 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Identity control | 170 | 12 | 1 | 0.163492 | 97 |
+| TRAIN covariance inverse | 170 | 12 | 1 | 0.168503 | 93 |
+
+Both arms retain their original parent at selected epoch zero. The covariance
+candidate worsens development loss and object fidelity and is not adopted.
+The identity arm reproduces the archived baseline tensors exactly. All nine
+control panels are retained for each selected and final attempted endpoint.
+
+Fit times are 25.93 and 25.20 seconds for 1,220 paragraph presentations per arm.
+Development numerical evaluation takes 0.00619 and 0.00638 seconds per span over
+48 spans, excluding source production and admission. The full guardian takes
+160.67 seconds and releases normally; maximum sampled process-group RSS is
+1,087,111,168 bytes under 1.5 GiB. These one-seed shared-host observations do not
+establish a speedup. Sources are warm cached vectors, one CPU worker is used,
+bridge names are `[]`, provers are off and metric disk cache is off.
+
+### Broader 4096D reconstruction remains incomplete
+
+A single authenticated native operation produces 12 original TRAIN clause
+vectors, 12 exposed original-development vectors and one reset repeat. Both
+splits cover all five actors and actions, all three modalities and both objects.
+Selection is deterministic and independent of model scores. The original banks
+have disjoint normalized source text, identities and actor/action combinations.
+Development is an already exposed regression set, not a new holdout.
+
+Two fresh heads receive 200 updates each, comparing the original source-weight
+rate against TRAIN-input-L1 scaling. Normalization and rate scaling use TRAIN
+vectors only. Development vectors and targets cannot affect updates, rate
+selection or normalization, and no checkpoint is selected from their scores.
+
+| 4096D source rate | Final TRAIN exact / 12 | TRAIN CE | Final development exact / 12 | Development CE | Development zero-source CE | Development rotated-source CE |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Original | 7 | 0.070717 | 0 | 0.137379 | 0.143009 | 0.174185 |
+| TRAIN-input-L1 scaled | 1 | 0.109239 | 0 | 0.131200 | 0.138967 | 0.141804 |
+
+The scaled rate modestly lowers development token CE but fits fewer TRAIN rules.
+Neither arm reconstructs a development rule exactly. Its earlier two-source
+training benefit therefore does not justify making it the default. The restricted
+rule parser accepts 11/12 development outputs for the original rate and 12/12
+for scaling. Final development actor/action/modality/object counts are only
+4/12, 2/12, 6/12, 8/12 for the original rate and 3/12, 1/12, 4/12, 8/12 for
+scaling. Shared rule syntax accounts for much of whole-sequence token loss;
+low CE alone does not demonstrate correct logical fields.
+
+Each fit presents 2,400 TRAIN rows and 93,600 target tokens, taking 1.430 and
+1.413 seconds including scheduled control measurements. The native operation
+takes 416.273 seconds for 25 rows, or 16.651 seconds per requested row including
+the repeat and integrity work. This includes 95.115 seconds hashing the model
+and 321.156 seconds in the native child. The full guardian takes 532.280 seconds
+and releases normally. Maximum sampled combined owner/native RSS is
+1,234,501,632 bytes under unchanged 8 GiB guards. Page-cache warmth is
+uncontrolled; one CPU worker, bridge names `[]`, provers off and metric disk
+cache off. This IO-sensitive run is not a matched speed comparison against the
+previous three-row pilot. No bridge-on evaluate timing is measured.
+
+### Balanced TRAIN paraphrases for 384D and 768D
+
+`authored_training_paraphrases.py` derives 180 clauses in two fixed wording
+families from the original 90 TRAIN rules and their 180 source records. Each
+derivation retains the original IDs and source/target hashes. No development,
+test or canary target is added to training. The resulting 48 paragraphs contain
+1, 2, 4 or 8 clauses, with 12 paragraphs per length and balanced O/P/F counts.
+Packing keeps different modalities of the same actor/action/object content out
+of a single paragraph. The canonical target vocabulary remains all 32 tokens.
+
+The wordings include “The rule forbids delivering the archive by the registrar.”
+and “For the registrar, delivering the archive is forbidden by the rule.” These illustrate
+the templates; they are authored TRAIN paraphrases, not model predictions or new
+legal coverage. Every actual target is copied from the original TRAIN bank and
+passes the restricted rule syntax validator. The second construction extends an
+already exposed style, so literal separation does not imply an unseen linguistic
+family. Ten declared source inventories, including raw splits, paragraph splits
+and exposed R6/R8/v3 sources, are checked at paragraph and clause level.
+
+`training_paraphrase_source_inputs.py` sends only closed source rows to the
+existing verified local encoders. Its explicit TRAIN plan/report and 384D source
+metadata distinguish these inputs from evaluation. The inherited setup reads
+old experiment metadata; only original TRAIN labels reach the builder and no
+labels enter the encoder calls. Each encoder produces 216 unique vectors: all
+180 clauses plus the additional multiclause paragraphs. These are new local
+forward results, with zero literal source overlap against the declared prior
+inventories and zero exact vector overlap against the available prior caches.
+The 384D vector check covers 911 unique prior vectors; the 768D check covers
+671. No 768D R8 vector artifact exists in this inventory; it is not silently
+included in the coverage claim.
+
+| Encoder width | Unique source inputs | Native production seconds | Seconds per unique source |
+| --- | ---: | ---: | ---: |
+| 384D | 216 | 8.679 | 0.04018 |
+| 768D | 216 | 26.969 | 0.12486 |
+
+The complete driver takes 52.560 seconds; the outer guardian invocation takes
+84.489 seconds, with 83.158 seconds measured inside its admission/accounting
+body. Batch size is four with one CPU worker. Context
+and output limits remain 512, bridge names are `[]`, provers and metric disk
+cache are off. OS page-cache warmth is uncontrolled; no bridge-on evaluate runs
+and these timings do not measure formalization or prove a speedup. Maximum
+sampled process-group RSS is 2,716,860,416 bytes under the 4 GiB guard. The
+successful attempt releases its reservation and retains 20,761,283 bytes.
+
+`prepare_training_paraphrases.py` now validates the inherited context, producer
+loads and source inventory before creating its output directory. Four lifecycle
+controls cover success and initialization failures, and all 41 focused controls
+pass. The first freeze was superseded before execution because its paragraph
+packing could combine conflicting modality variants. Two guarded startup
+failures are preserved: early directory creation and a missing exact parent
+producer pin. Both occurred before encoder execution; their 250 MB disk claims
+remain charged and their compute leases are released. The corrected fourth
+freeze completes. No guard, storage cap or qualification rule is weakened.
+
+Evidence is in `workspace/test-logs/decoder-training-paraphrases-r4-20261004`,
+with all earlier attempts retained alongside it. Source rows, targets, original
+TRAIN derivations, token observations, raw vectors, clause contexts and native
+receipts are separate artifacts. This phase fits no normalizer or head, scores
+no evaluation panel and changes neither selected larger-width checkpoint. The
+next comparison must pair original-only and augmented TRAIN exposure under a
+predeclared budget and unchanged development selection/control panels; these
+prepared vectors alone are not a training improvement. The existing trainer binds
+its preprocessing and count-prior receipts to the exact original cohort, so
+concatenating rows would correctly fail. An explicit mixture interface must
+retain that preprocessing provenance while authenticating the separate rows
+and contexts used for optimization.
+
+The 8D paths pass 137 focused/regression tests and 169,385 independent saved-data
+checks; the 4096D paths pass 47 tests and 4,717 independent checks. Initial failed
+test/audit attempts remain archived. Evidence is under
+`decoder-eight-source-preconditioning-20261004` and
+`native4096-balanced-cohort-20261004` in `workspace/test-logs`; the latter also
+contains every final emitted TRAIN/development rule in
+`decoded-balanced-examples.json`.
+
+Encoder context and decoder output limits remain 512, temperature remains zero,
+and no weights are downloaded. These fits provide no fresh-holdout gain,
+convergence result, global minimum, full logic-family qualification or production
+promotion. Restricted rule-codec parsing is not a Lake admit. Only an actual
+`lake build <Lib>` can provide that admission; none is claimed here, and the
+Constitution remains unformalized.
+
+Code and complete evidence are published under
+`docs/implementation/reports/evidence/decoder-generalization-20261004`.
+The archive retains prior attempts, failed hypotheses, source manifests and
+independent reviews, and references the preceding archive for unchanged frozen
+dependencies. Pretrained weights and private native binaries remain external.
