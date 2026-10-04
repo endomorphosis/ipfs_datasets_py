@@ -32,3 +32,5 @@ docs/software_contracts/evidence/source384-inference-publication-import-20261003
 docs/software_contracts/evidence/source384-manifest-combined-comparison-20261003/** -whitespace
 docs/software_contracts/evidence/source384-manifest-replay-candidate-20261003/** -whitespace
 docs/software_contracts/evidence/source384-verified-embedding-advice-20261003/** -whitespace
+
+# Historical large evidence and datasets retained through Git LFS.
