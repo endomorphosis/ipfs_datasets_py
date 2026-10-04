@@ -803,3 +803,172 @@ Code and complete evidence are published under
 The archive retains prior attempts, failed hypotheses, source manifests and
 independent reviews, and references the preceding archive for unchanged frozen
 dependencies. Pretrained weights and private native binaries remain external.
+
+## Authenticated TRAIN-mixture comparison, 2026-10-04
+
+The prepared 384D/768D paraphrases can now train the decoder through an explicit
+`source_training_mixture` argument to `long_span_source_value_training.train`. The default
+`None` path preserves the published trainer: regression tests reproduce its
+numerical reports, selected/final tensors and predictions. The identity
+`original_only` policy also preserves the original math and random stream. The
+new `half_paraphrases` policy alternates original and authenticated paraphrase
+sources within each original parent schedule, beginning with the original.
+
+The helper `contextual_training_mixture.py` separates the rows used for
+optimization from the original preprocessing/count-prior cohort. It rebuilds
+TRAIN derivations and checks source/reference/context joins against native-vector
+receipts. The new authored sources exclude all ten prior text inventories;
+the complete 96-row TRAIN union excludes the seven evaluation inventories, with
+exact-vector exclusion checked only where prior vectors are available. The
+trainer applies the effective row to all
+applicable token, scalar, source-value, action-contrastive and generated-boundary
+objectives. Original normalization, the original count stream, and the 384D
+113-row modality auxiliary stream retain their original ownership. The original
+48 paragraph rows become an effective 96-row pool, not a replacement normalizer
+fit. Digests inside a payload are integrity checks; the benchmark additionally
+binds the exact artifact files and executed producer closure.
+This first interface intentionally accepts only the authenticated 48-row,
+32-token-vocabulary, contextual 384D/768D cohort. It rejects incompatible
+experimental options; it does not silently generalize to arbitrary statute data,
+8D, 4096D or other IR modalities.
+
+Use `scripts/ops/autoencoder/benchmark_training_paraphrase_mixture.py` for the
+fixed comparison and `scripts/ops/autoencoder/evaluate_training_mixture_styles.py`
+for the separately frozen postfit observer. Both accept `--dependency-root`,
+`--extension-root`, `--manifest`, `--plan` and a fresh `--output`. The benchmark
+also requires `--dimension 384|768` and `--phase preflight|training`; the observer
+requires `--phase evaluation`. Operational runs must use the corresponding
+archived `run_reserved.py` guardians, whose source/plan hashes, resource claims,
+child identity and release receipts are retained. A plain direct invocation is
+not a substitute for a guarded campaign run. Existing completed attempt paths
+are immutable; preparing a new plan/manifest is necessary before changing the
+recipe. The observer seal binds both completed training attempts, all endpoints
+and the exact already exposed v3 source/native closure.
+
+The paired fits start from the same selected R13 parent within each width.
+Each uses a fresh AdamW optimizer and scheduler, seed 1729, learning rate 0.0001,
+non-action rate multiplier 10, four original curriculum stages and batch size
+eight. Each arm commits 170 updates, 1,220 decoder row presentations, 112,920
+valid target tokens and 12,800 source-value positions. Count supervision remains
+1,220 original draws (305 per class). The mixed arm uses 610 original and 610
+paraphrase paragraphs. Its paraphrase draws by clause count are 240/180/130/60
+for 1/2/4/8 clauses. The underlying catalog is balanced, but curriculum exposure
+is not: augmented rule draws are O458/P557/F585, and individual TRAIN rules
+appear 10–35 times. The exact template and per-rule histograms are retained.
+384D also retains 1,020 original modality-auxiliary presentations; 768D has no
+such auxiliary objective. No encoder runs or encoder-weight updates occur.
+
+Selection uses the unchanged original development fidelity, loss and length
+gates. Both selected parents already reconstruct 48/48 development paragraphs.
+All nine original evaluation panels run on selected and last-attempt endpoints:
+TRAIN, development, zero condition, source shuffle, cross-length shuffle,
+context-only shuffle, reverse context, rotated context and recurrent residual
+disabled. The preregistered v3 observer scores all eight width/arm/endpoint
+combinations only after all source-only predictions are persisted and checked.
+Its 48 paragraphs were already exposed; these are wording regression results,
+not fresh holdout evidence, and they cannot change checkpoint selection.
+
+All four fits finish the complete budget: **680 committed optimizer updates**,
+4,880 decoder row presentations and 451,680 valid target tokens. Each selects
+epoch 40, and each selected tensor is identical to its last-attempt tensor.
+The identity arm and mixture both preserve 48/48 exact original-development
+paragraphs and all 180 rules across the four paragraph lengths. Both improve token CE relative to
+their shared parent; the mixed arm has slightly higher CE than the matched
+original-only continuation.
+
+| Width | Arm | Parent development CE | Selected development CE | Development exact / 48 | Fit call seconds | Committed decoder rows/s |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| 384D | Original only | 0.002534 | 0.001699 | 48 | 38.389 | 31.780 |
+| 384D | Half paraphrases | 0.002534 | 0.001895 | 48 | 38.103 | 32.018 |
+| 768D | Original only | 0.002472 | 0.001705 | 48 | 50.626 | 24.098 |
+| 768D | Half paraphrases | 0.002472 | 0.001831 | 48 | 50.639 | 24.092 |
+
+Each endpoint reconstructs 0/48 original-development paragraphs under zero
+condition, source shuffle, cross-length shuffle, context-only shuffle or disabled
+recurrent residual, and 12/48 under reversed or rotated contexts. The conditioned
+48/48 result therefore depends on source/context order within this restricted
+cohort. Correct empty conditions, exceptions and temporal lists do not establish
+coverage of nonempty qualifiers or additional logic families.
+
+Fit timings include mixture preparation and the trainer's scheduled selection
+checks. Committed rows/s is 1,220 divided by that call time; it excludes external
+postfit panels, integrity checks and guardian accounting. The complete per-width
+drivers take 143.598 seconds (384D) and 203.650 seconds (768D), while the outer
+guardians take 205.923 and 254.430 seconds. Maximum *sampled* RSS is
+1,071,300,608 and 1,122,078,720 bytes under separate 1,536 MiB/one-CPU reservations;
+these are sampled observations rather than continuous memory peaks. Both
+reservations release normally. The two widths share the host concurrently, so
+these single-seed fit timings do not establish a speedup. Source vectors are
+warm authenticated caches; no encoder forward is included. Bridge names are
+`[]`, external provers and metric disk cache are off, and no bridge-on evaluate
+or real-text formalization timing is measured.
+
+### Previously exposed wording results
+
+| Width | Arm | Exact paragraphs / 48 | Correct modalities / 180 | Wording token CE |
+| --- | --- | ---: | ---: | ---: |
+| 384D | Original only | 20 | 139 | 0.030589 |
+| 384D | Half paraphrases | 18 | 134 | 0.030387 |
+| 768D | Original only | 46 | 178 | 0.003361 |
+| 768D | Half paraphrases | 46 | 178 | 0.002879 |
+
+Selected and last-attempt results agree because their tensors are identical.
+All eight panels emit syntactically valid restricted-rule documents for all
+48 paragraphs. For 384D, the mixture loses one exact one-clause paragraph and
+one exact two-clause paragraph; exact counts by length change from 9/8/2/1 to
+8/7/2/1. Both arms preserve 180/180 actors and objects but only 179/180 actions.
+The main gap is modality, which worsens from 139/180 to 134/180. Slightly lower
+whole-sequence CE therefore conceals a reconstruction regression.
+
+For 768D, both arms reconstruct 12/12, 12/12, 11/12 and 11/12 paragraphs at
+1/2/4/8 clauses. Both preserve every actor/action/object and 178/180 modalities.
+The mixture lowers wording token CE by about 14.34% without fixing the two
+remaining errors. The primary comparison is between the new matched arms;
+older v3 scores use different endpoint tensors and are not substituted as a
+parent baseline. The 384D mixture is not a reconstruction improvement, and the
+768D loss gain alone does not justify a production promotion. The mixture
+remains opt-in; no selected production pointer or published model default is
+changed.
+
+Source-only generation takes 0.365–0.370 seconds per 48-row selected 384D panel
+(7.60–7.70 ms/span), and 0.437–0.442 seconds per selected 768D panel
+(9.11–9.21 ms/span). These are bulk decoder timings on warm cached paragraph and
+clause vectors, batch size eight, one CPU worker, full 32-token vocabulary,
+temperature zero and output limit 512. They exclude encoding, checkpoint
+restoration, teacher-forced scoring, integrity checks and resource accounting.
+The complete observer driver takes 25.970 seconds and its outer guardian takes
+64.612 seconds. No bridge-on evaluate time is inferred from these numbers.
+
+There are 174 passing implementation/regression tests, including exact replay
+against the published default trainer. Independent saved-result checks verify
+all 680 updates and all 72 original panels. Source-only v3 predictions for all
+eight endpoints are persisted before this observer parses its v3 references;
+inherited setup still reads older experiment metadata, so this is not a claim
+that the process has never seen evaluation references. Complete raw predictions,
+logits, source derivations, contexts, states, schedules, resource observations,
+failed development audits and independent reviews are retained. The benchmark
+uses authenticated historical numerical snapshots plus the explicitly frozen
+new extensions, not an implicit editable-install import. No compiler speed or
+current-tree semantic equivalence claim follows from that numerical replay.
+
+The remaining reconstruction gap is chiefly modality discrimination, especially
+for 384D wording changes. A subsequent experiment should preregister a
+TRAIN-only modality-focused sampler/objective comparison and inspect per-field
+and per-length errors, keeping the original and exposed-wording panels as
+regressions. Increasing decoder updates or lowering aggregate token loss alone
+is insufficient. Any future fresh holdout must be separately prepared and
+sealed; these reused panels cannot establish generalization to unseen statutes.
+
+The 8D linguistic teacher and 4096D experimental endpoints are unchanged by
+this follow-up. Encoder context and output remain 512, no weights are downloaded,
+and no encoder weights are trained. No convergence/global-minimum, fresh-holdout,
+full-family, statutory formalization or Lake qualification is claimed. Only
+`lake build <Lib>` provides Lean admission; this decoder comparison runs no Lake
+build and the Constitution remains unformalized.
+
+Source and complete experiment evidence are published in
+`docs/implementation/reports/evidence/decoder-training-mixture-20261004`.
+The manifest records split-archive hashes and aliases for every bundled source,
+raw output and review. Unchanged numerical dependencies and prepared vectors
+remain transitively referenced through the preceding published evidence archive;
+external pretrained encoder weights and native binaries are not bundled.

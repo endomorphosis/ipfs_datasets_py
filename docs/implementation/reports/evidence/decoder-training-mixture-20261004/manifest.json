@@ -1,0 +1,1673 @@
+{
+  "admitted": false,
+  "archive": {
+    "bytes": 152796950,
+    "compression_level": 1,
+    "format": "ordered split gzip tar",
+    "members": 309,
+    "sha256": "5ee87d817f5645482b79c919e6d17b3f653ae63c7cde3efbfc426e31a107921f"
+  },
+  "archive_parts": [
+    {
+      "bytes": 40000000,
+      "path": "evidence.tar.gz.part-001",
+      "sha256": "599b31d0397356d279275fd794f3c5ed905aa8d4daba7528ad4c5142297b23bd"
+    },
+    {
+      "bytes": 40000000,
+      "path": "evidence.tar.gz.part-002",
+      "sha256": "45b915582cd557bbc5abfdea0392e442a913ce466c2ffa869dd801d11d09ec47"
+    },
+    {
+      "bytes": 40000000,
+      "path": "evidence.tar.gz.part-003",
+      "sha256": "bbbcbcd292a1b6dbda3f2c46f9817c52edf7e11cee8c886af6898498af4c9c36"
+    },
+    {
+      "bytes": 32796950,
+      "path": "evidence.tar.gz.part-004",
+      "sha256": "57d1c77ae4f751e3360137105b63dae900e865bf9101997d1a617d9cbcd89cba"
+    }
+  ],
+  "checkpoint_promoted": false,
+  "encoder_weights_trained": false,
+  "external_model_weights_included": false,
+  "inventory_member": "publication/archive-inventory.json",
+  "lake_executed": false,
+  "members": {
+    "documentation/four_width_training.md": {
+      "bytes": 61841,
+      "sha256": "acbf0886ddd27c26f129b662d3bff556990cf98a8f3dda5c2e9146c6c75560bd"
+    },
+    "exposed-styles/adopt_shared_scheduler.py": {
+      "bytes": 11206,
+      "sha256": "4956baa1e41abe53fc83a2d4ae7709b3be13ebc1c775b44571a33903b8f70b1f"
+    },
+    "exposed-styles/evaluation-manifest.json": {
+      "bytes": 260825,
+      "sha256": "4e8b6c60af38750558e4e88f8d73197fe91aab5da426568b801a5aa528a5cac2"
+    },
+    "exposed-styles/evaluation-plan.json": {
+      "bytes": 257884,
+      "sha256": "4dad9fc71501f6a3101783b7e95869d1bd6a3ae102b65aaaa127e9b9486d76a2"
+    },
+    "exposed-styles/evaluation-r1-guardian-exit.json": {
+      "bytes": 97,
+      "sha256": "ef0cf3d140807a7981313c5d47475a556eb30ce9a8058174f85281eb7205c37b"
+    },
+    "exposed-styles/evaluation-r1-guardian.log": {
+      "bytes": 5111,
+      "sha256": "9f94c8625c9a6c1672750334654e98c27988763c6bb8b73f9965f8d1328fb02b"
+    },
+    "exposed-styles/evaluation-r1-lease-observations.jsonl": {
+      "bytes": 37618,
+      "sha256": "ff7aec17c18b5723b43e95de93c7bfb87a4a05cd9fee3c1ba703520e91c7566b"
+    },
+    "exposed-styles/evaluation-r1-scheduler-adoption.json": {
+      "bytes": 4646,
+      "sha256": "12ea1a2659899c0909ef45e6beb1bc49ecbeddeb3bde6f80c42efa8eba8fad7e"
+    },
+    "exposed-styles/evaluation-r1/child-exit.json": {
+      "bytes": 323,
+      "sha256": "88068fd6e5eb378c805c1080de2f902c5504cb1e7a47ab84edba9207c1462fa8"
+    },
+    "exposed-styles/evaluation-r1/child-identity.json": {
+      "bytes": 44,
+      "sha256": "9a0d31421abf8f6178e5cc4e1c9f1fa69ebd8d7ab4f99f78a6a97c36434d5982"
+    },
+    "exposed-styles/evaluation-r1/command.json": {
+      "bytes": 6436,
+      "sha256": "be7b58cd73bd6b28c9cb3f7ed4668ea1e634a9cee1bfb941ab2979812da9f66b"
+    },
+    "exposed-styles/evaluation-r1/lease-binding.json": {
+      "bytes": 692,
+      "sha256": "a45b7c3bf66eb2af62ec886a59ffe911547640c1a9906b6ac58324eabdbfb0d9"
+    },
+    "exposed-styles/evaluation-r1/resource-observations.json": {
+      "bytes": 1743,
+      "sha256": "5e692252c7c775f5084a0800aee36946103bf896bcbd0251f8f1ea2065b3f434"
+    },
+    "exposed-styles/evaluation-r1/resources-final.json": {
+      "bytes": 5836,
+      "sha256": "bb0f7d02b693952dacf30f58e8e774ce25ccb869b6e34661b70a1a68ab49db0f"
+    },
+    "exposed-styles/evaluation-r1/resources-start.json": {
+      "bytes": 3180,
+      "sha256": "90eae35e1b08a7de64674ce6c349a986d2877a17b57758f7f1fd0c350aa8ab04"
+    },
+    "exposed-styles/evaluation-r1/results/384-half-paraphrases/last-attempt-predictions.json": {
+      "bytes": 26200,
+      "sha256": "d471cca65f23a308bfa7b659c4229638e2177ae57dd969bd5cb50303186e3068"
+    },
+    "exposed-styles/evaluation-r1/results/384-half-paraphrases/last-attempt-score.json": {
+      "bytes": 648049,
+      "sha256": "3c7b0cfef6b0d816e288b0a84d9108d1c5397036d2318aa632b904933d1afd05"
+    },
+    "exposed-styles/evaluation-r1/results/384-half-paraphrases/selected-predictions.json": {
+      "bytes": 26199,
+      "sha256": "72b7a1d67817966d5d25664d34bcb18b226aa0f156cb48b66cbfacf89c732b0e"
+    },
+    "exposed-styles/evaluation-r1/results/384-half-paraphrases/selected-score.json": {
+      "bytes": 648049,
+      "sha256": "bd4d683decfc9bdec4640dbda2234731a80045e4862d77be21f71b8f3f43638c"
+    },
+    "exposed-styles/evaluation-r1/results/384-original-only/last-attempt-predictions.json": {
+      "bytes": 26200,
+      "sha256": "1359075fc66ea22a50af6412b2cf7dfff29729b6ae53b861dca53c0c0ecb099a"
+    },
+    "exposed-styles/evaluation-r1/results/384-original-only/last-attempt-score.json": {
+      "bytes": 647986,
+      "sha256": "dd44d4487b84e97d7774bc99d7d20e123fe5c46d80dbb666a63f7311b8ab5c79"
+    },
+    "exposed-styles/evaluation-r1/results/384-original-only/selected-predictions.json": {
+      "bytes": 26200,
+      "sha256": "df152ff4003ac994c3c0a6c7ec65a004a3c36fd9c0e103fbd528b8fa2e6847bd"
+    },
+    "exposed-styles/evaluation-r1/results/384-original-only/selected-score.json": {
+      "bytes": 647985,
+      "sha256": "e6e18ea48f696770679e19a5d0ea047321741b6297bf7dcac738280cdd176f52"
+    },
+    "exposed-styles/evaluation-r1/results/768-half-paraphrases/last-attempt-predictions.json": {
+      "bytes": 26200,
+      "sha256": "8efab77f31658f00f0afe8c93ae7952535e60687e9443b058d884f796238b1c8"
+    },
+    "exposed-styles/evaluation-r1/results/768-half-paraphrases/last-attempt-score.json": {
+      "bytes": 647666,
+      "sha256": "e477132d51551974a0da1f59d25095b10d7bf967095bceea62285074d988ecbc"
+    },
+    "exposed-styles/evaluation-r1/results/768-half-paraphrases/selected-predictions.json": {
+      "bytes": 26199,
+      "sha256": "4dc8d6d709bdab7503c04349d94f4f239830ca04fe704b844c91eca1ab12ed50"
+    },
+    "exposed-styles/evaluation-r1/results/768-half-paraphrases/selected-score.json": {
+      "bytes": 647665,
+      "sha256": "ff8b49203a20ba5f902e7d26886a5269effc501d75111271b01136de00897dd8"
+    },
+    "exposed-styles/evaluation-r1/results/768-original-only/last-attempt-predictions.json": {
+      "bytes": 26199,
+      "sha256": "ce1c1d3bf8291816ed85cf5e4d351ec99aa646e13da228430777d3b7f19bbb2e"
+    },
+    "exposed-styles/evaluation-r1/results/768-original-only/last-attempt-score.json": {
+      "bytes": 647447,
+      "sha256": "c5b43ef3db72858c75de907d2c750e82d246df093e2615c81e8f823bed1116c4"
+    },
+    "exposed-styles/evaluation-r1/results/768-original-only/selected-predictions.json": {
+      "bytes": 26199,
+      "sha256": "67632d5e88539c2f140f6d2190a775fed7124c6626b7769370f8a5f82c8e208c"
+    },
+    "exposed-styles/evaluation-r1/results/768-original-only/selected-score.json": {
+      "bytes": 647448,
+      "sha256": "5246aad86beeb37848666d680fc855ac003f40c9b88107cd96c0ca5a7540db9c"
+    },
+    "exposed-styles/evaluation-r1/results/predictions-complete.json": {
+      "bytes": 6505,
+      "sha256": "7b5f2ac63892c3b175e0b80757a2147c30f67f314dda139b5f8072cd471501f1"
+    },
+    "exposed-styles/evaluation-r1/results/sealed-recipe.json": {
+      "bytes": 506286,
+      "sha256": "507812f9abfaacb86df874f4919f8a39411ec8e7ebf2c0a369860ad04529c09b"
+    },
+    "exposed-styles/evaluation-r1/results/summary.json": {
+      "bytes": 38207,
+      "sha256": "3b828c16ba9420ad8b9a71450e742bba0f9903a2da716e062ed5617079771e70"
+    },
+    "exposed-styles/observer-recipe.json": {
+      "bytes": 2548,
+      "sha256": "e382dacb064352c0e33755bbb359383efe5f2092d137a0bab726fee8899fad9f"
+    },
+    "exposed-styles/run_reserved.py": {
+      "bytes": 16673,
+      "sha256": "774a1c48248f17cfc965a0d4fc833ff91c0d2176fbf50cfc93c64e9e39c1fcf4"
+    },
+    "exposed-styles/seal-evaluation.log": {
+      "bytes": 117,
+      "sha256": "ec37f4b7af17ee00bd76bbf64db22dd3495150c79ed03d6e6dfed2f303cb13c2"
+    },
+    "exposed-styles/seal_evaluation.py": {
+      "bytes": 5798,
+      "sha256": "e5a87bf466e8b78fb5645dd453927ed3503cb1d000ccdeb40456ca36ff7ff47d"
+    },
+    "independent-review/audit_preflight.py": {
+      "bytes": 5534,
+      "sha256": "3cfcb0956bcedc7fa63281f69cf43e8012bae49add064ee25c7c1659921c170f"
+    },
+    "independent-review/audit_recipe_inputs.py": {
+      "bytes": 11040,
+      "sha256": "212626ecca09ad1364229e420cff1ea7cf5dd10ad8073b0952cee0ba494d93fb"
+    },
+    "independent-review/audit_saved_mixture.py": {
+      "bytes": 12949,
+      "sha256": "cbb95bc06df37ce0df2c75ebd4639b5227bfb405f36ea1830916e5cceb31a130"
+    },
+    "independent-review/audit_style_gaps.py": {
+      "bytes": 5076,
+      "sha256": "f8ddebc32cf25a4075811389043d21214a69f440698314029ae22318ec2a1ba5"
+    },
+    "independent-review/audit_styles.py": {
+      "bytes": 6960,
+      "sha256": "5da75d234306e8a09fa6ebba6675e4a9b17800a9ba9cb0254b3613e756b46a52"
+    },
+    "independent-review/expected-mixture-schedule-384.json": {
+      "bytes": 383743,
+      "sha256": "f527537bdf5afecf468a951a00eb85ff426675134c8b3db08905842779bb1676"
+    },
+    "independent-review/final-packet-review-attempt1.log": {
+      "bytes": 764,
+      "sha256": "a15eb947f56361b94b8053e9f335d44e9dd3ed4e144c370b055fb8aa70377017"
+    },
+    "independent-review/final-packet-review-attempt2.log": {
+      "bytes": 343,
+      "sha256": "9c3fe94b442b126a47859ed55f8dc33d78ef2a76acfcd9bdf91296aa3a36efbd"
+    },
+    "independent-review/freeze-review.json": {
+      "bytes": 271673,
+      "sha256": "4a7ff350ce36b1061b94a4d26321b1b26c6fae21ec0f8d3e3182ef21db416d01"
+    },
+    "independent-review/incremental-source-review.json": {
+      "bytes": 1412,
+      "sha256": "5bd73021d44a9d43e70fa9b5292d8aa503e1d6321ae58e4e8676d52908386d0b"
+    },
+    "independent-review/independent-mixture-384-review.json": {
+      "bytes": 353531,
+      "sha256": "267d58653be8e4feb4411aaf1d6a273b65c541cbed9c07822aa5170746076682"
+    },
+    "independent-review/independent-mixture-768-review.json": {
+      "bytes": 353547,
+      "sha256": "b6195183553f678d29984d5c6a54ccd41a29d1dd77f586d7f28fe118d0646c14"
+    },
+    "independent-review/independent-style-gap-review.json": {
+      "bytes": 47691,
+      "sha256": "293cf559ea280c3ac4fb2e721c54573f2e8539734d5e274556422f7bd71ea067"
+    },
+    "independent-review/independent-style-review.json": {
+      "bytes": 7164413,
+      "sha256": "665a8d478fa907b1e13fb3b757226e8a9becc7738e6d3a12f11db7c843493165"
+    },
+    "independent-review/initial-normal-git-state.json": {
+      "bytes": 725,
+      "sha256": "24d53451417fd1105d0a6a9c01c7f5243c7fcf20650d70082476b339f36daaae"
+    },
+    "independent-review/mixture-384-audit-attempt1.log": {
+      "bytes": 209,
+      "sha256": "f5b8069dd9b17433f798b016f9c7431afd1eba0e4f2b34d38127929c322e95ec"
+    },
+    "independent-review/mixture-768-audit-attempt1.log": {
+      "bytes": 209,
+      "sha256": "7e951e58a9d72be4ab1d2b42ce52e1c2d3a0b0fa0d745f8e8723135bac5ec672"
+    },
+    "independent-review/observer-freeze-review.json": {
+      "bytes": 310549,
+      "sha256": "d916645824024329f3ee4a53bb83e0f06bb25819f34295d11591895eec8601e7"
+    },
+    "independent-review/observer-sealer-review.json": {
+      "bytes": 769,
+      "sha256": "6a5a740a3894e3985f1acba7e16779b16d99ae673899f43256809ce2ff355055"
+    },
+    "independent-review/preflight-384-audit-attempt1.log": {
+      "bytes": 49,
+      "sha256": "928839ea3b02505645dd8d6b7574a401fb53d842249d06360a67299d43f113c4"
+    },
+    "independent-review/preflight-384-review.json": {
+      "bytes": 7216,
+      "sha256": "87ba9cb5ef7ec19923c6f194ff135839026b017cb6355bc02c8ef0972dfaff98"
+    },
+    "independent-review/preflight-768-review.json": {
+      "bytes": 6947,
+      "sha256": "7714382179b5f1f0d83109175aee7ae992f8eeaf61172eef9a57558f4718e9dc"
+    },
+    "independent-review/preflight-timing-scope.json": {
+      "bytes": 3101,
+      "sha256": "35767e0bdb3738e5822fafee55a8604165ef0f5b0c596a6aae042b719b0763f0"
+    },
+    "independent-review/recipe-input-audit-attempt1.log": {
+      "bytes": 2459,
+      "sha256": "5cfe03a08d2ac7006c63a439472aa2b593b89bfdb2d632611853a8f1e5090322"
+    },
+    "independent-review/recipe-input-review.json": {
+      "bytes": 16234,
+      "sha256": "7029c3cc03c1cd8623bd4a4e758639c6169c931728e324681c8ddd054775bbc5"
+    },
+    "independent-review/review_final_packet-attempt1.py": {
+      "bytes": 12636,
+      "sha256": "11e74d1b778ddacfaf2c114238920e9311b2c956930b66978465def28b66eee2"
+    },
+    "independent-review/review_final_packet.py": {
+      "bytes": 12779,
+      "sha256": "3ba041a33d7ebe5e9f0a427186a3e8d7e796837261280cb66a4c71189f124735"
+    },
+    "independent-review/source-design-review-r2.json": {
+      "bytes": 8691,
+      "sha256": "dd6b20c6ce6427aeada9873587966bec4268892870610c88c7446cf0862ba38c"
+    },
+    "independent-review/source-design-review.json": {
+      "bytes": 6446,
+      "sha256": "029628460f886dbe64b95046d78bb7670e51be674e6a66a6c99db0f088959f81"
+    },
+    "independent-review/style-gap-audit-attempt1.log": {
+      "bytes": 2113,
+      "sha256": "a8ece6ed314bf8fad8e29a5935481a140934d4562651d17c5b3edd7425b02664"
+    },
+    "independent-review/styles-audit-attempt1.log": {
+      "bytes": 202,
+      "sha256": "bd2b68899e607d39c71bf1b0825508d2b251006452ae6da6da099b158bb346ad"
+    },
+    "mixture-hook/audit-helper-selfcheck-attempt1.json": {
+      "bytes": 303,
+      "sha256": "86be085d07568f9891043532b45ae83a61ebbd3fec53fb27f1afd8feb238d14f"
+    },
+    "mixture-hook/audit-helper-selfcheck-attempt2.json": {
+      "bytes": 868,
+      "sha256": "24a8d3036313d314a8ea3e8b9b6ca526455e7bdeebe746ada1fde1bab5e578d4"
+    },
+    "mixture-hook/audit-helper-selfcheck-attempt3.json": {
+      "bytes": 1728,
+      "sha256": "0a86afb6c2c16ce1c10e95f924caa034ff731c393010ea38af53520cced38718"
+    },
+    "mixture-hook/audit_training_results.py": {
+      "bytes": 24437,
+      "sha256": "ae12acc790705264e5660ceb28f208a0b80ee231fb312fbdeba052e27b3f5afc"
+    },
+    "mixture-hook/combined-tests-attempt1.xml": {
+      "bytes": 6804,
+      "sha256": "1a5eea6c30060d3658f82b5c481a42dd4f43344fe6dac930113435923307c071"
+    },
+    "mixture-hook/final-focused-tests.log": {
+      "bytes": 1879,
+      "sha256": "e408f3e31cc89b4abcf48c7e2c839eca4b70b2b8bc7ddfe5154a2882c832792d"
+    },
+    "mixture-hook/final-focused-tests.xml": {
+      "bytes": 24175,
+      "sha256": "8b8732a48e1909aa8ad14af9485933f5fb4f504d46fbd6d02e406527a15f5405"
+    },
+    "mixture-hook/focused-tests.xml": {
+      "bytes": 23998,
+      "sha256": "917c12f6dc01a987cdde49ee1ee2a60c7cb69b598404b49a5b9f866ee5e806cc"
+    },
+    "mixture-hook/owned-source-publication.json": {
+      "bytes": 2479,
+      "sha256": "3e03fff58a09ebdb0c4fb3295b4d1e72e3ebd88378c4c1bb8a6e9f0b3c14da76"
+    },
+    "mixture-hook/preimages.json": {
+      "bytes": 394,
+      "sha256": "cd8d64b178a719a4a2b24ce30bcceaecb2fec01a65c8569a69e98c813a6d329f"
+    },
+    "mixture-hook/pure-tests-attempt1.xml": {
+      "bytes": 28741,
+      "sha256": "0838979d9d34f1faec6c1dd824effbe942f99403ffe191e35cd12383593c74f4"
+    },
+    "mixture-hook/pure-tests-attempt2.xml": {
+      "bytes": 4730,
+      "sha256": "7b6e89704b60f69c859542368045a6a56970ffc98a7ccc2ce3c0913265e171b5"
+    },
+    "mixture-hook/residual-gaps-r1.json": {
+      "bytes": 810779,
+      "sha256": "b68536963814f04847ff88ecd195887131d2241ee61b6fbd4593f689f6db3db1"
+    },
+    "mixture-hook/style-residual-gaps-r1-failure.json": {
+      "bytes": 486,
+      "sha256": "44a483040efde2451a550d0d9d348bf09f228de6ee21ebf2bb42b0cf55765f7a"
+    },
+    "mixture-hook/style-residual-gaps-r2.json": {
+      "bytes": 114191,
+      "sha256": "2349cc002e06acf81a923f33fb43d0168606db7f57d5a957375e1bcdc9c1be2c"
+    },
+    "mixture-hook/summarize_residual_gaps.py": {
+      "bytes": 6898,
+      "sha256": "d7fe930dd476ad1b5e45853b56d6e02885baa9bcdee6f2215a432e2c1b09e709"
+    },
+    "mixture-hook/summarize_style_gaps.py": {
+      "bytes": 12976,
+      "sha256": "fe17eb6419c78424e408fbdca32f394e8879b54749b8df40e1e75ad64e84055e"
+    },
+    "mixture-hook/trainer-preimage.py": {
+      "bytes": 93180,
+      "sha256": "21f300fbc969c2b34be355b633c46a616d83d451207cc5f3bd56537d40bd0498"
+    },
+    "mixture-hook/training-results-r1-failure.json": {
+      "bytes": 21328,
+      "sha256": "5f1ec009a3df0ebf8d459323391c19ab4b647e2b9949c308c8e120773a9c2602"
+    },
+    "mixture-hook/training-results-r2.json": {
+      "bytes": 169228,
+      "sha256": "289fb1dc2678f5487202aa3301d2954e4aabecd0fba4a4b29454f98191a48b69"
+    },
+    "mixture/adopt_shared_scheduler.py": {
+      "bytes": 11340,
+      "sha256": "3f95185d701c054bc86aa3b3d0862039c7954ffe524f4956387db1fbf5fea93f"
+    },
+    "mixture/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/authored_training_paraphrases.py": {
+      "bytes": 9718,
+      "sha256": "9644f86159fecd0d9a1bb8599e06dacfcbba2581db98a990b0e224ebb8de8513"
+    },
+    "mixture/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/contextual_training_mixture.py": {
+      "bytes": 17786,
+      "sha256": "2d7de997e1baff4a1534ddd756f99864ef2270e3c641c0664f6a240f826bfda5"
+    },
+    "mixture/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/long_span_source_value_training.py": {
+      "bytes": 97881,
+      "sha256": "c7ac8153acc04926bc2200e1031970c428090bc2132f31cc937fbdebdec3478f"
+    },
+    "mixture/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/training_paraphrase_source_inputs.py": {
+      "bytes": 9145,
+      "sha256": "5c0d4571b87d4b3b82be3bae11ff08599f2a5d09c4465a8315641a05d1657649"
+    },
+    "mixture/experiment-source/scripts/ops/autoencoder/benchmark_training_paraphrase_mixture.py": {
+      "bytes": 26501,
+      "sha256": "9f8b036eadb8ee343687d62dd5b490b15d6786414d0bd72e1e06f0b87bbf7115"
+    },
+    "mixture/experiment-source/scripts/ops/autoencoder/evaluate_training_mixture_styles.py": {
+      "bytes": 13057,
+      "sha256": "5491333721699cf2ef730e81ff1c544565c87ebe23439fd86ac117067b676740"
+    },
+    "mixture/experiment-source/tests/unit/logic/formalization/autoencoder/test_contextual_training_mixture.py": {
+      "bytes": 11193,
+      "sha256": "50d902dd26b7c9ff2dcbfc59c47dafef8e7b3a96ff68ea88353f3410bcded199"
+    },
+    "mixture/experiment-source/tests/unit/logic/formalization/autoencoder/test_contextual_training_mixture_integration.py": {
+      "bytes": 14670,
+      "sha256": "8eff05ea463c6601ec75af7e776afb3c5ec99f2cdc04328bec2bc60b829b5bdc"
+    },
+    "mixture/experiment-source/tests/unit/logic/formalization/autoencoder/test_training_mixture_styles.py": {
+      "bytes": 5931,
+      "sha256": "e3e6b1c35076646b83b6df67475d7260c832513e64932b02a96f1142d1091d8f"
+    },
+    "mixture/experiment-source/tests/unit/logic/formalization/autoencoder/test_training_paraphrase_mixture_runner.py": {
+      "bytes": 7528,
+      "sha256": "42c1157e177283db169bc87869528afbcb511ed81860ebc823d535b17171fc19"
+    },
+    "mixture/freeze-receipt.json": {
+      "bytes": 1824,
+      "sha256": "00edce7f8cd57b4ef32ee705d41379d081d95465ee76b00f7adeea7e1953479d"
+    },
+    "mixture/freeze.log": {
+      "bytes": 1530,
+      "sha256": "0ba1bdc36532f6b610ace2b54092191f65ae411b5f22f933a17d6b68b9d04a9a"
+    },
+    "mixture/freeze.py": {
+      "bytes": 7606,
+      "sha256": "4f0e143f032063af72388542e8ceef4730b39165d6f263ab9808d9e76b55ea66"
+    },
+    "mixture/lazy_scheduler_adoption.py": {
+      "bytes": 1345,
+      "sha256": "42f31d8da1eb5b44274ca0b8c8180cd78bc083dfd0e93438e61f38223929d84a"
+    },
+    "mixture/owned-source-publication.json": {
+      "bytes": 1250,
+      "sha256": "50423bd430f07b309c5c4384a04813f5ee044eceee9776f929e4fa5318777d1e"
+    },
+    "mixture/owned_lease_watchdog.py": {
+      "bytes": 20712,
+      "sha256": "f1b9f71e375cf5ed4004e023bbef2d6f7f61e1ecb588078a1094d7b1982609b3"
+    },
+    "mixture/preflight-384-r1-guardian-exit.json": {
+      "bytes": 102,
+      "sha256": "748b888b2426f447baa8802abfeebb672aab89a21988a41a094e2837dc4cac4c"
+    },
+    "mixture/preflight-384-r1-guardian.log": {
+      "bytes": 5097,
+      "sha256": "ea6c579f80b090c374feba3e06c45db9f5da13d39db3ae78451b0d68c22d0567"
+    },
+    "mixture/preflight-384-r1-lease-observations.jsonl": {
+      "bytes": 47783,
+      "sha256": "739a89bc1ca09523d5f2e3dc5afa134f502f981b8f9b84a4ca09b29fae53f159"
+    },
+    "mixture/preflight-384-r1-scheduler-adoption.json": {
+      "bytes": 4646,
+      "sha256": "ed761e46bab1049aaea00bde8eadfe190b69e7f3d40a2cce53397154daa96e4e"
+    },
+    "mixture/preflight-384-r1/child-exit.json": {
+      "bytes": 323,
+      "sha256": "462a5f4e7e3bae56077f898593ca9b233e9a6e4e6de24cc6180d45eed8800195"
+    },
+    "mixture/preflight-384-r1/child-identity.json": {
+      "bytes": 44,
+      "sha256": "6b3c62ccb79d809fa8ea70a1515d568d8eec86b528fbf2eff99f46444dc7799d"
+    },
+    "mixture/preflight-384-r1/command.json": {
+      "bytes": 6454,
+      "sha256": "950fb33460a7c554c50ef624ffe77dc135d300436d1e64c930060e3fd0c49173"
+    },
+    "mixture/preflight-384-r1/lease-binding.json": {
+      "bytes": 694,
+      "sha256": "53594cfa3bdcd3f0435e992a414ae3bf257514b78af900509bbd09049462a98e"
+    },
+    "mixture/preflight-384-r1/resource-observations.json": {
+      "bytes": 1739,
+      "sha256": "4c1835e001728b283c66b1519cdcb95cab7aebd614c4867d4702e67164d07a8a"
+    },
+    "mixture/preflight-384-r1/resources-final.json": {
+      "bytes": 5823,
+      "sha256": "6604fea2ec38004db4c7d27ea660d121f16f97d67988379d9ae71b1c23ae59f2"
+    },
+    "mixture/preflight-384-r1/resources-start.json": {
+      "bytes": 3176,
+      "sha256": "16078be111ab5dbc7fdc59fbcd2d481ba846854d0f77369ab7e31bae220e0e4f"
+    },
+    "mixture/preflight-384-r1/results/half-paraphrases/parent-validation.json": {
+      "bytes": 1995430,
+      "sha256": "560e01bd4c42033da8d6ecb13d0760ac9bb08d868a15051fd073ad364fe30614"
+    },
+    "mixture/preflight-384-r1/results/original-only/parent-validation.json": {
+      "bytes": 1995430,
+      "sha256": "36ddfc49dad68261b880f12767d479fb50e637768e75e1b3980f4cf39f8b8824"
+    },
+    "mixture/preflight-384-r1/results/summary.json": {
+      "bytes": 66310,
+      "sha256": "f807e02138055a263888f03fe6671601cff88b8c76f7486dea48215b2d291e01"
+    },
+    "mixture/preflight-768-r1-guardian-exit.json": {
+      "bytes": 100,
+      "sha256": "c5f7faf67db26e9926c2caf78a14b1fc22b712da3dce7c3eda4115ce93e2db3d"
+    },
+    "mixture/preflight-768-r1-guardian.log": {
+      "bytes": 5103,
+      "sha256": "b84a16b6bfe3cf3c7583acfd73264070ae9f278558a3a860d1137a8477cb78e5"
+    },
+    "mixture/preflight-768-r1-lease-observations.jsonl": {
+      "bytes": 33600,
+      "sha256": "d7e1d2a73feea16b93cc0a9aeb88aac46162da69d78328172cc180a0c76f1e98"
+    },
+    "mixture/preflight-768-r1-scheduler-adoption.json": {
+      "bytes": 4646,
+      "sha256": "7e583f913ede4abb07be6b2bfae75f03453b81a3203a64ba3690128e6d842530"
+    },
+    "mixture/preflight-768-r1/child-exit.json": {
+      "bytes": 325,
+      "sha256": "78b5c0f5d3dba5d73a38d182ec184c6b7f3108d6cd20f138b81e9ca38384da93"
+    },
+    "mixture/preflight-768-r1/child-identity.json": {
+      "bytes": 44,
+      "sha256": "fd11fc2303261fffd8c3205132e08041d57f478cca2a377773c24a75fd5c85eb"
+    },
+    "mixture/preflight-768-r1/child.log": {
+      "bytes": 1674,
+      "sha256": "80633b4fc45621a5a5c2203d00ea83a4412b2d1b0366cfea5b07cd2749289302"
+    },
+    "mixture/preflight-768-r1/command.json": {
+      "bytes": 6454,
+      "sha256": "136cca80a03528b286a2c6946e1c3854bf031d81c1f8cee7b9ff2ae79e2bb8db"
+    },
+    "mixture/preflight-768-r1/lease-binding.json": {
+      "bytes": 692,
+      "sha256": "117f5143aca34dc1ecff0058d68d674f1d5ca31d11178f9134181f10ba94248f"
+    },
+    "mixture/preflight-768-r1/resources-final.json": {
+      "bytes": 5829,
+      "sha256": "e5653117ed9133562eed9c03c8942aecb88c8ea77368ec3e6f84ae4cb47ce80d"
+    },
+    "mixture/preflight-768-r1/resources-start.json": {
+      "bytes": 3177,
+      "sha256": "48a06546d8e6c7808ed38c616deeb36bd8de84c482e5c7c85f6a0fae53b7f3a9"
+    },
+    "mixture/preflight-768-r1/results/half-paraphrases/parent-validation.json": {
+      "bytes": 2385638,
+      "sha256": "c96639aaf57dfa1b0d5a73e0a57d4388d60356cb5cadb049336b246a2cd56a8b"
+    },
+    "mixture/preflight-768-r1/results/original-only/parent-validation.json": {
+      "bytes": 2385639,
+      "sha256": "124db8fd073ea0f4a76ce9ef80fb82483a3d4880fbd0c635aa32959bce0cb270"
+    },
+    "mixture/preflight-768-r1/results/summary.json": {
+      "bytes": 64954,
+      "sha256": "f70bcccc5884d98384515d5b6786cf2377ed1acc66599f17b325c5c82060ded5"
+    },
+    "mixture/preimages.json": {
+      "bytes": 371,
+      "sha256": "fae9cc14e8292864fd60dbf2dbab66dd6e145eaf66666a58cf06197553f5e03d"
+    },
+    "mixture/publication-helper-review-r2.json": {
+      "bytes": 7735,
+      "sha256": "f8ff96f695c8f68b7bd63768d331cda49ba4137c95b5015b27401a3b6fbf5da4"
+    },
+    "mixture/publication-helper-review-r3.json": {
+      "bytes": 2977,
+      "sha256": "df7574006f5c712ab495303547420e16008fc28a212aa2da971caa75f4a5f64b"
+    },
+    "mixture/publication-helper-review.json": {
+      "bytes": 7754,
+      "sha256": "638d5c85cdff22988a987f03a5f4519754efeecd42f84f6fe2e5c79d3df4d250"
+    },
+    "mixture/run_reserved.py": {
+      "bytes": 16603,
+      "sha256": "2e526ef31314ca99239c7d00da7f4b6fc87adc7344bbcc59d7c4cc4fc7383b2a"
+    },
+    "mixture/tests-runner.log": {
+      "bytes": 1170,
+      "sha256": "8e92acd5e4306b043c6800a3f443c5769325448b553f7ea5f5d3ff12a090a230"
+    },
+    "mixture/tests-runner.xml": {
+      "bytes": 4251,
+      "sha256": "0114281f64db86b58d46c6c409dd136148487a30fafcde361613a77bd6633c75"
+    },
+    "mixture/tests.json": {
+      "bytes": 686,
+      "sha256": "63d39c0176c78e1d3d158132ac083c2788a5a2d3c6a512a5df7d2b15e59a745f"
+    },
+    "mixture/training-384-r1-guardian-exit.json": {
+      "bytes": 101,
+      "sha256": "5759756158286808dc311db134be877c5ee79e4b04b0c987cecfe195b5ee0024"
+    },
+    "mixture/training-384-r1-guardian.log": {
+      "bytes": 5111,
+      "sha256": "a8cc155478d292eac0640dd645bad3e415f35928836e71ec6c7b4069384e93e3"
+    },
+    "mixture/training-384-r1-lease-observations.jsonl": {
+      "bytes": 165613,
+      "sha256": "0e7df3ed5b609bb0c9c09f4fd341f679d32b4bc22ea41abe434e6457ab8ca9b7"
+    },
+    "mixture/training-384-r1-scheduler-adoption.json": {
+      "bytes": 4646,
+      "sha256": "c1cfe20f155e12998f0da81cb5c69a509216b149a41a5aeb6a95308adcf842ee"
+    },
+    "mixture/training-384-r1/child-exit.json": {
+      "bytes": 325,
+      "sha256": "1e8997713f3890bb871ac318509440e4a375a67ae60a3441cfb62c2095101f6e"
+    },
+    "mixture/training-384-r1/child-identity.json": {
+      "bytes": 44,
+      "sha256": "f65ea0b9ac0f714d91964494606800baa6ffec43fc3395ab35d6f134b4f3d253"
+    },
+    "mixture/training-384-r1/child.log": {
+      "bytes": 1859,
+      "sha256": "8d10e395055834c3840b138208ee847b3c6efef2cf067134296b6bd005818d0b"
+    },
+    "mixture/training-384-r1/command.json": {
+      "bytes": 6452,
+      "sha256": "440e67a235d2e057eb0d7ed1af8fc339c11ca5338e652239eb8c10cc80b2f64b"
+    },
+    "mixture/training-384-r1/lease-binding.json": {
+      "bytes": 694,
+      "sha256": "91faf787cdfd497c49987088750e391e01d8c32eb7c08ed36cda481acbcd6019"
+    },
+    "mixture/training-384-r1/resource-observations.json": {
+      "bytes": 5256,
+      "sha256": "f1b08fdb31d0c6917fd461a7ddb7b1e81eaef77f033b256ee1a55a7a52730539"
+    },
+    "mixture/training-384-r1/resources-final.json": {
+      "bytes": 5836,
+      "sha256": "2e1c7eeedd45ec5f400188c9e2f35f533d76fb46035684811336225882eaa7fd"
+    },
+    "mixture/training-384-r1/resources-start.json": {
+      "bytes": 3178,
+      "sha256": "718867514a0821bfc0db2bbb20c369e6ee73cf346ab95dafa1a4ded54075e0ac"
+    },
+    "mixture/training-384-r1/results/half-paraphrases/initial-state.json": {
+      "bytes": 2799104,
+      "sha256": "6ff21d9be7f215aeae2e95c282c10dbe2b3aa5556f6aed4d123aa16bc87399d3"
+    },
+    "mixture/training-384-r1/results/half-paraphrases/last-attempt-state.json": {
+      "bytes": 2799085,
+      "sha256": "70bfdcafc0762f60b6fd6322f54813f18efaef5b95bd6cc222da268c612d56de"
+    },
+    "mixture/training-384-r1/results/half-paraphrases/last-attempt/evaluation-context-only-shuffle.json": {
+      "bytes": 2077082,
+      "sha256": "d52c5ab9b1995e766c96f3d04a19d62113e8adde4641058b1ae3fe7c46765e83"
+    },
+    "mixture/training-384-r1/results/half-paraphrases/last-attempt/evaluation-context-reverse.json": {
+      "bytes": 2077118,
+      "sha256": "e2ea78b92d8265a4028dd169991868a81619f702bc6ed67601b2b7324b77a855"
+    },
+    "mixture/training-384-r1/results/half-paraphrases/last-attempt/evaluation-context-rotate.json": {
+      "bytes": 2077082,
+      "sha256": "81396a3eccaaaf84717a1ab0c081c3ea94b0a9723de37197ec018fd5685916eb"
+    },
+    "mixture/training-384-r1/results/half-paraphrases/last-attempt/evaluation-cross-length-shuffle.json": {
+      "bytes": 2077168,
+      "sha256": "f1f5e259923d51e54508ddca0ceb89e2e33d81bc2bc84e329f4f05648dbce849"
+    },
+    "mixture/training-384-r1/results/half-paraphrases/last-attempt/evaluation-recurrent-residual-off.json": {
+      "bytes": 1988446,
+      "sha256": "d89eb4418719fd3e52d04fea073385c7306096fa54c69fa2df0bfcbde1e0bb6b"
+    },
+    "mixture/training-384-r1/results/half-paraphrases/last-attempt/evaluation-source-shuffle.json": {
+      "bytes": 2077011,
+      "sha256": "b4d47a5e46cbdde348606b5742787fe640a49f114882fe4f29a35e2cde097c6c"
+    },
+    "mixture/training-384-r1/results/half-paraphrases/last-attempt/evaluation-training.json": {
+      "bytes": 2070409,
+      "sha256": "9270ae76561c2ba8e1aa41c1e7d337c1652baa2399b47dfb7f40afbeeacac13d"
+    },
+    "mixture/training-384-r1/results/half-paraphrases/last-attempt/evaluation-validation.json": {
+      "bytes": 2076038,
+      "sha256": "63f5a1a36d39fe40b96849b1cec21c1e62931afa290f10c6ef89e1733cdbb129"
+    },
+    "mixture/training-384-r1/results/half-paraphrases/last-attempt/evaluation-zero-condition.json": {
+      "bytes": 2785758,
+      "sha256": "e3ea51b47d52f5eb48005d450745e545f464345e5acc4ed34f93665a9105035e"
+    },
+    "mixture/training-384-r1/results/half-paraphrases/mixture-inputs.json": {
+      "bytes": 13728379,
+      "sha256": "009a67299a8ac2e8e2bdf7893e451e90b9ed2f5542ff2057b41cdd9a9020c3f6"
+    },
+    "mixture/training-384-r1/results/half-paraphrases/parent-validation.json": {
+      "bytes": 1995433,
+      "sha256": "c8e0ea598c4f69dcece1ebc7308c13ce80505e191df8ca6980b747a838759252"
+    },
+    "mixture/training-384-r1/results/half-paraphrases/predeclared-schedule.json": {
+      "bytes": 718332,
+      "sha256": "7de095d2e9d8ff778c51394b3de5d4427431ee4a4fed41a5caba12b20bb6330c"
+    },
+    "mixture/training-384-r1/results/half-paraphrases/retained-endpoints.json": {
+      "bytes": 1762,
+      "sha256": "58cdaacd6b5dde62f3f79118c157a73608536bd3930400f5956c0b6de0bb9726"
+    },
+    "mixture/training-384-r1/results/half-paraphrases/selected-state.json": {
+      "bytes": 2799081,
+      "sha256": "a403b130523e15fef5a084d0ed31d9f2d1a74d8e7cd4bb20f947ced41fc8c8d9"
+    },
+    "mixture/training-384-r1/results/half-paraphrases/selected/evaluation-context-only-shuffle.json": {
+      "bytes": 2077078,
+      "sha256": "e7f0ab2defb963d907b25396ed5a007124329d95943ae4646b8a84e62a57d07b"
+    },
+    "mixture/training-384-r1/results/half-paraphrases/selected/evaluation-context-reverse.json": {
+      "bytes": 2077122,
+      "sha256": "b554d3b7945db0a4553ec647b5e86805b828ea78d71d722f888598cd4a26fc66"
+    },
+    "mixture/training-384-r1/results/half-paraphrases/selected/evaluation-context-rotate.json": {
+      "bytes": 2077085,
+      "sha256": "35a4d17c8b7621ad3a4613bc34c26badd7a25c52daf29236f1fee4d602edac7b"
+    },
+    "mixture/training-384-r1/results/half-paraphrases/selected/evaluation-cross-length-shuffle.json": {
+      "bytes": 2077166,
+      "sha256": "306a37d5f974b461791f2ef20fa21201ee05e8155eeadfc63575d8c9c223d223"
+    },
+    "mixture/training-384-r1/results/half-paraphrases/selected/evaluation-recurrent-residual-off.json": {
+      "bytes": 1988446,
+      "sha256": "38c8a6aacdc3f114781b88695b2435c61ab7b74f228e2952f457ceae44694bc2"
+    },
+    "mixture/training-384-r1/results/half-paraphrases/selected/evaluation-source-shuffle.json": {
+      "bytes": 2077008,
+      "sha256": "1b0507744b3d48f9e5c7b0be534515023eb8aabde6944e8ecebda2965f6d0888"
+    },
+    "mixture/training-384-r1/results/half-paraphrases/selected/evaluation-training.json": {
+      "bytes": 2070410,
+      "sha256": "c2b837f0d44b7c4b43ece6a53f4db125469632c8751f87e5dfda2290b188886b"
+    },
+    "mixture/training-384-r1/results/half-paraphrases/selected/evaluation-validation.json": {
+      "bytes": 2076041,
+      "sha256": "d61c261e5231c5d603bed7e2f615e36a8c894124c543d1d46456384e010200c3"
+    },
+    "mixture/training-384-r1/results/half-paraphrases/selected/evaluation-zero-condition.json": {
+      "bytes": 2785757,
+      "sha256": "fd73ce9ed558453de94b5d0f304c25a1031f2290ecfb21752e35eddc0f8f69af"
+    },
+    "mixture/training-384-r1/results/half-paraphrases/summary.json": {
+      "bytes": 333933,
+      "sha256": "1236ed42df29c82f088c504dea8f9febeb066e7aab6c521ccd1a9bd7ece01426"
+    },
+    "mixture/training-384-r1/results/half-paraphrases/training.json": {
+      "bytes": 20942232,
+      "sha256": "9b1d2422a0bdea718993656d26d0576446291bfd8ef42484155045682519bb5e"
+    },
+    "mixture/training-384-r1/results/original-only/initial-state.json": {
+      "bytes": 2799098,
+      "sha256": "d0eacd65a7c60818a2f77c9dc523d4f4c5b4600f4c1af15e2f09972cf9634748"
+    },
+    "mixture/training-384-r1/results/original-only/last-attempt-state.json": {
+      "bytes": 2798249,
+      "sha256": "f6c5842a6f3898ce17d18dc329e4007f956259f46ee5a8262d8f420f4eb8979d"
+    },
+    "mixture/training-384-r1/results/original-only/last-attempt/evaluation-context-only-shuffle.json": {
+      "bytes": 2079113,
+      "sha256": "826a9a58307a852bbdf80c158758760d8d9b58e92490fedf81a824107af0a2ee"
+    },
+    "mixture/training-384-r1/results/original-only/last-attempt/evaluation-context-reverse.json": {
+      "bytes": 2079150,
+      "sha256": "d25a34705854bf0f595bc13f8c5545d13817cdaedfd19dfb7d5af3ab1e603e69"
+    },
+    "mixture/training-384-r1/results/original-only/last-attempt/evaluation-context-rotate.json": {
+      "bytes": 2079113,
+      "sha256": "cf0a92e11b7dfe8f92ed2f66ee9d6db1918ad31cb34e7c401112a0324899b6db"
+    },
+    "mixture/training-384-r1/results/original-only/last-attempt/evaluation-cross-length-shuffle.json": {
+      "bytes": 2079199,
+      "sha256": "6c88ebb87c1e00d4dc0f4f8b927a5df726897168777775015523e98f42b3e44a"
+    },
+    "mixture/training-384-r1/results/original-only/last-attempt/evaluation-recurrent-residual-off.json": {
+      "bytes": 1990570,
+      "sha256": "2b818b4c71c03b1e9a7a9188f06f5dbd50ebb92431488668f55a826c799d1774"
+    },
+    "mixture/training-384-r1/results/original-only/last-attempt/evaluation-source-shuffle.json": {
+      "bytes": 2079042,
+      "sha256": "fd3150dfdcae9a3ced5fd5d94f8c8b964735c71fad519eba780410a2c267ed92"
+    },
+    "mixture/training-384-r1/results/original-only/last-attempt/evaluation-training.json": {
+      "bytes": 2072252,
+      "sha256": "dbe462a1aade2eb3a76b2ec7505473766b9f2c718217c4d3bcdd5a09f613e3fb"
+    },
+    "mixture/training-384-r1/results/original-only/last-attempt/evaluation-validation.json": {
+      "bytes": 2078072,
+      "sha256": "add9cb1c6935651b9ff29caa1de49eae5fb1176b10cae33cd7e85a7330376c59"
+    },
+    "mixture/training-384-r1/results/original-only/last-attempt/evaluation-zero-condition.json": {
+      "bytes": 2785492,
+      "sha256": "f932fb5580c536417def3dd9453d4ab78cc1d8c4da6b752828eaa289a96f74cc"
+    },
+    "mixture/training-384-r1/results/original-only/mixture-inputs.json": {
+      "bytes": 13728376,
+      "sha256": "da8541b1c5903bcacd7ea5d6beb3094c53f53918287f9a0c7d138fa9bf1b10f4"
+    },
+    "mixture/training-384-r1/results/original-only/parent-validation.json": {
+      "bytes": 1995431,
+      "sha256": "d672b80b8fb74c2bd3a1d97d0acd58d4b033d90c80f31d847f1351f5d0407603"
+    },
+    "mixture/training-384-r1/results/original-only/predeclared-schedule.json": {
+      "bytes": 721311,
+      "sha256": "9d61838730a9bfbfc2172b92f3ae93924bc8f6976ba1872591668a9921ac3387"
+    },
+    "mixture/training-384-r1/results/original-only/retained-endpoints.json": {
+      "bytes": 1750,
+      "sha256": "40d692518728a20efdd7c4d5fed0b57d9e802e07c786276c3845844ff4d7cbbc"
+    },
+    "mixture/training-384-r1/results/original-only/selected-state.json": {
+      "bytes": 2798245,
+      "sha256": "82d4fa41ecb77f3912af76853fb35eaeb325994332a0bf3f73fc74081211a938"
+    },
+    "mixture/training-384-r1/results/original-only/selected/evaluation-context-only-shuffle.json": {
+      "bytes": 2079109,
+      "sha256": "8da661f910dbfa403f41e5f0128abeb532794ee6be080df483f84d1a7fb798c8"
+    },
+    "mixture/training-384-r1/results/original-only/selected/evaluation-context-reverse.json": {
+      "bytes": 2079151,
+      "sha256": "9fdb23d380ccad0dc864ae710e1df7cdb009e58140f80ea53f64284446c24caa"
+    },
+    "mixture/training-384-r1/results/original-only/selected/evaluation-context-rotate.json": {
+      "bytes": 2079116,
+      "sha256": "e5ab21a5b3322f7ea2c66d221bbbdf6054aa2f9438694e3d4977cf2fda2cc15a"
+    },
+    "mixture/training-384-r1/results/original-only/selected/evaluation-cross-length-shuffle.json": {
+      "bytes": 2079196,
+      "sha256": "150a5834a3bd7ab6336a986841833e95c4062054779ab2ca29161c915bb1414d"
+    },
+    "mixture/training-384-r1/results/original-only/selected/evaluation-recurrent-residual-off.json": {
+      "bytes": 1990568,
+      "sha256": "80313bd946a35c78a5cf454ff361b3d2a02bda9dc7b869d18289e3435b712c15"
+    },
+    "mixture/training-384-r1/results/original-only/selected/evaluation-source-shuffle.json": {
+      "bytes": 2079041,
+      "sha256": "ee780a53e90d62caab8be9eb6ce79803a9a2c8e0a31342949d57d787a89a184b"
+    },
+    "mixture/training-384-r1/results/original-only/selected/evaluation-training.json": {
+      "bytes": 2072251,
+      "sha256": "82f67d995365f27009561cc1a86cb81ef4acb43b86199ec1faf2978ac334245c"
+    },
+    "mixture/training-384-r1/results/original-only/selected/evaluation-validation.json": {
+      "bytes": 2078073,
+      "sha256": "4ddef8e30b5d0a75da934780916b35d2fffe41428d10ef303ddf96ba34886d4a"
+    },
+    "mixture/training-384-r1/results/original-only/selected/evaluation-zero-condition.json": {
+      "bytes": 2785494,
+      "sha256": "9b09f4e947bb0517608e5af20c0f46233956bcd169f16d63efc38a18c82488f2"
+    },
+    "mixture/training-384-r1/results/original-only/summary.json": {
+      "bytes": 333842,
+      "sha256": "135fef87ee378c3868640f624a621a591c7272a45671eea2575c925f2bd12ae2"
+    },
+    "mixture/training-384-r1/results/original-only/training.json": {
+      "bytes": 20827038,
+      "sha256": "1dde16c42121a7d811a14d039158963044bd9bdb19c44f2b6c0712057712f11b"
+    },
+    "mixture/training-384-r1/results/preprocessing.json": {
+      "bytes": 1510086,
+      "sha256": "de96c5f0a90a1472e346f3732ace42f0b4af4b3915026695fb705ae809663d8f"
+    },
+    "mixture/training-384-r1/results/source-contexts.json": {
+      "bytes": 3032308,
+      "sha256": "85415c5cef1c25450119cc419797c7f53b2817658d975cd4b357fdde01362a8c"
+    },
+    "mixture/training-384-r1/results/summary.json": {
+      "bytes": 29632,
+      "sha256": "0c6b1efb7fbf44a0cc1bb994821024f6b84ba8a308f37c7e6bb26beb0b16fd0b"
+    },
+    "mixture/training-384-r1/results/training-rows.json": {
+      "bytes": 841411,
+      "sha256": "854c059a7f7b2f9285eac10795191a9439b24ad6141d80406ffa9d6726892359"
+    },
+    "mixture/training-768-r1-guardian-exit.json": {
+      "bytes": 101,
+      "sha256": "656c792f27c16d34758c9efffd6550a2ba4a47c8a0ec8a993a5e3f1292866be2"
+    },
+    "mixture/training-768-r1-guardian.log": {
+      "bytes": 5107,
+      "sha256": "bbfed672004dd7b033092cf16f747112d50541effb24dd5274f72e5fcb86c219"
+    },
+    "mixture/training-768-r1-lease-observations.jsonl": {
+      "bytes": 214115,
+      "sha256": "3dc1e3f682bc7283af81e10aae1afdb5f0600310cfa0e36a9fa868adf63118bb"
+    },
+    "mixture/training-768-r1-scheduler-adoption.json": {
+      "bytes": 4645,
+      "sha256": "07296b489598391f309a14da29ea923ca814753ed8dcc1cbc639075de7896d6f"
+    },
+    "mixture/training-768-r1/child-exit.json": {
+      "bytes": 323,
+      "sha256": "9f2302e81b68513e8f7413cd1b352bff4a0b3ac75fbe12f9fc47c13fa2b2eb0c"
+    },
+    "mixture/training-768-r1/child-identity.json": {
+      "bytes": 44,
+      "sha256": "4c483227005aa4837d30ddbc4e04b06c96c8389fdfe53e6b35b53a59327b9630"
+    },
+    "mixture/training-768-r1/child.log": {
+      "bytes": 1859,
+      "sha256": "fbb6bee82cb41d48415d8b947fa76e52fc934b864213e1477a519d83dee57a11"
+    },
+    "mixture/training-768-r1/command.json": {
+      "bytes": 6451,
+      "sha256": "0f4e2c45e2357fbd85cb1c64f849f3bb04c405050f13290d9bd068e1a20e0e68"
+    },
+    "mixture/training-768-r1/lease-binding.json": {
+      "bytes": 693,
+      "sha256": "cb25892063bb418e3da38f37a96bbf8e6fa447aa4e9f299301a3d6c526460d11"
+    },
+    "mixture/training-768-r1/resource-observations.json": {
+      "bytes": 6145,
+      "sha256": "11045caeba0ee58ea6b3dbfe7ea9f1a930be2736ac4c4001fa087011864f6ddf"
+    },
+    "mixture/training-768-r1/resources-final.json": {
+      "bytes": 5832,
+      "sha256": "32370df5b80efdffe1f36ab5ef2918d18344a83232f75f8bce300471f29cb3f4"
+    },
+    "mixture/training-768-r1/resources-start.json": {
+      "bytes": 3175,
+      "sha256": "0f6c69dee3ca9d67dc95461b610309fae68f584ba374d5ccda37a9691014df93"
+    },
+    "mixture/training-768-r1/results/half-paraphrases/initial-state.json": {
+      "bytes": 4781619,
+      "sha256": "350a0839894fce67065b8671be341b1999b3f9d235eb17b62e5ea0e4c4eebf71"
+    },
+    "mixture/training-768-r1/results/half-paraphrases/last-attempt-state.json": {
+      "bytes": 4780225,
+      "sha256": "608a61c4a2d7911fe7396b868c0d9625111bc467deae63316e387c49c5f7bcc3"
+    },
+    "mixture/training-768-r1/results/half-paraphrases/last-attempt/evaluation-context-only-shuffle.json": {
+      "bytes": 2468187,
+      "sha256": "47a8e5bc9e0b7c52cac2aeb1dd4fb94225cee467ae4bb02b39bbfd65bf72028c"
+    },
+    "mixture/training-768-r1/results/half-paraphrases/last-attempt/evaluation-context-reverse.json": {
+      "bytes": 2468225,
+      "sha256": "a2e43b9fb797d9b68ddc05cd0112f0ca031a8210a50ef1c3bf54d357b3d346fb"
+    },
+    "mixture/training-768-r1/results/half-paraphrases/last-attempt/evaluation-context-rotate.json": {
+      "bytes": 2468188,
+      "sha256": "8592c6c6e12b85dbab8b2c0db83cc71ca55ac0e83dda5aa03d1e262fb7440d8e"
+    },
+    "mixture/training-768-r1/results/half-paraphrases/last-attempt/evaluation-cross-length-shuffle.json": {
+      "bytes": 2468269,
+      "sha256": "4613251e0a9b9cee52affbf6b20c16476466730ed74f4574e04f9111f947d81a"
+    },
+    "mixture/training-768-r1/results/half-paraphrases/last-attempt/evaluation-recurrent-residual-off.json": {
+      "bytes": 2379079,
+      "sha256": "e552f64766e6d2e3e9d00eca131c156f9817f6aa947de7622f4fb6f9bb3025cd"
+    },
+    "mixture/training-768-r1/results/half-paraphrases/last-attempt/evaluation-source-shuffle.json": {
+      "bytes": 2468115,
+      "sha256": "7db07e6e033cd0faf8428b5ac24a883a1b37803eb8cd9e03c9477633f0069f90"
+    },
+    "mixture/training-768-r1/results/half-paraphrases/last-attempt/evaluation-training.json": {
+      "bytes": 2462322,
+      "sha256": "7d0bb34244f0520ec61cc0c5e350b63dd328f4450b9861c68ac5c2626488694e"
+    },
+    "mixture/training-768-r1/results/half-paraphrases/last-attempt/evaluation-validation.json": {
+      "bytes": 2467144,
+      "sha256": "ac1178b4c0cc73a687975b41505278c3bd136a277deb082e276c628ebef9a345"
+    },
+    "mixture/training-768-r1/results/half-paraphrases/last-attempt/evaluation-zero-condition.json": {
+      "bytes": 3180476,
+      "sha256": "476fa7b2aa39096676679269b7d959e354476272e42de68aa040e10de9b3ea86"
+    },
+    "mixture/training-768-r1/results/half-paraphrases/mixture-inputs.json": {
+      "bytes": 24751030,
+      "sha256": "5aa005c9771b9db6871ee14e4495c5a8aaff5890b78b25668e70bb9346937d74"
+    },
+    "mixture/training-768-r1/results/half-paraphrases/parent-validation.json": {
+      "bytes": 2385639,
+      "sha256": "3cd1cfd9a7c213daa092b2ac814ea76bba255a9eaea281c8cda6140c5a990303"
+    },
+    "mixture/training-768-r1/results/half-paraphrases/predeclared-schedule.json": {
+      "bytes": 698580,
+      "sha256": "e6e9114e709667809273d86507eba2c2fef1cc57187bfff89cce0940c071e1a1"
+    },
+    "mixture/training-768-r1/results/half-paraphrases/retained-endpoints.json": {
+      "bytes": 1762,
+      "sha256": "cf4c83c317052c8e9c70a712417236255fc6fbd8ab200ca889013244c6047ef6"
+    },
+    "mixture/training-768-r1/results/half-paraphrases/selected-state.json": {
+      "bytes": 4780221,
+      "sha256": "43d5149c82fa67ec97f00ff792aef77dde3526fd18fe7ea3c14fc62e5d8023b7"
+    },
+    "mixture/training-768-r1/results/half-paraphrases/selected/evaluation-context-only-shuffle.json": {
+      "bytes": 2468186,
+      "sha256": "bce7615a98539e0ec98847ea5dd358c7686be63cd9114715b74c45caaf2088d5"
+    },
+    "mixture/training-768-r1/results/half-paraphrases/selected/evaluation-context-reverse.json": {
+      "bytes": 2468224,
+      "sha256": "168375333f0f804f5d3e428d0625f22341ddcbb3faa6b0b05854531793da8b7b"
+    },
+    "mixture/training-768-r1/results/half-paraphrases/selected/evaluation-context-rotate.json": {
+      "bytes": 2468190,
+      "sha256": "68743eb26ea466c5eb9236a73a15cf8782f3cb547946b125c8fa2cb25ad3603d"
+    },
+    "mixture/training-768-r1/results/half-paraphrases/selected/evaluation-cross-length-shuffle.json": {
+      "bytes": 2468264,
+      "sha256": "37265f9ef6fc5d67ccfb06ebb3b6b2e4a99332d610f3adf80b91ce25c8d7267c"
+    },
+    "mixture/training-768-r1/results/half-paraphrases/selected/evaluation-recurrent-residual-off.json": {
+      "bytes": 2379080,
+      "sha256": "f09d47b4d20332d9989933515ca53dac4b34a4692c1465acf4ad958c09795621"
+    },
+    "mixture/training-768-r1/results/half-paraphrases/selected/evaluation-source-shuffle.json": {
+      "bytes": 2468115,
+      "sha256": "f48d1f77d6731801c735eb25b0ecc1afe0d899eea2a95f1ec8cd0417b1e9ad1d"
+    },
+    "mixture/training-768-r1/results/half-paraphrases/selected/evaluation-training.json": {
+      "bytes": 2462323,
+      "sha256": "2efa39222ca0e5565f4ca8704d9e813712a054c03efdae238edfb61a2423091d"
+    },
+    "mixture/training-768-r1/results/half-paraphrases/selected/evaluation-validation.json": {
+      "bytes": 2467145,
+      "sha256": "b7914ca2ea49b14698dd2eac1e220681628e862b4590b243d453157389d481e8"
+    },
+    "mixture/training-768-r1/results/half-paraphrases/selected/evaluation-zero-condition.json": {
+      "bytes": 3180475,
+      "sha256": "1e31f8f77760d3b6b3066c4819a637ecf708cc2782145446ef5a0eca6ccbb8c1"
+    },
+    "mixture/training-768-r1/results/half-paraphrases/summary.json": {
+      "bytes": 333918,
+      "sha256": "b54ed8a32302465e517a8b6c69731978a0de77c4458908be928f80068761e3b6"
+    },
+    "mixture/training-768-r1/results/half-paraphrases/training.json": {
+      "bytes": 20158856,
+      "sha256": "81fc551e78cd601d5812bed16fd8b987848d7498e9e1b97a565672fc0ff23c82"
+    },
+    "mixture/training-768-r1/results/original-only/initial-state.json": {
+      "bytes": 4781613,
+      "sha256": "63ede2d7c9b24f07ee3c5be251d6da487ffa5eaeb731a5a68ff5c7b0a2507bf2"
+    },
+    "mixture/training-768-r1/results/original-only/last-attempt-state.json": {
+      "bytes": 4778681,
+      "sha256": "861d881ac80c1a2d969ee138e923fc2cd649cd7e835ca7bc7755dbd37c63e642"
+    },
+    "mixture/training-768-r1/results/original-only/last-attempt/evaluation-context-only-shuffle.json": {
+      "bytes": 2469013,
+      "sha256": "3f95cc57c3aa4360a763dc6a9e46502d486fd76dc8febdb8a74f03d4ecc9a271"
+    },
+    "mixture/training-768-r1/results/original-only/last-attempt/evaluation-context-reverse.json": {
+      "bytes": 2469050,
+      "sha256": "bbf877c6991ab21174b09f6590b6bf5fe4b71aec82d979dde9b2b696f0493ce8"
+    },
+    "mixture/training-768-r1/results/original-only/last-attempt/evaluation-context-rotate.json": {
+      "bytes": 2469015,
+      "sha256": "3ef050135ce55c1e155a4786e6243b64360e6f823f9eddd792b775b35908c93a"
+    },
+    "mixture/training-768-r1/results/original-only/last-attempt/evaluation-cross-length-shuffle.json": {
+      "bytes": 2469094,
+      "sha256": "7ce7ae084359b5d9df8c7fc0fe538be0ede8da8f010129f8faf733bf8a8b9af5"
+    },
+    "mixture/training-768-r1/results/original-only/last-attempt/evaluation-recurrent-residual-off.json": {
+      "bytes": 2380321,
+      "sha256": "380e845029c7b0805364abbbabadd85f5e78856501d1bf36ad35dc2d4d7c3ac0"
+    },
+    "mixture/training-768-r1/results/original-only/last-attempt/evaluation-source-shuffle.json": {
+      "bytes": 2468939,
+      "sha256": "df98e5a2dc788fd9bd257e4dcd72b70c1b2d1a79bee787594d9dc1c1fd2e6fe7"
+    },
+    "mixture/training-768-r1/results/original-only/last-attempt/evaluation-training.json": {
+      "bytes": 2463993,
+      "sha256": "ba2fe679293aad3b60828ee764ba5224f9480404b52c57c7fd62430b6cbdd6cf"
+    },
+    "mixture/training-768-r1/results/original-only/last-attempt/evaluation-validation.json": {
+      "bytes": 2467969,
+      "sha256": "1fd881cad5e7e097d437cd57070bcda8c5a3e3d920e7ebff8b63c938e7a9e1d5"
+    },
+    "mixture/training-768-r1/results/original-only/last-attempt/evaluation-zero-condition.json": {
+      "bytes": 3175053,
+      "sha256": "c0fcd761575d6d719de9dac9365bff1df4ba739f287a90dfcf72959413f5ddb3"
+    },
+    "mixture/training-768-r1/results/original-only/mixture-inputs.json": {
+      "bytes": 24751027,
+      "sha256": "f5280c38d562496e53c63a792795a5dfe1a0fb446852759f66fe316a2fd96719"
+    },
+    "mixture/training-768-r1/results/original-only/parent-validation.json": {
+      "bytes": 2385639,
+      "sha256": "6fdb48080b140321f29de6d49f4771009322090af8496007e4073347f6395e00"
+    },
+    "mixture/training-768-r1/results/original-only/predeclared-schedule.json": {
+      "bytes": 701559,
+      "sha256": "b1dfb57bbd04a7db0ef0777cd6860c844f3c2a6d22ff66bd0c6d2519d9466d59"
+    },
+    "mixture/training-768-r1/results/original-only/retained-endpoints.json": {
+      "bytes": 1750,
+      "sha256": "56afdd05d1290220dd464520102096e70e5ebefb24a5c27e57448109c3c2a6b1"
+    },
+    "mixture/training-768-r1/results/original-only/selected-state.json": {
+      "bytes": 4778677,
+      "sha256": "c82700a74de0526ab1d3a85077544b152d53de2acf3d41a66518797a7f9bd5f5"
+    },
+    "mixture/training-768-r1/results/original-only/selected/evaluation-context-only-shuffle.json": {
+      "bytes": 2469013,
+      "sha256": "351743b130ce24ace2d916c3414592437a306eb81d0d3e313a7e447cbe10cd53"
+    },
+    "mixture/training-768-r1/results/original-only/selected/evaluation-context-reverse.json": {
+      "bytes": 2469050,
+      "sha256": "6e0d6cb8df3686ac0f8c5d416bb4fe18fe49416df95223b25d5967c11c9dbee4"
+    },
+    "mixture/training-768-r1/results/original-only/selected/evaluation-context-rotate.json": {
+      "bytes": 2469014,
+      "sha256": "a24dc5b738aea7000c3899952fb5794837276f7ace7bd293994721be937ab2f3"
+    },
+    "mixture/training-768-r1/results/original-only/selected/evaluation-cross-length-shuffle.json": {
+      "bytes": 2469094,
+      "sha256": "e1ce2e9fa48c2a440d0e50432792af2ea583472d0328f98158370e8746ae6c03"
+    },
+    "mixture/training-768-r1/results/original-only/selected/evaluation-recurrent-residual-off.json": {
+      "bytes": 2380320,
+      "sha256": "c7deb511a31c12ae850af7e38a266a8f248ae4b14249a3fc0924c1b7137f0666"
+    },
+    "mixture/training-768-r1/results/original-only/selected/evaluation-source-shuffle.json": {
+      "bytes": 2468940,
+      "sha256": "0a21afaae16dabe1e303a423ba42eedb7b728e3c2f1bac0966c3a8138e6df0ee"
+    },
+    "mixture/training-768-r1/results/original-only/selected/evaluation-training.json": {
+      "bytes": 2463992,
+      "sha256": "b12cf377c54dced543affa1d8a46711745b1271f3bff14bd26688f9b61efe079"
+    },
+    "mixture/training-768-r1/results/original-only/selected/evaluation-validation.json": {
+      "bytes": 2467968,
+      "sha256": "6ee5ee4fe12e9edda28273f695fd4900ea7c366004826114cd677d3dff7c64b5"
+    },
+    "mixture/training-768-r1/results/original-only/selected/evaluation-zero-condition.json": {
+      "bytes": 3175053,
+      "sha256": "49c75f4e283f557ffaab10a32dd9fee973091464fb4de466abcbf319e73bbacf"
+    },
+    "mixture/training-768-r1/results/original-only/summary.json": {
+      "bytes": 333841,
+      "sha256": "d0aefe94e397916631136338c65710e596204622b41ff6feb5887c607101b1cb"
+    },
+    "mixture/training-768-r1/results/original-only/training.json": {
+      "bytes": 20043598,
+      "sha256": "d3c2efa46b3f0a0849ea1addf4ece96166f5d2ed74caae4db3e451f6a4576e17"
+    },
+    "mixture/training-768-r1/results/preprocessing.json": {
+      "bytes": 2864122,
+      "sha256": "f4acb7b6b20a38c226a509e331d638fa667c929bd5b8970be44048d549f072ae"
+    },
+    "mixture/training-768-r1/results/sealed-recipe.json": {
+      "bytes": 498597,
+      "sha256": "4013a0fc5cd731e683ad48ef295a08110324a25605db45ec6986b3bf29c04731"
+    },
+    "mixture/training-768-r1/results/source-contexts.json": {
+      "bytes": 5960181,
+      "sha256": "88406d13f72794934d4c9dc8aa69238004e1f6c5d7bd855ba319c14486392104"
+    },
+    "mixture/training-768-r1/results/summary.json": {
+      "bytes": 28277,
+      "sha256": "6a957bd34953d3362caa8989ec7061a6beab14cae53715ba83d2779ef1479d22"
+    },
+    "mixture/training-768-r1/results/training-rows.json": {
+      "bytes": 1621518,
+      "sha256": "a66ba07b38d101b48f8cd995cc82b2f22f220323ba6f7fc676b87638c4e05254"
+    },
+    "mixture/training-manifest.json": {
+      "bytes": 286241,
+      "sha256": "6eb5c6bcc7008f30636551443162fd1c5a9d45f7c7cc8dbfa4ee2b4635f1a953"
+    },
+    "mixture/training-plan.json": {
+      "bytes": 224631,
+      "sha256": "8c5def9cf69b96852636d42f57f9fcc61f23250bcd416b13fd7f663b9afdc89a"
+    },
+    "publication/aggregate_results.py": {
+      "bytes": 7615,
+      "sha256": "2aca279b0825b1c8a21cfa0266bdd4d664ca97073bac38bada4d2a53d7dbc1e3"
+    },
+    "publication/archive-inventory.json": {
+      "bytes": 206443,
+      "sha256": "3cbdac237e202f3c6793f81b7af85e02f248b6e7152410ed1a97562b50216058"
+    },
+    "publication/archive_helpers.py": {
+      "bytes": 2822,
+      "sha256": "5613458f73112f935124c2a6cf85b6cf36a2e151b35c44afea023accb68e3f44"
+    },
+    "publication/build_evidence.py": {
+      "bytes": 10124,
+      "sha256": "6e166383edb339b432d11f7ff5a671630cf26ad40cfe2554a66a74c8482a8785"
+    },
+    "publication/documentation-review.json": {
+      "bytes": 21024,
+      "sha256": "f9fb0446f22e5bf69843026c6eba7b0551a8c0f9c549af196a399a785387f7fe"
+    },
+    "publication/guide-introduction-draft.md": {
+      "bytes": 4401,
+      "sha256": "253707dae1615651c434dbe9de57b3de543d35e217c9812a57052457e71ccfaa"
+    },
+    "publication/guide-training-results-draft.md": {
+      "bytes": 2352,
+      "sha256": "8129d70d2efe872d347241c7377ccf51f25a1c2614d8e29e94e8ac820c0c5e4b"
+    },
+    "publication/guide-wording-results-draft.md": {
+      "bytes": 4425,
+      "sha256": "ad1fa5841f25a0d7b4dacb7d5b3c3a81e164b23a1893b51b80735a92d7ff64f0"
+    },
+    "publication/inventory_evidence.py": {
+      "bytes": 6393,
+      "sha256": "ecd2d4bd935954472a9ad8556c3aa5038f742987e253fd6d9c2dbb0ae3fef1d1"
+    },
+    "publication/observer-tests-r1.json": {
+      "bytes": 874,
+      "sha256": "96e0698368ec8512728a3dc9ce1848a234d861569f0c0d2c30fb3ba1ffdc8233"
+    },
+    "publication/observer-tests-r1.log": {
+      "bytes": 1176,
+      "sha256": "b8e505e4cd0b33e9ae72e07f3783da5d88ef635afcbc1ac3dc22b67cd57642cd"
+    },
+    "publication/observer-tests-r1.xml": {
+      "bytes": 5197,
+      "sha256": "bb2bb2cc09a82b28d8afb4d18558eb3897738d86aba37049b5b0842c361d965d"
+    },
+    "publication/observer-tests-r2.json": {
+      "bytes": 875,
+      "sha256": "39218ca7dc6138380206e6fdfd940f20accbcc940576718ad542184833b314a4"
+    },
+    "publication/observer-tests-r2.log": {
+      "bytes": 1176,
+      "sha256": "ebdee9c55da7ced06ec9e50e745c47ffae14d167a4d7c1d646c3fcd21ea61d7a"
+    },
+    "publication/observer-tests-r2.xml": {
+      "bytes": 5563,
+      "sha256": "e696aa975c68294536107c4a71b7fb4e5bf294d800139c4bfc3c39606be462f1"
+    },
+    "publication/prearchive-measurement-r1.json": {
+      "bytes": 878,
+      "sha256": "19e2a20d3f4868a9c0d151e9a6eddc34734a7685fb010cd05cc22193995490ed"
+    },
+    "publication/public-readme.txt": {
+      "bytes": 1725,
+      "sha256": "97a6a8d47c0dee90481cb8e4e4d13a20f8cd1dd1b572e394037b9e55865360a5"
+    },
+    "publication/publication-readiness.json": {
+      "bytes": 31474,
+      "sha256": "f019145f25613dc27c794f5e4304fe624dd31c3cd5612601848b3466694454a3"
+    },
+    "publication/publish_results.py": {
+      "bytes": 6436,
+      "sha256": "24fc8dbf63a8b42e51150eb86f8297b401525129a29d39c276b65f35f4d80a0e"
+    },
+    "publication/results-before-paired-conclusions.json": {
+      "bytes": 3048492,
+      "sha256": "31b2fcddd308f4cce3b427555554158097e374ef10d8ec993fbf5bc4b8781ced"
+    },
+    "publication/results.json": {
+      "bytes": 3049472,
+      "sha256": "faf44e25cf2fea5ffce229b617314f185314747b3606da2e45b80d5ad2e0ebac"
+    },
+    "publication/scaffolding.json": {
+      "bytes": 835,
+      "sha256": "5e2edc4961393711d3a0125cdfec7f748072e46218862d322e31af26bb2c5bb8"
+    },
+    "publication/source-review.json": {
+      "bytes": 7913,
+      "sha256": "8f51fdc6d5abc9261ffdd92bf0f64ee9de8a705e6907215c0ba4f1097225f0c7"
+    },
+    "publication/source-scope-final.json": {
+      "bytes": 2998,
+      "sha256": "1e96855b151b4027d2a81e3a26d78c868120edfc5fbb58da9b29db857e86fbf8"
+    }
+  },
+  "native_external_identity_policy": "exact build/native owner manifests and source Git revisions retained; native binaries and pretrained model content remain external",
+  "numerical_source_policy": "all historical executed frozen snapshots retained; publication candidate source inventory is separate",
+  "original_artifact_archive_paths": {
+    "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/four_width_training.md": "documentation/four_width_training.md",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-contextual-mixture-hook-20261004/audit-helper-selfcheck-attempt1.json": "mixture-hook/audit-helper-selfcheck-attempt1.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-contextual-mixture-hook-20261004/audit-helper-selfcheck-attempt2.json": "mixture-hook/audit-helper-selfcheck-attempt2.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-contextual-mixture-hook-20261004/audit-helper-selfcheck-attempt3.json": "mixture-hook/audit-helper-selfcheck-attempt3.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-contextual-mixture-hook-20261004/audit_training_results.py": "mixture-hook/audit_training_results.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-contextual-mixture-hook-20261004/combined-tests-attempt1.xml": "mixture-hook/combined-tests-attempt1.xml",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-contextual-mixture-hook-20261004/final-focused-tests.log": "mixture-hook/final-focused-tests.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-contextual-mixture-hook-20261004/final-focused-tests.xml": "mixture-hook/final-focused-tests.xml",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-contextual-mixture-hook-20261004/focused-tests.xml": "mixture-hook/focused-tests.xml",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-contextual-mixture-hook-20261004/owned-source-publication.json": "mixture-hook/owned-source-publication.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-contextual-mixture-hook-20261004/preimages.json": "mixture-hook/preimages.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-contextual-mixture-hook-20261004/pure-tests-attempt1.xml": "mixture-hook/pure-tests-attempt1.xml",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-contextual-mixture-hook-20261004/pure-tests-attempt2.xml": "mixture-hook/pure-tests-attempt2.xml",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-contextual-mixture-hook-20261004/residual-gaps-r1.json": "mixture-hook/residual-gaps-r1.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-contextual-mixture-hook-20261004/style-residual-gaps-r1-failure.json": "mixture-hook/style-residual-gaps-r1-failure.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-contextual-mixture-hook-20261004/style-residual-gaps-r2.json": "mixture-hook/style-residual-gaps-r2.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-contextual-mixture-hook-20261004/summarize_residual_gaps.py": "mixture-hook/summarize_residual_gaps.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-contextual-mixture-hook-20261004/summarize_style_gaps.py": "mixture-hook/summarize_style_gaps.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-contextual-mixture-hook-20261004/trainer-preimage.py": "mixture-hook/trainer-preimage.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-contextual-mixture-hook-20261004/training-results-r1-failure.json": "mixture-hook/training-results-r1-failure.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-contextual-mixture-hook-20261004/training-results-r2.json": "mixture-hook/training-results-r2.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/adopt_shared_scheduler.py": "mixture/adopt_shared_scheduler.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/authored_training_paraphrases.py": "mixture/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/authored_training_paraphrases.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/contextual_training_mixture.py": "mixture/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/contextual_training_mixture.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/long_span_source_value_training.py": "mixture/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/long_span_source_value_training.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/training_paraphrase_source_inputs.py": "mixture/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/training_paraphrase_source_inputs.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/experiment-source/scripts/ops/autoencoder/benchmark_training_paraphrase_mixture.py": "mixture/experiment-source/scripts/ops/autoencoder/benchmark_training_paraphrase_mixture.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/experiment-source/scripts/ops/autoencoder/evaluate_training_mixture_styles.py": "mixture/experiment-source/scripts/ops/autoencoder/evaluate_training_mixture_styles.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/experiment-source/tests/unit/logic/formalization/autoencoder/test_contextual_training_mixture.py": "mixture/experiment-source/tests/unit/logic/formalization/autoencoder/test_contextual_training_mixture.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/experiment-source/tests/unit/logic/formalization/autoencoder/test_contextual_training_mixture_integration.py": "mixture/experiment-source/tests/unit/logic/formalization/autoencoder/test_contextual_training_mixture_integration.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/experiment-source/tests/unit/logic/formalization/autoencoder/test_training_mixture_styles.py": "mixture/experiment-source/tests/unit/logic/formalization/autoencoder/test_training_mixture_styles.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/experiment-source/tests/unit/logic/formalization/autoencoder/test_training_paraphrase_mixture_runner.py": "mixture/experiment-source/tests/unit/logic/formalization/autoencoder/test_training_paraphrase_mixture_runner.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/freeze-receipt.json": "mixture/freeze-receipt.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/freeze.log": "mixture/freeze.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/freeze.py": "mixture/freeze.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/lazy_scheduler_adoption.py": "mixture/lazy_scheduler_adoption.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/owned-source-publication.json": "mixture/owned-source-publication.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/owned_lease_watchdog.py": "mixture/owned_lease_watchdog.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/preflight-384-r1-guardian-exit.json": "mixture/preflight-384-r1-guardian-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/preflight-384-r1-guardian.log": "mixture/preflight-384-r1-guardian.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/preflight-384-r1-lease-observations.jsonl": "mixture/preflight-384-r1-lease-observations.jsonl",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/preflight-384-r1-scheduler-adoption.json": "mixture/preflight-384-r1-scheduler-adoption.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/preflight-384-r1/child-exit.json": "mixture/preflight-384-r1/child-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/preflight-384-r1/child-identity.json": "mixture/preflight-384-r1/child-identity.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/preflight-384-r1/child.log": "mixture/preflight-768-r1/child.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/preflight-384-r1/command.json": "mixture/preflight-384-r1/command.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/preflight-384-r1/lease-binding.json": "mixture/preflight-384-r1/lease-binding.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/preflight-384-r1/resource-observations.json": "mixture/preflight-384-r1/resource-observations.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/preflight-384-r1/resources-final.json": "mixture/preflight-384-r1/resources-final.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/preflight-384-r1/resources-start.json": "mixture/preflight-384-r1/resources-start.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/preflight-384-r1/results/half-paraphrases/mixture-inputs.json": "mixture/training-384-r1/results/half-paraphrases/mixture-inputs.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/preflight-384-r1/results/half-paraphrases/parent-validation.json": "mixture/preflight-384-r1/results/half-paraphrases/parent-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/preflight-384-r1/results/half-paraphrases/predeclared-schedule.json": "mixture/training-384-r1/results/half-paraphrases/predeclared-schedule.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/preflight-384-r1/results/original-only/mixture-inputs.json": "mixture/training-384-r1/results/original-only/mixture-inputs.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/preflight-384-r1/results/original-only/parent-validation.json": "mixture/preflight-384-r1/results/original-only/parent-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/preflight-384-r1/results/original-only/predeclared-schedule.json": "mixture/training-384-r1/results/original-only/predeclared-schedule.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/preflight-384-r1/results/preprocessing.json": "mixture/training-384-r1/results/preprocessing.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/preflight-384-r1/results/sealed-recipe.json": "mixture/training-768-r1/results/sealed-recipe.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/preflight-384-r1/results/source-contexts.json": "mixture/training-384-r1/results/source-contexts.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/preflight-384-r1/results/summary.json": "mixture/preflight-384-r1/results/summary.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/preflight-384-r1/results/training-rows.json": "mixture/training-384-r1/results/training-rows.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/preflight-768-r1-guardian-exit.json": "mixture/preflight-768-r1-guardian-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/preflight-768-r1-guardian.log": "mixture/preflight-768-r1-guardian.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/preflight-768-r1-lease-observations.jsonl": "mixture/preflight-768-r1-lease-observations.jsonl",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/preflight-768-r1-scheduler-adoption.json": "mixture/preflight-768-r1-scheduler-adoption.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/preflight-768-r1/child-exit.json": "mixture/preflight-768-r1/child-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/preflight-768-r1/child-identity.json": "mixture/preflight-768-r1/child-identity.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/preflight-768-r1/child.log": "mixture/preflight-768-r1/child.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/preflight-768-r1/command.json": "mixture/preflight-768-r1/command.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/preflight-768-r1/lease-binding.json": "mixture/preflight-768-r1/lease-binding.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/preflight-768-r1/resources-final.json": "mixture/preflight-768-r1/resources-final.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/preflight-768-r1/resources-start.json": "mixture/preflight-768-r1/resources-start.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/preflight-768-r1/results/half-paraphrases/mixture-inputs.json": "mixture/training-768-r1/results/half-paraphrases/mixture-inputs.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/preflight-768-r1/results/half-paraphrases/parent-validation.json": "mixture/preflight-768-r1/results/half-paraphrases/parent-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/preflight-768-r1/results/half-paraphrases/predeclared-schedule.json": "mixture/training-768-r1/results/half-paraphrases/predeclared-schedule.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/preflight-768-r1/results/original-only/mixture-inputs.json": "mixture/training-768-r1/results/original-only/mixture-inputs.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/preflight-768-r1/results/original-only/parent-validation.json": "mixture/preflight-768-r1/results/original-only/parent-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/preflight-768-r1/results/original-only/predeclared-schedule.json": "mixture/training-768-r1/results/original-only/predeclared-schedule.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/preflight-768-r1/results/preprocessing.json": "mixture/training-768-r1/results/preprocessing.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/preflight-768-r1/results/sealed-recipe.json": "mixture/training-768-r1/results/sealed-recipe.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/preflight-768-r1/results/source-contexts.json": "mixture/training-768-r1/results/source-contexts.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/preflight-768-r1/results/summary.json": "mixture/preflight-768-r1/results/summary.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/preflight-768-r1/results/training-rows.json": "mixture/training-768-r1/results/training-rows.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/preimages.json": "mixture/preimages.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/publication-helper-review-r2.json": "mixture/publication-helper-review-r2.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/publication-helper-review-r3.json": "mixture/publication-helper-review-r3.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/publication-helper-review.json": "mixture/publication-helper-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/run_reserved.py": "mixture/run_reserved.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/tests-runner.log": "mixture/tests-runner.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/tests-runner.xml": "mixture/tests-runner.xml",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/tests.json": "mixture/tests.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1-guardian-exit.json": "mixture/training-384-r1-guardian-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1-guardian.log": "mixture/training-384-r1-guardian.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1-lease-observations.jsonl": "mixture/training-384-r1-lease-observations.jsonl",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1-scheduler-adoption.json": "mixture/training-384-r1-scheduler-adoption.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/child-exit.json": "mixture/training-384-r1/child-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/child-identity.json": "mixture/training-384-r1/child-identity.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/child.log": "mixture/training-384-r1/child.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/command.json": "mixture/training-384-r1/command.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/lease-binding.json": "mixture/training-384-r1/lease-binding.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/resource-observations.json": "mixture/training-384-r1/resource-observations.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/resources-final.json": "mixture/training-384-r1/resources-final.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/resources-start.json": "mixture/training-384-r1/resources-start.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/half-paraphrases/initial-state.json": "mixture/training-384-r1/results/half-paraphrases/initial-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/half-paraphrases/last-attempt-state.json": "mixture/training-384-r1/results/half-paraphrases/last-attempt-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/half-paraphrases/last-attempt/evaluation-context-only-shuffle.json": "mixture/training-384-r1/results/half-paraphrases/last-attempt/evaluation-context-only-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/half-paraphrases/last-attempt/evaluation-context-reverse.json": "mixture/training-384-r1/results/half-paraphrases/last-attempt/evaluation-context-reverse.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/half-paraphrases/last-attempt/evaluation-context-rotate.json": "mixture/training-384-r1/results/half-paraphrases/last-attempt/evaluation-context-rotate.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/half-paraphrases/last-attempt/evaluation-cross-length-shuffle.json": "mixture/training-384-r1/results/half-paraphrases/last-attempt/evaluation-cross-length-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/half-paraphrases/last-attempt/evaluation-recurrent-residual-off.json": "mixture/training-384-r1/results/half-paraphrases/last-attempt/evaluation-recurrent-residual-off.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/half-paraphrases/last-attempt/evaluation-source-shuffle.json": "mixture/training-384-r1/results/half-paraphrases/last-attempt/evaluation-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/half-paraphrases/last-attempt/evaluation-training.json": "mixture/training-384-r1/results/half-paraphrases/last-attempt/evaluation-training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/half-paraphrases/last-attempt/evaluation-validation.json": "mixture/training-384-r1/results/half-paraphrases/last-attempt/evaluation-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/half-paraphrases/last-attempt/evaluation-zero-condition.json": "mixture/training-384-r1/results/half-paraphrases/last-attempt/evaluation-zero-condition.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/half-paraphrases/mixture-inputs.json": "mixture/training-384-r1/results/half-paraphrases/mixture-inputs.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/half-paraphrases/parent-validation.json": "mixture/training-384-r1/results/half-paraphrases/parent-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/half-paraphrases/predeclared-schedule.json": "mixture/training-384-r1/results/half-paraphrases/predeclared-schedule.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/half-paraphrases/retained-endpoints.json": "mixture/training-384-r1/results/half-paraphrases/retained-endpoints.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/half-paraphrases/selected-state.json": "mixture/training-384-r1/results/half-paraphrases/selected-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/half-paraphrases/selected/evaluation-context-only-shuffle.json": "mixture/training-384-r1/results/half-paraphrases/selected/evaluation-context-only-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/half-paraphrases/selected/evaluation-context-reverse.json": "mixture/training-384-r1/results/half-paraphrases/selected/evaluation-context-reverse.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/half-paraphrases/selected/evaluation-context-rotate.json": "mixture/training-384-r1/results/half-paraphrases/selected/evaluation-context-rotate.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/half-paraphrases/selected/evaluation-cross-length-shuffle.json": "mixture/training-384-r1/results/half-paraphrases/selected/evaluation-cross-length-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/half-paraphrases/selected/evaluation-recurrent-residual-off.json": "mixture/training-384-r1/results/half-paraphrases/selected/evaluation-recurrent-residual-off.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/half-paraphrases/selected/evaluation-source-shuffle.json": "mixture/training-384-r1/results/half-paraphrases/selected/evaluation-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/half-paraphrases/selected/evaluation-training.json": "mixture/training-384-r1/results/half-paraphrases/selected/evaluation-training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/half-paraphrases/selected/evaluation-validation.json": "mixture/training-384-r1/results/half-paraphrases/selected/evaluation-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/half-paraphrases/selected/evaluation-zero-condition.json": "mixture/training-384-r1/results/half-paraphrases/selected/evaluation-zero-condition.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/half-paraphrases/summary.json": "mixture/training-384-r1/results/half-paraphrases/summary.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/half-paraphrases/training.json": "mixture/training-384-r1/results/half-paraphrases/training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/original-only/initial-state.json": "mixture/training-384-r1/results/original-only/initial-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/original-only/last-attempt-state.json": "mixture/training-384-r1/results/original-only/last-attempt-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/original-only/last-attempt/evaluation-context-only-shuffle.json": "mixture/training-384-r1/results/original-only/last-attempt/evaluation-context-only-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/original-only/last-attempt/evaluation-context-reverse.json": "mixture/training-384-r1/results/original-only/last-attempt/evaluation-context-reverse.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/original-only/last-attempt/evaluation-context-rotate.json": "mixture/training-384-r1/results/original-only/last-attempt/evaluation-context-rotate.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/original-only/last-attempt/evaluation-cross-length-shuffle.json": "mixture/training-384-r1/results/original-only/last-attempt/evaluation-cross-length-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/original-only/last-attempt/evaluation-recurrent-residual-off.json": "mixture/training-384-r1/results/original-only/last-attempt/evaluation-recurrent-residual-off.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/original-only/last-attempt/evaluation-source-shuffle.json": "mixture/training-384-r1/results/original-only/last-attempt/evaluation-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/original-only/last-attempt/evaluation-training.json": "mixture/training-384-r1/results/original-only/last-attempt/evaluation-training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/original-only/last-attempt/evaluation-validation.json": "mixture/training-384-r1/results/original-only/last-attempt/evaluation-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/original-only/last-attempt/evaluation-zero-condition.json": "mixture/training-384-r1/results/original-only/last-attempt/evaluation-zero-condition.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/original-only/mixture-inputs.json": "mixture/training-384-r1/results/original-only/mixture-inputs.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/original-only/parent-validation.json": "mixture/training-384-r1/results/original-only/parent-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/original-only/predeclared-schedule.json": "mixture/training-384-r1/results/original-only/predeclared-schedule.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/original-only/retained-endpoints.json": "mixture/training-384-r1/results/original-only/retained-endpoints.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/original-only/selected-state.json": "mixture/training-384-r1/results/original-only/selected-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/original-only/selected/evaluation-context-only-shuffle.json": "mixture/training-384-r1/results/original-only/selected/evaluation-context-only-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/original-only/selected/evaluation-context-reverse.json": "mixture/training-384-r1/results/original-only/selected/evaluation-context-reverse.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/original-only/selected/evaluation-context-rotate.json": "mixture/training-384-r1/results/original-only/selected/evaluation-context-rotate.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/original-only/selected/evaluation-cross-length-shuffle.json": "mixture/training-384-r1/results/original-only/selected/evaluation-cross-length-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/original-only/selected/evaluation-recurrent-residual-off.json": "mixture/training-384-r1/results/original-only/selected/evaluation-recurrent-residual-off.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/original-only/selected/evaluation-source-shuffle.json": "mixture/training-384-r1/results/original-only/selected/evaluation-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/original-only/selected/evaluation-training.json": "mixture/training-384-r1/results/original-only/selected/evaluation-training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/original-only/selected/evaluation-validation.json": "mixture/training-384-r1/results/original-only/selected/evaluation-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/original-only/selected/evaluation-zero-condition.json": "mixture/training-384-r1/results/original-only/selected/evaluation-zero-condition.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/original-only/summary.json": "mixture/training-384-r1/results/original-only/summary.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/original-only/training.json": "mixture/training-384-r1/results/original-only/training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/preprocessing.json": "mixture/training-384-r1/results/preprocessing.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/sealed-recipe.json": "mixture/training-768-r1/results/sealed-recipe.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/source-contexts.json": "mixture/training-384-r1/results/source-contexts.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/summary.json": "mixture/training-384-r1/results/summary.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-384-r1/results/training-rows.json": "mixture/training-384-r1/results/training-rows.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1-guardian-exit.json": "mixture/training-768-r1-guardian-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1-guardian.log": "mixture/training-768-r1-guardian.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1-lease-observations.jsonl": "mixture/training-768-r1-lease-observations.jsonl",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1-scheduler-adoption.json": "mixture/training-768-r1-scheduler-adoption.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/child-exit.json": "mixture/training-768-r1/child-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/child-identity.json": "mixture/training-768-r1/child-identity.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/child.log": "mixture/training-768-r1/child.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/command.json": "mixture/training-768-r1/command.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/lease-binding.json": "mixture/training-768-r1/lease-binding.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/resource-observations.json": "mixture/training-768-r1/resource-observations.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/resources-final.json": "mixture/training-768-r1/resources-final.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/resources-start.json": "mixture/training-768-r1/resources-start.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/half-paraphrases/initial-state.json": "mixture/training-768-r1/results/half-paraphrases/initial-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/half-paraphrases/last-attempt-state.json": "mixture/training-768-r1/results/half-paraphrases/last-attempt-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/half-paraphrases/last-attempt/evaluation-context-only-shuffle.json": "mixture/training-768-r1/results/half-paraphrases/last-attempt/evaluation-context-only-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/half-paraphrases/last-attempt/evaluation-context-reverse.json": "mixture/training-768-r1/results/half-paraphrases/last-attempt/evaluation-context-reverse.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/half-paraphrases/last-attempt/evaluation-context-rotate.json": "mixture/training-768-r1/results/half-paraphrases/last-attempt/evaluation-context-rotate.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/half-paraphrases/last-attempt/evaluation-cross-length-shuffle.json": "mixture/training-768-r1/results/half-paraphrases/last-attempt/evaluation-cross-length-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/half-paraphrases/last-attempt/evaluation-recurrent-residual-off.json": "mixture/training-768-r1/results/half-paraphrases/last-attempt/evaluation-recurrent-residual-off.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/half-paraphrases/last-attempt/evaluation-source-shuffle.json": "mixture/training-768-r1/results/half-paraphrases/last-attempt/evaluation-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/half-paraphrases/last-attempt/evaluation-training.json": "mixture/training-768-r1/results/half-paraphrases/last-attempt/evaluation-training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/half-paraphrases/last-attempt/evaluation-validation.json": "mixture/training-768-r1/results/half-paraphrases/last-attempt/evaluation-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/half-paraphrases/last-attempt/evaluation-zero-condition.json": "mixture/training-768-r1/results/half-paraphrases/last-attempt/evaluation-zero-condition.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/half-paraphrases/mixture-inputs.json": "mixture/training-768-r1/results/half-paraphrases/mixture-inputs.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/half-paraphrases/parent-validation.json": "mixture/training-768-r1/results/half-paraphrases/parent-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/half-paraphrases/predeclared-schedule.json": "mixture/training-768-r1/results/half-paraphrases/predeclared-schedule.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/half-paraphrases/retained-endpoints.json": "mixture/training-768-r1/results/half-paraphrases/retained-endpoints.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/half-paraphrases/selected-state.json": "mixture/training-768-r1/results/half-paraphrases/selected-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/half-paraphrases/selected/evaluation-context-only-shuffle.json": "mixture/training-768-r1/results/half-paraphrases/selected/evaluation-context-only-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/half-paraphrases/selected/evaluation-context-reverse.json": "mixture/training-768-r1/results/half-paraphrases/selected/evaluation-context-reverse.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/half-paraphrases/selected/evaluation-context-rotate.json": "mixture/training-768-r1/results/half-paraphrases/selected/evaluation-context-rotate.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/half-paraphrases/selected/evaluation-cross-length-shuffle.json": "mixture/training-768-r1/results/half-paraphrases/selected/evaluation-cross-length-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/half-paraphrases/selected/evaluation-recurrent-residual-off.json": "mixture/training-768-r1/results/half-paraphrases/selected/evaluation-recurrent-residual-off.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/half-paraphrases/selected/evaluation-source-shuffle.json": "mixture/training-768-r1/results/half-paraphrases/selected/evaluation-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/half-paraphrases/selected/evaluation-training.json": "mixture/training-768-r1/results/half-paraphrases/selected/evaluation-training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/half-paraphrases/selected/evaluation-validation.json": "mixture/training-768-r1/results/half-paraphrases/selected/evaluation-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/half-paraphrases/selected/evaluation-zero-condition.json": "mixture/training-768-r1/results/half-paraphrases/selected/evaluation-zero-condition.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/half-paraphrases/summary.json": "mixture/training-768-r1/results/half-paraphrases/summary.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/half-paraphrases/training.json": "mixture/training-768-r1/results/half-paraphrases/training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/original-only/initial-state.json": "mixture/training-768-r1/results/original-only/initial-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/original-only/last-attempt-state.json": "mixture/training-768-r1/results/original-only/last-attempt-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/original-only/last-attempt/evaluation-context-only-shuffle.json": "mixture/training-768-r1/results/original-only/last-attempt/evaluation-context-only-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/original-only/last-attempt/evaluation-context-reverse.json": "mixture/training-768-r1/results/original-only/last-attempt/evaluation-context-reverse.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/original-only/last-attempt/evaluation-context-rotate.json": "mixture/training-768-r1/results/original-only/last-attempt/evaluation-context-rotate.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/original-only/last-attempt/evaluation-cross-length-shuffle.json": "mixture/training-768-r1/results/original-only/last-attempt/evaluation-cross-length-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/original-only/last-attempt/evaluation-recurrent-residual-off.json": "mixture/training-768-r1/results/original-only/last-attempt/evaluation-recurrent-residual-off.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/original-only/last-attempt/evaluation-source-shuffle.json": "mixture/training-768-r1/results/original-only/last-attempt/evaluation-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/original-only/last-attempt/evaluation-training.json": "mixture/training-768-r1/results/original-only/last-attempt/evaluation-training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/original-only/last-attempt/evaluation-validation.json": "mixture/training-768-r1/results/original-only/last-attempt/evaluation-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/original-only/last-attempt/evaluation-zero-condition.json": "mixture/training-768-r1/results/original-only/last-attempt/evaluation-zero-condition.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/original-only/mixture-inputs.json": "mixture/training-768-r1/results/original-only/mixture-inputs.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/original-only/parent-validation.json": "mixture/training-768-r1/results/original-only/parent-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/original-only/predeclared-schedule.json": "mixture/training-768-r1/results/original-only/predeclared-schedule.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/original-only/retained-endpoints.json": "mixture/training-768-r1/results/original-only/retained-endpoints.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/original-only/selected-state.json": "mixture/training-768-r1/results/original-only/selected-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/original-only/selected/evaluation-context-only-shuffle.json": "mixture/training-768-r1/results/original-only/selected/evaluation-context-only-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/original-only/selected/evaluation-context-reverse.json": "mixture/training-768-r1/results/original-only/selected/evaluation-context-reverse.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/original-only/selected/evaluation-context-rotate.json": "mixture/training-768-r1/results/original-only/selected/evaluation-context-rotate.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/original-only/selected/evaluation-cross-length-shuffle.json": "mixture/training-768-r1/results/original-only/selected/evaluation-cross-length-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/original-only/selected/evaluation-recurrent-residual-off.json": "mixture/training-768-r1/results/original-only/selected/evaluation-recurrent-residual-off.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/original-only/selected/evaluation-source-shuffle.json": "mixture/training-768-r1/results/original-only/selected/evaluation-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/original-only/selected/evaluation-training.json": "mixture/training-768-r1/results/original-only/selected/evaluation-training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/original-only/selected/evaluation-validation.json": "mixture/training-768-r1/results/original-only/selected/evaluation-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/original-only/selected/evaluation-zero-condition.json": "mixture/training-768-r1/results/original-only/selected/evaluation-zero-condition.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/original-only/summary.json": "mixture/training-768-r1/results/original-only/summary.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/original-only/training.json": "mixture/training-768-r1/results/original-only/training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/preprocessing.json": "mixture/training-768-r1/results/preprocessing.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/sealed-recipe.json": "mixture/training-768-r1/results/sealed-recipe.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/source-contexts.json": "mixture/training-768-r1/results/source-contexts.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/summary.json": "mixture/training-768-r1/results/summary.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-768-r1/results/training-rows.json": "mixture/training-768-r1/results/training-rows.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-manifest.json": "mixture/training-manifest.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-20261004/training-plan.json": "mixture/training-plan.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-publication-20261004/aggregate_results.py": "publication/aggregate_results.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-publication-20261004/archive-inventory.json": "publication/archive-inventory.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-publication-20261004/archive_helpers.py": "publication/archive_helpers.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-publication-20261004/build_evidence.py": "publication/build_evidence.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-publication-20261004/documentation-review.json": "publication/documentation-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-publication-20261004/guide-introduction-draft.md": "publication/guide-introduction-draft.md",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-publication-20261004/guide-training-results-draft.md": "publication/guide-training-results-draft.md",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-publication-20261004/guide-wording-results-draft.md": "publication/guide-wording-results-draft.md",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-publication-20261004/inventory_evidence.py": "publication/inventory_evidence.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-publication-20261004/observer-tests-r1.json": "publication/observer-tests-r1.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-publication-20261004/observer-tests-r1.log": "publication/observer-tests-r1.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-publication-20261004/observer-tests-r1.xml": "publication/observer-tests-r1.xml",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-publication-20261004/observer-tests-r2.json": "publication/observer-tests-r2.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-publication-20261004/observer-tests-r2.log": "publication/observer-tests-r2.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-publication-20261004/observer-tests-r2.xml": "publication/observer-tests-r2.xml",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-publication-20261004/prearchive-measurement-r1.json": "publication/prearchive-measurement-r1.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-publication-20261004/public-readme.txt": "publication/public-readme.txt",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-publication-20261004/publication-readiness.json": "publication/publication-readiness.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-publication-20261004/publish_results.py": "publication/publish_results.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-publication-20261004/results-before-paired-conclusions.json": "publication/results-before-paired-conclusions.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-publication-20261004/results.json": "publication/results.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-publication-20261004/scaffolding.json": "publication/scaffolding.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-publication-20261004/source-review.json": "publication/source-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-publication-20261004/source-scope-final.json": "publication/source-scope-final.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-review-20261004/audit_preflight.py": "independent-review/audit_preflight.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-review-20261004/audit_recipe_inputs.py": "independent-review/audit_recipe_inputs.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-review-20261004/audit_saved_mixture.py": "independent-review/audit_saved_mixture.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-review-20261004/audit_style_gaps.py": "independent-review/audit_style_gaps.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-review-20261004/audit_styles.py": "independent-review/audit_styles.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-review-20261004/expected-mixture-schedule-384.json": "independent-review/expected-mixture-schedule-384.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-review-20261004/expected-mixture-schedule-768.json": "independent-review/expected-mixture-schedule-384.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-review-20261004/final-packet-review-attempt1.log": "independent-review/final-packet-review-attempt1.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-review-20261004/final-packet-review-attempt2.log": "independent-review/final-packet-review-attempt2.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-review-20261004/freeze-review.json": "independent-review/freeze-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-review-20261004/incremental-source-review.json": "independent-review/incremental-source-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-review-20261004/independent-mixture-384-review.json": "independent-review/independent-mixture-384-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-review-20261004/independent-mixture-768-review.json": "independent-review/independent-mixture-768-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-review-20261004/independent-style-gap-review.json": "independent-review/independent-style-gap-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-review-20261004/independent-style-review.json": "independent-review/independent-style-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-review-20261004/initial-normal-git-state.json": "independent-review/initial-normal-git-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-review-20261004/mixture-384-audit-attempt1.log": "independent-review/mixture-384-audit-attempt1.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-review-20261004/mixture-768-audit-attempt1.log": "independent-review/mixture-768-audit-attempt1.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-review-20261004/observer-freeze-review.json": "independent-review/observer-freeze-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-review-20261004/observer-sealer-review.json": "independent-review/observer-sealer-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-review-20261004/preflight-384-audit-attempt1.log": "independent-review/preflight-384-audit-attempt1.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-review-20261004/preflight-384-review.json": "independent-review/preflight-384-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-review-20261004/preflight-768-audit-attempt1.log": "independent-review/preflight-384-audit-attempt1.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-review-20261004/preflight-768-review.json": "independent-review/preflight-768-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-review-20261004/preflight-timing-scope.json": "independent-review/preflight-timing-scope.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-review-20261004/recipe-input-audit-attempt1.log": "independent-review/recipe-input-audit-attempt1.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-review-20261004/recipe-input-review.json": "independent-review/recipe-input-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-review-20261004/review_final_packet-attempt1.py": "independent-review/review_final_packet-attempt1.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-review-20261004/review_final_packet.py": "independent-review/review_final_packet.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-review-20261004/source-design-review-r2.json": "independent-review/source-design-review-r2.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-review-20261004/source-design-review.json": "independent-review/source-design-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-review-20261004/style-gap-audit-attempt1.log": "independent-review/style-gap-audit-attempt1.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-review-20261004/styles-audit-attempt1.log": "independent-review/styles-audit-attempt1.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/adopt_shared_scheduler.py": "exposed-styles/adopt_shared_scheduler.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/evaluation-manifest.json": "exposed-styles/evaluation-manifest.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/evaluation-plan.json": "exposed-styles/evaluation-plan.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/evaluation-r1-guardian-exit.json": "exposed-styles/evaluation-r1-guardian-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/evaluation-r1-guardian.log": "exposed-styles/evaluation-r1-guardian.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/evaluation-r1-lease-observations.jsonl": "exposed-styles/evaluation-r1-lease-observations.jsonl",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/evaluation-r1-scheduler-adoption.json": "exposed-styles/evaluation-r1-scheduler-adoption.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/evaluation-r1/child-exit.json": "exposed-styles/evaluation-r1/child-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/evaluation-r1/child-identity.json": "exposed-styles/evaluation-r1/child-identity.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/evaluation-r1/child.log": "mixture/preflight-768-r1/child.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/evaluation-r1/command.json": "exposed-styles/evaluation-r1/command.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/evaluation-r1/lease-binding.json": "exposed-styles/evaluation-r1/lease-binding.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/evaluation-r1/resource-observations.json": "exposed-styles/evaluation-r1/resource-observations.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/evaluation-r1/resources-final.json": "exposed-styles/evaluation-r1/resources-final.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/evaluation-r1/resources-start.json": "exposed-styles/evaluation-r1/resources-start.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/evaluation-r1/results/384-half-paraphrases/last-attempt-predictions.json": "exposed-styles/evaluation-r1/results/384-half-paraphrases/last-attempt-predictions.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/evaluation-r1/results/384-half-paraphrases/last-attempt-score.json": "exposed-styles/evaluation-r1/results/384-half-paraphrases/last-attempt-score.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/evaluation-r1/results/384-half-paraphrases/selected-predictions.json": "exposed-styles/evaluation-r1/results/384-half-paraphrases/selected-predictions.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/evaluation-r1/results/384-half-paraphrases/selected-score.json": "exposed-styles/evaluation-r1/results/384-half-paraphrases/selected-score.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/evaluation-r1/results/384-original-only/last-attempt-predictions.json": "exposed-styles/evaluation-r1/results/384-original-only/last-attempt-predictions.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/evaluation-r1/results/384-original-only/last-attempt-score.json": "exposed-styles/evaluation-r1/results/384-original-only/last-attempt-score.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/evaluation-r1/results/384-original-only/selected-predictions.json": "exposed-styles/evaluation-r1/results/384-original-only/selected-predictions.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/evaluation-r1/results/384-original-only/selected-score.json": "exposed-styles/evaluation-r1/results/384-original-only/selected-score.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/evaluation-r1/results/768-half-paraphrases/last-attempt-predictions.json": "exposed-styles/evaluation-r1/results/768-half-paraphrases/last-attempt-predictions.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/evaluation-r1/results/768-half-paraphrases/last-attempt-score.json": "exposed-styles/evaluation-r1/results/768-half-paraphrases/last-attempt-score.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/evaluation-r1/results/768-half-paraphrases/selected-predictions.json": "exposed-styles/evaluation-r1/results/768-half-paraphrases/selected-predictions.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/evaluation-r1/results/768-half-paraphrases/selected-score.json": "exposed-styles/evaluation-r1/results/768-half-paraphrases/selected-score.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/evaluation-r1/results/768-original-only/last-attempt-predictions.json": "exposed-styles/evaluation-r1/results/768-original-only/last-attempt-predictions.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/evaluation-r1/results/768-original-only/last-attempt-score.json": "exposed-styles/evaluation-r1/results/768-original-only/last-attempt-score.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/evaluation-r1/results/768-original-only/selected-predictions.json": "exposed-styles/evaluation-r1/results/768-original-only/selected-predictions.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/evaluation-r1/results/768-original-only/selected-score.json": "exposed-styles/evaluation-r1/results/768-original-only/selected-score.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/evaluation-r1/results/predictions-complete.json": "exposed-styles/evaluation-r1/results/predictions-complete.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/evaluation-r1/results/sealed-recipe.json": "exposed-styles/evaluation-r1/results/sealed-recipe.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/evaluation-r1/results/summary.json": "exposed-styles/evaluation-r1/results/summary.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/authored_training_paraphrases.py": "mixture/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/authored_training_paraphrases.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/contextual_training_mixture.py": "mixture/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/contextual_training_mixture.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/long_span_source_value_training.py": "mixture/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/long_span_source_value_training.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/training_paraphrase_source_inputs.py": "mixture/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/training_paraphrase_source_inputs.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/experiment-source/scripts/ops/autoencoder/benchmark_training_paraphrase_mixture.py": "mixture/experiment-source/scripts/ops/autoencoder/benchmark_training_paraphrase_mixture.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/experiment-source/scripts/ops/autoencoder/evaluate_training_mixture_styles.py": "mixture/experiment-source/scripts/ops/autoencoder/evaluate_training_mixture_styles.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/experiment-source/tests/unit/logic/formalization/autoencoder/test_contextual_training_mixture.py": "mixture/experiment-source/tests/unit/logic/formalization/autoencoder/test_contextual_training_mixture.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/experiment-source/tests/unit/logic/formalization/autoencoder/test_contextual_training_mixture_integration.py": "mixture/experiment-source/tests/unit/logic/formalization/autoencoder/test_contextual_training_mixture_integration.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/experiment-source/tests/unit/logic/formalization/autoencoder/test_training_mixture_styles.py": "mixture/experiment-source/tests/unit/logic/formalization/autoencoder/test_training_mixture_styles.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/experiment-source/tests/unit/logic/formalization/autoencoder/test_training_paraphrase_mixture_runner.py": "mixture/experiment-source/tests/unit/logic/formalization/autoencoder/test_training_paraphrase_mixture_runner.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/lazy_scheduler_adoption.py": "mixture/lazy_scheduler_adoption.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/observer-recipe.json": "exposed-styles/observer-recipe.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/owned_lease_watchdog.py": "mixture/owned_lease_watchdog.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/run_reserved.py": "exposed-styles/run_reserved.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/seal-evaluation.log": "exposed-styles/seal-evaluation.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-mixture-styles-20261004/seal_evaluation.py": "exposed-styles/seal_evaluation.py"
+  },
+  "prior_published_evidence": {
+    "commit": "fd89d2a48aa0de771dd22ec8fd079af10732051f",
+    "path": "docs/implementation/reports/evidence/decoder-generalization-20261004/manifest.json",
+    "sha256": "2270aedb3fd5641f61551f8850a704f86b13dcf9733a0f9a65eb9989d8188051",
+    "transitive_dependencies_required": true
+  },
+  "private_native_backend_trees_or_binaries_included": false,
+  "publication_owned_source_sha256": {
+    "ipfs_datasets_py/logic/formalization/autoencoder/contextual_training_mixture.py": "2d7de997e1baff4a1534ddd756f99864ef2270e3c641c0664f6a240f826bfda5",
+    "ipfs_datasets_py/logic/formalization/autoencoder/long_span_source_value_training.py": "c7ac8153acc04926bc2200e1031970c428090bc2132f31cc937fbdebdec3478f",
+    "scripts/ops/autoencoder/benchmark_training_paraphrase_mixture.py": "9f8b036eadb8ee343687d62dd5b490b15d6786414d0bd72e1e06f0b87bbf7115",
+    "scripts/ops/autoencoder/evaluate_training_mixture_styles.py": "5491333721699cf2ef730e81ff1c544565c87ebe23439fd86ac117067b676740",
+    "tests/unit/logic/formalization/autoencoder/test_contextual_training_mixture.py": "50d902dd26b7c9ff2dcbfc59c47dafef8e7b3a96ff68ea88353f3410bcded199",
+    "tests/unit/logic/formalization/autoencoder/test_contextual_training_mixture_integration.py": "8eff05ea463c6601ec75af7e776afb3c5ec99f2cdc04328bec2bc60b829b5bdc",
+    "tests/unit/logic/formalization/autoencoder/test_training_mixture_styles.py": "e3e6b1c35076646b83b6df67475d7260c832513e64932b02a96f1142d1091d8f",
+    "tests/unit/logic/formalization/autoencoder/test_training_paraphrase_mixture_runner.py": "42c1157e177283db169bc87869528afbcb511ed81860ebc823d535b17171fc19"
+  },
+  "qualified": false,
+  "schema": "decoder-training-mixture-evidence/v1",
+  "source_scope_member": "publication/source-scope-final.json",
+  "terminal_phases": {
+    "exposed-styles/evaluation-r1": {
+      "child_returncode": 0,
+      "failure_retained": false,
+      "released_receipt": true,
+      "terminal_source": "child-exit.json"
+    },
+    "mixture/preflight-384-r1": {
+      "child_returncode": 0,
+      "failure_retained": false,
+      "released_receipt": true,
+      "terminal_source": "child-exit.json"
+    },
+    "mixture/preflight-768-r1": {
+      "child_returncode": 0,
+      "failure_retained": false,
+      "released_receipt": true,
+      "terminal_source": "child-exit.json"
+    },
+    "mixture/training-384-r1": {
+      "child_returncode": 0,
+      "failure_retained": false,
+      "released_receipt": true,
+      "terminal_source": "child-exit.json"
+    },
+    "mixture/training-768-r1": {
+      "child_returncode": 0,
+      "failure_retained": false,
+      "released_receipt": true,
+      "terminal_source": "child-exit.json"
+    }
+  }
+}
