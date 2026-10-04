@@ -1,0 +1,1917 @@
+{
+  "admitted": false,
+  "archive": {
+    "bytes": 139650728,
+    "compression_level": 1,
+    "format": "ordered split gzip tar",
+    "members": 355,
+    "sha256": "62f3f4ed27e33501698bece08e275086d0a619412e8e71c42b8e9a90231273aa"
+  },
+  "archive_parts": [
+    {
+      "bytes": 40000000,
+      "path": "evidence.tar.gz.part-001",
+      "sha256": "6a311f077c375ca4ef52616fca3a8908ab8fe833fe8ac4e4a949eef132aab11c"
+    },
+    {
+      "bytes": 40000000,
+      "path": "evidence.tar.gz.part-002",
+      "sha256": "d9f6400153268c73d87c2723b063138057343f8fb1169eda25d80fe156e97ecb"
+    },
+    {
+      "bytes": 40000000,
+      "path": "evidence.tar.gz.part-003",
+      "sha256": "0b130d21b2e2d05d24787737941b0f6eccae25ee5eb5e81b29942515beb2b092"
+    },
+    {
+      "bytes": 19650728,
+      "path": "evidence.tar.gz.part-004",
+      "sha256": "d4365ce3bc36baa0cfa8045a166c5a1362fb0eb72fca5c7df0b97875419d9d75"
+    }
+  ],
+  "checkpoint_promoted": false,
+  "encoder_weights_trained": false,
+  "external_model_weights_included": false,
+  "inventory_member": "publication/archive-inventory.json",
+  "lake_executed": false,
+  "members": {
+    "documentation/four_width_training.md": {
+      "bytes": 73238,
+      "sha256": "643d2ef2626c95e73fdd6943512e5d85b95a7171f2f7b61bb4c2a600df5e57ef"
+    },
+    "exposed-styles/adopt_shared_scheduler.py": {
+      "bytes": 11206,
+      "sha256": "4956baa1e41abe53fc83a2d4ae7709b3be13ebc1c775b44571a33903b8f70b1f"
+    },
+    "exposed-styles/evaluation-manifest.json": {
+      "bytes": 289580,
+      "sha256": "4c340221f77e3607a92ef055b8d7781649d02aab2777dc1d4aa643b84b255922"
+    },
+    "exposed-styles/evaluation-plan.json": {
+      "bytes": 286778,
+      "sha256": "bcc070b06afea9fb7374bc09f9ef0e5bb778104d7fb41a3389f3e79695afec0c"
+    },
+    "exposed-styles/evaluation-r1-guardian-exit.json": {
+      "bytes": 98,
+      "sha256": "2707d7ee6f9ba0ea9dec8da1197973ae89f303059e7aeca6bede0a4055fed3d6"
+    },
+    "exposed-styles/evaluation-r1-guardian.log": {
+      "bytes": 5112,
+      "sha256": "c9d5637e5e45357af4a5959a2ac9bb373bf27bf5c98e5bdfb7eb0063cf11461b"
+    },
+    "exposed-styles/evaluation-r1-lease-observations.jsonl": {
+      "bytes": 37753,
+      "sha256": "f81c51aa7b5dc0e42ff19072eff02c993ffc195a596a3018d6424fea1add1657"
+    },
+    "exposed-styles/evaluation-r1-scheduler-adoption.json": {
+      "bytes": 4645,
+      "sha256": "1ddbf7a8a13bc7617773b8d50034400b6a1974590d566a763f4fd935c3e87702"
+    },
+    "exposed-styles/evaluation-r1/child-exit.json": {
+      "bytes": 325,
+      "sha256": "a5bcd7301d40176f1d6d2f2553afeadb048f07972bae69ed5cf8b09d5136e25c"
+    },
+    "exposed-styles/evaluation-r1/child-identity.json": {
+      "bytes": 43,
+      "sha256": "fce1a63846c45e1dcef91efe898053e01b7a6a0a768717dfa564433ad826028c"
+    },
+    "exposed-styles/evaluation-r1/command.json": {
+      "bytes": 6453,
+      "sha256": "663d58be0f9114389710d41bf79fa9359b5f245a4ae82165d75fcc154fa4ad1d"
+    },
+    "exposed-styles/evaluation-r1/lease-binding.json": {
+      "bytes": 693,
+      "sha256": "52622cc3177303184bffae4fa25b03a600486be883990d42b19fb445ac493e6d"
+    },
+    "exposed-styles/evaluation-r1/resource-observations.json": {
+      "bytes": 1744,
+      "sha256": "bcab9dbe282cbd01042a99d1345cc42be232c0c86f7d859ebb8efb650733b305"
+    },
+    "exposed-styles/evaluation-r1/resources-final.json": {
+      "bytes": 5838,
+      "sha256": "324a0083ef7277069e3757bc8ddb82e98e36013f3b5f99ebbab468769aa4c5ab"
+    },
+    "exposed-styles/evaluation-r1/resources-start.json": {
+      "bytes": 3181,
+      "sha256": "67d1457e46d8c06802aec09c2016f037ae3a98ff9cf3de91544cf391218597e4"
+    },
+    "exposed-styles/evaluation-r1/results/384-paraphrase-modality-ce/last-attempt-predictions.json": {
+      "bytes": 26199,
+      "sha256": "ca37d9fb8114a3360cf0710578be80970f604e640721880f00e48c4836d28377"
+    },
+    "exposed-styles/evaluation-r1/results/384-paraphrase-modality-ce/last-attempt-score.json": {
+      "bytes": 648184,
+      "sha256": "14bdfb7b0aca3e13f964f35ef15d457fd81bb8daa91dee0f556b114354e5101a"
+    },
+    "exposed-styles/evaluation-r1/results/384-paraphrase-modality-ce/selected-predictions.json": {
+      "bytes": 26199,
+      "sha256": "14edfa53ce8b63c9586efd7574191a784182cbc4b52daab5eaf67e8050d04e17"
+    },
+    "exposed-styles/evaluation-r1/results/384-paraphrase-modality-ce/selected-score.json": {
+      "bytes": 648184,
+      "sha256": "f7b6b0f7f98df43f0bb6136ec1bf2521c3c5941f241fd7250729031c91880031"
+    },
+    "exposed-styles/evaluation-r1/results/384-paraphrase-modality-zero/last-attempt-predictions.json": {
+      "bytes": 26199,
+      "sha256": "754663158e23a74153e3a5f4748f8ab8e4a399673bd450374ba59c71f6ad348b"
+    },
+    "exposed-styles/evaluation-r1/results/384-paraphrase-modality-zero/last-attempt-score.json": {
+      "bytes": 647986,
+      "sha256": "0b091a2c03d60f12c3328a1ba6e791dda2f0e6925d3adbccb6733eca1105d225"
+    },
+    "exposed-styles/evaluation-r1/results/384-paraphrase-modality-zero/selected-predictions.json": {
+      "bytes": 26199,
+      "sha256": "106d0f24743a7425ae40ff25198f745fc08ed7b03e9f584a3ef64bc922c82b3c"
+    },
+    "exposed-styles/evaluation-r1/results/384-paraphrase-modality-zero/selected-score.json": {
+      "bytes": 647986,
+      "sha256": "1ce0b0535d6328d943ea7024a69fd5267c544b9d6954eb7d06d5ba1793d71825"
+    },
+    "exposed-styles/evaluation-r1/results/768-paraphrase-modality-ce/last-attempt-predictions.json": {
+      "bytes": 26200,
+      "sha256": "8630c2804988a5a3fdb0c7b90460e27c18bc57cc108bd02d44844c23237b3f3f"
+    },
+    "exposed-styles/evaluation-r1/results/768-paraphrase-modality-ce/last-attempt-score.json": {
+      "bytes": 647657,
+      "sha256": "8f397b84ddc00884ac20afba88f23ec4f38fc9885ebd247949cb52d991ad69a8"
+    },
+    "exposed-styles/evaluation-r1/results/768-paraphrase-modality-ce/selected-predictions.json": {
+      "bytes": 26200,
+      "sha256": "44653f335603c3f9da5666b22149db606fa61afc30c46eb6c9148b9f961dadf3"
+    },
+    "exposed-styles/evaluation-r1/results/768-paraphrase-modality-ce/selected-score.json": {
+      "bytes": 647657,
+      "sha256": "2b19dc14ec175b475e879afa12941372d68f41e7917c92910e69a3121a296b8d"
+    },
+    "exposed-styles/evaluation-r1/results/768-paraphrase-modality-zero/last-attempt-predictions.json": {
+      "bytes": 26200,
+      "sha256": "d0d334cef11abd6e131956a328d54dbf338f402ce3ad5d4c2c1762454b39b834"
+    },
+    "exposed-styles/evaluation-r1/results/768-paraphrase-modality-zero/last-attempt-score.json": {
+      "bytes": 647448,
+      "sha256": "1ed31d6e3627632bcedf3a7a16dabdd992d3d2d4f072e3fc8be0fe4e4adc6484"
+    },
+    "exposed-styles/evaluation-r1/results/768-paraphrase-modality-zero/selected-predictions.json": {
+      "bytes": 26200,
+      "sha256": "d47399a6e0476d5d1566e66343531817194bbe651db5b6979aebfe95283c16cb"
+    },
+    "exposed-styles/evaluation-r1/results/768-paraphrase-modality-zero/selected-score.json": {
+      "bytes": 647448,
+      "sha256": "c6a4b2a36231328ec450648cfbd14e33d2b4eca5b8f70940d45ed7dd612d37b8"
+    },
+    "exposed-styles/evaluation-r1/results/predictions-complete.json": {
+      "bytes": 6757,
+      "sha256": "fcf4905815d2aba09d331c14c7a7637b05f0f811d85cf5647b9e491343b0715a"
+    },
+    "exposed-styles/evaluation-r1/results/sealed-recipe.json": {
+      "bytes": 562561,
+      "sha256": "ff11925d98fbc45501fd12a11823fdd1fda5d646f54dd4ded01c163ecbbe3f7a"
+    },
+    "exposed-styles/evaluation-r1/results/summary.json": {
+      "bytes": 39139,
+      "sha256": "a026d989003556b4744b36a1bd9556d18de8363902e393f85d3111f497ca783b"
+    },
+    "exposed-styles/observer-recipe.json": {
+      "bytes": 2407,
+      "sha256": "f9fd738ad70ef98ae21980ff5134dccc8bc431fc0b71eec16f9239f649ec36ed"
+    },
+    "exposed-styles/run_reserved.py": {
+      "bytes": 16676,
+      "sha256": "58e884025928fb258ba541afd70bc34af9ab84074e42609bfcd62def6cca56d1"
+    },
+    "exposed-styles/seal_evaluation.py": {
+      "bytes": 5837,
+      "sha256": "c3fec2e5238ff1bf0615f3beea2da08e0702ca303809290069570e31ffabee3e"
+    },
+    "exposed-styles/seal_evaluation_r2.py": {
+      "bytes": 6264,
+      "sha256": "5d36f36495ef59d04abe12ef3366db7ed1b1ab231a5736bfd34ccf1591df3cae"
+    },
+    "independent-review/audit_observer_freeze.py": {
+      "bytes": 4707,
+      "sha256": "64d2aa6aeaf3043114a31ffd7314b0c23323dc2d16b582a7f54a24e1bcc94dc6"
+    },
+    "independent-review/audit_preflight.py": {
+      "bytes": 6866,
+      "sha256": "e8c62b01c275e594926de3befeb5ddfff3673b8f5d61b0ffb01a9af2330e1b0b"
+    },
+    "independent-review/audit_recipe_bank-attempt1.py": {
+      "bytes": 11738,
+      "sha256": "085c4ac7330bbf984239c3c3377aaeca28343d7b9ebef7efdcbc9623631c2332"
+    },
+    "independent-review/audit_recipe_bank.py": {
+      "bytes": 11742,
+      "sha256": "249167b40285868af0f91fda5c3fbe9f4d5acdf2d75786b2090f68a3f4d9b796"
+    },
+    "independent-review/audit_retry.py": {
+      "bytes": 4036,
+      "sha256": "8492c75e9b64f58e2eaea9cbba1c075e980b6e75766ca436ab9ec881569c6b89"
+    },
+    "independent-review/audit_saved_training.py": {
+      "bytes": 15959,
+      "sha256": "af99251ec30ef08fbda99e426a7e8c0236e31ec556b4de23639fbb202af23ca6"
+    },
+    "independent-review/audit_styles.py": {
+      "bytes": 7005,
+      "sha256": "2ac7e25c33746da0dade3644aa5270c0224ab76c79d400e2b7a0046de5839a1b"
+    },
+    "independent-review/concurrent-upstream-a3005bc-observation.json": {
+      "bytes": 4041,
+      "sha256": "0e6ddda1ff45cb397b85b87263a3d8e21031e71c6ed15f55ccc1ee9f0c4d1eb8"
+    },
+    "independent-review/expected-auxiliary-schedule.json": {
+      "bytes": 267191,
+      "sha256": "f07c44e3825a27f657de267e4eb12eb7e4ab6a54700d35f3403391fa787418ce"
+    },
+    "independent-review/expected-bank-384.json": {
+      "bytes": 55083,
+      "sha256": "602422ca9be0c9e27cbe97472795c4343e57df86848012d919e0d29c2028f426"
+    },
+    "independent-review/expected-bank-768.json": {
+      "bytes": 55083,
+      "sha256": "ba9d4bfb2f8f12c9ee97c903f2dd387fde42b175fb8022c6fbc00f53d3afdd3f"
+    },
+    "independent-review/expected-bank-common.json": {
+      "bytes": 134067,
+      "sha256": "6f7682c8c3c8062a14d38839031f1e6b6655c2e5d2a323aaebcb4dbf8fc9134e"
+    },
+    "independent-review/expected-primary-schedule-384.json": {
+      "bytes": 1891486,
+      "sha256": "bbf1542d76f6d79e2950bf15618b1ae12f172b82c148b41ebd1ae696cdd93a84"
+    },
+    "independent-review/expected-primary-schedule-768.json": {
+      "bytes": 400232,
+      "sha256": "5e322d68e83b59e107289148d0a2d87f051f4199644860856e84402ecaba7616"
+    },
+    "independent-review/freeze-review.json": {
+      "bytes": 298972,
+      "sha256": "999224db5dc52d0d8a7d5934cc3fc0455d9485f2940a62cb66ce7a4d9c8558f2"
+    },
+    "independent-review/independent-style-review.json": {
+      "bytes": 7198957,
+      "sha256": "5cf2ffa75bcce7e4974451e76a6da3a123548fcbd36a9f644f9f670d01269a87"
+    },
+    "independent-review/independent-training-384-review.json": {
+      "bytes": 395467,
+      "sha256": "b966a99b5d041e649f84dcc43738b741ed0ed90658555c33e4a776706b51b2e0"
+    },
+    "independent-review/independent-training-768-review.json": {
+      "bytes": 395481,
+      "sha256": "653498976d3d79574361fb623d161ef55674694f272c4c0152d2fc6583f26110"
+    },
+    "independent-review/initial-normal-git-state.json": {
+      "bytes": 809,
+      "sha256": "9fe18fa34e5df75bd5ec150ab921a3dd1a7936823225e14239506dd6e6b6994b"
+    },
+    "independent-review/new-auxiliary-hook-from-published-trainer.diff": {
+      "bytes": 15206,
+      "sha256": "3964b20a34628c831d6cf351c773894356becff1619d40263db4ffcd2fede73b"
+    },
+    "independent-review/observer-freeze-audit.log": {
+      "bytes": 127,
+      "sha256": "3978734e4e4f2c26d656cd32c915218f556fa5bc3a4a8bf2c76cab147cc61ce8"
+    },
+    "independent-review/observer-freeze-review.json": {
+      "bytes": 346173,
+      "sha256": "5b50b3077477d673cf8d52b4ccbe32fb43640e5fb4ff71f64b79e4e1187763f0"
+    },
+    "independent-review/observer-r2-sealer-review.json": {
+      "bytes": 2063,
+      "sha256": "7bb5c120a80f6815f0cfcec2ca5a580167f8f756b8a3366cfb04135ac9979322"
+    },
+    "independent-review/observer-r2-sealer.diff": {
+      "bytes": 2325,
+      "sha256": "c912674c86592c8f1a584ab4e8e095aa4b5cdd6614ed9be98eddada36ab0a9d4"
+    },
+    "independent-review/observer-source-review.json": {
+      "bytes": 2917,
+      "sha256": "1e7c169c14b3944ef628d1bc94ad568345b9b34c958487a48bde3753a1110906"
+    },
+    "independent-review/preflight-384-audit-attempt1.log": {
+      "bytes": 49,
+      "sha256": "d3d74ae556240de7f200444b7b392fe25e328f9812cae581f54fa1ae46734c27"
+    },
+    "independent-review/preflight-384-review.json": {
+      "bytes": 11548,
+      "sha256": "c52bf3569f1b480855cbd8c1280541591c3d2a85060904670c2be15d6a61a8eb"
+    },
+    "independent-review/preflight-768-review.json": {
+      "bytes": 11278,
+      "sha256": "417f5e730486cbd1d36e96c616c298b3829e338f1e541170ae6abeb0f952e50b"
+    },
+    "independent-review/published-mixture-restoration-review.json": {
+      "bytes": 3942,
+      "sha256": "24550e5bdd50f0dcf9e38f6221a37c168ec50cf39a5cffbb48ece1f7ca73f1f5"
+    },
+    "independent-review/recipe-bank-audit-attempt1.log": {
+      "bytes": 714,
+      "sha256": "6d953c319427258b9afa3ba18a0aad680f50ae4df031e7f823539acb0affa40e"
+    },
+    "independent-review/recipe-bank-audit-attempt2.log": {
+      "bytes": 226,
+      "sha256": "7f67609f57bbe7b73b24577ca43abec7d7b63038b75b6927bdcbffae017fdd4e"
+    },
+    "independent-review/recipe-bank-provenance-supplement.json": {
+      "bytes": 2343,
+      "sha256": "c430c9c4dcc0379b653918ef9fc846756c284a67524ed3bf618e70547b92b98b"
+    },
+    "independent-review/recipe-bank-review.json": {
+      "bytes": 10906,
+      "sha256": "111dc0540129f77364da50bae1d6fbf77b75cb789a770df3de0f7411bdbc298a"
+    },
+    "independent-review/restore-published-guide.diff": {
+      "bytes": 11711,
+      "sha256": "fc70e76ea14d03effcba2cc8c7fc600d0d8b11848182e61664b5aa8d875ca011"
+    },
+    "independent-review/restore-published-trainer.diff": {
+      "bytes": 11063,
+      "sha256": "574b7bf4fb67546f3fd3700e30a041466f7836dead10fd561aa93cc51b9f2eb4"
+    },
+    "independent-review/source-design-review.json": {
+      "bytes": 9390,
+      "sha256": "84e0dc18d99bc12b9b401d386b11337098ba3f21475ca3b28bd4ec6d850abae7"
+    },
+    "independent-review/style-audit-r1.log": {
+      "bytes": 205,
+      "sha256": "b397537c7ebbfef5e3015e6a2779a8c613bccc3a63c66063016803d6a8169f8c"
+    },
+    "independent-review/training-384-audit-r1.log": {
+      "bytes": 214,
+      "sha256": "5b57b400ca15c7b496fd78bafdaf750a3e29c8ec65ab9727f97bb300b7e12e6d"
+    },
+    "independent-review/training-768-audit-r1.log": {
+      "bytes": 214,
+      "sha256": "08d9dd64f24fade2ba37c0e3eaa71cb5372fc3ba5da35a30ecb57d3a0f56116c"
+    },
+    "independent-review/training-r1-admission-failure-review.json": {
+      "bytes": 2253,
+      "sha256": "00c37e2b065d2a0798b353beffd1b43bf261198f82a79ee2a9cd811916a5e376"
+    },
+    "independent-review/unchanged-scheduler-r2-retry-review.json": {
+      "bytes": 4644,
+      "sha256": "51f614183460d9bfb110f690e3c1733156a110b879031de87e7472cec7b6199a"
+    },
+    "modality-hook/audit-epoch-negative-controls-r1.json": {
+      "bytes": 1187,
+      "sha256": "5bc55a5d9b0a159e354cce9ed4ae55a57a52e1bdc8d6ca5c2c36a51f66a02724"
+    },
+    "modality-hook/audit-epoch-selfcheck-r1.json": {
+      "bytes": 26671,
+      "sha256": "6a2a774cf284da9fce768383cc26d07aa375e8fe527c676f6cd9a49b57c67ca6"
+    },
+    "modality-hook/audit-helper-selfcheck-r1.json": {
+      "bytes": 579,
+      "sha256": "bb4f006d9ea328261818a678b5c88ba34e292b1c889878c873773fb3cf8df5e2"
+    },
+    "modality-hook/audit_paraphrase_modality_results.py": {
+      "bytes": 28675,
+      "sha256": "cd9bcbb57337cb8dee8123fea7f72c10268b14e517db58ad65f861bad17a4cbd"
+    },
+    "modality-hook/audit_paraphrase_modality_results_r2.py": {
+      "bytes": 38036,
+      "sha256": "60344fb2bcc8943735ebe59a4ce5a0110e2826214e575488509e451cc11b0c58"
+    },
+    "modality-hook/combined-tests-r1.log": {
+      "bytes": 1368,
+      "sha256": "ecf4054be5bb7e29879dd367cead2d23a670c0f302680c3e51b2a8949d3971d6"
+    },
+    "modality-hook/combined-tests-r1.xml": {
+      "bytes": 6727,
+      "sha256": "ce450f9696b8a626f78ae086b6f2f73003aa6111b0632521ea2ee99f70421945"
+    },
+    "modality-hook/compact-training-comparison-r2.json": {
+      "bytes": 20097,
+      "sha256": "e83e6e358cf1422a2408a8d226a4c36b4549dc647ed9d531009ff8942e0fd061"
+    },
+    "modality-hook/final-focused-tests.log": {
+      "bytes": 2240,
+      "sha256": "f4da194ad4cfd4abcecccc3c9f1295e734391f450f92d29d61c87d6700d1556a"
+    },
+    "modality-hook/final-focused-tests.xml": {
+      "bytes": 30654,
+      "sha256": "571f7ccecd8d86af6d3bcf3eaf72d6c26eb8af184e6cbc59263b62cda1f5b20e"
+    },
+    "modality-hook/float32-readout-clarification.json": {
+      "bytes": 7958,
+      "sha256": "684da6866c1c21fe153178ed83ce0664e295f5f8dc470235bf76ab9091155d91"
+    },
+    "modality-hook/helper-tests-r1.log": {
+      "bytes": 2737,
+      "sha256": "296370f459500bcda8ea8a74dea3459ea485bf3db6b922429b0d889efe7d507f"
+    },
+    "modality-hook/helper-tests-r1.xml": {
+      "bytes": 4768,
+      "sha256": "17e985d91d49e60924626452c4aadab50fa32f0b8888e521fdb7cbafe771ae9a"
+    },
+    "modality-hook/helper-tests-r2.log": {
+      "bytes": 1185,
+      "sha256": "a7aafa51ca0bdbeaa2f994b62392e9f0585653c97469778a19d2dae172380abc"
+    },
+    "modality-hook/helper-tests-r2.xml": {
+      "bytes": 3261,
+      "sha256": "8732b9bd252db0ca10cfd0595d3711a16c80e22874b061fd092a509077932c1b"
+    },
+    "modality-hook/initial-guard-failures-audit.json": {
+      "bytes": 2257,
+      "sha256": "5b97c513e8a736a3f8a13493e541a47cac37cf05938e216d3a00191b6719dab8"
+    },
+    "modality-hook/owned-source-publication.json": {
+      "bytes": 1933,
+      "sha256": "933ab00884df345717f3def318fc503c10276bc7a3766dc96d58c046a949f51a"
+    },
+    "modality-hook/preimages.json": {
+      "bytes": 211,
+      "sha256": "fdfdfdf5e8470f3973d6d6fb9944867fcb2300bf626efa1c0882b069986fcc77"
+    },
+    "modality-hook/trainer-preimage.py": {
+      "bytes": 97881,
+      "sha256": "c7ac8153acc04926bc2200e1031970c428090bc2132f31cc937fbdebdec3478f"
+    },
+    "modality-hook/training-results-r2.json": {
+      "bytes": 264074,
+      "sha256": "25f3895a79ea9ff24b99d1aa5192db57e7dfe4e2a67fc616a83080136a53e72f"
+    },
+    "modality-hook/usage-notes-api-review-r1.json": {
+      "bytes": 3676,
+      "sha256": "5413b80a5d77f45637d275e8999889cc05f6746ea23ab59bca0c3e1d12487dc7"
+    },
+    "modality-hook/usage-notes-api-review-r2.json": {
+      "bytes": 947,
+      "sha256": "2a98b1c151f5303772e888a3ebc4a813af5357bb59c4e025d90e9e39e9639772"
+    },
+    "modality-training/adopt_shared_scheduler.py": {
+      "bytes": 11340,
+      "sha256": "3f95185d701c054bc86aa3b3d0862039c7954ffe524f4956387db1fbf5fea93f"
+    },
+    "modality-training/diagnose_scheduler_r1.py": {
+      "bytes": 5760,
+      "sha256": "dc9e7925e1598763571e34a5cba5d3cbcc0517a79f722df7bc3194ef01c288cf"
+    },
+    "modality-training/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/long_span_source_value_training.py": {
+      "bytes": 105415,
+      "sha256": "c1663820492a6879b14ab89dfd9b052105cf16378bb015fea08c3220d83456e0"
+    },
+    "modality-training/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/paraphrase_modality_auxiliary_training.py": {
+      "bytes": 13994,
+      "sha256": "789f47047badfa30553940547c2db28f08afa1052f1bcc5ace68dbccedc2ccac"
+    },
+    "modality-training/experiment-source/scripts/ops/autoencoder/benchmark_paraphrase_modality_training.py": {
+      "bytes": 26383,
+      "sha256": "d84974df896df766794069da01319ef0d7473eb2907f4a6a540a0661f6b193e8"
+    },
+    "modality-training/experiment-source/scripts/ops/autoencoder/evaluate_paraphrase_modality_styles.py": {
+      "bytes": 1694,
+      "sha256": "17525c855995dda7714682188fe7b68f9d3e9195ec73839a346afad498824e9f"
+    },
+    "modality-training/experiment-source/scripts/ops/autoencoder/evaluate_training_mixture_styles.py": {
+      "bytes": 13087,
+      "sha256": "37c22dbdec537a6b8690feb42c0dfdf083c4934aab159108cdfda03e602e9b84"
+    },
+    "modality-training/experiment-source/tests/unit/logic/formalization/autoencoder/test_paraphrase_modality_auxiliary_training.py": {
+      "bytes": 7961,
+      "sha256": "c316c1d88c2265a25c77e13710ec6b1298f429dd956dbe6aaa447e5f6d35c4e6"
+    },
+    "modality-training/experiment-source/tests/unit/logic/formalization/autoencoder/test_paraphrase_modality_styles.py": {
+      "bytes": 5207,
+      "sha256": "41dbdf2fcf7ef5159d24509f02af97049389b773c2bde6fe9c21f1b9f3890c09"
+    },
+    "modality-training/experiment-source/tests/unit/logic/formalization/autoencoder/test_paraphrase_modality_training_integration.py": {
+      "bytes": 9231,
+      "sha256": "b0d1f897e4fd05919d7aa7b84081fff201461588d2ed851fcf5a3323fed8e722"
+    },
+    "modality-training/experiment-source/tests/unit/logic/formalization/autoencoder/test_paraphrase_modality_training_runner.py": {
+      "bytes": 7177,
+      "sha256": "034da61052cf05538873876fb5f1f78df27c683a265c73d1a9797475fc703f98"
+    },
+    "modality-training/freeze-receipt.json": {
+      "bytes": 1672,
+      "sha256": "a7432073988341f2ca4285cf20bacdeefad1c542572354c91a99340f4e3f388f"
+    },
+    "modality-training/freeze.log": {
+      "bytes": 1382,
+      "sha256": "ee5d2d8207ba49251e6b17d302a86819636bc743c910fd8c40f6e70185e1ed9d"
+    },
+    "modality-training/freeze.py": {
+      "bytes": 6411,
+      "sha256": "c15c2496967c5a00b36b10fec6b2aa8f17af6449775f64d1d9912aed9319e820"
+    },
+    "modality-training/helper-test-inputs.json": {
+      "bytes": 1389,
+      "sha256": "24d4451a9b7be5aa6dc7fd859b2e8a7102dd31ee12b1397358c3020cf1fbe8d4"
+    },
+    "modality-training/lazy_scheduler_adoption.py": {
+      "bytes": 1345,
+      "sha256": "42f31d8da1eb5b44274ca0b8c8180cd78bc083dfd0e93438e61f38223929d84a"
+    },
+    "modality-training/owned-source-publication.json": {
+      "bytes": 757,
+      "sha256": "dc78b067c29a3861361914ac6e7c0636f49cdcbfbbd3f2c3ec63a0c27116498c"
+    },
+    "modality-training/owned_lease_watchdog.py": {
+      "bytes": 20712,
+      "sha256": "f1b9f71e375cf5ed4004e023bbef2d6f7f61e1ecb588078a1094d7b1982609b3"
+    },
+    "modality-training/preflight-384-r1-guardian-exit.json": {
+      "bytes": 102,
+      "sha256": "fe47690cf11bd8f348d7b610e3795f8e2c0bcdd53fd42cf7628524169da51733"
+    },
+    "modality-training/preflight-384-r1-guardian.log": {
+      "bytes": 5115,
+      "sha256": "7ee511bb5ae9b9bb9503579c4ee88eb9f0776bb0725d29c324e8b3d1fd6912ac"
+    },
+    "modality-training/preflight-384-r1-lease-observations.jsonl": {
+      "bytes": 61949,
+      "sha256": "90cf11a03d99aae33533e5e0d5432cc1f8512e44ab4503c555a44790e58a1467"
+    },
+    "modality-training/preflight-384-r1-scheduler-adoption.json": {
+      "bytes": 4646,
+      "sha256": "4a66f0698264397deeade287a2ebae67825792bb098e4480fbb20c3732f2e58b"
+    },
+    "modality-training/preflight-384-r1/child-exit.json": {
+      "bytes": 323,
+      "sha256": "7ef6166ec1a2ca022f7de53d86de0fbe08442da506476b3177d96443aa354225"
+    },
+    "modality-training/preflight-384-r1/child-identity.json": {
+      "bytes": 44,
+      "sha256": "674ff83d16889278df003dd10104fd8567bbe7564104b6990256e4bb34f2df93"
+    },
+    "modality-training/preflight-384-r1/command.json": {
+      "bytes": 6470,
+      "sha256": "09965b4562ced51b8a2c0ee3be24e0f5e423881b8cbb15425c3d7486564f733e"
+    },
+    "modality-training/preflight-384-r1/lease-binding.json": {
+      "bytes": 694,
+      "sha256": "8688938f3b176feb6601da613a4e3ca36ec3f87a7bd2b9019c927f91fb13c89c"
+    },
+    "modality-training/preflight-384-r1/resource-observations.json": {
+      "bytes": 1740,
+      "sha256": "9ea17783887fcf1929f0d676898eb350386e730064fd087247d6fe314a3c9339"
+    },
+    "modality-training/preflight-384-r1/resources-final.json": {
+      "bytes": 5840,
+      "sha256": "c6027584df8d71812a35666f0ca547e515f4cc8f1a79d8d08df90f813f3326a3"
+    },
+    "modality-training/preflight-384-r1/resources-start.json": {
+      "bytes": 3182,
+      "sha256": "4e7fc0828e8534d886721c172a0ded16d107f25f7e772b639348c53f195663ca"
+    },
+    "modality-training/preflight-384-r1/results/paraphrase-modality-ce/auxiliary-cache-receipt.json": {
+      "bytes": 74346,
+      "sha256": "7dbcb577b397dd67ebc232a853ea6966f818dc999a93002594caa0e96aa643eb"
+    },
+    "modality-training/preflight-384-r1/results/paraphrase-modality-ce/parent-paraphrase-readout.json": {
+      "bytes": 167761,
+      "sha256": "6b405f7813add49873d190dbb3b40906239136f1fbcc730054cf26cdbc7bb703"
+    },
+    "modality-training/preflight-384-r1/results/paraphrase-modality-ce/parent-validation.json": {
+      "bytes": 1995429,
+      "sha256": "68d849ae430371582d1fe984770300dcf22c3438cdfd72bbfe07b24fbb8c959a"
+    },
+    "modality-training/preflight-384-r1/results/paraphrase-modality-zero/auxiliary-cache-receipt.json": {
+      "bytes": 74347,
+      "sha256": "a98e8829e6040e79c5e10dd4d72536e538dee41356fd47b552b5bc288b26a8a4"
+    },
+    "modality-training/preflight-384-r1/results/paraphrase-modality-zero/parent-paraphrase-readout.json": {
+      "bytes": 167761,
+      "sha256": "08acb047c0ce4fe910d0cd6067a27c193b7c766508cdd97c81897f144f4c8872"
+    },
+    "modality-training/preflight-384-r1/results/paraphrase-modality-zero/parent-validation.json": {
+      "bytes": 1995432,
+      "sha256": "db29160419a747e2734286ae60e7b6a792229fe007d2587acea31b96913d8015"
+    },
+    "modality-training/preflight-384-r1/results/summary.json": {
+      "bytes": 68626,
+      "sha256": "6de9c84e3ace50672944b5e645c0105a16085d666a757263cb94ee81698db708"
+    },
+    "modality-training/preflight-768-r1-guardian-exit.json": {
+      "bytes": 101,
+      "sha256": "af3a985c3bd697512ddde444edc86efea6c0af3b84ca76bc52ee683157bd467d"
+    },
+    "modality-training/preflight-768-r1-guardian.log": {
+      "bytes": 5116,
+      "sha256": "ed453c02d22a74ff7082557b96653549a1aac2355c52b59ff1691776cc84400c"
+    },
+    "modality-training/preflight-768-r1-lease-observations.jsonl": {
+      "bytes": 32690,
+      "sha256": "666f42360d2c76d38c3d4ef0e21f8e3e74449a6bf01fa39c99628e803a216a57"
+    },
+    "modality-training/preflight-768-r1-scheduler-adoption.json": {
+      "bytes": 4646,
+      "sha256": "737494645648058222e0aec51e66d1d48ede66d762d1bb28b0850a7175a3600a"
+    },
+    "modality-training/preflight-768-r1/child-exit.json": {
+      "bytes": 324,
+      "sha256": "7db6c9cfb646d87492ce3d0010d4a6673895ec902877bdb83011dec7264e3741"
+    },
+    "modality-training/preflight-768-r1/child-identity.json": {
+      "bytes": 44,
+      "sha256": "fec5d389d4c87b4e51ffdcb4a02a43e9bc2062b6d7fa7801d9cd90d3f761f978"
+    },
+    "modality-training/preflight-768-r1/child.log": {
+      "bytes": 1674,
+      "sha256": "80633b4fc45621a5a5c2203d00ea83a4412b2d1b0366cfea5b07cd2749289302"
+    },
+    "modality-training/preflight-768-r1/command.json": {
+      "bytes": 6470,
+      "sha256": "b50917b071afc354e4fa1f7dc7baebe24ec83690de7fac5679946c5b1167d6ff"
+    },
+    "modality-training/preflight-768-r1/lease-binding.json": {
+      "bytes": 694,
+      "sha256": "b089a719f35841f533b093c3b594cb90e2c2a02d2741b0c1838532d73f073e75"
+    },
+    "modality-training/preflight-768-r1/resources-final.json": {
+      "bytes": 5842,
+      "sha256": "4096ab2404aa665284b3b1af22f3f1c4b50f657ca4f13183aa3c426e708ce751"
+    },
+    "modality-training/preflight-768-r1/resources-start.json": {
+      "bytes": 3186,
+      "sha256": "596f7c6f4ec85bd8d4e21df2f2160840c5c0cd450922edb3b60e17f288b80d1d"
+    },
+    "modality-training/preflight-768-r1/results/paraphrase-bank.json": {
+      "bytes": 3313220,
+      "sha256": "752344c746f5d5be71aef5182626fafee0f9b5c3a8912f3c3cb56211469db591"
+    },
+    "modality-training/preflight-768-r1/results/paraphrase-modality-ce/auxiliary-cache-receipt.json": {
+      "bytes": 74346,
+      "sha256": "bafe65094b56859289fa97b116353013abab6a538d5ca6f447202092f16299ab"
+    },
+    "modality-training/preflight-768-r1/results/paraphrase-modality-ce/parent-paraphrase-readout.json": {
+      "bytes": 167031,
+      "sha256": "a89bbf68a6a0c77803e312e4a9866f38285597080bc754250f52e39cc04d066a"
+    },
+    "modality-training/preflight-768-r1/results/paraphrase-modality-ce/parent-validation.json": {
+      "bytes": 2385639,
+      "sha256": "63eb569758f633dc398320450c28ac5a92adc9aecb49824a98d31e303ae84950"
+    },
+    "modality-training/preflight-768-r1/results/paraphrase-modality-zero/auxiliary-cache-receipt.json": {
+      "bytes": 74345,
+      "sha256": "385daeefcb9fa13eaa5f7b7ba470cecb28c8e22fd96895ba53a51b1a6701fc3e"
+    },
+    "modality-training/preflight-768-r1/results/paraphrase-modality-zero/parent-paraphrase-readout.json": {
+      "bytes": 167032,
+      "sha256": "7f5441931eeec01d595c7b7729fddcff464e7df224031001faa3b9ced25a0a91"
+    },
+    "modality-training/preflight-768-r1/results/paraphrase-modality-zero/parent-validation.json": {
+      "bytes": 2385639,
+      "sha256": "74b8f38c06de205a5c68f0794d50063d20b2816bf0ac470e4eba4a9f89ba0b52"
+    },
+    "modality-training/preflight-768-r1/results/predeclared-auxiliary-schedule.json": {
+      "bytes": 209530,
+      "sha256": "34e5ed833a688f62d4af63605de6b4efb31e387411ab5af7092324fa5d715ec5"
+    },
+    "modality-training/preflight-768-r1/results/preprocessing.json": {
+      "bytes": 2864122,
+      "sha256": "f4acb7b6b20a38c226a509e331d638fa667c929bd5b8970be44048d549f072ae"
+    },
+    "modality-training/preflight-768-r1/results/sealed-recipe.json": {
+      "bytes": 544141,
+      "sha256": "2f00f974885f81827063dc9c4c658aa2edf31175ed6df6f5aaeb3bceb83d1c76"
+    },
+    "modality-training/preflight-768-r1/results/source-contexts.json": {
+      "bytes": 5960181,
+      "sha256": "88406d13f72794934d4c9dc8aa69238004e1f6c5d7bd855ba319c14486392104"
+    },
+    "modality-training/preflight-768-r1/results/source-inventory.json": {
+      "bytes": 24751027,
+      "sha256": "f5280c38d562496e53c63a792795a5dfe1a0fb446852759f66fe316a2fd96719"
+    },
+    "modality-training/preflight-768-r1/results/summary.json": {
+      "bytes": 67269,
+      "sha256": "e5ad084d9aa916b32c45adf47d1149735350a0926a12b0f7ca1210c42725d357"
+    },
+    "modality-training/preflight-768-r1/results/training-rows.json": {
+      "bytes": 1621518,
+      "sha256": "a66ba07b38d101b48f8cd995cc82b2f22f220323ba6f7fc676b87638c4e05254"
+    },
+    "modality-training/preimages.json": {
+      "bytes": 345,
+      "sha256": "fbafc3b8588bef4c1bee3e426776550e95312b792ef018a653d08636c96bd4d2"
+    },
+    "modality-training/run_reserved.py": {
+      "bytes": 16604,
+      "sha256": "5a4ec3ed73c98a4ee228537654ca4432fc0fb40ec292aa09306f8ef51c179e6d"
+    },
+    "modality-training/scheduler-admission-diagnosis-r1.json": {
+      "bytes": 6642,
+      "sha256": "5d4bd9aaad9956cadbeab5e4854c435c76eb7a8375dd67260b02c1e1e8151905"
+    },
+    "modality-training/source-coverage-audit.json": {
+      "bytes": 5203,
+      "sha256": "e3900b8d97e72942a1dd82650aac7172749195c03558c270d6f73ea3745054eb"
+    },
+    "modality-training/tests-runner.log": {
+      "bytes": 1174,
+      "sha256": "8fbd0513895c4410757aec4955a2fee7cb7eb9af420103bcd5f96e40ae44e3cd"
+    },
+    "modality-training/tests-runner.xml": {
+      "bytes": 5381,
+      "sha256": "dee7e323bc87f5165cc981f6a907df151a0725ab44959c624a5692adb3c2b353"
+    },
+    "modality-training/tests.json": {
+      "bytes": 802,
+      "sha256": "ec6a6a7b17ef15909df4f974b377d62a9f0904f3bdf2fcc017876bce4f452c8b"
+    },
+    "modality-training/training-384-r1-guardian-exit.json": {
+      "bytes": 101,
+      "sha256": "c84ba3cea544a92a4952b74e1de00969f31933223e49d8661dbee6f0f3b9281f"
+    },
+    "modality-training/training-384-r1-guardian.log": {
+      "bytes": 467,
+      "sha256": "9a7ebfe49ddebf5c3524616446469dd49bb1b89855b858e4213f32fcb9d18365"
+    },
+    "modality-training/training-384-r1/failure.json": {
+      "bytes": 4813,
+      "sha256": "48a1d7c726956c55caa7696abeb07a1a154fa4fca3b816e36bd27616371e7738"
+    },
+    "modality-training/training-384-r2-guardian-exit.json": {
+      "bytes": 101,
+      "sha256": "d82635d24a1b3dcbd87eb54117d7a712faa753b38f21abcca1ebba410727d57f"
+    },
+    "modality-training/training-384-r2-guardian.log": {
+      "bytes": 5109,
+      "sha256": "135f8a45672c2d94ac8b1361647fe7d0a6f22c8c83eb07d2f3d43c239d3beb87"
+    },
+    "modality-training/training-384-r2-lease-observations.jsonl": {
+      "bytes": 183795,
+      "sha256": "39f334524a69e2465ef8d03bda44497a46761bfa730527a7dcafdb7f6243e0b9"
+    },
+    "modality-training/training-384-r2-scheduler-adoption.json": {
+      "bytes": 4644,
+      "sha256": "64753131fa82f52d50e4538b2aba9a3c48dfa63a727cf29096b182e7252bffe7"
+    },
+    "modality-training/training-384-r2/child-exit.json": {
+      "bytes": 324,
+      "sha256": "529a8ae3816e07f717ba3285a419467b86273721bd7f42dbd9f719d8cadcfe29"
+    },
+    "modality-training/training-384-r2/child-identity.json": {
+      "bytes": 42,
+      "sha256": "2ec516d32d0224090b16b9237e433f9bc5265715fb0830de81929438d31e7f18"
+    },
+    "modality-training/training-384-r2/child.log": {
+      "bytes": 1877,
+      "sha256": "c6be90ec43a7c62f3786a3356eafa6be3698243ffc2fceeb8f534316e541ae51"
+    },
+    "modality-training/training-384-r2/command.json": {
+      "bytes": 6466,
+      "sha256": "51cab5152bc45ef7e1c1a5fa4b43cbdb522dd589294c1956d11c8229b7bb4f12"
+    },
+    "modality-training/training-384-r2/lease-binding.json": {
+      "bytes": 692,
+      "sha256": "9c3e3e7e4fd8cd9a3ab6bdb0b578019911c1235360c662a1c935d2b9d89fb948"
+    },
+    "modality-training/training-384-r2/resource-observations.json": {
+      "bytes": 5257,
+      "sha256": "e7c5825396ed9d1617087fd38beca82fbd6c6aa6e83372cbf4fba85c418fbccf"
+    },
+    "modality-training/training-384-r2/resources-final.json": {
+      "bytes": 5834,
+      "sha256": "bf60db7472e527acf54f222c5580cf9e07ff853a83763820ebe63b574ca8bba6"
+    },
+    "modality-training/training-384-r2/resources-start.json": {
+      "bytes": 3177,
+      "sha256": "f385f19b48ab2bef7cba3a8ad4f9a442ac0108945c6bb15b41d44b6e3ceb62f0"
+    },
+    "modality-training/training-384-r2/results/paraphrase-bank.json": {
+      "bytes": 1849817,
+      "sha256": "0c43b0e41be33564707eb5a1805454c870d88214eadc3d5385562cee35eaba3e"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-ce/auxiliary-cache-receipt.json": {
+      "bytes": 74347,
+      "sha256": "2e27a78695e1eb1def766606160578b1fad2030829a73f96c046c291165f9aa3"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-ce/initial-state.json": {
+      "bytes": 2799096,
+      "sha256": "4d67ef5c91ec7ed9a4489ba42eac4e1a8f004f1cc25d113cbf38ccb1b3b04c62"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-ce/last-attempt-state.json": {
+      "bytes": 2798203,
+      "sha256": "fe175685e3511e4e708d0fc311416d242d75714793821b21ff84808e923158b4"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-ce/last-attempt/evaluation-context-only-shuffle.json": {
+      "bytes": 2078406,
+      "sha256": "632f4ff0421ff45311b46fd15435763ce6ad46cb1224cc6032b9c53d54868c83"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-ce/last-attempt/evaluation-context-reverse.json": {
+      "bytes": 2078440,
+      "sha256": "c7776d1c6c71630b7fa08a0e6c74324cbf05be21a2d3b6170aa8fa548907fa73"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-ce/last-attempt/evaluation-context-rotate.json": {
+      "bytes": 2078407,
+      "sha256": "e73e19756c108c51cd7e1d959a8e4bed3b5e896251a2ee484344364f27afd7dd"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-ce/last-attempt/evaluation-cross-length-shuffle.json": {
+      "bytes": 2078490,
+      "sha256": "ded4e1cb9cfeebf27ff709564e64da363ce7498c7ab1d472c1b82ddb31741360"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-ce/last-attempt/evaluation-recurrent-residual-off.json": {
+      "bytes": 1989801,
+      "sha256": "aeaf2267fd14e9067b60fd34d4e4ddec36bee0b21264fd33b4aa43db968502b3"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-ce/last-attempt/evaluation-source-shuffle.json": {
+      "bytes": 2078334,
+      "sha256": "62f3cb0375aa0be8c26c1d97c2542a97cd8840d31b5dae77ed783d3e9d54c33d"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-ce/last-attempt/evaluation-training.json": {
+      "bytes": 2071350,
+      "sha256": "be16b50484c6322e3be9f9eff234fb0d822e5f9411418eacfe74d129dc2b17a5"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-ce/last-attempt/evaluation-validation.json": {
+      "bytes": 2077362,
+      "sha256": "e3aca4d3bac30b0c82e42d78ad546c428b6ddca84c57d118965980a6c75dcebd"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-ce/last-attempt/evaluation-zero-condition.json": {
+      "bytes": 2782471,
+      "sha256": "bae44c5e2b2e78a801e0375832de168670476914152e6da45dc64142b61c128d"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-ce/last-attempt/paraphrase-modality-readout.json": {
+      "bytes": 167350,
+      "sha256": "57bb3c8512aa5babea5b77535b071540ad91af23f91e69b36a7dd3038e51ec0b"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-ce/parent-paraphrase-readout.json": {
+      "bytes": 167761,
+      "sha256": "b5ea40349be6e54ff0d37d2f500e39fe8fd1da491855fb77830644727366f39c"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-ce/parent-validation.json": {
+      "bytes": 1995432,
+      "sha256": "4bfc3fc16cc5548787720cfab433e34a4209319bf1a3111b88054e422d4e37d2"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-ce/retained-endpoints.json": {
+      "bytes": 1798,
+      "sha256": "fd4bce430c44183cd4d047eb0b53c166b69378798bf0d1b110955a3ae6192eda"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-ce/selected-state.json": {
+      "bytes": 2798199,
+      "sha256": "14e7df15703f5ac2bc79e48569f2983eabde5fc5d6d84c77be7cbb56066d89d5"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-ce/selected/evaluation-context-only-shuffle.json": {
+      "bytes": 2078403,
+      "sha256": "b13b9170a6bcb3a16a45fd845b5f8045184482ce7789f8f37740c73bd4197fa8"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-ce/selected/evaluation-context-reverse.json": {
+      "bytes": 2078436,
+      "sha256": "9cea5bb419b5be385959592c7ee15982d9bacd0ff2718d7f7f648d9df9f46deb"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-ce/selected/evaluation-context-rotate.json": {
+      "bytes": 2078407,
+      "sha256": "bab28516ea7b020dd5aec450dcbf44fcc164cb61624901b1efc80431eec6ee3a"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-ce/selected/evaluation-cross-length-shuffle.json": {
+      "bytes": 2078488,
+      "sha256": "fad18c94fe0c5797a177ae8522436be0ee9bce3e35f355164bb21c9e92a34dd0"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-ce/selected/evaluation-recurrent-residual-off.json": {
+      "bytes": 1989800,
+      "sha256": "08192d90119e5162be5cf95172841e880345652f8849b2e5bd637f3099fb1b16"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-ce/selected/evaluation-source-shuffle.json": {
+      "bytes": 2078332,
+      "sha256": "02272d3e049d8eb0e859435e1254612865853f45040dcd480ee83c761a732c86"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-ce/selected/evaluation-training.json": {
+      "bytes": 2071351,
+      "sha256": "1743c599319f78a8ce4dc7ee507c47411fbfbbee137ce138412fb939b70fcfc5"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-ce/selected/evaluation-validation.json": {
+      "bytes": 2077362,
+      "sha256": "cc09c98827f9e79117c56e5b07bced1ff7df13a198d7bc2fee636cf8cf00ca9f"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-ce/selected/evaluation-zero-condition.json": {
+      "bytes": 2782469,
+      "sha256": "4d4cc52d8e08f0154062b9d93fc3f92c34c018df36039fdb3e4bd8c54cc8bb8f"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-ce/selected/paraphrase-modality-readout.json": {
+      "bytes": 167350,
+      "sha256": "caff8c2cbeb873ef63e1324f626996200cee5120c759a0f78557922bed8aac1c"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-ce/summary.json": {
+      "bytes": 335679,
+      "sha256": "21d1d0550cdcf10c15f3ea0c5145c793442348ced49ad12b2ce750d2339bb8e5"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-ce/training.json": {
+      "bytes": 21204081,
+      "sha256": "0eb9b2c18ff6cb6ba0f00ee9e3e416d651aff05cb7d65d61ee0a519a92e5d873"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-zero/auxiliary-cache-receipt.json": {
+      "bytes": 74345,
+      "sha256": "b1ae21fcb9b5ff8ea98e701ab8a6b25ad35e714f8e77a158ab40b4fe138621f5"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-zero/initial-state.json": {
+      "bytes": 2799097,
+      "sha256": "0a1e2663290a8b9a7287f1b699459bda19169361479592d7326bc67861113ccb"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-zero/last-attempt-state.json": {
+      "bytes": 2798248,
+      "sha256": "8ff095daefdf49d5d2f4740d658f3b6f8e25b81da444490365641fdbd1a87dcc"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-zero/last-attempt/evaluation-context-only-shuffle.json": {
+      "bytes": 2079115,
+      "sha256": "863f686aa95e0177d105237b899a6f22ea1b0b1273b023ab71b7907837d16b7e"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-zero/last-attempt/evaluation-context-reverse.json": {
+      "bytes": 2079153,
+      "sha256": "2cd3bda5cb62bf48699197d840a5caaa7e03d4e0db8c0e972747c2eb4f15d883"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-zero/last-attempt/evaluation-context-rotate.json": {
+      "bytes": 2079115,
+      "sha256": "58d9969969bf173ebd3a73d67a199b0aa8e22e491c8c95b5187deec8a695802c"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-zero/last-attempt/evaluation-cross-length-shuffle.json": {
+      "bytes": 2079197,
+      "sha256": "b6be48096cbefc6f531496b96b5778d84d31e45380f3802539c77996a5cab58a"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-zero/last-attempt/evaluation-recurrent-residual-off.json": {
+      "bytes": 1990572,
+      "sha256": "5e715fd52ee844aa600e691eba625a5fdaadfa87b50d6750a0d34a4d81cb4ee3"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-zero/last-attempt/evaluation-source-shuffle.json": {
+      "bytes": 2079039,
+      "sha256": "a3f378442dbb041899e21422e6ec43c36a6fc771baed682a8cb9840a88ee61bc"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-zero/last-attempt/evaluation-training.json": {
+      "bytes": 2072253,
+      "sha256": "a4f28324943e55a46a8dcf123ea4ec2fb705071e6929283979c6eda8d96485cb"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-zero/last-attempt/evaluation-validation.json": {
+      "bytes": 2078069,
+      "sha256": "e1e10a7e1e8a2f5f8919fc8cc0b403f75aba8ac736023e673fe084528791e1e0"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-zero/last-attempt/evaluation-zero-condition.json": {
+      "bytes": 2785496,
+      "sha256": "5c9fe817a34be043bd9e325bc3efd2e3166b9fa57075d2b87bd223022d362447"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-zero/last-attempt/paraphrase-modality-readout.json": {
+      "bytes": 167439,
+      "sha256": "26a5fdbd2364d5ede423fcf5c10db633f32e4764dd949c6788efab67f27daaf3"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-zero/parent-paraphrase-readout.json": {
+      "bytes": 167761,
+      "sha256": "b0ba259519bbbbcb0f45b9f8fc640f257208065793d49644e2711a0d6fbe22c9"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-zero/parent-validation.json": {
+      "bytes": 1995429,
+      "sha256": "bb34037b7f9d29865b204f45ea7b96cfb0b83e63359c553545fd1df659d9b768"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-zero/retained-endpoints.json": {
+      "bytes": 1806,
+      "sha256": "a8425e393e4dc25e4b2393cb34d6e947e90db974253954460bd43aa3d2cd3abe"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-zero/selected-state.json": {
+      "bytes": 2798244,
+      "sha256": "51803e508a1d0b95de46ae8eec7cac625c79fff98d52200278b66f44db7a8cb8"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-zero/selected/evaluation-context-only-shuffle.json": {
+      "bytes": 2079115,
+      "sha256": "ba3b3120d4be1d9d0ba1bd2b8cea0257e34aadadcda268b18c421b191f7d37d5"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-zero/selected/evaluation-context-reverse.json": {
+      "bytes": 2079152,
+      "sha256": "05be78d0560ccf5bc53c4e3dd8fc65bb4b794b265d99d22cf41974cedb64c7b1"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-zero/selected/evaluation-context-rotate.json": {
+      "bytes": 2079114,
+      "sha256": "41801d7b8cf33c46c743b84224a5439b7cd2ee3e886bf088f2b3356c1612550e"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-zero/selected/evaluation-cross-length-shuffle.json": {
+      "bytes": 2079197,
+      "sha256": "71498e47fff9ae0482d147dbf1869c0ab75d72acf543e4fffd588f53e4d78f73"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-zero/selected/evaluation-recurrent-residual-off.json": {
+      "bytes": 1990571,
+      "sha256": "4e213d59a959ab3d41c2d95c22f78cbe891916cce8a8206bdcd3f64bcad6af28"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-zero/selected/evaluation-source-shuffle.json": {
+      "bytes": 2079036,
+      "sha256": "d3d945448b9907f872b383705a40cde841ed824672e7d129f44a8eea4bfc42f8"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-zero/selected/evaluation-training.json": {
+      "bytes": 2072255,
+      "sha256": "32ccc873000af1c86c7099ba8dc151564b5c1df46dd652ec41b2e22986527c65"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-zero/selected/evaluation-validation.json": {
+      "bytes": 2078073,
+      "sha256": "7b6680bb5f8e9431ed90b3d6734eda4f722365bd39ae6c5c768162c02968698d"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-zero/selected/evaluation-zero-condition.json": {
+      "bytes": 2785496,
+      "sha256": "e1198903ad4b454a90ad22a6ccea343b29e7ff55356258652a2714b62e3d593e"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-zero/selected/paraphrase-modality-readout.json": {
+      "bytes": 167440,
+      "sha256": "43a78d5049f30742a80ad2366857836b6cb0a26d32b23be4509d6dfc230171b9"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-zero/summary.json": {
+      "bytes": 335737,
+      "sha256": "bbc7f942fcbe80f36573037d9b0b719c4b060b6aa14325649beabb814e6a0690"
+    },
+    "modality-training/training-384-r2/results/paraphrase-modality-zero/training.json": {
+      "bytes": 21202709,
+      "sha256": "7fe7fefe811544fded26fe6f4498c216d2f91808f387793e0ae4f99e7f05c44d"
+    },
+    "modality-training/training-384-r2/results/predeclared-auxiliary-schedule.json": {
+      "bytes": 209530,
+      "sha256": "02a4a9a9dbf9282fa83058646940d203bbde3ac5536090e13a4f5a46d61c4ad0"
+    },
+    "modality-training/training-384-r2/results/preprocessing.json": {
+      "bytes": 1510086,
+      "sha256": "de96c5f0a90a1472e346f3732ace42f0b4af4b3915026695fb705ae809663d8f"
+    },
+    "modality-training/training-384-r2/results/source-contexts.json": {
+      "bytes": 3032308,
+      "sha256": "85415c5cef1c25450119cc419797c7f53b2817658d975cd4b357fdde01362a8c"
+    },
+    "modality-training/training-384-r2/results/source-inventory.json": {
+      "bytes": 13728376,
+      "sha256": "da8541b1c5903bcacd7ea5d6beb3094c53f53918287f9a0c7d138fa9bf1b10f4"
+    },
+    "modality-training/training-384-r2/results/summary.json": {
+      "bytes": 30232,
+      "sha256": "299c1e8c6b711b4e63d0956c25475d850a891fadff91223f1cca2520b49456e7"
+    },
+    "modality-training/training-384-r2/results/training-rows.json": {
+      "bytes": 841411,
+      "sha256": "854c059a7f7b2f9285eac10795191a9439b24ad6141d80406ffa9d6726892359"
+    },
+    "modality-training/training-768-r1-guardian-exit.json": {
+      "bytes": 101,
+      "sha256": "50c500c622bbf418aa3da183c391c86dfbc60b2a853f58485c381886f04cf44b"
+    },
+    "modality-training/training-768-r1/failure.json": {
+      "bytes": 4813,
+      "sha256": "cd49366d82662530b1e020c9c123c33477b31f73d903b39093cef8eece8786bc"
+    },
+    "modality-training/training-768-r2-guardian-exit.json": {
+      "bytes": 100,
+      "sha256": "5997e75986a2e7f982f6936c0815e762b0cfbf2c65a3c781d0443bee13447bc5"
+    },
+    "modality-training/training-768-r2-guardian.log": {
+      "bytes": 5112,
+      "sha256": "c90797ad6f14e76eed2a5c53ebfc25a6ce51558c17ae2d7e7fc090e17515e130"
+    },
+    "modality-training/training-768-r2-lease-observations.jsonl": {
+      "bytes": 229171,
+      "sha256": "44fa08c34bd5eadd46366bb8afc82e9a66c5d6a4f1d1d365e1a7655f0db7a78e"
+    },
+    "modality-training/training-768-r2-scheduler-adoption.json": {
+      "bytes": 4644,
+      "sha256": "f68e8cc2a692d908d476d9986efe7b31baa20dda43dcff3f9522fac06260cf4c"
+    },
+    "modality-training/training-768-r2/child-exit.json": {
+      "bytes": 324,
+      "sha256": "41011968bf25391d8e6e00877d7f0f35a8efa16fe2bc905fcd9c93a72f1753c5"
+    },
+    "modality-training/training-768-r2/child-identity.json": {
+      "bytes": 42,
+      "sha256": "576f158a1452f0ecd7475766df9ce03c8516f18c502181ca311108a00b60b1b8"
+    },
+    "modality-training/training-768-r2/child.log": {
+      "bytes": 1878,
+      "sha256": "8a572dd7d839e7b613a369d73c83c604ce38f137a39346c432874e91acddb28a"
+    },
+    "modality-training/training-768-r2/command.json": {
+      "bytes": 6466,
+      "sha256": "37c90d5d154cbb15da0ef2955d57c7c51123889991853b793c7924a9cd96baa9"
+    },
+    "modality-training/training-768-r2/lease-binding.json": {
+      "bytes": 692,
+      "sha256": "9d71ec347f4574afda7f0ebabd79b9cce6d1a99f62d715aa4c87c4688bb3a1a0"
+    },
+    "modality-training/training-768-r2/resource-observations.json": {
+      "bytes": 6151,
+      "sha256": "6e24194215ee94fd47e2874de2b150327689d226fbae730113d578b69012f8f4"
+    },
+    "modality-training/training-768-r2/resources-final.json": {
+      "bytes": 5837,
+      "sha256": "8ae331204f1ccf2484242af3e9b687dbb7abeab40ca728e1db292bc42e988c15"
+    },
+    "modality-training/training-768-r2/resources-start.json": {
+      "bytes": 3180,
+      "sha256": "5a70aea55c38c9c47d7e899e332b590bfe7562d6df0c23b2523db29cd65c7d29"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-ce/auxiliary-cache-receipt.json": {
+      "bytes": 74347,
+      "sha256": "576d65fbfee9e6401f3d1e8106bb38b94dbaf0321acc20d7afefd2e978179747"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-ce/initial-state.json": {
+      "bytes": 4781611,
+      "sha256": "27bda2b8e702f2b014f0f9783e16a8fcf868d0c7cd9f0e74208f6d2e58a6c8ac"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-ce/last-attempt-state.json": {
+      "bytes": 4779350,
+      "sha256": "0449653104922ef499720e93621c8c7a22b9f636445370a8e33c85c45afb20a9"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-ce/last-attempt/evaluation-context-only-shuffle.json": {
+      "bytes": 2468908,
+      "sha256": "e309cd40bda1058da9c6b5ae830c978b70ffbbee87240044483c999b6f5537c9"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-ce/last-attempt/evaluation-context-reverse.json": {
+      "bytes": 2468945,
+      "sha256": "411978f9678feb965e82183d806d72ccb63e3b64dd620698656e167fd7e343a4"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-ce/last-attempt/evaluation-context-rotate.json": {
+      "bytes": 2468910,
+      "sha256": "6774c916a719017406045006ae72de1211bf58f853e33154cb35695d2e8a0cb5"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-ce/last-attempt/evaluation-cross-length-shuffle.json": {
+      "bytes": 2468990,
+      "sha256": "4804590510cf37b88d523ab9b705fe92a52df666e07d6777d1e4e661d5bbbd26"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-ce/last-attempt/evaluation-recurrent-residual-off.json": {
+      "bytes": 2380195,
+      "sha256": "c204ead14292778e1db45ab7d89c413b4d51c709a0aa632dc3a9a94821264dc2"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-ce/last-attempt/evaluation-source-shuffle.json": {
+      "bytes": 2468837,
+      "sha256": "94c71ac5dd290c6c9618e3c9ec62d720db6d2ec6368b8566e799dd2b375bd761"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-ce/last-attempt/evaluation-training.json": {
+      "bytes": 2463438,
+      "sha256": "abddd344222f951f340fd141deb6a4d8db2f51b160e14926add4c7caa3276b37"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-ce/last-attempt/evaluation-validation.json": {
+      "bytes": 2467866,
+      "sha256": "911caa61d3fd3c4d2cf9d79ee9c837b00eb206b7350411c92ea759e3021e0a8f"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-ce/last-attempt/evaluation-zero-condition.json": {
+      "bytes": 3178173,
+      "sha256": "28b43015e1ed8e17c00f803d3b7f65c8a5abd7dcd14962c48b361db9a11ff346"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-ce/last-attempt/paraphrase-modality-readout.json": {
+      "bytes": 166920,
+      "sha256": "f464c0114d68a9d3937189519b7cce16e839d573bcfe5a1a061abd70df3f9fb9"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-ce/parent-paraphrase-readout.json": {
+      "bytes": 167032,
+      "sha256": "85cb562cbf56459f9242bc01ebeaa798b5eab9b117a7f993930e5c07cd270456"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-ce/parent-validation.json": {
+      "bytes": 2385640,
+      "sha256": "cfccd39a8e80b065899e28672fa84c3859e250178790d86a10b275a6e3db7609"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-ce/retained-endpoints.json": {
+      "bytes": 1798,
+      "sha256": "05d27edf5674dc0d014e7513765be5cd61a80075d884f1a8817f5b37b20dc406"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-ce/selected-state.json": {
+      "bytes": 4779346,
+      "sha256": "01b38795fbba91e63ff1238b575f4fc332da9b627c0ad7c5cc86a25ceaf622fa"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-ce/selected/evaluation-context-only-shuffle.json": {
+      "bytes": 2468906,
+      "sha256": "e453dbc3b03ac68cad3677c940a0494b446e10834c3d75f3b55b629a547c66d8"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-ce/selected/evaluation-context-reverse.json": {
+      "bytes": 2468947,
+      "sha256": "3713c110463cadbae9056f7d344e6d4ace22c701f2923ab1100b7b4c0d2badce"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-ce/selected/evaluation-context-rotate.json": {
+      "bytes": 2468909,
+      "sha256": "c6c393dc360ab052558d2e4deaf2bf9ca655e8de6cf2260a77534864af7a9e2f"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-ce/selected/evaluation-cross-length-shuffle.json": {
+      "bytes": 2468990,
+      "sha256": "8f4ce062c9692dcf53fac3da002db67e9c67ca45cf8f59421a6cdf8d2978cb32"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-ce/selected/evaluation-recurrent-residual-off.json": {
+      "bytes": 2380199,
+      "sha256": "624a198a1f258e2a10ececb53d84b58dc007c3f2dcb70c603e873a91b5419614"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-ce/selected/evaluation-source-shuffle.json": {
+      "bytes": 2468836,
+      "sha256": "10a2ee066b24dbaa7a522cced4b5bef6d53c4f9d43ce3746b23b37f206815815"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-ce/selected/evaluation-training.json": {
+      "bytes": 2463439,
+      "sha256": "dd8887cde1b331db5678ff4964f573b6a6ad5bc37bfd39425cc3d523b7f08441"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-ce/selected/evaluation-validation.json": {
+      "bytes": 2467865,
+      "sha256": "ddb4f328097e24900cc67f3ed5d941af402cc13a8da22d8989c392b208ef1c57"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-ce/selected/evaluation-zero-condition.json": {
+      "bytes": 3178171,
+      "sha256": "51199c9aed73423663a9806035cc42ddb4ce044f4d27e67883d58808ef5e352b"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-ce/selected/paraphrase-modality-readout.json": {
+      "bytes": 166919,
+      "sha256": "904264e45e633c0d3636853d0898cc3f6e7ff4b6a8a09f88a8935f74537cf1a8"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-ce/summary.json": {
+      "bytes": 335663,
+      "sha256": "490f6a4eb5cf885cc548dffda097fc803791044ec100b61a2f7ada8c7f1109ed"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-ce/training.json": {
+      "bytes": 20418778,
+      "sha256": "db8cbcc56f10a17dfc96134fb075e7128468821b8bd963665566ac6a8d5c3418"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-zero/auxiliary-cache-receipt.json": {
+      "bytes": 74346,
+      "sha256": "6d29b1327c24f307467095221d3d9cf10c6b7b0c9b648c71b4ca580f07fbfee9"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-zero/initial-state.json": {
+      "bytes": 4781612,
+      "sha256": "e9fdf24af0219aa980510f834730d3d1d714c59af2e155454e5002d3aac93f43"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-zero/last-attempt-state.json": {
+      "bytes": 4778680,
+      "sha256": "2e207d70f320a3e51a68332e66fa1191c345af010f70093d4a8d9695fd0e47aa"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-zero/last-attempt/evaluation-context-only-shuffle.json": {
+      "bytes": 2469013,
+      "sha256": "47624c32a582bd980628bfa0fb89398ba966d8c9b8689aef48aa34f79357d64e"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-zero/last-attempt/evaluation-context-reverse.json": {
+      "bytes": 2469050,
+      "sha256": "6d42584add900e8fa73ec63ab30634ad65418748acd7bd8e9ff2d266c89e053b"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-zero/last-attempt/evaluation-context-rotate.json": {
+      "bytes": 2469015,
+      "sha256": "c17b797ba948d6396341a9a06efbc5d13eeb2df0c502d02b28c65d8cf7b72e57"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-zero/last-attempt/evaluation-cross-length-shuffle.json": {
+      "bytes": 2469091,
+      "sha256": "2278ea6e144f5078cc045eac54699b9bc29a9218ad83d07b37381deef5b43f75"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-zero/last-attempt/evaluation-recurrent-residual-off.json": {
+      "bytes": 2380322,
+      "sha256": "81b345c01e7953091ea450f5d3de98c1d780b62af8610bb52a49d2bbb766ac2e"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-zero/last-attempt/evaluation-source-shuffle.json": {
+      "bytes": 2468938,
+      "sha256": "2d05cb9546dc43e1cf267610ac0901b36b21124c6ce0e7bcd334c18a5871dc36"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-zero/last-attempt/evaluation-training.json": {
+      "bytes": 2463993,
+      "sha256": "50ca0f622b5bf34bc2b90eb13ef07cd69b1a4c5ebd448f753888f6b810ce7402"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-zero/last-attempt/evaluation-validation.json": {
+      "bytes": 2467965,
+      "sha256": "f9b74c7e7d1354de5b2c2829c878c5c81e635222bf4e8d416da868561a897605"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-zero/last-attempt/evaluation-zero-condition.json": {
+      "bytes": 3175054,
+      "sha256": "81d46d4eecfe79a0ab1044a29620b0106285e5cfc9ecbce34f63b7c926e8d549"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-zero/last-attempt/paraphrase-modality-readout.json": {
+      "bytes": 166623,
+      "sha256": "3edd1b7125403dd416f29b890f934d4ac5fc32335ce6c668facdd02033cd08a7"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-zero/parent-paraphrase-readout.json": {
+      "bytes": 167032,
+      "sha256": "64fe2e4875388671a1c6dd101ba56fabee536cad8164e351126251f14442159d"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-zero/parent-validation.json": {
+      "bytes": 2385640,
+      "sha256": "5ec60d3e89b955c70a2487090c1a78eb2233e3dda64338eb7ff4ad50a02ff147"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-zero/retained-endpoints.json": {
+      "bytes": 1806,
+      "sha256": "565652e2a4902f9d1fcb590e3e7d4756093fcb31b221109be1b9962eb459cbd3"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-zero/selected-state.json": {
+      "bytes": 4778676,
+      "sha256": "6dadd10c8585328a3b35215ddc3fae71d9b6dce13869d1c8c48981b669b7d429"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-zero/selected/evaluation-context-only-shuffle.json": {
+      "bytes": 2469013,
+      "sha256": "3610fd095de9d4413b1ff39b57e52080f87299097269fcc560a0758a6cc1cee8"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-zero/selected/evaluation-context-reverse.json": {
+      "bytes": 2469050,
+      "sha256": "a594376fbb9f1957c8e302c42012602d0a531da69a8db29930ce076b2e5ddec2"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-zero/selected/evaluation-context-rotate.json": {
+      "bytes": 2469015,
+      "sha256": "78699de1f84a888850f7fc5778d7d38d88b9cabd45ac77c302ea22e7bf7070b2"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-zero/selected/evaluation-cross-length-shuffle.json": {
+      "bytes": 2469093,
+      "sha256": "78e92c1d7e5b1cfc587118f3efe58a7ea7c0dc4edac71956d0f543539b066101"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-zero/selected/evaluation-recurrent-residual-off.json": {
+      "bytes": 2380321,
+      "sha256": "f07e25dfd83530da44d64c5948b3f1172253c50d82c001c7e573968e89745620"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-zero/selected/evaluation-source-shuffle.json": {
+      "bytes": 2468936,
+      "sha256": "fe0cf4859de8dba8f448bbf394733cc5e5f437f5c29f774f7675b7af975a0590"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-zero/selected/evaluation-training.json": {
+      "bytes": 2463994,
+      "sha256": "0ae02a0506b65cb9b7a4b73706141e3532cc7fe344150c86a6cefbffed5c95c4"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-zero/selected/evaluation-validation.json": {
+      "bytes": 2467969,
+      "sha256": "f34ba71abca05ed582e1f0f2868a3c64f55882638ed190578039cde0bf7a5180"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-zero/selected/evaluation-zero-condition.json": {
+      "bytes": 3175055,
+      "sha256": "39a12fb912db3a2b51ea2fd6515cd84569b83d748d4dc60d580ab23d23fb5886"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-zero/selected/paraphrase-modality-readout.json": {
+      "bytes": 166623,
+      "sha256": "5f46f312d688e0c5b3c5eecc70a5ce4cb7ec388cf2c43a0b46de8236b20a58fc"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-zero/summary.json": {
+      "bytes": 335725,
+      "sha256": "7b52a06ecda1a8bddb567fff3e5f81589bef05df671c4b6b53026cd5813da068"
+    },
+    "modality-training/training-768-r2/results/paraphrase-modality-zero/training.json": {
+      "bytes": 20415167,
+      "sha256": "cda3e4178076a0328e7900e23ae84e8683e8cd7fd8cdb40d85ad36a510675d6b"
+    },
+    "modality-training/training-768-r2/results/summary.json": {
+      "bytes": 28877,
+      "sha256": "423591f7c22de07c52170871ee38a37195868104477bb0972dc8d04c16e69fd1"
+    },
+    "modality-training/training-manifest.json": {
+      "bytes": 308966,
+      "sha256": "5f9b14b3d8091ecedff781a6e0f0c421e48302c9b6d6497377b3e269cf4ff65f"
+    },
+    "modality-training/training-plan.json": {
+      "bytes": 248682,
+      "sha256": "23c9ccffcbc925f9639450c0e09e0538d48ef77ee24d98b3384d701d50909fd9"
+    },
+    "publication/aggregate_results.py": {
+      "bytes": 8605,
+      "sha256": "a4150508098838bc742ed0fca9ea89e6982491911683b6205deb5ad9042e954b"
+    },
+    "publication/archive-inventory.json": {
+      "bytes": 250461,
+      "sha256": "990adea4f42df7e29b273287949b5cccd7b0774c0757a64b93976b6ba96b07cb"
+    },
+    "publication/archive-size-pre-observer.json": {
+      "bytes": 892,
+      "sha256": "fb0ac6e70d4670c3276f3eb4b1d221fd71abaaa4f6fe26668e566b38fb720a9d"
+    },
+    "publication/archive_helpers.py": {
+      "bytes": 2822,
+      "sha256": "5613458f73112f935124c2a6cf85b6cf36a2e151b35c44afea023accb68e3f44"
+    },
+    "publication/build_evidence.py": {
+      "bytes": 11287,
+      "sha256": "31f946fe1a84abc4a7726ad55ac883afc56b2628bb48bd64e2b52ea635fc1884"
+    },
+    "publication/design-notes-before-training.md": {
+      "bytes": 3113,
+      "sha256": "9497f0df4fb481e3152a753c6c5ead6c7c841110323fd7d7ed8a96df5d2907d5"
+    },
+    "publication/documentation-review.json": {
+      "bytes": 9040,
+      "sha256": "5b7c934a3c5f8b7977c3a54577da3038638685bb80f9fb443cca1839ab7e182f"
+    },
+    "publication/documentation-section.md": {
+      "bytes": 11396,
+      "sha256": "d0872e179da2d7bfde31832e13efba16217d9e924a338d12323c8b595c3fc762"
+    },
+    "publication/inventory_evidence.py": {
+      "bytes": 6429,
+      "sha256": "8ac79b86588d72a8996088018cad57a8a6b971d39affbb1dd23882c9e9053931"
+    },
+    "publication/observer-tests-r1.json": {
+      "bytes": 490,
+      "sha256": "464d5860cf854555b206cc0a58f93eb957b66e9bbc21a4470781645ba4b7fc30"
+    },
+    "publication/observer-tests-r1.log": {
+      "bytes": 1664,
+      "sha256": "82fd0724abbbfbd2dd3db9a35b61cd0d6f97e0d911f0f820818bc48089b393a8"
+    },
+    "publication/observer-tests-r2.json": {
+      "bytes": 766,
+      "sha256": "8ffd0434d20a0e07ecc554e266b59552ee1f09fe289d141593af9022593a4ef7"
+    },
+    "publication/observer-tests-r2.log": {
+      "bytes": 1439,
+      "sha256": "cc342af337c503b4b67bd5a9706f041974d0e1385042515c8e4700801d3e804c"
+    },
+    "publication/observer-tests-r2.xml": {
+      "bytes": 8899,
+      "sha256": "17a8d7e39030623c562f55cde24a16fce4fb13afbfb1e2e4751d7fa6249c396b"
+    },
+    "publication/preimages.json": {
+      "bytes": 680,
+      "sha256": "20b73bf15502dc783578a2797138f6b01dc6fb0ff8c8de1b3570bd12da45d792"
+    },
+    "publication/protected-checkpoint-check.json": {
+      "bytes": 375,
+      "sha256": "5792a9ed3b681a3974dcc65897cdd7e012eabbfd3ae456294f731cbb67a801ea"
+    },
+    "publication/public-readme.txt": {
+      "bytes": 8281,
+      "sha256": "6808c0aa363187bcfa7e4a3e94b1e936bd2f94e9df8ac92cea27e6109d1bcecf"
+    },
+    "publication/publication-helper-review.json": {
+      "bytes": 5402,
+      "sha256": "96102edca374deb6dc2f4b3c511af62593f5a5676a6d9e5af209dbab060349f5"
+    },
+    "publication/publication-readiness.json": {
+      "bytes": 17093,
+      "sha256": "77738bd63987fc183bba034a59fa6aaa45af1696c7884c466cee9d9cb331fc75"
+    },
+    "publication/publish_results.py": {
+      "bytes": 6452,
+      "sha256": "6694c0dd52b279d99c4ce6c226f3deca21a2b3a0b98d4faa513302211dbe2194"
+    },
+    "publication/results.json": {
+      "bytes": 3547468,
+      "sha256": "9c90c25559dcec91afaa62d4f153d952f123643fadbf85e14490a6531c7c2a4d"
+    },
+    "publication/review_completed_evidence.py": {
+      "bytes": 5894,
+      "sha256": "3150841f2b9aa4be4ab36d1f149b205b6aa2c5114425048997617e1888cc447c"
+    },
+    "publication/root-current-config-observation.json": {
+      "bytes": 288,
+      "sha256": "d62fd5680c72d67c05cd42912e6cb32e48a2e33738fc471b7a1b16d1db253b30"
+    },
+    "publication/scaffolding.json": {
+      "bytes": 833,
+      "sha256": "ef309f78a0e97edffa01a603f189cf8fd2adea154846a17037d2f8e3d66b072e"
+    },
+    "publication/source-reconciliation-76022bac.json": {
+      "bytes": 47140,
+      "sha256": "d03337479a46eb9e4659871410ccfe62d66ba18aa7482c40ae0408bad1126a47"
+    },
+    "publication/source-review.json": {
+      "bytes": 23309,
+      "sha256": "9fa7b741800f69dded6c465130017a97c4852f00d8ba3f6f843f10c2c15fa56c"
+    },
+    "publication/source-scope-final-76022bac.json": {
+      "bytes": 3749,
+      "sha256": "3ad1952c47f9d0cabf524c35a568ed0e897262f8a2c29841a122be5f76ee07da"
+    },
+    "publication/training-retry-followup.json": {
+      "bytes": 593,
+      "sha256": "8e151d95d6fd92210c5b2c983cd9a8ab3010f93d28fec9dd7adff47421902953"
+    },
+    "publication/training-retry-note.json": {
+      "bytes": 567,
+      "sha256": "98aff11f85d2efb70965cf7877b49d9b1ca4b4d2923e3ab1c9dbdb39bfe83139"
+    },
+    "publication/usage-notes.md": {
+      "bytes": 3357,
+      "sha256": "f48000ba5c36618154c24d6b6dd7186a3daacc3f6f8c7376c44f8d76f85e65c5"
+    },
+    "publication/write_documentation.py": {
+      "bytes": 10209,
+      "sha256": "fb72c35c1f482f98c29dbca66d0cba3d7adf316d149684b368c62143650f6643"
+    }
+  },
+  "native_external_identity_policy": "exact build/native owner manifests and source Git revisions retained; native binaries and pretrained model content remain external",
+  "numerical_source_policy": "all historical executed frozen snapshots retained; publication candidate source inventory is separate",
+  "original_artifact_archive_paths": {
+    "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/four_width_training.md": "documentation/four_width_training.md",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/adopt_shared_scheduler.py": "modality-training/adopt_shared_scheduler.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/diagnose_scheduler_r1.py": "modality-training/diagnose_scheduler_r1.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/long_span_source_value_training.py": "modality-training/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/long_span_source_value_training.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/paraphrase_modality_auxiliary_training.py": "modality-training/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/paraphrase_modality_auxiliary_training.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/experiment-source/scripts/ops/autoencoder/benchmark_paraphrase_modality_training.py": "modality-training/experiment-source/scripts/ops/autoencoder/benchmark_paraphrase_modality_training.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/experiment-source/scripts/ops/autoencoder/evaluate_paraphrase_modality_styles.py": "modality-training/experiment-source/scripts/ops/autoencoder/evaluate_paraphrase_modality_styles.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/experiment-source/scripts/ops/autoencoder/evaluate_training_mixture_styles.py": "modality-training/experiment-source/scripts/ops/autoencoder/evaluate_training_mixture_styles.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/experiment-source/tests/unit/logic/formalization/autoencoder/test_paraphrase_modality_auxiliary_training.py": "modality-training/experiment-source/tests/unit/logic/formalization/autoencoder/test_paraphrase_modality_auxiliary_training.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/experiment-source/tests/unit/logic/formalization/autoencoder/test_paraphrase_modality_styles.py": "modality-training/experiment-source/tests/unit/logic/formalization/autoencoder/test_paraphrase_modality_styles.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/experiment-source/tests/unit/logic/formalization/autoencoder/test_paraphrase_modality_training_integration.py": "modality-training/experiment-source/tests/unit/logic/formalization/autoencoder/test_paraphrase_modality_training_integration.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/experiment-source/tests/unit/logic/formalization/autoencoder/test_paraphrase_modality_training_runner.py": "modality-training/experiment-source/tests/unit/logic/formalization/autoencoder/test_paraphrase_modality_training_runner.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/freeze-receipt.json": "modality-training/freeze-receipt.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/freeze.log": "modality-training/freeze.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/freeze.py": "modality-training/freeze.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/helper-test-inputs.json": "modality-training/helper-test-inputs.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/lazy_scheduler_adoption.py": "modality-training/lazy_scheduler_adoption.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/owned-source-publication.json": "modality-training/owned-source-publication.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/owned_lease_watchdog.py": "modality-training/owned_lease_watchdog.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-384-r1-guardian-exit.json": "modality-training/preflight-384-r1-guardian-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-384-r1-guardian.log": "modality-training/preflight-384-r1-guardian.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-384-r1-lease-observations.jsonl": "modality-training/preflight-384-r1-lease-observations.jsonl",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-384-r1-scheduler-adoption.json": "modality-training/preflight-384-r1-scheduler-adoption.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-384-r1/child-exit.json": "modality-training/preflight-384-r1/child-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-384-r1/child-identity.json": "modality-training/preflight-384-r1/child-identity.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-384-r1/child.log": "modality-training/preflight-768-r1/child.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-384-r1/command.json": "modality-training/preflight-384-r1/command.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-384-r1/lease-binding.json": "modality-training/preflight-384-r1/lease-binding.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-384-r1/resource-observations.json": "modality-training/preflight-384-r1/resource-observations.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-384-r1/resources-final.json": "modality-training/preflight-384-r1/resources-final.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-384-r1/resources-start.json": "modality-training/preflight-384-r1/resources-start.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-384-r1/results/paraphrase-bank.json": "modality-training/training-384-r2/results/paraphrase-bank.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-384-r1/results/paraphrase-modality-ce/auxiliary-cache-receipt.json": "modality-training/preflight-384-r1/results/paraphrase-modality-ce/auxiliary-cache-receipt.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-384-r1/results/paraphrase-modality-ce/parent-paraphrase-readout.json": "modality-training/preflight-384-r1/results/paraphrase-modality-ce/parent-paraphrase-readout.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-384-r1/results/paraphrase-modality-ce/parent-validation.json": "modality-training/preflight-384-r1/results/paraphrase-modality-ce/parent-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-384-r1/results/paraphrase-modality-zero/auxiliary-cache-receipt.json": "modality-training/preflight-384-r1/results/paraphrase-modality-zero/auxiliary-cache-receipt.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-384-r1/results/paraphrase-modality-zero/parent-paraphrase-readout.json": "modality-training/preflight-384-r1/results/paraphrase-modality-zero/parent-paraphrase-readout.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-384-r1/results/paraphrase-modality-zero/parent-validation.json": "modality-training/preflight-384-r1/results/paraphrase-modality-zero/parent-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-384-r1/results/predeclared-auxiliary-schedule.json": "modality-training/training-384-r2/results/predeclared-auxiliary-schedule.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-384-r1/results/preprocessing.json": "modality-training/training-384-r2/results/preprocessing.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-384-r1/results/sealed-recipe.json": "modality-training/preflight-768-r1/results/sealed-recipe.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-384-r1/results/source-contexts.json": "modality-training/training-384-r2/results/source-contexts.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-384-r1/results/source-inventory.json": "modality-training/training-384-r2/results/source-inventory.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-384-r1/results/summary.json": "modality-training/preflight-384-r1/results/summary.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-384-r1/results/training-rows.json": "modality-training/training-384-r2/results/training-rows.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-768-r1-guardian-exit.json": "modality-training/preflight-768-r1-guardian-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-768-r1-guardian.log": "modality-training/preflight-768-r1-guardian.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-768-r1-lease-observations.jsonl": "modality-training/preflight-768-r1-lease-observations.jsonl",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-768-r1-scheduler-adoption.json": "modality-training/preflight-768-r1-scheduler-adoption.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-768-r1/child-exit.json": "modality-training/preflight-768-r1/child-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-768-r1/child-identity.json": "modality-training/preflight-768-r1/child-identity.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-768-r1/child.log": "modality-training/preflight-768-r1/child.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-768-r1/command.json": "modality-training/preflight-768-r1/command.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-768-r1/lease-binding.json": "modality-training/preflight-768-r1/lease-binding.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-768-r1/resources-final.json": "modality-training/preflight-768-r1/resources-final.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-768-r1/resources-start.json": "modality-training/preflight-768-r1/resources-start.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-768-r1/results/paraphrase-bank.json": "modality-training/preflight-768-r1/results/paraphrase-bank.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-768-r1/results/paraphrase-modality-ce/auxiliary-cache-receipt.json": "modality-training/preflight-768-r1/results/paraphrase-modality-ce/auxiliary-cache-receipt.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-768-r1/results/paraphrase-modality-ce/parent-paraphrase-readout.json": "modality-training/preflight-768-r1/results/paraphrase-modality-ce/parent-paraphrase-readout.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-768-r1/results/paraphrase-modality-ce/parent-validation.json": "modality-training/preflight-768-r1/results/paraphrase-modality-ce/parent-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-768-r1/results/paraphrase-modality-zero/auxiliary-cache-receipt.json": "modality-training/preflight-768-r1/results/paraphrase-modality-zero/auxiliary-cache-receipt.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-768-r1/results/paraphrase-modality-zero/parent-paraphrase-readout.json": "modality-training/preflight-768-r1/results/paraphrase-modality-zero/parent-paraphrase-readout.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-768-r1/results/paraphrase-modality-zero/parent-validation.json": "modality-training/preflight-768-r1/results/paraphrase-modality-zero/parent-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-768-r1/results/predeclared-auxiliary-schedule.json": "modality-training/preflight-768-r1/results/predeclared-auxiliary-schedule.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-768-r1/results/preprocessing.json": "modality-training/preflight-768-r1/results/preprocessing.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-768-r1/results/sealed-recipe.json": "modality-training/preflight-768-r1/results/sealed-recipe.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-768-r1/results/source-contexts.json": "modality-training/preflight-768-r1/results/source-contexts.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-768-r1/results/source-inventory.json": "modality-training/preflight-768-r1/results/source-inventory.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-768-r1/results/summary.json": "modality-training/preflight-768-r1/results/summary.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preflight-768-r1/results/training-rows.json": "modality-training/preflight-768-r1/results/training-rows.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/preimages.json": "modality-training/preimages.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/run_reserved.py": "modality-training/run_reserved.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/scheduler-admission-diagnosis-r1.json": "modality-training/scheduler-admission-diagnosis-r1.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/source-coverage-audit.json": "modality-training/source-coverage-audit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/tests-runner.log": "modality-training/tests-runner.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/tests-runner.xml": "modality-training/tests-runner.xml",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/tests.json": "modality-training/tests.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r1-guardian-exit.json": "modality-training/training-384-r1-guardian-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r1-guardian.log": "modality-training/training-384-r1-guardian.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r1/failure.json": "modality-training/training-384-r1/failure.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2-guardian-exit.json": "modality-training/training-384-r2-guardian-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2-guardian.log": "modality-training/training-384-r2-guardian.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2-lease-observations.jsonl": "modality-training/training-384-r2-lease-observations.jsonl",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2-scheduler-adoption.json": "modality-training/training-384-r2-scheduler-adoption.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/child-exit.json": "modality-training/training-384-r2/child-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/child-identity.json": "modality-training/training-384-r2/child-identity.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/child.log": "modality-training/training-384-r2/child.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/command.json": "modality-training/training-384-r2/command.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/lease-binding.json": "modality-training/training-384-r2/lease-binding.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/resource-observations.json": "modality-training/training-384-r2/resource-observations.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/resources-final.json": "modality-training/training-384-r2/resources-final.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/resources-start.json": "modality-training/training-384-r2/resources-start.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-bank.json": "modality-training/training-384-r2/results/paraphrase-bank.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-ce/auxiliary-cache-receipt.json": "modality-training/training-384-r2/results/paraphrase-modality-ce/auxiliary-cache-receipt.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-ce/initial-state.json": "modality-training/training-384-r2/results/paraphrase-modality-ce/initial-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-ce/last-attempt-state.json": "modality-training/training-384-r2/results/paraphrase-modality-ce/last-attempt-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-ce/last-attempt/evaluation-context-only-shuffle.json": "modality-training/training-384-r2/results/paraphrase-modality-ce/last-attempt/evaluation-context-only-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-ce/last-attempt/evaluation-context-reverse.json": "modality-training/training-384-r2/results/paraphrase-modality-ce/last-attempt/evaluation-context-reverse.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-ce/last-attempt/evaluation-context-rotate.json": "modality-training/training-384-r2/results/paraphrase-modality-ce/last-attempt/evaluation-context-rotate.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-ce/last-attempt/evaluation-cross-length-shuffle.json": "modality-training/training-384-r2/results/paraphrase-modality-ce/last-attempt/evaluation-cross-length-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-ce/last-attempt/evaluation-recurrent-residual-off.json": "modality-training/training-384-r2/results/paraphrase-modality-ce/last-attempt/evaluation-recurrent-residual-off.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-ce/last-attempt/evaluation-source-shuffle.json": "modality-training/training-384-r2/results/paraphrase-modality-ce/last-attempt/evaluation-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-ce/last-attempt/evaluation-training.json": "modality-training/training-384-r2/results/paraphrase-modality-ce/last-attempt/evaluation-training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-ce/last-attempt/evaluation-validation.json": "modality-training/training-384-r2/results/paraphrase-modality-ce/last-attempt/evaluation-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-ce/last-attempt/evaluation-zero-condition.json": "modality-training/training-384-r2/results/paraphrase-modality-ce/last-attempt/evaluation-zero-condition.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-ce/last-attempt/paraphrase-modality-readout.json": "modality-training/training-384-r2/results/paraphrase-modality-ce/last-attempt/paraphrase-modality-readout.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-ce/parent-paraphrase-readout.json": "modality-training/training-384-r2/results/paraphrase-modality-ce/parent-paraphrase-readout.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-ce/parent-validation.json": "modality-training/training-384-r2/results/paraphrase-modality-ce/parent-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-ce/retained-endpoints.json": "modality-training/training-384-r2/results/paraphrase-modality-ce/retained-endpoints.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-ce/selected-state.json": "modality-training/training-384-r2/results/paraphrase-modality-ce/selected-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-ce/selected/evaluation-context-only-shuffle.json": "modality-training/training-384-r2/results/paraphrase-modality-ce/selected/evaluation-context-only-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-ce/selected/evaluation-context-reverse.json": "modality-training/training-384-r2/results/paraphrase-modality-ce/selected/evaluation-context-reverse.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-ce/selected/evaluation-context-rotate.json": "modality-training/training-384-r2/results/paraphrase-modality-ce/selected/evaluation-context-rotate.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-ce/selected/evaluation-cross-length-shuffle.json": "modality-training/training-384-r2/results/paraphrase-modality-ce/selected/evaluation-cross-length-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-ce/selected/evaluation-recurrent-residual-off.json": "modality-training/training-384-r2/results/paraphrase-modality-ce/selected/evaluation-recurrent-residual-off.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-ce/selected/evaluation-source-shuffle.json": "modality-training/training-384-r2/results/paraphrase-modality-ce/selected/evaluation-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-ce/selected/evaluation-training.json": "modality-training/training-384-r2/results/paraphrase-modality-ce/selected/evaluation-training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-ce/selected/evaluation-validation.json": "modality-training/training-384-r2/results/paraphrase-modality-ce/selected/evaluation-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-ce/selected/evaluation-zero-condition.json": "modality-training/training-384-r2/results/paraphrase-modality-ce/selected/evaluation-zero-condition.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-ce/selected/paraphrase-modality-readout.json": "modality-training/training-384-r2/results/paraphrase-modality-ce/selected/paraphrase-modality-readout.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-ce/summary.json": "modality-training/training-384-r2/results/paraphrase-modality-ce/summary.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-ce/training.json": "modality-training/training-384-r2/results/paraphrase-modality-ce/training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-zero/auxiliary-cache-receipt.json": "modality-training/training-384-r2/results/paraphrase-modality-zero/auxiliary-cache-receipt.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-zero/initial-state.json": "modality-training/training-384-r2/results/paraphrase-modality-zero/initial-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-zero/last-attempt-state.json": "modality-training/training-384-r2/results/paraphrase-modality-zero/last-attempt-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-zero/last-attempt/evaluation-context-only-shuffle.json": "modality-training/training-384-r2/results/paraphrase-modality-zero/last-attempt/evaluation-context-only-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-zero/last-attempt/evaluation-context-reverse.json": "modality-training/training-384-r2/results/paraphrase-modality-zero/last-attempt/evaluation-context-reverse.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-zero/last-attempt/evaluation-context-rotate.json": "modality-training/training-384-r2/results/paraphrase-modality-zero/last-attempt/evaluation-context-rotate.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-zero/last-attempt/evaluation-cross-length-shuffle.json": "modality-training/training-384-r2/results/paraphrase-modality-zero/last-attempt/evaluation-cross-length-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-zero/last-attempt/evaluation-recurrent-residual-off.json": "modality-training/training-384-r2/results/paraphrase-modality-zero/last-attempt/evaluation-recurrent-residual-off.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-zero/last-attempt/evaluation-source-shuffle.json": "modality-training/training-384-r2/results/paraphrase-modality-zero/last-attempt/evaluation-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-zero/last-attempt/evaluation-training.json": "modality-training/training-384-r2/results/paraphrase-modality-zero/last-attempt/evaluation-training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-zero/last-attempt/evaluation-validation.json": "modality-training/training-384-r2/results/paraphrase-modality-zero/last-attempt/evaluation-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-zero/last-attempt/evaluation-zero-condition.json": "modality-training/training-384-r2/results/paraphrase-modality-zero/last-attempt/evaluation-zero-condition.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-zero/last-attempt/paraphrase-modality-readout.json": "modality-training/training-384-r2/results/paraphrase-modality-zero/last-attempt/paraphrase-modality-readout.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-zero/parent-paraphrase-readout.json": "modality-training/training-384-r2/results/paraphrase-modality-zero/parent-paraphrase-readout.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-zero/parent-validation.json": "modality-training/training-384-r2/results/paraphrase-modality-zero/parent-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-zero/retained-endpoints.json": "modality-training/training-384-r2/results/paraphrase-modality-zero/retained-endpoints.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-zero/selected-state.json": "modality-training/training-384-r2/results/paraphrase-modality-zero/selected-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-zero/selected/evaluation-context-only-shuffle.json": "modality-training/training-384-r2/results/paraphrase-modality-zero/selected/evaluation-context-only-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-zero/selected/evaluation-context-reverse.json": "modality-training/training-384-r2/results/paraphrase-modality-zero/selected/evaluation-context-reverse.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-zero/selected/evaluation-context-rotate.json": "modality-training/training-384-r2/results/paraphrase-modality-zero/selected/evaluation-context-rotate.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-zero/selected/evaluation-cross-length-shuffle.json": "modality-training/training-384-r2/results/paraphrase-modality-zero/selected/evaluation-cross-length-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-zero/selected/evaluation-recurrent-residual-off.json": "modality-training/training-384-r2/results/paraphrase-modality-zero/selected/evaluation-recurrent-residual-off.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-zero/selected/evaluation-source-shuffle.json": "modality-training/training-384-r2/results/paraphrase-modality-zero/selected/evaluation-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-zero/selected/evaluation-training.json": "modality-training/training-384-r2/results/paraphrase-modality-zero/selected/evaluation-training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-zero/selected/evaluation-validation.json": "modality-training/training-384-r2/results/paraphrase-modality-zero/selected/evaluation-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-zero/selected/evaluation-zero-condition.json": "modality-training/training-384-r2/results/paraphrase-modality-zero/selected/evaluation-zero-condition.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-zero/selected/paraphrase-modality-readout.json": "modality-training/training-384-r2/results/paraphrase-modality-zero/selected/paraphrase-modality-readout.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-zero/summary.json": "modality-training/training-384-r2/results/paraphrase-modality-zero/summary.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-zero/training.json": "modality-training/training-384-r2/results/paraphrase-modality-zero/training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/predeclared-auxiliary-schedule.json": "modality-training/training-384-r2/results/predeclared-auxiliary-schedule.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/preprocessing.json": "modality-training/training-384-r2/results/preprocessing.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/sealed-recipe.json": "modality-training/preflight-768-r1/results/sealed-recipe.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/source-contexts.json": "modality-training/training-384-r2/results/source-contexts.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/source-inventory.json": "modality-training/training-384-r2/results/source-inventory.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/summary.json": "modality-training/training-384-r2/results/summary.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/training-rows.json": "modality-training/training-384-r2/results/training-rows.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r1-guardian-exit.json": "modality-training/training-768-r1-guardian-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r1-guardian.log": "modality-training/training-384-r1-guardian.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r1/failure.json": "modality-training/training-768-r1/failure.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2-guardian-exit.json": "modality-training/training-768-r2-guardian-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2-guardian.log": "modality-training/training-768-r2-guardian.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2-lease-observations.jsonl": "modality-training/training-768-r2-lease-observations.jsonl",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2-scheduler-adoption.json": "modality-training/training-768-r2-scheduler-adoption.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/child-exit.json": "modality-training/training-768-r2/child-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/child-identity.json": "modality-training/training-768-r2/child-identity.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/child.log": "modality-training/training-768-r2/child.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/command.json": "modality-training/training-768-r2/command.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/lease-binding.json": "modality-training/training-768-r2/lease-binding.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/resource-observations.json": "modality-training/training-768-r2/resource-observations.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/resources-final.json": "modality-training/training-768-r2/resources-final.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/resources-start.json": "modality-training/training-768-r2/resources-start.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-bank.json": "modality-training/preflight-768-r1/results/paraphrase-bank.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-ce/auxiliary-cache-receipt.json": "modality-training/training-768-r2/results/paraphrase-modality-ce/auxiliary-cache-receipt.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-ce/initial-state.json": "modality-training/training-768-r2/results/paraphrase-modality-ce/initial-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-ce/last-attempt-state.json": "modality-training/training-768-r2/results/paraphrase-modality-ce/last-attempt-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-ce/last-attempt/evaluation-context-only-shuffle.json": "modality-training/training-768-r2/results/paraphrase-modality-ce/last-attempt/evaluation-context-only-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-ce/last-attempt/evaluation-context-reverse.json": "modality-training/training-768-r2/results/paraphrase-modality-ce/last-attempt/evaluation-context-reverse.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-ce/last-attempt/evaluation-context-rotate.json": "modality-training/training-768-r2/results/paraphrase-modality-ce/last-attempt/evaluation-context-rotate.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-ce/last-attempt/evaluation-cross-length-shuffle.json": "modality-training/training-768-r2/results/paraphrase-modality-ce/last-attempt/evaluation-cross-length-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-ce/last-attempt/evaluation-recurrent-residual-off.json": "modality-training/training-768-r2/results/paraphrase-modality-ce/last-attempt/evaluation-recurrent-residual-off.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-ce/last-attempt/evaluation-source-shuffle.json": "modality-training/training-768-r2/results/paraphrase-modality-ce/last-attempt/evaluation-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-ce/last-attempt/evaluation-training.json": "modality-training/training-768-r2/results/paraphrase-modality-ce/last-attempt/evaluation-training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-ce/last-attempt/evaluation-validation.json": "modality-training/training-768-r2/results/paraphrase-modality-ce/last-attempt/evaluation-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-ce/last-attempt/evaluation-zero-condition.json": "modality-training/training-768-r2/results/paraphrase-modality-ce/last-attempt/evaluation-zero-condition.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-ce/last-attempt/paraphrase-modality-readout.json": "modality-training/training-768-r2/results/paraphrase-modality-ce/last-attempt/paraphrase-modality-readout.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-ce/parent-paraphrase-readout.json": "modality-training/training-768-r2/results/paraphrase-modality-ce/parent-paraphrase-readout.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-ce/parent-validation.json": "modality-training/training-768-r2/results/paraphrase-modality-ce/parent-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-ce/retained-endpoints.json": "modality-training/training-768-r2/results/paraphrase-modality-ce/retained-endpoints.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-ce/selected-state.json": "modality-training/training-768-r2/results/paraphrase-modality-ce/selected-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-ce/selected/evaluation-context-only-shuffle.json": "modality-training/training-768-r2/results/paraphrase-modality-ce/selected/evaluation-context-only-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-ce/selected/evaluation-context-reverse.json": "modality-training/training-768-r2/results/paraphrase-modality-ce/selected/evaluation-context-reverse.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-ce/selected/evaluation-context-rotate.json": "modality-training/training-768-r2/results/paraphrase-modality-ce/selected/evaluation-context-rotate.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-ce/selected/evaluation-cross-length-shuffle.json": "modality-training/training-768-r2/results/paraphrase-modality-ce/selected/evaluation-cross-length-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-ce/selected/evaluation-recurrent-residual-off.json": "modality-training/training-768-r2/results/paraphrase-modality-ce/selected/evaluation-recurrent-residual-off.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-ce/selected/evaluation-source-shuffle.json": "modality-training/training-768-r2/results/paraphrase-modality-ce/selected/evaluation-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-ce/selected/evaluation-training.json": "modality-training/training-768-r2/results/paraphrase-modality-ce/selected/evaluation-training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-ce/selected/evaluation-validation.json": "modality-training/training-768-r2/results/paraphrase-modality-ce/selected/evaluation-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-ce/selected/evaluation-zero-condition.json": "modality-training/training-768-r2/results/paraphrase-modality-ce/selected/evaluation-zero-condition.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-ce/selected/paraphrase-modality-readout.json": "modality-training/training-768-r2/results/paraphrase-modality-ce/selected/paraphrase-modality-readout.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-ce/summary.json": "modality-training/training-768-r2/results/paraphrase-modality-ce/summary.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-ce/training.json": "modality-training/training-768-r2/results/paraphrase-modality-ce/training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-zero/auxiliary-cache-receipt.json": "modality-training/training-768-r2/results/paraphrase-modality-zero/auxiliary-cache-receipt.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-zero/initial-state.json": "modality-training/training-768-r2/results/paraphrase-modality-zero/initial-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-zero/last-attempt-state.json": "modality-training/training-768-r2/results/paraphrase-modality-zero/last-attempt-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-zero/last-attempt/evaluation-context-only-shuffle.json": "modality-training/training-768-r2/results/paraphrase-modality-zero/last-attempt/evaluation-context-only-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-zero/last-attempt/evaluation-context-reverse.json": "modality-training/training-768-r2/results/paraphrase-modality-zero/last-attempt/evaluation-context-reverse.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-zero/last-attempt/evaluation-context-rotate.json": "modality-training/training-768-r2/results/paraphrase-modality-zero/last-attempt/evaluation-context-rotate.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-zero/last-attempt/evaluation-cross-length-shuffle.json": "modality-training/training-768-r2/results/paraphrase-modality-zero/last-attempt/evaluation-cross-length-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-zero/last-attempt/evaluation-recurrent-residual-off.json": "modality-training/training-768-r2/results/paraphrase-modality-zero/last-attempt/evaluation-recurrent-residual-off.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-zero/last-attempt/evaluation-source-shuffle.json": "modality-training/training-768-r2/results/paraphrase-modality-zero/last-attempt/evaluation-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-zero/last-attempt/evaluation-training.json": "modality-training/training-768-r2/results/paraphrase-modality-zero/last-attempt/evaluation-training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-zero/last-attempt/evaluation-validation.json": "modality-training/training-768-r2/results/paraphrase-modality-zero/last-attempt/evaluation-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-zero/last-attempt/evaluation-zero-condition.json": "modality-training/training-768-r2/results/paraphrase-modality-zero/last-attempt/evaluation-zero-condition.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-zero/last-attempt/paraphrase-modality-readout.json": "modality-training/training-768-r2/results/paraphrase-modality-zero/last-attempt/paraphrase-modality-readout.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-zero/parent-paraphrase-readout.json": "modality-training/training-768-r2/results/paraphrase-modality-zero/parent-paraphrase-readout.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-zero/parent-validation.json": "modality-training/training-768-r2/results/paraphrase-modality-zero/parent-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-zero/retained-endpoints.json": "modality-training/training-768-r2/results/paraphrase-modality-zero/retained-endpoints.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-zero/selected-state.json": "modality-training/training-768-r2/results/paraphrase-modality-zero/selected-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-zero/selected/evaluation-context-only-shuffle.json": "modality-training/training-768-r2/results/paraphrase-modality-zero/selected/evaluation-context-only-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-zero/selected/evaluation-context-reverse.json": "modality-training/training-768-r2/results/paraphrase-modality-zero/selected/evaluation-context-reverse.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-zero/selected/evaluation-context-rotate.json": "modality-training/training-768-r2/results/paraphrase-modality-zero/selected/evaluation-context-rotate.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-zero/selected/evaluation-cross-length-shuffle.json": "modality-training/training-768-r2/results/paraphrase-modality-zero/selected/evaluation-cross-length-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-zero/selected/evaluation-recurrent-residual-off.json": "modality-training/training-768-r2/results/paraphrase-modality-zero/selected/evaluation-recurrent-residual-off.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-zero/selected/evaluation-source-shuffle.json": "modality-training/training-768-r2/results/paraphrase-modality-zero/selected/evaluation-source-shuffle.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-zero/selected/evaluation-training.json": "modality-training/training-768-r2/results/paraphrase-modality-zero/selected/evaluation-training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-zero/selected/evaluation-validation.json": "modality-training/training-768-r2/results/paraphrase-modality-zero/selected/evaluation-validation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-zero/selected/evaluation-zero-condition.json": "modality-training/training-768-r2/results/paraphrase-modality-zero/selected/evaluation-zero-condition.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-zero/selected/paraphrase-modality-readout.json": "modality-training/training-768-r2/results/paraphrase-modality-zero/selected/paraphrase-modality-readout.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-zero/summary.json": "modality-training/training-768-r2/results/paraphrase-modality-zero/summary.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-zero/training.json": "modality-training/training-768-r2/results/paraphrase-modality-zero/training.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/predeclared-auxiliary-schedule.json": "modality-training/preflight-768-r1/results/predeclared-auxiliary-schedule.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/preprocessing.json": "modality-training/preflight-768-r1/results/preprocessing.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/sealed-recipe.json": "modality-training/preflight-768-r1/results/sealed-recipe.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/source-contexts.json": "modality-training/preflight-768-r1/results/source-contexts.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/source-inventory.json": "modality-training/preflight-768-r1/results/source-inventory.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/summary.json": "modality-training/training-768-r2/results/summary.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/training-rows.json": "modality-training/preflight-768-r1/results/training-rows.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-manifest.json": "modality-training/training-manifest.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-plan.json": "modality-training/training-plan.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-hook-20261004/audit-epoch-negative-controls-r1.json": "modality-hook/audit-epoch-negative-controls-r1.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-hook-20261004/audit-epoch-selfcheck-r1.json": "modality-hook/audit-epoch-selfcheck-r1.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-hook-20261004/audit-helper-selfcheck-r1.json": "modality-hook/audit-helper-selfcheck-r1.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-hook-20261004/audit_paraphrase_modality_results.py": "modality-hook/audit_paraphrase_modality_results.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-hook-20261004/audit_paraphrase_modality_results_r2.py": "modality-hook/audit_paraphrase_modality_results_r2.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-hook-20261004/combined-tests-r1.log": "modality-hook/combined-tests-r1.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-hook-20261004/combined-tests-r1.xml": "modality-hook/combined-tests-r1.xml",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-hook-20261004/compact-training-comparison-r2.json": "modality-hook/compact-training-comparison-r2.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-hook-20261004/final-focused-tests.log": "modality-hook/final-focused-tests.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-hook-20261004/final-focused-tests.xml": "modality-hook/final-focused-tests.xml",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-hook-20261004/float32-readout-clarification.json": "modality-hook/float32-readout-clarification.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-hook-20261004/helper-tests-r1.log": "modality-hook/helper-tests-r1.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-hook-20261004/helper-tests-r1.xml": "modality-hook/helper-tests-r1.xml",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-hook-20261004/helper-tests-r2.log": "modality-hook/helper-tests-r2.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-hook-20261004/helper-tests-r2.xml": "modality-hook/helper-tests-r2.xml",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-hook-20261004/initial-guard-failures-audit.json": "modality-hook/initial-guard-failures-audit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-hook-20261004/owned-source-publication.json": "modality-hook/owned-source-publication.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-hook-20261004/preimages.json": "modality-hook/preimages.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-hook-20261004/trainer-preimage.py": "modality-hook/trainer-preimage.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-hook-20261004/training-results-r2.json": "modality-hook/training-results-r2.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-hook-20261004/usage-notes-api-review-r1.json": "modality-hook/usage-notes-api-review-r1.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-hook-20261004/usage-notes-api-review-r2.json": "modality-hook/usage-notes-api-review-r2.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-publication-20261004/aggregate_results.py": "publication/aggregate_results.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-publication-20261004/archive-inventory.json": "publication/archive-inventory.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-publication-20261004/archive-size-pre-observer.json": "publication/archive-size-pre-observer.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-publication-20261004/archive_helpers.py": "publication/archive_helpers.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-publication-20261004/build_evidence.py": "publication/build_evidence.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-publication-20261004/design-notes-before-training.md": "publication/design-notes-before-training.md",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-publication-20261004/documentation-review.json": "publication/documentation-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-publication-20261004/documentation-section.md": "publication/documentation-section.md",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-publication-20261004/inventory_evidence.py": "publication/inventory_evidence.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-publication-20261004/observer-tests-r1.json": "publication/observer-tests-r1.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-publication-20261004/observer-tests-r1.log": "publication/observer-tests-r1.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-publication-20261004/observer-tests-r2.json": "publication/observer-tests-r2.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-publication-20261004/observer-tests-r2.log": "publication/observer-tests-r2.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-publication-20261004/observer-tests-r2.xml": "publication/observer-tests-r2.xml",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-publication-20261004/preimages.json": "publication/preimages.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-publication-20261004/protected-checkpoint-check.json": "publication/protected-checkpoint-check.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-publication-20261004/public-readme.txt": "publication/public-readme.txt",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-publication-20261004/publication-helper-review.json": "publication/publication-helper-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-publication-20261004/publication-readiness.json": "publication/publication-readiness.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-publication-20261004/publish_results.py": "publication/publish_results.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-publication-20261004/results.json": "publication/results.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-publication-20261004/review_completed_evidence.py": "publication/review_completed_evidence.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-publication-20261004/root-current-config-observation.json": "publication/root-current-config-observation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-publication-20261004/scaffolding.json": "publication/scaffolding.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-publication-20261004/source-reconciliation-76022bac.json": "publication/source-reconciliation-76022bac.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-publication-20261004/source-review.json": "publication/source-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-publication-20261004/source-scope-final-76022bac.json": "publication/source-scope-final-76022bac.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-publication-20261004/training-retry-followup.json": "publication/training-retry-followup.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-publication-20261004/training-retry-note.json": "publication/training-retry-note.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-publication-20261004/usage-notes.md": "publication/usage-notes.md",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-publication-20261004/write_documentation.py": "publication/write_documentation.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-review-20261004/audit_observer_freeze.py": "independent-review/audit_observer_freeze.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-review-20261004/audit_preflight.py": "independent-review/audit_preflight.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-review-20261004/audit_recipe_bank-attempt1.py": "independent-review/audit_recipe_bank-attempt1.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-review-20261004/audit_recipe_bank.py": "independent-review/audit_recipe_bank.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-review-20261004/audit_retry.py": "independent-review/audit_retry.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-review-20261004/audit_saved_training.py": "independent-review/audit_saved_training.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-review-20261004/audit_styles.py": "independent-review/audit_styles.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-review-20261004/concurrent-upstream-a3005bc-observation.json": "independent-review/concurrent-upstream-a3005bc-observation.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-review-20261004/expected-auxiliary-schedule.json": "independent-review/expected-auxiliary-schedule.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-review-20261004/expected-bank-384.json": "independent-review/expected-bank-384.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-review-20261004/expected-bank-768.json": "independent-review/expected-bank-768.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-review-20261004/expected-bank-common.json": "independent-review/expected-bank-common.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-review-20261004/expected-primary-schedule-384.json": "independent-review/expected-primary-schedule-384.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-review-20261004/expected-primary-schedule-768.json": "independent-review/expected-primary-schedule-768.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-review-20261004/freeze-review.json": "independent-review/freeze-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-review-20261004/independent-style-review.json": "independent-review/independent-style-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-review-20261004/independent-training-384-review.json": "independent-review/independent-training-384-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-review-20261004/independent-training-768-review.json": "independent-review/independent-training-768-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-review-20261004/initial-normal-git-state.json": "independent-review/initial-normal-git-state.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-review-20261004/new-auxiliary-hook-from-published-trainer.diff": "independent-review/new-auxiliary-hook-from-published-trainer.diff",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-review-20261004/observer-freeze-audit.log": "independent-review/observer-freeze-audit.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-review-20261004/observer-freeze-review.json": "independent-review/observer-freeze-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-review-20261004/observer-r2-sealer-review.json": "independent-review/observer-r2-sealer-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-review-20261004/observer-r2-sealer.diff": "independent-review/observer-r2-sealer.diff",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-review-20261004/observer-source-review.json": "independent-review/observer-source-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-review-20261004/preflight-384-audit-attempt1.log": "independent-review/preflight-384-audit-attempt1.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-review-20261004/preflight-384-review.json": "independent-review/preflight-384-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-review-20261004/preflight-768-audit-attempt1.log": "independent-review/preflight-384-audit-attempt1.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-review-20261004/preflight-768-review.json": "independent-review/preflight-768-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-review-20261004/published-mixture-restoration-review.json": "independent-review/published-mixture-restoration-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-review-20261004/recipe-bank-audit-attempt1.log": "independent-review/recipe-bank-audit-attempt1.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-review-20261004/recipe-bank-audit-attempt2.log": "independent-review/recipe-bank-audit-attempt2.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-review-20261004/recipe-bank-provenance-supplement.json": "independent-review/recipe-bank-provenance-supplement.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-review-20261004/recipe-bank-review.json": "independent-review/recipe-bank-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-review-20261004/restore-published-guide.diff": "independent-review/restore-published-guide.diff",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-review-20261004/restore-published-trainer.diff": "independent-review/restore-published-trainer.diff",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-review-20261004/source-design-review.json": "independent-review/source-design-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-review-20261004/style-audit-r1.log": "independent-review/style-audit-r1.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-review-20261004/training-384-audit-r1.log": "independent-review/training-384-audit-r1.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-review-20261004/training-768-audit-r1.log": "independent-review/training-768-audit-r1.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-review-20261004/training-r1-admission-failure-review.json": "independent-review/training-r1-admission-failure-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-review-20261004/unchanged-scheduler-r2-retry-review.json": "independent-review/unchanged-scheduler-r2-retry-review.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-styles-20261004/adopt_shared_scheduler.py": "exposed-styles/adopt_shared_scheduler.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-styles-20261004/evaluation-manifest.json": "exposed-styles/evaluation-manifest.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-styles-20261004/evaluation-plan.json": "exposed-styles/evaluation-plan.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-styles-20261004/evaluation-r1-guardian-exit.json": "exposed-styles/evaluation-r1-guardian-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-styles-20261004/evaluation-r1-guardian.log": "exposed-styles/evaluation-r1-guardian.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-styles-20261004/evaluation-r1-lease-observations.jsonl": "exposed-styles/evaluation-r1-lease-observations.jsonl",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-styles-20261004/evaluation-r1-scheduler-adoption.json": "exposed-styles/evaluation-r1-scheduler-adoption.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-styles-20261004/evaluation-r1/child-exit.json": "exposed-styles/evaluation-r1/child-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-styles-20261004/evaluation-r1/child-identity.json": "exposed-styles/evaluation-r1/child-identity.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-styles-20261004/evaluation-r1/child.log": "modality-training/preflight-768-r1/child.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-styles-20261004/evaluation-r1/command.json": "exposed-styles/evaluation-r1/command.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-styles-20261004/evaluation-r1/lease-binding.json": "exposed-styles/evaluation-r1/lease-binding.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-styles-20261004/evaluation-r1/resource-observations.json": "exposed-styles/evaluation-r1/resource-observations.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-styles-20261004/evaluation-r1/resources-final.json": "exposed-styles/evaluation-r1/resources-final.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-styles-20261004/evaluation-r1/resources-start.json": "exposed-styles/evaluation-r1/resources-start.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-styles-20261004/evaluation-r1/results/384-paraphrase-modality-ce/last-attempt-predictions.json": "exposed-styles/evaluation-r1/results/384-paraphrase-modality-ce/last-attempt-predictions.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-styles-20261004/evaluation-r1/results/384-paraphrase-modality-ce/last-attempt-score.json": "exposed-styles/evaluation-r1/results/384-paraphrase-modality-ce/last-attempt-score.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-styles-20261004/evaluation-r1/results/384-paraphrase-modality-ce/selected-predictions.json": "exposed-styles/evaluation-r1/results/384-paraphrase-modality-ce/selected-predictions.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-styles-20261004/evaluation-r1/results/384-paraphrase-modality-ce/selected-score.json": "exposed-styles/evaluation-r1/results/384-paraphrase-modality-ce/selected-score.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-styles-20261004/evaluation-r1/results/384-paraphrase-modality-zero/last-attempt-predictions.json": "exposed-styles/evaluation-r1/results/384-paraphrase-modality-zero/last-attempt-predictions.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-styles-20261004/evaluation-r1/results/384-paraphrase-modality-zero/last-attempt-score.json": "exposed-styles/evaluation-r1/results/384-paraphrase-modality-zero/last-attempt-score.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-styles-20261004/evaluation-r1/results/384-paraphrase-modality-zero/selected-predictions.json": "exposed-styles/evaluation-r1/results/384-paraphrase-modality-zero/selected-predictions.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-styles-20261004/evaluation-r1/results/384-paraphrase-modality-zero/selected-score.json": "exposed-styles/evaluation-r1/results/384-paraphrase-modality-zero/selected-score.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-styles-20261004/evaluation-r1/results/768-paraphrase-modality-ce/last-attempt-predictions.json": "exposed-styles/evaluation-r1/results/768-paraphrase-modality-ce/last-attempt-predictions.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-styles-20261004/evaluation-r1/results/768-paraphrase-modality-ce/last-attempt-score.json": "exposed-styles/evaluation-r1/results/768-paraphrase-modality-ce/last-attempt-score.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-styles-20261004/evaluation-r1/results/768-paraphrase-modality-ce/selected-predictions.json": "exposed-styles/evaluation-r1/results/768-paraphrase-modality-ce/selected-predictions.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-styles-20261004/evaluation-r1/results/768-paraphrase-modality-ce/selected-score.json": "exposed-styles/evaluation-r1/results/768-paraphrase-modality-ce/selected-score.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-styles-20261004/evaluation-r1/results/768-paraphrase-modality-zero/last-attempt-predictions.json": "exposed-styles/evaluation-r1/results/768-paraphrase-modality-zero/last-attempt-predictions.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-styles-20261004/evaluation-r1/results/768-paraphrase-modality-zero/last-attempt-score.json": "exposed-styles/evaluation-r1/results/768-paraphrase-modality-zero/last-attempt-score.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-styles-20261004/evaluation-r1/results/768-paraphrase-modality-zero/selected-predictions.json": "exposed-styles/evaluation-r1/results/768-paraphrase-modality-zero/selected-predictions.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-styles-20261004/evaluation-r1/results/768-paraphrase-modality-zero/selected-score.json": "exposed-styles/evaluation-r1/results/768-paraphrase-modality-zero/selected-score.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-styles-20261004/evaluation-r1/results/predictions-complete.json": "exposed-styles/evaluation-r1/results/predictions-complete.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-styles-20261004/evaluation-r1/results/sealed-recipe.json": "exposed-styles/evaluation-r1/results/sealed-recipe.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-styles-20261004/evaluation-r1/results/summary.json": "exposed-styles/evaluation-r1/results/summary.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-styles-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/long_span_source_value_training.py": "modality-training/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/long_span_source_value_training.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-styles-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/paraphrase_modality_auxiliary_training.py": "modality-training/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/paraphrase_modality_auxiliary_training.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-styles-20261004/experiment-source/scripts/ops/autoencoder/benchmark_paraphrase_modality_training.py": "modality-training/experiment-source/scripts/ops/autoencoder/benchmark_paraphrase_modality_training.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-styles-20261004/experiment-source/scripts/ops/autoencoder/evaluate_paraphrase_modality_styles.py": "modality-training/experiment-source/scripts/ops/autoencoder/evaluate_paraphrase_modality_styles.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-styles-20261004/experiment-source/scripts/ops/autoencoder/evaluate_training_mixture_styles.py": "modality-training/experiment-source/scripts/ops/autoencoder/evaluate_training_mixture_styles.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-styles-20261004/experiment-source/tests/unit/logic/formalization/autoencoder/test_paraphrase_modality_auxiliary_training.py": "modality-training/experiment-source/tests/unit/logic/formalization/autoencoder/test_paraphrase_modality_auxiliary_training.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-styles-20261004/experiment-source/tests/unit/logic/formalization/autoencoder/test_paraphrase_modality_styles.py": "modality-training/experiment-source/tests/unit/logic/formalization/autoencoder/test_paraphrase_modality_styles.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-styles-20261004/experiment-source/tests/unit/logic/formalization/autoencoder/test_paraphrase_modality_training_integration.py": "modality-training/experiment-source/tests/unit/logic/formalization/autoencoder/test_paraphrase_modality_training_integration.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-styles-20261004/experiment-source/tests/unit/logic/formalization/autoencoder/test_paraphrase_modality_training_runner.py": "modality-training/experiment-source/tests/unit/logic/formalization/autoencoder/test_paraphrase_modality_training_runner.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-styles-20261004/lazy_scheduler_adoption.py": "modality-training/lazy_scheduler_adoption.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-styles-20261004/observer-recipe.json": "exposed-styles/observer-recipe.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-styles-20261004/owned_lease_watchdog.py": "modality-training/owned_lease_watchdog.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-styles-20261004/run_reserved.py": "exposed-styles/run_reserved.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-styles-20261004/seal_evaluation.py": "exposed-styles/seal_evaluation.py",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-styles-20261004/seal_evaluation_r2.py": "exposed-styles/seal_evaluation_r2.py"
+  },
+  "prior_published_evidence": {
+    "commit": "aa586a9b91b583a2ac5d867bd107ba0c5a4762d5",
+    "path": "docs/implementation/reports/evidence/decoder-training-mixture-20261004/manifest.json",
+    "sha256": "c2ca1934a4b10f964f474d7dad5389b86b14e91b0821570ed6d5cb93b605808d",
+    "transitive_dependencies_required": true
+  },
+  "private_native_backend_trees_or_binaries_included": false,
+  "publication_owned_source_sha256": {
+    "ipfs_datasets_py/logic/formalization/autoencoder/long_span_source_value_training.py": "c1663820492a6879b14ab89dfd9b052105cf16378bb015fea08c3220d83456e0",
+    "ipfs_datasets_py/logic/formalization/autoencoder/paraphrase_modality_auxiliary_training.py": "789f47047badfa30553940547c2db28f08afa1052f1bcc5ace68dbccedc2ccac",
+    "scripts/ops/autoencoder/benchmark_paraphrase_modality_training.py": "d84974df896df766794069da01319ef0d7473eb2907f4a6a540a0661f6b193e8",
+    "scripts/ops/autoencoder/evaluate_paraphrase_modality_styles.py": "17525c855995dda7714682188fe7b68f9d3e9195ec73839a346afad498824e9f",
+    "scripts/ops/autoencoder/evaluate_training_mixture_styles.py": "37c22dbdec537a6b8690feb42c0dfdf083c4934aab159108cdfda03e602e9b84",
+    "tests/unit/logic/formalization/autoencoder/test_paraphrase_modality_auxiliary_training.py": "c316c1d88c2265a25c77e13710ec6b1298f429dd956dbe6aaa447e5f6d35c4e6",
+    "tests/unit/logic/formalization/autoencoder/test_paraphrase_modality_styles.py": "41dbdf2fcf7ef5159d24509f02af97049389b773c2bde6fe9c21f1b9f3890c09",
+    "tests/unit/logic/formalization/autoencoder/test_paraphrase_modality_training_integration.py": "b0d1f897e4fd05919d7aa7b84081fff201461588d2ed851fcf5a3323fed8e722",
+    "tests/unit/logic/formalization/autoencoder/test_paraphrase_modality_training_runner.py": "034da61052cf05538873876fb5f1f78df27c683a265c73d1a9797475fc703f98"
+  },
+  "qualified": false,
+  "schema": "decoder-paraphrase-modality-evidence/v1",
+  "source_scope_member": "publication/source-scope-final-76022bac.json",
+  "terminal_phases": {
+    "exposed-styles/evaluation-r1": {
+      "child_returncode": 0,
+      "failure_retained": false,
+      "released_receipt": true,
+      "terminal_source": "child-exit.json"
+    },
+    "modality-training/preflight-384-r1": {
+      "child_returncode": 0,
+      "failure_retained": false,
+      "released_receipt": true,
+      "terminal_source": "child-exit.json"
+    },
+    "modality-training/preflight-768-r1": {
+      "child_returncode": 0,
+      "failure_retained": false,
+      "released_receipt": true,
+      "terminal_source": "child-exit.json"
+    },
+    "modality-training/training-384-r1": {
+      "child_returncode": null,
+      "child_started": false,
+      "failure_retained": true,
+      "outer_returncode": 1,
+      "released_receipt": false,
+      "terminal_source": "failure.json:pre_child_admission_refusal"
+    },
+    "modality-training/training-384-r2": {
+      "child_returncode": 0,
+      "failure_retained": false,
+      "released_receipt": true,
+      "terminal_source": "child-exit.json"
+    },
+    "modality-training/training-768-r1": {
+      "child_returncode": null,
+      "child_started": false,
+      "failure_retained": true,
+      "outer_returncode": 1,
+      "released_receipt": false,
+      "terminal_source": "failure.json:pre_child_admission_refusal"
+    },
+    "modality-training/training-768-r2": {
+      "child_returncode": 0,
+      "failure_retained": false,
+      "released_receipt": true,
+      "terminal_source": "child-exit.json"
+    }
+  }
+}
