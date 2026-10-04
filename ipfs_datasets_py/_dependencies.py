@@ -22,7 +22,5 @@ dependencies = _Dependencies(
 
 # Capability probes are side-effect free. Accessing a dependency through the
 # proxy is what may trigger the configured lazy installer.
-HAVE_IPFS = importlib.util.find_spec(
-    "ipfs_datasets_py.ipfs_backend_router"
-) is not None
+HAVE_IPFS = importlib.util.find_spec("ipfs_datasets_py.ipfs_backend_router") is not None
 HAVE_IPLD_CAR = importlib.util.find_spec("ipld_car") is not None

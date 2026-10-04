@@ -2,6 +2,7 @@
 """
 Simple test to check which MCP tools exist in the codebase.
 """
+
 import os
 import sys
 from pathlib import Path
@@ -9,6 +10,7 @@ from pathlib import Path
 # Define the MCP server tools directory
 project_root = Path("/home/barberb/ipfs_datasets_py")
 mcp_tools_dir = project_root / "ipfs_datasets_py" / "mcp_server" / "tools"
+
 
 def check_tool_existence():
     """Check which MCP tools exist on disk."""
@@ -71,6 +73,7 @@ def check_tool_existence():
                     print(f"  First few lines: {content.splitlines()[:3]}")
             except Exception as e:
                 print(f"  Error reading file: {e}")
+
 
 if __name__ == "__main__":
     check_tool_existence()

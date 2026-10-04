@@ -103,7 +103,9 @@ class AdvancedIPFSEmbeddings:
     switch between local adapter and ipfs_accelerate_py without changing code.
     """
 
-    def __init__(self, resources: Dict[str, Any], metadata: Dict[str, Any], use_accelerate: bool = True):
+    def __init__(
+        self, resources: Dict[str, Any], metadata: Dict[str, Any], use_accelerate: bool = True
+    ):
         self.resources = resources
         self.metadata = metadata
 
@@ -138,12 +140,16 @@ class AdvancedIPFSEmbeddings:
                 if self.accelerate_manager is not None:
                     logger.info("✓ Accelerate integration enabled for embeddings engine")
                 else:
-                    logger.info("⚠ Accelerate integration not available, using router/local/endpoint inference")
+                    logger.info(
+                        "⚠ Accelerate integration not available, using router/local/endpoint inference"
+                    )
             except Exception as e:
                 logger.warning(f"⚠ Failed to initialize accelerate manager: {e}")
                 self.accelerate_manager = None
         else:
-            logger.info("⚠ Accelerate integration not available, using router/local/endpoint inference")
+            logger.info(
+                "⚠ Accelerate integration not available, using router/local/endpoint inference"
+            )
 
         self._initialize_endpoints()
 
@@ -209,14 +215,18 @@ class AdvancedIPFSEmbeddings:
             all_endpoints.update(self.local_endpoints.get(model, {}))
             endpoints_dict = all_endpoints
 
-        return [endpoint for endpoint in endpoints_dict if self.endpoint_status.get(endpoint, 0) >= 1]
+        return [
+            endpoint for endpoint in endpoints_dict if self.endpoint_status.get(endpoint, 0) >= 1
+        ]
 
     async def test_endpoint(self, endpoint: str, model: str) -> bool:
         try:
             if endpoint.startswith("http"):
                 async with ClientSession() as session:
                     test_data = {"inputs": "test"}
-                    async with session.post(endpoint, json=test_data, timeout=ClientTimeout(total=10)) as response:
+                    async with session.post(
+                        endpoint, json=test_data, timeout=ClientTimeout(total=10)
+                    ) as response:
                         ok = response.status == 200
                         self.endpoint_status[endpoint] = 1 if ok else 0
                         return ok
@@ -236,7 +246,9 @@ class AdvancedIPFSEmbeddings:
             self.endpoint_status[endpoint] = 0
             return False
 
-    async def generate_embeddings(self, texts: List[str], model: str, endpoint: Optional[str] = None) -> np.ndarray:
+    async def generate_embeddings(
+        self, texts: List[str], model: str, endpoint: Optional[str] = None
+    ) -> np.ndarray:
         if not texts:
             return np.array([])
 
@@ -273,7 +285,9 @@ class AdvancedIPFSEmbeddings:
                     return np.array(result, dtype=np.float32)
                 raise RuntimeError(f"HTTP embedding request failed: {response.status}")
 
-    async def _generate_local_embeddings(self, texts: List[str], model: str, device: str) -> np.ndarray:
+    async def _generate_local_embeddings(
+        self, texts: List[str], model: str, device: str
+    ) -> np.ndarray:
         # Router-first for local embeddings so callers benefit from provider
         # selection (ipfs_accelerate_py, CLI/cloud, local HF) in one place.
         if _use_embedding_router():
@@ -306,7 +320,9 @@ class AdvancedIPFSEmbeddings:
         tokenizer = components["tokenizer"]
         model_obj = components["model"]
 
-        inputs = tokenizer(texts, padding=True, truncation=True, return_tensors="pt", max_length=512)
+        inputs = tokenizer(
+            texts, padding=True, truncation=True, return_tensors="pt", max_length=512
+        )
         if device != "cpu" and torch.cuda.is_available():
             inputs = {k: v.to(device) for k, v in inputs.items()}
 
@@ -318,7 +334,10 @@ class AdvancedIPFSEmbeddings:
 
     def chunk_text(self, text: str, config: ChunkingConfig) -> List[Tuple[int, int]]:
         if not DATASETS_AVAILABLE:
-            return [(i, min(i + config.chunk_size, len(text))) for i in range(0, len(text), config.chunk_size)]
+            return [
+                (i, min(i + config.chunk_size, len(text)))
+                for i in range(0, len(text), config.chunk_size)
+            ]
 
         try:
             words = text.split()
@@ -343,7 +362,10 @@ class AdvancedIPFSEmbeddings:
             return chunks
         except Exception as e:
             logger.warning(f"Chunking failed, using simple split: {e}")
-            return [(i, min(i + config.chunk_size, len(text))) for i in range(0, len(text), config.chunk_size)]
+            return [
+                (i, min(i + config.chunk_size, len(text)))
+                for i in range(0, len(text), config.chunk_size)
+            ]
 
     async def index_dataset(
         self,
@@ -375,7 +397,9 @@ class AdvancedIPFSEmbeddings:
 
         return results
 
-    async def _process_dataset_for_model(self, dataset, model: str, column: str, dst_path: str) -> Dict[str, Any]:
+    async def _process_dataset_for_model(
+        self, dataset, model: str, column: str, dst_path: str
+    ) -> Dict[str, Any]:
         processed_count = 0
         embeddings_list = []
         texts_list = []
@@ -422,7 +446,9 @@ class AdvancedIPFSEmbeddings:
             logger.error(f"Error processing dataset for {model}: {e}")
             return {"status": "error", "error": str(e), "processed_count": processed_count}
 
-    async def search_similar(self, query: str, model: str, top_k: int = 10, index_path: Optional[str] = None):
+    async def search_similar(
+        self, query: str, model: str, top_k: int = 10, index_path: Optional[str] = None
+    ):
         if not index_path:
             raise ValueError("Index path required for similarity search")
 
@@ -459,6 +485,3 @@ class AdvancedIPFSEmbeddings:
             "faiss_available": FAISS_AVAILABLE,
             "cached_models": list(self.tokenizer.keys()),
         }
-
-
-

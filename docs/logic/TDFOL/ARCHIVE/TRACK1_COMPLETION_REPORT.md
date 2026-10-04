@@ -115,7 +115,7 @@ def _traverse_formula(
     formula: Formula,
     predicate: Callable[[Formula], bool],
     depth: int = 0,
-    track_depth: bool = False
+    track_depth: bool = False,
 ) -> bool:
     """Generic formula tree traversal with predicate."""
     # Single implementation replaces 3 near-identical methods
@@ -128,16 +128,15 @@ def _has_deontic_operators(self, formula):
     if isinstance(formula, DeonticFormula):
         return True
     if isinstance(formula, BinaryFormula):
-        return (self._has_deontic_operators(formula.left) or 
-                self._has_deontic_operators(formula.right))
+        return self._has_deontic_operators(formula.left) or self._has_deontic_operators(
+            formula.right
+        )
     # ... 6 more cases
+
 
 # After: 7 LOC with single predicate
 def _has_deontic_operators(self, formula):
-    return self._traverse_formula(
-        formula,
-        lambda f: isinstance(f, DeonticFormula)
-    )
+    return self._traverse_formula(formula, lambda f: isinstance(f, DeonticFormula))
 ```
 
 **spaCy Centralization:**
@@ -232,12 +231,7 @@ class UnifiedProofResult:
 from ipfs_datasets_py.logic.TDFOL.zkp_integration import ZKPTDFOLProver
 
 # Hybrid prover (recommended)
-prover = ZKPTDFOLProver(
-    kb,
-    enable_zkp=True,
-    zkp_backend="simulated",
-    zkp_fallback="standard"
-)
+prover = ZKPTDFOLProver(kb, enable_zkp=True, zkp_backend="simulated", zkp_fallback="standard")
 
 # Prove with automatic mode selection
 result = prover.prove(formula, prefer_zkp=True)

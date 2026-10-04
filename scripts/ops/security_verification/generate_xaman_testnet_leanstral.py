@@ -36,17 +36,17 @@ def _load_json(path: Path, *, required: bool = True) -> dict[str, Any] | None:
         if required:
             raise FileNotFoundError(path)
         return None
-    payload = json.loads(path.read_text(encoding='utf-8'))
+    payload = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
-        raise ValueError(f'{path} did not contain a JSON object')
+        raise ValueError(f"{path} did not contain a JSON object")
     return payload
 
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
-        json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=True) + '\n',
-        encoding='utf-8',
+        json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=True) + "\n",
+        encoding="utf-8",
     )
 
 
@@ -59,12 +59,12 @@ def generate(repo_root: Path) -> dict[str, dict[str, Any]]:
     coq_decision = _load_json(repo_root / TESTNET_COQ_DECISION_PATH)
     leanstral_report = _load_json(repo_root / LEANSTRAL_ENV_REPORT_PATH, required=False)
     lean_solver_report = _load_json(repo_root / LEAN_SOLVER_LANE_REPORT_PATH, required=False)
-    model_cid = (repo_root / MODEL_CID_PATH).read_text(encoding='utf-8').strip()
+    model_cid = (repo_root / MODEL_CID_PATH).read_text(encoding="utf-8").strip()
 
     if model_payload is None or assumptions_payload is None or trace_map_payload is None:
-        raise FileNotFoundError('required Testnet model inputs are missing')
+        raise FileNotFoundError("required Testnet model inputs are missing")
     if testnet_lean_report is None or smt_report is None or coq_decision is None:
-        raise FileNotFoundError('required Testnet checker reports are missing')
+        raise FileNotFoundError("required Testnet checker reports are missing")
 
     lock = build_xaman_testnet_leanstral_lock(
         model_payload=model_payload,
@@ -88,26 +88,30 @@ def generate(repo_root: Path) -> dict[str, dict[str, Any]]:
 
     _write_json(repo_root / LOCK_PATH, lock)
     _write_json(repo_root / AUDIT_PATH, audit)
-    return {'leanstral_assistant_lock': lock, 'leanstral_candidate_audit': audit}
+    return {"leanstral_assistant_lock": lock, "leanstral_candidate_audit": audit}
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--repo-root', default=str(ROOT_DIR), help='Repository root containing security_ir_artifacts.')
+    parser.add_argument(
+        "--repo-root",
+        default=str(ROOT_DIR),
+        help="Repository root containing security_ir_artifacts.",
+    )
     args = parser.parse_args(argv)
 
     artifacts = generate(Path(args.repo_root).resolve())
-    lock = artifacts['leanstral_assistant_lock']
-    audit = artifacts['leanstral_candidate_audit']
+    lock = artifacts["leanstral_assistant_lock"]
+    audit = artifacts["leanstral_candidate_audit"]
     print(
         json.dumps(
             {
-                'leanstral_assistant_lock_path': LOCK_PATH,
-                'leanstral_candidate_audit_path': AUDIT_PATH,
-                'lock_status': lock['overall_status'],
-                'audit_status': audit['overall_status'],
-                'security_decision': audit['security_decision'],
-                'promoted_candidate_count': audit['summary']['promoted_candidate_count'],
+                "leanstral_assistant_lock_path": LOCK_PATH,
+                "leanstral_candidate_audit_path": AUDIT_PATH,
+                "lock_status": lock["overall_status"],
+                "audit_status": audit["overall_status"],
+                "security_decision": audit["security_decision"],
+                "promoted_candidate_count": audit["summary"]["promoted_candidate_count"],
             },
             sort_keys=True,
         )
@@ -115,5 +119,5 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
-if __name__ == '__main__':  # pragma: no cover
+if __name__ == "__main__":  # pragma: no cover
     raise SystemExit(main())

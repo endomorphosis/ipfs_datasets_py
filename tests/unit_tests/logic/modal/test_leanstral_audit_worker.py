@@ -59,9 +59,7 @@ sys.modules[_SPEC.name] = _audit_worker_script
 _SPEC.loader.exec_module(_audit_worker_script)
 
 load_reference_examples = _audit_worker_script.load_reference_examples
-compact_hammer_verification_for_cache = (
-    _audit_worker_script.compact_hammer_verification_for_cache
-)
+compact_hammer_verification_for_cache = _audit_worker_script.compact_hammer_verification_for_cache
 parse_args = _audit_worker_script.parse_args
 publish_verified_rule_gap_report = _audit_worker_script.publish_verified_rule_gap_report
 select_canonical_snapshot_records = _audit_worker_script.select_canonical_snapshot_records
@@ -151,7 +149,9 @@ def _response_json(request_payload: dict) -> str:
             "counterexample": {"source_span_hash": "abc", "expected": "obligation_with_exception"},
             "missing_semantic_rule": {"rule_id": "obligation_scope"},
             "proof_obligation_ids": [request.proof_obligation_ids[0]],
-            "proposed_compiler_surface": [{"component": "deontic.ir", "operation": "preserve scope"}],
+            "proposed_compiler_surface": [
+                {"component": "deontic.ir", "operation": "preserve scope"}
+            ],
             "request_cache_key": request.cache_key,
             "request_id": request.request_id,
             "schema_version": LEANSTRAL_AUDIT_RESPONSE_SCHEMA_VERSION,
@@ -259,9 +259,7 @@ def test_live_audit_worker_lean_timeout_default_matches_canary_budget() -> None:
     assert args.max_new_tokens == 1000
     assert args.batch_size == 2
     assert args.batch_max_workers == 2
-    assert args.required_semantic_families == (
-        "tdfol,dcec,flogic,deontic,knowledge_graph"
-    )
+    assert args.required_semantic_families == ("tdfol,dcec,flogic,deontic,knowledge_graph")
     assert args.batch_use_mesh is True
     assert args.prompt_payload_mode == "daemon"
     assert args.context_size_per_slot == 8096
@@ -282,11 +280,25 @@ def test_live_audit_worker_lean_timeout_default_matches_canary_budget() -> None:
     assert "IPFS_ACCELERATE_LLAMA_CPP_CONTEXT_SIZE:-${LLAMA_CPP_CONTEXT_DEFAULT}" in watcher
     assert "IPFS_ACCELERATE_LLAMA_CPP_GPU_LAYERS:-${LLAMA_CPP_GPU_LAYERS_DEFAULT}" in watcher
     assert "IPFS_ACCELERATE_LLAMA_CPP_AUTO_SIZING:-${LLAMA_CPP_AUTO_SIZE_DEFAULT}" in watcher
-    assert 'LLAMA_CPP_EXTRA_ARGS_DEFAULT="--parallel ${LEANSTRAL_AUDIT_BATCH_SIZE_DEFAULT}"' in watcher
-    assert 'LLAMA_CPP_EXTRA_ARGS_DEFAULT="--parallel ${LEANSTRAL_AUDIT_BATCH_SIZE_DEFAULT} --device none --no-op-offload --no-kv-offload"' in watcher
-    assert '--context-size "${IPFS_ACCELERATE_LLAMA_CPP_CONTEXT_SIZE:-${LLAMA_CPP_CONTEXT_DEFAULT}}"' in watcher
-    assert '--gpu-layers "${IPFS_ACCELERATE_LLAMA_CPP_GPU_LAYERS:-${LLAMA_CPP_GPU_LAYERS_DEFAULT}}"' in watcher
-    assert '--extra-args "${IPFS_ACCELERATE_LLAMA_CPP_EXTRA_ARGS:-${LLAMA_CPP_EXTRA_ARGS_DEFAULT}}"' in watcher
+    assert (
+        'LLAMA_CPP_EXTRA_ARGS_DEFAULT="--parallel ${LEANSTRAL_AUDIT_BATCH_SIZE_DEFAULT}"' in watcher
+    )
+    assert (
+        'LLAMA_CPP_EXTRA_ARGS_DEFAULT="--parallel ${LEANSTRAL_AUDIT_BATCH_SIZE_DEFAULT} --device none --no-op-offload --no-kv-offload"'
+        in watcher
+    )
+    assert (
+        '--context-size "${IPFS_ACCELERATE_LLAMA_CPP_CONTEXT_SIZE:-${LLAMA_CPP_CONTEXT_DEFAULT}}"'
+        in watcher
+    )
+    assert (
+        '--gpu-layers "${IPFS_ACCELERATE_LLAMA_CPP_GPU_LAYERS:-${LLAMA_CPP_GPU_LAYERS_DEFAULT}}"'
+        in watcher
+    )
+    assert (
+        '--extra-args "${IPFS_ACCELERATE_LLAMA_CPP_EXTRA_ARGS:-${LLAMA_CPP_EXTRA_ARGS_DEFAULT}}"'
+        in watcher
+    )
     assert "--auto-size" in watcher
     assert "llama_cpp_preflight_if_enabled" in watcher
     assert "ipfs_accelerate_py.utils.llama_cpp" in watcher
@@ -301,22 +313,33 @@ def test_live_audit_worker_lean_timeout_default_matches_canary_budget() -> None:
     assert "LEANSTRAL_AUDIT_MAX_WORK_ITEMS:-8" in watcher
     assert "LEANSTRAL_AUDIT_PROVER_PORTFOLIO:-legal_ir_training" in watcher
     assert (
-        "LEANSTRAL_AUDIT_REQUIRED_SEMANTIC_FAMILIES:"
-        "-tdfol,dcec,flogic,deontic,knowledge_graph"
+        "LEANSTRAL_AUDIT_REQUIRED_SEMANTIC_FAMILIES:-tdfol,dcec,flogic,deontic,knowledge_graph"
     ) in watcher
     assert "--family-balanced-selection" in watcher
     assert "LEANSTRAL_AUDIT_MAX_NEW_TOKENS:-1000" in watcher
-    assert 'LEANSTRAL_AUDIT_PROMPT_PAYLOAD_MODE:-daemon' in watcher
+    assert "LEANSTRAL_AUDIT_PROMPT_PAYLOAD_MODE:-daemon" in watcher
     assert "--require-exact-token-count" in watcher
     assert "--require-trusted-semantic-context" in watcher
     assert "LEANSTRAL_AUDIT_BATCH_SIZE:-2" in watcher
     assert "LEANSTRAL_AUDIT_BATCH_MAX_WORKERS" in watcher
     assert "LEANSTRAL_AUDIT_BATCH_USE_MESH:-1" in watcher
     assert "--batch-use-mesh" in watcher
-    assert 'DEFAULT_INPUT_PATH="${ROOT_DIR}/workspace/test-logs/${RUN_ID}.canonical-disagreements.jsonl"' in watcher
-    assert 'LEGACY_INPUT_PATH="${ROOT_DIR}/workspace/test-logs/${RUN_ID}-autoencoder.canonical-disagreements.jsonl"' in watcher
-    assert 'DEFAULT_REFERENCE_EXAMPLE_PATH="${ROOT_DIR}/workspace/test-logs/${RUN_ID}.reference-examples.json"' in watcher
-    assert 'LEGACY_REFERENCE_EXAMPLE_PATH="${ROOT_DIR}/workspace/test-logs/${RUN_ID}-autoencoder.reference-examples.json"' in watcher
+    assert (
+        'DEFAULT_INPUT_PATH="${ROOT_DIR}/workspace/test-logs/${RUN_ID}.canonical-disagreements.jsonl"'
+        in watcher
+    )
+    assert (
+        'LEGACY_INPUT_PATH="${ROOT_DIR}/workspace/test-logs/${RUN_ID}-autoencoder.canonical-disagreements.jsonl"'
+        in watcher
+    )
+    assert (
+        'DEFAULT_REFERENCE_EXAMPLE_PATH="${ROOT_DIR}/workspace/test-logs/${RUN_ID}.reference-examples.json"'
+        in watcher
+    )
+    assert (
+        'LEGACY_REFERENCE_EXAMPLE_PATH="${ROOT_DIR}/workspace/test-logs/${RUN_ID}-autoencoder.reference-examples.json"'
+        in watcher
+    )
 
 
 def test_hammer_cache_summary_omits_duplicated_premise_graph() -> None:
@@ -363,9 +386,9 @@ def test_hammer_cache_summary_omits_duplicated_premise_graph() -> None:
     assert "premise_security" not in encoded
     assert "translation_records" not in encoded
     assert "candidate" not in compact["candidate_results"][0]
-    assert compact["candidate_results"][0]["hammer_report"]["metadata"][
-        "backend_health"
-    ] == {"z3": "unavailable"}
+    assert compact["candidate_results"][0]["hammer_report"]["metadata"]["backend_health"] == {
+        "z3": "unavailable"
+    }
 
 
 def test_provider_candidates_keep_native_and_server_leanstral_attempts() -> None:
@@ -543,9 +566,7 @@ def test_worker_snapshot_selection_uses_latest_coherent_state() -> None:
     )
 
     assert len(selected) == 8
-    assert {record["run_context"]["state_hash"] for record in selected} == {
-        "state-latest"
-    }
+    assert {record["run_context"]["state_hash"] for record in selected} == {"state-latest"}
     assert metadata["selected_state_hash"] == "state-latest"
     assert metadata["selected_compiler_commit"] == "commit-latest"
     assert metadata["meets_min_snapshot_records"] is False
@@ -574,9 +595,7 @@ def test_worker_snapshot_selection_honors_expected_state_filter() -> None:
     )
 
     assert len(selected) == 3
-    assert {record["run_context"]["state_hash"] for record in selected} == {
-        "state-expected"
-    }
+    assert {record["run_context"]["state_hash"] for record in selected} == {"state-expected"}
     assert metadata["selection_reason"] == "expected_newest_min_satisfying_snapshot"
 
 
@@ -612,9 +631,7 @@ def test_worker_bounds_model_evidence_and_preserves_full_hash_manifest(tmp_path)
 
     assert stale == []
     truncated = [
-        item
-        for item in items
-        if item.request.evidence.get("evidence_packet_count", 0) > 2
+        item for item in items if item.request.evidence.get("evidence_packet_count", 0) > 2
     ]
     assert truncated
     for item in truncated:
@@ -622,19 +639,16 @@ def test_worker_bounds_model_evidence_and_preserves_full_hash_manifest(tmp_path)
         assert len(evidence["evidence_packets"]) == 2
         assert evidence["owned_compiler_surfaces"]
         assert evidence["referenced_examples"]
-        assert evidence["referenced_examples"][0]["compiler_decompiler_metrics"][
-            "cross_entropy_loss"
-        ] > 0.0
-        prompt_payload = item.request.to_prompt_payload()
-        assert prompt_payload["audit_response_identity"]["request_id"] == (
-            item.request.request_id
+        assert (
+            evidence["referenced_examples"][0]["compiler_decompiler_metrics"]["cross_entropy_loss"]
+            > 0.0
         )
+        prompt_payload = item.request.to_prompt_payload()
+        assert prompt_payload["audit_response_identity"]["request_id"] == (item.request.request_id)
         assert prompt_payload["audit_response_identity"]["request_cache_key"] == (
             item.request.cache_key
         )
-        assert "Do not copy request.cache_key" in " ".join(
-            prompt_payload["instructions"]
-        )
+        assert "Do not copy request.cache_key" in " ".join(prompt_payload["instructions"])
         assert prompt_payload["output_contract"]
         assert "modal.ir_decompiler" in prompt_payload["owned_compiler_surfaces"]
         assert prompt_payload["referenced_examples"]
@@ -646,12 +660,8 @@ def test_worker_bounds_model_evidence_and_preserves_full_hash_manifest(tmp_path)
         cluster = evidence["cluster"]
         assert cluster["gap_count"] > len(cluster["gaps"])
         assert len(cluster["gaps"]) <= 2
-        assert len(cluster["omitted_gap_hashes"]) == (
-            cluster["gap_count"] - len(cluster["gaps"])
-        )
-        assert cluster["gap_detail_selection"] == (
-            "selected_evidence_packets_with_hash_manifest"
-        )
+        assert len(cluster["omitted_gap_hashes"]) == (cluster["gap_count"] - len(cluster["gaps"]))
+        assert cluster["gap_detail_selection"] == ("selected_evidence_packets_with_hash_manifest")
 
 
 def test_worker_builds_hash_attested_semantic_context_and_real_obligations(
@@ -714,13 +724,12 @@ def test_worker_builds_hash_attested_semantic_context_and_real_obligations(
         for obligation in context["proof_obligations"]
     )
     assert tuple(item.request.proof_obligation_ids) == tuple(
-        obligation["obligation_id"]
-        for obligation in context["proof_obligations"]
+        obligation["obligation_id"] for obligation in context["proof_obligations"]
     )
     obligation = context["proof_obligations"][0]
-    candidate_contract = item.request.to_prompt_payload()[
-        "drafted_logic_candidate_contract"
-    ]["proof_obligation_contracts"][0]
+    candidate_contract = item.request.to_prompt_payload()["drafted_logic_candidate_contract"][
+        "proof_obligation_contracts"
+    ][0]
     candidate_language = candidate_contract["candidate_language"]
     candidate_text = candidate_language["grounded_candidate_seed"]
     candidate = {
@@ -747,9 +756,7 @@ def test_worker_builds_hash_attested_semantic_context_and_real_obligations(
         "drafted_logic_candidates": [candidate],
         "missing_semantic_rule": {"rule_id": "exception_scope"},
         "proof_obligation_ids": [obligation["obligation_id"]],
-        "proposed_compiler_surface": [
-            {"component": obligation["legal_ir_view"]}
-        ],
+        "proposed_compiler_surface": [{"component": obligation["legal_ir_view"]}],
         "request_id": item.request.request_id,
         "schema_version": LEANSTRAL_AUDIT_RESPONSE_SCHEMA_VERSION,
         "witness": None,
@@ -772,10 +779,7 @@ def test_worker_builds_hash_attested_semantic_context_and_real_obligations(
         copied_obligation,
     )
     assert copied_obligation_validation.accepted is False
-    assert (
-        "drafted_logic_candidate_copies_obligation"
-        in copied_obligation_validation.reasons
-    )
+    assert "drafted_logic_candidate_copies_obligation" in copied_obligation_validation.reasons
     repair_text = _leanstral_audit_prompt_text(
         item.request,
         payload_mode="daemon",
@@ -783,27 +787,21 @@ def test_worker_builds_hash_attested_semantic_context_and_real_obligations(
         previous_response_text=json.dumps(copied_obligation.to_dict()),
         previous_validation=copied_obligation_validation,
     )
-    candidate_repair = _repair_payload_from_prompt(repair_text)[
-        "candidate_repair"
-    ]
+    candidate_repair = _repair_payload_from_prompt(repair_text)["candidate_repair"]
     assert candidate_repair["allowed_predicate_heads"]
     assert candidate_repair["grounding_symbols"]
     assert candidate_repair["grounded_candidate_seed"] == candidate_text
     assert candidate_repair["minimum_distinct_grounding_symbols"] == 2
-    assert candidate_repair["shape_example_only"] == (
-        candidate_contract["candidate_language"]["candidate_shape_example"]
-    )
     assert (
-        "with grounded_candidate_seed exactly"
-        in candidate_repair["required_action"]
+        candidate_repair["shape_example_only"]
+        == (candidate_contract["candidate_language"]["candidate_shape_example"])
     )
+    assert "with grounded_candidate_seed exactly" in candidate_repair["required_action"]
 
     untyped = LeanstralAuditResponse.from_mapping(
         {
             **response_payload,
-            "drafted_logic_candidates": [
-                {**candidate, "candidate": "frame_role_typing"}
-            ],
+            "drafted_logic_candidates": [{**candidate, "candidate": "frame_role_typing"}],
         }
     )
     untyped_validation = validate_leanstral_audit_response(
@@ -844,22 +842,14 @@ def test_worker_builds_hash_attested_semantic_context_and_real_obligations(
     assert repaired_result.generation_attempts == 2
     assert repaired_result.validation.accepted is True
     assert repaired_result.response is not None
-    assert (
-        repaired_result.response.drafted_logic_candidates[0]["candidate"]
-        == candidate_text
-    )
-    assert (
-        "deterministic_grounded_candidate_seed_repair"
-        in repaired_result.repair_reasons
-    )
+    assert repaired_result.response.drafted_logic_candidates[0]["candidate"] == candidate_text
+    assert "deterministic_grounded_candidate_seed_repair" in repaired_result.repair_reasons
     assert len(stubborn_calls) == 2
 
-    direct_repair, direct_repair_applied = (
-        _repair_response_with_grounded_candidate_seed(
-            item.request,
-            copied_obligation,
-            copied_obligation_validation,
-        )
+    direct_repair, direct_repair_applied = _repair_response_with_grounded_candidate_seed(
+        item.request,
+        copied_obligation,
+        copied_obligation_validation,
     )
     assert direct_repair_applied is True
     assert direct_repair.drafted_logic_candidates[0]["candidate"] == candidate_text
@@ -867,9 +857,7 @@ def test_worker_builds_hash_attested_semantic_context_and_real_obligations(
     copied = LeanstralAuditResponse.from_mapping(
         {
             **response_payload,
-            "drafted_logic_candidates": [
-                {**candidate, "candidate": sample.text}
-            ],
+            "drafted_logic_candidates": [{**candidate, "candidate": sample.text}],
         }
     )
     copied_validation = validate_leanstral_audit_response(
@@ -877,10 +865,7 @@ def test_worker_builds_hash_attested_semantic_context_and_real_obligations(
         copied,
     )
     assert copied_validation.accepted is False
-    assert (
-        "drafted_logic_candidate_copies_source_span"
-        in copied_validation.reasons
-    )
+    assert "drafted_logic_candidate_copies_source_span" in copied_validation.reasons
     prompt = _leanstral_audit_prompt_text(
         item.request,
         payload_mode="daemon",
@@ -890,15 +875,9 @@ def test_worker_builds_hash_attested_semantic_context_and_real_obligations(
     assert "balanced predicate applications" in prompt
     response_format = _leanstral_audit_response_format(item.request)
     response_schema = response_format["json_schema"]["schema"]
-    assert response_schema["properties"]["request_id"]["const"] == (
-        item.request.request_id
-    )
-    assert response_schema["properties"]["request_cache_key"]["const"] == (
-        item.request.cache_key
-    )
-    assert response_schema["properties"]["drafted_logic_candidates"][
-        "minItems"
-    ] == 1
+    assert response_schema["properties"]["request_id"]["const"] == (item.request.request_id)
+    assert response_schema["properties"]["request_cache_key"]["const"] == (item.request.cache_key)
+    assert response_schema["properties"]["drafted_logic_candidates"]["minItems"] == 1
     preflight = leanstral_audit_context_preflight(
         item.request,
         config=config.runner_config(),
@@ -948,10 +927,7 @@ def test_worker_fails_closed_on_reference_source_hash_mismatch(tmp_path) -> None
     context = item.request.evidence["semantic_context"]
 
     assert context["accepted"] is False
-    assert any(
-        "source_text_hash_mismatch" in reason
-        for reason in context["rejection_reasons"]
-    )
+    assert any("source_text_hash_mismatch" in reason for reason in context["rejection_reasons"])
 
 
 def test_daemon_prompt_payload_is_bounded_and_preserves_response_identity(tmp_path) -> None:
@@ -994,18 +970,13 @@ def test_daemon_prompt_payload_is_bounded_and_preserves_response_identity(tmp_pa
     assert not daemon_text.lstrip().startswith("{")
     assert "BEGIN_REQUEST_JSON" in daemon_text
     assert "BEGIN_RESPONSE_TEMPLATE_JSON" in daemon_text
-    assert daemon_text.rfind("BEGIN_RESPONSE_TEMPLATE_JSON") > daemon_text.rfind(
-        "END_REQUEST_JSON"
-    )
+    assert daemon_text.rfind("BEGIN_RESPONSE_TEMPLATE_JSON") > daemon_text.rfind("END_REQUEST_JSON")
     daemon_text_request = _request_payload_from_prompt(daemon_text)
     daemon_text_template = _prompt_json_section(daemon_text, "RESPONSE_TEMPLATE")
     assert daemon_text_request["request_id"] == request.request_id
     assert daemon_text_template["request_id"] == request.request_id
     assert daemon_text_template["request_cache_key"] == request.cache_key
-    assert (
-        daemon_text_template["schema_version"]
-        == LEANSTRAL_AUDIT_RESPONSE_SCHEMA_VERSION
-    )
+    assert daemon_text_template["schema_version"] == LEANSTRAL_AUDIT_RESPONSE_SCHEMA_VERSION
     repair_text = _leanstral_audit_prompt_text(
         request,
         payload_mode="daemon",
@@ -1121,10 +1092,7 @@ def test_worker_batches_first_attempt_leanstral_audits(tmp_path) -> None:
         assert response_format["type"] == "json_schema"
         assert response_format["json_schema"]["strict"] is True
         assert kwargs["stop"] == list(LEANSTRAL_AUDIT_STOP_TOKENS)
-        return [
-            _response_json(_request_payload_from_prompt(prompt))
-            for prompt in prompts
-        ]
+        return [_response_json(_request_payload_from_prompt(prompt)) for prompt in prompts]
 
     packets = [_packet(1, component="deontic"), _packet(2, component="temporal")]
     config = LeanstralAuditWorkerConfig(
@@ -1223,7 +1191,9 @@ def test_worker_retries_timeouts_and_reports_labs_unavailable(tmp_path) -> None:
         ),
         llm_generate=flaky_generate,
     )
-    retry_summary = anyio_compat.run_with_backend(retry_worker.run_records([_packet(1)], source_digest="retry"))
+    retry_summary = anyio_compat.run_with_backend(
+        retry_worker.run_records([_packet(1)], source_digest="retry")
+    )
     assert retry_summary.completed_count == 1
     assert retry_summary.results[0].attempts == 2
 
@@ -1239,7 +1209,9 @@ def test_worker_retries_timeouts_and_reports_labs_unavailable(tmp_path) -> None:
         ),
         llm_generate=unavailable_generate,
     )
-    unavailable = anyio_compat.run_with_backend(unavailable_worker.run_records([_packet(2)], source_digest="unavailable"))
+    unavailable = anyio_compat.run_with_backend(
+        unavailable_worker.run_records([_packet(2)], source_digest="unavailable")
+    )
     assert unavailable.unavailable_count == 1
     assert unavailable.results[0].reasons == ("leanstral_labs_model_unavailable",)
 
@@ -1259,9 +1231,7 @@ def test_worker_retries_timeouts_and_reports_labs_unavailable(tmp_path) -> None:
         oversized_worker.run_records([_packet(3)], source_digest="oversized")
     )
     assert oversized.failed_count == 1
-    assert oversized.results[0].reasons == (
-        "provider_error:OSError:argument_list_too_long",
-    )
+    assert oversized.results[0].reasons == ("provider_error:OSError:argument_list_too_long",)
 
 
 def test_worker_timeout_does_not_late_write_shared_cache(tmp_path) -> None:
@@ -1282,7 +1252,9 @@ def test_worker_timeout_does_not_late_write_shared_cache(tmp_path) -> None:
         llm_generate=slow_generate,
     )
 
-    summary = anyio_compat.run_with_backend(worker.run_records([_packet(1)], source_digest="timeout"))
+    summary = anyio_compat.run_with_backend(
+        worker.run_records([_packet(1)], source_digest="timeout")
+    )
     time.sleep(0.1)
 
     assert summary.failed_count == 1
@@ -1310,7 +1282,9 @@ def test_worker_fails_over_to_explicit_leanstral_provider(tmp_path) -> None:
         llm_generate=failover_generate,
     )
 
-    summary = anyio_compat.run_with_backend(worker.run_records([_packet(1)], source_digest="fallback"))
+    summary = anyio_compat.run_with_backend(
+        worker.run_records([_packet(1)], source_digest="fallback")
+    )
 
     assert summary.completed_count == 1
     assert summary.failed_count == 0
@@ -1345,14 +1319,18 @@ def test_worker_repairs_validation_rejected_audit_response(tmp_path) -> None:
         llm_generate=repair_generate,
     )
 
-    summary = anyio_compat.run_with_backend(worker.run_records([_packet(1)], source_digest="repair"))
+    summary = anyio_compat.run_with_backend(
+        worker.run_records([_packet(1)], source_digest="repair")
+    )
 
     assert summary.completed_count == 1
     assert summary.rejected_count == 0
     assert summary.results[0].attempts == 1
     assert summary.results[0].generation_attempts == 2
     assert "missing_counterexample_or_witness" in summary.results[0].repair_reasons
-    assert "filled_proposed_compiler_surface_from_request_context" in summary.results[0].repair_reasons
+    assert (
+        "filled_proposed_compiler_surface_from_request_context" in summary.results[0].repair_reasons
+    )
     assert len(payloads) == 2
 
 
@@ -1377,7 +1355,9 @@ def test_worker_normalizes_request_derived_leanstral_envelope_fields(tmp_path) -
         llm_generate=confused_generate,
     )
 
-    summary = anyio_compat.run_with_backend(worker.run_records([_packet(1)], source_digest="normalize"))
+    summary = anyio_compat.run_with_backend(
+        worker.run_records([_packet(1)], source_digest="normalize")
+    )
 
     assert summary.completed_count == 1
     result = summary.results[0]
@@ -1396,7 +1376,9 @@ def test_worker_rejects_stale_state_and_non_leanstral_model(tmp_path) -> None:
         ),
         llm_generate=lambda prompt, **kwargs: _response_json(_request_payload_from_prompt(prompt)),
     )
-    stale = anyio_compat.run_with_backend(stale_worker.run_records([_packet(1, state_hash="old-state")], source_digest="stale"))
+    stale = anyio_compat.run_with_backend(
+        stale_worker.run_records([_packet(1, state_hash="old-state")], source_digest="stale")
+    )
     assert stale.work_item_count == 0
     assert stale.stale_state_rejections[0]["reason"] == "stale_state_hash"
 
@@ -1407,7 +1389,9 @@ def test_worker_rejects_stale_state_and_non_leanstral_model(tmp_path) -> None:
         ),
         llm_generate=lambda prompt, **kwargs: _response_json(_request_payload_from_prompt(prompt)),
     )
-    generic = anyio_compat.run_with_backend(generic_worker.run_records([_packet(2)], source_digest="generic"))
+    generic = anyio_compat.run_with_backend(
+        generic_worker.run_records([_packet(2)], source_digest="generic")
+    )
     assert generic.rejected_count == 1
     assert generic.results[0].status == "model_rejected"
     assert generic.results[0].llm_called is False
@@ -1514,9 +1498,7 @@ def test_worker_publishes_only_nonempty_verified_rule_gap_reports(tmp_path) -> N
         "timeout": 1,
     }
     assert preserved["latest_source_audit_count"] == 2
-    assert json.loads(destination.read_text(encoding="utf-8"))["gaps"] == [
-        {"gap_id": "gap-a"}
-    ]
+    assert json.loads(destination.read_text(encoding="utf-8"))["gaps"] == [{"gap_id": "gap-a"}]
 
 
 def test_worker_verifier_resolves_hash_only_audit_from_trusted_examples(tmp_path) -> None:
@@ -1531,9 +1513,7 @@ def test_worker_verifier_resolves_hash_only_audit_from_trusted_examples(tmp_path
             "modal_ir_hash": modal_hash,
             "sample_id": sample.sample_id,
             "source_span_hashes": source_span_hashes,
-            "source_text_hash": hashlib.sha256(
-                sample.text.encode("utf-8")
-            ).hexdigest(),
+            "source_text_hash": hashlib.sha256(sample.text.encode("utf-8")).hexdigest(),
         }
     )
     packet["evidence_hashes"]["source_text_hash"] = hashlib.sha256(
@@ -1615,13 +1595,12 @@ def test_worker_verifier_resolves_hash_only_audit_from_trusted_examples(tmp_path
     )
 
     assert verification_records[0]["verification"]["outcome"] == "accepted"
-    assert verification_records[0]["verification"]["compiler_checks"][0][
-        "example_id"
-    ] == sample.sample_id
+    assert (
+        verification_records[0]["verification"]["compiler_checks"][0]["example_id"]
+        == sample.sample_id
+    )
     assert report.gaps[0].status == "accepted"
-    assert report.gaps[0].supporting_evidence[0].examples[0]["evidence_id"] == packet[
-        "evidence_id"
-    ]
+    assert report.gaps[0].supporting_evidence[0].examples[0]["evidence_id"] == packet["evidence_id"]
 
 
 def _modal_sample():
@@ -1646,10 +1625,7 @@ def _modal_sample():
 
 
 def _source_span_hashes(sample) -> dict:
-    return {
-        formula.formula_id: _span_hash(sample, formula)
-        for formula in sample.modal_ir.formulas
-    }
+    return {formula.formula_id: _span_hash(sample, formula) for formula in sample.modal_ir.formulas}
 
 
 def _introspection_source_span_hashes(sample) -> dict:

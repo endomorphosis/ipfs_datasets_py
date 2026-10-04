@@ -73,7 +73,9 @@ def test_execute_with_retry_succeeds_after_transient_failures() -> None:
 
     result = execute_with_retry(
         flaky,
-        policy=RetryPolicy(max_attempts=3, base_delay_seconds=0.1, max_delay_seconds=1.0, jitter_ratio=0.0),
+        policy=RetryPolicy(
+            max_attempts=3, base_delay_seconds=0.1, max_delay_seconds=1.0, jitter_ratio=0.0
+        ),
         sleep_fn=sleeps.append,
         random_fn=lambda: 0.5,
     )

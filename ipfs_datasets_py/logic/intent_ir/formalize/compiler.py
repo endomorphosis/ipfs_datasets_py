@@ -66,9 +66,7 @@ from ..schema import (
 )
 
 
-INTENT_FORMALIZATION_COMPILER_VERSION: Final = (
-    "intent-formalization-compiler/v1"
-)
+INTENT_FORMALIZATION_COMPILER_VERSION: Final = "intent-formalization-compiler/v1"
 INTENT_FORMALIZATION_PRODUCER_ID: Final = "intent-formalization-compiler"
 INTENT_FORMALIZATION_CONFIG_ID: Final = "intent-formalization-default"
 INTENT_FORMALIZATION_DOMAIN: Final = "intent"
@@ -104,9 +102,7 @@ INTENT_FORMALIZATION_VIEW_REGISTRY = ViewRegistry(
         FormalizationView(
             view_id=INTENT_MODAL_VIEW_ID,
             logic_family="intention_deontic",
-            description=(
-                "Goals, intentions, requirements, permissions, and prohibitions."
-            ),
+            description=("Goals, intentions, requirements, permissions, and prohibitions."),
             capabilities=("deontic_modality", "intention", "source_grounding"),
             metadata={"intent_constructs": ["goal", "modality"]},
         ),
@@ -120,9 +116,7 @@ INTENT_FORMALIZATION_VIEW_REGISTRY = ViewRegistry(
         FormalizationView(
             view_id=INTENT_WORKFLOW_VIEW_ID,
             logic_family="workflow_temporal",
-            description=(
-                "Entry, terminal, sequencing, branching, retry, and concurrency."
-            ),
+            description=("Entry, terminal, sequencing, branching, retry, and concurrency."),
             capabilities=("state_transitions", "temporal_control", "source_grounding"),
             metadata={"intent_constructs": ["control_edge", "workflow_boundary"]},
         ),
@@ -183,8 +177,7 @@ def _derived_id(prefix: str, *parts: str) -> str:
     readable = ":".join(parts)
     candidate = f"{prefix}:{readable}"
     if len(candidate) <= 256 and all(
-        character.isascii()
-        and (character.isalnum() or character in "._:/-")
+        character.isascii() and (character.isalnum() or character in "._:/-")
         for character in candidate
     ):
         return candidate
@@ -193,9 +186,7 @@ def _derived_id(prefix: str, *parts: str) -> str:
 
 
 def _binding_id(subject_id: str, purpose: str) -> str:
-    digest = hashlib.sha256(
-        f"{purpose}\0{subject_id}".encode("utf-8")
-    ).hexdigest()
+    digest = hashlib.sha256(f"{purpose}\0{subject_id}".encode("utf-8")).hexdigest()
     return f"binding:intent:{purpose}:{digest[:32]}"
 
 
@@ -269,10 +260,7 @@ def _statement_body(statement: IntentStatement) -> dict[str, Any]:
 
 
 def _modal_operator(statement: IntentStatement) -> str:
-    if (
-        statement.kind is StatementKind.GOAL
-        and statement.modality is IntentModality.ASSERTED
-    ):
+    if statement.kind is StatementKind.GOAL and statement.modality is IntentModality.ASSERTED:
         return IntentModality.INTENDED.value
     return statement.modality.value
 
@@ -287,25 +275,15 @@ def _premise_payload(value: Any) -> tuple[dict[str, Any], tuple[str, ...], str]:
             "graph premises must be RetrievedPremise values or mappings"
         )
     if payload.get("proof_authority", False) is not False:
-        raise IntentFormalizationCompilerError(
-            "retrieved premises cannot have proof authority"
-        )
+        raise IntentFormalizationCompilerError("retrieved premises cannot have proof authority")
     if payload.get("authority", "context_only") != "context_only":
-        raise IntentFormalizationCompilerError(
-            "retrieved premise authority must be context_only"
-        )
+        raise IntentFormalizationCompilerError("retrieved premise authority must be context_only")
     node_id = str(payload.get("node_id") or "")
     if not node_id:
-        raise IntentFormalizationCompilerError(
-            "retrieved premise requires a node_id"
-        )
+        raise IntentFormalizationCompilerError("retrieved premise requires a node_id")
     raw_sources = payload.get("source_ids", ())
-    if isinstance(raw_sources, (str, bytes, bytearray)) or not isinstance(
-        raw_sources, Sequence
-    ):
-        raise IntentFormalizationCompilerError(
-            "retrieved premise source_ids must be a sequence"
-        )
+    if isinstance(raw_sources, (str, bytes, bytearray)) or not isinstance(raw_sources, Sequence):
+        raise IntentFormalizationCompilerError("retrieved premise source_ids must be a sequence")
     source_ids = tuple(sorted({str(item) for item in raw_sources if str(item)}))
     payload["authority"] = "context_only"
     payload["proof_authority"] = False
@@ -327,16 +305,10 @@ def _graph_context(
     elif isinstance(value, Mapping):
         context = dict(value)
         candidate = context.get("premises", ())
-        if isinstance(candidate, (str, bytes, bytearray)) or not isinstance(
-            candidate, Sequence
-        ):
-            raise IntentFormalizationCompilerError(
-                "graph context premises must be a sequence"
-            )
+        if isinstance(candidate, (str, bytes, bytearray)) or not isinstance(candidate, Sequence):
+            raise IntentFormalizationCompilerError("graph context premises must be a sequence")
         raw_premises = candidate
-    elif isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    elif isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         raw_premises = value
         context = {
             "authority": "context_only",
@@ -352,13 +324,9 @@ def _graph_context(
     premises = tuple(_premise_payload(item) for item in raw_premises)
     context["premises"] = [item[0] for item in premises]
     if context.get("proof_authority", False) is not False:
-        raise IntentFormalizationCompilerError(
-            "graph context cannot have proof authority"
-        )
+        raise IntentFormalizationCompilerError("graph context cannot have proof authority")
     if context.get("authority", "context_only") != "context_only":
-        raise IntentFormalizationCompilerError(
-            "graph context authority must be context_only"
-        )
+        raise IntentFormalizationCompilerError("graph context authority must be context_only")
     context["authority"] = "context_only"
     context["proof_authority"] = False
     return context, premises
@@ -391,9 +359,7 @@ class IntentFormalizationCompiler(FormalizationCompiler):
                 },
             ),
             ProvenanceBinding(
-                binding_id=_binding_id(
-                    _node_id("document", document.document_id), "input"
-                ),
+                binding_id=_binding_id(_node_id("document", document.document_id), "input"),
                 subject_id=_node_id("document", document.document_id),
                 source_ref_ids=all_source_ids,
                 parent_subject_ids=(document.document_id,),
@@ -433,9 +399,7 @@ class IntentFormalizationCompiler(FormalizationCompiler):
             )
             return node_id, refs
 
-        for statement in sorted(
-            document.statements, key=lambda item: item.statement_id
-        ):
+        for statement in sorted(document.statements, key=lambda item: item.statement_id):
             node_id, refs = bind_node(
                 "statement",
                 statement.statement_id,
@@ -447,9 +411,7 @@ class IntentFormalizationCompiler(FormalizationCompiler):
                 or statement.grounding is NodeGrounding.INFERRED
                 or float(statement.confidence) < 1.0
             ):
-                assumption_id = _derived_id(
-                    "assumption:intent:statement", statement.statement_id
-                )
+                assumption_id = _derived_id("assumption:intent:statement", statement.statement_id)
                 assumptions.append(
                     Assumption(
                         assumption_id=assumption_id,
@@ -475,9 +437,7 @@ class IntentFormalizationCompiler(FormalizationCompiler):
                 action.grounding,
             )
             if action.grounding is NodeGrounding.INFERRED:
-                assumption_id = _derived_id(
-                    "assumption:intent:action", action.action_id
-                )
+                assumption_id = _derived_id("assumption:intent:action", action.action_id)
                 assumptions.append(
                     Assumption(
                         assumption_id=assumption_id,
@@ -501,15 +461,12 @@ class IntentFormalizationCompiler(FormalizationCompiler):
                 edge.grounding,
             )
             if edge.grounding is NodeGrounding.INFERRED:
-                assumption_id = _derived_id(
-                    "assumption:intent:control-edge", edge.edge_id
-                )
+                assumption_id = _derived_id("assumption:intent:control-edge", edge.edge_id)
                 assumptions.append(
                     Assumption(
                         assumption_id=assumption_id,
                         statement=(
-                            f"{edge.kind.value}({edge.source_action_id},"
-                            f"{edge.target_action_id})"
+                            f"{edge.kind.value}({edge.source_action_id},{edge.target_action_id})"
                         ),
                         source_refs=refs,
                         metadata={
@@ -572,16 +529,11 @@ class IntentFormalizationCompiler(FormalizationCompiler):
             targets.add(INTENT_MODAL_VIEW_ID)
         if document.actions:
             targets.update((INTENT_ACTION_VIEW_ID, INTENT_WORKFLOW_VIEW_ID))
-        if any(
-            item.kind is StatementKind.INVARIANT for item in document.statements
-        ):
+        if any(item.kind is StatementKind.INVARIANT for item in document.statements):
             targets.add(INTENT_INVARIANT_VIEW_ID)
         if any(item.kind is StatementKind.FAILURE for item in document.statements):
             targets.add(INTENT_FAILURE_VIEW_ID)
-        if any(
-            item.kind is StatementKind.VERIFICATION
-            for item in document.statements
-        ):
+        if any(item.kind is StatementKind.VERIFICATION for item in document.statements):
             targets.add(INTENT_VERIFICATION_VIEW_ID)
         return FormalizationCompilerConfig(
             compiler_id=self.producer_id,
@@ -624,15 +576,12 @@ class IntentFormalizationCompiler(FormalizationCompiler):
             )
         config = config or self.default_config(sample)
         if not isinstance(config, FormalizationCompilerConfig):
-            raise IntentFormalizationCompilerError(
-                "config must be a FormalizationCompilerConfig"
-            )
+            raise IntentFormalizationCompilerError("config must be a FormalizationCompilerConfig")
         document = self._sample_document(sample)
         unknown_views = set(config.target_view_ids) - set(self.view_registry.view_ids)
         if unknown_views:
             raise IntentFormalizationCompilerError(
-                "Intent compiler targets unknown views: "
-                + ", ".join(sorted(unknown_views))
+                "Intent compiler targets unknown views: " + ", ".join(sorted(unknown_views))
             )
         context, retrieved = _graph_context(
             graph_context if graph_context is not None else graph_projection
@@ -659,9 +608,7 @@ class IntentFormalizationCompiler(FormalizationCompiler):
         formula_by_key: dict[tuple[str, str, str], str] = {}
         binding_producer_id = config.producer_id or self.producer_id
         severity = (
-            DiagnosticSeverity.ERROR
-            if config.strict_unsupported
-            else DiagnosticSeverity.WARNING
+            DiagnosticSeverity.ERROR if config.strict_unsupported else DiagnosticSeverity.WARNING
         )
 
         assumptions = list(sample.assumptions)
@@ -677,9 +624,7 @@ class IntentFormalizationCompiler(FormalizationCompiler):
             if assumption_id in assumption_ids_seen:
                 continue
             assumption_ids_seen.add(assumption_id)
-            known_refs = tuple(
-                sorted(set(premise_sources).intersection(all_sources))
-            )
+            known_refs = tuple(sorted(set(premise_sources).intersection(all_sources)))
             assumptions.append(
                 Assumption(
                     assumption_id=assumption_id,
@@ -692,18 +637,14 @@ class IntentFormalizationCompiler(FormalizationCompiler):
                         "premise_node_id": premise_node_id,
                         "proof_authority": False,
                         "source_resolution": (
-                            "intent_source_refs"
-                            if known_refs
-                            else "query_source_fallback"
+                            "intent_source_refs" if known_refs else "query_source_fallback"
                         ),
                     },
                 )
             )
 
         def refs_for_node(node: Any) -> tuple[str, ...]:
-            return _sources_for(
-                node.source_ref_ids, all_source_ids=all_sources
-            )
+            return _sources_for(node.source_ref_ids, all_source_ids=all_sources)
 
         def combined_refs(*nodes: Any) -> tuple[str, ...]:
             refs: set[str] = set()
@@ -720,9 +661,7 @@ class IntentFormalizationCompiler(FormalizationCompiler):
             sort: str,
             refs: tuple[str, ...],
         ) -> str:
-            symbol_id = _derived_id(
-                f"symbol:intent:{node_kind}:{role}", node_id, name
-            )
+            symbol_id = _derived_id(f"symbol:intent:{node_kind}:{role}", node_id, name)
             spec = symbol_specs.setdefault(
                 symbol_id,
                 {
@@ -793,17 +732,12 @@ class IntentFormalizationCompiler(FormalizationCompiler):
                 source_ref_ids=refs,
                 assumption_ids=tuple(assumption_ids),
                 input_node_ids=tuple(
-                    _node_id(kind, identifier)
-                    for kind, identifier in normalized_inputs
+                    _node_id(kind, identifier) for kind, identifier in normalized_inputs
                 ),
                 opaque=bool(opaque_reason),
                 metadata={
-                    "intent_node_ids": [
-                        identifier for _, identifier in normalized_inputs
-                    ],
-                    "intent_node_kinds": [
-                        kind for kind, _ in normalized_inputs
-                    ],
+                    "intent_node_ids": [identifier for _, identifier in normalized_inputs],
+                    "intent_node_kinds": [kind for kind, _ in normalized_inputs],
                     "retains_source_semantics": True,
                 },
             )
@@ -835,14 +769,9 @@ class IntentFormalizationCompiler(FormalizationCompiler):
         # Typed facts retain every statement, including constructs that also
         # lower into a specialized view.
         if INTENT_FACT_VIEW_ID in config.target_view_ids:
-            for statement in sorted(
-                document.statements, key=lambda item: item.statement_id
-            ):
+            for statement in sorted(document.statements, key=lambda item: item.statement_id):
                 refs = refs_for_node(statement)
-                predicate_name = (
-                    statement.predicate
-                    or f"statement:{statement.kind.value}"
-                )
+                predicate_name = statement.predicate or f"statement:{statement.kind.value}"
                 symbol_ids = [
                     add_symbol(
                         node_kind="statement",
@@ -873,9 +802,7 @@ class IntentFormalizationCompiler(FormalizationCompiler):
                     input_nodes=(("statement", statement.statement_id),),
                     refs=refs,
                     symbol_ids=symbol_ids,
-                    assumption_ids=node_assumptions(
-                        "statement", statement.statement_id
-                    ),
+                    assumption_ids=node_assumptions("statement", statement.statement_id),
                     opaque_reason=(
                         "Intent statement has no typed predicate; normalized text "
                         "was retained as an opaque fact"
@@ -886,9 +813,7 @@ class IntentFormalizationCompiler(FormalizationCompiler):
                 )
             for action in sorted(document.actions, key=lambda item: item.action_id):
                 refs = refs_for_node(action)
-                symbol_ids = self._action_symbols(
-                    action, refs=refs, add_symbol=add_symbol
-                )
+                symbol_ids = self._action_symbols(action, refs=refs, add_symbol=add_symbol)
                 emit(
                     view_id=INTENT_FACT_VIEW_ID,
                     view_token="facts",
@@ -906,9 +831,7 @@ class IntentFormalizationCompiler(FormalizationCompiler):
 
         # Goal/intention and deontic lowering.
         if INTENT_MODAL_VIEW_ID in config.target_view_ids:
-            for statement in sorted(
-                document.statements, key=lambda item: item.statement_id
-            ):
+            for statement in sorted(document.statements, key=lambda item: item.statement_id):
                 if (
                     statement.kind is not StatementKind.GOAL
                     and statement.modality is IntentModality.ASSERTED
@@ -919,8 +842,7 @@ class IntentFormalizationCompiler(FormalizationCompiler):
                     node_kind="statement",
                     node_id=statement.statement_id,
                     role="predicate",
-                    name=statement.predicate
-                    or f"statement:{statement.kind.value}",
+                    name=statement.predicate or f"statement:{statement.kind.value}",
                     sort="predicate",
                     refs=refs,
                 )
@@ -937,9 +859,7 @@ class IntentFormalizationCompiler(FormalizationCompiler):
                     input_nodes=(("statement", statement.statement_id),),
                     refs=refs,
                     symbol_ids=(symbol_id,),
-                    assumption_ids=node_assumptions(
-                        "statement", statement.statement_id
-                    ),
+                    assumption_ids=node_assumptions("statement", statement.statement_id),
                     opaque_reason=(
                         "Modal statement has no typed predicate; its normalized "
                         "body was retained opaquely"
@@ -966,13 +886,9 @@ class IntentFormalizationCompiler(FormalizationCompiler):
                     ("action", action.action_id),
                     *(("statement", item.statement_id) for item in related),
                 ]
-                relevant_assumptions = set(
-                    node_assumptions("action", action.action_id)
-                )
+                relevant_assumptions = set(node_assumptions("action", action.action_id))
                 for identifier in action.precondition_ids:
-                    relevant_assumptions.update(
-                        node_assumptions("statement", identifier)
-                    )
+                    relevant_assumptions.update(node_assumptions("statement", identifier))
                 emit(
                     view_id=INTENT_ACTION_VIEW_ID,
                     view_token="action",
@@ -980,29 +896,19 @@ class IntentFormalizationCompiler(FormalizationCompiler):
                     record_id=action.action_id,
                     expression={
                         "action": action.to_dict(),
-                        "effects": [
-                            statements[item].to_dict()
-                            for item in action.effect_ids
-                        ],
+                        "effects": [statements[item].to_dict() for item in action.effect_ids],
                         "kind": "hoare_action_contract",
-                        "postcondition": [
-                            statements[item].to_dict()
-                            for item in action.effect_ids
-                        ],
+                        "postcondition": [statements[item].to_dict() for item in action.effect_ids],
                         "precondition": [
-                            statements[item].to_dict()
-                            for item in action.precondition_ids
+                            statements[item].to_dict() for item in action.precondition_ids
                         ],
                         "verification": [
-                            statements[item].to_dict()
-                            for item in action.verification_ids
+                            statements[item].to_dict() for item in action.verification_ids
                         ],
                     },
                     input_nodes=input_nodes,
                     refs=refs,
-                    symbol_ids=self._action_symbols(
-                        action, refs=refs, add_symbol=add_symbol
-                    ),
+                    symbol_ids=self._action_symbols(action, refs=refs, add_symbol=add_symbol),
                     assumption_ids=tuple(sorted(relevant_assumptions)),
                 )
 
@@ -1067,14 +973,11 @@ class IntentFormalizationCompiler(FormalizationCompiler):
                     input_nodes=input_nodes,
                     refs=refs,
                     symbol_ids=(transition_symbol,),
-                    assumption_ids=node_assumptions(
-                        "control-edge", edge.edge_id
-                    ),
+                    assumption_ids=node_assumptions("control-edge", edge.edge_id),
                     opaque_reason=(
                         "Workflow guard has no typed predicate; the complete guard "
                         "was retained opaquely"
-                        if guard is not None
-                        and not statements[edge.guard_statement_id].predicate
+                        if guard is not None and not statements[edge.guard_statement_id].predicate
                         else ""
                     ),
                     field_path=(
@@ -1115,15 +1018,11 @@ class IntentFormalizationCompiler(FormalizationCompiler):
         for statement_kind, view_id, token, expression_kind, operator in specialized:
             if view_id not in config.target_view_ids:
                 continue
-            for statement in sorted(
-                document.statements, key=lambda item: item.statement_id
-            ):
+            for statement in sorted(document.statements, key=lambda item: item.statement_id):
                 if statement.kind is not statement_kind:
                     continue
                 refs = refs_for_node(statement)
-                own_assumptions = node_assumptions(
-                    "statement", statement.statement_id
-                )
+                own_assumptions = node_assumptions("statement", statement.statement_id)
                 formula_id = emit(
                     view_id=view_id,
                     view_token=token,
@@ -1141,8 +1040,7 @@ class IntentFormalizationCompiler(FormalizationCompiler):
                             node_kind="statement",
                             node_id=statement.statement_id,
                             role="predicate",
-                            name=statement.predicate
-                            or f"statement:{statement.kind.value}",
+                            name=statement.predicate or f"statement:{statement.kind.value}",
                             sort="predicate",
                             refs=refs,
                         ),
@@ -1169,9 +1067,7 @@ class IntentFormalizationCompiler(FormalizationCompiler):
                         obligation_id=_derived_id(
                             f"obligation:intent:{token}", statement.statement_id
                         ),
-                        statement=_canonical_bytes(obligation_semantics).decode(
-                            "utf-8"
-                        ),
+                        statement=_canonical_bytes(obligation_semantics).decode("utf-8"),
                         assumption_ids=obligation_assumptions,
                         logic_family=self.view_registry[view_id].logic_family,
                         source_refs=refs,
@@ -1188,9 +1084,7 @@ class IntentFormalizationCompiler(FormalizationCompiler):
         formula_lookup = {item.formula_id: item for item in formulas}
         if INTENT_FACT_VIEW_ID in config.target_view_ids:
             for statement in document.statements:
-                source_id = formula_by_key.get(
-                    ("facts", "statement", statement.statement_id)
-                )
+                source_id = formula_by_key.get(("facts", "statement", statement.statement_id))
                 if source_id:
                     for token in (
                         "modal",
@@ -1198,9 +1092,7 @@ class IntentFormalizationCompiler(FormalizationCompiler):
                         "failure",
                         "verification",
                     ):
-                        target_id = formula_by_key.get(
-                            (token, "statement", statement.statement_id)
-                        )
+                        target_id = formula_by_key.get((token, "statement", statement.statement_id))
                         if target_id:
                             links.append(
                                 self._cross_link(
@@ -1216,12 +1108,8 @@ class IntentFormalizationCompiler(FormalizationCompiler):
                                 )
                             )
             for action in document.actions:
-                source_id = formula_by_key.get(
-                    ("facts", "action", action.action_id)
-                )
-                target_id = formula_by_key.get(
-                    ("action", "action", action.action_id)
-                )
+                source_id = formula_by_key.get(("facts", "action", action.action_id))
+                target_id = formula_by_key.get(("action", "action", action.action_id))
                 if source_id and target_id:
                     links.append(
                         self._cross_link(
@@ -1242,10 +1130,7 @@ class IntentFormalizationCompiler(FormalizationCompiler):
             diagnostics.append(
                 Diagnostic(
                     code=DiagnosticCode.UNSUPPORTED_FEATURE,
-                    message=(
-                        "Intent document has no construct for requested view "
-                        f"{view_id}"
-                    ),
+                    message=(f"Intent document has no construct for requested view {view_id}"),
                     severity=severity,
                     location=DiagnosticLocation(
                         subject_ids=(document.document_id,),
@@ -1290,8 +1175,7 @@ class IntentFormalizationCompiler(FormalizationCompiler):
                     source_ref_ids=symbol.source_ref_ids,
                     producer_id=binding_producer_id,
                     config_id=config.config_id,
-                    parent_subject_ids=tuple(candidate_parents)
-                    or (document.document_id,),
+                    parent_subject_ids=tuple(candidate_parents) or (document.document_id,),
                     derived=True,
                 )
             )
@@ -1313,14 +1197,12 @@ class IntentFormalizationCompiler(FormalizationCompiler):
             spans=sample.provenance.spans,
             producers=tuple(
                 {
-                    item.producer_id: item
-                    for item in (*sample.provenance.producers, producer)
+                    item.producer_id: item for item in (*sample.provenance.producers, producer)
                 }.values()
             ),
             configs=tuple(
                 {
-                    item.config_id: item
-                    for item in (*sample.provenance.configs, config_binding)
+                    item.config_id: item for item in (*sample.provenance.configs, config_binding)
                 }.values()
             ),
             bindings=tuple(bindings),
@@ -1333,21 +1215,16 @@ class IntentFormalizationCompiler(FormalizationCompiler):
         )
         report = DiagnosticReport(
             report_id=(
-                f"diagnostics:intent:{sample.digest[7:23]}:"
-                f"{config.digest[7:23]}:{context_digest}"
+                f"diagnostics:intent:{sample.digest[7:23]}:{config.digest[7:23]}:{context_digest}"
             ),
-            diagnostics=tuple(
-                sorted(diagnostics, key=lambda item: item.diagnostic_id)
-            ),
+            diagnostics=tuple(sorted(diagnostics, key=lambda item: item.diagnostic_id)),
             provenance_id=source_map.provenance_id,
             producer_id=binding_producer_id,
             config_id=config.config_id,
             metadata={
                 "graph_context_present": context is not None,
                 "retrieved_premise_count": len(retrieved),
-                "unsupported_formula_count": sum(
-                    item.opaque for item in formulas
-                ),
+                "unsupported_formula_count": sum(item.opaque for item in formulas),
             },
         )
         metadata: dict[str, Any] = {
@@ -1365,9 +1242,7 @@ class IntentFormalizationCompiler(FormalizationCompiler):
             compiler_config=config,
             view_registry=self.view_registry,
             symbol_table=SymbolTable(
-                table_id=_derived_id(
-                    "symbols:intent", document.document_id
-                ),
+                table_id=_derived_id("symbols:intent", document.document_id),
                 symbols=symbols,
                 metadata={"domain": INTENT_FORMALIZATION_DOMAIN},
             ),
@@ -1419,21 +1294,15 @@ class IntentFormalizationCompiler(FormalizationCompiler):
         source = formulas[source_formula_id]
         target = formulas[target_formula_id]
         return CrossViewLink(
-            link_id=_derived_id(
-                "link:intent", source_formula_id, target_formula_id
-            ),
+            link_id=_derived_id("link:intent", source_formula_id, target_formula_id),
             source_formula_id=source_formula_id,
             target_formula_id=target_formula_id,
             relation=relation,
             preserved_properties=properties,
-            source_ref_ids=tuple(
-                sorted(set(source.source_ref_ids).union(target.source_ref_ids))
-            ),
+            source_ref_ids=tuple(sorted(set(source.source_ref_ids).union(target.source_ref_ids))),
         )
 
-    def _sample_document(
-        self, sample: FormalizationSample
-    ) -> IntentIRDocument:
+    def _sample_document(self, sample: FormalizationSample) -> IntentIRDocument:
         if (
             not isinstance(sample, FormalizationSample)
             or sample.domain != INTENT_FORMALIZATION_DOMAIN
@@ -1442,18 +1311,13 @@ class IntentFormalizationCompiler(FormalizationCompiler):
                 "IntentFormalizationCompiler requires an Intent FormalizationSample"
             )
         payload = sample.payload.to_dict()
-        if (
-            payload.get("adapter_schema_version")
-            != INTENT_FORMALIZATION_COMPILER_VERSION
-        ):
+        if payload.get("adapter_schema_version") != INTENT_FORMALIZATION_COMPILER_VERSION:
             raise IntentFormalizationCompilerError(
                 "sample was not produced by this Intent compiler schema"
             )
         declaration = payload.get("declaration")
         if not isinstance(declaration, Mapping):
-            raise IntentFormalizationCompilerError(
-                "Intent sample declaration must be a mapping"
-            )
+            raise IntentFormalizationCompilerError("Intent sample declaration must be a mapping")
         try:
             document = decode_intent_ir(declaration)
         except ValueError as exc:
@@ -1492,9 +1356,7 @@ class IntentFormalizationCompiler(FormalizationCompiler):
     ) -> Mapping[str, Any]:
         """Implement the original Intent formalizer port with a wire mapping."""
 
-        return self.compile(
-            document, graph_projection=graph_projection
-        ).to_dict()
+        return self.compile(document, graph_projection=graph_projection).to_dict()
 
     adapt = compile_document
 
@@ -1502,9 +1364,7 @@ class IntentFormalizationCompiler(FormalizationCompiler):
 # Alternate noun used by adapters in the other IR domains.
 IntentIRFormalizationCompiler = IntentFormalizationCompiler
 
-INTENT_IR_FORMALIZATION_COMPILER_VERSION: Final = (
-    INTENT_FORMALIZATION_COMPILER_VERSION
-)
+INTENT_IR_FORMALIZATION_COMPILER_VERSION: Final = INTENT_FORMALIZATION_COMPILER_VERSION
 INTENT_IR_FORMALIZATION_PRODUCER_ID: Final = INTENT_FORMALIZATION_PRODUCER_ID
 INTENT_IR_FORMALIZATION_CONFIG_ID: Final = INTENT_FORMALIZATION_CONFIG_ID
 INTENT_IR_FORMALIZATION_DOMAIN: Final = INTENT_FORMALIZATION_DOMAIN
@@ -1515,9 +1375,7 @@ INTENT_IR_WORKFLOW_VIEW_ID: Final = INTENT_WORKFLOW_VIEW_ID
 INTENT_IR_INVARIANT_VIEW_ID: Final = INTENT_INVARIANT_VIEW_ID
 INTENT_IR_FAILURE_VIEW_ID: Final = INTENT_FAILURE_VIEW_ID
 INTENT_IR_VERIFICATION_VIEW_ID: Final = INTENT_VERIFICATION_VIEW_ID
-INTENT_IR_FORMALIZATION_VIEW_REGISTRY: Final = (
-    INTENT_FORMALIZATION_VIEW_REGISTRY
-)
+INTENT_IR_FORMALIZATION_VIEW_REGISTRY: Final = INTENT_FORMALIZATION_VIEW_REGISTRY
 
 
 __all__ = [

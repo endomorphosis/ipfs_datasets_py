@@ -75,12 +75,8 @@ from ..guard.preflight import TransactionPreflight
 # ---------------------------------------------------------------------------
 
 XRPL_TRANSACTION_GUARD_INTERFACE: Final = "XRPLTransactionGuard@1"
-XRPL_TRANSACTION_GUARD_SCHEMA_VERSION: Final = (
-    "wallet-guard.xrpl-transaction-guard/v1"
-)
-XRPL_CANDIDATE_SCHEMA_VERSION: Final = (
-    "wallet-guard.xrpl-transaction-candidate/v1"
-)
+XRPL_TRANSACTION_GUARD_SCHEMA_VERSION: Final = "wallet-guard.xrpl-transaction-guard/v1"
+XRPL_CANDIDATE_SCHEMA_VERSION: Final = "wallet-guard.xrpl-transaction-candidate/v1"
 XRPL_BINDING_SCHEMA_VERSION: Final = "wallet-guard.xrpl-transaction-binding/v1"
 LEDGER_EPOCH_SCHEMA_VERSION: Final = "wallet-guard.xrpl-ledger-epoch/v1"
 SIGNER_LIST_SCHEMA_VERSION: Final = "wallet-guard.xrpl-signer-list/v1"
@@ -199,9 +195,7 @@ def _digest(value: Any, name: str) -> str:
 def _timestamp(value: Any, name: str) -> str:
     text = _text(value, name, max_chars=64)
     if not _ISO8601_RE.fullmatch(text):
-        raise GuardValidationError(
-            f"{name} must be an ISO-8601 UTC/offset timestamp"
-        )
+        raise GuardValidationError(f"{name} must be an ISO-8601 UTC/offset timestamp")
     return text
 
 
@@ -235,9 +229,7 @@ def _amount_drops(value: Any, name: str) -> str:
         return str(value)
     text = _text(value, name, max_chars=128)
     if not _DECIMAL_RE.fullmatch(text):
-        raise GuardValidationError(
-            f"{name} must be a non-negative decimal integer string (drops)"
-        )
+        raise GuardValidationError(f"{name} must be a non-negative decimal integer string (drops)")
     return text
 
 
@@ -245,9 +237,7 @@ def _amount_decimal(value: Any, name: str) -> str:
     """Issued currency amount: decimal string, never binary float."""
 
     if isinstance(value, float):
-        raise GuardValidationError(
-            f"{name} must not be a binary float; use a decimal string"
-        )
+        raise GuardValidationError(f"{name} must not be a binary float; use a decimal string")
     if isinstance(value, int) and not isinstance(value, bool):
         return str(value)
     text = _text(value, name, max_chars=128)
@@ -266,8 +256,7 @@ def _reject_forbidden(value: Mapping[str, Any], record_name: str) -> None:
     hit = sorted(set(value) & _FORBIDDEN_FIELDS)
     if hit:
         raise GuardForbiddenSurfaceError(
-            f"{record_name} contains forbidden custody/approval field(s): "
-            f"{', '.join(hit)}",
+            f"{record_name} contains forbidden custody/approval field(s): {', '.join(hit)}",
             details={"fields": hit},
         )
     # Nested tx blob may carry XRPL signing fields.
@@ -295,12 +284,7 @@ def _attributes(value: Mapping[str, Any] | None) -> FrozenMap:
 
 
 def _iso_now() -> str:
-    return (
-        datetime.now(timezone.utc)
-        .replace(microsecond=0)
-        .isoformat()
-        .replace("+00:00", "Z")
-    )
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
 def _jsonable(value: Any) -> Any:
@@ -335,9 +319,7 @@ def _account(
     try:
         if isinstance(value, XRPLAccountIdentity):
             return value
-        return XRPLAccountIdentity.parse(
-            value, destination_tag=destination_tag, field=name
-        )
+        return XRPLAccountIdentity.parse(value, destination_tag=destination_tag, field=name)
     except (XRPLAdapterError, TypeError, ValueError) as exc:
         raise GuardValidationError(f"{name} is not a valid XRPL account: {exc}") from exc
 
@@ -377,9 +359,7 @@ class NormalizedXRPLEffect:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "kind", _identifier(self.kind, "kind"))
-        object.__setattr__(
-            self, "account", _text(self.account, "account", max_chars=128)
-        )
+        object.__setattr__(self, "account", _text(self.account, "account", max_chars=128))
         object.__setattr__(
             self,
             "destination",
@@ -391,9 +371,7 @@ class NormalizedXRPLEffect:
                 "destination_tag",
                 _optional_uint32(self.destination_tag, "destination_tag"),
             )
-        object.__setattr__(
-            self, "amount_kind", _optional_text(self.amount_kind, "amount_kind")
-        )
+        object.__setattr__(self, "amount_kind", _optional_text(self.amount_kind, "amount_kind"))
         if self.amount_kind == "xrp":
             object.__setattr__(
                 self, "amount_value", _amount_drops(self.amount_value or "0", "amount_value")
@@ -413,9 +391,7 @@ class NormalizedXRPLEffect:
         object.__setattr__(
             self, "currency", _optional_text(self.currency, "currency", max_chars=64)
         )
-        object.__setattr__(
-            self, "issuer", _optional_text(self.issuer, "issuer", max_chars=128)
-        )
+        object.__setattr__(self, "issuer", _optional_text(self.issuer, "issuer", max_chars=128))
         object.__setattr__(
             self,
             "delivered_amount_kind",
@@ -425,17 +401,13 @@ class NormalizedXRPLEffect:
             object.__setattr__(
                 self,
                 "delivered_amount_value",
-                _amount_drops(
-                    self.delivered_amount_value or "0", "delivered_amount_value"
-                ),
+                _amount_drops(self.delivered_amount_value or "0", "delivered_amount_value"),
             )
         elif self.delivered_amount_kind == "issued":
             object.__setattr__(
                 self,
                 "delivered_amount_value",
-                _amount_decimal(
-                    self.delivered_amount_value or "0", "delivered_amount_value"
-                ),
+                _amount_decimal(self.delivered_amount_value or "0", "delivered_amount_value"),
             )
         else:
             object.__setattr__(
@@ -457,14 +429,10 @@ class NormalizedXRPLEffect:
         )
         object.__setattr__(self, "partial_payment", bool(self.partial_payment))
         if self.fee_drops:
-            object.__setattr__(
-                self, "fee_drops", _amount_drops(self.fee_drops, "fee_drops")
-            )
+            object.__setattr__(self, "fee_drops", _amount_drops(self.fee_drops, "fee_drops"))
         else:
             object.__setattr__(self, "fee_drops", "")
-        object.__setattr__(
-            self, "sequence", _optional_non_negative_int(self.sequence, "sequence")
-        )
+        object.__setattr__(self, "sequence", _optional_non_negative_int(self.sequence, "sequence"))
         object.__setattr__(
             self,
             "ticket_sequence",
@@ -524,9 +492,7 @@ class NormalizedXRPLEffect:
             sequence=value.get("sequence", value.get("Sequence")),
             ticket_sequence=value.get("ticket_sequence", value.get("TicketSequence")),
             flags=value.get("flags", value.get("Flags", 0)),
-            transaction_type=value.get(
-                "transaction_type", value.get("TransactionType", "")
-            ),
+            transaction_type=value.get("transaction_type", value.get("TransactionType", "")),
             attributes=value.get("attributes", {}),
         )
 
@@ -548,11 +514,15 @@ def normalize_xrpl_tx_effects(
     dest_tag = tx.get("DestinationTag", tx.get("destination_tag"))
     destination: XRPLAccountIdentity | None = None
     if dest_raw:
-        destination = _account(dest_raw, "Destination", destination_tag=_optional_uint32(dest_tag, "DestinationTag") if dest_tag is not None else None)
-    elif dest_tag is not None:
-        raise GuardValidationError(
-            "DestinationTag without Destination is unbound routing identity"
+        destination = _account(
+            dest_raw,
+            "Destination",
+            destination_tag=_optional_uint32(dest_tag, "DestinationTag")
+            if dest_tag is not None
+            else None,
         )
+    elif dest_tag is not None:
+        raise GuardValidationError("DestinationTag without Destination is unbound routing identity")
 
     flags = parse_flags(tx.get("Flags", tx.get("flags", 0)))
     partial = has_partial_payment(flags) or bool(tx.get("partial_payment", False))
@@ -606,7 +576,11 @@ def normalize_xrpl_tx_effects(
         kind="payment" if "Payment" in tx_type or tx_type == "Payment" else "ledger_transition",
         account=account.classic_address,
         destination=destination.classic_address if destination else "",
-        destination_tag=destination.destination_tag if destination else _optional_uint32(dest_tag, "DestinationTag") if dest_tag is not None else None,
+        destination_tag=destination.destination_tag
+        if destination
+        else _optional_uint32(dest_tag, "DestinationTag")
+        if dest_tag is not None
+        else None,
         amount_kind=amount_kind,
         amount_value=amount_value,
         currency=currency,
@@ -618,7 +592,9 @@ def normalize_xrpl_tx_effects(
         partial_payment=partial,
         fee_drops=str(fee) if fee is not None else DEFAULT_FEE_DROPS,
         sequence=_optional_non_negative_int(sequence, "Sequence") if sequence is not None else None,
-        ticket_sequence=_optional_non_negative_int(ticket, "TicketSequence") if ticket is not None else None,
+        ticket_sequence=_optional_non_negative_int(ticket, "TicketSequence")
+        if ticket is not None
+        else None,
         flags=flags,
         transaction_type=tx_type,
     )
@@ -674,13 +650,9 @@ class LedgerEpoch:
         )
         if not isinstance(self.attributes, FrozenMap):
             object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != LEDGER_EPOCH_SCHEMA_VERSION:
-            raise GuardValidationError(
-                f"unsupported ledger epoch schema: {self.schema_version!r}"
-            )
+            raise GuardValidationError(f"unsupported ledger epoch schema: {self.schema_version!r}")
 
     @property
     def epoch_digest(self) -> str:
@@ -735,9 +707,7 @@ class SignerListBinding:
     schema_version: str = SIGNER_LIST_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        if isinstance(self.signers, (str, bytes)) or not isinstance(
-            self.signers, Sequence
-        ):
+        if isinstance(self.signers, (str, bytes)) or not isinstance(self.signers, Sequence):
             raise GuardValidationError("signers must be a sequence")
         if len(self.signers) > MAX_COLLECTION_ITEMS:
             raise GuardValidationError("signers exceeds maximum collection size")
@@ -749,9 +719,7 @@ class SignerListBinding:
             account = item.get("Account", item.get("account", item.get("SignerEntry", {})))
             if isinstance(account, Mapping):
                 account = account.get("Account", account.get("account", ""))
-            weight = item.get(
-                "SignerWeight", item.get("signer_weight", item.get("weight", 1))
-            )
+            weight = item.get("SignerWeight", item.get("signer_weight", item.get("weight", 1)))
             entry = {
                 "account": normalize_classic_address(str(account), field="signer.account")
                 if account
@@ -774,13 +742,9 @@ class SignerListBinding:
         )
         if not isinstance(self.attributes, FrozenMap):
             object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != SIGNER_LIST_SCHEMA_VERSION:
-            raise GuardValidationError(
-                f"unsupported signer list schema: {self.schema_version!r}"
-            )
+            raise GuardValidationError(f"unsupported signer list schema: {self.schema_version!r}")
 
     @property
     def list_digest(self) -> str:
@@ -890,9 +854,7 @@ class XRPLTransactionCandidate:
         )
         object.__setattr__(self, "fee_drops", _amount_drops(self.fee_drops, "fee_drops"))
         object.__setattr__(self, "flags", parse_flags(self.flags))
-        object.__setattr__(
-            self, "sequence", _optional_non_negative_int(self.sequence, "sequence")
-        )
+        object.__setattr__(self, "sequence", _optional_non_negative_int(self.sequence, "sequence"))
         object.__setattr__(
             self,
             "ticket_sequence",
@@ -905,13 +867,9 @@ class XRPLTransactionCandidate:
         object.__setattr__(
             self,
             "last_ledger_sequence",
-            _optional_non_negative_int(
-                self.last_ledger_sequence, "last_ledger_sequence"
-            ),
+            _optional_non_negative_int(self.last_ledger_sequence, "last_ledger_sequence"),
         )
-        if isinstance(self.signers, (str, bytes)) or not isinstance(
-            self.signers, Sequence
-        ):
+        if isinstance(self.signers, (str, bytes)) or not isinstance(self.signers, Sequence):
             raise GuardValidationError("signers must be a sequence")
         object.__setattr__(self, "signers", tuple(dict(s) for s in self.signers))
         object.__setattr__(
@@ -935,20 +893,14 @@ class XRPLTransactionCandidate:
                 raise GuardValidationError(str(exc)) from exc
         else:
             object.__setattr__(self, "ledger_hash", "")
-        object.__setattr__(
-            self, "hooks_capability_present", bool(self.hooks_capability_present)
-        )
+        object.__setattr__(self, "hooks_capability_present", bool(self.hooks_capability_present))
         if isinstance(self.hooks_effects, (str, bytes)) or not isinstance(
             self.hooks_effects, Sequence
         ):
             raise GuardValidationError("hooks_effects must be a sequence")
-        object.__setattr__(
-            self, "hooks_effects", tuple(dict(h) for h in self.hooks_effects)
-        )
+        object.__setattr__(self, "hooks_effects", tuple(dict(h) for h in self.hooks_effects))
         if self.serialized_hex:
-            ser = _text(
-                self.serialized_hex, "serialized_hex", max_chars=MAX_HEX_PAYLOAD_CHARS
-            )
+            ser = _text(self.serialized_hex, "serialized_hex", max_chars=MAX_HEX_PAYLOAD_CHARS)
             if ser.startswith("0x"):
                 ser = ser[2:]
             if ser and (len(ser) % 2 != 0 or not re.fullmatch(r"[0-9a-fA-F]+", ser)):
@@ -975,9 +927,7 @@ class XRPLTransactionCandidate:
                 raise GuardValidationError(f"delivered_amount invalid: {exc}") from exc
         if not isinstance(self.attributes, FrozenMap):
             object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != XRPL_CANDIDATE_SCHEMA_VERSION:
             raise GuardValidationError(
                 f"unsupported XRPL candidate schema: {self.schema_version!r}"
@@ -1103,13 +1053,9 @@ class XRPLTransactionCandidate:
                     meta.get("delivered_amount", meta.get("DeliveredAmount")),
                 ),
             ),
-            fee_drops=value.get(
-                "fee_drops", value.get("Fee", tx.get("Fee", DEFAULT_FEE_DROPS))
-            ),
+            fee_drops=value.get("fee_drops", value.get("Fee", tx.get("Fee", DEFAULT_FEE_DROPS))),
             flags=value.get("flags", value.get("Flags", tx.get("Flags", 0))),
-            sequence=value.get(
-                "sequence", value.get("Sequence", tx.get("Sequence"))
-            ),
+            sequence=value.get("sequence", value.get("Sequence", tx.get("Sequence"))),
             ticket_sequence=value.get(
                 "ticket_sequence",
                 value.get("TicketSequence", tx.get("TicketSequence")),
@@ -1118,9 +1064,7 @@ class XRPLTransactionCandidate:
                 "last_ledger_sequence",
                 value.get("LastLedgerSequence", tx.get("LastLedgerSequence")),
             ),
-            signers=tuple(
-                value.get("signers", value.get("Signers", tx.get("Signers", ())))
-            ),
+            signers=tuple(value.get("signers", value.get("Signers", tx.get("Signers", ())))),
             signer_quorum=value.get(
                 "signer_quorum",
                 value.get("SignerQuorum", tx.get("SignerQuorum")),
@@ -1139,9 +1083,7 @@ class XRPLTransactionCandidate:
             hooks_capability_present=bool(
                 value.get("hooks_capability_present", value.get("hooksCapability", False))
             ),
-            hooks_effects=tuple(
-                value.get("hooks_effects", value.get("hooksEffects", ()))
-            ),
+            hooks_effects=tuple(value.get("hooks_effects", value.get("hooksEffects", ()))),
             serialized_hex=value.get(
                 "serialized_hex", value.get("serializedHex", value.get("tx_blob", ""))
             ),
@@ -1191,19 +1133,11 @@ class XRPLTransactionBinding:
     schema_version: str = XRPL_BINDING_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "binding_id", _identifier(self.binding_id, "binding_id")
-        )
+        object.__setattr__(self, "binding_id", _identifier(self.binding_id, "binding_id"))
         object.__setattr__(self, "intent_id", _identifier(self.intent_id, "intent_id"))
-        object.__setattr__(
-            self, "candidate_id", _identifier(self.candidate_id, "candidate_id")
-        )
-        object.__setattr__(
-            self, "chain_id", _text(self.chain_id, "chain_id", max_chars=128)
-        )
-        object.__setattr__(
-            self, "network", _text(self.network, "network", max_chars=128)
-        )
+        object.__setattr__(self, "candidate_id", _identifier(self.candidate_id, "candidate_id"))
+        object.__setattr__(self, "chain_id", _text(self.chain_id, "chain_id", max_chars=128))
+        object.__setattr__(self, "network", _text(self.network, "network", max_chars=128))
         object.__setattr__(
             self,
             "genesis_hash",
@@ -1239,9 +1173,7 @@ class XRPLTransactionBinding:
         object.__setattr__(self, "effects", tuple(effects))
         object.__setattr__(self, "fee_drops", _amount_drops(self.fee_drops, "fee_drops"))
         object.__setattr__(self, "flags", parse_flags(self.flags))
-        object.__setattr__(
-            self, "sequence", _optional_non_negative_int(self.sequence, "sequence")
-        )
+        object.__setattr__(self, "sequence", _optional_non_negative_int(self.sequence, "sequence"))
         object.__setattr__(
             self,
             "ticket_sequence",
@@ -1250,9 +1182,7 @@ class XRPLTransactionBinding:
         object.__setattr__(
             self,
             "last_ledger_sequence",
-            _optional_non_negative_int(
-                self.last_ledger_sequence, "last_ledger_sequence"
-            ),
+            _optional_non_negative_int(self.last_ledger_sequence, "last_ledger_sequence"),
         )
         if not isinstance(self.signer_list, SignerListBinding):
             if isinstance(self.signer_list, Mapping):
@@ -1263,17 +1193,11 @@ class XRPLTransactionBinding:
                 raise GuardValidationError("signer_list must be SignerListBinding")
         if not isinstance(self.ledger_epoch, LedgerEpoch):
             if isinstance(self.ledger_epoch, Mapping):
-                object.__setattr__(
-                    self, "ledger_epoch", LedgerEpoch.from_dict(self.ledger_epoch)
-                )
+                object.__setattr__(self, "ledger_epoch", LedgerEpoch.from_dict(self.ledger_epoch))
             else:
                 raise GuardValidationError("ledger_epoch must be LedgerEpoch")
-        object.__setattr__(
-            self, "hooks_capability_present", bool(self.hooks_capability_present)
-        )
-        object.__setattr__(
-            self, "hooks_effects", tuple(dict(h) for h in self.hooks_effects)
-        )
+        object.__setattr__(self, "hooks_capability_present", bool(self.hooks_capability_present))
+        object.__setattr__(self, "hooks_effects", tuple(dict(h) for h in self.hooks_effects))
         object.__setattr__(
             self, "candidate_digest", _digest(self.candidate_digest, "candidate_digest")
         )
@@ -1283,23 +1207,15 @@ class XRPLTransactionBinding:
             _digest(self.serialized_digest, "serialized_digest"),
         )
         object.__setattr__(self, "tx_digest", _digest(self.tx_digest, "tx_digest"))
-        object.__setattr__(
-            self, "encoding", _text(self.encoding, "encoding", max_chars=64)
-        )
-        object.__setattr__(
-            self, "byte_length", _non_negative_int(self.byte_length, "byte_length")
-        )
+        object.__setattr__(self, "encoding", _text(self.encoding, "encoding", max_chars=64))
+        object.__setattr__(self, "byte_length", _non_negative_int(self.byte_length, "byte_length"))
         if self.byte_length < 1:
             raise GuardValidationError("byte_length must be positive")
         if not isinstance(self.attributes, FrozenMap):
             object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != XRPL_BINDING_SCHEMA_VERSION:
-            raise GuardValidationError(
-                f"unsupported XRPL binding schema: {self.schema_version!r}"
-            )
+            raise GuardValidationError(f"unsupported XRPL binding schema: {self.schema_version!r}")
         if not self.binding_digest:
             object.__setattr__(self, "binding_digest", self.compute_binding_digest())
         else:
@@ -1388,9 +1304,7 @@ class XRPLTransactionBinding:
             last_ledger_sequence=value.get("last_ledger_sequence"),
             signer_list=value.get("signer_list", {}),
             ledger_epoch=value.get("ledger_epoch", {"ledger_index": 0}),
-            hooks_capability_present=bool(
-                value.get("hooks_capability_present", False)
-            ),
+            hooks_capability_present=bool(value.get("hooks_capability_present", False)),
             hooks_effects=tuple(value.get("hooks_effects", ())),
             candidate_digest=value.get("candidate_digest", ""),
             serialized_digest=value.get("serialized_digest", ""),
@@ -1434,41 +1348,26 @@ class XRPLGuardDecision:
 
     def __post_init__(self) -> None:
         if not isinstance(self.outcome, TransactionVerdictOutcome):
-            object.__setattr__(
-                self, "outcome", TransactionVerdictOutcome(str(self.outcome))
-            )
+            object.__setattr__(self, "outcome", TransactionVerdictOutcome(str(self.outcome)))
         object.__setattr__(self, "blocks_automation", bool(self.blocks_automation))
-        object.__setattr__(
-            self, "reason_codes", tuple(str(c) for c in self.reason_codes)
-        )
+        object.__setattr__(self, "reason_codes", tuple(str(c) for c in self.reason_codes))
         object.__setattr__(self, "reasons", tuple(str(r) for r in self.reasons))
-        object.__setattr__(
-            self, "binding_digest", _digest(self.binding_digest, "binding_digest")
-        )
+        object.__setattr__(self, "binding_digest", _digest(self.binding_digest, "binding_digest"))
         if self.request_digest:
             object.__setattr__(
                 self, "request_digest", _digest(self.request_digest, "request_digest")
             )
         else:
             object.__setattr__(self, "request_digest", "")
-        object.__setattr__(
-            self, "security_results", dict(self.security_results or {})
-        )
-        object.__setattr__(
-            self, "compliance_results", dict(self.compliance_results or {})
-        )
+        object.__setattr__(self, "security_results", dict(self.security_results or {}))
+        object.__setattr__(self, "compliance_results", dict(self.compliance_results or {}))
         if not isinstance(self.attributes, FrozenMap):
             object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
 
     @property
     def allowed(self) -> bool:
-        return (
-            self.outcome is TransactionVerdictOutcome.ALLOW
-            and not self.blocks_automation
-        )
+        return self.outcome is TransactionVerdictOutcome.ALLOW and not self.blocks_automation
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -1549,17 +1448,13 @@ class XRPLTransactionGuard:
         if self.preflight is None:
             self.preflight = TransactionPreflight(producer_id=self.producer_id)
         if self.interface != XRPL_TRANSACTION_GUARD_INTERFACE:
-            raise GuardValidationError(
-                f"unsupported xrpl guard interface: {self.interface!r}"
-            )
+            raise GuardValidationError(f"unsupported xrpl guard interface: {self.interface!r}")
         if self.schema_version != XRPL_TRANSACTION_GUARD_SCHEMA_VERSION:
-            raise GuardValidationError(
-                f"unsupported xrpl guard schema: {self.schema_version!r}"
-            )
+            raise GuardValidationError(f"unsupported xrpl guard schema: {self.schema_version!r}")
         if self.ledger_is_fresh is None:
             # Offline default: validated ledger epochs with index > 0 are fresh.
-            self.ledger_is_fresh = (
-                lambda epoch, _now: bool(epoch.validated) and epoch.ledger_index > 0
+            self.ledger_is_fresh = lambda epoch, _now: (
+                bool(epoch.validated) and epoch.ledger_index > 0
             )
 
     # -- binding ------------------------------------------------------------
@@ -1570,8 +1465,7 @@ class XRPLTransactionGuard:
         *,
         ledger_epoch: LedgerEpoch | Mapping[str, Any] | None = None,
         signer_list: SignerListBinding | Mapping[str, Any] | None = None,
-        declared_effects: Sequence[NormalizedXRPLEffect | Mapping[str, Any]]
-        | None = None,
+        declared_effects: Sequence[NormalizedXRPLEffect | Mapping[str, Any]] | None = None,
         serialized_bytes: bytes | str | None = None,
         encoding: str = "xrpl-tx-json",
         candidate_id: str = "",
@@ -1644,8 +1538,7 @@ class XRPLTransactionGuard:
             )
         else:
             raise GuardValidationError(
-                "ledger_epoch or candidate.ledger_index is required; "
-                "unbound ledger fails closed"
+                "ledger_epoch or candidate.ledger_index is required; unbound ledger fails closed"
             )
 
         if signer_list is not None:
@@ -1742,9 +1635,7 @@ class XRPLTransactionGuard:
     ) -> TransactionPreflightRequest:
         """Project an XRPL binding into the common preflight request surface."""
 
-        intent = self._intent_from_binding(
-            binding, expires_at=intent_expires_at or expiry
-        )
+        intent = self._intent_from_binding(binding, expires_at=intent_expires_at or expiry)
         candidate = TransactionCandidate(
             candidate_id=binding.candidate_id,
             intent_id=binding.intent_id,
@@ -1939,16 +1830,12 @@ class XRPLTransactionGuard:
             if isinstance(capability, Mapping):
                 capability = AdmissibilityCapability.from_dict(capability)
             else:
-                raise GuardValidationError(
-                    "capability must be an AdmissibilityCapability"
-                )
+                raise GuardValidationError("capability must be an AdmissibilityCapability")
         if not isinstance(live_request, TransactionPreflightRequest):
             if isinstance(live_request, Mapping):
                 live_request = TransactionPreflightRequest.from_dict(live_request)
             else:
-                raise GuardValidationError(
-                    "live_request must be a TransactionPreflightRequest"
-                )
+                raise GuardValidationError("live_request must be a TransactionPreflightRequest")
 
         if isinstance(phase, PreflightPhase):
             phase_value = phase.value
@@ -2001,8 +1888,7 @@ class XRPLTransactionGuard:
         )
         if structural["blocking"] is not None:
             raise GuardCapabilityError(
-                "; ".join(structural["reasons"])
-                or "xrpl live revalidation failed",
+                "; ".join(structural["reasons"]) or "xrpl live revalidation failed",
                 reason_code=structural["reason_codes"][0]
                 if structural["reason_codes"]
                 else "xrpl.consumption_blocked",
@@ -2043,9 +1929,7 @@ class XRPLTransactionGuard:
         if isinstance(candidate, Mapping):
             _reject_forbidden(candidate, "XRPLTransactionCandidate")
             return XRPLTransactionCandidate.from_dict(candidate)
-        raise GuardValidationError(
-            "candidate must be an XRPLTransactionCandidate or mapping"
-        )
+        raise GuardValidationError("candidate must be an XRPLTransactionCandidate or mapping")
 
     def _check_structural(
         self,
@@ -2085,13 +1969,9 @@ class XRPLTransactionGuard:
                 and blocking is not TransactionVerdictOutcome.DENY
             ):
                 blocking = outcome
-            elif (
-                outcome is TransactionVerdictOutcome.STALE
-                and blocking
-                not in (
-                    TransactionVerdictOutcome.DENY,
-                    TransactionVerdictOutcome.STALE,
-                )
+            elif outcome is TransactionVerdictOutcome.STALE and blocking not in (
+                TransactionVerdictOutcome.DENY,
+                TransactionVerdictOutcome.STALE,
             ):
                 blocking = outcome
 
@@ -2123,9 +2003,7 @@ class XRPLTransactionGuard:
                 "payment amount identity is unbound",
                 "sec:xrpl-amount-identity",
             )
-        elif primary.amount_kind == "issued" and (
-            not primary.issuer or not primary.currency
-        ):
+        elif primary.amount_kind == "issued" and (not primary.issuer or not primary.currency):
             _block(
                 TransactionVerdictOutcome.DENY,
                 "xrpl.issued_asset_incomplete",
@@ -2239,9 +2117,7 @@ class XRPLTransactionGuard:
                     "sec:xrpl-ledger-epoch",
                 )
             elif live_epoch_value is not None:
-                live_epoch = _coerce_ledger_epoch(
-                    live_epoch_value, field_name="live ledger epoch"
-                )
+                live_epoch = _coerce_ledger_epoch(live_epoch_value, field_name="live ledger epoch")
                 assert live_epoch is not None
                 if live_epoch.epoch_digest != binding.ledger_epoch.epoch_digest:
                     _block(
@@ -2309,7 +2185,9 @@ class XRPLTransactionGuard:
                     "live tx Destination substituted",
                     reason_code="xrpl.destination_substituted",
                 )
-            live_tag_n = _optional_uint32(live_tag, "live.DestinationTag") if live_tag is not None else None
+            live_tag_n = (
+                _optional_uint32(live_tag, "live.DestinationTag") if live_tag is not None else None
+            )
             if live_tag_n != binding.destination_tag:
                 raise GuardCapabilityError(
                     "live tx DestinationTag mutated",
@@ -2449,8 +2327,7 @@ class XRPLTransactionGuard:
             )
             if effect.partial_payment:
                 summary += (
-                    f" delivered={effect.delivered_amount_value}"
-                    f"({effect.delivered_amount_kind})"
+                    f" delivered={effect.delivered_amount_value}({effect.delivered_amount_kind})"
                 )
             effects.append(
                 ExpectedEffect(

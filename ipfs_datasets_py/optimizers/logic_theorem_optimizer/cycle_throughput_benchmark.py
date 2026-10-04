@@ -39,17 +39,11 @@ from .legal_ir_family_evaluator import (
 from .runtime_telemetry import RUNTIME_PHASES, canonical_runtime_phase
 
 
-CYCLE_THROUGHPUT_BASELINE_SCHEMA_VERSION: Final = (
-    "legal-ir-modal-autoencoder-cycle-throughput-v1"
-)
-CYCLE_THROUGHPUT_BENCHMARK_SCHEMA_VERSION: Final = (
-    CYCLE_THROUGHPUT_BASELINE_SCHEMA_VERSION
-)
+CYCLE_THROUGHPUT_BASELINE_SCHEMA_VERSION: Final = "legal-ir-modal-autoencoder-cycle-throughput-v1"
+CYCLE_THROUGHPUT_BENCHMARK_SCHEMA_VERSION: Final = CYCLE_THROUGHPUT_BASELINE_SCHEMA_VERSION
 CANONICAL_SAMPLE_SCHEMA_VERSION: Final = "legal-ir-cycle-canonical-sample-v1"
 
-TimeKind = Literal[
-    "useful_compute", "wait", "serialization", "persistence", "child_process"
-]
+TimeKind = Literal["useful_compute", "wait", "serialization", "persistence", "child_process"]
 TIME_KINDS: Final[tuple[TimeKind, ...]] = (
     "useful_compute",
     "wait",
@@ -291,7 +285,11 @@ def _time_kind(phase: str, span: Optional[Mapping[str, Any]] = None) -> TimeKind
         return "wait"
     if phase_name in SERIALIZATION_PHASES or "serializ" in phase_name or "hashing" in phase_name:
         return "serialization"
-    if phase_name in PERSISTENCE_PHASES or "persist" in phase_name or "checkpoint_write" in phase_name:
+    if (
+        phase_name in PERSISTENCE_PHASES
+        or "persist" in phase_name
+        or "checkpoint_write" in phase_name
+    ):
         return "persistence"
     if phase_name in CHILD_PROCESS_PHASES or bool(span and span.get("child_process") is True):
         return "child_process"
@@ -406,9 +404,7 @@ def _phase_measurements(
             "cache_hits": cache_hits,
             "cache_misses": cache_misses,
         }
-    breakdown = {
-        f"{kind}_seconds": round(value, 9) for kind, value in buckets.items()
-    }
+    breakdown = {f"{kind}_seconds": round(value, 9) for kind, value in buckets.items()}
     breakdown.update(
         {
             "observed_phase_seconds": round(observed_phase_seconds, 9),
@@ -595,7 +591,8 @@ def _lane_seconds(
 
 def _lane_measurements(summaries: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
     lean_startups = _lane_counter(
-        summaries, ("leanstral_startup_count", "leanstral_service_startup_count", "model_load_count")
+        summaries,
+        ("leanstral_startup_count", "leanstral_service_startup_count", "model_load_count"),
     )
     lean_reuses = _lane_counter(
         summaries, ("leanstral_reuse_count", "leanstral_service_reuse_count", "service_reuse_count")
@@ -604,9 +601,7 @@ def _lane_measurements(summaries: Sequence[Mapping[str, Any]]) -> dict[str, Any]
         summaries, ("leanstral_request_count", "accepted_request_count", "enqueued_count")
     )
     healthy_reuse_count = sum(
-        1
-        for summary in summaries
-        if _first(summary, ("healthy_cuda_service_reused",))[0] is True
+        1 for summary in summaries if _first(summary, ("healthy_cuda_service_reused",))[0] is True
     )
     if healthy_reuse_count:
         lean_reuses = (max(lean_reuses[0], healthy_reuse_count), True)
@@ -621,7 +616,12 @@ def _lane_measurements(summaries: Sequence[Mapping[str, Any]]) -> dict[str, Any]
 
     hammer_attempts = _lane_counter(
         summaries,
-        ("hammer_attempt_count", "hammer_artifact_count", "proof_attempted_count", "obligation_count"),
+        (
+            "hammer_attempt_count",
+            "hammer_artifact_count",
+            "proof_attempted_count",
+            "obligation_count",
+        ),
     )
     hammer_proved = _lane_counter(
         summaries, ("hammer_proved_count", "proof_valid_count", "proved_count")
@@ -884,11 +884,7 @@ def _family_guardrails(summaries: Sequence[Mapping[str, Any]]) -> dict[str, Any]
             explicit = semantic_values.get("semantic_equivalence_score")
             if explicit is None:
                 explicit = semantic_values.get("semantic_equivalence")
-            semantic_score = (
-                explicit
-                if explicit is not None
-                else min(semantic_values.values())
-            )
+            semantic_score = explicit if explicit is not None else min(semantic_values.values())
         metrics["semantic_equivalence"] = {
             "value": round(semantic_score, 12),
             "observed": bool(semantic_values),
@@ -918,7 +914,9 @@ def _completeness(
     families: Mapping[str, Any],
 ) -> dict[str, Any]:
     missing: list[str] = []
-    if not any(bool(value.get("observed")) for value in phases.values() if isinstance(value, Mapping)):
+    if not any(
+        bool(value.get("observed")) for value in phases.values() if isinstance(value, Mapping)
+    ):
         missing.append("cycle_phases")
     for key in (
         "cpu_occupancy_percent",
@@ -1011,7 +1009,9 @@ class MatchedCycleThroughputBaseline:
         if self.cold.cache_state != "cold" or self.warm.cache_state != "warm":
             raise BaselineEvidenceError("matched baseline requires cold then warm evidence")
         if self.cold.canonical_sample_digest != self.warm.canonical_sample_digest:
-            raise BaselineEvidenceError("cold and warm baselines replay different canonical samples")
+            raise BaselineEvidenceError(
+                "cold and warm baselines replay different canonical samples"
+            )
         document = _thaw(self._document)
         supplied = str(document.pop("evidence_digest", "") or "")
         expected = content_digest(document)
@@ -1091,8 +1091,7 @@ def build_cycle_throughput_baseline(
     )
     if strict and not completeness["complete"]:
         raise BaselineEvidenceError(
-            "baseline evidence is incomplete: "
-            + ", ".join(completeness["missing_measurements"])
+            "baseline evidence is incomplete: " + ", ".join(completeness["missing_measurements"])
         )
 
     document: dict[str, Any] = {
@@ -1182,9 +1181,7 @@ def build_matched_cycle_throughput_baseline(
             if cold_rate
             else 0.0,
             "cycle_seconds_saved_warm": round(cold_seconds - warm_seconds, 9),
-            "cycle_speedup_ratio": round(cold_seconds / warm_seconds, 12)
-            if warm_seconds
-            else 0.0,
+            "cycle_speedup_ratio": round(cold_seconds / warm_seconds, 12) if warm_seconds else 0.0,
         },
         "complete": cold.complete and warm.complete,
     }
@@ -1206,7 +1203,9 @@ def _write_immutable(path: Path, payload: str) -> Path:
     data = payload.encode("utf-8")
     if path.exists():
         if path.read_bytes() != data:
-            raise BaselineEvidenceError(f"immutable artifact already exists with different bytes: {path}")
+            raise BaselineEvidenceError(
+                f"immutable artifact already exists with different bytes: {path}"
+            )
         return path
     descriptor, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
     temporary = Path(temporary_name)
@@ -1249,9 +1248,7 @@ def write_content_addressed_baselines(
     return result
 
 
-def write_immutable_baseline_document(
-    document: Mapping[str, Any], path: str | Path
-) -> Path:
+def write_immutable_baseline_document(document: Mapping[str, Any], path: str | Path) -> Path:
     """Atomically write a canonical baseline document without overwriting it."""
 
     return _write_immutable(Path(path), canonical_json(document) + "\n")

@@ -40,15 +40,9 @@ from types import MappingProxyType
 from typing import Any, Final, Protocol
 
 
-LEGAL_IR_GUIDANCE_REPLAY_SCHEMA_VERSION: Final = (
-    "legal-ir-compiler-guidance-replay-v1"
-)
-LEGAL_IR_GUIDANCE_INVENTORY_SCHEMA_VERSION: Final = (
-    "legal-ir-compiler-guidance-inventory-v1"
-)
-LEGAL_IR_GUIDANCE_CANDIDATE_SCHEMA_VERSION: Final = (
-    "legal-ir-compiler-guidance-replay-candidate-v1"
-)
+LEGAL_IR_GUIDANCE_REPLAY_SCHEMA_VERSION: Final = "legal-ir-compiler-guidance-replay-v1"
+LEGAL_IR_GUIDANCE_INVENTORY_SCHEMA_VERSION: Final = "legal-ir-compiler-guidance-inventory-v1"
+LEGAL_IR_GUIDANCE_CANDIDATE_SCHEMA_VERSION: Final = "legal-ir-compiler-guidance-replay-candidate-v1"
 LEGAL_IR_GUIDANCE_REVALIDATION_SCHEMA_VERSION: Final = (
     "legal-ir-compiler-guidance-current-revalidation-v1"
 )
@@ -184,16 +178,12 @@ def _json_ready(value: Any) -> Any:
             str(key): _json_ready(item)
             for key, item in sorted(value.items(), key=lambda pair: str(pair[0]))
         }
-    if isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         return [_json_ready(item) for item in value]
     to_dict = getattr(value, "to_dict", None)
     if callable(to_dict):
         return _json_ready(to_dict())
-    raise GuidanceReplayError(
-        f"value of type {type(value).__name__} is not canonical JSON"
-    )
+    raise GuidanceReplayError(f"value of type {type(value).__name__} is not canonical JSON")
 
 
 def canonical_guidance_replay_json(value: Any) -> str:
@@ -209,9 +199,7 @@ def canonical_guidance_replay_json(value: Any) -> str:
 
 
 def guidance_replay_digest(value: Any, *, prefixed: bool = True) -> str:
-    digest = hashlib.sha256(
-        canonical_guidance_replay_json(value).encode("utf-8")
-    ).hexdigest()
+    digest = hashlib.sha256(canonical_guidance_replay_json(value).encode("utf-8")).hexdigest()
     return f"sha256:{digest}" if prefixed else digest
 
 
@@ -247,9 +235,7 @@ def sign_guidance_replay_payload(
     key = secret.encode("utf-8") if isinstance(secret, str) else bytes(secret)
     if not key:
         raise GuidanceReplayError("signature secret must be non-empty")
-    message = canonical_guidance_replay_json(_without_signature(payload)).encode(
-        "utf-8"
-    )
+    message = canonical_guidance_replay_json(_without_signature(payload)).encode("utf-8")
     return {
         "algorithm": "hmac-sha256",
         "signer_id": signer,
@@ -359,9 +345,7 @@ def _source_bearing_paths(value: Any, *, path: str = "$") -> tuple[str, ...]:
             if lowered in _SOURCE_POLICY_KEYS:
                 continue
             found.extend(_source_bearing_paths(item, path=child))
-    elif isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    elif isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         for index, item in enumerate(value[:128]):
             found.extend(_source_bearing_paths(item, path=f"{path}[{index}]"))
     elif isinstance(value, str) and _looks_source_like(value):
@@ -376,8 +360,7 @@ def _report_is_contradictory(report: Mapping[str, Any]) -> bool:
         report.get("has_candidates") is not True
         or str(report.get("quality_gate") or "") != "pass"
         or bool(str(report.get("promotion_block_reason") or "").strip())
-        or str(report.get("recommended_mode") or "")
-        != "promote_deterministic_rules"
+        or str(report.get("recommended_mode") or "") != "promote_deterministic_rules"
     )
     if direct_conflict:
         return True
@@ -390,9 +373,7 @@ def _report_is_contradictory(report: Mapping[str, Any]) -> bool:
             if str(value.get("quality_gate") or "") == "fail":
                 return True
             return any(has_failed_gate(item) for item in value.values())
-        if isinstance(value, Sequence) and not isinstance(
-            value, (str, bytes, bytearray)
-        ):
+        if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
             return any(has_failed_gate(item) for item in value)
         return False
 
@@ -413,16 +394,10 @@ class GuidanceReplayPolicy:
     source_copy_policy_version: str
     lineage_id: str
     base_state_digest: str
-    trusted_signers: Mapping[str, str | bytes] = field(
-        default_factory=dict, repr=False
-    )
+    trusted_signers: Mapping[str, str | bytes] = field(default_factory=dict, repr=False)
     expected_report_count: int | None = CANONICAL_HISTORICAL_REPORT_COUNT
-    expected_candidate_count: int | None = (
-        CANONICAL_HISTORICAL_PROMOTION_CANDIDATE_COUNT
-    )
-    evaluation_time: str = field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat()
-    )
+    expected_candidate_count: int | None = CANONICAL_HISTORICAL_PROMOTION_CANDIDATE_COUNT
+    evaluation_time: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     max_report_age_seconds: float = 180 * 24 * 60 * 60
     max_feature_deltas: int = 32
 
@@ -437,15 +412,11 @@ class GuidanceReplayPolicy:
             "source_copy_policy_version",
             "lineage_id",
         ):
-            object.__setattr__(
-                self, name, _safe_identifier(getattr(self, name), name=name)
-            )
+            object.__setattr__(self, name, _safe_identifier(getattr(self, name), name=name))
         object.__setattr__(
             self,
             "fixed_holdout_digest",
-            _normalized_digest(
-                self.fixed_holdout_digest, name="fixed_holdout_digest"
-            ),
+            _normalized_digest(self.fixed_holdout_digest, name="fixed_holdout_digest"),
         )
         object.__setattr__(
             self,
@@ -456,9 +427,7 @@ class GuidanceReplayPolicy:
             raise GuidanceReplayError("evaluation_time must be an ISO-8601 timestamp")
         age = float(self.max_report_age_seconds)
         if not math.isfinite(age) or age < 0.0:
-            raise GuidanceReplayError(
-                "max_report_age_seconds must be finite and non-negative"
-            )
+            raise GuidanceReplayError("max_report_age_seconds must be finite and non-negative")
         object.__setattr__(self, "max_report_age_seconds", age)
         limit = int(self.max_feature_deltas)
         if limit < 1 or limit > HARD_MAX_FEATURE_DELTAS:
@@ -554,9 +523,7 @@ class HistoricalGuidanceInventory:
             ],
             "schema_version": self.schema_version,
         }
-        return "lir-guidance-inventory-" + guidance_replay_digest(
-            descriptor, prefixed=False
-        )
+        return "lir-guidance-inventory-" + guidance_replay_digest(descriptor, prefixed=False)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -625,9 +592,7 @@ def load_historical_compiler_guidance_reports(
                 report_id="historical-guidance-" + digest.split(":", 1)[1],
                 content_digest=digest,
                 byte_count=byte_count,
-                promotion_candidate=(
-                    not load_error and payload.get("promotion_allowed") is True
-                ),
+                promotion_candidate=(not load_error and payload.get("promotion_allowed") is True),
                 _payload=payload,
                 load_error=load_error,
             )
@@ -673,10 +638,7 @@ class GuidanceRevalidationContext:
         )
 
     def to_dict(self) -> dict[str, str]:
-        return {
-            name: str(getattr(self, name))
-            for name in self.__dataclass_fields__
-        }
+        return {name: str(getattr(self, name)) for name in self.__dataclass_fields__}
 
 
 @dataclass(frozen=True, slots=True)
@@ -695,13 +657,10 @@ class GuidanceFeatureDelta:
         except GuidanceReplayError as exc:
             raise GuidanceRevalidationError(str(exc)) from exc
         lowered = feature_id.lower()
-        if (
-            not lowered.startswith(_SAFE_FEATURE_PREFIXES)
-            or any(marker in lowered for marker in _SOURCE_FEATURE_MARKERS)
+        if not lowered.startswith(_SAFE_FEATURE_PREFIXES) or any(
+            marker in lowered for marker in _SOURCE_FEATURE_MARKERS
         ):
-            raise GuidanceRevalidationError(
-                "feature_id is not an approved source-free feature"
-            )
+            raise GuidanceRevalidationError("feature_id is not an approved source-free feature")
         object.__setattr__(self, "feature_id", feature_id)
         try:
             family = _safe_identifier(self.family, name="family")
@@ -712,9 +671,7 @@ class GuidanceFeatureDelta:
             raise GuidanceRevalidationError("weight_delta must be numeric")
         weight = float(self.weight_delta)
         if not math.isfinite(weight) or abs(weight) > 1.0:
-            raise GuidanceRevalidationError(
-                "weight_delta must be finite and within [-1, 1]"
-            )
+            raise GuidanceRevalidationError("weight_delta must be finite and within [-1, 1]")
         object.__setattr__(self, "weight_delta", weight)
         support = int(self.support_count)
         if support < 1 or support > 1_000_000_000:
@@ -722,9 +679,7 @@ class GuidanceFeatureDelta:
         object.__setattr__(self, "support_count", support)
         if self.evidence_digest:
             try:
-                digest = _normalized_digest(
-                    self.evidence_digest, name="evidence_digest"
-                )
+                digest = _normalized_digest(self.evidence_digest, name="evidence_digest")
             except GuidanceReplayError as exc:
                 raise GuidanceRevalidationError(str(exc)) from exc
             object.__setattr__(self, "evidence_digest", digest)
@@ -737,15 +692,10 @@ class GuidanceFeatureDelta:
             raise GuidanceRevalidationError("feature delta must be a mapping")
         return cls(
             feature_id=str(
-                value.get("feature_id")
-                or value.get("feature_key")
-                or value.get("id")
-                or ""
+                value.get("feature_id") or value.get("feature_key") or value.get("id") or ""
             ),
             family=str(value.get("family") or value.get("semantic_family") or ""),
-            weight_delta=value.get(
-                "weight_delta", value.get("delta", value.get("weight", 0.0))
-            ),
+            weight_delta=value.get("weight_delta", value.get("delta", value.get("weight", 0.0))),
             support_count=value.get("support_count", value.get("support", 1)),
             evidence_digest=str(value.get("evidence_digest") or ""),
         )
@@ -805,9 +755,7 @@ class CurrentGuidanceRevalidation:
         ):
             value = str(getattr(self, name) or "").strip()
             if value and not _SAFE_IDENTIFIER_RE.fullmatch(value):
-                raise GuidanceRevalidationError(
-                    f"{name} must be empty or a bounded identifier"
-                )
+                raise GuidanceRevalidationError(f"{name} must be empty or a bounded identifier")
             object.__setattr__(self, name, value)
         for name in (
             "report_digest",
@@ -817,18 +765,14 @@ class CurrentGuidanceRevalidation:
             "provenance_digest",
         ):
             try:
-                digest = _normalized_digest(
-                    getattr(self, name), name=name, required=False
-                )
+                digest = _normalized_digest(getattr(self, name), name=name, required=False)
             except GuidanceReplayError as exc:
                 raise GuidanceRevalidationError(str(exc)) from exc
             object.__setattr__(self, name, digest)
         receipt_ids: list[str] = []
         for receipt_id in self.proof_receipt_ids:
             try:
-                receipt_ids.append(
-                    _safe_identifier(receipt_id, name="proof_receipt_id")
-                )
+                receipt_ids.append(_safe_identifier(receipt_id, name="proof_receipt_id"))
             except GuidanceReplayError as exc:
                 raise GuidanceRevalidationError(str(exc)) from exc
         object.__setattr__(self, "proof_receipt_ids", tuple(receipt_ids))
@@ -858,9 +802,7 @@ class CurrentGuidanceRevalidation:
         if isinstance(value, cls):
             return value
         if not isinstance(value, Mapping):
-            raise GuidanceRevalidationError(
-                "current revalidation result must be a mapping"
-            )
+            raise GuidanceRevalidationError("current revalidation result must be a mapping")
         gates = value.get("gates")
         gates = gates if isinstance(gates, Mapping) else {}
 
@@ -873,57 +815,35 @@ class CurrentGuidanceRevalidation:
             return False
 
         raw_deltas = value.get("feature_deltas", value.get("feature_updates", ()))
-        if not isinstance(raw_deltas, Sequence) or isinstance(
-            raw_deltas, (str, bytes, bytearray)
-        ):
+        if not isinstance(raw_deltas, Sequence) or isinstance(raw_deltas, (str, bytes, bytearray)):
             raise GuidanceRevalidationError("feature_deltas must be a sequence")
         raw_receipts = value.get("proof_receipt_ids", ())
         if not isinstance(raw_receipts, Sequence) or isinstance(
             raw_receipts, (str, bytes, bytearray)
         ):
-            raise GuidanceRevalidationError(
-                "proof_receipt_ids must be a sequence"
-            )
+            raise GuidanceRevalidationError("proof_receipt_ids must be a sequence")
         return cls(
-            report_digest=str(
-                value.get("report_digest")
-                or value.get("candidate_digest")
-                or ""
-            ),
+            report_digest=str(value.get("report_digest") or value.get("candidate_digest") or ""),
             policy_fingerprint=str(value.get("policy_fingerprint") or ""),
             compiler_commit=str(value.get("compiler_commit") or ""),
             compiler_schema_version=str(
-                value.get("compiler_schema_version")
-                or value.get("compiler_schema")
-                or ""
+                value.get("compiler_schema_version") or value.get("compiler_schema") or ""
             ),
-            canonicalization_version=str(
-                value.get("canonicalization_version") or ""
-            ),
+            canonicalization_version=str(value.get("canonicalization_version") or ""),
             fixed_holdout_id=str(value.get("fixed_holdout_id") or ""),
             fixed_holdout_digest=str(value.get("fixed_holdout_digest") or ""),
             proof_policy_version=str(value.get("proof_policy_version") or ""),
-            provenance_policy_version=str(
-                value.get("provenance_policy_version") or ""
-            ),
-            source_copy_policy_version=str(
-                value.get("source_copy_policy_version") or ""
-            ),
+            provenance_policy_version=str(value.get("provenance_policy_version") or ""),
+            source_copy_policy_version=str(value.get("source_copy_policy_version") or ""),
             lineage_id=str(value.get("lineage_id") or ""),
             base_state_digest=str(value.get("base_state_digest") or ""),
             reconstructed=boolean("reconstructed", "reconstruction_valid"),
             compiler_valid=boolean("compiler_valid", "compiler_passed"),
             schema_valid=boolean("schema_valid", "schema_passed"),
-            canonicalization_valid=boolean(
-                "canonicalization_valid", "canonicalization_passed"
-            ),
-            holdout_valid=boolean(
-                "holdout_valid", "fixed_holdout_valid", "holdout_passed"
-            ),
+            canonicalization_valid=boolean("canonicalization_valid", "canonicalization_passed"),
+            holdout_valid=boolean("holdout_valid", "fixed_holdout_valid", "holdout_passed"),
             proof_valid=boolean("proof_valid", "proof_passed"),
-            provenance_valid=boolean(
-                "provenance_valid", "provenance_passed"
-            ),
+            provenance_valid=boolean("provenance_valid", "provenance_passed"),
             source_copy_valid=boolean(
                 "source_copy_valid",
                 "source_copy_passed",
@@ -933,23 +853,15 @@ class CurrentGuidanceRevalidation:
             contains_source_material=boolean("contains_source_material"),
             proof_receipt_ids=tuple(str(item) for item in raw_receipts),
             provenance_digest=str(value.get("provenance_digest") or ""),
-            feature_deltas=tuple(
-                GuidanceFeatureDelta.from_value(item) for item in raw_deltas
-            ),
+            feature_deltas=tuple(GuidanceFeatureDelta.from_value(item) for item in raw_deltas),
             signature=_freeze_mapping(
-                value.get("signature")
-                if isinstance(value.get("signature"), Mapping)
-                else {}
+                value.get("signature") if isinstance(value.get("signature"), Mapping) else {}
             ),
             schema_version=str(value.get("schema_version") or ""),
         )
 
     def unsigned_dict(self) -> dict[str, Any]:
-        return {
-            key: value
-            for key, value in self.to_dict().items()
-            if key != "signature"
-        }
+        return {key: value for key, value in self.to_dict().items() if key != "signature"}
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -1051,9 +963,7 @@ class GuidanceReplayOutcome:
     def to_dict(self) -> dict[str, Any]:
         return {
             "accepted": self.accepted,
-            "feature_update": (
-                self.feature_update.to_dict() if self.feature_update else None
-            ),
+            "feature_update": (self.feature_update.to_dict() if self.feature_update else None),
             "rejection_reasons": list(self.rejection_reasons),
             "report_digest": self.report_digest,
             "report_id": self.report_id,
@@ -1082,9 +992,7 @@ class GuidanceReplayReport:
     @property
     def feature_updates(self) -> tuple[BoundedGuidanceFeatureUpdate, ...]:
         return tuple(
-            item.feature_update
-            for item in self.outcomes
-            if item.feature_update is not None
+            item.feature_update for item in self.outcomes if item.feature_update is not None
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -1100,9 +1008,7 @@ class GuidanceReplayReport:
                 if index < len(candidate_audits)
                 else set()
             )
-            reason_counts.update(
-                set(outcome.rejection_reasons) - preflight_reasons
-            )
+            reason_counts.update(set(outcome.rejection_reasons) - preflight_reasons)
         payload = {
             "accepted_count": self.accepted_count,
             "audited_report_count": self.audited_report_count,
@@ -1137,9 +1043,7 @@ def _historical_preflight(
     if report.load_error:
         reasons.append(GuidanceReplayRejection.INVALID_REPORT.value)
         return reasons, ()
-    if str(payload.get("schema_version") or "") != (
-        LEGAL_IR_GUIDANCE_CANDIDATE_SCHEMA_VERSION
-    ):
+    if str(payload.get("schema_version") or "") != (LEGAL_IR_GUIDANCE_CANDIDATE_SCHEMA_VERSION):
         reasons.append(GuidanceReplayRejection.SCHEMA_MISMATCH.value)
     if not _verify_signature(payload, policy.trusted_signers):
         reasons.append(GuidanceReplayRejection.UNSIGNED.value)
@@ -1149,11 +1053,9 @@ def _historical_preflight(
         report_time is None
         or evaluation_time is None
         or report_time > evaluation_time
-        or (evaluation_time - report_time).total_seconds()
-        > policy.max_report_age_seconds
+        or (evaluation_time - report_time).total_seconds() > policy.max_report_age_seconds
         or str(payload.get("compiler_commit") or "") != policy.compiler_commit
-        or str(payload.get("compiler_schema_version") or "")
-        != policy.compiler_schema_version
+        or str(payload.get("compiler_schema_version") or "") != policy.compiler_schema_version
     ):
         reasons.append(GuidanceReplayRejection.STALE.value)
     if _report_is_contradictory(payload):
@@ -1236,8 +1138,7 @@ def _receipt_rejections(
     if (
         not receipt.feature_deltas
         or len(receipt.feature_deltas) > policy.max_feature_deltas
-        or len({item.feature_id for item in receipt.feature_deltas})
-        != len(receipt.feature_deltas)
+        or len({item.feature_id for item in receipt.feature_deltas}) != len(receipt.feature_deltas)
     ):
         reasons.append(GuidanceReplayRejection.FEATURE_UPDATE_INVALID.value)
     return list(dict.fromkeys(reasons))
@@ -1248,9 +1149,7 @@ def _feature_update(
     receipt: CurrentGuidanceRevalidation,
     policy: GuidanceReplayPolicy,
 ) -> BoundedGuidanceFeatureUpdate:
-    deltas = tuple(
-        sorted(receipt.feature_deltas, key=lambda item: (item.family, item.feature_id))
-    )
+    deltas = tuple(sorted(receipt.feature_deltas, key=lambda item: (item.family, item.feature_id)))
     descriptor = {
         "base_state_digest": policy.base_state_digest,
         "capacity_family": "compiler_guidance",
@@ -1263,8 +1162,7 @@ def _feature_update(
         "schema_version": LEGAL_IR_GUIDANCE_FEATURE_UPDATE_SCHEMA_VERSION,
     }
     return BoundedGuidanceFeatureUpdate(
-        update_id="lir-guidance-update-"
-        + guidance_replay_digest(descriptor, prefixed=False),
+        update_id="lir-guidance-update-" + guidance_replay_digest(descriptor, prefixed=False),
         report_digest=report.content_digest,
         policy_fingerprint=policy.fingerprint,
         base_state_digest=policy.base_state_digest,
@@ -1339,9 +1237,7 @@ def replay_historical_compiler_guidance(
             try:
                 raw_receipt = revalidator(report, context)
                 receipt = CurrentGuidanceRevalidation.from_value(raw_receipt)
-                reasons.extend(
-                    _receipt_rejections(receipt, report=report, policy=policy)
-                )
+                reasons.extend(_receipt_rejections(receipt, report=report, policy=policy))
             except Exception:
                 # Exception messages can contain source text and are never state.
                 reasons.extend(

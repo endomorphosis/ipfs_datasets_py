@@ -182,13 +182,17 @@ def sign_world_id_request_from_config(
 
 def _require_signing_dependencies() -> None:
     if _SIGNING_IMPORT_ERROR is not None:
-        raise WorldIdSignatureError("World ID signing dependencies are not installed") from _SIGNING_IMPORT_ERROR
+        raise WorldIdSignatureError(
+            "World ID signing dependencies are not installed"
+        ) from _SIGNING_IMPORT_ERROR
     _require_keccak_dependency()
 
 
 def _require_keccak_dependency() -> None:
     if _KECCAK_IMPORT_ERROR is not None:
-        raise WorldIdSignatureError("World ID Keccak dependency is not installed") from _KECCAK_IMPORT_ERROR
+        raise WorldIdSignatureError(
+            "World ID Keccak dependency is not installed"
+        ) from _KECCAK_IMPORT_ERROR
 
 
 def _parse_private_key(value: str) -> bytes:

@@ -98,13 +98,8 @@ def _normalize_json(value: Any, *, path: str = "$") -> JSONValue:
             normalized[key] = _normalize_json(item, path=f"{path}.{key}")
         return normalized
     if isinstance(value, (list, tuple)):
-        return [
-            _normalize_json(item, path=f"{path}[{index}]")
-            for index, item in enumerate(value)
-        ]
-    raise MigrationExecutionError(
-        f"{path} contains non-JSON value of type {type(value).__name__}"
-    )
+        return [_normalize_json(item, path=f"{path}[{index}]") for index, item in enumerate(value)]
+    raise MigrationExecutionError(f"{path} contains non-JSON value of type {type(value).__name__}")
 
 
 def canonical_payload_bytes(payload: Mapping[str, Any]) -> bytes:
@@ -183,15 +178,11 @@ class CompatibilityDeclaration:
         _validate_exact_id(self.source_schema_id, field_name="source_schema_id")
         _validate_exact_id(self.reader_schema_id, field_name="reader_schema_id")
         if self.source_schema_id == self.reader_schema_id:
-            raise SchemaRegistryError(
-                "same-schema compatibility is exact and must not be declared"
-            )
+            raise SchemaRegistryError("same-schema compatibility is exact and must not be declared")
         if not isinstance(self.compatible, bool):
             raise SchemaRegistryError("compatible must be a bool")
         if not isinstance(self.rationale, str) or not self.rationale.strip():
-            raise SchemaRegistryError(
-                "compatibility declarations require a non-empty rationale"
-            )
+            raise SchemaRegistryError("compatibility declarations require a non-empty rationale")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -236,9 +227,7 @@ class LossReport:
     def __post_init__(self) -> None:
         object.__setattr__(self, "losses", tuple(self.losses))
         if not all(isinstance(item, MigrationLoss) for item in self.losses):
-            raise MigrationExecutionError(
-                "loss reports may contain only MigrationLoss records"
-            )
+            raise MigrationExecutionError("loss reports may contain only MigrationLoss records")
 
     @property
     def lossy(self) -> bool:
@@ -289,9 +278,7 @@ class MigrationSpec:
     def __post_init__(self) -> None:
         _validate_identifier(self.migration_id, field_name="migration_id")
         _validate_exact_id(self.source_schema_id, field_name="source_schema_id")
-        _validate_exact_id(
-            self.destination_schema_id, field_name="destination_schema_id"
-        )
+        _validate_exact_id(self.destination_schema_id, field_name="destination_schema_id")
         if self.source_schema_id == self.destination_schema_id:
             raise MigrationCycleError("self migrations are cycles and are not allowed")
         if not callable(self.transform):
@@ -365,9 +352,7 @@ class MigrationReceipt:
                 f"receipt schema_id must be exactly {MIGRATION_RECEIPT_SCHEMA_ID!r}"
             )
         _validate_exact_id(self.source_schema_id, field_name="source_schema_id")
-        _validate_exact_id(
-            self.destination_schema_id, field_name="destination_schema_id"
-        )
+        _validate_exact_id(self.destination_schema_id, field_name="destination_schema_id")
         object.__setattr__(self, "schema_path", tuple(self.schema_path))
         object.__setattr__(self, "migration_ids", tuple(self.migration_ids))
         for schema_id in self.schema_path:
@@ -375,22 +360,16 @@ class MigrationReceipt:
         for migration_id in self.migration_ids:
             _validate_identifier(migration_id, field_name="migration_ids item")
         if not isinstance(self.loss_report, LossReport):
-            raise MigrationExecutionError(
-                "receipt loss_report must be a LossReport"
-            )
+            raise MigrationExecutionError("receipt loss_report must be a LossReport")
         expected_length = max(0, len(self.schema_path) - 1)
         if len(self.migration_ids) != expected_length:
             raise MigrationExecutionError(
                 "receipt migration_ids must connect every schema_path element"
             )
         if not self.schema_path or self.schema_path[0] != self.source_schema_id:
-            raise MigrationExecutionError(
-                "receipt schema_path must start at source_schema_id"
-            )
+            raise MigrationExecutionError("receipt schema_path must start at source_schema_id")
         if self.schema_path[-1] != self.destination_schema_id:
-            raise MigrationExecutionError(
-                "receipt schema_path must end at destination_schema_id"
-            )
+            raise MigrationExecutionError("receipt schema_path must end at destination_schema_id")
         for field_name, digest in (
             ("source_digest", self.source_digest),
             ("destination_digest", self.destination_digest),
@@ -401,9 +380,7 @@ class MigrationReceipt:
                 or len(digest) != 71
                 or any(character not in "0123456789abcdef" for character in digest[7:])
             ):
-                raise MigrationExecutionError(
-                    f"{field_name} must be a lowercase sha256 digest"
-                )
+                raise MigrationExecutionError(f"{field_name} must be a lowercase sha256 digest")
 
     def _bound_dict(self) -> dict[str, Any]:
         return {
@@ -446,9 +423,7 @@ class MigrationResult:
 
     def __post_init__(self) -> None:
         if not isinstance(self.receipt, MigrationReceipt):
-            raise MigrationExecutionError(
-                "migration result receipt must be a MigrationReceipt"
-            )
+            raise MigrationExecutionError("migration result receipt must be a MigrationReceipt")
         detached = _detached_payload(self.payload)
         if payload_digest(detached) != self.receipt.destination_digest:
             raise MigrationExecutionError(
@@ -473,9 +448,7 @@ class IRSchemaRegistry(Mapping[str, SchemaSpec]):
         migrations: Sequence[MigrationSpec] = (),
     ) -> None:
         self._schemas: dict[str, SchemaSpec] = {}
-        self._compatibility: dict[
-            tuple[str, str], CompatibilityDeclaration
-        ] = {}
+        self._compatibility: dict[tuple[str, str], CompatibilityDeclaration] = {}
         self._migrations: dict[tuple[str, str], MigrationSpec] = {}
         self._migration_ids: set[str] = set()
         for schema in schemas:
@@ -516,9 +489,7 @@ class IRSchemaRegistry(Mapping[str, SchemaSpec]):
             )
         self._schemas[schema.schema_id] = schema
 
-    def register_compatibility(
-        self, declaration: CompatibilityDeclaration
-    ) -> None:
+    def register_compatibility(self, declaration: CompatibilityDeclaration) -> None:
         if not isinstance(declaration, CompatibilityDeclaration):
             raise TypeError("declaration must be a CompatibilityDeclaration")
         self._require_schema(declaration.source_schema_id)
@@ -559,9 +530,7 @@ class IRSchemaRegistry(Mapping[str, SchemaSpec]):
                 migration.destination_schema_id,
                 *(edge.destination_schema_id for edge in reverse_path),
             )
-            raise MigrationCycleError(
-                "migration cycle detected: " + " -> ".join(cycle_ids)
-            )
+            raise MigrationCycleError("migration cycle detected: " + " -> ".join(cycle_ids))
         self._migrations[key] = migration
         self._migration_ids.add(migration.migration_id)
 
@@ -572,9 +541,7 @@ class IRSchemaRegistry(Mapping[str, SchemaSpec]):
         except KeyError as error:
             raise UnknownSchemaError(f"unknown schema_id {schema_id!r}") from error
 
-    def negotiate(
-        self, source_schema_id: str, reader_schema_id: str
-    ) -> CompatibilityResult:
+    def negotiate(self, source_schema_id: str, reader_schema_id: str) -> CompatibilityResult:
         """Negotiate a directional read using exact registered identifiers."""
 
         self._require_schema(source_schema_id)
@@ -589,9 +556,7 @@ class IRSchemaRegistry(Mapping[str, SchemaSpec]):
                 schema_path=(source_schema_id,),
             )
 
-        declaration = self._compatibility.get(
-            (source_schema_id, reader_schema_id)
-        )
+        declaration = self._compatibility.get((source_schema_id, reader_schema_id))
         if declaration is not None and declaration.compatible:
             return CompatibilityResult(
                 source_schema_id=source_schema_id,
@@ -642,9 +607,7 @@ class IRSchemaRegistry(Mapping[str, SchemaSpec]):
 
         self._require_schema(source_schema_id)
         self._require_schema(destination_schema_id)
-        path = self._find_path(
-            source_schema_id, destination_schema_id, missing_ok=False
-        )
+        path = self._find_path(source_schema_id, destination_schema_id, missing_ok=False)
         assert path is not None
         return path
 
@@ -664,9 +627,7 @@ class IRSchemaRegistry(Mapping[str, SchemaSpec]):
         for edge in self._migrations.values():
             outgoing.setdefault(edge.source_schema_id, []).append(edge)
         for edges in outgoing.values():
-            edges.sort(
-                key=lambda edge: (edge.destination_schema_id, edge.migration_id)
-            )
+            edges.sort(key=lambda edge: (edge.destination_schema_id, edge.migration_id))
 
         queue: list[
             tuple[
@@ -686,9 +647,7 @@ class IRSchemaRegistry(Mapping[str, SchemaSpec]):
             if current == destination_schema_id:
                 return path
             for edge in outgoing.get(current, ()):
-                next_signature = signature + (
-                    (edge.destination_schema_id, edge.migration_id),
-                )
+                next_signature = signature + ((edge.destination_schema_id, edge.migration_id),)
                 heapq.heappush(
                     queue,
                     (
@@ -701,8 +660,7 @@ class IRSchemaRegistry(Mapping[str, SchemaSpec]):
         if missing_ok:
             return None
         raise MigrationPathError(
-            f"no migration path from {source_schema_id!r} "
-            f"to {destination_schema_id!r}"
+            f"no migration path from {source_schema_id!r} to {destination_schema_id!r}"
         )
 
     def migrate(
@@ -736,32 +694,27 @@ class IRSchemaRegistry(Mapping[str, SchemaSpec]):
             )
             return MigrationResult(source, receipt)
 
-        path = self.resolve_migration_path(
-            source_schema_id, destination_schema_id
-        )
+        path = self.resolve_migration_path(source_schema_id, destination_schema_id)
         current = source
         all_losses: list[MigrationLoss] = []
         for migration in path:
             first_payload, first_losses = self._execute_once(migration, current)
             second_payload, second_losses = self._execute_once(migration, current)
-            if (
-                canonical_payload_bytes(first_payload)
-                != canonical_payload_bytes(second_payload)
-                or tuple(item.to_dict() for item in first_losses)
-                != tuple(item.to_dict() for item in second_losses)
+            if canonical_payload_bytes(first_payload) != canonical_payload_bytes(
+                second_payload
+            ) or tuple(item.to_dict() for item in first_losses) != tuple(
+                item.to_dict() for item in second_losses
             ):
                 raise NondeterministicMigrationError(
                     f"migration {migration.migration_id!r} is nondeterministic"
                 )
             if migration.lossy and not first_losses:
                 raise MigrationExecutionError(
-                    f"lossy migration {migration.migration_id!r} "
-                    "must return at least one loss"
+                    f"lossy migration {migration.migration_id!r} must return at least one loss"
                 )
             if not migration.lossy and first_losses:
                 raise MigrationExecutionError(
-                    f"lossless migration {migration.migration_id!r} "
-                    "returned a loss report"
+                    f"lossless migration {migration.migration_id!r} returned a loss report"
                 )
             current = first_payload
             all_losses.extend(first_losses)
@@ -787,9 +740,7 @@ class IRSchemaRegistry(Mapping[str, SchemaSpec]):
     ) -> tuple[dict[str, JSONValue], tuple[MigrationLoss, ...]]:
         migration_input = _detached_payload(payload)
         try:
-            raw_outcome = migration.transform(
-                MappingProxyType(migration_input)
-            )
+            raw_outcome = migration.transform(MappingProxyType(migration_input))
         except SchemaRegistryError:
             raise
         except Exception as error:
@@ -805,8 +756,7 @@ class IRSchemaRegistry(Mapping[str, SchemaSpec]):
             raw_losses = ()
         else:
             raise MigrationExecutionError(
-                f"migration {migration.migration_id!r} must return "
-                "a mapping or MigrationOutcome"
+                f"migration {migration.migration_id!r} must return a mapping or MigrationOutcome"
             )
 
         losses: list[MigrationLoss] = []
@@ -844,10 +794,7 @@ class IRSchemaRegistry(Mapping[str, SchemaSpec]):
                     ),
                 )
             ],
-            "schemas": [
-                self._schemas[schema_id].to_dict()
-                for schema_id in sorted(self._schemas)
-            ],
+            "schemas": [self._schemas[schema_id].to_dict() for schema_id in sorted(self._schemas)],
         }
         return {**body, "registry_digest": payload_digest(body)}
 

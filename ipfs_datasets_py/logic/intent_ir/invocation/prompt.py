@@ -171,8 +171,7 @@ class PromptInvocationPolicyError(PromptInvocationError):
     def __init__(self, decision: PromptSourcePolicyDecision) -> None:
         self.decision = decision
         super().__init__(
-            "Prompt is not eligible for invocation adaptation: "
-            f"{decision.allowed_use.value}"
+            f"Prompt is not eligible for invocation adaptation: {decision.allowed_use.value}"
         )
 
 
@@ -215,25 +214,17 @@ class ResolvedScopeClaim:
         attributes: Mapping[str, Any] | None = None,
     ) -> None:
         if not isinstance(entry_id, str) or not _ID_RE.fullmatch(entry_id):
-            raise PromptInvocationError(
-                f"scope claim entry_id is invalid: {entry_id!r}"
-            )
+            raise PromptInvocationError(f"scope claim entry_id is invalid: {entry_id!r}")
         if not isinstance(value, str) or not value.strip() or value != value.strip():
-            raise PromptInvocationError(
-                f"scope claim value is invalid for {entry_id}"
-            )
+            raise PromptInvocationError(f"scope claim value is invalid for {entry_id}")
         if len(value) > MAX_STRING_CHARS:
             raise PromptInvocationBoundError(
                 f"scope claim value for {entry_id} exceeds maximum string length"
             )
         if description is None:
             description = ""
-        if not isinstance(description, str) or (
-            description and description != description.strip()
-        ):
-            raise PromptInvocationError(
-                f"scope claim description is invalid for {entry_id}"
-            )
+        if not isinstance(description, str) or (description and description != description.strip()):
+            raise PromptInvocationError(f"scope claim description is invalid for {entry_id}")
         if len(description) > MAX_STRING_CHARS:
             raise PromptInvocationBoundError(
                 f"scope claim description for {entry_id} exceeds maximum string length"
@@ -262,9 +253,7 @@ class PromptContentSegment:
     attributes: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        if not isinstance(self.segment_id, str) or not _ID_RE.fullmatch(
-            self.segment_id
-        ):
+        if not isinstance(self.segment_id, str) or not _ID_RE.fullmatch(self.segment_id):
             raise PromptInvocationSegmentError(
                 f"segment_id is not a stable identifier: {self.segment_id!r}"
             )
@@ -286,9 +275,7 @@ class PromptContentSegment:
             if value < 0:
                 raise PromptInvocationSegmentError(f"{name} must be non-negative")
         if self.end_char < self.start_char:
-            raise PromptInvocationSegmentError(
-                "segment must satisfy start_char <= end_char"
-            )
+            raise PromptInvocationSegmentError("segment must satisfy start_char <= end_char")
         if not isinstance(self.redact, bool):
             raise PromptInvocationSegmentError("redact must be a boolean")
         label = self.label if self.label is not None else ""
@@ -409,17 +396,13 @@ class PromptInvocationContext:
         object.__setattr__(
             self, "envelope_id", _require_identifier(self.envelope_id, "envelope_id")
         )
-        object.__setattr__(
-            self, "tenant_id", _require_identifier(self.tenant_id, "tenant_id")
-        )
+        object.__setattr__(self, "tenant_id", _require_identifier(self.tenant_id, "tenant_id"))
         if not isinstance(self.actor, ActorBinding):
             raise PromptInvocationContextError("actor must be an ActorBinding")
         if not isinstance(self.audience, AudienceBinding):
             raise PromptInvocationContextError("audience must be an AudienceBinding")
         if not isinstance(self.environment, EnvironmentBinding):
-            raise PromptInvocationContextError(
-                "environment must be an EnvironmentBinding"
-            )
+            raise PromptInvocationContextError("environment must be an EnvironmentBinding")
         if not self.environment.environment_id:
             raise PromptInvocationContextError(
                 "environment.environment_id is required runtime context"
@@ -444,21 +427,11 @@ class PromptInvocationContext:
             "content_segments",
             _coerce_segments(self.content_segments, "content_segments"),
         )
-        object.__setattr__(
-            self, "tool_id", _optional_identifier(self.tool_id, "tool_id")
-        )
-        object.__setattr__(
-            self, "tool_name", _optional_text(self.tool_name, "tool_name")
-        )
-        object.__setattr__(
-            self, "tool_version", _optional_text(self.tool_version, "tool_version")
-        )
-        object.__setattr__(
-            self, "server_id", _require_identifier(self.server_id, "server_id")
-        )
-        object.__setattr__(
-            self, "server_name", _optional_text(self.server_name, "server_name")
-        )
+        object.__setattr__(self, "tool_id", _optional_identifier(self.tool_id, "tool_id"))
+        object.__setattr__(self, "tool_name", _optional_text(self.tool_name, "tool_name"))
+        object.__setattr__(self, "tool_version", _optional_text(self.tool_version, "tool_version"))
+        object.__setattr__(self, "server_id", _require_identifier(self.server_id, "server_id"))
+        object.__setattr__(self, "server_name", _optional_text(self.server_name, "server_name"))
         object.__setattr__(
             self,
             "transport_peer",
@@ -516,26 +489,20 @@ class PromptInvocationContext:
             object.__setattr__(self, "delegation", tuple(self.delegation))
         for link in self.delegation:
             if not isinstance(link, DelegationLink):
-                raise PromptInvocationError(
-                    "delegation entries must be DelegationLink"
-                )
+                raise PromptInvocationError("delegation entries must be DelegationLink")
         if not isinstance(self.purpose, PurposeContext):
             raise PromptInvocationError("purpose must be a PurposeContext")
         if not isinstance(self.policy, PolicyRequirements):
             raise PromptInvocationError("policy must be PolicyRequirements")
         object.__setattr__(self, "nonce", _require_identifier(self.nonce, "nonce"))
-        object.__setattr__(
-            self, "created_at", _require_text(self.created_at, "created_at")
-        )
+        object.__setattr__(self, "created_at", _require_text(self.created_at, "created_at"))
         object.__setattr__(self, "deadline", _require_text(self.deadline, "deadline"))
         object.__setattr__(
             self,
             "trust_domain",
             _optional_identifier(self.trust_domain, "trust_domain"),
         )
-        object.__setattr__(
-            self, "trace_id", _optional_identifier(self.trace_id, "trace_id")
-        )
+        object.__setattr__(self, "trace_id", _optional_identifier(self.trace_id, "trace_id"))
         for name in (
             "intent_document_id",
             "formalization_artifact_id",
@@ -602,9 +569,7 @@ class PromptInvocationAdapter:
         max_argument_chars: int = MAX_STRING_CHARS,
         max_segments: int = MAX_COLLECTION_ITEMS,
     ) -> None:
-        if source_adapter is not None and not isinstance(
-            source_adapter, PromptIntentAdapter
-        ):
+        if source_adapter is not None and not isinstance(source_adapter, PromptIntentAdapter):
             raise TypeError("source_adapter must be a PromptIntentAdapter")
         if policy is not None and not isinstance(policy, PromptSourcePolicy):
             raise TypeError("policy must be a PromptSourcePolicy")
@@ -672,22 +637,16 @@ class PromptInvocationAdapter:
 
         if intent_document is None:
             try:
-                intent_document, decision = self.source_adapter.adapt_with_policy(
-                    record
-                )
+                intent_document, decision = self.source_adapter.adapt_with_policy(record)
             except PromptPolicyError as exc:
                 raise PromptInvocationPolicyError(exc.decision) from exc
         elif not isinstance(intent_document, IntentIRDocument):
             raise TypeError("intent_document must be an IntentIRDocument")
 
         bound_intent_id = (
-            intent_document_id
-            or context.intent_document_id
-            or intent_document.document_id
+            intent_document_id or context.intent_document_id or intent_document.document_id
         )
-        bound_formalization_id = (
-            formalization_artifact_id or context.formalization_artifact_id
-        )
+        bound_formalization_id = formalization_artifact_id or context.formalization_artifact_id
 
         self._validate_identity(
             record,
@@ -712,9 +671,7 @@ class PromptInvocationAdapter:
         unsupported, diagnostics, assumptions = self._collect_unsupported(
             record, context, bound_segments, intent_document
         )
-        source_maps = self._source_maps(
-            record, source.source_ref, bound_segments, intent_document
-        )
+        source_maps = self._source_maps(record, source.source_ref, bound_segments, intent_document)
 
         preconditions = list(context.preconditions)
         postconditions = list(context.postconditions)
@@ -726,10 +683,7 @@ class PromptInvocationAdapter:
                 continue
             if statement.kind is StatementKind.PRECONDITION and text not in preconditions:
                 preconditions.append(text)
-            elif (
-                statement.kind is StatementKind.POSTCONDITION
-                and text not in postconditions
-            ):
+            elif statement.kind is StatementKind.POSTCONDITION and text not in postconditions:
                 postconditions.append(text)
             elif statement.kind is StatementKind.FAILURE and text not in failure_modes:
                 failure_modes.append(text)
@@ -781,18 +735,15 @@ class PromptInvocationAdapter:
         )
 
         diagnostics = (
-            (
-                InvocationDiagnostic(
-                    code="invocation.prompt.adapted",
-                    message=(
-                        f"Adapted prompt {record.prompt_id!r} via "
-                        f"{PROMPT_INVOCATION_ADAPTER} without execution"
-                    ),
-                    severity=DiagnosticSeverity.INFO,
+            InvocationDiagnostic(
+                code="invocation.prompt.adapted",
+                message=(
+                    f"Adapted prompt {record.prompt_id!r} via "
+                    f"{PROMPT_INVOCATION_ADAPTER} without execution"
                 ),
-            )
-            + diagnostics
-        )
+                severity=DiagnosticSeverity.INFO,
+            ),
+        ) + diagnostics
 
         try:
             envelope = InvocationIntentEnvelope(
@@ -904,10 +855,7 @@ class PromptInvocationAdapter:
         intent_document_id: str,
         formalization_artifact_id: str,
     ) -> None:
-        if (
-            context.expected_prompt_id
-            and context.expected_prompt_id != record.prompt_id
-        ):
+        if context.expected_prompt_id and context.expected_prompt_id != record.prompt_id:
             raise PromptInvocationIdentityError(
                 f"prompt_id mismatch: expected {context.expected_prompt_id!r}, "
                 f"got {record.prompt_id!r}"
@@ -919,17 +867,11 @@ class PromptInvocationAdapter:
             raise PromptInvocationIdentityError(
                 "content_sha256 mismatch (identity drift or wrong revision)"
             )
-        if (
-            context.expected_entry_cid
-            and context.expected_entry_cid != record.entry_cid
-        ):
+        if context.expected_entry_cid and context.expected_entry_cid != record.entry_cid:
             raise PromptInvocationIdentityError(
                 "entry_cid mismatch between context expectation and record"
             )
-        if (
-            context.expected_content_cid
-            and context.expected_content_cid != record.content_cid
-        ):
+        if context.expected_content_cid and context.expected_content_cid != record.content_cid:
             raise PromptInvocationIdentityError(
                 "content_cid mismatch between context expectation and record"
             )
@@ -959,10 +901,7 @@ class PromptInvocationAdapter:
                     "expected_formalization_artifact_id set but no formalization "
                     "artifact identity was supplied"
                 )
-            if (
-                context.expected_formalization_artifact_id
-                != formalization_artifact_id
-            ):
+            if context.expected_formalization_artifact_id != formalization_artifact_id:
                 raise PromptInvocationIdentityError(
                     "formalization_artifact_id mismatch between context expectation "
                     "and supplied identity"
@@ -991,8 +930,7 @@ class PromptInvocationAdapter:
         ):
             if _is_caller_dispatcher_marker(candidate):
                 raise PromptInvocationDispatcherError(
-                    "caller-controlled dispatcher audience is rejected "
-                    f"({label}={candidate!r})"
+                    f"caller-controlled dispatcher audience is rejected ({label}={candidate!r})"
                 )
         for key, value in audience.attributes.items():
             if isinstance(value, str) and _is_caller_dispatcher_marker(value):
@@ -1000,9 +938,7 @@ class PromptInvocationAdapter:
                     "caller-controlled dispatcher audience is rejected "
                     f"(attributes.{key}={value!r})"
                 )
-            if key in {"authority", "controlled_by", "source"} and isinstance(
-                value, str
-            ):
+            if key in {"authority", "controlled_by", "source"} and isinstance(value, str):
                 if value.lower() in _CALLER_DISPATCHER_MARKERS:
                     raise PromptInvocationDispatcherError(
                         "audience.attributes.authority must not be caller-controlled"
@@ -1034,14 +970,10 @@ class PromptInvocationAdapter:
                 )
             for key, item in value.items():
                 if not isinstance(key, str):
-                    raise PromptInvocationBoundError(
-                        f"{path}: argument keys must be strings"
-                    )
+                    raise PromptInvocationBoundError(f"{path}: argument keys must be strings")
                 self._reject_dynamic_arguments(item, path=f"{path}.{key}")
             return
-        if isinstance(value, Sequence) and not isinstance(
-            value, (str, bytes, bytearray)
-        ):
+        if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
             for index, item in enumerate(value):
                 self._reject_dynamic_arguments(item, path=f"{path}[{index}]")
 
@@ -1060,17 +992,11 @@ class PromptInvocationAdapter:
             counter = [0]
         counter[0] += 1
         if counter[0] > max_nodes:
-            raise PromptInvocationBoundError(
-                f"{name} exceeds maximum of {max_nodes} JSON nodes"
-            )
+            raise PromptInvocationBoundError(f"{name} exceeds maximum of {max_nodes} JSON nodes")
         if depth > max_depth:
-            raise PromptInvocationBoundError(
-                f"{name} exceeds maximum JSON depth of {max_depth}"
-            )
+            raise PromptInvocationBoundError(f"{name} exceeds maximum JSON depth of {max_depth}")
         if isinstance(value, str) and len(value) > max_chars:
-            raise PromptInvocationBoundError(
-                f"{name} string exceeds maximum length of {max_chars}"
-            )
+            raise PromptInvocationBoundError(f"{name} string exceeds maximum length of {max_chars}")
         if isinstance(value, Mapping):
             if len(value) > MAX_COLLECTION_ITEMS:
                 raise PromptInvocationBoundError(
@@ -1088,9 +1014,7 @@ class PromptInvocationAdapter:
                     counter=counter,
                 )
             return
-        if isinstance(value, Sequence) and not isinstance(
-            value, (str, bytes, bytearray)
-        ):
+        if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
             if len(value) > MAX_COLLECTION_ITEMS:
                 raise PromptInvocationBoundError(
                     f"{name} sequence exceeds maximum of {MAX_COLLECTION_ITEMS} items"
@@ -1137,9 +1061,7 @@ class PromptInvocationAdapter:
         bound: list[BoundPromptSegment] = []
         for segment in declared:
             if segment.segment_id in seen_ids:
-                raise PromptInvocationSegmentError(
-                    f"duplicate segment_id: {segment.segment_id}"
-                )
+                raise PromptInvocationSegmentError(f"duplicate segment_id: {segment.segment_id}")
             seen_ids.add(segment.segment_id)
             if segment.end_char > text_len:
                 raise PromptInvocationSegmentError(
@@ -1211,9 +1133,7 @@ class PromptInvocationAdapter:
         else:
             # Caller-supplied segment views must match host-bound digests.
             supplied = payload["content_segments"]
-            if not isinstance(supplied, Sequence) or isinstance(
-                supplied, (str, bytes, bytearray)
-            ):
+            if not isinstance(supplied, Sequence) or isinstance(supplied, (str, bytes, bytearray)):
                 raise PromptInvocationSegmentError(
                     "redacted_arguments.content_segments must be a sequence"
                 )
@@ -1227,9 +1147,10 @@ class PromptInvocationAdapter:
                     raise PromptInvocationSegmentError(
                         f"content_segments[{index}] must be a mapping"
                     )
-                if item.get("content_sha256") and item.get(
-                    "content_sha256"
-                ) != bound.content_sha256:
+                if (
+                    item.get("content_sha256")
+                    and item.get("content_sha256") != bound.content_sha256
+                ):
                     raise PromptInvocationIdentityError(
                         f"content_segments[{index}] content_sha256 mismatch"
                     )
@@ -1256,9 +1177,7 @@ class PromptInvocationAdapter:
                 secret_refs=context.secret_refs,
                 attributes={
                     "segment_count": len(bound_segments),
-                    "segment_kinds": sorted(
-                        {seg.kind.value for seg in bound_segments}
-                    ),
+                    "segment_kinds": sorted({seg.kind.value for seg in bound_segments}),
                 },
             )
         except InvocationEnvelopeValidationError as exc:
@@ -1304,9 +1223,7 @@ class PromptInvocationAdapter:
         source_ref = record.to_source_ref()
         source_id = record.source_id or record.prompt_id
         if source_id and not _ID_RE.fullmatch(source_id):
-            source_id = (
-                f"source:{hashlib.sha256(source_id.encode('utf-8')).hexdigest()[:24]}"
-            )
+            source_id = f"source:{hashlib.sha256(source_id.encode('utf-8')).hexdigest()[:24]}"
         return SourceBinding(
             kind=InvocationKind.PROMPT,
             source_ref=source_ref.ref_id,
@@ -1388,24 +1305,15 @@ class PromptInvocationAdapter:
             effects=_claims_to_entries(context.resolved_effects, ScopeKind.EFFECT),
             capabilities=tuple(capability_entries),
             assets=_claims_to_entries(context.resolved_assets, ScopeKind.ASSET),
-            resources=_claims_to_entries(
-                context.resolved_resources, ScopeKind.RESOURCE
-            ),
-            data_classes=_claims_to_entries(
-                context.resolved_data_classes, ScopeKind.DATA
-            ),
+            resources=_claims_to_entries(context.resolved_resources, ScopeKind.RESOURCE),
+            data_classes=_claims_to_entries(context.resolved_data_classes, ScopeKind.DATA),
             network=_claims_to_entries(context.resolved_network, ScopeKind.NETWORK),
-            filesystem=_claims_to_entries(
-                context.resolved_filesystem, ScopeKind.FILESYSTEM
-            ),
-            subprocess=_claims_to_entries(
-                context.resolved_subprocess, ScopeKind.SUBPROCESS
-            ),
+            filesystem=_claims_to_entries(context.resolved_filesystem, ScopeKind.FILESYSTEM),
+            subprocess=_claims_to_entries(context.resolved_subprocess, ScopeKind.SUBPROCESS),
             secret_refs=tuple(
                 ScopeEntry(
                     entry_id=(
-                        f"scope:sref:{index}:"
-                        f"{hashlib.sha256(ref.encode('utf-8')).hexdigest()[:16]}"
+                        f"scope:sref:{index}:{hashlib.sha256(ref.encode('utf-8')).hexdigest()[:16]}"
                     ),
                     kind=ScopeKind.SECRET_REF,
                     value=ref,
@@ -1495,9 +1403,7 @@ class PromptInvocationAdapter:
             )
             assumptions.append(
                 InvocationAssumption(
-                    assumption_id=_stable_assumption_id(
-                        record, "unsupported-retained"
-                    ),
+                    assumption_id=_stable_assumption_id(record, "unsupported-retained"),
                     statement=(
                         "Unsupported and ambiguous prompt constructs were retained "
                         "as diagnostics and unsupported fields"
@@ -1510,9 +1416,7 @@ class PromptInvocationAdapter:
             if statement.kind is StatementKind.ASSUMPTION:
                 assumptions.append(
                     InvocationAssumption(
-                        assumption_id=(
-                            f"assume:intent:{_hash_token(statement.statement_id)}"
-                        ),
+                        assumption_id=(f"assume:intent:{_hash_token(statement.statement_id)}"),
                         statement=statement.normalized_text[:MAX_STRING_CHARS],
                         source_ref=source_ref,
                         attributes={"statement_id": statement.statement_id},
@@ -1528,9 +1432,7 @@ class PromptInvocationAdapter:
                 code="invocation.prompt.segments_bound",
                 message=(
                     "Bound "
-                    + ", ".join(
-                        f"{count} {kind}" for kind, count in sorted(kind_counts.items())
-                    )
+                    + ", ".join(f"{count} {kind}" for kind, count in sorted(kind_counts.items()))
                     + " segment(s) with exact source spans"
                 ),
                 severity=DiagnosticSeverity.INFO,
@@ -1637,9 +1539,7 @@ def _optional_identifier(value: Any, name: str) -> str:
     return _require_identifier(value, name)
 
 
-def _unique_strings(
-    values: Sequence[str] | Iterable[str] | None, name: str
-) -> tuple[str, ...]:
+def _unique_strings(values: Sequence[str] | Iterable[str] | None, name: str) -> tuple[str, ...]:
     if values is None:
         return ()
     if isinstance(values, (str, bytes, bytearray)):
@@ -1658,15 +1558,11 @@ def _unique_strings(
     return tuple(result)
 
 
-def _unique_identifiers(
-    values: Sequence[str] | Iterable[str] | None, name: str
-) -> tuple[str, ...]:
+def _unique_identifiers(values: Sequence[str] | Iterable[str] | None, name: str) -> tuple[str, ...]:
     items = _unique_strings(values, name)
     for item in items:
         if not _ID_RE.fullmatch(item):
-            raise PromptInvocationError(
-                f"{name} contains an invalid identifier: {item!r}"
-            )
+            raise PromptInvocationError(f"{name} contains an invalid identifier: {item!r}")
     return items
 
 
@@ -1687,13 +1583,9 @@ def _unique_texts(
         result: list[str] = []
         for item in items:
             if not isinstance(item, str) or not item.strip() or item != item.strip():
-                raise PromptInvocationError(
-                    f"{name} entries must be non-empty strings"
-                )
+                raise PromptInvocationError(f"{name} entries must be non-empty strings")
             if len(item) > MAX_STRING_CHARS:
-                raise PromptInvocationBoundError(
-                    f"{name} entry exceeds maximum length"
-                )
+                raise PromptInvocationBoundError(f"{name} entry exceeds maximum length")
             result.append(item)
         return tuple(result)
     return _unique_strings(values, name)
@@ -1706,9 +1598,7 @@ def _coerce_claims(
     if values is None:
         return ()
     if isinstance(values, (str, bytes, bytearray)):
-        raise PromptInvocationError(
-            f"{name} must be a sequence of ResolvedScopeClaim"
-        )
+        raise PromptInvocationError(f"{name} must be a sequence of ResolvedScopeClaim")
     items = tuple(values)
     if len(items) > MAX_COLLECTION_ITEMS:
         raise PromptInvocationBoundError(f"{name} exceeds maximum collection size")
@@ -1723,13 +1613,9 @@ def _coerce_claims(
                 attributes=item.get("attributes"),
             )
         if not isinstance(item, ResolvedScopeClaim):
-            raise PromptInvocationError(
-                f"{name} entries must be ResolvedScopeClaim"
-            )
+            raise PromptInvocationError(f"{name} entries must be ResolvedScopeClaim")
         if item.entry_id in seen:
-            raise PromptInvocationError(
-                f"duplicate scope claim entry_id: {item.entry_id}"
-            )
+            raise PromptInvocationError(f"duplicate scope claim entry_id: {item.entry_id}")
         seen.add(item.entry_id)
         result.append(item)
     return tuple(result)
@@ -1742,9 +1628,7 @@ def _coerce_segments(
     if values is None:
         return ()
     if isinstance(values, (str, bytes, bytearray)):
-        raise PromptInvocationSegmentError(
-            f"{name} must be a sequence of PromptContentSegment"
-        )
+        raise PromptInvocationSegmentError(f"{name} must be a sequence of PromptContentSegment")
     items = tuple(values)
     if len(items) > MAX_COLLECTION_ITEMS:
         raise PromptInvocationBoundError(f"{name} exceeds maximum collection size")
@@ -1761,9 +1645,7 @@ def _coerce_segments(
                 attributes=item.get("attributes") or {},
             )
         if not isinstance(item, PromptContentSegment):
-            raise PromptInvocationSegmentError(
-                f"{name} entries must be PromptContentSegment"
-            )
+            raise PromptInvocationSegmentError(f"{name} entries must be PromptContentSegment")
         result.append(item)
     return tuple(result)
 

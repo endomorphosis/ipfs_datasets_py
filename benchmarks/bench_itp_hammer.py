@@ -157,7 +157,9 @@ def _import_golden_helpers():
     return _golden_helpers
 
 
-def load_fixture_manifest(fixture_dir: Path, *, corpus_file: Optional[str] = None) -> Tuple[CorpusManifest, Path]:
+def load_fixture_manifest(
+    fixture_dir: Path, *, corpus_file: Optional[str] = None
+) -> Tuple[CorpusManifest, Path]:
     """Build a :class:`CorpusManifest` from a declarative corpus JSON fixture
     under ``fixture_dir``. Prefers the golden corpus
     (``golden_corpus.json``, the HAMMER-014 fixture this benchmark's

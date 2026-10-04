@@ -38,9 +38,7 @@ from .ontology import CorpusNodeType, IntentCorpusGraph
 
 SEMANTIC_ONTOLOGY_VERSION: Final = "semantic-intent-ontology/v1"
 SEMANTIC_GRAPH_SCHEMA_VERSION: Final = "semantic-intent-graph/v1"
-SEMANTIC_GRAPH_MEDIA_TYPE: Final = (
-    "application/vnd.intent-ir.semantic-graph+json"
-)
+SEMANTIC_GRAPH_MEDIA_TYPE: Final = "application/vnd.intent-ir.semantic-graph+json"
 SEMANTIC_GRAPH_IDENTITY_DOMAIN: Final = "semantic-intent-graph"
 
 # Descriptive aliases for callers that qualify semantic constants explicitly.
@@ -190,16 +188,12 @@ class SemanticGraphOntology:
         expected_class = _edge_class(edge)
         if category is not expected_class:
             raise SemanticGraphValidationError(
-                f"{edge.value} must be classified as {expected_class.value}, "
-                f"not {category.value}"
+                f"{edge.value} must be classified as {expected_class.value}, not {category.value}"
             )
 
         valid = False
         if edge is SemanticEdgeType.HAS_GOAL:
-            valid = (
-                source is SemanticNodeType.INTENT_DOCUMENT
-                and target is SemanticNodeType.GOAL
-            )
+            valid = source is SemanticNodeType.INTENT_DOCUMENT and target is SemanticNodeType.GOAL
         elif edge is SemanticEdgeType.REQUIRES:
             valid = (
                 source in {SemanticNodeType.ACTION, SemanticNodeType.INTENT_DOCUMENT}
@@ -208,44 +202,29 @@ class SemanticGraphOntology:
         elif edge is SemanticEdgeType.GUARDED_BY:
             valid = source is SemanticNodeType.ACTION and target in _STATEMENT_NODE_TYPES
         elif edge is SemanticEdgeType.PERFORMS:
-            valid = (
-                source is SemanticNodeType.ACTOR
-                and target is SemanticNodeType.ACTION
-            )
+            valid = source is SemanticNodeType.ACTOR and target is SemanticNodeType.ACTION
         elif edge is SemanticEdgeType.USES:
-            valid = (
-                source is SemanticNodeType.ACTION
-                and target in {SemanticNodeType.RESOURCE, SemanticNodeType.TOOL}
-            )
+            valid = source is SemanticNodeType.ACTION and target in {
+                SemanticNodeType.RESOURCE,
+                SemanticNodeType.TOOL,
+            }
         elif edge is SemanticEdgeType.CONSUMES:
-            valid = (
-                source is SemanticNodeType.ACTION
-                and target is SemanticNodeType.INPUT
-            )
+            valid = source is SemanticNodeType.ACTION and target is SemanticNodeType.INPUT
         elif edge is SemanticEdgeType.PRODUCES:
-            valid = (
-                source is SemanticNodeType.ACTION
-                and target is SemanticNodeType.OUTPUT
-            )
+            valid = source is SemanticNodeType.ACTION and target is SemanticNodeType.OUTPUT
         elif edge is SemanticEdgeType.CAUSES:
             valid = source is SemanticNodeType.ACTION and target in _STATEMENT_NODE_TYPES
         elif edge is SemanticEdgeType.VERIFIED_BY:
             valid = source is SemanticNodeType.ACTION and target in _STATEMENT_NODE_TYPES
         elif edge in _CONTROL_EDGE_TYPES:
-            valid = (
-                source is SemanticNodeType.ACTION
-                and target is SemanticNodeType.ACTION
-            )
+            valid = source is SemanticNodeType.ACTION and target is SemanticNodeType.ACTION
         elif edge is SemanticEdgeType.GROUNDED_IN:
             valid = (
                 source is not SemanticNodeType.SOURCE_REFERENCE
                 and target is SemanticNodeType.SOURCE_REFERENCE
             )
         elif edge is SemanticEdgeType.LOWERS_TO:
-            valid = (
-                source in _STATEMENT_NODE_TYPES
-                and target is SemanticNodeType.FORMAL_SYMBOL
-            )
+            valid = source in _STATEMENT_NODE_TYPES and target is SemanticNodeType.FORMAL_SYMBOL
         elif edge is SemanticEdgeType.SIMILAR_TO:
             valid = source is target
         if not valid:
@@ -287,9 +266,7 @@ class SemanticGraphNode(Mapping[str, Any]):
         _validate_digest(self.graph_digest, "node graph_digest")
         source_ref_ids = _canonical_ids(self.source_ref_ids, "node source_ref_ids")
         if not source_ref_ids:
-            raise SemanticGraphValidationError(
-                "semantic nodes must have source_ref_ids"
-            )
+            raise SemanticGraphValidationError("semantic nodes must have source_ref_ids")
         object.__setattr__(self, "source_ref_ids", source_ref_ids)
         if self.ontology_version != SEMANTIC_ONTOLOGY_VERSION:
             raise SemanticGraphValidationError("unsupported node ontology_version")
@@ -354,16 +331,12 @@ class SemanticGraphEdge(Mapping[str, Any]):
         _validate_id(self.source, "edge source")
         _validate_id(self.target, "edge target")
         if self.source == self.target:
-            raise SemanticGraphValidationError(
-                "self-referential semantic graph edges are invalid"
-            )
+            raise SemanticGraphValidationError("self-referential semantic graph edges are invalid")
         _validate_digest(self.intent_ir_digest, "edge intent_ir_digest")
         _validate_digest(self.graph_digest, "edge graph_digest")
         source_ref_ids = _canonical_ids(self.source_ref_ids, "edge source_ref_ids")
         if not source_ref_ids:
-            raise SemanticGraphValidationError(
-                "semantic graph edges must have source_ref_ids"
-            )
+            raise SemanticGraphValidationError("semantic graph edges must have source_ref_ids")
         object.__setattr__(self, "source_ref_ids", source_ref_ids)
         if self.ontology_version != SEMANTIC_ONTOLOGY_VERSION:
             raise SemanticGraphValidationError("unsupported edge ontology_version")
@@ -422,22 +395,14 @@ class SemanticIntentGraph(Mapping[str, Any]):
         object.__setattr__(self, "nodes", tuple(self.nodes))
         object.__setattr__(self, "semantic_edges", tuple(self.semantic_edges))
         object.__setattr__(self, "similarity_edges", tuple(self.similarity_edges))
-        source_ref_ids = _canonical_ids(
-            self.source_ref_ids, "graph source_ref_ids"
-        )
+        source_ref_ids = _canonical_ids(self.source_ref_ids, "graph source_ref_ids")
         if not source_ref_ids:
-            raise SemanticGraphValidationError(
-                "source_ref_ids must not be empty"
-            )
+            raise SemanticGraphValidationError("source_ref_ids must not be empty")
         object.__setattr__(self, "source_ref_ids", source_ref_ids)
         if self.schema_version != SEMANTIC_GRAPH_SCHEMA_VERSION:
-            raise SemanticGraphValidationError(
-                "unsupported semantic graph schema_version"
-            )
+            raise SemanticGraphValidationError("unsupported semantic graph schema_version")
         if self.ontology_version != SEMANTIC_ONTOLOGY_VERSION:
-            raise SemanticGraphValidationError(
-                "unsupported semantic graph ontology_version"
-            )
+            raise SemanticGraphValidationError("unsupported semantic graph ontology_version")
         _validate_digest(self.intent_ir_digest, "intent_ir_digest")
         _validate_digest(self.graph_digest, "graph_digest")
         _require_text(self.intent_ir_cid, "intent_ir_cid")
@@ -445,19 +410,13 @@ class SemanticIntentGraph(Mapping[str, Any]):
             bytes.fromhex(self.intent_ir_digest.removeprefix("sha256:"))
         )
         if self.intent_ir_cid != expected_ir_cid:
-            raise SemanticGraphValidationError(
-                "intent_ir_cid does not match intent_ir_digest"
-            )
+            raise SemanticGraphValidationError("intent_ir_cid does not match intent_ir_digest")
         if self.corpus_graph_digest:
             _validate_digest(self.corpus_graph_digest, "corpus_graph_digest")
         elif self.corpus_graph_cid:
-            raise SemanticGraphValidationError(
-                "corpus_graph_cid requires corpus_graph_digest"
-            )
+            raise SemanticGraphValidationError("corpus_graph_cid requires corpus_graph_digest")
         if any(not isinstance(node, SemanticGraphNode) for node in self.nodes):
-            raise SemanticGraphValidationError(
-                "nodes must contain SemanticGraphNode values"
-            )
+            raise SemanticGraphValidationError("nodes must contain SemanticGraphNode values")
         all_edges = self.semantic_edges + self.similarity_edges
         if any(not isinstance(edge, SemanticGraphEdge) for edge in all_edges):
             raise SemanticGraphValidationError(
@@ -465,18 +424,13 @@ class SemanticIntentGraph(Mapping[str, Any]):
             )
         if tuple(sorted(self.nodes, key=lambda item: item.node_id)) != self.nodes:
             raise SemanticGraphValidationError("nodes must be sorted by node_id")
-        if tuple(
-            sorted(self.semantic_edges, key=lambda item: item.edge_id)
-        ) != self.semantic_edges:
-            raise SemanticGraphValidationError(
-                "semantic_edges must be sorted by edge_id"
-            )
-        if tuple(
-            sorted(self.similarity_edges, key=lambda item: item.edge_id)
-        ) != self.similarity_edges:
-            raise SemanticGraphValidationError(
-                "similarity_edges must be sorted by edge_id"
-            )
+        if tuple(sorted(self.semantic_edges, key=lambda item: item.edge_id)) != self.semantic_edges:
+            raise SemanticGraphValidationError("semantic_edges must be sorted by edge_id")
+        if (
+            tuple(sorted(self.similarity_edges, key=lambda item: item.edge_id))
+            != self.similarity_edges
+        ):
+            raise SemanticGraphValidationError("similarity_edges must be sorted by edge_id")
         node_by_id = {node.node_id: node for node in self.nodes}
         if len(node_by_id) != len(self.nodes):
             raise SemanticGraphValidationError("duplicate node_id")
@@ -485,48 +439,32 @@ class SemanticIntentGraph(Mapping[str, Any]):
         known_sources = set(self.source_ref_ids)
         for node in self.nodes:
             if node.intent_ir_digest != self.intent_ir_digest:
-                raise SemanticGraphValidationError(
-                    "node Intent IR digest binding mismatch"
-                )
+                raise SemanticGraphValidationError("node Intent IR digest binding mismatch")
             if node.graph_digest != self.graph_digest:
-                raise SemanticGraphValidationError(
-                    "node graph_digest binding mismatch"
-                )
+                raise SemanticGraphValidationError("node graph_digest binding mismatch")
             if not set(node.source_ref_ids) <= known_sources:
-                raise SemanticGraphValidationError(
-                    "node references an unknown source_ref_id"
-                )
+                raise SemanticGraphValidationError("node references an unknown source_ref_id")
         for edge in all_edges:
             if edge.intent_ir_digest != self.intent_ir_digest:
-                raise SemanticGraphValidationError(
-                    "edge Intent IR digest binding mismatch"
-                )
+                raise SemanticGraphValidationError("edge Intent IR digest binding mismatch")
             if edge.graph_digest != self.graph_digest:
-                raise SemanticGraphValidationError(
-                    "edge graph_digest binding mismatch"
-                )
+                raise SemanticGraphValidationError("edge graph_digest binding mismatch")
             if edge.source not in node_by_id or edge.target not in node_by_id:
                 raise SemanticGraphValidationError("edge endpoint is dangling")
             if not set(edge.source_ref_ids) <= known_sources:
-                raise SemanticGraphValidationError(
-                    "edge references an unknown source_ref_id"
-                )
+                raise SemanticGraphValidationError("edge references an unknown source_ref_id")
             SEMANTIC_ONTOLOGY.validate_edge(
                 edge.edge_type,
                 node_by_id[edge.source].node_type,
                 node_by_id[edge.target].node_type,
                 edge_class=edge.edge_class,
             )
-        if any(
-            edge.edge_class is SemanticEdgeClass.SIMILARITY
-            for edge in self.semantic_edges
-        ):
+        if any(edge.edge_class is SemanticEdgeClass.SIMILARITY for edge in self.semantic_edges):
             raise SemanticGraphValidationError(
                 "similarity observations cannot appear in semantic_edges"
             )
         if any(
-            edge.edge_class is not SemanticEdgeClass.SIMILARITY
-            for edge in self.similarity_edges
+            edge.edge_class is not SemanticEdgeClass.SIMILARITY for edge in self.similarity_edges
         ):
             raise SemanticGraphValidationError(
                 "similarity_edges may contain only similarity observations"
@@ -578,9 +516,7 @@ class SemanticIntentGraph(Mapping[str, Any]):
             "ontology_version": self.ontology_version,
             "schema_version": self.schema_version,
             "semantic_edges": [edge.to_dict() for edge in self.semantic_edges],
-            "similarity_edges": [
-                edge.to_dict() for edge in self.similarity_edges
-            ],
+            "similarity_edges": [edge.to_dict() for edge in self.similarity_edges],
             "source_ref_ids": list(self.source_ref_ids),
         }
 
@@ -624,9 +560,7 @@ class _GraphBuilder:
         )
         existing = self.nodes.get(node_id)
         if existing is not None and existing != node:
-            raise SemanticProjectionError(
-                f"conflicting projection for node {node_id}"
-            )
+            raise SemanticProjectionError(f"conflicting projection for node {node_id}")
         self.nodes[node_id] = node
         return node_id
 
@@ -665,9 +599,7 @@ class _GraphBuilder:
         )
         existing = self.edges.get(edge_id)
         if existing is not None and existing != edge:
-            raise SemanticProjectionError(
-                f"conflicting projection for edge {edge_id}"
-            )
+            raise SemanticProjectionError(f"conflicting projection for edge {edge_id}")
         self.edges[edge_id] = edge
         return edge_id
 
@@ -690,9 +622,7 @@ class SemanticIntentGraphProjector:
 
     def __init__(self, store: ContentAddressedStore | None = None) -> None:
         if store is not None and not isinstance(store, ContentAddressedStore):
-            raise TypeError(
-                "store must implement put_bytes(payload, media_type=...)"
-            )
+            raise TypeError("store must implement put_bytes(payload, media_type=...)")
         self.store = store
 
     def project(
@@ -705,22 +635,16 @@ class SemanticIntentGraphProjector:
         try:
             validated = validate_intent_ir(document)
         except (IntentIRValidationError, TypeError, ValueError) as exc:
-            raise SemanticProjectionError(
-                f"Intent IR validation failed: {exc}"
-            ) from exc
+            raise SemanticProjectionError(f"Intent IR validation failed: {exc}") from exc
         self._require_exact_grounding(validated)
-        if corpus_graph is not None and not isinstance(
-            corpus_graph, IntentCorpusGraph
-        ):
+        if corpus_graph is not None and not isinstance(corpus_graph, IntentCorpusGraph):
             raise TypeError("corpus_graph must be an IntentCorpusGraph")
 
         ir_bytes = canonical_intent_ir_bytes(validated)
         ir_digest = intent_ir_sha256(validated)
         ir_cid = cid_v1(ir_bytes)
         source_by_id = {item.ref_id: item for item in validated.sources}
-        statement_by_id = {
-            item.statement_id: item for item in validated.statements
-        }
+        statement_by_id = {item.statement_id: item for item in validated.statements}
         corpus_nodes = {
             source.ref_id: self._resolve_corpus_node(source, corpus_graph)
             for source in validated.sources
@@ -754,9 +678,7 @@ class SemanticIntentGraphProjector:
                 source_ref_ids=(source.ref_id,),
                 properties={
                     "container_sha256": (
-                        f"sha256:{source.container_sha256}"
-                        if source.container_sha256
-                        else ""
+                        f"sha256:{source.container_sha256}" if source.container_sha256 else ""
                     ),
                     "container_uri": source.container_uri,
                     "content_cid": source.content_cid,
@@ -773,9 +695,7 @@ class SemanticIntentGraphProjector:
             )
 
         statement_nodes: dict[str, str] = {}
-        for statement in sorted(
-            validated.statements, key=lambda item: item.statement_id
-        ):
+        for statement in sorted(validated.statements, key=lambda item: item.statement_id):
             node_type = _statement_node_type(statement.kind)
             statement_node = builder.add_node(
                 node_type,
@@ -834,8 +754,7 @@ class SemanticIntentGraphProjector:
                     "actor": action.actor,
                     "entry": action.action_id in validated.entry_action_ids,
                     "grounding": action.grounding.value,
-                    "terminal": action.action_id
-                    in validated.terminal_action_ids,
+                    "terminal": action.action_id in validated.terminal_action_ids,
                     "verb": action.verb,
                 },
             )
@@ -885,9 +804,7 @@ class SemanticIntentGraphProjector:
                     edge_type,
                     action_node,
                     statement_nodes[statement_id],
-                    source_ref_ids=_union_ids(
-                        action.source_ref_ids, statement.source_ref_ids
-                    ),
+                    source_ref_ids=_union_ids(action.source_ref_ids, statement.source_ref_ids),
                 )
             for statement_id in action.effect_ids:
                 statement = statement_by_id[statement_id]
@@ -895,9 +812,7 @@ class SemanticIntentGraphProjector:
                     SemanticEdgeType.CAUSES,
                     action_node,
                     statement_nodes[statement_id],
-                    source_ref_ids=_union_ids(
-                        action.source_ref_ids, statement.source_ref_ids
-                    ),
+                    source_ref_ids=_union_ids(action.source_ref_ids, statement.source_ref_ids),
                 )
             for statement_id in action.verification_ids:
                 statement = statement_by_id[statement_id]
@@ -905,14 +820,10 @@ class SemanticIntentGraphProjector:
                     SemanticEdgeType.VERIFIED_BY,
                     action_node,
                     statement_nodes[statement_id],
-                    source_ref_ids=_union_ids(
-                        action.source_ref_ids, statement.source_ref_ids
-                    ),
+                    source_ref_ids=_union_ids(action.source_ref_ids, statement.source_ref_ids),
                 )
 
-        for control in sorted(
-            validated.control_edges, key=lambda item: item.edge_id
-        ):
+        for control in sorted(validated.control_edges, key=lambda item: item.edge_id):
             builder.add_edge(
                 _CONTROL_EDGE_MAP[control.kind],
                 action_nodes[control.source_action_id],
@@ -931,9 +842,7 @@ class SemanticIntentGraphProjector:
                     SemanticEdgeType.GUARDED_BY,
                     action_nodes[control.source_action_id],
                     statement_nodes[control.guard_statement_id],
-                    source_ref_ids=_union_ids(
-                        control.source_ref_ids, guard.source_ref_ids
-                    ),
+                    source_ref_ids=_union_ids(control.source_ref_ids, guard.source_ref_ids),
                     properties={"control_edge_id": control.edge_id},
                 )
 
@@ -941,9 +850,7 @@ class SemanticIntentGraphProjector:
         formal_refs: dict[str, set[str]] = {}
         for statement in validated.statements:
             if statement.predicate:
-                formal_refs.setdefault(statement.predicate, set()).update(
-                    statement.source_ref_ids
-                )
+                formal_refs.setdefault(statement.predicate, set()).update(statement.source_ref_ids)
         for predicate, ref_ids in sorted(formal_refs.items()):
             formal_nodes[predicate] = builder.add_node(
                 SemanticNodeType.FORMAL_SYMBOL,
@@ -954,9 +861,7 @@ class SemanticIntentGraphProjector:
                 source_ref_ids=tuple(sorted(ref_ids)),
                 properties={"predicate": predicate},
             )
-        for statement in sorted(
-            validated.statements, key=lambda item: item.statement_id
-        ):
+        for statement in sorted(validated.statements, key=lambda item: item.statement_id):
             if statement.predicate:
                 builder.add_edge(
                     SemanticEdgeType.LOWERS_TO,
@@ -978,9 +883,7 @@ class SemanticIntentGraphProjector:
                     source_ref_ids=(ref_id,),
                 )
 
-        unbound_nodes = tuple(
-            sorted(builder.nodes.values(), key=lambda item: item.node_id)
-        )
+        unbound_nodes = tuple(sorted(builder.nodes.values(), key=lambda item: item.node_id))
         unbound_semantic_edges = tuple(
             sorted(
                 (
@@ -1004,12 +907,9 @@ class SemanticIntentGraphProjector:
             corpus_graph_digest=corpus_digest,
             corpus_graph_cid=corpus_cid,
         )
-        nodes = tuple(
-            replace(node, graph_digest=graph_digest) for node in unbound_nodes
-        )
+        nodes = tuple(replace(node, graph_digest=graph_digest) for node in unbound_nodes)
         semantic_edges = tuple(
-            replace(edge, graph_digest=graph_digest)
-            for edge in unbound_semantic_edges
+            replace(edge, graph_digest=graph_digest) for edge in unbound_semantic_edges
         )
         graph = SemanticIntentGraph(
             nodes=nodes,
@@ -1038,45 +938,31 @@ class SemanticIntentGraphProjector:
     def _require_exact_grounding(document: IntentIRDocument) -> None:
         ungrounded: list[str] = []
         for statement in document.statements:
-            if (
-                statement.grounding is not NodeGrounding.GROUNDED
-                or not statement.source_ref_ids
-            ):
+            if statement.grounding is not NodeGrounding.GROUNDED or not statement.source_ref_ids:
                 ungrounded.append(f"statement {statement.statement_id!r}")
         for action in document.actions:
-            if (
-                action.grounding is not NodeGrounding.GROUNDED
-                or not action.source_ref_ids
-            ):
+            if action.grounding is not NodeGrounding.GROUNDED or not action.source_ref_ids:
                 ungrounded.append(f"action {action.action_id!r}")
         for edge in document.control_edges:
-            if (
-                edge.grounding is not NodeGrounding.GROUNDED
-                or not edge.source_ref_ids
-            ):
+            if edge.grounding is not NodeGrounding.GROUNDED or not edge.source_ref_ids:
                 ungrounded.append(f"control edge {edge.edge_id!r}")
         if ungrounded:
             raise SemanticProjectionError(
-                "semantic projection rejects ungrounded IR nodes or edges: "
-                + ", ".join(ungrounded)
+                "semantic projection rejects ungrounded IR nodes or edges: " + ", ".join(ungrounded)
             )
 
     @staticmethod
-    def _resolve_corpus_node(
-        source: SourceRef, corpus_graph: IntentCorpusGraph | None
-    ) -> str:
+    def _resolve_corpus_node(source: SourceRef, corpus_graph: IntentCorpusGraph | None) -> str:
         if corpus_graph is None:
             return ""
         source_digest = f"sha256:{source.content_sha256}"
         if source_digest not in corpus_graph.source_digests:
             raise SemanticProjectionError(
-                f"source {source.ref_id!r} content digest is absent from "
-                "the supplied corpus graph"
+                f"source {source.ref_id!r} content digest is absent from the supplied corpus graph"
             )
         if (
             source.container_sha256
-            and f"sha256:{source.container_sha256}"
-            not in corpus_graph.source_digests
+            and f"sha256:{source.container_sha256}" not in corpus_graph.source_digests
         ):
             raise SemanticProjectionError(
                 f"source {source.ref_id!r} container digest is absent from "
@@ -1207,9 +1093,7 @@ def _shared_action_reference_sources(
         )
         for node_type, values in fields:
             for value in values:
-                shared.setdefault((node_type, value), set()).update(
-                    action.source_ref_ids
-                )
+                shared.setdefault((node_type, value), set()).update(action.source_ref_ids)
     return shared
 
 
@@ -1234,15 +1118,11 @@ def _stable_id(namespace: str, kind: str, identity: Mapping[str, Any]) -> str:
 
 def _canonical_ids(values: Any, label: str) -> tuple[str, ...]:
     if isinstance(values, (str, bytes)) or not isinstance(values, tuple):
-        raise SemanticGraphValidationError(
-            f"{label} must be an immutable tuple"
-        )
+        raise SemanticGraphValidationError(f"{label} must be an immutable tuple")
     for value in values:
         _validate_id(value, label)
     if len(set(values)) != len(values):
-        raise SemanticGraphValidationError(
-            f"{label} must not contain duplicates"
-        )
+        raise SemanticGraphValidationError(f"{label} must not contain duplicates")
     return tuple(sorted(values))
 
 
@@ -1250,35 +1130,22 @@ def _enum_value(enum_type: type[Enum], value: Any, label: str) -> Any:
     try:
         return value if isinstance(value, enum_type) else enum_type(value)
     except (TypeError, ValueError) as exc:
-        raise SemanticGraphValidationError(
-            f"unknown {label}: {value!r}"
-        ) from exc
+        raise SemanticGraphValidationError(f"unknown {label}: {value!r}") from exc
 
 
 def _validate_id(value: Any, label: str) -> None:
     if not isinstance(value, str) or not _ID_RE.fullmatch(value):
-        raise SemanticGraphValidationError(
-            f"{label} is not a valid stable identifier"
-        )
+        raise SemanticGraphValidationError(f"{label} is not a valid stable identifier")
 
 
 def _validate_digest(value: Any, label: str) -> None:
     if not isinstance(value, str) or not _DIGEST_RE.fullmatch(value):
-        raise SemanticGraphValidationError(
-            f"{label} must be a lowercase sha256:<hex> digest"
-        )
+        raise SemanticGraphValidationError(f"{label} must be a lowercase sha256:<hex> digest")
 
 
 def _require_text(value: Any, label: str) -> str:
-    if (
-        not isinstance(value, str)
-        or not value
-        or value.strip() != value
-        or "\x00" in value
-    ):
-        raise SemanticGraphValidationError(
-            f"{label} must be non-empty normalized text"
-        )
+    if not isinstance(value, str) or not value or value.strip() != value or "\x00" in value:
+        raise SemanticGraphValidationError(f"{label} must be non-empty normalized text")
     return value
 
 
@@ -1298,9 +1165,7 @@ def _freeze_mapping(value: Mapping[str, Any]) -> Mapping[str, Any]:
 
 def _freeze(value: Any) -> Any:
     if isinstance(value, Mapping):
-        return MappingProxyType(
-            {str(key): _freeze(item) for key, item in value.items()}
-        )
+        return MappingProxyType({str(key): _freeze(item) for key, item in value.items()})
     if isinstance(value, (list, tuple)):
         return tuple(_freeze(item) for item in value)
     if value is None or isinstance(value, (str, int, float, bool)):
@@ -1321,9 +1186,7 @@ def _thaw(value: Any) -> Any:
 def _validate_property_strings(value: Any) -> None:
     if isinstance(value, str):
         if len(value) > _MAX_PROPERTY_STRING_CHARS:
-            raise SemanticGraphValidationError(
-                "graph property string exceeds the bounded size"
-            )
+            raise SemanticGraphValidationError("graph property string exceeds the bounded size")
         return
     if isinstance(value, Mapping):
         for key, item in value.items():

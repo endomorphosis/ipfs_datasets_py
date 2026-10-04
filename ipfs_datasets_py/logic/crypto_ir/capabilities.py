@@ -43,9 +43,7 @@ _SEMVER_RE: Final[re.Pattern[str]] = re.compile(
     r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)"
     r"(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$"
 )
-_CAPABILITY_ID_RE: Final[re.Pattern[str]] = re.compile(
-    r"^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$"
-)
+_CAPABILITY_ID_RE: Final[re.Pattern[str]] = re.compile(r"^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$")
 
 
 class CryptoIRCapabilityError(ValueError):
@@ -117,14 +115,10 @@ def _as_mapping(value: Any, name: str) -> Mapping[str, Any]:
     return value
 
 
-def _known_fields(
-    value: Mapping[str, Any], allowed: frozenset[str], name: str
-) -> None:
+def _known_fields(value: Mapping[str, Any], allowed: frozenset[str], name: str) -> None:
     unknown = sorted(set(value) - allowed)
     if unknown:
-        raise CryptoIRCapabilityError(
-            f"unknown {name} field(s): {', '.join(unknown)}"
-        )
+        raise CryptoIRCapabilityError(f"unknown {name} field(s): {', '.join(unknown)}")
 
 
 def _attributes(value: Mapping[str, Any] | None) -> Mapping[str, Any]:
@@ -144,9 +138,7 @@ def _payload(value: Any) -> Any:
 def _semver(value: Any, name: str) -> str:
     text = _text(value, name)
     if not _SEMVER_RE.fullmatch(text):
-        raise CryptoIRCapabilityError(
-            f"{name} must be a semantic version (major.minor.patch)"
-        )
+        raise CryptoIRCapabilityError(f"{name} must be a semantic version (major.minor.patch)")
     return text
 
 
@@ -218,9 +210,7 @@ class CapabilityDescriptor:
             "semantic_version",
             _semver(self.semantic_version, "semantic_version"),
         )
-        object.__setattr__(
-            self, "status", _enum(CapabilityStatus, self.status, "status")
-        )
+        object.__setattr__(self, "status", _enum(CapabilityStatus, self.status, "status"))
         object.__setattr__(
             self,
             "surfaces",
@@ -231,9 +221,7 @@ class CapabilityDescriptor:
             "chain_namespaces",
             _unique_texts(self.chain_namespaces, "chain_namespaces"),
         )
-        object.__setattr__(
-            self, "features", _unique_texts(self.features, "features")
-        )
+        object.__setattr__(self, "features", _unique_texts(self.features, "features"))
         if not isinstance(self.deterministic, bool):
             raise CryptoIRCapabilityError("deterministic must be a boolean")
         if not isinstance(self.side_effect_free, bool):
@@ -245,17 +233,11 @@ class CapabilityDescriptor:
         object.__setattr__(
             self, "provider_id", _text(self.provider_id, "provider_id", allow_empty=True)
         )
-        object.__setattr__(
-            self, "summary", _text(self.summary, "summary", allow_empty=True)
-        )
+        object.__setattr__(self, "summary", _text(self.summary, "summary", allow_empty=True))
         object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != CRYPTO_IR_CAPABILITY_SCHEMA_VERSION.identifier:
-            raise CryptoIRCapabilityError(
-                f"unsupported capability schema: {self.schema_version}"
-            )
+            raise CryptoIRCapabilityError(f"unsupported capability schema: {self.schema_version}")
 
     @property
     def available(self) -> bool:
@@ -362,17 +344,11 @@ class CapabilityProbeResult:
     attributes: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "capability_id", _text(self.capability_id, "capability_id")
-        )
-        object.__setattr__(
-            self, "status", _enum(CapabilityStatus, self.status, "status")
-        )
+        object.__setattr__(self, "capability_id", _text(self.capability_id, "capability_id"))
+        object.__setattr__(self, "status", _enum(CapabilityStatus, self.status, "status"))
         if not isinstance(self.available, bool):
             raise CryptoIRCapabilityError("available must be a boolean")
-        object.__setattr__(
-            self, "reason", _text(self.reason, "reason", allow_empty=True)
-        )
+        object.__setattr__(self, "reason", _text(self.reason, "reason", allow_empty=True))
         object.__setattr__(
             self,
             "missing_surfaces",
@@ -442,14 +418,10 @@ def probe_capability(
     required_feature_values = _unique_texts(required_features, "required_features")
 
     missing_surfaces = tuple(
-        surface.value
-        for surface in required_surface_values
-        if surface not in descriptor.surfaces
+        surface.value for surface in required_surface_values if surface not in descriptor.surfaces
     )
     missing_features = tuple(
-        feature
-        for feature in required_feature_values
-        if feature not in descriptor.features
+        feature for feature in required_feature_values if feature not in descriptor.features
     )
 
     if descriptor.status is not CapabilityStatus.AVAILABLE:
@@ -496,12 +468,8 @@ def fail_closed_for_unavailable(
     The family selects the result type.  Authorization is never fabricated.
     """
 
-    family_value = (
-        family if isinstance(family, VerdictFamily) else VerdictFamily(family)
-    )
-    resolved_id = (
-        descriptor.capability_id if descriptor is not None else capability_id
-    )
+    family_value = family if isinstance(family, VerdictFamily) else VerdictFamily(family)
+    resolved_id = descriptor.capability_id if descriptor is not None else capability_id
     message = reason or f"capability {resolved_id!r} is unavailable"
     if family_value is VerdictFamily.ANALYSIS:
         return unavailable_analysis_verdict(

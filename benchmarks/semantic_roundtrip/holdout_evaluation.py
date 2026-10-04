@@ -138,9 +138,7 @@ EVAL_REVISION: Final = 1
 BOARD_NAMESPACE: Final = "semantic-roundtrip-plateau-holdout-v2"
 BUNDLE_ID: Final = "semantic-roundtrip/plateau-holdout/remeasure"
 
-HOLDOUT_REMEASURE_SCHEMA: Final = (
-    "ipfs-datasets.semantic-roundtrip-holdout-remeasure.v1"
-)
+HOLDOUT_REMEASURE_SCHEMA: Final = "ipfs-datasets.semantic-roundtrip-holdout-remeasure.v1"
 HOLDOUT_PROMOTION_DECISION_INTERFACE: Final = "CanonicalCompilerDecision@1"
 HOLDOUT_PROMOTION_DECISION_SCHEMA: Final = (
     "ipfs-datasets.semantic-roundtrip-holdout-promotion-decision.v1"
@@ -156,16 +154,13 @@ LEDGER_CID_SCOPE: Final = "payload_without_ledger_cid"
 CID_CODEC: Final = "dag-json"
 
 DEFAULT_ACCESS_LEDGER_RELATIVE_PATH: Final = Path(
-    "workspace/benchmarks/semantic-roundtrip-compositions/"
-    "plateau2_holdout_access_ledger.json"
+    "workspace/benchmarks/semantic-roundtrip-compositions/plateau2_holdout_access_ledger.json"
 )
 DEFAULT_REMEASURE_RELATIVE_PATH: Final = Path(
-    "docs/performance_snapshots/"
-    "2026-07-28_semantic_roundtrip_holdout_remeasure.json"
+    "docs/performance_snapshots/2026-07-28_semantic_roundtrip_holdout_remeasure.json"
 )
 DEFAULT_PROMOTION_DECISION_RELATIVE_PATH: Final = Path(
-    "docs/performance_snapshots/"
-    "2026-07-28_semantic_roundtrip_holdout_promotion_decision.json"
+    "docs/performance_snapshots/2026-07-28_semantic_roundtrip_holdout_promotion_decision.json"
 )
 DEFAULT_RESULTS_DOCS_RELATIVE_PATH: Final = Path(
     "docs/benchmarks/semantic_roundtrip_holdout_results.md"
@@ -205,15 +200,13 @@ _PRIVATE_CONTENT_KEYS: Final = frozenset(
 )
 
 IMMUTABLE_REPLACEMENT_REPORT_PATH: Final = Path(
-    "docs/performance_snapshots/"
-    "2026-07-27_semantic_roundtrip_composition_replacement.json"
+    "docs/performance_snapshots/2026-07-27_semantic_roundtrip_composition_replacement.json"
 )
 IMMUTABLE_REPLACEMENT_REPORT_CID: Final = (
     "baguqeeramdvshi4ynajkvsb72zncgcn2pgvklsglgxwea7za25lndnaf5cga"
 )
 PILOT_PROMOTION_DECISION_PATH: Final = Path(
-    "docs/performance_snapshots/"
-    "2026-07-27_semantic_roundtrip_plateau_break_promotion_decision.json"
+    "docs/performance_snapshots/2026-07-27_semantic_roundtrip_plateau_break_promotion_decision.json"
 )
 
 DEFAULT_EVAL_ASSUMPTIONS: Final = (
@@ -329,11 +322,7 @@ def _atomic_write_json(path: Path, payload: Mapping[str, object]) -> None:
 
 
 def _utc_now_iso() -> str:
-    return (
-        datetime.now(timezone.utc)
-        .isoformat(timespec="milliseconds")
-        .replace("+00:00", "+00:00")
-    )
+    return datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "+00:00")
 
 
 def _strip_private_content(value: object) -> object:
@@ -392,9 +381,7 @@ def vocabulary_from_gold_ir(gold_ir: Mapping[str, object]) -> AllowedAtomVocabul
         for field in ("conditions", "exceptions", "temporal"):
             values = rule.get(field) or []
             if not isinstance(values, list):
-                raise HoldoutEvaluationError(
-                    f"rules[{index}].{field} must be an array"
-                )
+                raise HoldoutEvaluationError(f"rules[{index}].{field} must be an array")
             for item in values:
                 qualifiers.add(_nonblank(item, f"rules[{index}].{field}[]"))
     return AllowedAtomVocabulary(
@@ -478,11 +465,7 @@ def materialize_blind_matrix_cases(
 ) -> tuple[MatrixCase, ...]:
     """Materialize preregistered blind cases for custodian evaluation only."""
 
-    private = (
-        tuple(records)
-        if records is not None
-        else materialize_preregistered_blind_records()
-    )
+    private = tuple(records) if records is not None else materialize_preregistered_blind_records()
     cases = tuple(private_record_to_matrix_case(item) for item in private)
     _require(cases, "blind population must be nonempty")
     ids = [case.case_id for case in cases]
@@ -506,9 +489,7 @@ def protocol_authorization_from_payload(
         goal_id=AUTHORIZATION_GOAL_ID,
         authorization_cid=_cid(protocol.get("authorization_cid"), "authorization_cid"),
         seal_cid=_cid(protocol.get("seal_cid"), "seal_cid"),
-        candidate_freeze_cid=_cid(
-            protocol.get("candidate_freeze_cid"), "candidate_freeze_cid"
-        ),
+        candidate_freeze_cid=_cid(protocol.get("candidate_freeze_cid"), "candidate_freeze_cid"),
         complete=True,
         holdout_authorized=True,
         outcomes_inspected=False,
@@ -556,9 +537,7 @@ def validate_identities_for_access(
         "sealed_private_bundle_cid": seal.sealed_private_bundle_cid,
         "access_ledger_authority_cid": seal.access_ledger_authority_cid,
         "powered": bool(seal.sample_size_justification.powered),
-        "promotion_eligible": bool(
-            seal.sample_size_justification.promotion_eligible
-        ),
+        "promotion_eligible": bool(seal.sample_size_justification.promotion_eligible),
         "exploratory": bool(seal.sample_size_justification.exploratory),
     }
 
@@ -605,9 +584,7 @@ def grant_single_use_access(
             executor_id=executor_id,
             purpose="rejected",
         )
-        raise HoldoutEvaluationError(
-            f"blind holdout already accessed (event={rejected.event})"
-        )
+        raise HoldoutEvaluationError(f"blind holdout already accessed (event={rejected.event})")
 
     grant = request_blind_access(
         ledger,
@@ -616,9 +593,7 @@ def grant_single_use_access(
         purpose=purpose,
     )
     if grant.event != "access_granted":
-        raise HoldoutEvaluationError(
-            f"access grant failed closed with event={grant.event!r}"
-        )
+        raise HoldoutEvaluationError(f"access grant failed closed with event={grant.event!r}")
     released = release_blind_manifest(
         ledger,
         authorization=protocol_auth,
@@ -766,18 +741,17 @@ def score_cases_for_role(
     ]
     means = {
         metric: (
-            round(_mean([float(_mapping(item.get("losses"), "losses")[metric]) for item in scored]), 12)  # type: ignore[index,arg-type]
+            round(
+                _mean([float(_mapping(item.get("losses"), "losses")[metric]) for item in scored]),
+                12,
+            )  # type: ignore[index,arg-type]
             if scored
             else FAILURE_LOSS
         )
         for metric in LOSS_METRICS
     }
     gate_pass_counts = {
-        gate: sum(
-            1
-            for item in records
-            if bool(_mapping(item.get("gates"), "gates").get(gate))
-        )
+        gate: sum(1 for item in records if bool(_mapping(item.get("gates"), "gates").get(gate)))
         for gate in (
             "full_coverage",
             "source_copy_exclusion",
@@ -893,9 +867,10 @@ def _per_case_metric_map(
         case = _mapping(item, "case")
         case_id = _nonblank(case.get("case_id"), "case_id")
         status = case.get("evaluation_status")
-        if status != EVAL_STATUS_SEMANTIC_SCORED and case.get(
-            "semantic_score_eligible"
-        ) is not True:
+        if (
+            status != EVAL_STATUS_SEMANTIC_SCORED
+            and case.get("semantic_score_eligible") is not True
+        ):
             out[case_id] = None
             continue
         losses = _mapping(case.get("losses"), "losses")
@@ -951,9 +926,7 @@ def paired_case_cluster_analysis(
         metrics_out[metric] = {
             "baseline_mean": _rounded(baseline_mean),
             "candidate_mean": _rounded(candidate_mean),
-            "case_deltas": {
-                case_id: _rounded(c - b) for case_id, b, c in measured
-            },
+            "case_deltas": {case_id: _rounded(c - b) for case_id, b, c in measured},
             "confidence_interval": {
                 "bootstrap_samples": bootstrap_samples,
                 "confidence_level": confidence_level,
@@ -972,11 +945,7 @@ def paired_case_cluster_analysis(
     e2e = _mapping(metrics_out.get("end_to_end"), "end_to_end")
     ci = _mapping(e2e.get("confidence_interval"), "confidence_interval")
     high = ci.get("high")
-    beats = (
-        isinstance(high, (int, float))
-        and not isinstance(high, bool)
-        and float(high) < 0.0
-    )
+    beats = isinstance(high, (int, float)) and not isinstance(high, bool) and float(high) < 0.0
     noninferior = (
         isinstance(high, (int, float))
         and not isinstance(high, bool)
@@ -1118,12 +1087,9 @@ def decide_holdout_outcome(
         "evidence_complete": evidence_complete,
         "improvement_claim": improvement_claim,
         "production_promotion_authorized": promotion
-        if outcome
-        in {DECISION_IMPROVEMENT_CONFIRMED, DECISION_GENERALIZATION_NO_IMPROVEMENT}
+        if outcome in {DECISION_IMPROVEMENT_CONFIRMED, DECISION_GENERALIZATION_NO_IMPROVEMENT}
         else False,
-        "promotion": promotion
-        if outcome == DECISION_IMPROVEMENT_CONFIRMED
-        else False,
+        "promotion": promotion if outcome == DECISION_IMPROVEMENT_CONFIRMED else False,
         "reason_codes": reason_codes,
         "rules": noninferiority_and_promotion_rules(),
         "selected_arm_id": PRODUCTION_ARM_ID,
@@ -1158,8 +1124,7 @@ def collect_missingness(
             "semantic_scored_count": sum(
                 1
                 for item in cases
-                if _mapping(item, "case").get("evaluation_status")
-                == EVAL_STATUS_SEMANTIC_SCORED
+                if _mapping(item, "case").get("evaluation_status") == EVAL_STATUS_SEMANTIC_SCORED
             ),
             "scheduled_count": len(cases),
         }
@@ -1190,9 +1155,7 @@ def collect_named_residuals(
         if e2e <= 0.0 and forward <= 0.0:
             continue
         facets = case.get("facets") or {}
-        e2e_facets = (
-            facets.get("end_to_end") if isinstance(facets, Mapping) else None
-        )
+        e2e_facets = facets.get("end_to_end") if isinstance(facets, Mapping) else None
         facet_hits: list[str] = []
         if isinstance(e2e_facets, Mapping):
             for facet in FACET_NAMES:
@@ -1210,9 +1173,7 @@ def collect_named_residuals(
                     "new board only with newly authored blind population; "
                     "do not retune against this holdout"
                 ),
-                "residual_kind": (
-                    "facet_mismatch" if facet_hits else "nonzero_end_to_end_loss"
-                ),
+                "residual_kind": ("facet_mismatch" if facet_hits else "nonzero_end_to_end_loss"),
             }
         )
     residuals.sort(key=lambda row: (-float(row["case_end_to_end_loss"]), str(row["case_id"])))
@@ -1289,12 +1250,8 @@ def build_remeasure_report(
             "named_next_residuals_when_not_improved": True,
             "paired_bootstrap_per_case_first": True,
             "path_free_single_use_access_receipt": True,
-            "pilots_rechecked_non_regressed": bool(
-                pilot_non_regression.get("non_regressed")
-            ),
-            "promotion_authorized": bool(
-                decision.get("production_promotion_authorized")
-            ),
+            "pilots_rechecked_non_regressed": bool(pilot_non_regression.get("non_regressed")),
+            "promotion_authorized": bool(decision.get("production_promotion_authorized")),
             "promotion_true_only_if_improvement_confirmed": True,
         },
         "access_ledger_cid": ledger_cid,
@@ -1336,9 +1293,7 @@ def build_remeasure_report(
             "seed": BOOTSTRAP_SEED,
         },
         "blind_holdout": {
-            "access_ledger_authority_cid": identities.get(
-                "access_ledger_authority_cid"
-            ),
+            "access_ledger_authority_cid": identities.get("access_ledger_authority_cid"),
             "case_count": _mapping(candidate_block.get("aggregates"), "aggregates").get(
                 "case_count"
             ),
@@ -1356,9 +1311,7 @@ def build_remeasure_report(
         "decision_summary": {
             "decision_outcome": decision.get("decision_outcome"),
             "improvement_claim": decision.get("improvement_claim"),
-            "production_promotion_authorized": decision.get(
-                "production_promotion_authorized"
-            ),
+            "production_promotion_authorized": decision.get("production_promotion_authorized"),
             "promotion": decision.get("promotion"),
             "reason_codes": decision.get("reason_codes"),
             "status": decision.get("status"),
@@ -1443,17 +1396,12 @@ def build_promotion_decision(
             "full_gates_pass": bool(gates.get("full_gates_pass")),
             "immutable_2026_07_27_replacement_promotion_report_not_rewritten": True,
             "named_next_residuals_when_not_promoted": bool(next_residuals)
-            or decision.get("decision_outcome")
-            != DECISION_IMPROVEMENT_CONFIRMED,
+            or decision.get("decision_outcome") != DECISION_IMPROVEMENT_CONFIRMED,
             "no_post_access_retune": True,
             "paired_bootstrap_vs_frozen_baseline": True,
             "path_free_single_use_access": True,
-            "pilots_rechecked_non_regressed": bool(
-                pilot_non_regression.get("non_regressed")
-            ),
-            "promotion_authorized": bool(
-                decision.get("production_promotion_authorized")
-            ),
+            "pilots_rechecked_non_regressed": bool(pilot_non_regression.get("non_regressed")),
+            "promotion_authorized": bool(decision.get("production_promotion_authorized")),
             "promotion_true_only_if_improvement_confirmed": True,
         },
         "artifacts": {
@@ -1483,9 +1431,7 @@ def build_promotion_decision(
             "decision_outcome": decision.get("decision_outcome"),
             "evidence_complete": decision.get("evidence_complete"),
             "improvement_claim": decision.get("improvement_claim"),
-            "production_promotion_authorized": decision.get(
-                "production_promotion_authorized"
-            ),
+            "production_promotion_authorized": decision.get("production_promotion_authorized"),
             "promotion": decision.get("promotion"),
             "reason_codes": decision.get("reason_codes"),
             "selected_arm_id": decision.get("selected_arm_id"),
@@ -1507,8 +1453,7 @@ def build_promotion_decision(
         },
         "next_residuals": list(next_residuals),
         "next_residuals_note": (
-            "Post-hoc residuals may seed a new board only with a newly authored "
-            "blind population."
+            "Post-hoc residuals may seed a new board only with a newly authored blind population."
             if next_residuals
             else "Empty or no residual hold for a follow-on board."
         ),
@@ -1523,9 +1468,7 @@ def build_promotion_decision(
             "confidence_interval": ci,
             "full_gates_pass": bool(gates.get("full_gates_pass")),
             "mean_delta_end_to_end": e2e.get("mean_delta"),
-            "noninferiority_holds": bool(
-                paired.get("e2e_noninferior_ucb_lte_margin")
-            ),
+            "noninferiority_holds": bool(paired.get("e2e_noninferior_ucb_lte_margin")),
             "noninferiority_margin": NONINFERIORITY_MARGIN,
             "pilot_mean_e2e": pilot_non_regression.get("mean_end_to_end"),
             "pilot_non_regressed": bool(pilot_non_regression.get("non_regressed")),
@@ -1574,15 +1517,11 @@ def render_holdout_results_markdown(
     gates = _mapping(remeasure.get("full_gates"), "full_gates")
     pilot = _mapping(remeasure.get("pilot_non_regression"), "pilot")
     candidate = _mapping(
-        _mapping(remeasure.get("holdout_remeasure"), "holdout_remeasure").get(
-            "candidate"
-        ),
+        _mapping(remeasure.get("holdout_remeasure"), "holdout_remeasure").get("candidate"),
         "candidate",
     )
     cases = _array(candidate.get("cases"), "cases")
-    means = _mapping(
-        _mapping(candidate.get("aggregates"), "aggregates").get("means"), "means"
-    )
+    means = _mapping(_mapping(candidate.get("aggregates"), "aggregates").get("means"), "means")
     residuals = _array(remeasure.get("next_residuals"), "next_residuals")
     captured = remeasure.get("captured_at_utc")
 
@@ -1729,8 +1668,7 @@ def render_holdout_results_markdown(
             )
         lines.append("")
         lines.append(
-            "These residuals may seed a **new** board only with a newly authored "
-            "blind population."
+            "These residuals may seed a **new** board only with a newly authored blind population."
         )
     lines.extend(
         [
@@ -1791,9 +1729,7 @@ def run_one_shot_blind_evaluation(
         if authorization is not None
         else load_holdout_authorization(repo_root=root)
     )
-    loaded_seal = (
-        seal if seal is not None else load_frozen_blind_holdout_seal(repository_root=root)
-    )
+    loaded_seal = seal if seal is not None else load_frozen_blind_holdout_seal(repository_root=root)
 
     if skip_access_grant:
         _require(access_export is not None, "access_export required when skip_access_grant")
@@ -1816,11 +1752,7 @@ def run_one_shot_blind_evaluation(
     identity_map = dict(_mapping(access_bundle.get("identities"), "identities"))
     ledger_export = dict(_mapping(access_bundle.get("export"), "export"))
 
-    cases = (
-        tuple(blind_cases)
-        if blind_cases is not None
-        else materialize_blind_matrix_cases()
-    )
+    cases = tuple(blind_cases) if blind_cases is not None else materialize_blind_matrix_cases()
     # Boundary split retained only in memory for doctrine checks.
     boundary = split_runtime_and_scorer_views(cases)
     _require(
@@ -1830,12 +1762,8 @@ def run_one_shot_blind_evaluation(
 
     freeze_cid = _cid(identity_map.get("candidate_freeze_cid"), "candidate_freeze_cid")
     seal_cid = _cid(identity_map.get("seal_cid"), "seal_cid")
-    baseline_ns = isolated_namespace(
-        BASELINE_ROLE, seal_cid=seal_cid, freeze_cid=freeze_cid
-    )
-    candidate_ns = isolated_namespace(
-        CANDIDATE_ROLE, seal_cid=seal_cid, freeze_cid=freeze_cid
-    )
+    baseline_ns = isolated_namespace(BASELINE_ROLE, seal_cid=seal_cid, freeze_cid=freeze_cid)
+    candidate_ns = isolated_namespace(CANDIDATE_ROLE, seal_cid=seal_cid, freeze_cid=freeze_cid)
     _require(baseline_ns != candidate_ns, "baseline/candidate namespaces must differ")
 
     baseline_block = score_cases_for_role(
@@ -1907,21 +1835,25 @@ def run_one_shot_blind_evaluation(
     )
     next_residuals = collect_named_residuals(candidate_block)
     structural = structural_receipts_summary()
-    resources = dict(resource_summary) if resource_summary is not None else {
-        "context_tokens": {
-            "note": "one-shot evaluation; no packet materialization",
-            "packet_token_budget": 8192,
-            "used": 0,
-        },
-        "cost": {
-            "currency": "USD",
-            "metered": False,
-            "total_cost": 0.0,
-        },
-        "environment_toolchain": capture_environment_toolchain(),
-        "model_calls": 0,
-        "wall_time_note": "deterministic in-process scoring",
-    }
+    resources = (
+        dict(resource_summary)
+        if resource_summary is not None
+        else {
+            "context_tokens": {
+                "note": "one-shot evaluation; no packet materialization",
+                "packet_token_budget": 8192,
+                "used": 0,
+            },
+            "cost": {
+                "currency": "USD",
+                "metered": False,
+                "total_cost": 0.0,
+            },
+            "environment_toolchain": capture_environment_toolchain(),
+            "model_calls": 0,
+            "wall_time_note": "deterministic in-process scoring",
+        }
+    )
     stamp = captured_at_utc or _utc_now_iso()
 
     remeasure = build_remeasure_report(
@@ -2027,9 +1959,7 @@ def write_evaluation_artifacts(
             else root / DEFAULT_ACCESS_LEDGER_RELATIVE_PATH
         ),
         "remeasure": Path(
-            remeasure_path
-            if remeasure_path is not None
-            else root / DEFAULT_REMEASURE_RELATIVE_PATH
+            remeasure_path if remeasure_path is not None else root / DEFAULT_REMEASURE_RELATIVE_PATH
         ),
         "promotion_decision": Path(
             decision_path
@@ -2037,9 +1967,7 @@ def write_evaluation_artifacts(
             else root / DEFAULT_PROMOTION_DECISION_RELATIVE_PATH
         ),
         "results_markdown": Path(
-            results_path
-            if results_path is not None
-            else root / DEFAULT_RESULTS_DOCS_RELATIVE_PATH
+            results_path if results_path is not None else root / DEFAULT_RESULTS_DOCS_RELATIVE_PATH
         ),
     }
     _atomic_write_json(

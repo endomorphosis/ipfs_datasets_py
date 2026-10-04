@@ -30,8 +30,8 @@ from ipfs_datasets_py.utils.workflows import WorkflowAnalyzer
 
 analyzer = WorkflowAnalyzer()
 result = analyzer.analyze_failure(
-    workflow_file=Path('.github/workflows/ci.yml'),
-    error_log='Error: ModuleNotFoundError: No module named numpy'
+    workflow_file=Path(".github/workflows/ci.yml"),
+    error_log="Error: ModuleNotFoundError: No module named numpy",
 )
 # Returns: {
 #   'root_cause': 'Missing Python module/dependency',
@@ -63,7 +63,7 @@ analyzer = WorkflowAnalyzer()
 analysis = analyzer.analyze_failure(workflow_file, error_log)
 
 # Generate fix proposal
-fixer = WorkflowFixer(analysis, workflow_name='CI Tests')
+fixer = WorkflowFixer(analysis, workflow_name="CI Tests")
 proposal = fixer.generate_fix_proposal()
 # Returns: {
 #   'branch_name': 'autofix/ci-tests/add-dependency/20260214-123456',
@@ -91,11 +91,11 @@ proposal = fixer.generate_fix_proposal()
 ```python
 from ipfs_datasets_py.utils.workflows import DashboardGenerator
 
-generator = DashboardGenerator(repo='owner/repo')
-generator.load_all_metrics(metrics_dir=Path('/tmp'))
+generator = DashboardGenerator(repo="owner/repo")
+generator.load_all_metrics(metrics_dir=Path("/tmp"))
 aggregated = generator.aggregate_metrics()
-report = generator.generate_report(format='html', aggregated=aggregated)
-generator.save_report(report, Path('dashboard.html'))
+report = generator.generate_report(format="html", aggregated=aggregated)
+generator.save_report(report, Path("dashboard.html"))
 ```
 
 **Test Coverage**: 13 unit tests (9.4 KB)
@@ -221,24 +221,27 @@ Established consistent pattern across all refactored scripts:
 # 1. Import from utils (single source of truth)
 from ipfs_datasets_py.utils.workflows import WorkflowAnalyzer
 
+
 # 2. CLI argument parsing (workflow-specific)
 def parse_args():
-    parser = argparse.ArgumentParser(description='...')
+    parser = argparse.ArgumentParser(description="...")
     # Workflow-specific arguments
     return parser.parse_args()
+
 
 # 3. Main function (thin glue layer)
 def main():
     args = parse_args()
-    
+
     # Use utils module for core functionality
     analyzer = WorkflowAnalyzer()
     result = analyzer.analyze_failure(args.workflow, args.error_log)
-    
+
     # Workflow-specific output formatting
     print(format_for_workflow(result))
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
 ```
 

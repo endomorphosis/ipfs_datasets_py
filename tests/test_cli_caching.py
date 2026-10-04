@@ -24,12 +24,7 @@ class TestGitHubCLICaching:
         from ipfs_datasets_py.utils.github_cli import GitHubCLI
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            cli = GitHubCLI(
-                install_dir=tmpdir,
-                enable_cache=True,
-                cache_maxsize=50,
-                cache_ttl=120
-            )
+            cli = GitHubCLI(install_dir=tmpdir, enable_cache=True, cache_maxsize=50, cache_ttl=120)
 
             assert cli.cache is not None
             assert cli.cache.maxsize == 50
@@ -60,18 +55,18 @@ class TestGitHubCLICaching:
             cli = GitHubCLI(install_dir=tmpdir)
 
             # Cacheable commands
-            assert cli._is_cacheable_command(['repo', 'list']) is True
-            assert cli._is_cacheable_command(['repo', 'view']) is True
-            assert cli._is_cacheable_command(['auth', 'status']) is True
-            assert cli._is_cacheable_command(['--version']) is True
-            assert cli._is_cacheable_command(['pr', 'list']) is True
+            assert cli._is_cacheable_command(["repo", "list"]) is True
+            assert cli._is_cacheable_command(["repo", "view"]) is True
+            assert cli._is_cacheable_command(["auth", "status"]) is True
+            assert cli._is_cacheable_command(["--version"]) is True
+            assert cli._is_cacheable_command(["pr", "list"]) is True
 
             # Non-cacheable commands
-            assert cli._is_cacheable_command(['repo', 'create']) is False
-            assert cli._is_cacheable_command(['pr', 'create']) is False
-            assert cli._is_cacheable_command(['auth', 'login']) is False
+            assert cli._is_cacheable_command(["repo", "create"]) is False
+            assert cli._is_cacheable_command(["pr", "create"]) is False
+            assert cli._is_cacheable_command(["auth", "login"]) is False
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_github_cli_cache_hit(self, mock_run):
         """
         GIVEN a cached GitHub CLI query
@@ -96,22 +91,22 @@ class TestGitHubCLICaching:
             cli.cli_executable.chmod(0o755)
 
             # First call - should execute command
-            result1 = cli.execute(['repo', 'list'])
+            result1 = cli.execute(["repo", "list"])
             assert mock_run.call_count == 1
             assert result1.stdout == "test output"
 
             # Second call - should use cache
-            result2 = cli.execute(['repo', 'list'])
+            result2 = cli.execute(["repo", "list"])
             assert mock_run.call_count == 1  # Not called again
             assert result2.stdout == "test output"
 
             # Check cache stats
             stats = cli.get_cache_stats()
             assert stats is not None
-            assert stats['hits'] == 1
-            assert stats['sets'] == 1
+            assert stats["hits"] == 1
+            assert stats["sets"] == 1
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_github_cli_cache_miss_different_args(self, mock_run):
         """
         GIVEN cached GitHub CLI queries
@@ -134,8 +129,8 @@ class TestGitHubCLICaching:
             cli.cli_executable.chmod(0o755)
 
             # Different commands should not use cache
-            cli.execute(['repo', 'list', '--limit', '10'])
-            cli.execute(['repo', 'list', '--limit', '20'])
+            cli.execute(["repo", "list", "--limit", "10"])
+            cli.execute(["repo", "list", "--limit", "20"])
 
             assert mock_run.call_count == 2
 
@@ -158,7 +153,7 @@ class TestGitHubCLICaching:
             cli.clear_cache()
             assert cli.cache.get("test_key") is None
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_github_cli_cache_bypass(self, mock_run):
         """
         GIVEN a cached GitHub CLI
@@ -181,10 +176,10 @@ class TestGitHubCLICaching:
             cli.cli_executable.chmod(0o755)
 
             # First call with caching
-            cli.execute(['repo', 'list'])
+            cli.execute(["repo", "list"])
 
             # Second call bypassing cache
-            cli.execute(['repo', 'list'], use_cache=False)
+            cli.execute(["repo", "list"], use_cache=False)
 
             # Should have called subprocess twice
             assert mock_run.call_count == 2
@@ -201,14 +196,10 @@ class TestCopilotCLICaching:
         """
         from ipfs_datasets_py.utils.copilot_cli import CopilotCLI
 
-        with patch('ipfs_datasets_py.utils.copilot_cli.CopilotCLI._find_gh_cli') as mock_find:
-            mock_find.return_value = Path('/usr/bin/gh')
+        with patch("ipfs_datasets_py.utils.copilot_cli.CopilotCLI._find_gh_cli") as mock_find:
+            mock_find.return_value = Path("/usr/bin/gh")
 
-            cli = CopilotCLI(
-                enable_cache=True,
-                cache_maxsize=75,
-                cache_ttl=180
-            )
+            cli = CopilotCLI(enable_cache=True, cache_maxsize=75, cache_ttl=180)
 
             assert cli.cache is not None
             assert cli.cache.maxsize == 75
@@ -222,14 +213,14 @@ class TestCopilotCLICaching:
         """
         from ipfs_datasets_py.utils.copilot_cli import CopilotCLI
 
-        with patch('ipfs_datasets_py.utils.copilot_cli.CopilotCLI._find_gh_cli') as mock_find:
-            mock_find.return_value = Path('/usr/bin/gh')
+        with patch("ipfs_datasets_py.utils.copilot_cli.CopilotCLI._find_gh_cli") as mock_find:
+            mock_find.return_value = Path("/usr/bin/gh")
 
             cli = CopilotCLI(enable_cache=False)
 
             assert cli.cache is None
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_copilot_explain_cache_hit(self, mock_run):
         """
         GIVEN a cached Copilot code explanation
@@ -245,11 +236,16 @@ class TestCopilotCLICaching:
         mock_result.stderr = ""
         mock_run.return_value = mock_result
 
-        with patch('ipfs_datasets_py.utils.copilot_cli.CopilotCLI._find_gh_cli') as mock_find:
-            mock_find.return_value = Path('/usr/bin/gh')
-            with patch('ipfs_datasets_py.utils.copilot_cli.CopilotCLI._verify_installation') as mock_check, patch(
-                'ipfs_datasets_py.utils.copilot_cli.CopilotCLI._check_copilot_extension'
-            ) as mock_extension:
+        with patch("ipfs_datasets_py.utils.copilot_cli.CopilotCLI._find_gh_cli") as mock_find:
+            mock_find.return_value = Path("/usr/bin/gh")
+            with (
+                patch(
+                    "ipfs_datasets_py.utils.copilot_cli.CopilotCLI._verify_installation"
+                ) as mock_check,
+                patch(
+                    "ipfs_datasets_py.utils.copilot_cli.CopilotCLI._check_copilot_extension"
+                ) as mock_extension,
+            ):
                 mock_check.return_value = True
                 mock_extension.return_value = True
 
@@ -260,19 +256,19 @@ class TestCopilotCLICaching:
                 # First call
                 result1 = cli.explain_code(code)
                 assert mock_run.call_count == 1
-                assert result1['success'] is True
+                assert result1["success"] is True
 
                 # Second call - should use cache
                 result2 = cli.explain_code(code)
                 assert mock_run.call_count == 1  # Not called again
-                assert result2['success'] is True
+                assert result2["success"] is True
 
                 # Check cache stats
                 stats = cli.get_cache_stats()
                 assert stats is not None
-                assert stats['hits'] == 1
+                assert stats["hits"] == 1
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_copilot_suggest_cache_hit(self, mock_run):
         """
         GIVEN a cached Copilot command suggestion
@@ -287,11 +283,16 @@ class TestCopilotCLICaching:
         mock_result.stderr = ""
         mock_run.return_value = mock_result
 
-        with patch('ipfs_datasets_py.utils.copilot_cli.CopilotCLI._find_gh_cli') as mock_find:
-            mock_find.return_value = Path('/usr/bin/gh')
-            with patch('ipfs_datasets_py.utils.copilot_cli.CopilotCLI._verify_installation') as mock_check, patch(
-                'ipfs_datasets_py.utils.copilot_cli.CopilotCLI._check_copilot_extension'
-            ) as mock_extension:
+        with patch("ipfs_datasets_py.utils.copilot_cli.CopilotCLI._find_gh_cli") as mock_find:
+            mock_find.return_value = Path("/usr/bin/gh")
+            with (
+                patch(
+                    "ipfs_datasets_py.utils.copilot_cli.CopilotCLI._verify_installation"
+                ) as mock_check,
+                patch(
+                    "ipfs_datasets_py.utils.copilot_cli.CopilotCLI._check_copilot_extension"
+                ) as mock_extension,
+            ):
                 mock_check.return_value = True
                 mock_extension.return_value = True
 
@@ -310,9 +311,9 @@ class TestCopilotCLICaching:
                 assert result2 is not None
 
                 stats = cli.get_cache_stats()
-                assert stats['hits'] == 1
+                assert stats["hits"] == 1
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_copilot_git_suggest_cache_hit(self, mock_run):
         """
         GIVEN a cached Copilot Git suggestion
@@ -327,11 +328,16 @@ class TestCopilotCLICaching:
         mock_result.stderr = ""
         mock_run.return_value = mock_result
 
-        with patch('ipfs_datasets_py.utils.copilot_cli.CopilotCLI._find_gh_cli') as mock_find:
-            mock_find.return_value = Path('/usr/bin/gh')
-            with patch('ipfs_datasets_py.utils.copilot_cli.CopilotCLI._verify_installation') as mock_check, patch(
-                'ipfs_datasets_py.utils.copilot_cli.CopilotCLI._check_copilot_extension'
-            ) as mock_extension:
+        with patch("ipfs_datasets_py.utils.copilot_cli.CopilotCLI._find_gh_cli") as mock_find:
+            mock_find.return_value = Path("/usr/bin/gh")
+            with (
+                patch(
+                    "ipfs_datasets_py.utils.copilot_cli.CopilotCLI._verify_installation"
+                ) as mock_check,
+                patch(
+                    "ipfs_datasets_py.utils.copilot_cli.CopilotCLI._check_copilot_extension"
+                ) as mock_extension,
+            ):
                 mock_check.return_value = True
                 mock_extension.return_value = True
 
@@ -350,7 +356,7 @@ class TestCopilotCLICaching:
                 assert result2 is not None
 
                 stats = cli.get_cache_stats()
-                assert stats['hits'] == 1
+                assert stats["hits"] == 1
 
     def test_copilot_cache_clear(self):
         """
@@ -360,8 +366,8 @@ class TestCopilotCLICaching:
         """
         from ipfs_datasets_py.utils.copilot_cli import CopilotCLI
 
-        with patch('ipfs_datasets_py.utils.copilot_cli.CopilotCLI._find_gh_cli') as mock_find:
-            mock_find.return_value = Path('/usr/bin/gh')
+        with patch("ipfs_datasets_py.utils.copilot_cli.CopilotCLI._find_gh_cli") as mock_find:
+            mock_find.return_value = Path("/usr/bin/gh")
 
             cli = CopilotCLI(enable_cache=True)
 
@@ -373,7 +379,7 @@ class TestCopilotCLICaching:
             cli.clear_cache()
             assert cli.cache.get("test_key") is None
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_copilot_cache_bypass(self, mock_run):
         """
         GIVEN a cached Copilot CLI
@@ -388,9 +394,11 @@ class TestCopilotCLICaching:
         mock_result.stderr = ""
         mock_run.return_value = mock_result
 
-        with patch('ipfs_datasets_py.utils.copilot_cli.CopilotCLI._find_gh_cli') as mock_find:
-            mock_find.return_value = Path('/usr/bin/gh')
-            with patch('ipfs_datasets_py.utils.copilot_cli.CopilotCLI._check_installed') as mock_check:
+        with patch("ipfs_datasets_py.utils.copilot_cli.CopilotCLI._find_gh_cli") as mock_find:
+            mock_find.return_value = Path("/usr/bin/gh")
+            with patch(
+                "ipfs_datasets_py.utils.copilot_cli.CopilotCLI._check_installed"
+            ) as mock_check:
                 mock_check.return_value = True
 
                 cli = CopilotCLI(enable_cache=True)
@@ -431,11 +439,11 @@ class TestCachingIntegration:
 
             stats = cli.get_cache_stats()
 
-            assert stats['sets'] == 2
-            assert stats['hits'] == 2
-            assert stats['misses'] == 1
-            assert stats['hit_rate'] > 0
+            assert stats["sets"] == 2
+            assert stats["hits"] == 2
+            assert stats["misses"] == 1
+            assert stats["hit_rate"] > 0
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

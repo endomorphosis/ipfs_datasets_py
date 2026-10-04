@@ -51,7 +51,9 @@ def event_dag_merkle_root(event_cids: Sequence[str]) -> str:
     leaves.extend([bytes(32)] * (MAX_EVENTS - len(leaves)))
     layer = [_sha256_bytes(leaf) for leaf in leaves]
     while len(layer) > 1:
-        layer = [_sha256_bytes(layer[index] + layer[index + 1]) for index in range(0, len(layer), 2)]
+        layer = [
+            _sha256_bytes(layer[index] + layer[index + 1]) for index in range(0, len(layer), 2)
+        ]
     return layer[0].hex()
 
 
@@ -77,9 +79,8 @@ def _binary_path() -> Path | None:
 
 
 def _artifacts_root() -> Path:
-    configured = (
-        os.environ.get("IPFS_DATASETS_EVENT_DAG_GROTH16_ARTIFACTS")
-        or os.environ.get("GROTH16_BACKEND_ARTIFACTS_ROOT")
+    configured = os.environ.get("IPFS_DATASETS_EVENT_DAG_GROTH16_ARTIFACTS") or os.environ.get(
+        "GROTH16_BACKEND_ARTIFACTS_ROOT"
     )
     return Path(configured) if configured else _backend_root() / "artifacts"
 
@@ -112,8 +113,12 @@ def availability() -> dict[str, Any]:
         "binary": str(binary) if binary else None,
         "proving_key": str(proving_key),
         "verifying_key": str(verifying_key),
-        "verification_key_sha256": hashlib.sha256(verifying_key_bytes).hexdigest() if verifying_key_bytes else None,
-        "verification_key_cid": verification_key_cid(verifying_key_bytes) if verifying_key_bytes else None,
+        "verification_key_sha256": hashlib.sha256(verifying_key_bytes).hexdigest()
+        if verifying_key_bytes
+        else None,
+        "verification_key_cid": verification_key_cid(verifying_key_bytes)
+        if verifying_key_bytes
+        else None,
     }
 
 
@@ -132,7 +137,17 @@ def _run(command: str, payload: Mapping[str, Any]) -> Any:
     environment = dict(os.environ)
     environment["GROTH16_BACKEND_ARTIFACTS_ROOT"] = str(artifacts_root)
     completed = subprocess.run(
-        [str(binary), command, "--input" if command == "prove" else "--proof", "/dev/stdin", "--output" if command == "prove" else "--json", "/dev/stdout" if command == "prove" else "--quiet", "--quiet"] if command == "prove" else [str(binary), "verify", "--proof", "/dev/stdin", "--json", "--quiet"],
+        [
+            str(binary),
+            command,
+            "--input" if command == "prove" else "--proof",
+            "/dev/stdin",
+            "--output" if command == "prove" else "--json",
+            "/dev/stdout" if command == "prove" else "--quiet",
+            "--quiet",
+        ]
+        if command == "prove"
+        else [str(binary), "verify", "--proof", "/dev/stdin", "--json", "--quiet"],
         input=json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8"),
         capture_output=True,
         check=False,
@@ -141,7 +156,9 @@ def _run(command: str, payload: Mapping[str, Any]) -> Any:
     )
     if completed.returncode != 0:
         detail = (completed.stderr or completed.stdout).decode("utf-8", errors="replace").strip()
-        raise EventDagZKUnavailable(f"Profile F Groth16 {command} failed: {detail or completed.returncode}")
+        raise EventDagZKUnavailable(
+            f"Profile F Groth16 {command} failed: {detail or completed.returncode}"
+        )
     try:
         return json.loads(completed.stdout.decode("utf-8"))
     except json.JSONDecodeError as error:
@@ -184,16 +201,23 @@ def prove_event_dag_compaction(event_cids: Sequence[str]) -> dict[str, Any]:
     }
 
 
-def verify_event_dag_compaction(certificate: Mapping[str, Any], event_cids: Iterable[str] | None = None) -> dict[str, Any]:
+def verify_event_dag_compaction(
+    certificate: Mapping[str, Any], event_cids: Iterable[str] | None = None
+) -> dict[str, Any]:
     """Verify a Profile F certificate and optionally bind it to archive CIDs."""
-    if certificate.get("proof_system") != PROOF_SYSTEM or certificate.get("zero_knowledge") is not True:
+    if (
+        certificate.get("proof_system") != PROOF_SYSTEM
+        or certificate.get("zero_knowledge") is not True
+    ):
         return {"valid": False, "reason": "not_a_profile_f_groth16_certificate"}
     proof = certificate.get("proof")
     if not isinstance(proof, Mapping):
         return {"valid": False, "reason": "proof_missing"}
     if event_cids is not None:
         values = list(event_cids)
-        if certificate.get("event_count") != len(values) or certificate.get("zk_merkle_root") != event_dag_merkle_root(values):
+        if certificate.get("event_count") != len(values) or certificate.get(
+            "zk_merkle_root"
+        ) != event_dag_merkle_root(values):
             return {"valid": False, "reason": "archive_root_mismatch"}
     try:
         result = _run("verify", proof)

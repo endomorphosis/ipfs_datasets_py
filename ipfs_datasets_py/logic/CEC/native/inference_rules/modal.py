@@ -39,8 +39,7 @@ class NecessityElimination(InferenceRule):
     def can_apply(self, formulas: List[Formula]) -> bool:
         """Check if we have □P (a formula marked as necessary)."""
         for formula in formulas:
-            if (hasattr(formula, 'modality') and
-                    getattr(formula, 'modality', None) == 'necessary'):
+            if hasattr(formula, "modality") and getattr(formula, "modality", None) == "necessary":
                 return True
         return False
 
@@ -48,10 +47,9 @@ class NecessityElimination(InferenceRule):
         """Apply T axiom: □P → P."""
         results: List[Formula] = []
         for formula in formulas:
-            if (hasattr(formula, 'modality') and
-                    getattr(formula, 'modality', None) == 'necessary'):
+            if hasattr(formula, "modality") and getattr(formula, "modality", None) == "necessary":
                 # Extract the content formula
-                content = getattr(formula, 'content', None)
+                content = getattr(formula, "content", None)
                 if content is not None:
                     results.append(content)
         return results
@@ -109,17 +107,20 @@ class NecessityDistribution(InferenceRule):
     def can_apply(self, formulas: List[Formula]) -> bool:
         """Check if we have □(P→Q) and □P."""
         necessary_formulas = [
-            f for f in formulas
-            if hasattr(f, 'modality') and getattr(f, 'modality', None) == 'necessary'
+            f
+            for f in formulas
+            if hasattr(f, "modality") and getattr(f, "modality", None) == "necessary"
         ]
         if len(necessary_formulas) < 2:
             return False
         # Check if any necessary formula is an implication
         for f in necessary_formulas:
-            content = getattr(f, 'content', None)
-            if (content is not None and
-                    isinstance(content, ConnectiveFormula) and
-                    content.connective == LogicalConnective.IMPLIES):
+            content = getattr(f, "content", None)
+            if (
+                content is not None
+                and isinstance(content, ConnectiveFormula)
+                and content.connective == LogicalConnective.IMPLIES
+            ):
                 return True
         return False
 
@@ -127,20 +128,23 @@ class NecessityDistribution(InferenceRule):
         """Apply K axiom: □(P→Q) ∧ □P → □Q."""
         results: List[Formula] = []
         necessary_formulas = [
-            f for f in formulas
-            if hasattr(f, 'modality') and getattr(f, 'modality', None) == 'necessary'
+            f
+            for f in formulas
+            if hasattr(f, "modality") and getattr(f, "modality", None) == "necessary"
         ]
         for f_impl in necessary_formulas:
-            content = getattr(f_impl, 'content', None)
-            if (content is not None and
-                    isinstance(content, ConnectiveFormula) and
-                    content.connective == LogicalConnective.IMPLIES and
-                    len(content.formulas) == 2):
+            content = getattr(f_impl, "content", None)
+            if (
+                content is not None
+                and isinstance(content, ConnectiveFormula)
+                and content.connective == LogicalConnective.IMPLIES
+                and len(content.formulas) == 2
+            ):
                 p = content.formulas[0]
                 q = content.formulas[1]
                 # Check if □P exists
                 for f_p in necessary_formulas:
-                    p_content = getattr(f_p, 'content', None)
+                    p_content = getattr(f_p, "content", None)
                     if p_content is not None and p_content == p:
                         # We can derive □Q — here we derive Q as a result
                         results.append(q)
@@ -166,16 +170,19 @@ class PossibilityDuality(InferenceRule):
     def can_apply(self, formulas: List[Formula]) -> bool:
         """Check if we have ¬□¬P."""
         for formula in formulas:
-            if (isinstance(formula, ConnectiveFormula) and
-                    formula.connective == LogicalConnective.NOT and
-                    len(formula.formulas) == 1):
+            if (
+                isinstance(formula, ConnectiveFormula)
+                and formula.connective == LogicalConnective.NOT
+                and len(formula.formulas) == 1
+            ):
                 inner = formula.formulas[0]
-                if (hasattr(inner, 'modality') and
-                        getattr(inner, 'modality', None) == 'necessary'):
-                    inner_content = getattr(inner, 'content', None)
-                    if (inner_content is not None and
-                            isinstance(inner_content, ConnectiveFormula) and
-                            inner_content.connective == LogicalConnective.NOT):
+                if hasattr(inner, "modality") and getattr(inner, "modality", None) == "necessary":
+                    inner_content = getattr(inner, "content", None)
+                    if (
+                        inner_content is not None
+                        and isinstance(inner_content, ConnectiveFormula)
+                        and inner_content.connective == LogicalConnective.NOT
+                    ):
                         return True
         return False
 
@@ -183,17 +190,20 @@ class PossibilityDuality(InferenceRule):
         """Derive ◇P from ¬□¬P."""
         results: List[Formula] = []
         for formula in formulas:
-            if (isinstance(formula, ConnectiveFormula) and
-                    formula.connective == LogicalConnective.NOT and
-                    len(formula.formulas) == 1):
+            if (
+                isinstance(formula, ConnectiveFormula)
+                and formula.connective == LogicalConnective.NOT
+                and len(formula.formulas) == 1
+            ):
                 inner = formula.formulas[0]
-                if (hasattr(inner, 'modality') and
-                        getattr(inner, 'modality', None) == 'necessary'):
-                    inner_content = getattr(inner, 'content', None)
-                    if (inner_content is not None and
-                            isinstance(inner_content, ConnectiveFormula) and
-                            inner_content.connective == LogicalConnective.NOT and
-                            len(inner_content.formulas) == 1):
+                if hasattr(inner, "modality") and getattr(inner, "modality", None) == "necessary":
+                    inner_content = getattr(inner, "content", None)
+                    if (
+                        inner_content is not None
+                        and isinstance(inner_content, ConnectiveFormula)
+                        and inner_content.connective == LogicalConnective.NOT
+                        and len(inner_content.formulas) == 1
+                    ):
                         # Extract P from ¬□¬P
                         p = inner_content.formulas[0]
                         results.append(p)
@@ -219,8 +229,9 @@ class NecessityConjunction(InferenceRule):
     def can_apply(self, formulas: List[Formula]) -> bool:
         """Check if we have at least two necessary formulas."""
         count = sum(
-            1 for f in formulas
-            if hasattr(f, 'modality') and getattr(f, 'modality', None) == 'necessary'
+            1
+            for f in formulas
+            if hasattr(f, "modality") and getattr(f, "modality", None) == "necessary"
         )
         return count >= 2
 
@@ -228,24 +239,23 @@ class NecessityConjunction(InferenceRule):
         """Apply: □P ∧ □Q → □(P∧Q)."""
         results: List[Formula] = []
         necessary_formulas = [
-            f for f in formulas
-            if hasattr(f, 'modality') and getattr(f, 'modality', None) == 'necessary'
+            f
+            for f in formulas
+            if hasattr(f, "modality") and getattr(f, "modality", None) == "necessary"
         ]
         if len(necessary_formulas) >= 2:
             # Combine the contents as a conjunction
-            contents = [getattr(f, 'content', f) for f in necessary_formulas]
+            contents = [getattr(f, "content", f) for f in necessary_formulas]
             if len(contents) >= 2:
-                conjunction = ConnectiveFormula(
-                    LogicalConnective.AND, [contents[0], contents[1]]
-                )
+                conjunction = ConnectiveFormula(LogicalConnective.AND, [contents[0], contents[1]])
                 results.append(conjunction)
         return results
 
 
 __all__ = [
-    'NecessityElimination',
-    'PossibilityIntroduction',
-    'NecessityDistribution',
-    'PossibilityDuality',
-    'NecessityConjunction',
+    "NecessityElimination",
+    "PossibilityIntroduction",
+    "NecessityDistribution",
+    "PossibilityDuality",
+    "NecessityConjunction",
 ]

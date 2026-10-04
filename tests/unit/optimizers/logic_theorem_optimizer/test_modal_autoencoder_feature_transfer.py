@@ -84,13 +84,12 @@ def test_transfer_defers_legacy_only_embeddings_by_default() -> None:
     )
 
     assert result.state.feature_embedding_weights == {}
-    assert result.state.feature_family_logits == {
-        "legacy": {"deontic": 3.0}
-    }
+    assert result.state.feature_family_logits == {"legacy": {"deontic": 3.0}}
     assert result.report["source_embedding_transfer_enabled"] is False
-    assert "behavior distillation" in result.report["deferred_components"][
-        "legacy_only_embedding_weights"
-    ]
+    assert (
+        "behavior distillation"
+        in result.report["deferred_components"]["legacy_only_embedding_weights"]
+    )
 
 
 def test_transfer_fails_when_target_cannot_fit_without_eviction() -> None:
@@ -150,9 +149,10 @@ def test_transfer_never_synthesizes_legacy_proof_heads() -> None:
         }
     }
     assert result.state.applied_proof_feedback_ids == ["current-record"]
-    assert "versioned Hammer proof labels" in result.report[
-        "deferred_components"
-    ]["proof_auxiliary_head_logits"]
+    assert (
+        "versioned Hammer proof labels"
+        in result.report["deferred_components"]["proof_auxiliary_head_logits"]
+    )
 
 
 def test_transfer_is_deterministic() -> None:
@@ -193,17 +193,11 @@ def test_transfer_can_allowlist_source_fields() -> None:
         ),
     )
 
-    assert result.state.feature_family_logits == {
-        "feature": {"deontic": 2.0}
-    }
+    assert result.state.feature_family_logits == {"feature": {"deontic": 2.0}}
     assert result.state.feature_legal_ir_view_logits == {}
-    assert result.report["source_field_allowlist"] == [
-        "feature_family_logits"
-    ]
+    assert result.report["source_field_allowlist"] == ["feature_family_logits"]
 
 
 def test_transfer_rejects_unknown_allowlist_field() -> None:
     with pytest.raises(ValueError, match="unknown source transfer fields"):
-        LegacyFeatureTransferConfig(
-            source_field_allowlist=("not_a_real_head",)
-        )
+        LegacyFeatureTransferConfig(source_field_allowlist=("not_a_real_head",))

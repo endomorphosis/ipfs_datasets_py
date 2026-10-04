@@ -20,6 +20,7 @@ Strategy:
   (at the end of the while-True body, or on the next iteration) raises
   anyio.get_cancelled_exc_class() to exit the loop cleanly.
 """
+
 from __future__ import annotations
 
 import anyio
@@ -34,9 +35,11 @@ pytestmark = pytest.mark.asyncio
 
 # ─── helpers ─────────────────────────────────────────────────────────────────
 
+
 def _make_collector():
     """Return a fresh EnhancedMetricsCollector with enabled=False (no bg tasks)."""
     from ipfs_datasets_py.mcp_server.monitoring import EnhancedMetricsCollector
+
     return EnhancedMetricsCollector(enabled=False)
 
 
@@ -54,8 +57,8 @@ async def _run_loop_once(loop_coro, *, max_iterations: int = 5):
 # _monitoring_loop branches
 # ════════════════════════════════════════════════════════════════════════════
 
-class TestMonitoringLoopCancelled:
 
+class TestMonitoringLoopCancelled:
     @pytest.mark.asyncio
     async def test_cancelled_exits_cleanly(self):
         """Cancellation should break the while-loop without raising."""
@@ -76,7 +79,6 @@ class TestMonitoringLoopCancelled:
 
 
 class TestMonitoringLoopMetricsCollectionError:
-
     @pytest.mark.asyncio
     async def test_sleeps_60_on_metrics_error(self):
         import ipfs_datasets_py.mcp_server.monitoring as mon_mod
@@ -111,7 +113,6 @@ class TestMonitoringLoopMetricsCollectionError:
 
 
 class TestMonitoringLoopOSError:
-
     @pytest.mark.asyncio
     async def test_sleeps_60_on_os_error(self):
         import ipfs_datasets_py.mcp_server.monitoring as mon_mod
@@ -144,7 +145,6 @@ class TestMonitoringLoopOSError:
 
 
 class TestMonitoringLoopGenericException:
-
     @pytest.mark.asyncio
     async def test_sleeps_60_on_unexpected_error(self):
         import ipfs_datasets_py.mcp_server.monitoring as mon_mod
@@ -173,7 +173,6 @@ class TestMonitoringLoopGenericException:
 
 
 class TestMonitoringLoopHappyPath:
-
     @pytest.mark.asyncio
     async def test_happy_path_calls_sleep_30(self):
         import ipfs_datasets_py.mcp_server.monitoring as mon_mod
@@ -212,8 +211,8 @@ class TestMonitoringLoopHappyPath:
 # _cleanup_loop branches
 # ════════════════════════════════════════════════════════════════════════════
 
-class TestCleanupLoopCancelled:
 
+class TestCleanupLoopCancelled:
     @pytest.mark.asyncio
     async def test_cancelled_exits_cleanly(self):
         col = _make_collector()
@@ -233,7 +232,6 @@ class TestCleanupLoopCancelled:
 
 
 class TestCleanupLoopMonitoringError:
-
     @pytest.mark.asyncio
     async def test_monitoring_error_reraises(self):
         import ipfs_datasets_py.mcp_server.monitoring as mon_mod
@@ -250,7 +248,6 @@ class TestCleanupLoopMonitoringError:
 
 
 class TestCleanupLoopIOError:
-
     @pytest.mark.asyncio
     async def test_sleeps_3600_on_io_error(self):
         import ipfs_datasets_py.mcp_server.monitoring as mon_mod
@@ -279,7 +276,6 @@ class TestCleanupLoopIOError:
 
 
 class TestCleanupLoopGenericException:
-
     @pytest.mark.asyncio
     async def test_sleeps_3600_on_generic_error(self):
         import ipfs_datasets_py.mcp_server.monitoring as mon_mod
@@ -308,7 +304,6 @@ class TestCleanupLoopGenericException:
 
 
 class TestCleanupLoopHappyPath:
-
     @pytest.mark.asyncio
     async def test_happy_path_calls_sleep_3600(self):
         import ipfs_datasets_py.mcp_server.monitoring as mon_mod

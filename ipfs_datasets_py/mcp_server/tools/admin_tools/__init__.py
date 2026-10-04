@@ -7,8 +7,4 @@ These tools provide system management, configuration, and maintenance capabiliti
 
 from .admin_tools import manage_endpoints, system_maintenance, configure_system
 
-__all__ = [
-    "manage_endpoints",
-    "system_maintenance", 
-    "configure_system"
-]
+__all__ = ["manage_endpoints", "system_maintenance", "configure_system"]

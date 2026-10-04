@@ -12,6 +12,7 @@ Methods under test:
   - OntologyLearningAdapter.feedback_weighted_mean(weights)
   - OntologyLearningAdapter.feedback_last_score()
 """
+
 import pytest
 from unittest.mock import MagicMock
 
@@ -27,14 +28,20 @@ def _push_opt(o, avg):
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
 def _make_score(**kwargs):
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+
     defaults = dict(
-        completeness=0.5, consistency=0.5, clarity=0.5,
-        granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5,
+        completeness=0.5,
+        consistency=0.5,
+        clarity=0.5,
+        granularity=0.5,
+        relationship_coherence=0.5,
+        domain_alignment=0.5,
     )
     defaults.update(kwargs)
     return CriticScore(**defaults)
@@ -42,21 +49,25 @@ def _make_score(**kwargs):
 
 def _make_critic():
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
     return OntologyCritic(use_llm=False)
 
 
 def _make_entity(eid, text=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
     return Entity(id=eid, type="T", text=text or eid)
 
 
 def _make_relationship(sid, tid, rtype="r"):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Relationship
+
     return Relationship(id=f"{sid}-{tid}", type=rtype, source_id=sid, target_id=tid)
 
 
 def _make_result(entities, rels=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
     return EntityExtractionResult(
         entities=entities, relationships=rels or [], confidence=1.0, metadata={}, errors=[]
     )
@@ -64,11 +75,13 @@ def _make_result(entities, rels=None):
 
 def _make_generator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
     return OntologyGenerator()
 
 
 def _make_pipeline():
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     return OntologyPipeline()
 
 
@@ -79,16 +92,21 @@ def _push_run(p, score):
 
 
 def _make_adapter():
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter()
 
 
 def _push_feedback(adapter, score):
     from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import FeedbackRecord
+
     adapter._feedback.append(FeedbackRecord(final_score=score))
 
 
 # ── OntologyOptimizer.history_momentum_score ──────────────────────────────────
+
 
 class TestHistoryMomentumScore:
     def test_empty_returns_zero(self):
@@ -121,6 +139,7 @@ class TestHistoryMomentumScore:
 
 # ── OntologyOptimizer.score_signed_sum ────────────────────────────────────────
 
+
 class TestScoreSignedSum:
     def test_empty_returns_zero(self):
         o = _make_optimizer()
@@ -146,17 +165,40 @@ class TestScoreSignedSum:
 
 # ── OntologyCritic.score_classification ──────────────────────────────────────
 
+
 class TestScoreClassification:
     def test_excellent(self):
         c = _make_critic()
-        score = _make_score(**{d: 1.0 for d in ["completeness", "consistency", "clarity",
-                                                   "granularity", "relationship_coherence", "domain_alignment"]})
+        score = _make_score(
+            **{
+                d: 1.0
+                for d in [
+                    "completeness",
+                    "consistency",
+                    "clarity",
+                    "granularity",
+                    "relationship_coherence",
+                    "domain_alignment",
+                ]
+            }
+        )
         assert c.score_classification(score) == "excellent"
 
     def test_poor(self):
         c = _make_critic()
-        score = _make_score(**{d: 0.0 for d in ["completeness", "consistency", "clarity",
-                                                   "granularity", "relationship_coherence", "domain_alignment"]})
+        score = _make_score(
+            **{
+                d: 0.0
+                for d in [
+                    "completeness",
+                    "consistency",
+                    "clarity",
+                    "granularity",
+                    "relationship_coherence",
+                    "domain_alignment",
+                ]
+            }
+        )
         assert c.score_classification(score) == "poor"
 
     def test_returns_string(self):
@@ -171,6 +213,7 @@ class TestScoreClassification:
 
 # ── OntologyCritic.dimension_rank_order ──────────────────────────────────────
 
+
 class TestDimensionRankOrder:
     def test_returns_list_of_6(self):
         c = _make_critic()
@@ -180,7 +223,14 @@ class TestDimensionRankOrder:
 
     def test_contains_all_dims(self):
         c = _make_critic()
-        dims = {"completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment"}
+        dims = {
+            "completeness",
+            "consistency",
+            "clarity",
+            "granularity",
+            "relationship_coherence",
+            "domain_alignment",
+        }
         assert set(c.dimension_rank_order(_make_score())) == dims
 
     def test_sorted_desc(self):
@@ -191,6 +241,7 @@ class TestDimensionRankOrder:
 
 
 # ── OntologyGenerator.relationship_bidirectionality_rate ─────────────────────
+
 
 class TestRelationshipBidirectionalityRate:
     def test_empty_returns_zero(self):
@@ -226,6 +277,7 @@ class TestRelationshipBidirectionalityRate:
 
 # ── OntologyGenerator.entity_text_length_mean ────────────────────────────────
 
+
 class TestEntityTextLengthMean:
     def test_empty_returns_zero(self):
         gen = _make_generator()
@@ -244,6 +296,7 @@ class TestEntityTextLengthMean:
 
 
 # ── OntologyPipeline.run_score_delta_sum ──────────────────────────────────────
+
 
 class TestRunScoreDeltaSum:
     def test_single_run_returns_zero(self):
@@ -265,6 +318,7 @@ class TestRunScoreDeltaSum:
 
 
 # ── OntologyPipeline.run_score_improving_fraction ────────────────────────────
+
 
 class TestRunScoreImprovingFraction:
     def test_single_run_returns_zero(self):
@@ -294,6 +348,7 @@ class TestRunScoreImprovingFraction:
 
 # ── OntologyLearningAdapter.feedback_weighted_mean ───────────────────────────
 
+
 class TestFeedbackWeightedMean:
     def test_empty_returns_zero(self):
         a = _make_adapter()
@@ -319,6 +374,7 @@ class TestFeedbackWeightedMean:
 
 
 # ── OntologyLearningAdapter.feedback_last_score ───────────────────────────────
+
 
 class TestFeedbackLastScore:
     def test_empty_returns_zero(self):

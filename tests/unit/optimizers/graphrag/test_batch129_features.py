@@ -4,6 +4,7 @@ Methods under test:
   - LogicValidator.self_loop_count(ontology)
   - LogicValidator.average_entity_degree(ontology)
 """
+
 import pytest
 
 
@@ -11,8 +12,10 @@ import pytest
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_validator():
     from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
     return LogicValidator()
 
 
@@ -34,6 +37,7 @@ def _rel(src, tgt, rtype="knows"):
 # ---------------------------------------------------------------------------
 # LogicValidator.self_loop_count
 # ---------------------------------------------------------------------------
+
 
 class TestSelfLoopCount:
     def test_empty(self):
@@ -64,6 +68,7 @@ class TestSelfLoopCount:
 # ---------------------------------------------------------------------------
 # LogicValidator.average_entity_degree
 # ---------------------------------------------------------------------------
+
 
 class TestAverageEntityDegree:
     def test_empty_entities(self):

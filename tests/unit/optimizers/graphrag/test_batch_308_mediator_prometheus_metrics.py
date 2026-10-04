@@ -86,7 +86,9 @@ def test_run_refinement_cycle_emits_prometheus_score_and_round_metrics(monkeypat
     assert len(metrics.round_calls) == len(state.refinement_history)
     assert metrics.duration_calls and metrics.duration_calls[-1] >= 0.0
     assert metrics.delta_calls and metrics.delta_calls[-1][0] >= 0.0
-    assert all(labels.get("optimizer_type") == "ontology_mediator" for _, labels in metrics.score_calls)
+    assert all(
+        labels.get("optimizer_type") == "ontology_mediator" for _, labels in metrics.score_calls
+    )
     assert all(domain == "general" for domain in metrics.round_calls)
 
 

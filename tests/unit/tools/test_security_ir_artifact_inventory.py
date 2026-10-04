@@ -11,9 +11,7 @@ from tools.security_ir import inventory_artifacts as inventory
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 ARTIFACT_ROOT = REPO_ROOT / "security_ir_artifacts"
-INVENTORY_PATH = (
-    REPO_ROOT / "docs/security_verification/security_ir_artifact_inventory.json"
-)
+INVENTORY_PATH = REPO_ROOT / "docs/security_verification/security_ir_artifact_inventory.json"
 
 
 def _by_path(payload: dict) -> dict[str, dict]:
@@ -25,9 +23,7 @@ def test_checked_in_inventory_is_complete_and_deterministic() -> None:
     second = inventory.build_inventory(REPO_ROOT)
 
     assert first == second
-    assert inventory.render_inventory(first) == INVENTORY_PATH.read_text(
-        encoding="utf-8"
-    )
+    assert inventory.render_inventory(first) == INVENTORY_PATH.read_text(encoding="utf-8")
     assert first["schema_version"] == "SecurityArtifactInventory@1"
     assert first["scope"] == "git-tracked files"
     assert first["artifact_count"] == 269
@@ -39,10 +35,7 @@ def test_checked_in_inventory_is_complete_and_deterministic() -> None:
     paths = [record["path"] for record in first["artifacts"]]
     assert paths == sorted(paths, key=lambda value: value.encode("utf-8"))
     assert len(paths) == len(set(paths))
-    assert paths == [
-        path.as_posix()
-        for path in inventory.tracked_artifact_paths(REPO_ROOT)
-    ]
+    assert paths == [path.as_posix() for path in inventory.tracked_artifact_paths(REPO_ROOT)]
 
     canonical_records = json.dumps(
         first["artifacts"],
@@ -75,12 +68,9 @@ def test_temporary_and_filename_variants_are_explicit_without_authority() -> Non
     records = _by_path(payload)
 
     new_variants = {
-        "security_ir_artifacts/corpora/xaman-app/native-boundary-coverage-new.json":
-            "security_ir_artifacts/corpora/xaman-app/native-boundary-coverage.json",
-        "security_ir_artifacts/corpora/xaman-app/public-source-assessment-new.json":
-            "security_ir_artifacts/corpora/xaman-app/public-source-assessment.json",
-        "security_ir_artifacts/corpora/xaman-app/source-claim-map-new.json":
-            "security_ir_artifacts/corpora/xaman-app/source-claim-map.json",
+        "security_ir_artifacts/corpora/xaman-app/native-boundary-coverage-new.json": "security_ir_artifacts/corpora/xaman-app/native-boundary-coverage.json",
+        "security_ir_artifacts/corpora/xaman-app/public-source-assessment-new.json": "security_ir_artifacts/corpora/xaman-app/public-source-assessment.json",
+        "security_ir_artifacts/corpora/xaman-app/source-claim-map-new.json": "security_ir_artifacts/corpora/xaman-app/source-claim-map.json",
     }
     assert payload["new_variant_count"] == len(new_variants)
     for variant_path, base_path in new_variants.items():
@@ -91,30 +81,23 @@ def test_temporary_and_filename_variants_are_explicit_without_authority() -> Non
         assert record["ambiguity_reasons"]
         assert record["authority_selected"] is False
 
-    temporary = records[
-        "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/fuzz-report.tmp.json"
-    ]
+    temporary = records["security_ir_artifacts/corpora/xaman-app/testnet/fuzz/fuzz-report.tmp.json"]
     assert temporary["is_temporary"] is True
     assert temporary["classification"] == "transient compiler output"
     assert temporary["variant_of"].endswith("/fuzz-report.json")
 
-    latest = records[
-        "security_ir_artifacts/recovery/taskboard-preflight-latest.json"
-    ]
+    latest = records["security_ir_artifacts/recovery/taskboard-preflight-latest.json"]
     assert latest["is_mutable_alias"] is True
     assert latest["classification"] == "ambiguous"
     assert latest["variant_of"].endswith("/taskboard-preflight.json")
 
     apalache_records = [
-        record
-        for record in payload["artifacts"]
-        if "/_apalache-out/" in record["path"]
+        record for record in payload["artifacts"] if "/_apalache-out/" in record["path"]
     ]
     assert apalache_records
     assert all(record["is_temporary"] for record in apalache_records)
     assert all(
-        record["classification"] == "transient compiler output"
-        for record in apalache_records
+        record["classification"] == "transient compiler output" for record in apalache_records
     )
 
     groups = {group["base_path"]: group for group in payload["variant_groups"]}
@@ -156,9 +139,7 @@ def test_legacy_identifier_and_format_detection_on_fixture_tree(tmp_path: Path) 
     assert records["security_ir_artifacts/model.cid"]["legacy_ids"] == [
         {"field": "sidecar", "value": "sha256:def"}
     ]
-    assert records["security_ir_artifacts/broken.json"]["detected_format"] == (
-        "invalid-json"
-    )
+    assert records["security_ir_artifacts/broken.json"]["detected_format"] == ("invalid-json")
     assert records["security_ir_artifacts/broken.json"]["ambiguity_reasons"]
     assert records["security_ir_artifacts/query.smt2"]["classification"] == "source"
 

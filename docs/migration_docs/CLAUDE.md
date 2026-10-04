@@ -160,7 +160,9 @@ query_vector = np.random.rand(768)
 # Search for similar vectors
 results = index.search(query_vector, top_k=5)
 for i, result in enumerate(results):
-    print(f"Result {i+1}: ID={result.id}, Score={result.score:.4f}, Title={result.metadata['title']}")
+    print(
+        f"Result {i + 1}: ID={result.id}, Score={result.score:.4f}, Title={result.metadata['title']}"
+    )
 ```
 
 ## Code Style Guidelines
@@ -220,11 +222,11 @@ for i, result in enumerate(results):
 ```python
 class IPLDVectorStore:
     """IPLD-based vector storage for embeddings."""
-    
+
     def __init__(self, dimension=768, metric="cosine"):
         """
         Initialize vector store with dimension and similarity metric.
-        
+
         Args:
             dimension: int - Dimensionality of vectors
             metric: str - Distance metric ('cosine', 'l2', 'ip')
@@ -234,55 +236,57 @@ class IPLDVectorStore:
         self.vectors = []
         self.metadata = []
         self.root_cid = None
-        
+
     def add_vectors(self, vectors: List[np.ndarray], metadata: List[dict] = None) -> List[str]:
         """
         Store vectors in IPLD format.
-        
+
         Args:
             vectors: List[np.ndarray] - List of vectors to store
             metadata: List[dict] - Optional metadata for each vector
-            
+
         Returns:
             List[str] - List of vector IDs (CIDs)
         """
         # Implementation details
         return [f"bafy...{i}" for i in range(len(vectors))]  # Example CIDs
-        
+
     def search(self, query_vector: np.ndarray, top_k: int = 10) -> List[SearchResult]:
         """
         Perform vector similarity search.
-        
+
         Args:
             query_vector: np.ndarray - Query vector
             top_k: int - Number of results to return
-            
+
         Returns:
             List[SearchResult] - Ranked search results
         """
         # Implementation details
-        return [SearchResult(id=f"bafy...{i}", 
-                           score=0.9-i*0.1, 
-                           metadata_index=i,
-                           metadata=self.metadata[i]) for i in range(min(top_k, len(self.vectors)))]
-        
+        return [
+            SearchResult(
+                id=f"bafy...{i}", score=0.9 - i * 0.1, metadata_index=i, metadata=self.metadata[i]
+            )
+            for i in range(min(top_k, len(self.vectors)))
+        ]
+
     def export_to_ipld(self) -> tuple:
         """
         Export vector index as IPLD structure.
-        
+
         Returns:
             tuple: (root_cid, {cid: block_data}) - Root CID and blocks
         """
         # Implementation details
         return "bafy...root", {"bafy...root": b"root_data", "bafy...meta": b"meta_data"}
-        
+
     def export_to_car(self, output_path: str) -> str:
         """
         Export vector index to CAR file.
-        
+
         Args:
             output_path: str - Path to output CAR file
-            
+
         Returns:
             str - Root CID of the exported index
         """
@@ -296,9 +300,10 @@ import uuid
 from typing import Dict, List, Optional, Tuple, Union
 from slugify import slugify
 
+
 class IPLDKnowledgeGraph:
     """Knowledge graph using IPLD for storage."""
-    
+
     def __init__(self):
         """Initialize graph store."""
         self.entities = {}  # Map of entity_id to entity data
@@ -306,38 +311,40 @@ class IPLDKnowledgeGraph:
         self.root_cid = None
         self.entity_count = 0
         self.relationship_count = 0
-        
+
     def add_entity(self, entity_data: Dict) -> str:
         """
         Add entity node to graph.
-        
+
         Args:
             entity_data: Dict - Entity data including name, type, properties
-            
+
         Returns:
             str - CID of the new entity
         """
         entity_id = str(uuid.uuid4())
         slug = slugify(entity_data.get("name", f"entity-{entity_id}"))
         entity_cid = f"bafy...{slug}"
-        self.entities[entity_id] = {
-            "cid": entity_cid,
-            "data": entity_data
-        }
+        self.entities[entity_id] = {"cid": entity_cid, "data": entity_data}
         self.entity_count += 1
         return entity_cid
-        
-    def add_relationship(self, source_cid: str, target_cid: str, 
-                         relationship_type: str, properties: Optional[Dict] = None) -> str:
+
+    def add_relationship(
+        self,
+        source_cid: str,
+        target_cid: str,
+        relationship_type: str,
+        properties: Optional[Dict] = None,
+    ) -> str:
         """
         Add relationship between entities.
-        
+
         Args:
             source_cid: str - CID of source entity
             target_cid: str - CID of target entity
             relationship_type: str - Type of relationship
             properties: Optional[Dict] - Additional relationship properties
-            
+
         Returns:
             str - CID of the new relationship
         """
@@ -348,94 +355,102 @@ class IPLDKnowledgeGraph:
             "source": source_cid,
             "target": target_cid,
             "type": relationship_type,
-            "properties": properties or {}
+            "properties": properties or {},
         }
         self.relationship_count += 1
         return rel_cid
-        
+
     def query(self, start_entity: str, relationship_path: List[str]) -> List[Dict]:
         """
         Query graph following relationship paths.
-        
+
         Args:
             start_entity: str - Starting entity CID
             relationship_path: List[str] - Path of relationship types to follow
-            
+
         Returns:
             List[Dict] - Matching entities and relationships
         """
         # Implementation details
         return [{"entity": f"Entity {i}", "path": relationship_path} for i in range(3)]
-        
-    def vector_augmented_query(self, query_vector: np.ndarray, 
-                              relationship_constraints: List[Dict]) -> List[Dict]:
+
+    def vector_augmented_query(
+        self, query_vector: np.ndarray, relationship_constraints: List[Dict]
+    ) -> List[Dict]:
         """
         GraphRAG query combining vector similarity and graph traversal.
-        
+
         Args:
             query_vector: np.ndarray - Query vector for similarity search
             relationship_constraints: List[Dict] - Constraints on traversal
-            
+
         Returns:
             List[Dict] - Ranked results with entity and relationship data
         """
         # Implementation details
-        return [{"score": 0.9-i*0.1, "entity": f"Entity {i}"} for i in range(5)]
-        
+        return [{"score": 0.9 - i * 0.1, "entity": f"Entity {i}"} for i in range(5)]
+
     def get_entities_by_vector_ids(self, vector_ids: List[str]) -> List[Dict]:
         """
         Get entities that reference the given vector IDs.
-        
+
         Args:
             vector_ids: List[str] - List of vector IDs (CIDs)
-            
+
         Returns:
             List[Dict] - Entities referencing these vectors
         """
         # Implementation details
         return [{"id": f"entity-{i}", "name": f"Entity {i}"} for i in range(len(vector_ids))]
-        
-    def traverse_from_entities(self, entities: List[Dict], 
-                              relationship_types: Optional[List[str]] = None,
-                              max_depth: int = 2) -> List[Dict]:
+
+    def traverse_from_entities(
+        self,
+        entities: List[Dict],
+        relationship_types: Optional[List[str]] = None,
+        max_depth: int = 2,
+    ) -> List[Dict]:
         """
         Traverse graph from seed entities.
-        
+
         Args:
             entities: List[Dict] - Starting entities
             relationship_types: Optional[List[str]] - Types to traverse
             max_depth: int - Maximum traversal depth
-            
+
         Returns:
             List[Dict] - Resulting entities from traversal
         """
         # Implementation details
-        return [{"id": f"related-{i}", 
-                "type": "concept", 
-                "properties": {"name": f"Related Concept {i}"}} 
-                for i in range(10)]
-                
+        return [
+            {
+                "id": f"related-{i}",
+                "type": "concept",
+                "properties": {"name": f"Related Concept {i}"},
+            }
+            for i in range(10)
+        ]
+
     def export_to_car(self, output_path: str) -> str:
         """
         Export knowledge graph to CAR file.
-        
+
         Args:
             output_path: str - Path to output CAR file
-            
+
         Returns:
             str - Root CID of the exported graph
         """
         # Implementation details
         return "bafy...graph-root"
-        
+
     @classmethod
-    def from_cid(cls, cid: str) -> 'IPLDKnowledgeGraph':
+    def from_cid(cls, cid: str) -> "IPLDKnowledgeGraph":
         """
         Load knowledge graph from IPFS by CID.
-        
+
         Args:
             cid: str - Root CID of the knowledge graph
-            
+
         Returns:
             IPLDKnowledgeGraph - Loaded knowledge graph
         """
@@ -592,6 +607,7 @@ tokenizer = AutoTokenizer.from_pretrained("sentence-transformers/all-MiniLM-L6-v
 embedding_model = AutoModel.from_pretrained("sentence-transformers/all-MiniLM-L6-v2")
 graph_rag = IPLDGraphRAG(ipfs_client=ipfs)
 
+
 # 1. Create a knowledge graph with vector-enabled nodes
 def add_document_to_graph(doc_text, doc_metadata):
     """Process a document and add it to the knowledge graph with vector embeddings."""
@@ -599,9 +615,9 @@ def add_document_to_graph(doc_text, doc_metadata):
     inputs = tokenizer(doc_text, padding=True, truncation=True, return_tensors="pt")
     with torch.no_grad():
         outputs = embedding_model(**inputs)
-    embeddings = mean_pooling(outputs, inputs['attention_mask'])
+    embeddings = mean_pooling(outputs, inputs["attention_mask"])
     embedding_vector = embeddings[0].numpy()  # Get the vector
-    
+
     # Create document entity in graph with vector
     doc_id = f"doc_{uuid.uuid4()}"
     graph_rag.add_entity(
@@ -611,11 +627,11 @@ def add_document_to_graph(doc_text, doc_metadata):
             "text": doc_text,
             "title": doc_metadata.get("title", ""),
             "source": doc_metadata.get("source", ""),
-            "created_at": doc_metadata.get("created_at", time.time())
+            "created_at": doc_metadata.get("created_at", time.time()),
         },
-        vector=embedding_vector
+        vector=embedding_vector,
     )
-    
+
     # Extract concepts and create relationships
     concepts = extract_key_concepts(doc_text)  # Custom extraction function
     for concept in concepts:
@@ -623,19 +639,19 @@ def add_document_to_graph(doc_text, doc_metadata):
         concept_id = f"concept_{slugify(concept)}"
         if not graph_rag.get_entity(concept_id):
             graph_rag.add_entity(
-                entity_id=concept_id,
-                properties={"type": "concept", "name": concept}
+                entity_id=concept_id, properties={"type": "concept", "name": concept}
             )
-        
+
         # Link document to concept
         graph_rag.add_relationship(
             from_entity=doc_id,
             to_entity=concept_id,
             relationship_type="mentions",
-            properties={"confidence": 0.85}
+            properties={"confidence": 0.85},
         )
-    
+
     return doc_id
+
 
 # 2. Perform hybrid search combining vector similarity and graph traversal
 def query_knowledge_graph(query_text, top_k=5):
@@ -644,50 +660,54 @@ def query_knowledge_graph(query_text, top_k=5):
     inputs = tokenizer(query_text, padding=True, truncation=True, return_tensors="pt")
     with torch.no_grad():
         outputs = embedding_model(**inputs)
-    query_embedding = mean_pooling(outputs, inputs['attention_mask'])
+    query_embedding = mean_pooling(outputs, inputs["attention_mask"])
     query_vector = query_embedding[0].numpy()
-    
+
     # Perform hybrid search with 2-hop graph exploration
-    results = graph_rag.graph_vector_search(
-        query_vector=query_vector,
-        hop_count=2,
-        top_k=top_k
-    )
-    
+    results = graph_rag.graph_vector_search(query_vector=query_vector, hop_count=2, top_k=top_k)
+
     # Extract and format the results
     formatted_results = []
     for result in results:
         entity = graph_rag.get_entity(result["entity_id"])
-        formatted_results.append({
-            "id": result["entity_id"],
-            "score": result["score"],
-            "properties": entity["properties"],
-            "path": result["path"],  # The graph traversal path
-            "distance": result["distance"]  # Graph distance (hops)
-        })
-    
+        formatted_results.append(
+            {
+                "id": result["entity_id"],
+                "score": result["score"],
+                "properties": entity["properties"],
+                "path": result["path"],  # The graph traversal path
+                "distance": result["distance"],  # Graph distance (hops)
+            }
+        )
+
     return formatted_results
+
 
 # Helper function for embedding generation
 def mean_pooling(model_output, attention_mask):
     token_embeddings = model_output[0]
     input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
-    return torch.sum(token_embeddings * input_mask_expanded, 1) / torch.clamp(input_mask_expanded.sum(1), min=1e-9)
+    return torch.sum(token_embeddings * input_mask_expanded, 1) / torch.clamp(
+        input_mask_expanded.sum(1), min=1e-9
+    )
+
 
 # 3. Use the retrieved context with an LLM
 def answer_with_rag(query, llm_client):
     """Generate an answer using retrieved context from the knowledge graph."""
     # Retrieve relevant context
     context_items = query_knowledge_graph(query)
-    
+
     # Format context for the LLM
-    context_text = "\n\n".join([
-        f"Document: {item['properties'].get('title', 'Untitled')}\n"
-        f"Content: {item['properties'].get('text', '')[:500]}...\n"
-        f"Relevance: {item['score']:.2f}"
-        for item in context_items
-    ])
-    
+    context_text = "\n\n".join(
+        [
+            f"Document: {item['properties'].get('title', 'Untitled')}\n"
+            f"Content: {item['properties'].get('text', '')[:500]}...\n"
+            f"Relevance: {item['score']:.2f}"
+            for item in context_items
+        ]
+    )
+
     # Build prompt with context
     prompt = f"""Answer the following question based on the provided context:
 
@@ -697,14 +717,14 @@ Context:
 Question: {query}
 
 Answer:"""
-    
+
     # Get response from LLM
     response = llm_client.generate_text(prompt)
-    
+
     return {
         "answer": response,
         "sources": [item["id"] for item in context_items],
-        "context_used": context_text
+        "context_used": context_text,
     }
 ```
 
@@ -1193,7 +1213,9 @@ The query optimization system incorporates robust error handling to ensure relia
 The `UnifiedGraphRAGQueryOptimizer` includes a `_create_fallback_plan` method that generates conservative query plans when optimization fails:
 
 ```python
-def _create_fallback_plan(self, query: Dict[str, Any], priority: str = "normal", error: Optional[str] = None) -> Dict[str, Any]:
+def _create_fallback_plan(
+    self, query: Dict[str, Any], priority: str = "normal", error: Optional[str] = None
+) -> Dict[str, Any]:
     """Create a fallback query plan when optimization fails."""
     # Create safe defaults for the query parameters
     fallback_query = query.copy()
@@ -1206,7 +1228,7 @@ def _create_fallback_plan(self, query: Dict[str, Any], priority: str = "normal",
         fallback_query["max_vector_results"] = 5
     if "min_similarity" not in fallback_query:
         fallback_query["min_similarity"] = 0.6
-        
+
     # Return a complete fallback plan
     return {
         "query": fallback_query,
@@ -1217,7 +1239,7 @@ def _create_fallback_plan(self, query: Dict[str, Any], priority: str = "normal",
         "caching": {"enabled": False},
         "traversal_strategy": "default",
         "fallback": True,
-        "error": error
+        "error": error,
     }
 ```
 
@@ -1272,22 +1294,23 @@ The library provides two primary functions:
 def encode(roots: List[CID], blocks: List[Tuple[CID, bytes]]) -> bytes:
     """
     Encode roots and blocks into a CAR file.
-    
+
     Args:
         roots: List of root CIDs
         blocks: List of (CID, data) tuples
-        
+
     Returns:
         bytes: The CAR file as bytes
     """
 
+
 def decode(car_data: bytes) -> Tuple[List[CID], Dict[CID, bytes]]:
     """
     Decode a CAR file into roots and blocks.
-    
+
     Args:
         car_data: The CAR file as bytes
-        
+
     Returns:
         Tuple[List[CID], Dict[CID, bytes]]: (roots, blocks)
     """
@@ -1354,26 +1377,31 @@ message PBNode {
 # Low-level API (raw structures)
 def encode_raw(raw_node: Dict) -> bytes:
     """Encode a raw PBNode dictionary to bytes."""
-    
+
+
 def decode_raw(raw_data: bytes) -> Dict:
     """Decode bytes to a raw PBNode dictionary."""
+
 
 # High-level API (object-oriented)
 class PBNode:
     """A node in a DAG-PB graph."""
-    
+
     def __init__(self, data=None, links=None):
         """Initialize a PBNode with optional data and links."""
-        
+
     def add_link(self, name, cid, tsize=None):
         """Add a link to another node."""
 
+
 def encode(node: PBNode) -> bytes:
     """Encode a PBNode object to bytes."""
-    
+
+
 def decode(data: bytes) -> PBNode:
     """Decode bytes to a PBNode object."""
-    
+
+
 def prepare(obj: Dict) -> PBNode:
     """Prepare a dictionary as a valid PBNode."""
 ```
@@ -1384,24 +1412,24 @@ from ipld_dag_pb import PBNode, encode, decode, prepare
 from multiformats import CID
 
 # Create a node with dataset metadata
-metadata_node = PBNode(json.dumps({
-    "name": "climate_dataset",
-    "dimensions": 3,
-    "count": 10000
-}).encode("utf-8"))
+metadata_node = PBNode(
+    json.dumps({"name": "climate_dataset", "dimensions": 3, "count": 10000}).encode("utf-8")
+)
 
 # Encode to bytes for storage
 encoded_metadata = encode(metadata_node)
 
 # Create linked structure for dataset components
-root_node = prepare({
-    "data": {"Data": json.dumps({"type": "dataset_root"}).encode()},
-    "links": [
-        {"Name": "metadata", "Hash": metadata_cid, "Tsize": len(encoded_metadata)},
-        {"Name": "vectors", "Hash": vectors_cid, "Tsize": vectors_size},
-        {"Name": "index", "Hash": index_cid, "Tsize": index_size}
-    ]
-})
+root_node = prepare(
+    {
+        "data": {"Data": json.dumps({"type": "dataset_root"}).encode()},
+        "links": [
+            {"Name": "metadata", "Hash": metadata_cid, "Tsize": len(encoded_metadata)},
+            {"Name": "vectors", "Hash": vectors_cid, "Tsize": vectors_size},
+            {"Name": "index", "Hash": index_cid, "Tsize": index_size},
+        ],
+    }
+)
 
 # Decode a node from storage
 retrieved_node = decode(stored_bytes)
@@ -1438,30 +1466,32 @@ UnixFS is a data format that represents files and directories in a POSIX-like fi
 ```python
 class ChunkerBase:
     """Base class for chunking strategies."""
-    
+
     def cut(self, context, buffer, end=False) -> list[int]:
         """
         Cut buffer into chunks, returning a list of chunk byte lengths.
-        
+
         Args:
             context: Opaque context maintained between calls
             buffer: Bytes buffer to chunk
             end: True if this is the last buffer
-            
+
         Returns:
             list[int]: List of chunk lengths
         """
 
+
 class FixedSizeChunker(ChunkerBase):
     """Chunks data into fixed-size pieces."""
-    
+
     def __init__(self, chunk_size=262144):  # Default 256KB
         """Initialize with chunk size."""
-        
+
+
 class RabinChunker(ChunkerBase):
     """Content-defined chunking using Rabin fingerprinting."""
-    
-    def __init__(self, min_size=256*1024, avg_size=1024*1024, max_size=4*1024*1024):
+
+    def __init__(self, min_size=256 * 1024, avg_size=1024 * 1024, max_size=4 * 1024 * 1024):
         """Initialize with size parameters."""
 ```
 
@@ -1513,7 +1543,7 @@ class UnixFSWriter:
 from ipld_unixfs.file.chunker import fixed
 
 # Create a fixed-size chunker for large dataset files
-chunker = fixed.FixedSizeChunker(chunk_size=1024*1024)  # 1MB chunks
+chunker = fixed.FixedSizeChunker(chunk_size=1024 * 1024)  # 1MB chunks
 
 # Process a large dataset file incrementally
 with open("large_dataset.parquet", "rb") as f:
@@ -1575,36 +1605,36 @@ The `ipfs` field contains the IPFS hash for the archived content, enabling direc
 3. **Indexing Web Archives**:
    ```python
    from ipwb import indexer
-   
+
    # Basic indexing
-   cdxj_lines = indexer.index_file_at('path/to/archive.warc', 
-                                       outfile='index.cdxj',
-                                       quiet=True)
-   
+   cdxj_lines = indexer.index_file_at("path/to/archive.warc", outfile="index.cdxj", quiet=True)
+
    # Encrypted indexing for private archives
-   encryption_key = 'mySecretKey'
-   cdxj_lines = indexer.index_file_at('path/to/archive.warc',
-                                       outfile='encrypted_index.cdxj',
-                                       encryption_key=encryption_key)
-   
+   encryption_key = "mySecretKey"
+   cdxj_lines = indexer.index_file_at(
+       "path/to/archive.warc", outfile="encrypted_index.cdxj", encryption_key=encryption_key
+   )
+
    # Selective indexing (only include specific MIME types)
-   cdxj_lines = indexer.index_file_at('path/to/archive.warc',
-                                       outfile='filtered_index.cdxj',
-                                       include_mimes=['text/html', 'text/css', 'application/javascript'])
+   cdxj_lines = indexer.index_file_at(
+       "path/to/archive.warc",
+       outfile="filtered_index.cdxj",
+       include_mimes=["text/html", "text/css", "application/javascript"],
+   )
    ```
 
 4. **Replaying Web Archives**:
    ```python
    from ipwb import replay
-   
+
    # Start the replay system with your CDXJ index
-   replay.start('path/to/index.cdxj')
-   
+   replay.start("path/to/index.cdxj")
+
    # Start with encrypted index
-   replay.start('path/to/encrypted_index.cdxj', encryption_key='mySecretKey')
-   
+   replay.start("path/to/encrypted_index.cdxj", encryption_key="mySecretKey")
+
    # Start with proxy support for HTTPS content
-   replay.start('path/to/index.cdxj', proxy=True)
+   replay.start("path/to/index.cdxj", proxy=True)
    ```
 
 5. **Advanced API Usage**:
@@ -1670,46 +1700,47 @@ docker run -p 12345:12345 oduwsdl/archivenow --server --host 0.0.0.0
 2. **Python API Usage**:
    ```python
    from archivenow import archivenow
-   
+
    # Create a WARC archive of a website
-   result = archivenow.push("https://example.com/", "warc", 
-                            {"warc": "myarchive", "agent": "wget"})
-   
+   result = archivenow.push("https://example.com/", "warc", {"warc": "myarchive", "agent": "wget"})
+
    # Push to Internet Archive
    result_ia = archivenow.push("https://example.com/", "ia")
    print(f"Internet Archive URL: {result_ia}")
-   
+
    # Push to Archive.is (archive.today)
    result_is = archivenow.push("https://example.com/", "is")
    print(f"Archive.is URL: {result_is}")
-   
+
    # Push to multiple archives including Archive.is
    results = archivenow.push("https://example.com/", ["ia", "is", "cc"])
    for archive, url in results.items():
        print(f"{archive}: {url}")
-   
+
    # Direct Archive.is integration with custom headers
    import requests
-   
+
+
    def archive_to_archive_is(url, wait_for_completion=True):
        """Archive URL directly to Archive.is with completion tracking."""
        response = requests.post(
-           'https://archive.is/submit/',
-           data={'url': url},
+           "https://archive.is/submit/",
+           data={"url": url},
            headers={
-               'User-Agent': 'IPFS Datasets Archive Bot 1.0',
-               'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+               "User-Agent": "IPFS Datasets Archive Bot 1.0",
+               "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
            },
-           timeout=60
+           timeout=60,
        )
-       
+
        if response.status_code == 200:
            archive_url = response.url
-           if wait_for_completion and 'archive.is' in archive_url:
+           if wait_for_completion and "archive.is" in archive_url:
                # Wait for archive completion
                import time
+
                time.sleep(5)  # Allow processing time
-               
+
                # Verify archive exists
                verify_response = requests.get(archive_url, timeout=30)
                if verify_response.status_code == 200:
@@ -1717,19 +1748,19 @@ docker run -p 12345:12345 oduwsdl/archivenow --server --host 0.0.0.0
            return archive_url
        else:
            raise Exception(f"Archive.is failed with status: {response.status_code}")
-   
+
+
    # Use direct Archive.is integration
    archive_is_url = archive_to_archive_is("https://example.com")
    print(f"Direct Archive.is URL: {archive_is_url}")
-       
+
    # Custom implementation with handlers
    from archivenow.handlers import warc_handler
-   
+
    custom_handler = warc_handler.WARCHandler()
-   archive_url = custom_handler.push("https://example.com/", 
-                                    {"warc": "custom_archive", 
-                                     "agent": "squidwarc", 
-                                     "depth": 1})
+   archive_url = custom_handler.push(
+       "https://example.com/", {"warc": "custom_archive", "agent": "squidwarc", "depth": 1}
+   )
    ```
 
 3. **Web Service Usage**:
@@ -1755,21 +1786,24 @@ docker run -p 12345:12345 oduwsdl/archivenow --server --host 0.0.0.0
    ```python
    # Creating a custom archive handler
    from archivenow.handlers.archive_handler import ArchiveHandler
-   
+
+
    class MyCustomArchiveHandler(ArchiveHandler):
        def __init__(self):
            ArchiveHandler.__init__(self)
            self.enabled = True
-           self.name = 'my_archive'
-           self.service_api = 'https://myarchive.example.org/api/save'
-       
+           self.name = "my_archive"
+           self.service_api = "https://myarchive.example.org/api/save"
+
        def push(self, uri, params=None):
            # Custom implementation to push to your archive service
            # Returns the URL of the archived version
            return f"https://myarchive.example.org/archived/{uri}"
-   
+
+
    # Register the handler
    from archivenow import archivenow
+
    archivenow.handler_api.register_handler(MyCustomArchiveHandler())
    ```
 
@@ -1808,12 +1842,13 @@ To obtain WARC or CDXJ files from the Internet Archive:
 1. **Internet Archive API**:
    ```python
    import requests
-   
+
+
    def get_warc_from_ia(identifier, filename):
        """Download a WARC file from Internet Archive."""
        url = f"https://archive.org/download/{identifier}/{filename}"
        response = requests.get(url, stream=True)
-       with open(filename, 'wb') as f:
+       with open(filename, "wb") as f:
            for chunk in response.iter_content(chunk_size=8192):
                f.write(chunk)
        return filename
@@ -1825,7 +1860,7 @@ To obtain WARC or CDXJ files from the Internet Archive:
        """Get list of WARCs in an IA collection."""
        url = f"https://archive.org/advancedsearch.php?q=collection:{collection_id}+AND+format:WARC&fl[]=identifier&fl[]=filename&output=json"
        response = requests.get(url)
-       return response.json()['response']['docs']
+       return response.json()["response"]["docs"]
    ```
 
 3. **Web Archive Discovery Tools**:
@@ -1838,35 +1873,34 @@ To obtain WARC or CDXJ files from the Internet Archive:
    ```python
    # CDX API for Wayback Machine
    import requests
-   
+
+
    def query_cdx_api(url, from_date=None, to_date=None, limit=100):
        """Query Archive.org CDX API for URL captures."""
-       params = {
-           'url': url,
-           'output': 'json',
-           'limit': limit
-       }
+       params = {"url": url, "output": "json", "limit": limit}
        if from_date:
-           params['from'] = from_date
+           params["from"] = from_date
        if to_date:
-           params['to'] = to_date
-           
-       response = requests.get('http://web.archive.org/cdx/search/cdx', params=params)
+           params["to"] = to_date
+
+       response = requests.get("http://web.archive.org/cdx/search/cdx", params=params)
        return response.json()
-   
+
+
    # Common Crawl Index API
    def query_common_crawl_index(url_pattern, crawl_id="CC-MAIN-2024-10"):
        """Query Common Crawl index for URL patterns."""
        cc_url = f"https://index.commoncrawl.org/{crawl_id}-index"
-       params = {'url': url_pattern, 'output': 'json'}
-       
+       params = {"url": url_pattern, "output": "json"}
+
        response = requests.get(cc_url, params=params)
        results = []
-       for line in response.text.strip().split('\n'):
+       for line in response.text.strip().split("\n"):
            if line:
                results.append(json.loads(line))
        return results
-   
+
+
    # Archive.is verification and metadata
    def get_archive_is_metadata(archive_url):
        """Get metadata from Archive.is archived page."""
@@ -1874,16 +1908,19 @@ To obtain WARC or CDXJ files from the Internet Archive:
        if response.status_code == 200:
            # Extract metadata from Archive.is page
            from bs4 import BeautifulSoup
-           soup = BeautifulSoup(response.content, 'html.parser')
-           
+
+           soup = BeautifulSoup(response.content, "html.parser")
+
            # Find archive timestamp and original URL
-           meta_info = soup.find('div', class_='TEXT-BLOCK')
+           meta_info = soup.find("div", class_="TEXT-BLOCK")
            if meta_info:
                return {
-                   'archive_url': archive_url,
-                   'archived_at': meta_info.get_text().strip(),
-                   'original_url': soup.find('a', {'rel': 'canonical'})['href'] if soup.find('a', {'rel': 'canonical'}) else None,
-                   'archive_service': 'archive.is'
+                   "archive_url": archive_url,
+                   "archived_at": meta_info.get_text().strip(),
+                   "original_url": soup.find("a", {"rel": "canonical"})["href"]
+                   if soup.find("a", {"rel": "canonical"})
+                   else None,
+                   "archive_service": "archive.is",
                }
        return None
    ```
@@ -1926,15 +1963,15 @@ This module aims to provide functionality for querying Common Crawl and Internet
 1. **Common Crawl Integration**:
    ```python
    from ipfs_datasets_py import web_archive_utils
-   
+
    # Query Common Crawl for specific domain/URL pattern
    results = web_archive_utils.query_common_crawl(
        domain="example.com",
        url_pattern="*/blog/*",
        crawl_id="CC-MAIN-2023-06",  # Optional specific crawl
-       limit=1000
+       limit=1000,
    )
-   
+
    # Advanced Common Crawl querying with filters
    filtered_results = web_archive_utils.query_common_crawl(
        domain="stackoverflow.com",
@@ -1942,59 +1979,54 @@ This module aims to provide functionality for querying Common Crawl and Internet
        crawl_id="CC-MAIN-2024-10",
        limit=5000,
        filters={
-           'mime_type': 'text/html',
-           'status_code': '200',
-           'language': 'en',
-           'min_content_length': 1000
-       }
+           "mime_type": "text/html",
+           "status_code": "200",
+           "language": "en",
+           "min_content_length": 1000,
+       },
    )
-   
+
    # Download matching WARC records with parallel processing
    warc_data = web_archive_utils.download_cc_warcs(
-       results, 
+       results,
        max_workers=4,
-       chunk_size=1024*1024  # 1MB chunks
+       chunk_size=1024 * 1024,  # 1MB chunks
    )
-   
+
    # Convert to structured dataset with content analysis
    dataset = web_archive_utils.warc_to_dataset(
-       warc_data, 
-       extract_text=True, 
+       warc_data,
+       extract_text=True,
        extract_metadata=True,
        content_analysis={
-           'language_detection': True,
-           'content_classification': True,
-           'link_extraction': True,
-           'structured_data_extraction': True  # JSON-LD, microdata, etc.
-       }
+           "language_detection": True,
+           "content_classification": True,
+           "link_extraction": True,
+           "structured_data_extraction": True,  # JSON-LD, microdata, etc.
+       },
    )
-   
+
    # Advanced Common Crawl processing pipeline
    cc_pipeline = web_archive_utils.CommonCrawlPipeline(
        crawl_ids=["CC-MAIN-2024-10", "CC-MAIN-2024-06"],  # Multiple crawls
        domain_filters=["*.edu", "*.gov", "*.org"],
        content_filters={
-           'min_text_length': 500,
-           'languages': ['en', 'es', 'fr'],
-           'exclude_patterns': ['*/admin/*', '*/login/*']
+           "min_text_length": 500,
+           "languages": ["en", "es", "fr"],
+           "exclude_patterns": ["*/admin/*", "*/login/*"],
        },
-       output_format='parquet',
-       deduplication=True
+       output_format="parquet",
+       deduplication=True,
    )
-   
+
    # Process multiple domains across multiple crawls
-   bulk_dataset = cc_pipeline.process_domains([
-       "example.com",
-       "stackoverflow.com", 
-       "github.com"
-   ])
-   
+   bulk_dataset = cc_pipeline.process_domains(["example.com", "stackoverflow.com", "github.com"])
+
    # Save as Parquet with partitioning
    bulk_dataset.save_to_parquet(
-       "common_crawl_dataset.parquet",
-       partition_cols=["domain", "crawl_id", "language"]
+       "common_crawl_dataset.parquet", partition_cols=["domain", "crawl_id", "language"]
    )
-   
+
    # Or push to Hugging Face Datasets Hub
    bulk_dataset.push_to_hub("username/common-crawl-processed")
    ```
@@ -2003,21 +2035,17 @@ This module aims to provide functionality for querying Common Crawl and Internet
    ```python
    # Query Internet Archive for historical captures of a domain
    captures = web_archive_utils.query_wayback_machine(
-       url="example.com",
-       from_date="20150101",
-       to_date="20220101",
-       match_type="domain",
-       limit=500
+       url="example.com", from_date="20150101", to_date="20220101", match_type="domain", limit=500
    )
-   
+
    # Download captures as WARC
    warc_data = web_archive_utils.download_wayback_captures(captures)
-   
+
    # Process into dataset with time series information
    timeseries_dataset = web_archive_utils.wayback_to_timeseries_dataset(
        warc_data,
        temporal_field="capture_date",
-       content_fields=["html_content", "text_content", "links"]
+       content_fields=["html_content", "text_content", "links"],
    )
    ```
 
@@ -2029,23 +2057,23 @@ This module aims to provide functionality for querying Common Crawl and Internet
            web_archive_utils.extractors.HTMLExtractor(),
            web_archive_utils.extractors.TextExtractor(),
            web_archive_utils.extractors.LinkExtractor(),
-           web_archive_utils.extractors.MetadataExtractor()
+           web_archive_utils.extractors.MetadataExtractor(),
        ],
        transformation_steps=[
            web_archive_utils.transformers.DedupContent(),
            web_archive_utils.transformers.LanguageDetection(),
            web_archive_utils.transformers.HTMLCleaner(),
-           web_archive_utils.transformers.TextNormalizer()
+           web_archive_utils.transformers.TextNormalizer(),
        ],
-       output_format="parquet"
+       output_format="parquet",
    )
-   
+
    # Process multiple archives in parallel
    processed_datasets = pipeline.process_bulk(
        warc_files=["archive1.warc.gz", "archive2.warc.gz"],
        output_dir="processed_datasets/",
        partitions=["domain", "language"],
-       parallel_workers=4
+       parallel_workers=4,
    )
    ```
 
@@ -2083,24 +2111,18 @@ The extracted web content can be directly piped into machine learning pipelines:
 ```python
 # Create a dataset from Common Crawl and fine-tune a model
 cc_dataset = web_archive_utils.query_and_process_common_crawl(
-    domain="stackoverflow.com",
-    url_pattern="*/questions/*",
-    extract_qa_pairs=True
+    domain="stackoverflow.com", url_pattern="*/questions/*", extract_qa_pairs=True
 )
 
 # Convert to format suitable for model training
 training_dataset = cc_dataset.prepare_for_training(
-    text_field="answer_text",
-    metadata_fields=["tags", "upvotes"]
+    text_field="answer_text", metadata_fields=["tags", "upvotes"]
 )
 
 # Use with Hugging Face Transformers
 from transformers import Trainer, TrainingArguments
-trainer = Trainer(
-    model=model,
-    args=TrainingArguments(...),
-    train_dataset=training_dataset
-)
+
+trainer = Trainer(model=model, args=TrainingArguments(...), train_dataset=training_dataset)
 trainer.train()
 ```
 
@@ -2115,15 +2137,15 @@ IPFS Datasets Python integrates YT-DLP for downloading content from 1000+ platfo
 ```python
 from ipfs_datasets_py.data_transformation.multimedia import YtDlpWrapper
 from ipfs_datasets_py.mcp_server.tools.media_tools import (
-    ytdlp_download_video, ytdlp_download_playlist, 
-    ytdlp_extract_info, ytdlp_search_videos, ytdlp_batch_download
+    ytdlp_download_video,
+    ytdlp_download_playlist,
+    ytdlp_extract_info,
+    ytdlp_search_videos,
+    ytdlp_batch_download,
 )
 
 # Initialize YT-DLP wrapper
-ytdlp = YtDlpWrapper(
-    default_output_dir="downloads",
-    default_quality="best[height<=720]"
-)
+ytdlp = YtDlpWrapper(default_output_dir="downloads", default_quality="best[height<=720]")
 
 # Download single video with comprehensive metadata
 result = await ytdlp_download_video(
@@ -2137,8 +2159,8 @@ result = await ytdlp_download_video(
         "writesubtitles": True,
         "writeautomaticsub": True,
         "writedescription": True,
-        "writeinfojson": True
-    }
+        "writeinfojson": True,
+    },
 )
 
 # Download entire playlists for large datasets
@@ -2148,13 +2170,12 @@ playlist_result = await ytdlp_download_playlist(
     quality="best[height<=720]",
     max_downloads=100,
     download_info_json=True,
-    archive_file="downloaded_videos.txt"  # Track downloads
+    archive_file="downloaded_videos.txt",  # Track downloads
 )
 
 # Extract metadata without downloading for dataset analysis
 info_result = await ytdlp_extract_info(
-    url="https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-    extract_flat=False
+    url="https://www.youtube.com/watch?v=dQw4w9WgXcQ", extract_flat=False
 )
 
 print(f"Video metadata: {info_result['title']}, {info_result['duration']}s")
@@ -2167,10 +2188,18 @@ Professional media processing and conversion with FFmpeg integration:
 
 ```python
 from ipfs_datasets_py.mcp_server.tools.media_tools import (
-    ffmpeg_convert, ffmpeg_mux, ffmpeg_demux,
-    ffmpeg_cut, ffmpeg_splice, ffmpeg_concat,
-    ffmpeg_probe, ffmpeg_analyze, ffmpeg_apply_filters,
-    ffmpeg_batch_process, ffmpeg_stream_input, ffmpeg_stream_output
+    ffmpeg_convert,
+    ffmpeg_mux,
+    ffmpeg_demux,
+    ffmpeg_cut,
+    ffmpeg_splice,
+    ffmpeg_concat,
+    ffmpeg_probe,
+    ffmpeg_analyze,
+    ffmpeg_apply_filters,
+    ffmpeg_batch_process,
+    ffmpeg_stream_input,
+    ffmpeg_stream_output,
 )
 
 # Convert videos to standardized formats for ML datasets
@@ -2185,8 +2214,8 @@ conversion_result = await ffmpeg_convert(
         "preset": "medium",
         "crf": "23",  # Constant rate factor for quality
         "profile": "high",
-        "level": "4.0"
-    }
+        "level": "4.0",
+    },
 )
 
 # Extract audio for speech/music analysis
@@ -2196,7 +2225,7 @@ audio_extraction = await ffmpeg_convert(
     video_codec=None,  # Remove video stream
     audio_codec="pcm_s16le",  # Uncompressed for analysis
     audio_sampling_rate="16000",  # Standard for speech processing
-    audio_channels=1  # Mono for speech
+    audio_channels=1,  # Mono for speech
 )
 
 # Extract frames for computer vision datasets
@@ -2204,10 +2233,10 @@ frames_result = await ffmpeg_convert(
     input_file="video.mp4",
     output_file="frames/frame_%04d.jpg",
     custom_options={
-        "vf": "fps=1",         # 1 frame per second
-        "q:v": "2",            # High quality JPEG
-        "start_number": "0"    # Start numbering from 0
-    }
+        "vf": "fps=1",  # 1 frame per second
+        "q:v": "2",  # High quality JPEG
+        "start_number": "0",  # Start numbering from 0
+    },
 )
 
 # Batch processing for large datasets
@@ -2219,10 +2248,10 @@ batch_result = await ffmpeg_batch_process(
         "video_codec": "libx264",
         "audio_codec": "aac",
         "resolution": "854x480",
-        "quality": "medium"
+        "quality": "medium",
     },
     max_parallel=4,
-    progress_callback=lambda status: print(f"Progress: {status['completed']}/{status['total']}")
+    progress_callback=lambda status: print(f"Progress: {status['completed']}/{status['total']}"),
 )
 ```
 
@@ -2238,83 +2267,75 @@ async def comprehensive_web_scraping_pipeline(targets):
     - Archive.is archiving
     - Multimedia content scraping (YT-DLP)
     """
-    
+
     results = {
-        'web_archives': [],
-        'multimedia_content': [],
-        'wayback_captures': [],
-        'common_crawl_data': [],
-        'archive_is_snapshots': []
+        "web_archives": [],
+        "multimedia_content": [],
+        "wayback_captures": [],
+        "common_crawl_data": [],
+        "archive_is_snapshots": [],
     }
-    
+
     for target in targets:
-        target_type = target['type']
-        url = target['url']
-        
+        target_type = target["type"]
+        url = target["url"]
+
         try:
-            if target_type == 'web_archive':
+            if target_type == "web_archive":
                 # Traditional web archiving
                 warc_path = processor.create_warc(
-                    url=url,
-                    options=target.get('options', {"agent": "wget", "depth": 1})
+                    url=url, options=target.get("options", {"agent": "wget", "depth": 1})
                 )
-                
+
                 # Index to IPFS
                 index_result = processor.index_warc(warc_path)
-                
+
                 # Archive to multiple services
                 ia_url = archivenow.push(url, "ia")
                 is_url = archivenow.push(url, "is")
-                
-                results['web_archives'].append({
-                    'url': url,
-                    'warc_path': warc_path,
-                    'ipfs_hash': index_result['ipfs_hash'],
-                    'internet_archive_url': ia_url,
-                    'archive_is_url': is_url
-                })
-                
-            elif target_type == 'multimedia':
+
+                results["web_archives"].append(
+                    {
+                        "url": url,
+                        "warc_path": warc_path,
+                        "ipfs_hash": index_result["ipfs_hash"],
+                        "internet_archive_url": ia_url,
+                        "archive_is_url": is_url,
+                    }
+                )
+
+            elif target_type == "multimedia":
                 # Multimedia content scraping
-                if 'playlist' in url:
+                if "playlist" in url:
                     download_result = await ytdlp_download_playlist(
                         url=url,
                         output_dir="multimedia_content",
-                        max_downloads=target.get('max_videos', 20)
+                        max_downloads=target.get("max_videos", 20),
                     )
                 else:
                     download_result = await ytdlp_download_video(
                         url=url,
                         output_dir="multimedia_content",
-                        quality=target.get('quality', 'best[height<=720]'),
-                        download_info_json=True
+                        quality=target.get("quality", "best[height<=720]"),
+                        download_info_json=True,
                     )
-                
-                results['multimedia_content'].append(download_result)
-                
+
+                results["multimedia_content"].append(download_result)
+
         except Exception as e:
             print(f"Error processing {url}: {e}")
-    
+
     return results
+
 
 # Example comprehensive scraping configuration
 scraping_targets = [
-    {
-        "type": "web_archive",
-        "url": "https://example.com",
-        "options": {"agent": "wget", "depth": 2}
-    },
-    {
-        "type": "multimedia", 
-        "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-        "quality": "720p"
-    }
+    {"type": "web_archive", "url": "https://example.com", "options": {"agent": "wget", "depth": 2}},
+    {"type": "multimedia", "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ", "quality": "720p"},
 ]
 
 # Run comprehensive scraping
-comprehensive_results = asyncio.run(
-    comprehensive_web_scraping_pipeline(scraping_targets)
-)
+comprehensive_results = asyncio.run(comprehensive_web_scraping_pipeline(scraping_targets))
 ```
 
 ## Complete Integration Examples
@@ -2391,12 +2412,14 @@ import json
 
 # Step 1: Archive a website using ArchiveNow
 print("Creating web archive...")
-warc_file = archivenow.push("https://en.wikipedia.org/wiki/IPFS", "warc", 
-                           {"warc": "ipfs_wiki", "agent": "wget"})
+warc_file = archivenow.push(
+    "https://en.wikipedia.org/wiki/IPFS", "warc", {"warc": "ipfs_wiki", "agent": "wget"}
+)
 
 # Step 2: Index the WARC file to IPFS using IPWB
 print("Indexing to IPFS...")
 from ipwb import indexer
+
 cdxj_path = indexer.index_file_at(warc_file, outfile="ipfs_wiki.cdxj")
 
 # Step 3: Extract structured data from the archive
@@ -2407,14 +2430,14 @@ pipeline = web_archive_utils.WARCProcessingPipeline(
         web_archive_utils.extractors.HTMLExtractor(),
         web_archive_utils.extractors.TextExtractor(),
         web_archive_utils.extractors.EntityExtractor(),
-        web_archive_utils.extractors.LinkExtractor()
+        web_archive_utils.extractors.LinkExtractor(),
     ],
     transformation_steps=[
         web_archive_utils.transformers.HTMLCleaner(),
         web_archive_utils.transformers.TextNormalizer(),
-        web_archive_utils.transformers.EntityLinker()
+        web_archive_utils.transformers.EntityLinker(),
     ],
-    output_format="dataset"
+    output_format="dataset",
 )
 
 # Process the archive into a dataset
@@ -2432,11 +2455,9 @@ embeddings = [embedding_model.encode(chunk) for chunk in text_chunks]
 
 # Create vector index
 vector_index = IPFSKnnIndex(dimension=embedding_model.dimension)
-vector_ids = vector_index.add_vectors(embeddings, metadata={
-    "source": "wikipedia",
-    "topic": "ipfs",
-    "chunks": text_chunks
-})
+vector_ids = vector_index.add_vectors(
+    embeddings, metadata={"source": "wikipedia", "topic": "ipfs", "chunks": text_chunks}
+)
 
 # Step 5: Build knowledge graph from extracted entities
 print("Building knowledge graph...")
@@ -2444,12 +2465,14 @@ kg = IPLDKnowledgeGraph()
 
 # Add entities from the dataset
 for entity in dataset.get_entities():
-    entity_cid = kg.add_entity({
-        "name": entity.name,
-        "type": entity.type,
-        "mentions": entity.mentions,
-        "vector_ids": [vector_ids[i] for i in entity.chunk_indices]
-    })
+    entity_cid = kg.add_entity(
+        {
+            "name": entity.name,
+            "type": entity.type,
+            "mentions": entity.mentions,
+            "vector_ids": [vector_ids[i] for i in entity.chunk_indices],
+        }
+    )
 
 # Add relationships between entities
 for relation in dataset.get_relations():
@@ -2457,7 +2480,7 @@ for relation in dataset.get_relations():
         source_cid=relation.source_entity_cid,
         target_cid=relation.target_entity_cid,
         relationship_type=relation.type,
-        properties=relation.properties
+        properties=relation.properties,
     )
 
 # Step 6: Export everything to CAR files for distribution
@@ -2476,7 +2499,7 @@ dataset_root = {
     "cdxj_index": cdxj_path,
     "vector_index_cid": vector_index.root_cid,
     "knowledge_graph_cid": kg.root_cid,
-    "created_at": datetime.datetime.now().isoformat()
+    "created_at": datetime.datetime.now().isoformat(),
 }
 
 # Store the root object
@@ -2494,15 +2517,11 @@ query_embedding = embedding_model.encode(query)
 vector_results = vector_index.search(query_embedding, top_k=5)
 
 # Get entities mentioned in the most relevant chunks
-mentioned_entities = kg.get_entities_by_vector_ids(
-    [result.id for result in vector_results]
-)
+mentioned_entities = kg.get_entities_by_vector_ids([result.id for result in vector_results])
 
 # Perform graph traversal to find related concepts
 related_concepts = kg.traverse_from_entities(
-    mentioned_entities,
-    relationship_types=["RELATED_TO", "IS_PART_OF"],
-    max_depth=2
+    mentioned_entities, relationship_types=["RELATED_TO", "IS_PART_OF"], max_depth=2
 )
 
 # Combine results for a comprehensive answer
@@ -2902,43 +2921,35 @@ data_layer.duckdb_to_car(
     query="SELECT * FROM my_table WHERE category = 'science'",
     car_path="science_data.car",
     db_path="my_database.duckdb",
-    hash_columns=["id", "timestamp"]
+    hash_columns=["id", "timestamp"],
 )
 
 # Example 2: DuckDB to Parquet file
 data_layer.duckdb_to_parquet(
     query="SELECT * FROM my_table WHERE category = 'science'",
     parquet_path="science_data.parquet",
-    db_path="my_database.duckdb"
+    db_path="my_database.duckdb",
 )
 
 # Example 3: Huggingface Dataset to CAR file
 data_layer.hf_dataset_to_car(
-    dataset_name="wikipedia",
-    split="train",
-    car_path="wikipedia_train.car",
-    hash_columns=["id"]
+    dataset_name="wikipedia", split="train", car_path="wikipedia_train.car", hash_columns=["id"]
 )
 
 # Example 4: Huggingface Dataset to Parquet file
 data_layer.hf_dataset_to_parquet(
-    dataset_name="wikipedia",
-    split="train",
-    parquet_path="wikipedia_train.parquet"
+    dataset_name="wikipedia", split="train", parquet_path="wikipedia_train.parquet"
 )
 
 # Example 5: Converting between formats
 data_layer.parquet_to_car(
     parquet_path="my_dataset.parquet",
     car_path="my_dataset.car",
-    hash_columns=["id", "timestamp"]  # Use these columns for content-addressing
+    hash_columns=["id", "timestamp"],  # Use these columns for content-addressing
 )
 
 # Example 6: Converting CAR to Parquet
-data_layer.car_to_parquet(
-    car_path="my_dataset.car",
-    parquet_path="reconstructed_dataset.parquet"
-)
+data_layer.car_to_parquet(car_path="my_dataset.car", parquet_path="reconstructed_dataset.parquet")
 ```
 
 #### 2. DuckDB Direct Export Examples
@@ -2963,7 +2974,7 @@ duckdb.export_to_car(
     ORDER BY date, total_revenue DESC
     """,
     output_path="sales_summary_2023.car",
-    hash_columns=["date", "category"]
+    hash_columns=["date", "category"],
 )
 
 # Execute query and export directly to Parquet file
@@ -2973,14 +2984,11 @@ duckdb.export_to_parquet(
     WHERE event_type = 'purchase'
     AND timestamp >= CURRENT_DATE - INTERVAL 30 DAY
     """,
-    output_path="recent_purchases.parquet"
+    output_path="recent_purchases.parquet",
 )
 
 # Convert data from CAR file and load into DuckDB table
-rows_imported = duckdb.import_from_car(
-    car_path="external_dataset.car",
-    table_name="external_data"
-)
+rows_imported = duckdb.import_from_car(car_path="external_dataset.car", table_name="external_data")
 print(f"Imported {rows_imported} rows from CAR file")
 
 # Query combining data from different sources
@@ -3006,7 +3014,7 @@ from ipfs_datasets_py.arrow_ipld import ArrowIPLDConverter
 data = {
     "id": pa.array([1, 2, 3, 4]),
     "name": pa.array(["Alice", "Bob", "Charlie", "Dave"]),
-    "value": pa.array([10.1, 12.3, 15.7, 9.8])
+    "value": pa.array([10.1, 12.3, 15.7, 9.8]),
 }
 table = pa.Table.from_pydict(data)
 
@@ -3032,19 +3040,15 @@ import json
 import os
 
 # Process 1: Prepare and share data
-data = pa.table({
-    "id": range(1000),
-    "values": [float(i * 2) for i in range(1000)]
-})
+data = pa.table({"id": range(1000), "values": [float(i * 2) for i in range(1000)]})
 
 interchange = DataInterchangeUtils()
 c_data = interchange.get_c_data_interface(data)
 
 # Serialize the interface data (except for the actual memory buffers)
-interface_json = json.dumps({
-    "schema": c_data["schema"],
-    "buffer_addresses": [int(addr) for addr in c_data["buffers"]]
-})
+interface_json = json.dumps(
+    {"schema": c_data["schema"], "buffer_addresses": [int(addr) for addr in c_data["buffers"]]}
+)
 
 # Write to shared location
 with open("/tmp/shared_arrow_metadata.json", "w") as f:
@@ -3075,7 +3079,7 @@ processor = StreamingProcessor()
 processor.stream_parquet_to_car(
     parquet_path="large_dataset.parquet",
     car_path="large_dataset.car",
-    batch_size=50000  # Process 50k rows at a time
+    batch_size=50000,  # Process 50k rows at a time
 )
 ```
 
@@ -3340,67 +3344,68 @@ class KnowledgeGraphExtractor:
 ```python
 class GraphRAGQueryEngine:
     """Query engine combining vector search and graph traversal."""
-    
+
     def __init__(self, vector_stores, graph_store, model_weights=None):
         """
         Initialize with vector stores and graph store.
-        
+
         Args:
             vector_stores: dict - Map of model name to vector store
             graph_store: GraphStore - Knowledge graph store
             model_weights: dict - Weights for each model's results
         """
-        
-    def query(self, query_text, top_k=10, max_graph_hops=2, 
-              min_relevance=0.7, combine_method="weighted"):
+
+    def query(
+        self, query_text, top_k=10, max_graph_hops=2, min_relevance=0.7, combine_method="weighted"
+    ):
         """
         Perform GraphRAG query.
-        
+
         Args:
             query_text: str - Query text
             top_k: int - Number of results to return
             max_graph_hops: int - Maximum graph traversal hops
             min_relevance: float - Minimum relevance score
             combine_method: str - Method to combine results
-            
+
         Returns:
             list - Ranked results with metadata
         """
-        
+
     def vector_search(self, query_embedding, models=None):
         """
         Perform vector search across specified models.
-        
+
         Args:
             query_embedding: dict - Map of model name to query embedding
             models: list - Models to search, None for all
-            
+
         Returns:
             dict - Map of model name to search results
         """
-        
+
     def graph_search(self, seed_entities, max_hops=2, relation_types=None):
         """
         Perform graph search from seed entities.
-        
+
         Args:
             seed_entities: list - List of seed entity CIDs
             max_hops: int - Maximum traversal hops
             relation_types: list - Types of relations to traverse
-            
+
         Returns:
             list - Graph search results
         """
-        
+
     def combine_results(self, vector_results, graph_results, method="weighted"):
         """
         Combine vector and graph search results.
-        
+
         Args:
             vector_results: dict - Vector search results by model
             graph_results: list - Graph search results
             method: str - Combination method
-            
+
         Returns:
             list - Combined and ranked results
         """
@@ -3490,26 +3495,30 @@ The GraphRAG system uses IPLD structures to store all components with content-ad
 
 ```python
 import datetime
-from ipfs_datasets_py.graphrag import IPFSFileProcessor, MultiModelEmbeddingGenerator, KnowledgeGraphExtractor
+from ipfs_datasets_py.graphrag import (
+    IPFSFileProcessor,
+    MultiModelEmbeddingGenerator,
+    KnowledgeGraphExtractor,
+)
 
 # Initialize components
-embedding_generator = MultiModelEmbeddingGenerator([
-    {"name": "sentence-transformers/all-MiniLM-L6-v2", "dimension": 384, "type": "sentence"},
-    {"name": "sentence-transformers/multi-qa-mpnet-base-dot-v1", "dimension": 768, "type": "qa"}
-])
+embedding_generator = MultiModelEmbeddingGenerator(
+    [
+        {"name": "sentence-transformers/all-MiniLM-L6-v2", "dimension": 384, "type": "sentence"},
+        {
+            "name": "sentence-transformers/multi-qa-mpnet-base-dot-v1",
+            "dimension": 768,
+            "type": "qa",
+        },
+    ]
+)
 
-graph_extractor = KnowledgeGraphExtractor({
-    "entity": "spacy_large",
-    "relation": "rebel-large"
-})
+graph_extractor = KnowledgeGraphExtractor({"entity": "spacy_large", "relation": "rebel-large"})
 
 processor = IPFSFileProcessor(embedding_generator, graph_extractor)
 
 # Process a single PDF file
-result = processor.process_file(
-    file_path="/path/to/research_paper.pdf",
-    file_type="pdf"
-)
+result = processor.process_file(file_path="/path/to/research_paper.pdf", file_type="pdf")
 
 print(f"Document CID: {result['document_cid']}")
 print(f"Embedding CIDs: {result['embedding_cids']}")
@@ -3517,9 +3526,7 @@ print(f"Graph CID: {result['graph_cid']}")
 
 # Process a directory of files
 directory_results = processor.process_directory(
-    dir_path="/path/to/documents",
-    recursive=True,
-    file_types=["pdf", "docx", "txt"]
+    dir_path="/path/to/documents", recursive=True, file_types=["pdf", "docx", "txt"]
 )
 
 # Export index structure to CAR file
@@ -3535,20 +3542,23 @@ from ipfs_datasets_py.knowledge_graph import IPLDKnowledgeGraph
 
 # Initialize stores from CIDs
 vector_stores = {
-    "all-MiniLM-L6-v2": IPLDVectorStore.from_cid("bafybeihsl7tqdebswdmafvytgkofgxnpq5rwzzqpsbd7gtaiujwsn4qeyy"),
-    "multi-qa-mpnet": IPLDVectorStore.from_cid("bafybeibtj5t2vxiiipnsbfji5qvlhv5zqbyblxcy7smtho2dup7g4zsqa")
+    "all-MiniLM-L6-v2": IPLDVectorStore.from_cid(
+        "bafybeihsl7tqdebswdmafvytgkofgxnpq5rwzzqpsbd7gtaiujwsn4qeyy"
+    ),
+    "multi-qa-mpnet": IPLDVectorStore.from_cid(
+        "bafybeibtj5t2vxiiipnsbfji5qvlhv5zqbyblxcy7smtho2dup7g4zsqa"
+    ),
 }
 
-graph_store = IPLDKnowledgeGraph.from_cid("bafybeicezu4acwofwzihqnqlipwytxnl5n5j7wr7rgxfjddj3m5jk4ux4q")
+graph_store = IPLDKnowledgeGraph.from_cid(
+    "bafybeicezu4acwofwzihqnqlipwytxnl5n5j7wr7rgxfjddj3m5jk4ux4q"
+)
 
 # Initialize query engine with store references
 query_engine = GraphRAGQueryEngine(
     vector_stores=vector_stores,
     graph_store=graph_store,
-    model_weights={
-        "all-MiniLM-L6-v2": 0.3,
-        "multi-qa-mpnet": 0.7
-    }
+    model_weights={"all-MiniLM-L6-v2": 0.3, "multi-qa-mpnet": 0.7},
 )
 
 # Perform a query
@@ -3556,12 +3566,12 @@ results = query_engine.query(
     query_text="How does IPFS handle content addressing?",
     top_k=5,
     max_graph_hops=2,
-    combine_method="weighted"
+    combine_method="weighted",
 )
 
 # Display results
 for i, result in enumerate(results):
-    print(f"Result {i+1}: {result['text'][:100]}...")
+    print(f"Result {i + 1}: {result['text'][:100]}...")
     print(f"  Source: {result['source']}")
     print(f"  Relevance: {result['relevance']:.2f}")
     print(f"  Supporting Entities: {[e['name'] for e in result['entities']]}")
@@ -3590,8 +3600,7 @@ new_entities, new_relationships = extractor.extract_graph(text)
 
 # Merge with existing graph
 merged_entities, merged_relationships, updated_cid = extractor.merge_with_existing(
-    (new_entities, new_relationships),
-    existing_graph_cid
+    (new_entities, new_relationships), existing_graph_cid
 )
 
 print(f"New entities added: {len(merged_entities) - existing_graph.entity_count}")
@@ -3818,39 +3827,40 @@ cid = self.api.add(json.dumps(vector_store))
 # Initialize the module
 from ipfs_kit_py.high_level_api import IPFSSimpleAPI
 
+
 class KNN:
     # ...existing code...
-    
+
     def __init__(self, resources, meta):
         # ...existing code...
-        
+
         # Old
         # self.ipfs_kit = ipfs_kit(resources, meta)
-        
+
         # New
         self.api = IPFSSimpleAPI(metadata=meta)
-        
+
         # ...existing code...
-    
+
     # ...
-    
+
     def save_database(self, dest, bucket, dir, documentdb, **kwargs):
         # ...existing code...
-        
+
         # Old
         # vector_store_cid = self.ipfs_kit.ipfs_upload_object(json.dumps(vector_store), **kwargs)
         # vector_index_cid = self.ipfs_kit.ipfs_upload_object(json.dumps(vector_index), **kwargs)
         # doc_index_cid = self.ipfs_kit.ipfs_upload_object(json.dumps(doc_index), **kwargs)
         # doc_store_cid = self.ipfs_kit.ipfs_upload_object(json.dumps(doc_store), **kwargs)
         # metadata_cid = self.ipfs_kit.ipfs_upload_object(json.dumps(metadata_json), **kwargs)
-        
+
         # New
         vector_store_cid = self.api.add(json.dumps(vector_store))
         vector_index_cid = self.api.add(json.dumps(vector_index))
         doc_index_cid = self.api.add(json.dumps(doc_index))
         doc_store_cid = self.api.add(json.dumps(doc_store))
         metadata_cid = self.api.add(json.dumps(metadata_json))
-        
+
         # ...existing code...
 ```
 
@@ -3869,11 +3879,13 @@ class KNN:
    try:
        # Try new implementation
        from ipfs_kit_py.high_level_api import IPFSSimpleAPI
+
        api = IPFSSimpleAPI(metadata=meta)
        cid = api.add(json.dumps(data))
    except Exception as e:
        # Fall back to old implementation
        from ipfs_kit import ipfs_kit
+
        old_ipfs = ipfs_kit(resources, meta)
        cid = old_ipfs.ipfs_upload_object(json.dumps(data))
    ```
@@ -4049,6 +4061,7 @@ We will implement a layered architecture that incorporates `ipfs_kit_py` compone
 from ipfs_datasets_py import ipfs_datasets
 from ipfs_kit_py.high_level_api import IPFSSimpleAPI
 
+
 class EnhancedIPFSDataset:
     def __init__(self, name, role="leecher", config=None):
         """Initialize with enhanced IPFS capabilities."""
@@ -4056,30 +4069,33 @@ class EnhancedIPFSDataset:
         # Initialize both dataset and advanced IPFS API
         self.dataset = ipfs_datasets.load_dataset(name)
         self.ipfs_api = IPFSSimpleAPI(role=role, config_path=config)
-        
+
     def save_to_ipfs(self, subset=None):
         """Save dataset to IPFS with advanced features."""
         # Convert dataset to serializable format
         data = self.dataset.to_dict() if subset is None else self.dataset[subset].to_dict()
-        
+
         # Save with metadata and pinning
         cid = self.ipfs_api.add(data, pin=True)
-        
+
         # Register in metadata index
-        self.ipfs_api.register_dataset(cid, {
-            "name": self.name,
-            "type": "dataset",
-            "rows": len(self.dataset),
-            "created_at": self.ipfs_api.get_timestamp()
-        })
-        
+        self.ipfs_api.register_dataset(
+            cid,
+            {
+                "name": self.name,
+                "type": "dataset",
+                "rows": len(self.dataset),
+                "created_at": self.ipfs_api.get_timestamp(),
+            },
+        )
+
         return cid
-        
+
     def load_from_ipfs(self, cid):
         """Load dataset from IPFS with caching and verification."""
         # Using tiered cache system automatically
         data = self.ipfs_api.get(cid)
-        
+
         # Convert back to dataset format
         return ipfs_datasets.Dataset.from_dict(data)
 ```
@@ -4091,49 +4107,44 @@ def setup_processing_node(role, resources=None):
     """Configure a node for distributed dataset processing."""
     from ipfs_datasets_py import ipfs_datasets
     from ipfs_kit_py.high_level_api import IPFSSimpleAPI
-    
+
     # Configure based on role
     if role == "master":
         # Master node manages task distribution and result aggregation
         api = IPFSSimpleAPI(
-            role="master",
-            resources=resources or {"max_memory": "4GB", "max_storage": "100GB"}
+            role="master", resources=resources or {"max_memory": "4GB", "max_storage": "100GB"}
         )
-        
-        # Set up cluster coordination 
+
+        # Set up cluster coordination
         api.setup_cluster(replication_factor=3)
-        
+
         # Create metadata index
         api.initialize_metadata_index(sync_interval=60)  # seconds
-        
+
         return api
-        
+
     elif role == "worker":
         # Worker node handles computational tasks
         api = IPFSSimpleAPI(
-            role="worker", 
-            resources=resources or {"max_memory": "8GB", "max_cpu": 8}
+            role="worker", resources=resources or {"max_memory": "8GB", "max_cpu": 8}
         )
-        
+
         # Connect to cluster
         master_addresses = discover_masters()
         api.join_cluster(master_addresses)
-        
+
         # Configure processing capabilities
         api.register_capabilities(["embedding_generation", "data_transformation"])
-        
+
         return api
-        
+
     else:  # leecher
         # Leecher node primarily consumes data
-        api = IPFSSimpleAPI(
-            role="leecher",
-            resources=resources or {"max_memory": "2GB"}
-        )
-        
+        api = IPFSSimpleAPI(role="leecher", resources=resources or {"max_memory": "2GB"})
+
         # Configure minimal local cache
         api.setup_cache(memory_size="500MB", disk_size="2GB")
-        
+
         return api
 ```
 
@@ -4144,56 +4155,57 @@ from ipfs_datasets_py import ipfs_datasets
 from ipfs_kit_py.high_level_api import IPFSSimpleAPI
 from ipfs_kit_py.tiered_cache import TieredCache
 
+
 class CachedDatasetOperations:
     """Dataset operations with enhanced caching."""
-    
+
     def __init__(self):
         self.api = IPFSSimpleAPI()
-        
+
         # Configure tiered cache with optimal settings
         self.cache = TieredCache(
             memory_size="1GB",
             disk_size="10GB",
             mmap_size="4GB",
             path="~/.ipfs_datasets/cache",
-            eviction_policy="ARC"  # Adaptive Replacement Cache
+            eviction_policy="ARC",  # Adaptive Replacement Cache
         )
-        
+
     def process_dataset_batch(self, dataset_cid, batch_size=1000):
         """Process dataset in batches with caching."""
         dataset = self.load_dataset_with_cache(dataset_cid)
-        
+
         results = []
         for i in range(0, len(dataset), batch_size):
-            batch = dataset[i:i+batch_size]
-            
+            batch = dataset[i : i + batch_size]
+
             # Process batch
             processed_batch = self.process_batch(batch)
             results.extend(processed_batch)
-            
+
         return results
-        
+
     def load_dataset_with_cache(self, cid):
         """Load dataset with tiered caching."""
         # Check memory cache
         if self.cache.has(cid, tier="memory"):
             return self.cache.get(cid, tier="memory")
-            
+
         # Check disk cache
         if self.cache.has(cid, tier="disk"):
             dataset = self.cache.get(cid, tier="disk")
             # Promote to memory cache
             self.cache.put(cid, dataset, tier="memory")
             return dataset
-            
+
         # Fetch from IPFS
         data = self.api.get(cid)
         dataset = ipfs_datasets.Dataset.from_dict(data)
-        
+
         # Store in cache
         self.cache.put(cid, dataset, tier="memory")
         self.cache.put(cid, dataset, tier="disk")
-        
+
         return dataset
 ```
 
@@ -4204,55 +4216,52 @@ from ipfs_datasets_py import ipfs_datasets, knowledge_graph_extraction
 from ipfs_kit_py.high_level_api import IPFSSimpleAPI
 from ipfs_kit_py.ipld_knowledge_graph import IPLDKnowledgeGraph
 
+
 class EnhancedKnowledgeGraph:
     """Enhanced knowledge graph with IPLD storage."""
-    
+
     def __init__(self):
         self.api = IPFSSimpleAPI()
         self.kg = IPLDKnowledgeGraph()
-        
+
     def extract_and_store(self, dataset_name, text_column):
         """Extract knowledge graph from dataset and store in IPLD."""
         # Load dataset
         dataset = ipfs_datasets.load_dataset(dataset_name)
-        
+
         # Extract entities and relationships
         entities = []
         relationships = []
-        
+
         for item in dataset:
             text = item[text_column]
             item_entities, item_relationships = knowledge_graph_extraction.extract(
-                text, 
-                extraction_temperature=0.7,
-                structure_temperature=0.5
+                text, extraction_temperature=0.7, structure_temperature=0.5
             )
-            
+
             entities.extend(item_entities)
             relationships.extend(item_relationships)
-        
+
         # Add to knowledge graph
         for entity in entities:
             self.kg.add_entity(entity)
-            
+
         for rel in relationships:
-            self.kg.add_relationship(
-                rel["source"], 
-                rel["target"], 
-                rel["type"], 
-                rel["properties"]
-            )
-        
+            self.kg.add_relationship(rel["source"], rel["target"], rel["type"], rel["properties"])
+
         # Export to IPLD/IPFS
         root_cid = self.kg.export_to_car("/tmp/knowledge_graph.car")
-        
+
         # Register in metadata index
-        self.api.register_knowledge_graph(root_cid, {
-            "dataset": dataset_name,
-            "entity_count": len(entities),
-            "relationship_count": len(relationships)
-        })
-        
+        self.api.register_knowledge_graph(
+            root_cid,
+            {
+                "dataset": dataset_name,
+                "entity_count": len(entities),
+                "relationship_count": len(relationships),
+            },
+        )
+
         return root_cid
 ```
 

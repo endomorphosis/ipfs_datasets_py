@@ -173,7 +173,7 @@ Whitelist of entity types to extract. Only entities matching these types are kep
 
 **Usage**:
 ```python
-config = ExtractionConfig(allowed_entity_types=['person', 'organization', 'location'])
+config = ExtractionConfig(allowed_entity_types=["person", "organization", "location"])
 # Only extracts entities of these types; others are filtered out
 ```
 
@@ -200,7 +200,7 @@ Words to exclude from entity extraction. Case-insensitive matching.
 
 **Usage**:
 ```python
-config = ExtractionConfig(stopwords={'the', 'a', 'an', 'and', 'or'})
+config = ExtractionConfig(stopwords={"the", "a", "an", "and", "or"})
 # "the organization" → extracts "organization" only
 ```
 
@@ -221,16 +221,15 @@ Domain-specific extraction rules for rule-based extraction engine.
 
 **Usage**:
 ```python
-config = ExtractionConfig(custom_rules={
-    'legal': [
-        r'(?:party|plaintiff|defendant)\s+[A-Z][a-z]+',
-        r'section\s+\d+(?:\.\d+)*'
-    ],
-    'medical': [
-        r'(?:diagnosis|treatment|medication):\s+[A-Za-z\s]+',
-        r'(?:ICD-10|CPT)\s+[0-9A-Z\-]+'
-    ]
-})
+config = ExtractionConfig(
+    custom_rules={
+        "legal": [r"(?:party|plaintiff|defendant)\s+[A-Z][a-z]+", r"section\s+\d+(?:\.\d+)*"],
+        "medical": [
+            r"(?:diagnosis|treatment|medication):\s+[A-Za-z\s]+",
+            r"(?:ICD-10|CPT)\s+[0-9A-Z\-]+",
+        ],
+    }
+)
 ```
 
 **Format**:
@@ -277,7 +276,7 @@ Mutate the config in-place with domain-appropriate defaults.
 **Usage**:
 ```python
 config = ExtractionConfig()
-config.apply_defaults_for_domain('legal')
+config.apply_defaults_for_domain("legal")
 # Now has: confidence_threshold=0.75, min_entity_length=3, etc.
 ```
 
@@ -356,7 +355,7 @@ Deserialize config from dictionary (inverse of `to_dict`).
 
 **Usage**:
 ```python
-config_dict = {'confidence_threshold': 0.7, 'min_entity_length': 3}
+config_dict = {"confidence_threshold": 0.7, "min_entity_length": 3}
 config = ExtractionConfig.from_dict(config_dict)
 ```
 
@@ -393,7 +392,7 @@ window_size: 1500
 
 Then load:
 ```python
-config = ExtractionConfig.from_yaml(open('config.yaml').read())
+config = ExtractionConfig.from_yaml(open("config.yaml").read())
 ```
 
 ---
@@ -503,10 +502,10 @@ config = ExtractionConfig(
     confidence_threshold=0.80,
     min_entity_length=3,
     max_entities_per_document=500,
-    allowed_entity_types=['person', 'organization', 'location', 'obligation'],
-    stopwords={'the', 'a', 'an', 'and', 'or'},
+    allowed_entity_types=["person", "organization", "location", "obligation"],
+    stopwords={"the", "a", "an", "and", "or"},
 )
-config.apply_defaults_for_domain('legal')
+config.apply_defaults_for_domain("legal")
 ```
 
 **Result**: High precision, low recall; suitable for contract analysis.
@@ -533,10 +532,10 @@ config = ExtractionConfig(
 config = ExtractionConfig(
     confidence_threshold=0.60,
     llm_fallback_threshold=0.50,  # Use LLM if rule-based < 0.50
-    allowed_entity_types=['concept', 'organization', 'person'],
+    allowed_entity_types=["concept", "organization", "person"],
     use_llm_backend=True,
 )
-config.apply_defaults_for_domain('medical')
+config.apply_defaults_for_domain("medical")
 ```
 
 **Result**: Balanced precision/recall with LLM backup for uncertain cases.
@@ -596,7 +595,7 @@ print(f"Extraction confidence: {result.confidence:.2f}")
 config = ExtractionConfig(
     confidence_threshold=0.5,
     min_entity_length=2,
-    allowed_entity_types=[]  # Allow all types
+    allowed_entity_types=[],  # Allow all types
 )
 ```
 
@@ -613,7 +612,7 @@ config = ExtractionConfig(
 config = ExtractionConfig(
     confidence_threshold=0.75,  # Higher threshold
     min_entity_length=3,  # Longer entities
-    stopwords={'the', 'a', 'and', 'or'}  # Filter noise
+    stopwords={"the", "a", "and", "or"},  # Filter noise
 )
 ```
 
@@ -664,7 +663,7 @@ config = ExtractionConfig(
 2. **Use domain presets** as starting points:
    ```python
    config = ExtractionConfig()
-   config.apply_defaults_for_domain('legal')
+   config.apply_defaults_for_domain("legal")
    # Then customize as needed
    ```
 

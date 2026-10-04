@@ -138,9 +138,11 @@ import trio
 from typing import Any, Callable, Optional
 from dataclasses import dataclass
 
+
 @dataclass
 class ToolMetadata:
     """Metadata for tool runtime requirements."""
+
     name: str
     runtime: str  # "fastapi" or "trio"
     requires_p2p: bool = False
@@ -148,10 +150,11 @@ class ToolMetadata:
     timeout_seconds: Optional[float] = None
     retry_policy: Optional[str] = None
 
+
 class EnhancedRuntimeRouter:
     """
     Enhanced RuntimeRouter with full Trio nursery integration.
-    
+
     Key Enhancements:
     1. Proper Trio nursery management
     2. Tool metadata registry
@@ -159,7 +162,7 @@ class EnhancedRuntimeRouter:
     4. Circuit breaker pattern for error handling
     5. Request queuing and prioritization
     """
-    
+
     def __init__(self, config: dict):
         self.config = config
         self.fastapi_server = None
@@ -167,11 +170,11 @@ class EnhancedRuntimeRouter:
         self._trio_nursery = None
         self._tool_metadata: dict[str, ToolMetadata] = {}
         self._metrics = RuntimeMetrics()
-        
+
     async def startup(self):
         """
         Start both runtimes with proper lifecycle management.
-        
+
         Steps:
         1. Start FastAPI server
         2. Initialize Trio nursery (if enabled)
@@ -180,50 +183,45 @@ class EnhancedRuntimeRouter:
         """
         # Start FastAPI server
         self.fastapi_server = await self._start_fastapi()
-        
+
         # Start Trio server if enabled
-        if self.config.get('trio', {}).get('enabled', False):
+        if self.config.get("trio", {}).get("enabled", False):
             self.trio_server = await self._start_trio()
-            
+
     async def _start_trio(self):
         """
         Start Trio server with proper nursery management.
-        
+
         Implementation uses trio.open_nursery() for structured
         concurrency and proper resource cleanup.
         """
         import trio
-        
+
         async def trio_server_task(task_status=trio.TASK_STATUS_IGNORED):
             """Trio server task running in nursery."""
             async with trio.open_nursery() as nursery:
                 self._trio_nursery = nursery
                 task_status.started()
-                
+
                 # Start Trio MCP server
                 server = TrioMCPServer(
-                    host=self.config['trio']['host'],
-                    port=self.config['trio']['port'],
-                    enable_p2p_tools=True
+                    host=self.config["trio"]["host"],
+                    port=self.config["trio"]["port"],
+                    enable_p2p_tools=True,
                 )
                 await nursery.start(server.run)
-        
+
         # Run Trio server in background
         # Use anyio.create_task_group() for asyncio compatibility
         import anyio
+
         async with anyio.create_task_group() as tg:
             await tg.start(trio_server_task)
-            
-    async def route_tool_call(
-        self, 
-        tool_name: str,
-        tool_func: Callable,
-        *args,
-        **kwargs
-    ) -> Any:
+
+    async def route_tool_call(self, tool_name: str, tool_func: Callable, *args, **kwargs) -> Any:
         """
         Route tool call to appropriate runtime.
-        
+
         Decision Flow:
         1. Get tool metadata (or detect)
         2. Choose runtime (Trio or FastAPI)
@@ -233,10 +231,10 @@ class EnhancedRuntimeRouter:
         """
         # Get or detect tool metadata
         metadata = self._get_tool_metadata(tool_name, tool_func)
-        
+
         # Choose runtime
         runtime = self._choose_runtime(metadata)
-        
+
         # Execute with metrics
         start_time = time.time()
         try:
@@ -244,23 +242,23 @@ class EnhancedRuntimeRouter:
                 result = await self._execute_trio(tool_func, *args, **kwargs)
             else:
                 result = await self._execute_fastapi(tool_func, *args, **kwargs)
-                
+
             # Record success
             latency_ms = (time.time() - start_time) * 1000
             self._metrics.record_success(runtime, latency_ms)
-            
+
             return result
-            
+
         except Exception as e:
             # Record error
             latency_ms = (time.time() - start_time) * 1000
             self._metrics.record_error(runtime, latency_ms, e)
             raise
-            
+
     async def _execute_trio(self, tool_func: Callable, *args, **kwargs) -> Any:
         """
         Execute tool in Trio runtime with proper nursery usage.
-        
+
         Key Features:
         1. Direct execution in Trio nursery (zero bridge overhead)
         2. Structured concurrency with cancel scopes
@@ -269,11 +267,11 @@ class EnhancedRuntimeRouter:
         """
         if not self._trio_nursery:
             raise RuntimeError("Trio nursery not initialized")
-            
+
         # Execute in Trio nursery
         result = await self._trio_nursery.start(tool_func, *args, **kwargs)
         return result
-        
+
     async def _execute_fastapi(self, tool_func: Callable, *args, **kwargs) -> Any:
         """
         Execute tool in anyio/FastAPI runtime.
@@ -294,13 +292,13 @@ class EnhancedRuntimeRouter:
 def _choose_runtime(self, metadata: ToolMetadata) -> str:
     """
     Choose runtime based on tool metadata.
-    
+
     Decision Matrix:
     1. If metadata.runtime explicitly set → use it
     2. If tool requires P2P → use Trio (if available)
     3. If tool name matches P2P patterns → use Trio
     4. Otherwise → use FastAPI (default)
-    
+
     P2P Patterns:
     - p2p_*
     - *workflow*
@@ -311,18 +309,18 @@ def _choose_runtime(self, metadata: ToolMetadata) -> str:
     # Check explicit runtime
     if metadata.runtime:
         return metadata.runtime
-        
+
     # Check P2P requirement
     if metadata.requires_p2p and self.trio_server:
         return RUNTIME_TRIO
-        
+
     # Check name patterns
     tool_name_lower = metadata.name.lower()
-    p2p_patterns = ['p2p_', 'workflow', 'taskqueue', 'peer', 'bootstrap']
-    
+    p2p_patterns = ["p2p_", "workflow", "taskqueue", "peer", "bootstrap"]
+
     if any(pattern in tool_name_lower for pattern in p2p_patterns):
         return RUNTIME_TRIO if self.trio_server else RUNTIME_FASTAPI
-        
+
     # Default to FastAPI
     return RUNTIME_FASTAPI
 ```
@@ -333,7 +331,7 @@ def _choose_runtime(self, metadata: ToolMetadata) -> str:
 class RuntimeMetrics:
     """
     Comprehensive metrics for runtime performance.
-    
+
     Collected Metrics:
     - Request count per runtime
     - Latency distribution (min, max, avg, p50, p95, p99)
@@ -342,15 +340,15 @@ class RuntimeMetrics:
     - Memory usage
     - CPU utilization
     """
-    
+
     def __init__(self):
         self.fastapi_metrics = MetricsBucket()
         self.trio_metrics = MetricsBucket()
-        
+
     def get_comparison(self) -> dict:
         """
         Get performance comparison between runtimes.
-        
+
         Returns:
             {
                 "fastapi": {...},
@@ -363,22 +361,23 @@ class RuntimeMetrics:
         """
         fastapi = self.fastapi_metrics.to_dict()
         trio = self.trio_metrics.to_dict()
-        
+
         # Calculate improvements
         latency_reduction = 0.0
-        if fastapi['avg_latency_ms'] > 0:
+        if fastapi["avg_latency_ms"] > 0:
             latency_reduction = (
-                (fastapi['avg_latency_ms'] - trio['avg_latency_ms']) /
-                fastapi['avg_latency_ms'] * 100
+                (fastapi["avg_latency_ms"] - trio["avg_latency_ms"])
+                / fastapi["avg_latency_ms"]
+                * 100
             )
-            
+
         return {
             "fastapi": fastapi,
             "trio": trio,
             "improvement": {
                 "latency_reduction_pct": round(latency_reduction, 1),
-                "target_met": latency_reduction >= 50.0  # 50-70% target
-            }
+                "target_met": latency_reduction >= 50.0,  # 50-70% target
+            },
         }
 ```
 
@@ -395,7 +394,7 @@ Each tool must have metadata defining its runtime requirements:
 class ToolMetadata:
     """
     Complete metadata for a tool.
-    
+
     Attributes:
         name: Tool name (e.g., "p2p_workflow_submit")
         runtime: Preferred runtime ("fastapi" or "trio")
@@ -408,6 +407,7 @@ class ToolMetadata:
         cpu_intensive: Whether tool is CPU-bound
         io_intensive: Whether tool is I/O-bound
     """
+
     name: str
     runtime: str
     requires_p2p: bool = False
@@ -418,11 +418,11 @@ class ToolMetadata:
     memory_intensive: bool = False
     cpu_intensive: bool = False
     io_intensive: bool = False
-    
+
     # MCP-specific metadata
     mcp_schema: Optional[dict] = None
     mcp_description: Optional[str] = None
-    
+
     def to_dict(self) -> dict:
         """Convert to dictionary for serialization."""
         return {
@@ -436,8 +436,8 @@ class ToolMetadata:
             "resource_hints": {
                 "memory_intensive": self.memory_intensive,
                 "cpu_intensive": self.cpu_intensive,
-                "io_intensive": self.io_intensive
-            }
+                "io_intensive": self.io_intensive,
+            },
         }
 ```
 
@@ -448,23 +448,22 @@ Tools register metadata using decorators:
 ```python
 from ipfs_datasets_py.mcp_server.runtime_router import tool_metadata
 
+
 # Example 1: FastAPI tool (default)
 @tool_metadata(runtime="fastapi", category="dataset")
 async def load_dataset(dataset_id: str) -> dict:
     """Load a dataset from storage."""
     ...
 
+
 # Example 2: Trio P2P tool
 @tool_metadata(
-    runtime="trio",
-    requires_p2p=True,
-    category="p2p_workflow",
-    priority=8,
-    timeout_seconds=60.0
+    runtime="trio", requires_p2p=True, category="p2p_workflow", priority=8, timeout_seconds=60.0
 )
 async def p2p_workflow_submit(workflow: dict) -> str:
     """Submit a P2P workflow for execution."""
     ...
+
 
 # Example 3: Auto-detection
 @tool_metadata(category="general")  # runtime auto-detected
@@ -479,40 +478,33 @@ async def search_documents(query: str) -> list:
 class ToolMetadataRegistry:
     """
     Central registry for tool metadata.
-    
+
     Features:
     - Store and retrieve tool metadata
     - Validate metadata completeness
     - Export metadata for introspection
     - Update metadata at runtime
     """
-    
+
     def __init__(self):
         self._registry: dict[str, ToolMetadata] = {}
-        
+
     def register(self, metadata: ToolMetadata) -> None:
         """Register tool metadata."""
         self._validate(metadata)
         self._registry[metadata.name] = metadata
-        
+
     def get(self, tool_name: str) -> Optional[ToolMetadata]:
         """Get metadata for a tool."""
         return self._registry.get(tool_name)
-        
+
     def list_by_runtime(self, runtime: str) -> list[ToolMetadata]:
         """List all tools for a specific runtime."""
-        return [
-            metadata 
-            for metadata in self._registry.values()
-            if metadata.runtime == runtime
-        ]
-        
+        return [metadata for metadata in self._registry.values() if metadata.runtime == runtime]
+
     def export(self) -> dict:
         """Export all metadata as dictionary."""
-        return {
-            name: metadata.to_dict()
-            for name, metadata in self._registry.items()
-        }
+        return {name: metadata.to_dict() for name, metadata in self._registry.items()}
 ```
 
 ---
@@ -525,7 +517,7 @@ class ToolMetadataRegistry:
 async def startup_sequence():
     """
     MCP Server startup with dual-runtime support.
-    
+
     Sequence:
     1. Load configuration
     2. Initialize RuntimeRouter
@@ -537,31 +529,29 @@ async def startup_sequence():
     """
     # 1. Load configuration
     config = load_config()
-    
+
     # 2. Initialize RuntimeRouter
     router = EnhancedRuntimeRouter(config)
-    
+
     # 3. Start FastAPI server
     fastapi_server = FastAPIServer(
-        host=config['server']['fastapi']['host'],
-        port=config['server']['fastapi']['port']
+        host=config["server"]["fastapi"]["host"], port=config["server"]["fastapi"]["port"]
     )
     await fastapi_server.start()
-    
+
     # 4. Start Trio server (if enabled)
-    if config['server']['trio']['enabled']:
+    if config["server"]["trio"]["enabled"]:
         trio_server = TrioMCPServer(
-            host=config['server']['trio']['host'],
-            port=config['server']['trio']['port']
+            host=config["server"]["trio"]["host"], port=config["server"]["trio"]["port"]
         )
         await trio_server.start()
-    
+
     # 5. Register tools
     await register_all_tools(router)
-    
+
     # 6. Health checks
     await start_health_checks(router)
-    
+
     # 7. Signal ready
     logger.info("MCP Server ready - dual-runtime enabled")
     logger.info(f"FastAPI: http://{fastapi_server.host}:{fastapi_server.port}")
@@ -615,18 +605,18 @@ async def shutdown_sequence():
 class HealthChecker:
     """
     Health check endpoints for monitoring.
-    
+
     Endpoints:
     - /health: Basic liveness check
     - /health/ready: Readiness check
     - /health/runtime: Runtime-specific health
     - /metrics: Prometheus-compatible metrics
     """
-    
+
     async def check_health(self) -> dict:
         """
         Comprehensive health check.
-        
+
         Returns:
             {
                 "status": "healthy",
@@ -640,7 +630,7 @@ class HealthChecker:
             "fastapi": await self._check_fastapi(),
             "trio": await self._check_trio(),
             "metrics": await self._get_metrics(),
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.utcnow().isoformat(),
         }
 ```
 

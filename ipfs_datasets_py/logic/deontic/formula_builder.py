@@ -298,7 +298,9 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     if mental_state_pred and mental_state_pred != "P":
         modifiers.append(mental_state_pred)
 
-    antecedent_preds = _unique_antecedent_predicates(condition_preds[:_FORMULA_CONDITION_LIMIT] + modifiers)
+    antecedent_preds = _unique_antecedent_predicates(
+        condition_preds[:_FORMULA_CONDITION_LIMIT] + modifiers
+    )
 
     inner_parts = [_subject_predicate_expr(norm)]
     inner_parts.extend(f"{pred}(x)" for pred in antecedent_preds)
@@ -315,83 +317,302 @@ def _normalize_domain_canonical_action(action_text: str) -> str:
         return text
 
     patterns: Sequence[tuple[str, str]] = (
-        (r"^(?:make|provide|grant)\s+(?:an?\s+|the\s+)?reasonable\s+accommodation\s+(?:for|to|of)\s+(?:the\s+)?(.+)$", "accommodate"),
-        (r"^(?:make|complete|enter|file|record)\s+(?:a\s+|the\s+)?recordation\s+(?:of|for)\s+(?:the\s+)?(.+)$", "record"),
-        (r"^(?:make|complete|enter|file|record)\s+(?:a\s+|the\s+)?memorialization\s+(?:of|for)\s+(?:the\s+)?(.+)$", "memorialize"),
-        (r"^(?:grant|order|approve|authorize|issue|enter)\s+(?:a\s+|the\s+)?stay\s+(?:of|for)\s+(?:the\s+)?(.+)$", "stay"),
-        (r"^(?:grant|order|approve|authorize|issue|enter)\s+(?:a\s+|the\s+)?continuance\s+(?:of|for)\s+(?:the\s+)?(.+)$", "continue"),
-        (r"^(?:grant|order|approve|authorize|issue|enter)\s+(?:a\s+|the\s+)?postponement\s+(?:of|for)\s+(?:the\s+)?(.+)$", "postpone"),
-        (r"^(?:grant|order|approve|authorize|issue|enter)\s+(?:a\s+|the\s+)?deferral\s+(?:of|for)\s+(?:the\s+)?(.+)$", "defer"),
-        (r"^(?:perform|conduct|complete|prepare|undertake)\s+(?:an?\s+|the\s+)?access\s+review\s+(?:of|for)\s+(?:the\s+)?(.+)$", "review access"),
-        (r"^(?:conduct|perform|complete|prepare)\s+(?:an?\s+|the\s+)?credential\s+rotation\s+(?:of|for)\s+(?:the\s+)?(.+)$", "rotate credentials"),
-        (r"^(?:complete|perform|conduct|prepare)\s+(?:an?\s+|the\s+)?password\s+reset\s+(?:of|for)\s+(?:the\s+)?(.+)$", "reset password"),
-        (r"^(?:perform|conduct|complete|prepare)\s+(?:an?\s+|the\s+)?vulnerability\s+scanning\s+(?:of|for)\s+(?:the\s+)?(.+)$", "scan vulnerabilities"),
-        (r"^(?:perform|conduct|complete|prepare)\s+(?:an?\s+|the\s+)?intrusion\s+monitoring\s+(?:of|for)\s+(?:the\s+)?(.+)$", "monitor intrusions"),
-        (r"^(?:issue|provide|give|send|deliver)\s+(?:an?\s+|the\s+)?notification\s+(?:of|to|regarding|concerning|about)\s+(?:the\s+)?(.+)$", "notify"),
-        (r"^(?:provide|give|issue|deliver|send)\s+(?:a\s+|the\s+)?notice\s+(?:of|to|regarding|concerning|about)\s+(?:the\s+)?(.+)$", "notice"),
-        (r"^(?:provide|give|furnish|deliver)\s+(?:an?\s+|the\s+)?disclosure\s+(?:of|to|regarding|concerning|about)\s+(?:the\s+)?(.+)$", "disclose"),
-        (r"^(?:provide|furnish|deliver)\s+auxiliary\s+aids?\s+(?:to|for)\s+(?:the\s+)?(.+)$", "provide auxiliary aid"),
-        (r"^(?:make|complete|perform|prepare)\s+accessibility\s+modifications\s+(?:to|for|of)\s+(?:the\s+)?(.+)$", "modify accessibility"),
-        (r"^(?:prepare|submit|maintain|adopt)\s+(?:a\s+|the\s+)?language\s+access\s+plan\s+(?:for|of)\s+(?:the\s+)?(.+)$", "plan language access"),
-        (r"^(?:provide|furnish|deliver)\s+accessible\s+formats\s+(?:to|for|of)\s+(?:the\s+)?(.+)$", "format accessibly"),
-        (r"^(?:provide|furnish|deliver)\s+sign\s+language\s+interpretation\s+(?:to|for|of)\s+(?:the\s+)?(.+)$", "interpret sign language"),
-        (r"^(?:conduct|perform|complete|prepare)\s+(?:an?\s+|the\s+)?risk\s+assessment(?:\s+(?:of|for)\s+(?:the\s+)?(.+))?$", "assess risk"),
-        (r"^(?:perform|conduct|complete|prepare)\s+(?:an?\s+|the\s+)?safety\s+analysis(?:\s+(?:of|for)\s+(?:the\s+)?(.+))?$", "analyze safety"),
-        (r"^(?:prepare|develop|complete|submit)\s+(?:an?\s+|the\s+)?emergency\s+response\s+plan(?:\s+(?:of|for)\s+(?:the\s+)?(.+))?$", "plan emergency response"),
-        (r"^(?:perform|conduct|complete|provide|make|carry\s+out)\s+(?:an?\s+|the\s+)?matching\s+(?:of|for)\s+(?:the\s+)?(.+)$", "match"),
-        (r"^(?:perform|conduct|complete|provide|make|carry\s+out)\s+(?:an?\s+|the\s+)?comparison\s+(?:of|for)\s+(?:the\s+)?(.+)$", "compare"),
-        (r"^(?:perform|conduct|complete|provide|make|carry\s+out)\s+(?:an?\s+|the\s+)?validation\s+(?:of|for)\s+(?:the\s+)?(.+)$", "validate"),
-        (r"^(?:perform|conduct|complete|provide|make|carry\s+out)\s+(?:an?\s+|the\s+)?normalization\s+(?:of|for)\s+(?:the\s+)?(.+)$", "normalize"),
-        (r"^(?:perform|conduct|complete|provide|make|carry\s+out)\s+(?:an?\s+|the\s+)?deduplication\s+(?:of|for)\s+(?:the\s+)?(.+)$", "deduplicate"),
-        (r"^(?:perform|conduct|complete|provide|make|carry\s+out)\s+(?:an?\s+|the\s+)?cross-checking\s+(?:of|for)\s+(?:the\s+)?(.+)$", "cross-check"),
-        (r"^(?:perform|conduct|complete|provide|make|carry\s+out)\s+(?:an?\s+|the\s+)?digitization\s+(?:of|for)\s+(?:the\s+)?(.+)$", "digitize"),
-        (r"^(?:perform|conduct|complete|provide|make|carry\s+out)\s+(?:an?\s+|the\s+)?scanning\s+(?:of|for)\s+(?:the\s+)?(.+)$", "scan"),
-        (r"^(?:perform|conduct|complete|provide|make|carry\s+out)\s+(?:an?\s+|the\s+)?migration\s+(?:of|for)\s+(?:the\s+)?(.+)$", "migrate"),
-        (r"^(?:perform|conduct|complete|provide|make|carry\s+out|execute)\s+(?:an?\s+|the\s+)?upload\s+(?:of|for)\s+(?:the\s+)?(.+)$", "upload"),
-        (r"^(?:perform|conduct|complete|provide|make|carry\s+out|execute)\s+(?:an?\s+|the\s+)?download\s+(?:of|for)\s+(?:the\s+)?(.+)$", "download"),
-        (r"^(?:perform|conduct|complete|provide|make|carry\s+out|execute)\s+(?:an?\s+|the\s+)?import\s+(?:of|for)\s+(?:the\s+)?(.+)$", "import"),
-        (r"^(?:perform|conduct|complete|provide|make|carry\s+out|execute)\s+(?:an?\s+|the\s+)?export\s+(?:of|for)\s+(?:the\s+)?(.+)$", "export"),
-        (r"^(?:make|prepare|submit|file)\s+(?:an?\s+|the\s+)?report\s+(?:of|for|on|regarding|concerning)\s+(?:the\s+)?(.+)$", "report"),
-        (r"^(?:submit|file|prepare)\s+reporting\s+(?:of|for|on|regarding|concerning)\s+(?:the\s+)?(.+)$", "report"),
-        (r"^(?:prepare|file|submit)\s+(?:a\s+|the\s+)?return\s+(?:of|for)\s+(?:the\s+)?(.+)$", "file return"),
-        (r"^(?:file|submit|prepare)\s+(?:a\s+|the\s+)?statement\s+of\s+compliance$", "declare compliance"),
-        (r"^(?:secure|obtain|record)\s+(?:an?\s+|the\s+)?authorization\s+(?:from|of|for)\s+(?:the\s+)?(.+)$", "obtain authorization"),
-        (r"^(?:obtain|secure|record)\s+(?:a\s+|the\s+)?consent\s+(?:from|of|for)\s+(?:the\s+)?(.+)$", "obtain consent"),
-        (r"^(?:file|record|grant|approve)\s+(?:a\s+|the\s+)?waiver\s+(?:of|for|from)\s+(?:the\s+)?(.+)$", "waive"),
-        (r"^(?:record|file|execute)\s+(?:a\s+|the\s+)?release\s+(?:of|for)\s+(?:the\s+)?(.+)$", "release"),
-        (r"^(?:furnish|make|provide|deliver)\s+(?:a\s+|the\s+)?copy\s+(?:of|for)\s+(?:the\s+)?(.+)$", "provide copy"),
-        (r"^(?:make|provide|post)\s+(?:a\s+|the\s+)?deposit\s+(?:of|for)\s+(?:the\s+)?(.+)$", "deposit"),
-        (r"^(?:perform|conduct|prepare|maintain|complete)\s+(?:a\s+|the\s+)?mapping\s+(?:of|for)\s+(?:the\s+)?(.+)$", "map"),
-        (r"^(?:perform|conduct|prepare|maintain|complete)\s+(?:a\s+|the\s+)?geocoding\s+(?:of|for)\s+(?:the\s+)?(.+)$", "geocode"),
-        (r"^(?:perform|conduct|prepare|maintain|complete)\s+(?:a\s+|the\s+)?georeferencing\s+(?:of|for)\s+(?:the\s+)?(.+)$", "georeference"),
-        (r"^(?:perform|conduct|prepare|maintain|complete)\s+(?:a\s+|the\s+)?survey\s+(?:of|for)\s+(?:the\s+)?(.+)$", "survey"),
-        (r"^(?:perform|conduct|prepare|provide|complete)\s+(?:an?\s+|the\s+)?evacuation\s+(?:of|for)\s+(?:the\s+)?(.+)$", "evacuate"),
-        (r"^(?:perform|conduct|prepare|provide|complete)\s+(?:a\s+|the\s+)?sheltering\s+(?:of|for)\s+(?:the\s+)?(.+)$", "shelter"),
-        (r"^(?:perform|conduct|prepare|provide|complete)\s+(?:a\s+|the\s+)?rescue\s+(?:of|for)\s+(?:the\s+)?(.+)$", "rescue"),
-        (r"^(?:carry\s+out|perform|conduct|complete)\s+(?:an?\s+|the\s+)?emergency\s+drill\s+(?:of|for)\s+(?:the\s+)?(.+)$", "drill"),
-        (r"^(?:maintain|create|prepare|conduct)\s+(?:a\s+|the\s+)?custody\s+log\s+(?:of|for)\s+(?:the\s+)?(.+)$", "log custody"),
-        (r"^(?:prepare|document|complete|maintain)\s+chain(?:-|\s+)of(?:-|\s+)custody\s+documentation\s+(?:of|for)\s+(?:the\s+)?(.+)$", "document chain custody"),
-        (r"^(?:prepare|complete|maintain)\s+(?:an?\s+|the\s+)?exhibit\s+inventory\s+(?:of|for)\s+(?:the\s+)?(.+)$", "inventory exhibit"),
-        (r"^(?:complete|prepare|maintain)\s+(?:a\s+|the\s+)?specimen\s+accession\s+records?\s+(?:of|for)\s+(?:the\s+)?(.+)$", "accession"),
-        (r"^(?:maintain|prepare|complete)\s+evidence\s+preservation\s+records?\s+(?:of|for)\s+(?:the\s+)?(.+)$", "preserve evidence"),
-        (r"^(?:keep|maintain|prepare|complete)\s+(?:a\s+|the\s+)?transfer\s+log\s+(?:of|for)\s+(?:the\s+)?(.+)$", "record evidence transfer"),
-        (r"^(?:prepare|adopt|publish|issue)\s+(?:a\s+|the\s+)?revisions?\s+(?:of|for|to)\s+(?:the\s+)?(.+)$", "revise"),
-        (r"^(?:publish|prepare|adopt|issue)\s+annotations\s+(?:of|for|to)\s+(?:the\s+)?(.+)$", "annotate"),
-        (r"^(?:issue|prepare|publish|adopt)\s+(?:a\s+|the\s+)?supplement\s+(?:of|for|to)\s+(?:the\s+)?(.+)$", "supplement"),
-        (r"^(?:prepare|record|approve)\s+minutes\s+(?:of|for)\s+(?:the\s+)?(.+)$", "record minutes"),
-        (r"^(?:approve|prepare|set)\s+(?:an?\s+|the\s+)?agenda\s+(?:of|for)\s+(?:the\s+)?(.+)$", "set agenda"),
-        (r"^(?:conduct|perform|record)\s+(?:a\s+|the\s+)?roll\s+call\s+(?:of|for)\s+(?:the\s+)?(.+)$", "call roll"),
-        (r"^(?:publish|issue|provide)\s+meeting\s+notices?\s+(?:to|for)\s+(?:the\s+)?(.+)$", "notice meeting"),
-        (r"^(?:prepare|publish|provide)\s+(?:an?\s+|the\s+)?abstract\s+(?:of|for)\s+(?:the\s+)?(.+)$", "abstract"),
+        (
+            r"^(?:make|provide|grant)\s+(?:an?\s+|the\s+)?reasonable\s+accommodation\s+(?:for|to|of)\s+(?:the\s+)?(.+)$",
+            "accommodate",
+        ),
+        (
+            r"^(?:make|complete|enter|file|record)\s+(?:a\s+|the\s+)?recordation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "record",
+        ),
+        (
+            r"^(?:make|complete|enter|file|record)\s+(?:a\s+|the\s+)?memorialization\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "memorialize",
+        ),
+        (
+            r"^(?:grant|order|approve|authorize|issue|enter)\s+(?:a\s+|the\s+)?stay\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "stay",
+        ),
+        (
+            r"^(?:grant|order|approve|authorize|issue|enter)\s+(?:a\s+|the\s+)?continuance\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "continue",
+        ),
+        (
+            r"^(?:grant|order|approve|authorize|issue|enter)\s+(?:a\s+|the\s+)?postponement\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "postpone",
+        ),
+        (
+            r"^(?:grant|order|approve|authorize|issue|enter)\s+(?:a\s+|the\s+)?deferral\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "defer",
+        ),
+        (
+            r"^(?:perform|conduct|complete|prepare|undertake)\s+(?:an?\s+|the\s+)?access\s+review\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "review access",
+        ),
+        (
+            r"^(?:conduct|perform|complete|prepare)\s+(?:an?\s+|the\s+)?credential\s+rotation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "rotate credentials",
+        ),
+        (
+            r"^(?:complete|perform|conduct|prepare)\s+(?:an?\s+|the\s+)?password\s+reset\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "reset password",
+        ),
+        (
+            r"^(?:perform|conduct|complete|prepare)\s+(?:an?\s+|the\s+)?vulnerability\s+scanning\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "scan vulnerabilities",
+        ),
+        (
+            r"^(?:perform|conduct|complete|prepare)\s+(?:an?\s+|the\s+)?intrusion\s+monitoring\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "monitor intrusions",
+        ),
+        (
+            r"^(?:issue|provide|give|send|deliver)\s+(?:an?\s+|the\s+)?notification\s+(?:of|to|regarding|concerning|about)\s+(?:the\s+)?(.+)$",
+            "notify",
+        ),
+        (
+            r"^(?:provide|give|issue|deliver|send)\s+(?:a\s+|the\s+)?notice\s+(?:of|to|regarding|concerning|about)\s+(?:the\s+)?(.+)$",
+            "notice",
+        ),
+        (
+            r"^(?:provide|give|furnish|deliver)\s+(?:an?\s+|the\s+)?disclosure\s+(?:of|to|regarding|concerning|about)\s+(?:the\s+)?(.+)$",
+            "disclose",
+        ),
+        (
+            r"^(?:provide|furnish|deliver)\s+auxiliary\s+aids?\s+(?:to|for)\s+(?:the\s+)?(.+)$",
+            "provide auxiliary aid",
+        ),
+        (
+            r"^(?:make|complete|perform|prepare)\s+accessibility\s+modifications\s+(?:to|for|of)\s+(?:the\s+)?(.+)$",
+            "modify accessibility",
+        ),
+        (
+            r"^(?:prepare|submit|maintain|adopt)\s+(?:a\s+|the\s+)?language\s+access\s+plan\s+(?:for|of)\s+(?:the\s+)?(.+)$",
+            "plan language access",
+        ),
+        (
+            r"^(?:provide|furnish|deliver)\s+accessible\s+formats\s+(?:to|for|of)\s+(?:the\s+)?(.+)$",
+            "format accessibly",
+        ),
+        (
+            r"^(?:provide|furnish|deliver)\s+sign\s+language\s+interpretation\s+(?:to|for|of)\s+(?:the\s+)?(.+)$",
+            "interpret sign language",
+        ),
+        (
+            r"^(?:conduct|perform|complete|prepare)\s+(?:an?\s+|the\s+)?risk\s+assessment(?:\s+(?:of|for)\s+(?:the\s+)?(.+))?$",
+            "assess risk",
+        ),
+        (
+            r"^(?:perform|conduct|complete|prepare)\s+(?:an?\s+|the\s+)?safety\s+analysis(?:\s+(?:of|for)\s+(?:the\s+)?(.+))?$",
+            "analyze safety",
+        ),
+        (
+            r"^(?:prepare|develop|complete|submit)\s+(?:an?\s+|the\s+)?emergency\s+response\s+plan(?:\s+(?:of|for)\s+(?:the\s+)?(.+))?$",
+            "plan emergency response",
+        ),
+        (
+            r"^(?:perform|conduct|complete|provide|make|carry\s+out)\s+(?:an?\s+|the\s+)?matching\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "match",
+        ),
+        (
+            r"^(?:perform|conduct|complete|provide|make|carry\s+out)\s+(?:an?\s+|the\s+)?comparison\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "compare",
+        ),
+        (
+            r"^(?:perform|conduct|complete|provide|make|carry\s+out)\s+(?:an?\s+|the\s+)?validation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "validate",
+        ),
+        (
+            r"^(?:perform|conduct|complete|provide|make|carry\s+out)\s+(?:an?\s+|the\s+)?normalization\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "normalize",
+        ),
+        (
+            r"^(?:perform|conduct|complete|provide|make|carry\s+out)\s+(?:an?\s+|the\s+)?deduplication\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "deduplicate",
+        ),
+        (
+            r"^(?:perform|conduct|complete|provide|make|carry\s+out)\s+(?:an?\s+|the\s+)?cross-checking\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "cross-check",
+        ),
+        (
+            r"^(?:perform|conduct|complete|provide|make|carry\s+out)\s+(?:an?\s+|the\s+)?digitization\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "digitize",
+        ),
+        (
+            r"^(?:perform|conduct|complete|provide|make|carry\s+out)\s+(?:an?\s+|the\s+)?scanning\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "scan",
+        ),
+        (
+            r"^(?:perform|conduct|complete|provide|make|carry\s+out)\s+(?:an?\s+|the\s+)?migration\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "migrate",
+        ),
+        (
+            r"^(?:perform|conduct|complete|provide|make|carry\s+out|execute)\s+(?:an?\s+|the\s+)?upload\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "upload",
+        ),
+        (
+            r"^(?:perform|conduct|complete|provide|make|carry\s+out|execute)\s+(?:an?\s+|the\s+)?download\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "download",
+        ),
+        (
+            r"^(?:perform|conduct|complete|provide|make|carry\s+out|execute)\s+(?:an?\s+|the\s+)?import\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "import",
+        ),
+        (
+            r"^(?:perform|conduct|complete|provide|make|carry\s+out|execute)\s+(?:an?\s+|the\s+)?export\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "export",
+        ),
+        (
+            r"^(?:make|prepare|submit|file)\s+(?:an?\s+|the\s+)?report\s+(?:of|for|on|regarding|concerning)\s+(?:the\s+)?(.+)$",
+            "report",
+        ),
+        (
+            r"^(?:submit|file|prepare)\s+reporting\s+(?:of|for|on|regarding|concerning)\s+(?:the\s+)?(.+)$",
+            "report",
+        ),
+        (
+            r"^(?:prepare|file|submit)\s+(?:a\s+|the\s+)?return\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "file return",
+        ),
+        (
+            r"^(?:file|submit|prepare)\s+(?:a\s+|the\s+)?statement\s+of\s+compliance$",
+            "declare compliance",
+        ),
+        (
+            r"^(?:secure|obtain|record)\s+(?:an?\s+|the\s+)?authorization\s+(?:from|of|for)\s+(?:the\s+)?(.+)$",
+            "obtain authorization",
+        ),
+        (
+            r"^(?:obtain|secure|record)\s+(?:a\s+|the\s+)?consent\s+(?:from|of|for)\s+(?:the\s+)?(.+)$",
+            "obtain consent",
+        ),
+        (
+            r"^(?:file|record|grant|approve)\s+(?:a\s+|the\s+)?waiver\s+(?:of|for|from)\s+(?:the\s+)?(.+)$",
+            "waive",
+        ),
+        (
+            r"^(?:record|file|execute)\s+(?:a\s+|the\s+)?release\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "release",
+        ),
+        (
+            r"^(?:furnish|make|provide|deliver)\s+(?:a\s+|the\s+)?copy\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "provide copy",
+        ),
+        (
+            r"^(?:make|provide|post)\s+(?:a\s+|the\s+)?deposit\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "deposit",
+        ),
+        (
+            r"^(?:perform|conduct|prepare|maintain|complete)\s+(?:a\s+|the\s+)?mapping\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "map",
+        ),
+        (
+            r"^(?:perform|conduct|prepare|maintain|complete)\s+(?:a\s+|the\s+)?geocoding\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "geocode",
+        ),
+        (
+            r"^(?:perform|conduct|prepare|maintain|complete)\s+(?:a\s+|the\s+)?georeferencing\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "georeference",
+        ),
+        (
+            r"^(?:perform|conduct|prepare|maintain|complete)\s+(?:a\s+|the\s+)?survey\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "survey",
+        ),
+        (
+            r"^(?:perform|conduct|prepare|provide|complete)\s+(?:an?\s+|the\s+)?evacuation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "evacuate",
+        ),
+        (
+            r"^(?:perform|conduct|prepare|provide|complete)\s+(?:a\s+|the\s+)?sheltering\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "shelter",
+        ),
+        (
+            r"^(?:perform|conduct|prepare|provide|complete)\s+(?:a\s+|the\s+)?rescue\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "rescue",
+        ),
+        (
+            r"^(?:carry\s+out|perform|conduct|complete)\s+(?:an?\s+|the\s+)?emergency\s+drill\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "drill",
+        ),
+        (
+            r"^(?:maintain|create|prepare|conduct)\s+(?:a\s+|the\s+)?custody\s+log\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "log custody",
+        ),
+        (
+            r"^(?:prepare|document|complete|maintain)\s+chain(?:-|\s+)of(?:-|\s+)custody\s+documentation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "document chain custody",
+        ),
+        (
+            r"^(?:prepare|complete|maintain)\s+(?:an?\s+|the\s+)?exhibit\s+inventory\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "inventory exhibit",
+        ),
+        (
+            r"^(?:complete|prepare|maintain)\s+(?:a\s+|the\s+)?specimen\s+accession\s+records?\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "accession",
+        ),
+        (
+            r"^(?:maintain|prepare|complete)\s+evidence\s+preservation\s+records?\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "preserve evidence",
+        ),
+        (
+            r"^(?:keep|maintain|prepare|complete)\s+(?:a\s+|the\s+)?transfer\s+log\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "record evidence transfer",
+        ),
+        (
+            r"^(?:prepare|adopt|publish|issue)\s+(?:a\s+|the\s+)?revisions?\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+            "revise",
+        ),
+        (
+            r"^(?:publish|prepare|adopt|issue)\s+annotations\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+            "annotate",
+        ),
+        (
+            r"^(?:issue|prepare|publish|adopt)\s+(?:a\s+|the\s+)?supplement\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+            "supplement",
+        ),
+        (
+            r"^(?:prepare|record|approve)\s+minutes\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "record minutes",
+        ),
+        (
+            r"^(?:approve|prepare|set)\s+(?:an?\s+|the\s+)?agenda\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "set agenda",
+        ),
+        (
+            r"^(?:conduct|perform|record)\s+(?:a\s+|the\s+)?roll\s+call\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "call roll",
+        ),
+        (
+            r"^(?:publish|issue|provide)\s+meeting\s+notices?\s+(?:to|for)\s+(?:the\s+)?(.+)$",
+            "notice meeting",
+        ),
+        (
+            r"^(?:prepare|publish|provide)\s+(?:an?\s+|the\s+)?abstract\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "abstract",
+        ),
         (r"^(?:prepare|publish|provide)\s+excerpts\s+(?:of|for)\s+(?:the\s+)?(.+)$", "excerpt"),
         (r"^(?:provide|prepare|publish)\s+captioning\s+(?:of|for)\s+(?:the\s+)?(.+)$", "caption"),
         (r"^(?:assign|prepare|provide)\s+tags\s+(?:to|for)\s+(?:the\s+)?(.+)$", "tag"),
-        (r"^(?:file|prepare|submit)\s+(?:an?\s+|the\s+)?incident\s+report\s+(?:of|for)\s+(?:the\s+)?(.+)$", "report incident"),
-        (r"^(?:create|maintain|prepare|conduct)\s+(?:an?\s+|the\s+)?incident\s+log(?:ging)?\s+(?:of|for)\s+(?:the\s+)?(.+)$", "log incident"),
+        (
+            r"^(?:file|prepare|submit)\s+(?:an?\s+|the\s+)?incident\s+report\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "report incident",
+        ),
+        (
+            r"^(?:create|maintain|prepare|conduct)\s+(?:an?\s+|the\s+)?incident\s+log(?:ging)?\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "log incident",
+        ),
         (r"^(?:conduct)\s+incident\s+logging\s+(?:of|for)\s+(?:the\s+)?(.+)$", "log incident"),
-        (r"^(?:maintain|create|prepare|update)\s+(?:a\s+|the\s+)?breach\s+register\s+(?:of|for)\s+(?:the\s+)?(.+)$", "register breach"),
-        (r"^(?:maintain|create|prepare|update)\s+(?:a\s+|the\s+)?risk\s+register\s+(?:of|for)\s+(?:the\s+)?(.+)$", "register risk"),
-        (r"^(?:maintain|create|prepare|update)\s+(?:an?\s+|the\s+)?incident\s+register\s+(?:of|for)\s+(?:the\s+)?(.+)$", "register incident"),
+        (
+            r"^(?:maintain|create|prepare|update)\s+(?:a\s+|the\s+)?breach\s+register\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "register breach",
+        ),
+        (
+            r"^(?:maintain|create|prepare|update)\s+(?:a\s+|the\s+)?risk\s+register\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "register risk",
+        ),
+        (
+            r"^(?:maintain|create|prepare|update)\s+(?:an?\s+|the\s+)?incident\s+register\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "register incident",
+        ),
     )
     for pattern, replacement in patterns:
         match = re.match(pattern, text, re.IGNORECASE)
@@ -427,13 +648,15 @@ def _is_failure_prohibition(norm: LegalNormIR, action_text: str) -> bool:
 
     if _norm_modality(norm) != "F":
         return False
-    return bool(re.match(
-        r"^(?:fail(?:ure)?|refus(?:e|al)|neglect(?:s|ed|ing)?|omit(?:s|ted|ting)?)"
-        r"(?:\s+or\s+(?:fail(?:ure)?|refus(?:e|al)|neglect(?:s|ed|ing)?|omit(?:s|ted|ting)?))*"
-        r"\s+to\s+\S",
-        str(action_text or "").strip(),
-        re.IGNORECASE,
-    ))
+    return bool(
+        re.match(
+            r"^(?:fail(?:ure)?|refus(?:e|al)|neglect(?:s|ed|ing)?|omit(?:s|ted|ting)?)"
+            r"(?:\s+or\s+(?:fail(?:ure)?|refus(?:e|al)|neglect(?:s|ed|ing)?|omit(?:s|ted|ting)?))*"
+            r"\s+to\s+\S",
+            str(action_text or "").strip(),
+            re.IGNORECASE,
+        )
+    )
 
 
 def _strip_failure_action(action_text: str) -> str:
@@ -1775,11 +1998,13 @@ def _is_direct_gerund_prohibition(norm: LegalNormIR, action_text: str) -> bool:
 
     if _norm_modality(norm) != "F":
         return False
-    return bool(re.match(
-        r"^(?:disclosing|entering|operating|using|contacting|discharging|removing|altering|destroying|obstructing|interfering|impeding)\b",
-        str(action_text or "").strip(),
-        re.IGNORECASE,
-    ))
+    return bool(
+        re.match(
+            r"^(?:disclosing|entering|operating|using|contacting|discharging|removing|altering|destroying|obstructing|interfering|impeding)\b",
+            str(action_text or "").strip(),
+            re.IGNORECASE,
+        )
+    )
 
 
 def _is_refrain_obligation(norm: LegalNormIR, action_text: str) -> bool:
@@ -1787,12 +2012,14 @@ def _is_refrain_obligation(norm: LegalNormIR, action_text: str) -> bool:
 
     if _norm_modality(norm) != "O":
         return False
-    return bool(re.match(
-        r"^(?:(?:refrain|abstain|desist|forbear)\s+from|(?:cease|stop))\s+\S"
-        r"|^avoid\s+(?:contacting|entering|operating|using|discharging|removing|altering|destroying|obstructing|interfering|impeding)\b",
-        str(action_text or "").strip(),
-        re.IGNORECASE,
-    ))
+    return bool(
+        re.match(
+            r"^(?:(?:refrain|abstain|desist|forbear)\s+from|(?:cease|stop))\s+\S"
+            r"|^avoid\s+(?:contacting|entering|operating|using|discharging|removing|altering|destroying|obstructing|interfering|impeding)\b",
+            str(action_text or "").strip(),
+            re.IGNORECASE,
+        )
+    )
 
 
 def _is_prevention_obligation(norm: LegalNormIR, action_text: str) -> bool:
@@ -1800,11 +2027,13 @@ def _is_prevention_obligation(norm: LegalNormIR, action_text: str) -> bool:
 
     if _norm_modality(norm) != "O":
         return False
-    return bool(re.match(
-        r"^(?:prevent|prohibit|bar|block)\s+(?:entry|access|discharge|disclosure|removal|alteration|destruction)\b",
-        str(action_text or "").strip(),
-        re.IGNORECASE,
-    ))
+    return bool(
+        re.match(
+            r"^(?:prevent|prohibit|bar|block)\s+(?:entry|access|discharge|disclosure|removal|alteration|destruction)\b",
+            str(action_text or "").strip(),
+            re.IGNORECASE,
+        )
+    )
 
 
 def _is_confidentiality_obligation(norm: LegalNormIR, action_text: str) -> bool:
@@ -1819,7 +2048,11 @@ def _is_confidentiality_obligation(norm: LegalNormIR, action_text: str) -> bool:
             text,
             re.IGNORECASE,
         )
-        or re.match(r"^(?:protect|preserve|maintain)\s+(?:the\s+)?confidentiality\s+of\s+\S", text, re.IGNORECASE)
+        or re.match(
+            r"^(?:protect|preserve|maintain)\s+(?:the\s+)?confidentiality\s+of\s+\S",
+            text,
+            re.IGNORECASE,
+        )
     )
 
 
@@ -1828,11 +2061,13 @@ def _is_compliance_obligation(norm: LegalNormIR, action_text: str) -> bool:
 
     if _norm_modality(norm) != "O":
         return False
-    return bool(re.match(
-        r"^(?:ensure|secure|maintain)\s+compliance\s+with\s+\S",
-        str(action_text or "").strip(),
-        re.IGNORECASE,
-    ))
+    return bool(
+        re.match(
+            r"^(?:ensure|secure|maintain)\s+compliance\s+with\s+\S",
+            str(action_text or "").strip(),
+            re.IGNORECASE,
+        )
+    )
 
 
 def _is_access_availability_obligation(norm: LegalNormIR, action_text: str) -> bool:
@@ -1860,11 +2095,13 @@ def _is_direct_interference_prohibition(norm: LegalNormIR, action_text: str) -> 
 
     if _norm_modality(norm) != "F":
         return False
-    return bool(re.match(
-        r"^(?:interfere|interferes|obstruct|obstructs|impede|impedes)\s+(?:with\s+)?\S",
-        str(action_text or "").strip(),
-        re.IGNORECASE,
-    ))
+    return bool(
+        re.match(
+            r"^(?:interfere|interferes|obstruct|obstructs|impede|impedes)\s+(?:with\s+)?\S",
+            str(action_text or "").strip(),
+            re.IGNORECASE,
+        )
+    )
 
 
 def _is_permission_facilitation_prohibition(norm: LegalNormIR, action_text: str) -> bool:
@@ -1872,14 +2109,16 @@ def _is_permission_facilitation_prohibition(norm: LegalNormIR, action_text: str)
 
     if _norm_modality(norm) != "F":
         return False
-    return bool(re.match(
-        r"^(?:permit|allow|authorize|enable|require|compel|direct|coerce|cause|causes|result\s+in)\s+(?:any\s+|a\s+|an\s+|the\s+)?"
-        r"(?:person\s+to\s+|entity\s+to\s+|applicant\s+to\s+|permittee\s+to\s+|licensee\s+to\s+)?"
-        r"(?:enter|access|discharge|disclose|remove|alter|destroy|obstruct|interfere|impede|"
-        r"entry|discharge|disclosure|removal|alteration|destruction|access)\b",
-        str(action_text or "").strip(),
-        re.IGNORECASE,
-    ))
+    return bool(
+        re.match(
+            r"^(?:permit|allow|authorize|enable|require|compel|direct|coerce|cause|causes|result\s+in)\s+(?:any\s+|a\s+|an\s+|the\s+)?"
+            r"(?:person\s+to\s+|entity\s+to\s+|applicant\s+to\s+|permittee\s+to\s+|licensee\s+to\s+)?"
+            r"(?:enter|access|discharge|disclose|remove|alter|destroy|obstruct|interfere|impede|"
+            r"entry|discharge|disclosure|removal|alteration|destruction|access)\b",
+            str(action_text or "").strip(),
+            re.IGNORECASE,
+        )
+    )
 
 
 def _strip_refrain_action(action_text: str) -> str:
@@ -2230,7 +2469,9 @@ def build_deontic_formula_record_from_ir(norm: LegalNormIR) -> Dict[str, Any]:
     omitted_slots = _omitted_formula_slots(norm)
     deterministic_resolution = _deterministic_formula_resolution(norm, blockers)
     if not deterministic_resolution:
-        deterministic_resolution = _batch_resolved_reference_exception_formula_resolution(norm, blockers)
+        deterministic_resolution = _batch_resolved_reference_exception_formula_resolution(
+            norm, blockers
+        )
     if not deterministic_resolution:
         deterministic_resolution = _readiness_formula_resolution(norm)
     deterministic_resolution = _normalize_formula_resolution(deterministic_resolution)
@@ -2417,18 +2658,19 @@ def _resolve_norm_same_document_references(
         for citation in citations:
             if citation in existing:
                 continue
-            additions.append({
-                "reference_type": "section",
-                "target": citation[len("section ") :],
-                "canonical_citation": citation,
-                "value": citation,
-                "resolution_scope": "same_document",
-                "same_document": True,
-                "resolved_source_id": section_index[citation],
-                "source_id": section_index[citation],
-                "matched_section_context": citation in section_context_citations,
-                "span": reference.get("span", []),
-            }
+            additions.append(
+                {
+                    "reference_type": "section",
+                    "target": citation[len("section ") :],
+                    "canonical_citation": citation,
+                    "value": citation,
+                    "resolution_scope": "same_document",
+                    "same_document": True,
+                    "resolved_source_id": section_index[citation],
+                    "source_id": section_index[citation],
+                    "matched_section_context": citation in section_context_citations,
+                    "span": reference.get("span", []),
+                }
             )
             existing.add(citation)
 
@@ -2443,7 +2685,9 @@ def _reference_section_citation(reference: Mapping[str, Any]) -> str:
         if citation:
             return citation
 
-    reference_type = str(reference.get("reference_type") or reference.get("type") or "").strip().lower()
+    reference_type = (
+        str(reference.get("reference_type") or reference.get("type") or "").strip().lower()
+    )
     target = str(reference.get("target") or reference.get("section") or "").strip()
     if reference_type == "section" and target and target.lower() not in {"this", "current"}:
         return _canonical_section_citation(f"section {target}")
@@ -2862,7 +3106,9 @@ def _action_without_procedure_trigger_tail(action: str, procedure: Dict[str, Any
             cleaned = _strip_action_tail_trigger_segment(cleaned, trigger_phrase, anchor)
 
         if relation_type in {"triggered_by_archiving_of", "triggered_by_retention_of"}:
-            anchor = str(relation.get("anchor_event") or procedure.get("trigger_event") or "").strip()
+            anchor = str(
+                relation.get("anchor_event") or procedure.get("trigger_event") or ""
+            ).strip()
             trigger_word = {
                 "triggered_by_archiving_of": "archiving",
                 "triggered_by_retention_of": "retention",
@@ -2871,11 +3117,20 @@ def _action_without_procedure_trigger_tail(action: str, procedure: Dict[str, Any
                 cleaned = _strip_action_tail_trigger_segment(cleaned, trigger_word, anchor)
 
         if relation_type == "triggered_by_approval_of":
-            anchor = str(relation.get("anchor_event") or procedure.get("trigger_event") or "").strip()
+            anchor = str(
+                relation.get("anchor_event") or procedure.get("trigger_event") or ""
+            ).strip()
             if anchor:
-                cleaned = re.sub(rf"\s+(?:upon|after)\s+approval\s+(?:of\s+)?(?:an?\s+|the\s+)?{re.escape(anchor)}\s*$", "", cleaned, flags=re.IGNORECASE).strip()
+                cleaned = re.sub(
+                    rf"\s+(?:upon|after)\s+approval\s+(?:of\s+)?(?:an?\s+|the\s+)?{re.escape(anchor)}\s*$",
+                    "",
+                    cleaned,
+                    flags=re.IGNORECASE,
+                ).strip()
         if relation_type == "triggered_by_completion_of":
-            anchor = str(relation.get("anchor_event") or procedure.get("trigger_event") or "").strip()
+            anchor = str(
+                relation.get("anchor_event") or procedure.get("trigger_event") or ""
+            ).strip()
             if anchor:
                 cleaned = re.sub(
                     rf"\s+(?:upon|after|following)\s+completion\s+(?:of\s+)?(?:an?\s+|the\s+)?{re.escape(anchor)}\s*$",
@@ -2884,7 +3139,9 @@ def _action_without_procedure_trigger_tail(action: str, procedure: Dict[str, Any
                     flags=re.IGNORECASE,
                 ).strip()
         if relation_type == "triggered_by_effective_date_of":
-            anchor = str(relation.get("anchor_event") or procedure.get("trigger_event") or "").strip()
+            anchor = str(
+                relation.get("anchor_event") or procedure.get("trigger_event") or ""
+            ).strip()
             if anchor:
                 cleaned = re.sub(
                     rf"\s+(?:upon|on|after)\s+(?:the\s+)?effective\s+date\s+(?:of\s+)?(?:an?\s+|the\s+)?{re.escape(anchor)}\s*$",
@@ -2893,7 +3150,9 @@ def _action_without_procedure_trigger_tail(action: str, procedure: Dict[str, Any
                     flags=re.IGNORECASE,
                 ).strip()
         if relation_type == "triggered_by_certification_of":
-            anchor = str(relation.get("anchor_event") or procedure.get("trigger_event") or "").strip()
+            anchor = str(
+                relation.get("anchor_event") or procedure.get("trigger_event") or ""
+            ).strip()
             if anchor:
                 cleaned = re.sub(
                     rf"\s+(?:upon|after|following)\s+certification\s+(?:of\s+)?(?:an?\s+|the\s+)?{re.escape(anchor)}\s*$",
@@ -2902,7 +3161,9 @@ def _action_without_procedure_trigger_tail(action: str, procedure: Dict[str, Any
                     flags=re.IGNORECASE,
                 ).strip()
         if relation_type == "triggered_by_issuance_of":
-            anchor = str(relation.get("anchor_event") or procedure.get("trigger_event") or "").strip()
+            anchor = str(
+                relation.get("anchor_event") or procedure.get("trigger_event") or ""
+            ).strip()
             if anchor:
                 cleaned = re.sub(
                     rf"\s+(?:upon|after|following)\s+issuance\s+(?:of\s+)?(?:an?\s+|the\s+)?{re.escape(anchor)}\s*$",
@@ -2911,7 +3172,9 @@ def _action_without_procedure_trigger_tail(action: str, procedure: Dict[str, Any
                     flags=re.IGNORECASE,
                 ).strip()
         if relation_type == "triggered_by_publication_of":
-            anchor = str(relation.get("anchor_event") or procedure.get("trigger_event") or "").strip()
+            anchor = str(
+                relation.get("anchor_event") or procedure.get("trigger_event") or ""
+            ).strip()
             if anchor:
                 cleaned = re.sub(
                     rf"\s+(?:upon|after|following)\s+publication\s+(?:of\s+)?(?:an?\s+|the\s+)?{re.escape(anchor)}\s*$",
@@ -2920,7 +3183,9 @@ def _action_without_procedure_trigger_tail(action: str, procedure: Dict[str, Any
                     flags=re.IGNORECASE,
                 ).strip()
         if relation_type == "triggered_by_inspection_of":
-            anchor = str(relation.get("anchor_event") or procedure.get("trigger_event") or "").strip()
+            anchor = str(
+                relation.get("anchor_event") or procedure.get("trigger_event") or ""
+            ).strip()
             if anchor:
                 cleaned = re.sub(
                     rf"\s+(?:upon|after|following)\s+inspection\s+(?:of\s+)?(?:an?\s+|the\s+)?{re.escape(anchor)}\s*$",
@@ -2929,7 +3194,9 @@ def _action_without_procedure_trigger_tail(action: str, procedure: Dict[str, Any
                     flags=re.IGNORECASE,
                 ).strip()
         if relation_type == "triggered_by_service_of":
-            anchor = str(relation.get("anchor_event") or procedure.get("trigger_event") or "").strip()
+            anchor = str(
+                relation.get("anchor_event") or procedure.get("trigger_event") or ""
+            ).strip()
             if anchor:
                 cleaned = re.sub(
                     rf"\s+(?:upon|after|following)\s+service\s+(?:of\s+)?(?:an?\s+|the\s+)?{re.escape(anchor)}\s*$",
@@ -2938,7 +3205,9 @@ def _action_without_procedure_trigger_tail(action: str, procedure: Dict[str, Any
                     flags=re.IGNORECASE,
                 ).strip()
         if relation_type == "triggered_by_adoption_of":
-            anchor = str(relation.get("anchor_event") or procedure.get("trigger_event") or "").strip()
+            anchor = str(
+                relation.get("anchor_event") or procedure.get("trigger_event") or ""
+            ).strip()
             if anchor:
                 cleaned = re.sub(
                     rf"\s+(?:upon|after|following)\s+adoption\s+(?:of\s+)?(?:an?\s+|the\s+)?{re.escape(anchor)}\s*$",
@@ -2947,7 +3216,9 @@ def _action_without_procedure_trigger_tail(action: str, procedure: Dict[str, Any
                     flags=re.IGNORECASE,
                 ).strip()
         if relation_type == "triggered_by_commencement_of":
-            anchor = str(relation.get("anchor_event") or procedure.get("trigger_event") or "").strip()
+            anchor = str(
+                relation.get("anchor_event") or procedure.get("trigger_event") or ""
+            ).strip()
             if anchor:
                 cleaned = re.sub(
                     rf"\s+(?:upon|after|following)\s+commencement\s+(?:of\s+)?(?:an?\s+|the\s+)?{re.escape(anchor)}\s*$",
@@ -2956,7 +3227,9 @@ def _action_without_procedure_trigger_tail(action: str, procedure: Dict[str, Any
                     flags=re.IGNORECASE,
                 ).strip()
         if relation_type == "triggered_by_execution_of":
-            anchor = str(relation.get("anchor_event") or procedure.get("trigger_event") or "").strip()
+            anchor = str(
+                relation.get("anchor_event") or procedure.get("trigger_event") or ""
+            ).strip()
             if anchor:
                 cleaned = re.sub(
                     rf"\s+(?:upon|after|following)\s+execution\s+(?:of\s+)?(?:an?\s+|the\s+)?{re.escape(anchor)}\s*$",
@@ -2965,7 +3238,9 @@ def _action_without_procedure_trigger_tail(action: str, procedure: Dict[str, Any
                     flags=re.IGNORECASE,
                 ).strip()
         if relation_type == "triggered_by_recording_of":
-            anchor = str(relation.get("anchor_event") or procedure.get("trigger_event") or "").strip()
+            anchor = str(
+                relation.get("anchor_event") or procedure.get("trigger_event") or ""
+            ).strip()
             if anchor:
                 cleaned = re.sub(
                     rf"\s+(?:upon|after|following)\s+recording\s+(?:of\s+)?(?:an?\s+|the\s+)?{re.escape(anchor)}\s*$",
@@ -2974,7 +3249,9 @@ def _action_without_procedure_trigger_tail(action: str, procedure: Dict[str, Any
                     flags=re.IGNORECASE,
                 ).strip()
         if relation_type == "triggered_by_renewal_of":
-            anchor = str(relation.get("anchor_event") or procedure.get("trigger_event") or "").strip()
+            anchor = str(
+                relation.get("anchor_event") or procedure.get("trigger_event") or ""
+            ).strip()
             if anchor:
                 cleaned = re.sub(
                     rf"\s+(?:upon|after|following)\s+renewal\s+(?:of\s+)?(?:an?\s+|the\s+)?{re.escape(anchor)}\s*$",
@@ -2983,7 +3260,9 @@ def _action_without_procedure_trigger_tail(action: str, procedure: Dict[str, Any
                     flags=re.IGNORECASE,
                 ).strip()
         if relation_type == "triggered_by_expiration_of":
-            anchor = str(relation.get("anchor_event") or procedure.get("trigger_event") or "").strip()
+            anchor = str(
+                relation.get("anchor_event") or procedure.get("trigger_event") or ""
+            ).strip()
             if anchor:
                 cleaned = re.sub(
                     rf"\s+(?:upon|after|following)\s+expiration\s+(?:of\s+)?(?:an?\s+|the\s+)?{re.escape(anchor)}\s*$",
@@ -2992,7 +3271,9 @@ def _action_without_procedure_trigger_tail(action: str, procedure: Dict[str, Any
                     flags=re.IGNORECASE,
                 ).strip()
         if relation_type == "triggered_by_termination_of":
-            anchor = str(relation.get("anchor_event") or procedure.get("trigger_event") or "").strip()
+            anchor = str(
+                relation.get("anchor_event") or procedure.get("trigger_event") or ""
+            ).strip()
             if anchor:
                 cleaned = re.sub(
                     rf"\s+(?:upon|after|following)\s+termination\s+(?:of\s+)?(?:an?\s+|the\s+)?{re.escape(anchor)}\s*$",
@@ -3001,7 +3282,9 @@ def _action_without_procedure_trigger_tail(action: str, procedure: Dict[str, Any
                     flags=re.IGNORECASE,
                 ).strip()
         if relation_type == "triggered_by_revocation_of":
-            anchor = str(relation.get("anchor_event") or procedure.get("trigger_event") or "").strip()
+            anchor = str(
+                relation.get("anchor_event") or procedure.get("trigger_event") or ""
+            ).strip()
             if anchor:
                 cleaned = re.sub(
                     rf"\s+(?:upon|after|following)\s+revocation\s+(?:of\s+)?(?:an?\s+|the\s+)?{re.escape(anchor)}\s*$",
@@ -3010,7 +3293,9 @@ def _action_without_procedure_trigger_tail(action: str, procedure: Dict[str, Any
                     flags=re.IGNORECASE,
                 ).strip()
         if relation_type == "triggered_by_denial_of":
-            anchor = str(relation.get("anchor_event") or procedure.get("trigger_event") or "").strip()
+            anchor = str(
+                relation.get("anchor_event") or procedure.get("trigger_event") or ""
+            ).strip()
             if anchor:
                 cleaned = re.sub(
                     rf"\s+(?:upon|after|following)\s+denial\s+(?:of\s+)?(?:an?\s+|the\s+)?{re.escape(anchor)}\s*$",
@@ -3019,7 +3304,9 @@ def _action_without_procedure_trigger_tail(action: str, procedure: Dict[str, Any
                     flags=re.IGNORECASE,
                 ).strip()
         if relation_type == "triggered_by_payment_of":
-            anchor = str(relation.get("anchor_event") or procedure.get("trigger_event") or "").strip()
+            anchor = str(
+                relation.get("anchor_event") or procedure.get("trigger_event") or ""
+            ).strip()
             if anchor:
                 cleaned = re.sub(
                     rf"\s+(?:upon|after|following)\s+payment\s+(?:of\s+)?(?:an?\s+|the\s+)?{re.escape(anchor)}\s*$",
@@ -3028,7 +3315,9 @@ def _action_without_procedure_trigger_tail(action: str, procedure: Dict[str, Any
                     flags=re.IGNORECASE,
                 ).strip()
         if relation_type == "triggered_by_assessment_of":
-            anchor = str(relation.get("anchor_event") or procedure.get("trigger_event") or "").strip()
+            anchor = str(
+                relation.get("anchor_event") or procedure.get("trigger_event") or ""
+            ).strip()
             if anchor:
                 cleaned = re.sub(
                     rf"\s+(?:upon|after|following)\s+assessment\s+(?:of\s+)?(?:an?\s+|the\s+)?{re.escape(anchor)}\s*$",
@@ -3038,7 +3327,9 @@ def _action_without_procedure_trigger_tail(action: str, procedure: Dict[str, Any
                 ).strip()
         tail_noun = _procedure_trigger_tail_noun(relation_type)
         if tail_noun:
-            anchor = str(relation.get("anchor_event") or procedure.get("trigger_event") or "").strip()
+            anchor = str(
+                relation.get("anchor_event") or procedure.get("trigger_event") or ""
+            ).strip()
             if anchor:
                 cleaned = re.sub(
                     rf"\s+(?:and\s+)?(?:upon|after|following)\s+{tail_noun}\s+(?:of|on)?\s*(?:an?\s+|the\s+)?{re.escape(anchor)}\b",
@@ -3134,24 +3425,16 @@ def _suppress_subsumed_whichever_deadlines(predicates: List[str]) -> List[str]:
     """
 
     suffixes = ("WhicheverIsEarlier", "WhicheverIsLater")
-    composites = [
-        predicate for predicate in predicates if predicate.endswith(suffixes)
-    ]
+    composites = [predicate for predicate in predicates if predicate.endswith(suffixes)]
     composite_bases = {
-        re.sub(r"WhicheverIs(?:Earlier|Later)$", "", composite)
-        for composite in composites
+        re.sub(r"WhicheverIs(?:Earlier|Later)$", "", composite) for composite in composites
     }
     return [
         predicate
         for predicate in predicates
         if predicate in composites
         or not any(
-            base
-            and (
-                predicate == base
-                or base.startswith(predicate)
-                or predicate.startswith(base)
-            )
+            base and (predicate == base or base.startswith(predicate) or predicate.startswith(base))
             for base in composite_bases
         )
     ]
@@ -3368,28 +3651,54 @@ def _field_span(norm: LegalNormIR, keys: Iterable[str]) -> List[int]:
         value = norm.field_spans.get(key)
         if isinstance(value, list) and len(value) == 2:
             return list(value)
-        if isinstance(value, dict) and isinstance(value.get("span"), list) and len(value["span"]) == 2:
+        if (
+            isinstance(value, dict)
+            and isinstance(value.get("span"), list)
+            and len(value["span"]) == 2
+        ):
             return list(value["span"])
     return []
 
 
-def _is_reference_condition(item: Dict[str, Any], text: str, reference_values: Iterable[str]) -> bool:
+def _is_reference_condition(
+    item: Dict[str, Any], text: str, reference_values: Iterable[str]
+) -> bool:
     condition_type = str(item.get("condition_type") or item.get("type") or "").lower()
     reference_type = str(item.get("reference_type") or "").lower()
-    if reference_type in {"section", "subsection", "chapter", "title", "article", "part", "cross_reference"}:
+    if reference_type in {
+        "section",
+        "subsection",
+        "chapter",
+        "title",
+        "article",
+        "part",
+        "cross_reference",
+    }:
         return True
 
     normalized = text.strip().lower()
     if _is_local_scope_reference_condition_text(normalized):
         return True
-    if reference_values and any(reference and reference in normalized for reference in reference_values):
+    if reference_values and any(
+        reference and reference in normalized for reference in reference_values
+    ):
         return True
     return condition_type == "subject_to" and bool(_LEGAL_REFERENCE_TEXT_RE.search(text))
 
 
-def _is_reference_exception(item: Dict[str, Any], text: str, reference_values: Iterable[str]) -> bool:
+def _is_reference_exception(
+    item: Dict[str, Any], text: str, reference_values: Iterable[str]
+) -> bool:
     reference_type = str(item.get("reference_type") or item.get("type") or "").lower()
-    if reference_type in {"section", "subsection", "chapter", "title", "article", "part", "cross_reference"}:
+    if reference_type in {
+        "section",
+        "subsection",
+        "chapter",
+        "title",
+        "article",
+        "part",
+        "cross_reference",
+    }:
         return True
 
     normalized = text.strip().lower()
@@ -3507,19 +3816,27 @@ def _deterministic_formula_resolution(norm: LegalNormIR, blockers: List[str]) ->
     if override_resolution:
         return override_resolution
 
-    reference_exception_resolution = _resolved_reference_exception_formula_resolution(norm, blockers)
+    reference_exception_resolution = _resolved_reference_exception_formula_resolution(
+        norm, blockers
+    )
     if reference_exception_resolution:
         return reference_exception_resolution
 
-    local_reference_exception_resolution = _local_scope_reference_exception_formula_resolution(norm, blockers)
+    local_reference_exception_resolution = _local_scope_reference_exception_formula_resolution(
+        norm, blockers
+    )
     if local_reference_exception_resolution:
         return local_reference_exception_resolution
 
-    local_reference_condition_resolution = _local_scope_reference_condition_formula_resolution(norm, blockers)
+    local_reference_condition_resolution = _local_scope_reference_condition_formula_resolution(
+        norm, blockers
+    )
     if local_reference_condition_resolution:
         return local_reference_condition_resolution
 
-    reference_condition_resolution = _resolved_reference_condition_formula_resolution(norm, blockers)
+    reference_condition_resolution = _resolved_reference_condition_formula_resolution(
+        norm, blockers
+    )
     if reference_condition_resolution:
         return reference_condition_resolution
 
@@ -3647,9 +3964,7 @@ def _has_unresolved_reference_exception_blocker(
         return False
 
     exception_texts = [
-        _slot_primary_text(item)
-        for item in norm.exceptions
-        if isinstance(item, dict)
+        _slot_primary_text(item) for item in norm.exceptions if isinstance(item, dict)
     ]
     if not exception_texts:
         return False
@@ -3752,7 +4067,9 @@ def _readiness_formula_resolution(norm: LegalNormIR) -> Dict[str, Any]:
     return normalized
 
 
-def _standard_exception_formula_resolution(norm: LegalNormIR, blockers: List[str]) -> Dict[str, Any]:
+def _standard_exception_formula_resolution(
+    norm: LegalNormIR, blockers: List[str]
+) -> Dict[str, Any]:
     """Resolve simple substantive exceptions at formula-record level.
 
     A clause like ``The applicant shall obtain a permit unless approval is
@@ -3836,7 +4153,9 @@ def _pure_override_formula_resolution(norm: LegalNormIR, blockers: List[str]) ->
     if not override_text:
         return {}
 
-    reference_texts = [_slot_primary_text(item) for item in norm.cross_references if isinstance(item, dict)]
+    reference_texts = [
+        _slot_primary_text(item) for item in norm.cross_references if isinstance(item, dict)
+    ]
     for reference_text in reference_texts:
         if reference_text and reference_text.lower() not in override_text.lower():
             return {}
@@ -3850,7 +4169,9 @@ def _pure_override_formula_resolution(norm: LegalNormIR, blockers: List[str]) ->
     }
 
 
-def _resolved_reference_exception_formula_resolution(norm: LegalNormIR, blockers: List[str]) -> Dict[str, Any]:
+def _resolved_reference_exception_formula_resolution(
+    norm: LegalNormIR, blockers: List[str]
+) -> Dict[str, Any]:
     """Resolve reference-only exceptions when citation resolution is explicit.
 
     A clause such as ``except as provided in section 552`` should not fabricate
@@ -3886,7 +4207,8 @@ def _resolved_reference_exception_formula_resolution(norm: LegalNormIR, blockers
 
     reference_values = {
         str(value).strip().lower()
-        for value in _slot_texts(norm.cross_references) + _slot_texts(norm.resolved_cross_references)
+        for value in _slot_texts(norm.cross_references)
+        + _slot_texts(norm.resolved_cross_references)
         if str(value).strip()
     }
     reference_exceptions = [
@@ -3907,10 +4229,15 @@ def _resolved_reference_exception_formula_resolution(norm: LegalNormIR, blockers
         exception_text = _slot_primary_text(exception).lower()
         if not exception_text:
             return {}
-        if not any(_reference_text_matches_slot(reference_text, exception_text) for reference_text in resolved_texts):
+        if not any(
+            _reference_text_matches_slot(reference_text, exception_text)
+            for reference_text in resolved_texts
+        ):
             return {}
 
-    reason = "reference-only exception is backed by explicit same-document cross-reference resolution"
+    reason = (
+        "reference-only exception is backed by explicit same-document cross-reference resolution"
+    )
     resolved_blockers = sorted(blocker_set)
     if any(item.get("matched_section_context") for item in resolved_references):
         reason = "numbered exception reference is resolved to an exact same-document section and retained as provenance"
@@ -3927,7 +4254,9 @@ def _resolved_reference_exception_formula_resolution(norm: LegalNormIR, blockers
     }
 
 
-def _resolved_reference_condition_formula_resolution(norm: LegalNormIR, blockers: List[str]) -> Dict[str, Any]:
+def _resolved_reference_condition_formula_resolution(
+    norm: LegalNormIR, blockers: List[str]
+) -> Dict[str, Any]:
     """Resolve reference-only conditions when citation resolution is explicit.
 
     A clause such as ``Subject to section 552, the Secretary shall publish the
@@ -3960,7 +4289,8 @@ def _resolved_reference_condition_formula_resolution(norm: LegalNormIR, blockers
 
     reference_values = {
         str(value).strip().lower()
-        for value in _slot_texts(norm.cross_references) + _slot_texts(norm.resolved_cross_references)
+        for value in _slot_texts(norm.cross_references)
+        + _slot_texts(norm.resolved_cross_references)
         if str(value).strip()
     }
     reference_conditions = [
@@ -3981,7 +4311,10 @@ def _resolved_reference_condition_formula_resolution(norm: LegalNormIR, blockers
         condition_text = _slot_primary_text(condition).lower()
         if not condition_text:
             return {}
-        if not any(_reference_text_matches_slot(reference_text, condition_text) for reference_text in resolved_texts):
+        if not any(
+            _reference_text_matches_slot(reference_text, condition_text)
+            for reference_text in resolved_texts
+        ):
             return {}
 
     return {
@@ -3993,7 +4326,9 @@ def _resolved_reference_condition_formula_resolution(norm: LegalNormIR, blockers
     }
 
 
-def _local_scope_reference_condition_formula_resolution(norm: LegalNormIR, blockers: List[str]) -> Dict[str, Any]:
+def _local_scope_reference_condition_formula_resolution(
+    norm: LegalNormIR, blockers: List[str]
+) -> Dict[str, Any]:
     """Resolve exact local self-reference conditions at formula-record level.
 
     A clause such as ``Subject to this section, the Secretary shall publish the
@@ -4060,7 +4395,9 @@ def _local_scope_reference_condition_formula_resolution(norm: LegalNormIR, block
     }
 
 
-def _local_scope_reference_exception_formula_resolution(norm: LegalNormIR, blockers: List[str]) -> Dict[str, Any]:
+def _local_scope_reference_exception_formula_resolution(
+    norm: LegalNormIR, blockers: List[str]
+) -> Dict[str, Any]:
     """Resolve exact local self-reference exceptions at formula-record level.
 
     Clauses such as ``except as provided in this section`` point back to the
@@ -4159,7 +4496,9 @@ def _batch_resolved_reference_exception_formula_resolution(
     blocker_set = set(blockers)
     if not blocker_set or not blocker_set.issubset(allowed_blockers):
         return {}
-    if not {"cross_reference_requires_resolution", "exception_requires_scope_review"}.issubset(blocker_set):
+    if not {"cross_reference_requires_resolution", "exception_requires_scope_review"}.issubset(
+        blocker_set
+    ):
         return {}
 
     same_document_records = _same_document_reference_records(norm)
@@ -4167,9 +4506,7 @@ def _batch_resolved_reference_exception_formula_resolution(
         return {}
 
     exception_texts = [
-        _slot_primary_text(item)
-        for item in norm.exceptions
-        if isinstance(item, dict)
+        _slot_primary_text(item) for item in norm.exceptions if isinstance(item, dict)
     ]
     if len(exception_texts) != len(norm.exceptions):
         return {}
@@ -4180,7 +4517,10 @@ def _batch_resolved_reference_exception_formula_resolution(
     if not reference_texts:
         return {}
     if not all(
-        any(_reference_text_matches_slot(reference_text, exception_text) for reference_text in reference_texts)
+        any(
+            _reference_text_matches_slot(reference_text, exception_text)
+            for reference_text in reference_texts
+        )
         for exception_text in exception_texts
     ):
         return {}
@@ -4192,7 +4532,9 @@ def _batch_resolved_reference_exception_formula_resolution(
         "type": "resolved_same_document_reference_exception",
         "resolved_blockers": resolved_blockers,
         "references": reference_texts,
-        "exception_spans": [item.get("span", []) for item in norm.exceptions if isinstance(item, dict)],
+        "exception_spans": [
+            item.get("span", []) for item in norm.exceptions if isinstance(item, dict)
+        ],
         "reason": "numbered exception reference is resolved to an exact same-document section and retained as provenance",
     }
 
@@ -4257,7 +4599,9 @@ def _local_scope_reference_records(norm: LegalNormIR) -> List[Dict[str, Any]]:
     if not all_references:
         return []
 
-    local_references = [item for item in all_references if _local_scope_reference_record_scope(item)]
+    local_references = [
+        item for item in all_references if _local_scope_reference_record_scope(item)
+    ]
     if len(local_references) != len(all_references):
         return []
     return local_references
@@ -4270,7 +4614,11 @@ def _local_scope_reference_record_scope(item: Dict[str, Any]) -> str:
     if reference_type not in {"section", "subsection", "chapter", "title", "article", "part"}:
         return ""
 
-    target = str(item.get("target") or item.get("section") or item.get("subsection") or "").strip().lower()
+    target = (
+        str(item.get("target") or item.get("section") or item.get("subsection") or "")
+        .strip()
+        .lower()
+    )
     if target in {"this", f"this {reference_type}"}:
         return f"this {reference_type}"
 
@@ -4293,7 +4641,11 @@ def _reference_resolution_text(item: Dict[str, Any]) -> str:
     reference_type = str(item.get("reference_type") or item.get("type") or "").strip().lower()
     target = str(item.get("target") or item.get("section") or item.get("subsection") or "").strip()
     if reference_type and target:
-        return target if target.lower().startswith(reference_type + " ") else f"{reference_type} {target}"
+        return (
+            target
+            if target.lower().startswith(reference_type + " ")
+            else f"{reference_type} {target}"
+        )
     return ""
 
 
@@ -4350,15 +4702,17 @@ def _exception_text_needs_external_resolution(text: str) -> bool:
         return True
     if _LEGAL_REFERENCE_TEXT_RE.search(normalized):
         return True
-    return normalized.startswith((
-        "as otherwise provided",
-        "as provided",
-        "otherwise provided in",
-        "provided in",
-        "under ",
-        "pursuant to ",
-        "notwithstanding ",
-    ))
+    return normalized.startswith(
+        (
+            "as otherwise provided",
+            "as provided",
+            "otherwise provided in",
+            "provided in",
+            "under ",
+            "pursuant to ",
+            "notwithstanding ",
+        )
+    )
 
 
 def _normalize_assessment_imposition_light_verb_action(action_text: str) -> str:

@@ -19,43 +19,56 @@ def a_responserule_with_alert_typebrute_force_login_ex():
     """
     try:
         rule = ResponseRule(
-            rule_id="test_rule_001",
-            alert_type="brute_force_login",
-            severity_levels=[],
-            actions=[]
+            rule_id="test_rule_001", alert_type="brute_force_login", severity_levels=[], actions=[]
         )
-        
+
         if rule is None:
-            raise FixtureError("Failed to create fixture a_responserule_with_alert_typebrute_force_login_ex: ResponseRule instance is None") from None
-        
-        if not hasattr(rule, 'matches_alert'):
-            raise FixtureError("Failed to create fixture a_responserule_with_alert_typebrute_force_login_ex: ResponseRule missing 'matches_alert' method") from None
-        
+            raise FixtureError(
+                "Failed to create fixture a_responserule_with_alert_typebrute_force_login_ex: ResponseRule instance is None"
+            ) from None
+
+        if not hasattr(rule, "matches_alert"):
+            raise FixtureError(
+                "Failed to create fixture a_responserule_with_alert_typebrute_force_login_ex: ResponseRule missing 'matches_alert' method"
+            ) from None
+
         if rule.alert_type != "brute_force_login":
-            raise FixtureError(f"Failed to create fixture a_responserule_with_alert_typebrute_force_login_ex: alert_type is {rule.alert_type}, expected 'brute_force_login'") from None
-        
+            raise FixtureError(
+                f"Failed to create fixture a_responserule_with_alert_typebrute_force_login_ex: alert_type is {rule.alert_type}, expected 'brute_force_login'"
+            ) from None
+
         return rule
     except Exception as e:
-        raise FixtureError(f"Failed to create fixture a_responserule_with_alert_typebrute_force_login_ex: {e}") from e
+        raise FixtureError(
+            f"Failed to create fixture a_responserule_with_alert_typebrute_force_login_ex: {e}"
+        ) from e
+
 
 @pytest.fixture
-def the_rule_severity_levels_are_medium_high_critical(a_responserule_with_alert_typebrute_force_login_ex):
+def the_rule_severity_levels_are_medium_high_critical(
+    a_responserule_with_alert_typebrute_force_login_ex,
+):
     """
     Given the rule severity_levels are ["medium", "high", "critical"]
     """
     try:
         rule = a_responserule_with_alert_typebrute_force_login_ex
-        
+
         # Set severity levels
         rule.severity_levels = [AlertSeverity.MEDIUM, AlertSeverity.HIGH, AlertSeverity.CRITICAL]
-        
+
         # Verify severity levels are set
         if len(rule.severity_levels) != 3:
-            raise FixtureError(f"Failed to create fixture the_rule_severity_levels_are_medium_high_critical: {len(rule.severity_levels)} severity levels set, expected 3") from None
-        
+            raise FixtureError(
+                f"Failed to create fixture the_rule_severity_levels_are_medium_high_critical: {len(rule.severity_levels)} severity levels set, expected 3"
+            ) from None
+
         return rule
     except Exception as e:
-        raise FixtureError(f"Failed to create fixture the_rule_severity_levels_are_medium_high_critical: {e}") from e
+        raise FixtureError(
+            f"Failed to create fixture the_rule_severity_levels_are_medium_high_critical: {e}"
+        ) from e
+
 
 @pytest.fixture
 def the_rule_is_enabled(the_rule_severity_levels_are_medium_high_critical):
@@ -64,20 +77,26 @@ def the_rule_is_enabled(the_rule_severity_levels_are_medium_high_critical):
     """
     try:
         rule = the_rule_severity_levels_are_medium_high_critical
-        
+
         # Enable the rule
         rule.enabled = True
-        
+
         # Verify rule is enabled
         if not rule.enabled:
-            raise FixtureError("Failed to create fixture the_rule_is_enabled: Rule is not enabled after setting enabled=True") from None
-        
+            raise FixtureError(
+                "Failed to create fixture the_rule_is_enabled: Rule is not enabled after setting enabled=True"
+            ) from None
+
         return rule
     except Exception as e:
         raise FixtureError(f"Failed to create fixture the_rule_is_enabled: {e}") from e
 
 
-def test_matches_alert_returns_true_when_all_conditions_met(a_responserule_with_alert_typebrute_force_login_ex, the_rule_severity_levels_are_medium_high_critical, the_rule_is_enabled):
+def test_matches_alert_returns_true_when_all_conditions_met(
+    a_responserule_with_alert_typebrute_force_login_ex,
+    the_rule_severity_levels_are_medium_high_critical,
+    the_rule_is_enabled,
+):
     """
     Scenario: Matches alert returns True when all conditions met
 
@@ -94,7 +113,11 @@ def test_matches_alert_returns_true_when_all_conditions_met(a_responserule_with_
     pass
 
 
-def test_matches_alert_returns_false_when_rule_disabled(a_responserule_with_alert_typebrute_force_login_ex, the_rule_severity_levels_are_medium_high_critical, the_rule_is_enabled):
+def test_matches_alert_returns_false_when_rule_disabled(
+    a_responserule_with_alert_typebrute_force_login_ex,
+    the_rule_severity_levels_are_medium_high_critical,
+    the_rule_is_enabled,
+):
     """
     Scenario: Matches alert returns False when rule disabled
 
@@ -111,7 +134,11 @@ def test_matches_alert_returns_false_when_rule_disabled(a_responserule_with_aler
     pass
 
 
-def test_matches_alert_returns_false_when_alert_type_differs(a_responserule_with_alert_typebrute_force_login_ex, the_rule_severity_levels_are_medium_high_critical, the_rule_is_enabled):
+def test_matches_alert_returns_false_when_alert_type_differs(
+    a_responserule_with_alert_typebrute_force_login_ex,
+    the_rule_severity_levels_are_medium_high_critical,
+    the_rule_is_enabled,
+):
     """
     Scenario: Matches alert returns False when alert type differs
 
@@ -128,7 +155,11 @@ def test_matches_alert_returns_false_when_alert_type_differs(a_responserule_with
     pass
 
 
-def test_matches_alert_returns_false_when_severity_not_in_list(a_responserule_with_alert_typebrute_force_login_ex, the_rule_severity_levels_are_medium_high_critical, the_rule_is_enabled):
+def test_matches_alert_returns_false_when_severity_not_in_list(
+    a_responserule_with_alert_typebrute_force_login_ex,
+    the_rule_severity_levels_are_medium_high_critical,
+    the_rule_is_enabled,
+):
     """
     Scenario: Matches alert returns False when severity not in list
 
@@ -145,7 +176,11 @@ def test_matches_alert_returns_false_when_severity_not_in_list(a_responserule_wi
     pass
 
 
-def test_matches_alert_returns_true_for_wildcard_alert_type(a_responserule_with_alert_typebrute_force_login_ex, the_rule_severity_levels_are_medium_high_critical, the_rule_is_enabled):
+def test_matches_alert_returns_true_for_wildcard_alert_type(
+    a_responserule_with_alert_typebrute_force_login_ex,
+    the_rule_severity_levels_are_medium_high_critical,
+    the_rule_is_enabled,
+):
     """
     Scenario: Matches alert returns True for wildcard alert_type
 
@@ -162,7 +197,11 @@ def test_matches_alert_returns_true_for_wildcard_alert_type(a_responserule_with_
     pass
 
 
-def test_matches_alert_checks_additional_ruleconditions(a_responserule_with_alert_typebrute_force_login_ex, the_rule_severity_levels_are_medium_high_critical, the_rule_is_enabled):
+def test_matches_alert_checks_additional_ruleconditions(
+    a_responserule_with_alert_typebrute_force_login_ex,
+    the_rule_severity_levels_are_medium_high_critical,
+    the_rule_is_enabled,
+):
     """
     Scenario: Matches alert checks additional RuleConditions
 
@@ -179,7 +218,11 @@ def test_matches_alert_checks_additional_ruleconditions(a_responserule_with_aler
     pass
 
 
-def test_matches_alert_returns_false_when_condition_not_met(a_responserule_with_alert_typebrute_force_login_ex, the_rule_severity_levels_are_medium_high_critical, the_rule_is_enabled):
+def test_matches_alert_returns_false_when_condition_not_met(
+    a_responserule_with_alert_typebrute_force_login_ex,
+    the_rule_severity_levels_are_medium_high_critical,
+    the_rule_is_enabled,
+):
     """
     Scenario: Matches alert returns False when condition not met
 
@@ -196,7 +239,11 @@ def test_matches_alert_returns_false_when_condition_not_met(a_responserule_with_
     pass
 
 
-def test_matches_alert_with_multiple_conditions_requires_all_returns_false(a_responserule_with_alert_typebrute_force_login_ex, the_rule_severity_levels_are_medium_high_critical, the_rule_is_enabled):
+def test_matches_alert_with_multiple_conditions_requires_all_returns_false(
+    a_responserule_with_alert_typebrute_force_login_ex,
+    the_rule_severity_levels_are_medium_high_critical,
+    the_rule_is_enabled,
+):
     """
     Scenario: Matches alert with multiple conditions requires all returns False
 
@@ -215,7 +262,11 @@ def test_matches_alert_with_multiple_conditions_requires_all_returns_false(a_res
     pass
 
 
-def test_matches_alert_with_multiple_severity_levels(a_responserule_with_alert_typebrute_force_login_ex, the_rule_severity_levels_are_medium_high_critical, the_rule_is_enabled):
+def test_matches_alert_with_multiple_severity_levels(
+    a_responserule_with_alert_typebrute_force_login_ex,
+    the_rule_severity_levels_are_medium_high_critical,
+    the_rule_is_enabled,
+):
     """
     Scenario: Matches alert with multiple severity levels
 
@@ -232,7 +283,11 @@ def test_matches_alert_with_multiple_severity_levels(a_responserule_with_alert_t
     pass
 
 
-def test_matches_alert_evaluates_condition_operators(a_responserule_with_alert_typebrute_force_login_ex, the_rule_severity_levels_are_medium_high_critical, the_rule_is_enabled):
+def test_matches_alert_evaluates_condition_operators(
+    a_responserule_with_alert_typebrute_force_login_ex,
+    the_rule_severity_levels_are_medium_high_critical,
+    the_rule_is_enabled,
+):
     """
     Scenario: Matches alert evaluates condition operators
 
@@ -249,7 +304,11 @@ def test_matches_alert_evaluates_condition_operators(a_responserule_with_alert_t
     pass
 
 
-def test_matches_alert_handles_nested_field_paths(a_responserule_with_alert_typebrute_force_login_ex, the_rule_severity_levels_are_medium_high_critical, the_rule_is_enabled):
+def test_matches_alert_handles_nested_field_paths(
+    a_responserule_with_alert_typebrute_force_login_ex,
+    the_rule_severity_levels_are_medium_high_critical,
+    the_rule_is_enabled,
+):
     """
     Scenario: Matches alert handles nested field paths
 
@@ -264,4 +323,3 @@ def test_matches_alert_handles_nested_field_paths(a_responserule_with_alert_type
     """
     # TODO: Implement test
     pass
-

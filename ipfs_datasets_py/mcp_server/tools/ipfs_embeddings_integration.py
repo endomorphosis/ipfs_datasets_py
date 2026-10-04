@@ -4,6 +4,7 @@ from typing import Any, Dict
 
 from mcp.server import FastMCP
 
+
 # Placeholder for pre-migration embeddings services
 # TODO: Replace these placeholders with actual service instances.
 # In a real migration, these would be actual service instances
@@ -11,22 +12,26 @@ from mcp.server import FastMCP
 class PlaceholderEmbeddingService:
     async def generate_embedding(self, text: str) -> list[float]:
         logging.warning("Using placeholder EmbeddingService. Implement actual service.")
-        return [0.0] * 768 # Example embedding size
+        return [0.0] * 768  # Example embedding size
+
 
 class PlaceholderVectorService:
     async def search(self, query_embedding: list[float], top_k: int) -> list[Dict[str, Any]]:
         logging.warning("Using placeholder VectorService. Implement actual service.")
         return []
 
+
 class PlaceholderClusteringService:
     async def cluster(self, embeddings: list[list[float]]) -> Dict[str, Any]:
         logging.warning("Using placeholder ClusteringService. Implement actual service.")
         return {"clusters": []}
 
+
 class PlaceholderIPFSVectorService:
     async def store_vector(self, vector_data: Dict[str, Any]) -> str:
         logging.warning("Using placeholder IPFSVectorService. Implement actual service.")
         return "ipfs_cid_placeholder"
+
 
 class PlaceholderDistributedVectorService:
     async def get_distributed_vector(self, cid: str) -> Dict[str, Any]:
@@ -37,7 +42,7 @@ class PlaceholderDistributedVectorService:
 async def register_ipfs_embeddings_tools(mcp_server: FastMCP, tools_dict: Dict[str, Any]):
     """
     Registers migrated embeddings-related tools with the main MCP server.
-    
+
     Uses the migrated tools that are now part of ipfs_datasets_py.
 
     Args:
@@ -51,35 +56,51 @@ async def register_ipfs_embeddings_tools(mcp_server: FastMCP, tools_dict: Dict[s
         # Import the migrated tools from our new structure
         from .embedding_tools.tool_registration import register_enhanced_embedding_tools
         from .analysis_tools.analysis_tools import (
-            cluster_analysis, quality_assessment, dimensionality_reduction,
-            similarity_analysis, embedding_drift_analysis
+            cluster_analysis,
+            quality_assessment,
+            dimensionality_reduction,
+            similarity_analysis,
+            embedding_drift_analysis,
         )
         from .workflow_tools.workflow_tools import (
-            workflow_orchestration, batch_processing_workflow,
-            pipeline_execution, task_scheduling
+            workflow_orchestration,
+            batch_processing_workflow,
+            pipeline_execution,
+            task_scheduling,
         )
         from .monitoring_tools.monitoring_tools import (
-            system_monitoring, performance_metrics, resource_usage,
-            error_tracking, health_check
+            system_monitoring,
+            performance_metrics,
+            resource_usage,
+            error_tracking,
+            health_check,
         )
         from .admin_tools.admin_tools import (
-            user_management, system_administration, backup_operations,
-            maintenance_tasks, configuration_management
+            user_management,
+            system_administration,
+            backup_operations,
+            maintenance_tasks,
+            configuration_management,
         )
         from .cache_tools.cache_tools import (
-            cache_management, cache_operations, cache_statistics,
-            cache_cleanup, cache_configuration
+            cache_management,
+            cache_operations,
+            cache_statistics,
+            cache_cleanup,
+            cache_configuration,
         )
         from .sparse_embedding_tools.sparse_embedding_tools import (
-            sparse_embedding_generation, sparse_vector_operations,
-            sparse_indexing, sparse_search
+            sparse_embedding_generation,
+            sparse_vector_operations,
+            sparse_indexing,
+            sparse_search,
         )
 
         # Register enhanced embedding tools
         embedding_tools = register_enhanced_embedding_tools()
         for tool in embedding_tools:
-            tool_name = tool['name']
-            tool_function = tool['function']
+            tool_name = tool["name"]
+            tool_function = tool["function"]
             mcp_server.add_tool(tool_function, name=tool_name)
             tools_dict[tool_name] = tool_function
             logger.debug(f"Registered enhanced embedding tool: {tool_name}")
@@ -92,7 +113,7 @@ async def register_ipfs_embeddings_tools(mcp_server: FastMCP, tools_dict: Dict[s
             ("similarity_analysis", similarity_analysis),
             ("embedding_drift_analysis", embedding_drift_analysis),
         ]
-        
+
         for tool_name, tool_func in analysis_tools:
             mcp_server.add_tool(tool_func, name=tool_name)
             tools_dict[tool_name] = tool_func
@@ -105,7 +126,7 @@ async def register_ipfs_embeddings_tools(mcp_server: FastMCP, tools_dict: Dict[s
             ("pipeline_execution", pipeline_execution),
             ("task_scheduling", task_scheduling),
         ]
-        
+
         for tool_name, tool_func in workflow_tools:
             mcp_server.add_tool(tool_func, name=tool_name)
             tools_dict[tool_name] = tool_func
@@ -119,7 +140,7 @@ async def register_ipfs_embeddings_tools(mcp_server: FastMCP, tools_dict: Dict[s
             ("error_tracking", error_tracking),
             ("health_check", health_check),
         ]
-        
+
         for tool_name, tool_func in monitoring_tools:
             mcp_server.add_tool(tool_func, name=tool_name)
             tools_dict[tool_name] = tool_func
@@ -133,7 +154,7 @@ async def register_ipfs_embeddings_tools(mcp_server: FastMCP, tools_dict: Dict[s
             ("maintenance_tasks", maintenance_tasks),
             ("configuration_management", configuration_management),
         ]
-        
+
         for tool_name, tool_func in admin_tools:
             mcp_server.add_tool(tool_func, name=tool_name)
             tools_dict[tool_name] = tool_func
@@ -147,7 +168,7 @@ async def register_ipfs_embeddings_tools(mcp_server: FastMCP, tools_dict: Dict[s
             ("cache_cleanup", cache_cleanup),
             ("cache_configuration", cache_configuration),
         ]
-        
+
         for tool_name, tool_func in cache_tools:
             mcp_server.add_tool(tool_func, name=tool_name)
             tools_dict[tool_name] = tool_func
@@ -160,30 +181,38 @@ async def register_ipfs_embeddings_tools(mcp_server: FastMCP, tools_dict: Dict[s
             ("sparse_indexing", sparse_indexing),
             ("sparse_search", sparse_search),
         ]
-        
+
         for tool_name, tool_func in sparse_tools:
             mcp_server.add_tool(tool_func, name=tool_name)
             tools_dict[tool_name] = tool_func
             logger.debug(f"Registered sparse embedding tool: {tool_name}")
 
-        total_tools = len(embedding_tools) + len(analysis_tools) + len(workflow_tools) + len(monitoring_tools) + len(admin_tools) + len(cache_tools) + len(sparse_tools)
+        total_tools = (
+            len(embedding_tools)
+            + len(analysis_tools)
+            + len(workflow_tools)
+            + len(monitoring_tools)
+            + len(admin_tools)
+            + len(cache_tools)
+            + len(sparse_tools)
+        )
         logger.info(f"✅ Successfully registered {total_tools} embedding tools")
 
     except ImportError as e:
         logger.warning(f"⚠️  Some embedding tools are not available: {e}")
-        
+
         # Register fallback tools for basic functionality
         async def fallback_embedding_tool(**kwargs):
             return {
                 "status": "fallback",
                 "message": "Embedding tools not fully available",
-                "requested_parameters": kwargs
+                "requested_parameters": kwargs,
             }
-        
+
         mcp_server.add_tool(fallback_embedding_tool, name="generate_embedding_fallback")
         tools_dict["generate_embedding_fallback"] = fallback_embedding_tool
         logger.info("Registered fallback embedding tool")
-        
+
     except Exception as e:
         logger.error(f"❌ Error registering embedding tools: {e}")
         logger.debug(traceback.format_exc())

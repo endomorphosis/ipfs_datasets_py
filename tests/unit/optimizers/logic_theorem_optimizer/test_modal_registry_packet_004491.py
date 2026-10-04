@@ -27,11 +27,7 @@ _PACKET_004491_FAMILY_PAIRS = (
 
 def _profile_cues(family: ModalLogicFamily) -> set[str]:
     profile = DEFAULT_MODAL_REGISTRY.get_profile(family)
-    return {
-        cue
-        for operator in profile.operators
-        for cue in operator.cue_terms
-    }
+    return {cue for operator in profile.operators for cue in operator.cue_terms}
 
 
 def test_packet_004491_frame_target_pairs_are_supported() -> None:

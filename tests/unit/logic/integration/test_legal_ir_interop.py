@@ -134,7 +134,9 @@ def test_legal_json_interchange_is_lossless_and_json_serializable(tmp_path) -> N
     assert envelope.source_map.source_map_id == "map-interop"
     assert envelope.schema_mappings[0].mode == LegalIRInteropLossMode.LOSSLESS.value
 
-    imported = import_legal_ir_interchange(envelope.payload, "legal_json", source_map=envelope.source_map)
+    imported = import_legal_ir_interchange(
+        envelope.payload, "legal_json", source_map=envelope.source_map
+    )
     assert imported.legal_ir == envelope.legal_ir
 
     path = tmp_path / "interop.json"
@@ -155,7 +157,9 @@ def test_legal_xml_round_trip_preserves_supported_subset_and_marks_unsupported_f
 
     imported = import_legal_ir_interchange(envelope.payload, "xml", source_map=envelope.source_map)
     assert imported.legal_ir["obligations"][0]["statement"] == SOURCE_TEXT
-    assert supported_legal_ir_projection(imported.legal_ir, "legal_xml") == supported_legal_ir_projection(
+    assert supported_legal_ir_projection(
+        imported.legal_ir, "legal_xml"
+    ) == supported_legal_ir_projection(
         envelope.legal_ir,
         "legal_xml",
     )
@@ -188,7 +192,10 @@ def test_proof_interchange_preserves_evidence_subset_and_reports_document_loss()
     proof = export_legal_ir_interchange(_legal_ir(), "proof", source_map=_source_map())
 
     assert proof.payload["proof_obligations"][0]["obligation_id"] == "po-disclose"
-    assert proof.payload["evidence"]["translation_records"][0]["translation_id"] == "translation-disclose"
+    assert (
+        proof.payload["evidence"]["translation_records"][0]["translation_id"]
+        == "translation-disclose"
+    )
     assert proof.unsupported_count >= 1
     assert {marker.feature for marker in proof.loss_markers} >= {"obligations", "text"}
 
@@ -201,16 +208,24 @@ def test_proof_interchange_preserves_evidence_subset_and_reports_document_loss()
 
 
 def test_decompiler_interchange_carries_loss_markers_and_round_trip_statements() -> None:
-    decompiler = export_legal_ir_interchange(_legal_ir(), "decompiler_json", source_map=_source_map())
+    decompiler = export_legal_ir_interchange(
+        _legal_ir(), "decompiler_json", source_map=_source_map()
+    )
 
     assert decompiler.payload["decompiled_text"] == SOURCE_TEXT
     assert decompiler.payload["lossless"] is False
-    assert any(marker.mode == LegalIRInteropLossMode.LOSSY.value for marker in decompiler.loss_markers)
+    assert any(
+        marker.mode == LegalIRInteropLossMode.LOSSY.value for marker in decompiler.loss_markers
+    )
     assert "decompiler_loss" in decompiler.diagnostics.families
 
-    imported = import_legal_ir_interchange(decompiler.payload, "decompiler_json", source_map=decompiler.source_map)
+    imported = import_legal_ir_interchange(
+        decompiler.payload, "decompiler_json", source_map=decompiler.source_map
+    )
     assert imported.legal_ir["decompiler"]["statements"] == [SOURCE_TEXT]
 
-    round_trip = round_trip_legal_ir_interchange(_legal_ir(), "decompiler_json", source_map=_source_map())
+    round_trip = round_trip_legal_ir_interchange(
+        _legal_ir(), "decompiler_json", source_map=_source_map()
+    )
     assert round_trip.conformant is True
     assert round_trip.supported_before == round_trip.supported_after

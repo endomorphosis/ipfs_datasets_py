@@ -89,9 +89,7 @@ class FixedConstructor:
 
     def construct(self, request: ConstructorRequest) -> ConstructorResult:
         del request
-        return ConstructorResult(
-            ComponentStatus.SUCCESS, canonical_ir=self.ir
-        )
+        return ConstructorResult(ComponentStatus.SUCCESS, canonical_ir=self.ir)
 
 
 class FailingConstructor:
@@ -142,12 +140,8 @@ def test_required_modes_are_preregistered() -> None:
         "realizer_only",
         "hybrid",
     }
-    assert CONSTRUCTOR_ONLY_BASELINE_ARM_ID in registry["modes"][
-        "constructor_only"
-    ]
-    assert REALIZER_ONLY_DETERMINISTIC_ARM_ID in registry["modes"][
-        "realizer_only"
-    ]
+    assert CONSTRUCTOR_ONLY_BASELINE_ARM_ID in registry["modes"]["constructor_only"]
+    assert REALIZER_ONLY_DETERMINISTIC_ARM_ID in registry["modes"]["realizer_only"]
     assert HYBRID_CANONICAL_PATH_ARM_ID in registry["modes"]["hybrid"]
     hybrid = get_hybrid_arm(HYBRID_CANONICAL_PATH_ARM_ID)
     assert hybrid.pipeline[0] == "typed_deontic_construct"
@@ -159,12 +153,8 @@ def test_required_modes_are_preregistered() -> None:
 
 
 def test_mode_selection_aliases_and_arm_resolution() -> None:
-    assert select_evaluation_mode("constructor") is (
-        EvaluationMode.CONSTRUCTOR_ONLY
-    )
-    assert select_evaluation_mode("realizer_only") is (
-        EvaluationMode.REALIZER_ONLY
-    )
+    assert select_evaluation_mode("constructor") is (EvaluationMode.CONSTRUCTOR_ONLY)
+    assert select_evaluation_mode("realizer_only") is (EvaluationMode.REALIZER_ONLY)
     assert select_evaluation_mode({"mode": "hybrid"}) is EvaluationMode.HYBRID
     with pytest.raises(ContractError, match="unknown evaluation mode"):
         select_evaluation_mode("not_a_mode")
@@ -201,9 +191,7 @@ def test_fail_closed_missing_preflight_for_model_hybrid_arms() -> None:
     verdict = evaluate_hybrid_mode_preflight([selective], live_smokes=None)
     assert verdict["authorized"] is False
     assert verdict["fail_closed"] is True
-    assert any(
-        item["preflight"] == "live_smoke" for item in verdict["missing"]
-    )
+    assert any(item["preflight"] == "live_smoke" for item in verdict["missing"])
 
     with pytest.raises(HybridPreflightError, match="lack required preflight"):
         assert_hybrid_mode_preflight([selective], live_smokes=None)
@@ -221,9 +209,7 @@ def test_fail_closed_missing_preflight_for_model_hybrid_arms() -> None:
     with pytest.raises(HybridPreflightError):
         assert_hybrid_mode_preflight([selective], live_smokes=health_only)
 
-    ok = assert_hybrid_mode_preflight(
-        [selective], live_smokes=_live_smokes_ok()
-    )
+    ok = assert_hybrid_mode_preflight([selective], live_smokes=_live_smokes_ok())
     assert ok["authorized"] is True
 
     model_constructor = get_hybrid_arm(CONSTRUCTOR_ONLY_MODEL_DIRECT_ARM_ID)

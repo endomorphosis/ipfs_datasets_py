@@ -118,9 +118,7 @@ def test_cuda_image_binding_uses_reviewed_manifest_digest() -> None:
             CUDA_IMAGE,
             {
                 "Id": f"sha256:{'e' * 64}",
-                "RepoDigests": [
-                    f"nvcr.io/nvidia/pytorch@sha256:{'f' * 64}"
-                ],
+                "RepoDigests": [f"nvcr.io/nvidia/pytorch@sha256:{'f' * 64}"],
             },
         )
 
@@ -261,32 +259,19 @@ def test_original_data_is_byte_exact_and_row_cids_resolve_to_offsets(
         release_root,
         installed,
     )
-    rows = {
-        row["source_row_index"]: row
-        for row in pq.read_table(index_path).to_pylist()
-    }
+    rows = {row["source_row_index"]: row for row in pq.read_table(index_path).to_pylist()}
     assert set(rows) == {0, 1}
     assert rows[0]["security_ir_source_cid"] == _cid("source-row-0")
     assert rows[0]["source_status"] == "admitted"
-    assert rows[0]["source_identity_domain"] == (
-        "cvefixes-security-ir/pinned-source-row"
-    )
-    assert rows[0]["source_identity_schema_version"] == (
-        "cvefixes-pinned-source-row/v1"
-    )
+    assert rows[0]["source_identity_domain"] == ("cvefixes-security-ir/pinned-source-row")
+    assert rows[0]["source_identity_schema_version"] == ("cvefixes-pinned-source-row/v1")
     assert rows[1]["security_ir_source_cid"] == _cid("source-row-1")
     assert rows[1]["source_status"] == "publication_rejected"
-    assert rows[1]["source_identity_domain"] == (
-        "cvefixes-security-ir/rejected-source-row"
-    )
-    assert rows[1]["source_identity_schema_version"] == (
-        "cvefixes-rejected-source-row/v1"
-    )
+    assert rows[1]["source_identity_domain"] == ("cvefixes-security-ir/rejected-source-row")
+    assert rows[1]["source_identity_schema_version"] == ("cvefixes-rejected-source-row/v1")
     assert [rows[index]["source_shard_row_index"] for index in (0, 1)] == [
         0,
         1,
     ]
-    assert {row["relative_path"] for row in rows.values()} == {
-        installed[0]["release_path"]
-    }
+    assert {row["relative_path"] for row in rows.values()} == {installed[0]["release_path"]}
     assert index_path.stat().st_size < 128 * 1024 * 1024

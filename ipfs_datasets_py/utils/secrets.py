@@ -81,7 +81,10 @@ def _value_from_json_file(path: Path, names: tuple[str, ...]) -> str:
         for key, value in values:
             key_leaf = str(key).rsplit(".", 1)[-1]
             if key != name and key_leaf != name:
-                if _normalized_name(key) != normalized_name and _normalized_name(key_leaf) != normalized_name:
+                if (
+                    _normalized_name(key) != normalized_name
+                    and _normalized_name(key_leaf) != normalized_name
+                ):
                     continue
             text = str(value).strip()
             if text:
@@ -185,7 +188,9 @@ def _keyring_get_password(keyring_module: Any, service_name: str, name: str) -> 
     if timeout <= 0:
         return keyring_module.get_password(service_name, name)
 
-    if threading.current_thread() is not threading.main_thread() or not hasattr(signal, "setitimer"):
+    if threading.current_thread() is not threading.main_thread() or not hasattr(
+        signal, "setitimer"
+    ):
         return keyring_module.get_password(service_name, name)
 
     previous_handler = signal.getsignal(signal.SIGALRM)

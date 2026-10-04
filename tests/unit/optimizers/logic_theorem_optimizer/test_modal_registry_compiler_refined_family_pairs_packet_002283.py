@@ -34,10 +34,7 @@ _PACKET_002283_MIN_MARGIN_BUFFERS = {
 
 
 def test_packet_002283_pairs_are_pinned_in_refined_pair_table() -> None:
-    assert (
-        tuple(COMPILER_REFINED_PACKET_002283_FAMILY_PAIRS)
-        == _PACKET_002283_FAMILY_PAIRS
-    )
+    assert tuple(COMPILER_REFINED_PACKET_002283_FAMILY_PAIRS) == _PACKET_002283_FAMILY_PAIRS
 
 
 def test_packet_002283_pairs_are_in_refined_modal_family_cue_policy_table() -> None:

@@ -114,9 +114,7 @@ def test_decode_and_recompute_source_rejects_tamper_and_wrong_codec() -> None:
 def test_canonical_dag_json_is_sorted_compact_utf8() -> None:
     encoded = canonical_dag_json_bytes({"b": 1, "a": 2})
     assert encoded == b'{"a":2,"b":1}'
-    nested = canonical_dag_json_bytes(
-        {"z": {"y": [1, "x", None, True]}, "a": "unicode-café"}
-    )
+    nested = canonical_dag_json_bytes({"z": {"y": [1, "x", None, True]}, "a": "unicode-café"})
     assert nested == b'{"a":"unicode-caf\xc3\xa9","z":{"y":[1,"x",null,true]}}'
 
 

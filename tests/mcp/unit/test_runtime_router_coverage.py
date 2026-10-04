@@ -44,6 +44,7 @@ from ipfs_datasets_py.mcp_server.exceptions import RuntimeExecutionError
 # RuntimeMetrics
 # ---------------------------------------------------------------------------
 
+
 class TestRuntimeMetrics:
     """Test RuntimeMetrics data class and its computed properties."""
 
@@ -109,6 +110,7 @@ class TestRuntimeMetrics:
 # RuntimeRouter startup / shutdown
 # ---------------------------------------------------------------------------
 
+
 class TestRuntimeRouterLifecycle:
     """Lines 313-351: startup() and shutdown() lifecycle."""
 
@@ -149,6 +151,7 @@ class TestRuntimeRouterLifecycle:
 # register_tool_runtime validation
 # ---------------------------------------------------------------------------
 
+
 class TestRegisterToolRuntime:
     """Line 432-436: register_tool_runtime() raises ValueError for bad runtime."""
 
@@ -171,6 +174,7 @@ class TestRegisterToolRuntime:
 # ---------------------------------------------------------------------------
 # get_tool_runtime and list_tools_by_runtime
 # ---------------------------------------------------------------------------
+
 
 class TestToolRuntimeQueries:
     """Lines 747-759: get_tool_runtime + list_tools_by_runtime."""
@@ -203,6 +207,7 @@ class TestToolRuntimeQueries:
 # ---------------------------------------------------------------------------
 # route_tool_call — FastAPI path
 # ---------------------------------------------------------------------------
+
 
 class TestRouteToolCallFastAPI:
     """Lines 471-521: route_tool_call dispatches to _route_to_fastapi."""
@@ -239,8 +244,10 @@ class TestRouteToolCallFastAPI:
     async def test_not_started_raises_runtime_error(self):
         """RuntimeRouter not started → RuntimeError."""
         router = RuntimeRouter()
+
         async def my_tool() -> str:
             return "x"
+
         with pytest.raises(RuntimeError, match="not started"):
             await router.route_tool_call("my_tool", my_tool)
 
@@ -278,6 +285,7 @@ class TestRouteToolCallFastAPI:
 # route_tool_call — Trio path
 # ---------------------------------------------------------------------------
 
+
 class TestRouteToolCallTrio:
     """Lines 530-554: _route_to_trio falls back when trio unavailable."""
 
@@ -305,8 +313,7 @@ class TestRouteToolCallTrio:
         async def my_tool(x: int) -> int:
             return x * 2
 
-        with patch.object(router, "_route_to_trio",
-                          side_effect=RuntimeError("trio error")):
+        with patch.object(router, "_route_to_trio", side_effect=RuntimeError("trio error")):
             router.register_tool_runtime("t2", RUNTIME_TRIO)
             # Should not raise — RuntimeExecutionError expected
             with pytest.raises(RuntimeExecutionError):
@@ -316,6 +323,7 @@ class TestRouteToolCallTrio:
 # ---------------------------------------------------------------------------
 # get_runtime_stats and _calculate_latency_improvement
 # ---------------------------------------------------------------------------
+
 
 class TestRuntimeStats:
     """Lines 574-735: get_runtime_stats + _calculate_latency_improvement."""
@@ -366,6 +374,7 @@ class TestRuntimeStats:
 # runtime_context async context manager
 # ---------------------------------------------------------------------------
 
+
 class TestRuntimeContext:
     """Lines 911-915: runtime_context() starts + yields + shuts down router."""
 
@@ -380,6 +389,7 @@ class TestRuntimeContext:
 # ---------------------------------------------------------------------------
 # create_router convenience function
 # ---------------------------------------------------------------------------
+
 
 class TestCreateRouter:
     """Lines 948-953: create_router() creates a started RuntimeRouter."""
@@ -400,6 +410,7 @@ class TestCreateRouter:
 # ---------------------------------------------------------------------------
 # detect_runtime fallback
 # ---------------------------------------------------------------------------
+
 
 class TestDetectRuntime:
     """Line 377: detect_runtime falls back to default_runtime."""

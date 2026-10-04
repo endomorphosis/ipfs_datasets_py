@@ -81,6 +81,7 @@ Complete high-impact performance optimizations from PHASE7_PERFORMANCE_OPTIMIZAT
 ```python
 from functools import lru_cache
 
+
 @lru_cache(maxsize=1000)
 def parse_fol(text: str) -> Dict[str, Any]:
     """Parse FOL with AST caching (PHASE 7 optimized)."""
@@ -110,7 +111,8 @@ def parse_quantifiers(text: str):
 @dataclass
 class Predicate:
     """With __slots__ for 40% memory reduction."""
-    __slots__ = ('name', 'arity', 'category', 'definition')
+
+    __slots__ = ("name", "arity", "category", "definition")
     name: str
     arity: int
     category: PredicateCategory

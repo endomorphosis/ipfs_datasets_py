@@ -11,9 +11,11 @@ from typing import Dict, List, Optional, Tuple, Union, Any, Set, Callable
 
 try:
     from multiformats import CID
+
     HAVE_MULTIFORMATS = True
 except ImportError:
     HAVE_MULTIFORMATS = False
+
     # Simple CID class for compatibility
     class CID:
         @staticmethod
@@ -24,9 +26,11 @@ except ImportError:
         def encode(cid_obj):
             return str(cid_obj)
 
+
 try:
     # Try to import the official py-ipld-dag-pb if available
     from ipld_dag_pb import encode, decode, PBNode, PBLink
+
     HAVE_IPLD_DAG_PB = True
 except ImportError:
     HAVE_IPLD_DAG_PB = False
@@ -35,11 +39,12 @@ except ImportError:
 # If the official library is not available, provide basic protobuf encoding/decoding
 # Note: This is a simplified implementation for demonstration purposes
 if not HAVE_IPLD_DAG_PB:
+
     def encode_varint(value):
         """Encode an integer as a protobuf varint."""
         buf = bytearray()
         while True:
-            byte = value & 0x7f
+            byte = value & 0x7F
             value >>= 7
             if value:
                 byte |= 0x80
@@ -55,7 +60,7 @@ if not HAVE_IPLD_DAG_PB:
         while True:
             byte = buf[pos]
             pos += 1
-            result |= ((byte & 0x7f) << shift)
+            result |= (byte & 0x7F) << shift
             if not (byte & 0x80):
                 break
             shift += 7
@@ -92,11 +97,7 @@ if not HAVE_IPLD_DAG_PB:
         @classmethod
         def from_dict(cls, obj):
             """Create a PBLink from a dictionary."""
-            return cls(
-                name=obj.get("Name"),
-                cid=obj.get("Hash"),
-                tsize=obj.get("Tsize")
-            )
+            return cls(name=obj.get("Name"), cid=obj.get("Hash"), tsize=obj.get("Tsize"))
 
     class PBNode:
         """A node in a DAG-PB graph."""
@@ -118,10 +119,7 @@ if not HAVE_IPLD_DAG_PB:
         def from_dict(cls, obj):
             """Create a PBNode from a dictionary."""
             links = [PBLink.from_dict(link) for link in obj.get("Links", [])]
-            return cls(
-                data=obj.get("Data"),
-                links=links
-            )
+            return cls(data=obj.get("Data"), links=links)
 
     def encode(node):
         """Encode a PBNode as a protobuf message."""
@@ -133,14 +131,14 @@ if not HAVE_IPLD_DAG_PB:
 
             # Name (field 1, string)
             if link.name is not None:
-                name_bytes = link.name.encode('utf-8')
+                name_bytes = link.name.encode("utf-8")
                 link_buf.extend(encode_field(1, 2, encode_bytes(name_bytes)))
 
             # Hash (field 2, bytes)
             if link.cid is not None:
                 if isinstance(link.cid, str):
                     # Convert string CID to bytes
-                    cid_bytes = link.cid.encode('utf-8')
+                    cid_bytes = link.cid.encode("utf-8")
                 else:
                     cid_bytes = link.cid
                 link_buf.extend(encode_field(2, 2, encode_bytes(cid_bytes)))
@@ -178,7 +176,7 @@ if not HAVE_IPLD_DAG_PB:
 
                 # Read the nested message
                 len_bytes, pos = decode_varint(buf, pos)
-                link_buf = buf[pos:pos+len_bytes]
+                link_buf = buf[pos : pos + len_bytes]
                 pos += len_bytes
 
                 # Parse the link
@@ -194,23 +192,31 @@ if not HAVE_IPLD_DAG_PB:
 
                     if link_field == 1:  # Name
                         if link_type != 2:
-                            raise ValueError(f"Expected wire type 2 for link field 1, got {link_type}")
+                            raise ValueError(
+                                f"Expected wire type 2 for link field 1, got {link_type}"
+                            )
 
                         name_len, link_pos = decode_varint(link_buf, link_pos)
-                        link_name = link_buf[link_pos:link_pos+name_len].tobytes().decode('utf-8')
+                        link_name = (
+                            link_buf[link_pos : link_pos + name_len].tobytes().decode("utf-8")
+                        )
                         link_pos += name_len
 
                     elif link_field == 2:  # Hash
                         if link_type != 2:
-                            raise ValueError(f"Expected wire type 2 for link field 2, got {link_type}")
+                            raise ValueError(
+                                f"Expected wire type 2 for link field 2, got {link_type}"
+                            )
 
                         hash_len, link_pos = decode_varint(link_buf, link_pos)
-                        link_hash = link_buf[link_pos:link_pos+hash_len].tobytes()
+                        link_hash = link_buf[link_pos : link_pos + hash_len].tobytes()
                         link_pos += hash_len
 
                     elif link_field == 3:  # Tsize
                         if link_type != 0:
-                            raise ValueError(f"Expected wire type 0 for link field 3, got {link_type}")
+                            raise ValueError(
+                                f"Expected wire type 0 for link field 3, got {link_type}"
+                            )
 
                         link_tsize, link_pos = decode_varint(link_buf, link_pos)
 
@@ -233,7 +239,7 @@ if not HAVE_IPLD_DAG_PB:
                     raise ValueError(f"Expected wire type 2 for field 2, got {wire_type}")
 
                 len_bytes, pos = decode_varint(buf, pos)
-                data = buf[pos:pos+len_bytes].tobytes()
+                data = buf[pos : pos + len_bytes].tobytes()
                 pos += len_bytes
 
             else:

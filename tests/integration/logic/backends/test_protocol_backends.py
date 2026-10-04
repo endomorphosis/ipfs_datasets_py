@@ -329,12 +329,8 @@ def _protocol(*, include_equivalence: bool = False) -> ProtocolIR:
                 "claim:equivalence",
                 ProtocolClaimKind.EQUIVALENCE,
                 "Observations are indistinguishable.",
-                left_terms=(
-                    ProtocolTerm(sort="sort:message", literal="left-observation"),
-                ),
-                right_terms=(
-                    ProtocolTerm(sort="sort:message", literal="right-observation"),
-                ),
+                left_terms=(ProtocolTerm(sort="sort:message", literal="left-observation"),),
+                right_terms=(ProtocolTerm(sort="sort:message", literal="right-observation"),),
                 **_mapped(),
             )
         )
@@ -506,9 +502,7 @@ def test_proverif_missing_tool_is_explicit_unavailable():
 
 
 def test_tamarin_secure_run_binds_maude_version_and_ceiling():
-    runner, invocations = _process_runner(
-        TAMARIN_SECURE, expected_suffix="lemma secrecy_claim"
-    )
+    runner, invocations = _process_runner(TAMARIN_SECURE, expected_suffix="lemma secrecy_claim")
     backend = TamarinBackend(
         runner=runner,
         available_probe=lambda: True,
@@ -654,9 +648,7 @@ def test_proverif_disagreement_is_quarantined():
     outcome = backend.run(request)
     assert outcome.result.status is ResultStatus.UNKNOWN
     assert outcome.receipt.quarantine is not None
-    assert (
-        outcome.receipt.quarantine.reason is ProVerifQuarantineReason.DISAGREEMENT
-    )
+    assert outcome.receipt.quarantine.reason is ProVerifQuarantineReason.DISAGREEMENT
 
 
 def test_tamarin_inconclusive_is_quarantined():
@@ -693,18 +685,18 @@ def test_proverif_cannot_prove_is_quarantined():
     outcome = backend.run(request)
     assert outcome.result.status is ResultStatus.UNKNOWN
     assert outcome.receipt.quarantine is not None
-    assert (
-        outcome.receipt.quarantine.reason is ProVerifQuarantineReason.INCONCLUSIVE
-    )
+    assert outcome.receipt.quarantine.reason is ProVerifQuarantineReason.INCONCLUSIVE
 
 
 def test_protocol_ir_end_to_end_tamarin_and_proverif():
     protocol = _protocol()
     t_compiled = TamarinCompiler().compile_protocol(protocol)
-    t_stdout = "\n".join(
-        f"lemma {lemma}: verified"
-        for lemma in t_compiled.claim_lemmas.to_dict().values()
-    ) + "\n"
+    t_stdout = (
+        "\n".join(
+            f"lemma {lemma}: verified" for lemma in t_compiled.claim_lemmas.to_dict().values()
+        )
+        + "\n"
+    )
     tamarin_runner, t_inv = _process_runner(
         t_stdout,
         expected_suffix="symbolic-model-ceiling",
@@ -730,8 +722,7 @@ def test_protocol_ir_end_to_end_tamarin_and_proverif():
     # Compile once to learn exact query texts for RESULT matching.
     compiled = ProVerifCompiler().compile_protocol(protocol)
     proverif_stdout_lines = [
-        f"RESULT {query} is true."
-        for query in compiled.claim_queries.to_dict().values()
+        f"RESULT {query} is true." for query in compiled.claim_queries.to_dict().values()
     ]
     p_runner, p_inv = _process_runner(
         "\n".join(proverif_stdout_lines) + "\n",
@@ -775,9 +766,7 @@ def test_parse_helpers_and_classifiers_are_deterministic():
         "",
         claim_queries={
             "claim:secrecy": "not attacker(challenge[])",
-            "claim:auth": (
-                "inj-event(AcceptChallenge(x)) ==> inj-event(BeginChallenge(x))"
-            ),
+            "claim:auth": ("inj-event(AcceptChallenge(x)) ==> inj-event(BeginChallenge(x))"),
         },
     )
     status, quarantine, accepted = classify_proverif(p_outcomes)

@@ -13,6 +13,7 @@ Methods under test:
   - OntologyLearningAdapter.feedback_improvement_count()
   - OntologyLearningAdapter.feedback_decline_count()
 """
+
 import pytest
 from unittest.mock import MagicMock
 
@@ -28,14 +29,20 @@ def _push_opt(o, avg):
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
 def _make_score(**kwargs):
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+
     defaults = dict(
-        completeness=0.5, consistency=0.5, clarity=0.5,
-        granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5,
+        completeness=0.5,
+        consistency=0.5,
+        clarity=0.5,
+        granularity=0.5,
+        relationship_coherence=0.5,
+        domain_alignment=0.5,
     )
     defaults.update(kwargs)
     return CriticScore(**defaults)
@@ -43,16 +50,19 @@ def _make_score(**kwargs):
 
 def _make_critic():
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
     return OntologyCritic(use_llm=False)
 
 
 def _make_entity(eid, confidence=0.5, props=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
     return Entity(id=eid, type="T", text=eid, confidence=confidence, properties=props or {})
 
 
 def _make_result(entities, rels=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
     return EntityExtractionResult(
         entities=entities, relationships=rels or [], confidence=1.0, metadata={}, errors=[]
     )
@@ -60,6 +70,7 @@ def _make_result(entities, rels=None):
 
 def _make_generator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
     return OntologyGenerator()
 
 
@@ -76,11 +87,13 @@ class _FakeOntology:
 
 def _make_validator():
     from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
     return LogicValidator()
 
 
 def _make_pipeline():
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     return OntologyPipeline()
 
 
@@ -91,16 +104,21 @@ def _push_run(p, score):
 
 
 def _make_adapter():
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter()
 
 
 def _push_feedback(adapter, score):
     from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import FeedbackRecord
+
     adapter._feedback.append(FeedbackRecord(final_score=score))
 
 
 # ── OntologyOptimizer.history_valley_count ───────────────────────────────────
+
 
 class TestHistoryValleyCount:
     def test_empty_returns_zero(self):
@@ -127,6 +145,7 @@ class TestHistoryValleyCount:
 
 
 # ── OntologyOptimizer.score_trend_correlation ─────────────────────────────────
+
 
 class TestScoreTrendCorrelation:
     def test_empty_returns_zero(self):
@@ -160,6 +179,7 @@ class TestScoreTrendCorrelation:
 
 # ── OntologyCritic.dimension_cosine_similarity ───────────────────────────────
 
+
 class TestDimensionCosineSimilarity:
     def test_same_score_returns_one(self):
         c = _make_critic()
@@ -168,8 +188,19 @@ class TestDimensionCosineSimilarity:
 
     def test_zero_vector_returns_zero(self):
         c = _make_critic()
-        zero = _make_score(**{d: 0.0 for d in ["completeness", "consistency", "clarity",
-                                                  "granularity", "relationship_coherence", "domain_alignment"]})
+        zero = _make_score(
+            **{
+                d: 0.0
+                for d in [
+                    "completeness",
+                    "consistency",
+                    "clarity",
+                    "granularity",
+                    "relationship_coherence",
+                    "domain_alignment",
+                ]
+            }
+        )
         assert c.dimension_cosine_similarity(zero, _make_score()) == pytest.approx(0.0)
 
     def test_in_range(self):
@@ -185,6 +216,7 @@ class TestDimensionCosineSimilarity:
 
 
 # ── OntologyCritic.score_distance ─────────────────────────────────────────────
+
 
 class TestScoreDistance:
     def test_same_score_returns_zero(self):
@@ -202,6 +234,7 @@ class TestScoreDistance:
 
 
 # ── OntologyGenerator.entity_confidence_std ──────────────────────────────────
+
 
 class TestEntityConfidenceStd:
     def test_empty_returns_zero(self):
@@ -225,6 +258,7 @@ class TestEntityConfidenceStd:
 
 # ── OntologyGenerator.entity_avg_property_count ───────────────────────────────
 
+
 class TestEntityAvgPropertyCount:
     def test_empty_returns_zero(self):
         gen = _make_generator()
@@ -247,6 +281,7 @@ class TestEntityAvgPropertyCount:
 
 # ── LogicValidator.self_loop_count ────────────────────────────────────────────
 
+
 class TestSelfLoopCount:
     def test_empty_returns_zero(self):
         v = _make_validator()
@@ -254,30 +289,37 @@ class TestSelfLoopCount:
 
     def test_no_self_loops(self):
         v = _make_validator()
-        ont = {"relationships": [
-            {"source_id": "a", "target_id": "b", "type": "r"},
-            {"source_id": "b", "target_id": "c", "type": "r"},
-        ]}
+        ont = {
+            "relationships": [
+                {"source_id": "a", "target_id": "b", "type": "r"},
+                {"source_id": "b", "target_id": "c", "type": "r"},
+            ]
+        }
         assert v.self_loop_count(ont) == 0
 
     def test_one_self_loop(self):
         v = _make_validator()
-        ont = {"relationships": [
-            {"source_id": "a", "target_id": "a", "type": "r"},
-            {"source_id": "b", "target_id": "c", "type": "r"},
-        ]}
+        ont = {
+            "relationships": [
+                {"source_id": "a", "target_id": "a", "type": "r"},
+                {"source_id": "b", "target_id": "c", "type": "r"},
+            ]
+        }
         assert v.self_loop_count(ont) == 1
 
     def test_multiple_self_loops(self):
         v = _make_validator()
-        ont = {"relationships": [
-            {"source_id": "a", "target_id": "a", "type": "r"},
-            {"source_id": "b", "target_id": "b", "type": "r"},
-        ]}
+        ont = {
+            "relationships": [
+                {"source_id": "a", "target_id": "a", "type": "r"},
+                {"source_id": "b", "target_id": "b", "type": "r"},
+            ]
+        }
         assert v.self_loop_count(ont) == 2
 
 
 # ── LogicValidator.node_count ─────────────────────────────────────────────────
+
 
 class TestNodeCount:
     def test_empty_returns_zero(self):
@@ -297,6 +339,7 @@ class TestNodeCount:
 
 
 # ── OntologyPipeline.run_score_trend_direction ────────────────────────────────
+
 
 class TestRunScoreTrendDirection:
     def test_single_run_returns_stable(self):
@@ -325,6 +368,7 @@ class TestRunScoreTrendDirection:
 
 # ── OntologyLearningAdapter.feedback_improvement_count ───────────────────────
 
+
 class TestFeedbackImprovementCount:
     def test_single_record_returns_zero(self):
         a = _make_adapter()
@@ -345,6 +389,7 @@ class TestFeedbackImprovementCount:
 
 
 # ── OntologyLearningAdapter.feedback_decline_count ───────────────────────────
+
 
 class TestFeedbackDeclineCount:
     def test_single_record_returns_zero(self):

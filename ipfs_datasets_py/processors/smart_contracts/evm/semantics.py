@@ -144,7 +144,9 @@ _MNEMONIC_TO_OPCODE: dict[str, int] = {
 }
 
 # Build reverse map and push/dup/swap tables.
-OPCODE_MNEMONICS: dict[int, str] = {v: k for k, v in _MNEMONIC_TO_OPCODE.items() if k != "KECCAK256"}
+OPCODE_MNEMONICS: dict[int, str] = {
+    v: k for k, v in _MNEMONIC_TO_OPCODE.items() if k != "KECCAK256"
+}
 for _n in range(1, 33):
     OPCODE_MNEMONICS[0x60 + _n - 1] = f"PUSH{_n}"
 for _n in range(1, 17):
@@ -156,7 +158,9 @@ _TERMINATORS: frozenset[int] = frozenset(
     {0x00, 0x56, 0xF3, 0xFD, 0xFE, 0xFF}  # STOP, JUMP, RETURN, REVERT, INVALID, SELFDESTRUCT
 )
 _CONDITIONAL: frozenset[int] = frozenset({0x57})  # JUMPI
-_CALL_LIKE: frozenset[int] = frozenset({0xF1, 0xF2, 0xF4, 0xFA})  # CALL, CALLCODE, DELEGATECALL, STATICCALL
+_CALL_LIKE: frozenset[int] = frozenset(
+    {0xF1, 0xF2, 0xF4, 0xFA}
+)  # CALL, CALLCODE, DELEGATECALL, STATICCALL
 _CREATE_LIKE: frozenset[int] = frozenset({0xF0, 0xF5})
 _STORAGE_READ: frozenset[int] = frozenset({0x54})
 _STORAGE_WRITE: frozenset[int] = frozenset({0x55})
@@ -410,10 +414,7 @@ class ControlFlowGraph:
         object.__setattr__(
             self,
             "unsupported_opcodes",
-            tuple(
-                _non_negative(op, "unsupported_opcodes item")
-                for op in self.unsupported_opcodes
-            ),
+            tuple(_non_negative(op, "unsupported_opcodes item") for op in self.unsupported_opcodes),
         )
         status = (
             self.pass_status
@@ -483,9 +484,7 @@ class StorageEffect:
         )
         object.__setattr__(self, "kind", kind)
         object.__setattr__(self, "pc", _non_negative(self.pc, "pc"))
-        object.__setattr__(
-            self, "slot_hint", self.slot_hint.strip() if self.slot_hint else ""
-        )
+        object.__setattr__(self, "slot_hint", self.slot_hint.strip() if self.slot_hint else "")
         object.__setattr__(self, "attributes", _freeze_mapping(self.attributes))
 
     def to_dict(self) -> dict[str, Any]:
@@ -521,9 +520,7 @@ class DisassemblyResult:
             raise ResourceLimitError("instruction count exceeds bound")
         for index, item in enumerate(instructions):
             if not isinstance(item, DecodedInstruction):
-                raise InvalidRequestError(
-                    f"instructions[{index}] must be a DecodedInstruction"
-                )
+                raise InvalidRequestError(f"instructions[{index}] must be a DecodedInstruction")
         object.__setattr__(self, "instructions", instructions)
         object.__setattr__(
             self,
@@ -815,9 +812,7 @@ def build_cfg(
 
     diagnostics = list(disassembly.diagnostics)
     if unsupported_opcodes:
-        diagnostics.append(
-            "unsupported opcodes present; semantic pass is forbidden"
-        )
+        diagnostics.append("unsupported opcodes present; semantic pass is forbidden")
     if unresolved:
         diagnostics.append("unresolved dynamic or invalid jumps; CFG incomplete")
     if disassembly.truncated:
@@ -883,9 +878,7 @@ def analyze_bytecode(
 ) -> tuple[DisassemblyResult, ControlFlowGraph, tuple[StorageEffect, ...]]:
     """Full bounded static analysis pipeline for EVM bytecode."""
 
-    disasm = disassemble_bytecode(
-        bytecode, max_bytes=max_bytes, max_instructions=max_instructions
-    )
+    disasm = disassemble_bytecode(bytecode, max_bytes=max_bytes, max_instructions=max_instructions)
     cfg = build_cfg(disasm, max_nodes=max_nodes, max_edges=max_edges)
     effects = extract_storage_effects(disasm, trace_complete=trace_complete)
     # Incomplete traces never pass even if CFG is complete.

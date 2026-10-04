@@ -151,9 +151,7 @@ class _PortfolioCancellationSignal:
         self._external = external
 
     def is_set(self) -> bool:
-        return self._local.is_set() or bool(
-            self._external is not None and self._external.is_set()
-        )
+        return self._local.is_set() or bool(self._external is not None and self._external.is_set())
 
     def set(self) -> None:
         self._local.set()
@@ -196,9 +194,7 @@ def build_solver_input_text(translation: TranslationRecord) -> str:
             f"({translation.unsupported_reason!r}); there is no solver input to build"
         )
     if translation.translated_text is None:
-        raise ValueError(
-            f"translation {translation.translation_id!r} has no translated_text"
-        )
+        raise ValueError(f"translation {translation.translation_id!r} has no translated_text")
 
     text = translation.translated_text
     if translation.target is TranslationTarget.SMTLIB:
@@ -404,7 +400,9 @@ def run_bounded_solver_process(
     )
 
 
-def _probe_solver_version(executable_path: str, spec, *, timeout: float = _VERSION_PROBE_TIMEOUT_SECONDS):
+def _probe_solver_version(
+    executable_path: str, spec, *, timeout: float = _VERSION_PROBE_TIMEOUT_SECONDS
+):
     """Run a single bounded ``--version``-style metadata query against an
     already-resolved executable. Never raises; returns ``None`` on any
     failure."""
@@ -517,12 +515,9 @@ class PortfolioRunResult:
         _require_schema_version(
             data.get("schema_version", SCHEMA_VERSION), owner="PortfolioRunResult"
         )
-        attempts = [
-            SolverAttemptRecord.from_dict(entry) for entry in data.get("attempts", [])
-        ]
+        attempts = [SolverAttemptRecord.from_dict(entry) for entry in data.get("attempts", [])]
         evidence = {
-            k: SolverAttemptEvidence.from_dict(v)
-            for k, v in (data.get("evidence") or {}).items()
+            k: SolverAttemptEvidence.from_dict(v) for k, v in (data.get("evidence") or {}).items()
         }
         return cls(
             schema_version=data.get("schema_version", SCHEMA_VERSION),
@@ -561,9 +556,7 @@ class SolverPortfolio:
         self,
         policy: PortfolioPolicy,
         *,
-        process_runner: Callable[
-            [List[str]], SolverProcessOutcome
-        ] = run_bounded_solver_process,
+        process_runner: Callable[[List[str]], SolverProcessOutcome] = run_bounded_solver_process,
         version_prober: Callable[[str, Any], Optional[str]] = _probe_solver_version,
         resource_scheduler: Optional[GlobalResourceScheduler] = None,
         resource_lane: str = ResourceLane.HAMMER_LEAN.value,
@@ -694,14 +687,10 @@ class SolverPortfolio:
         evidence: Dict[str, SolverAttemptEvidence] = {}
         cancelled_ids: List[str] = []
 
-        max_workers = min(
-            len(permitted), max(1, int(self.policy.max_parallel_processes))
-        )
+        max_workers = min(len(permitted), max(1, int(self.policy.max_parallel_processes)))
         budgets = [self.policy.budget_for(spec.solver_name) for spec, _ in permitted]
         concurrent_memory = sum(
-            sorted((int(budget.memory_mb or 0) for budget in budgets), reverse=True)[
-                :max_workers
-            ]
+            sorted((int(budget.memory_mb or 0) for budget in budgets), reverse=True)[:max_workers]
         )
         telemetry_before = self.resource_scheduler.snapshot()
         with self.resource_scheduler.acquire(
@@ -718,8 +707,7 @@ class SolverPortfolio:
                 for index, (spec, executable_path) in enumerate(permitted):
                     budget = self.policy.budget_for(spec.solver_name)
                     attempt_id = (
-                        f"{request_id}:{spec.translation.translation_id}:"
-                        f"{spec.solver_name}:{index}"
+                        f"{request_id}:{spec.translation.translation_id}:{spec.solver_name}:{index}"
                     )
                     work_items.append((spec, executable_path, budget, attempt_id, tmp_dir))
 
@@ -788,9 +776,7 @@ class SolverPortfolio:
         # `command` is a literal argv list built only from a resolved
         # executable path, fixed CLI flags, and this file *path* — never
         # from `input_text` itself.
-        command = self.policy.build_command(
-            spec.solver_name, executable_path, input_path, budget
-        )
+        command = self.policy.build_command(spec.solver_name, executable_path, input_path, budget)
         solver_version: Optional[str] = None
 
         started_at = _utcnow()

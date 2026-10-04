@@ -153,14 +153,10 @@ def _as_mapping(value: Any, name: str) -> Mapping[str, Any]:
     return value
 
 
-def _known_fields(
-    value: Mapping[str, Any], allowed: frozenset[str], name: str
-) -> None:
+def _known_fields(value: Mapping[str, Any], allowed: frozenset[str], name: str) -> None:
     unknown = sorted(set(value) - allowed)
     if unknown:
-        raise CryptoIRValidationError(
-            f"unknown {name} field(s): {', '.join(unknown)}"
-        )
+        raise CryptoIRValidationError(f"unknown {name} field(s): {', '.join(unknown)}")
 
 
 def _attributes(value: Mapping[str, Any] | None) -> Mapping[str, Any]:
@@ -237,9 +233,7 @@ class ViolationWitness:
     LAYER: ClassVar[AuthorityKind] = AuthorityKind.EVIDENCE
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "witness_id", _identifier(self.witness_id, "witness_id")
-        )
+        object.__setattr__(self, "witness_id", _identifier(self.witness_id, "witness_id"))
         object.__setattr__(
             self, "description", assert_not_universal_secure(self.description, field="description")
         )
@@ -249,9 +243,7 @@ class ViolationWitness:
             "path_summary",
             _text(self.path_summary, "path_summary", allow_empty=True),
         )
-        object.__setattr__(
-            self, "effect_ids", _unique_ids(self.effect_ids, "effect_ids")
-        )
+        object.__setattr__(self, "effect_ids", _unique_ids(self.effect_ids, "effect_ids"))
         object.__setattr__(
             self,
             "control_edge_ids",
@@ -313,13 +305,9 @@ class ViolationWitness:
             description=self.description,
             fact_ids=tuple(fact_ids),
             path_summary=self.path_summary if path_summary is None else path_summary,
-            effect_ids=(
-                self.effect_ids if effect_ids is None else tuple(effect_ids)
-            ),
+            effect_ids=(self.effect_ids if effect_ids is None else tuple(effect_ids)),
             control_edge_ids=(
-                self.control_edge_ids
-                if control_edge_ids is None
-                else tuple(control_edge_ids)
+                self.control_edge_ids if control_edge_ids is None else tuple(control_edge_ids)
             ),
             attributes=dict(self.attributes),
         )
@@ -351,18 +339,10 @@ class ProofObligation:
     LAYER: ClassVar[AuthorityKind] = AuthorityKind.DECLARATION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "obligation_id", _identifier(self.obligation_id, "obligation_id")
-        )
-        object.__setattr__(
-            self, "category", _enum(ObligationCategory, self.category, "category")
-        )
-        object.__setattr__(
-            self, "statement", assert_not_universal_secure(self.statement)
-        )
-        object.__setattr__(
-            self, "formal_target", _text(self.formal_target, "formal_target")
-        )
+        object.__setattr__(self, "obligation_id", _identifier(self.obligation_id, "obligation_id"))
+        object.__setattr__(self, "category", _enum(ObligationCategory, self.category, "category"))
+        object.__setattr__(self, "statement", assert_not_universal_secure(self.statement))
+        object.__setattr__(self, "formal_target", _text(self.formal_target, "formal_target"))
         object.__setattr__(
             self,
             "formal_target_kind",
@@ -380,9 +360,7 @@ class ProofObligation:
         object.__setattr__(
             self,
             "required_semantic_dimensions",
-            _unique_texts(
-                self.required_semantic_dimensions, "required_semantic_dimensions"
-            ),
+            _unique_texts(self.required_semantic_dimensions, "required_semantic_dimensions"),
         )
         if not self.required_semantic_dimensions:
             raise CryptoIRValidationError(
@@ -411,15 +389,11 @@ class ProofObligation:
                 raise CryptoIRValidationError(
                     "violation_witness must be ViolationWitness or mapping"
                 )
-        object.__setattr__(
-            self, "summary", _text(self.summary, "summary", allow_empty=True)
-        )
+        object.__setattr__(self, "summary", _text(self.summary, "summary", allow_empty=True))
         if self.summary:
             assert_not_universal_secure(self.summary, field="summary")
         object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
 
     def to_dependency(self) -> ProofObligationDependency:
         """Project to the contract-semantics admissibility dependency view."""
@@ -459,9 +433,7 @@ class ProofObligation:
             "summary": self.summary,
             "trusted_assumption_ids": list(self.trusted_assumption_ids),
             "violation_witness": (
-                self.violation_witness.to_dict()
-                if self.violation_witness is not None
-                else None
+                self.violation_witness.to_dict() if self.violation_witness is not None else None
             ),
         }
 
@@ -495,21 +467,15 @@ class ProofObligation:
             category=value.get("category", ObligationCategory.AUTHORIZATION),
             statement=value.get("statement", ""),
             formal_target=value.get("formal_target", ""),
-            formal_target_kind=value.get(
-                "formal_target_kind", FormalTargetKind.DETERMINISTIC
-            ),
+            formal_target_kind=value.get("formal_target_kind", FormalTargetKind.DETERMINISTIC),
             required_fact_ids=tuple(value.get("required_fact_ids", ())),
-            required_semantic_dimensions=tuple(
-                value.get("required_semantic_dimensions", ())
-            ),
+            required_semantic_dimensions=tuple(value.get("required_semantic_dimensions", ())),
             trusted_assumption_ids=tuple(value.get("trusted_assumption_ids", ())),
             required_evidence=tuple(value.get("required_evidence", ())),
             violation_witness=witness,
             summary=value.get("summary", ""),
             attributes=value.get("attributes", {}),
-            schema_version=value.get(
-                "schema_version", CRYPTO_IR_SECURITY_RULES_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", CRYPTO_IR_SECURITY_RULES_SCHEMA_VERSION),
         )
 
     def canonical_bytes(self) -> bytes:
@@ -544,16 +510,12 @@ class RuleApplicability:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "rule_id", _identifier(self.rule_id, "rule_id"))
-        object.__setattr__(
-            self, "status", _enum(ApplicabilityStatus, self.status, "status")
-        )
+        object.__setattr__(self, "status", _enum(ApplicabilityStatus, self.status, "status"))
         object.__setattr__(self, "reason", _text(self.reason, "reason"))
         object.__setattr__(
             self,
             "missing_semantic_dimensions",
-            _unique_texts(
-                self.missing_semantic_dimensions, "missing_semantic_dimensions"
-            ),
+            _unique_texts(self.missing_semantic_dimensions, "missing_semantic_dimensions"),
         )
         object.__setattr__(
             self,
@@ -568,9 +530,7 @@ class RuleApplicability:
         object.__setattr__(
             self,
             "matched_chain_namespaces",
-            _unique_texts(
-                self.matched_chain_namespaces, "matched_chain_namespaces"
-            ),
+            _unique_texts(self.matched_chain_namespaces, "matched_chain_namespaces"),
         )
         if self.fallback_outcome is not None:
             object.__setattr__(
@@ -598,9 +558,7 @@ class RuleApplicability:
             "reason": self.reason,
             "rule_id": self.rule_id,
             "status": (
-                self.status.value
-                if isinstance(self.status, ApplicabilityStatus)
-                else self.status
+                self.status.value if isinstance(self.status, ApplicabilityStatus) else self.status
             ),
             "unsupported_codes": list(self.unsupported_codes),
         }
@@ -629,14 +587,10 @@ class RuleApplicability:
             rule_id=value.get("rule_id", ""),
             status=value.get("status", ApplicabilityStatus.INCONCLUSIVE),
             reason=value.get("reason", ""),
-            missing_semantic_dimensions=tuple(
-                value.get("missing_semantic_dimensions", ())
-            ),
+            missing_semantic_dimensions=tuple(value.get("missing_semantic_dimensions", ())),
             missing_fact_ids=tuple(value.get("missing_fact_ids", ())),
             unsupported_codes=tuple(value.get("unsupported_codes", ())),
-            matched_chain_namespaces=tuple(
-                value.get("matched_chain_namespaces", ())
-            ),
+            matched_chain_namespaces=tuple(value.get("matched_chain_namespaces", ())),
             fallback_outcome=value.get("fallback_outcome"),
             attributes=value.get("attributes", {}),
         )
@@ -685,15 +639,9 @@ class SecurityRule:
         object.__setattr__(self, "rule_id", _identifier(self.rule_id, "rule_id"))
         object.__setattr__(self, "version", _version(self.version, "version"))
         object.__setattr__(self, "name", _text(self.name, "name"))
-        object.__setattr__(
-            self, "category", _enum(ObligationCategory, self.category, "category")
-        )
-        object.__setattr__(
-            self, "statement", assert_not_universal_secure(self.statement)
-        )
-        object.__setattr__(
-            self, "formal_target", _text(self.formal_target, "formal_target")
-        )
+        object.__setattr__(self, "category", _enum(ObligationCategory, self.category, "category"))
+        object.__setattr__(self, "statement", assert_not_universal_secure(self.statement))
+        object.__setattr__(self, "formal_target", _text(self.formal_target, "formal_target"))
         object.__setattr__(
             self,
             "formal_target_kind",
@@ -752,18 +700,12 @@ class SecurityRule:
             "fact_id_templates",
             _unique_texts(self.fact_id_templates, "fact_id_templates"),
         )
-        object.__setattr__(
-            self, "summary", _text(self.summary, "summary", allow_empty=True)
-        )
+        object.__setattr__(self, "summary", _text(self.summary, "summary", allow_empty=True))
         if self.summary:
             assert_not_universal_secure(self.summary, field="summary")
-        object.__setattr__(
-            self, "pack_version", _version(self.pack_version, "pack_version")
-        )
+        object.__setattr__(self, "pack_version", _version(self.pack_version, "pack_version"))
         object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
 
     @property
     def is_common(self) -> bool:
@@ -900,24 +842,18 @@ class SecurityRule:
             category=value.get("category", ObligationCategory.AUTHORIZATION),
             statement=value.get("statement", ""),
             formal_target=value.get("formal_target", ""),
-            formal_target_kind=value.get(
-                "formal_target_kind", FormalTargetKind.DETERMINISTIC
-            ),
+            formal_target_kind=value.get("formal_target_kind", FormalTargetKind.DETERMINISTIC),
             semantic_preconditions=tuple(value.get("semantic_preconditions", ())),
             required_evidence=tuple(value.get("required_evidence", ())),
             violation_witness=value.get("violation_witness", {}),
-            unsupported_fallback=value.get(
-                "unsupported_fallback", UnsupportedFallback.UNSUPPORTED
-            ),
+            unsupported_fallback=value.get("unsupported_fallback", UnsupportedFallback.UNSUPPORTED),
             chain_namespaces=tuple(value.get("chain_namespaces", ())),
             trusted_assumptions=tuple(value.get("trusted_assumptions", ())),
             fact_id_templates=tuple(value.get("fact_id_templates", ())),
             summary=value.get("summary", ""),
             pack_version=value.get("pack_version", SECURITY_RULE_PACK_VERSION),
             attributes=value.get("attributes", {}),
-            schema_version=value.get(
-                "schema_version", CRYPTO_IR_SECURITY_RULES_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", CRYPTO_IR_SECURITY_RULES_SCHEMA_VERSION),
         )
 
     def canonical_bytes(self) -> bytes:
@@ -995,9 +931,7 @@ def evaluate_rule_applicability(
             fallback_outcome=fallback,
         )
 
-    unsupported_codes = _unsupported_for_dimensions(
-        model, rule.semantic_preconditions
-    )
+    unsupported_codes = _unsupported_for_dimensions(model, rule.semantic_preconditions)
     if unsupported_codes:
         return RuleApplicability(
             rule_id=rule.rule_id,
@@ -1025,8 +959,7 @@ def evaluate_rule_applicability(
                 rule_id=rule.rule_id,
                 status=ApplicabilityStatus.UNSUPPORTED,
                 reason=(
-                    f"rule {rule.rule_id} dimension {dim!r} marked unsupported "
-                    "in coverage frontier"
+                    f"rule {rule.rule_id} dimension {dim!r} marked unsupported in coverage frontier"
                 ),
                 missing_semantic_dimensions=(dim,),
                 matched_chain_namespaces=(namespace,),
@@ -1077,8 +1010,7 @@ def evaluate_rule_applicability(
                 rule_id=rule.rule_id,
                 status=ApplicabilityStatus.MISSING_SEMANTIC,
                 reason=(
-                    f"rule {rule.rule_id} depends on discarded facts: "
-                    f"{', '.join(on_discarded)}"
+                    f"rule {rule.rule_id} depends on discarded facts: {', '.join(on_discarded)}"
                 ),
                 missing_fact_ids=tuple(on_discarded),
                 matched_chain_namespaces=(namespace,),
@@ -1088,10 +1020,7 @@ def evaluate_rule_applicability(
             return RuleApplicability(
                 rule_id=rule.rule_id,
                 status=ApplicabilityStatus.MISSING_SEMANTIC,
-                reason=(
-                    f"rule {rule.rule_id} depends on uncovered facts: "
-                    f"{', '.join(missing)}"
-                ),
+                reason=(f"rule {rule.rule_id} depends on uncovered facts: {', '.join(missing)}"),
                 missing_fact_ids=tuple(missing),
                 matched_chain_namespaces=(namespace,),
                 fallback_outcome=fallback,
@@ -1151,9 +1080,7 @@ def name_security_conclusions(
     obligation id to its analysis outcome.
     """
 
-    if isinstance(obligations, (str, bytes, bytearray)) or not isinstance(
-        obligations, Sequence
-    ):
+    if isinstance(obligations, (str, bytes, bytearray)) or not isinstance(obligations, Sequence):
         raise CryptoIRValidationError("obligations must be a sequence")
     if not isinstance(outcomes, Mapping):
         raise CryptoIRValidationError("outcomes must be a mapping")
@@ -1161,18 +1088,14 @@ def name_security_conclusions(
     conclusions: list[dict[str, Any]] = []
     for obligation in obligations:
         if not isinstance(obligation, ProofObligation):
-            raise CryptoIRValidationError(
-                "obligations items must be ProofObligation instances"
-            )
+            raise CryptoIRValidationError("obligations items must be ProofObligation instances")
         raw = outcomes.get(obligation.obligation_id)
         if raw is None:
             raise CryptoIRValidationError(
                 f"missing outcome for obligation {obligation.obligation_id!r}"
             )
         outcome = (
-            raw
-            if isinstance(raw, AnalysisOutcome)
-            else _enum(AnalysisOutcome, raw, "outcome")
+            raw if isinstance(raw, AnalysisOutcome) else _enum(AnalysisOutcome, raw, "outcome")
         )
         conclusions.append(
             {
@@ -1282,8 +1205,7 @@ def common_security_rules() -> tuple[SecurityRule, ...]:
                 "mint/burn authorities."
             ),
             formal_target=(
-                "sum(inflows) - sum(outflows) = mint - burn - fees "
-                "for each asset identity"
+                "sum(inflows) - sum(outflows) = mint - burn - fees for each asset identity"
             ),
             formal_target_kind=FormalTargetKind.SMT_LIB,
             semantic_preconditions=("asset_effects",),
@@ -1311,8 +1233,7 @@ def common_security_rules() -> tuple[SecurityRule, ...]:
                 "authorities and match the bound intent parameters."
             ),
             formal_target=(
-                "mint/burn/transfer effect e implies authorized(e) and "
-                "matches_intent(e)"
+                "mint/burn/transfer effect e implies authorized(e) and matches_intent(e)"
             ),
             formal_target_kind=FormalTargetKind.FOL,
             semantic_preconditions=("asset_effects", "privileges"),
@@ -1359,9 +1280,7 @@ def common_security_rules() -> tuple[SecurityRule, ...]:
                 "nonce/sequence, and cannot be accepted twice in the same "
                 "replay domain."
             ),
-            formal_target=(
-                "accept(action) once per (chain, domain, nonce_or_nullifier)"
-            ),
+            formal_target=("accept(action) once per (chain, domain, nonce_or_nullifier)"),
             formal_target_kind=FormalTargetKind.FOL,
             semantic_preconditions=("replay_domain", "identity_binding"),
             required_evidence=(
@@ -1386,9 +1305,7 @@ def common_security_rules() -> tuple[SecurityRule, ...]:
                 "violates declared invariants between external call and state "
                 "commit."
             ),
-            formal_target=(
-                "no reentrant_call observes mutable state before invariant restore"
-            ),
+            formal_target=("no reentrant_call observes mutable state before invariant restore"),
             formal_target_kind=FormalTargetKind.TEMPORAL,
             semantic_preconditions=("control_flow", "state_invariants"),
             required_evidence=(
@@ -1413,9 +1330,7 @@ def common_security_rules() -> tuple[SecurityRule, ...]:
                 "writable, and owner constraints; privileges do not escalate "
                 "across the CPI boundary."
             ),
-            formal_target=(
-                "cpi_edge e implies privileges(e)subseteq declared_callee_grants(e)"
-            ),
+            formal_target=("cpi_edge e implies privileges(e)subseteq declared_callee_grants(e)"),
             formal_target_kind=FormalTargetKind.FOL,
             semantic_preconditions=("control_flow", "privileges"),
             required_evidence=(
@@ -1440,8 +1355,7 @@ def common_security_rules() -> tuple[SecurityRule, ...]:
                 "rounding, and precision bounds for each asset."
             ),
             formal_target=(
-                "all amount expressions evaluate without overflow and within "
-                "declared rounding mode"
+                "all amount expressions evaluate without overflow and within declared rounding mode"
             ),
             formal_target_kind=FormalTargetKind.SMT_LIB,
             semantic_preconditions=("asset_effects", "arithmetic_model"),
@@ -1465,9 +1379,7 @@ def common_security_rules() -> tuple[SecurityRule, ...]:
                 "Code or implementation epochs change only under the declared "
                 "upgrade authority and within the declared upgrade policy."
             ),
-            formal_target=(
-                "code_epoch_change implies authorized_upgrade(authority, policy)"
-            ),
+            formal_target=("code_epoch_change implies authorized_upgrade(authority, policy)"),
             formal_target_kind=FormalTargetKind.FOL,
             semantic_preconditions=("code_epoch", "upgrade_authority"),
             required_evidence=(
@@ -1492,8 +1404,7 @@ def common_security_rules() -> tuple[SecurityRule, ...]:
                 "freshness window and manipulation bounds."
             ),
             formal_target=(
-                "oracle_read r used by effect e implies fresh(r, window) and "
-                "within_bounds(r)"
+                "oracle_read r used by effect e implies fresh(r, window) and within_bounds(r)"
             ),
             formal_target_kind=FormalTargetKind.SMT_LIB,
             semantic_preconditions=("oracle_inputs", "asset_effects"),
@@ -1542,10 +1453,7 @@ def common_security_rules() -> tuple[SecurityRule, ...]:
                 "Timelocked or expiry-gated transitions fire only when the "
                 "declared time/finality conditions hold."
             ),
-            formal_target=(
-                "transition t enabled iff timelock_satisfied(t) and "
-                "not_expired(t)"
-            ),
+            formal_target=("transition t enabled iff timelock_satisfied(t) and not_expired(t)"),
             formal_target_kind=FormalTargetKind.TEMPORAL,
             semantic_preconditions=("workflow_time", "control_flow"),
             required_evidence=(
@@ -1569,9 +1477,7 @@ def common_security_rules() -> tuple[SecurityRule, ...]:
                 "and size resource bounds; unbounded loops or allocations are "
                 "rejected."
             ),
-            formal_target=(
-                "resource_usage(path) <= declared_bounds(path) for all paths"
-            ),
+            formal_target=("resource_usage(path) <= declared_bounds(path) for all paths"),
             formal_target_kind=FormalTargetKind.MONITOR,
             semantic_preconditions=("resource_model", "control_flow"),
             required_evidence=(

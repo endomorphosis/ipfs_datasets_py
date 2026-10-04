@@ -50,9 +50,7 @@ G021_RESIDUAL_SCAN_CLOSURE_AUTO_030: Final = (
     "data/abby_voice/agent_supervisor/discovery/"
     "2026-07-26-abby-voice-auto-030-objective-validation-repair.md"
 )
-G021_PACKAGE_EVIDENCE_PATH: Final = (
-    "docs/voice/ABBY_VOICE_HF_PUBLICATION_EVIDENCE.md"
-)
+G021_PACKAGE_EVIDENCE_PATH: Final = "docs/voice/ABBY_VOICE_HF_PUBLICATION_EVIDENCE.md"
 G021_REQUIRED_EVIDENCE_TERMS: Final[tuple[str, ...]] = (
     "post-publication verification",
     "dry-run diff and cost receipt",
@@ -216,13 +214,9 @@ def estimate_publication_cost(
         or isinstance(retained_release_bytes, bool)
         or retained_release_bytes < 0
     ):
-        raise HuggingFacePublicationError(
-            "retained_release_bytes must be a non-negative integer"
-        )
+        raise HuggingFacePublicationError("retained_release_bytes must be a non-negative integer")
     transfer = _bytes_to_gib(upload_bytes) * float(transfer_rate_usd_per_gib)
-    storage = _bytes_to_gib(retained_release_bytes) * float(
-        storage_rate_usd_per_gib_month
-    )
+    storage = _bytes_to_gib(retained_release_bytes) * float(storage_rate_usd_per_gib_month)
     return {
         "currency": "USD",
         "estimated_cost_usd": round(transfer + storage, 8),
@@ -303,9 +297,7 @@ class PublicationPlan:
         if not self.dry_run:
             raise HuggingFacePublicationError("publication plans are dry-run only")
         if self.remote_write_contacted:
-            raise HuggingFacePublicationError(
-                "dry-run plans must not contact a write endpoint"
-            )
+            raise HuggingFacePublicationError("dry-run plans must not contact a write endpoint")
         audited_parent = ""
         if self.audited_parent_commit:
             audited_parent = _commit_sha(
@@ -325,9 +317,7 @@ class PublicationPlan:
             raise HuggingFacePublicationError("publication plan requires at least one add")
         remotes = [item.remote_path for item in ops]
         if len(remotes) != len(set(remotes)):
-            raise HuggingFacePublicationError(
-                "publication plan contains duplicate remote paths"
-            )
+            raise HuggingFacePublicationError("publication plan contains duplicate remote paths")
         release_prefix = _normalize_relative_path(self.release_prefix)
         prefix_marker = f"{release_prefix}/"
         if any(not remote.startswith(prefix_marker) for remote in remotes):
@@ -340,7 +330,13 @@ class PublicationPlan:
                     f"append-only plan refuses overwrite of existing remote path: {existing}"
                 )
         prohibited = tuple(
-            sorted({str(item).strip().casefold() for item in self.prohibited_operations if str(item).strip()})
+            sorted(
+                {
+                    str(item).strip().casefold()
+                    for item in self.prohibited_operations
+                    if str(item).strip()
+                }
+            )
         )
         for op in prohibited:
             if op not in _PROHIBITED_OPS and op not in {
@@ -422,33 +418,23 @@ class PublicationApproval:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "approver", _text(self.approver, label="approver"))
-        object.__setattr__(
-            self, "plan_digest", _digest(self.plan_digest, label="plan_digest")
-        )
-        object.__setattr__(
-            self, "approval_id", _text(self.approval_id, label="approval_id")
-        )
+        object.__setattr__(self, "plan_digest", _digest(self.plan_digest, label="plan_digest"))
+        object.__setattr__(self, "approval_id", _text(self.approval_id, label="approval_id"))
         object.__setattr__(
             self,
             "credentials_scope",
             _text(self.credentials_scope, label="credentials_scope"),
         )
-        if not isinstance(self.max_cost_usd, (int, float)) or isinstance(
-            self.max_cost_usd, bool
-        ):
+        if not isinstance(self.max_cost_usd, (int, float)) or isinstance(self.max_cost_usd, bool):
             raise HuggingFacePublicationError("max_cost_usd must be a number")
         if not math.isfinite(float(self.max_cost_usd)) or float(self.max_cost_usd) < 0:
-            raise HuggingFacePublicationError(
-                "max_cost_usd must be a finite non-negative number"
-            )
+            raise HuggingFacePublicationError("max_cost_usd must be a finite non-negative number")
         if (
             not isinstance(self.max_upload_bytes, int)
             or isinstance(self.max_upload_bytes, bool)
             or self.max_upload_bytes < 0
         ):
-            raise HuggingFacePublicationError(
-                "max_upload_bytes must be a non-negative integer"
-            )
+            raise HuggingFacePublicationError("max_upload_bytes must be a non-negative integer")
         notes = str(self.notes or "")
         lowered_notes = notes.casefold()
         if (
@@ -491,17 +477,11 @@ class PublicationCommitReceipt:
     approval_id: str
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "repository_id", _text(self.repository_id, label="repository_id")
-        )
+        object.__setattr__(self, "repository_id", _text(self.repository_id, label="repository_id"))
         object.__setattr__(self, "commit_sha", _commit_sha(self.commit_sha))
         object.__setattr__(self, "release_id", _safe_release_id(self.release_id))
-        object.__setattr__(
-            self, "release_prefix", _normalize_relative_path(self.release_prefix)
-        )
-        object.__setattr__(
-            self, "plan_digest", _digest(self.plan_digest, label="plan_digest")
-        )
+        object.__setattr__(self, "release_prefix", _normalize_relative_path(self.release_prefix))
+        object.__setattr__(self, "plan_digest", _digest(self.plan_digest, label="plan_digest"))
         object.__setattr__(
             self,
             "parent_commit",
@@ -512,12 +492,8 @@ class PublicationCommitReceipt:
             "target_revision",
             _text(self.target_revision, label="target_revision"),
         )
-        object.__setattr__(
-            self, "approval_id", _text(self.approval_id, label="approval_id")
-        )
-        paths = tuple(
-            _normalize_relative_path(path) for path in self.uploaded_paths if path
-        )
+        object.__setattr__(self, "approval_id", _text(self.approval_id, label="approval_id"))
+        paths = tuple(_normalize_relative_path(path) for path in self.uploaded_paths if path)
         if not paths:
             raise HuggingFacePublicationError("uploaded_paths must not be empty")
         if (
@@ -525,9 +501,7 @@ class PublicationCommitReceipt:
             or isinstance(self.upload_bytes, bool)
             or self.upload_bytes < 0
         ):
-            raise HuggingFacePublicationError(
-                "upload_bytes must be a non-negative integer"
-            )
+            raise HuggingFacePublicationError("upload_bytes must be a non-negative integer")
         object.__setattr__(self, "uploaded_paths", paths)
 
     def to_dict(self) -> dict[str, Any]:
@@ -590,9 +564,7 @@ class PinnedRedownloadValidation:
     canonical_release_validation_sha256: str = ""
 
     def __post_init__(self) -> None:
-        validation = json.loads(
-            canonical_json_bytes(dict(self.canonical_release_validation or {}))
-        )
+        validation = json.loads(canonical_json_bytes(dict(self.canonical_release_validation or {})))
         validation_sha256 = ""
         if validation:
             if validation.get("valid") is not True:
@@ -617,14 +589,10 @@ class PinnedRedownloadValidation:
     def to_dict(self) -> dict[str, Any]:
         return {
             "cache_root": self.cache_root,
-            "canonical_release_validation": dict(
-                self.canonical_release_validation
-            )
+            "canonical_release_validation": dict(self.canonical_release_validation)
             if self.canonical_release_validation
             else None,
-            "canonical_release_validation_performed": bool(
-                self.canonical_release_validation
-            ),
+            "canonical_release_validation_performed": bool(self.canonical_release_validation),
             "canonical_release_validation_sha256": (
                 self.canonical_release_validation_sha256 or None
             ),
@@ -654,17 +622,11 @@ class RuntimeReleasePointer:
     canary_percent: int = 0
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "repository_id", _text(self.repository_id, label="repository_id")
-        )
+        object.__setattr__(self, "repository_id", _text(self.repository_id, label="repository_id"))
         object.__setattr__(self, "release_id", _safe_release_id(self.release_id))
         object.__setattr__(self, "commit_sha", _commit_sha(self.commit_sha))
-        object.__setattr__(
-            self, "release_prefix", _normalize_relative_path(self.release_prefix)
-        )
-        object.__setattr__(
-            self, "pointer_path", _normalize_relative_path(self.pointer_path)
-        )
+        object.__setattr__(self, "release_prefix", _normalize_relative_path(self.release_prefix))
+        object.__setattr__(self, "pointer_path", _normalize_relative_path(self.pointer_path))
         if self.previous_commit_sha:
             object.__setattr__(
                 self,
@@ -683,9 +645,7 @@ class RuntimeReleasePointer:
             or self.canary_percent < 0
             or self.canary_percent > 100
         ):
-            raise HuggingFacePublicationError(
-                "canary_percent must be an integer between 0 and 100"
-            )
+            raise HuggingFacePublicationError("canary_percent must be an integer between 0 and 100")
 
     def to_dict(self) -> dict[str, Any]:
         payload: dict[str, Any] = {
@@ -714,8 +674,7 @@ def extract_manifest_files(
     _reject_secrets(manifest, label="release_manifest")
 
     release_id = (
-        str(manifest.get("release_id") or "").strip()
-        or str(manifest.get("release") or "").strip()
+        str(manifest.get("release_id") or "").strip() or str(manifest.get("release") or "").strip()
     )
     # Content-addressed ids may include a sha256: prefix; use the digest tail.
     if release_id.startswith("abby-voice-local-release:sha256:"):
@@ -731,9 +690,11 @@ def extract_manifest_files(
             raise HuggingFacePublicationError("release_id is required in the manifest")
     release_id = _safe_release_id(release_id)
 
-    release_sha256 = str(
-        manifest.get("release_sha256") or manifest.get("manifest_sha256") or ""
-    ).strip().casefold()
+    release_sha256 = (
+        str(manifest.get("release_sha256") or manifest.get("manifest_sha256") or "")
+        .strip()
+        .casefold()
+    )
     if not _HASH_RE.fullmatch(release_sha256):
         # Derive a stable digest from the canonicalized identity-bearing body.
         identity = {
@@ -757,10 +718,7 @@ def extract_manifest_files(
         if not isinstance(item, Mapping):
             raise HuggingFacePublicationError(f"manifest file entry {index} must be a mapping")
         path = str(
-            item.get("path")
-            or item.get("relative_path")
-            or item.get("remote_path")
-            or ""
+            item.get("path") or item.get("relative_path") or item.get("remote_path") or ""
         ).strip()
         if not path:
             raise HuggingFacePublicationError(f"manifest file entry {index} lacks path")
@@ -772,9 +730,7 @@ def extract_manifest_files(
             )
         size_bytes = int(size_raw)
         if size_bytes < 0:
-            raise HuggingFacePublicationError(
-                f"manifest file entry {relative} has negative size"
-            )
+            raise HuggingFacePublicationError(f"manifest file entry {relative} has negative size")
         digest = _digest(
             item.get("sha256") or item.get("digest") or "",
             label=f"files[{index}].sha256",
@@ -814,19 +770,15 @@ def _canonical_release_manifest_entry(
     manifest_path = root / CANONICAL_RELEASE_MANIFEST_PATH
     if not manifest_path.is_file() or manifest_path.is_symlink():
         raise HuggingFacePublicationError(
-            "canonical release requires a regular release-manifest.json at "
-            "local_root"
+            "canonical release requires a regular release-manifest.json at local_root"
         )
     try:
         on_disk = json.loads(manifest_path.read_text(encoding="utf-8"))
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
-        raise HuggingFacePublicationError(
-            "canonical release-manifest.json is malformed"
-        ) from exc
+        raise HuggingFacePublicationError("canonical release-manifest.json is malformed") from exc
     if not isinstance(on_disk, Mapping) or dict(on_disk) != dict(manifest):
         raise HuggingFacePublicationError(
-            "canonical release manifest mapping does not match local "
-            "release-manifest.json"
+            "canonical release manifest mapping does not match local release-manifest.json"
         )
 
     try:
@@ -842,9 +794,7 @@ def _canonical_release_manifest_entry(
             f"canonical release failed exhaustive local validation: {exc}"
         ) from exc
     if validation.get("valid") is not True:
-        raise HuggingFacePublicationError(
-            "canonical release validation did not record valid=true"
-        )
+        raise HuggingFacePublicationError("canonical release validation did not record valid=true")
 
     size_bytes, digest = _file_digest(manifest_path)
     return {
@@ -872,23 +822,18 @@ class HuggingFaceReleasePublisher:
         storage_rate_usd_per_gib_month: float = DEFAULT_STORAGE_RATE_USD_PER_GIB_MONTH,
         api: Any | None = None,
         fetch_bytes: Callable[[str, str, str], bytes] | None = None,
-        fetch_to_path: Callable[[str, str, str, Path], str | Path | None]
-        | None = None,
+        fetch_to_path: Callable[[str, str, str, Path], str | Path | None] | None = None,
         remote_info_batch_size: int = DEFAULT_REMOTE_INFO_BATCH_SIZE,
         pinned_download_workers: int = DEFAULT_PINNED_DOWNLOAD_WORKERS,
     ) -> None:
         self.repository_id = _text(repository_id, label="repository_id")
         repo_type = _text(repository_type, label="repository_type").casefold()
         if repo_type not in {"dataset", "model", "space"}:
-            raise HuggingFacePublicationError(
-                "repository_type must be dataset, model, or space"
-            )
+            raise HuggingFacePublicationError("repository_type must be dataset, model, or space")
         self.repository_type = repo_type
         template = _text(release_prefix_template, label="release_prefix_template")
         if "{release_id}" not in template:
-            raise HuggingFacePublicationError(
-                "release_prefix_template must include {release_id}"
-            )
+            raise HuggingFacePublicationError("release_prefix_template must include {release_id}")
         self.release_prefix_template = template
         self.pointer_path = _normalize_relative_path(pointer_path)
         self.transfer_rate_usd_per_gib = float(transfer_rate_usd_per_gib)
@@ -912,16 +857,12 @@ class HuggingFaceReleasePublisher:
             or pinned_download_workers <= 0
             or pinned_download_workers > 32
         ):
-            raise HuggingFacePublicationError(
-                "pinned_download_workers must be an integer in 1..32"
-            )
+            raise HuggingFacePublicationError("pinned_download_workers must be an integer in 1..32")
         self.pinned_download_workers = pinned_download_workers
 
     def release_prefix_for(self, release_id: str) -> str:
         safe = _safe_release_id(release_id)
-        return _normalize_relative_path(
-            self.release_prefix_template.format(release_id=safe)
-        )
+        return _normalize_relative_path(self.release_prefix_template.format(release_id=safe))
 
     def plan_dry_run(
         self,
@@ -967,13 +908,9 @@ class HuggingFaceReleasePublisher:
                 manifest,
                 local_root=root,
             )
-            if any(
-                entry["relative_path"] == CANONICAL_RELEASE_MANIFEST_PATH
-                for entry in files
-            ):
+            if any(entry["relative_path"] == CANONICAL_RELEASE_MANIFEST_PATH for entry in files):
                 raise HuggingFacePublicationError(
-                    "canonical release descriptors must not self-describe "
-                    "release-manifest.json"
+                    "canonical release descriptors must not self-describe release-manifest.json"
                 )
             files.append(canonical_manifest_entry)
             files.sort(key=lambda entry: entry["relative_path"])
@@ -1039,9 +976,7 @@ class HuggingFaceReleasePublisher:
             dry_run=True,
             remote_write_contacted=False,
             metadata={
-                "canonical_release_manifest_included": (
-                    canonical_manifest_entry is not None
-                ),
+                "canonical_release_manifest_included": (canonical_manifest_entry is not None),
                 "canonical_release_manifest_sha256": (
                     canonical_manifest_entry["sha256"]
                     if canonical_manifest_entry is not None
@@ -1078,8 +1013,7 @@ class HuggingFaceReleasePublisher:
             )
         except Exception as exc:  # pragma: no cover - live transport failure
             raise HuggingFacePublicationError(
-                "cannot resolve the current Hugging Face parent commit: "
-                f"{exc}"
+                f"cannot resolve the current Hugging Face parent commit: {exc}"
             ) from exc
         current = _extract_repo_commit_sha(info)
         if current != plan.audited_parent_commit:
@@ -1102,8 +1036,7 @@ class HuggingFaceReleasePublisher:
         )
         if prefix_entries or path_entries:
             existing_path = (
-                _record_value((prefix_entries or path_entries)[0], "path")
-                or plan.release_prefix
+                _record_value((prefix_entries or path_entries)[0], "path") or plan.release_prefix
             )
             raise HuggingFacePublicationError(
                 "append-only publication refuses a pre-existing path under the "
@@ -1118,9 +1051,7 @@ class HuggingFaceReleasePublisher:
             )
         method = getattr(self.api, name, None)
         if not callable(method):
-            raise HuggingFacePublicationError(
-                f"API client must provide {name}"
-            )
+            raise HuggingFacePublicationError(f"API client must provide {name}")
         return method
 
     def _get_paths_info(
@@ -1130,16 +1061,10 @@ class HuggingFaceReleasePublisher:
         revision: str,
     ) -> list[Any]:
         get_paths_info = self._require_api_method("get_paths_info")
-        normalized = tuple(
-            _normalize_relative_path(path)
-            for path in paths
-            if str(path).strip()
-        )
+        normalized = tuple(_normalize_relative_path(path) for path in paths if str(path).strip())
         records: list[Any] = []
         for offset in range(0, len(normalized), self.remote_info_batch_size):
-            chunk = list(
-                normalized[offset : offset + self.remote_info_batch_size]
-            )
+            chunk = list(normalized[offset : offset + self.remote_info_batch_size])
             try:
                 page = get_paths_info(
                     repo_id=self.repository_id,
@@ -1149,8 +1074,7 @@ class HuggingFaceReleasePublisher:
                 )
             except Exception as exc:  # pragma: no cover - live transport failure
                 raise HuggingFacePublicationError(
-                    "cannot inspect pinned Hugging Face paths at "
-                    f"{revision}: {exc}"
+                    f"cannot inspect pinned Hugging Face paths at {revision}: {exc}"
                 ) from exc
             records.extend(list(page or ()))
         return records
@@ -1176,9 +1100,7 @@ class HuggingFaceReleasePublisher:
             raise HuggingFacePublicationError(
                 "approval plan_digest does not match the dry-run plan"
             )
-        expected_scope = (
-            f"{self.repository_type}:write:{self.repository_id}"
-        )
+        expected_scope = f"{self.repository_type}:write:{self.repository_id}"
         if approval.credentials_scope != expected_scope:
             raise HuggingFacePublicationError(
                 "approval credentials_scope does not match the target repository; "
@@ -1222,9 +1144,7 @@ class HuggingFaceReleasePublisher:
             uploaded_paths.append(item.remote_path)
 
         if not operations_payload:
-            raise HuggingFacePublicationError(
-                "no upload operations remain; refusing empty commit"
-            )
+            raise HuggingFacePublicationError("no upload operations remain; refusing empty commit")
 
         try:
             result = create_commit(
@@ -1238,9 +1158,7 @@ class HuggingFaceReleasePublisher:
         except HuggingFacePublicationError:
             raise
         except Exception as exc:  # pragma: no cover - transport failures
-            raise HuggingFacePublicationError(
-                f"HfApi create_commit failed: {exc}"
-            ) from exc
+            raise HuggingFacePublicationError(f"HfApi create_commit failed: {exc}") from exc
 
         commit_sha = _extract_commit_sha(result)
         return PublicationCommitReceipt(
@@ -1271,9 +1189,7 @@ class HuggingFaceReleasePublisher:
         """
 
         if commit_receipt.plan_digest != plan.plan_digest:
-            raise HuggingFacePublicationError(
-                "commit receipt plan_digest does not match plan"
-            )
+            raise HuggingFacePublicationError("commit receipt plan_digest does not match plan")
         pinned = commit_receipt.commit_sha
         records = self._get_paths_info(
             tuple(item.remote_path for item in plan.operations),
@@ -1292,16 +1208,13 @@ class HuggingFaceReleasePublisher:
             by_path[path] = record
 
         inventory: dict[str, dict[str, Any]] = {}
-        with tempfile.TemporaryDirectory(
-            prefix="abby-voice-post-publication-"
-        ) as scratch_text:
+        with tempfile.TemporaryDirectory(prefix="abby-voice-post-publication-") as scratch_text:
             scratch = Path(scratch_text).resolve()
             for item in plan.operations:
                 record = by_path.get(item.remote_path)
                 if record is None:
                     raise HuggingFacePublicationError(
-                        "post-publication verification missing remote path: "
-                        f"{item.remote_path}"
+                        f"post-publication verification missing remote path: {item.remote_path}"
                     )
                 raw_size = _record_value(record, "size")
                 if raw_size is None:
@@ -1310,8 +1223,7 @@ class HuggingFaceReleasePublisher:
                     remote_size = int(raw_size)
                 except (TypeError, ValueError) as exc:
                     raise HuggingFacePublicationError(
-                        "post-publication verification lacks remote size: "
-                        f"{item.remote_path}"
+                        f"post-publication verification lacks remote size: {item.remote_path}"
                     ) from exc
 
                 remote_sha = _record_lfs_sha256(record)
@@ -1395,9 +1307,7 @@ class HuggingFaceReleasePublisher:
                         f"pinned redownload failed for {remote}: {exc}"
                     ) from exc
                 if not isinstance(payload, (bytes, bytearray)):
-                    raise HuggingFacePublicationError(
-                        f"redownload payload must be bytes: {remote}"
-                    )
+                    raise HuggingFacePublicationError(f"redownload payload must be bytes: {remote}")
                 temporary = target.with_name(f".{target.name}.partial")
                 temporary.write_bytes(bytes(payload))
                 os.replace(temporary, target)
@@ -1444,9 +1354,7 @@ class HuggingFaceReleasePublisher:
         """
 
         if commit_receipt.plan_digest != plan.plan_digest:
-            raise HuggingFacePublicationError(
-                "commit receipt plan_digest does not match plan"
-            )
+            raise HuggingFacePublicationError("commit receipt plan_digest does not match plan")
         verified_paths: list[str] = []
         verified_bytes = 0
         for item in plan.operations:
@@ -1550,8 +1458,7 @@ class HuggingFaceReleasePublisher:
             for item in plan.operations:
                 if item.remote_path not in remote_payloads:
                     raise HuggingFacePublicationError(
-                        "pinned redownload test payload missing path: "
-                        f"{item.remote_path}"
+                        f"pinned redownload test payload missing path: {item.remote_path}"
                     )
                 payload = remote_payloads[item.remote_path]
                 if not isinstance(payload, (bytes, bytearray)):
@@ -1579,17 +1486,14 @@ class HuggingFaceReleasePublisher:
         )
         if canonical_manifest.is_file() and not canonical_manifest.is_symlink():
             try:
-                manifest_payload = json.loads(
-                    canonical_manifest.read_text(encoding="utf-8")
-                )
+                manifest_payload = json.loads(canonical_manifest.read_text(encoding="utf-8"))
             except (OSError, UnicodeError, json.JSONDecodeError) as exc:
                 raise HuggingFacePublicationError(
                     "pinned canonical release manifest is malformed"
                 ) from exc
             if (
                 isinstance(manifest_payload, Mapping)
-                and manifest_payload.get("schema_version")
-                == CANONICAL_ABBY_RELEASE_SCHEMA
+                and manifest_payload.get("schema_version") == CANONICAL_ABBY_RELEASE_SCHEMA
             ):
                 release_root = canonical_manifest.parent
                 try:
@@ -1597,15 +1501,12 @@ class HuggingFaceReleasePublisher:
                     # uses this publisher for its local-only DAG dry runs.
                     from ..voice.hf_release import validate_abby_voice_hf_release
 
-                    canonical_release_validation = (
-                        validate_abby_voice_hf_release(release_root)
-                    )
+                    canonical_release_validation = validate_abby_voice_hf_release(release_root)
                 except Exception as exc:
                     if isinstance(exc, HuggingFacePublicationError):
                         raise
                     raise HuggingFacePublicationError(
-                        "pinned canonical release failed exhaustive validation: "
-                        f"{exc}"
+                        f"pinned canonical release failed exhaustive validation: {exc}"
                     ) from exc
                 if canonical_release_validation.get("valid") is not True:
                     raise HuggingFacePublicationError(
@@ -1657,9 +1558,7 @@ class HuggingFaceReleasePublisher:
             or canary_percent <= 0
             or canary_percent > 100
         ):
-            raise HuggingFacePublicationError(
-                "canary_percent must be an integer in 1..100"
-            )
+            raise HuggingFacePublicationError("canary_percent must be an integer in 1..100")
         return RuntimeReleasePointer(
             repository_id=commit_receipt.repository_id,
             release_id=commit_receipt.release_id,
@@ -1680,9 +1579,7 @@ class HuggingFaceReleasePublisher:
         """Restore the previous pinned commit; retain the failed release."""
 
         if not failed_release_retained:
-            raise HuggingFacePublicationError(
-                "rollback must retain the failed release (no delete)"
-            )
+            raise HuggingFacePublicationError("rollback must retain the failed release (no delete)")
         if not current.previous_commit_sha or not current.previous_release_id:
             raise HuggingFacePublicationError(
                 "rollback requires previous_commit_sha and previous_release_id"
@@ -1804,9 +1701,7 @@ def _require_path_within(root: Path, candidate: Path, *, label: str) -> None:
     try:
         candidate_resolved.relative_to(root_resolved)
     except ValueError as exc:
-        raise HuggingFacePublicationError(
-            f"{label} escapes its root: {candidate}"
-        ) from exc
+        raise HuggingFacePublicationError(f"{label} escapes its root: {candidate}") from exc
 
 
 def _record_lfs_sha256(record: Any) -> str:
@@ -1828,9 +1723,7 @@ def _extract_repo_commit_sha(info: Any) -> str:
         value = getattr(info, attr, None)
         if value:
             return _commit_sha(value, label="repository_commit_sha")
-    raise HuggingFacePublicationError(
-        "Hugging Face repository info did not include a commit SHA"
-    )
+    raise HuggingFacePublicationError("Hugging Face repository info did not include a commit SHA")
 
 
 def _build_commit_add_operation(*, path_in_repo: str, local_path: Path) -> Any:
@@ -1875,9 +1768,7 @@ def _extract_commit_sha(result: Any) -> str:
             for key in ("oid", "sha", "commit_sha"):
                 if commit.get(key):
                     return _commit_sha(commit[key])
-    raise HuggingFacePublicationError(
-        "create_commit result did not include a commit SHA"
-    )
+    raise HuggingFacePublicationError("create_commit result did not include a commit SHA")
 
 
 def publish_abby_voice_release(
@@ -1897,8 +1788,7 @@ def publish_abby_voice_release(
     remote_payloads: Mapping[str, bytes] | None = None,
     verified_cache_root: str | Path | None = None,
     fetch_bytes: Callable[[str, str, str], bytes] | None = None,
-    fetch_to_path: Callable[[str, str, str, Path], str | Path | None]
-    | None = None,
+    fetch_to_path: Callable[[str, str, str, Path], str | Path | None] | None = None,
     pinned_download_workers: int = DEFAULT_PINNED_DOWNLOAD_WORKERS,
     run_post_publication_verification: bool = True,
     run_pinned_redownload_validation: bool = True,
@@ -1919,17 +1809,13 @@ def publish_abby_voice_release(
     if isinstance(manifest, (str, Path)):
         requested_manifest_path = Path(manifest).expanduser()
         if requested_manifest_path.is_symlink():
-            raise HuggingFacePublicationError(
-                "release manifest must not be a symlink"
-            )
+            raise HuggingFacePublicationError("release manifest must not be a symlink")
         path = requested_manifest_path.resolve()
         manifest_path = path
         try:
             payload = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, UnicodeError, json.JSONDecodeError) as exc:
-            raise HuggingFacePublicationError(
-                f"cannot read release manifest: {path}"
-            ) from exc
+            raise HuggingFacePublicationError(f"cannot read release manifest: {path}") from exc
         if not isinstance(payload, Mapping):
             raise HuggingFacePublicationError("release manifest must be a JSON object")
         manifest_obj: Mapping[str, Any] = payload
@@ -1943,12 +1829,9 @@ def publish_abby_voice_release(
         and manifest_obj.get("schema_version") == CANONICAL_ABBY_RELEASE_SCHEMA
     ):
         if local_root is None:
-            raise HuggingFacePublicationError(
-                "canonical release manifest requires local_root"
-            )
+            raise HuggingFacePublicationError("canonical release manifest requires local_root")
         expected_manifest_path = (
-            Path(local_root).expanduser().resolve()
-            / CANONICAL_RELEASE_MANIFEST_PATH
+            Path(local_root).expanduser().resolve() / CANONICAL_RELEASE_MANIFEST_PATH
         )
         if manifest_path != expected_manifest_path:
             raise HuggingFacePublicationError(
@@ -1988,9 +1871,7 @@ def publish_abby_voice_release(
         )
     if local_root is None:
         raise HuggingFacePublicationError("local_root is required for publish")
-    commit = publisher.publish_append_only(
-        plan, approval=approval, local_root=local_root
-    )
+    commit = publisher.publish_append_only(plan, approval=approval, local_root=local_root)
 
     post_publication: PostPublicationVerification | None = None
     pinned_redownload: PinnedRedownloadValidation | None = None
@@ -2017,9 +1898,7 @@ def publish_abby_voice_release(
             if verified_cache_root is not None:
                 cache = Path(verified_cache_root).expanduser().resolve()
             else:
-                cache = Path(
-                    tempfile.mkdtemp(prefix="abby-voice-pinned-redownload-")
-                ).resolve()
+                cache = Path(tempfile.mkdtemp(prefix="abby-voice-pinned-redownload-")).resolve()
             pinned_redownload = publisher.redownload_and_validate_pinned(
                 commit_sha=commit.commit_sha,
                 plan=plan,
@@ -2042,9 +1921,7 @@ def publish_abby_voice_release(
             _write_receipt(receipt_path, blocked_receipt)
         if isinstance(exc, HuggingFacePublicationError):
             raise
-        raise HuggingFacePublicationError(
-            f"post-publication verification failed: {exc}"
-        ) from exc
+        raise HuggingFacePublicationError(f"post-publication verification failed: {exc}") from exc
 
     # Both residual gates must pass before promotion is considered; canary
     # remains a separate reviewed step (canary_promote_pointer).

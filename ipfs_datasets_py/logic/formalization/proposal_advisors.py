@@ -49,9 +49,7 @@ from .samples import (
 # Schema / interface versions
 # ---------------------------------------------------------------------------
 
-PROPOSAL_ADVISOR_CONFIG_SCHEMA_VERSION: Final = (
-    "formalization-proposal-advisor-config/v1"
-)
+PROPOSAL_ADVISOR_CONFIG_SCHEMA_VERSION: Final = "formalization-proposal-advisor-config/v1"
 PROPOSAL_REQUEST_SCHEMA_VERSION: Final = "formalization-proposal-request/v1"
 PROPOSAL_CANDIDATE_SCHEMA_VERSION: Final = "formalization-proposal-candidate/v1"
 PROPOSAL_RESULT_SCHEMA_VERSION: Final = "formalization-proposal-result/v1"
@@ -171,9 +169,7 @@ class ProposalProvider(str, Enum):
 
 def _positive_int(value: Any, field_name: str, *, maximum: int) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or value < 1:
-        raise ProposalAdvisorValidationError(
-            f"{field_name} must be a positive integer"
-        )
+        raise ProposalAdvisorValidationError(f"{field_name} must be a positive integer")
     if value > maximum:
         raise ProposalAdvisorValidationError(
             f"{field_name} must not exceed the hard limit {maximum}"
@@ -194,9 +190,7 @@ def _unit_interval(value: Any, field_name: str) -> float:
         raise ProposalAdvisorValidationError(f"{field_name} must be numeric")
     result = float(value)
     if not (0.0 <= result <= 1.0) or result != result:  # NaN guard
-        raise ProposalAdvisorValidationError(
-            f"{field_name} must be a finite value in [0, 1]"
-        )
+        raise ProposalAdvisorValidationError(f"{field_name} must be a finite value in [0, 1]")
     return result
 
 
@@ -215,18 +209,14 @@ def _canonical_json(value: Any) -> str:
 
 
 def _content_digest(value: Any) -> str:
-    return "sha256:" + hashlib.sha256(
-        _canonical_json(value).encode("utf-8")
-    ).hexdigest()
+    return "sha256:" + hashlib.sha256(_canonical_json(value).encode("utf-8")).hexdigest()
 
 
 def _json_size(value: Any) -> int:
     try:
         return len(_canonical_json(value).encode("utf-8"))
     except (TypeError, ValueError) as exc:
-        raise ProposalAdvisorValidationError(
-            "metadata must be finite JSON data"
-        ) from exc
+        raise ProposalAdvisorValidationError("metadata must be finite JSON data") from exc
 
 
 def _json_shape(value: Any) -> tuple[int, int]:
@@ -234,9 +224,7 @@ def _json_shape(value: Any) -> tuple[int, int]:
         if not all(isinstance(key, str) for key in value):
             raise ProposalAdvisorValidationError("metadata keys must be strings")
         shapes = [_json_shape(item) for item in value.values()]
-    elif isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    elif isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         shapes = [_json_shape(item) for item in value]
     else:
         shapes = []
@@ -260,23 +248,15 @@ def sanitize_inert_text(
     """
 
     if not isinstance(value, str):
-        raise ProposalAdvisorValidationError(
-            f"{field_name} must be a string"
-        )
+        raise ProposalAdvisorValidationError(f"{field_name} must be a string")
     if _CONTROL_CHAR_RE.search(value):
-        raise ProposalAdvisorValidationError(
-            f"{field_name} must not contain control characters"
-        )
+        raise ProposalAdvisorValidationError(f"{field_name} must not contain control characters")
     text = value.replace("\r\n", "\n").replace("\r", "\n")
     if "\x00" in text:
-        raise ProposalAdvisorValidationError(
-            f"{field_name} must not contain null bytes"
-        )
+        raise ProposalAdvisorValidationError(f"{field_name} must not contain null bytes")
     stripped = text.strip()
     if not stripped and not allow_empty:
-        raise ProposalAdvisorValidationError(
-            f"{field_name} must be a non-empty string"
-        )
+        raise ProposalAdvisorValidationError(f"{field_name} must be a non-empty string")
     if len(stripped) > maximum:
         raise ProposalAdvisorValidationError(
             f"{field_name} exceeds the hard limit of {maximum} characters"
@@ -297,30 +277,23 @@ def _reject_authority_payload(value: Any, *, path: str = "") -> None:
             child_path = f"{path}/{raw_key}"
             if key in _AUTHORITY_CLAIM_KEYS:
                 raise ProposalAdvisorValidationError(
-                    "proposal cannot claim proof or execution authority "
-                    f"at {child_path}"
+                    f"proposal cannot claim proof or execution authority at {child_path}"
                 )
-            if key in {"status", "verdict", "authority"} and isinstance(
-                child, str
-            ):
+            if key in {"status", "verdict", "authority"} and isinstance(child, str):
                 if _normalized_key(child) in _AUTHORITY_CLAIM_VALUES | {
                     "trusted",
                     "proof_complete",
                 }:
                     raise ProposalAdvisorValidationError(
-                        "proposal cannot claim proof or execution authority "
-                        f"at {child_path}"
+                        f"proposal cannot claim proof or execution authority at {child_path}"
                     )
             if key == "authority" and isinstance(child, str):
                 if child != UNVERIFIED_AUTHORITY:
                     raise ProposalAdvisorValidationError(
-                        "proposal authority must remain "
-                        f"{UNVERIFIED_AUTHORITY!r} at {child_path}"
+                        f"proposal authority must remain {UNVERIFIED_AUTHORITY!r} at {child_path}"
                     )
             _reject_authority_payload(child, path=child_path)
-    elif isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    elif isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         for index, child in enumerate(value):
             _reject_authority_payload(child, path=f"{path}/{index}")
 
@@ -334,8 +307,7 @@ def is_untrusted_proposal_provider(provider_id: Any) -> bool:
     if normalized in UNTRUSTED_PROPOSAL_PROVIDERS:
         return True
     return any(
-        token in normalized
-        for token in ("leanstral", "symbolicai", "symai", "neural", "embedding")
+        token in normalized for token in ("leanstral", "symbolicai", "symai", "neural", "embedding")
     )
 
 
@@ -376,9 +348,7 @@ class ProposalAdvisorConfig:
     schema_version: str = PROPOSAL_ADVISOR_CONFIG_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "advisor_id", _identifier(self.advisor_id, "advisor_id")
-        )
+        object.__setattr__(self, "advisor_id", _identifier(self.advisor_id, "advisor_id"))
         object.__setattr__(
             self,
             "advisor_version",
@@ -402,16 +372,13 @@ class ProposalAdvisorConfig:
         if provider is ProposalProvider.LEANSTRAL:
             if self.interface_id != LEANSTRAL_ADVISOR_INTERFACE:
                 raise ProposalAdvisorValidationError(
-                    "Leanstral advisor must declare "
-                    f"{LEANSTRAL_ADVISOR_INTERFACE!r}"
+                    f"Leanstral advisor must declare {LEANSTRAL_ADVISOR_INTERFACE!r}"
                 )
         elif self.interface_id != SYMAI_ADVISOR_INTERFACE:
             raise ProposalAdvisorValidationError(
                 f"SymAI advisor must declare {SYMAI_ADVISOR_INTERFACE!r}"
             )
-        object.__setattr__(
-            self, "config_id", _identifier(self.config_id, "config_id")
-        )
+        object.__setattr__(self, "config_id", _identifier(self.config_id, "config_id"))
         for name, maximum in (
             ("max_candidates", _MAX_CANDIDATES),
             ("max_prompt_chars", _MAX_PROMPT_CHARS),
@@ -423,13 +390,10 @@ class ProposalAdvisorConfig:
                 name,
                 _positive_int(getattr(self, name), name, maximum=maximum),
             )
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != PROPOSAL_ADVISOR_CONFIG_SCHEMA_VERSION:
             raise ProposalAdvisorValidationError(
-                f"unsupported proposal advisor config schema: "
-                f"{self.schema_version!r}"
+                f"unsupported proposal advisor config schema: {self.schema_version!r}"
             )
 
     @property
@@ -487,13 +451,9 @@ class ProposalAdvisorConfig:
             config_id=value.get("config_id", "default"),
             max_candidates=value.get("max_candidates", 4),
             max_prompt_chars=value.get("max_prompt_chars", _MAX_PROMPT_CHARS),
-            max_response_chars=value.get(
-                "max_response_chars", _MAX_RESPONSE_CHARS
-            ),
+            max_response_chars=value.get("max_response_chars", _MAX_RESPONSE_CHARS),
             max_body_chars=value.get("max_body_chars", _MAX_BODY_CHARS),
-            schema_version=value.get(
-                "schema_version", PROPOSAL_ADVISOR_CONFIG_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", PROPOSAL_ADVISOR_CONFIG_SCHEMA_VERSION),
         )
 
     @classmethod
@@ -538,22 +498,14 @@ class ProposalAdvisorRequest:
     schema_version: str = PROPOSAL_REQUEST_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "request_id", _identifier(self.request_id, "request_id")
-        )
-        object.__setattr__(
-            self, "goal_id", _identifier(self.goal_id, "goal_id")
-        )
+        object.__setattr__(self, "request_id", _identifier(self.request_id, "request_id"))
+        object.__setattr__(self, "goal_id", _identifier(self.goal_id, "goal_id"))
         object.__setattr__(
             self,
             "logic_family",
             _identifier(self.logic_family, "logic_family"),
         )
-        kind = (
-            self.kind
-            if isinstance(self.kind, ProposalKind)
-            else ProposalKind(str(self.kind))
-        )
+        kind = self.kind if isinstance(self.kind, ProposalKind) else ProposalKind(str(self.kind))
         object.__setattr__(self, "kind", kind)
         object.__setattr__(
             self,
@@ -562,8 +514,7 @@ class ProposalAdvisorRequest:
         )
         if not self.source_ref_ids:
             raise ProposalAdvisorValidationError(
-                "proposal requests must be source-bound "
-                "(source_ref_ids non-empty)"
+                "proposal requests must be source-bound (source_ref_ids non-empty)"
             )
         if len(self.source_ref_ids) > _MAX_SOURCE_REFS:
             raise ProposalAdvisorValidationError(
@@ -572,21 +523,15 @@ class ProposalAdvisorRequest:
         object.__setattr__(
             self,
             "context_text",
-            sanitize_inert_text(
-                self.context_text, "context_text", maximum=_MAX_PROMPT_CHARS
-            ),
+            sanitize_inert_text(self.context_text, "context_text", maximum=_MAX_PROMPT_CHARS),
         )
         object.__setattr__(
             self,
             "goal_text",
-            sanitize_inert_text(
-                self.goal_text, "goal_text", maximum=_MAX_BODY_CHARS
-            ),
+            sanitize_inert_text(self.goal_text, "goal_text", maximum=_MAX_BODY_CHARS),
         )
         if self.formula_id:
-            object.__setattr__(
-                self, "formula_id", _identifier(self.formula_id, "formula_id")
-            )
+            object.__setattr__(self, "formula_id", _identifier(self.formula_id, "formula_id"))
         if self.ontology_identity:
             object.__setattr__(
                 self,
@@ -601,9 +546,7 @@ class ProposalAdvisorRequest:
             )
         if self.allowed_kinds:
             allowed = tuple(
-                item
-                if isinstance(item, ProposalKind)
-                else ProposalKind(str(item))
+                item if isinstance(item, ProposalKind) else ProposalKind(str(item))
                 for item in self.allowed_kinds
             )
             if kind not in allowed:
@@ -624,9 +567,7 @@ class ProposalAdvisorRequest:
                     allow_empty=True,
                 ),
             )
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != PROPOSAL_REQUEST_SCHEMA_VERSION:
             raise ProposalAdvisorValidationError(
                 f"unsupported proposal request schema: {self.schema_version!r}"
@@ -686,9 +627,7 @@ class ProposalAdvisorRequest:
         if self.notes:
             lines.append(f"notes={self.notes}")
         prompt = "\n".join(lines)
-        return sanitize_inert_text(
-            prompt, "prompt", maximum=_MAX_PROMPT_CHARS
-        )
+        return sanitize_inert_text(prompt, "prompt", maximum=_MAX_PROMPT_CHARS)
 
     @classmethod
     def from_dict(cls, value: Mapping[str, Any]) -> "ProposalAdvisorRequest":
@@ -725,9 +664,7 @@ class ProposalAdvisorRequest:
             goal_id=value.get("goal_id", ""),
             logic_family=value.get("logic_family", ""),
             kind=value.get("kind", ""),
-            source_ref_ids=tuple(
-                _sequence(value.get("source_ref_ids", ()), "source_ref_ids")
-            ),
+            source_ref_ids=tuple(_sequence(value.get("source_ref_ids", ()), "source_ref_ids")),
             context_text=value.get("context_text", ""),
             goal_text=value.get("goal_text", ""),
             formula_id=value.get("formula_id", ""),
@@ -735,9 +672,7 @@ class ProposalAdvisorRequest:
             artifact_identity=value.get("artifact_identity", ""),
             allowed_kinds=allowed,
             notes=value.get("notes", ""),
-            schema_version=value.get(
-                "schema_version", PROPOSAL_REQUEST_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", PROPOSAL_REQUEST_SCHEMA_VERSION),
         )
 
 
@@ -762,11 +697,7 @@ class ProposalCandidate:
             "candidate_id",
             _identifier(self.candidate_id, "candidate_id"),
         )
-        kind = (
-            self.kind
-            if isinstance(self.kind, ProposalKind)
-            else ProposalKind(str(self.kind))
-        )
+        kind = self.kind if isinstance(self.kind, ProposalKind) else ProposalKind(str(self.kind))
         object.__setattr__(self, "kind", kind)
         object.__setattr__(
             self,
@@ -780,8 +711,7 @@ class ProposalCandidate:
         )
         if not self.source_ref_ids:
             raise ProposalAdvisorValidationError(
-                f"candidate {self.candidate_id!r} is ungrounded: "
-                "source_ref_ids must be non-empty"
+                f"candidate {self.candidate_id!r} is ungrounded: source_ref_ids must be non-empty"
             )
         if len(self.source_ref_ids) > _MAX_SOURCE_REFS:
             raise ProposalAdvisorValidationError(
@@ -793,9 +723,7 @@ class ProposalCandidate:
             else ProposalProvider(str(self.provider))
         )
         object.__setattr__(self, "provider", provider)
-        object.__setattr__(
-            self, "confidence", _unit_interval(self.confidence, "confidence")
-        )
+        object.__setattr__(self, "confidence", _unit_interval(self.confidence, "confidence"))
         if self.rationale:
             object.__setattr__(
                 self,
@@ -813,38 +741,27 @@ class ProposalCandidate:
         _reject_authority_payload(metadata)
         nodes, depth = _json_shape(metadata)
         if nodes > _MAX_METADATA_NODES:
-            raise ProposalAdvisorValidationError(
-                "candidate metadata exceeds node bound"
-            )
+            raise ProposalAdvisorValidationError("candidate metadata exceeds node bound")
         if depth > _MAX_METADATA_DEPTH:
-            raise ProposalAdvisorValidationError(
-                "candidate metadata exceeds depth bound"
-            )
+            raise ProposalAdvisorValidationError("candidate metadata exceeds depth bound")
         if _json_size(metadata) > _MAX_METADATA_BYTES:
-            raise ProposalAdvisorValidationError(
-                "candidate metadata exceeds byte bound"
-            )
+            raise ProposalAdvisorValidationError("candidate metadata exceeds byte bound")
         object.__setattr__(self, "metadata", metadata)
         if self.authority != UNVERIFIED_AUTHORITY:
             raise ProposalAdvisorValidationError(
                 "proposal candidates are untrusted and cannot claim authority"
             )
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != PROPOSAL_CANDIDATE_SCHEMA_VERSION:
             raise ProposalAdvisorValidationError(
-                f"unsupported proposal candidate schema: "
-                f"{self.schema_version!r}"
+                f"unsupported proposal candidate schema: {self.schema_version!r}"
             )
 
     @property
     def is_proved(self) -> bool:
         """Candidates never establish proof, regardless of confidence."""
 
-        return confidence_never_yields_proof(
-            confidence=self.confidence, is_valid=None
-        )
+        return confidence_never_yields_proof(confidence=self.confidence, is_valid=None)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -885,24 +802,18 @@ class ProposalCandidate:
         if metadata is None:
             metadata = {}
         if not isinstance(metadata, Mapping):
-            raise ProposalAdvisorValidationError(
-                "candidate metadata must be a mapping"
-            )
+            raise ProposalAdvisorValidationError("candidate metadata must be a mapping")
         return cls(
             candidate_id=value.get("candidate_id", ""),
             kind=value.get("kind", ""),
             body=value.get("body", ""),
-            source_ref_ids=tuple(
-                _sequence(value.get("source_ref_ids", ()), "source_ref_ids")
-            ),
+            source_ref_ids=tuple(_sequence(value.get("source_ref_ids", ()), "source_ref_ids")),
             provider=value.get("provider", ""),
             confidence=value.get("confidence", 0.0),
             rationale=value.get("rationale", ""),
             metadata=dict(metadata),
             authority=value.get("authority", UNVERIFIED_AUTHORITY),
-            schema_version=value.get(
-                "schema_version", PROPOSAL_CANDIDATE_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", PROPOSAL_CANDIDATE_SCHEMA_VERSION),
         )
 
 
@@ -937,15 +848,11 @@ class ProposalAdvisorResult:
             else ProposalProvider(str(self.provider))
         )
         object.__setattr__(self, "provider", provider)
-        object.__setattr__(
-            self, "interface_id", _text(self.interface_id, "interface_id")
-        )
+        object.__setattr__(self, "interface_id", _text(self.interface_id, "interface_id"))
         object.__setattr__(
             self,
             "prompt",
-            sanitize_inert_text(
-                self.prompt, "prompt", maximum=_MAX_PROMPT_CHARS
-            ),
+            sanitize_inert_text(self.prompt, "prompt", maximum=_MAX_PROMPT_CHARS),
         )
         object.__setattr__(
             self,
@@ -960,9 +867,7 @@ class ProposalAdvisorResult:
         candidates = tuple(
             item
             if isinstance(item, ProposalCandidate)
-            else ProposalCandidate.from_dict(
-                _mapping(item, "proposal candidate")
-            )
+            else ProposalCandidate.from_dict(_mapping(item, "proposal candidate"))
             for item in self.candidates
         )
         candidate_ids = [item.candidate_id for item in candidates]
@@ -976,12 +881,9 @@ class ProposalAdvisorResult:
         object.__setattr__(self, "candidates", candidates)
         if self.authority != UNVERIFIED_AUTHORITY:
             raise ProposalAdvisorValidationError(
-                "proposal advisor results cannot claim proof or execution "
-                "authority"
+                "proposal advisor results cannot claim proof or execution authority"
             )
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != PROPOSAL_RESULT_SCHEMA_VERSION:
             raise ProposalAdvisorValidationError(
                 f"unsupported proposal result schema: {self.schema_version!r}"
@@ -1028,15 +930,11 @@ class ProposalAdvisorResult:
             prompt=value.get("prompt", ""),
             raw_response=value.get("raw_response", ""),
             candidates=tuple(
-                ProposalCandidate.from_dict(
-                    _mapping(item, "proposal candidate")
-                )
+                ProposalCandidate.from_dict(_mapping(item, "proposal candidate"))
                 for item in _sequence(value.get("candidates", ()), "candidates")
             ),
             authority=value.get("authority", UNVERIFIED_AUTHORITY),
-            schema_version=value.get(
-                "schema_version", PROPOSAL_RESULT_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", PROPOSAL_RESULT_SCHEMA_VERSION),
         )
 
 
@@ -1065,9 +963,7 @@ class ProposalAcceptance:
         if not isinstance(self.compiled, bool):
             raise ProposalAdvisorValidationError("compiled must be a bool")
         if not isinstance(self.independently_validated, bool):
-            raise ProposalAdvisorValidationError(
-                "independently_validated must be a bool"
-            )
+            raise ProposalAdvisorValidationError("independently_validated must be a bool")
         if not isinstance(self.accepted, bool):
             raise ProposalAdvisorValidationError("accepted must be a bool")
         # Fail closed: acceptance requires both gates.
@@ -1078,9 +974,7 @@ class ProposalAcceptance:
                 "independent solver/kernel validation"
             )
         reasons = tuple(
-            sanitize_inert_text(
-                item, "reason", maximum=_MAX_NOTES_CHARS, allow_empty=False
-            )
+            sanitize_inert_text(item, "reason", maximum=_MAX_NOTES_CHARS, allow_empty=False)
             for item in self.reasons
         )
         object.__setattr__(self, "reasons", reasons)
@@ -1090,22 +984,15 @@ class ProposalAcceptance:
             UNVERIFIED_AUTHORITY,
             "candidate_admitted_for_validation",
         }:
-            raise ProposalAdvisorValidationError(
-                "proposal acceptance cannot claim proof authority"
-            )
+            raise ProposalAdvisorValidationError("proposal acceptance cannot claim proof authority")
         if self.accepted:
-            object.__setattr__(
-                self, "authority", "candidate_admitted_for_validation"
-            )
+            object.__setattr__(self, "authority", "candidate_admitted_for_validation")
         else:
             object.__setattr__(self, "authority", UNVERIFIED_AUTHORITY)
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != PROPOSAL_ACCEPTANCE_SCHEMA_VERSION:
             raise ProposalAdvisorValidationError(
-                f"unsupported proposal acceptance schema: "
-                f"{self.schema_version!r}"
+                f"unsupported proposal acceptance schema: {self.schema_version!r}"
             )
 
     def to_dict(self) -> dict[str, Any]:
@@ -1141,14 +1028,10 @@ class ProposalAcceptance:
             candidate_id=value.get("candidate_id", ""),
             accepted=bool(value.get("accepted", False)),
             compiled=bool(value.get("compiled", False)),
-            independently_validated=bool(
-                value.get("independently_validated", False)
-            ),
+            independently_validated=bool(value.get("independently_validated", False)),
             reasons=tuple(_sequence(value.get("reasons", ()), "reasons")),
             authority=value.get("authority", UNVERIFIED_AUTHORITY),
-            schema_version=value.get(
-                "schema_version", PROPOSAL_ACCEPTANCE_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", PROPOSAL_ACCEPTANCE_SCHEMA_VERSION),
         )
 
 
@@ -1165,9 +1048,7 @@ def accept_candidate(
     """
 
     if not isinstance(candidate, ProposalCandidate):
-        raise ProposalAdvisorValidationError(
-            "candidate must be a ProposalCandidate"
-        )
+        raise ProposalAdvisorValidationError("candidate must be a ProposalCandidate")
     accepted = bool(compiled) and bool(independently_validated)
     reason_list = list(reasons)
     if not compiled:
@@ -1270,9 +1151,7 @@ def _decode_candidate_records(
                         "JSON response must include a candidates array or body"
                     )
             else:
-                raise ProposalAdvisorValidationError(
-                    "JSON response must be an object or array"
-                )
+                raise ProposalAdvisorValidationError("JSON response must be an object or array")
 
     if len(records) > config.max_candidates:
         raise ProposalAdvisorValidationError(
@@ -1282,9 +1161,7 @@ def _decode_candidate_records(
     candidates: list[ProposalCandidate] = []
     for index, record in enumerate(records):
         payload = dict(record)
-        payload.setdefault(
-            "candidate_id", f"{provider.value}:candidate:{index + 1}"
-        )
+        payload.setdefault("candidate_id", f"{provider.value}:candidate:{index + 1}")
         payload.setdefault("kind", request.kind.value)
         payload.setdefault("provider", provider.value)
         payload.setdefault("source_ref_ids", list(request.source_ref_ids))
@@ -1307,9 +1184,7 @@ def _decode_candidate_records(
             )
         payload["provider"] = provider.value
         # Enforce source binding: candidate may only use request sources.
-        source_refs = tuple(
-            _sequence(payload.get("source_ref_ids", ()), "source_ref_ids")
-        )
+        source_refs = tuple(_sequence(payload.get("source_ref_ids", ()), "source_ref_ids"))
         if not source_refs:
             source_refs = request.source_ref_ids
         unknown = set(source_refs) - set(request.source_ref_ids)
@@ -1321,9 +1196,7 @@ def _decode_candidate_records(
         payload["source_ref_ids"] = list(source_refs)
         # Confidence is advisory only and may be stripped to unit interval.
         if "confidence" in payload:
-            payload["confidence"] = _unit_interval(
-                payload.get("confidence"), "confidence"
-            )
+            payload["confidence"] = _unit_interval(payload.get("confidence"), "confidence")
         kind_value = payload.get("kind", request.kind.value)
         try:
             kind = (
@@ -1332,16 +1205,12 @@ def _decode_candidate_records(
                 else ProposalKind(str(kind_value))
             )
         except ValueError as exc:
-            raise ProposalAdvisorValidationError(
-                f"unknown proposal kind: {kind_value!r}"
-            ) from exc
+            raise ProposalAdvisorValidationError(f"unknown proposal kind: {kind_value!r}") from exc
         if kind not in request.allowed_kinds:
             raise ProposalAdvisorValidationError(
                 f"proposal kind {kind.value!r} is not allowed for this request"
             )
-        if kind is not request.kind and request.kind not in {
-            ProposalKind.SPECIFICATION
-        }:
+        if kind is not request.kind and request.kind not in {ProposalKind.SPECIFICATION}:
             # Allow multi-kind only when the request kind matches or the
             # request is a specification pass that may refine into others.
             pass
@@ -1351,9 +1220,7 @@ def _decode_candidate_records(
             raise ProposalAdvisorValidationError(
                 f"candidate {payload.get('candidate_id')!r} requires body text"
             )
-        payload["body"] = sanitize_inert_text(
-            body, "body", maximum=config.max_body_chars
-        )
+        payload["body"] = sanitize_inert_text(body, "body", maximum=config.max_body_chars)
         candidates.append(ProposalCandidate.from_dict(payload))
     return tuple(candidates)
 
@@ -1374,28 +1241,18 @@ class BoundedProposalAdvisor:
         self._model = model
         self.config = ProposalAdvisorConfig.from_dict(config.to_dict())
 
-    def propose(
-        self, request: ProposalAdvisorRequest
-    ) -> ProposalAdvisorResult:
+    def propose(self, request: ProposalAdvisorRequest) -> ProposalAdvisorResult:
         if not isinstance(request, ProposalAdvisorRequest):
-            raise ProposalAdvisorValidationError(
-                "request must be a ProposalAdvisorRequest"
-            )
+            raise ProposalAdvisorValidationError("request must be a ProposalAdvisorRequest")
         prompt = request.build_inert_prompt(provider=self.config.provider)
         if len(prompt) > self.config.max_prompt_chars:
-            raise ProposalAdvisorValidationError(
-                "prompt exceeds max_prompt_chars"
-            )
+            raise ProposalAdvisorValidationError("prompt exceeds max_prompt_chars")
         try:
             raw = self._model.generate(prompt)
         except Exception as exc:  # noqa: BLE001 - fail closed for untrusted I/O
-            raise ProposalAdvisorValidationError(
-                f"proposal model failed: {exc}"
-            ) from exc
+            raise ProposalAdvisorValidationError(f"proposal model failed: {exc}") from exc
         if not isinstance(raw, str):
-            raise ProposalAdvisorValidationError(
-                "proposal model must return a string response"
-            )
+            raise ProposalAdvisorValidationError("proposal model must return a string response")
         response = sanitize_inert_text(
             raw,
             "raw_response",
@@ -1449,9 +1306,7 @@ class SymAIProposalAdvisor(BoundedProposalAdvisor):
     ) -> None:
         resolved = config or ProposalAdvisorConfig.symai_default()
         if resolved.provider is not ProposalProvider.SYMAI:
-            raise ProposalAdvisorValidationError(
-                "SymAIProposalAdvisor requires provider=symai"
-            )
+            raise ProposalAdvisorValidationError("SymAIProposalAdvisor requires provider=symai")
         if resolved.interface_id != SYMAI_ADVISOR_INTERFACE:
             raise ProposalAdvisorValidationError(
                 f"SymAIProposalAdvisor requires {SYMAI_ADVISOR_INTERFACE}"
@@ -1469,9 +1324,7 @@ class StaticProposalModel:
 
     def generate(self, prompt: str) -> str:
         if not isinstance(prompt, str) or not prompt.strip():
-            raise ProposalAdvisorValidationError(
-                "static model requires a non-empty inert prompt"
-            )
+            raise ProposalAdvisorValidationError("static model requires a non-empty inert prompt")
         return self._response
 
 

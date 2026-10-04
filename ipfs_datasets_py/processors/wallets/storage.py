@@ -93,9 +93,7 @@ def record_as_dict(record: object) -> dict[str, Any]:
             return dict(value)
     if isinstance(record, Mapping):
         return dict(record)
-    raise DatasetSinkError(
-        f"record of type {type(record).__name__} is not serializable"
-    )
+    raise DatasetSinkError(f"record of type {type(record).__name__} is not serializable")
 
 
 def record_finality(record: object) -> Finality:
@@ -221,9 +219,7 @@ class StoredRawPayload:
         if not isinstance(self.body, (bytes, bytearray)):
             raise InvalidRequestError("raw payload body must be bytes")
         object.__setattr__(self, "body", bytes(self.body))
-        object.__setattr__(
-            self, "media_type", _required_str(self.media_type, "media_type")
-        )
+        object.__setattr__(self, "media_type", _required_str(self.media_type, "media_type"))
         if self.cid is not None:
             object.__setattr__(self, "cid", _required_str(self.cid, "cid"))
 
@@ -283,13 +279,9 @@ class RawPayloadCustodyLimits:
             "max_total_bytes",
             _positive_int(self.max_total_bytes, "max_total_bytes"),
         )
-        object.__setattr__(
-            self, "max_objects", _positive_int(self.max_objects, "max_objects")
-        )
+        object.__setattr__(self, "max_objects", _positive_int(self.max_objects, "max_objects"))
         if self.max_object_bytes > self.max_total_bytes:
-            raise InvalidRequestError(
-                "max_object_bytes must not exceed max_total_bytes"
-            )
+            raise InvalidRequestError("max_object_bytes must not exceed max_total_bytes")
 
     def to_dict(self) -> dict[str, int]:
         return {
@@ -372,9 +364,7 @@ def _enforce_object_size(
         )
     # Operation-level response ceiling also bounds retained raw objects.
     if size > context.limits.max_response_bytes:
-        raise ResourceLimitError(
-            "raw payload exceeds operation max_response_bytes"
-        )
+        raise ResourceLimitError("raw payload exceeds operation max_response_bytes")
     return size
 
 
@@ -391,9 +381,7 @@ def _enforce_capacity(
     if not is_new:
         return
     if object_count >= limits.max_objects:
-        raise ResourceLimitError(
-            f"raw payload store exceeds max_objects ({limits.max_objects})"
-        )
+        raise ResourceLimitError(f"raw payload store exceeds max_objects ({limits.max_objects})")
     if total_bytes + size > limits.max_total_bytes:
         raise ResourceLimitError(
             f"raw payload store exceeds max_total_bytes ({limits.max_total_bytes})"
@@ -470,23 +458,15 @@ class InMemoryRawPayloadStore:
         if limits is None:
             limits = RawPayloadCustodyLimits(
                 max_object_bytes=(
-                    DEFAULT_MAX_RAW_OBJECT_BYTES
-                    if max_object_bytes is None
-                    else max_object_bytes
+                    DEFAULT_MAX_RAW_OBJECT_BYTES if max_object_bytes is None else max_object_bytes
                 ),
                 max_total_bytes=(
-                    DEFAULT_MAX_RAW_TOTAL_BYTES
-                    if max_total_bytes is None
-                    else max_total_bytes
+                    DEFAULT_MAX_RAW_TOTAL_BYTES if max_total_bytes is None else max_total_bytes
                 ),
-                max_objects=(
-                    DEFAULT_MAX_RAW_OBJECTS if max_objects is None else max_objects
-                ),
+                max_objects=(DEFAULT_MAX_RAW_OBJECTS if max_objects is None else max_objects),
             )
         elif any(v is not None for v in (max_object_bytes, max_total_bytes, max_objects)):
-            raise InvalidRequestError(
-                "pass either limits= or individual max_* kwargs, not both"
-            )
+            raise InvalidRequestError("pass either limits= or individual max_* kwargs, not both")
         if not isinstance(policy, RawPayloadPolicy):
             raise InvalidRequestError("policy must be a RawPayloadPolicy")
         _require_encryptor_for_policy(policy, encryptor)
@@ -544,9 +524,7 @@ class InMemoryRawPayloadStore:
             # Defensive equality check only applies to plaintext custody (encrypted
             # ciphertext may be non-deterministic across encrypt calls).
             if self._encryptor is None and existing.body != raw:
-                raise DatasetSinkError(
-                    f"raw payload digest collision for {digest}"
-                )
+                raise DatasetSinkError(f"raw payload digest collision for {digest}")
             return existing
 
         _enforce_capacity(
@@ -627,23 +605,15 @@ class DirectoryRawPayloadStore:
         if limits is None:
             limits = RawPayloadCustodyLimits(
                 max_object_bytes=(
-                    DEFAULT_MAX_RAW_OBJECT_BYTES
-                    if max_object_bytes is None
-                    else max_object_bytes
+                    DEFAULT_MAX_RAW_OBJECT_BYTES if max_object_bytes is None else max_object_bytes
                 ),
                 max_total_bytes=(
-                    DEFAULT_MAX_RAW_TOTAL_BYTES
-                    if max_total_bytes is None
-                    else max_total_bytes
+                    DEFAULT_MAX_RAW_TOTAL_BYTES if max_total_bytes is None else max_total_bytes
                 ),
-                max_objects=(
-                    DEFAULT_MAX_RAW_OBJECTS if max_objects is None else max_objects
-                ),
+                max_objects=(DEFAULT_MAX_RAW_OBJECTS if max_objects is None else max_objects),
             )
         elif any(v is not None for v in (max_object_bytes, max_total_bytes, max_objects)):
-            raise InvalidRequestError(
-                "pass either limits= or individual max_* kwargs, not both"
-            )
+            raise InvalidRequestError("pass either limits= or individual max_* kwargs, not both")
         if not isinstance(policy, RawPayloadPolicy):
             raise InvalidRequestError("policy must be a RawPayloadPolicy")
         _require_encryptor_for_policy(policy, encryptor)
@@ -725,9 +695,7 @@ class DirectoryRawPayloadStore:
             # is present we trust the digest key and skip byte equality.
             existing_body = path.read_bytes()
             if self._encryptor is None and existing_body != raw:
-                raise DatasetSinkError(
-                    f"raw payload digest collision for {digest}"
-                )
+                raise DatasetSinkError(f"raw payload digest collision for {digest}")
             return StoredRawPayload(
                 digest=digest,
                 body=existing_body if self._encryptor is not None else raw,
@@ -763,9 +731,7 @@ class DirectoryRawPayloadStore:
         # Write body then meta; counters update only after both succeed.
         _restrictive_write_bytes(path, payload.body)
         try:
-            _restrictive_write_bytes(
-                meta_path, canonical_json_bytes(payload.to_dict())
-            )
+            _restrictive_write_bytes(meta_path, canonical_json_bytes(payload.to_dict()))
         except Exception:
             try:
                 path.unlink(missing_ok=True)
@@ -807,9 +773,7 @@ class DirectoryRawPayloadStore:
             if not isinstance(body, (bytes, bytearray)):
                 raise DatasetSinkError("encryptor.decrypt must return bytes")
             body = bytes(body)
-        return StoredRawPayload(
-            digest=digest, body=body, media_type=media_type, cid=cid
-        )
+        return StoredRawPayload(digest=digest, body=body, media_type=media_type, cid=cid)
 
 
 @dataclass
@@ -1014,9 +978,7 @@ class StreamingDatasetSink:
                 # slice when the caller has not yet finalized multi-partition
                 # accounting; still require non-negative consistency.
                 if export_manifest.record_count > len(self._committed):
-                    raise DatasetSinkError(
-                        "manifest record_count exceeds committed sink rows"
-                    )
+                    raise DatasetSinkError("manifest record_count exceeds committed sink rows")
 
         digest = content_digest([item.payload for item in self._committed])
         if self._output_dir is not None:
@@ -1037,10 +999,7 @@ class StreamingDatasetSink:
         assert self._output_dir is not None
         path = self._output_dir / "records.jsonl"
         tmp = path.with_suffix(".jsonl.tmp")
-        lines = [
-            canonical_json_bytes(item.payload).decode("utf-8")
-            for item in self._committed
-        ]
+        lines = [canonical_json_bytes(item.payload).decode("utf-8") for item in self._committed]
         tmp.write_text("\n".join(lines) + ("\n" if lines else ""), encoding="utf-8")
         tmp.replace(path)
         (self._output_dir / "content.digest").write_text(digest + "\n", encoding="utf-8")

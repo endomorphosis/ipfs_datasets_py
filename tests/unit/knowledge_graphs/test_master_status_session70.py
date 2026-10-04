@@ -7,6 +7,7 @@ Tests for:
 3. KnowledgeGraph.apply_diff() — in-place diff application
 4. Doc integrity: MASTER_STATUS version + snapshot; MASTER_REFACTORING_PLAN snapshot
 """
+
 import os
 import sys
 from pathlib import Path
@@ -22,8 +23,10 @@ _REPO_ROOT = Path(__file__).resolve().parents[3]
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_kg(name="test"):
     from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraph
+
     return KnowledgeGraph(name=name)
 
 
@@ -51,29 +54,34 @@ def _deferred_features() -> str:
 # Class 1: KnowledgeGraphDiff dataclass
 # ===========================================================================
 
+
 class TestKnowledgeGraphDiff:
     """Unit tests for KnowledgeGraphDiff dataclass methods."""
 
     def test_import_knowledge_graph_diff(self):
         """KnowledgeGraphDiff is importable from extraction package."""
         from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraphDiff
+
         assert KnowledgeGraphDiff is not None
 
     def test_empty_diff_is_empty_true(self):
         """A default-constructed diff is empty."""
         from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraphDiff
+
         diff = KnowledgeGraphDiff()
         assert diff.is_empty is True
 
     def test_non_empty_diff_is_empty_false(self):
         """A diff with any content is not empty."""
         from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraphDiff
+
         diff = KnowledgeGraphDiff(added_entities=[{"entity_id": "x"}])
         assert diff.is_empty is False
 
     def test_summary_contains_plus_entities(self):
         """summary() contains '+N entities' component."""
         from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraphDiff
+
         diff = KnowledgeGraphDiff(added_entities=[{"a": 1}, {"b": 2}])
         s = diff.summary()
         assert "+2 entities" in s
@@ -81,6 +89,7 @@ class TestKnowledgeGraphDiff:
     def test_summary_contains_minus_entities(self):
         """summary() contains '-N entities' component."""
         from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraphDiff
+
         diff = KnowledgeGraphDiff(removed_entity_ids=["id1"])
         s = diff.summary()
         assert "-1 entities" in s
@@ -88,6 +97,7 @@ class TestKnowledgeGraphDiff:
     def test_summary_contains_modified(self):
         """summary() contains '~N modified' component."""
         from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraphDiff
+
         diff = KnowledgeGraphDiff(modified_entities=[{"entity_id": "x"}])
         s = diff.summary()
         assert "~1 modified" in s
@@ -95,12 +105,15 @@ class TestKnowledgeGraphDiff:
     def test_to_dict_from_dict_roundtrip(self):
         """to_dict() → from_dict() preserves all fields."""
         from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraphDiff
+
         diff = KnowledgeGraphDiff(
             added_entities=[{"entity_id": "a", "name": "Alice"}],
             removed_entity_ids=["old-id"],
             added_relationships=[{"relationship_type": "knows"}],
             removed_relationship_ids=["r1"],
-            modified_entities=[{"entity_id": "m", "old_properties": {}, "new_properties": {"x": 1}}],
+            modified_entities=[
+                {"entity_id": "m", "old_properties": {}, "new_properties": {"x": 1}}
+            ],
         )
         d = diff.to_dict()
         restored = KnowledgeGraphDiff.from_dict(d)
@@ -114,6 +127,7 @@ class TestKnowledgeGraphDiff:
     def test_from_dict_empty_produces_empty_diff(self):
         """from_dict({}) produces an empty diff."""
         from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraphDiff
+
         diff = KnowledgeGraphDiff.from_dict({})
         assert diff.is_empty
 
@@ -121,6 +135,7 @@ class TestKnowledgeGraphDiff:
 # ===========================================================================
 # Class 2: KnowledgeGraph.diff() computation
 # ===========================================================================
+
 
 class TestKnowledgeGraphDiffComputation:
     """Tests for KnowledgeGraph.diff()."""
@@ -224,12 +239,14 @@ class TestKnowledgeGraphDiffComputation:
 # Class 3: KnowledgeGraph.apply_diff()
 # ===========================================================================
 
+
 class TestKnowledgeGraphApplyDiff:
     """Tests for KnowledgeGraph.apply_diff()."""
 
     def test_apply_empty_diff_no_change(self):
         """Applying an empty diff leaves the graph unchanged."""
         from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraphDiff
+
         kg = _make_kg()
         kg.add_entity("person", "Alice")
         initial_count = len(kg.entities)
@@ -359,6 +376,7 @@ class TestKnowledgeGraphApplyDiff:
 # Class 4: Doc integrity — MASTER_STATUS + REFACTORING_PLAN snapshot
 # ===========================================================================
 
+
 class TestDocIntegritySession70:
     """Doc integrity tests for stale snapshot data fixed in session 70."""
 
@@ -402,9 +420,7 @@ class TestDocIntegritySession70:
     def test_refactoring_plan_test_count_updated(self):
         """MASTER_REFACTORING_PLAN_2026.md snapshot tests collected should be 3,939+."""
         content = _refactoring_plan()
-        assert "3,856+" not in content, (
-            "Stale 3,856+ test count should be replaced with 3,939+"
-        )
+        assert "3,856+" not in content, "Stale 3,856+ test count should be replaced with 3,939+"
 
     def test_changelog_has_3_22_24_section(self):
         """CHANGELOG_KNOWLEDGE_GRAPHS.md contains a ## [3.22.24] section."""
@@ -416,9 +432,7 @@ class TestDocIntegritySession70:
     def test_roadmap_has_3_22_24_row(self):
         """ROADMAP.md release table contains a 3.22.24 row."""
         content = _roadmap()
-        assert "3.22.24" in content, (
-            "ROADMAP.md release table should contain 3.22.24"
-        )
+        assert "3.22.24" in content, "ROADMAP.md release table should contain 3.22.24"
 
     def test_deferred_features_has_graph_diff(self):
         """DEFERRED_FEATURES.md mentions graph diff/patch as implemented."""
@@ -431,6 +445,7 @@ class TestDocIntegritySession70:
 # ===========================================================================
 # Class 5: Version Agreement
 # ===========================================================================
+
 
 class TestVersionAgreement:
     """MASTER_STATUS, CHANGELOG, and ROADMAP must all agree on current version."""

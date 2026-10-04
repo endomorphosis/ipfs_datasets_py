@@ -153,12 +153,7 @@ ExecutableFinder = Callable[[str], str | None]
 def _text(value: object, field_name: str, *, optional: bool = False) -> str:
     if optional and value == "":
         return ""
-    if (
-        not isinstance(value, str)
-        or not value
-        or value != value.strip()
-        or "\x00" in value
-    ):
+    if not isinstance(value, str) or not value or value != value.strip() or "\x00" in value:
         qualifier = "an empty or " if optional else "a "
         raise HyperpropertyAdapterError(
             f"{field_name} must be {qualifier}non-empty trimmed string without NUL bytes"
@@ -172,13 +167,9 @@ def _source_text(value: object, field_name: str, *, optional: bool = False) -> s
     if optional and value in ("", None):
         return ""
     if not isinstance(value, str) or "\x00" in value:
-        raise HyperpropertyAdapterError(
-            f"{field_name} must be text without NUL bytes"
-        )
+        raise HyperpropertyAdapterError(f"{field_name} must be text without NUL bytes")
     if not optional and not value.strip():
-        raise HyperpropertyAdapterError(
-            f"{field_name} must be non-empty text without NUL bytes"
-        )
+        raise HyperpropertyAdapterError(f"{field_name} must be non-empty text without NUL bytes")
     return value
 
 
@@ -186,9 +177,7 @@ def _digest(value: object, field_name: str) -> str:
     text = _text(value, field_name)
     candidate = text.removeprefix("sha256:")
     if not _DIGEST.fullmatch(candidate):
-        raise HyperpropertyAdapterError(
-            f"{field_name} must be a lowercase SHA-256 digest"
-        )
+        raise HyperpropertyAdapterError(f"{field_name} must be a lowercase SHA-256 digest")
     return candidate
 
 
@@ -197,9 +186,7 @@ def _enum(value: object, enum_type: type[StrEnum], field_name: str) -> Any:
         return value if isinstance(value, enum_type) else enum_type(str(value))
     except (TypeError, ValueError) as error:
         choices = ", ".join(item.value for item in enum_type)
-        raise HyperpropertyAdapterError(
-            f"{field_name} must be one of {choices}"
-        ) from error
+        raise HyperpropertyAdapterError(f"{field_name} must be one of {choices}") from error
 
 
 def _positive_int(value: object, field_name: str) -> int:
@@ -210,9 +197,7 @@ def _positive_int(value: object, field_name: str) -> int:
 
 def _non_negative_int(value: object, field_name: str) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or value < 0:
-        raise HyperpropertyAdapterError(
-            f"{field_name} must be a non-negative integer"
-        )
+        raise HyperpropertyAdapterError(f"{field_name} must be a non-negative integer")
     return value
 
 
@@ -250,9 +235,7 @@ def _document_from_value(value: object) -> HyperpropertyIR:
             return HyperpropertyIR.from_dict(value)
         except HyperpropertyValidationError as error:
             raise HyperpropertyAdapterError(str(error)) from error
-    raise HyperpropertyAdapterError(
-        "document must be a HyperpropertyIR or mapping"
-    )
+    raise HyperpropertyAdapterError("document must be a HyperpropertyIR or mapping")
 
 
 @dataclass(frozen=True, slots=True)
@@ -272,27 +255,19 @@ class HyperEngineCapability:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "engine", _enum(self.engine, HyperEngine, "engine"))
-        object.__setattr__(
-            self, "backend_version", _text(self.backend_version, "backend_version")
-        )
+        object.__setattr__(self, "backend_version", _text(self.backend_version, "backend_version"))
         candidates = tuple(
             _text(item, "executable candidate") for item in self.executable_candidates
         )
         if not candidates:
-            raise HyperpropertyAdapterError(
-                "executable_candidates must not be empty"
-            )
+            raise HyperpropertyAdapterError("executable_candidates must not be empty")
         if len(candidates) != len(set(candidates)):
-            raise HyperpropertyAdapterError(
-                "executable_candidates must not contain duplicates"
-            )
+            raise HyperpropertyAdapterError("executable_candidates must not contain duplicates")
         object.__setattr__(self, "executable_candidates", candidates)
         object.__setattr__(
             self,
             "max_quantifier_alternations",
-            _non_negative_int(
-                self.max_quantifier_alternations, "max_quantifier_alternations"
-            ),
+            _non_negative_int(self.max_quantifier_alternations, "max_quantifier_alternations"),
         )
         object.__setattr__(
             self,
@@ -407,9 +382,7 @@ class ObservationMap:
         object.__setattr__(
             self,
             "observation_fields",
-            tuple(
-                _text(item, "observation field") for item in self.observation_fields
-            ),
+            tuple(_text(item, "observation field") for item in self.observation_fields),
         )
         object.__setattr__(
             self,
@@ -419,9 +392,7 @@ class ObservationMap:
         if not isinstance(self.observation_kinds, Mapping):
             raise HyperpropertyAdapterError("observation_kinds must be a mapping")
         kinds = {
-            _text(key, "observation kind key"): _text(
-                value, f"observation kind for {key}"
-            )
+            _text(key, "observation kind key"): _text(value, f"observation kind for {key}")
             for key, value in self.observation_kinds.items()
         }
         object.__setattr__(self, "observation_kinds", FrozenMap(kinds).to_dict())
@@ -429,9 +400,9 @@ class ObservationMap:
     @classmethod
     def from_document(cls, document: HyperpropertyIR) -> ObservationMap:
         policy = document.information_flow_policy
-        kinds = {
-            item.field: item.kind.value for item in policy.observations
-        } or {field_name: "output" for field_name in policy.observation_fields}
+        kinds = {item.field: item.kind.value for item in policy.observations} or {
+            field_name: "output" for field_name in policy.observation_fields
+        }
         return cls(
             policy_id=policy.policy_id,
             low_input_fields=policy.low_input_fields,
@@ -496,9 +467,7 @@ class QuantifierOrder:
             == len(self.variable_names)
             == len(self.bindings)
         ):
-            raise HyperpropertyAdapterError(
-                "quantifier order components must have equal length"
-            )
+            raise HyperpropertyAdapterError("quantifier order components must have equal length")
         object.__setattr__(
             self,
             "bindings",
@@ -511,9 +480,7 @@ class QuantifierOrder:
         names_by_id = {item.variable_id: item.name for item in formula.variables}
         return cls(
             signature=formula.quantifier_signature,
-            variable_ids=tuple(
-                item.variable_id for item in formula.quantifier_prefix
-            ),
+            variable_ids=tuple(item.variable_id for item in formula.quantifier_prefix),
             variable_names=tuple(
                 names_by_id[item.variable_id] for item in formula.quantifier_prefix
             ),
@@ -524,13 +491,9 @@ class QuantifierOrder:
         formula = document.formula
         if self.signature != formula.quantifier_signature:
             return False
-        if self.variable_ids != tuple(
-            item.variable_id for item in formula.quantifier_prefix
-        ):
+        if self.variable_ids != tuple(item.variable_id for item in formula.quantifier_prefix):
             return False
-        restored = tuple(
-            QuantifierBinding.from_dict(item) for item in self.bindings
-        )
+        restored = tuple(QuantifierBinding.from_dict(item) for item in self.bindings)
         return quantifier_order_is_canonical(restored, formula.quantifier_prefix)
 
     def to_dict(self) -> dict[str, Any]:
@@ -571,20 +534,12 @@ class HyperpropertyTranslation:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "engine", _enum(self.engine, HyperEngine, "engine"))
-        object.__setattr__(
-            self, "translator_id", _text(self.translator_id, "translator_id")
-        )
-        object.__setattr__(
-            self, "formula_text", _source_text(self.formula_text, "formula_text")
-        )
+        object.__setattr__(self, "translator_id", _text(self.translator_id, "translator_id"))
+        object.__setattr__(self, "formula_text", _source_text(self.formula_text, "formula_text"))
         if not isinstance(self.quantifier_order, QuantifierOrder):
-            raise HyperpropertyAdapterError(
-                "quantifier_order must be a QuantifierOrder"
-            )
+            raise HyperpropertyAdapterError("quantifier_order must be a QuantifierOrder")
         if not isinstance(self.observation_map, ObservationMap):
-            raise HyperpropertyAdapterError(
-                "observation_map must be an ObservationMap"
-            )
+            raise HyperpropertyAdapterError("observation_map must be an ObservationMap")
         object.__setattr__(
             self, "document_digest", _digest(self.document_digest, "document_digest")
         )
@@ -669,18 +624,12 @@ class HyperCounterexampleTrace:
             )
         for item in self.traces:
             if not isinstance(item, WitnessTrace):
-                raise HyperpropertyAdapterError(
-                    "counterexample traces must be WitnessTrace values"
-                )
+                raise HyperpropertyAdapterError("counterexample traces must be WitnessTrace values")
         object.__setattr__(self, "differences", tuple(self.differences))
         for item in self.differences:
             if not isinstance(item, ObservationDifference):
-                raise HyperpropertyAdapterError(
-                    "differences must be ObservationDifference values"
-                )
-        object.__setattr__(
-            self, "raw", _source_text(self.raw, "raw", optional=True)
-        )
+                raise HyperpropertyAdapterError("differences must be ObservationDifference values")
+        object.__setattr__(self, "raw", _source_text(self.raw, "raw", optional=True))
         object.__setattr__(self, "replayed", _bool(self.replayed, "replayed"))
         object.__setattr__(
             self,
@@ -733,20 +682,12 @@ class FallbackBoundDisclosure:
     external_tool_proof: bool = False
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "max_traces", _positive_int(self.max_traces, "max_traces")
-        )
-        object.__setattr__(
-            self, "max_pairs", _positive_int(self.max_pairs, "max_pairs")
-        )
+        object.__setattr__(self, "max_traces", _positive_int(self.max_traces, "max_traces"))
+        object.__setattr__(self, "max_pairs", _positive_int(self.max_pairs, "max_pairs"))
         if self.max_steps is not None:
-            object.__setattr__(
-                self, "max_steps", _positive_int(self.max_steps, "max_steps")
-            )
+            object.__setattr__(self, "max_steps", _positive_int(self.max_steps, "max_steps"))
         object.__setattr__(self, "bound_id", _text(self.bound_id, "bound_id"))
-        object.__setattr__(
-            self, "authoritative", _bool(self.authoritative, "authoritative")
-        )
+        object.__setattr__(self, "authoritative", _bool(self.authoritative, "authoritative"))
         object.__setattr__(
             self,
             "external_tool_proof",
@@ -808,9 +749,7 @@ class HyperCheckReceipt:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "engine", _enum(self.engine, HyperEngine, "engine"))
-        object.__setattr__(
-            self, "status", _enum(self.status, HyperCheckOutcomeStatus, "status")
-        )
+        object.__setattr__(self, "status", _enum(self.status, HyperCheckOutcomeStatus, "status"))
         object.__setattr__(
             self,
             "evidence_path",
@@ -824,9 +763,7 @@ class HyperCheckReceipt:
             "translation_digest",
             _digest(self.translation_digest, "translation_digest"),
         )
-        object.__setattr__(
-            self, "executable", _text(self.executable, "executable", optional=True)
-        )
+        object.__setattr__(self, "executable", _text(self.executable, "executable", optional=True))
         object.__setattr__(
             self,
             "tool_version",
@@ -834,55 +771,37 @@ class HyperCheckReceipt:
         )
         object.__setattr__(self, "command", tuple(str(item) for item in self.command))
         if not isinstance(self.capability, HyperEngineCapability):
-            raise HyperpropertyAdapterError(
-                "capability must be a HyperEngineCapability"
-            )
+            raise HyperpropertyAdapterError("capability must be a HyperEngineCapability")
         if not isinstance(self.quantifier_order, QuantifierOrder):
-            raise HyperpropertyAdapterError(
-                "quantifier_order must be a QuantifierOrder"
-            )
+            raise HyperpropertyAdapterError("quantifier_order must be a QuantifierOrder")
         if not isinstance(self.observation_map, ObservationMap):
-            raise HyperpropertyAdapterError(
-                "observation_map must be an ObservationMap"
-            )
+            raise HyperpropertyAdapterError("observation_map must be an ObservationMap")
         if (
             isinstance(self.elapsed_ms, bool)
             or not isinstance(self.elapsed_ms, int)
             or self.elapsed_ms < 0
         ):
-            raise HyperpropertyAdapterError(
-                "elapsed_ms must be a non-negative integer"
-            )
+            raise HyperpropertyAdapterError("elapsed_ms must be a non-negative integer")
         if (
             isinstance(self.timeout_seconds, bool)
             or not isinstance(self.timeout_seconds, (int, float))
             or self.timeout_seconds <= 0
         ):
-            raise HyperpropertyAdapterError(
-                "timeout_seconds must be a positive number"
-            )
+            raise HyperpropertyAdapterError("timeout_seconds must be a positive number")
         object.__setattr__(
             self, "output_truncated", _bool(self.output_truncated, "output_truncated")
         )
         object.__setattr__(self, "reason", _text(self.reason, "reason"))
-        object.__setattr__(
-            self, "stdout", _source_text(self.stdout, "stdout", optional=True)
-        )
-        object.__setattr__(
-            self, "stderr", _source_text(self.stderr, "stderr", optional=True)
-        )
+        object.__setattr__(self, "stdout", _source_text(self.stdout, "stdout", optional=True))
+        object.__setattr__(self, "stderr", _source_text(self.stderr, "stderr", optional=True))
         if self.counterexample is not None and not isinstance(
             self.counterexample, HyperCounterexampleTrace
         ):
-            raise HyperpropertyAdapterError(
-                "counterexample must be a HyperCounterexampleTrace"
-            )
+            raise HyperpropertyAdapterError("counterexample must be a HyperCounterexampleTrace")
         if self.fallback_bounds is not None and not isinstance(
             self.fallback_bounds, FallbackBoundDisclosure
         ):
-            raise HyperpropertyAdapterError(
-                "fallback_bounds must be a FallbackBoundDisclosure"
-            )
+            raise HyperpropertyAdapterError("fallback_bounds must be a FallbackBoundDisclosure")
         object.__setattr__(
             self,
             "authorizes_universal_proof",
@@ -896,21 +815,15 @@ class HyperCheckReceipt:
             self.evidence_path is HyperEvidencePath.BOUNDED_SELF_COMPOSITION
             and self.fallback_bounds is None
         ):
-            raise HyperpropertyAdapterError(
-                "fallback evidence requires explicit fallback bounds"
-            )
+            raise HyperpropertyAdapterError("fallback evidence requires explicit fallback bounds")
         if (
             self.evidence_path is HyperEvidencePath.ENGINE
             and self.status is HyperCheckOutcomeStatus.SATISFIED
             and not self.executable
         ):
-            raise HyperpropertyAdapterError(
-                "engine satisfaction requires a resolved executable"
-            )
+            raise HyperpropertyAdapterError("engine satisfaction requires a resolved executable")
         if self.schema_version != HYPER_CHECK_RECEIPT_VERSION:
-            raise HyperpropertyAdapterError(
-                f"unsupported receipt schema: {self.schema_version!r}"
-            )
+            raise HyperpropertyAdapterError(f"unsupported receipt schema: {self.schema_version!r}")
 
     @property
     def external_tool_proof(self) -> bool:
@@ -923,10 +836,7 @@ class HyperCheckReceipt:
 
     @property
     def receipt_id(self) -> str:
-        return (
-            "hyperproperty-check-receipt:"
-            f"{stable_digest(self.to_dict(include_id=False))}"
-        )
+        return f"hyperproperty-check-receipt:{stable_digest(self.to_dict(include_id=False))}"
 
     def to_dict(self, *, include_id: bool = True) -> dict[str, Any]:
         payload = {
@@ -934,9 +844,7 @@ class HyperCheckReceipt:
             "capability": self.capability.to_dict(),
             "command": list(self.command),
             "counterexample": (
-                self.counterexample.to_dict()
-                if self.counterexample is not None
-                else None
+                self.counterexample.to_dict() if self.counterexample is not None else None
             ),
             "document_digest": self.document_digest,
             "elapsed_ms": self.elapsed_ms,
@@ -945,9 +853,7 @@ class HyperCheckReceipt:
             "executable": self.executable,
             "external_tool_proof": self.external_tool_proof,
             "fallback_bounds": (
-                self.fallback_bounds.to_dict()
-                if self.fallback_bounds is not None
-                else None
+                self.fallback_bounds.to_dict() if self.fallback_bounds is not None else None
             ),
             "observation_map": self.observation_map.to_dict(),
             "output_truncated": self.output_truncated,
@@ -978,9 +884,7 @@ class HyperCheckOutcome:
     interface_version: str = HYPERPROPERTY_BACKEND_FAMILY_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "request_digest", _digest(self.request_digest, "request_digest")
-        )
+        object.__setattr__(self, "request_digest", _digest(self.request_digest, "request_digest"))
         if not isinstance(self.result, HyperpropertyResult):
             raise HyperpropertyAdapterError("result must be a HyperpropertyResult")
         if not isinstance(self.receipt, HyperCheckReceipt):
@@ -988,9 +892,7 @@ class HyperCheckOutcome:
         if self.translation is not None and not isinstance(
             self.translation, HyperpropertyTranslation
         ):
-            raise HyperpropertyAdapterError(
-                "translation must be a HyperpropertyTranslation"
-            )
+            raise HyperpropertyAdapterError("translation must be a HyperpropertyTranslation")
         if self.interface_version not in {
             HYPERPROPERTY_BACKEND_FAMILY_VERSION,
             HYPERLTL_BACKEND_VERSION,
@@ -1007,9 +909,7 @@ class HyperCheckOutcome:
             "receipt": self.receipt.to_dict(),
             "request_digest": self.request_digest,
             "result": self.result.to_dict(),
-            "translation": (
-                self.translation.to_dict() if self.translation is not None else None
-            ),
+            "translation": (self.translation.to_dict() if self.translation is not None else None),
         }
 
 
@@ -1030,9 +930,7 @@ def render_hyperltl_formula(
     formula = document.formula
     policy = document.information_flow_policy
     names_by_id = {item.variable_id: item.name for item in formula.variables}
-    ordered_names = [
-        names_by_id[item.variable_id] for item in formula.quantifier_prefix
-    ]
+    ordered_names = [names_by_id[item.variable_id] for item in formula.quantifier_prefix]
     quantifiers = " ".join(
         f"{binding.quantifier.value} {names_by_id[binding.variable_id]}."
         for binding in formula.quantifier_prefix
@@ -1098,9 +996,7 @@ def parse_hyper_counterexample(
     text = str(output or "")
     if not text.strip():
         return None
-    trace_pattern = re.compile(
-        r"(?ms)^TRACE\s+([A-Za-z0-9_.:/-]+)\s*:\s*\n(.*?)(?=^TRACE\s|\Z)"
-    )
+    trace_pattern = re.compile(r"(?ms)^TRACE\s+([A-Za-z0-9_.:/-]+)\s*:\s*\n(.*?)(?=^TRACE\s|\Z)")
     parsed: list[WitnessTrace] = []
     for index, match in enumerate(trace_pattern.finditer(text)):
         name = match.group(1).strip()
@@ -1176,13 +1072,9 @@ def parse_hyper_counterexample(
                     ObservationDifference(
                         field=field_name,
                         left_digest="sha256:"
-                        + _content_digest(
-                            "" if left_value is None else str(left_value)
-                        ),
+                        + _content_digest("" if left_value is None else str(left_value)),
                         right_digest="sha256:"
-                        + _content_digest(
-                            "" if right_value is None else str(right_value)
-                        ),
+                        + _content_digest("" if right_value is None else str(right_value)),
                     )
                 )
                 break
@@ -1224,9 +1116,7 @@ def replay_hyper_counterexample(
     """
 
     if not isinstance(counterexample, HyperCounterexampleTrace):
-        raise HyperpropertyAdapterError(
-            "counterexample must be a HyperCounterexampleTrace"
-        )
+        raise HyperpropertyAdapterError("counterexample must be a HyperCounterexampleTrace")
     notes: list[str] = []
     approved = set(observation_map.observation_fields)
     low_inputs = set(observation_map.low_input_fields)
@@ -1245,15 +1135,11 @@ def replay_hyper_counterexample(
         unknown_obs = sorted(set(trace.observations) - approved)
         if unknown_obs:
             notes.append(
-                f"trace {trace.trace_id}: unapproved observation keys: "
-                + ", ".join(unknown_obs)
+                f"trace {trace.trace_id}: unapproved observation keys: " + ", ".join(unknown_obs)
             )
         known_obs = sorted(set(trace.observations) & approved)
         if known_obs:
-            notes.append(
-                f"trace {trace.trace_id}: replayed observations: "
-                + ", ".join(known_obs)
-            )
+            notes.append(f"trace {trace.trace_id}: replayed observations: " + ", ".join(known_obs))
         unknown_public = sorted(set(trace.public_inputs) - low_inputs)
         if unknown_public:
             notes.append(
@@ -1266,10 +1152,7 @@ def replay_hyper_counterexample(
                 f"trace {trace.trace_id}: subject keys outside subject map: "
                 + ", ".join(unknown_subject)
             )
-        if (
-            trace.variable_id not in declared_ids
-            and index < len(quantifier_order.variable_ids)
-        ):
+        if trace.variable_id not in declared_ids and index < len(quantifier_order.variable_ids):
             notes.append(
                 f"trace {trace.trace_id}: variable_id {trace.variable_id} "
                 "does not match quantifier order"
@@ -1277,15 +1160,11 @@ def replay_hyper_counterexample(
         # TRACE ids may use names; note whether the name is declared.
         label = trace.trace_id.removeprefix("trace:")
         if label not in declared_names and trace.variable_id not in declared_ids:
-            notes.append(
-                f"trace {trace.trace_id}: label is not in quantifier variable names"
-            )
+            notes.append(f"trace {trace.trace_id}: label is not in quantifier variable names")
 
     for difference in counterexample.differences:
         if difference.field not in approved and approved:
-            notes.append(
-                f"difference field {difference.field!r} is not an approved observation"
-            )
+            notes.append(f"difference field {difference.field!r} is not an approved observation")
         else:
             notes.append(f"difference field {difference.field!r} is approved")
 
@@ -1355,9 +1234,8 @@ class HyperpropertyBackend:
         available = bool(executable)
         reason = ""
         if not available:
-            reason = (
-                f"{self.engine.value} executable unavailable; looked for "
-                + ", ".join(self.capability.executable_candidates)
+            reason = f"{self.engine.value} executable unavailable; looked for " + ", ".join(
+                self.capability.executable_candidates
             )
         return ToolProbe(
             runtime=ToolRuntime.NATIVE,
@@ -1455,11 +1333,7 @@ class HyperpropertyBackend:
     ) -> HyperCheckOutcome:
         document = _document_from_value(document)
         translation = self.translate(document)
-        request_digest = (
-            request.digest
-            if request is not None
-            else translation.document_digest
-        )
+        request_digest = request.digest if request is not None else translation.document_digest
         bounds = (
             request.bounds
             if request is not None
@@ -1478,9 +1352,7 @@ class HyperpropertyBackend:
             )
             return HyperCheckOutcome(
                 request_digest=request_digest,
-                result=self._result_from_receipt(
-                    receipt, request=request, bounds=bounds
-                ),
+                result=self._result_from_receipt(receipt, request=request, bounds=bounds),
                 receipt=receipt,
                 translation=translation,
                 interface_version=self.backend_version,
@@ -1504,15 +1376,12 @@ class HyperpropertyBackend:
                 translation=translation,
                 status=HyperCheckOutcomeStatus.UNAVAILABLE,
                 evidence_path=HyperEvidencePath.NONE,
-                reason=probe.reason
-                or f"{self.engine.value} executable unavailable; no check ran",
+                reason=probe.reason or f"{self.engine.value} executable unavailable; no check ran",
                 bounds=bounds,
             )
             return HyperCheckOutcome(
                 request_digest=request_digest,
-                result=self._result_from_receipt(
-                    receipt, request=request, bounds=bounds
-                ),
+                result=self._result_from_receipt(receipt, request=request, bounds=bounds),
                 receipt=receipt,
                 translation=translation,
                 interface_version=self.backend_version,
@@ -1522,9 +1391,7 @@ class HyperpropertyBackend:
         timeout_seconds = max(0.001, bounds.timeout_ms / 1000.0)
         formula_name = "property.hltl"
         input_files: dict[str, str] = {formula_name: translation.formula_text}
-        input_files.update(
-            {name: text for name, text in translation.auxiliary_files.items()}
-        )
+        input_files.update({name: text for name, text in translation.auxiliary_files.items()})
         if self.engine is HyperEngine.AUTOHYPER:
             argv = (
                 executable,
@@ -1554,9 +1421,7 @@ class HyperpropertyBackend:
             cancellation=cancellation,
         )
         version = self._tool_version(executable)
-        combined = "\n".join(
-            part for part in (process.stdout, process.stderr) if part
-        )
+        combined = "\n".join(part for part in (process.stdout, process.stderr) if part)
         status, reason = self._classify(process, combined)
         counterexample: HyperCounterexampleTrace | None = None
         if status is HyperCheckOutcomeStatus.VIOLATED:
@@ -1580,8 +1445,7 @@ class HyperpropertyBackend:
                 )
             else:
                 reason = (
-                    reason
-                    + "; counterexample markers present but no multi-trace "
+                    reason + "; counterexample markers present but no multi-trace "
                     "tuple could be parsed"
                 )
 
@@ -1610,9 +1474,7 @@ class HyperpropertyBackend:
         )
         return HyperCheckOutcome(
             request_digest=request_digest,
-            result=self._result_from_receipt(
-                receipt, request=request, bounds=bounds
-            ),
+            result=self._result_from_receipt(receipt, request=request, bounds=bounds),
             receipt=receipt,
             translation=translation,
             interface_version=self.backend_version,
@@ -1648,9 +1510,7 @@ class HyperpropertyBackend:
                     )
                 )
             else:
-                raise HyperpropertyAdapterError(
-                    "traces must be ExecutionTrace values or mappings"
-                )
+                raise HyperpropertyAdapterError("traces must be ExecutionTrace values or mappings")
         allow_fallback = bool(payload.get("allow_fallback", False))
         return self.check(
             document,
@@ -1688,9 +1548,7 @@ class HyperpropertyBackend:
             )
             return HyperCheckOutcome(
                 request_digest=request_digest,
-                result=self._result_from_receipt(
-                    receipt, request=request, bounds=bounds
-                ),
+                result=self._result_from_receipt(receipt, request=request, bounds=bounds),
                 receipt=receipt,
                 translation=translation,
                 interface_version=self.backend_version,
@@ -1704,17 +1562,13 @@ class HyperpropertyBackend:
                 translation=translation,
                 status=HyperCheckOutcomeStatus.UNSUPPORTED,
                 evidence_path=HyperEvidencePath.BOUNDED_SELF_COMPOSITION,
-                reason=(
-                    f"bounded self-composition unavailable for this formula: {error}"
-                ),
+                reason=(f"bounded self-composition unavailable for this formula: {error}"),
                 bounds=bounds,
                 fallback_bounds=disclosure,
             )
             return HyperCheckOutcome(
                 request_digest=request_digest,
-                result=self._result_from_receipt(
-                    receipt, request=request, bounds=bounds
-                ),
+                result=self._result_from_receipt(receipt, request=request, bounds=bounds),
                 receipt=receipt,
                 translation=translation,
                 interface_version=self.backend_version,
@@ -1729,7 +1583,10 @@ class HyperpropertyBackend:
             status = HyperCheckOutcomeStatus.UNKNOWN
 
         counterexample: HyperCounterexampleTrace | None = None
-        if evaluation.witness_bundle is not None and evaluation.verdict is HyperpropertyVerdict.VIOLATED:
+        if (
+            evaluation.witness_bundle is not None
+            and evaluation.verdict is HyperpropertyVerdict.VIOLATED
+        ):
             bundle = evaluation.witness_bundle
             counterexample = HyperCounterexampleTrace(
                 formula_id=bundle.formula_id,
@@ -1775,9 +1632,7 @@ class HyperpropertyBackend:
         )
         return HyperCheckOutcome(
             request_digest=request_digest,
-            result=self._result_from_receipt(
-                receipt, request=request, bounds=bounds
-            ),
+            result=self._result_from_receipt(receipt, request=request, bounds=bounds),
             receipt=receipt,
             translation=translation,
             interface_version=self.backend_version,
@@ -1847,9 +1702,7 @@ class HyperpropertyBackend:
                 HyperCheckOutcomeStatus.VIOLATED,
                 f"{self.engine.value} reported a hyperproperty violation",
             )
-        if process.returncode == 0 and any(
-            marker in folded for marker in _SUCCESS_MARKERS
-        ):
+        if process.returncode == 0 and any(marker in folded for marker in _SUCCESS_MARKERS):
             return (
                 HyperCheckOutcomeStatus.SATISFIED,
                 f"{self.engine.value} reported the hyperproperty holds under its model",
@@ -1916,22 +1769,16 @@ class HyperpropertyBackend:
         }
         if receipt.counterexample is not None:
             witness["counterexample"] = receipt.counterexample.to_dict()
-            witness["witness_bundle"] = (
-                receipt.counterexample.to_witness_bundle().to_dict()
-            )
+            witness["witness_bundle"] = receipt.counterexample.to_witness_bundle().to_dict()
         if receipt.fallback_bounds is not None:
             witness["fallback_bounds"] = receipt.fallback_bounds.to_dict()
-            witness["evidence_kind"] = (
-                HyperpropertyEvidenceKind.BOUNDED_SELF_COMPOSITION.value
-            )
+            witness["evidence_kind"] = HyperpropertyEvidenceKind.BOUNDED_SELF_COMPOSITION.value
         elif receipt.evidence_path is HyperEvidencePath.ENGINE:
             witness["evidence_kind"] = "hyperproperty_engine"
         else:
             witness["evidence_kind"] = "none"
 
-        result_id = (
-            f"hyperproperty-result:{stable_digest({'receipt': receipt.receipt_id})}"
-        )
+        result_id = f"hyperproperty-result:{stable_digest({'receipt': receipt.receipt_id})}"
         return HyperpropertyResult(
             result_id=result_id,
             backend_id=self.backend_id,

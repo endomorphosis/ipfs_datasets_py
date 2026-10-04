@@ -158,15 +158,9 @@ class SnapshotSource:
             value = getattr(self, name)
             if type(value) is not str or not value or value != value.strip():
                 raise ValueError(f"{name} must be a non-empty trimmed string")
-        object.__setattr__(
-            self, "retrieved_at", _instant(self.retrieved_at, "retrieved_at")
-        )
-        object.__setattr__(
-            self, "published_at", _instant(self.published_at, "published_at")
-        )
-        object.__setattr__(
-            self, "effective_at", _instant(self.effective_at, "effective_at")
-        )
+        object.__setattr__(self, "retrieved_at", _instant(self.retrieved_at, "retrieved_at"))
+        object.__setattr__(self, "published_at", _instant(self.published_at, "published_at"))
+        object.__setattr__(self, "effective_at", _instant(self.effective_at, "effective_at"))
         metadata: dict[str, str] = {}
         for key, value in self.transport_metadata.items():
             if type(key) is not str or type(value) is not str or not key:
@@ -204,8 +198,7 @@ class ParsedSanctionsSnapshot:
             if type(value) is not int or value < 0:
                 raise ValueError(f"{name} must be a non-negative integer")
         if self.declared_entry_count is not None and (
-            type(self.declared_entry_count) is not int
-            or self.declared_entry_count < 0
+            type(self.declared_entry_count) is not int or self.declared_entry_count < 0
         ):
             raise ValueError("declared_entry_count must be a non-negative integer")
         object.__setattr__(self, "diagnostics", tuple(self.diagnostics))
@@ -244,11 +237,7 @@ class SnapshotDelta:
         added = tuple(sorted(set(new) - set(old)))
         removed = tuple(sorted(set(old) - set(new)))
         changed = tuple(
-            sorted(
-                key
-                for key in set(old) & set(new)
-                if old[key].to_dict() != new[key].to_dict()
-            )
+            sorted(key for key in set(old) & set(new) if old[key].to_dict() != new[key].to_dict())
         )
         old_identifiers = {
             identifier.comparison_key
@@ -336,15 +325,11 @@ class SanctionsSnapshotValidator:
                     "No typed sanctions snapshot could be constructed",
                 )
             )
-            return SnapshotValidation(
-                SnapshotEvidenceStatus.UNKNOWN, _dedupe(diagnostics)
-            )
+            return SnapshotValidation(SnapshotEvidenceStatus.UNKNOWN, _dedupe(diagnostics))
 
         if not snapshot.complete:
             diagnostics.append(
-                SnapshotDiagnostic(
-                    "snapshot.incomplete", "Snapshot is explicitly incomplete"
-                )
+                SnapshotDiagnostic("snapshot.incomplete", "Snapshot is explicitly incomplete")
             )
         if current.declared_entry_count is None:
             diagnostics.append(
@@ -450,9 +435,7 @@ class SanctionsSnapshotValidator:
                             "Entry count fell below the configured safety ratio",
                         )
                     )
-                if delta.removed_designation_ids and effective <= parse_instant(
-                    old.effective_at
-                ):
+                if delta.removed_designation_ids and effective <= parse_instant(old.effective_at):
                     diagnostics.append(
                         SnapshotDiagnostic(
                             "snapshot.delisting_time_error",
@@ -460,15 +443,9 @@ class SanctionsSnapshotValidator:
                         )
                     )
 
-        errors = tuple(
-            item
-            for item in diagnostics
-            if item.severity is DiagnosticSeverity.ERROR
-        )
+        errors = tuple(item for item in diagnostics if item.severity is DiagnosticSeverity.ERROR)
         if errors:
-            return SnapshotValidation(
-                SnapshotEvidenceStatus.UNKNOWN, _dedupe(diagnostics), delta
-            )
+            return SnapshotValidation(SnapshotEvidenceStatus.UNKNOWN, _dedupe(diagnostics), delta)
         if at > effective + self.maximum_age:
             diagnostics.append(
                 SnapshotDiagnostic(
@@ -477,12 +454,8 @@ class SanctionsSnapshotValidator:
                     DiagnosticSeverity.WARNING,
                 )
             )
-            return SnapshotValidation(
-                SnapshotEvidenceStatus.STALE, _dedupe(diagnostics), delta
-            )
-        return SnapshotValidation(
-            SnapshotEvidenceStatus.CURRENT, _dedupe(diagnostics), delta
-        )
+            return SnapshotValidation(SnapshotEvidenceStatus.STALE, _dedupe(diagnostics), delta)
+        return SnapshotValidation(SnapshotEvidenceStatus.CURRENT, _dedupe(diagnostics), delta)
 
 
 class AppendOnlySnapshotJournal:

@@ -51,6 +51,7 @@ from ipfs_datasets_py.mcp_server.hierarchical_tool_manager import (
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _mgr(tmp_path: Path) -> HierarchicalToolManager:
     mgr = HierarchicalToolManager(tmp_path)
     mgr._discovered_categories = True
@@ -67,6 +68,7 @@ def _add_tool(mgr: HierarchicalToolManager, cat: str, tool_name: str, fn) -> Non
 # ---------------------------------------------------------------------------
 # Part 1 — GraphRAG + IPFS multi-step pipeline
 # ---------------------------------------------------------------------------
+
 
 class TestGraphRAGIPFSPipeline:
     """Simulate the five-stage document→graph→IPFS→query→search pipeline."""
@@ -103,11 +105,27 @@ class TestGraphRAGIPFSPipeline:
         _add_tool(mgr, "search_tools", "semantic_search", semantic_search)
 
         calls = [
-            {"category": "pdf_tools",         "tool": "extract_text",   "params": {"doc_path": "/tmp/test.pdf"}},
-            {"category": "graph_tools_build",  "tool": "build_graph",    "params": {"text": "lorem ipsum"}},
-            {"category": "ipfs_tools",         "tool": "pin_content",    "params": {"content": "graph_bytes"}},
-            {"category": "graph_tools_query",  "tool": "query_graph",    "params": {"query": "contract terms"}},
-            {"category": "search_tools",       "tool": "semantic_search","params": {"query": "obligations"}},
+            {
+                "category": "pdf_tools",
+                "tool": "extract_text",
+                "params": {"doc_path": "/tmp/test.pdf"},
+            },
+            {
+                "category": "graph_tools_build",
+                "tool": "build_graph",
+                "params": {"text": "lorem ipsum"},
+            },
+            {"category": "ipfs_tools", "tool": "pin_content", "params": {"content": "graph_bytes"}},
+            {
+                "category": "graph_tools_query",
+                "tool": "query_graph",
+                "params": {"query": "contract terms"},
+            },
+            {
+                "category": "search_tools",
+                "tool": "semantic_search",
+                "params": {"query": "obligations"},
+            },
         ]
 
         results = await mgr.dispatch_parallel(calls)
@@ -137,9 +155,9 @@ class TestGraphRAGIPFSPipeline:
         _add_tool(mgr, "pcat2", "ok_tool", ok_tool)
 
         calls = [
-            {"category": "pcat1",    "tool": "ok_tool"},
+            {"category": "pcat1", "tool": "ok_tool"},
             {"category": "pcat_bad", "tool": "bad_pin"},
-            {"category": "pcat2",    "tool": "ok_tool"},
+            {"category": "pcat2", "tool": "ok_tool"},
         ]
         results = await mgr.dispatch_parallel(calls)
 
@@ -182,6 +200,7 @@ class TestGraphRAGIPFSPipeline:
 # ---------------------------------------------------------------------------
 # Part 2 — graceful_shutdown
 # ---------------------------------------------------------------------------
+
 
 class TestGracefulShutdown:
     """Verify HierarchicalToolManager.graceful_shutdown (lines 927-952)."""
@@ -240,6 +259,7 @@ class TestGracefulShutdown:
 # Part 3 — ToolCategory discovery error paths
 # ---------------------------------------------------------------------------
 
+
 class TestToolCategoryDiscoveryErrors:
     """Verify that discovery continues gracefully when files cannot be imported."""
 
@@ -255,8 +275,10 @@ class TestToolCategoryDiscoveryErrors:
         cat = ToolCategory("test_cat", tmp_path)
 
         # WHEN
-        with patch("ipfs_datasets_py.mcp_server.hierarchical_tool_manager.importlib.import_module",
-                   side_effect=ImportError("missing dep")):
+        with patch(
+            "ipfs_datasets_py.mcp_server.hierarchical_tool_manager.importlib.import_module",
+            side_effect=ImportError("missing dep"),
+        ):
             cat.discover_tools()
 
         # THEN: discovery completed without crashing
@@ -273,8 +295,10 @@ class TestToolCategoryDiscoveryErrors:
         (tmp_path / "broken_tool.py").write_text("# placeholder\n")
 
         cat = ToolCategory("test_cat", tmp_path)
-        with patch("ipfs_datasets_py.mcp_server.hierarchical_tool_manager.importlib.import_module",
-                   side_effect=SyntaxError("invalid syntax")):
+        with patch(
+            "ipfs_datasets_py.mcp_server.hierarchical_tool_manager.importlib.import_module",
+            side_effect=SyntaxError("invalid syntax"),
+        ):
             cat.discover_tools()
 
         assert cat._discovered is True
@@ -290,8 +314,10 @@ class TestToolCategoryDiscoveryErrors:
         (tmp_path / "generic_err_tool.py").write_text("# placeholder\n")
 
         cat = ToolCategory("test_cat", tmp_path)
-        with patch("ipfs_datasets_py.mcp_server.hierarchical_tool_manager.importlib.import_module",
-                   side_effect=Exception("oops")):
+        with patch(
+            "ipfs_datasets_py.mcp_server.hierarchical_tool_manager.importlib.import_module",
+            side_effect=Exception("oops"),
+        ):
             cat.discover_tools()
 
         assert cat._discovered is True
@@ -310,6 +336,7 @@ class TestToolCategoryDiscoveryErrors:
 # ---------------------------------------------------------------------------
 # Part 4 — ToolCategory schema cache
 # ---------------------------------------------------------------------------
+
 
 class TestToolCategorySchemaCache:
     """Verify get_tool_schema caching paths (lines 317-319, 360-361)."""
@@ -332,6 +359,7 @@ class TestToolCategorySchemaCache:
         WHEN get_tool_schema is called
         THEN a schema is built, stored in cache, and _cache_misses increments.
         """
+
         def my_tool(x: int, y: str = "default") -> str:
             """My tool docstring."""
             return f"{x} {y}"
@@ -363,6 +391,7 @@ class TestToolCategorySchemaCache:
         WHEN get_tool_schema is called again
         THEN cache_hits increments (no duplicate build).
         """
+
         def simple(n: int) -> int:
             return n
 
@@ -379,8 +408,8 @@ class TestToolCategorySchemaCache:
             "deprecation_message": "",
         }
 
-        cat.get_tool_schema("simple")   # first call → miss
-        cat.get_tool_schema("simple")   # second call → hit
+        cat.get_tool_schema("simple")  # first call → miss
+        cat.get_tool_schema("simple")  # second call → hit
 
         assert cat._cache_hits == 1
         assert cat._cache_misses == 1
@@ -431,6 +460,7 @@ class TestToolCategorySchemaCache:
 # ---------------------------------------------------------------------------
 # Part 5 — lazy_register_category + get_category lazy-load
 # ---------------------------------------------------------------------------
+
 
 class TestLazyRegisterCategory:
     """Verify lazy category registration (lines 520-568)."""
@@ -509,6 +539,7 @@ class TestLazyRegisterCategory:
 # ---------------------------------------------------------------------------
 # Part 6 — list_categories include_count + list_tools/get_tool_schema errors
 # ---------------------------------------------------------------------------
+
 
 class TestManagerListAndSchemaHelpers:
     """Cover the list_tools error path and get_tool_schema helpers."""

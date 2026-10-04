@@ -169,7 +169,9 @@ class LegalIRCitationTarget:
 
     @property
     def active_law(self) -> bool:
-        return bool(self.canonical_citation and self.authority_id and self.version and not self.repealed)
+        return bool(
+            self.canonical_citation and self.authority_id and self.version and not self.repealed
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -210,7 +212,11 @@ class LegalIRCitationTarget:
             incorporated=bool(data.get("incorporated")),
             source_node_ids=tuple(_unique(_strings(data.get("source_node_ids", ())))),
             span_ids=tuple(_unique(_strings(data.get("span_ids", ())))),
-            aliases=tuple(_unique(normalize_legal_citation(item) for item in _strings(data.get("aliases", ())))),
+            aliases=tuple(
+                _unique(
+                    normalize_legal_citation(item) for item in _strings(data.get("aliases", ()))
+                )
+            ),
             metadata=dict(data.get("metadata") or {}),
         )
 
@@ -264,7 +270,9 @@ class LegalIRCitationReference:
             authority_id=str(data.get("authority_id") or ""),
             version=str(data.get("version") or ""),
             explicit_target_id=str(data.get("explicit_target_id") or data.get("target_id") or ""),
-            explicit_target_document_id=str(data.get("explicit_target_document_id") or data.get("target_document_id") or ""),
+            explicit_target_document_id=str(
+                data.get("explicit_target_document_id") or data.get("target_document_id") or ""
+            ),
             source_node_ids=tuple(_unique(_strings(data.get("source_node_ids", ())))),
             span_ids=tuple(_unique(_strings(data.get("span_ids", ())))),
             metadata=dict(data.get("metadata") or {}),
@@ -454,7 +462,9 @@ class LegalIRCitationGraph:
             for reference in self.references
             if resolutions.get(
                 reference.reference_id,
-                LegalIRCitationResolution(reference.reference_id, LegalIRCitationResolutionStatus.UNRESOLVED),
+                LegalIRCitationResolution(
+                    reference.reference_id, LegalIRCitationResolutionStatus.UNRESOLVED
+                ),
             ).status
             is LegalIRCitationResolutionStatus.UNRESOLVED
         )
@@ -467,7 +477,9 @@ class LegalIRCitationGraph:
             for reference in self.references
             if resolutions.get(
                 reference.reference_id,
-                LegalIRCitationResolution(reference.reference_id, LegalIRCitationResolutionStatus.UNRESOLVED),
+                LegalIRCitationResolution(
+                    reference.reference_id, LegalIRCitationResolutionStatus.UNRESOLVED
+                ),
             ).status
             is LegalIRCitationResolutionStatus.AMBIGUOUS
         )
@@ -480,7 +492,9 @@ class LegalIRCitationGraph:
             for reference in self.references
             if resolutions.get(
                 reference.reference_id,
-                LegalIRCitationResolution(reference.reference_id, LegalIRCitationResolutionStatus.UNRESOLVED),
+                LegalIRCitationResolution(
+                    reference.reference_id, LegalIRCitationResolutionStatus.UNRESOLVED
+                ),
             ).status
             is LegalIRCitationResolutionStatus.REPEALED
         )
@@ -509,7 +523,9 @@ class LegalIRCitationGraph:
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> "LegalIRCitationGraph":
         return cls(
-            citation_graph_id=str(data.get("citation_graph_id") or data.get("citation_table_id") or ""),
+            citation_graph_id=str(
+                data.get("citation_graph_id") or data.get("citation_table_id") or ""
+            ),
             authorities=tuple(
                 LegalIRAuthority.from_dict(_mapping(item))
                 for item in data.get("authorities", []) or []
@@ -532,7 +548,9 @@ class LegalIRCitationGraph:
             ),
             source_map_id=str(data.get("source_map_id") or ""),
             metadata=dict(data.get("metadata") or {}),
-            schema_version=str(data.get("schema_version") or LEGAL_IR_CITATION_LINKER_SCHEMA_VERSION),
+            schema_version=str(
+                data.get("schema_version") or LEGAL_IR_CITATION_LINKER_SCHEMA_VERSION
+            ),
         )
 
 
@@ -624,7 +642,12 @@ class LegalIRCitationGraphBuilder:
             incorporated=bool(incorporated),
             source_node_ids=tuple(_unique(_strings(source_node_ids))),
             span_ids=tuple(_unique(_strings(span_ids))),
-            aliases=tuple(_unique(normalize_legal_citation(item, default_authority=authority_id) for item in _strings(aliases))),
+            aliases=tuple(
+                _unique(
+                    normalize_legal_citation(item, default_authority=authority_id)
+                    for item in _strings(aliases)
+                )
+            ),
             metadata=dict(metadata or {}),
         )
         self._targets[target.target_id] = target
@@ -654,7 +677,9 @@ class LegalIRCitationGraphBuilder:
     ) -> LegalIRCitationReference:
         kind = _citation_kind(citation_kind)
         if kind is LegalIRCitationKind.UNKNOWN:
-            kind = infer_legal_citation_kind(raw_text, document_id=document_id, authority_id=authority_id)
+            kind = infer_legal_citation_kind(
+                raw_text, document_id=document_id, authority_id=authority_id
+            )
         payload = {
             "authority_id": authority_id,
             "document_id": document_id,
@@ -663,7 +688,9 @@ class LegalIRCitationGraphBuilder:
             "version": version,
         }
         reference = LegalIRCitationReference(
-            reference_id=str(reference_id or f"lir-citation-reference-{_stable_hash(payload)[:24]}"),
+            reference_id=str(
+                reference_id or f"lir-citation-reference-{_stable_hash(payload)[:24]}"
+            ),
             raw_text=str(raw_text or ""),
             citation_kind=kind,
             document_id=str(document_id or ""),
@@ -699,13 +726,17 @@ class LegalIRCitationGraphBuilder:
         resolve: bool = True,
         external_citation_graphs: Sequence[LegalIRCitationGraph | Mapping[str, Any]] = (),
     ) -> LegalIRCitationGraph:
-        graph_id = self.citation_graph_id or "lir-citation-graph-" + _stable_hash(
-            {
-                "authorities": sorted(self._authorities),
-                "references": sorted(self._references),
-                "targets": sorted(self._targets),
-            }
-        )[:24]
+        graph_id = (
+            self.citation_graph_id
+            or "lir-citation-graph-"
+            + _stable_hash(
+                {
+                    "authorities": sorted(self._authorities),
+                    "references": sorted(self._references),
+                    "targets": sorted(self._targets),
+                }
+            )[:24]
+        )
         base = LegalIRCitationGraph(
             citation_graph_id=graph_id,
             authorities=tuple(self._authorities[key] for key in sorted(self._authorities)),
@@ -731,7 +762,11 @@ class LegalIRCitationGraphBuilder:
             _dedupe_diagnostics(
                 (
                     *base.diagnostics,
-                    *(diagnostic for resolution in resolutions for diagnostic in resolution.diagnostics),
+                    *(
+                        diagnostic
+                        for resolution in resolutions
+                        for diagnostic in resolution.diagnostics
+                    ),
                 )
             )
         )
@@ -807,7 +842,9 @@ def parse_legal_citation(citation: Any) -> Mapping[str, Any]:
     if _looks_like_range(canonical):
         left, right = canonical.split("-", 1)
         range_start = normalize_legal_citation(left.strip())
-        range_end = normalize_legal_citation(right.strip(), default_authority=_authority_id_for_citation(range_start))
+        range_end = normalize_legal_citation(
+            right.strip(), default_authority=_authority_id_for_citation(range_start)
+        )
         canonical = f"{range_start}-{range_end}"
     title = ""
     section = ""
@@ -852,7 +889,11 @@ def infer_legal_citation_kind(
         return LegalIRCitationKind.RANGE
     if _SUBSECTION_RE.search(canonical):
         return LegalIRCitationKind.SUBSECTION
-    if document_id and authority_id and _authority_id_for_citation(canonical) == _canonical_authority_prefix(authority_id):
+    if (
+        document_id
+        and authority_id
+        and _authority_id_for_citation(canonical) == _canonical_authority_prefix(authority_id)
+    ):
         return LegalIRCitationKind.INTERNAL
     return LegalIRCitationKind.EXTERNAL if canonical else LegalIRCitationKind.UNKNOWN
 
@@ -867,9 +908,16 @@ def build_legal_ir_citation_graph(
 
     sample = _payload_mapping(document_or_sample)
     document = _mapping(sample.get("modal_ir") or sample.get("document") or sample)
-    document_id = str(document.get("document_id") or sample.get("document_id") or sample.get("sample_id") or "legal-ir-document")
+    document_id = str(
+        document.get("document_id")
+        or sample.get("document_id")
+        or sample.get("sample_id")
+        or "legal-ir-document"
+    )
     citation = str(document.get("citation") or sample.get("citation") or "")
-    version = str(document.get("version") or document.get("effective_version") or sample.get("version") or "")
+    version = str(
+        document.get("version") or document.get("effective_version") or sample.get("version") or ""
+    )
     authority_payload = _mapping(document.get("authority") or sample.get("authority"))
     authority_id = str(
         authority_payload.get("authority_id")
@@ -886,19 +934,32 @@ def build_legal_ir_citation_graph(
             authority_id,
             name=str(authority_payload.get("name") or authority_id),
             jurisdiction=str(authority_payload.get("jurisdiction") or ""),
-            authority_type=str(authority_payload.get("authority_type") or authority_payload.get("type") or ""),
+            authority_type=str(
+                authority_payload.get("authority_type") or authority_payload.get("type") or ""
+            ),
             version=str(authority_payload.get("version") or version),
             source_uri=str(authority_payload.get("source_uri") or ""),
             rank=int(authority_payload.get("rank") or 0),
         )
     explicit_target_citations = {
         normalize_legal_citation(
-            str(_mapping(item).get("canonical_citation") or _mapping(item).get("citation") or _mapping(item).get("section") or ""),
+            str(
+                _mapping(item).get("canonical_citation")
+                or _mapping(item).get("citation")
+                or _mapping(item).get("section")
+                or ""
+            ),
             default_authority=authority_id,
         )
-        for item in _sequence(document.get("citation_targets") or document.get("targets") or document.get("sections"))
+        for item in _sequence(
+            document.get("citation_targets") or document.get("targets") or document.get("sections")
+        )
     }
-    if citation and normalize_legal_citation(citation, default_authority=authority_id) not in explicit_target_citations:
+    if (
+        citation
+        and normalize_legal_citation(citation, default_authority=authority_id)
+        not in explicit_target_citations
+    ):
         builder.add_target(
             citation,
             target_id=str(document.get("target_id") or f"document:{document_id}"),
@@ -910,9 +971,16 @@ def build_legal_ir_citation_graph(
             span_ids=_strings(document.get("span_ids", ())),
         )
 
-    for item in _sequence(document.get("citation_targets") or document.get("targets") or document.get("sections")):
+    for item in _sequence(
+        document.get("citation_targets") or document.get("targets") or document.get("sections")
+    ):
         payload = _mapping(item)
-        target_citation = str(payload.get("canonical_citation") or payload.get("citation") or payload.get("section") or "")
+        target_citation = str(
+            payload.get("canonical_citation")
+            or payload.get("citation")
+            or payload.get("section")
+            or ""
+        )
         if not target_citation:
             continue
         builder.add_target(
@@ -927,7 +995,11 @@ def build_legal_ir_citation_graph(
             aliases=_strings(payload.get("aliases", ())),
             repealed=bool(payload.get("repealed")),
             incorporated=bool(payload.get("incorporated")),
-            metadata={key: value for key, value in payload.items() if key not in {"citation", "canonical_citation", "section"}},
+            metadata={
+                key: value
+                for key, value in payload.items()
+                if key not in {"citation", "canonical_citation", "section"}
+            },
         )
 
     for field_name, kind in (
@@ -939,42 +1011,83 @@ def build_legal_ir_citation_graph(
     ):
         for item in _sequence(document.get(field_name)):
             payload = _reference_payload(item)
-            raw = str(payload.get("raw_text") or payload.get("citation") or payload.get("text") or item or "")
+            raw = str(
+                payload.get("raw_text")
+                or payload.get("citation")
+                or payload.get("text")
+                or item
+                or ""
+            )
             if raw:
                 builder.add_reference(
                     raw,
                     reference_id=str(payload.get("reference_id") or ""),
-                    citation_kind=_citation_kind(payload.get("citation_kind") or payload.get("kind") or kind),
+                    citation_kind=_citation_kind(
+                        payload.get("citation_kind") or payload.get("kind") or kind
+                    ),
                     document_id=str(payload.get("document_id") or document_id),
                     authority_id=str(payload.get("authority_id") or authority_id),
                     version=str(payload.get("version") or version),
-                    explicit_target_id=str(payload.get("explicit_target_id") or payload.get("target_id") or ""),
-                    explicit_target_document_id=str(payload.get("explicit_target_document_id") or payload.get("target_document_id") or ""),
+                    explicit_target_id=str(
+                        payload.get("explicit_target_id") or payload.get("target_id") or ""
+                    ),
+                    explicit_target_document_id=str(
+                        payload.get("explicit_target_document_id")
+                        or payload.get("target_document_id")
+                        or ""
+                    ),
                     source_node_ids=_source_node_ids(payload),
                     span_ids=_strings(payload.get("span_ids", ())),
-                    metadata={key: value for key, value in payload.items() if key not in {"raw_text", "citation", "text"}},
+                    metadata={
+                        key: value
+                        for key, value in payload.items()
+                        if key not in {"raw_text", "citation", "text"}
+                    },
                 )
 
     for index, formula in enumerate(_sequence(document.get("formulas")), start=1):
         formula_payload = _mapping(formula)
         formula_id = str(formula_payload.get("formula_id") or f"formula-{index}")
-        for field_name in ("citation", "citations", "references", "cross_references", "incorporated_references"):
+        for field_name in (
+            "citation",
+            "citations",
+            "references",
+            "cross_references",
+            "incorporated_references",
+        ):
             values = _sequence(formula_payload.get(field_name))
             if not values and field_name == "citation" and formula_payload.get(field_name):
                 values = (formula_payload[field_name],)
             for item in values:
                 payload = _reference_payload(item)
-                raw = str(payload.get("raw_text") or payload.get("citation") or payload.get("text") or item or "")
+                raw = str(
+                    payload.get("raw_text")
+                    or payload.get("citation")
+                    or payload.get("text")
+                    or item
+                    or ""
+                )
                 if raw:
                     builder.add_reference(
                         raw,
-                        reference_id=str(payload.get("reference_id") or f"{formula_id}:{field_name}:{_stable_hash(raw)[:8]}"),
-                        citation_kind=_citation_kind(payload.get("citation_kind") or payload.get("kind")),
+                        reference_id=str(
+                            payload.get("reference_id")
+                            or f"{formula_id}:{field_name}:{_stable_hash(raw)[:8]}"
+                        ),
+                        citation_kind=_citation_kind(
+                            payload.get("citation_kind") or payload.get("kind")
+                        ),
                         document_id=str(payload.get("document_id") or document_id),
                         authority_id=str(payload.get("authority_id") or authority_id),
                         version=str(payload.get("version") or version),
-                        explicit_target_id=str(payload.get("explicit_target_id") or payload.get("target_id") or ""),
-                        explicit_target_document_id=str(payload.get("explicit_target_document_id") or payload.get("target_document_id") or ""),
+                        explicit_target_id=str(
+                            payload.get("explicit_target_id") or payload.get("target_id") or ""
+                        ),
+                        explicit_target_document_id=str(
+                            payload.get("explicit_target_document_id")
+                            or payload.get("target_document_id")
+                            or ""
+                        ),
                         source_node_ids=_source_node_ids(payload) or (formula_id,),
                         span_ids=_strings(payload.get("span_ids", ())),
                         metadata={"field": field_name, "formula_id": formula_id},
@@ -1033,30 +1146,104 @@ def validate_legal_ir_citation_graph(
     targets = graph.target_by_id
     references = graph.reference_by_id
 
-    _duplicate_diagnostic("authority", [authority.authority_id for authority in graph.authorities], diagnostics, LegalIRCitationDiagnosticType.DUPLICATE_AUTHORITY_ID)
-    _duplicate_diagnostic("target", [target.target_id for target in graph.targets], diagnostics, LegalIRCitationDiagnosticType.DUPLICATE_TARGET_ID)
-    _duplicate_diagnostic("reference", [reference.reference_id for reference in graph.references], diagnostics, LegalIRCitationDiagnosticType.DUPLICATE_REFERENCE_ID)
+    _duplicate_diagnostic(
+        "authority",
+        [authority.authority_id for authority in graph.authorities],
+        diagnostics,
+        LegalIRCitationDiagnosticType.DUPLICATE_AUTHORITY_ID,
+    )
+    _duplicate_diagnostic(
+        "target",
+        [target.target_id for target in graph.targets],
+        diagnostics,
+        LegalIRCitationDiagnosticType.DUPLICATE_TARGET_ID,
+    )
+    _duplicate_diagnostic(
+        "reference",
+        [reference.reference_id for reference in graph.references],
+        diagnostics,
+        LegalIRCitationDiagnosticType.DUPLICATE_REFERENCE_ID,
+    )
 
     for target in graph.targets:
         if not target.authority_id:
-            diagnostics.append(_diagnostic(LegalIRCitationDiagnosticType.TARGET_AUTHORITY_MISSING, "Citation target has no authority.", target_ids=(target.target_id,), field_path=f"targets.{target.target_id}.authority_id"))
-        elif target.authority_id not in authorities and not _external_authority_exists(target.authority_id, external_graphs):
-            diagnostics.append(_diagnostic(LegalIRCitationDiagnosticType.TARGET_AUTHORITY_MISSING, "Citation target authority is missing.", target_ids=(target.target_id,), authority_id=target.authority_id, field_path=f"targets.{target.target_id}.authority_id"))
+            diagnostics.append(
+                _diagnostic(
+                    LegalIRCitationDiagnosticType.TARGET_AUTHORITY_MISSING,
+                    "Citation target has no authority.",
+                    target_ids=(target.target_id,),
+                    field_path=f"targets.{target.target_id}.authority_id",
+                )
+            )
+        elif target.authority_id not in authorities and not _external_authority_exists(
+            target.authority_id, external_graphs
+        ):
+            diagnostics.append(
+                _diagnostic(
+                    LegalIRCitationDiagnosticType.TARGET_AUTHORITY_MISSING,
+                    "Citation target authority is missing.",
+                    target_ids=(target.target_id,),
+                    authority_id=target.authority_id,
+                    field_path=f"targets.{target.target_id}.authority_id",
+                )
+            )
         if not target.version:
-            diagnostics.append(_diagnostic(LegalIRCitationDiagnosticType.TARGET_VERSION_MISSING, "Citation target has no version.", target_ids=(target.target_id,), authority_id=target.authority_id, field_path=f"targets.{target.target_id}.version"))
-        _append_provenance_diagnostics(diagnostics, target.source_node_ids, resolved_source_map, target_ids=(target.target_id,), authority_id=target.authority_id)
+            diagnostics.append(
+                _diagnostic(
+                    LegalIRCitationDiagnosticType.TARGET_VERSION_MISSING,
+                    "Citation target has no version.",
+                    target_ids=(target.target_id,),
+                    authority_id=target.authority_id,
+                    field_path=f"targets.{target.target_id}.version",
+                )
+            )
+        _append_provenance_diagnostics(
+            diagnostics,
+            target.source_node_ids,
+            resolved_source_map,
+            target_ids=(target.target_id,),
+            authority_id=target.authority_id,
+        )
 
     for reference in graph.references:
-        _append_provenance_diagnostics(diagnostics, reference.source_node_ids, resolved_source_map, reference_id=reference.reference_id, authority_id=reference.authority_id)
+        _append_provenance_diagnostics(
+            diagnostics,
+            reference.source_node_ids,
+            resolved_source_map,
+            reference_id=reference.reference_id,
+            authority_id=reference.authority_id,
+        )
 
     for resolution in graph.resolutions:
         if resolution.reference_id not in references:
-            diagnostics.append(_diagnostic(LegalIRCitationDiagnosticType.RESOLUTION_TARGET_MISSING, "Resolution references a missing citation reference.", reference_id=resolution.reference_id))
+            diagnostics.append(
+                _diagnostic(
+                    LegalIRCitationDiagnosticType.RESOLUTION_TARGET_MISSING,
+                    "Resolution references a missing citation reference.",
+                    reference_id=resolution.reference_id,
+                )
+            )
         for target_id in resolution.target_ids:
             if target_id not in targets and not _external_target_exists(target_id, external_graphs):
-                diagnostics.append(_diagnostic(LegalIRCitationDiagnosticType.RESOLUTION_TARGET_MISSING, "Resolution points at a missing citation target.", reference_id=resolution.reference_id, target_ids=(target_id,)))
-        if resolution.status is not LegalIRCitationResolutionStatus.RESOLVED and not resolution.diagnostics:
-            diagnostics.append(_diagnostic(LegalIRCitationDiagnosticType.RESOLUTION_DIAGNOSTIC_MISSING, "Non-resolved citation resolution lacks diagnostics.", reference_id=resolution.reference_id))
+                diagnostics.append(
+                    _diagnostic(
+                        LegalIRCitationDiagnosticType.RESOLUTION_TARGET_MISSING,
+                        "Resolution points at a missing citation target.",
+                        reference_id=resolution.reference_id,
+                        target_ids=(target_id,),
+                    )
+                )
+        if (
+            resolution.status is not LegalIRCitationResolutionStatus.RESOLVED
+            and not resolution.diagnostics
+        ):
+            diagnostics.append(
+                _diagnostic(
+                    LegalIRCitationDiagnosticType.RESOLUTION_DIAGNOSTIC_MISSING,
+                    "Non-resolved citation resolution lacks diagnostics.",
+                    reference_id=resolution.reference_id,
+                )
+            )
 
     diagnostics = list(_dedupe_diagnostics(diagnostics))
     return LegalIRCitationValidationResult(
@@ -1121,13 +1308,24 @@ def merge_legal_ir_citation_graphs(
 
     graphs = tuple(_citation_graph(graph) for graph in citation_graphs)
     return LegalIRCitationGraph(
-        citation_graph_id=citation_graph_id or "lir-citation-graph-" + _stable_hash([graph.citation_graph_id for graph in graphs])[:24],
-        authorities=tuple(_unique_records(authority for graph in graphs for authority in graph.authorities)),
+        citation_graph_id=citation_graph_id
+        or "lir-citation-graph-" + _stable_hash([graph.citation_graph_id for graph in graphs])[:24],
+        authorities=tuple(
+            _unique_records(authority for graph in graphs for authority in graph.authorities)
+        ),
         targets=tuple(_unique_records(target for graph in graphs for target in graph.targets)),
-        references=tuple(_unique_records(reference for graph in graphs for reference in graph.references)),
-        resolutions=tuple(_unique_records(resolution for graph in graphs for resolution in graph.resolutions)),
-        diagnostics=tuple(_dedupe_diagnostics(issue for graph in graphs for issue in graph.diagnostics)),
-        source_map_id=",".join(_unique(graph.source_map_id for graph in graphs if graph.source_map_id)),
+        references=tuple(
+            _unique_records(reference for graph in graphs for reference in graph.references)
+        ),
+        resolutions=tuple(
+            _unique_records(resolution for graph in graphs for resolution in graph.resolutions)
+        ),
+        diagnostics=tuple(
+            _dedupe_diagnostics(issue for graph in graphs for issue in graph.diagnostics)
+        ),
+        source_map_id=",".join(
+            _unique(graph.source_map_id for graph in graphs if graph.source_map_id)
+        ),
         metadata={"merged_citation_graph_ids": [graph.citation_graph_id for graph in graphs]},
     )
 
@@ -1140,11 +1338,20 @@ def _resolve_reference(
     source_map: LegalIRSourceMap | None = None,
 ) -> LegalIRCitationResolution:
     external_graphs = tuple(_citation_graph(item) for item in external_citation_graphs)
-    canonical = normalize_legal_citation(reference.raw_text, default_authority=reference.authority_id)
+    canonical = normalize_legal_citation(
+        reference.raw_text, default_authority=reference.authority_id
+    )
     candidates, confidence = _candidate_targets(graph, reference, canonical, external_graphs)
     diagnostics: list[LegalIRCitationDiagnostic] = []
     source_traces = _source_traces_for_reference(source_map, reference, candidates)
-    source_node_ids = tuple(_unique((*reference.source_node_ids, *(node for target in candidates for node in target.source_node_ids))))
+    source_node_ids = tuple(
+        _unique(
+            (
+                *reference.source_node_ids,
+                *(node for target in candidates for node in target.source_node_ids),
+            )
+        )
+    )
     source_span_ids = tuple(
         _unique(
             (
@@ -1190,7 +1397,15 @@ def _resolve_reference(
                 source_span_ids=source_span_ids,
             )
         )
-        return _resolution(reference, canonical, candidates, LegalIRCitationResolutionStatus.REPEALED, confidence, diagnostics, source_traces)
+        return _resolution(
+            reference,
+            canonical,
+            candidates,
+            LegalIRCitationResolutionStatus.REPEALED,
+            confidence,
+            diagnostics,
+            source_traces,
+        )
 
     repealed = tuple(target for target in candidates if target.repealed)
     active = tuple(target for target in candidates if not target.repealed)
@@ -1207,7 +1422,15 @@ def _resolve_reference(
                 source_span_ids=source_span_ids,
             )
         )
-        return _resolution(reference, canonical, candidates, LegalIRCitationResolutionStatus.REPEALED, confidence, diagnostics, source_traces)
+        return _resolution(
+            reference,
+            canonical,
+            candidates,
+            LegalIRCitationResolutionStatus.REPEALED,
+            confidence,
+            diagnostics,
+            source_traces,
+        )
 
     collapsed = active
     if reference.citation_kind is not LegalIRCitationKind.RANGE and len(collapsed) > 1:
@@ -1223,9 +1446,25 @@ def _resolve_reference(
                 source_span_ids=source_span_ids,
             )
         )
-        return _resolution(reference, canonical, collapsed, LegalIRCitationResolutionStatus.AMBIGUOUS, confidence, diagnostics, source_traces)
+        return _resolution(
+            reference,
+            canonical,
+            collapsed,
+            LegalIRCitationResolutionStatus.AMBIGUOUS,
+            confidence,
+            diagnostics,
+            source_traces,
+        )
 
-    return _resolution(reference, canonical, collapsed, LegalIRCitationResolutionStatus.RESOLVED, confidence, diagnostics, source_traces)
+    return _resolution(
+        reference,
+        canonical,
+        collapsed,
+        LegalIRCitationResolutionStatus.RESOLVED,
+        confidence,
+        diagnostics,
+        source_traces,
+    )
 
 
 def _candidate_targets(
@@ -1234,21 +1473,37 @@ def _candidate_targets(
     canonical: str,
     external_graphs: Sequence[LegalIRCitationGraph],
 ) -> tuple[tuple[LegalIRCitationTarget, ...], float]:
-    all_targets = tuple(graph.targets) + tuple(target for external in external_graphs for target in external.targets)
+    all_targets = tuple(graph.targets) + tuple(
+        target for external in external_graphs for target in external.targets
+    )
     if reference.explicit_target_id:
-        explicit = tuple(target for target in all_targets if target.target_id == reference.explicit_target_id)
+        explicit = tuple(
+            target for target in all_targets if target.target_id == reference.explicit_target_id
+        )
         return explicit, 1.0 if explicit else 0.0
-    exact = tuple(target for target in all_targets if _target_matches_exact(target, reference, canonical))
+    exact = tuple(
+        target for target in all_targets if _target_matches_exact(target, reference, canonical)
+    )
     if exact:
         return tuple(_unique_records(exact)), 1.0
-    alias = tuple(target for target in all_targets if canonical in target.aliases and _target_scope_matches(target, reference))
+    alias = tuple(
+        target
+        for target in all_targets
+        if canonical in target.aliases and _target_scope_matches(target, reference)
+    )
     if alias:
         return tuple(_unique_records(alias)), 0.92
     if reference.citation_kind is LegalIRCitationKind.RANGE or _looks_like_range(canonical):
-        ranged = tuple(target for target in all_targets if _target_in_range(target, canonical, reference))
+        ranged = tuple(
+            target for target in all_targets if _target_in_range(target, canonical, reference)
+        )
         if ranged:
             return tuple(_unique_records(ranged)), 0.9
-    subsection_parent = tuple(target for target in all_targets if _target_matches_parent_section(target, reference, canonical))
+    subsection_parent = tuple(
+        target
+        for target in all_targets
+        if _target_matches_parent_section(target, reference, canonical)
+    )
     if subsection_parent:
         return tuple(_unique_records(subsection_parent)), 0.84
     return (), 0.0
@@ -1264,12 +1519,17 @@ def _target_matches_exact(
     return _target_scope_matches(target, reference)
 
 
-def _target_scope_matches(target: LegalIRCitationTarget, reference: LegalIRCitationReference) -> bool:
+def _target_scope_matches(
+    target: LegalIRCitationTarget, reference: LegalIRCitationReference
+) -> bool:
     if reference.authority_id and target.authority_id != reference.authority_id:
         return False
     if reference.version and target.version != reference.version:
         return False
-    if reference.explicit_target_document_id and target.document_id != reference.explicit_target_document_id:
+    if (
+        reference.explicit_target_document_id
+        and target.document_id != reference.explicit_target_document_id
+    ):
         return False
     return True
 
@@ -1296,7 +1556,11 @@ def _target_in_range(
         return False
     if str(end_parts.get("title") or "") != str(target_parts.get("title") or ""):
         return False
-    return _section_sort_key(str(start_parts.get("section") or "")) <= _section_sort_key(str(target_parts.get("section") or "")) <= _section_sort_key(str(end_parts.get("section") or ""))
+    return (
+        _section_sort_key(str(start_parts.get("section") or ""))
+        <= _section_sort_key(str(target_parts.get("section") or ""))
+        <= _section_sort_key(str(end_parts.get("section") or ""))
+    )
 
 
 def _target_matches_parent_section(
@@ -1328,7 +1592,10 @@ def _resolution(
 ) -> LegalIRCitationResolution:
     target_tuple = tuple(_unique_records(targets))
     authority_id = target_tuple[0].authority_id if target_tuple else reference.authority_id
-    version = ",".join(_unique(target.version for target in target_tuple if target.version)) or reference.version
+    version = (
+        ",".join(_unique(target.version for target in target_tuple if target.version))
+        or reference.version
+    )
     return LegalIRCitationResolution(
         reference_id=reference.reference_id,
         status=status,
@@ -1346,16 +1613,24 @@ def _resolution(
 def _normalize_range_citation(text: str, *, default_authority: str = "") -> str:
     match = _RANGE_SPLIT_RE.search(text)
     if not match:
-        compact_ors = re.match(r"^\s*ORS\s+(?P<left>\d+(?:\.\d+)?)-(?P<right>\d+(?:\.\d+)?)(?P<subs>(?:\([A-Za-z0-9]+\))*)\s*$", text, re.IGNORECASE)
+        compact_ors = re.match(
+            r"^\s*ORS\s+(?P<left>\d+(?:\.\d+)?)-(?P<right>\d+(?:\.\d+)?)(?P<subs>(?:\([A-Za-z0-9]+\))*)\s*$",
+            text,
+            re.IGNORECASE,
+        )
         if compact_ors:
             left_canonical = normalize_legal_citation(f"ORS {compact_ors.group('left')}")
-            right_canonical = normalize_legal_citation(f"ORS {compact_ors.group('right')}{compact_ors.group('subs')}")
+            right_canonical = normalize_legal_citation(
+                f"ORS {compact_ors.group('right')}{compact_ors.group('subs')}"
+            )
             return f"{left_canonical}-{right_canonical}"
         return text
     left = text[: match.start()].strip()
     right = text[match.end() :].strip()
     left_canonical = normalize_legal_citation(left, default_authority=default_authority)
-    right_canonical = normalize_legal_citation(right, default_authority=_authority_id_for_citation(left_canonical) or default_authority)
+    right_canonical = normalize_legal_citation(
+        right, default_authority=_authority_id_for_citation(left_canonical) or default_authority
+    )
     return f"{left_canonical}-{right_canonical}"
 
 
@@ -1437,7 +1712,12 @@ def _source_traces_for_reference(
     if source_map is None:
         return ()
     traces: list[LegalIRFactTrace] = []
-    for node_id in _unique((*reference.source_node_ids, *(node for target in targets for node in target.source_node_ids))):
+    for node_id in _unique(
+        (
+            *reference.source_node_ids,
+            *(node for target in targets for node in target.source_node_ids),
+        )
+    ):
         trace = trace_legal_ir_fact(source_map, node_id)
         traces.append(trace)
     return tuple(traces)
@@ -1509,7 +1789,9 @@ def _diagnostic(
     )
 
 
-def _dedupe_diagnostics(items: Iterable[LegalIRCitationDiagnostic]) -> tuple[LegalIRCitationDiagnostic, ...]:
+def _dedupe_diagnostics(
+    items: Iterable[LegalIRCitationDiagnostic],
+) -> tuple[LegalIRCitationDiagnostic, ...]:
     seen: set[tuple[Any, ...]] = set()
     result: list[LegalIRCitationDiagnostic] = []
     for item in items:
@@ -1536,7 +1818,9 @@ def _duplicate_diagnostic(
     seen: set[str] = set()
     for value in values:
         if value in seen:
-            diagnostics.append(_diagnostic(diagnostic_type, f"Duplicate {kind} ID {value!r}.", field_path=kind))
+            diagnostics.append(
+                _diagnostic(diagnostic_type, f"Duplicate {kind} ID {value!r}.", field_path=kind)
+            )
         seen.add(value)
 
 
@@ -1549,11 +1833,19 @@ def _external_target_exists(target_id: str, graphs: Sequence[LegalIRCitationGrap
 
 
 def _citation_graph(value: LegalIRCitationGraph | Mapping[str, Any]) -> LegalIRCitationGraph:
-    return value if isinstance(value, LegalIRCitationGraph) else LegalIRCitationGraph.from_dict(_mapping(value))
+    return (
+        value
+        if isinstance(value, LegalIRCitationGraph)
+        else LegalIRCitationGraph.from_dict(_mapping(value))
+    )
 
 
 def _source_map(value: LegalIRSourceMap | Mapping[str, Any]) -> LegalIRSourceMap:
-    return value if isinstance(value, LegalIRSourceMap) else LegalIRSourceMap.from_dict(_mapping(value))
+    return (
+        value
+        if isinstance(value, LegalIRSourceMap)
+        else LegalIRSourceMap.from_dict(_mapping(value))
+    )
 
 
 def _mapping(value: Any) -> Mapping[str, Any]:
@@ -1649,28 +1941,48 @@ def _source_node_ids(payload: Mapping[str, Any]) -> tuple[str, ...]:
 
 def _citation_kind(value: Any) -> LegalIRCitationKind:
     try:
-        return value if isinstance(value, LegalIRCitationKind) else LegalIRCitationKind(str(value or LegalIRCitationKind.UNKNOWN.value))
+        return (
+            value
+            if isinstance(value, LegalIRCitationKind)
+            else LegalIRCitationKind(str(value or LegalIRCitationKind.UNKNOWN.value))
+        )
     except ValueError:
         return LegalIRCitationKind.UNKNOWN
 
 
 def _resolution_status(value: Any) -> LegalIRCitationResolutionStatus:
     try:
-        return value if isinstance(value, LegalIRCitationResolutionStatus) else LegalIRCitationResolutionStatus(str(value or LegalIRCitationResolutionStatus.UNRESOLVED.value))
+        return (
+            value
+            if isinstance(value, LegalIRCitationResolutionStatus)
+            else LegalIRCitationResolutionStatus(
+                str(value or LegalIRCitationResolutionStatus.UNRESOLVED.value)
+            )
+        )
     except ValueError:
         return LegalIRCitationResolutionStatus.UNRESOLVED
 
 
 def _diagnostic_type(value: Any) -> LegalIRCitationDiagnosticType:
     try:
-        return value if isinstance(value, LegalIRCitationDiagnosticType) else LegalIRCitationDiagnosticType(str(value or LegalIRCitationDiagnosticType.UNRESOLVED_CITATION.value))
+        return (
+            value
+            if isinstance(value, LegalIRCitationDiagnosticType)
+            else LegalIRCitationDiagnosticType(
+                str(value or LegalIRCitationDiagnosticType.UNRESOLVED_CITATION.value)
+            )
+        )
     except ValueError:
         return LegalIRCitationDiagnosticType.UNRESOLVED_CITATION
 
 
 def _citation_use(value: Any) -> LegalIRCitationUse:
     try:
-        return value if isinstance(value, LegalIRCitationUse) else LegalIRCitationUse(str(value or LegalIRCitationUse.PROOF_TARGET.value))
+        return (
+            value
+            if isinstance(value, LegalIRCitationUse)
+            else LegalIRCitationUse(str(value or LegalIRCitationUse.PROOF_TARGET.value))
+        )
     except ValueError:
         return LegalIRCitationUse.PROOF_TARGET
 

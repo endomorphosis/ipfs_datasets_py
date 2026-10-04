@@ -6,7 +6,9 @@ from pathlib import Path
 
 def _load_scraper_module():
     root = Path(__file__).resolve().parents[3]
-    path = root / "ipfs_datasets_py" / "processors" / "legal_scrapers" / "netherlands_laws_scraper.py"
+    path = (
+        root / "ipfs_datasets_py" / "processors" / "legal_scrapers" / "netherlands_laws_scraper.py"
+    )
     spec = importlib.util.spec_from_file_location("netherlands_laws_scraper_under_test", path)
     module = importlib.util.module_from_spec(spec)
     assert spec and spec.loader

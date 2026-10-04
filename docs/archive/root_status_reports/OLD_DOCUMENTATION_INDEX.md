@@ -295,15 +295,15 @@ The GraphRAG Ontology Optimizer is a production-ready multi-agent system for gen
 ### Quick Start:
 ```python
 from ipfs_datasets_py.optimizers.graphrag import (
-    OntologyHarness, MetricsCollector, OntologyVisualizer
+    OntologyHarness,
+    MetricsCollector,
+    OntologyVisualizer,
 )
 
 # Run ontology optimization
 harness = OntologyHarness(parallelism=4)
 cycle_results = harness.run_sgd_cycle(
-    data_sources=documents,
-    num_cycles=10,
-    convergence_threshold=0.85
+    data_sources=documents, num_cycles=10, convergence_threshold=0.85
 )
 ```
 

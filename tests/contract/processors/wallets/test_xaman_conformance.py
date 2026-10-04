@@ -84,9 +84,7 @@ def test_lifecycle_states_remain_distinct() -> None:
     processor = XamanWalletProcessor(network=XRPLNetwork.TESTNET)
     observed: dict[str, PayloadStatus] = {}
     for case in data["payloads"]:
-        payload = processor.normalize_payloads(
-            [case["document"]], context=_context(case["id"])
-        )[0]
+        payload = processor.normalize_payloads([case["document"]], context=_context(case["id"]))[0]
         observed[case["expect_status"]] = payload.status
         assert payload.status.value == case["expect_status"]
     assert set(observed) == set(data["required_statuses"])
@@ -114,9 +112,7 @@ def test_api_success_never_settlement_and_xrpl_verifies() -> None:
         assert verified.is_ledger_settled is case["expect_ledger_settled"], case["id"]
 
     # Explicit rule: signed with txid but no ledger evidence.
-    signed = parse_xaman_payload(
-        by_id["signed"]["document"], network=XRPLNetwork.TESTNET
-    )
+    signed = parse_xaman_payload(by_id["signed"]["document"], network=XRPLNetwork.TESTNET)
     only_api = verify_settlement_against_xrpl(signed, xrpl_transactions=())
     assert only_api.is_api_success is True
     assert only_api.settlement is SettlementVerdict.API_SUCCESS_ONLY
@@ -136,13 +132,9 @@ def test_network_account_payload_identity_bound() -> None:
             continue
         if case.get("expect_error"):
             with pytest.raises(NormalizationError):
-                processor.normalize_payloads(
-                    [case["document"]], context=_context(case["id"])
-                )
+                processor.normalize_payloads([case["document"]], context=_context(case["id"]))
             continue
-        payload = processor.normalize_payloads(
-            [case["document"]], context=_context(case["id"])
-        )[0]
+        payload = processor.normalize_payloads([case["document"]], context=_context(case["id"]))[0]
         assert payload.network.value == case["expect"]["network"]
         assert payload.account == case["expect"]["account"]
         assert payload.payload_uuid == case["expect"]["payload_uuid"]
@@ -156,12 +148,8 @@ def test_memos_and_payload_content_follow_redaction_size_policy() -> None:
             redact_instruction=bool(privacy_cfg.get("redact_instruction", False)),
             max_instruction_bytes=int(privacy_cfg.get("max_instruction_bytes", 1024)),
         )
-        processor = XamanWalletProcessor(
-            network=XRPLNetwork.TESTNET, privacy=privacy
-        )
-        payload = processor.normalize_payloads(
-            [case["document"]], context=_context(case["id"])
-        )[0]
+        processor = XamanWalletProcessor(network=XRPLNetwork.TESTNET, privacy=privacy)
+        payload = processor.normalize_payloads([case["document"]], context=_context(case["id"]))[0]
         expect = case.get("expect") or {}
         if expect.get("custom_instruction_redacted"):
             assert payload.custom_instruction is None
@@ -200,9 +188,7 @@ def test_processor_cannot_approve_sign_or_submit() -> None:
         "submit_payload",
         "broadcast",
     ):
-        assert not hasattr(processor, banned) or not callable(
-            getattr(processor, banned, None)
-        )
+        assert not hasattr(processor, banned) or not callable(getattr(processor, banned, None))
 
 
 def test_offline_payload_ingest_composes_provider() -> None:
@@ -210,9 +196,7 @@ def test_offline_payload_ingest_composes_provider() -> None:
     docs = [c["document"] for c in data["payloads"]]
     backend = fixture_backend_from_payloads(docs)
     provider = XamanPayloadProvider(network=XRPLNetwork.TESTNET, backend=backend)
-    processor = XamanWalletProcessor(
-        network=XRPLNetwork.TESTNET, payload_provider=provider
-    )
+    processor = XamanWalletProcessor(network=XRPLNetwork.TESTNET, payload_provider=provider)
 
     async def _collect():
         out = []

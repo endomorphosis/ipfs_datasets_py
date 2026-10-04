@@ -165,12 +165,8 @@ def test_classify_by_confirmation_depth(
 
 
 def test_common_ancestor_finds_highest_shared_hash() -> None:
-    local = CanonicalHistory.from_pairs(
-        [(1, "0x01"), (2, "0x02"), (3, "0x03a"), (4, "0x04a")]
-    )
-    remote = CanonicalHistory.from_pairs(
-        [(1, "0x01"), (2, "0x02"), (3, "0x03b"), (4, "0x04b")]
-    )
+    local = CanonicalHistory.from_pairs([(1, "0x01"), (2, "0x02"), (3, "0x03a"), (4, "0x04a")])
+    remote = CanonicalHistory.from_pairs([(1, "0x01"), (2, "0x02"), (3, "0x03b"), (4, "0x04b")])
     ancestor = common_ancestor(local, remote)
     assert ancestor is not None
     assert ancestor.sequence == 2
@@ -295,8 +291,7 @@ def test_deep_reorg_stops_for_review(
         prior_history=history[:-1],
     )
     remote = CanonicalHistory.from_pairs(
-        [(1, "0xold1"), (2, "0xold2")]
-        + [(i, f"0xnew{i}") for i in range(3, 10)]
+        [(1, "0xold1"), (2, "0xold2")] + [(i, f"0xnew{i}") for i in range(3, 10)]
     )
     decision = policy.evaluate_reorg(
         checkpoint,
@@ -358,11 +353,14 @@ def test_matching_anchor_is_not_a_reorg(
         context=context,
     )
     assert decision.kind is ReorgKind.NONE
-    assert policy.rewind_position(
-        checkpoint,
-        observed_anchor=HashAnchor(5, "0x05"),
-        context=context,
-    ) is None
+    assert (
+        policy.rewind_position(
+            checkpoint,
+            observed_anchor=HashAnchor(5, "0x05"),
+            context=context,
+        )
+        is None
+    )
 
 
 def test_orphan_suffix_and_project_corrections() -> None:
@@ -426,9 +424,7 @@ def test_checkpoint_cas_after_shallow_rewind(
             context=context,
         )
     )
-    remote = CanonicalHistory.from_pairs(
-        [(1, "0x01"), (2, "0x02"), (3, "0x03-new")]
-    )
+    remote = CanonicalHistory.from_pairs([(1, "0x01"), (2, "0x02"), (3, "0x03-new")])
     decision = policy.evaluate_reorg(
         original,
         observed_anchor=HashAnchor(3, "0x03-new"),

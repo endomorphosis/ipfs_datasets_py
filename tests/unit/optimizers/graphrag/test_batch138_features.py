@@ -7,6 +7,7 @@ Methods under test:
   - ExtractionConfig.combined_score()
   - ExtractionConfig.similarity_to(other)
 """
+
 import pytest
 from unittest.mock import MagicMock
 
@@ -15,8 +16,10 @@ from unittest.mock import MagicMock
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_pipeline():
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     return OntologyPipeline()
 
 
@@ -30,12 +33,14 @@ def _push_run(p, overall):
 
 def _make_config(threshold=0.5, max_entities=100):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
+
     return ExtractionConfig(confidence_threshold=threshold, max_entities=max_entities)
 
 
 # ---------------------------------------------------------------------------
 # OntologyPipeline.rolling_average
 # ---------------------------------------------------------------------------
+
 
 class TestRollingAverage:
     @pytest.mark.parametrize(
@@ -46,7 +51,9 @@ class TestRollingAverage:
             ([0.4, 0.8], 5, 2, 0, 0.4),
         ],
     )
-    def test_rolling_average_scenarios(self, scores, window, expected_len, expected_idx, expected_value):
+    def test_rolling_average_scenarios(
+        self, scores, window, expected_len, expected_idx, expected_value
+    ):
         p = _make_pipeline()
         for v in scores:
             _push_run(p, v)
@@ -66,6 +73,7 @@ class TestRollingAverage:
 # ---------------------------------------------------------------------------
 # OntologyPipeline.score_at_run
 # ---------------------------------------------------------------------------
+
 
 class TestScoreAtRun:
     @pytest.mark.parametrize(
@@ -91,6 +99,7 @@ class TestScoreAtRun:
 # ---------------------------------------------------------------------------
 # OntologyPipeline.score_percentile
 # ---------------------------------------------------------------------------
+
 
 class TestScorePercentile:
     @pytest.mark.parametrize(
@@ -118,6 +127,7 @@ class TestScorePercentile:
 # ExtractionConfig.combined_score
 # ---------------------------------------------------------------------------
 
+
 class TestCombinedScore:
     def test_returns_float(self):
         c = _make_config()
@@ -143,6 +153,7 @@ class TestCombinedScore:
 # ---------------------------------------------------------------------------
 # ExtractionConfig.similarity_to
 # ---------------------------------------------------------------------------
+
 
 class TestSimilarityTo:
     @pytest.mark.parametrize(

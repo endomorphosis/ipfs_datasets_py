@@ -63,18 +63,14 @@ def test_multi_input_output(load_fixture, context, processor) -> None:
         apply_utxos=True,
     )
     fee_transfers = [
-        r
-        for r in records
-        if isinstance(r, TransferRecord) and r.transfer_kind is TransferKind.FEE
+        r for r in records if isinstance(r, TransferRecord) and r.transfer_kind is TransferKind.FEE
     ]
     assert len(fee_transfers) == 1
     assert fee_transfers[0].amount.base_units == str(data["expect"]["fee_sats"])
     # UTXO-driven balances: source seeds spent, destinations funded.
     assert processor.balance_sats("bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4") == 25000
     assert (
-        processor.balance_sats(
-            "bc1p5cyxnuxmeuwuvkwfem96lqzszd02n6xdcjrs20cac6yqjjwudpxqkedrcr"
-        )
+        processor.balance_sats("bc1p5cyxnuxmeuwuvkwfem96lqzszd02n6xdcjrs20cac6yqjjwudpxqkedrcr")
         == 120000
     )
 
@@ -84,17 +80,11 @@ def test_spent_unspent(load_fixture, context, processor) -> None:
     processor.normalize_transactions(
         [data["create_tx"]], context=context, head_height=200, apply_utxos=True
     )
-    assert (
-        processor.balance_sats(data["address"])
-        == data["expect_after_create"]["balance_address"]
-    )
+    assert processor.balance_sats(data["address"]) == data["expect_after_create"]["balance_address"]
     processor.normalize_transactions(
         [data["spend_tx"]], context=context, head_height=200, apply_utxos=True
     )
-    assert (
-        processor.balance_sats(data["address"])
-        == data["expect_after_spend"]["balance_address"]
-    )
+    assert processor.balance_sats(data["address"]) == data["expect_after_spend"]["balance_address"]
     spent = processor.utxos.get(data["expect_after_spend"]["spent_outpoint"])
     assert spent is not None and spent.is_spent
 
@@ -102,12 +92,8 @@ def test_spent_unspent(load_fixture, context, processor) -> None:
 def test_replacement_rbf(load_fixture, context, processor) -> None:
     data = load_fixture("replacement_rbf.json")
     seed_from_mapping(processor.utxos, data["seed_utxo"])
-    processor.normalize_transactions(
-        [data["original"]], context=context, apply_utxos=True
-    )
-    processor.normalize_transactions(
-        [data["replacement"]], context=context, apply_utxos=True
-    )
+    processor.normalize_transactions([data["original"]], context=context, apply_utxos=True)
+    processor.normalize_transactions([data["replacement"]], context=context, apply_utxos=True)
     assert (
         processor.balance_sats("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")
         == data["expect_after_replacement"]["balance_destination"]
@@ -130,9 +116,7 @@ def test_reorg_reverses_utxo_effects(load_fixture, context, processor) -> None:
         == expect["after_orphan_apply"]["balance_source"]
     )
     assert (
-        processor.balance_sats(
-            "bc1p5cyxnuxmeuwuvkwfem96lqzszd02n6xdcjrs20cac6yqjjwudpxqkedrcr"
-        )
+        processor.balance_sats("bc1p5cyxnuxmeuwuvkwfem96lqzszd02n6xdcjrs20cac6yqjjwudpxqkedrcr")
         == expect["after_orphan_apply"]["balance_taproot"]
     )
 
@@ -143,9 +127,7 @@ def test_reorg_reverses_utxo_effects(load_fixture, context, processor) -> None:
         == expect["after_reorg_reverse"]["balance_source"]
     )
     assert (
-        processor.balance_sats(
-            "bc1p5cyxnuxmeuwuvkwfem96lqzszd02n6xdcjrs20cac6yqjjwudpxqkedrcr"
-        )
+        processor.balance_sats("bc1p5cyxnuxmeuwuvkwfem96lqzszd02n6xdcjrs20cac6yqjjwudpxqkedrcr")
         == expect["after_reorg_reverse"]["balance_taproot"]
     )
 

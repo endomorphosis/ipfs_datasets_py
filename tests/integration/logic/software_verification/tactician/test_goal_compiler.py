@@ -234,11 +234,7 @@ def test_exact_targets_and_bounds_reproduce_from_content_identities() -> None:
     assert first.end_goal_content_id == formal.end_goal.content_id
 
     # Target state and resource bounds round-trip through the IR.
-    contract = next(
-        item
-        for item in first.ir.declarations
-        if item.kind is DeclarationKind.CONTRACT
-    )
+    contract = next(item for item in first.ir.declarations if item.kind is DeclarationKind.CONTRACT)
     assert contract.payload["target_state"]["phase"] == "ready"
     assert contract.payload["current_state"]["phase"] == "init"
 
@@ -279,9 +275,10 @@ def test_source_spans_and_assumption_classes_survive() -> None:
     assert by_id["assumption:token-order"].expression["assumption_class"] == (
         AssumptionClass.MUST_PROVE.value
     )
-    assert by_id["assumption:token-order"].extensions[
-        "tactician.assumption_class"
-    ] == AssumptionClass.MUST_PROVE.value
+    assert (
+        by_id["assumption:token-order"].extensions["tactician.assumption_class"]
+        == AssumptionClass.MUST_PROVE.value
+    )
     assert by_id["assumption:token-order"].kind is AssumptionKind.SEMANTIC
 
     assert by_id["assumption:fair-scheduler"].expression["assumption_class"] == (
@@ -308,12 +305,8 @@ def test_emits_state_transition_environment_contract_and_root_obligation() -> No
     prop = result.ir.properties[0]
     assert prop.kind is PropertyKind.REACHABILITY
     assert prop.expression["target_state"]["phase"] == "ready"
-    assert prop.expression["property_class"] == (
-        PropertyClass.EXISTENTIAL_REACHABILITY.value
-    )
-    assert map_property_kind(PropertyClass.EXISTENTIAL_REACHABILITY) is (
-        PropertyKind.REACHABILITY
-    )
+    assert prop.expression["property_class"] == (PropertyClass.EXISTENTIAL_REACHABILITY.value)
+    assert map_property_kind(PropertyClass.EXISTENTIAL_REACHABILITY) is (PropertyKind.REACHABILITY)
 
     obligation = result.root_obligations[0]
     assert isinstance(obligation, RootObligation)
@@ -324,9 +317,7 @@ def test_emits_state_transition_environment_contract_and_root_obligation() -> No
 
     # Transition names survive as declarations.
     transition_names = {
-        item.name
-        for item in result.ir.declarations
-        if item.kind is DeclarationKind.TRANSITION
+        item.name for item in result.ir.declarations if item.kind is DeclarationKind.TRANSITION
     }
     assert transition_names == {"claim", "release"}
 
@@ -345,9 +336,7 @@ def test_loss_aware_receipt_binds_goal_and_ir_with_bounded_preservation() -> Non
     assert receipt.authority_ceiling is EvidenceAuthority.BOUNDED
     assert receipt.bounds, "bounded preservation requires explicit bounds"
     assert receipt.semantic_mutations
-    assert all(
-        item.kind.value == "bound_introduced" for item in receipt.semantic_mutations
-    )
+    assert all(item.kind.value == "bound_introduced" for item in receipt.semantic_mutations)
 
 
 def test_unbounded_goal_compiles_as_exact_preservation() -> None:
@@ -457,12 +446,8 @@ def test_backend_choice_cannot_raise_assurance_above_translation_ceiling() -> No
     # Bounded goal + resource bounds ⇒ preservation BOUNDED ⇒ max BOUNDED.
     formal = _formal_goal()
     weak = FormalGoalCompiler().compile(formal, requested_backend=None)
-    strong = FormalGoalCompiler().compile(
-        formal, requested_backend="backend:lean4-kernel"
-    )
-    stronger = FormalGoalCompiler().compile(
-        formal, requested_backend="backend:isabelle-kernel"
-    )
+    strong = FormalGoalCompiler().compile(formal, requested_backend="backend:lean4-kernel")
+    stronger = FormalGoalCompiler().compile(formal, requested_backend="backend:isabelle-kernel")
 
     assert weak.assurance_ceiling is EvidenceAuthority.BOUNDED
     assert strong.assurance_ceiling is EvidenceAuthority.BOUNDED
@@ -472,10 +457,7 @@ def test_backend_choice_cannot_raise_assurance_above_translation_ceiling() -> No
 
     # Metadata records the request without elevating the receipt ceiling.
     assert strong.metadata["requested_backend"] == "backend:lean4-kernel"
-    assert (
-        strong.translation_receipt.metadata["requested_backend"]
-        == "backend:lean4-kernel"
-    )
+    assert strong.translation_receipt.metadata["requested_backend"] == "backend:lean4-kernel"
     assert strong.translation_receipt.authority_ceiling is EvidenceAuthority.BOUNDED
 
 

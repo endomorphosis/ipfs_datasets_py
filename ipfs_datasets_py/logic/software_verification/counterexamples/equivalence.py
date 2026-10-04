@@ -24,18 +24,12 @@ from enum import StrEnum
 from types import MappingProxyType
 from typing import Any, Final, Protocol, runtime_checkable
 
-COUNTEREXAMPLE_SEMANTIC_EQUIVALENCE_INTERFACE: Final = (
-    "CounterexampleSemanticEquivalence@1"
-)
+COUNTEREXAMPLE_SEMANTIC_EQUIVALENCE_INTERFACE: Final = "CounterexampleSemanticEquivalence@1"
 EQUIVALENCE_REPORT_SCHEMA: Final = (
     "ipfs_datasets_py/logic/counterexample-semantic-equivalence-report@1"
 )
-EQUIVALENCE_CLUSTER_SCHEMA: Final = (
-    "ipfs_datasets_py/logic/counterexample-equivalence-cluster@1"
-)
-DIVERSITY_SELECTION_SCHEMA: Final = (
-    "ipfs_datasets_py/logic/counterexample-diversity-selection@1"
-)
+EQUIVALENCE_CLUSTER_SCHEMA: Final = "ipfs_datasets_py/logic/counterexample-equivalence-cluster@1"
+DIVERSITY_SELECTION_SCHEMA: Final = "ipfs_datasets_py/logic/counterexample-diversity-selection@1"
 DIFFERENTIAL_COMPARISON_SCHEMA: Final = (
     "ipfs_datasets_py/logic/counterexample-differential-comparison@1"
 )
@@ -234,8 +228,7 @@ class CounterexampleSemanticEquivalenceProtocol(Protocol):
         *,
         relation: EquivalenceRelationKind | str = EquivalenceRelationKind.REVIEWED_PROJECTION,
         family: WitnessFamily | str | None = None,
-    ) -> "SemanticProjection":
-        ...
+    ) -> "SemanticProjection": ...
 
     def are_equivalent(
         self,
@@ -243,16 +236,14 @@ class CounterexampleSemanticEquivalenceProtocol(Protocol):
         right: Mapping[str, Any],
         *,
         relation: EquivalenceRelationKind | str = EquivalenceRelationKind.REVIEWED_PROJECTION,
-    ) -> "EquivalencePairResult":
-        ...
+    ) -> "EquivalencePairResult": ...
 
     def deduplicate(
         self,
         witnesses: Sequence[Mapping[str, Any]],
         *,
         relation: EquivalenceRelationKind | str = EquivalenceRelationKind.REVIEWED_PROJECTION,
-    ) -> "EquivalenceReport":
-        ...
+    ) -> "EquivalenceReport": ...
 
     def select_diverse(
         self,
@@ -260,22 +251,19 @@ class CounterexampleSemanticEquivalenceProtocol(Protocol):
         *,
         dimensions: Sequence[CoverageDimension | str] | None = None,
         max_select: int | None = None,
-    ) -> "DiversitySelection":
-        ...
+    ) -> "DiversitySelection": ...
 
     def differential_compare(
         self,
         observations: Sequence["ProviderObservation | Mapping[str, Any]"],
         *,
         witness: Mapping[str, Any] | None = None,
-    ) -> "DifferentialComparison":
-        ...
+    ) -> "DifferentialComparison": ...
 
     def quarantine_disagreement(
         self,
         comparison: "DifferentialComparison | Mapping[str, Any]",
-    ) -> "DisagreementQuarantine":
-        ...
+    ) -> "DisagreementQuarantine": ...
 
 
 # ---------------------------------------------------------------------------
@@ -432,12 +420,11 @@ def _resolve_family(
     if family is not None and family != "":
         return _enum(family, WitnessFamily, "family")  # type: ignore[return-value]
 
-    kind = str(
-        witness.get("kind")
-        or witness.get("property_class")
-        or witness.get("family")
-        or ""
-    ).strip().lower()
+    kind = (
+        str(witness.get("kind") or witness.get("property_class") or witness.get("family") or "")
+        .strip()
+        .lower()
+    )
     if kind in {
         "smt_model",
         "smt-model",
@@ -608,9 +595,7 @@ def _hypertrace_features(witness: Mapping[str, Any]) -> dict[str, Any]:
     if observed is None and isinstance(payload, Mapping):
         observed = payload.get("observed_fields")
     diff_fields: list[str] = []
-    if isinstance(differences, Sequence) and not isinstance(
-        differences, (str, bytes, bytearray)
-    ):
+    if isinstance(differences, Sequence) and not isinstance(differences, (str, bytes, bytearray)):
         for d in differences:
             if isinstance(d, Mapping):
                 field_name = d.get("field") or d.get("name") or d.get("key")
@@ -741,17 +726,13 @@ class SemanticProjection:
                 _digest(self._core_for_relation(relation)),
             )
 
-    def _core_for_relation(
-        self, relation: EquivalenceRelationKind | str
-    ) -> dict[str, Any]:
+    def _core_for_relation(self, relation: EquivalenceRelationKind | str) -> dict[str, Any]:
         rel = (
             relation
             if isinstance(relation, EquivalenceRelationKind)
             else EquivalenceRelationKind(str(relation))
         )
-        family = (
-            self.family.value if isinstance(self.family, WitnessFamily) else str(self.family)
-        )
+        family = self.family.value if isinstance(self.family, WitnessFamily) else str(self.family)
         if rel is EquivalenceRelationKind.CAUSAL_PATH:
             return {
                 "causal_features": dict(self.causal_features),
@@ -797,9 +778,7 @@ class SemanticProjection:
         return "sem:" + _digest(self._core_for_relation(rel))[:40]
 
     def to_dict(self) -> dict[str, Any]:
-        family = (
-            self.family.value if isinstance(self.family, WitnessFamily) else str(self.family)
-        )
+        family = self.family.value if isinstance(self.family, WitnessFamily) else str(self.family)
         relation = (
             self.relation.value
             if isinstance(self.relation, EquivalenceRelationKind)
@@ -891,8 +870,7 @@ class EquivalencePairResult:
     @property
     def equivalent(self) -> bool:
         return self.verdict is EquivalenceVerdict.EQUIVALENT or (
-            isinstance(self.verdict, str)
-            and self.verdict == EquivalenceVerdict.EQUIVALENT.value
+            isinstance(self.verdict, str) and self.verdict == EquivalenceVerdict.EQUIVALENT.value
         )
 
     def to_dict(self, *, identity: bool = True) -> dict[str, Any]:
@@ -939,15 +917,9 @@ class EquivalenceCluster:
     interface: str = COUNTEREXAMPLE_SEMANTIC_EQUIVALENCE_INTERFACE
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "member_indices", tuple(int(i) for i in self.member_indices)
-        )
-        object.__setattr__(
-            self, "member_ids", tuple(str(i) for i in self.member_ids if str(i))
-        )
-        object.__setattr__(
-            self, "projection", MappingProxyType(dict(self.projection or {}))
-        )
+        object.__setattr__(self, "member_indices", tuple(int(i) for i in self.member_indices))
+        object.__setattr__(self, "member_ids", tuple(str(i) for i in self.member_ids if str(i)))
+        object.__setattr__(self, "projection", MappingProxyType(dict(self.projection or {})))
         if not self.cluster_id:
             object.__setattr__(
                 self, "cluster_id", _content_id("eq-cluster", self.to_dict(identity=False))
@@ -1049,9 +1021,7 @@ class DiversitySelection:
     interface: str = COUNTEREXAMPLE_SEMANTIC_EQUIVALENCE_INTERFACE
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "selected_indices", tuple(int(i) for i in self.selected_indices)
-        )
+        object.__setattr__(self, "selected_indices", tuple(int(i) for i in self.selected_indices))
         object.__setattr__(
             self, "selected_ids", tuple(str(i) for i in self.selected_ids if str(i) or i == "")
         )
@@ -1132,18 +1102,14 @@ class ProviderObservation:
     extra: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "provider_id", _text(self.provider_id, "provider_id", maximum=256)
-        )
+        object.__setattr__(self, "provider_id", _text(self.provider_id, "provider_id", maximum=256))
         outcome = (
             self.outcome
             if isinstance(self.outcome, ProviderOutcome)
             else ProviderOutcome(str(self.outcome).strip().lower())
         )
         object.__setattr__(self, "outcome", outcome)
-        object.__setattr__(
-            self, "receipt_id", _text(self.receipt_id, "receipt_id", optional=True)
-        )
+        object.__setattr__(self, "receipt_id", _text(self.receipt_id, "receipt_id", optional=True))
         object.__setattr__(self, "authority", _normalize_authority(self.authority))
         object.__setattr__(
             self,
@@ -1168,7 +1134,9 @@ class ProviderObservation:
         )
 
     @classmethod
-    def from_mapping(cls, value: Mapping[str, Any] | "ProviderObservation") -> "ProviderObservation":
+    def from_mapping(
+        cls, value: Mapping[str, Any] | "ProviderObservation"
+    ) -> "ProviderObservation":
         if isinstance(value, ProviderObservation):
             return value
         if not isinstance(value, Mapping):
@@ -1209,9 +1177,7 @@ class ProviderObservation:
 
     def to_dict(self) -> dict[str, Any]:
         outcome = (
-            self.outcome.value
-            if isinstance(self.outcome, ProviderOutcome)
-            else str(self.outcome)
+            self.outcome.value if isinstance(self.outcome, ProviderOutcome) else str(self.outcome)
         )
         payload = {
             "authority": self.authority,
@@ -1309,9 +1275,7 @@ class DifferentialComparison:
         else:
             object.__setattr__(self, "is_consensus", bool(self.is_consensus))
             object.__setattr__(self, "consensus_claimed", bool(self.consensus_claimed))
-        object.__setattr__(
-            self, "authority_ceiling", _normalize_authority(self.authority_ceiling)
-        )
+        object.__setattr__(self, "authority_ceiling", _normalize_authority(self.authority_ceiling))
         object.__setattr__(
             self,
             "retained_receipt_ids",
@@ -1322,9 +1286,7 @@ class DifferentialComparison:
             "disagreeing_provider_ids",
             tuple(str(p) for p in self.disagreeing_provider_ids if str(p)),
         )
-        object.__setattr__(
-            self, "polarities", MappingProxyType(dict(self.polarities or {}))
-        )
+        object.__setattr__(self, "polarities", MappingProxyType(dict(self.polarities or {})))
         if not self.comparison_id:
             object.__setattr__(
                 self,
@@ -1335,15 +1297,12 @@ class DifferentialComparison:
     @property
     def requires_quarantine(self) -> bool:
         return self.status is DifferentialStatus.DISAGREEMENT or (
-            isinstance(self.status, str)
-            and self.status == DifferentialStatus.DISAGREEMENT.value
+            isinstance(self.status, str) and self.status == DifferentialStatus.DISAGREEMENT.value
         )
 
     def to_dict(self, *, identity: bool = True) -> dict[str, Any]:
         status = (
-            self.status.value
-            if isinstance(self.status, DifferentialStatus)
-            else str(self.status)
+            self.status.value if isinstance(self.status, DifferentialStatus) else str(self.status)
         )
         payload = {
             "agreed": bool(self.agreed),
@@ -1400,17 +1359,13 @@ class DisagreementQuarantine:
             "retained_receipt_ids",
             tuple(str(r) for r in self.retained_receipt_ids if str(r)),
         )
-        object.__setattr__(
-            self, "provider_ids", tuple(str(p) for p in self.provider_ids if str(p))
-        )
+        object.__setattr__(self, "provider_ids", tuple(str(p) for p in self.provider_ids if str(p)))
         # Invariants enforced at construction time.
         object.__setattr__(self, "authority_raised", False)
         object.__setattr__(self, "is_consensus", False)
         object.__setattr__(self, "consensus_claimed", False)
         object.__setattr__(self, "discarded_evidence", False)
-        object.__setattr__(
-            self, "authority_ceiling", _normalize_authority(self.authority_ceiling)
-        )
+        object.__setattr__(self, "authority_ceiling", _normalize_authority(self.authority_ceiling))
         object.__setattr__(
             self,
             "prior_authority_ceiling",
@@ -1538,9 +1493,7 @@ class CounterexampleSemanticEquivalence:
             detail = ""
 
         verdict = (
-            EquivalenceVerdict.EQUIVALENT
-            if left_key == right_key
-            else EquivalenceVerdict.DISTINCT
+            EquivalenceVerdict.EQUIVALENT if left_key == right_key else EquivalenceVerdict.DISTINCT
         )
         if verdict is EquivalenceVerdict.EQUIVALENT and not detail:
             detail = "reviewed semantic projection matches"
@@ -1563,9 +1516,7 @@ class CounterexampleSemanticEquivalence:
         relation: EquivalenceRelationKind | str = EquivalenceRelationKind.REVIEWED_PROJECTION,
         family: WitnessFamily | str | None = None,
     ) -> EquivalenceReport:
-        if not isinstance(witnesses, Sequence) or isinstance(
-            witnesses, (str, bytes, bytearray)
-        ):
+        if not isinstance(witnesses, Sequence) or isinstance(witnesses, (str, bytes, bytearray)):
             raise EquivalenceError("witnesses must be a sequence of mappings")
         rel = _enum(relation, EquivalenceRelationKind, "relation")
         buckets: dict[str, list[int]] = {}
@@ -1579,11 +1530,7 @@ class CounterexampleSemanticEquivalence:
             key = projection.semantic_key(rel)
             buckets.setdefault(key, []).append(index)
             projections.setdefault(key, projection)
-            wid = str(
-                raw.get("counterexample_id")
-                or raw.get("content_id")
-                or f"index:{index}"
-            )
+            wid = str(raw.get("counterexample_id") or raw.get("content_id") or f"index:{index}")
             member_ids.setdefault(key, []).append(wid)
 
         # Stable order by first-seen index.
@@ -1622,9 +1569,7 @@ class CounterexampleSemanticEquivalence:
         family: WitnessFamily | str | None = None,
         relation: EquivalenceRelationKind | str = EquivalenceRelationKind.REVIEWED_PROJECTION,
     ) -> DiversitySelection:
-        if not isinstance(witnesses, Sequence) or isinstance(
-            witnesses, (str, bytes, bytearray)
-        ):
+        if not isinstance(witnesses, Sequence) or isinstance(witnesses, (str, bytes, bytearray)):
             raise EquivalenceError("witnesses must be a sequence of mappings")
         if max_select is not None and int(max_select) < 0:
             raise EquivalenceError("max_select must be non-negative")
@@ -1673,9 +1618,7 @@ class CounterexampleSemanticEquivalence:
             selected_indices=tuple(selected),
             selected_ids=tuple(selected_ids),
             coverage_keys=tuple(coverage_keys),
-            dimensions=tuple(
-                d.value if isinstance(d, CoverageDimension) else str(d) for d in dims
-            ),
+            dimensions=tuple(d.value if isinstance(d, CoverageDimension) else str(d) for d in dims),
             input_count=len(witnesses),
             selected_count=len(selected),
         )
@@ -1704,15 +1647,13 @@ class CounterexampleSemanticEquivalence:
         if witness is not None:
             witness_key = self.project(witness, family=family).semantic_key()
 
-        polarities = {
-            obs.provider_id: _outcome_polarity(obs.outcome) for obs in parsed
-        }
+        polarities = {obs.provider_id: _outcome_polarity(obs.outcome) for obs in parsed}
         definitive = {
             pid: pol for pid, pol in polarities.items() if pol in {"positive", "negative"}
         }
-        retained = tuple(
-            obs.receipt_id for obs in parsed if obs.receipt_id
-        ) or tuple(f"obs:{obs.provider_id}" for obs in parsed)
+        retained = tuple(obs.receipt_id for obs in parsed if obs.receipt_id) or tuple(
+            f"obs:{obs.provider_id}" for obs in parsed
+        )
 
         prior_authorities = [obs.authority for obs in parsed]
         prior_ceiling = _min_authority(prior_authorities) if prior_authorities else "none"
@@ -1735,9 +1676,7 @@ class CounterexampleSemanticEquivalence:
         definitive_values = set(definitive.values())
         if len(definitive_values) >= 2:
             # True cross-provider contradiction: retain all receipts, no consensus.
-            disagreeing = tuple(
-                sorted(pid for pid, pol in definitive.items())
-            )
+            disagreeing = tuple(sorted(pid for pid, pol in definitive.items()))
             # Floor authority under disagreement.
             authority = _cap_authority(prior_ceiling, _DISAGREEMENT_AUTHORITY_CAP)
             return DifferentialComparison(
@@ -1786,8 +1725,7 @@ class CounterexampleSemanticEquivalence:
                 polarities=polarities,
                 witness_semantic_key=witness_key,
                 detail=(
-                    "definitive providers agree polarity; neutral providers "
-                    "prevent consensus claim"
+                    "definitive providers agree polarity; neutral providers prevent consensus claim"
                 ),
             )
 
@@ -1828,9 +1766,7 @@ class CounterexampleSemanticEquivalence:
             if status != DifferentialStatus.DISAGREEMENT.value and not comparison.get(
                 "requires_quarantine"
             ):
-                raise EquivalenceError(
-                    "quarantine_disagreement requires a disagreement comparison"
-                )
+                raise EquivalenceError("quarantine_disagreement requires a disagreement comparison")
             comparison = DifferentialComparison(
                 observations=observations,
                 status=DifferentialStatus.DISAGREEMENT,
@@ -1838,12 +1774,8 @@ class CounterexampleSemanticEquivalence:
                 is_consensus=False,
                 consensus_claimed=False,
                 authority_ceiling=str(comparison.get("authority_ceiling") or "none"),
-                retained_receipt_ids=tuple(
-                    comparison.get("retained_receipt_ids") or ()
-                ),
-                disagreeing_provider_ids=tuple(
-                    comparison.get("disagreeing_provider_ids") or ()
-                ),
+                retained_receipt_ids=tuple(comparison.get("retained_receipt_ids") or ()),
+                disagreeing_provider_ids=tuple(comparison.get("disagreeing_provider_ids") or ()),
                 polarities=dict(comparison.get("polarities") or {}),
                 witness_semantic_key=str(comparison.get("witness_semantic_key") or ""),
                 comparison_id=str(comparison.get("comparison_id") or ""),
@@ -1853,9 +1785,7 @@ class CounterexampleSemanticEquivalence:
         if not isinstance(comparison, DifferentialComparison):
             raise EquivalenceError("comparison must be a DifferentialComparison")
         if not comparison.requires_quarantine:
-            raise EquivalenceError(
-                "quarantine_disagreement requires status=disagreement"
-            )
+            raise EquivalenceError("quarantine_disagreement requires status=disagreement")
 
         prior = comparison.authority_ceiling
         # Even if a caller requests a higher authority, refuse to raise it.
@@ -1874,8 +1804,7 @@ class CounterexampleSemanticEquivalence:
         retained = comparison.retained_receipt_ids
         if not retained:
             retained = tuple(
-                obs.receipt_id or f"obs:{obs.provider_id}"
-                for obs in comparison.observations
+                obs.receipt_id or f"obs:{obs.provider_id}" for obs in comparison.observations
             )
 
         return DisagreementQuarantine(
@@ -1903,9 +1832,7 @@ def are_semantically_equivalent(
     relation: EquivalenceRelationKind | str = EquivalenceRelationKind.REVIEWED_PROJECTION,
     family: WitnessFamily | str | None = None,
 ) -> EquivalencePairResult:
-    return _DEFAULT_ENGINE.are_equivalent(
-        left, right, relation=relation, family=family
-    )
+    return _DEFAULT_ENGINE.are_equivalent(left, right, relation=relation, family=family)
 
 
 def deduplicate_witnesses(

@@ -15,15 +15,9 @@ from benchmarks.logic_pipeline import cases
 from benchmarks.logic_pipeline.contracts import Split
 
 
-FROZEN_CORPUS_SHA256 = (
-    "a2720cee073bfe4221594c5b29d8a4557865f272f4d2c2c3553dfeab74c03509"
-)
-FROZEN_SEMANTIC_SHA256 = (
-    "9a1747aac8ab7393147795b7f756318a67f66b6f4eedd6ed368b0337c5e46932"
-)
-FROZEN_MANIFEST_SHA256 = (
-    "58b9122c24e4d9d4cc2ad01c7437dfeb45c80ad2535df769d81a89acbda24a26"
-)
+FROZEN_CORPUS_SHA256 = "a2720cee073bfe4221594c5b29d8a4557865f272f4d2c2c3553dfeab74c03509"
+FROZEN_SEMANTIC_SHA256 = "9a1747aac8ab7393147795b7f756318a67f66b6f4eedd6ed368b0337c5e46932"
+FROZEN_MANIFEST_SHA256 = "58b9122c24e4d9d4cc2ad01c7437dfeb45c80ad2535df769d81a89acbda24a26"
 
 
 def _copy_fixture(tmp_path: Path) -> tuple[Path, Path]:
@@ -35,10 +29,7 @@ def _copy_fixture(tmp_path: Path) -> tuple[Path, Path]:
 
 
 def _read_lines(path: Path) -> list[dict[str, object]]:
-    return [
-        json.loads(line)
-        for line in path.read_text(encoding="utf-8").splitlines()
-    ]
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
 
 
 def _write_lines(path: Path, values: list[dict[str, object]]) -> None:
@@ -57,10 +48,7 @@ def _write_manifest(path: Path, value: dict[str, object]) -> None:
 
 
 def test_objective_evidence_and_public_api_are_stable() -> None:
-    assert (
-        cases.HSSLEV0201B64()
-        == "reviewed immutable semantic and proof benchmark corpus"
-    )
+    assert cases.HSSLEV0201B64() == "reviewed immutable semantic and proof benchmark corpus"
     assert logic_pipeline.HSSLEV0201B64 is cases.HSSLEV0201B64
     assert cases.CASE_SCHEMA.endswith(".case.v1")
     assert cases.CORPUS_MANIFEST_SCHEMA.endswith(".corpus-manifest.v1")
@@ -80,27 +68,18 @@ def test_default_corpus_is_frozen_reviewed_and_representative() -> None:
     assert corpus.manifest.corpus_sha256 == FROZEN_CORPUS_SHA256
     assert corpus.manifest.semantic_sha256 == FROZEN_SEMANTIC_SHA256
     assert corpus.manifest_sha256 == FROZEN_MANIFEST_SHA256
-    assert (
-        cases.corpus_manifest_sha256(corpus.manifest)
-        == FROZEN_MANIFEST_SHA256
-    )
+    assert cases.corpus_manifest_sha256(corpus.manifest) == FROZEN_MANIFEST_SHA256
     assert {case.split for case in corpus.cases} == set(Split)
     assert len({case.stratum for case in corpus.cases}) == 10
-    assert {case.expected_class for case in corpus.cases} == set(
-        cases.ExpectedClass
-    )
+    assert {case.expected_class for case in corpus.cases} == set(cases.ExpectedClass)
     assert tuple(corpus.by_id) == tuple(case.case_id for case in corpus.cases)
 
 
 def test_unsealed_loader_stops_before_holdout_tail(tmp_path: Path) -> None:
-    source_lines = cases.DEFAULT_CORPUS_PATH.read_bytes().splitlines(
-        keepends=True
-    )
+    source_lines = cases.DEFAULT_CORPUS_PATH.read_bytes().splitlines(keepends=True)
     assert len(source_lines) == 30
     corpus_path = tmp_path / "corpus.jsonl"
-    corpus_path.write_bytes(
-        b"".join(source_lines[:20]) + b"{sealed-holdout-not-json}\n" * 10
-    )
+    corpus_path.write_bytes(b"".join(source_lines[:20]) + b"{sealed-holdout-not-json}\n" * 10)
 
     manifest, unsealed = cases.load_unsealed_pilot_development(
         corpus_path,
@@ -122,10 +101,7 @@ def test_every_case_has_acceptance_fields_and_reviewed_ground_truth() -> None:
         assert case.case_id
         assert case.split in Split
         assert case.stratum
-        assert (
-            hashlib.sha256(case.source_text.encode("utf-8")).hexdigest()
-            == case.source_sha256
-        )
+        assert hashlib.sha256(case.source_text.encode("utf-8")).hexdigest() == case.source_sha256
         assert case.expected_class in cases.ExpectedClass
         assert case.expected_ir
         assert case.provenance["source_ref"]

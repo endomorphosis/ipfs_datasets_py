@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 try:
     from ipfs_datasets_py.core_operations.logic_processor import LogicProcessor
+
     _PROCESSOR = LogicProcessor()
     _AVAILABLE = True
 except Exception as _e:
@@ -53,9 +54,7 @@ async def cec_prove(
         return _unavailable("cec_prove")
     if not goal:
         return {"success": False, "error": "'goal' is required.", "proved": False}
-    return await _PROCESSOR.prove_dcec(
-        goal=goal, axioms=axioms, strategy=strategy, timeout=timeout
-    )
+    return await _PROCESSOR.prove_dcec(goal=goal, axioms=axioms, strategy=strategy, timeout=timeout)
 
 
 async def cec_check_theorem(
@@ -79,22 +78,34 @@ async def cec_check_theorem(
     return await _PROCESSOR.check_dcec_theorem(formula=formula, axioms=axioms)
 
 
-__all__ = ["cec_prove", "cec_check_theorem",
-           "prove_dcec", "check_theorem", "get_proof_tree", "TOOLS"]
+__all__ = [
+    "cec_prove",
+    "cec_check_theorem",
+    "prove_dcec",
+    "check_theorem",
+    "get_proof_tree",
+    "TOOLS",
+]
 
 
-def prove_dcec(formula: str = "", goal: str = "",
-               strategy: str = "auto",
-               axioms: Optional[List[str]] = None,
-               timeout: int = 30,
-               timeout_ms: int = 0) -> Dict[str, Any]:
+def prove_dcec(
+    formula: str = "",
+    goal: str = "",
+    strategy: str = "auto",
+    axioms: Optional[List[str]] = None,
+    timeout: int = 30,
+    timeout_ms: int = 0,
+) -> Dict[str, Any]:
     """Sync wrapper around cec_prove for backward compatibility.
     Accepts both 'formula' (positional) and 'goal' keyword."""
     import anyio as _anyio_local
+
     actual_goal = goal or formula
     actual_timeout = timeout if not timeout_ms else max(1, timeout_ms // 1000)
     result = _anyio_local.run(
-        lambda: cec_prove(goal=actual_goal, axioms=axioms, strategy=strategy, timeout=actual_timeout)
+        lambda: cec_prove(
+            goal=actual_goal, axioms=axioms, strategy=strategy, timeout=actual_timeout
+        )
     )
     result.setdefault("execution_time", result.get("elapsed_ms", 0) / 1000)
     return result
@@ -103,6 +114,7 @@ def prove_dcec(formula: str = "", goal: str = "",
 def check_theorem(formula: str) -> Dict[str, Any]:
     """Sync wrapper around cec_check_theorem for backward compatibility."""
     import anyio as _anyio_local
+
     result = _anyio_local.run(lambda: cec_check_theorem(formula=formula))
     result.setdefault("is_theorem", result.get("proved", False))
     return result
@@ -115,10 +127,10 @@ def get_proof_tree(formula: str) -> Dict[str, Any]:
     # Count nesting depth
     max_depth, cur_depth = 0, 0
     for ch in formula:
-        if ch == '(':
+        if ch == "(":
             cur_depth += 1
             max_depth = max(max_depth, cur_depth)
-        elif ch == ')':
+        elif ch == ")":
             cur_depth = max(0, cur_depth - 1)
     return {
         "success": True,
@@ -150,6 +162,7 @@ import time as _time
 
 class _BaseCECTool:
     """Base class for CEC MCP tools."""
+
     name: str = ""
     category: str = "logic_tools"
     tags: List[str] = []

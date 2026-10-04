@@ -284,6 +284,7 @@ async def pdf_query_knowledge_graph(...):
 def test_tool_can_be_imported():
     """Tool should be importable from expected path."""
     from ipfs_datasets_py.mcp_server.tools.pdf_tools import pdf_query_knowledge_graph
+
     assert pdf_query_knowledge_graph is not None
 ```
 

@@ -102,9 +102,7 @@ def test_mean_pilot_forward_not_worse_than_sealed_plateau() -> None:
     losses: list[float] = []
     for case in load_pilot_matrix_cases():
         l1 = construct_baseline_l1(case)
-        losses.append(
-            float(compare_semantic_ir(case.gold_ir, l1)["semantic_loss"])
-        )
+        losses.append(float(compare_semantic_ir(case.gold_ir, l1)["semantic_loss"]))
     mean_forward = sum(losses) / len(losses)
     assert mean_forward <= BASELINE_E2E_MEAN + 1e-9
     assert mean_forward < 0.05
@@ -122,9 +120,7 @@ def test_domain_condition_and_compact_hour_projection() -> None:
     )
     # Leading domain preposition is optional; content tokens still require
     # precision-1.0 grounding.
-    assert "in" in _optional_grounding_tokens_for(
-        "in_government_communications"
-    )
+    assert "in" in _optional_grounding_tokens_for("in_government_communications")
     assert "in" not in _optional_grounding_tokens_for("within_24_hours")
     assert _qualifier_fully_grounded(
         "Chinese-manufactured equipment for government communications",
@@ -135,10 +131,7 @@ def test_domain_condition_and_compact_hour_projection() -> None:
         "report within 72 hours",
         "within_24_hours",
     )
-    assert (
-        _classify_qualifier_facet("in_government_communications")
-        == "conditions"
-    )
+    assert _classify_qualifier_facet("in_government_communications") == "conditions"
     assert _classify_qualifier_facet("within_24_hours") == "temporal"
     # Realizer-style "if in …" framing must not steal domain gates into
     # exceptions or temporal.
@@ -150,9 +143,7 @@ def test_domain_condition_and_compact_hour_projection() -> None:
         == "conditions"
     )
     assert _source_has_temporal_cue("report incidents within 24h")
-    assert _source_has_domain_condition_cue(
-        "cannot use equipment in any government communications"
-    )
+    assert _source_has_domain_condition_cue("cannot use equipment in any government communications")
 
     vocabulary = AllowedAtomVocabulary(
         actors=(
@@ -199,9 +190,7 @@ def test_domain_condition_and_compact_hour_projection() -> None:
                     "in any government communications"
                 ),
                 "action_verb": "use",
-                "action_object": (
-                    "Chinese-manufactured telecommunications equipment"
-                ),
+                "action_object": ("Chinese-manufactured telecommunications equipment"),
                 "conditions": [],
                 "exceptions": [],
                 "temporal_constraints": [],
@@ -234,10 +223,7 @@ def test_domain_condition_and_compact_hour_projection() -> None:
                 "modality": "O",
                 "norm_type": "obligation",
                 "actor": "Federal agencies",
-                "action": (
-                    "implement zero-trust cybersecurity frameworks "
-                    "within 90 days"
-                ),
+                "action": ("implement zero-trust cybersecurity frameworks within 90 days"),
                 "action_verb": "implement",
                 "action_object": "zero-trust cybersecurity frameworks",
                 "conditions": [],
@@ -278,8 +264,7 @@ def test_domain_condition_and_compact_hour_projection() -> None:
                 "exceptions": [],
                 "temporal_constraints": [],
                 "source_text": (
-                    "Government contractors must report cybersecurity "
-                    "incidents within 24h."
+                    "Government contractors must report cybersecurity incidents within 24h."
                 ),
             }
         )
@@ -306,10 +291,7 @@ def test_edit_wave_receipt_cites_packet_and_forbids_optional_promotion() -> None
 
     packet_cids = receipt["packet_cids"]
     assert isinstance(packet_cids, list) and packet_cids
-    assert all(
-        isinstance(item, str) and item.startswith("baguqeera")
-        for item in packet_cids
-    )
+    assert all(isinstance(item, str) and item.startswith("baguqeera") for item in packet_cids)
     packet_ids = receipt["packet_ids"]
     assert isinstance(packet_ids, list) and packet_ids
     assert any("exec-order" in str(item) for item in packet_ids)
@@ -326,12 +308,10 @@ def test_edit_wave_receipt_cites_packet_and_forbids_optional_promotion() -> None
 
     post = receipt["post_scores"]
     assert isinstance(post, dict)
-    assert float(post["exec_order_1_forward_loss"]) <= float(
-        prior["exec_order_1_forward_loss"]
-    ) + 1e-9
-    assert float(post["exec_order_1_forward_loss"]) == pytest.approx(
-        0.0, abs=1e-9
+    assert (
+        float(post["exec_order_1_forward_loss"]) <= float(prior["exec_order_1_forward_loss"]) + 1e-9
     )
+    assert float(post["exec_order_1_forward_loss"]) == pytest.approx(0.0, abs=1e-9)
     assert float(post["exec_order_1_end_to_end_loss"]) <= PRIOR_EXEC_ORDER_E2E + 1e-9
     assert float(post["mean_pilot_forward_loss"]) <= BASELINE_E2E_MEAN + 1e-9
 
@@ -345,9 +325,7 @@ def test_edit_wave_receipt_cites_packet_and_forbids_optional_promotion() -> None
 
     changes = receipt["deterministic_changes"]
     assert isinstance(changes, list) and changes
-    change_ids = {
-        change.get("id") for change in changes if isinstance(change, dict)
-    }
+    change_ids = {change.get("id") for change in changes if isinstance(change, dict)}
     assert "compact_hour_window_normalize" in change_ids
     assert "domain_scope_in_on_condition_classify" in change_ids
     assert "optional_domain_preposition_grounding" in change_ids
@@ -379,9 +357,9 @@ def test_constructor_identity_unchanged_and_no_llm_dependency() -> None:
     constructor = TypedDeonticCanonicalConstructor()
     assert constructor.identity == TYPED_DEONTIC_CANONICAL_CONSTRUCTOR_INTERFACE
     # Module surface stays deterministic: no teacher runtime hooks on construct.
-    source = (
-        ROOT / "benchmarks/semantic_roundtrip/constructors/typed_deontic.py"
-    ).read_text(encoding="utf-8")
+    source = (ROOT / "benchmarks/semantic_roundtrip/constructors/typed_deontic.py").read_text(
+        encoding="utf-8"
+    )
     lowered = source.lower()
     for banned in (
         "openai",
@@ -392,9 +370,7 @@ def test_constructor_identity_unchanged_and_no_llm_dependency() -> None:
         "autoencoder_guided",
     ):
         assert banned not in lowered, banned
-    case = next(
-        c for c in load_pilot_matrix_cases() if c.case_id == "exec_order_1"
-    )
+    case = next(c for c in load_pilot_matrix_cases() if c.case_id == "exec_order_1")
     result = constructor.construct(
         ConstructorRequest(case.source_text, case.allowed_atom_vocabulary, {})
     )

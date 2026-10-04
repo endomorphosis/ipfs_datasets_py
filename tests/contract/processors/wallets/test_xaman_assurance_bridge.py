@@ -128,9 +128,9 @@ def test_assurance_module_itself_has_no_forbidden_imports() -> None:
             imported.append(node.module)
     for module in imported:
         for prefix in FORBIDDEN_RUNTIME_IMPORT_PREFIXES:
-            assert not (
-                module == prefix or module.startswith(prefix + ".")
-            ), f"assurance.py must not import {module}"
+            assert not (module == prefix or module.startswith(prefix + ".")), (
+                f"assurance.py must not import {module}"
+            )
     # Only relative / local runtime dependencies.
     for module in imported:
         assert "security_ir" not in module
@@ -217,9 +217,7 @@ def test_projection_from_lifecycle_fixtures() -> None:
     life = _load("payload_lifecycle_states.json")
     observed_statuses: set[str] = set()
     for case in life["payloads"]:
-        payload = parse_xaman_payload(
-            case["document"], network=XRPLNetwork.TESTNET
-        )
+        payload = parse_xaman_payload(case["document"], network=XRPLNetwork.TESTNET)
         projection = project_payload_to_assurance(payload)
         assert required_domains_covered(projection)
         assert projection.payload_uuid
@@ -312,14 +310,13 @@ def test_ledger_sample_projection() -> None:
         projection = project_ledger_record_to_assurance(record)
         assert required_domains_covered(projection)
         assert projection.source_record_kind == "public_ledger_record"
-        assert projection.domain("payload_lifecycle").status is (
-            AssuranceStatus.NOT_APPLICABLE
-        )
+        assert projection.domain("payload_lifecycle").status is (AssuranceStatus.NOT_APPLICABLE)
         assert projection.domain("signing_decision").facts["runtime_can_sign"] is False
         nb = projection.domain("network_binding")
         assert nb.facts["account"] == record["account"]
-        assert projection.domain("submission").facts["transaction_hash"] == (
-            record["transaction_hash"]
+        assert (
+            projection.domain("submission").facts["transaction_hash"]
+            == (record["transaction_hash"])
         )
 
 

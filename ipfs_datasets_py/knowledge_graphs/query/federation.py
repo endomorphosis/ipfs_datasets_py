@@ -74,6 +74,7 @@ Usage
     hits = fed.query_entity(name="Alice")
     # [(0, alice_a), (1, alice_b)]
 """
+
 from __future__ import annotations
 
 import copy
@@ -89,6 +90,7 @@ logger = logging.getLogger(__name__)
 # Public types
 # ---------------------------------------------------------------------------
 
+
 class EntityResolutionStrategy(str, enum.Enum):
     """Strategy used by :meth:`FederatedKnowledgeGraph.resolve_entities`.
 
@@ -100,6 +102,7 @@ class EntityResolutionStrategy(str, enum.Enum):
         PROPERTY_MATCH: Entities match when ``(type, name)`` matches **and**
             at least one property key/value pair is shared.
     """
+
     EXACT_NAME = "exact_name"
     TYPE_AND_NAME = "type_and_name"
     PROPERTY_MATCH = "property_match"
@@ -120,6 +123,7 @@ class EntityMatch:
         strategy: The :class:`EntityResolutionStrategy` that produced this
             match.
     """
+
     entity_a_id: str
     entity_b_id: str
     kg_a_index: int
@@ -142,6 +146,7 @@ class FederationQueryResult:
         query_errors: Mapping of graph index → exception message for any
             graph that raised an exception during execution.
     """
+
     per_graph_results: Dict[int, Any] = field(default_factory=dict)
     merged_entities: List[Any] = field(default_factory=list)
     total_matches: int = 0
@@ -151,6 +156,7 @@ class FederationQueryResult:
 # ---------------------------------------------------------------------------
 # Main class
 # ---------------------------------------------------------------------------
+
 
 class FederatedKnowledgeGraph:
     """Federated view over multiple independent
@@ -299,14 +305,16 @@ class FederatedKnowledgeGraph:
                         if ent_b is not None and not self._properties_overlap(ent_a, ent_b):
                             continue
 
-                    matches.append(EntityMatch(
-                        entity_a_id=eid_a,
-                        entity_b_id=eid_b,
-                        kg_a_index=i,
-                        kg_b_index=j,
-                        score=1.0,
-                        strategy=strategy,
-                    ))
+                    matches.append(
+                        EntityMatch(
+                            entity_a_id=eid_a,
+                            entity_b_id=eid_b,
+                            kg_a_index=i,
+                            kg_b_index=j,
+                            score=1.0,
+                            strategy=strategy,
+                        )
+                    )
 
         return matches
 
@@ -392,7 +400,9 @@ class FederatedKnowledgeGraph:
                     merged.extend(result)
                     total += len(result)
             except Exception as exc:  # noqa: BLE001 — excludes SystemExit/KeyboardInterrupt (BaseException)
-                logger.debug("FederatedKnowledgeGraph.execute_across error on graph %d: %s", gi, exc)
+                logger.debug(
+                    "FederatedKnowledgeGraph.execute_across error on graph %d: %s", gi, exc
+                )
                 errors[gi] = str(exc)
 
         return FederationQueryResult(

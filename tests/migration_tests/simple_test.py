@@ -2,12 +2,14 @@
 """
 Simple test script to verify our MCP functionality without complex imports.
 """
+
 import sys
 import os
 from pathlib import Path
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+
 
 def test_web_archive():
     """Test the web archive module directly."""
@@ -33,6 +35,7 @@ def test_web_archive():
         print(f"✗ web_archive test failed: {e}")
         return False
 
+
 def test_vector_tools():
     """Test the vector tools module directly."""
     print("\nTesting vector_tools module...")
@@ -57,6 +60,7 @@ def test_vector_tools():
         print(f"✗ vector_tools test failed: {e}")
         return False
 
+
 def test_graphrag_processor():
     """Test the GraphRAG processor module directly."""
     print("\nTesting graphrag_processor module...")
@@ -79,26 +83,48 @@ def test_graphrag_processor():
         print(f"✗ graphrag_processor test failed: {e}")
         return False
 
+
 def test_mcp_tools():
     """Test that MCP tools can import our modules."""
     print("\nTesting MCP tools imports...")
     try:
         # Test web archive tool
-        web_tool_path = Path(__file__).resolve().parent / "ipfs_datasets_py" / "mcp_server" / "tools" / "web_archive_tools" / "extract_text_from_warc.py"
+        web_tool_path = (
+            Path(__file__).resolve().parent
+            / "ipfs_datasets_py"
+            / "mcp_server"
+            / "tools"
+            / "web_archive_tools"
+            / "extract_text_from_warc.py"
+        )
         if web_tool_path.exists():
             print(f"✓ Web archive tool exists: {web_tool_path.name}")
         else:
             print(f"✗ Web archive tool missing: {web_tool_path}")
 
         # Test vector tool
-        vector_tool_path = Path(__file__).resolve().parent / "ipfs_datasets_py" / "mcp_server" / "tools" / "vector_tools" / "create_vector_index.py"
+        vector_tool_path = (
+            Path(__file__).resolve().parent
+            / "ipfs_datasets_py"
+            / "mcp_server"
+            / "tools"
+            / "vector_tools"
+            / "create_vector_index.py"
+        )
         if vector_tool_path.exists():
             print(f"✓ Vector tool exists: {vector_tool_path.name}")
         else:
             print(f"✗ Vector tool missing: {vector_tool_path}")
 
         # Test graph tool
-        graph_tool_path = Path(__file__).resolve().parent / "ipfs_datasets_py" / "mcp_server" / "tools" / "graph_tools" / "query_knowledge_graph.py"
+        graph_tool_path = (
+            Path(__file__).resolve().parent
+            / "ipfs_datasets_py"
+            / "mcp_server"
+            / "tools"
+            / "graph_tools"
+            / "query_knowledge_graph.py"
+        )
         if graph_tool_path.exists():
             print(f"✓ Graph tool exists: {graph_tool_path.name}")
         else:
@@ -108,6 +134,7 @@ def test_mcp_tools():
     except Exception as e:
         print(f"✗ MCP tools test failed: {e}")
         return False
+
 
 def main():
     """Run all tests."""
@@ -139,6 +166,7 @@ def main():
         print("⚠️  Some tests failed. Check the output above for details.")
 
     return passed == total
+
 
 if __name__ == "__main__":
     success = main()

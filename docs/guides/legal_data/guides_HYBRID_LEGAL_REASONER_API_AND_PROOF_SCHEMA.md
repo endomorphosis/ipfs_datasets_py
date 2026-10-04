@@ -121,9 +121,9 @@ Deterministically regenerates CNL from a norm in `LegalIRV2`.
 
 ```python
 query = {
-    'ir': LegalIRV2,      # required
-    'facts': dict,         # predicate -> bool (optional)
-    'events': list[str],   # happened frame refs (optional)
+    "ir": LegalIRV2,  # required
+    "facts": dict,  # predicate -> bool (optional)
+    "events": list[str],  # happened frame refs (optional)
 }
 result = check_compliance(query, time_context={})
 ```
@@ -145,8 +145,8 @@ result = check_compliance(query, time_context={})
 #### `find_violations(state, time_range)`
 
 ```python
-state = {'ir': LegalIRV2, 'facts': dict, 'events': list}
-result = find_violations(state, ('2025-01-01', '2025-12-31'))
+state = {"ir": LegalIRV2, "facts": dict, "events": list}
+result = find_violations(state, ("2025-01-01", "2025-12-31"))
 ```
 
 **Returns:** `{'api', 'schema_version', 'time_range', 'violation_count', 'violations', 'proof_id'}`
@@ -158,13 +158,13 @@ Retrieves a stored proof by ID and renders it.
 **Format `'nl'`:**
 ```python
 {
-    'api': 'explain_proof',
-    'schema_version': '1.0',
-    'proof_id': str,
-    'format': 'nl',
-    'root_conclusion': str,
-    'text': str,   # natural language explanation
-    'steps': list,
+    "api": "explain_proof",
+    "schema_version": "1.0",
+    "proof_id": str,
+    "format": "nl",
+    "root_conclusion": str,
+    "text": str,  # natural language explanation
+    "steps": list,
 }
 ```
 
@@ -209,9 +209,9 @@ class ProofObject:
     query: dict
     root_conclusion: str
     steps: list[ProofStep]
-    status: Literal['proved', 'refuted', 'inconclusive']
-    schema_version: str = '1.0'
-    proof_hash: str = ''
+    status: Literal["proved", "refuted", "inconclusive"]
+    schema_version: str = "1.0"
+    proof_hash: str = ""
     created_at: Optional[str] = None
     certificates: list[ProofCertificate] = []
     certificate_trace_map: dict[str, list[IRReference]] = {}
@@ -226,7 +226,7 @@ class ProofStep:
     rule_id: str
     premises: list[str]
     conclusion: str
-    ir_refs: list[IRReference]    # required: non-empty
+    ir_refs: list[IRReference]  # required: non-empty
     provenance: list[SourceProvenance]  # required: non-empty
     timestamp: Optional[str] = None
     confidence: float = 1.0
@@ -249,16 +249,16 @@ The normalized envelope always includes `certificate_id`, `format`, `normalized_
 
 ```python
 {
-    'schema_version': '1.0',
-    'backend': str,
-    'status': str,
-    'theorem': str,
-    'assumptions': list[str],
-    'certificate': {
-        'certificate_id': str,    # 'cert_' + hash[:12]
-        'format': str,
-        'normalized_hash': str,   # SHA-256 hex
-        'payload': dict,
+    "schema_version": "1.0",
+    "backend": str,
+    "status": str,
+    "theorem": str,
+    "assumptions": list[str],
+    "certificate": {
+        "certificate_id": str,  # 'cert_' + hash[:12]
+        "format": str,
+        "normalized_hash": str,  # SHA-256 hex
+        "payload": dict,
     },
 }
 ```

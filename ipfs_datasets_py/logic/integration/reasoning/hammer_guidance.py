@@ -188,9 +188,7 @@ class HammerGuidanceArtifact:
             or ""
         )
         logic_family = str(
-            metadata.get("logic_family")
-            or result.goal.metadata.get("logic_family")
-            or ""
+            metadata.get("logic_family") or result.goal.metadata.get("logic_family") or ""
         )
         target_component = str(
             metadata.get("target_component")
@@ -213,9 +211,7 @@ class HammerGuidanceArtifact:
             rejection_reasons.append("source_copy_rejected")
         security_reasons = set(legal_ir_security_rejection_reasons(metadata))
         for premise in result.premise_selection.selected:
-            security_reasons.update(
-                legal_ir_security_rejection_reasons(premise.metadata or {})
-            )
+            security_reasons.update(legal_ir_security_rejection_reasons(premise.metadata or {}))
         if security_reasons:
             trusted = False
             rejection_reasons.extend(sorted(security_reasons))
@@ -224,9 +220,17 @@ class HammerGuidanceArtifact:
         selected_premises = [premise.name for premise in result.premise_selection.selected]
         premise_views = sorted(
             {
-                str(premise.metadata.get("legal_ir_view") or premise.metadata.get("target_component") or "")
+                str(
+                    premise.metadata.get("legal_ir_view")
+                    or premise.metadata.get("target_component")
+                    or ""
+                )
                 for premise in result.premise_selection.selected
-                if str(premise.metadata.get("legal_ir_view") or premise.metadata.get("target_component") or "")
+                if str(
+                    premise.metadata.get("legal_ir_view")
+                    or premise.metadata.get("target_component")
+                    or ""
+                )
             }
         )
         drafted_candidates = [
@@ -242,7 +246,10 @@ class HammerGuidanceArtifact:
             "selected_premises": selected_premises,
         }
         return cls(
-            guidance_id=str(metadata.get("guidance_id") or f"hammer-guidance-{_stable_hash(payload_for_id)[:16]}"),
+            guidance_id=str(
+                metadata.get("guidance_id")
+                or f"hammer-guidance-{_stable_hash(payload_for_id)[:16]}"
+            ),
             obligation_id=obligation_id,
             trusted=trusted,
             legal_ir_view=legal_ir_view,
@@ -259,7 +266,9 @@ class HammerGuidanceArtifact:
             winner_backend=str(result.metadata.get("winner_backend") or ""),
             failure_reason="" if proved else str(getattr(result.status, "value", result.status)),
             rejection_reasons=sorted(set(rejection_reasons)),
-            proof_obligation_ids=_string_list(metadata.get("proof_obligation_ids") or obligation_id),
+            proof_obligation_ids=_string_list(
+                metadata.get("proof_obligation_ids") or obligation_id
+            ),
             target_metrics=_string_list(metadata.get("target_metrics")),
             drafted_logic_candidates=drafted_candidates,
             metadata={
@@ -269,10 +278,7 @@ class HammerGuidanceArtifact:
                     or LEGAL_IR_PREMISE_SECURITY_SCHEMA_VERSION
                 ),
                 "poisoning_rejection_reason_set": sorted(
-                    {
-                        reason.value
-                        for reason in LegalIRPoisonReason
-                    }.intersection(security_reasons)
+                    {reason.value for reason in LegalIRPoisonReason}.intersection(security_reasons)
                 ),
             },
         )

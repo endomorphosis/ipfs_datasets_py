@@ -251,7 +251,9 @@ class HeuristicPremiseSelector:
         *,
         max_premises: int = 256,
     ) -> PremiseSelection:
-        normalized = [_as_premise(premise, index) for index, premise in enumerate(premises, start=1)]
+        normalized = [
+            _as_premise(premise, index) for index, premise in enumerate(premises, start=1)
+        ]
         goal_tokens = set(_tokens(goal.statement))
         goal_metadata = dict(goal.metadata or {})
         scores: Dict[str, float] = {}
@@ -282,7 +284,9 @@ class HeuristicPremiseSelector:
             max_premises=max(0, int(max_premises)),
         )
 
-    def _metadata_score(self, goal_metadata: Mapping[str, Any], premise_metadata: Mapping[str, Any]) -> float:
+    def _metadata_score(
+        self, goal_metadata: Mapping[str, Any], premise_metadata: Mapping[str, Any]
+    ) -> float:
         score = 0.0
         for key in (
             "formalism",
@@ -372,9 +376,7 @@ class HammerLogicTranslator:
         lines = ["; hammer generated SMT-LIB problem", "(set-logic ALL)"]
         declared_symbols: set[str] = set()
         for premise in premises:
-            lines.append(
-                f"; premise {premise.name}: {self._comment_text(premise.statement)}"
-            )
+            lines.append(f"; premise {premise.name}: {self._comment_text(premise.statement)}")
             expression, atoms = self._boolean_statement(premise.statement or premise.name)
             for atom in atoms:
                 symbol = _stable_symbol(atom, prefix="atom")
@@ -383,9 +385,7 @@ class HammerLogicTranslator:
                     declared_symbols.add(symbol)
             lines.append(f"(assert {self._render_boolean(expression, target='smt')})")
         goal_expression, goal_atoms = self._boolean_statement(goal.statement)
-        lines.append(
-            f"; conjecture {goal.name}: {self._comment_text(goal.statement)}"
-        )
+        lines.append(f"; conjecture {goal.name}: {self._comment_text(goal.statement)}")
         for atom in goal_atoms:
             symbol = _stable_symbol(atom, prefix="atom")
             if symbol not in declared_symbols:
@@ -397,7 +397,9 @@ class HammerLogicTranslator:
 
     def _to_tptp_fof(self, goal: HammerGoal, premises: Sequence[HammerPremise]) -> str:
         raw_goal = self._raw_solver_payload(goal.metadata, "tptp", "fof")
-        raw_premises = [self._raw_solver_payload(premise.metadata, "tptp", "fof") for premise in premises]
+        raw_premises = [
+            self._raw_solver_payload(premise.metadata, "tptp", "fof") for premise in premises
+        ]
         if raw_goal or any(raw_premises):
             lines: List[str] = ["% hammer generated TPTP problem"]
             for premise, raw in zip(premises, raw_premises):
@@ -412,20 +414,14 @@ class HammerLogicTranslator:
         lines = ["% hammer generated TPTP FOF problem"]
         for premise in premises:
             name = _normalize_identifier(premise.name, prefix="premise")
-            expression, _atoms = self._boolean_statement(
-                premise.statement or premise.name
-            )
+            expression, _atoms = self._boolean_statement(premise.statement or premise.name)
             lines.append(f"% {name}: {self._comment_text(premise.statement)}")
-            lines.append(
-                f"fof({name}, axiom, "
-                f"{self._render_boolean(expression, target='tptp')})."
-            )
+            lines.append(f"fof({name}, axiom, {self._render_boolean(expression, target='tptp')}).")
         goal_name = _normalize_identifier(goal.name, prefix="goal")
         goal_expression, _goal_atoms = self._boolean_statement(goal.statement)
         lines.append(f"% conjecture: {self._comment_text(goal.statement)}")
         lines.append(
-            f"fof({goal_name}, conjecture, "
-            f"{self._render_boolean(goal_expression, target='tptp')})."
+            f"fof({goal_name}, conjecture, {self._render_boolean(goal_expression, target='tptp')})."
         )
         return "\n".join(lines) + "\n"
 
@@ -637,9 +633,7 @@ class SubprocessHammerBackendRunner:
                 completed = get_process_supervisor().run(
                     command,
                     kind=kind,
-                    limits=ProcessLimits(
-                        wall_time_seconds=max(0.001, float(timeout_seconds))
-                    ),
+                    limits=ProcessLimits(wall_time_seconds=max(0.001, float(timeout_seconds))),
                 )
             finally:
                 try:
@@ -682,9 +676,7 @@ class SubprocessHammerBackendRunner:
                 proof_trace=output if proved else "",
                 raw_output=output,
                 error=(
-                    ""
-                    if completed.returncode == 0 or proved
-                    else completed.error or output[:1000]
+                    "" if completed.returncode == 0 or proved else completed.error or output[:1000]
                 ),
                 metadata={"returncode": completed.returncode},
             )
@@ -705,7 +697,11 @@ class SubprocessHammerBackendRunner:
                 return HammerBackendStatus.PROVED, True
             if re.search(r"(^|\s)sat(\s|$)", lowered):
                 return HammerBackendStatus.DISPROVED, False
-        if "refutation found" in lowered or "szs status theorem" in lowered or "szs status unsatisfiable" in lowered:
+        if (
+            "refutation found" in lowered
+            or "szs status theorem" in lowered
+            or "szs status unsatisfiable" in lowered
+        ):
             return HammerBackendStatus.PROVED, True
         if "timeout" in lowered:
             return HammerBackendStatus.TIMEOUT, False
@@ -827,14 +823,16 @@ class HammerProofReconstructor:
         selected_premises: Sequence[HammerPremise],
         backend_result: HammerBackendResult,
     ) -> str:
-        premise_names = " ".join(_normalize_identifier(premise.name, prefix="premise") for premise in selected_premises)
+        premise_names = " ".join(
+            _normalize_identifier(premise.name, prefix="premise") for premise in selected_premises
+        )
         method = str(goal.metadata.get("isabelle_hammer_method") or "metis")
         return (
             "theory HammerGenerated\n"
             "  imports Main\n"
             "begin\n\n"
             f"(* Hammer backend: {backend_result.backend} *)\n"
-            f"theorem {_normalize_identifier(goal.name, prefix='hammer_goal')}: \"{self._itp_statement(goal)}\"\n"
+            f'theorem {_normalize_identifier(goal.name, prefix="hammer_goal")}: "{self._itp_statement(goal)}"\n'
             f"  by ({method} {premise_names})\n\n"
             "end\n"
         )
@@ -885,7 +883,9 @@ class NativeKernelVerifier:
             error=f"No native checker registered for {itp_system}.",
         )
 
-    def _run_checker(self, executable: str, suffix: str, proof_script: str, start: float) -> HammerVerification:
+    def _run_checker(
+        self, executable: str, suffix: str, proof_script: str, start: float
+    ) -> HammerVerification:
         from ipfs_datasets_py.logic.external_provers.lazy_installer import (
             ensure_prover_executable,
         )
@@ -927,7 +927,11 @@ class NativeKernelVerifier:
                 error=(
                     ""
                     if completed.returncode == 0 and not completed.timed_out
-                    else ("kernel_timeout" if completed.timed_out else completed.error or output[:1000])
+                    else (
+                        "kernel_timeout"
+                        if completed.timed_out
+                        else completed.error or output[:1000]
+                    )
                 ),
             )
         except OSError as exc:
@@ -1069,10 +1073,14 @@ class HammerPipeline:
             )
         return translations
 
-    def _run_backends(self, translations: Mapping[str, HammerTranslation]) -> List[HammerBackendResult]:
+    def _run_backends(
+        self, translations: Mapping[str, HammerTranslation]
+    ) -> List[HammerBackendResult]:
         results: List[HammerBackendResult] = []
         max_workers = self.parallel_workers or max(1, len(self.backends))
-        with ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix="hammer-atp") as executor:
+        with ThreadPoolExecutor(
+            max_workers=max_workers, thread_name_prefix="hammer-atp"
+        ) as executor:
             futures = {}
             for backend in self.backends:
                 target_format = str(getattr(backend, "problem_format", "smt-lib"))
@@ -1105,14 +1113,18 @@ class HammerPipeline:
                             error=str(exc),
                         )
                     )
-        return sorted(results, key=lambda result: (not result.proved, result.elapsed_seconds, result.backend))
+        return sorted(
+            results, key=lambda result: (not result.proved, result.elapsed_seconds, result.backend)
+        )
 
     def _as_goal(self, value: HammerGoal | Mapping[str, Any] | str) -> HammerGoal:
         if isinstance(value, HammerGoal):
             return value
         if isinstance(value, Mapping):
             return HammerGoal(
-                statement=str(value.get("statement") or value.get("goal") or value.get("formula") or ""),
+                statement=str(
+                    value.get("statement") or value.get("goal") or value.get("formula") or ""
+                ),
                 itp_system=str(value.get("itp_system") or value.get("system") or "lean"),
                 name=str(value.get("name") or "hammer_generated_goal"),
                 metadata=dict(value.get("metadata") or {}),

@@ -72,9 +72,7 @@ def _case_result(
         elif stage_name is StageName.SPACY:
             stage_data = {"modal_ir": semantic_ir or {"kind": "proof-test"}}
         elif stage_name is StageName.SYMAI:
-            stage_data = {
-                "candidate_ir": semantic_ir or {"kind": "proof-test"}
-            }
+            stage_data = {"candidate_ir": semantic_ir or {"kind": "proof-test"}}
         elif stage_name is StageName.HAMMER:
             stage_data = {
                 "proof_candidate": None,
@@ -87,10 +85,7 @@ def _case_result(
             }
         else:
             receipt_body = {
-                "schema": (
-                    "ipfs-datasets.logic-pipeline-benchmark."
-                    "native-kernel-receipt.v1"
-                ),
+                "schema": ("ipfs-datasets.logic-pipeline-benchmark.native-kernel-receipt.v1"),
                 "protocol_sha256": DEFAULT_PROTOCOL_SHA256,
                 "run_id": RUN_ID,
                 "case_id": case_id,
@@ -112,15 +107,10 @@ def _case_result(
                 ).hexdigest(),
             }
         stage_unavailable = unavailable and not stages
-        graph_invoked = not (
-            stage_name is StageName.SYMAI and suppress_symai
-        )
+        graph_invoked = not (stage_name is StageName.SYMAI and suppress_symai)
         if not graph_invoked:
             stage_data = {
-                "schema": (
-                    "ipfs-datasets.logic-pipeline-benchmark."
-                    "policy-decision.v1"
-                ),
+                "schema": ("ipfs-datasets.logic-pipeline-benchmark.policy-decision.v1"),
                 "stage": "symai",
                 "invoked": False,
                 "reason": "frontend_ambiguity_gate_closed",
@@ -136,11 +126,7 @@ def _case_result(
                 cache_mode=cache_mode,
                 stage=stage_name,
                 adapter_version="1",
-                status=(
-                    StageStatus.UNAVAILABLE
-                    if stage_unavailable
-                    else StageStatus.SUCCESS
-                ),
+                status=(StageStatus.UNAVAILABLE if stage_unavailable else StageStatus.SUCCESS),
                 provenance=StageProvenance(
                     schema=STAGE_PROVENANCE_SCHEMA,
                     adapter_id=f"{stage_name.value}-adapter",
@@ -153,9 +139,7 @@ def _case_result(
                     },
                     input_sha256=INPUT,
                     environment_sha256=ENVIRONMENT,
-                    upstream_stage_digests=tuple(
-                        item.digest for item in stages
-                    ),
+                    upstream_stage_digests=tuple(item.digest for item in stages),
                 ),
                 telemetry=TelemetryRecord(
                     wall_time_ms=2.5,
@@ -166,21 +150,14 @@ def _case_result(
                     model_calls=int(
                         not stage_unavailable
                         and graph_invoked
-                        and stage_name
-                        in {StageName.SYMAI, StageName.LEANSTRAL}
+                        and stage_name in {StageName.SYMAI, StageName.LEANSTRAL}
                     ),
                     resource_lane=_RESOURCE_LANE[stage_name],
                 ),
                 data={} if stage_unavailable else stage_data,
-                failure_code=(
-                    FailureCode.CAPABILITY_UNAVAILABLE
-                    if stage_unavailable
-                    else None
-                ),
+                failure_code=(FailureCode.CAPABILITY_UNAVAILABLE if stage_unavailable else None),
                 failure_detail=(
-                    "requested capability is unavailable"
-                    if stage_unavailable
-                    else None
+                    "requested capability is unavailable" if stage_unavailable else None
                 ),
             ),
         )
@@ -188,17 +165,11 @@ def _case_result(
 
 
 def _frontend_capabilities() -> dict[str, object]:
-    return {
-        name: {"status": "available", "reason": ""}
-        for name in frontend_report.CAPABILITY_KEYS
-    }
+    return {name: {"status": "available", "reason": ""} for name in frontend_report.CAPABILITY_KEYS}
 
 
 def _proof_capabilities() -> dict[str, object]:
-    return {
-        name: {"status": "available", "reason": ""}
-        for name in report.CAPABILITY_KEYS
-    }
+    return {name: {"status": "available", "reason": ""} for name in report.CAPABILITY_KEYS}
 
 
 def _frontend_observations(
@@ -220,9 +191,7 @@ def _frontend_observations(
         )
         missing = coordinate == unavailable_coordinate
         case = catalog[str(row["case_id"])]
-        signature = hashlib.sha256(
-            canonical_json(case["expected_ir"]).encode("utf-8")
-        ).hexdigest()
+        signature = hashlib.sha256(canonical_json(case["expected_ir"]).encode("utf-8")).hexdigest()
         result = _case_result(
             case_id=str(row["case_id"]),
             variant_id=str(row["variant_id"]),
@@ -239,44 +208,28 @@ def _frontend_observations(
                 "case_result": result.to_dict(),
                 "semantic_signature_sha256": None if missing else signature,
                 "normalized_ir_exact_match": None if missing else True,
-                "deterministic_semantic_equivalence": (
-                    None if missing else False
-                ),
+                "deterministic_semantic_equivalence": (None if missing else False),
                 "semantic_validator_receipt_sha256": (
-                    None
-                    if missing
-                    else _sha(f"{result.digest}:semantic-validator")
+                    None if missing else _sha(f"{result.digest}:semantic-validator")
                 ),
-                "predicted_class": (
-                    None if missing else row["expected_class"]
-                ),
+                "predicted_class": (None if missing else row["expected_class"]),
                 "ambiguity_classification_correct": (
-                    None
-                    if missing or row["expected_class"] != "ambiguous"
-                    else True
+                    None if missing or row["expected_class"] != "ambiguous" else True
                 ),
                 "fail_closed_classification_correct": (
                     None
-                    if missing
-                    or row["expected_class"]
-                    not in {"disproved", "unsupported"}
+                    if missing or row["expected_class"] not in {"disproved", "unsupported"}
                     else True
                 ),
                 "spacy_invoked": any(
                     stage.stage is StageName.SPACY
-                    and stage.provenance.effective_identity.get(
-                        "graph_invoked"
-                    )
-                    is True
+                    and stage.provenance.effective_identity.get("graph_invoked") is True
                     for stage in result.stages
                 ),
                 "symai_invoked": (
                     any(
                         stage.stage is StageName.SYMAI
-                        and stage.provenance.effective_identity.get(
-                            "graph_invoked"
-                        )
-                        is True
+                        and stage.provenance.effective_identity.get("graph_invoked") is True
                         for stage in result.stages
                     )
                 ),
@@ -286,12 +239,8 @@ def _frontend_observations(
                     if stage.stage is StageName.SYMAI
                 ),
                 "total_wall_time_ms": 2.5 * len(result.stages),
-                "model_calls": sum(
-                    stage.telemetry.model_calls for stage in result.stages
-                ),
-                "missing_reason": (
-                    "requested capability is unavailable" if missing else None
-                ),
+                "model_calls": sum(stage.telemetry.model_calls for stage in result.stages),
+                "missing_reason": ("requested capability is unavailable" if missing else None),
             }
         )
     return rows
@@ -311,19 +260,11 @@ def _proof_observations() -> list[dict[str, object]]:
             cache_mode=CacheMode(str(row["cache_mode"])),
         )
         hammer_stage = next(
-            (
-                stage
-                for stage in result.stages
-                if stage.stage is StageName.HAMMER
-            ),
+            (stage for stage in result.stages if stage.stage is StageName.HAMMER),
             None,
         )
         lean_stage = next(
-            (
-                stage
-                for stage in result.stages
-                if stage.stage is StageName.LEANSTRAL
-            ),
+            (stage for stage in result.stages if stage.stage is StageName.LEANSTRAL),
             None,
         )
         row.update(
@@ -337,9 +278,7 @@ def _proof_observations() -> list[dict[str, object]]:
                 "verified_source": "none",
                 "model_claimed_verified": False,
                 "total_wall_time_ms": 2.5 * len(result.stages),
-                "model_calls": sum(
-                    stage.telemetry.model_calls for stage in result.stages
-                ),
+                "model_calls": sum(stage.telemetry.model_calls for stage in result.stages),
                 "missing_reason": None,
             }
         )
@@ -350,9 +289,7 @@ def _proof_observations() -> list[dict[str, object]]:
                 "reconstruction_attempted": False,
                 "reconstruction_succeeded": False,
                 "wall_time_ms": (
-                    0.0
-                    if hammer_stage is None
-                    else hammer_stage.telemetry.wall_time_ms
+                    0.0 if hammer_stage is None else hammer_stage.telemetry.wall_time_ms
                 ),
             }
         )
@@ -362,11 +299,7 @@ def _proof_observations() -> list[dict[str, object]]:
                 "candidate_created": lean_stage is not None,
                 "repair_attempted": False,
                 "repair_succeeded": False,
-                "wall_time_ms": (
-                    0.0
-                    if lean_stage is None
-                    else lean_stage.telemetry.wall_time_ms
-                ),
+                "wall_time_ms": (0.0 if lean_stage is None else lean_stage.telemetry.wall_time_ms),
             }
         )
     return rows
@@ -382,9 +315,7 @@ def _frontend_metric(
     record = next(
         item
         for item in rows
-        if item["split"] == split
-        and item["cache_mode"] == mode
-        and item["variant_id"] == variant
+        if item["split"] == split and item["cache_mode"] == mode and item["variant_id"] == variant
     )
     return record["metrics"]
 
@@ -402,9 +333,7 @@ def test_frontend_builder_derives_complete_nonnull_measured_evidence() -> None:
 
     assert value["execution_mode"] == "measured"
     assert len(value["observations"]) == 240
-    metrics = _frontend_metric(
-        value, split="pilot", mode="cold", variant="A4"
-    )
+    metrics = _frontend_metric(value, split="pilot", mode="cold", variant="A4")
     assert metrics["measured_count"] == 10
     assert metrics["semantic_quality_rate"] == 1.0
     assert metrics["latency_ms_p95"] == 15.0
@@ -419,9 +348,7 @@ def test_frontend_builder_retains_measured_capability_missingness() -> None:
         _frontend_observations(unavailable_coordinate=missing),
     )
 
-    metrics = _frontend_metric(
-        value, split="pilot", mode="cold", variant="A4"
-    )
+    metrics = _frontend_metric(value, split="pilot", mode="cold", variant="A4")
     assert metrics["scheduled_count"] == 10
     assert metrics["measured_count"] == 9
     assert metrics["unavailable_count"] == 1
@@ -452,16 +379,11 @@ def test_frontend_builder_counts_typed_gated_symai_stage_as_zero_call() -> None:
     )
     assert row["symai_invoked"] is False
     assert row["symai_model_calls"] == 0
-    assert any(
-        stage["stage"] == "symai"
-        for stage in row["case_result"]["stages"]
-    )
+    assert any(stage["stage"] == "symai" for stage in row["case_result"]["stages"])
 
 
 def test_proof_builder_derives_latency_and_completion_from_receipts() -> None:
-    value = report.build_proof_report(
-        RUN_ID, _proof_capabilities(), _proof_observations()
-    )
+    value = report.build_proof_report(RUN_ID, _proof_capabilities(), _proof_observations())
 
     assert value["execution_mode"] == "measured"
     assert len(value["observations"]) == 154
@@ -488,10 +410,7 @@ def test_proof_validator_includes_symai_setup_in_totals_only(
 
     def setup_for(stage: StageRecord) -> TelemetryRecord | None:
         return (
-            setup
-            if stage.stage is StageName.SYMAI
-            and stage.cache_mode is CacheMode.WARM
-            else None
+            setup if stage.stage is StageName.SYMAI and stage.cache_mode is CacheMode.WARM else None
         )
 
     monkeypatch.setattr(
@@ -522,18 +441,10 @@ def test_proof_validator_includes_symai_setup_in_totals_only(
     )
     measured_result = CaseResultRecord.from_dict(measured["case_result"])
     assert measured["total_wall_time_ms"] == (
-        sum(
-            stage.telemetry.wall_time_ms
-            for stage in measured_result.stages
-        )
-        + 7.0
+        sum(stage.telemetry.wall_time_ms for stage in measured_result.stages) + 7.0
     )
     assert measured["model_calls"] == (
-        sum(
-            stage.telemetry.model_calls
-            for stage in measured_result.stages
-        )
-        + 2
+        sum(stage.telemetry.model_calls for stage in measured_result.stages) + 2
     )
     assert measured["hammer"]["wall_time_ms"] == 2.5
     assert measured["leanstral"]["wall_time_ms"] == 2.5
@@ -543,24 +454,16 @@ def test_proof_validator_includes_symai_setup_in_totals_only(
 def test_builders_reject_receipt_projection_and_run_identity_tampering() -> None:
     frontend_rows = _frontend_observations()
     frontend_rows[0]["total_wall_time_ms"] = 0.0
-    with pytest.raises(
-        frontend_report.FrontendReportError, match="latency telemetry"
-    ):
-        frontend_report.build_frontend_report(
-            RUN_ID, _frontend_capabilities(), frontend_rows
-        )
+    with pytest.raises(frontend_report.FrontendReportError, match="latency telemetry"):
+        frontend_report.build_frontend_report(RUN_ID, _frontend_capabilities(), frontend_rows)
 
     proof_rows = _proof_observations()
     proof_rows[0]["model_calls"] = 9
     with pytest.raises(report.ProofReportError, match="model calls"):
-        report.build_proof_report(
-            RUN_ID, _proof_capabilities(), proof_rows
-        )
+        report.build_proof_report(RUN_ID, _proof_capabilities(), proof_rows)
 
     with pytest.raises(report.ProofReportError, match="run id"):
-        report.build_proof_report(
-            "different-run", _proof_capabilities(), _proof_observations()
-        )
+        report.build_proof_report("different-run", _proof_capabilities(), _proof_observations())
 
 
 def test_successful_truncated_routes_are_not_complete_measured_receipts() -> None:
@@ -587,9 +490,5 @@ def test_successful_truncated_routes_are_not_complete_measured_receipts() -> Non
         }
     )
 
-    with pytest.raises(
-        frontend_report.FrontendReportError, match="requested route"
-    ):
-        frontend_report.build_frontend_report(
-            RUN_ID, _frontend_capabilities(), rows
-        )
+    with pytest.raises(frontend_report.FrontendReportError, match="requested route"):
+        frontend_report.build_frontend_report(RUN_ID, _frontend_capabilities(), rows)

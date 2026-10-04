@@ -36,7 +36,9 @@ class FakeClient:
         private_key: str,
         gas_price_wei: Optional[int] = None,
     ) -> str:
-        self.calls.append(("submit", (proof_hex, public_inputs_hex, from_account, private_key, gas_price_wei)))
+        self.calls.append(
+            ("submit", (proof_hex, public_inputs_hex, from_account, private_key, gas_price_wei))
+        )
         return "0x" + "ab" * 32
 
     def wait_for_confirmation(self, tx_hash: str, timeout_seconds: int = 300) -> Mapping[str, Any]:

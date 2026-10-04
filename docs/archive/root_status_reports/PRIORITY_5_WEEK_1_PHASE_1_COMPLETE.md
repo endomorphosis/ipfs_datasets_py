@@ -103,23 +103,23 @@ config = OptimizerConfig(
     convergence_threshold=0.01,
     early_stopping=True,
     validation_enabled=True,
-    metrics_enabled=True
+    metrics_enabled=True,
 )
 
 # Create optimizer
 optimizer = LogicTheoremOptimizer(
     config=config,
     extraction_mode=ExtractionMode.TDFOL,  # Temporal Deontic FOL
-    use_provers=['z3', 'cvc5'],
-    domain='legal'
+    use_provers=["z3", "cvc5"],
+    domain="legal",
 )
 
 # Create context
 context = OptimizationContext(
-    session_id='legal-contract-001',
+    session_id="legal-contract-001",
     input_data=contract_text,
-    domain='legal',
-    metadata={'hints': ['focus on obligations', 'identify temporal constraints']}
+    domain="legal",
+    metadata={"hints": ["focus on obligations", "identify temporal constraints"]},
 )
 
 # Run optimization session
@@ -132,14 +132,14 @@ print(f"Iterations: {result['iterations']}")
 print(f"Execution Time: {result['execution_time']:.2f}s")
 
 # Access metrics
-if 'metrics' in result:
-    metrics = result['metrics']
+if "metrics" in result:
+    metrics = result["metrics"]
     print(f"Improvement: {metrics['improvement']:.2f}")
     print(f"Initial Score: {metrics['initial_score']:.2f}")
     print(f"Final Score: {metrics['final_score']:.2f}")
 
 # Access artifact
-extraction_result = result['artifact']
+extraction_result = result["artifact"]
 print(f"Statements: {len(extraction_result.statements)}")
 for stmt in extraction_result.statements:
     print(f"  - {stmt.natural_language} (confidence: {stmt.confidence:.2f})")
@@ -187,9 +187,9 @@ print(f"Capabilities: {capabilities}")
 
 # Test with simple input
 context = OptimizationContext(
-    session_id='test-001',
+    session_id="test-001",
     input_data="All citizens must pay taxes. John is a citizen.",
-    domain='general'
+    domain="general",
 )
 
 # This would run the full optimization

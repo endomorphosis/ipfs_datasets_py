@@ -28,12 +28,12 @@ from ipfs_datasets_py.utils.workflows import WorkflowAnalyzer
 
 def fetch_error_log_from_run(run_id: str) -> Optional[str]:
     """Fetch error log from a workflow run.
-    
+
     This is workflow-specific functionality kept in .github/scripts.
-    
+
     Args:
         run_id: GitHub Actions workflow run ID
-    
+
     Returns:
         Error log content or None if not found
     """
@@ -45,22 +45,19 @@ def fetch_error_log_from_run(run_id: str) -> Optional[str]:
 def main():
     """CLI entry point."""
     parser = argparse.ArgumentParser(
-        description='Analyze GitHub Actions workflow failures',
-        epilog='Core analysis functionality provided by ipfs_datasets_py.utils.workflows.WorkflowAnalyzer'
+        description="Analyze GitHub Actions workflow failures",
+        epilog="Core analysis functionality provided by ipfs_datasets_py.utils.workflows.WorkflowAnalyzer",
     )
-    parser.add_argument('workflow_file', type=Path,
-                       help='Path to workflow YAML file')
-    parser.add_argument('--error-log', type=str,
-                       help='Error log content (or path to log file)')
-    parser.add_argument('--run-id', type=str,
-                       help='Workflow run ID to fetch log from')
-    parser.add_argument('--output', type=Path,
-                       help='Output JSON file for analysis results')
-    parser.add_argument('--format', choices=['text', 'json'], default='text',
-                       help='Output format (default: text)')
-    
+    parser.add_argument("workflow_file", type=Path, help="Path to workflow YAML file")
+    parser.add_argument("--error-log", type=str, help="Error log content (or path to log file)")
+    parser.add_argument("--run-id", type=str, help="Workflow run ID to fetch log from")
+    parser.add_argument("--output", type=Path, help="Output JSON file for analysis results")
+    parser.add_argument(
+        "--format", choices=["text", "json"], default="text", help="Output format (default: text)"
+    )
+
     args = parser.parse_args()
-    
+
     # Get error log
     error_log = None
     if args.error_log:
@@ -75,17 +72,17 @@ def main():
     else:
         print("Error: Must provide either --error-log or --run-id", file=sys.stderr)
         return 1
-    
+
     # Use utils.workflows.WorkflowAnalyzer for core analysis
     analyzer = WorkflowAnalyzer()
     result = analyzer.analyze_failure(
         workflow_file=args.workflow_file,
         error_log=error_log,
-        context={'run_id': args.run_id} if args.run_id else None
+        context={"run_id": args.run_id} if args.run_id else None,
     )
-    
+
     # Output results
-    if args.format == 'json':
+    if args.format == "json":
         output_json = json.dumps(result, indent=2)
         if args.output:
             args.output.write_text(output_json)
@@ -100,11 +97,11 @@ def main():
             print(f"Report saved to {args.output}")
         else:
             print(report)
-    
+
     # Return error code based on severity
-    severity_codes = {'low': 0, 'medium': 0, 'high': 1, 'critical': 2}
-    return severity_codes.get(result['severity'], 0)
+    severity_codes = {"low": 0, "medium": 0, "high": 1, "critical": 2}
+    return severity_codes.get(result["severity"], 0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

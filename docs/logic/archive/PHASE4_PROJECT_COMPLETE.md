@@ -250,7 +250,7 @@ from ipfs_datasets_py.logic.CEC.native import (
     parse_dcec_string,
     InferenceEngine,
     create_prover,
-    ModalLogic
+    ModalLogic,
 )
 
 # Parse DCEC
@@ -289,10 +289,7 @@ print(f"Cognitive axioms: {len(prover.cognitive_axioms)}")
 ### Natural Language
 
 ```python
-from ipfs_datasets_py.logic.CEC.native import (
-    DCECEnglishGrammar,
-    GrammarEngine
-)
+from ipfs_datasets_py.logic.CEC.native import DCECEnglishGrammar, GrammarEngine
 
 grammar = DCECEnglishGrammar()
 engine = GrammarEngine()

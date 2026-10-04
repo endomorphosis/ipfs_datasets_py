@@ -319,11 +319,12 @@ This shim will be removed in version 2.0.0.
 """
 
 import warnings
+
 warnings.warn(
     "data_transformation.car_conversion is deprecated. "
     "Use data_transformation.serialization.car_conversion instead.",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 
 from ipfs_datasets_py.data_transformation.serialization.car_conversion import *
@@ -356,16 +357,17 @@ Create a new adapter that provides high-level access to data_transformation util
 ```python
 # processors/adapters/data_transformation_adapter.py
 
+
 class DataTransformationAdapter:
     """Adapter for data transformation utilities."""
-    
+
     async def can_handle(self, context: ProcessingContext) -> bool:
         """Can handle serialization and IPLD operations."""
         return context.input_type in [
             InputType.IPFS_CID,
             InputType.BINARY,  # for serialization
         ]
-    
+
     async def process(self, context: ProcessingContext) -> ProcessingResult:
         """Process using data transformation utilities."""
         if context.requires_ipld:
@@ -373,10 +375,7 @@ class DataTransformationAdapter:
         elif context.requires_serialization:
             return await self._process_serialization(context)
         else:
-            return ProcessingResult(
-                success=False,
-                error="Unsupported operation"
-            )
+            return ProcessingResult(success=False, error="Unsupported operation")
 ```
 
 **Acceptance Criteria:**
@@ -408,10 +407,11 @@ Enhance ipfs_adapter.py to use data_transformation.ipld.IPLDStorage.
 ```python
 from ipfs_datasets_py.data_transformation.ipld import IPLDStorage
 
+
 class IPFSAdapter:
     def __init__(self):
         self.ipld_storage = IPLDStorage()
-        
+
     async def process(self, context):
         if context.requires_ipld:
             # Use IPLDStorage

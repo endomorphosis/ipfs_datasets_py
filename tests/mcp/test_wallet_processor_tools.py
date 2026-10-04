@@ -41,7 +41,9 @@ from ipfs_datasets_py.processors.wallets.models import (
 )
 
 
-NOW = __import__("datetime").datetime(2025, 6, 1, 12, 0, 0, tzinfo=__import__("datetime").timezone.utc)
+NOW = __import__("datetime").datetime(
+    2025, 6, 1, 12, 0, 0, tzinfo=__import__("datetime").timezone.utc
+)
 GENESIS = "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3"
 
 TOOLS_DIR = (
@@ -168,9 +170,7 @@ def test_directory_import_registration_skips_helpers() -> None:
         )
         if not valid:
             continue
-        module_name = (
-            "ipfs_datasets_py.mcp_server.tools.wallet_processor_tools." + item.stem
-        )
+        module_name = "ipfs_datasets_py.mcp_server.tools.wallet_processor_tools." + item.stem
         module = importlib.import_module(module_name)
         for attr_name in dir(module):
             attr = getattr(module, attr_name)
@@ -235,9 +235,7 @@ def test_wallet_ingest_rejects_provider_url_outside_allowlist(
     assert "allowlist" in result["message"].lower() or result["error"] == "InvalidRequestError"
 
 
-def test_wallet_ingest_rejects_inline_secret(
-    chain_dict: dict[str, str], monkeypatch
-) -> None:
+def test_wallet_ingest_rejects_inline_secret(chain_dict: dict[str, str], monkeypatch) -> None:
     # secret_reference without allowlisted prefix
     result = _run(
         wallet_ingest(
@@ -275,9 +273,7 @@ def test_wallet_ingest_allowlisted_host_still_needs_processor(
 # ---------------------------------------------------------------------------
 
 
-def test_wallet_export_default_finalized(
-    chain_dict: dict[str, str], tmp_path: Path
-) -> None:
+def test_wallet_export_default_finalized(chain_dict: dict[str, str], tmp_path: Path) -> None:
     out = tmp_path / "export-out"
     result = _run(
         wallet_export(
@@ -297,9 +293,7 @@ def test_wallet_export_default_finalized(
     assert "records" not in result or result.get("records") in (None, "<omitted>")
     assert (out / "export-manifest.json").is_file()
 
-    verified = _run(
-        wallet_processor_verify_manifest(path=str(out / "export-manifest.json"))
-    )
+    verified = _run(wallet_processor_verify_manifest(path=str(out / "export-manifest.json")))
     assert verified["status"] == "success"
     assert verified["ok"] is True
 
@@ -394,19 +388,13 @@ def test_package_does_not_import_chain_extras() -> None:
         "ipfs_datasets_py.processors.wallets.worldcoin",
     )
     before = {
-        name
-        for name in sys.modules
-        if any(name == p or name.startswith(p + ".") for p in prefixes)
+        name for name in sys.modules if any(name == p or name.startswith(p + ".") for p in prefixes)
     }
     importlib.reload(
-        importlib.import_module(
-            "ipfs_datasets_py.mcp_server.tools.wallet_processor_tools"
-        )
+        importlib.import_module("ipfs_datasets_py.mcp_server.tools.wallet_processor_tools")
     )
     after = {
-        name
-        for name in sys.modules
-        if any(name == p or name.startswith(p + ".") for p in prefixes)
+        name for name in sys.modules if any(name == p or name.startswith(p + ".") for p in prefixes)
     }
     # Reload may not add new chain modules.
     assert after <= before or not (after - before)

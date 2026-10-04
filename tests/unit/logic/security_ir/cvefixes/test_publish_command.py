@@ -54,9 +54,7 @@ PUBLISHED_COMMIT = "2" * 40
 
 
 def _canonical(value: Any) -> bytes:
-    return json.dumps(
-        value, ensure_ascii=True, separators=(",", ":"), sort_keys=True
-    ).encode()
+    return json.dumps(value, ensure_ascii=True, separators=(",", ":"), sort_keys=True).encode()
 
 
 def _cid(label: str) -> str:
@@ -110,10 +108,7 @@ def _descriptor(
     result = {
         "byte_length": len(content),
         "content_id": "b"
-        + base64.b32encode(bytes((1, 0x55, 0x12, 0x20)) + digest)
-        .decode()
-        .lower()
-        .rstrip("="),
+        + base64.b32encode(bytes((1, 0x55, 0x12, 0x20)) + digest).decode().lower().rstrip("="),
         "media_type": media_type,
         "path": path,
         "sha256": digest.hex(),
@@ -147,16 +142,11 @@ def _complete_parquet_rows(
     rows: Sequence[Mapping[str, Any]],
 ) -> bytes:
     columns = publisher._CONFIG_COLUMNS[config]
-    metadata = {
-        b"schema_version": str(rows[0]["schema_version"]).encode()
-    }
+    metadata = {b"schema_version": str(rows[0]["schema_version"]).encode()}
     if config == "original_row_index":
         metadata[b"primary_key"] = b"security_ir_source_cid"
     schema = pa.schema(
-        [
-            pa.field(name, _type_for_complete(config, name))
-            for name in columns
-        ],
+        [pa.field(name, _type_for_complete(config, name)) for name in columns],
         metadata=metadata,
     )
     table = pa.Table.from_pylist([dict(row) for row in rows], schema=schema)
@@ -326,18 +316,13 @@ def _write_complete_release(
         "bm25_postings": "data/bm25/postings/part-000000.parquet",
         "graph_nodes": "data/graph/nodes/part-000000.parquet",
         "graph_edges": "data/graph/edges/part-000000.parquet",
-        "graph_outgoing_adjacency": (
-            "data/graph/adjacency/outgoing/part-000000.parquet"
-        ),
-        "graph_incoming_adjacency": (
-            "data/graph/adjacency/incoming/part-000000.parquet"
-        ),
+        "graph_outgoing_adjacency": ("data/graph/adjacency/outgoing/part-000000.parquet"),
+        "graph_incoming_adjacency": ("data/graph/adjacency/incoming/part-000000.parquet"),
         "vectors": "data/vectors/part-000000.parquet",
     }
     rows = _complete_data_rows()
     contents: dict[str, bytes] = {
-        path: _complete_parquet(config, rows[config])
-        for config, path in data_paths.items()
+        path: _complete_parquet(config, rows[config]) for config, path in data_paths.items()
     }
     descriptors: dict[str, dict[str, Any]] = {
         path: _descriptor(
@@ -412,11 +397,7 @@ def _write_complete_release(
         target = descriptors[target_path]
         key_column = publisher._DATA_KEY_COLUMNS[family]
         key = str(rows[family][key_column])
-        document_range = (
-            (0, 0)
-            if family in {"corpus", "bm25_documents", "vectors"}
-            else (-1, -1)
-        )
+        document_range = (0, 0) if family in {"corpus", "bm25_documents", "vectors"} else (-1, -1)
         meta: dict[str, Any] = {
             "cid": target["content_id"],
             "end_document_index": document_range[1],
@@ -492,9 +473,7 @@ def _write_complete_release(
                     if source_status == "admitted"
                     else "cvefixes-rejected-source-row/v1"
                 ),
-                "source_shard_cid": descriptors[contract.release_path][
-                    "content_id"
-                ],
+                "source_shard_cid": descriptors[contract.release_path]["content_id"],
                 "source_shard_path": contract.source_path,
                 "source_shard_row_index": 0,
                 "relative_path": contract.release_path,
@@ -503,9 +482,7 @@ def _write_complete_release(
                 "schema_version": publisher.ORIGINAL_ROW_INDEX_SCHEMA_VERSION,
             }
         )
-    original_index_rows.sort(
-        key=lambda item: item["security_ir_source_cid"]
-    )
+    original_index_rows.sort(key=lambda item: item["security_ir_source_cid"])
     original_index_path = "indexes/original_rows.parquet"
     contents[original_index_path] = _complete_parquet_rows(
         "original_row_index",
@@ -520,16 +497,9 @@ def _write_complete_release(
     )
 
     viewer_configs = tuple(sorted(publisher.COMPLETE_VIEWER_CONFIGS))
-    card_configs = "\n".join(
-        f"- config_name: {config}" for config in viewer_configs
-    )
+    card_configs = "\n".join(f"- config_name: {config}" for config in viewer_configs)
     contents["README.md"] = (
-        "---\n"
-        "license: apache-2.0\n"
-        "configs:\n"
-        f"{card_configs}\n"
-        "---\n"
-        "# Complete CVEfixes fixture\n"
+        f"---\nlicense: apache-2.0\nconfigs:\n{card_configs}\n---\n# Complete CVEfixes fixture\n"
     ).encode()
     features: dict[str, dict[str, dict[str, str]]] = {}
     for config in viewer_configs:
@@ -538,31 +508,18 @@ def _write_complete_release(
             for path, descriptor in descriptors.items()
             if descriptor.get("config_name") == config
         )
-        feature_schema = pq.ParquetFile(
-            pa.BufferReader(contents[feature_path])
-        ).schema_arrow
-        features[config] = {
-            field.name: {"dtype": str(field.type)}
-            for field in feature_schema
-        }
+        feature_schema = pq.ParquetFile(pa.BufferReader(contents[feature_path])).schema_arrow
+        features[config] = {field.name: {"dtype": str(field.type)} for field in feature_schema}
     infos_configs: dict[str, Any] = {}
     for config in viewer_configs:
-        matching = [
-            value
-            for value in descriptors.values()
-            if value.get("config_name") == config
-        ]
+        matching = [value for value in descriptors.values() if value.get("config_name") == config]
         assert matching
         infos_configs[config] = {
             "features": features[config],
             "splits": {
                 "train": {
-                    "num_bytes": sum(
-                        int(item["byte_length"]) for item in matching
-                    ),
-                    "num_examples": sum(
-                        int(item["row_count"]) for item in matching
-                    ),
+                    "num_bytes": sum(int(item["byte_length"]) for item in matching),
+                    "num_examples": sum(int(item["row_count"]) for item in matching),
                 }
             },
         }
@@ -586,12 +543,8 @@ def _write_complete_release(
         "evaluation-report.json": "application/json",
     }
     for path in media_types:
-        descriptors[path] = _descriptor(
-            path, contents[path], media_types[path]
-        )
-    artifact_values = [
-        descriptors[path] for path in sorted(descriptors)
-    ]
+        descriptors[path] = _descriptor(path, contents[path], media_types[path])
+    artifact_values = [descriptors[path] for path in sorted(descriptors)]
     index_values = {
         Path(path).stem: {
             "cid": descriptors[path]["content_id"],
@@ -617,9 +570,7 @@ def _write_complete_release(
                 "row_index_config_name": "original_row_index",
                 "shards": publisher._expected_original_runtime_shards(),
                 "source_dataset_id": SOURCE,
-                "source_profile_sha256": (
-                    publisher.PINNED_SOURCE_PROFILE_SHA256
-                ),
+                "source_profile_sha256": (publisher.PINNED_SOURCE_PROFILE_SHA256),
                 "source_revision": SOURCE_REVISION,
             },
         },
@@ -629,9 +580,7 @@ def _write_complete_release(
         },
         "counts": {
             "admitted_rows": 1,
-            "original_data_bytes": sum(
-                item.size_bytes for item in original_contracts
-            ),
+            "original_data_bytes": sum(item.size_bytes for item in original_contracts),
             "original_data_rows": len(original_contracts),
             "original_data_shards": len(original_contracts),
             "original_row_index_rows": len(original_index_rows),
@@ -653,16 +602,12 @@ def _write_complete_release(
             "dataset_id": TARGET,
             "profile": publisher.ORIGINAL_MIRROR_PROFILE,
             "payload": {
-                "derived_security_ir_profile": (
-                    "public-metadata-and-body-digests"
-                ),
+                "derived_security_ir_profile": ("public-metadata-and-body-digests"),
                 "release_root": RELEASE_ROOT,
                 "release_schema_version": publisher.RELEASE_SCHEMA_VERSION,
             },
             "shard_cids": [
-                item["content_id"]
-                for item in artifact_values
-                if item["path"].startswith("data/")
+                item["content_id"] for item in artifact_values if item["path"].startswith("data/")
             ],
         },
         "release_root": RELEASE_ROOT,
@@ -700,8 +645,7 @@ def _replace_index_artifact(
     manifest_path = root / "manifest.json"
     manifest = json.loads(manifest_path.read_text())
     manifest["artifacts"] = [
-        descriptor if item["path"] == path else item
-        for item in manifest["artifacts"]
+        descriptor if item["path"] == path else item for item in manifest["artifacts"]
     ]
     manifest["indexes"][Path(path).stem] = {
         "cid": descriptor["content_id"],
@@ -720,15 +664,9 @@ def staged_release(tmp_path: Path) -> Path:
     root.mkdir()
     contents = {
         "README.md": b"---\nlicense: Apache-2.0\n---\n# Test release\n",
-        "evaluation-report.json": _canonical(
-            {"grants_execution_authority": False}
-        ),
-        "data/graph_node/train-00000-of-00001.parquet": _parquet_bytes(
-            "graph_node"
-        ),
-        "data/policy_candidate/train-00000-of-00001.parquet": _parquet_bytes(
-            "policy_candidate"
-        ),
+        "evaluation-report.json": _canonical({"grants_execution_authority": False}),
+        "data/graph_node/train-00000-of-00001.parquet": _parquet_bytes("graph_node"),
+        "data/policy_candidate/train-00000-of-00001.parquet": _parquet_bytes("policy_candidate"),
     }
     features = {
         "authority": {"dtype": "string"},
@@ -747,10 +685,7 @@ def staged_release(tmp_path: Path) -> Path:
                     "splits": {
                         "train": {
                             "num_bytes": len(
-                                contents[
-                                    "data/graph_node/"
-                                    "train-00000-of-00001.parquet"
-                                ]
+                                contents["data/graph_node/train-00000-of-00001.parquet"]
                             ),
                             "num_examples": 1,
                         }
@@ -761,10 +696,7 @@ def staged_release(tmp_path: Path) -> Path:
                     "splits": {
                         "train": {
                             "num_bytes": len(
-                                contents[
-                                    "data/policy_candidate/"
-                                    "train-00000-of-00001.parquet"
-                                ]
+                                contents["data/policy_candidate/train-00000-of-00001.parquet"]
                             ),
                             "num_examples": 1,
                         }
@@ -788,11 +720,7 @@ def staged_release(tmp_path: Path) -> Path:
             _descriptor(
                 path,
                 content,
-                (
-                    "application/vnd.apache.parquet"
-                    if config
-                    else media_types[path]
-                ),
+                ("application/vnd.apache.parquet" if config else media_types[path]),
                 config=config,
             )
         )
@@ -810,9 +738,7 @@ def staged_release(tmp_path: Path) -> Path:
                 "release_schema_version": publisher.RELEASE_SCHEMA_VERSION,
             },
             "shard_cids": [
-                item["content_id"]
-                for item in descriptors
-                if item["path"].endswith(".parquet")
+                item["content_id"] for item in descriptors if item["path"].endswith(".parquet")
             ],
         },
         "release_root": RELEASE_ROOT,
@@ -839,9 +765,7 @@ class FakeHub:
         self.files: dict[tuple[str, str], bytes] = {}
         self.upload_calls = 0
         self.auth_calls = 0
-        self.viewer_columns = (
-            tuple(viewer_columns) if viewer_columns is not None else None
-        )
+        self.viewer_columns = tuple(viewer_columns) if viewer_columns is not None else None
         self.token_values: list[str] = []
 
     def authenticate(self, token: str) -> str:
@@ -855,15 +779,11 @@ class FakeHub:
             self.token_values.append(token)
         return self.current_head
 
-    def revisions(
-        self, repo_id: str, token: str | None, *, limit: int
-    ) -> Sequence[str]:
+    def revisions(self, repo_id: str, token: str | None, *, limit: int) -> Sequence[str]:
         assert repo_id == TARGET
         return tuple(self.history[:limit])
 
-    def read_file(
-        self, repo_id: str, revision: str, path: str, token: str | None
-    ) -> bytes:
+    def read_file(self, repo_id: str, revision: str, path: str, token: str | None) -> bytes:
         assert repo_id == TARGET
         try:
             return self.files[(revision, path)]
@@ -888,9 +808,9 @@ class FakeHub:
         self.history.insert(0, PUBLISHED_COMMIT)
         for path in release.directory.rglob("*"):
             if path.is_file():
-                self.files[
-                    (PUBLISHED_COMMIT, path.relative_to(release.directory).as_posix())
-                ] = path.read_bytes()
+                self.files[(PUBLISHED_COMMIT, path.relative_to(release.directory).as_posix())] = (
+                    path.read_bytes()
+                )
         return PUBLISHED_COMMIT
 
     def viewer(
@@ -899,28 +819,18 @@ class FakeHub:
         params: Mapping[str, str],
         token: str | None,
     ) -> Mapping[str, Any]:
-        manifest = json.loads(
-            (self.release_dir / "manifest.json").read_text()
-        )
+        manifest = json.loads((self.release_dir / "manifest.json").read_text())
         configs = sorted(
-            {
-                item["config_name"]
-                for item in manifest["artifacts"]
-                if "config_name" in item
-            }
+            {item["config_name"] for item in manifest["artifacts"] if "config_name" in item}
         )
-        if any(
-            item["path"].startswith("data/corpus/")
-            for item in manifest["artifacts"]
-        ):
+        if any(item["path"].startswith("data/corpus/") for item in manifest["artifacts"]):
             configs = sorted(publisher.COMPLETE_VIEWER_CONFIGS)
         if endpoint == "is-valid":
             return {"viewer": True}
         if endpoint == "splits":
             return {
                 "splits": [
-                    {"dataset": TARGET, "config": config, "split": "train"}
-                    for config in configs
+                    {"dataset": TARGET, "config": config, "split": "train"} for config in configs
                 ]
             }
         if endpoint == "parquet":
@@ -940,9 +850,7 @@ class FakeHub:
         if endpoint == "first-rows":
             config = params["config"]
             artifact = next(
-                item
-                for item in manifest["artifacts"]
-                if item.get("config_name") == config
+                item for item in manifest["artifacts"] if item.get("config_name") == config
             )
             table = pq.read_table(self.release_dir / artifact["path"])
             values = table.slice(0, 1).to_pylist()[0]
@@ -960,11 +868,7 @@ class FakeHub:
                 ],
                 "rows": [
                     {
-                        "row": {
-                            name: values[name]
-                            for name in columns
-                            if name in values
-                        },
+                        "row": {name: values[name] for name in columns if name in values},
                         "row_idx": 0,
                         "truncated_cells": [],
                     }
@@ -977,9 +881,7 @@ class FakeHub:
 def _seed_remote(hub: FakeHub, release_dir: Path, revision: str) -> None:
     for path in release_dir.rglob("*"):
         if path.is_file():
-            hub.files[
-                (revision, path.relative_to(release_dir).as_posix())
-            ] = path.read_bytes()
+            hub.files[(revision, path.relative_to(release_dir).as_posix())] = path.read_bytes()
 
 
 def test_default_is_credential_free_dry_run(
@@ -1052,9 +954,7 @@ def test_publisher_accepts_skillcenter_compatible_meta_indexes(
     loaded = publisher.load_local_release(root, expected_target=TARGET)
 
     assert "corpus_chunk_index" in loaded.config_names
-    assert loaded.columns_for_config("corpus_chunk_index") == (
-        publisher.META_INDEX_COLUMNS
-    )
+    assert loaded.columns_for_config("corpus_chunk_index") == (publisher.META_INDEX_COLUMNS)
 
 
 def test_publisher_accepts_complete_skillcenter_layout(
@@ -1071,26 +971,14 @@ def test_publisher_accepts_complete_skillcenter_layout(
     assert not publisher._HIDDEN_INDEX_CONFIGS & set(loaded.config_names)
     assert (root / publisher.COMPLETE_RELEASE_METADATA_PATH).is_file()
     assert not (root / publisher.LEGACY_RELEASE_METADATA_PATH).exists()
-    assert {
-        item.path
-        for item in loaded.artifacts
-        if item.path.startswith("indexes/")
-    } == set(publisher.COMPLETE_INDEX_PATHS)
-    assert loaded.columns_for_config("bm25_keyword_index") == (
-        publisher.BM25_KEYWORD_META_COLUMNS
+    assert {item.path for item in loaded.artifacts if item.path.startswith("indexes/")} == set(
+        publisher.COMPLETE_INDEX_PATHS
     )
-    assert loaded.columns_for_config("vector_meta_index") == (
-        publisher.VECTOR_META_COLUMNS
-    )
-    assert loaded.columns_for_config("original_data") == (
-        publisher.ORIGINAL_DATA_COLUMNS
-    )
-    assert loaded.columns_for_config("original_row_index") == (
-        publisher.ORIGINAL_ROW_INDEX_COLUMNS
-    )
-    viewer = publisher.verify_dataset_viewer(
-        FakeHub(root), loaded, token=None
-    )
+    assert loaded.columns_for_config("bm25_keyword_index") == (publisher.BM25_KEYWORD_META_COLUMNS)
+    assert loaded.columns_for_config("vector_meta_index") == (publisher.VECTOR_META_COLUMNS)
+    assert loaded.columns_for_config("original_data") == (publisher.ORIGINAL_DATA_COLUMNS)
+    assert loaded.columns_for_config("original_row_index") == (publisher.ORIGINAL_ROW_INDEX_COLUMNS)
+    viewer = publisher.verify_dataset_viewer(FakeHub(root), loaded, token=None)
     assert set(viewer["configs"]) == publisher.COMPLETE_VIEWER_CONFIGS
 
 
@@ -1119,24 +1007,25 @@ def test_pinned_original_shards_have_exact_production_contract() -> None:
         ),
     )
 
-    assert tuple(
-        (
-            item.release_path,
-            item.source_path,
-            item.size_bytes,
-            item.row_count,
-            item.sha256,
+    assert (
+        tuple(
+            (
+                item.release_path,
+                item.source_path,
+                item.size_bytes,
+                item.row_count,
+                item.sha256,
+            )
+            for item in publisher.PINNED_ORIGINAL_SHARDS
         )
-        for item in publisher.PINNED_ORIGINAL_SHARDS
-    ) == expected
+        == expected
+    )
     for contract in publisher.PINNED_ORIGINAL_SHARDS:
         publisher.ArtifactDescriptor.from_dict(
             {
                 "byte_length": contract.size_bytes,
                 "config_name": "original_data",
-                "content_id": publisher._raw_sha256_cid(
-                    bytes.fromhex(contract.sha256)
-                ),
+                "content_id": publisher._raw_sha256_cid(bytes.fromhex(contract.sha256)),
                 "media_type": "application/vnd.apache.parquet",
                 "path": contract.release_path,
                 "row_count": contract.row_count,
@@ -1152,9 +1041,7 @@ def test_pinned_original_shards_have_exact_production_contract() -> None:
             {
                 "byte_length": first.size_bytes,
                 "config_name": "original_data",
-                "content_id": publisher._raw_sha256_cid(
-                    bytes.fromhex(first.sha256)
-                ),
+                "content_id": publisher._raw_sha256_cid(bytes.fromhex(first.sha256)),
                 "media_type": "application/vnd.apache.parquet",
                 "path": "data/original/part-000003.parquet",
                 "row_count": first.row_count,
@@ -1200,17 +1087,14 @@ def test_complete_release_metadata_binds_exact_arrow_types(
     relative = publisher.COMPLETE_RELEASE_METADATA_PATH
     metadata_path = root / relative
     metadata = json.loads(metadata_path.read_text())
-    metadata["configs"]["original_row_index"]["features"][
-        "source_row_index"
-    ]["dtype"] = "string"
+    metadata["configs"]["original_row_index"]["features"]["source_row_index"]["dtype"] = "string"
     content = _canonical(metadata)
     metadata_path.write_bytes(content)
     descriptor = _descriptor(relative, content, "application/json")
     manifest_path = root / "manifest.json"
     manifest = json.loads(manifest_path.read_text())
     manifest["artifacts"] = [
-        descriptor if item["path"] == relative else item
-        for item in manifest["artifacts"]
+        descriptor if item["path"] == relative else item for item in manifest["artifacts"]
     ]
     manifest_path.write_bytes(_canonical(manifest))
 
@@ -1248,9 +1132,7 @@ def test_original_row_index_fails_closed_on_binding_tamper(
     index_path = root / "indexes/original_rows.parquet"
     table = pq.read_table(index_path)
     rows = table.to_pylist()
-    rows[0][field] = (
-        rows[1]["source_row_index"] if value is None else value
-    )
+    rows[0][field] = rows[1]["source_row_index"] if value is None else value
     sink = pa.BufferOutputStream()
     pq.write_table(
         pa.Table.from_pylist(rows, schema=table.schema),
@@ -1308,9 +1190,7 @@ def test_original_data_requires_snappy_and_unversioned_schema(
         media_type="application/vnd.apache.parquet",
         byte_length=len(content),
         sha256=hashlib.sha256(content).hexdigest(),
-        content_id=publisher._raw_sha256_cid(
-            hashlib.sha256(content).digest()
-        ),
+        content_id=publisher._raw_sha256_cid(hashlib.sha256(content).digest()),
         config_name="original_data",
         row_count=1,
     )
@@ -1340,9 +1220,7 @@ def test_original_data_requires_snappy_and_unversioned_schema(
         media_type=descriptor.media_type,
         byte_length=len(versioned_content),
         sha256=hashlib.sha256(versioned_content).hexdigest(),
-        content_id=publisher._raw_sha256_cid(
-            hashlib.sha256(versioned_content).digest()
-        ),
+        content_id=publisher._raw_sha256_cid(hashlib.sha256(versioned_content).digest()),
         config_name=descriptor.config_name,
         row_count=descriptor.row_count,
     )
@@ -1399,9 +1277,7 @@ def test_complete_layout_rejects_reserved_dataset_infos(
     (root / reserved_path).write_bytes(content)
     manifest_path = root / "manifest.json"
     manifest = json.loads(manifest_path.read_text())
-    manifest["artifacts"].append(
-        _descriptor(reserved_path, content, "application/json")
-    )
+    manifest["artifacts"].append(_descriptor(reserved_path, content, "application/json"))
     manifest["artifacts"].sort(key=lambda item: item["path"])
     manifest_path.write_bytes(_canonical(manifest))
 
@@ -1421,9 +1297,7 @@ def test_complete_layout_requires_every_physical_index(
     manifest = json.loads(manifest_path.read_text())
     missing_path = "indexes/graph_edge_chunks.parquet"
     (root / missing_path).unlink()
-    manifest["artifacts"] = [
-        item for item in manifest["artifacts"] if item["path"] != missing_path
-    ]
+    manifest["artifacts"] = [item for item in manifest["artifacts"] if item["path"] != missing_path]
     del manifest["indexes"]["graph_edge_chunks"]
     manifest_path.write_bytes(_canonical(manifest))
 
@@ -1443,23 +1317,16 @@ def test_complete_layout_requires_raw_sha256_cids(
     manifest = json.loads(manifest_path.read_text())
     target_path = "data/corpus/part-000000.parquet"
     forged = _cid("not-the-raw-file-cid")
-    old = next(
-        item["content_id"]
-        for item in manifest["artifacts"]
-        if item["path"] == target_path
-    )
+    old = next(item["content_id"] for item in manifest["artifacts"] if item["path"] == target_path)
     for item in manifest["artifacts"]:
         if item["path"] == target_path:
             item["content_id"] = forged
     manifest["release_manifest"]["shard_cids"] = [
-        forged if value == old else value
-        for value in manifest["release_manifest"]["shard_cids"]
+        forged if value == old else value for value in manifest["release_manifest"]["shard_cids"]
     ]
     manifest_path.write_bytes(_canonical(manifest))
 
-    with pytest.raises(
-        publisher.LocalReleaseError, match="raw SHA-256 CID mismatch"
-    ):
+    with pytest.raises(publisher.LocalReleaseError, match="raw SHA-256 CID mismatch"):
         publisher.load_local_release(root, expected_target=TARGET)
 
 
@@ -1491,8 +1358,7 @@ def test_complete_index_cannot_point_to_another_family(
     manifest_path = root / "manifest.json"
     manifest = json.loads(manifest_path.read_text())
     manifest["artifacts"] = [
-        descriptor if item["path"] == relative else item
-        for item in manifest["artifacts"]
+        descriptor if item["path"] == relative else item for item in manifest["artifacts"]
     ]
     manifest["indexes"]["bm25_document_chunks"] = {
         "cid": descriptor["content_id"],
@@ -1514,9 +1380,7 @@ def test_complete_index_cannot_point_to_another_family(
 def test_hub_upload_deletes_stale_data_and_indexes(
     staged_release: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    release = publisher.load_local_release(
-        staged_release, expected_target=TARGET
-    )
+    release = publisher.load_local_release(staged_release, expected_target=TARGET)
     captured: dict[str, Any] = {}
 
     class Api:
@@ -1545,14 +1409,8 @@ def test_hub_upload_deletes_stale_data_and_indexes(
     assert revision == PUBLISHED_COMMIT
     assert "data/**" in captured["delete_patterns"]
     assert "indexes/**" in captured["delete_patterns"]
-    assert (
-        publisher.COMPLETE_RELEASE_METADATA_PATH
-        in captured["delete_patterns"]
-    )
-    assert (
-        publisher.LEGACY_RELEASE_METADATA_PATH
-        in captured["delete_patterns"]
-    )
+    assert publisher.COMPLETE_RELEASE_METADATA_PATH in captured["delete_patterns"]
+    assert publisher.LEGACY_RELEASE_METADATA_PATH in captured["delete_patterns"]
 
 
 def test_remote_read_limit_is_narrowly_raised_for_pinned_original(
@@ -1664,9 +1522,7 @@ def test_viewer_schema_mismatch_prevents_receipt(
         viewer_columns=publisher.EXPECTED_COLUMNS[:-1],
     )
 
-    with pytest.raises(
-        publisher.ViewerNotReadyError, match="feature binding mismatch"
-    ):
+    with pytest.raises(publisher.ViewerNotReadyError, match="feature binding mismatch"):
         publisher.publish_release(
             staged_release,
             execute=True,
@@ -1696,9 +1552,7 @@ def test_remote_shard_mismatch_prevents_receipt(
 
     hub.upload = corrupting_upload
 
-    with pytest.raises(
-        publisher.RemoteVerificationError, match="remote artifact verification"
-    ):
+    with pytest.raises(publisher.RemoteVerificationError, match="remote artifact verification"):
         publisher.publish_release(staged_release, execute=True, gateway=hub)
 
 
@@ -1757,9 +1611,7 @@ def test_receipt_verification_rejects_authority_claim(
 ) -> None:
     monkeypatch.setenv("HF_TOKEN", "hf_" + ("a" * 30))
     hub = FakeHub(staged_release)
-    receipt = publisher.publish_release(
-        staged_release, execute=True, gateway=hub
-    )
+    receipt = publisher.publish_release(staged_release, execute=True, gateway=hub)
     receipt["grants_completion_authority"] = True
     path = tmp_path / "forged.json"
     path.write_bytes(_canonical(receipt))

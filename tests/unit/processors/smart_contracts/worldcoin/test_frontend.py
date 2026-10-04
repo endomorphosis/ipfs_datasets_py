@@ -268,9 +268,7 @@ def test_normalize_verifier_contract_states_trust_and_epochs(
     assert result.verifier_binding is not None
     assert result.verifier_binding.code_epoch == "epoch-1"
     assert result.evm_result is not None
-    assert result.evm_result.code_epoch.runtime_bytecode_digest == bytes_digest(
-        ADD_BYTECODE
-    )
+    assert result.evm_result.code_epoch.runtime_bytecode_digest == bytes_digest(ADD_BYTECODE)
     assert result.proof_consumer is not None
     assert result.proof_consumer.implies_payment is False
     assert result.proof_consumer.implies_legal_identity is False
@@ -440,9 +438,7 @@ def test_normalize_bridge_observation(frontend: WorldcoinContractFrontend) -> No
 
 
 def test_default_trust_catalogs_are_nonempty() -> None:
-    v = default_verifier_trust_assumptions(
-        verifier_kind=VerifierKind.DEVELOPER_PORTAL
-    )
+    v = default_verifier_trust_assumptions(verifier_kind=VerifierKind.DEVELOPER_PORTAL)
     assert any(item.surface is TrustSurface.DEVELOPER_PORTAL_API for item in v)
     b = default_bridge_trust_assumptions()
     assert len(b) >= 4

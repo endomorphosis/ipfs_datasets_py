@@ -3,6 +3,7 @@ Error handler module for the Omni-Converter.
 
 This module provides the ErrorMonitor class for centralizing error handling and reporting.
 """
+
 from types_ import Any, Optional, Callable, Type, Logger, Configs, Path
 
 
@@ -34,8 +35,8 @@ class ErrorMonitor:
         self.configs = configs
         self.resources = resources
 
-        self.traceback = self.resources['traceback']
-        self.datetime = self.resources['datetime']
+        self.traceback = self.resources["traceback"]
+        self.datetime = self.resources["datetime"]
 
         self._logger = self.resources["logger"]
         self._suppress_errors: bool = self.configs.processing.suppress_errors
@@ -100,7 +101,7 @@ class ErrorMonitor:
             case Exception() as e:
                 error_message = f"{type(e).__name__}: {str(e)}"
                 error_traceback = self.traceback.format_exc()
-                context["error_type"] = type(error).__name__ 
+                context["error_type"] = type(error).__name__
             case str() as e:
                 error_message = e
                 error_traceback = ""
@@ -126,7 +127,7 @@ class ErrorMonitor:
         return {
             "total_errors": sum(self._error_counters.values()),
             "error_types": list(self._error_types),
-            "error_counts": self._error_counters.copy()
+            "error_counts": self._error_counters.copy(),
         }
 
     def core_dump(self) -> None:
@@ -162,7 +163,10 @@ class ErrorMonitor:
                     f"Error Types: {', '.join(self.error_statistics['error_types'])}\n"
                     f"Error Counts:\n"
                 )
-                f.writelines(f"  {etype}: {count}\n" for etype, count in self.error_statistics["error_counts"].items())
+                f.writelines(
+                    f"  {etype}: {count}\n"
+                    for etype, count in self.error_statistics["error_counts"].items()
+                )
         except Exception as e:
             self.logger.error(f"Failed to write core dump to {core_log_file}: {e}")
             raise
@@ -175,12 +179,12 @@ class ErrorMonitor:
     def set_error_suppression(self, suppress: bool) -> None:
         """
         Set error suppression.
-        
+
         Args:
             suppress: Whether to suppress errors.
         """
         self._suppress_errors = suppress
-    
+
     def get_most_common_errors(self, limit: int = 5) -> list[dict[str, Any]]:
         """Get the most common errors.
 
@@ -191,22 +195,15 @@ class ErrorMonitor:
             A list of dictionaries with error type and count.
         """
         # Sort error types by count (descending)
-        sorted_errors = sorted(
-            self._error_counters.items(),
-            key=lambda x: x[1],
-            reverse=True
-        )
+        sorted_errors = sorted(self._error_counters.items(), key=lambda x: x[1], reverse=True)
 
         # Return the top N errors
-        return [
-            {"type": error_type, "count": count}
-            for error_type, count in sorted_errors[:limit]
-        ]
+        return [{"type": error_type, "count": count} for error_type, count in sorted_errors[:limit]]
 
     @property
     def has_errors(self) -> bool:
         """Check if any errors have been handled.
-        
+
         Returns:
             True if errors have been handled, False otherwise.
         """
@@ -229,4 +226,3 @@ class ErrorMonitor:
 
         count = self._error_counters.get(error_type, 0)
         return count
-

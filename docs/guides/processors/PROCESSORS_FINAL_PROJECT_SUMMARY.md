@@ -166,7 +166,7 @@ print(decision.to_json())
 ```python
 async with profile_processing("analysis") as metrics:
     result = await processor.process("document.pdf")
-    metrics.custom_metrics['entities'] = result.get_entity_count()
+    metrics.custom_metrics["entities"] = result.get_entity_count()
 
 print(metrics.summary())
 profiler.export_metrics("performance.json")
@@ -338,8 +338,10 @@ import anyio
 
 processor = UniversalProcessor()
 
+
 async def main():
     result = await processor.process("document.pdf")
+
 
 anyio.run(main)
 ```
@@ -348,12 +350,13 @@ anyio.run(main)
 ```python
 async def main():
     processor = UniversalProcessor()
-    
+
     # Process multiple files concurrently
     results = await processor.process_batch(
         ["doc1.pdf", "doc2.pdf", "doc3.pdf"],
-        parallel=True  # 5-50x faster!
+        parallel=True,  # 5-50x faster!
     )
+
 
 anyio.run(main)
 ```
@@ -366,15 +369,16 @@ anyio.run(main)
 class MyProcessor:
     def can_handle(self, context):
         return True
-    
+
     def process(self, context):
         return result
+
 
 # After
 class MyProcessor:
     async def can_handle(self, context):
         return True
-    
+
     async def process(self, context):
         return result
 ```

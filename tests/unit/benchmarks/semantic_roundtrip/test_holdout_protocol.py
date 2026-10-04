@@ -105,13 +105,8 @@ def test_pilot_and_repair_dev_manifests_are_disjoint_and_frozen() -> None:
     assert pilot.fixture_sha256
     assert repair.fixture_sha256
     # Round-trip.
-    assert (
-        type(pilot).from_dict(pilot.to_dict()).manifest_cid == pilot.manifest_cid
-    )
-    assert (
-        type(repair).from_dict(repair.to_dict()).manifest_cid
-        == repair.manifest_cid
-    )
+    assert type(pilot).from_dict(pilot.to_dict()).manifest_cid == pilot.manifest_cid
+    assert type(repair).from_dict(repair.to_dict()).manifest_cid == repair.manifest_cid
 
 
 def test_freeze_visible_populations_rejects_no_leakage() -> None:
@@ -229,12 +224,9 @@ def test_cross_split_and_prompt_leakage_checks_pass_for_preregistered() -> None:
         records,
         prompt_examples={
             "pilot_style": (
-                "Company A shall submit backup report within 10 days unless "
-                "emergency."
+                "Company A shall submit backup report within 10 days unless emergency."
             ),
-            "repair_style": (
-                "The controller must delete the records after 30 days."
-            ),
+            "repair_style": ("The controller must delete the records after 30 days."),
         },
     )
     assert result["blind_holdout_seal"].case_count == FROZEN_BLIND_CASE_COUNT
@@ -253,17 +245,19 @@ def test_exact_source_leakage_is_rejected() -> None:
     leaked = PrivateBlindCaseRecord(
         case_id="leaked_exact",
         source_text=pilot[0].source_text,
-        gold_ir={"rules": [
-            {
-                "modality": "O",
-                "actor": "a",
-                "action": "b",
-                "object": "c",
-                "conditions": [],
-                "exceptions": [],
-                "temporal": [],
-            }
-        ]},
+        gold_ir={
+            "rules": [
+                {
+                    "modality": "O",
+                    "actor": "a",
+                    "action": "b",
+                    "object": "c",
+                    "conditions": [],
+                    "exceptions": [],
+                    "temporal": [],
+                }
+            ]
+        },
         source_ref="custodian://leaked/exact",
         stratum="complexity_tier_1",
         provenance={"prompt_exposure": "none"},
@@ -288,24 +282,24 @@ def test_normalized_and_near_duplicate_leakage_are_rejected() -> None:
     normalized_dup = PrivateBlindCaseRecord(
         case_id="leaked_normalized",
         source_text=base.upper().replace(".", "!!!"),
-        gold_ir={"rules": [
-            {
-                "modality": "O",
-                "actor": "a",
-                "action": "b",
-                "object": "c",
-                "conditions": [],
-                "exceptions": [],
-                "temporal": [],
-            }
-        ]},
+        gold_ir={
+            "rules": [
+                {
+                    "modality": "O",
+                    "actor": "a",
+                    "action": "b",
+                    "object": "c",
+                    "conditions": [],
+                    "exceptions": [],
+                    "temporal": [],
+                }
+            ]
+        },
         source_ref="custodian://leaked/normalized",
         stratum="complexity_tier_1",
         provenance={"prompt_exposure": "none"},
     )
-    assert normalize_source_text(normalized_dup.source_text) == normalize_source_text(
-        base
-    )
+    assert normalize_source_text(normalized_dup.source_text) == normalize_source_text(base)
     with pytest.raises(HoldoutProtocolError, match="normalized source"):
         validate_cross_split_leakage(
             {
@@ -327,17 +321,19 @@ def test_normalized_and_near_duplicate_leakage_are_rejected() -> None:
     near_dup = PrivateBlindCaseRecord(
         case_id="leaked_near",
         source_text=near_text,
-        gold_ir={"rules": [
-            {
-                "modality": "O",
-                "actor": "a",
-                "action": "b",
-                "object": "c",
-                "conditions": [],
-                "exceptions": [],
-                "temporal": [],
-            }
-        ]},
+        gold_ir={
+            "rules": [
+                {
+                    "modality": "O",
+                    "actor": "a",
+                    "action": "b",
+                    "object": "c",
+                    "conditions": [],
+                    "exceptions": [],
+                    "temporal": [],
+                }
+            ]
+        },
         source_ref="custodian://leaked/near",
         stratum="complexity_tier_1",
         provenance={"prompt_exposure": "none"},
@@ -360,17 +356,19 @@ def test_provenance_and_prompt_example_leakage_are_rejected() -> None:
     blind = PrivateBlindCaseRecord(
         case_id="leaked_ref",
         source_text="Completely unique blind wording about orbital debris liability bonds.",
-        gold_ir={"rules": [
-            {
-                "modality": "O",
-                "actor": "operators",
-                "action": "post",
-                "object": "debris_bonds",
-                "conditions": [],
-                "exceptions": [],
-                "temporal": [],
-            }
-        ]},
+        gold_ir={
+            "rules": [
+                {
+                    "modality": "O",
+                    "actor": "operators",
+                    "action": "post",
+                    "object": "debris_bonds",
+                    "conditions": [],
+                    "exceptions": [],
+                    "temporal": [],
+                }
+            ]
+        },
         source_ref=shared_ref,
         stratum="complexity_tier_1",
         provenance={"prompt_exposure": "none"},
@@ -420,9 +418,7 @@ def test_custodian_store_must_live_outside_worktree(tmp_path: Path) -> None:
 def _authorization_for(seal) -> HoldoutAccessAuthorization:
     return HoldoutAccessAuthorization.build(
         seal=seal,
-        candidate_freeze_cid=cid_for_dag_json(
-            {"candidate": "plat2-055-synthetic-freeze"}
-        ),
+        candidate_freeze_cid=cid_for_dag_json({"candidate": "plat2-055-synthetic-freeze"}),
     )
 
 

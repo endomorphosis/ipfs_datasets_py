@@ -36,14 +36,10 @@ VERIFICATION_PORTFOLIO_SCHEMA_VERSION: Final = "verification-portfolio/v1"
 PORTFOLIO_OBLIGATION_SCHEMA_VERSION: Final = "verification-portfolio-obligation/v1"
 PORTFOLIO_PLAN_SCHEMA_VERSION: Final = "verification-portfolio-plan/v1"
 PORTFOLIO_ATTEMPT_SPEC_SCHEMA_VERSION: Final = "verification-portfolio-attempt-spec/v1"
-PORTFOLIO_ATTEMPT_OUTCOME_SCHEMA_VERSION: Final = (
-    "verification-portfolio-attempt-outcome/v1"
-)
+PORTFOLIO_ATTEMPT_OUTCOME_SCHEMA_VERSION: Final = "verification-portfolio-attempt-outcome/v1"
 PORTFOLIO_SELECTION_SCHEMA_VERSION: Final = "verification-portfolio-selection/v1"
 PORTFOLIO_CAPABILITY_SCHEMA_VERSION: Final = "verification-portfolio-capability/v1"
-PORTFOLIO_RESOURCE_POLICY_SCHEMA_VERSION: Final = (
-    "verification-portfolio-resource-policy/v1"
-)
+PORTFOLIO_RESOURCE_POLICY_SCHEMA_VERSION: Final = "verification-portfolio-resource-policy/v1"
 PORTFOLIO_POLICY_SCHEMA_VERSION: Final = "verification-portfolio-property-policy/v1"
 
 DEFAULT_TIMEOUT_MS: Final = 60_000
@@ -195,12 +191,7 @@ _NON_CONCLUSIVE: Final[frozenset[ResultStatus]] = frozenset(
 def _text(value: object, field_name: str, *, optional: bool = False) -> str:
     if optional and value == "":
         return ""
-    if (
-        not isinstance(value, str)
-        or not value
-        or value != value.strip()
-        or "\x00" in value
-    ):
+    if not isinstance(value, str) or not value or value != value.strip() or "\x00" in value:
         qualifier = "an empty or " if optional else "a "
         raise PortfolioError(
             f"{field_name} must be {qualifier}non-empty trimmed string without NUL bytes"
@@ -222,14 +213,10 @@ def _mapping(value: object, field_name: str) -> dict[str, Any]:
     return dict(value)
 
 
-def _reject_unknown(
-    value: Mapping[str, Any], allowed: frozenset[str], record_name: str
-) -> None:
+def _reject_unknown(value: Mapping[str, Any], allowed: frozenset[str], record_name: str) -> None:
     unknown = sorted(set(value) - allowed)
     if unknown:
-        raise PortfolioError(
-            f"unknown {record_name} field(s): {', '.join(unknown)}"
-        )
+        raise PortfolioError(f"unknown {record_name} field(s): {', '.join(unknown)}")
 
 
 def _non_negative_int(value: object, field_name: str) -> int:
@@ -272,9 +259,7 @@ def assurance_satisfies(
 def family_default_authority(family: AttemptFamily | str) -> ResultAuthority:
     """Return the default result authority for an attempt family."""
 
-    return _FAMILY_DEFAULT_AUTHORITY[
-        _enum(family, AttemptFamily, "attempt family")
-    ]
+    return _FAMILY_DEFAULT_AUTHORITY[_enum(family, AttemptFamily, "attempt family")]
 
 
 # ---------------------------------------------------------------------------
@@ -302,14 +287,10 @@ class PortfolioResourcePolicy:
     def __post_init__(self) -> None:
         if not isinstance(self.bounds, ExecutionBounds):
             raise PortfolioError("bounds must be an ExecutionBounds value")
-        object.__setattr__(
-            self, "max_parallel", _positive_int(self.max_parallel, "max_parallel")
-        )
+        object.__setattr__(self, "max_parallel", _positive_int(self.max_parallel, "max_parallel"))
         if self.max_parallel > 64:
             raise PortfolioError("max_parallel must be at most 64")
-        object.__setattr__(
-            self, "max_attempts", _positive_int(self.max_attempts, "max_attempts")
-        )
+        object.__setattr__(self, "max_attempts", _positive_int(self.max_attempts, "max_attempts"))
         object.__setattr__(
             self,
             "cancel_on_counterexample",
@@ -321,9 +302,7 @@ class PortfolioResourcePolicy:
             _text(self.schema_version, "schema_version"),
         )
         if self.schema_version != PORTFOLIO_RESOURCE_POLICY_SCHEMA_VERSION:
-            raise PortfolioError(
-                f"unsupported resource policy schema: {self.schema_version}"
-            )
+            raise PortfolioError(f"unsupported resource policy schema: {self.schema_version}")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -355,9 +334,7 @@ class PortfolioResourcePolicy:
             max_parallel=payload.get("max_parallel", DEFAULT_MAX_PARALLEL),
             max_attempts=payload.get("max_attempts", DEFAULT_MAX_ATTEMPTS),
             cancel_on_counterexample=payload.get("cancel_on_counterexample", True),
-            schema_version=payload.get(
-                "schema_version", PORTFOLIO_RESOURCE_POLICY_SCHEMA_VERSION
-            ),
+            schema_version=payload.get("schema_version", PORTFOLIO_RESOURCE_POLICY_SCHEMA_VERSION),
         )
 
 
@@ -378,12 +355,8 @@ class PortfolioCapability:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "backend_id", _text(self.backend_id, "backend_id"))
-        object.__setattr__(
-            self, "family", _enum(self.family, AttemptFamily, "family")
-        )
-        object.__setattr__(
-            self, "status", _enum(self.status, CapabilityStatus, "status")
-        )
+        object.__setattr__(self, "family", _enum(self.family, AttemptFamily, "family"))
+        object.__setattr__(self, "status", _enum(self.status, CapabilityStatus, "status"))
         authority = (
             family_default_authority(self.family)
             if self.result_authority is None
@@ -400,33 +373,23 @@ class PortfolioCapability:
             "reconstruction_capable",
             _boolean(self.reconstruction_capable, "reconstruction_capable"),
         )
-        object.__setattr__(
-            self, "version", _text(self.version, "version", optional=True)
-        )
-        object.__setattr__(
-            self, "diagnostics", _unique_text(self.diagnostics, "diagnostics")
-        )
+        object.__setattr__(self, "version", _text(self.version, "version", optional=True))
+        object.__setattr__(self, "diagnostics", _unique_text(self.diagnostics, "diagnostics"))
         try:
             object.__setattr__(
                 self,
                 "metadata",
-                self.metadata
-                if isinstance(self.metadata, FrozenMap)
-                else FrozenMap(self.metadata),
+                self.metadata if isinstance(self.metadata, FrozenMap) else FrozenMap(self.metadata),
             )
         except (TypeError, ValueError) as error:
-            raise PortfolioError(
-                "metadata must be an immutable JSON mapping"
-            ) from error
+            raise PortfolioError("metadata must be an immutable JSON mapping") from error
         object.__setattr__(
             self,
             "schema_version",
             _text(self.schema_version, "schema_version"),
         )
         if self.schema_version != PORTFOLIO_CAPABILITY_SCHEMA_VERSION:
-            raise PortfolioError(
-                f"unsupported capability schema: {self.schema_version}"
-            )
+            raise PortfolioError(f"unsupported capability schema: {self.schema_version}")
         if (
             self.family is AttemptFamily.KERNEL
             and self.reconstruction_capable is False
@@ -480,16 +443,12 @@ class PortfolioCapability:
             family=payload.get("family", ""),
             status=payload.get("status", CapabilityStatus.DECLARED),
             result_authority=payload.get("result_authority"),
-            authority_capabilities=tuple(
-                payload.get("authority_capabilities") or ()
-            ),
+            authority_capabilities=tuple(payload.get("authority_capabilities") or ()),
             reconstruction_capable=payload.get("reconstruction_capable", False),
             version=payload.get("version", ""),
             diagnostics=tuple(payload.get("diagnostics") or ()),
             metadata=FrozenMap(payload.get("metadata") or {}),
-            schema_version=payload.get(
-                "schema_version", PORTFOLIO_CAPABILITY_SCHEMA_VERSION
-            ),
+            schema_version=payload.get("schema_version", PORTFOLIO_CAPABILITY_SCHEMA_VERSION),
         )
 
 
@@ -505,13 +464,9 @@ class CapabilityGap:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "backend_id", _text(self.backend_id, "backend_id"))
-        object.__setattr__(
-            self, "family", _enum(self.family, AttemptFamily, "family")
-        )
+        object.__setattr__(self, "family", _enum(self.family, AttemptFamily, "family"))
         object.__setattr__(self, "reason", _text(self.reason, "reason"))
-        object.__setattr__(
-            self, "status", _enum(self.status, CapabilityStatus, "status")
-        )
+        object.__setattr__(self, "status", _enum(self.status, CapabilityStatus, "status"))
         object.__setattr__(
             self,
             "required_for_authority",
@@ -558,9 +513,7 @@ class PortfolioObligation:
     schema_version: str = PORTFOLIO_OBLIGATION_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "obligation_id", _text(self.obligation_id, "obligation_id")
-        )
+        object.__setattr__(self, "obligation_id", _text(self.obligation_id, "obligation_id"))
         object.__setattr__(
             self,
             "property_kind",
@@ -582,9 +535,7 @@ class PortfolioObligation:
             object.__setattr__(
                 self,
                 "required_authority",
-                _enum(
-                    self.required_authority, ResultAuthority, "required_authority"
-                ),
+                _enum(self.required_authority, ResultAuthority, "required_authority"),
             )
         object.__setattr__(
             self,
@@ -595,23 +546,17 @@ class PortfolioObligation:
             object.__setattr__(
                 self,
                 "metadata",
-                self.metadata
-                if isinstance(self.metadata, FrozenMap)
-                else FrozenMap(self.metadata),
+                self.metadata if isinstance(self.metadata, FrozenMap) else FrozenMap(self.metadata),
             )
         except (TypeError, ValueError) as error:
-            raise PortfolioError(
-                "metadata must be an immutable JSON mapping"
-            ) from error
+            raise PortfolioError("metadata must be an immutable JSON mapping") from error
         object.__setattr__(
             self,
             "schema_version",
             _text(self.schema_version, "schema_version"),
         )
         if self.schema_version != PORTFOLIO_OBLIGATION_SCHEMA_VERSION:
-            raise PortfolioError(
-                f"unsupported obligation schema: {self.schema_version}"
-            )
+            raise PortfolioError(f"unsupported obligation schema: {self.schema_version}")
 
     @property
     def digest(self) -> str:
@@ -652,15 +597,11 @@ class PortfolioObligation:
             obligation_id=payload.get("obligation_id", ""),
             property_kind=payload.get("property_kind", ""),
             statement=payload.get("statement", ""),
-            required_assurance=payload.get(
-                "required_assurance", EvidenceAuthority.BOUNDED
-            ),
+            required_assurance=payload.get("required_assurance", EvidenceAuthority.BOUNDED),
             required_authority=payload.get("required_authority"),
             assumption_ids=tuple(payload.get("assumption_ids") or ()),
             metadata=FrozenMap(payload.get("metadata") or {}),
-            schema_version=payload.get(
-                "schema_version", PORTFOLIO_OBLIGATION_SCHEMA_VERSION
-            ),
+            schema_version=payload.get("schema_version", PORTFOLIO_OBLIGATION_SCHEMA_VERSION),
         )
 
 
@@ -710,9 +651,7 @@ class PortfolioAttemptSpec:
     def __post_init__(self) -> None:
         object.__setattr__(self, "attempt_id", _text(self.attempt_id, "attempt_id"))
         object.__setattr__(self, "backend_id", _text(self.backend_id, "backend_id"))
-        object.__setattr__(
-            self, "family", _enum(self.family, AttemptFamily, "family")
-        )
+        object.__setattr__(self, "family", _enum(self.family, AttemptFamily, "family"))
         object.__setattr__(self, "role", _enum(self.role, PortfolioRole, "role"))
         object.__setattr__(self, "stage", _non_negative_int(self.stage, "stage"))
         authority = (
@@ -732,34 +671,26 @@ class PortfolioAttemptSpec:
             _text(self.authority_capability, "authority_capability", optional=True),
         )
         object.__setattr__(self, "runnable", _boolean(self.runnable, "runnable"))
-        object.__setattr__(
-            self, "gap_reason", _text(self.gap_reason, "gap_reason", optional=True)
-        )
+        object.__setattr__(self, "gap_reason", _text(self.gap_reason, "gap_reason", optional=True))
         object.__setattr__(
             self,
             "schema_version",
             _text(self.schema_version, "schema_version"),
         )
         if self.schema_version != PORTFOLIO_ATTEMPT_SPEC_SCHEMA_VERSION:
-            raise PortfolioError(
-                f"unsupported attempt spec schema: {self.schema_version}"
-            )
+            raise PortfolioError(f"unsupported attempt spec schema: {self.schema_version}")
         if self.role is PortfolioRole.ADVISOR and self.authority_capability:
             raise PortfolioError("advisor attempts cannot declare authority capability")
-        if (
-            self.role is PortfolioRole.CANDIDATE
-            and self.result_authority
-            not in (ResultAuthority.CANDIDATE, ResultAuthority.SATISFIABILITY)
+        if self.role is PortfolioRole.CANDIDATE and self.result_authority not in (
+            ResultAuthority.CANDIDATE,
+            ResultAuthority.SATISFIABILITY,
         ):
             # Candidates may still emit sat/unsat raw solver status; selection
             # demotes them unless reconstruction succeeds.
             pass
         if self.requires_candidate and self.role is PortfolioRole.ADVISOR:
             raise PortfolioError("advisor attempts cannot require a candidate")
-        if (
-            self.role is PortfolioRole.RECONSTRUCTION
-            and self.family is not AttemptFamily.KERNEL
-        ):
+        if self.role is PortfolioRole.RECONSTRUCTION and self.family is not AttemptFamily.KERNEL:
             raise PortfolioError("reconstruction role requires the kernel family")
         if not self.runnable and not self.gap_reason:
             raise PortfolioError("non-runnable attempts require a gap_reason")
@@ -797,9 +728,7 @@ class PortfolioAttemptSpec:
             authority_capability=payload.get("authority_capability", ""),
             runnable=payload.get("runnable", True),
             gap_reason=payload.get("gap_reason", ""),
-            schema_version=payload.get(
-                "schema_version", PORTFOLIO_ATTEMPT_SPEC_SCHEMA_VERSION
-            ),
+            schema_version=payload.get("schema_version", PORTFOLIO_ATTEMPT_SPEC_SCHEMA_VERSION),
         )
 
 
@@ -810,9 +739,7 @@ class PropertyPortfolioPolicy:
     property_kind: PropertyKind
     attempts: tuple[PortfolioAttemptSpec, ...]
     policy_id: str = ""
-    resource_policy: PortfolioResourcePolicy = field(
-        default_factory=PortfolioResourcePolicy
-    )
+    resource_policy: PortfolioResourcePolicy = field(default_factory=PortfolioResourcePolicy)
     fail_on_disagreement: bool = True
     require_reconstruction_for_candidates: bool = True
     minimum_assurance: EvidenceAuthority = EvidenceAuthority.BOUNDED
@@ -822,9 +749,7 @@ class PropertyPortfolioPolicy:
         kind = _enum(self.property_kind, PropertyKind, "property_kind")
         object.__setattr__(self, "property_kind", kind)
         attempts = tuple(self.attempts)
-        if not attempts or any(
-            not isinstance(item, PortfolioAttemptSpec) for item in attempts
-        ):
+        if not attempts or any(not isinstance(item, PortfolioAttemptSpec) for item in attempts):
             raise PortfolioError("policy attempts must contain PortfolioAttemptSpec values")
         ids = [item.attempt_id for item in attempts]
         if len(ids) != len(set(ids)):
@@ -861,9 +786,7 @@ class PropertyPortfolioPolicy:
             _text(self.schema_version, "schema_version"),
         )
         if self.schema_version != PORTFOLIO_POLICY_SCHEMA_VERSION:
-            raise PortfolioError(
-                f"unsupported property policy schema: {self.schema_version}"
-            )
+            raise PortfolioError(f"unsupported property policy schema: {self.schema_version}")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -872,9 +795,7 @@ class PropertyPortfolioPolicy:
             "minimum_assurance": self.minimum_assurance.value,
             "policy_id": self.policy_id,
             "property_kind": self.property_kind.value,
-            "require_reconstruction_for_candidates": (
-                self.require_reconstruction_for_candidates
-            ),
+            "require_reconstruction_for_candidates": (self.require_reconstruction_for_candidates),
             "resource_policy": self.resource_policy.to_dict(),
             "schema_version": self.schema_version,
         }
@@ -883,27 +804,19 @@ class PropertyPortfolioPolicy:
     def from_dict(cls, value: Mapping[str, Any]) -> "PropertyPortfolioPolicy":
         payload = _mapping(value, "property policy")
         attempts = payload.get("attempts") or ()
-        if isinstance(attempts, (str, bytes, bytearray)) or not isinstance(
-            attempts, Sequence
-        ):
+        if isinstance(attempts, (str, bytes, bytearray)) or not isinstance(attempts, Sequence):
             raise PortfolioError("attempts must be a sequence")
         return cls(
             property_kind=payload.get("property_kind", ""),
             attempts=tuple(PortfolioAttemptSpec.from_dict(item) for item in attempts),
             policy_id=payload.get("policy_id", ""),
-            resource_policy=PortfolioResourcePolicy.from_dict(
-                payload.get("resource_policy") or {}
-            ),
+            resource_policy=PortfolioResourcePolicy.from_dict(payload.get("resource_policy") or {}),
             fail_on_disagreement=payload.get("fail_on_disagreement", True),
             require_reconstruction_for_candidates=payload.get(
                 "require_reconstruction_for_candidates", True
             ),
-            minimum_assurance=payload.get(
-                "minimum_assurance", EvidenceAuthority.BOUNDED
-            ),
-            schema_version=payload.get(
-                "schema_version", PORTFOLIO_POLICY_SCHEMA_VERSION
-            ),
+            minimum_assurance=payload.get("minimum_assurance", EvidenceAuthority.BOUNDED),
+            schema_version=payload.get("schema_version", PORTFOLIO_POLICY_SCHEMA_VERSION),
         )
 
 
@@ -1316,9 +1229,7 @@ class PortfolioPlan:
             raise PortfolioError("obligation must be a PortfolioObligation")
         object.__setattr__(self, "policy_id", _text(self.policy_id, "policy_id"))
         attempts = tuple(self.attempts)
-        if not attempts or any(
-            not isinstance(item, PortfolioAttemptSpec) for item in attempts
-        ):
+        if not attempts or any(not isinstance(item, PortfolioAttemptSpec) for item in attempts):
             raise PortfolioError("plan attempts must contain PortfolioAttemptSpec values")
         object.__setattr__(self, "attempts", attempts)
         if not isinstance(self.resource_policy, PortfolioResourcePolicy):
@@ -1362,23 +1273,17 @@ class PortfolioPlan:
             object.__setattr__(
                 self,
                 "metadata",
-                self.metadata
-                if isinstance(self.metadata, FrozenMap)
-                else FrozenMap(self.metadata),
+                self.metadata if isinstance(self.metadata, FrozenMap) else FrozenMap(self.metadata),
             )
         except (TypeError, ValueError) as error:
-            raise PortfolioError(
-                "metadata must be an immutable JSON mapping"
-            ) from error
+            raise PortfolioError("metadata must be an immutable JSON mapping") from error
         object.__setattr__(
             self,
             "schema_version",
             _text(self.schema_version, "schema_version"),
         )
         if self.schema_version != PORTFOLIO_PLAN_SCHEMA_VERSION:
-            raise PortfolioError(
-                f"unsupported plan schema: {self.schema_version}"
-            )
+            raise PortfolioError(f"unsupported plan schema: {self.schema_version}")
 
     @property
     def plan_id(self) -> str:
@@ -1398,17 +1303,11 @@ class PortfolioPlan:
 
     @property
     def reconstruction_attempts(self) -> tuple[PortfolioAttemptSpec, ...]:
-        return tuple(
-            item
-            for item in self.attempts
-            if item.role is PortfolioRole.RECONSTRUCTION
-        )
+        return tuple(item for item in self.attempts if item.role is PortfolioRole.RECONSTRUCTION)
 
     @property
     def candidate_attempts(self) -> tuple[PortfolioAttemptSpec, ...]:
-        return tuple(
-            item for item in self.attempts if item.role is PortfolioRole.CANDIDATE
-        )
+        return tuple(item for item in self.attempts if item.role is PortfolioRole.CANDIDATE)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -1430,9 +1329,7 @@ class PortfolioPlan:
         payload = _mapping(value, "portfolio plan")
         attempts = payload.get("attempts") or ()
         gaps = payload.get("capability_gaps") or ()
-        if isinstance(attempts, (str, bytes, bytearray)) or not isinstance(
-            attempts, Sequence
-        ):
+        if isinstance(attempts, (str, bytes, bytearray)) or not isinstance(attempts, Sequence):
             raise PortfolioError("attempts must be a sequence")
         if isinstance(gaps, (str, bytes, bytearray)) or not isinstance(gaps, Sequence):
             raise PortfolioError("capability_gaps must be a sequence")
@@ -1443,20 +1340,12 @@ class PortfolioPlan:
             obligation=PortfolioObligation.from_dict(obligation),
             policy_id=payload.get("policy_id", ""),
             attempts=tuple(PortfolioAttemptSpec.from_dict(item) for item in attempts),
-            resource_policy=PortfolioResourcePolicy.from_dict(
-                payload.get("resource_policy") or {}
-            ),
-            required_assurance=payload.get(
-                "required_assurance", EvidenceAuthority.BOUNDED
-            ),
-            required_authority=payload.get(
-                "required_authority", ResultAuthority.THEOREM
-            ),
+            resource_policy=PortfolioResourcePolicy.from_dict(payload.get("resource_policy") or {}),
+            required_assurance=payload.get("required_assurance", EvidenceAuthority.BOUNDED),
+            required_authority=payload.get("required_authority", ResultAuthority.THEOREM),
             capability_gaps=tuple(CapabilityGap.from_dict(item) for item in gaps),
             metadata=FrozenMap(payload.get("metadata") or {}),
-            schema_version=payload.get(
-                "schema_version", PORTFOLIO_PLAN_SCHEMA_VERSION
-            ),
+            schema_version=payload.get("schema_version", PORTFOLIO_PLAN_SCHEMA_VERSION),
         )
 
 
@@ -1484,12 +1373,8 @@ class PortfolioAttemptOutcome:
     def __post_init__(self) -> None:
         object.__setattr__(self, "attempt_id", _text(self.attempt_id, "attempt_id"))
         object.__setattr__(self, "backend_id", _text(self.backend_id, "backend_id"))
-        object.__setattr__(
-            self, "status", _enum(self.status, ResultStatus, "status")
-        )
-        object.__setattr__(
-            self, "authority", _enum(self.authority, ResultAuthority, "authority")
-        )
+        object.__setattr__(self, "status", _enum(self.status, ResultStatus, "status"))
+        object.__setattr__(self, "authority", _enum(self.authority, ResultAuthority, "authority"))
         object.__setattr__(self, "role", _enum(self.role, PortfolioRole, "role"))
         object.__setattr__(self, "stage", _non_negative_int(self.stage, "stage"))
         object.__setattr__(
@@ -1500,38 +1385,26 @@ class PortfolioAttemptOutcome:
         object.__setattr__(
             self,
             "achieved_assurance",
-            _enum(
-                self.achieved_assurance, EvidenceAuthority, "achieved_assurance"
-            ),
+            _enum(self.achieved_assurance, EvidenceAuthority, "achieved_assurance"),
         )
-        object.__setattr__(
-            self, "detail", _text(self.detail, "detail", optional=True)
-        )
+        object.__setattr__(self, "detail", _text(self.detail, "detail", optional=True))
         try:
             object.__setattr__(
                 self,
                 "witness",
-                self.witness
-                if isinstance(self.witness, FrozenMap)
-                else FrozenMap(self.witness),
+                self.witness if isinstance(self.witness, FrozenMap) else FrozenMap(self.witness),
             )
         except (TypeError, ValueError) as error:
-            raise PortfolioError(
-                "witness must be an immutable JSON mapping"
-            ) from error
+            raise PortfolioError("witness must be an immutable JSON mapping") from error
         object.__setattr__(
             self,
             "schema_version",
             _text(self.schema_version, "schema_version"),
         )
         if self.schema_version != PORTFOLIO_ATTEMPT_OUTCOME_SCHEMA_VERSION:
-            raise PortfolioError(
-                f"unsupported attempt outcome schema: {self.schema_version}"
-            )
+            raise PortfolioError(f"unsupported attempt outcome schema: {self.schema_version}")
         if self.conclusive_counterexample and self.status not in _CONCLUSIVE_NEGATIVE:
-            raise PortfolioError(
-                "conclusive_counterexample requires a negative conclusive status"
-            )
+            raise PortfolioError("conclusive_counterexample requires a negative conclusive status")
 
     @property
     def is_positive(self) -> bool:
@@ -1571,14 +1444,10 @@ class PortfolioAttemptOutcome:
             role=payload.get("role", ""),
             stage=payload.get("stage", 0),
             conclusive_counterexample=payload.get("conclusive_counterexample", False),
-            achieved_assurance=payload.get(
-                "achieved_assurance", EvidenceAuthority.NONE
-            ),
+            achieved_assurance=payload.get("achieved_assurance", EvidenceAuthority.NONE),
             detail=payload.get("detail", ""),
             witness=FrozenMap(payload.get("witness") or {}),
-            schema_version=payload.get(
-                "schema_version", PORTFOLIO_ATTEMPT_OUTCOME_SCHEMA_VERSION
-            ),
+            schema_version=payload.get("schema_version", PORTFOLIO_ATTEMPT_OUTCOME_SCHEMA_VERSION),
         )
 
 
@@ -1601,15 +1470,11 @@ class PortfolioSelection:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "plan_id", _text(self.plan_id, "plan_id"))
-        object.__setattr__(
-            self, "verdict", _enum(self.verdict, PortfolioVerdict, "verdict")
-        )
+        object.__setattr__(self, "verdict", _enum(self.verdict, PortfolioVerdict, "verdict"))
         object.__setattr__(
             self,
             "achieved_assurance",
-            _enum(
-                self.achieved_assurance, EvidenceAuthority, "achieved_assurance"
-            ),
+            _enum(self.achieved_assurance, EvidenceAuthority, "achieved_assurance"),
         )
         object.__setattr__(
             self,
@@ -1625,11 +1490,7 @@ class PortfolioSelection:
             self,
             "reconstruction_attempt_ids",
             tuple(
-                sorted(
-                    _unique_text(
-                        self.reconstruction_attempt_ids, "reconstruction_attempt_ids"
-                    )
-                )
+                sorted(_unique_text(self.reconstruction_attempt_ids, "reconstruction_attempt_ids"))
             ),
         )
         object.__setattr__(
@@ -1644,13 +1505,7 @@ class PortfolioSelection:
         object.__setattr__(
             self,
             "quarantined_attempt_ids",
-            tuple(
-                sorted(
-                    _unique_text(
-                        self.quarantined_attempt_ids, "quarantined_attempt_ids"
-                    )
-                )
-            ),
+            tuple(sorted(_unique_text(self.quarantined_attempt_ids, "quarantined_attempt_ids"))),
         )
         dispositions = tuple(self.dispositions)
         normalized: list[tuple[str, AttemptDisposition]] = []
@@ -1660,9 +1515,7 @@ class PortfolioSelection:
                 or isinstance(item, (str, bytes, bytearray))
                 or len(item) != 2
             ):
-                raise PortfolioError(
-                    "dispositions must be (attempt_id, AttemptDisposition) pairs"
-                )
+                raise PortfolioError("dispositions must be (attempt_id, AttemptDisposition) pairs")
             attempt_id = _text(item[0], "disposition attempt_id")
             disposition = _enum(item[1], AttemptDisposition, "disposition")
             normalized.append((attempt_id, disposition))
@@ -1671,9 +1524,7 @@ class PortfolioSelection:
             "dispositions",
             tuple(sorted(normalized, key=lambda pair: pair[0])),
         )
-        object.__setattr__(
-            self, "disagreement", _boolean(self.disagreement, "disagreement")
-        )
+        object.__setattr__(self, "disagreement", _boolean(self.disagreement, "disagreement"))
         object.__setattr__(self, "reason", _text(self.reason, "reason"))
         object.__setattr__(
             self,
@@ -1681,18 +1532,11 @@ class PortfolioSelection:
             _text(self.schema_version, "schema_version"),
         )
         if self.schema_version != PORTFOLIO_SELECTION_SCHEMA_VERSION:
-            raise PortfolioError(
-                f"unsupported selection schema: {self.schema_version}"
-            )
+            raise PortfolioError(f"unsupported selection schema: {self.schema_version}")
         if self.verdict is PortfolioVerdict.PROVED and not self.authority_attempt_ids:
             raise PortfolioError("proved selection requires authority_attempt_ids")
-        if (
-            self.verdict is PortfolioVerdict.DISPROVED
-            and not self.counterexample_attempt_id
-        ):
-            raise PortfolioError(
-                "disproved selection requires counterexample_attempt_id"
-            )
+        if self.verdict is PortfolioVerdict.DISPROVED and not self.counterexample_attempt_id:
+            raise PortfolioError("disproved selection requires counterexample_attempt_id")
         if self.disagreement and self.verdict is not PortfolioVerdict.QUARANTINED:
             raise PortfolioError("disagreement must quarantine")
 
@@ -1747,24 +1591,16 @@ class PortfolioSelection:
         return cls(
             plan_id=payload.get("plan_id", ""),
             verdict=payload.get("verdict", ""),
-            achieved_assurance=payload.get(
-                "achieved_assurance", EvidenceAuthority.NONE
-            ),
+            achieved_assurance=payload.get("achieved_assurance", EvidenceAuthority.NONE),
             authority_attempt_ids=tuple(payload.get("authority_attempt_ids") or ()),
             candidate_attempt_ids=tuple(payload.get("candidate_attempt_ids") or ()),
-            reconstruction_attempt_ids=tuple(
-                payload.get("reconstruction_attempt_ids") or ()
-            ),
+            reconstruction_attempt_ids=tuple(payload.get("reconstruction_attempt_ids") or ()),
             counterexample_attempt_id=payload.get("counterexample_attempt_id", ""),
-            quarantined_attempt_ids=tuple(
-                payload.get("quarantined_attempt_ids") or ()
-            ),
+            quarantined_attempt_ids=tuple(payload.get("quarantined_attempt_ids") or ()),
             dispositions=tuple(dispositions),
             disagreement=payload.get("disagreement", False),
             reason=payload.get("reason", ""),
-            schema_version=payload.get(
-                "schema_version", PORTFOLIO_SELECTION_SCHEMA_VERSION
-            ),
+            schema_version=payload.get("schema_version", PORTFOLIO_SELECTION_SCHEMA_VERSION),
         )
 
 
@@ -1792,27 +1628,19 @@ class VerificationPortfolio:
         normalized: dict[PropertyKind, PropertyPortfolioPolicy] = {}
         for key, policy in source.items():
             kind = _enum(key, PropertyKind, "policy key")
-            if (
-                not isinstance(policy, PropertyPortfolioPolicy)
-                or policy.property_kind is not kind
-            ):
+            if not isinstance(policy, PropertyPortfolioPolicy) or policy.property_kind is not kind:
                 raise PortfolioError("policy key and property_kind must agree")
             normalized[kind] = policy
         if policies is None:
             missing = set(PropertyKind) - set(normalized)
             if missing:  # pragma: no cover - constant invariant
                 raise RuntimeError(
-                    "default policies missing "
-                    f"{sorted(item.value for item in missing)}"
+                    f"default policies missing {sorted(item.value for item in missing)}"
                 )
         self._policies = normalized
-        self._default_resource_policy = (
-            default_resource_policy or PortfolioResourcePolicy()
-        )
+        self._default_resource_policy = default_resource_policy or PortfolioResourcePolicy()
         if not isinstance(self._default_resource_policy, PortfolioResourcePolicy):
-            raise PortfolioError(
-                "default_resource_policy must be a PortfolioResourcePolicy"
-            )
+            raise PortfolioError("default_resource_policy must be a PortfolioResourcePolicy")
 
     @property
     def policies(self) -> Mapping[PropertyKind, PropertyPortfolioPolicy]:
@@ -1823,15 +1651,15 @@ class VerificationPortfolio:
         try:
             return self._policies[kind]
         except KeyError as error:
-            raise PortfolioError(
-                f"no portfolio policy for property kind {kind.value}"
-            ) from error
+            raise PortfolioError(f"no portfolio policy for property kind {kind.value}") from error
 
     def plan(
         self,
         obligation: PortfolioObligation | Mapping[str, Any],
         *,
-        capabilities: Sequence[PortfolioCapability] | Mapping[str, PortfolioCapability] | None = None,
+        capabilities: Sequence[PortfolioCapability]
+        | Mapping[str, PortfolioCapability]
+        | None = None,
         resource_policy: PortfolioResourcePolicy | None = None,
     ) -> PortfolioPlan:
         """Build a deterministic staged plan; never launches tools."""
@@ -1845,19 +1673,16 @@ class VerificationPortfolio:
 
         required_assurance = (
             normalized.required_assurance
-            if assurance_satisfies(
-                normalized.required_assurance, policy.minimum_assurance
-            )
+            if assurance_satisfies(normalized.required_assurance, policy.minimum_assurance)
             else policy.minimum_assurance
-            if assurance_satisfies(
-                policy.minimum_assurance, normalized.required_assurance
-            )
+            if assurance_satisfies(policy.minimum_assurance, normalized.required_assurance)
             else normalized.required_assurance
         )
         # Take the max of obligation and policy minimums.
-        if _ASSURANCE_RANK[policy.minimum_assurance] > _ASSURANCE_RANK[
-            normalized.required_assurance
-        ]:
+        if (
+            _ASSURANCE_RANK[policy.minimum_assurance]
+            > _ASSURANCE_RANK[normalized.required_assurance]
+        ):
             required_assurance = policy.minimum_assurance
         else:
             required_assurance = normalized.required_assurance
@@ -1866,12 +1691,8 @@ class VerificationPortfolio:
         # High assurance on theorem-like properties forces reconstruction lanes.
         if (
             normalized.property_kind in _THEOREM_LIKE
-            and assurance_satisfies(
-                required_assurance, EvidenceAuthority.INDEPENDENTLY_CHECKABLE
-            )
-            and not any(
-                item.role is PortfolioRole.RECONSTRUCTION for item in base_attempts
-            )
+            and assurance_satisfies(required_assurance, EvidenceAuthority.INDEPENDENTLY_CHECKABLE)
+            and not any(item.role is PortfolioRole.RECONSTRUCTION for item in base_attempts)
         ):
             stage = max((item.stage for item in base_attempts), default=-1) + 1
             base_attempts.extend(_kernel_reconstruction_specs(stage=stage))
@@ -2061,9 +1882,7 @@ class VerificationPortfolio:
                     authority_positive.append(outcome)
                 elif spec.requires_candidate and not any(
                     item.role is PortfolioRole.CANDIDATE
-                    and (
-                        item.is_positive or item.status is ResultStatus.CANDIDATE
-                    )
+                    and (item.is_positive or item.status is ResultStatus.CANDIDATE)
                     for item in recorded
                 ):
                     dispositions[outcome.attempt_id] = AttemptDisposition.BLOCKED
@@ -2076,9 +1895,7 @@ class VerificationPortfolio:
                     dispositions[outcome.attempt_id] = AttemptDisposition.NON_CONCLUSIVE
                 else:
                     authority_positive.append(outcome)
-                    dispositions[outcome.attempt_id] = (
-                        AttemptDisposition.CONCLUSIVE_AUTHORITY
-                    )
+                    dispositions[outcome.attempt_id] = AttemptDisposition.CONCLUSIVE_AUTHORITY
                 continue
             if outcome.role is PortfolioRole.ORCHESTRATOR:
                 dispositions[outcome.attempt_id] = AttemptDisposition.NON_CONCLUSIVE
@@ -2121,9 +1938,7 @@ class VerificationPortfolio:
         reconstruction_ids = sorted(set(reconstruction_ids))
 
         positive_ids = tuple(item.attempt_id for item in authority_positive)
-        counterexample_id = (
-            counterexamples[0].attempt_id if counterexamples else ""
-        )
+        counterexample_id = counterexamples[0].attempt_id if counterexamples else ""
 
         disagreement = bool(positive_ids and counterexamples)
         if disagreement and fail_closed_disagreement:
@@ -2144,8 +1959,7 @@ class VerificationPortfolio:
                 dispositions=tuple(dispositions.items()),
                 disagreement=True,
                 reason=(
-                    "conflicting conclusive authority and counterexample; "
-                    "portfolio quarantined"
+                    "conflicting conclusive authority and counterexample; portfolio quarantined"
                 ),
             )
 
@@ -2205,10 +2019,7 @@ class VerificationPortfolio:
         if plan.capability_gaps and not any(
             not item.is_non_conclusive for item in recorded if specs[item.attempt_id].runnable
         ):
-            if all(
-                gap.status is CapabilityStatus.UNSUPPORTED
-                for gap in plan.capability_gaps
-            ):
+            if all(gap.status is CapabilityStatus.UNSUPPORTED for gap in plan.capability_gaps):
                 verdict = PortfolioVerdict.UNSUPPORTED
             else:
                 verdict = PortfolioVerdict.UNAVAILABLE
@@ -2263,7 +2074,9 @@ class VerificationPortfolio:
         obligation: PortfolioObligation | Mapping[str, Any],
         outcomes: Sequence[PortfolioAttemptOutcome] | Mapping[str, Any],
         *,
-        capabilities: Sequence[PortfolioCapability] | Mapping[str, PortfolioCapability] | None = None,
+        capabilities: Sequence[PortfolioCapability]
+        | Mapping[str, PortfolioCapability]
+        | None = None,
         resource_policy: PortfolioResourcePolicy | None = None,
         fail_on_disagreement: bool | None = None,
     ) -> tuple[PortfolioPlan, PortfolioSelection]:
@@ -2274,9 +2087,7 @@ class VerificationPortfolio:
             capabilities=capabilities,
             resource_policy=resource_policy,
         )
-        return plan, self.select(
-            plan, outcomes, fail_on_disagreement=fail_on_disagreement
-        )
+        return plan, self.select(plan, outcomes, fail_on_disagreement=fail_on_disagreement)
 
     def _obligation(
         self, obligation: PortfolioObligation | Mapping[str, Any]
@@ -2289,9 +2100,7 @@ class VerificationPortfolio:
 
     def _capability_index(
         self,
-        capabilities: Sequence[PortfolioCapability]
-        | Mapping[str, PortfolioCapability]
-        | None,
+        capabilities: Sequence[PortfolioCapability] | Mapping[str, PortfolioCapability] | None,
     ) -> dict[str, PortfolioCapability]:
         if capabilities is None:
             return {}
@@ -2304,13 +2113,9 @@ class VerificationPortfolio:
         index: dict[str, PortfolioCapability] = {}
         for item in items:
             if not isinstance(item, PortfolioCapability):
-                raise PortfolioError(
-                    "capabilities must contain PortfolioCapability values"
-                )
+                raise PortfolioError("capabilities must contain PortfolioCapability values")
             if item.backend_id in index:
-                raise PortfolioError(
-                    f"duplicate capability for backend {item.backend_id!r}"
-                )
+                raise PortfolioError(f"duplicate capability for backend {item.backend_id!r}")
             index[item.backend_id] = item
         return index
 
@@ -2346,18 +2151,12 @@ class VerificationPortfolio:
         seen: set[str] = set()
         for item in normalized:
             if item.attempt_id not in planned_ids:
-                raise PortfolioError(
-                    f"outcome attempt_id {item.attempt_id!r} is not in the plan"
-                )
+                raise PortfolioError(f"outcome attempt_id {item.attempt_id!r} is not in the plan")
             if item.attempt_id in seen:
-                raise PortfolioError(
-                    f"duplicate outcome for attempt {item.attempt_id!r}"
-                )
+                raise PortfolioError(f"duplicate outcome for attempt {item.attempt_id!r}")
             seen.add(item.attempt_id)
             spec = next(
-                attempt
-                for attempt in plan.attempts
-                if attempt.attempt_id == item.attempt_id
+                attempt for attempt in plan.attempts if attempt.attempt_id == item.attempt_id
             )
             if item.backend_id != spec.backend_id:
                 raise PortfolioError(
@@ -2366,8 +2165,7 @@ class VerificationPortfolio:
                 )
             if item.role is not spec.role:
                 raise PortfolioError(
-                    f"outcome role {item.role.value} does not match "
-                    f"plan role {spec.role.value}"
+                    f"outcome role {item.role.value} does not match plan role {spec.role.value}"
                 )
 
         # Fill missing planned attempts as non-conclusive gaps so selection
@@ -2378,11 +2176,7 @@ class VerificationPortfolio:
             if spec.attempt_id in by_id:
                 complete.append(by_id[spec.attempt_id])
                 continue
-            status = (
-                ResultStatus.UNAVAILABLE
-                if not spec.runnable
-                else ResultStatus.UNKNOWN
-            )
+            status = ResultStatus.UNAVAILABLE if not spec.runnable else ResultStatus.UNKNOWN
             complete.append(
                 PortfolioAttemptOutcome(
                     attempt_id=spec.attempt_id,

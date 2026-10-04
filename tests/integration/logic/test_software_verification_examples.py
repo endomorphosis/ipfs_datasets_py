@@ -155,13 +155,7 @@ from ipfs_datasets_py.logic.verification_api import (
 
 
 DATASETS_ROOT = Path(__file__).resolve().parents[3]
-MANIFEST_PATH = (
-    DATASETS_ROOT
-    / "examples"
-    / "logic"
-    / "software_verification"
-    / "manifest.json"
-)
+MANIFEST_PATH = DATASETS_ROOT / "examples" / "logic" / "software_verification" / "manifest.json"
 MANIFEST: dict[str, Any] = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
 
 INTERFACE = "SoftwareVerificationExamples@1"
@@ -334,9 +328,7 @@ def _trace_from_mapping(payload: Mapping[str, Any]) -> Trace:
                 event_type=str(item.get("event_type") or "state"),
                 time=time,
                 true_propositions=tuple(item.get("true_propositions") or item.get("true") or ()),
-                false_propositions=tuple(
-                    item.get("false_propositions") or item.get("false") or ()
-                ),
+                false_propositions=tuple(item.get("false_propositions") or item.get("false") or ()),
             )
         )
     kind = payload.get("kind") or TraceKind.FINITE
@@ -892,7 +884,9 @@ def _bind_concurrency(
     doc_dict = document.to_dict()
     source_identity = str(doc_dict.get("document_id") or document.document_id or "")
     if not source_identity.startswith("b"):
-        source_identity = "bafkrei" + _digest(json.dumps(doc_dict, sort_keys=True, default=str))[:52]
+        source_identity = (
+            "bafkrei" + _digest(json.dumps(doc_dict, sort_keys=True, default=str))[:52]
+        )
     target_identity = "bafkrei" + _digest(f"tla:{case['case_id']}")[:52]
     receipt = _build_receipt(
         lane=lane,
@@ -1082,7 +1076,9 @@ def _bind_authorization(
     doc_dict = document.to_dict()
     source_identity = str(doc_dict.get("document_id") or "")
     if not source_identity.startswith("b"):
-        source_identity = "bafkrei" + _digest(json.dumps(doc_dict, sort_keys=True, default=str))[:52]
+        source_identity = (
+            "bafkrei" + _digest(json.dumps(doc_dict, sort_keys=True, default=str))[:52]
+        )
     target_identity = "bafkrei" + _digest(f"datalog:{case['case_id']}")[:52]
     receipt = _build_receipt(
         lane=lane,
@@ -1354,7 +1350,9 @@ def _bind_protocol(
     doc_dict = document.to_dict()
     source_identity = str(doc_dict.get("document_id") or "")
     if not source_identity.startswith("b"):
-        source_identity = "bafkrei" + _digest(json.dumps(doc_dict, sort_keys=True, default=str))[:52]
+        source_identity = (
+            "bafkrei" + _digest(json.dumps(doc_dict, sort_keys=True, default=str))[:52]
+        )
     target_identity = "bafkrei" + _digest(f"protocol:{case['case_id']}")[:52]
     receipt = _build_receipt(
         lane=lane,
@@ -1394,8 +1392,7 @@ def _bind_protocol(
     if case["kind"] == "negative":
         explained = _explain(
             api,
-            case.get("counterexample")
-            or {"kind": "attack_trace", "summary": case["statement"]},
+            case.get("counterexample") or {"kind": "attack_trace", "summary": case["statement"]},
             request_id=f"req:cex:{case['case_id']}",
         )
         responses.append(explained)
@@ -1448,9 +1445,7 @@ def _bind_noninterference(
         SecurityLabel("label:user", "user_id", SecurityLevel.LOW, ObservationKind.INPUT),
         SecurityLabel("label:secret", "secret", SecurityLevel.HIGH, ObservationKind.INPUT),
         SecurityLabel("label:status", "status", SecurityLevel.LOW, ObservationKind.OUTPUT),
-        SecurityLabel(
-            "label:token", "public_token", SecurityLevel.LOW, ObservationKind.OUTPUT
-        ),
+        SecurityLabel("label:token", "public_token", SecurityLevel.LOW, ObservationKind.OUTPUT),
     )
     policy = InformationFlowPolicy(
         policy_id="policy:ni-example",
@@ -1460,9 +1455,7 @@ def _bind_noninterference(
         labels=labels,
         observations=(
             ObservationSpec("obs:status", "status", ObservationKind.OUTPUT, SecurityLevel.LOW),
-            ObservationSpec(
-                "obs:token", "public_token", ObservationKind.OUTPUT, SecurityLevel.LOW
-            ),
+            ObservationSpec("obs:token", "public_token", ObservationKind.OUTPUT, SecurityLevel.LOW),
         ),
         subject_fields=("task_id",),
         description="Example two-trace noninterference policy",
@@ -1497,7 +1490,9 @@ def _bind_noninterference(
     )
     evaluation = document.evaluate_bounded_noninterference(traces)
     evaluation_dict = (
-        evaluation.to_dict() if hasattr(evaluation, "to_dict") else {"verdict": str(evaluation.verdict)}
+        evaluation.to_dict()
+        if hasattr(evaluation, "to_dict")
+        else {"verdict": str(evaluation.verdict)}
     )
 
     source_identity = document.document_id
@@ -1523,7 +1518,9 @@ def _bind_noninterference(
         api, receipt, request_id=f"req:receipt:{case['case_id']}"
     )
     responses: list[VerificationResponse] = [portfolio_resp, receipt_resp]
-    witnesses: list[dict[str, Any]] = [{"kind": "hyperproperty_evaluation", "payload": evaluation_dict}]
+    witnesses: list[dict[str, Any]] = [
+        {"kind": "hyperproperty_evaluation", "payload": evaluation_dict}
+    ]
 
     if case["kind"] == "negative":
         explained = _explain(
@@ -1637,8 +1634,7 @@ def _bind_runtime_mtl(
     if case["kind"] == "negative":
         explained = _explain(
             api,
-            case.get("counterexample")
-            or {"kind": "trace_violation", "summary": case["statement"]},
+            case.get("counterexample") or {"kind": "trace_violation", "summary": case["statement"]},
             request_id=f"req:cex:{case['case_id']}",
         )
         responses.append(explained)

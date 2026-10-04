@@ -15,10 +15,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_modal_daemon_run
 
 
 FIXTURE_PATH = (
-    Path(__file__).resolve().parents[3]
-    / "fixtures"
-    / "legal_ir"
-    / "hammer_failure_replay.jsonl"
+    Path(__file__).resolve().parents[3] / "fixtures" / "legal_ir" / "hammer_failure_replay.jsonl"
 )
 
 

@@ -130,23 +130,16 @@ class ToolPin:
     def __post_init__(self) -> None:
         object.__setattr__(self, "tool_id", _text(self.tool_id, "tool_id"))
         object.__setattr__(self, "version", _text(self.version, "version"))
-        object.__setattr__(
-            self, "artifact_url", _optional_text(self.artifact_url, "artifact_url")
-        )
+        object.__setattr__(self, "artifact_url", _optional_text(self.artifact_url, "artifact_url"))
         object.__setattr__(self, "sha256", _optional_text(self.sha256, "sha256"))
         object.__setattr__(self, "platform", _text(self.platform, "platform"))
         object.__setattr__(self, "notes", _optional_text(self.notes, "notes"))
         if self.schema_version != TOOLCHAIN_PIN_SCHEMA:
-            raise ToolchainError(
-                f"tool pin schema must be {TOOLCHAIN_PIN_SCHEMA}"
-            )
+            raise ToolchainError(f"tool pin schema must be {TOOLCHAIN_PIN_SCHEMA}")
         if self.sha256 and (
-            len(self.sha256) != 64
-            or any(ch not in "0123456789abcdef" for ch in self.sha256)
+            len(self.sha256) != 64 or any(ch not in "0123456789abcdef" for ch in self.sha256)
         ):
-            raise ToolchainError(
-                f"sha256 for {self.tool_id!r} must be a lowercase hex digest"
-            )
+            raise ToolchainError(f"sha256 for {self.tool_id!r} must be a lowercase hex digest")
 
     @property
     def is_checksummed(self) -> bool:
@@ -177,25 +170,19 @@ class ToolchainDependency:
 
     def __post_init__(self) -> None:
         kind = (
-            self.kind
-            if isinstance(self.kind, DependencyKind)
-            else DependencyKind(str(self.kind))
+            self.kind if isinstance(self.kind, DependencyKind) else DependencyKind(str(self.kind))
         )
         object.__setattr__(self, "kind", kind)
         if not isinstance(self.required, bool):
             raise ToolchainError("dependency.required must be a boolean")
-        object.__setattr__(
-            self, "description", _text(self.description, "description")
-        )
+        object.__setattr__(self, "description", _text(self.description, "description"))
         object.__setattr__(
             self,
             "bound_tool_ids",
             tuple(_text(item, "bound_tool_id") for item in self.bound_tool_ids),
         )
         if self.schema_version != TOOLCHAIN_DEPENDENCY_SCHEMA:
-            raise ToolchainError(
-                f"dependency schema must be {TOOLCHAIN_DEPENDENCY_SCHEMA}"
-            )
+            raise ToolchainError(f"dependency schema must be {TOOLCHAIN_DEPENDENCY_SCHEMA}")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -246,9 +233,7 @@ class IsolationPolicy:
         ):
             raise ToolchainError("max_output_bytes must be a positive integer")
         if self.schema_version != TOOLCHAIN_ISOLATION_SCHEMA:
-            raise ToolchainError(
-                f"isolation schema must be {TOOLCHAIN_ISOLATION_SCHEMA}"
-            )
+            raise ToolchainError(f"isolation schema must be {TOOLCHAIN_ISOLATION_SCHEMA}")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -290,9 +275,7 @@ class SecretHandlingPolicy:
             if not isinstance(getattr(self, name), bool):
                 raise ToolchainError(f"{name} must be a boolean")
         if self.schema_version != TOOLCHAIN_SECRET_POLICY_SCHEMA:
-            raise ToolchainError(
-                f"secret policy schema must be {TOOLCHAIN_SECRET_POLICY_SCHEMA}"
-            )
+            raise ToolchainError(f"secret policy schema must be {TOOLCHAIN_SECRET_POLICY_SCHEMA}")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -327,25 +310,17 @@ class WitnessHandlingPolicy:
             if not isinstance(getattr(self, name), bool):
                 raise ToolchainError(f"{name} must be a boolean")
         if self.allow_private_witness_in_logs or self.allow_private_witness_in_cache_keys:
-            raise ToolchainError(
-                "private witnesses must not appear in logs or cache keys"
-            )
+            raise ToolchainError("private witnesses must not appear in logs or cache keys")
         if not self.redacted_public_references_only:
-            raise ToolchainError(
-                "witness policy must expose only redacted public references"
-            )
+            raise ToolchainError("witness policy must expose only redacted public references")
         if self.schema_version != TOOLCHAIN_WITNESS_POLICY_SCHEMA:
-            raise ToolchainError(
-                f"witness policy schema must be {TOOLCHAIN_WITNESS_POLICY_SCHEMA}"
-            )
+            raise ToolchainError(f"witness policy schema must be {TOOLCHAIN_WITNESS_POLICY_SCHEMA}")
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "schema_version": self.schema_version,
             "allow_private_witness_in_logs": self.allow_private_witness_in_logs,
-            "allow_private_witness_in_cache_keys": (
-                self.allow_private_witness_in_cache_keys
-            ),
+            "allow_private_witness_in_cache_keys": (self.allow_private_witness_in_cache_keys),
             "redacted_public_references_only": self.redacted_public_references_only,
             "bind_witness_to_source_digest": self.bind_witness_to_source_digest,
         }
@@ -377,13 +352,9 @@ class InstallPolicy:
             if not isinstance(getattr(self, name), bool):
                 raise ToolchainError(f"{name} must be a boolean")
             if not getattr(self, name):
-                raise ToolchainError(
-                    f"install policy is fail-closed; {name} must remain true"
-                )
+                raise ToolchainError(f"install policy is fail-closed; {name} must remain true")
         if self.schema_version != INSTALL_POLICY_SCHEMA:
-            raise ToolchainError(
-                f"install policy schema must be {INSTALL_POLICY_SCHEMA}"
-            )
+            raise ToolchainError(f"install policy schema must be {INSTALL_POLICY_SCHEMA}")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -419,9 +390,7 @@ class InstallGap:
             else InstallGapKind(str(self.gap_id))
         )
         object.__setattr__(self, "gap_id", gap_id)
-        providers = tuple(
-            _text(item, "provider_id") for item in self.provider_ids
-        )
+        providers = tuple(_text(item, "provider_id") for item in self.provider_ids)
         if not providers:
             raise ToolchainError("install gap requires at least one provider_id")
         object.__setattr__(self, "provider_ids", providers)
@@ -455,32 +424,19 @@ class ToolchainDescriptor:
     dependencies: tuple[ToolchainDependency, ...] = ()
     gap: InstallGap | None = None
     families: tuple[str, ...] = ()
-    isolation: IsolationPolicy = field(
-        default_factory=lambda: DEFAULT_ISOLATION_POLICY
-    )
-    secret_policy: SecretHandlingPolicy = field(
-        default_factory=SecretHandlingPolicy
-    )
-    witness_policy: WitnessHandlingPolicy = field(
-        default_factory=WitnessHandlingPolicy
-    )
+    isolation: IsolationPolicy = field(default_factory=lambda: DEFAULT_ISOLATION_POLICY)
+    secret_policy: SecretHandlingPolicy = field(default_factory=SecretHandlingPolicy)
+    witness_policy: WitnessHandlingPolicy = field(default_factory=WitnessHandlingPolicy)
     notes: str = ""
     schema_version: str = TOOLCHAIN_DESCRIPTOR_SCHEMA
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "provider_id", _text(self.provider_id, "provider_id")
-        )
-        object.__setattr__(
-            self, "display_name", _text(self.display_name, "display_name")
-        )
+        object.__setattr__(self, "provider_id", _text(self.provider_id, "provider_id"))
+        object.__setattr__(self, "display_name", _text(self.display_name, "display_name"))
         object.__setattr__(
             self,
             "executable_candidates",
-            tuple(
-                _text(item, "executable_candidate")
-                for item in self.executable_candidates
-            ),
+            tuple(_text(item, "executable_candidate") for item in self.executable_candidates),
         )
         resource = (
             self.resource_class
@@ -522,16 +478,11 @@ class ToolchainDescriptor:
         if self.gap is not None and not isinstance(self.gap, InstallGap):
             raise ToolchainError("gap must be InstallGap or None")
         if self.schema_version != TOOLCHAIN_DESCRIPTOR_SCHEMA:
-            raise ToolchainError(
-                f"descriptor schema must be {TOOLCHAIN_DESCRIPTOR_SCHEMA}"
-            )
-        if (
-            self.availability is InstallAvailability.MANAGED_PIN
-            and not any(pin.is_checksummed or pin.version for pin in self.pins)
+            raise ToolchainError(f"descriptor schema must be {TOOLCHAIN_DESCRIPTOR_SCHEMA}")
+        if self.availability is InstallAvailability.MANAGED_PIN and not any(
+            pin.is_checksummed or pin.version for pin in self.pins
         ):
-            raise ToolchainError(
-                f"managed pin provider {self.provider_id!r} requires pin metadata"
-            )
+            raise ToolchainError(f"managed pin provider {self.provider_id!r} requires pin metadata")
         if self.availability is InstallAvailability.DECLARED_GAP and self.gap is None:
             raise ToolchainError(
                 f"declared gap provider {self.provider_id!r} requires gap metadata"
@@ -737,8 +688,7 @@ def _build_default_descriptors() -> tuple[ToolchainDescriptor, ...]:
     circuit_gap = _gap(
         InstallGapKind.CIRCUIT_WITNESS,
         ("zkp-circuit",),
-        "Production ZKP circuit artifacts are bound per deployment and are not "
-        "auto-installed.",
+        "Production ZKP circuit artifacts are bound per deployment and are not auto-installed.",
         "Attestation backends require an explicit circuit binding; simulated ZKP "
         "never grants production attestation.",
     )
@@ -796,9 +746,7 @@ def _build_default_descriptors() -> tuple[ToolchainDescriptor, ...]:
                     "eprover",
                     "3.2.5",
                     url="https://wwwlehre.dhbw-stuttgart.de/~sschulz/WORK/E_DOWNLOAD/V_3.2/E.tgz",
-                    sha256=(
-                        "074c8e5fc3062476341ce790fd15ad8004d322d6b6627844bd2768a8830bd4ae"
-                    ),
+                    sha256=("074c8e5fc3062476341ce790fd15ad8004d322d6b6627844bd2768a8830bd4ae"),
                 ),
             ),
             families=("atp",),
@@ -819,9 +767,7 @@ def _build_default_descriptors() -> tuple[ToolchainDescriptor, ...]:
                         "https://github.com/apalache-mc/apalache/releases/download/"
                         "v0.58.3/apalache-0.58.3.tgz"
                     ),
-                    sha256=(
-                        "ba622db9538aebf942cc7a7815f942a6b2b419012707e16dfdc25a73ff95d0a5"
-                    ),
+                    sha256=("ba622db9538aebf942cc7a7815f942a6b2b419012707e16dfdc25a73ff95d0a5"),
                 ),
             ),
             dependencies=(jvm_dep,),
@@ -876,9 +822,7 @@ def _build_default_descriptors() -> tuple[ToolchainDescriptor, ...]:
                     "proverif",
                     "2.05",
                     url="https://proverif.inria.fr/proverif2.05.tar.gz",
-                    sha256=(
-                        "4871f53c32ab4a04669a060c4886ba5d9080496963fb980a9a62d2c429ceabc4"
-                    ),
+                    sha256=("4871f53c32ab4a04669a060c4886ba5d9080496963fb980a9a62d2c429ceabc4"),
                 ),
             ),
             dependencies=(opam_dep,),
@@ -1074,15 +1018,12 @@ class VerificationToolchainRegistry:
 
     interface_version: str = VERIFICATION_TOOLCHAIN_REGISTRY_VERSION
     install_policy: InstallPolicy = field(default_factory=lambda: DEFAULT_INSTALL_POLICY)
-    descriptors: tuple[ToolchainDescriptor, ...] = field(
-        default_factory=_build_default_descriptors
-    )
+    descriptors: tuple[ToolchainDescriptor, ...] = field(default_factory=_build_default_descriptors)
 
     def __post_init__(self) -> None:
         if self.interface_version != VERIFICATION_TOOLCHAIN_REGISTRY_VERSION:
             raise ToolchainError(
-                "interface_version must be "
-                f"{VERIFICATION_TOOLCHAIN_REGISTRY_VERSION}"
+                f"interface_version must be {VERIFICATION_TOOLCHAIN_REGISTRY_VERSION}"
             )
         if not isinstance(self.install_policy, InstallPolicy):
             raise ToolchainError("install_policy must be InstallPolicy")
@@ -1094,9 +1035,7 @@ class VerificationToolchainRegistry:
             if not isinstance(descriptor, ToolchainDescriptor):
                 raise ToolchainError("descriptors must be ToolchainDescriptor values")
             if descriptor.provider_id in seen:
-                raise ToolchainError(
-                    f"duplicate provider_id {descriptor.provider_id!r}"
-                )
+                raise ToolchainError(f"duplicate provider_id {descriptor.provider_id!r}")
             seen.add(descriptor.provider_id)
         object.__setattr__(self, "descriptors", descriptors)
 
@@ -1114,9 +1053,7 @@ class VerificationToolchainRegistry:
             if provider_id in descriptor.executable_candidates:
                 return descriptor
         # Second pass for alias-style lookups.
-        normalized = (
-            str(provider_id).strip().lower().replace("-", "_").replace(" ", "_")
-        )
+        normalized = str(provider_id).strip().lower().replace("-", "_").replace(" ", "_")
         aliases = {
             "cvc5_cli": "cvc5",
             "tamarin_prover": "tamarin",
@@ -1153,11 +1090,7 @@ class VerificationToolchainRegistry:
         return frozenset(gap.gap_id for gap in self.declared_gaps())
 
     def providers_for_gap(self, gap_id: InstallGapKind | str) -> tuple[str, ...]:
-        kind = (
-            gap_id
-            if isinstance(gap_id, InstallGapKind)
-            else InstallGapKind(str(gap_id))
-        )
+        kind = gap_id if isinstance(gap_id, InstallGapKind) else InstallGapKind(str(gap_id))
         return tuple(
             descriptor.provider_id
             for descriptor in self.descriptors
@@ -1167,9 +1100,7 @@ class VerificationToolchainRegistry:
     def dependencies_of_kind(
         self, kind: DependencyKind | str
     ) -> tuple[tuple[str, ToolchainDependency], ...]:
-        dependency_kind = (
-            kind if isinstance(kind, DependencyKind) else DependencyKind(str(kind))
-        )
+        dependency_kind = kind if isinstance(kind, DependencyKind) else DependencyKind(str(kind))
         bound: list[tuple[str, ToolchainDependency]] = []
         for descriptor in self.descriptors:
             for dependency in descriptor.dependencies:
@@ -1215,15 +1146,11 @@ class VerificationToolchainRegistry:
                     )
                 descriptor = self.get(provider)
                 if not any(dep.kind is kind for dep in descriptor.dependencies):
-                    raise ToolchainError(
-                        f"provider {provider!r} must bind dependency {kind.value}"
-                    )
+                    raise ToolchainError(f"provider {provider!r} must bind dependency {kind.value}")
         # Companion carriers themselves must also be registered.
         for carrier in ("java", "opam", "maude", "zkp-circuit"):
             if carrier not in known:
-                raise ToolchainError(
-                    f"dependency carrier provider {carrier!r} is not registered"
-                )
+                raise ToolchainError(f"dependency carrier provider {carrier!r} is not registered")
 
     def authorize_install(
         self,
@@ -1241,29 +1168,15 @@ class VerificationToolchainRegistry:
 
         policy = self.install_policy
         if import_context and policy.never_on_import:
-            raise ToolchainError(
-                "installation is forbidden during import or module initialization"
-            )
+            raise ToolchainError("installation is forbidden during import or module initialization")
         if capability_discovery and policy.never_on_capability_discovery:
-            raise ToolchainError(
-                "installation is forbidden during capability discovery"
-            )
+            raise ToolchainError("installation is forbidden during capability discovery")
         if not explicit_call:
-            raise ToolchainError(
-                "installation requires an explicit install_provider/ensure_* call"
-            )
+            raise ToolchainError("installation requires an explicit install_provider/ensure_* call")
         if policy.requires_explicit_yes and not yes:
-            raise ToolchainError(
-                "installation requires explicit yes=True consent"
-            )
-        if (
-            test_mode
-            and system_package_mutation
-            and policy.forbid_system_package_mutation_in_tests
-        ):
-            raise ToolchainError(
-                "system package manager mutation is forbidden in tests"
-            )
+            raise ToolchainError("installation requires explicit yes=True consent")
+        if test_mode and system_package_mutation and policy.forbid_system_package_mutation_in_tests:
+            raise ToolchainError("system package manager mutation is forbidden in tests")
         descriptor = self.get(provider_id)
         if descriptor.availability is InstallAvailability.DECLARED_GAP:
             raise ToolchainError(
@@ -1276,9 +1189,7 @@ class VerificationToolchainRegistry:
                 f"provider {descriptor.provider_id!r} is in-process and has no installer"
             )
         if descriptor.availability is InstallAvailability.ADVISOR_ONLY and not yes:
-            raise ToolchainError(
-                "advisor package install still requires explicit yes=True"
-            )
+            raise ToolchainError("advisor package install still requires explicit yes=True")
         if (
             descriptor.availability is InstallAvailability.MANAGED_PIN
             and policy.requires_checksum_for_managed_artifacts
@@ -1289,9 +1200,7 @@ class VerificationToolchainRegistry:
                     "verified checksum pins"
                 )
             if not descriptor.pins:
-                raise ToolchainError(
-                    f"managed install for {descriptor.provider_id!r} has no pins"
-                )
+                raise ToolchainError(f"managed install for {descriptor.provider_id!r} has no pins")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -1439,8 +1348,7 @@ def registry_side_effect_free_on_import() -> bool:
         registry.install_policy.never_on_import
         and registry.install_policy.never_on_capability_discovery
         and not any(
-            descriptor.availability is InstallAvailability.MANAGED_PIN
-            and not descriptor.pins
+            descriptor.availability is InstallAvailability.MANAGED_PIN and not descriptor.pins
             for descriptor in registry.descriptors
         )
     )

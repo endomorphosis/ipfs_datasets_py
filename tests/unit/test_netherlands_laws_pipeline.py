@@ -124,7 +124,13 @@ def _raw_fixture(raw_dir: Path) -> Path:
                 "records_count": 1,
                 "article_records_count": 3,
                 "search_records_count": 4,
-                "law_status_counts": {"current": 1, "historical": 0, "repealed": 0, "superseded": 0, "unknown": 0},
+                "law_status_counts": {
+                    "current": 1,
+                    "historical": 0,
+                    "repealed": 0,
+                    "superseded": 0,
+                    "unknown": 0,
+                },
                 "current_laws_count": 1,
                 "historical_repealed_superseded_laws_count": 0,
                 "unknown_status_laws_count": 0,
@@ -162,13 +168,24 @@ def test_package_managed_paths_are_used():
 
 
 def test_compatibility_wrappers_import_package_builder_mains():
-    from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws.builders import ipfs_indexes, ipfs_package, normalized_package
+    from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws.builders import (
+        ipfs_indexes,
+        ipfs_package,
+        normalized_package,
+    )
 
     root = Path(__file__).resolve().parents[2]
     wrappers = root / "scripts" / "ops" / "legal_data"
-    assert _load_script(wrappers / "build_normalized_netherlands_laws_package.py").main is normalized_package.main
-    assert _load_script(wrappers / "build_ipfs_netherlands_laws_package.py").main is ipfs_package.main
-    assert _load_script(wrappers / "build_ipfs_netherlands_laws_indexes.py").main is ipfs_indexes.main
+    assert (
+        _load_script(wrappers / "build_normalized_netherlands_laws_package.py").main
+        is normalized_package.main
+    )
+    assert (
+        _load_script(wrappers / "build_ipfs_netherlands_laws_package.py").main is ipfs_package.main
+    )
+    assert (
+        _load_script(wrappers / "build_ipfs_netherlands_laws_indexes.py").main is ipfs_indexes.main
+    )
 
 
 def test_scrape_cli_accepts_underscore_boolean_aliases():
@@ -227,7 +244,9 @@ def test_operational_cli_commands_parse_catalog_arguments(tmp_path):
     assert args.discovery_jsonl == discovery_path
     assert args.catalog_path == catalog_path
 
-    queue_args = build_parser().parse_args(["queue", "--catalog_path", str(catalog_path), "--limit", "10"])
+    queue_args = build_parser().parse_args(
+        ["queue", "--catalog_path", str(catalog_path), "--limit", "10"]
+    )
     assert queue_args.command == "queue"
     assert queue_args.limit == 10
 
@@ -247,8 +266,18 @@ def test_persistent_catalog_import_queue_and_coverage(tmp_path):
     discovery.write_text(
         "\n".join(
             [
-                json.dumps({"identifier": "BWBR0000001", "source_url": "https://wetten.overheid.nl/BWBR0000001/"}),
-                json.dumps({"identifier": "BWBR0000001", "source_url": "https://wetten.overheid.nl/BWBR0000001/"}),
+                json.dumps(
+                    {
+                        "identifier": "BWBR0000001",
+                        "source_url": "https://wetten.overheid.nl/BWBR0000001/",
+                    }
+                ),
+                json.dumps(
+                    {
+                        "identifier": "BWBR0000001",
+                        "source_url": "https://wetten.overheid.nl/BWBR0000001/",
+                    }
+                ),
                 json.dumps({"identifier": "BWBR0000002", "document_type": "wet"}),
             ]
         )
@@ -297,11 +326,18 @@ def test_retry_policy_only_requeues_transient_failures(tmp_path):
     import_discovery_catalog(discovery_jsonl_path=discovery, catalog_path=catalog_path)
     queue_identifiers(catalog_path=catalog_path, identifiers=["BWBR0000001", "BWBR0000002"])
 
-    assert classify_failure("HTTP 504 for https://wetten.overheid.nl/BWBR0000001/")["retryable"] is True
+    assert (
+        classify_failure("HTTP 504 for https://wetten.overheid.nl/BWBR0000001/")["retryable"]
+        is True
+    )
     assert classify_failure("No law text extracted")["retryable"] is False
 
-    transient = mark_failure(catalog_path=catalog_path, identifier="BWBR0000001", message="HTTP 504 for source")
-    permanent = mark_failure(catalog_path=catalog_path, identifier="BWBR0000002", message="No law text extracted")
+    transient = mark_failure(
+        catalog_path=catalog_path, identifier="BWBR0000001", message="HTTP 504 for source"
+    )
+    permanent = mark_failure(
+        catalog_path=catalog_path, identifier="BWBR0000002", message="No law text extracted"
+    )
     assert transient["failure_is_transient"] == 1
     assert permanent["failure_is_permanent"] == 1
 
@@ -335,7 +371,9 @@ def test_catalog_sync_incremental_delta_and_integrity(tmp_path):
     assert report["non_article_producing_laws_count"] == 0
     assert report["article_rows_count"] == 3
 
-    delta = build_incremental_hf_delta(catalog_path=catalog_path, raw_dir=raw_dir, out_dir=tmp_path / "delta")
+    delta = build_incremental_hf_delta(
+        catalog_path=catalog_path, raw_dir=raw_dir, out_dir=tmp_path / "delta"
+    )
     assert delta["records"] == {"laws": 1, "articles": 3, "cid_index": 4, "index_rows": 4}
     assert (tmp_path / "delta" / "incremental_manifest.json").exists()
 
@@ -354,7 +392,9 @@ def test_catalog_sync_incremental_delta_and_integrity(tmp_path):
         "law_status": "unknown",
         "text": "Orphan row.",
     }
-    with (raw_dir / "netherlands_laws_articles_index_latest.jsonl").open("a", encoding="utf-8") as handle:
+    with (raw_dir / "netherlands_laws_articles_index_latest.jsonl").open(
+        "a", encoding="utf-8"
+    ) as handle:
         handle.write(json.dumps(orphan) + "\n")
     bad_report = validate_integrity(
         catalog_path=catalog_path,
@@ -367,11 +407,20 @@ def test_catalog_sync_incremental_delta_and_integrity(tmp_path):
 
 
 def test_ipfs_package_manifest_has_cids_hashes_counts_and_upload_target(tmp_path):
-    from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws.builders.ipfs_package import build_ipfs_cid_package
-    from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws.upload import DatasetUploadTarget, assert_local_upload_ready
+    from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws.builders.ipfs_package import (
+        build_ipfs_cid_package,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws.upload import (
+        DatasetUploadTarget,
+        assert_local_upload_ready,
+    )
 
     raw_dir = _raw_fixture(tmp_path / "raw")
-    out_dir = build_ipfs_cid_package(raw_dir=raw_dir, out_dir=tmp_path / "hf" / "base", repo_id="justicedao/ipfs_netherlands_laws")
+    out_dir = build_ipfs_cid_package(
+        raw_dir=raw_dir,
+        out_dir=tmp_path / "hf" / "base",
+        repo_id="justicedao/ipfs_netherlands_laws",
+    )
     manifest = json.loads((out_dir / "dataset_manifest.json").read_text(encoding="utf-8"))
 
     assert manifest["repo_target"] == "justicedao/ipfs_netherlands_laws"
@@ -383,14 +432,19 @@ def test_ipfs_package_manifest_has_cids_hashes_counts_and_upload_target(tmp_path
         if rel.endswith(".jsonl") or rel.endswith(".parquet"):
             assert "records" in info
 
-    laws = [json.loads(line) for line in (out_dir / "data/laws/ipfs_netherlands_laws.jsonl").read_text().splitlines()]
+    laws = [
+        json.loads(line)
+        for line in (out_dir / "data/laws/ipfs_netherlands_laws.jsonl").read_text().splitlines()
+    ]
     assert laws[0]["cid"].startswith("b")
     assert laws[0]["content_address"] == f"ipfs://{laws[0]['cid']}"
     assert laws[0]["law_status"] == "current"
     assert laws[0]["is_current"] is True
     assert laws[0]["status_confidence"] == "high"
 
-    target = DatasetUploadTarget("base", out_dir, "justicedao/ipfs_netherlands_laws", ("dataset_manifest.json",))
+    target = DatasetUploadTarget(
+        "base", out_dir, "justicedao/ipfs_netherlands_laws", ("dataset_manifest.json",)
+    )
     assert assert_local_upload_ready(target)["records"]["laws"] == 1
 
 
@@ -403,14 +457,28 @@ def test_index_manifests_have_cids_hashes_counts_and_upload_targets(tmp_path):
         build_knowledge_graph,
         build_vector_index,
     )
-    from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws.builders.ipfs_package import build_ipfs_cid_package
+    from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws.builders.ipfs_package import (
+        build_ipfs_cid_package,
+    )
 
     raw_dir = _raw_fixture(tmp_path / "raw")
     source_dir = build_ipfs_cid_package(raw_dir=raw_dir, out_dir=tmp_path / "hf" / "base")
     outputs = [
-        build_vector_index(source_dir=source_dir, out_dir=tmp_path / "hf" / "vector", repo_id="justicedao/ipfs_netherlands_laws_vector_index"),
-        build_bm25_index(source_dir=source_dir, out_dir=tmp_path / "hf" / "bm25", repo_id="justicedao/ipfs_netherlands_laws_bm25_index"),
-        build_knowledge_graph(source_dir=source_dir, out_dir=tmp_path / "hf" / "kg", repo_id="justicedao/ipfs_netherlands_laws_knowledge_graph"),
+        build_vector_index(
+            source_dir=source_dir,
+            out_dir=tmp_path / "hf" / "vector",
+            repo_id="justicedao/ipfs_netherlands_laws_vector_index",
+        ),
+        build_bm25_index(
+            source_dir=source_dir,
+            out_dir=tmp_path / "hf" / "bm25",
+            repo_id="justicedao/ipfs_netherlands_laws_bm25_index",
+        ),
+        build_knowledge_graph(
+            source_dir=source_dir,
+            out_dir=tmp_path / "hf" / "kg",
+            repo_id="justicedao/ipfs_netherlands_laws_knowledge_graph",
+        ),
     ]
 
     for out_dir in outputs:
@@ -426,15 +494,21 @@ def test_index_manifests_have_cids_hashes_counts_and_upload_targets(tmp_path):
 
     vector_mapping = [
         json.loads(line)
-        for line in (outputs[0] / "data/mapping/ipfs_netherlands_laws_vector_mapping.jsonl").read_text().splitlines()
+        for line in (outputs[0] / "data/mapping/ipfs_netherlands_laws_vector_mapping.jsonl")
+        .read_text()
+        .splitlines()
     ]
     bm25_documents = [
         json.loads(line)
-        for line in (outputs[1] / "data/documents/ipfs_netherlands_laws_bm25_documents.jsonl").read_text().splitlines()
+        for line in (outputs[1] / "data/documents/ipfs_netherlands_laws_bm25_documents.jsonl")
+        .read_text()
+        .splitlines()
     ]
     kg_nodes = [
         json.loads(line)
-        for line in (outputs[2] / "data/nodes/ipfs_netherlands_laws_kg_nodes.jsonl").read_text().splitlines()
+        for line in (outputs[2] / "data/nodes/ipfs_netherlands_laws_kg_nodes.jsonl")
+        .read_text()
+        .splitlines()
     ]
     kg_graph = json.loads((outputs[2] / "data/graph/ipfs_netherlands_laws_kg.jsonld").read_text())
 

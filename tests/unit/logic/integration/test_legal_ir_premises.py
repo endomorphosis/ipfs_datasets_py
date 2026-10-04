@@ -90,8 +90,7 @@ def test_export_legal_ir_premises_combines_document_obligation_and_registry_fact
     assert any(name.startswith("obligation_context_lir-obligation-") for name in names)
     assert len(names) == len(premises)
     assert any(
-        premise.metadata.get("source_module") == "legal_ir_theorem_registry"
-        for premise in premises
+        premise.metadata.get("source_module") == "legal_ir_theorem_registry" for premise in premises
     )
     formal_statements = {
         premise.statement

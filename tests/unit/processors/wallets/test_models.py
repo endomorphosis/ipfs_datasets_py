@@ -279,8 +279,7 @@ def test_record_id_is_a_golden_semantic_identity_not_an_observation_identity(
 
     assert first.record_id == later.record_id
     assert (
-        first.record_id
-        == "urn:wallet:transaction:sha256:"
+        first.record_id == "urn:wallet:transaction:sha256:"
         "d51eca6a61f64f95d4693f8f6a02933ef642ef5ab722478240d183c10d5d4b5b"
     )
     assert first.to_dict()["finality"] == "pending"
@@ -368,9 +367,7 @@ def test_extensions_are_versioned_deeply_immutable_and_order_independent(
         finality=Finality.OBSERVED,
         transaction_hash="0xtx",
         status=TransactionStatus.UNKNOWN,
-        extensions={
-            "eip155": VersionedExtension("wallet-eip155-extension-v1", first_data)
-        },
+        extensions={"eip155": VersionedExtension("wallet-eip155-extension-v1", first_data)},
     )
     second = TransactionRecord(
         chain=chain,
@@ -379,9 +376,7 @@ def test_extensions_are_versioned_deeply_immutable_and_order_independent(
         finality=Finality.OBSERVED,
         transaction_hash="0xtx",
         status=TransactionStatus.UNKNOWN,
-        extensions={
-            "eip155": VersionedExtension("wallet-eip155-extension-v1", second_data)
-        },
+        extensions={"eip155": VersionedExtension("wallet-eip155-extension-v1", second_data)},
     )
 
     assert first.to_canonical_json() == second.to_canonical_json()
@@ -511,9 +506,7 @@ def test_export_manifest_is_accounted_deterministic_and_schema_validated(
         format_checker=jsonschema.FormatChecker(),
     ).validate(payload)
     assert json.loads(manifest.to_canonical_json()) == payload
-    assert payload["record_count"] == sum(
-        item["record_count"] for item in payload["partitions"]
-    )
+    assert payload["record_count"] == sum(item["record_count"] for item in payload["partitions"])
     assert payload["record_count"] == sum(payload["finality_counts"].values())
     assert payload["checkpoint_after"]["cursor_id"] == cursor.cursor_id
 

@@ -4,11 +4,13 @@ Test stubs for libp2p_kit_stub module.
 Feature: LibP2P Kit Stub
   Stub implementation for LibP2P functionality
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def discovery_simulation():
@@ -83,6 +85,7 @@ def stub_peer_generation():
 
 
 # Test scenarios
+
 
 def test_initialize_stub_libp2p_node():
     """
@@ -173,6 +176,7 @@ def test_validate_stub_behavior():
 
 
 # Step definitions
+
 
 # Given steps
 @given("discovery simulation")
@@ -343,4 +347,3 @@ def stub_response_is_returned():
     """Step: Then stub response is returned"""
     # TODO: Implement step
     pass
-

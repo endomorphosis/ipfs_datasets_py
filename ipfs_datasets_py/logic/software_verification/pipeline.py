@@ -187,9 +187,7 @@ class ContractSpec:
     contract_id: str = ""
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "function_name", _text(self.function_name, "function_name")
-        )
+        object.__setattr__(self, "function_name", _text(self.function_name, "function_name"))
         object.__setattr__(
             self,
             "preconditions",
@@ -280,9 +278,7 @@ class ObligationSolveResult:
         return {
             "body_assumption_names": list(self.body_assumption_names),
             "compilation_id": self.compilation.compilation_id,
-            "differential": (
-                None if self.differential is None else self.differential.to_dict()
-            ),
+            "differential": (None if self.differential is None else self.differential.to_dict()),
             "property_id": self.property_id,
             "script_digest": self.compilation.script.digest,
             "smt_obligation_id": self.smt_obligation.obligation_id,
@@ -290,9 +286,7 @@ class ObligationSolveResult:
             "translation_receipt_id": self.compilation.receipt.receipt_id,
             "vc_obligation": self.vc_obligation.to_dict(),
             "verdict_classification": (
-                None
-                if self.differential is None
-                else self.differential.classification.value
+                None if self.differential is None else self.differential.classification.value
             ),
         }
 
@@ -348,8 +342,7 @@ class SourceToVerificationResult:
     def disproved(self) -> bool:
         return any(
             item.differential is not None
-            and item.differential.classification
-            is DifferentialClassification.AGREE_DISPROVED
+            and item.differential.classification is DifferentialClassification.AGREE_DISPROVED
             for item in self.obligation_results
         )
 
@@ -447,9 +440,7 @@ class _ExpressionInjector:
                 )
             symbol = self.symbols[symbol_id]
             kind = (
-                ExpressionKind.RESULT
-                if symbol.kind is SymbolKind.RESULT
-                else ExpressionKind.SYMBOL
+                ExpressionKind.RESULT if symbol.kind is SymbolKind.RESULT else ExpressionKind.SYMBOL
             )
             expr_id = self._next_id("name")
             self.expressions.append(
@@ -596,9 +587,7 @@ class _SmtLowering:
             # Generated / synthetic symbol: declare as unconstrained Int.
             name = smt_sanitize(symbol_id, prefix="g")
             if name not in self._fun_decls:
-                self._fun_decls[name] = SmtFunDecl(
-                    name=name, range=INT_SORT, is_const=True
-                )
+                self._fun_decls[name] = SmtFunDecl(name=name, range=INT_SORT, is_const=True)
             return name
         name = _symbol_smt_name(symbol)
         if name not in self._fun_decls:
@@ -641,32 +630,24 @@ class _SmtLowering:
             return term_symbol(name)
         if kind is ExpressionKind.UNARY:
             if len(expr.operand_ids) != 1:
-                raise PipelineError(
-                    f"unary expression {expr.expression_id} requires one operand"
-                )
+                raise PipelineError(f"unary expression {expr.expression_id} requires one operand")
             operand = self.term_for_expression(expr.operand_ids[0])
             if expr.operator == "pos":
                 return operand
             smt_kind = _UNARY_OP_TO_SMT.get(expr.operator)
             if smt_kind is None:
-                raise UnsupportedConstructError(
-                    f"unsupported unary operator {expr.operator!r}"
-                )
+                raise UnsupportedConstructError(f"unsupported unary operator {expr.operator!r}")
             return SmtTerm(smt_kind, arguments=(operand,))
         if kind is ExpressionKind.BINARY:
             if len(expr.operand_ids) != 2:
-                raise PipelineError(
-                    f"binary expression {expr.expression_id} requires two operands"
-                )
+                raise PipelineError(f"binary expression {expr.expression_id} requires two operands")
             left = self.term_for_expression(expr.operand_ids[0])
             right = self.term_for_expression(expr.operand_ids[1])
             if expr.operator == "ne":
                 return term_not(term_eq(left, right))
             smt_kind = _BINARY_OP_TO_SMT.get(expr.operator)
             if smt_kind is None:
-                raise UnsupportedConstructError(
-                    f"unsupported binary operator {expr.operator!r}"
-                )
+                raise UnsupportedConstructError(f"unsupported binary operator {expr.operator!r}")
             return SmtTerm(smt_kind, arguments=(left, right))
         if kind is ExpressionKind.CONDITIONAL:
             if len(expr.operand_ids) != 3:
@@ -682,9 +663,7 @@ class _SmtLowering:
             f"(expression_id={expr.expression_id})"
         )
 
-    def body_assumptions(
-        self, function: ProgramFunction
-    ) -> tuple[SmtNamedAssertion, ...]:
+    def body_assumptions(self, function: ProgramFunction) -> tuple[SmtNamedAssertion, ...]:
         """Encode straight-line body facts: assignments and result-return equalities."""
 
         assumptions: list[SmtNamedAssertion] = []
@@ -990,8 +969,7 @@ class SourceToVerificationPipeline:
                 status=PipelineStatus.UNSUPPORTED,
                 adapter=adapter,
                 unsupported_constructs=tuple(unsupported),
-                diagnostics=tuple(diagnostics)
-                + ("source adapter did not produce a ProgramIR",),
+                diagnostics=tuple(diagnostics) + ("source adapter did not produce a ProgramIR",),
             )
 
         if unsupported and self.fail_on_unsupported:
@@ -1008,9 +986,7 @@ class SourceToVerificationPipeline:
             )
 
         try:
-            program, resolved_contracts = self._resolve_contracts(
-                adapter.program, contracts
-            )
+            program, resolved_contracts = self._resolve_contracts(adapter.program, contracts)
         except (PipelineError, UnsupportedConstructError) as error:
             return SourceToVerificationResult(
                 status=PipelineStatus.ERROR,
@@ -1050,9 +1026,7 @@ class SourceToVerificationPipeline:
                     )
                     if rule not in self.solver_rules:
                         continue
-                    property_id = (
-                        f"property:{contract.contract_id}:{obligation.obligation_id}"
-                    )
+                    property_id = f"property:{contract.contract_id}:{obligation.obligation_id}"
                     smt_obl, body_names = lower_vc_obligation_to_smt(
                         program,
                         obligation,
@@ -1069,10 +1043,7 @@ class SourceToVerificationPipeline:
                             cvc5_backend=self.cvc5_backend,
                             compiler=self.compiler,
                         )
-                        if (
-                            differential.classification
-                            is DifferentialClassification.DISAGREE
-                        ):
+                        if differential.classification is DifferentialClassification.DISAGREE:
                             disagreement = True
                     obligation_results.append(
                         ObligationSolveResult(
@@ -1167,9 +1138,7 @@ class SourceToVerificationPipeline:
                 else:
                     ready.append(ProgramContract.from_dict(item))
             else:
-                raise PipelineError(
-                    f"unsupported contract entry type {type(item).__name__}"
-                )
+                raise PipelineError(f"unsupported contract entry type {type(item).__name__}")
         if specs:
             program, attached = attach_contract_specs(program, specs)
             ready.extend(attached)
@@ -1191,18 +1160,12 @@ class SourceToVerificationPipeline:
         content_sha256 = ""
         if program.sources:
             content_sha256 = getattr(program.sources[0], "content_sha256", "") or ""
-        property_ids = tuple(
-            sorted({item.property_id for item in obligation_results})
-        )
+        property_ids = tuple(sorted({item.property_id for item in obligation_results}))
         assumption_ids: list[str] = []
         if adapter.document is not None:
-            assumption_ids.extend(
-                item.assumption_id for item in adapter.document.assumptions
-            )
+            assumption_ids.extend(item.assumption_id for item in adapter.document.assumptions)
         for contract in contracts:
-            assumption_ids.extend(
-                clause.expression_id for clause in contract.preconditions
-            )
+            assumption_ids.extend(clause.expression_id for clause in contract.preconditions)
         tool_ids: list[str] = [SMT_COMPILER_ID]
         translation_ids: list[str] = []
         for item in obligation_results:

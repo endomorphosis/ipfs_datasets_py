@@ -41,12 +41,7 @@ from ipfs_datasets_py.logic.intent_ir.formalize.compiler import (
 from ipfs_datasets_py.logic.intent_ir.schema import IntentKind, validate_intent_ir
 
 
-FIXTURE_ROOT = (
-    Path(__file__).resolve().parents[4]
-    / "fixtures"
-    / "intent_ir"
-    / "admissibility"
-)
+FIXTURE_ROOT = Path(__file__).resolve().parents[4] / "fixtures" / "intent_ir" / "admissibility"
 
 REQUIRED_CASE_IDS = (
     "benign_skill",
@@ -181,20 +176,14 @@ def test_manifest_binds_valid_gate_outcomes(case_id: str) -> None:
 def test_expected_outcomes_cover_allow_legal_reject_security_reject_abstain() -> None:
     cases = _case_map()
     assert cases["benign_skill"]["expected_gate_status"] == "allow"
-    assert cases["benign_skill"]["expected_gate_reason_codes"] == [
-        "obligations_supported"
-    ]
+    assert cases["benign_skill"]["expected_gate_reason_codes"] == ["obligations_supported"]
     assert cases["legally_risky_effect"]["expected_gate_status"] == "reject"
-    assert cases["legally_risky_effect"]["expected_gate_reason_codes"] == [
-        "legal_hard_constraint"
-    ]
+    assert cases["legally_risky_effect"]["expected_gate_reason_codes"] == ["legal_hard_constraint"]
     assert cases["security_sensitive_resource"]["expected_gate_status"] == "reject"
     assert cases["security_sensitive_resource"]["expected_gate_reason_codes"] == [
         "security_hard_constraint"
     ]
-    assert cases["incomplete_unsupported_semantics"]["expected_gate_status"] == (
-        "abstain"
-    )
+    assert cases["incomplete_unsupported_semantics"]["expected_gate_status"] == ("abstain")
     assert set(cases["incomplete_unsupported_semantics"]["expected_gate_reason_codes"]) == {
         "semantics_unsupported",
         "missing_evidence",
@@ -302,8 +291,7 @@ def test_legally_risky_effect_exports_disclosure_effect() -> None:
     }
     assert any("pii" in text or "third party" in text for text in effect_texts)
     assert any(
-        "export" in action.verb or "export" in action.action_id
-        for action in document.actions
+        "export" in action.verb or "export" in action.action_id for action in document.actions
     )
     assert artifact.formulas
     assert case["expected_gate_status"] == "reject"
@@ -316,11 +304,7 @@ def test_security_sensitive_resource_access_is_source_grounded() -> None:
     artifact = _compile(case)
 
     verbs = {action.verb for action in document.actions}
-    objects = {
-        ref
-        for action in document.actions
-        for ref in action.object_refs
-    }
+    objects = {ref for action in document.actions for ref in action.object_refs}
     assert any("secret" in verb or "vault" in verb for verb in verbs)
     assert any("secret" in ref or "vault" in ref for ref in objects)
     assert artifact.proof_obligations
@@ -340,10 +324,7 @@ def test_incomplete_semantics_surface_unsupported_diagnostics() -> None:
     assert case["unsupported_diagnostic_count"] >= 1
     assert len(artifact.unsupported_diagnostics) == case["unsupported_diagnostic_count"]
     assert any(formula.opaque for formula in artifact.formulas)
-    assert all(
-        diagnostic.location.traceable
-        for diagnostic in artifact.unsupported_diagnostics
-    )
+    assert all(diagnostic.location.traceable for diagnostic in artifact.unsupported_diagnostics)
     assert case["expected_gate_status"] == "abstain"
 
 

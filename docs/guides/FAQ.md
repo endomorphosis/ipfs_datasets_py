@@ -30,7 +30,7 @@ For production deployment: **30 minutes** with Docker, **2 hours** for full ente
 **A**: **No!** The platform handles all IPFS complexity automatically. You can use familiar APIs:
 ```python
 dataset = load_dataset("wikipedia")  # Works just like HuggingFace
-vector_store = IPFSVectorStore()     # But with IPFS backing
+vector_store = IPFSVectorStore()  # But with IPFS backing
 ```
 
 ---
@@ -125,7 +125,7 @@ processor = PDFProcessor(
     ocr_engines=["surya", "tesseract"],  # Choose OCR engines
     entity_types=["person", "org", "concept"],  # Custom entity types
     confidence_threshold=0.8,  # Quality threshold
-    enable_cross_document=True  # Multi-document analysis
+    enable_cross_document=True,  # Multi-document analysis
 )
 ```
 
@@ -147,9 +147,7 @@ processor = PDFProcessor(
 **A**: **Yes!** With parallel processing:
 ```python
 result = await downloader.download_playlist(
-    "https://youtube.com/playlist?list=...",
-    max_downloads=50,
-    max_concurrent=5
+    "https://youtube.com/playlist?list=...", max_downloads=50, max_concurrent=5
 )
 ```
 
@@ -197,6 +195,7 @@ curl http://localhost:8080/tools/generate_test
 **A**: **Yes!** Plugin system for custom tools:
 ```python
 from ipfs_datasets_py.mcp_server.tools.base import BaseTool
+
 
 class MyCustomTool(BaseTool):
     def execute(self, input_data):

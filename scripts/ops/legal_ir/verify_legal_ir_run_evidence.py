@@ -54,9 +54,7 @@ REQUIRED_METRIC_BRIDGE_ADAPTERS = frozenset(
         "external_prover_router",
     }
 )
-REQUIRED_FAMILY_OBSERVED_METRICS = frozenset(
-    {"ir_cross_entropy_loss", "ir_cosine_similarity"}
-)
+REQUIRED_FAMILY_OBSERVED_METRICS = frozenset({"ir_cross_entropy_loss", "ir_cosine_similarity"})
 REQUIRED_QUALITY_METRICS = (
     "ir_cross_entropy_loss",
     "ir_cosine_similarity",
@@ -129,7 +127,10 @@ def canonical_bytes(payload: Mapping[str, Any]) -> bytes:
     body = dict(payload)
     body.pop("manifest_sha256", None)
     return json.dumps(
-        body, sort_keys=True, separators=(",", ":"), ensure_ascii=False,
+        body,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
     ).encode("utf-8")
 
 
@@ -201,7 +202,9 @@ def _walk(value: Any, path: str = ""):
             yield from _walk(child, f"{path}[{index}]")
 
 
-def _fail_missing(failures: list[str], block: Mapping[str, Any], names: Sequence[str], prefix: str) -> None:
+def _fail_missing(
+    failures: list[str], block: Mapping[str, Any], names: Sequence[str], prefix: str
+) -> None:
     for name in names:
         if name not in block:
             failures.append(f"missing:{prefix}.{name}")
@@ -271,7 +274,10 @@ def verify_evidence(
         failures.append("timing:timestamp_order")
     if generated is not None:
         current = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
-        if generated > current.replace(microsecond=current.microsecond) and (generated - current).total_seconds() > 300:
+        if (
+            generated > current.replace(microsecond=current.microsecond)
+            and (generated - current).total_seconds() > 300
+        ):
             failures.append("freshness:future_evidence")
         if max_age_seconds is not None and (current - generated).total_seconds() > max_age_seconds:
             failures.append("freshness:evidence_too_old")
@@ -304,7 +310,13 @@ def verify_evidence(
                 continue
             begin, finish = _timestamp(item.get("started_at")), _timestamp(item.get("ended_at"))
             seconds = _number(item.get("active_seconds"))
-            if begin is None or finish is None or begin >= finish or seconds is None or seconds <= 0:
+            if (
+                begin is None
+                or finish is None
+                or begin >= finish
+                or seconds is None
+                or seconds <= 0
+            ):
                 failures.append(f"timing:active_interval_invalid:{index}")
                 continue
             measured = (finish - begin).total_seconds()
@@ -334,8 +346,12 @@ def verify_evidence(
     if REVISION_RE.fullmatch(revision) is None:
         failures.append("lineage:code_revision")
     for name in (
-        "source_tree_sha256", "baseline_state_sha256", "final_state_sha256",
-        "fixture_sha256", "configuration_sha256", "holdout_sha256",
+        "source_tree_sha256",
+        "baseline_state_sha256",
+        "final_state_sha256",
+        "fixture_sha256",
+        "configuration_sha256",
+        "holdout_sha256",
     ):
         if not _sha(lineage.get(name)):
             failures.append(f"lineage:{name}")
@@ -361,7 +377,9 @@ def verify_evidence(
     if fixture is None:
         failures.append("missing:fixed_fixture")
     else:
-        if fixture.get("fixture_id") != lineage.get("fixture_id") or fixture.get("sha256") != lineage.get("fixture_sha256"):
+        if fixture.get("fixture_id") != lineage.get("fixture_id") or fixture.get(
+            "sha256"
+        ) != lineage.get("fixture_sha256"):
             failures.append("lineage:fixture_mismatch")
         if fixture.get("immutable") is not True or fixture.get("replay") is not False:
             failures.append("fixture:not_real_fixed_input")
@@ -371,13 +389,23 @@ def verify_evidence(
         failures.append("missing:progress")
         progress = {}
     cycles = _number(progress.get("warm_cycles_completed"))
-    sample_start, sample_end = _number(progress.get("sample_count_start")), _number(progress.get("sample_count_end"))
-    state_start, state_end = progress.get("state_revision_start"), progress.get("state_revision_end")
+    sample_start, sample_end = (
+        _number(progress.get("sample_count_start")),
+        _number(progress.get("sample_count_end")),
+    )
+    state_start, state_end = (
+        progress.get("state_revision_start"),
+        progress.get("state_revision_end"),
+    )
     if cycles is None or cycles < 2:
         failures.append("progress:fewer_than_two_warm_cycles")
     if sample_start is None or sample_end is None or sample_end <= sample_start:
         failures.append("progress:samples_not_advanced")
-    if state_start == state_end or state_start != lineage.get("baseline_state_revision") or state_end != lineage.get("final_state_revision"):
+    if (
+        state_start == state_end
+        or state_start != lineage.get("baseline_state_revision")
+        or state_end != lineage.get("final_state_revision")
+    ):
         failures.append("progress:state_revision_lineage")
     resumes = _sequence(progress.get("resumes"))
     resume_count = _number(progress.get("resume_count"))
@@ -389,7 +417,10 @@ def verify_evidence(
             for name in ("source_checkpoint_sha256", "restored_checkpoint_sha256"):
                 if not _sha(item.get(name)):
                     failures.append(f"progress:resume:{index}:{name}")
-            if item.get("lineage_verified") is not True or item.get("post_restore_health") != "healthy":
+            if (
+                item.get("lineage_verified") is not True
+                or item.get("post_restore_health") != "healthy"
+            ):
                 failures.append(f"progress:resume:{index}:unverified")
 
     model = _mapping(payload.get("model_context"))
@@ -404,10 +435,9 @@ def verify_evidence(
         1,
         int(os.environ.get("IPFS_ACCELERATE_LLAMA_CPP_CONTEXT_PER_SLOT", "8096")),
     )
-    if (
-        (_nonnegative_integer(model.get("context_size")) or 0) < required_context
-        or not str(model.get("device") or "").lower().startswith("cuda")
-    ):
+    if (_nonnegative_integer(model.get("context_size")) or 0) < required_context or not str(
+        model.get("device") or ""
+    ).lower().startswith("cuda"):
         failures.append("model_context:cuda_context")
 
     services = _mapping(payload.get("services"))
@@ -415,11 +445,17 @@ def verify_evidence(
         failures.append("missing:services")
         services = {}
     auto = _mapping(services.get("cuda_autoencoder")) or {}
-    if auto.get("backend") != "torch_cuda" or not str(auto.get("device") or "").lower().startswith("cuda"):
+    if auto.get("backend") != "torch_cuda" or not str(auto.get("device") or "").lower().startswith(
+        "cuda"
+    ):
         failures.append("service:autoencoder:not_cuda")
     if auto.get("cpu_fallback") is not False or auto.get("simulated") is not False:
         failures.append("service:autoencoder:fallback_or_simulated")
-    if selected and str(selected.get("autoencoder_device") or "").lower() != str(auto.get("device") or "").lower():
+    if (
+        selected
+        and str(selected.get("autoencoder_device") or "").lower()
+        != str(auto.get("device") or "").lower()
+    ):
         failures.append("configuration:autoencoder_device_mismatch")
     for name in ("forward_count", "loss_count", "backward_count", "optimizer_step_count"):
         if (_nonnegative_integer(auto.get(name)) or 0) < 1:
@@ -437,19 +473,26 @@ def verify_evidence(
 
     lean = _mapping(services.get("leanstral")) or {}
     if (
-        lean.get("healthy") is not True or lean.get("persistent") is not True
+        lean.get("healthy") is not True
+        or lean.get("persistent") is not True
         or lean.get("cpu_fallback") is not False
         or not str(lean.get("device") or "").lower().startswith("cuda")
     ):
         failures.append("service:leanstral:cuda_health")
-    if lean.get("generation") != model.get("service_generation") or lean.get("model_id") != model.get("model_id") or lean.get("context_fingerprint") != model.get("context_fingerprint"):
+    if (
+        lean.get("generation") != model.get("service_generation")
+        or lean.get("model_id") != model.get("model_id")
+        or lean.get("context_fingerprint") != model.get("context_fingerprint")
+    ):
         failures.append("service:leanstral:model_context_mismatch")
     if _number(lean.get("model_load_count")) != 1 or _number(lean.get("preflight_count")) != 1:
         failures.append("service:leanstral:weights_reloaded")
     for name in ("request_count", "reuse_count"):
         if (_nonnegative_integer(lean.get(name)) or 0) < 1:
             failures.append(f"service:leanstral:{name}")
-    if (_number(lean.get("request_count")) or 0) < 2 or lean.get("healthy_cuda_service_reused") is not True:
+    if (_number(lean.get("request_count")) or 0) < 2 or lean.get(
+        "healthy_cuda_service_reused"
+    ) is not True:
         failures.append("service:leanstral:not_reused_after_warmup")
     request_count = _nonnegative_integer(lean.get("request_count"))
     reuse_count = _nonnegative_integer(lean.get("reuse_count"))
@@ -526,7 +569,9 @@ def verify_evidence(
     if any(value is None for value in legal_counts[2:]):
         failures.append("service:hammer:legal_result_counters")
     if all(value is not None for value in legal_counts):
-        legal_obligations, legal_attempts, legal_proved, legal_reconstructed, legal_trusted = legal_counts
+        legal_obligations, legal_attempts, legal_proved, legal_reconstructed, legal_trusted = (
+            legal_counts
+        )
         assert legal_obligations is not None and legal_attempts is not None
         assert legal_proved is not None and legal_reconstructed is not None
         assert legal_trusted is not None
@@ -560,13 +605,19 @@ def verify_evidence(
             failures.append(f"service:metrics:{name}")
 
     codex = _mapping(services.get("codex")) or {}
-    if codex.get("fixture_sha256") != lineage.get("fixture_sha256") or codex.get("run_id") != run_id:
+    if (
+        codex.get("fixture_sha256") != lineage.get("fixture_sha256")
+        or codex.get("run_id") != run_id
+    ):
         failures.append("service:codex:lineage")
     for name in ("todo_count", "invocation_count", "focused_validation_count"):
         if (_nonnegative_integer(codex.get(name)) or 0) < 1:
             failures.append(f"service:codex:{name}")
     max_todos, todo_count = _number(codex.get("max_todos")), _number(codex.get("todo_count"))
-    max_bytes, queue_bytes = _number(codex.get("max_queue_bytes")), _number(codex.get("queue_bytes_peak"))
+    max_bytes, queue_bytes = (
+        _number(codex.get("max_queue_bytes")),
+        _number(codex.get("queue_bytes_peak")),
+    )
     if max_todos is None or todo_count is None or todo_count > max_todos or max_todos <= 0:
         failures.append("service:codex:todo_bound")
     if max_bytes is None or queue_bytes is None or queue_bytes > max_bytes or max_bytes <= 0:
@@ -610,7 +661,10 @@ def verify_evidence(
                 failures.append(f"service:codex:disposition:{index}:digest")
             if item.get("focused_validation") is not True:
                 failures.append(f"service:codex:disposition:{index}:validation")
-            if item.get("status") == "safe_rejection" and not str(item.get("reason_code") or "").strip():
+            if (
+                item.get("status") == "safe_rejection"
+                and not str(item.get("reason_code") or "").strip()
+            ):
                 failures.append(f"service:codex:disposition:{index}:reason")
         if accepted_count != disposition_accepted or rejected_count != disposition_rejected:
             failures.append("service:codex:terminal_count_mismatch")
@@ -633,14 +687,27 @@ def verify_evidence(
             failures.append(f"service:watchdog:{name}")
     if watchdog.get("children_launched") != watchdog.get("children_reaped"):
         failures.append("service:watchdog:children_not_reaped")
-    for name in ("missed_heartbeat_count", "fatal_event_count", "orphaned_child_count", "concurrent_writer_count"):
+    for name in (
+        "missed_heartbeat_count",
+        "fatal_event_count",
+        "orphaned_child_count",
+        "concurrent_writer_count",
+    ):
         if _number(watchdog.get(name)) != 0:
             failures.append(f"service:watchdog:{name}")
     heartbeat_gap = _number(watchdog.get("max_heartbeat_gap_seconds"))
     progress_gap = _number(watchdog.get("max_progress_gap_seconds"))
-    if heartbeat_gap is None or heartbeat_gap < 0 or heartbeat_gap > MAX_WATCHDOG_HEARTBEAT_GAP_SECONDS:
+    if (
+        heartbeat_gap is None
+        or heartbeat_gap < 0
+        or heartbeat_gap > MAX_WATCHDOG_HEARTBEAT_GAP_SECONDS
+    ):
         failures.append("service:watchdog:heartbeat_gap")
-    if progress_gap is None or progress_gap < 0 or progress_gap > MAX_PROGRESS_HEARTBEAT_GAP_SECONDS:
+    if (
+        progress_gap is None
+        or progress_gap < 0
+        or progress_gap > MAX_PROGRESS_HEARTBEAT_GAP_SECONDS
+    ):
         failures.append("service:watchdog:progress_gap")
     if wall is not None:
         heartbeats = _nonnegative_integer(watchdog.get("heartbeat_count"))
@@ -676,7 +743,10 @@ def verify_evidence(
         failures.append("quality:family_set")
     for family in REQUIRED_FAMILIES:
         pair = _mapping(quality.get(family)) or {}
-        baseline, candidate = _mapping(pair.get("baseline")) or {}, _mapping(pair.get("candidate")) or {}
+        baseline, candidate = (
+            _mapping(pair.get("baseline")) or {},
+            _mapping(pair.get("candidate")) or {},
+        )
         if not _positive(pair, "sample_count") or pair.get("guardrail_passed") is not True:
             failures.append(f"quality:{family}:coverage")
         for phase in ("baseline", "candidate"):
@@ -685,25 +755,33 @@ def verify_evidence(
             if not _positive(pair, f"{phase}_metric_coverage"):
                 failures.append(f"quality:{family}:{phase}_metric_coverage")
             observed = {
-                str(name)
-                for name in (_sequence(pair.get(f"{phase}_observed_metrics")) or [])
+                str(name) for name in (_sequence(pair.get(f"{phase}_observed_metrics")) or [])
             }
             if not REQUIRED_FAMILY_OBSERVED_METRICS.issubset(observed):
                 failures.append(f"quality:{family}:{phase}_observed_metrics")
-        if set(baseline) != set(REQUIRED_QUALITY_METRICS) or set(candidate) != set(REQUIRED_QUALITY_METRICS):
+        if set(baseline) != set(REQUIRED_QUALITY_METRICS) or set(candidate) != set(
+            REQUIRED_QUALITY_METRICS
+        ):
             failures.append(f"quality:{family}:metric_set")
         for metric in REQUIRED_QUALITY_METRICS:
             before, after = _number(baseline.get(metric)), _number(candidate.get(metric))
             if before is None or after is None:
                 failures.append(f"quality:{family}:{metric}:nonfinite_or_missing")
                 continue
-            if metric in {"ir_cross_entropy_loss", "autoencoder_cross_entropy_loss", "uncertainty", "source_copy_penalty"}:
+            if metric in {
+                "ir_cross_entropy_loss",
+                "autoencoder_cross_entropy_loss",
+                "uncertainty",
+                "source_copy_penalty",
+            }:
                 invalid_domain = before < 0 or after < 0
             else:
                 invalid_domain = not (0 <= before <= 1 and 0 <= after <= 1)
             if invalid_domain:
                 failures.append(f"quality:{family}:{metric}:domain")
-            regressed = after > before + 1e-12 if metric in LOWER_IS_BETTER else after + 1e-12 < before
+            regressed = (
+                after > before + 1e-12 if metric in LOWER_IS_BETTER else after + 1e-12 < before
+            )
             if regressed:
                 failures.append(f"quality:{family}:{metric}:regression")
 
@@ -711,9 +789,16 @@ def verify_evidence(
     if telemetry is None:
         failures.append("missing:telemetry")
         telemetry = {}
-    stage_timings, queue_timings = _mapping(telemetry.get("stage_timings_seconds")) or {}, _mapping(telemetry.get("queue_timings_seconds")) or {}
-    _fail_missing(failures, stage_timings, REQUIRED_STAGE_TIMINGS, "telemetry.stage_timings_seconds")
-    _fail_missing(failures, queue_timings, REQUIRED_QUEUE_TIMINGS, "telemetry.queue_timings_seconds")
+    stage_timings, queue_timings = (
+        _mapping(telemetry.get("stage_timings_seconds")) or {},
+        _mapping(telemetry.get("queue_timings_seconds")) or {},
+    )
+    _fail_missing(
+        failures, stage_timings, REQUIRED_STAGE_TIMINGS, "telemetry.stage_timings_seconds"
+    )
+    _fail_missing(
+        failures, queue_timings, REQUIRED_QUEUE_TIMINGS, "telemetry.queue_timings_seconds"
+    )
     for prefix, block in (("stage", stage_timings), ("queue", queue_timings)):
         for name, value in block.items():
             number = _number(value)
@@ -721,7 +806,10 @@ def verify_evidence(
                 failures.append(f"telemetry:{prefix}:{name}")
     if not _positive(telemetry, "queue_depth_limit"):
         failures.append("telemetry:queue_depth_limit")
-    peak, limit = _number(telemetry.get("queue_depth_peak")), _number(telemetry.get("queue_depth_limit"))
+    peak, limit = (
+        _number(telemetry.get("queue_depth_peak")),
+        _number(telemetry.get("queue_depth_limit")),
+    )
     if peak is None or peak < 0 or limit is None or peak > limit:
         failures.append("telemetry:queue_depth_bound")
 
@@ -735,7 +823,12 @@ def verify_evidence(
             failures.append(f"artifact:{name}:missing")
             continue
         size = _number(item.get("bytes"))
-        if size is None or size <= 0 or not _sha(item.get("sha256")) or item.get("durable") is not True:
+        if (
+            size is None
+            or size <= 0
+            or not _sha(item.get("sha256"))
+            or item.get("durable") is not True
+        ):
             failures.append(f"artifact:{name}:invalid")
             continue
         maximum = _number(item.get("max_bytes"))
@@ -743,21 +836,29 @@ def verify_evidence(
             failures.append(f"artifact:{name}:oversized")
         path_value = item.get("path")
         if path_value is not None:
-            if not isinstance(path_value, str) or Path(path_value).is_absolute() or ".." in Path(path_value).parts:
+            if (
+                not isinstance(path_value, str)
+                or Path(path_value).is_absolute()
+                or ".." in Path(path_value).parts
+            ):
                 failures.append(f"artifact:{name}:unsafe_path")
             elif verify_available_artifacts:
                 base = evidence_path.parent if evidence_path is not None else Path.cwd()
                 artifact_path = (base / path_value).resolve()
                 if not artifact_path.is_file():
                     failures.append(f"artifact:{name}:unavailable")
-                elif artifact_path.stat().st_size != int(size) or file_sha256(artifact_path) != item.get("sha256"):
+                elif artifact_path.stat().st_size != int(size) or file_sha256(
+                    artifact_path
+                ) != item.get("sha256"):
                     failures.append(f"artifact:{name}:content_mismatch")
 
     unique_failures = tuple(dict.fromkeys(failures))
     metrics.update(
         {
             "warm_cycles_completed": cycles,
-            "sample_count_advanced": sample_end is not None and sample_start is not None and sample_end > sample_start,
+            "sample_count_advanced": sample_end is not None
+            and sample_start is not None
+            and sample_end > sample_start,
             "quality_family_count": len(quality),
             "failure_count": len(unique_failures),
         }
@@ -772,7 +873,9 @@ def load_evidence(path: Path) -> Mapping[str, Any]:
     return value
 
 
-def write_evidence(path: Path, payload: Mapping[str, Any], *, refuse_overwrite: bool = True) -> None:
+def write_evidence(
+    path: Path, payload: Mapping[str, Any], *, refuse_overwrite: bool = True
+) -> None:
     """Atomically write a canonical, fsync'd evidence receipt."""
 
     if refuse_overwrite and path.exists():
@@ -795,13 +898,18 @@ def write_evidence(path: Path, payload: Mapping[str, Any], *, refuse_overwrite: 
 
 def _json_sha256(value: Any) -> str:
     encoded = json.dumps(
-        value, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False,
+        value,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+        allow_nan=False,
     ).encode("utf-8")
     return "sha256:" + hashlib.sha256(encoded).hexdigest()
 
 
 def _require_legacy_artifact(
-    fragment: Mapping[str, Any], name: str,
+    fragment: Mapping[str, Any],
+    name: str,
 ) -> tuple[Path, Mapping[str, Any]]:
     artifacts = _mapping(fragment.get("artifacts")) or {}
     item = _mapping(artifacts.get(name))
@@ -920,16 +1028,24 @@ def _finite_nonnegative(value: Any, default: float = 0.0) -> float:
 
 def _source_tree_identity(root: Path) -> tuple[str, str]:
     revision = subprocess.run(
-        ["git", "rev-parse", "HEAD"], cwd=root, check=True,
-        capture_output=True, text=True,
+        ["git", "rev-parse", "HEAD"],
+        cwd=root,
+        check=True,
+        capture_output=True,
+        text=True,
     ).stdout.strip()
     diff = subprocess.run(
         ["git", "diff", "--no-ext-diff", "--binary", "HEAD", "--"],
-        cwd=root, check=True, capture_output=True,
+        cwd=root,
+        check=True,
+        capture_output=True,
     ).stdout
     untracked = subprocess.run(
-        ["git", "ls-files", "--others", "--exclude-standard"], cwd=root,
-        check=True, capture_output=True, text=True,
+        ["git", "ls-files", "--others", "--exclude-standard"],
+        cwd=root,
+        check=True,
+        capture_output=True,
+        text=True,
     ).stdout.splitlines()
     digest = hashlib.sha256()
     digest.update(revision.encode("ascii"))
@@ -951,13 +1067,17 @@ def _clean_source_revision_identity(root: Path, revision: str) -> tuple[str, str
     requested = str(revision or "").strip().lower()
     if not re.fullmatch(r"[0-9a-f]{40}", requested):
         raise ValueError("recorded code revision is not a full Git commit")
-    resolved = subprocess.run(
-        ["git", "rev-parse", "--verify", f"{requested}^{{commit}}"],
-        cwd=root,
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.strip().lower()
+    resolved = (
+        subprocess.run(
+            ["git", "rev-parse", "--verify", f"{requested}^{{commit}}"],
+            cwd=root,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        .stdout.strip()
+        .lower()
+    )
     if resolved != requested:
         raise ValueError("recorded code revision does not resolve exactly")
     digest = hashlib.sha256()
@@ -972,19 +1092,16 @@ def _codex_terminal_receipt_counts(
     """Account for merged, validated patch-only, and rejected Codex outcomes."""
 
     invocation_count = _nonnegative_integer(codex_health.get("codex_execution_count")) or 0
-    completed_count = _nonnegative_integer(
-        codex_health.get("program_synthesis_completed")
-    ) or 0
+    completed_count = _nonnegative_integer(codex_health.get("program_synthesis_completed")) or 0
     applied_count = _nonnegative_integer(codex_health.get("codex_main_apply_count")) or 0
     accepted_count = min(completed_count, applied_count)
     patch_only_count = max(0, completed_count - accepted_count)
-    failure_reasons = _mapping(
-        codex_health.get("program_synthesis_failed_validation_reason_counts")
-    ) or {}
+    failure_reasons = (
+        _mapping(codex_health.get("program_synthesis_failed_validation_reason_counts")) or {}
+    )
     focused_rejection_count = min(
         max(0, invocation_count - completed_count),
-        _nonnegative_integer(failure_reasons.get("program_synthesis_validation_rejected"))
-        or 0,
+        _nonnegative_integer(failure_reasons.get("program_synthesis_validation_rejected")) or 0,
     )
     rejected_count = patch_only_count + focused_rejection_count
     return {
@@ -1038,16 +1155,12 @@ def _family_quality_pair(
     ):
         auto_ce = _number(validation.get("cross_entropy_loss"))
         auto_cosine = _number(validation.get("cosine_similarity"))
-        if (
-            auto_ce is None
-            or auto_ce < 0.0
-            or auto_cosine is None
-            or not 0.0 <= auto_cosine <= 1.0
-        ):
+        if auto_ce is None or auto_ce < 0.0 or auto_cosine is None or not 0.0 <= auto_cosine <= 1.0:
             raise ValueError(f"{label} global autoencoder metrics are invalid")
 
     def quality(
-        item: Mapping[str, Any], validation: Mapping[str, Any],
+        item: Mapping[str, Any],
+        validation: Mapping[str, Any],
     ) -> dict[str, float]:
         reconstruction = _finite_nonnegative(item.get("reconstruction_success_rate"))
         symbolic = _finite_nonnegative(item.get("symbolic_validity_success_rate"))
@@ -1065,7 +1178,9 @@ def _family_quality_pair(
                 validation.get("cosine_similarity")
             ),
             "semantic_equivalence": min(1.0, symbolic),
-            "proof_success_rate": min(1.0, _finite_nonnegative(item.get("hammer_proof_success_rate"))),
+            "proof_success_rate": min(
+                1.0, _finite_nonnegative(item.get("hammer_proof_success_rate"))
+            ),
             "reconstruction_success_rate": min(1.0, reconstruction),
             "provenance": min(1.0, provenance_score),
             "round_trip": min(1.0, reconstruction),
@@ -1125,8 +1240,7 @@ def _strict_metric_evidence(auto: Mapping[str, Any]) -> dict[str, int]:
         evaluated_count += block_evaluated
 
     configured_adapters = {
-        str(name)
-        for name in (_sequence(auto.get("active_cycle_metric_bridge_adapters")) or [])
+        str(name) for name in (_sequence(auto.get("active_cycle_metric_bridge_adapters")) or [])
     }
     bridge = _mapping(auto.get("latest_logic_bridge_validation")) or {}
     adapter_rows = _mapping(bridge.get("adapters")) or {}
@@ -1148,12 +1262,8 @@ def _strict_metric_evidence(auto: Mapping[str, Any]) -> dict[str, int]:
     }
 
 
-def _strict_contract_evidence(
-    auto: Mapping[str, Any], hammer: Mapping[str, Any]
-) -> dict[str, Any]:
-    projection_failure_count = _nonnegative_integer(
-        hammer.get("contract_projection_failure_count")
-    )
+def _strict_contract_evidence(auto: Mapping[str, Any], hammer: Mapping[str, Any]) -> dict[str, Any]:
+    projection_failure_count = _nonnegative_integer(hammer.get("contract_projection_failure_count"))
     if projection_failure_count is None:
         raise ValueError("LegalIR contract projection failure counter is absent")
     if projection_failure_count:
@@ -1165,9 +1275,8 @@ def _strict_contract_evidence(
         hammer.get("legal_ir_contract_failure_counts")
         or auto.get("legal_ir_contract_failure_counts")
     )
-    family_gaps = (
-        hammer.get("legal_ir_contract_view_family_gaps")
-        or auto.get("legal_ir_contract_view_family_gaps")
+    family_gaps = hammer.get("legal_ir_contract_view_family_gaps") or auto.get(
+        "legal_ir_contract_view_family_gaps"
     )
     if coverage is None or coverage < 1.0:
         raise ValueError("LegalIR contract coverage is incomplete")
@@ -1206,9 +1315,10 @@ def _strict_hammer_runtime_canary(hammer: Mapping[str, Any]) -> dict[str, Any]:
     proved = _nonnegative_integer(canary.get("proved_count"))
     reconstructed = _nonnegative_integer(canary.get("reconstruction_count"))
     trusted = _nonnegative_integer(canary.get("trusted_count"))
-    if None in (proved, reconstructed, trusted) or min(
-        int(proved or 0), int(reconstructed or 0), int(trusted or 0)
-    ) < 1:
+    if (
+        None in (proved, reconstructed, trusted)
+        or min(int(proved or 0), int(reconstructed or 0), int(trusted or 0)) < 1
+    ):
         raise ValueError("Hammer runtime canary proof counters are incomplete")
     assert proved is not None and reconstructed is not None and trusted is not None
     if not trusted <= reconstructed <= proved:
@@ -1255,7 +1365,13 @@ def build_execution_receipt_from_legacy(
 
     artifact_paths: dict[str, Path] = {}
     artifact_items: dict[str, Mapping[str, Any]] = {}
-    for name in ("autoencoder_summary", "paired_summary", "checkpoint", "leanstral_service", "gate_decision"):
+    for name in (
+        "autoencoder_summary",
+        "paired_summary",
+        "checkpoint",
+        "leanstral_service",
+        "gate_decision",
+    ):
         artifact_paths[name], artifact_items[name] = _require_legacy_artifact(fragment, name)
     auto = load_evidence(artifact_paths["autoencoder_summary"])
     paired = load_evidence(artifact_paths["paired_summary"])
@@ -1265,8 +1381,7 @@ def build_execution_receipt_from_legacy(
         raise ValueError("canonical gate or paired supervisor rejected the run")
     if (
         paired.get("paired_timeout_exceeded") is True
-        or str(paired.get("latest_stop_reason") or "")
-        == "paired_timeout_grace_exceeded"
+        or str(paired.get("latest_stop_reason") or "") == "paired_timeout_grace_exceeded"
     ):
         raise ValueError("paired supervisor exceeded its completion deadline")
     if str(paired.get("run_id") or "") != run_id:
@@ -1308,8 +1423,7 @@ def build_execution_receipt_from_legacy(
     if (
         final_persistence.get("durable") is not True
         or _nonnegative_integer(final_persistence.get("checkpoint_revision")) is None
-        or Path(str(final_persistence.get("state_path") or ""))
-        != artifact_paths["checkpoint"]
+        or Path(str(final_persistence.get("state_path") or "")) != artifact_paths["checkpoint"]
     ):
         raise ValueError("final autoencoder state checkpoint is not durable")
     training_log = Path(str(auto.get("log_path") or ""))
@@ -1339,12 +1453,16 @@ def build_execution_receipt_from_legacy(
 
     fragment_revision = str(fragment.get("code_revision") or "").strip().lower()
     auto_revision = str(auto.get("compiler_commit") or "").strip().lower()
-    promotion_revision = str(
-        (_mapping(auto.get("latest_legal_ir_learned_guidance_promotion")) or {}).get(
-            "compiler_commit"
+    promotion_revision = (
+        str(
+            (_mapping(auto.get("latest_legal_ir_learned_guidance_promotion")) or {}).get(
+                "compiler_commit"
+            )
+            or ""
         )
-        or ""
-    ).strip().lower()
+        .strip()
+        .lower()
+    )
     if not fragment_revision or auto_revision != fragment_revision:
         raise ValueError("canonical fragment and autoencoder compiler revisions disagree")
     if promotion_revision and promotion_revision != fragment_revision:
@@ -1384,15 +1502,11 @@ def build_execution_receipt_from_legacy(
     compiler_validation = _mapping(auto.get("latest_compiler_ir_validation")) or {}
     compiler_timeout = _number(compiler_validation.get("sample_timeout_seconds"))
     persistence = _mapping(auto.get("latest_async_state_persistence")) or {}
-    checkpoint_cadence = _nonnegative_integer(
-        persistence.get("full_checkpoint_every_n_cycles")
-    )
+    checkpoint_cadence = _nonnegative_integer(persistence.get("full_checkpoint_every_n_cycles"))
     capacity_limit = _nonnegative_integer(
         auto.get("autoencoder_max_generalizable_entries_per_group")
     )
-    capacity = _mapping(
-        auto.get("latest_autoencoder_generalizable_capacity")
-    ) or {}
+    capacity = _mapping(auto.get("latest_autoencoder_generalizable_capacity")) or {}
     if (
         paired_grace is None
         or paired_grace < 0.0
@@ -1408,10 +1522,8 @@ def build_execution_receipt_from_legacy(
         or capacity_limit < 1
         or auto.get("autoencoder_generalizable_capacity_schema_version")
         != "modal-autoencoder-generalizable-capacity-v1"
-        or capacity.get("schema_version")
-        != "modal-autoencoder-generalizable-capacity-v1"
-        or _nonnegative_integer(capacity.get("max_entries_per_group"))
-        != capacity_limit
+        or capacity.get("schema_version") != "modal-autoencoder-generalizable-capacity-v1"
+        or _nonnegative_integer(capacity.get("max_entries_per_group")) != capacity_limit
     ):
         raise ValueError("selected runtime configuration evidence is incomplete")
     selected_configuration: dict[str, Any] = {
@@ -1423,9 +1535,14 @@ def build_execution_receipt_from_legacy(
         "autoencoder_device": str(auto.get("autoencoder_compute_device") or ""),
         "codex_apply_mode": "patch_only",
         "fixture_seed": "PORTAL-LIR-HAMMER-117-fixed-smoke-v1",
-        "max_codex_todos": max(1, cycles * (_nonnegative_integer(auto.get("autoencoder_max_todos_per_cycle")) or 8)),
+        "max_codex_todos": max(
+            1, cycles * (_nonnegative_integer(auto.get("autoencoder_max_todos_per_cycle")) or 8)
+        ),
         "validation_canary_count": _nonnegative_integer(auto.get("validation_canary_count")) or 0,
-        "train_count": _nonnegative_integer((_mapping(auto.get("latest_autoencoder_train")) or {}).get("sample_count")) or 0,
+        "train_count": _nonnegative_integer(
+            (_mapping(auto.get("latest_autoencoder_train")) or {}).get("sample_count")
+        )
+        or 0,
         "compiler_ir_metric_sample_timeout_seconds": compiler_timeout,
         "full_checkpoint_every_n_cycles": checkpoint_cadence,
         "max_generalizable_entries_per_group": capacity_limit,
@@ -1454,7 +1571,11 @@ def build_execution_receipt_from_legacy(
     if not _sha(model_sha):
         model_sha = _json_sha256({"model": model_id, "identity": identity})
 
-    hammer = _mapping(auto.get("active_cycle_hammer_guidance")) or _mapping(auto.get("latest_daemon_hammer_guidance")) or {}
+    hammer = (
+        _mapping(auto.get("active_cycle_hammer_guidance"))
+        or _mapping(auto.get("latest_daemon_hammer_guidance"))
+        or {}
+    )
     hammer_metrics = _mapping(hammer.get("hammer_metrics")) or {}
     hammer_config = _mapping(hammer.get("hammer_config")) or {}
     if hammer_config.get("verify_reconstruction") is not True:
@@ -1468,12 +1589,10 @@ def build_execution_receipt_from_legacy(
     backend_attempt_count = proof_attempts
     proved_count = _nonnegative_integer(hammer_metrics.get("hammer_proved_count")) or 0
     reconstruction_count = (
-        _nonnegative_integer(hammer_metrics.get("hammer_reconstruction_success_count"))
-        or 0
+        _nonnegative_integer(hammer_metrics.get("hammer_reconstruction_success_count")) or 0
     )
     trusted_guidance_count = (
-        _nonnegative_integer(hammer_metrics.get("trusted_hammer_guidance_count"))
-        or 0
+        _nonnegative_integer(hammer_metrics.get("trusted_hammer_guidance_count")) or 0
     )
     if min(obligations, backend_attempt_count, proof_attempts) < 1:
         raise ValueError("Hammer did not attempt any legal proof obligations")
@@ -1523,9 +1642,9 @@ def build_execution_receipt_from_legacy(
     invocation_count = codex_terminal_counts["invocation_count"]
     accepted_count = codex_terminal_counts["accepted_count"]
     patch_only_count = codex_terminal_counts["patch_only_count"]
-    failure_reasons = _mapping(
-        codex_health.get("program_synthesis_failed_validation_reason_counts")
-    ) or {}
+    failure_reasons = (
+        _mapping(codex_health.get("program_synthesis_failed_validation_reason_counts")) or {}
+    )
     focused_rejection_count = codex_terminal_counts["focused_rejection_count"]
     transient_failure_count = sum(
         _nonnegative_integer(value) or 0
@@ -1537,7 +1656,10 @@ def build_execution_receipt_from_legacy(
     )
     rejected_count = codex_terminal_counts["rejected_count"]
     focused_validation_count = codex_terminal_counts["focused_validation_count"]
-    if min(todo_count, invocation_count, focused_validation_count) < 1 or accepted_count + rejected_count < 1:
+    if (
+        min(todo_count, invocation_count, focused_validation_count) < 1
+        or accepted_count + rejected_count < 1
+    ):
         raise ValueError("Codex TODO/invocation/validation/terminal evidence is incomplete")
     max_todos = selected_configuration["max_codex_todos"]
     if todo_count > max_todos:
@@ -1553,31 +1675,59 @@ def build_execution_receipt_from_legacy(
     todo_sha = file_sha256(queue_path)
     dispositions: list[dict[str, Any]] = []
     if accepted_count:
-        dispositions.append({
-            "status": "merged", "count": accepted_count, "focused_validation": True,
-            "todo_sha256": todo_sha, "validation_sha256": validation_sha,
-        })
+        dispositions.append(
+            {
+                "status": "merged",
+                "count": accepted_count,
+                "focused_validation": True,
+                "todo_sha256": todo_sha,
+                "validation_sha256": validation_sha,
+            }
+        )
     if patch_only_count:
-        dispositions.append({
-            "status": "safe_rejection", "count": patch_only_count,
-            "reason_code": "validated_patch_withheld_by_patch_only_policy",
-            "focused_validation": True,
-            "todo_sha256": todo_sha, "validation_sha256": validation_sha,
-        })
+        dispositions.append(
+            {
+                "status": "safe_rejection",
+                "count": patch_only_count,
+                "reason_code": "validated_patch_withheld_by_patch_only_policy",
+                "focused_validation": True,
+                "todo_sha256": todo_sha,
+                "validation_sha256": validation_sha,
+            }
+        )
     if focused_rejection_count:
-        dispositions.append({
-            "status": "safe_rejection", "count": focused_rejection_count,
-            "reason_code": "focused_validation_rejected", "focused_validation": True,
-            "todo_sha256": todo_sha, "validation_sha256": validation_sha,
-        })
+        dispositions.append(
+            {
+                "status": "safe_rejection",
+                "count": focused_rejection_count,
+                "reason_code": "focused_validation_rejected",
+                "focused_validation": True,
+                "todo_sha256": todo_sha,
+                "validation_sha256": validation_sha,
+            }
+        )
 
-    baseline_family_block = _mapping(
-        (_mapping(baseline_snapshot.get("legal_ir_view_family_validation")) or {}).get("view_family_metrics")
-    ) or _mapping(baseline_validation.get("legal_ir_view_family_metrics")) or {}
-    candidate_family_block = _mapping(
-        (_mapping(auto.get("latest_legal_ir_view_family_validation")) or {}).get("view_family_metrics")
-    ) or _mapping(candidate_validation.get("legal_ir_view_family_metrics")) or {}
-    if set(baseline_family_block) != set(REQUIRED_FAMILIES) or set(candidate_family_block) != set(REQUIRED_FAMILIES):
+    baseline_family_block = (
+        _mapping(
+            (_mapping(baseline_snapshot.get("legal_ir_view_family_validation")) or {}).get(
+                "view_family_metrics"
+            )
+        )
+        or _mapping(baseline_validation.get("legal_ir_view_family_metrics"))
+        or {}
+    )
+    candidate_family_block = (
+        _mapping(
+            (_mapping(auto.get("latest_legal_ir_view_family_validation")) or {}).get(
+                "view_family_metrics"
+            )
+        )
+        or _mapping(candidate_validation.get("legal_ir_view_family_metrics"))
+        or {}
+    )
+    if set(baseline_family_block) != set(REQUIRED_FAMILIES) or set(candidate_family_block) != set(
+        REQUIRED_FAMILIES
+    ):
         raise ValueError("canonical summaries lack the exact LegalIR family set")
     provenance_score = 1.0
     uncertainty_error = 0.0
@@ -1592,20 +1742,37 @@ def build_execution_receipt_from_legacy(
         )
         for family in REQUIRED_FAMILIES
     }
-    if any(not item["guardrail_passed"] or item["sample_count"] < 1 for item in quality_families.values()):
+    if any(
+        not item["guardrail_passed"] or item["sample_count"] < 1
+        for item in quality_families.values()
+    ):
         raise ValueError("one or more LegalIR family guardrails lack coverage or regressed")
 
     phase = _mapping(auto.get("latest_cycle_phase_timings")) or {}
     service_queue = _finite_nonnegative(service.get("queue_seconds"))
-    resources = _mapping((_mapping(auto.get("latest_runtime_phase_telemetry")) or {}).get("resources")) or {}
+    resources = (
+        _mapping((_mapping(auto.get("latest_runtime_phase_telemetry")) or {}).get("resources"))
+        or {}
+    )
     queue_depth_peak = _finite_nonnegative(resources.get("queue_depth_peak"))
     queue_depth_limit = max(512.0, queue_depth_peak)
     stage_timings = {
         "cuda_training": _finite_nonnegative(phase.get("projection_training")),
-        "snapshot_evaluation": sum(_finite_nonnegative(phase.get(name)) for name in ("before_train_eval", "after_train_eval", "before_validation_eval", "after_validation_eval")),
+        "snapshot_evaluation": sum(
+            _finite_nonnegative(phase.get(name))
+            for name in (
+                "before_train_eval",
+                "after_train_eval",
+                "before_validation_eval",
+                "after_validation_eval",
+            )
+        ),
         "hammer": _finite_nonnegative(phase.get("hammer_guidance_cycle")),
-        "leanstral": _finite_nonnegative(phase.get("leanstral_direct_guidance_projection")) + _finite_nonnegative(phase.get("leanstral_rule_gap_projection")),
-        "codex": sum(_finite_nonnegative(item.get("elapsed_seconds")) for _, item in codex_summaries),
+        "leanstral": _finite_nonnegative(phase.get("leanstral_direct_guidance_projection"))
+        + _finite_nonnegative(phase.get("leanstral_rule_gap_projection")),
+        "codex": sum(
+            _finite_nonnegative(item.get("elapsed_seconds")) for _, item in codex_summaries
+        ),
         "focused_validation": 0.0,
         "persistence": _finite_nonnegative(phase.get("state_persistence_enqueue")),
     }
@@ -1634,12 +1801,14 @@ def build_execution_receipt_from_legacy(
         },
     ]
     for name, status in sorted(codex_status.items()):
-        child_ledger.append({
-            "name": str(name),
-            "status": str(status),
-            "exit_code": int(_number(codex_exit_codes.get(name)) or 0),
-            "orphaned": False,
-        })
+        child_ledger.append(
+            {
+                "name": str(name),
+                "status": str(status),
+                "exit_code": int(_number(codex_exit_codes.get(name)) or 0),
+                "orphaned": False,
+            }
+        )
     heartbeat_count = _nonnegative_integer(watchdog.get("heartbeat_count")) or 0
     progress_count = _nonnegative_integer(watchdog.get("progress_heartbeat_count")) or 0
     if heartbeat_count < 1 or progress_count < 1:
@@ -1650,14 +1819,20 @@ def build_execution_receipt_from_legacy(
     if resume_evidence.get("resumed") is True:
         source_sha = str(resume_evidence.get("source_sha256") or "")
         destination_sha = str(resume_evidence.get("destination_checkpoint_sha256") or "")
-        if not _sha(source_sha) or not _sha(destination_sha) or resume_evidence.get("lineage_verified") is not True:
+        if (
+            not _sha(source_sha)
+            or not _sha(destination_sha)
+            or resume_evidence.get("lineage_verified") is not True
+        ):
             raise ValueError("resume lineage evidence is incomplete")
-        resumes.append({
-            "source_checkpoint_sha256": source_sha,
-            "restored_checkpoint_sha256": destination_sha,
-            "lineage_verified": True,
-            "post_restore_health": "healthy",
-        })
+        resumes.append(
+            {
+                "source_checkpoint_sha256": source_sha,
+                "restored_checkpoint_sha256": destination_sha,
+                "lineage_verified": True,
+                "post_restore_health": "healthy",
+            }
+        )
 
     artifacts = {
         name: {
@@ -1687,39 +1862,53 @@ def build_execution_receipt_from_legacy(
             "active_seconds": active_seconds,
             "startup_seconds": startup_seconds,
             "downtime_seconds": downtime_seconds,
-            "active_intervals": [{
-                "started_at": active_started.isoformat(),
-                "ended_at": active_ended.isoformat(),
-                "active_seconds": active_seconds,
-            }],
+            "active_intervals": [
+                {
+                    "started_at": active_started.isoformat(),
+                    "ended_at": active_ended.isoformat(),
+                    "active_seconds": active_seconds,
+                }
+            ],
         },
         "lineage": {
-            "run_id": run_id, "stage": "ten_minute_smoke",
-            "code_revision": revision, "source_tree_sha256": source_tree_sha,
-            "baseline_state_id": f"{run_id}-baseline", "baseline_state_revision": baseline_revision,
+            "run_id": run_id,
+            "stage": "ten_minute_smoke",
+            "code_revision": revision,
+            "source_tree_sha256": source_tree_sha,
+            "baseline_state_id": f"{run_id}-baseline",
+            "baseline_state_revision": baseline_revision,
             "baseline_state_sha256": baseline_state_sha,
-            "final_state_revision": final_revision, "final_state_sha256": final_state_sha,
-            "fixture_id": "PORTAL-LIR-HAMMER-117-fixed-smoke-v1", "fixture_sha256": fixture_sha,
-            "configuration_id": "PORTAL-LIR-HAMMER-117-selected-v1", "configuration_sha256": configuration_sha,
-            "holdout_id": "PORTAL-LIR-HAMMER-117-fixed-canary-v1", "holdout_sha256": holdout_sha,
+            "final_state_revision": final_revision,
+            "final_state_sha256": final_state_sha,
+            "fixture_id": "PORTAL-LIR-HAMMER-117-fixed-smoke-v1",
+            "fixture_sha256": fixture_sha,
+            "configuration_id": "PORTAL-LIR-HAMMER-117-selected-v1",
+            "configuration_sha256": configuration_sha,
+            "holdout_id": "PORTAL-LIR-HAMMER-117-fixed-canary-v1",
+            "holdout_sha256": holdout_sha,
         },
         "selected_configuration": selected_configuration,
         "fixed_fixture": {
             "fixture_id": "PORTAL-LIR-HAMMER-117-fixed-smoke-v1",
-            "sha256": fixture_sha, "immutable": True, "replay": False,
+            "sha256": fixture_sha,
+            "immutable": True,
+            "replay": False,
             "dataset_id": fixture_material["dataset_id"],
             "sample_hash_count": len(target_hashes),
         },
         "progress": {
             "warm_cycles_completed": cycles,
             "sample_count_start": 0,
-            "sample_count_end": cycles * max(1, _nonnegative_integer(candidate_validation.get("sample_count")) or 0),
+            "sample_count_end": cycles
+            * max(1, _nonnegative_integer(candidate_validation.get("sample_count")) or 0),
             "state_revision_start": baseline_revision,
             "state_revision_end": final_revision,
-            "resume_count": len(resumes), "resumes": resumes,
+            "resume_count": len(resumes),
+            "resumes": resumes,
         },
         "model_context": {
-            "model_id": model_id, "model_sha256": model_sha,
+            "model_id": model_id,
+            "model_sha256": model_sha,
             "context_size": _nonnegative_integer(identity.get("context_size")) or 0,
             "context_fingerprint": context_fingerprint,
             "service_generation": generation,
@@ -1727,26 +1916,37 @@ def build_execution_receipt_from_legacy(
         },
         "services": {
             "cuda_autoencoder": {
-                "backend": "torch_cuda", "device": str(auto.get("autoencoder_compute_device")),
-                "cpu_fallback": False, "simulated": False,
-                "forward_count": forward_backward, "loss_count": forward_backward,
-                "backward_count": forward_backward, "optimizer_step_count": optimizer_steps,
+                "backend": "torch_cuda",
+                "device": str(auto.get("autoencoder_compute_device")),
+                "cpu_fallback": False,
+                "simulated": False,
+                "forward_count": forward_backward,
+                "loss_count": forward_backward,
+                "backward_count": forward_backward,
+                "optimizer_step_count": optimizer_steps,
             },
             "leanstral": {
-                "healthy": health.get("status") == "healthy", "persistent": True,
-                "device": str(health.get("device") or "cuda"), "cpu_fallback": False,
-                "generation": generation, "model_id": model_id,
+                "healthy": health.get("status") == "healthy",
+                "persistent": True,
+                "device": str(health.get("device") or "cuda"),
+                "cpu_fallback": False,
+                "generation": generation,
+                "model_id": model_id,
                 "context_fingerprint": context_fingerprint,
                 "model_load_count": service.get("model_load_count"),
                 "preflight_count": service.get("preflight_count"),
-                "request_count": service.get("acquire_count"), "reuse_count": service.get("reuse_count"),
+                "request_count": service.get("acquire_count"),
+                "reuse_count": service.get("reuse_count"),
                 "healthy_cuda_service_reused": service.get("healthy_cuda_service_reused"),
-                "queue_seconds": service.get("queue_seconds"), "inference_seconds": service.get("inference_seconds"),
-                "verification_seconds": service.get("verification_seconds"), "restart_seconds": service.get("restart_seconds"),
+                "queue_seconds": service.get("queue_seconds"),
+                "inference_seconds": service.get("inference_seconds"),
+                "verification_seconds": service.get("verification_seconds"),
+                "restart_seconds": service.get("restart_seconds"),
             },
             "hammer": {
                 "healthy": hammer.get("status") == "completed",
-                "backend_available": _number(hammer_metrics.get("hammer_backend_unavailable_ratio")) != 1.0,
+                "backend_available": _number(hammer_metrics.get("hammer_backend_unavailable_ratio"))
+                != 1.0,
                 "evidence_kind": "runtime_canary",
                 "winner_backends": runtime_canary["winner_backends"],
                 "checker_routes": runtime_canary["checker_routes"],
@@ -1769,24 +1969,34 @@ def build_execution_receipt_from_legacy(
             "contract_validation": contract_evidence,
             "metric_evaluation": metric_evidence,
             "codex": {
-                "run_id": run_id, "fixture_sha256": fixture_sha,
-                "todo_count": todo_count, "max_todos": max_todos,
-                "invocation_count": invocation_count, "focused_validation_count": focused_validation_count,
-                "accepted_merge_count": accepted_count, "safe_rejection_count": rejected_count,
+                "run_id": run_id,
+                "fixture_sha256": fixture_sha,
+                "todo_count": todo_count,
+                "max_todos": max_todos,
+                "invocation_count": invocation_count,
+                "focused_validation_count": focused_validation_count,
+                "accepted_merge_count": accepted_count,
+                "safe_rejection_count": rejected_count,
                 "transient_failure_count": transient_failure_count,
                 "transient_requeue_count": transient_requeue_count,
-                "queue_bytes_peak": queue_bytes, "max_queue_bytes": max_queue_bytes,
-                "apply_mode": "patch_only", "dispositions": dispositions,
+                "queue_bytes_peak": queue_bytes,
+                "max_queue_bytes": max_queue_bytes,
+                "apply_mode": "patch_only",
+                "dispositions": dispositions,
             },
             "watchdog": {
-                "healthy": True, "status": "exited_cleanly",
+                "healthy": True,
+                "status": "exited_cleanly",
                 "heartbeat_count": heartbeat_count,
                 "max_heartbeat_gap_seconds": watchdog.get("max_heartbeat_gap_seconds"),
                 "progress_heartbeat_count": progress_count,
                 "max_progress_gap_seconds": watchdog.get("max_progress_gap_seconds"),
-                "missed_heartbeat_count": 0, "fatal_event_count": 0,
-                "children_launched": len(child_ledger), "children_reaped": len(child_ledger),
-                "orphaned_child_count": 0, "concurrent_writer_count": 0,
+                "missed_heartbeat_count": 0,
+                "fatal_event_count": 0,
+                "children_launched": len(child_ledger),
+                "children_reaped": len(child_ledger),
+                "orphaned_child_count": 0,
+                "concurrent_writer_count": 0,
                 "managed_children": child_ledger,
             },
         },
@@ -1925,7 +2135,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     if not math.isfinite(args.minimum_active_seconds) or args.minimum_active_seconds < 0:
         print("minimum active seconds must be finite and non-negative", file=sys.stderr)
         return 2
-    if args.max_age_seconds is not None and (not math.isfinite(args.max_age_seconds) or args.max_age_seconds < 0):
+    if args.max_age_seconds is not None and (
+        not math.isfinite(args.max_age_seconds) or args.max_age_seconds < 0
+    ):
         print("max age seconds must be finite and non-negative", file=sys.stderr)
         return 2
     if args.seal_canonical_fragment is not None:

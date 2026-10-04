@@ -44,10 +44,7 @@ def test_accelerate_provider_accepts_generated_text_shape(monkeypatch) -> None:
         "text-generation",
     )
 
-    assert (
-        provider.generate("hello", model_name="Leanstral-119B")
-        == "ok from accelerate"
-    )
+    assert provider.generate("hello", model_name="Leanstral-119B") == "ok from accelerate"
     assert calls[-1] == (
         "Leanstral-119B",
         {"prompt": "hello"},

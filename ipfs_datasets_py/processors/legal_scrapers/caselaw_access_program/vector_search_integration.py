@@ -189,9 +189,7 @@ class CaselawAccessVectorSearch:
         centroid_files = [f for f in parquet_files if "centroid" in f.lower()]
         cid_map_files = [f for f in parquet_files if "cids" in f.lower()]
         embedding_files = [
-            f
-            for f in parquet_files
-            if f not in centroid_files and f not in cid_map_files
+            f for f in parquet_files if f not in centroid_files and f not in cid_map_files
         ]
 
         return {
@@ -260,7 +258,9 @@ class CaselawAccessVectorSearch:
         )
 
         if create_collection and not await store.collection_exists(collection_name):
-            await store.create_collection(collection_name=collection_name, dimension=vector_dimension)
+            await store.create_collection(
+                collection_name=collection_name, dimension=vector_dimension
+            )
 
         ingested = 0
         for start in range(0, len(embeddings), batch_size):
@@ -377,7 +377,9 @@ class CaselawAccessVectorSearch:
 
             search_top_k = per_cluster_top_k
             if mapped_cids:
-                search_top_k = max(per_cluster_top_k, per_cluster_top_k * max(cid_candidate_multiplier, 1))
+                search_top_k = max(
+                    per_cluster_top_k, per_cluster_top_k * max(cid_candidate_multiplier, 1)
+                )
 
             hits = await self.search_by_vector(
                 collection_name=target_collection_name,

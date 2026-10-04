@@ -40,9 +40,7 @@ from ipfs_datasets_py.logic.proof_corpus.store import ProofCorpusStore
 REPO_ROOT = Path(__file__).resolve().parents[3]
 PARENT_FIXTURE_ROOT = REPO_ROOT / "tests" / "fixtures" / "logic" / "admissibility"
 BENCHMARK_ROOT = PARENT_FIXTURE_ROOT / "benchmark"
-INTENT_FORMAL_ROOT = (
-    REPO_ROOT / "tests" / "fixtures" / "intent_ir" / "admissibility"
-)
+INTENT_FORMAL_ROOT = REPO_ROOT / "tests" / "fixtures" / "intent_ir" / "admissibility"
 
 BENCHMARK_INTERFACE: Final = "IntentAdmissibilityBenchmark@1"
 BENCHMARK_SCHEMA_VERSION: Final = "intent-admissibility-benchmark/v1"
@@ -52,9 +50,7 @@ REPORT_SCHEMA_VERSION: Final = "intent-admissibility-benchmark-report/v1"
 
 EVALUATION_PARTITIONS: Final = frozenset({"test", "held_out_domain"})
 DEVELOPMENT_PARTITIONS: Final = frozenset({"train", "validation"})
-ALL_PARTITIONS: Final = frozenset(
-    {"train", "validation", "test", "held_out_domain"}
-)
+ALL_PARTITIONS: Final = frozenset({"train", "validation", "test", "held_out_domain"})
 STATUSES: Final = ("allow", "reject", "abstain")
 
 
@@ -86,9 +82,7 @@ def _canonical_json(value: Any) -> str:
 
 
 def _digest(value: Any) -> str:
-    return "sha256:" + hashlib.sha256(
-        _canonical_json(value).encode("utf-8")
-    ).hexdigest()
+    return "sha256:" + hashlib.sha256(_canonical_json(value).encode("utf-8")).hexdigest()
 
 
 def _benchmark_manifest() -> dict[str, Any]:
@@ -112,9 +106,7 @@ def _recipe_lineage(case_id: str) -> dict[str, Any]:
 
 
 def _recipe_expected(case_id: str) -> dict[str, Any]:
-    return _load_json(
-        PARENT_FIXTURE_ROOT / "cases" / case_id / "expected_decision.json"
-    )
+    return _load_json(PARENT_FIXTURE_ROOT / "cases" / case_id / "expected_decision.json")
 
 
 # ---------------------------------------------------------------------------
@@ -171,9 +163,7 @@ def _build_corpus(
     env_profile = case.get("envelope_profile_id", "legal-strict")
 
     store = ProofCorpusStore()
-    intent_env = store.put(
-        ArtifactEnvelope.from_intent_artifact(intent, profile=env_profile)
-    )
+    intent_env = store.put(ArtifactEnvelope.from_intent_artifact(intent, profile=env_profile))
     for c in case.get("constraints") or []:
         art = _constraint_from_intent(
             intent_raw,
@@ -196,9 +186,7 @@ def _build_corpus(
             f"{store_snapshot_digest(store)} != {lineage['store_snapshot_digest']}"
         )
     if intent_env.content_cid != lineage["intent_content_cid"]:
-        raise AdmissibilityBenchmarkError(
-            f"intent content CID mismatch for {case_id}"
-        )
+        raise AdmissibilityBenchmarkError(f"intent content CID mismatch for {case_id}")
     return store, intent_env, lineage
 
 
@@ -276,12 +264,8 @@ def _development_source_fence(
     """Block eval cases from sharing sources or retrieving development rows."""
 
     findings: list[LeakageFinding] = []
-    development = [
-        c for c in cases if c["partition"] in DEVELOPMENT_PARTITIONS
-    ]
-    evaluation = [
-        c for c in cases if c["partition"] in EVALUATION_PARTITIONS
-    ]
+    development = [c for c in cases if c["partition"] in DEVELOPMENT_PARTITIONS]
+    evaluation = [c for c in cases if c["partition"] in EVALUATION_PARTITIONS]
     dev_digests = {c["intent_source_digest"] for c in development}
     dev_case_ids = {c["case_id"] for c in development}
     dev_families = {c["source_family_id"] for c in development}
@@ -291,9 +275,7 @@ def _development_source_fence(
             findings.append(
                 LeakageFinding(
                     rule="evaluation_must_not_share_intent_source_digest_with_development",
-                    detail=(
-                        f"{case['case_id']} shares intent_source_digest with development"
-                    ),
+                    detail=(f"{case['case_id']} shares intent_source_digest with development"),
                     case_ids=(case["case_id"],),
                 )
             )
@@ -316,9 +298,7 @@ def _development_source_fence(
                 findings.append(
                     LeakageFinding(
                         rule="evaluation_must_not_retrieve_development_case_ids",
-                        detail=(
-                            f"{case_id} retrieved development case(s) {leaked}"
-                        ),
+                        detail=(f"{case_id} retrieved development case(s) {leaked}"),
                         case_ids=(case_id, *leaked),
                     )
                 )
@@ -332,9 +312,7 @@ def validate_leakage_safe_splits(
     retrieved_by_case: Mapping[str, Sequence[str]] | None = None,
 ) -> list[LeakageFinding]:
     findings = _source_family_partition_fence(cases, splits)
-    findings.extend(
-        _development_source_fence(cases, retrieved_by_case=retrieved_by_case)
-    )
+    findings.extend(_development_source_fence(cases, retrieved_by_case=retrieved_by_case))
     return findings
 
 
@@ -344,9 +322,7 @@ def require_leakage_safe(
     *,
     retrieved_by_case: Mapping[str, Sequence[str]] | None = None,
 ) -> None:
-    findings = validate_leakage_safe_splits(
-        cases, splits, retrieved_by_case=retrieved_by_case
-    )
+    findings = validate_leakage_safe_splits(cases, splits, retrieved_by_case=retrieved_by_case)
     if findings:
         detail = "; ".join(f"{item.rule}: {item.detail}" for item in findings)
         raise AdmissibilityBenchmarkIntegrityError(
@@ -380,9 +356,7 @@ class CaseObservation:
 
     @property
     def reasons_match(self) -> bool:
-        return set(self.expected_reason_codes) == set(
-            self.observed_reason_codes
-        )
+        return set(self.expected_reason_codes) == set(self.observed_reason_codes)
 
 
 def _precision_recall(
@@ -442,9 +416,7 @@ def run_admissibility_benchmark(
     require_leakage_safe(cases, splits, retrieved_by_case=retrieved_by_case)
 
     evaluation_cases = [
-        c
-        for c in cases
-        if c["partition"] in EVALUATION_PARTITIONS or c.get("evaluation")
+        c for c in cases if c["partition"] in EVALUATION_PARTITIONS or c.get("evaluation")
     ]
     if not evaluation_cases:
         raise AdmissibilityBenchmarkError("no evaluation cases in benchmark")
@@ -455,13 +427,9 @@ def run_admissibility_benchmark(
         store, intent_env, lineage = _build_corpus(case_id)
         gate = IntentAdmissibilityGate(store=store)
         decision = gate.evaluate(intent_env.content_cid, case["profile_id"])
-        via_helper = evaluate_admissibility(
-            store, intent_env.content_cid, case["profile_id"]
-        )
+        via_helper = evaluate_admissibility(store, intent_env.content_cid, case["profile_id"])
         if decision.to_dict() != via_helper.to_dict():
-            raise AdmissibilityBenchmarkError(
-                f"gate/helper divergence on {case_id}"
-            )
+            raise AdmissibilityBenchmarkError(f"gate/helper divergence on {case_id}")
 
         expected = _recipe_expected(case_id)
         observations.append(
@@ -470,9 +438,7 @@ def run_admissibility_benchmark(
                 partition=str(case["partition"]),
                 expected_status=str(case["expected_status"]),
                 observed_status=decision.status.value,
-                expected_reason_codes=tuple(
-                    sorted(case["expected_reason_codes"])
-                ),
+                expected_reason_codes=tuple(sorted(case["expected_reason_codes"])),
                 observed_reason_codes=tuple(sorted(decision.reason_codes)),
                 profile_id=decision.profile_id,
                 decision=decision.to_dict(),
@@ -480,9 +446,7 @@ def run_admissibility_benchmark(
                 intent_cid=decision.intent_cid,
                 intent_artifact_cid=decision.intent_artifact_cid or "",
                 retrieved_case_ids=tuple(
-                    sorted(retrieved_by_case.get(case_id, ()))
-                    if retrieved_by_case
-                    else ()
+                    sorted(retrieved_by_case.get(case_id, ())) if retrieved_by_case else ()
                 ),
             )
         )
@@ -498,9 +462,7 @@ def run_admissibility_benchmark(
                 f"!= recipe {set(expected['reason_codes'])}"
             )
         if decision.store_snapshot_digest != lineage["store_snapshot_digest"]:
-            raise AdmissibilityBenchmarkError(
-                f"{case_id}: store snapshot drift"
-            )
+            raise AdmissibilityBenchmarkError(f"{case_id}: store snapshot drift")
         if decision.intent_cid != lineage["intent_content_cid"]:
             raise AdmissibilityBenchmarkError(f"{case_id}: intent CID drift")
 
@@ -508,12 +470,8 @@ def run_admissibility_benchmark(
     first = evaluation_cases[0]
     store_a, intent_a, _ = _build_corpus(first["case_id"])
     store_b, intent_b, _ = _build_corpus(first["case_id"])
-    d1 = IntentAdmissibilityGate(store=store_a).evaluate(
-        intent_a.content_cid, first["profile_id"]
-    )
-    d2 = IntentAdmissibilityGate(store=store_b).evaluate(
-        intent_b.content_cid, first["profile_id"]
-    )
+    d1 = IntentAdmissibilityGate(store=store_a).evaluate(intent_a.content_cid, first["profile_id"])
+    d2 = IntentAdmissibilityGate(store=store_b).evaluate(intent_b.content_cid, first["profile_id"])
     determinism_pass = d1.to_dict() == d2.to_dict()
 
     y_true = [obs.expected_status for obs in observations]
@@ -535,9 +493,7 @@ def run_admissibility_benchmark(
         "leakage_count": 0,
         "authority_violation_count": 0,
         "false_allow_count": sum(
-            1
-            for t, p in zip(y_true, y_pred)
-            if p == AdmissibilityStatus.ALLOW.value and t != p
+            1 for t, p in zip(y_true, y_pred) if p == AdmissibilityStatus.ALLOW.value and t != p
         ),
         "determinism_pass": determinism_pass,
         "offline": offline,
@@ -550,10 +506,7 @@ def run_admissibility_benchmark(
     # Authority: an allow without obligations_supported is a violation.
     for obs in observations:
         if obs.observed_status == AdmissibilityStatus.ALLOW.value:
-            if (
-                AdmissibilityReasonCode.OBLIGATIONS_SUPPORTED.value
-                not in obs.observed_reason_codes
-            ):
+            if AdmissibilityReasonCode.OBLIGATIONS_SUPPORTED.value not in obs.observed_reason_codes:
                 metrics["authority_violation_count"] += 1
         if not obs.status_match and obs.observed_status == "allow":
             metrics["authority_violation_count"] += 1
@@ -597,9 +550,7 @@ def run_admissibility_benchmark(
         ],
         "report_digest": "",
     }
-    report["report_digest"] = _digest(
-        {k: v for k, v in report.items() if k != "report_digest"}
-    )
+    report["report_digest"] = _digest({k: v for k, v in report.items() if k != "report_digest"})
     return report
 
 
@@ -613,9 +564,7 @@ def _block_network(monkeypatch: pytest.MonkeyPatch) -> None:
     """Fail closed if any benchmark path attempts a real network connection."""
 
     def _blocked(*_args: object, **_kwargs: object) -> None:
-        raise AssertionError(
-            "LIG-019 admissibility benchmark must not use the network"
-        )
+        raise AssertionError("LIG-019 admissibility benchmark must not use the network")
 
     monkeypatch.setattr(socket.socket, "connect", _blocked)
     monkeypatch.setattr(socket.socket, "connect_ex", lambda *_a, **_k: 1)
@@ -676,9 +625,7 @@ def test_benchmark_manifest_documents_splits_corpus_profiles_and_metrics() -> No
         assert case["intent_artifact_cid"] == lineage["intent_artifact_cid"]
         recipe_expected = _recipe_expected(case["case_id"])
         assert case["expected_status"] == recipe_expected["status"]
-        assert set(case["expected_reason_codes"]) == set(
-            recipe_expected["reason_codes"]
-        )
+        assert set(case["expected_reason_codes"]) == set(recipe_expected["reason_codes"])
         # Profile config digest is live and matches get_profile
         profile = get_profile(case["profile_id"])
         assert profile.config_digest() == recipe_expected["config_digest"]
@@ -686,15 +633,9 @@ def test_benchmark_manifest_documents_splits_corpus_profiles_and_metrics() -> No
     for metric in manifest["required_metrics"]:
         assert metric in expected["metrics"]
 
-    cid, digest = compute_corpus_snapshot(
-        [c for c in manifest["cases"] if c["evaluation"]]
-    )
+    cid, digest = compute_corpus_snapshot([c for c in manifest["cases"] if c["evaluation"]])
     assert manifest["corpus_snapshot_cid"] == cid == expected["corpus_snapshot_cid"]
-    assert (
-        manifest["corpus_snapshot_digest"]
-        == digest
-        == expected["corpus_snapshot_digest"]
-    )
+    assert manifest["corpus_snapshot_digest"] == digest == expected["corpus_snapshot_digest"]
 
 
 def test_splits_are_leakage_safe_by_source_family() -> None:
@@ -736,13 +677,8 @@ def test_source_family_leakage_is_rejected_before_evaluation() -> None:
             break
 
     findings = validate_leakage_safe_splits(cases, splits)
-    assert any(
-        item.rule == "entire_source_family_in_single_partition"
-        for item in findings
-    )
-    with pytest.raises(
-        AdmissibilityBenchmarkIntegrityError, match="source.family|leakage"
-    ):
+    assert any(item.rule == "entire_source_family_in_single_partition" for item in findings)
+    with pytest.raises(AdmissibilityBenchmarkIntegrityError, match="source.family|leakage"):
         require_leakage_safe(cases, splits)
 
 
@@ -754,13 +690,9 @@ def test_cross_partition_retrieval_is_rejected() -> None:
         manifest["cases"], splits, retrieved_by_case=leaked_retrieval
     )
     assert any(
-        item.rule
-        == "evaluation_must_not_retrieve_development_case_ids"
-        for item in findings
+        item.rule == "evaluation_must_not_retrieve_development_case_ids" for item in findings
     )
-    with pytest.raises(
-        AdmissibilityBenchmarkIntegrityError, match="retrieve|leakage"
-    ):
+    with pytest.raises(AdmissibilityBenchmarkIntegrityError, match="retrieve|leakage"):
         run_admissibility_benchmark(retrieved_by_case=leaked_retrieval)
 
 
@@ -778,12 +710,8 @@ def test_held_out_benchmark_matches_pinned_metrics_and_is_deterministic() -> Non
     assert report["gate_interface"] == ADMISSIBILITY_GATE_INTERFACE
     assert report["decision_interface"] == ADMISSIBILITY_DECISION_INTERFACE
     assert report["corpus_snapshot_cid"] == expected["corpus_snapshot_cid"]
-    assert (
-        report["corpus_snapshot_digest"] == expected["corpus_snapshot_digest"]
-    )
-    assert set(report["evaluation_case_ids"]) == set(
-        expected["evaluation_case_ids"]
-    )
+    assert report["corpus_snapshot_digest"] == expected["corpus_snapshot_digest"]
+    assert set(report["evaluation_case_ids"]) == set(expected["evaluation_case_ids"])
     assert report["case_count"] == expected["case_count"]
 
     metrics = report["metrics"]
@@ -828,9 +756,9 @@ def test_held_out_benchmark_matches_pinned_metrics_and_is_deterministic() -> Non
     assert second["metrics"] == report["metrics"]
     assert second["corpus_snapshot_digest"] == report["corpus_snapshot_digest"]
     assert second["evaluation_case_ids"] == report["evaluation_case_ids"]
-    assert [
-        {k: v for k, v in obs.items()} for obs in second["observations"]
-    ] == [{k: v for k, v in obs.items()} for obs in report["observations"]]
+    assert [{k: v for k, v in obs.items()} for obs in second["observations"]] == [
+        {k: v for k, v in obs.items()} for obs in report["observations"]
+    ]
 
 
 def test_evaluation_never_uses_development_partitions() -> None:
@@ -847,9 +775,7 @@ def test_evaluation_never_uses_development_partitions() -> None:
     for case_id in sorted(development_ids):
         store, intent_env, lineage = _build_corpus(case_id)
         case = _recipe_case(case_id)
-        decision = evaluate_admissibility(
-            store, intent_env.content_cid, case["profile_id"]
-        )
+        decision = evaluate_admissibility(store, intent_env.content_cid, case["profile_id"])
         expected = _recipe_expected(case_id)
         assert decision.status.value == expected["status"]
         assert decision.store_snapshot_digest == lineage["store_snapshot_digest"]
@@ -860,14 +786,8 @@ def test_decision_wire_form_is_closed_and_serializable() -> None:
     for obs in report["observations"]:
         case_id = obs["case_id"]
         store, intent_env, _ = _build_corpus(case_id)
-        case = next(
-            c
-            for c in _benchmark_manifest()["cases"]
-            if c["case_id"] == case_id
-        )
-        decision = evaluate_admissibility(
-            store, intent_env.content_cid, case["profile_id"]
-        )
+        case = next(c for c in _benchmark_manifest()["cases"] if c["case_id"] == case_id)
+        decision = evaluate_admissibility(store, intent_env.content_cid, case["profile_id"])
         wire = decision.to_dict()
         assert wire["interface"] == ADMISSIBILITY_DECISION_INTERFACE
         assert wire["status"] in STATUSES
@@ -899,9 +819,7 @@ def test_benchmark_covers_allow_reject_and_abstain_strata() -> None:
     """Effects contract: metrics for allow/reject/abstain on held-out sources."""
 
     report = run_admissibility_benchmark()
-    by_status = Counter(
-        obs["expected_status"] for obs in report["observations"]
-    )
+    by_status = Counter(obs["expected_status"] for obs in report["observations"])
     assert by_status["allow"] >= 1
     assert by_status["reject"] >= 1
     assert by_status["abstain"] >= 1

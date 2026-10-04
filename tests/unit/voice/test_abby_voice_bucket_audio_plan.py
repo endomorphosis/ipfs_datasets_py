@@ -68,9 +68,7 @@ def test_alias_preserves_legacy_hash_when_spoken_normalization_changes_identity(
     plan = plan_abby_voice_bucket_audio(
         source_manifest={"responses": [source]},
         accepted_responses=normalized.responses,
-        discovered_objects=[
-            _ListingObject(path=path, size_bytes=321, xet_hash="a" * 64)
-        ],
+        discovered_objects=[_ListingObject(path=path, size_bytes=321, xet_hash="a" * 64)],
         source_uri="hf://datasets/Publicus/211-abby-tts/source.json@commit",
         bucket_id="Publicus/abby-voice",
         listing_sha256="b" * 64,
@@ -99,15 +97,17 @@ def test_alias_preserves_legacy_hash_when_spoken_normalization_changes_identity(
     assert payload["listing_sha256"] == "b" * 64
     assert payload["listing_id"].endswith("b" * 64)
     assert AbbyVoiceBucketAudioPlan.from_json(plan.to_json()) == plan
-    assert SourceResponseAlias.from_json(
-        json.dumps(alias.to_dict(), sort_keys=True)
-    ) == alias
-    assert BucketAudioSelection.from_json(
-        json.dumps(plan.selections[0].to_dict(), sort_keys=True)
-    ) == plan.selections[0]
-    assert BucketAudioDiscoveryObject.from_json(
-        json.dumps(plan.selections[0].selected.to_dict(), sort_keys=True)
-    ) == plan.selections[0].selected
+    assert SourceResponseAlias.from_json(json.dumps(alias.to_dict(), sort_keys=True)) == alias
+    assert (
+        BucketAudioSelection.from_json(json.dumps(plan.selections[0].to_dict(), sort_keys=True))
+        == plan.selections[0]
+    )
+    assert (
+        BucketAudioDiscoveryObject.from_json(
+            json.dumps(plan.selections[0].selected.to_dict(), sort_keys=True)
+        )
+        == plan.selections[0].selected
+    )
 
 
 def test_selection_prefers_production_phase4_then_newer_run_and_is_order_independent():
@@ -116,18 +116,9 @@ def test_selection_prefers_production_phase4_then_newer_run_and_is_order_indepen
     filename = f"abby-tts-{source['textHash']}.mp3"
     paths = [
         f"scratch/phase4-residual/audio/{filename}",
-        (
-            "runs/abby-full-preprocess-20260622T152102Z/"
-            f"phase3-duplicate/audio/{filename}"
-        ),
-        (
-            "runs/abby-full-preprocess-20260614T004544Z/"
-            f"phase4-residual/audio/{filename}"
-        ),
-        (
-            "runs/abby-full-preprocess-20260622T152102Z/"
-            f"phase4-residual/audio/{filename}"
-        ),
+        (f"runs/abby-full-preprocess-20260622T152102Z/phase3-duplicate/audio/{filename}"),
+        (f"runs/abby-full-preprocess-20260614T004544Z/phase4-residual/audio/{filename}"),
+        (f"runs/abby-full-preprocess-20260622T152102Z/phase4-residual/audio/{filename}"),
     ]
     objects = [
         {"path": path, "size_bytes": index + 10, "xet_hash": f"xet-{index}"}
@@ -173,10 +164,7 @@ def test_allowed_run_ids_exclude_unapproved_future_lookalike_objects():
         "xet_hash": "a" * 64,
     }
     unapproved_future = {
-        "path": (
-            "runs/abby-full-preprocess-20991231T235959Z/"
-            f"phase4-residual/audio/{filename}"
-        ),
+        "path": (f"runs/abby-full-preprocess-20991231T235959Z/phase4-residual/audio/{filename}"),
         "size_bytes": 999,
         "xet_hash": "f" * 64,
     }
@@ -256,9 +244,7 @@ def test_quarantined_and_other_unaccepted_source_rows_cannot_claim_bucket_audio(
     )
     manifest = {"responses": [accepted, quarantined, unaccepted]}
     normalized = normalize_manifest(manifest)
-    accepted_only = tuple(
-        row for row in normalized.responses if row.text == accepted["text"]
-    )
+    accepted_only = tuple(row for row in normalized.responses if row.text == accepted["text"])
     assert len(accepted_only) == 1
     assert normalized.quarantine
 
@@ -287,18 +273,11 @@ def test_quarantined_and_other_unaccepted_source_rows_cannot_claim_bucket_audio(
         SourceAliasExclusionReason.UNACCEPTED_RESPONSE,
     }
     assert all(
-        SourceAliasExclusion.from_json(
-            json.dumps(item.to_dict(), sort_keys=True)
-        )
-        == item
+        SourceAliasExclusion.from_json(json.dumps(item.to_dict(), sort_keys=True)) == item
         for item in plan.exclusions
     )
-    assert quarantined["textHash"] not in {
-        item.legacy_text_hash for item in plan.aliases
-    }
-    assert unaccepted["textHash"] not in {
-        item.legacy_text_hash for item in plan.aliases
-    }
+    assert quarantined["textHash"] not in {item.legacy_text_hash for item in plan.aliases}
+    assert unaccepted["textHash"] not in {item.legacy_text_hash for item in plan.aliases}
 
 
 def test_ambiguous_source_alias_is_fail_closed_and_conflicting_duplicate_paths_fail():

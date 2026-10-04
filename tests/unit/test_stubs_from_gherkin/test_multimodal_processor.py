@@ -4,11 +4,13 @@ Test stubs for multimodal_processor module.
 Feature: Multimodal Processing
   Processing of text, image, audio, and video content
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def a_video_file_path():
@@ -92,6 +94,7 @@ def an_image_file_path():
 
 
 # Test scenarios
+
 
 def test_process_image_file():
     """
@@ -215,6 +218,7 @@ def test_convert_image_format():
 
 
 # Step definitions
+
 
 # Given steps
 @given("a video file path")
@@ -434,4 +438,3 @@ def video_frames_are_extracted():
     """Step: Then video frames are extracted"""
     # TODO: Implement step
     pass
-

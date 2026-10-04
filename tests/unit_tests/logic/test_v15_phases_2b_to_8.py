@@ -10,6 +10,7 @@ Covers:
 - Phase 7: RevocationList save/load (plain JSON + vault-backed)
 - Phase 8: PolicyAuditLog record/recent/stats/clear/file/sink
 """
+
 from __future__ import annotations
 
 import json
@@ -38,21 +39,21 @@ class TestSignDelegationToken:
 
     def _mgr(self, tmp_path):
         from ipfs_datasets_py.mcp_server.did_key_manager import DIDKeyManager
+
         return DIDKeyManager(key_file=tmp_path / "key.json")
 
     def test_sign_returns_string(self, tmp_path):
         """sign_delegation_token always returns a non-empty string."""
         import asyncio
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationToken, Capability
+
         mgr = self._mgr(tmp_path)
         tok = DelegationToken(
             issuer=mgr.did or "did:ex",
             audience="did:aud",
             capabilities=[Capability("res", "read")],
         )
-        result = asyncio.run(
-            mgr.sign_delegation_token(tok, audience_did="did:aud")
-        )
+        result = asyncio.run(mgr.sign_delegation_token(tok, audience_did="did:aud"))
         assert isinstance(result, str)
         assert len(result) > 10
 
@@ -60,15 +61,16 @@ class TestSignDelegationToken:
         """Without py-ucan the JWT starts with 'stub:'."""
         import asyncio
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationToken, Capability
+
         mgr = self._mgr(tmp_path)
         from ipfs_datasets_py.mcp_server import did_key_manager as _mod
+
         # Force stub mode
         with patch.object(_mod, "_UCAN_AVAILABLE", False):
-            tok = DelegationToken(issuer="did:ex", audience="did:aud",
-                                  capabilities=[Capability("r", "read")])
-            jwt = asyncio.run(
-                mgr.sign_delegation_token(tok, audience_did="did:aud")
+            tok = DelegationToken(
+                issuer="did:ex", audience="did:aud", capabilities=[Capability("r", "read")]
             )
+            jwt = asyncio.run(mgr.sign_delegation_token(tok, audience_did="did:aud"))
         assert jwt.startswith("stub:")
 
     def test_stub_payload_is_valid_json(self, tmp_path):
@@ -77,13 +79,13 @@ class TestSignDelegationToken:
         import base64
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationToken, Capability
         from ipfs_datasets_py.mcp_server import did_key_manager as _mod
+
         mgr = self._mgr(tmp_path)
         with patch.object(_mod, "_UCAN_AVAILABLE", False):
-            tok = DelegationToken(issuer="did:ex", audience="did:aud",
-                                  capabilities=[Capability("r", "read")])
-            jwt = asyncio.run(
-                mgr.sign_delegation_token(tok)
+            tok = DelegationToken(
+                issuer="did:ex", audience="did:aud", capabilities=[Capability("r", "read")]
             )
+            jwt = asyncio.run(mgr.sign_delegation_token(tok))
         b64 = jwt[5:] + "=="
         payload = json.loads(base64.urlsafe_b64decode(b64).decode())
         assert "iss" in payload
@@ -96,13 +98,12 @@ class TestSignDelegationToken:
         import base64
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationToken, Capability
         from ipfs_datasets_py.mcp_server import did_key_manager as _mod
+
         mgr = self._mgr(tmp_path)
         caps = [Capability("res/a", "a/invoke"), Capability("res/b", "b/invoke")]
         with patch.object(_mod, "_UCAN_AVAILABLE", False):
             tok = DelegationToken(issuer="did:ex", audience="did:aud", capabilities=caps)
-            jwt = asyncio.run(
-                mgr.sign_delegation_token(tok)
-            )
+            jwt = asyncio.run(mgr.sign_delegation_token(tok))
         payload = json.loads(base64.urlsafe_b64decode(jwt[5:] + "==").decode())
         assert len(payload["caps"]) == 2
 
@@ -112,13 +113,12 @@ class TestSignDelegationToken:
         import base64
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationToken
         from ipfs_datasets_py.mcp_server import did_key_manager as _mod
+
         mgr = self._mgr(tmp_path)
         with patch.object(_mod, "_UCAN_AVAILABLE", False):
             tok = DelegationToken(issuer="did:ex", audience="did:aud")
             now = time.time()
-            jwt = asyncio.run(
-                mgr.sign_delegation_token(tok, lifetime_seconds=3600)
-            )
+            jwt = asyncio.run(mgr.sign_delegation_token(tok, lifetime_seconds=3600))
         payload = json.loads(base64.urlsafe_b64decode(jwt[5:] + "==").decode())
         assert payload["exp"] > now + 3500
 
@@ -127,26 +127,22 @@ class TestSignDelegationToken:
         import asyncio
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationToken
         from ipfs_datasets_py.mcp_server import did_key_manager as _mod
+
         mgr = self._mgr(tmp_path)
         with patch.object(_mod, "_UCAN_AVAILABLE", False):
             tok = DelegationToken(issuer="did:ex", audience="did:aud")
-            jwt = asyncio.run(
-                mgr.sign_delegation_token(tok)
-            )
-            ok = asyncio.run(
-                mgr.verify_signed_token(jwt)
-            )
+            jwt = asyncio.run(mgr.sign_delegation_token(tok))
+            ok = asyncio.run(mgr.verify_signed_token(jwt))
         assert ok is True
 
     def test_verify_corrupted_stub_returns_false(self, tmp_path):
         """verify_signed_token is False for corrupted stub."""
         import asyncio
         from ipfs_datasets_py.mcp_server import did_key_manager as _mod
+
         mgr = self._mgr(tmp_path)
         with patch.object(_mod, "_UCAN_AVAILABLE", False):
-            ok = asyncio.run(
-                mgr.verify_signed_token("stub:!!not-base64!!")
-            )
+            ok = asyncio.run(mgr.verify_signed_token("stub:!!not-base64!!"))
         assert ok is False
 
 
@@ -159,6 +155,7 @@ class TestCompileAndSign:
     def test_returns_signed_policy_result(self):
         import asyncio
         from ipfs_datasets_py.logic.integration.ucan_policy_bridge import UCANPolicyBridge
+
         bridge = UCANPolicyBridge()
         result = asyncio.run(
             bridge.compile_and_sign(
@@ -167,23 +164,25 @@ class TestCompileAndSign:
             )
         )
         from ipfs_datasets_py.logic.integration.ucan_policy_bridge import SignedPolicyResult
+
         assert isinstance(result, SignedPolicyResult)
 
     def test_compile_result_is_bridge_compile_result(self):
         import asyncio
         from ipfs_datasets_py.logic.integration.ucan_policy_bridge import (
-            UCANPolicyBridge, BridgeCompileResult,
+            UCANPolicyBridge,
+            BridgeCompileResult,
         )
+
         bridge = UCANPolicyBridge()
-        r = asyncio.run(
-            bridge.compile_and_sign("Bob is permitted to access resources")
-        )
+        r = asyncio.run(bridge.compile_and_sign("Bob is permitted to access resources"))
         assert isinstance(r.compile_result, BridgeCompileResult)
 
     def test_jwt_count_matches_delegation_count(self):
         """One JWT is produced per permission token."""
         import asyncio
         from ipfs_datasets_py.logic.integration.ucan_policy_bridge import UCANPolicyBridge
+
         bridge = UCANPolicyBridge()
         r = asyncio.run(
             bridge.compile_and_sign("Carol may read files. Carol is allowed to write files.")
@@ -194,20 +193,18 @@ class TestCompileAndSign:
     def test_signed_jwts_is_list_of_strings(self):
         import asyncio
         from ipfs_datasets_py.logic.integration.ucan_policy_bridge import UCANPolicyBridge
+
         bridge = UCANPolicyBridge()
-        r = asyncio.run(
-            bridge.compile_and_sign("Dave may invoke tools")
-        )
+        r = asyncio.run(bridge.compile_and_sign("Dave may invoke tools"))
         assert all(isinstance(j, str) for j in r.signed_jwts)
 
     def test_no_sign_on_prohibition_only(self):
         """Prohibitions produce no delegation tokens or JWTs."""
         import asyncio
         from ipfs_datasets_py.logic.integration.ucan_policy_bridge import UCANPolicyBridge
+
         bridge = UCANPolicyBridge()
-        r = asyncio.run(
-            bridge.compile_and_sign("Eve must not delete records")
-        )
+        r = asyncio.run(bridge.compile_and_sign("Eve must not delete records"))
         # prohibition → DenyCapability → no delegation token → no JWT
         assert r.jwt_count == 0
 
@@ -221,6 +218,7 @@ class TestGrammarFallbackIntegration:
     def test_stage1b_metadata_set_when_grammar_used(self):
         """compile_sentence records stage1b_grammar=True when grammar was used."""
         from ipfs_datasets_py.logic.CEC.nl.nl_to_policy_compiler import NLToDCECCompiler
+
         compiler = NLToDCECCompiler()
         # Force Stage 1 to fail by patching converter
         with patch(
@@ -241,12 +239,15 @@ class TestGrammarFallbackIntegration:
     def test_overall_compile_still_works(self):
         """Overall compile() still produces results after Phase 3b integration."""
         from ipfs_datasets_py.logic.CEC.nl.nl_to_policy_compiler import NLToDCECCompiler
+
         compiler = NLToDCECCompiler()
         # Use sentences that the regex converter handles well
-        result = compiler.compile([
-            "Alice is permitted to read the database",
-            "Bob must not delete files",
-        ])
+        result = compiler.compile(
+            [
+                "Alice is permitted to read the database",
+                "Bob must not delete files",
+            ]
+        )
         # May succeed partially or fully — main invariant: no exception raised
         assert hasattr(result, "success")
         assert hasattr(result, "clauses")
@@ -254,14 +255,17 @@ class TestGrammarFallbackIntegration:
     def test_grammar_compiler_importable(self):
         """GrammarNLPolicyCompiler can be imported from the CEC/nl package."""
         from ipfs_datasets_py.logic.CEC.nl.grammar_nl_policy_compiler import GrammarNLPolicyCompiler
+
         c = GrammarNLPolicyCompiler()
         assert c is not None
 
     def test_grammar_compiler_produces_result(self):
         """GrammarNLPolicyCompiler.compile() always returns a GrammarCompilationResult."""
         from ipfs_datasets_py.logic.CEC.nl.grammar_nl_policy_compiler import (
-            GrammarNLPolicyCompiler, GrammarCompilationResult,
+            GrammarNLPolicyCompiler,
+            GrammarCompilationResult,
         )
+
         c = GrammarNLPolicyCompiler()
         r = c.compile("Alice must not access the system")
         assert isinstance(r, GrammarCompilationResult)
@@ -275,6 +279,7 @@ class TestApiPhase5:
 
     def test_all_contains_nl_ucan_symbols(self):
         import ipfs_datasets_py.logic.api as api
+
         expected = [
             "compile_nl_to_policy",
             "evaluate_nl_policy",
@@ -285,37 +290,44 @@ class TestApiPhase5:
 
     def test_all_contains_class_symbols(self):
         import ipfs_datasets_py.logic.api as api
+
         for sym in ["UCANPolicyBridge", "SignedPolicyResult", "BridgeCompileResult"]:
             assert sym in api.__all__, f"{sym!r} missing from api.__all__"
 
     def test_compile_nl_to_policy_callable(self):
         import ipfs_datasets_py.logic.api as api
+
         assert callable(api.compile_nl_to_policy)
 
     def test_evaluate_nl_policy_callable(self):
         import ipfs_datasets_py.logic.api as api
+
         assert callable(api.evaluate_nl_policy)
 
     def test_build_signed_delegation_is_coroutine_function(self):
         import asyncio
         import inspect
         import ipfs_datasets_py.logic.api as api
+
         # build_signed_delegation is async
         assert inspect.iscoroutinefunction(api.build_signed_delegation)
 
     def test_ucan_policy_bridge_exported(self):
         """UCANPolicyBridge is accessible directly from logic.api when available."""
         import ipfs_datasets_py.logic.api as api
+
         # May be None if integration sub-package can't be imported (CI without deps)
         bridge_cls = getattr(api, "UCANPolicyBridge", None)
         if bridge_cls is not None:
             from ipfs_datasets_py.logic.integration.ucan_policy_bridge import UCANPolicyBridge
+
             assert bridge_cls is UCANPolicyBridge
 
     def test_api_import_quiet(self):
         """Importing logic.api must produce no warnings."""
         import importlib
         import sys
+
         mod_name = "ipfs_datasets_py.logic.api"
         # Remove cached module so we get a fresh import
         saved = sys.modules.pop(mod_name, None)
@@ -325,11 +337,14 @@ class TestApiPhase5:
                 importlib.import_module(mod_name)
             # Filter out known unavoidable stdlib/third-party warnings
             our_warns = [
-                x for x in w
+                x
+                for x in w
                 if "ipfs_datasets_py" in str(x.filename or "")
                 and "DeprecationWarning" not in str(x.category)
             ]
-            assert len(our_warns) == 0, f"Unexpected warnings: {[str(x.message) for x in our_warns]}"
+            assert len(our_warns) == 0, (
+                f"Unexpected warnings: {[str(x.message) for x in our_warns]}"
+            )
         finally:
             if saved is not None:
                 sys.modules[mod_name] = saved
@@ -343,8 +358,12 @@ class TestPolicyEvaluatorCache:
 
     def _make_evaluator(self):
         from ipfs_datasets_py.mcp_server.temporal_policy import (
-            PolicyEvaluator, PolicyObject, PolicyClause, IntentObject,
+            PolicyEvaluator,
+            PolicyObject,
+            PolicyClause,
+            IntentObject,
         )
+
         e = PolicyEvaluator()
         p = PolicyObject(
             policy_id="test",
@@ -402,6 +421,7 @@ class TestPolicyEvaluatorCache:
     def test_register_new_policy_clears_cache(self):
         """Registering a genuinely new policy invalidates existing cache entries."""
         from ipfs_datasets_py.mcp_server.temporal_policy import PolicyObject, PolicyClause
+
         e, cid, intent = self._make_evaluator()
         e.evaluate(intent, cid, actor="alice")
         assert len(e._decision_cache) == 1
@@ -416,6 +436,7 @@ class TestPolicyEvaluatorCache:
     def test_re_register_same_policy_preserves_cache(self):
         """Re-registering the *same* policy_cid must NOT clear the cache."""
         from ipfs_datasets_py.mcp_server.temporal_policy import PolicyObject, PolicyClause
+
         e, cid, intent = self._make_evaluator()
         e.evaluate(intent, cid, actor="alice")
         assert len(e._decision_cache) == 1
@@ -434,15 +455,20 @@ class TestDelegationEvaluatorChainCache:
 
     def _make_chain(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import (
-            DelegationEvaluator, DelegationToken, Capability,
+            DelegationEvaluator,
+            DelegationToken,
+            Capability,
         )
+
         e = DelegationEvaluator()
         root = DelegationToken(
-            issuer="did:root", audience="did:a",
+            issuer="did:root",
+            audience="did:a",
             capabilities=[Capability("res", "read")],
         )
         leaf = DelegationToken(
-            issuer="did:a", audience="did:b",
+            issuer="did:a",
+            audience="did:b",
             capabilities=[Capability("res", "read")],
             proof_cid=root.cid,
         )
@@ -465,12 +491,14 @@ class TestDelegationEvaluatorChainCache:
     def test_chain_cache_cleared_on_new_token(self):
         """Adding a new token invalidates the chain cache."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationToken, Capability
+
         e, root, leaf = self._make_chain()
         e.build_chain(leaf.cid)
         assert len(e._chain_cache) == 1
 
         new_tok = DelegationToken(
-            issuer="did:new", audience="did:c",
+            issuer="did:new",
+            audience="did:c",
             capabilities=[Capability("res", "write")],
         )
         e.add_token(new_tok)
@@ -496,6 +524,7 @@ class TestRevocationListPersistence:
 
     def test_save_load_roundtrip_json(self, tmp_path):
         from ipfs_datasets_py.mcp_server.ucan_delegation import RevocationList
+
         rl = RevocationList()
         rl.revoke("cid:A")
         rl.revoke("cid:B")
@@ -514,12 +543,14 @@ class TestRevocationListPersistence:
 
     def test_load_nonexistent_returns_zero(self, tmp_path):
         from ipfs_datasets_py.mcp_server.ucan_delegation import RevocationList
+
         rl = RevocationList()
         n = rl.load(str(tmp_path / "no-such-file.json"))
         assert n == 0
 
     def test_save_file_is_valid_json(self, tmp_path):
         from ipfs_datasets_py.mcp_server.ucan_delegation import RevocationList
+
         rl = RevocationList()
         rl.revoke("cid:X")
         path = str(tmp_path / "rev.json")
@@ -533,6 +564,7 @@ class TestRevocationListPersistence:
     def test_load_adds_to_existing(self, tmp_path):
         """load() MERGES into the existing set (does not replace)."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import RevocationList
+
         rl = RevocationList()
         rl.revoke("cid:A")
         path = str(tmp_path / "rev.json")
@@ -548,6 +580,7 @@ class TestRevocationListPersistence:
     def test_save_empty_list(self, tmp_path):
         """save() works even with an empty revocation list."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import RevocationList
+
         rl = RevocationList()
         path = str(tmp_path / "empty.json")
         rl.save(path)
@@ -565,16 +598,22 @@ class TestPolicyAuditLogBasic:
 
     def test_record_returns_audit_entry(self):
         from ipfs_datasets_py.mcp_server.policy_audit_log import PolicyAuditLog, AuditEntry
+
         log = PolicyAuditLog()
         e = log.record(policy_cid="c1", intent_cid="i1", decision="allow", tool="read")
         assert isinstance(e, AuditEntry)
 
     def test_record_sets_fields_correctly(self):
         from ipfs_datasets_py.mcp_server.policy_audit_log import PolicyAuditLog
+
         log = PolicyAuditLog()
         e = log.record(
-            policy_cid="c1", intent_cid="i1", decision="deny",
-            actor="alice", tool="delete", justification="Prohibited.",
+            policy_cid="c1",
+            intent_cid="i1",
+            decision="deny",
+            actor="alice",
+            tool="delete",
+            justification="Prohibited.",
         )
         assert e.policy_cid == "c1"
         assert e.intent_cid == "i1"
@@ -585,6 +624,7 @@ class TestPolicyAuditLogBasic:
 
     def test_recent_returns_last_n(self):
         from ipfs_datasets_py.mcp_server.policy_audit_log import PolicyAuditLog
+
         log = PolicyAuditLog()
         for i in range(5):
             log.record(policy_cid=f"c{i}", intent_cid=f"i{i}", decision="allow")
@@ -594,17 +634,19 @@ class TestPolicyAuditLogBasic:
 
     def test_stats_counters(self):
         from ipfs_datasets_py.mcp_server.policy_audit_log import PolicyAuditLog
+
         log = PolicyAuditLog()
         log.record(policy_cid="c", intent_cid="i1", decision="allow")
         log.record(policy_cid="c", intent_cid="i2", decision="deny")
         log.record(policy_cid="c", intent_cid="i3", decision="allow_with_obligations")
         s = log.stats()
         assert s["total_recorded"] == 3
-        assert s["allow_count"] == 2   # allow + allow_with_obligations
+        assert s["allow_count"] == 2  # allow + allow_with_obligations
         assert s["deny_count"] == 1
 
     def test_allow_rate_calculation(self):
         from ipfs_datasets_py.mcp_server.policy_audit_log import PolicyAuditLog
+
         log = PolicyAuditLog()
         log.record(policy_cid="c", intent_cid="i1", decision="allow")
         log.record(policy_cid="c", intent_cid="i2", decision="deny")
@@ -614,6 +656,7 @@ class TestPolicyAuditLogBasic:
 
     def test_clear_removes_entries(self):
         from ipfs_datasets_py.mcp_server.policy_audit_log import PolicyAuditLog
+
         log = PolicyAuditLog()
         log.record(policy_cid="c", intent_cid="i", decision="allow")
         n = log.clear()
@@ -622,6 +665,7 @@ class TestPolicyAuditLogBasic:
 
     def test_disabled_log_returns_none(self):
         from ipfs_datasets_py.mcp_server.policy_audit_log import PolicyAuditLog
+
         log = PolicyAuditLog(enabled=False)
         e = log.record(policy_cid="c", intent_cid="i", decision="allow")
         assert e is None
@@ -629,6 +673,7 @@ class TestPolicyAuditLogBasic:
 
     def test_enable_disable_toggle(self):
         from ipfs_datasets_py.mcp_server.policy_audit_log import PolicyAuditLog
+
         log = PolicyAuditLog()
         log.enabled = False
         log.record(policy_cid="c", intent_cid="i1", decision="allow")
@@ -640,6 +685,7 @@ class TestPolicyAuditLogBasic:
     def test_max_entries_ring_buffer(self):
         """Old entries are evicted when max_entries is reached."""
         from ipfs_datasets_py.mcp_server.policy_audit_log import PolicyAuditLog
+
         log = PolicyAuditLog(max_entries=3)
         for i in range(5):
             log.record(policy_cid=f"c{i}", intent_cid=f"i{i}", decision="allow")
@@ -650,6 +696,7 @@ class TestPolicyAuditLogBasic:
     def test_file_sink(self, tmp_path):
         """Records are appended to a JSONL file."""
         from ipfs_datasets_py.mcp_server.policy_audit_log import PolicyAuditLog
+
         log_path = str(tmp_path / "audit.jsonl")
         log = PolicyAuditLog(log_path=log_path)
         log.record(policy_cid="c1", intent_cid="i1", decision="allow", tool="read")
@@ -665,6 +712,7 @@ class TestPolicyAuditLogBasic:
     def test_custom_sink_called(self):
         """Custom sink callable is invoked on each record."""
         from ipfs_datasets_py.mcp_server.policy_audit_log import PolicyAuditLog
+
         received = []
         log = PolicyAuditLog(sink=received.append)
         log.record(policy_cid="c", intent_cid="i", decision="allow")
@@ -674,6 +722,7 @@ class TestPolicyAuditLogBasic:
     def test_record_decision_obj(self):
         """record_decision() accepts duck-typed DecisionObject."""
         from ipfs_datasets_py.mcp_server.policy_audit_log import PolicyAuditLog
+
         log = PolicyAuditLog()
 
         class FakeDecision:
@@ -690,16 +739,23 @@ class TestPolicyAuditLogBasic:
 
     def test_repr(self):
         from ipfs_datasets_py.mcp_server.policy_audit_log import PolicyAuditLog
+
         log = PolicyAuditLog()
         r = repr(log)
         assert "PolicyAuditLog" in r
 
     def test_audit_entry_to_dict_all_fields(self):
         from ipfs_datasets_py.mcp_server.policy_audit_log import AuditEntry
+
         e = AuditEntry(
-            timestamp=1000.0, policy_cid="p", intent_cid="i",
-            decision="allow", actor="a", tool="t",
-            justification="j", obligations=["ob1"],
+            timestamp=1000.0,
+            policy_cid="p",
+            intent_cid="i",
+            decision="allow",
+            actor="a",
+            tool="t",
+            justification="j",
+            obligations=["ob1"],
         )
         d = e.to_dict()
         assert d["timestamp"] == 1000.0
@@ -707,6 +763,7 @@ class TestPolicyAuditLogBasic:
 
     def test_audit_entry_to_json(self):
         from ipfs_datasets_py.mcp_server.policy_audit_log import AuditEntry
+
         e = AuditEntry(timestamp=0.0, policy_cid="p", intent_cid="i", decision="deny")
         s = e.to_json()
         parsed = json.loads(s)
@@ -715,10 +772,12 @@ class TestPolicyAuditLogBasic:
     def test_get_audit_log_singleton(self):
         """get_audit_log() returns the same instance on repeated calls."""
         from ipfs_datasets_py.mcp_server import policy_audit_log as _mod
+
         saved = _mod._default_audit_log
         _mod._default_audit_log = None
         try:
             from ipfs_datasets_py.mcp_server.policy_audit_log import get_audit_log
+
             l1 = get_audit_log()
             l2 = get_audit_log()
             assert l1 is l2
@@ -727,6 +786,7 @@ class TestPolicyAuditLogBasic:
 
     def test_zero_allow_rate_on_empty_log(self):
         from ipfs_datasets_py.mcp_server.policy_audit_log import PolicyAuditLog
+
         log = PolicyAuditLog()
         s = log.stats()
         assert s["allow_rate"] == 0.0
@@ -743,6 +803,7 @@ class TestSecurityValidatorFixes:
         """audit_zkp_proof passes when hash covers only non-metadata fields."""
         import hashlib
         from ipfs_datasets_py.logic.TDFOL.security_validator import SecurityValidator
+
         validator = SecurityValidator()
 
         proof_data = {
@@ -759,6 +820,7 @@ class TestSecurityValidatorFixes:
     def test_proof_integrity_fails_with_wrong_hash(self):
         """audit_zkp_proof fails when hash does not match."""
         from ipfs_datasets_py.logic.TDFOL.security_validator import SecurityValidator
+
         validator = SecurityValidator()
         proof = {
             "commitment": "a" * 64,
@@ -773,8 +835,10 @@ class TestSecurityValidatorFixes:
     def test_acquire_concurrent_slot_is_atomic(self):
         """_acquire_concurrent_slot prevents TOCTOU by being atomic."""
         from ipfs_datasets_py.logic.TDFOL.security_validator import (
-            SecurityValidator, SecurityConfig,
+            SecurityValidator,
+            SecurityConfig,
         )
+
         config = SecurityConfig(max_concurrent_requests=1)
         validator = SecurityValidator(config)
 
@@ -796,8 +860,10 @@ class TestSecurityValidatorFixes:
         """5 threads with max_concurrent_requests=2 → at least one rejection."""
         import threading
         from ipfs_datasets_py.logic.TDFOL.security_validator import (
-            SecurityValidator, SecurityConfig,
+            SecurityValidator,
+            SecurityConfig,
         )
+
         config = SecurityConfig(max_concurrent_requests=2)
         validator = SecurityValidator(config)
         results = []

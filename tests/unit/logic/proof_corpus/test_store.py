@@ -63,9 +63,7 @@ def _security_record() -> dict[str, Any]:
 
 
 def _three_envelopes() -> tuple[ArtifactEnvelope, ArtifactEnvelope, ArtifactEnvelope]:
-    intent = ArtifactEnvelope.from_intent_artifact(
-        _intent_artifact(), profile=_intent_profile()
-    )
+    intent = ArtifactEnvelope.from_intent_artifact(_intent_artifact(), profile=_intent_profile())
     legal = ArtifactEnvelope.from_legal_record(_legal_record())
     security = ArtifactEnvelope.from_security_record(_security_record())
     return intent, legal, security
@@ -86,9 +84,7 @@ def test_interface_and_schema_versions_are_pinned() -> None:
 
 def test_artifact_envelope_from_intent_fixture() -> None:
     artifact = _intent_artifact()
-    envelope = ArtifactEnvelope.from_intent_artifact(
-        artifact, profile=_intent_profile()
-    )
+    envelope = ArtifactEnvelope.from_intent_artifact(artifact, profile=_intent_profile())
     assert envelope.family is ProofCorpusFamily.INTENT
     assert envelope.artifact_cid == artifact.artifact_id
     assert envelope.artifact_digest == artifact.digest
@@ -109,9 +105,7 @@ def test_artifact_envelope_from_legal_fixture() -> None:
     assert envelope.source_digest == record["source_digest"]
     assert envelope.jurisdiction == record["jurisdiction"]
     assert envelope.artifact_cid == record["artifact_cid"]
-    assert "theorem_receipts" in envelope.attachments or not record.get(
-        "theorem_receipts"
-    )
+    assert "theorem_receipts" in envelope.attachments or not record.get("theorem_receipts")
 
 
 def test_artifact_envelope_from_security_fixture() -> None:
@@ -122,9 +116,7 @@ def test_artifact_envelope_from_security_fixture() -> None:
     assert envelope.source_id == record["declaration_id"]
     assert envelope.source_digest == record["declaration_digest"]
     assert envelope.attachments["declaration_cid"] == record["declaration_cid"]
-    assert "security.crypto-exchange" in envelope.attachments[
-        "extension_vocabularies"
-    ]
+    assert "security.crypto-exchange" in envelope.attachments["extension_vocabularies"]
 
 
 def test_unknown_family_fails_closed() -> None:
@@ -198,9 +190,7 @@ def test_store_accepts_three_family_fixtures_on_disk(tmp_path: Path) -> None:
     assert reloaded.contains(intent.content_cid)
     assert reloaded.get(legal.content_cid).family is ProofCorpusFamily.LEGAL
     assert (
-        reloaded.get_by_source_digest(
-            security.source_digest, profile=security.profile
-        ).content_cid
+        reloaded.get_by_source_digest(security.source_digest, profile=security.profile).content_cid
         == security.content_cid
     )
     assert reloaded.get_by_profile(intent.profile).content_cid == intent.content_cid
@@ -246,9 +236,7 @@ def test_artifact_payload_tamper_fails_closed() -> None:
     # Mutate a nested field so recomputed artifact identity drifts.
     payload["artifact"] = dict(payload["artifact"])
     payload["artifact"]["sample_id"] = "tampered-sample-id"
-    with pytest.raises(
-        (ProofCorpusIntegrityError, ProofCorpusSchemaError)
-    ):
+    with pytest.raises((ProofCorpusIntegrityError, ProofCorpusSchemaError)):
         ArtifactEnvelope.from_dict(payload)
 
 
@@ -267,9 +255,7 @@ def test_on_disk_corruption_fails_closed_on_get(tmp_path: Path) -> None:
 
     # Drop memory cache so get reloads from disk.
     store._envelopes.clear()  # noqa: SLF001 — intentional integrity probe
-    with pytest.raises(
-        (ProofCorpusStoreIntegrityError, ProofCorpusIntegrityError)
-    ):
+    with pytest.raises((ProofCorpusStoreIntegrityError, ProofCorpusIntegrityError)):
         store.get(intent.content_cid)
 
 
@@ -286,9 +272,7 @@ def test_on_disk_corruption_fails_closed_on_reload(tmp_path: Path) -> None:
     raw = path.read_text(encoding="utf-8")
     path.write_text(raw.replace(legal.profile, "tampered-profile", 1), encoding="utf-8")
 
-    with pytest.raises(
-        (ProofCorpusStoreIntegrityError, ProofCorpusIntegrityError)
-    ):
+    with pytest.raises((ProofCorpusStoreIntegrityError, ProofCorpusIntegrityError)):
         ProofCorpusStore(root=root)
 
 
@@ -317,9 +301,7 @@ def test_index_references_missing_envelope_fails_closed(tmp_path: Path) -> None:
     index["profiles"][intent.profile] = "bafkreimissingenvelope000000000000000000000000000"
     index_path.write_text(json.dumps(index, sort_keys=True), encoding="utf-8")
 
-    with pytest.raises(
-        ProofCorpusStoreIntegrityError, match="missing envelope"
-    ):
+    with pytest.raises(ProofCorpusStoreIntegrityError, match="missing envelope"):
         ProofCorpusStore(root=root)
 
 

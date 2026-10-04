@@ -33,12 +33,10 @@ from .contracts import (
 
 
 LEANSTRAL_DIAGNOSTIC_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "leanstral-diagnostic-projection.v1"
+    "ipfs-datasets.logic-pipeline-benchmark.leanstral-diagnostic-projection.v1"
 )
 LEANSTRAL_DIAGNOSTIC_SOURCE_SET_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "leanstral-diagnostic-source-set.v1"
+    "ipfs-datasets.logic-pipeline-benchmark.leanstral-diagnostic-source-set.v1"
 )
 LEANSTRAL_DIAGNOSTIC_SAFE_FAILURE_CLASSES: Final = (
     "inadmissible_proposal",
@@ -87,9 +85,7 @@ class LeanstralDiagnosticError(ValueError):
 
 
 def _mapping(value: object, field: str) -> Mapping[str, object]:
-    if not isinstance(value, Mapping) or not all(
-        isinstance(key, str) for key in value
-    ):
+    if not isinstance(value, Mapping) or not all(isinstance(key, str) for key in value):
         raise LeanstralDiagnosticError(f"{field} must be an object")
     return value
 
@@ -108,14 +104,8 @@ def _exact_fields(
 
 
 def _count(value: object, field: str, *, maximum: int) -> int:
-    if (
-        isinstance(value, bool)
-        or not isinstance(value, int)
-        or not 0 <= value <= maximum
-    ):
-        raise LeanstralDiagnosticError(
-            f"{field} must be an integer from 0 to {maximum}"
-        )
+    if isinstance(value, bool) or not isinstance(value, int) or not 0 <= value <= maximum:
+        raise LeanstralDiagnosticError(f"{field} must be an integer from 0 to {maximum}")
     return value
 
 
@@ -128,10 +118,7 @@ def _fixed_count_map(
 ) -> dict[str, int]:
     data = _mapping(value, field)
     _exact_fields(data, set(keys), field)
-    return {
-        key: _count(data[key], f"{field}.{key}", maximum=maximum)
-        for key in keys
-    }
+    return {key: _count(data[key], f"{field}.{key}", maximum=maximum) for key in keys}
 
 
 def _fixed_wall_time_map(
@@ -147,10 +134,7 @@ def _fixed_wall_time_map(
         set(LEANSTRAL_DIAGNOSTIC_SAFE_FAILURE_CLASSES),
         field,
     )
-    maximum_total = (
-        maximum_source_results
-        * LEANSTRAL_DIAGNOSTIC_MAX_STAGE_WALL_TIME_MS
-    )
+    maximum_total = maximum_source_results * LEANSTRAL_DIAGNOSTIC_MAX_STAGE_WALL_TIME_MS
     normalized: dict[str, float] = {}
     for safe_class in LEANSTRAL_DIAGNOSTIC_SAFE_FAILURE_CLASSES:
         raw = data[safe_class]
@@ -160,22 +144,12 @@ def _fixed_wall_time_map(
             or not math.isfinite(float(raw))
             or not 0.0 <= float(raw) <= maximum_total
         ):
-            raise LeanstralDiagnosticError(
-                f"{field}.{safe_class} is outside the aggregate bound"
-            )
+            raise LeanstralDiagnosticError(f"{field}.{safe_class} is outside the aggregate bound")
         measured = float(raw)
         if class_counts[safe_class] == 0 and measured != 0.0:
-            raise LeanstralDiagnosticError(
-                f"{field}.{safe_class} has time without a failure"
-            )
-        if (
-            measured
-            > class_counts[safe_class]
-            * LEANSTRAL_DIAGNOSTIC_MAX_STAGE_WALL_TIME_MS
-        ):
-            raise LeanstralDiagnosticError(
-                f"{field}.{safe_class} exceeds its per-stage bound"
-            )
+            raise LeanstralDiagnosticError(f"{field}.{safe_class} has time without a failure")
+        if measured > class_counts[safe_class] * LEANSTRAL_DIAGNOSTIC_MAX_STAGE_WALL_TIME_MS:
+            raise LeanstralDiagnosticError(f"{field}.{safe_class} exceeds its per-stage bound")
         normalized[safe_class] = measured
     return normalized
 
@@ -190,9 +164,7 @@ def _result_cid(result: CaseResultRecord) -> str:
 def _validated_sources(
     sources: Sequence[CaseResultRecord],
 ) -> tuple[tuple[str, CaseResultRecord], ...]:
-    if isinstance(sources, (str, bytes, bytearray)) or not isinstance(
-        sources, Sequence
-    ):
+    if isinstance(sources, (str, bytes, bytearray)) or not isinstance(sources, Sequence):
         raise LeanstralDiagnosticError(
             "sources must be a bounded sequence of CaseResultRecord values"
         )
@@ -206,9 +178,7 @@ def _validated_sources(
     environments: set[str | None] = set()
     for source in sources:
         if not isinstance(source, CaseResultRecord):
-            raise LeanstralDiagnosticError(
-                "sources must contain CaseResultRecord values"
-            )
+            raise LeanstralDiagnosticError("sources must contain CaseResultRecord values")
         try:
             validated = CaseResultRecord.from_dict(source.to_dict())
         except (TypeError, ValueError) as exc:
@@ -216,9 +186,7 @@ def _validated_sources(
                 "source result did not survive strict wire validation"
             ) from exc
         if validated != source:
-            raise LeanstralDiagnosticError(
-                "source result changed during strict wire validation"
-            )
+            raise LeanstralDiagnosticError("source result changed during strict wire validation")
         source_identities.add(
             (
                 source.protocol_sha256,
@@ -226,9 +194,7 @@ def _validated_sources(
                 source.case_manifest_sha256,
             )
         )
-        environments.update(
-            stage.provenance.environment_sha256 for stage in source.stages
-        )
+        environments.update(stage.provenance.environment_sha256 for stage in source.stages)
         restored.append((_result_cid(source), source))
 
     if len(source_identities) != 1:
@@ -241,9 +207,7 @@ def _validated_sources(
         )
     cids = [cid for cid, _source in restored]
     if len(set(cids)) != len(cids):
-        raise LeanstralDiagnosticError(
-            "source results contain duplicate content identities"
-        )
+        raise LeanstralDiagnosticError("source results contain duplicate content identities")
     return tuple(sorted(restored, key=lambda item: item[0]))
 
 
@@ -261,17 +225,11 @@ def _failure_class_and_phase(stage: StageRecord) -> tuple[str, str]:
     )
     safe_class = data["safe_failure_class"]
     if safe_class not in LEANSTRAL_DIAGNOSTIC_SAFE_FAILURE_CLASSES:
-        raise LeanstralDiagnosticError(
-            "Leanstral failure class is not allow-listed"
-        )
+        raise LeanstralDiagnosticError("Leanstral failure class is not allow-listed")
     if data["schema"] != LEANSTRAL_GENERATION_FAILURE_SCHEMA:
-        raise LeanstralDiagnosticError(
-            "Leanstral failure data uses the wrong schema"
-        )
+        raise LeanstralDiagnosticError("Leanstral failure data uses the wrong schema")
     if data["request_input_sha256"] != stage.provenance.input_sha256:
-        raise LeanstralDiagnosticError(
-            "Leanstral failure input identity changed"
-        )
+        raise LeanstralDiagnosticError("Leanstral failure input identity changed")
 
     boundary = _mapping(
         data["generation_failure_boundary"],
@@ -286,42 +244,28 @@ def _failure_class_and_phase(stage: StageRecord) -> tuple[str, str]:
         "receipt_sha256",
     }
     if not required_boundary_fields.issubset(boundary):
-        raise LeanstralDiagnosticError(
-            "Leanstral failure boundary is incomplete"
-        )
+        raise LeanstralDiagnosticError("Leanstral failure boundary is incomplete")
     phase = boundary["phase"]
     if (
         boundary["schema"] != LEANSTRAL_GENERATION_FAILURE_SCHEMA
         or boundary["safe_failure_class"] != safe_class
         or phase not in LEANSTRAL_DIAGNOSTIC_FAILURE_PHASES
     ):
-        raise LeanstralDiagnosticError(
-            "Leanstral failure boundary class or phase changed"
-        )
+        raise LeanstralDiagnosticError("Leanstral failure boundary class or phase changed")
     http_status = boundary["http_status"]
-    if (
-        http_status is not None
-        and (
-            isinstance(http_status, bool)
-            or not isinstance(http_status, int)
-            or not 100 <= http_status <= 599
-        )
+    if http_status is not None and (
+        isinstance(http_status, bool)
+        or not isinstance(http_status, int)
+        or not 100 <= http_status <= 599
     ):
-        raise LeanstralDiagnosticError(
-            "Leanstral failure HTTP status is invalid"
-        )
+        raise LeanstralDiagnosticError("Leanstral failure HTTP status is invalid")
     request_digest = boundary["request_payload_sha256"]
     if request_digest is not None and (
-        not isinstance(request_digest, str)
-        or _DIGEST.fullmatch(request_digest) is None
+        not isinstance(request_digest, str) or _DIGEST.fullmatch(request_digest) is None
     ):
-        raise LeanstralDiagnosticError(
-            "Leanstral failure request digest is invalid"
-        )
+        raise LeanstralDiagnosticError("Leanstral failure request digest is invalid")
     receipt_digest = boundary["receipt_sha256"]
-    boundary_body = {
-        key: value for key, value in boundary.items() if key != "receipt_sha256"
-    }
+    boundary_body = {key: value for key, value in boundary.items() if key != "receipt_sha256"}
     expected_receipt_digest = hashlib.sha256(
         canonical_json(boundary_body).encode("utf-8")
     ).hexdigest()
@@ -330,27 +274,20 @@ def _failure_class_and_phase(stage: StageRecord) -> tuple[str, str]:
         or _DIGEST.fullmatch(receipt_digest) is None
         or receipt_digest != expected_receipt_digest
     ):
-        raise LeanstralDiagnosticError(
-            "Leanstral failure boundary content address changed"
-        )
+        raise LeanstralDiagnosticError("Leanstral failure boundary content address changed")
 
     identity = stage.provenance.effective_identity
     if (
         identity.get("leanstral_safe_failure_class") != safe_class
-        or identity.get("leanstral_failure_boundary_sha256")
-        != receipt_digest
+        or identity.get("leanstral_failure_boundary_sha256") != receipt_digest
     ):
-        raise LeanstralDiagnosticError(
-            "Leanstral failure provenance differs from its boundary"
-        )
+        raise LeanstralDiagnosticError("Leanstral failure provenance differs from its boundary")
     if safe_class == "unavailable":
         expected_status = StageStatus.UNAVAILABLE
         expected_code = FailureCode.CAPABILITY_UNAVAILABLE
     else:
         expected_status = StageStatus.FAILED
-        expected_code = (
-            FailureCode.LEANSTRAL_TIMEOUT_SCHEMA_OR_FORBIDDEN_CONSTRUCT
-        )
+        expected_code = FailureCode.LEANSTRAL_TIMEOUT_SCHEMA_OR_FORBIDDEN_CONSTRUCT
     if stage.status is not expected_status or stage.failure_code is not expected_code:
         raise LeanstralDiagnosticError(
             "Leanstral safe class differs from its legacy failure contract"
@@ -381,30 +318,17 @@ def _projection_body(
 
     for _source_cid, source in validated_sources:
         stage = next(
-            (
-                candidate
-                for candidate in source.stages
-                if candidate.stage is StageName.LEANSTRAL
-            ),
+            (candidate for candidate in source.stages if candidate.stage is StageName.LEANSTRAL),
             None,
         )
         if stage is None:
             continue
-        graph_invoked = stage.provenance.effective_identity.get(
-            "graph_invoked"
-        )
+        graph_invoked = stage.provenance.effective_identity.get("graph_invoked")
         if type(graph_invoked) is not bool:
-            raise LeanstralDiagnosticError(
-                "Leanstral source omitted its graph invocation decision"
-            )
+            raise LeanstralDiagnosticError("Leanstral source omitted its graph invocation decision")
         if not graph_invoked:
-            if (
-                stage.status is not StageStatus.SUCCESS
-                or stage.failure_code is not None
-            ):
-                raise LeanstralDiagnosticError(
-                    "suppressed Leanstral stage carries a failure"
-                )
+            if stage.status is not StageStatus.SUCCESS or stage.failure_code is not None:
+                raise LeanstralDiagnosticError("suppressed Leanstral stage carries a failure")
             continue
 
         invocation_count += 1
@@ -441,8 +365,7 @@ def _projection_body(
             for safe_class in LEANSTRAL_DIAGNOSTIC_SAFE_FAILURE_CLASSES
         },
         "failure_phase_counts": {
-            phase: phase_counts[phase]
-            for phase in LEANSTRAL_DIAGNOSTIC_FAILURE_PHASES
+            phase: phase_counts[phase] for phase in LEANSTRAL_DIAGNOSTIC_FAILURE_PHASES
         },
         "wall_time_ms_by_safe_failure_class": {
             safe_class: round(math.fsum(wall_times[safe_class]), 6)
@@ -455,22 +378,16 @@ def _validate_receipt_shape(value: object) -> dict[str, object]:
     data = _mapping(value, "Leanstral diagnostic projection")
     _exact_fields(data, _PROJECTION_FIELDS, "Leanstral diagnostic projection")
     if data["schema"] != LEANSTRAL_DIAGNOSTIC_SCHEMA:
-        raise LeanstralDiagnosticError(
-            "unsupported Leanstral diagnostic projection schema"
-        )
+        raise LeanstralDiagnosticError("unsupported Leanstral diagnostic projection schema")
     if data["source_recomputed"] is not True:
-        raise LeanstralDiagnosticError(
-            "Leanstral diagnostics must be source-recomputed"
-        )
+        raise LeanstralDiagnosticError("Leanstral diagnostics must be source-recomputed")
     source_result_count = _count(
         data["source_result_count"],
         "source_result_count",
         maximum=LEANSTRAL_DIAGNOSTIC_MAX_SOURCE_RESULTS,
     )
     if source_result_count == 0:
-        raise LeanstralDiagnosticError(
-            "Leanstral diagnostics require source results"
-        )
+        raise LeanstralDiagnosticError("Leanstral diagnostics require source results")
     try:
         source_results_cid = validate_cid(
             data["source_results_cid"],
@@ -481,9 +398,7 @@ def _validate_receipt_shape(value: object) -> dict[str, object]:
             codecs=("dag-json",),
         )
     except (TypeError, ValueError) as exc:
-        raise LeanstralDiagnosticError(
-            "Leanstral diagnostic provenance CID is invalid"
-        ) from exc
+        raise LeanstralDiagnosticError("Leanstral diagnostic provenance CID is invalid") from exc
 
     invocation_count = _count(
         data["invocation_count"],
@@ -511,13 +426,9 @@ def _validate_receipt_shape(value: object) -> dict[str, object]:
         maximum=failure_count,
     )
     if success_count + failure_count != invocation_count:
-        raise LeanstralDiagnosticError(
-            "Leanstral success/failure totals do not cover invocations"
-        )
+        raise LeanstralDiagnosticError("Leanstral success/failure totals do not cover invocations")
     if recovered_count + terminal_count != failure_count:
-        raise LeanstralDiagnosticError(
-            "Leanstral recovered/terminal totals do not cover failures"
-        )
+        raise LeanstralDiagnosticError("Leanstral recovered/terminal totals do not cover failures")
 
     class_counts = _fixed_count_map(
         data["safe_failure_class_counts"],
@@ -532,13 +443,9 @@ def _validate_receipt_shape(value: object) -> dict[str, object]:
         maximum=failure_count,
     )
     if sum(class_counts.values()) != failure_count:
-        raise LeanstralDiagnosticError(
-            "Leanstral failure classes do not cover failures"
-        )
+        raise LeanstralDiagnosticError("Leanstral failure classes do not cover failures")
     if sum(phase_counts.values()) != failure_count:
-        raise LeanstralDiagnosticError(
-            "Leanstral failure phases do not cover failures"
-        )
+        raise LeanstralDiagnosticError("Leanstral failure phases do not cover failures")
     wall_times = _fixed_wall_time_map(
         data["wall_time_ms_by_safe_failure_class"],
         class_counts=class_counts,
@@ -560,9 +467,7 @@ def _validate_receipt_shape(value: object) -> dict[str, object]:
         "wall_time_ms_by_safe_failure_class": wall_times,
     }
     if receipt_cid != cid_for_dag_json(normalized):
-        raise LeanstralDiagnosticError(
-            "Leanstral diagnostic receipt content address changed"
-        )
+        raise LeanstralDiagnosticError("Leanstral diagnostic receipt content address changed")
     return {**normalized, "receipt_cid": receipt_cid}
 
 

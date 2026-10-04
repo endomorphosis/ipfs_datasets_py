@@ -88,51 +88,32 @@ from .variants import (
 )
 
 
-MATRIX_INDEX_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.reassessment-matrix.v1"
-)
+MATRIX_INDEX_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.reassessment-matrix.v1"
 MATRIX_SNAPSHOT_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.reassessment-matrix-snapshot.v1"
 )
-RESOURCE_LEDGER_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.matrix-resource-ledger.v1"
-)
+RESOURCE_LEDGER_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.matrix-resource-ledger.v1"
 MATRIX_SEED: Final = 2737
 EXPECTED_CASES_PER_SPLIT: Final = 10
 EXPECTED_COORDINATE_COUNT: Final = 560
-DEFAULT_MATRIX_ROOT: Final = Path(
-    ReassessmentRunLayout.for_run(REASSESSMENT_RUN_ID).matrix_root
-)
-DEFAULT_MATRIX_INDEX: Final = Path(
-    ReassessmentRunLayout.for_run(REASSESSMENT_RUN_ID).matrix_index
-)
+DEFAULT_MATRIX_ROOT: Final = Path(ReassessmentRunLayout.for_run(REASSESSMENT_RUN_ID).matrix_root)
+DEFAULT_MATRIX_INDEX: Final = Path(ReassessmentRunLayout.for_run(REASSESSMENT_RUN_ID).matrix_index)
 DEFAULT_MATRIX_SNAPSHOT: Final = Path(
     ReassessmentRunLayout.for_run(REASSESSMENT_RUN_ID).matrix_snapshot
 )
 FROZEN_SELECTION_PATH: Final = Path(
-    "workspace/benchmarks/hammer-symai-spacy-leanstral/results/"
-    "pilot-shortlist-v1.json"
+    "workspace/benchmarks/hammer-symai-spacy-leanstral/results/pilot-shortlist-v1.json"
 )
 FROZEN_SELECTION_BYTES_SHA256: Final = (
     "0e702d4e19dbc242b445f4f6ef91647506ee4c0174072318098a6f6be2173e45"
 )
 FROZEN_SELECTION_SHA256S: Final = MappingProxyType(
     {
-        "freeze": (
-            "1349e8ed8cdc20bcfc6de4b6eba83f41a9188702a95c28a7ec3566127d24b007"
-        ),
-        "prompts": (
-            "7f3140b13261feb8d6eb22a3df60c3b7656649306d1a683b91979922655c369b"
-        ),
-        "policies": (
-            "528ed32632e523e0c0c79abb0459bdba8f6c68bafda5609db04ec35dc5b771e0"
-        ),
-        "resource_policy": (
-            "66bd17812fee1b8d5a59b31ded57552c44c161fbda8fa8b82d4ab1f1f712bdfb"
-        ),
-        "thresholds": (
-            "17f2bc866988a7fd5101a6ce6b905beff5f010c17195289078cd81077df0d424"
-        ),
+        "freeze": ("1349e8ed8cdc20bcfc6de4b6eba83f41a9188702a95c28a7ec3566127d24b007"),
+        "prompts": ("7f3140b13261feb8d6eb22a3df60c3b7656649306d1a683b91979922655c369b"),
+        "policies": ("528ed32632e523e0c0c79abb0459bdba8f6c68bafda5609db04ec35dc5b771e0"),
+        "resource_policy": ("66bd17812fee1b8d5a59b31ded57552c44c161fbda8fa8b82d4ab1f1f712bdfb"),
+        "thresholds": ("17f2bc866988a7fd5101a6ce6b905beff5f010c17195289078cd81077df0d424"),
     }
 )
 REQUIRED_COMMAND: Final = (
@@ -165,22 +146,17 @@ def _sha_bytes(value: bytes) -> str:
 
 
 def _mapping(value: object, field: str) -> Mapping[str, object]:
-    if not isinstance(value, Mapping) or not all(
-        isinstance(key, str) for key in value
-    ):
+    if not isinstance(value, Mapping) or not all(isinstance(key, str) for key in value):
         raise MatrixReassessmentError(f"{field} must be an object")
     return value
 
 
-def _exact(
-    value: Mapping[str, object], expected: set[str], field: str
-) -> None:
+def _exact(value: Mapping[str, object], expected: set[str], field: str) -> None:
     missing = expected - set(value)
     unknown = set(value) - expected
     if missing or unknown:
         raise MatrixReassessmentError(
-            f"{field} fields changed: missing={sorted(missing)}, "
-            f"unknown={sorted(unknown)}"
+            f"{field} fields changed: missing={sorted(missing)}, unknown={sorted(unknown)}"
         )
 
 
@@ -251,14 +227,10 @@ def _sealed_non_holdout_cases(
             manifest_path=manifest_path,
         )
     except CorpusContractError as exc:
-        raise MatrixReassessmentError(
-            "frozen unsealed corpus prefix is invalid"
-        ) from exc
+        raise MatrixReassessmentError("frozen unsealed corpus prefix is invalid") from exc
     if (
-        manifest.split_counts.get(Split.PILOT.value)
-        != EXPECTED_CASES_PER_SPLIT
-        or manifest.split_counts.get(Split.DEVELOPMENT.value)
-        != EXPECTED_CASES_PER_SPLIT
+        manifest.split_counts.get(Split.PILOT.value) != EXPECTED_CASES_PER_SPLIT
+        or manifest.split_counts.get(Split.DEVELOPMENT.value) != EXPECTED_CASES_PER_SPLIT
         or len(cases) != 2 * EXPECTED_CASES_PER_SPLIT
     ):
         raise MatrixReassessmentError("frozen reviewed split cardinality drifted")
@@ -268,18 +240,14 @@ def _sealed_non_holdout_cases(
 def _normalize_splits(splits: Sequence[Split]) -> tuple[Split, ...]:
     value = tuple(splits)
     if value != _MATRIX_SPLITS:
-        raise MatrixReassessmentError(
-            "reassessment execution requires exactly pilot,development"
-        )
+        raise MatrixReassessmentError("reassessment execution requires exactly pilot,development")
     return value
 
 
 def _normalize_modes(modes: Sequence[CacheMode]) -> tuple[CacheMode, ...]:
     value = tuple(modes)
     if value != _MATRIX_CACHE_MODES:
-        raise MatrixReassessmentError(
-            "reassessment execution requires exactly cold,warm"
-        )
+        raise MatrixReassessmentError("reassessment execution requires exactly cold,warm")
     return value
 
 
@@ -287,10 +255,7 @@ def _validate_counterbalance(plan: AblationPlan) -> None:
     if tuple(plan.variant_ids) != tuple(ALL_VARIANT_IDS):
         raise MatrixReassessmentError("matrix arm registry is incomplete")
     position_counts = {
-        mode: {
-            variant: [0] * len(ALL_VARIANT_IDS)
-            for variant in ALL_VARIANT_IDS
-        }
+        mode: {variant: [0] * len(ALL_VARIANT_IDS) for variant in ALL_VARIANT_IDS}
         for mode in _MATRIX_CACHE_MODES
     }
     for block in plan.blocks:
@@ -317,9 +282,7 @@ def build_reassessment_plans(
 
     if not isinstance(frozen_reprobe, LiveCapabilityReprobe):
         raise MatrixReassessmentError("frozen_reprobe is invalid")
-    selected_run_id = (
-        frozen_reprobe.inventory.run_id if run_id is None else run_id
-    )
+    selected_run_id = frozen_reprobe.inventory.run_id if run_id is None else run_id
     try:
         ReassessmentRunLayout.for_run(selected_run_id)
     except ValueError as exc:
@@ -378,31 +341,18 @@ def _receipt_binding(
 ) -> dict[str, object]:
     prefix, separator, suffix = receipt.owner_id.partition("-")
     ordinal_text, stage_separator, stage_text = suffix.partition("-")
-    if (
-        prefix != "lease"
-        or not separator
-        or not stage_separator
-        or not ordinal_text.isdigit()
-    ):
-        raise MatrixReassessmentError(
-            "resource lease owner is not schedule-bound"
-        )
+    if prefix != "lease" or not separator or not stage_separator or not ordinal_text.isdigit():
+        raise MatrixReassessmentError("resource lease owner is not schedule-bound")
     ordinal = int(ordinal_text)
     if ordinal >= len(run.plan.jobs) or str(ordinal) != ordinal_text:
-        raise MatrixReassessmentError(
-            "resource lease owner has an invalid job ordinal"
-        )
+        raise MatrixReassessmentError("resource lease owner has an invalid job ordinal")
     try:
         stage = StageName(stage_text)
     except ValueError as exc:
-        raise MatrixReassessmentError(
-            "resource lease owner has an invalid stage"
-        ) from exc
+        raise MatrixReassessmentError("resource lease owner has an invalid stage") from exc
     job = run.plan.jobs[ordinal]
     if stage not in get_variant_definition(job.variant_id).stages:
-        raise MatrixReassessmentError(
-            "resource lease stage is outside the scheduled route"
-        )
+        raise MatrixReassessmentError("resource lease stage is outside the scheduled route")
     return {
         "owner_id": receipt.owner_id,
         "job_id": job.job_id,
@@ -421,9 +371,7 @@ def _build_ledger(
     graph_invoked = _invoked_stage_owners(run)
     graph_owners = {owner for owner, _, _ in graph_invoked}
     if graph_owners != set(by_owner):
-        raise MatrixReassessmentError(
-            "resource lease receipts differ from the invoked stage graph"
-        )
+        raise MatrixReassessmentError("resource lease receipts differ from the invoked stage graph")
     bindings = [_receipt_binding(run, receipt) for receipt in receipts]
     without_digest = {
         "schema": RESOURCE_LEDGER_SCHEMA,
@@ -472,17 +420,13 @@ def _validate_ledger(
     if not isinstance(raw_receipts, list) or not isinstance(raw_bindings, list):
         raise MatrixReassessmentError("resource ledger arrays are invalid")
     try:
-        receipts = tuple(
-            ResourceLeaseReceipt.from_dict(item) for item in raw_receipts
-        )
+        receipts = tuple(ResourceLeaseReceipt.from_dict(item) for item in raw_receipts)
     except (CapabilityContractError, TypeError, ValueError) as exc:
         raise MatrixReassessmentError("resource receipt is invalid") from exc
     by_owner = {receipt.owner_id: receipt for receipt in receipts}
     graph_invoked = _invoked_stage_owners(run)
     graph_owners = {owner for owner, _, _ in graph_invoked}
-    expected_bindings = [
-        _receipt_binding(run, receipt) for receipt in receipts
-    ]
+    expected_bindings = [_receipt_binding(run, receipt) for receipt in receipts]
     if (
         len(by_owner) != len(receipts)
         or graph_owners != set(by_owner)
@@ -529,9 +473,7 @@ def _kernel_receipt_valid(
     for stage in record.stages:
         if stage.stage is not StageName.KERNEL:
             continue
-        graph_invoked = stage.provenance.effective_identity.get(
-            "graph_invoked"
-        )
+        graph_invoked = stage.provenance.effective_identity.get("graph_invoked")
         has_native_receipt = (
             isinstance(stage.data, Mapping)
             and stage.data.get("schema") == NATIVE_KERNEL_RECEIPT_SCHEMA
@@ -543,20 +485,14 @@ def _kernel_receipt_valid(
                 )
             continue
         if graph_invoked is not True:
-            if (
-                require_graph_decision
-                or stage.kernel_accepted
-                or has_native_receipt
-            ):
+            if require_graph_decision or stage.kernel_accepted or has_native_receipt:
                 raise MatrixReassessmentError(
                     "kernel stage lacks an explicit graph invocation decision"
                 )
             continue
         invoked += 1
         try:
-            raw_acceptance = validate_native_kernel_stage_receipt(
-                stage
-            )
+            raw_acceptance = validate_native_kernel_stage_receipt(stage)
         except ProtocolContractError as exc:
             raise MatrixReassessmentError(
                 "invoked kernel lacks a valid source-bound terminal receipt"
@@ -613,33 +549,22 @@ def _split_summary(
     measured_symai_wall_time_ms = 0.0
     measured_symai_model_calls = 0
     refs: list[dict[str, object]] = []
-    for ordinal, (job, result) in enumerate(
-        zip(run.plan.jobs, run.results, strict=True)
-    ):
+    for ordinal, (job, result) in enumerate(zip(run.plan.jobs, run.results, strict=True)):
         if result.status not in set(OutcomeStatus):
             raise MatrixReassessmentError("case result is not terminal")
         if any(
-            stage.provenance.environment_sha256
-            != run.plan.environment_sha256
+            stage.provenance.environment_sha256 != run.plan.environment_sha256
             for stage in result.stages
         ):
-            raise MatrixReassessmentError(
-                "matrix result environment differs from its frozen plan"
-            )
+            raise MatrixReassessmentError("matrix result environment differs from its frozen plan")
         statuses[result.status.value] += 1
         path = _result_path(split_root, run.plan, ordinal)
         raw = path.read_bytes()
         try:
-            envelope = _mapping(
-                json.loads(raw), "matrix result envelope"
-            )
+            envelope = _mapping(json.loads(raw), "matrix result envelope")
         except (json.JSONDecodeError, UnicodeError) as exc:
-            raise MatrixReassessmentError(
-                "matrix result envelope is not canonical JSON"
-            ) from exc
-        current_envelope = (
-            envelope.get("schema") == ABLATION_RESULT_SCHEMA
-        )
+            raise MatrixReassessmentError("matrix result envelope is not canonical JSON") from exc
+        current_envelope = envelope.get("schema") == ABLATION_RESULT_SCHEMA
         for stage in result.stages:
             if stage.failure_code is not None:
                 failures[stage.failure_code.value] += 1
@@ -650,21 +575,15 @@ def _split_summary(
             try:
                 prime = extract_symai_cache_prime_receipt(stage)
             except ProtocolContractError as exc:
-                raise MatrixReassessmentError(
-                    "SyMAI cache-prime receipt is invalid"
-                ) from exc
+                raise MatrixReassessmentError("SyMAI cache-prime receipt is invalid") from exc
             if prime is not None and stage.stage is not StageName.SYMAI:
-                raise MatrixReassessmentError(
-                    "cache-prime evidence is only defined for SyMAI"
-                )
+                raise MatrixReassessmentError("cache-prime evidence is only defined for SyMAI")
             if not current_envelope or stage.stage is not StageName.SYMAI:
                 continue
             effective = stage.provenance.effective_identity
             graph_invoked = effective.get("graph_invoked") is True
             expected_warm_measurement = (
-                job.cache_mode is CacheMode.WARM
-                and graph_invoked
-                and job.variant_id != "S1"
+                job.cache_mode is CacheMode.WARM and graph_invoked and job.variant_id != "S1"
             )
             if expected_warm_measurement:
                 if prime is None:
@@ -672,17 +591,11 @@ def _split_summary(
                         "invoked warm SyMAI stage omitted its cache-prime receipt"
                     )
                 cache_prime_count += 1
-                warm_symai_measured_invocation_count += int(
-                    prime.measured_invoked
-                )
-                warm_symai_backend_invocation_count += (
-                    symai_backend_invocation_count(stage)
-                )
+                warm_symai_measured_invocation_count += int(prime.measured_invoked)
+                warm_symai_backend_invocation_count += symai_backend_invocation_count(stage)
                 setup = extract_symai_cache_setup_telemetry(stage)
                 if setup is None:
-                    raise MatrixReassessmentError(
-                        "SyMAI cache-prime setup telemetry is missing"
-                    )
+                    raise MatrixReassessmentError("SyMAI cache-prime setup telemetry is missing")
                 cache_setup_wall_time_ms += setup.wall_time_ms
                 cache_setup_model_calls += setup.model_calls
                 cache_setup_retries += setup.retries
@@ -708,31 +621,21 @@ def _split_summary(
                 and graph_invoked
                 and job.variant_id != "S1"
                 and stage.status is StageStatus.SUCCESS
-                and (
-                    stage.telemetry.cache_hits != 0
-                    or stage.telemetry.cache_misses != 1
-                )
+                and (stage.telemetry.cache_hits != 0 or stage.telemetry.cache_misses != 1)
             ):
-                raise MatrixReassessmentError(
-                    "cold SyMAI measurement is not an exact cache miss"
-                )
+                raise MatrixReassessmentError("cold SyMAI measurement is not an exact cache miss")
         invoked, accepted, raw_accepted = _kernel_receipt_valid(
             result,
             require_graph_decision=current_envelope,
         )
         kernel_invoked += invoked
         kernel_accepted += accepted
-        recovered_codes = tuple(
-            code.value for code in result.recovered_failure_codes
-        )
+        recovered_codes = tuple(code.value for code in result.recovered_failure_codes)
         recovered_failures.update(recovered_codes)
         expected_class = job.case.input_data.get("expected_class")
         if expected_class == ExpectedClass.UNSUPPORTED.value:
             invalid_control_coordinates += 1
-        if (
-            expected_class == ExpectedClass.UNSUPPORTED.value
-            and raw_accepted > 0
-        ):
+        if expected_class == ExpectedClass.UNSUPPORTED.value and raw_accepted > 0:
             invalid_verified += 1
         if job.variant_id == "S1" and result.status is OutcomeStatus.VERIFIED:
             raise MatrixReassessmentError("S1 diagnostic claimed verification")
@@ -756,9 +659,7 @@ def _split_summary(
             reference["recovered_failure_codes"] = list(recovered_codes)
         refs.append(reference)
     if invalid_verified:
-        raise MatrixReassessmentError(
-            "invalid controls have kernel-verified false positives"
-        )
+        raise MatrixReassessmentError("invalid controls have kernel-verified false positives")
     plan_path = split_root / "state" / "ablation-plan.json"
     summary = {
         "split": run.plan.split.value,
@@ -789,52 +690,35 @@ def _split_summary(
     }
     if recovered_failures:
         summary["recovered_failure_count"] = sum(recovered_failures.values())
-        summary["recovered_failure_counts"] = dict(
-            sorted(recovered_failures.items())
-        )
+        summary["recovered_failure_counts"] = dict(sorted(recovered_failures.items()))
     if cache_prime_count:
         summary["symai_cache_measurement"] = {
             "cache_semantics": "setup_then_measured_hit",
             "prime_receipt_count": cache_prime_count,
-            "measured_invocation_count": (
-                warm_symai_measured_invocation_count
-            ),
-            "backend_invocation_count": (
-                warm_symai_backend_invocation_count
-            ),
+            "measured_invocation_count": (warm_symai_measured_invocation_count),
+            "backend_invocation_count": (warm_symai_backend_invocation_count),
             "measured_hit_count": warm_symai_measured_hit_count,
             "prime_failure_count": cache_prime_failure_count,
-            "cache_setup_wall_time_ms_total": round(
-                cache_setup_wall_time_ms, 6
-            ),
+            "cache_setup_wall_time_ms_total": round(cache_setup_wall_time_ms, 6),
             "cache_setup_model_calls": cache_setup_model_calls,
             "cache_setup_retries": cache_setup_retries,
-            "measured_wall_time_ms_total": round(
-                measured_symai_wall_time_ms, 6
-            ),
+            "measured_wall_time_ms_total": round(measured_symai_wall_time_ms, 6),
             "measured_model_calls": measured_symai_model_calls,
             "inclusive_wall_time_ms_total": round(
-                cache_setup_wall_time_ms
-                + measured_symai_wall_time_ms,
+                cache_setup_wall_time_ms + measured_symai_wall_time_ms,
                 6,
             ),
-            "inclusive_model_calls": (
-                cache_setup_model_calls + measured_symai_model_calls
-            ),
+            "inclusive_model_calls": (cache_setup_model_calls + measured_symai_model_calls),
             "leanstral_cache_semantics": "not_applicable",
         }
     return summary
 
 
-def _selection_inputs(
-    repository: Path, frozen: LiveCapabilityReprobe
-) -> dict[str, object]:
+def _selection_inputs(repository: Path, frozen: LiveCapabilityReprobe) -> dict[str, object]:
     source_path = repository / FROZEN_SELECTION_PATH
     raw = source_path.read_bytes()
     if _sha_bytes(raw) != FROZEN_SELECTION_BYTES_SHA256:
-        raise MatrixReassessmentError(
-            "frozen pilot/development selection input bytes changed"
-        )
+        raise MatrixReassessmentError("frozen pilot/development selection input bytes changed")
     source = _mapping(
         _read_canonical(source_path, "frozen selection input"),
         "frozen selection input",
@@ -842,27 +726,19 @@ def _selection_inputs(
     deep_freeze = _mapping(source.get("deep_freeze"), "selection deep freeze")
     observed = {
         "freeze": deep_freeze.get("freeze_sha256"),
-        "prompts": _mapping(
-            deep_freeze.get("prompts"), "frozen prompts"
-        ).get("sha256"),
-        "policies": _mapping(
-            deep_freeze.get("policies"), "frozen policies"
-        ).get("sha256"),
+        "prompts": _mapping(deep_freeze.get("prompts"), "frozen prompts").get("sha256"),
+        "policies": _mapping(deep_freeze.get("policies"), "frozen policies").get("sha256"),
         "resource_policy": _mapping(
             deep_freeze.get("resource_policy"), "frozen resource policy"
         ).get("sha256"),
-        "thresholds": _mapping(
-            deep_freeze.get("thresholds"), "frozen thresholds"
-        ).get("sha256"),
+        "thresholds": _mapping(deep_freeze.get("thresholds"), "frozen thresholds").get("sha256"),
     }
     if (
         observed != dict(FROZEN_SELECTION_SHA256S)
         or deep_freeze.get("frozen") is not True
         or deep_freeze.get("tuning_permitted") is not False
     ):
-        raise MatrixReassessmentError(
-            "frozen pilot/development selection contract changed"
-        )
+        raise MatrixReassessmentError("frozen pilot/development selection contract changed")
     return {
         "splits": [split.value for split in _MATRIX_SPLITS],
         "cache_modes": [mode.value for mode in _MATRIX_CACHE_MODES],
@@ -874,9 +750,7 @@ def _selection_inputs(
         },
         "prompts_sha256": FROZEN_SELECTION_SHA256S["prompts"],
         "policies_sha256": FROZEN_SELECTION_SHA256S["policies"],
-        "resource_policy_sha256": FROZEN_SELECTION_SHA256S[
-            "resource_policy"
-        ],
+        "resource_policy_sha256": FROZEN_SELECTION_SHA256S["resource_policy"],
         "thresholds_sha256": FROZEN_SELECTION_SHA256S["thresholds"],
         "repaired_model_identities_sha256": frozen.inventory.sha256,
         "prompts_frozen": True,
@@ -895,21 +769,11 @@ def _build_index(
 ) -> dict[str, object]:
     totals = {
         "case_count": sum(int(item["case_count"]) for item in summaries),
-        "coordinate_count": sum(
-            int(item["coordinate_count"]) for item in summaries
-        ),
-        "kernel_invoked_count": sum(
-            int(item["kernel_invoked_count"]) for item in summaries
-        ),
-        "kernel_accepted_count": sum(
-            int(item["kernel_accepted_count"]) for item in summaries
-        ),
-        "invoked_stage_count": sum(
-            int(item["invoked_stage_count"]) for item in summaries
-        ),
-        "resource_lease_count": sum(
-            int(item["resource_lease_count"]) for item in summaries
-        ),
+        "coordinate_count": sum(int(item["coordinate_count"]) for item in summaries),
+        "kernel_invoked_count": sum(int(item["kernel_invoked_count"]) for item in summaries),
+        "kernel_accepted_count": sum(int(item["kernel_accepted_count"]) for item in summaries),
+        "invoked_stage_count": sum(int(item["invoked_stage_count"]) for item in summaries),
+        "resource_lease_count": sum(int(item["resource_lease_count"]) for item in summaries),
         "invalid_control_verified_count": sum(
             int(item["invalid_control_verified_count"]) for item in summaries
         ),
@@ -930,9 +794,7 @@ def _build_index(
         )
     if recovered_failures:
         totals["recovered_failure_count"] = sum(recovered_failures.values())
-        totals["recovered_failure_counts"] = dict(
-            sorted(recovered_failures.items())
-        )
+        totals["recovered_failure_counts"] = dict(sorted(recovered_failures.items()))
     cache_measurements = [
         _mapping(
             summary["symai_cache_measurement"],
@@ -943,67 +805,47 @@ def _build_index(
     ]
     if cache_measurements:
         if len(cache_measurements) != len(summaries):
-            raise MatrixReassessmentError(
-                "SyMAI cache measurement coverage differs by split"
-            )
+            raise MatrixReassessmentError("SyMAI cache measurement coverage differs by split")
         totals["symai_cache_measurement"] = {
             "cache_semantics": "setup_then_measured_hit",
             "prime_receipt_count": sum(
-                int(item["prime_receipt_count"])
-                for item in cache_measurements
+                int(item["prime_receipt_count"]) for item in cache_measurements
             ),
             "measured_invocation_count": sum(
-                int(item["measured_invocation_count"])
-                for item in cache_measurements
+                int(item["measured_invocation_count"]) for item in cache_measurements
             ),
             "backend_invocation_count": sum(
-                int(item["backend_invocation_count"])
-                for item in cache_measurements
+                int(item["backend_invocation_count"]) for item in cache_measurements
             ),
             "measured_hit_count": sum(
-                int(item["measured_hit_count"])
-                for item in cache_measurements
+                int(item["measured_hit_count"]) for item in cache_measurements
             ),
             "prime_failure_count": sum(
-                int(item["prime_failure_count"])
-                for item in cache_measurements
+                int(item["prime_failure_count"]) for item in cache_measurements
             ),
             "cache_setup_wall_time_ms_total": round(
-                sum(
-                    float(item["cache_setup_wall_time_ms_total"])
-                    for item in cache_measurements
-                ),
+                sum(float(item["cache_setup_wall_time_ms_total"]) for item in cache_measurements),
                 6,
             ),
             "cache_setup_model_calls": sum(
-                int(item["cache_setup_model_calls"])
-                for item in cache_measurements
+                int(item["cache_setup_model_calls"]) for item in cache_measurements
             ),
             "cache_setup_retries": sum(
-                int(item["cache_setup_retries"])
-                for item in cache_measurements
+                int(item["cache_setup_retries"]) for item in cache_measurements
             ),
             "measured_wall_time_ms_total": round(
-                sum(
-                    float(item["measured_wall_time_ms_total"])
-                    for item in cache_measurements
-                ),
+                sum(float(item["measured_wall_time_ms_total"]) for item in cache_measurements),
                 6,
             ),
             "measured_model_calls": sum(
-                int(item["measured_model_calls"])
-                for item in cache_measurements
+                int(item["measured_model_calls"]) for item in cache_measurements
             ),
             "inclusive_wall_time_ms_total": round(
-                sum(
-                    float(item["inclusive_wall_time_ms_total"])
-                    for item in cache_measurements
-                ),
+                sum(float(item["inclusive_wall_time_ms_total"]) for item in cache_measurements),
                 6,
             ),
             "inclusive_model_calls": sum(
-                int(item["inclusive_model_calls"])
-                for item in cache_measurements
+                int(item["inclusive_model_calls"]) for item in cache_measurements
             ),
             "leanstral_cache_semantics": "not_applicable",
         }
@@ -1038,12 +880,8 @@ def _build_index(
             "fallback_used": False,
             "capability_missingness_synthesized_as_efficacy": False,
             "production_routing_changed": False,
-            "invalid_control_verified_count": totals[
-                "invalid_control_verified_count"
-            ],
-            "invalid_control_coordinate_count": totals[
-                "invalid_control_coordinate_count"
-            ],
+            "invalid_control_verified_count": totals["invalid_control_verified_count"],
+            "invalid_control_coordinate_count": totals["invalid_control_coordinate_count"],
         },
     }
     if (
@@ -1093,9 +931,7 @@ def _snapshot_artifact_reference(
     target = _rooted(repository, index_path)
     _assert_no_symlink_chain(root, target, "matrix snapshot artifact")
     try:
-        relative = target.resolve(strict=True).relative_to(
-            root.resolve(strict=True)
-        )
+        relative = target.resolve(strict=True).relative_to(root.resolve(strict=True))
     except (OSError, ValueError) as exc:
         raise MatrixReassessmentError(
             "matrix snapshot artifact is outside its canonical reference root"
@@ -1107,41 +943,24 @@ def _snapshot_artifact_reference(
         or Path(reference).is_absolute()
         or any(part in {"", ".", ".."} for part in relative.parts)
     ):
-        raise MatrixReassessmentError(
-            "matrix snapshot artifact path is not canonical"
-        )
+        raise MatrixReassessmentError("matrix snapshot artifact path is not canonical")
     return reference
 
 
 def _snapshot_capture_date(run_id: str, value: object | None = None) -> str:
     if run_id == PUBLISHED_REASSESSMENT_RUN_ID:
         if value not in {None, "2026-07-24"}:
-            raise MatrixReassessmentError(
-                "published matrix snapshot capture date changed"
-            )
+            raise MatrixReassessmentError("published matrix snapshot capture date changed")
         return "2026-07-24"
-    captured_on = (
-        datetime.now(timezone.utc).date().isoformat()
-        if value is None
-        else value
-    )
+    captured_on = datetime.now(timezone.utc).date().isoformat() if value is None else value
     if not isinstance(captured_on, str):
-        raise MatrixReassessmentError(
-            "fresh matrix snapshot capture date is invalid"
-        )
+        raise MatrixReassessmentError("fresh matrix snapshot capture date is invalid")
     try:
         captured = date.fromisoformat(captured_on)
     except ValueError as exc:
-        raise MatrixReassessmentError(
-            "fresh matrix snapshot capture date is invalid"
-        ) from exc
-    if (
-        captured_on != captured.isoformat()
-        or captured > datetime.now(timezone.utc).date()
-    ):
-        raise MatrixReassessmentError(
-            "fresh matrix snapshot capture date is invalid"
-        )
+        raise MatrixReassessmentError("fresh matrix snapshot capture date is invalid") from exc
+    if captured_on != captured.isoformat() or captured > datetime.now(timezone.utc).date():
+        raise MatrixReassessmentError("fresh matrix snapshot capture date is invalid")
     return captured_on
 
 
@@ -1176,9 +995,7 @@ def _snapshot(
                     run_id=run_id,
                     benchmark_root=benchmark_root,
                 ),
-                "bytes_sha256": _sha_bytes(
-                    _rooted(repository, index_path).read_bytes()
-                ),
+                "bytes_sha256": _sha_bytes(_rooted(repository, index_path).read_bytes()),
                 "semantic_sha256": index["artifact_sha256"],
             },
             "scope": {
@@ -1186,9 +1003,7 @@ def _snapshot(
                 "variant_ids": list(ALL_VARIANT_IDS),
                 "cache_modes": ["cold", "warm"],
             },
-            "completeness": dict(
-                _mapping(index["totals"], "matrix totals")
-            ),
+            "completeness": dict(_mapping(index["totals"], "matrix totals")),
             "safety": dict(_mapping(index["safety"], "matrix safety")),
             "source_binding": dict(source),
         },
@@ -1256,18 +1071,14 @@ def _validate_index_payload(
             run = validate_ablation_evidence(
                 plan,
                 output_root=split_root,
-                allow_legacy_results=(
-                    expected_run_id == PUBLISHED_REASSESSMENT_RUN_ID
-                ),
+                allow_legacy_results=(expected_run_id == PUBLISHED_REASSESSMENT_RUN_ID),
             )
         except AblationValidationError as exc:
             raise MatrixReassessmentError(
                 f"{plan.split.value} ablation evidence is invalid: {exc}"
             ) from exc
         ledger_path = _ledger_path(split_root)
-        ledger = _validate_ledger(
-            _read_canonical(ledger_path, "resource ledger"), run
-        )
+        ledger = _validate_ledger(_read_canonical(ledger_path, "resource ledger"), run)
         summary = _split_summary(
             run=run,
             split_root=split_root,
@@ -1276,9 +1087,7 @@ def _validate_index_payload(
             ledger=ledger,
         )
         if raw != summary:
-            raise MatrixReassessmentError(
-                f"{plan.split.value} matrix summary changed"
-            )
+            raise MatrixReassessmentError(f"{plan.split.value} matrix summary changed")
         summaries.append(summary)
     expected = _build_index(frozen, summaries, repository)
     if data != expected:
@@ -1308,9 +1117,7 @@ def validate_reassessment_matrix(
     except ValueError as exc:
         raise MatrixReassessmentError("matrix run_id is invalid") from exc
     root = Path(layout.matrix_root if output_root is None else output_root)
-    snapshot = Path(
-        layout.matrix_snapshot if snapshot_path is None else snapshot_path
-    )
+    snapshot = Path(layout.matrix_snapshot if snapshot_path is None else snapshot_path)
     index_path = _index_path(root)
     try:
         frozen = frozen_reprobe or validate_frozen_capability_reprobe(
@@ -1371,14 +1178,10 @@ def execute_reassessment_matrix(
         raise MatrixReassessmentError("resume must be a boolean")
     repository = Path(repository_root).resolve()
     selected_run_id = (
-        frozen_reprobe.inventory.run_id
-        if run_id is None and frozen_reprobe is not None
-        else run_id
+        frozen_reprobe.inventory.run_id if run_id is None and frozen_reprobe is not None else run_id
     )
     if selected_run_id is None:
-        raise MatrixReassessmentError(
-            "fresh matrix execution requires an explicit run_id"
-        )
+        raise MatrixReassessmentError("fresh matrix execution requires an explicit run_id")
     try:
         layout = require_fresh_reassessment_run(
             selected_run_id,
@@ -1386,15 +1189,10 @@ def execute_reassessment_matrix(
         )
     except ReassessmentNamespaceError as exc:
         raise MatrixReassessmentError(str(exc)) from exc
-    if (
-        frozen_reprobe is not None
-        and frozen_reprobe.inventory.run_id != selected_run_id
-    ):
+    if frozen_reprobe is not None and frozen_reprobe.inventory.run_id != selected_run_id:
         raise MatrixReassessmentError("capability run identity drifted")
     root = Path(layout.matrix_root if output_root is None else output_root)
-    snapshot = Path(
-        layout.matrix_snapshot if snapshot_path is None else snapshot_path
-    )
+    snapshot = Path(layout.matrix_snapshot if snapshot_path is None else snapshot_path)
     index_path = _index_path(root)
     try:
         reject_published_write_targets(
@@ -1476,9 +1274,7 @@ def execute_reassessment_matrix(
                 resume=False,
             )
             if not run.complete:
-                raise MatrixReassessmentError(
-                    f"{plan.split.value} execution is incomplete"
-                )
+                raise MatrixReassessmentError(f"{plan.split.value} execution is incomplete")
             ledger_value = _build_ledger(run)
             _write_once(ledger_path, ledger_value)
             validated_run = validate_ablation_evidence(

@@ -5,7 +5,10 @@ import threading
 
 import pytest
 
-from ipfs_datasets_py.processors.wallets.worldcoin import DEFAULT_WORLD_ID_ACTION, load_world_id_config
+from ipfs_datasets_py.processors.wallets.worldcoin import (
+    DEFAULT_WORLD_ID_ACTION,
+    load_world_id_config,
+)
 from ipfs_datasets_py.processors.wallets.worldcoin.bindings import (
     WorldIdBindingError,
     WorldIdBindingStore,

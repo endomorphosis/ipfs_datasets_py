@@ -56,12 +56,8 @@ RESOLUTION_STATUSES: Final[frozenset[str]] = frozenset(
     }
 )
 
-_IDENTIFIER_RE: Final[re.Pattern[str]] = re.compile(
-    r"^[A-Za-z0-9][A-Za-z0-9._:/#@+-]{0,2047}$"
-)
-_MODULE_RE: Final[re.Pattern[str]] = re.compile(
-    r"^[A-Za-z0-9_$@.][A-Za-z0-9_$@./-]{0,2047}$"
-)
+_IDENTIFIER_RE: Final[re.Pattern[str]] = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/#@+-]{0,2047}$")
+_MODULE_RE: Final[re.Pattern[str]] = re.compile(r"^[A-Za-z0-9_$@.][A-Za-z0-9_$@./-]{0,2047}$")
 _JS_EXTENSIONS: Final[tuple[str, ...]] = (
     ".d.ts",
     ".tsx",
@@ -107,10 +103,7 @@ def _text(
         value
         and not allow_empty
         and not (
-            module
-            and _MODULE_RE.fullmatch(value)
-            or not module
-            and _IDENTIFIER_RE.fullmatch(value)
+            module and _MODULE_RE.fullmatch(value) or not module and _IDENTIFIER_RE.fullmatch(value)
         )
     ):
         kind = "module path" if module else "identifier"
@@ -130,12 +123,9 @@ def _strings(
     try:
         items = tuple(value)
     except TypeError as exc:
-        raise ResolutionValidationError(
-            f"{field_name} must be an ordered sequence"
-        ) from exc
+        raise ResolutionValidationError(f"{field_name} must be an ordered sequence") from exc
     result = tuple(
-        _text(item, f"{field_name}[{index}]", module=modules)
-        for index, item in enumerate(items)
+        _text(item, f"{field_name}[{index}]", module=modules) for index, item in enumerate(items)
     )
     if not allow_empty and not result:
         raise ResolutionValidationError(f"{field_name} must not be empty")
@@ -155,8 +145,7 @@ def _closed(
     extra = set(value) - fields
     if missing or extra:
         raise ResolutionValidationError(
-            f"{record_name} fields are closed "
-            f"(missing={sorted(missing)}, extra={sorted(extra)})"
+            f"{record_name} fields are closed (missing={sorted(missing)}, extra={sorted(extra)})"
         )
     return dict(value)
 
@@ -182,9 +171,7 @@ class RepositoryPin(_CanonicalResolutionRecord):
     revision: str
     module_prefixes: tuple[str, ...]
 
-    _FIELDS: ClassVar[frozenset[str]] = frozenset(
-        {"repository_id", "revision", "module_prefixes"}
-    )
+    _FIELDS: ClassVar[frozenset[str]] = frozenset({"repository_id", "revision", "module_prefixes"})
 
     def __post_init__(self) -> None:
         object.__setattr__(
@@ -233,9 +220,7 @@ class ModuleAlias(_CanonicalResolutionRecord):
     targets: tuple[str, ...]
     optional: bool = False
 
-    _FIELDS: ClassVar[frozenset[str]] = frozenset(
-        {"name", "targets", "optional"}
-    )
+    _FIELDS: ClassVar[frozenset[str]] = frozenset({"name", "targets", "optional"})
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "name", _text(self.name, "name", module=True))
@@ -274,22 +259,16 @@ class RepositoryComposition(_CanonicalResolutionRecord):
 
     def __post_init__(self) -> None:
         if self.schema != RESOLVER_SCHEMA:
-            raise ResolutionValidationError(
-                f"schema must be exactly {RESOLVER_SCHEMA}"
-            )
+            raise ResolutionValidationError(f"schema must be exactly {RESOLVER_SCHEMA}")
         if isinstance(self.repositories, (str, bytes, Mapping, set, frozenset)):
             raise ResolutionValidationError("repositories must be an ordered sequence")
         repositories = tuple(self.repositories)
         if not repositories or not all(type(item) is RepositoryPin for item in repositories):
-            raise ResolutionValidationError(
-                "repositories must contain exact RepositoryPin records"
-            )
+            raise ResolutionValidationError("repositories must contain exact RepositoryPin records")
         repository_ids = [item.repository_id for item in repositories]
         if len(repository_ids) != len(set(repository_ids)):
             raise ResolutionValidationError("repository_id values must be unique")
-        prefixes = [
-            prefix for item in repositories for prefix in item.module_prefixes
-        ]
+        prefixes = [prefix for item in repositories for prefix in item.module_prefixes]
         if len(prefixes) != len(set(prefixes)):
             raise ResolutionValidationError(
                 "a module prefix must have exactly one repository owner"
@@ -340,8 +319,7 @@ class RepositoryComposition(_CanonicalResolutionRecord):
                 "repository_revisions and package_owners must be exact mappings"
             )
         prefixes: dict[str, list[str]] = {
-            _text(repository_id, "repository_id"): []
-            for repository_id in repository_revisions
+            _text(repository_id, "repository_id"): [] for repository_id in repository_revisions
         }
         for package, repository_id in package_owners.items():
             package_name = _text(package, "package", module=True)
@@ -387,11 +365,7 @@ class RepositoryComposition(_CanonicalResolutionRecord):
 
     def repository(self, repository_id: str) -> RepositoryPin | None:
         return next(
-            (
-                item
-                for item in self.repositories
-                if item.repository_id == repository_id
-            ),
+            (item for item in self.repositories if item.repository_id == repository_id),
             None,
         )
 
@@ -434,9 +408,7 @@ class RepositoryComposition(_CanonicalResolutionRecord):
         data = _closed(value, cls._FIELDS, cls.__name__)
         return cls(
             schema=data["schema"],
-            repositories=tuple(
-                RepositoryPin.from_dict(item) for item in data["repositories"]
-            ),
+            repositories=tuple(RepositoryPin.from_dict(item) for item in data["repositories"]),
             aliases=tuple(ModuleAlias.from_dict(item) for item in data["aliases"]),
             optional_modules=tuple(data["optional_modules"]),
         )
@@ -519,9 +491,7 @@ class ResolutionResult(_CanonicalResolutionRecord):
             _text(self.requested, "requested", module=True),
         )
         if self.status not in RESOLUTION_STATUSES:
-            raise ResolutionValidationError(
-                f"status must be one of {sorted(RESOLUTION_STATUSES)}"
-            )
+            raise ResolutionValidationError(f"status must be one of {sorted(RESOLUTION_STATUSES)}")
         if isinstance(self.candidates, (str, bytes, Mapping, set, frozenset)):
             raise ResolutionValidationError("candidates must be an ordered sequence")
         candidates = tuple(self.candidates)
@@ -543,21 +513,15 @@ class ResolutionResult(_CanonicalResolutionRecord):
         if type(self.is_optional) is not bool:
             raise ResolutionValidationError("is_optional must be an exact bool")
         if self.status == STATUS_DEFINITE and len(self.candidates) != 1:
-            raise ResolutionValidationError(
-                "definite resolution requires exactly one candidate"
-            )
+            raise ResolutionValidationError("definite resolution requires exactly one candidate")
         if self.status == STATUS_FINITE_MAY and len(self.candidates) < 2:
             raise ResolutionValidationError(
                 "finite_may resolution requires at least two candidates"
             )
         if self.status in {STATUS_OPTIONAL, STATUS_MISSING} and self.candidates:
-            raise ResolutionValidationError(
-                f"{self.status} resolution cannot contain candidates"
-            )
+            raise ResolutionValidationError(f"{self.status} resolution cannot contain candidates")
         if self.status == STATUS_OPTIONAL and not self.is_optional:
-            raise ResolutionValidationError(
-                "optional resolution must set is_optional"
-            )
+            raise ResolutionValidationError("optional resolution must set is_optional")
 
     @property
     def is_resolved(self) -> bool:
@@ -578,9 +542,7 @@ class ResolutionResult(_CanonicalResolutionRecord):
         return cls(
             requested=data["requested"],
             status=data["status"],
-            candidates=tuple(
-                ResolutionTarget.from_dict(item) for item in data["candidates"]
-            ),
+            candidates=tuple(ResolutionTarget.from_dict(item) for item in data["candidates"]),
             reason=data["reason"],
             is_optional=data["is_optional"],
         )
@@ -641,9 +603,7 @@ class ImportEdge(_CanonicalResolutionRecord):
         if type(self.is_type_only) is not bool:
             raise ResolutionValidationError("is_type_only must be an exact bool")
         if type(self.resolution) is not ResolutionResult:
-            raise ResolutionValidationError(
-                "resolution must be an exact ResolutionResult"
-            )
+            raise ResolutionValidationError("resolution must be an exact ResolutionResult")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -709,9 +669,7 @@ class ExportEdge(_CanonicalResolutionRecord):
                 _text(self.via_import_id, "via_import_id"),
             )
         if type(self.resolution) is not ResolutionResult:
-            raise ResolutionValidationError(
-                "resolution must be an exact ResolutionResult"
-            )
+            raise ResolutionValidationError("resolution must be an exact ResolutionResult")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -765,13 +723,9 @@ class ProtocolImplementation(_CanonicalResolutionRecord):
         ):
             raise ResolutionValidationError("implementation must be a symbol target")
         if self.kind not in {"explicit", "inherited", "structural"}:
-            raise ResolutionValidationError(
-                "kind must be explicit, inherited, or structural"
-            )
+            raise ResolutionValidationError("kind must be explicit, inherited, or structural")
         if self.certainty not in {STATUS_DEFINITE, STATUS_FINITE_MAY}:
-            raise ResolutionValidationError(
-                "protocol certainty must be definite or finite_may"
-            )
+            raise ResolutionValidationError("protocol certainty must be definite or finite_may")
         if self.base_reference_id is not None:
             object.__setattr__(
                 self,
@@ -835,12 +789,8 @@ class RepositoryResolution(_CanonicalResolutionRecord):
 
     def __post_init__(self) -> None:
         if self.schema != RESOLVER_SCHEMA:
-            raise ResolutionValidationError(
-                f"schema must be exactly {RESOLVER_SCHEMA}"
-            )
-        object.__setattr__(
-            self, "composition_cid", _text(self.composition_cid, "composition_cid")
-        )
+            raise ResolutionValidationError(f"schema must be exactly {RESOLVER_SCHEMA}")
+        object.__setattr__(self, "composition_cid", _text(self.composition_cid, "composition_cid"))
         typed_sequences = (
             ("import_edges", ImportEdge),
             ("export_edges", ExportEdge),
@@ -870,9 +820,7 @@ class RepositoryResolution(_CanonicalResolutionRecord):
             "composition_cid": self.composition_cid,
             "import_edges": [item.to_dict() for item in self.import_edges],
             "export_edges": [item.to_dict() for item in self.export_edges],
-            "protocol_implementations": [
-                item.to_dict() for item in self.protocol_implementations
-            ],
+            "protocol_implementations": [item.to_dict() for item in self.protocol_implementations],
             "ignored_mirror_record_cids": list(self.ignored_mirror_record_cids),
             "stale_record_cids": list(self.stale_record_cids),
         }
@@ -883,19 +831,12 @@ class RepositoryResolution(_CanonicalResolutionRecord):
         return cls(
             schema=data["schema"],
             composition_cid=data["composition_cid"],
-            import_edges=tuple(
-                ImportEdge.from_dict(item) for item in data["import_edges"]
-            ),
-            export_edges=tuple(
-                ExportEdge.from_dict(item) for item in data["export_edges"]
-            ),
+            import_edges=tuple(ImportEdge.from_dict(item) for item in data["import_edges"]),
+            export_edges=tuple(ExportEdge.from_dict(item) for item in data["export_edges"]),
             protocol_implementations=tuple(
-                ProtocolImplementation.from_dict(item)
-                for item in data["protocol_implementations"]
+                ProtocolImplementation.from_dict(item) for item in data["protocol_implementations"]
             ),
-            ignored_mirror_record_cids=tuple(
-                data["ignored_mirror_record_cids"]
-            ),
+            ignored_mirror_record_cids=tuple(data["ignored_mirror_record_cids"]),
             stale_record_cids=tuple(data["stale_record_cids"]),
         )
 
@@ -916,18 +857,14 @@ class SymbolResolver:
         max_reexport_depth: int = 32,
     ) -> None:
         if type(composition) is not RepositoryComposition:
-            raise ResolutionValidationError(
-                "composition must be an exact RepositoryComposition"
-            )
+            raise ResolutionValidationError("composition must be an exact RepositoryComposition")
         if isinstance(records, (str, bytes, Mapping, set, frozenset)):
             raise ResolutionValidationError("records must be an ordered sequence")
         supplied = tuple(records)
         if not all(type(item) is ASTRecord for item in supplied):
             raise ResolutionValidationError("records must contain exact ASTRecord values")
         if type(max_reexport_depth) is not int or not 1 <= max_reexport_depth <= 256:
-            raise ResolutionValidationError(
-                "max_reexport_depth must be an integer in 1..256"
-            )
+            raise ResolutionValidationError("max_reexport_depth must be an integer in 1..256")
         self.composition = composition
         self.records = tuple(sorted(supplied, key=lambda item: item.cid))
         self.max_reexport_depth = max_reexport_depth
@@ -945,9 +882,7 @@ class SymbolResolver:
                 self._ignored.append(record)
                 continue
             destination = (
-                self._pinned
-                if owner.revision == record.provenance.revision
-                else self._stale
+                self._pinned if owner.revision == record.provenance.revision else self._stale
             )
             destination.setdefault(module_name, []).append(record)
         for index in (self._pinned, self._stale):
@@ -1004,9 +939,7 @@ class SymbolResolver:
         alias, suffix = self.composition.alias_for(module_name)
         if alias is None:
             return ((module_name,), self.composition.is_optional(module_name))
-        targets = tuple(
-            target + suffix.replace("/", ".") for target in alias.targets
-        )
+        targets = tuple(target + suffix.replace("/", ".") for target in alias.targets)
         return (tuple(sorted(set(targets))), alias.optional)
 
     @staticmethod
@@ -1091,14 +1024,10 @@ class SymbolResolver:
             )
         names, optional = self._expanded_modules(normalized)
         candidates = [
-            self._module_target(record)
-            for name in names
-            for record in self._pinned.get(name, ())
+            self._module_target(record) for name in names for record in self._pinned.get(name, ())
         ]
         stale = [
-            self._module_target(record)
-            for name in names
-            for record in self._stale.get(name, ())
+            self._module_target(record) for name in names for record in self._stale.get(name, ())
         ]
         if not candidates and stale:
             return self._result(
@@ -1170,9 +1099,7 @@ class SymbolResolver:
         if local:
             return tuple(self._symbol_target(record, item) for item in local)
 
-        matching_imports = tuple(
-            item for item in record.imports if item.local_name == name
-        )
+        matching_imports = tuple(item for item in record.imports if item.local_name == name)
         if not matching_imports:
             return ()
         targets: list[ResolutionTarget] = []
@@ -1223,9 +1150,7 @@ class SymbolResolver:
         # ``from package import submodule`` is valid even when the package
         # module has no symbol definition for the child.
         if not candidates:
-            submodule_names = tuple(
-                f"{item.module}.{symbol_name}" for item in modules.candidates
-            )
+            submodule_names = tuple(f"{item.module}.{symbol_name}" for item in modules.candidates)
             for submodule_name in submodule_names:
                 submodule = self.resolve_module(submodule_name)
                 candidates.extend(submodule.candidates)
@@ -1237,9 +1162,7 @@ class SymbolResolver:
             optional=modules.is_optional,
             missing_reason="symbol is not exported by the resolved module",
             unresolved_reason=(
-                "re-export chain is cyclic or exceeds its configured bound"
-                if unresolved
-                else None
+                "re-export chain is cyclic or exceeds its configured bound" if unresolved else None
             ),
         )
 
@@ -1353,8 +1276,7 @@ class SymbolResolver:
                     (
                         item
                         for item in record.imports
-                        if item.local_name == name
-                        and item.kind in {"re_export", "symbol"}
+                        if item.local_name == name and item.kind in {"re_export", "symbol"}
                     ),
                     None,
                 )
@@ -1406,9 +1328,7 @@ class SymbolResolver:
             prefix = target.qualified_name or target.module
             qualified = f"{prefix}.{suffix}"
             matches = tuple(
-                symbol
-                for symbol in record.symbols
-                if symbol.qualified_name == qualified
+                symbol for symbol in record.symbols if symbol.qualified_name == qualified
             )
             candidates.extend(self._symbol_target(record, item) for item in matches)
         return self._result(
@@ -1434,15 +1354,11 @@ class SymbolResolver:
             return mismatch
 
         first, separator, suffix = reference.name.partition(".")
-        parent_by_scope = {
-            item.scope_id: item.parent_scope_id for item in source.scopes
-        }
+        parent_by_scope = {item.scope_id: item.parent_scope_id for item in source.scopes}
         scope_id: str | None = reference.scope_id
         while scope_id is not None:
             symbols = tuple(
-                item
-                for item in source.symbols
-                if item.scope_id == scope_id and item.name == first
+                item for item in source.symbols if item.scope_id == scope_id and item.name == first
             )
             if symbols:
                 base = self._result(
@@ -1452,9 +1368,7 @@ class SymbolResolver:
                     missing_reason="",
                 )
                 return (
-                    self._member_from_targets(reference.name, base, suffix)
-                    if separator
-                    else base
+                    self._member_from_targets(reference.name, base, suffix) if separator else base
                 )
             imports = tuple(
                 item
@@ -1478,16 +1392,12 @@ class SymbolResolver:
                     optional=optional,
                     missing_reason="import binding has no target",
                     unresolved_reason=(
-                        "one or more import bindings are unresolved"
-                        if unresolved
-                        else None
+                        "one or more import bindings are unresolved" if unresolved else None
                     ),
                     stale=stale,
                 )
                 return (
-                    self._member_from_targets(reference.name, base, suffix)
-                    if separator
-                    else base
+                    self._member_from_targets(reference.name, base, suffix) if separator else base
                 )
             scope_id = parent_by_scope.get(scope_id)
         return self._result(
@@ -1523,9 +1433,7 @@ class SymbolResolver:
     @staticmethod
     def _owned_members(record: ASTRecord, owner: SymbolDefinition) -> tuple[str, ...]:
         scope_ids = {
-            scope.scope_id
-            for scope in record.scopes
-            if scope.owner_symbol_id == owner.symbol_id
+            scope.scope_id for scope in record.scopes if scope.owner_symbol_id == owner.symbol_id
         }
         return tuple(
             sorted(
@@ -1575,9 +1483,7 @@ class SymbolResolver:
 
         # An explicit base which resolves to a protocol/interface is definite;
         # a finite base set stays finite-may.
-        relationships: dict[
-            tuple[str, str, str, str], ProtocolImplementation
-        ] = {}
+        relationships: dict[tuple[str, str, str, str], ProtocolImplementation] = {}
         base_links: dict[
             tuple[str, str],
             list[tuple[tuple[str, str], ReferenceRecord, str]],
@@ -1592,23 +1498,17 @@ class SymbolResolver:
                     )
                 if candidate_key not in protocol_keys:
                     continue
-                protocol_record, protocol_symbol, protocol_target = class_targets[
-                    candidate_key
-                ]
+                protocol_record, protocol_symbol, protocol_target = class_targets[candidate_key]
                 implementation_target = self._symbol_target(record, implementation)
                 relation = ProtocolImplementation(
                     protocol=protocol_target,
                     implementation=implementation_target,
                     kind="explicit",
                     certainty=(
-                        STATUS_DEFINITE
-                        if base.status == STATUS_DEFINITE
-                        else STATUS_FINITE_MAY
+                        STATUS_DEFINITE if base.status == STATUS_DEFINITE else STATUS_FINITE_MAY
                     ),
                     base_reference_id=reference.reference_id,
-                    required_members=self._owned_members(
-                        protocol_record, protocol_symbol
-                    ),
+                    required_members=self._owned_members(protocol_record, protocol_symbol),
                 )
                 relationships[
                     (
@@ -1658,9 +1558,7 @@ class SymbolResolver:
                                 else STATUS_FINITE_MAY
                             ),
                             base_reference_id=reference.reference_id,
-                            required_members=self._owned_members(
-                                protocol_record, protocol_symbol
-                            ),
+                            required_members=self._owned_members(protocol_record, protocol_symbol),
                         )
                         changed = True
 
@@ -1668,9 +1566,7 @@ class SymbolResolver:
         # Empty marker protocols are not expanded structurally because they
         # would match every class and destroy useful precision.
         for protocol_key in sorted(protocol_keys):
-            protocol_record, protocol_symbol, protocol_target = class_targets[
-                protocol_key
-            ]
+            protocol_record, protocol_symbol, protocol_target = class_targets[protocol_key]
             required = set(self._owned_members(protocol_record, protocol_symbol))
             if not required:
                 continue
@@ -1689,11 +1585,7 @@ class SymbolResolver:
                 )
                 if key in relationships:
                     continue
-                provided = set(
-                    self._owned_members(
-                        implementation_record, implementation_symbol
-                    )
-                )
+                provided = set(self._owned_members(implementation_record, implementation_symbol))
                 if required <= provided:
                     relationships[key] = ProtocolImplementation(
                         protocol=protocol_target,
@@ -1703,18 +1595,12 @@ class SymbolResolver:
                         required_members=tuple(required),
                     )
 
-        return tuple(
-            sorted(relationships.values(), key=lambda item: item.canonical_bytes)
-        )
+        return tuple(sorted(relationships.values(), key=lambda item: item.canonical_bytes))
 
     def resolve(self) -> RepositoryResolution:
         """Build the deterministic resolution artifact consumed by call graphs."""
 
-        stale = tuple(
-            record.cid
-            for records in self._stale.values()
-            for record in records
-        )
+        stale = tuple(record.cid for records in self._stale.values() for record in records)
         return RepositoryResolution(
             composition_cid=self.composition.cid,
             import_edges=self.resolve_imports(),

@@ -105,9 +105,7 @@ def _record(
                         }
                     ],
                 },
-                "source_span_sha256": hashlib.sha256(
-                    SOURCE.encode("utf-8")
-                ).hexdigest(),
+                "source_span_sha256": hashlib.sha256(SOURCE.encode("utf-8")).hexdigest(),
                 "structural_signature": "structural-1",
             },
             {
@@ -128,9 +126,7 @@ def _record(
                     },
                     "temporal_anchors": [],
                 },
-                "source_span_sha256": hashlib.sha256(
-                    b"emergency"
-                ).hexdigest(),
+                "source_span_sha256": hashlib.sha256(b"emergency").hexdigest(),
                 "structural_signature": "structural-helper",
             },
         ]
@@ -251,9 +247,7 @@ def _constructor(
             if requested == DEFAULT_SPACY_MODEL
             else pytest.fail("constructor requested the wrong model")
         ),
-        repairer=lambda modal_ir: (
-            record if record is not None else _record()
-        ),
+        repairer=lambda modal_ir: record if record is not None else _record(),
     )
 
 
@@ -296,9 +290,7 @@ def test_full_pipeline_projects_only_canonical_scored_fields() -> None:
             }
         ]
     }
-    assert set(
-        construction.result.canonical_ir.to_dict()["rules"][0]
-    ) == {
+    assert set(construction.result.canonical_ir.to_dict()["rules"][0]) == {
         "modality",
         "actor",
         "action",
@@ -313,16 +305,11 @@ def test_full_pipeline_projects_only_canonical_scored_fields() -> None:
 
 
 def test_codec_added_sentencizer_does_not_relabel_full_model_as_degraded() -> None:
-    codec = _Codec(
-        pipeline=(*REQUIRED_SPACY_PIPELINE, "sentencizer")
-    )
+    codec = _Codec(pipeline=(*REQUIRED_SPACY_PIPELINE, "sentencizer"))
     construction = _constructor(codec).construct_with_diagnostics(_request())
 
     assert construction.result.status is ComponentStatus.SUCCESS
-    assert (
-        construction.diagnostics.frontend_status
-        is ModalSpacyFrontendStatus.FULL_MODEL
-    )
+    assert construction.diagnostics.frontend_status is ModalSpacyFrontendStatus.FULL_MODEL
     assert construction.diagnostics.effective_pipeline[-1] == "sentencizer"
 
 
@@ -350,11 +337,7 @@ def test_constructor_polarity_preflight_on_pilot_cases() -> None:
 
     repository_root = Path(__file__).resolve().parents[4]
     fixture_path = (
-        repository_root
-        / "tests"
-        / "fixtures"
-        / "semantic_roundtrip"
-        / "pilot_cases.json"
+        repository_root / "tests" / "fixtures" / "semantic_roundtrip" / "pilot_cases.json"
     )
     cases = json.loads(fixture_path.read_text(encoding="utf-8"))
     constructor = ModalSpacyCanonicalConstructor()
@@ -369,36 +352,25 @@ def test_constructor_polarity_preflight_on_pilot_cases() -> None:
         )
 
         if construction.result.status is ComponentStatus.FAILED:
+            assert construction.result.failure_reason is FailureReason.CAPABILITY_UNAVAILABLE, case[
+                "id"
+            ]
             assert (
-                construction.result.failure_reason
-                is FailureReason.CAPABILITY_UNAVAILABLE
-            ), case["id"]
-            assert (
-                construction.diagnostics.frontend_status
-                is ModalSpacyFrontendStatus.UNAVAILABLE
+                construction.diagnostics.frontend_status is ModalSpacyFrontendStatus.UNAVAILABLE
             ), case["id"]
             pytest.skip(
                 "the pinned full spaCy/modal frontend is unavailable: "
                 f"{construction.result.failure_detail}"
             )
-        assert construction.result.status is ComponentStatus.SUCCESS, case[
-            "id"
-        ]
+        assert construction.result.status is ComponentStatus.SUCCESS, case["id"]
         assert construction.result.canonical_ir is not None
-        assert (
-            construction.diagnostics.frontend_status
-            is ModalSpacyFrontendStatus.FULL_MODEL
-        )
+        assert construction.diagnostics.frontend_status is ModalSpacyFrontendStatus.FULL_MODEL
         assert construction.diagnostics.source_spans
 
-        preflight = polarity_preflight(
-            gold, construction.result.canonical_ir
-        )
+        preflight = polarity_preflight(gold, construction.result.canonical_ir)
         assert preflight["interface"] == POLARITY_PREFLIGHT_INTERFACE
         assert preflight["promotion_requires_full_gates"] is True
-        stage = compute_constructor_only_metrics(
-            gold, construction.result.canonical_ir
-        )
+        stage = compute_constructor_only_metrics(gold, construction.result.canonical_ir)
         assert stage.promotion_requires_full_gates is True
 
         if case["id"] == "exception_with_window":
@@ -415,11 +387,7 @@ def test_constructor_polarity_preflight_on_pilot_cases() -> None:
             residual.append(case["id"])
 
     assert "exception_with_window" in polarity_clean
-    additional = [
-        case_id
-        for case_id in polarity_clean
-        if case_id != "exception_with_window"
-    ]
+    additional = [case_id for case_id in polarity_clean if case_id != "exception_with_window"]
     if not additional:
         # Fail closed unless residual inversions are explicitly documented.
         assert residual, "expected residual inversions when no additional clean case"
@@ -430,8 +398,7 @@ def test_constructor_polarity_preflight_on_pilot_cases() -> None:
     else:
         # Document only true residuals; extras in the constant are allowed.
         assert set(residual) <= set(RESIDUAL_POLARITY_INVERSION_CASE_IDS) or (
-            RESIDUAL_POLARITY_INVERSION_CASE_IDS == ()
-            and not residual
+            RESIDUAL_POLARITY_INVERSION_CASE_IDS == () and not residual
         )
 
 
@@ -447,9 +414,7 @@ def test_constructor_matches_frozen_modal_spacy_l1_for_every_case() -> None:
 
 
 def test_source_span_diagnostics_are_preserved_outside_realizer_payload() -> None:
-    construction = _constructor(_Codec()).construct_with_diagnostics(
-        _request()
-    )
+    construction = _constructor(_Codec()).construct_with_diagnostics(_request())
 
     assert construction.result.status is ComponentStatus.SUCCESS
     diagnostics = construction.diagnostics
@@ -462,9 +427,7 @@ def test_source_span_diagnostics_are_preserved_outside_realizer_payload() -> Non
         "source_id": "doc-1",
         "start_char": 0,
         "end_char": SPAN_END,
-        "source_span_sha256": hashlib.sha256(
-            SOURCE.encode("utf-8")
-        ).hexdigest(),
+        "source_span_sha256": hashlib.sha256(SOURCE.encode("utf-8")).hexdigest(),
         "structural_signature": "structural-1",
     }
     assert SOURCE not in str(diagnostics.to_dict())
@@ -510,18 +473,10 @@ def test_degraded_frontends_fail_explicitly_without_substitution(
     construction = _constructor(codec).construct_with_diagnostics(_request())
 
     assert construction.result.status is ComponentStatus.FAILED
-    assert (
-        construction.result.failure_reason
-        is FailureReason.CAPABILITY_UNAVAILABLE
-    )
+    assert construction.result.failure_reason is FailureReason.CAPABILITY_UNAVAILABLE
     assert construction.result.canonical_ir is None
-    assert (
-        construction.diagnostics.frontend_status
-        is ModalSpacyFrontendStatus.DEGRADED
-    )
-    assert detail_fragment in (
-        construction.result.failure_detail or ""
-    )
+    assert construction.diagnostics.frontend_status is ModalSpacyFrontendStatus.DEGRADED
+    assert detail_fragment in (construction.result.failure_detail or "")
     assert codec.encode_calls == []
 
 
@@ -530,17 +485,9 @@ def test_effective_regex_parser_is_post_schedule_degradation() -> None:
     construction = _constructor(codec).construct_with_diagnostics(_request())
 
     assert construction.result.status is ComponentStatus.FAILED
-    assert (
-        construction.result.failure_reason
-        is FailureReason.CAPABILITY_UNAVAILABLE
-    )
-    assert (
-        construction.diagnostics.frontend_status
-        is ModalSpacyFrontendStatus.DEGRADED
-    )
-    assert "effective modal parser" in (
-        construction.result.failure_detail or ""
-    )
+    assert construction.result.failure_reason is FailureReason.CAPABILITY_UNAVAILABLE
+    assert construction.diagnostics.frontend_status is ModalSpacyFrontendStatus.DEGRADED
+    assert "effective modal parser" in (construction.result.failure_detail or "")
     assert len(codec.encode_calls) == 1
 
 
@@ -552,40 +499,24 @@ def test_unavailable_full_model_is_not_silently_replaced() -> None:
     construction = constructor.construct_with_diagnostics(_request())
 
     assert construction.result.status is ComponentStatus.FAILED
-    assert (
-        construction.result.failure_reason
-        is FailureReason.CAPABILITY_UNAVAILABLE
-    )
-    assert (
-        construction.diagnostics.frontend_status
-        is ModalSpacyFrontendStatus.UNAVAILABLE
-    )
+    assert construction.result.failure_reason is FailureReason.CAPABILITY_UNAVAILABLE
+    assert construction.diagnostics.frontend_status is ModalSpacyFrontendStatus.UNAVAILABLE
     assert "unavailable" in (construction.result.failure_detail or "")
-    assert "ModuleNotFoundError" in (
-        construction.result.failure_detail or ""
-    )
+    assert "ModuleNotFoundError" in (construction.result.failure_detail or "")
 
 
 def test_permission_denied_frontend_is_reported_as_unavailable() -> None:
     def denied(_requested: str) -> object:
         raise PermissionError("frontend cache is read-only")
 
-    construction = ModalSpacyCanonicalConstructor(
-        codec_factory=denied
-    ).construct_with_diagnostics(_request())
+    construction = ModalSpacyCanonicalConstructor(codec_factory=denied).construct_with_diagnostics(
+        _request()
+    )
 
     assert construction.result.status is ComponentStatus.FAILED
-    assert (
-        construction.result.failure_reason
-        is FailureReason.CAPABILITY_UNAVAILABLE
-    )
-    assert (
-        construction.diagnostics.frontend_status
-        is ModalSpacyFrontendStatus.UNAVAILABLE
-    )
-    assert "PermissionError" in (
-        construction.result.failure_detail or ""
-    )
+    assert construction.result.failure_reason is FailureReason.CAPABILITY_UNAVAILABLE
+    assert construction.diagnostics.frontend_status is ModalSpacyFrontendStatus.UNAVAILABLE
+    assert "PermissionError" in (construction.result.failure_detail or "")
 
 
 @pytest.mark.parametrize(
@@ -601,9 +532,7 @@ def test_public_config_cannot_weaken_the_full_frontend(
     config: dict[str, Any],
 ) -> None:
     codec = _Codec()
-    construction = _constructor(codec).construct_with_diagnostics(
-        _request(**config)
-    )
+    construction = _constructor(codec).construct_with_diagnostics(_request(**config))
 
     assert construction.result.status is ComponentStatus.FAILED
     assert construction.result.failure_reason is FailureReason.INVALID_OUTPUT
@@ -611,17 +540,14 @@ def test_public_config_cannot_weaken_the_full_frontend(
 
 
 def test_empty_modal_projection_is_a_typed_empty_l1_failure() -> None:
-    construction = _constructor(
-        _Codec(), record=_record(formulas=[])
-    ).construct_with_diagnostics(_request())
+    construction = _constructor(_Codec(), record=_record(formulas=[])).construct_with_diagnostics(
+        _request()
+    )
 
     assert construction.result.status is ComponentStatus.FAILED
     assert construction.result.failure_reason is FailureReason.EMPTY_L1
     assert construction.result.canonical_ir is None
-    assert (
-        construction.diagnostics.frontend_status
-        is ModalSpacyFrontendStatus.FULL_MODEL
-    )
+    assert construction.diagnostics.frontend_status is ModalSpacyFrontendStatus.FULL_MODEL
 
 
 def test_codec_exception_is_retained_as_a_terminal_failure() -> None:
@@ -631,10 +557,7 @@ def test_codec_exception_is_retained_as_a_terminal_failure() -> None:
 
     assert construction.result.status is ComponentStatus.FAILED
     assert construction.result.failure_reason is FailureReason.EXCEPTION
-    assert (
-        construction.diagnostics.frontend_status
-        is ModalSpacyFrontendStatus.UNAVAILABLE
-    )
+    assert construction.diagnostics.frontend_status is ModalSpacyFrontendStatus.UNAVAILABLE
     assert construction.result.canonical_ir is None
 
 
@@ -685,9 +608,7 @@ def _prohibition_formula(
             "start_char": 0,
             "end_char": len(surface),
         },
-        "source_span_sha256": hashlib.sha256(
-            surface.encode("utf-8")
-        ).hexdigest(),
+        "source_span_sha256": hashlib.sha256(surface.encode("utf-8")).hexdigest(),
         "structural_signature": "structural-polarity",
     }
 

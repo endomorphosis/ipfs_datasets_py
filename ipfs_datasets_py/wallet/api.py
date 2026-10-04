@@ -26,9 +26,21 @@ from pydantic import BaseModel, Field
 from . import DataWalletError, WalletService
 from .crypto import sha256_hex
 from .manifest import canonical_bytes
-from .models import AnalyticsTemplate, AccessRequest, ApprovalRequest, AuditEvent, GrantReceipt, ProofReceipt
+from .models import (
+    AnalyticsTemplate,
+    AccessRequest,
+    ApprovalRequest,
+    AuditEvent,
+    GrantReceipt,
+    ProofReceipt,
+)
 from .storage import LocalEncryptedBlobStore
-from .ucan import invocation_from_token, invocation_to_token, resource_for_export, resource_for_record
+from .ucan import (
+    invocation_from_token,
+    invocation_to_token,
+    resource_for_export,
+    resource_for_record,
+)
 
 PORTLAND_POLICE_MISSING_EMAIL = "missing@police.portlandoregon.gov"
 
@@ -522,7 +534,9 @@ def _base64url_decode_to_bytes(value: str) -> bytes:
 
 
 def _hmac_base64url(secret: str, value: str) -> str:
-    return _base64url_encode_bytes(hmac.new(secret.encode("utf-8"), value.encode("utf-8"), hashlib.sha256).digest())
+    return _base64url_encode_bytes(
+        hmac.new(secret.encode("utf-8"), value.encode("utf-8"), hashlib.sha256).digest()
+    )
 
 
 def _extract_bearer_token(authorization: str | None) -> str:
@@ -609,7 +623,9 @@ def _save_wallet_snapshot(service: WalletService, wallet_dir: Path, wallet_id: s
     )
 
 
-def _load_wallet_service(wallet_id: str, wallet_dir: Path | None = None, blob_dir: Path | None = None) -> WalletService:
+def _load_wallet_service(
+    wallet_id: str, wallet_dir: Path | None = None, blob_dir: Path | None = None
+) -> WalletService:
     manifest_dir = wallet_dir or default_wallet_dir()
     blob_root = blob_dir or default_blob_dir()
     path = wallet_path(manifest_dir, wallet_id)
@@ -637,7 +653,9 @@ def _send_webhook_notification(
     extra_payload: Dict[str, Any] | None = None,
 ) -> Dict[str, str]:
     webhook_url = str(os.getenv(f"{env_prefix}_WEBHOOK_URL") or "").strip()
-    backend = str(os.getenv(f"{env_prefix}_BACKEND") or ("http" if webhook_url else "")).strip().lower()
+    backend = (
+        str(os.getenv(f"{env_prefix}_BACKEND") or ("http" if webhook_url else "")).strip().lower()
+    )
     if not backend or not webhook_url:
         raise RuntimeError(
             f"{env_prefix}_WEBHOOK_URL environment variable is required for delivery but is not configured"
@@ -651,7 +669,9 @@ def _send_webhook_notification(
     if header_name := str(os.getenv(f"{env_prefix}_HTTP_HEADER_NAME") or "").strip():
         header_value = str(os.getenv(f"{env_prefix}_HTTP_HEADER_VALUE") or "").strip()
         if not header_value:
-            raise RuntimeError(f"{env_prefix}_HTTP_HEADER_VALUE is required when header name is set")
+            raise RuntimeError(
+                f"{env_prefix}_HTTP_HEADER_VALUE is required when header name is set"
+            )
         extra_headers[header_name] = header_value
 
     timeout_seconds = float(str(os.getenv(f"{env_prefix}_TIMEOUT_SECONDS") or "15").strip())
@@ -705,7 +725,11 @@ def _send_dead_drop_email(
     sender = str(os.getenv("WALLET_DEAD_DROP_FROM_EMAIL") or "no-reply@211-ai.org").strip()
 
     webhook_url = str(os.getenv("WALLET_DEAD_DROP_WEBHOOK_URL") or "").strip()
-    backend = str(os.getenv("WALLET_DEAD_DROP_BACKEND") or ("http" if webhook_url else "")).strip().lower()
+    backend = (
+        str(os.getenv("WALLET_DEAD_DROP_BACKEND") or ("http" if webhook_url else ""))
+        .strip()
+        .lower()
+    )
     if backend or webhook_url:
         if backend != "http" or not webhook_url:
             raise RuntimeError(
@@ -720,7 +744,9 @@ def _send_dead_drop_email(
                 "body": normalized_body,
                 "from_email": sender,
                 "attachment_base64": base64.b64encode(bundle_json.encode("utf-8")).decode("ascii"),
-                "attachment_filename": str(bundle_filename or "abby-missing-person-wallet-dead-drop.json"),
+                "attachment_filename": str(
+                    bundle_filename or "abby-missing-person-wallet-dead-drop.json"
+                ),
                 "attachment_mime_type": "application/json",
             },
         )
@@ -732,8 +758,18 @@ def _send_dead_drop_email(
             "WALLET_DEAD_DROP_SMTP_HOST environment variable is required for dead-drop email delivery but is not configured"
         )
     smtp_port = int(str(os.getenv("WALLET_DEAD_DROP_SMTP_PORT") or "587").strip())
-    smtp_use_ssl = str(os.getenv("WALLET_DEAD_DROP_SMTP_USE_SSL") or "").strip().lower() in {"1", "true", "yes", "on"}
-    smtp_starttls = str(os.getenv("WALLET_DEAD_DROP_SMTP_STARTTLS") or "true").strip().lower() in {"1", "true", "yes", "on"}
+    smtp_use_ssl = str(os.getenv("WALLET_DEAD_DROP_SMTP_USE_SSL") or "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+    smtp_starttls = str(os.getenv("WALLET_DEAD_DROP_SMTP_STARTTLS") or "true").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
     smtp_username = str(os.getenv("WALLET_DEAD_DROP_SMTP_USERNAME") or "").strip()
     smtp_password = str(os.getenv("WALLET_DEAD_DROP_SMTP_PASSWORD") or "")
 
@@ -760,7 +796,7 @@ def _send_dead_drop_email(
         rejected = smtp.send_message(message)
     if rejected:
         raise RuntimeError(f"Dead-drop email delivery rejected recipients: {sorted(rejected)}")
-    return {"message_id": str(message.get('Message-Id') or '')}
+    return {"message_id": str(message.get("Message-Id") or "")}
 
 
 def _inject_shared_analytics_templates(service: WalletService, wallet_dir: Path) -> None:
@@ -799,7 +835,9 @@ def _list_shared_analytics_templates(wallet_dir: Path) -> List[Dict[str, Any]]:
     return [templates[template_id] for template_id in sorted(templates)]
 
 
-def _sorted_records(service: WalletService, wallet_id: str, data_type: str | None = None) -> List[Dict[str, Any]]:
+def _sorted_records(
+    service: WalletService, wallet_id: str, data_type: str | None = None
+) -> List[Dict[str, Any]]:
     records = []
     for record in sorted(service.records.values(), key=lambda item: item.record_id):
         if record.wallet_id != wallet_id:
@@ -815,7 +853,9 @@ def _sorted_records(service: WalletService, wallet_id: str, data_type: str | Non
             payload["storage_metadata"] = {
                 "encrypted_payload_ref": version.encrypted_payload_ref.to_dict(),
                 "encrypted_metadata_ref": (
-                    version.encrypted_metadata_ref.to_dict() if version.encrypted_metadata_ref else None
+                    version.encrypted_metadata_ref.to_dict()
+                    if version.encrypted_metadata_ref
+                    else None
                 ),
                 "created_at": version.created_at,
             }
@@ -831,7 +871,9 @@ def _wallet_proofs(service: WalletService, wallet_id: str) -> List[Dict[str, Any
     ]
 
 
-def _serialize_many(values: List[AccessRequest] | List[GrantReceipt] | List[AuditEvent] | List[ProofReceipt]) -> List[Dict[str, Any]]:
+def _serialize_many(
+    values: List[AccessRequest] | List[GrantReceipt] | List[AuditEvent] | List[ProofReceipt],
+) -> List[Dict[str, Any]]:
     return [item.to_dict() for item in values]
 
 
@@ -857,7 +899,9 @@ def _ops_health_report(*, verify_storage: bool = False) -> Dict[str, Any]:
     services: List[WalletService] = []
     for wallet_id in wallet_ids:
         try:
-            services.append(_load_wallet_service(wallet_id, wallet_dir=wallet_dir, blob_dir=blob_dir))
+            services.append(
+                _load_wallet_service(wallet_id, wallet_dir=wallet_dir, blob_dir=blob_dir)
+            )
         except Exception:
             continue
 
@@ -869,7 +913,9 @@ def _ops_health_report(*, verify_storage: bool = False) -> Dict[str, Any]:
     add_check(
         "repository",
         "ok",
-        "Wallet snapshot repository is available." if wallet_dir.exists() else "Wallet snapshot repository directory does not exist yet.",
+        "Wallet snapshot repository is available."
+        if wallet_dir.exists()
+        else "Wallet snapshot repository directory does not exist yet.",
         configured=True,
         wallet_snapshot_count=len(wallet_ids),
         live_wallet_count=len(wallet_ids),
@@ -898,11 +944,17 @@ def _ops_health_report(*, verify_storage: bool = False) -> Dict[str, Any]:
                         {
                             "wallet_id": wallet_id,
                             "record_id": record.record_id,
-                            "payload_failures": [status.to_dict() for status in report.payload if not status.ok],
-                            "metadata_failures": [status.to_dict() for status in report.metadata if not status.ok],
+                            "payload_failures": [
+                                status.to_dict() for status in report.payload if not status.ok
+                            ],
+                            "metadata_failures": [
+                                status.to_dict() for status in report.metadata if not status.ok
+                            ],
                         }
                     )
-    storage_backend_name = services[0].storage.__class__.__name__ if services else "LocalEncryptedBlobStore"
+    storage_backend_name = (
+        services[0].storage.__class__.__name__ if services else "LocalEncryptedBlobStore"
+    )
     add_check(
         "storage_availability",
         "error" if storage_failures else "ok",
@@ -1078,7 +1130,9 @@ def _record_metadata_value(record: Mapping[str, Any], key: str) -> str:
 def _safe_short_text(value: Any, *, limit: int = 240) -> str:
     text = str(value or "")
     text = re.sub(r"[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}", "[email]", text, flags=re.IGNORECASE)
-    text = re.sub(r"\b(?:\+?1[\s.-]?)?(?:\(\d{3}\)|\d{3})[\s.-]?\d{3}[\s.-]?\d{4}\b", "[phone]", text)
+    text = re.sub(
+        r"\b(?:\+?1[\s.-]?)?(?:\(\d{3}\)|\d{3})[\s.-]?\d{3}[\s.-]?\d{4}\b", "[phone]", text
+    )
     text = re.sub(r"\b\d{4,}\b", "[number]", text)
     return text.strip()[:limit]
 
@@ -1086,7 +1140,9 @@ def _safe_short_text(value: Any, *, limit: int = 240) -> str:
 def _read_string_list(value: Any, *, limit: int = 12) -> List[str]:
     if not isinstance(value, list):
         return []
-    return [_safe_short_text(item, limit=80) for item in value if _safe_short_text(item, limit=80)][:limit]
+    return [_safe_short_text(item, limit=80) for item in value if _safe_short_text(item, limit=80)][
+        :limit
+    ]
 
 
 def _read_number(record: Mapping[str, Any] | None, key: str) -> int | float | None:
@@ -1173,7 +1229,9 @@ def _build_document_profile_public_inputs(
     for output in outputs:
         counts = output.get("redaction_counts")
         if isinstance(counts, Mapping):
-            redaction_count += sum(value for value in counts.values() if isinstance(value, (int, float)))
+            redaction_count += sum(
+                value for value in counts.values() if isinstance(value, (int, float))
+            )
     public_mime_type = mime_type or "application/octet-stream"
     labels = _default_labels_for_mime_type(public_mime_type)
     return {
@@ -1187,9 +1245,13 @@ def _build_document_profile_public_inputs(
         "node_count": _read_number(graph, "node_count"),
         "organizer_labels": labels,
         "organizer_summary": _display_mime_type(public_mime_type),
-        "output_policies": sorted({str(output.get("output_policy")) for output in outputs if output.get("output_policy")}),
+        "output_policies": sorted(
+            {str(output.get("output_policy")) for output in outputs if output.get("output_policy")}
+        ),
         "privacy_policy": "no_plaintext_public_inputs",
-        "profile_methods": sorted({str(output.get("output_policy")) for output in outputs if output.get("output_policy")}),
+        "profile_methods": sorted(
+            {str(output.get("output_policy")) for output in outputs if output.get("output_policy")}
+        ),
         "redaction_count": redaction_count,
         "size_bucket": "server-side",
         "summary": "Redacted GraphRAG, vector metadata, and derived descriptors created inside the wallet boundary.",
@@ -1216,12 +1278,18 @@ def _summarize_document_profile(public_inputs: Mapping[str, Any]) -> str:
     return f"{mime_type} · {graph_type} · {nodes_text} · {chunks_text}"
 
 
-def _build_privacy_search_text(outputs: Sequence[Mapping[str, Any]], public_inputs: Mapping[str, Any]) -> str:
+def _build_privacy_search_text(
+    outputs: Sequence[Mapping[str, Any]], public_inputs: Mapping[str, Any]
+) -> str:
     parts: List[str] = [
         _classify_document_profile(public_inputs),
         _summarize_document_profile(public_inputs),
         " ".join(_read_string_list(public_inputs.get("organizer_labels"), limit=12)),
-        " ".join(str(policy) for policy in public_inputs.get("output_policies", []) if isinstance(policy, str)),
+        " ".join(
+            str(policy)
+            for policy in public_inputs.get("output_policies", [])
+            if isinstance(policy, str)
+        ),
     ]
     for output in outputs:
         parts.append(_safe_short_text(output.get("summary")))
@@ -1229,7 +1297,9 @@ def _build_privacy_search_text(outputs: Sequence[Mapping[str, Any]], public_inpu
     return " ".join(part for part in parts if part).strip()
 
 
-def _build_privacy_vector_terms(outputs: Sequence[Mapping[str, Any]], public_inputs: Mapping[str, Any]) -> List[str]:
+def _build_privacy_vector_terms(
+    outputs: Sequence[Mapping[str, Any]], public_inputs: Mapping[str, Any]
+) -> List[str]:
     terms: List[str] = []
     terms.extend(_read_string_list(public_inputs.get("organizer_labels"), limit=12))
     for key in ("mime_type", "mime_family", "graph_type", "organizer_summary"):
@@ -1272,7 +1342,9 @@ def _invocation_caveats(
     return caveats
 
 
-def _normalize_record_grant_caveats(request: RecordGrantRequest) -> tuple[List[str], Dict[str, Any]]:
+def _normalize_record_grant_caveats(
+    request: RecordGrantRequest,
+) -> tuple[List[str], Dict[str, Any]]:
     allowed_abilities = {"record/analyze", "record/decrypt", "record/share"}
     normalized_abilities: List[str] = []
     for ability in request.abilities:
@@ -1310,7 +1382,9 @@ def _normalize_export_grant_caveats(request: ExportGrantRequest) -> Dict[str, An
     caveats: Dict[str, Any] = {
         "purpose": request.purpose or "user_export",
         "record_ids": list(request.record_ids),
-        "output_types": list(request.output_types) if request.output_types else ["encrypted_export_bundle"],
+        "output_types": list(request.output_types)
+        if request.output_types
+        else ["encrypted_export_bundle"],
     }
     return caveats
 
@@ -1423,7 +1497,9 @@ def revoke_wallet_device(wallet_id: str, request: WalletDeviceRequest) -> Dict[s
 
 
 @router.post("/wallets/{wallet_id}/recovery-policy")
-def set_wallet_recovery_policy(wallet_id: str, request: WalletRecoveryPolicyRequest) -> Dict[str, Any]:
+def set_wallet_recovery_policy(
+    wallet_id: str, request: WalletRecoveryPolicyRequest
+) -> Dict[str, Any]:
     service = _load_wallet_service(wallet_id)
     wallet_dir = default_wallet_dir()
     try:
@@ -1441,7 +1517,9 @@ def set_wallet_recovery_policy(wallet_id: str, request: WalletRecoveryPolicyRequ
 
 
 @router.post("/wallets/{wallet_id}/recovery-bundles")
-def store_wallet_recovery_bundle(wallet_id: str, request: WalletRecoveryBundleRequest) -> Dict[str, Any]:
+def store_wallet_recovery_bundle(
+    wallet_id: str, request: WalletRecoveryBundleRequest
+) -> Dict[str, Any]:
     service = _load_wallet_service(wallet_id)
     wallet_dir = default_wallet_dir()
     try:
@@ -1533,7 +1611,9 @@ def get_wallet_recovery_bundle(
 
 
 @router.post("/wallets/{wallet_id}/controllers/recover")
-def recover_wallet_controller(wallet_id: str, request: WalletControllerRecoveryRequest) -> Dict[str, Any]:
+def recover_wallet_controller(
+    wallet_id: str, request: WalletControllerRecoveryRequest
+) -> Dict[str, Any]:
     service = _load_wallet_service(wallet_id)
     wallet_dir = default_wallet_dir()
     try:
@@ -1551,7 +1631,9 @@ def recover_wallet_controller(wallet_id: str, request: WalletControllerRecoveryR
 
 
 @router.get("/wallets/{wallet_id}/records", response_model=WalletRecordsResponse)
-def list_wallet_records(wallet_id: str, data_type: Optional[str] = Query(default=None)) -> WalletRecordsResponse:
+def list_wallet_records(
+    wallet_id: str, data_type: Optional[str] = Query(default=None)
+) -> WalletRecordsResponse:
     service = _load_wallet_service(wallet_id)
     return WalletRecordsResponse(records=_sorted_records(service, wallet_id, data_type))
 
@@ -1800,7 +1882,9 @@ def generate_wallet_record_metadata(
     service = _load_wallet_service(wallet_id)
     wallet_dir = default_wallet_dir()
     actor_secret = _optional_hex_key(request.actor_key_hex)
-    invocation = invocation_from_token(request.invocation_token) if request.invocation_token else None
+    invocation = (
+        invocation_from_token(request.invocation_token) if request.invocation_token else None
+    )
     try:
         if invocation is not None:
             service.verify_invocation(
@@ -1878,15 +1962,21 @@ def generate_wallet_record_metadata(
             outputs.append(
                 _fallback_document_profile_output(
                     file_name=request.file_name or record_id,
-                    mime_type=request.mime_type or _record_metadata_value(metadata_status, "privacyProfileMimeType") or "application/octet-stream",
+                    mime_type=request.mime_type
+                    or _record_metadata_value(metadata_status, "privacyProfileMimeType")
+                    or "application/octet-stream",
                 )
             )
         artifact_ids = [_derived_artifact_id(result) for result in derived_results]
         artifact_ids = [artifact_id for artifact_id in artifact_ids if artifact_id]
         public_inputs = _build_document_profile_public_inputs(
             artifact_ids=artifact_ids,
-            file_name=request.file_name or _record_metadata_value(metadata_status, "fileName") or record_id,
-            mime_type=request.mime_type or _record_metadata_value(metadata_status, "privacyProfileMimeType") or "application/octet-stream",
+            file_name=request.file_name
+            or _record_metadata_value(metadata_status, "fileName")
+            or record_id,
+            mime_type=request.mime_type
+            or _record_metadata_value(metadata_status, "privacyProfileMimeType")
+            or "application/octet-stream",
             outputs=outputs,
         )
         proof = service.create_document_profile_proof(
@@ -1898,7 +1988,8 @@ def generate_wallet_record_metadata(
         metadata_patch: Dict[str, Any] = {
             "privacyProfileArtifactIds": artifact_ids,
             "privacyProfileClassification": _classify_document_profile(public_inputs),
-            "privacyProfileLabels": _read_string_list(public_inputs.get("organizer_labels")) or _default_labels_for_mime_type(str(public_inputs.get("mime_type") or "")),
+            "privacyProfileLabels": _read_string_list(public_inputs.get("organizer_labels"))
+            or _default_labels_for_mime_type(str(public_inputs.get("mime_type") or "")),
             "privacyProfileMessage": "Safe document profile and proof are attached to this wallet record.",
             "privacyProfileMimeType": public_inputs.get("mime_type"),
             "privacyProfileNeedsRefresh": False,
@@ -1983,7 +2074,8 @@ def list_wallet_analytics_consents(wallet_id: str, status: str = "all") -> Dict[
     consents = [
         consent.to_dict()
         for consent in sorted(service.analytics_consents.values(), key=lambda item: item.created_at)
-        if consent.wallet_id == wallet_id and (normalized_status == "all" or consent.status == normalized_status)
+        if consent.wallet_id == wallet_id
+        and (normalized_status == "all" or consent.status == normalized_status)
     ]
     return {"consents": consents}
 
@@ -2022,7 +2114,9 @@ def revoke_wallet_analytics_consent(
     wallet_dir = default_wallet_dir()
     service = _load_wallet_service(wallet_id, wallet_dir=wallet_dir)
     try:
-        consent = service.revoke_analytics_consent(wallet_id, consent_id, actor_did=request.actor_did)
+        consent = service.revoke_analytics_consent(
+            wallet_id, consent_id, actor_did=request.actor_did
+        )
         _save_wallet_snapshot(service, wallet_dir, wallet_id)
         return consent.to_dict()
     except (DataWalletError, ValueError, KeyError) as exc:
@@ -2107,7 +2201,9 @@ def dispatch_missing_person_dead_drop(
     service = _load_wallet_service(wallet_id)
     wallet_dir = default_wallet_dir()
     try:
-        record = service.get_missing_person_dead_drop_for_dispatch(wallet_id, actor_did=request.actor_did)
+        record = service.get_missing_person_dead_drop_for_dispatch(
+            wallet_id, actor_did=request.actor_did
+        )
     except (DataWalletError, ValueError, KeyError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     try:
@@ -2149,7 +2245,9 @@ def list_saved_services(wallet_id: str, status: str | None = None) -> SavedServi
     try:
         service = _load_wallet_service(wallet_id)
         return SavedServicesResponse(
-            saved_services=[record.to_dict() for record in service.list_saved_services(wallet_id, status=status)]
+            saved_services=[
+                record.to_dict() for record in service.list_saved_services(wallet_id, status=status)
+            ]
         )
     except (DataWalletError, ValueError, KeyError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -2208,7 +2306,9 @@ def list_service_interactions(
 
 
 @router.post("/wallets/{wallet_id}/portal/interactions")
-def create_service_interaction(wallet_id: str, request: ServiceInteractionRequest) -> Dict[str, Any]:
+def create_service_interaction(
+    wallet_id: str, request: ServiceInteractionRequest
+) -> Dict[str, Any]:
     service = _load_wallet_service(wallet_id)
     wallet_dir = default_wallet_dir()
     try:
@@ -2296,7 +2396,9 @@ def create_service_plan(wallet_id: str, request: ServicePlanRequest) -> Dict[str
 
 
 @router.patch("/wallets/{wallet_id}/portal/plans/{plan_id}")
-def update_service_plan(wallet_id: str, plan_id: str, request: ServicePlanUpdateRequest) -> Dict[str, Any]:
+def update_service_plan(
+    wallet_id: str, plan_id: str, request: ServicePlanUpdateRequest
+) -> Dict[str, Any]:
     service = _load_wallet_service(wallet_id)
     wallet_dir = default_wallet_dir()
     try:
@@ -2364,7 +2466,9 @@ def ops_health(
 ) -> Dict[str, Any]:
     expected_secret = _ops_health_shared_secret()
     if expected_secret:
-        supplied_secret = _extract_bearer_token(authorization) or str(x_wallet_ops_shared_secret or "").strip()
+        supplied_secret = (
+            _extract_bearer_token(authorization) or str(x_wallet_ops_shared_secret or "").strip()
+        )
         if supplied_secret != expected_secret:
             raise HTTPException(status_code=401, detail="ops health authorization required")
     try:
@@ -2391,7 +2495,9 @@ def list_wallet_access_requests(
 
 
 @router.post("/wallets/{wallet_id}/access-requests")
-def create_wallet_access_request(wallet_id: str, request: AccessRequestCreateRequest) -> Dict[str, Any]:
+def create_wallet_access_request(
+    wallet_id: str, request: AccessRequestCreateRequest
+) -> Dict[str, Any]:
     service = _load_wallet_service(wallet_id)
     wallet_dir = default_wallet_dir()
     try:
@@ -2431,7 +2537,9 @@ def approve_wallet_access_request(
         )
         response = access_request.to_dict()
         if access_request.invocation_id:
-            response["invocation_token"] = invocation_to_token(service.invocations[access_request.invocation_id])
+            response["invocation_token"] = invocation_to_token(
+                service.invocations[access_request.invocation_id]
+            )
         _save_wallet_snapshot(service, wallet_dir, wallet_id)
         return response
     except (DataWalletError, ValueError, KeyError) as exc:
@@ -2612,7 +2720,9 @@ def create_wallet_export_grant(wallet_id: str, request: ExportGrantRequest) -> D
 
 
 @router.post("/wallets/{wallet_id}/exports/invocations")
-def issue_wallet_export_invocation(wallet_id: str, request: ExportInvocationRequest) -> Dict[str, Any]:
+def issue_wallet_export_invocation(
+    wallet_id: str, request: ExportInvocationRequest
+) -> Dict[str, Any]:
     service = _load_wallet_service(wallet_id)
     wallet_dir = default_wallet_dir()
     try:

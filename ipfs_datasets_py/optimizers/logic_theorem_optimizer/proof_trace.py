@@ -71,9 +71,7 @@ def serialize_aggregated_proof_trace(
     Returns:
         Canonical proof-trace dictionary.
     """
-    prover_results = [
-        _prover_verification_to_dict(item) for item in aggregated.prover_results
-    ]
+    prover_results = [_prover_verification_to_dict(item) for item in aggregated.prover_results]
     return {
         "schema": "logic_theorem_optimizer.proof_trace",
         "schema_version": "1.0",
@@ -116,11 +114,11 @@ def proof_trace_to_json(trace: Dict[str, Any], *, indent: int = 2) -> str:
 def write_proof_trace_json(trace: Dict[str, Any], output_path: str | Path) -> Path:
     """Write proof trace JSON to disk and return resolved path."""
     path = Path(output_path)
-    
+
     # Validate output path
     base_dir = path.parent if path.is_absolute() else None
     safe_path = validate_output_path(str(path), allow_overwrite=True, base_dir=base_dir)
-    
+
     # Ensure directory exists
     Path(safe_path).parent.mkdir(parents=True, exist_ok=True)
     Path(safe_path).write_text(proof_trace_to_json(trace) + "\n", encoding="utf-8")
@@ -141,4 +139,3 @@ def serialize_dataclass_like(obj: Any) -> Dict[str, Any]:
     if isinstance(obj, dict):
         return dict(obj)
     return {"value": str(obj)}
-

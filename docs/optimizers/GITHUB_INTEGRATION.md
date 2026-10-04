@@ -83,7 +83,7 @@ from ipfs_datasets_py.optimizers.agentic import GitHubAPICounter
 counter = GitHubAPICounter()
 
 # Run command with tracking
-result = counter.run_gh_command(['gh', 'pr', 'list'])
+result = counter.run_gh_command(["gh", "pr", "list"])
 
 # Generate report
 print(counter.report())
@@ -96,7 +96,7 @@ The `.github/scripts/` directory now contains thin wrappers that import from the
 **`github_api_counter_thin.py`:**
 ```python
 from ipfs_datasets_py.optimizers.agentic.github_api_unified import (
-    UnifiedGitHubAPICache as GitHubAPICounter
+    UnifiedGitHubAPICache as GitHubAPICounter,
 )
 ```
 
@@ -104,10 +104,11 @@ from ipfs_datasets_py.optimizers.agentic.github_api_unified import (
 ```python
 from ipfs_datasets_py.optimizers.agentic.github_api_unified import UnifiedGitHubAPICache
 
+
 class CopilotWorkflowHelper:
     def __init__(self):
         self.api_cache = UnifiedGitHubAPICache()
-    
+
     def run_command(self, command):
         return self.api_cache.run_gh_command(command)
 ```
@@ -193,13 +194,11 @@ from ipfs_datasets_py.optimizers.agentic import (
 )
 
 # Create cache
-cache = UnifiedGitHubAPICache(
-    config_file=Path('.github/cache-config.yml')
-)
+cache = UnifiedGitHubAPICache(config_file=Path(".github/cache-config.yml"))
 
 # Use in change controller
 controller = GitHubChangeController(
-    repo_path=Path('.'),
+    repo_path=Path("."),
     github_client=github_client,
     cache=cache,
 )
@@ -242,21 +241,21 @@ print(f"Cache hit rate: {stats['hit_rate']:.2%}")
 #!/usr/bin/env python3
 from ipfs_datasets_py.optimizers.agentic import UnifiedGitHubAPICache
 
+
 def main():
     # Initialize with config
-    cache = UnifiedGitHubAPICache(
-        config_file=Path('.github/cache-config.yml')
-    )
-    
+    cache = UnifiedGitHubAPICache(config_file=Path(".github/cache-config.yml"))
+
     # Run multiple operations
     for i in range(10):
-        cache.run_gh_command(['gh', 'repo', 'view', f'repo-{i}'])
-    
+        cache.run_gh_command(["gh", "repo", "view", f"repo-{i}"])
+
     # Report statistics
     print(cache.report())
     cache.save_metrics()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
 ```
 
@@ -295,17 +294,17 @@ Loads from `.github/cache-config.yml`:
 ```python
 def test_unified_cache():
     cache = UnifiedGitHubAPICache(backend=CacheBackend.MEMORY)
-    
+
     # Test caching
     cache.set("test", {"data": "value"})
     result = cache.get("test")
     assert result is not None
-    
+
     # Test call tracking
     cache.count_api_call("gh_pr_list", 1)
     stats = cache.get_statistics()
-    assert stats['total_api_calls'] == 1
-    assert stats['cache_hits'] == 1
+    assert stats["total_api_calls"] == 1
+    assert stats["cache_hits"] == 1
 ```
 
 ### Integration Tests
@@ -313,14 +312,14 @@ def test_unified_cache():
 ```python
 def test_workflow_integration():
     cache = UnifiedGitHubAPICache()
-    
+
     # Run actual gh command
-    result = cache.run_gh_command(['gh', 'repo', 'view'])
+    result = cache.run_gh_command(["gh", "repo", "view"])
     assert result.returncode == 0
-    
+
     # Check tracking
     stats = cache.get_statistics()
-    assert 'gh_repo_view' in stats['calls_by_type']
+    assert "gh_repo_view" in stats["calls_by_type"]
 ```
 
 ## Monitoring

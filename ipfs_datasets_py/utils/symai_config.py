@@ -111,6 +111,7 @@ def ensure_symai_config(
         config["NEUROSYMBOLIC_ENGINE_API_KEY"] = neurosymbolic_api_key
 
     if apply_engine_router:
+
         def set_if_empty(key: str, value: str) -> None:
             if force or not config.get(key):
                 config[key] = value
@@ -123,15 +124,41 @@ def ensure_symai_config(
             )
         if not neurosymbolic_api_key:
             set_if_empty("NEUROSYMBOLIC_ENGINE_API_KEY", "ipfs")
-        set_if_empty("EMBEDDING_ENGINE_MODEL", os.environ.get("IPFS_DATASETS_PY_SYMAI_EMBEDDING_MODEL", "ipfs:default"))
-        set_if_empty("SEARCH_ENGINE_MODEL", os.environ.get("IPFS_DATASETS_PY_SYMAI_SEARCH_MODEL", "ipfs:default"))
-        set_if_empty("OCR_ENGINE_MODEL", os.environ.get("IPFS_DATASETS_PY_SYMAI_OCR_MODEL", "ipfs:default"))
-        set_if_empty("SPEECH_TO_TEXT_ENGINE_MODEL", os.environ.get("IPFS_DATASETS_PY_SYMAI_SPEECH_TO_TEXT_MODEL", "ipfs:default"))
-        set_if_empty("TEXT_TO_SPEECH_ENGINE_MODEL", os.environ.get("IPFS_DATASETS_PY_SYMAI_TEXT_TO_SPEECH_MODEL", "ipfs:default"))
-        set_if_empty("DRAWING_ENGINE_MODEL", os.environ.get("IPFS_DATASETS_PY_SYMAI_DRAWING_MODEL", "ipfs:default"))
-        set_if_empty("VISION_ENGINE_MODEL", os.environ.get("IPFS_DATASETS_PY_SYMAI_VISION_MODEL", "ipfs:default"))
-        set_if_empty("CAPTION_ENGINE_MODEL", os.environ.get("IPFS_DATASETS_PY_SYMAI_CAPTION_MODEL", "ipfs:default"))
-        set_if_empty("INDEXING_ENGINE_ENVIRONMENT", os.environ.get("IPFS_DATASETS_PY_SYMAI_INDEXING_ENV", "ipfs:default"))
+        set_if_empty(
+            "EMBEDDING_ENGINE_MODEL",
+            os.environ.get("IPFS_DATASETS_PY_SYMAI_EMBEDDING_MODEL", "ipfs:default"),
+        )
+        set_if_empty(
+            "SEARCH_ENGINE_MODEL",
+            os.environ.get("IPFS_DATASETS_PY_SYMAI_SEARCH_MODEL", "ipfs:default"),
+        )
+        set_if_empty(
+            "OCR_ENGINE_MODEL", os.environ.get("IPFS_DATASETS_PY_SYMAI_OCR_MODEL", "ipfs:default")
+        )
+        set_if_empty(
+            "SPEECH_TO_TEXT_ENGINE_MODEL",
+            os.environ.get("IPFS_DATASETS_PY_SYMAI_SPEECH_TO_TEXT_MODEL", "ipfs:default"),
+        )
+        set_if_empty(
+            "TEXT_TO_SPEECH_ENGINE_MODEL",
+            os.environ.get("IPFS_DATASETS_PY_SYMAI_TEXT_TO_SPEECH_MODEL", "ipfs:default"),
+        )
+        set_if_empty(
+            "DRAWING_ENGINE_MODEL",
+            os.environ.get("IPFS_DATASETS_PY_SYMAI_DRAWING_MODEL", "ipfs:default"),
+        )
+        set_if_empty(
+            "VISION_ENGINE_MODEL",
+            os.environ.get("IPFS_DATASETS_PY_SYMAI_VISION_MODEL", "ipfs:default"),
+        )
+        set_if_empty(
+            "CAPTION_ENGINE_MODEL",
+            os.environ.get("IPFS_DATASETS_PY_SYMAI_CAPTION_MODEL", "ipfs:default"),
+        )
+        set_if_empty(
+            "INDEXING_ENGINE_ENVIRONMENT",
+            os.environ.get("IPFS_DATASETS_PY_SYMAI_INDEXING_ENV", "ipfs:default"),
+        )
 
     try:
         config_path.write_text(json.dumps(config, indent=4), encoding="utf-8")
@@ -175,7 +202,9 @@ def choose_symai_neurosymbolic_engine() -> Optional[Dict[str, str]]:
 
     # 3) Codex CLI routing via llm_router. This is the practical default in this
     # workspace when Codex is available, but callers can disable it explicitly.
-    disable_codex = os.environ.get("IPFS_DATASETS_PY_DISABLE_CODEX_FOR_SYMAI", "").strip().lower() in {
+    disable_codex = os.environ.get(
+        "IPFS_DATASETS_PY_DISABLE_CODEX_FOR_SYMAI", ""
+    ).strip().lower() in {
         "1",
         "true",
         "yes",

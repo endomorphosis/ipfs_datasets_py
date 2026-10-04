@@ -15,6 +15,7 @@ Context:
 All tests follow GIVEN-WHEN-THEN and use pytest.importorskip where optional
 dependencies are required.
 """
+
 from __future__ import annotations
 
 import importlib.util
@@ -28,13 +29,16 @@ _rdflib_available = bool(importlib.util.find_spec("rdflib"))
 # Helpers
 # ===========================================================================
 
+
 def _make_kg(name: str = "test"):
     from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
     return KnowledgeGraph(name=name)
 
 
 def _add_entity(kg, eid: str, etype: str = "Thing", ename: str = "E", **props):
     from ipfs_datasets_py.knowledge_graphs.extraction.graph import Entity
+
     e = Entity(entity_id=eid, entity_type=etype, name=ename, properties=props)
     kg.add_entity(e)
     return e
@@ -42,6 +46,7 @@ def _add_entity(kg, eid: str, etype: str = "Thing", ename: str = "E", **props):
 
 def _add_rel(kg, rid: str, src, tgt, rtype: str = "REL", **props):
     from ipfs_datasets_py.knowledge_graphs.extraction.graph import Relationship
+
     r = Relationship(
         relationship_id=rid,
         relationship_type=rtype,
@@ -56,6 +61,7 @@ def _add_rel(kg, rid: str, src, tgt, rtype: str = "REL", **props):
 # ===========================================================================
 # 1. extraction/graph.py line 629  — non-primitive entity property (case _:)
 # ===========================================================================
+
 
 @pytest.mark.skipif(not _rdflib_available, reason="rdflib not installed")
 class TestExportToRdfEntityNonPrimitiveProperty:
@@ -105,6 +111,7 @@ class TestExportToRdfEntityNonPrimitiveProperty:
 # ===========================================================================
 # 2. extraction/graph.py line 661  — non-primitive relationship property (else:)
 # ===========================================================================
+
 
 @pytest.mark.skipif(not _rdflib_available, reason="rdflib not installed")
 class TestExportToRdfRelationshipNonPrimitiveProperty:

@@ -17,13 +17,15 @@ Use the builder directly when you already have normalized workspace payloads.
 from ipfs_datasets_py.processors.legal_data import WorkspaceDatasetBuilder
 
 builder = WorkspaceDatasetBuilder()
-dataset = builder.build_from_workspace({
-    "workspace_id": "ws-01",
-    "workspace_name": "Evidence Workspace",
-    "documents": [
-        {"id": "doc-1", "title": "Email", "text": "Sample evidence"},
-    ],
-})
+dataset = builder.build_from_workspace(
+    {
+        "workspace_id": "ws-01",
+        "workspace_name": "Evidence Workspace",
+        "documents": [
+            {"id": "doc-1", "title": "Email", "text": "Sample evidence"},
+        ],
+    }
+)
 ```
 
 ## Export a Single-Parquet Bundle
@@ -68,13 +70,17 @@ from ipfs_datasets_py.processors.legal_data import (
 )
 
 builder = WorkspaceDatasetBuilder()
-dataset = builder.build_from_workspace({
-    "workspace_id": "ws-01",
-    "workspace_name": "Evidence Workspace",
-    "documents": [{"id": "doc-1", "title": "Email", "text": "Sample evidence"}],
-})
+dataset = builder.build_from_workspace(
+    {
+        "workspace_id": "ws-01",
+        "workspace_name": "Evidence Workspace",
+        "documents": [{"id": "doc-1", "title": "Email", "text": "Sample evidence"}],
+    }
+)
 
-package = package_workspace_dataset(dataset, output_dir="/tmp/workspace_bundle", package_name="workspace_bundle")
+package = package_workspace_dataset(
+    dataset, output_dir="/tmp/workspace_bundle", package_name="workspace_bundle"
+)
 print(package["manifest_json_path"])
 ```
 

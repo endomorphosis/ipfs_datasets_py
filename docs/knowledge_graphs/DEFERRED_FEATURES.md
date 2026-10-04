@@ -226,8 +226,10 @@ CALL { MATCH (n:Person) RETURN n.name AS nm } YIELD nm AS personName
 **Usage:**
 ```python
 from ipfs_datasets_py.knowledge_graphs.migration.formats import (
-    GraphData, MigrationFormat,
+    GraphData,
+    MigrationFormat,
 )
+
 graph_data.save_to_file("graph.car", format=MigrationFormat.CAR)
 loaded = GraphData.load_from_file("graph.car", format=MigrationFormat.CAR)
 ```
@@ -309,7 +311,7 @@ kg = ext_srl.to_knowledge_graph(frames)
 # Integrated SRL enrichment
 ext = KnowledgeGraphExtractor(use_srl=True)
 kg2 = ext.extract_knowledge_graph("Alice sent Bob a report.")  # SRL triples merged
-kg3 = ext.extract_srl_knowledge_graph("Alice taught Bob.")     # event-centric only
+kg3 = ext.extract_srl_knowledge_graph("Alice taught Bob.")  # event-centric only
 ```
 
 # Batch extraction (session 4)
@@ -393,16 +395,20 @@ result = reasoner.reason_across_documents(documents, query="Who collaborated wit
 
 **Example (now works):**
 ```python
-from ipfs_datasets_py.knowledge_graphs.ontology import OntologySchema, OntologyReasoner, InferenceTrace
+from ipfs_datasets_py.knowledge_graphs.ontology import (
+    OntologySchema,
+    OntologyReasoner,
+    InferenceTrace,
+)
 
 schema = OntologySchema()
 schema.add_subclass("Employee", "Person")
 schema.add_transitive("isAncestorOf")
-schema.add_equivalent_class("Person", "Human")       # session 4
+schema.add_equivalent_class("Person", "Human")  # session 4
 
 schema2 = OntologySchema()
 schema2.add_symmetric("isSiblingOf")
-combined = schema.merge(schema2)                       # session 4
+combined = schema.merge(schema2)  # session 4
 
 reasoner = OntologyReasoner(combined)
 kg2 = reasoner.materialize(kg)
@@ -452,7 +458,9 @@ for t in traces:
 **Example (now works):**
 ```python
 from ipfs_datasets_py.knowledge_graphs.query.distributed import (
-    GraphPartitioner, FederatedQueryExecutor, PartitionStrategy,
+    GraphPartitioner,
+    FederatedQueryExecutor,
+    PartitionStrategy,
 )
 
 dist = GraphPartitioner(num_partitions=4, strategy=PartitionStrategy.HASH).partition(kg)
@@ -463,6 +471,7 @@ result = executor.execute_cypher("MATCH (n:Person) WHERE n.age > 30 RETURN n.nam
 
 # Async fan-out
 import asyncio
+
 result = asyncio.run(executor.execute_cypher_async("MATCH (n:Person) RETURN n"))
 
 # Cross-partition entity lookup
@@ -508,12 +517,14 @@ from ipfs_datasets_py.knowledge_graphs.extraction.extractor import KnowledgeGrap
 # Aggregate multiple source confidences
 scores = [0.9, 0.75, 0.85]
 agg = KnowledgeGraphExtractor.aggregate_confidence_scores(scores)  # mean → 0.833
-conservative = KnowledgeGraphExtractor.aggregate_confidence_scores(scores, method="probabilistic_and")  # 0.574
+conservative = KnowledgeGraphExtractor.aggregate_confidence_scores(
+    scores, method="probabilistic_and"
+)  # 0.574
 
 # Quality metrics for an extracted graph
 metrics = KnowledgeGraphExtractor.compute_extraction_quality_metrics(kg)
-print(metrics["relationship_density"])    # rels / entities
-print(metrics["low_confidence_ratio"])    # fraction with confidence < 0.5
+print(metrics["relationship_density"])  # rels / entities
+print(metrics["low_confidence_ratio"])  # fraction with confidence < 0.5
 ```
 
 **Tests:** `tests/unit/knowledge_graphs/test_master_status_session69.py`
@@ -537,6 +548,7 @@ print(metrics["low_confidence_ratio"])    # fraction with confidence < 0.5
 def on_progress(nw, nt, rw, rt):
     pct = ((nw + rw) / (nt + rt) * 100) if (nt + rt) else 0
     print(f"  {pct:.1f}%  nodes {nw}/{nt}  rels {rw}/{rt}")
+
 
 nodes_written, rels_written = graph.export_streaming(
     "large_graph.jsonl",
@@ -571,10 +583,10 @@ from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraph, Knowled
 
 diff = original_kg.diff(updated_kg)
 if not diff.is_empty:
-    print(diff.summary())          # "+1 entities, -0 entities, +2 rels, ..."
-    d = diff.to_dict()             # serialize to JSON-safe dict
+    print(diff.summary())  # "+1 entities, -0 entities, +2 rels, ..."
+    d = diff.to_dict()  # serialize to JSON-safe dict
     restored = KnowledgeGraphDiff.from_dict(d)  # round-trip
-    original_kg.apply_diff(diff)   # transform original into updated in-place
+    original_kg.apply_diff(diff)  # transform original into updated in-place
 ```
 
 **Tests:** `tests/unit/knowledge_graphs/test_master_status_session70.py`
@@ -609,14 +621,14 @@ events = []
 kg = KnowledgeGraph("example")
 hid = kg.subscribe(events.append)
 
-e1 = kg.add_entity("person", "Alice")   # fires ENTITY_ADDED
-e2 = kg.add_entity("person", "Bob")    # fires ENTITY_ADDED
-kg.add_relationship("knows", e1, e2)   # fires RELATIONSHIP_ADDED
+e1 = kg.add_entity("person", "Alice")  # fires ENTITY_ADDED
+e2 = kg.add_entity("person", "Bob")  # fires ENTITY_ADDED
+kg.add_relationship("knows", e1, e2)  # fires RELATIONSHIP_ADDED
 
 assert events[0].event_type == GraphEventType.ENTITY_ADDED
 assert events[0].entity_id == e1.entity_id
 
-kg.unsubscribe(hid)   # clean up
+kg.unsubscribe(hid)  # clean up
 ```
 
 **Tests:** `tests/unit/knowledge_graphs/test_master_status_session71.py`
@@ -645,7 +657,7 @@ from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraph
 
 kg = KnowledgeGraph("versioned")
 kg.add_entity("person", "Alice")
-snap = kg.snapshot("before_merge")   # "before_merge"
+snap = kg.snapshot("before_merge")  # "before_merge"
 
 kg.add_entity("org", "Acme Corp")
 assert len(kg.entities) == 2
@@ -719,11 +731,11 @@ from ipfs_datasets_py.knowledge_graphs.query import KnowledgeGraphQLExecutor
 
 kg = KnowledgeGraph("example")
 alice = kg.add_entity("person", "Alice", {"age": 30, "city": "NYC"})
-bob   = kg.add_entity("person", "Bob",   {"age": 25})
+bob = kg.add_entity("person", "Bob", {"age": 25})
 kg.add_relationship("knows", alice, bob)
 
 exe = KnowledgeGraphQLExecutor(kg)
-result = exe.execute('''
+result = exe.execute("""
 {
     person(name: "Alice") {
         id
@@ -733,7 +745,7 @@ result = exe.execute('''
         knows { name age }
     }
 }
-''')
+""")
 # {"data": {"person": [{"id": "...", "name": "Alice", "age": 30, "city": "NYC",
 #           "knows": [{"name": "Bob", "age": 25}]}]}}
 
@@ -778,10 +790,10 @@ from ipfs_datasets_py.knowledge_graphs.extraction import (
 
 kg = KnowledgeGraph("social")
 alice = kg.add_entity("person", "Alice", {"age": 30})
-bob   = kg.add_entity("person", "Bob",   {"age": 25})
-acme  = kg.add_entity("org",    "Acme Corp")
-kg.add_relationship("knows",    alice, bob)
-kg.add_relationship("works_at", bob,   acme)
+bob = kg.add_entity("person", "Bob", {"age": 25})
+acme = kg.add_entity("org", "Acme Corp")
+kg.add_relationship("knows", alice, bob)
+kg.add_relationship("works_at", bob, acme)
 
 vis = KnowledgeGraphVisualizer(kg)
 
@@ -817,13 +829,14 @@ print(vis.to_ascii())
 
 # --- D3.js JSON ---
 import json
+
 d3_data = vis.to_d3_json()
 print(json.dumps(d3_data, indent=2))
 # {"nodes": [{"id": "...", "name": "Alice", "type": "person", ...}, ...],
 #  "links": [{"source": "...", "target": "...", "type": "knows", ...}, ...]}
 
 # --- Convenience methods on KnowledgeGraph ---
-dot_src = kg.to_dot(directed=False)   # undirected graph { ... -- ... }
+dot_src = kg.to_dot(directed=False)  # undirected graph { ... -- ... }
 mermaid_tb = kg.to_mermaid(direction="TB")
 ascii_rooted = kg.to_ascii(root_entity_id=alice.entity_id, max_depth=2)
 d3_limited = kg.to_d3_json(max_nodes=2)
@@ -856,7 +869,8 @@ execution, and property-merging graph consolidation.
 **Usage:**
 ```python
 from ipfs_datasets_py.knowledge_graphs.query.federation import (
-    FederatedKnowledgeGraph, EntityResolutionStrategy
+    FederatedKnowledgeGraph,
+    EntityResolutionStrategy,
 )
 from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
 
@@ -941,7 +955,7 @@ alice = kg.add_entity("person", "Alice", confidence=0.9)
 bob = kg.add_entity("person", "Bob", confidence=0.8)
 kg.add_relationship("knows", alice, bob)
 
-print(pchain.depth)       # 3
+print(pchain.depth)  # 3
 print(pchain.latest_cid)  # e.g. "bafk3a9c..." (SHA-256 derived)
 
 # Per-entity history
@@ -958,6 +972,7 @@ jsonl = pchain.to_jsonl()
 
 # Restore
 from ipfs_datasets_py.knowledge_graphs.extraction import ProvenanceChain
+
 restored = ProvenanceChain.from_jsonl(jsonl)
 assert restored.depth == pchain.depth
 is_valid, _ = restored.verify_chain()
@@ -992,17 +1007,20 @@ Provides a pure-Python (no PyTorch / TensorFlow required) GNN implementation:
 
 ```python
 from ipfs_datasets_py.knowledge_graphs.query.gnn import (
-    GraphNeuralNetworkAdapter, GNNConfig, GNNLayerType,
+    GraphNeuralNetworkAdapter,
+    GNNConfig,
+    GNNLayerType,
 )
+
 kg = KnowledgeGraph("demo")
 alice = kg.add_entity("person", "Alice", confidence=0.9)
-bob   = kg.add_entity("person", "Bob",   confidence=0.8)
-carol = kg.add_entity("org",    "ACME")
+bob = kg.add_entity("person", "Bob", confidence=0.8)
+carol = kg.add_entity("org", "ACME")
 kg.add_relationship("works_at", alice, carol)
-kg.add_relationship("knows",    alice, bob)
+kg.add_relationship("knows", alice, bob)
 
 adapter = GraphNeuralNetworkAdapter(kg, GNNConfig(num_layers=2, normalize=True))
-score = adapter.link_prediction_score(alice, bob)   # cosine similarity
+score = adapter.link_prediction_score(alice, bob)  # cosine similarity
 similar = adapter.find_similar_entities(alice, top_k=2)
 ids, matrix = adapter.export_node_features_array()  # → numpy / PyTorch
 ```
@@ -1036,12 +1054,12 @@ without revealing underlying entity IDs, names, or relationship details:
 ```python
 from ipfs_datasets_py.knowledge_graphs.query.zkp import KGZKProver, KGZKVerifier
 
-prover   = KGZKProver(kg)
+prover = KGZKProver(kg)
 verifier = KGZKVerifier()
 
 stmt = prover.prove_entity_exists("person", "Alice")
 assert stmt is not None
-assert verifier.verify_statement(stmt)    # True — without seeing Alice's entity_id
+assert verifier.verify_statement(stmt)  # True — without seeing Alice's entity_id
 
 # Batch proving
 requests = [
@@ -1058,23 +1076,25 @@ Connect the KG prover to the `ipfs_datasets_py.logic.zkp` simulation
 (or production Groth16 when `processors/groth16_backend` Rust binary is compiled):
 
 ```python
-import warnings; warnings.filterwarnings("ignore")   # suppress simulation warnings
+import warnings
+
+warnings.filterwarnings("ignore")  # suppress simulation warnings
 
 from ipfs_datasets_py.logic.zkp import ZKPProver, ZKPVerifier
 from ipfs_datasets_py.knowledge_graphs.query.zkp import KGZKProver, KGZKVerifier
 
-logic_prover   = ZKPProver()      # simulated; swap for ZKPProver(backend="groth16") when binary ready
+logic_prover = ZKPProver()  # simulated; swap for ZKPProver(backend="groth16") when binary ready
 logic_verifier = ZKPVerifier()
 
-prover   = KGZKProver.from_logic_prover(kg, logic_prover)
+prover = KGZKProver.from_logic_prover(kg, logic_prover)
 verifier = KGZKVerifier.from_logic_verifier(logic_verifier)
 
-assert prover.uses_logic_backend                             # True
-print(prover.get_backend_info())                             # {"backend": "simulated", "security_level": 128, ...}
+assert prover.uses_logic_backend  # True
+print(prover.get_backend_info())  # {"backend": "simulated", "security_level": 128, ...}
 
 stmt = prover.prove_entity_exists("person", "Alice")
-assert "logic_proof_data" in stmt.public_inputs              # embedded ZKPProof
-assert verifier.verify_statement(stmt)                       # structural + logic-layer verification
+assert "logic_proof_data" in stmt.public_inputs  # embedded ZKPProof
+assert verifier.verify_statement(stmt)  # structural + logic-layer verification
 ```
 
 **Production path:** when `ipfs_datasets_py/processors/groth16_backend` Rust binary is compiled
@@ -1107,8 +1127,10 @@ Provides a direct bridge from the KG ZKP layer to `processors/groth16_backend` v
 ```python
 from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
 from ipfs_datasets_py.knowledge_graphs.query.groth16_bridge import (
-    Groth16KGConfig, KGEntityFormula,
-    create_groth16_kg_prover, create_groth16_kg_verifier,
+    Groth16KGConfig,
+    KGEntityFormula,
+    create_groth16_kg_prover,
+    create_groth16_kg_verifier,
     describe_groth16_status,
 )
 
@@ -1117,17 +1139,17 @@ kg.add_entity("person", "Alice", confidence=0.95)
 
 # Inspect the theorem/axiom mapping
 theorem = KGEntityFormula.entity_exists_theorem("person", "Alice")
-axioms  = KGEntityFormula.entity_exists_axioms("e-001", "person", "Alice", 0.95)
+axioms = KGEntityFormula.entity_exists_axioms("e-001", "person", "Alice", 0.95)
 
 # Create prover/verifier (auto-fallback to simulation when binary absent)
-prover   = create_groth16_kg_prover(kg)
+prover = create_groth16_kg_prover(kg)
 verifier = create_groth16_kg_verifier()
 stmt = prover.prove_entity_exists("person", "Alice")
 assert verifier.verify_statement(stmt)
 
 # Diagnostics
 status = describe_groth16_status()
-print(status["backend"])           # "simulated" or "groth16"
+print(status["backend"])  # "simulated" or "groth16"
 print(status["binary_available"])  # True / False (False in CI)
 print(status["production_ready"])  # True only when enabled AND binary compiled
 ```
@@ -1206,7 +1228,8 @@ BFS paths, and batch query results in a KnowledgeGraph.
 
 ```python
 from ipfs_datasets_py.knowledge_graphs.query.explanation import (
-    QueryExplainer, ExplanationDepth,
+    QueryExplainer,
+    ExplanationDepth,
 )
 
 explainer = QueryExplainer(kg)

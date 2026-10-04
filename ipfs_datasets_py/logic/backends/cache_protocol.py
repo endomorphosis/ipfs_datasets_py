@@ -104,12 +104,7 @@ class CacheLookupReason(StrEnum):
 def _text(value: object, field_name: str, *, optional: bool = False) -> str:
     if optional and value == "":
         return ""
-    if (
-        not isinstance(value, str)
-        or not value
-        or value != value.strip()
-        or "\x00" in value
-    ):
+    if not isinstance(value, str) or not value or value != value.strip() or "\x00" in value:
         qualifier = "an empty or " if optional else "a "
         raise VerificationCacheError(
             f"{field_name} must be {qualifier}non-empty trimmed string without NUL"
@@ -122,9 +117,7 @@ def _enum(value: object, enum_type: type[Any], field_name: str) -> Any:
         return value if isinstance(value, enum_type) else enum_type(value)
     except (TypeError, ValueError) as error:
         choices = ", ".join(repr(item.value) for item in enum_type)
-        raise VerificationCacheError(
-            f"{field_name} must be one of {choices}"
-        ) from error
+        raise VerificationCacheError(f"{field_name} must be one of {choices}") from error
 
 
 def _json_ready(value: Any) -> Any:
@@ -227,37 +220,25 @@ class VerificationCacheKey:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "ir_digest", identity_digest(self.ir_digest))
-        object.__setattr__(
-            self, "property_digest", identity_digest(self.property_digest)
-        )
-        object.__setattr__(
-            self, "assumptions_digest", identity_digest(self.assumptions_digest)
-        )
-        object.__setattr__(
-            self, "translation_digest", identity_digest(self.translation_digest)
-        )
+        object.__setattr__(self, "property_digest", identity_digest(self.property_digest))
+        object.__setattr__(self, "assumptions_digest", identity_digest(self.assumptions_digest))
+        object.__setattr__(self, "translation_digest", identity_digest(self.translation_digest))
         object.__setattr__(self, "backend_id", _text(self.backend_id, "backend_id"))
         object.__setattr__(
             self,
             "backend_binary_digest",
             identity_digest(self.backend_binary_digest),
         )
-        object.__setattr__(
-            self, "backend_version", _text(self.backend_version, "backend_version")
-        )
+        object.__setattr__(self, "backend_version", _text(self.backend_version, "backend_version"))
         object.__setattr__(
             self,
             "backend_config_digest",
             identity_digest(self.backend_config_digest),
         )
-        object.__setattr__(
-            self, "resources_digest", identity_digest(self.resources_digest)
-        )
+        object.__setattr__(self, "resources_digest", identity_digest(self.resources_digest))
         object.__setattr__(self, "tree_digest", identity_digest(self.tree_digest))
         object.__setattr__(self, "policy_digest", identity_digest(self.policy_digest))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != VERIFICATION_CACHE_KEY_SCHEMA_VERSION:
             raise VerificationCacheError(
                 f"unsupported verification cache key schema: {self.schema_version!r}"
@@ -289,15 +270,11 @@ class VerificationCacheKey:
             ir_digest=identity_digest(ir),
             property_digest=identity_digest(prop),
             assumptions_digest=identity_digest(assumptions),
-            translation_digest=identity_digest(
-                {} if translation is None else translation
-            ),
+            translation_digest=identity_digest({} if translation is None else translation),
             backend_id=backend_id,
             backend_binary_digest=identity_digest(backend_binary),
             backend_version=backend_version,
-            backend_config_digest=identity_digest(
-                {} if backend_config is None else backend_config
-            ),
+            backend_config_digest=identity_digest({} if backend_config is None else backend_config),
             resources_digest=identity_digest({} if resources is None else resources),
             tree_digest=identity_digest({} if tree is None else tree),
             policy_digest=identity_digest({} if policy is None else policy),
@@ -349,9 +326,7 @@ class VerificationCacheKey:
             resources_digest=payload.get("resources_digest", ""),
             tree_digest=payload.get("tree_digest", ""),
             policy_digest=payload.get("policy_digest", ""),
-            schema_version=payload.get(
-                "schema_version", VERIFICATION_CACHE_KEY_SCHEMA_VERSION
-            ),
+            schema_version=payload.get("schema_version", VERIFICATION_CACHE_KEY_SCHEMA_VERSION),
         )
 
 
@@ -429,18 +404,12 @@ class VerificationCacheEntry:
         if not isinstance(self.created_at, (int, float)) or self.created_at != self.created_at:
             raise VerificationCacheError("created_at must be a finite number")
         object.__setattr__(self, "created_at", float(self.created_at))
-        object.__setattr__(
-            self, "result_id", _text(self.result_id, "result_id", optional=True)
-        )
-        diagnostics = tuple(
-            _text(item, "diagnostics item") for item in (self.diagnostics or ())
-        )
+        object.__setattr__(self, "result_id", _text(self.result_id, "result_id", optional=True))
+        diagnostics = tuple(_text(item, "diagnostics item") for item in (self.diagnostics or ()))
         if len(diagnostics) != len(set(diagnostics)):
             raise VerificationCacheError("diagnostics must not contain duplicates")
         object.__setattr__(self, "diagnostics", diagnostics)
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != VERIFICATION_CACHE_ENTRY_SCHEMA_VERSION:
             raise VerificationCacheError(
                 f"unsupported verification cache entry schema: {self.schema_version!r}"
@@ -500,9 +469,7 @@ class VerificationCacheEntry:
             return False
         return self.age_seconds(now=now) > ttl
 
-    def require_authority_at_most(
-        self, ceiling: EvidenceAuthority | str
-    ) -> VerificationCacheEntry:
+    def require_authority_at_most(self, ceiling: EvidenceAuthority | str) -> VerificationCacheEntry:
         """Reject when the stored evidence authority exceeds a caller ceiling.
 
         Hits may only inherit authority; they never raise it.  Callers that
@@ -549,18 +516,14 @@ class VerificationCacheEntry:
             key=VerificationCacheKey.from_dict(key_payload),
             result_authority=payload.get("result_authority", ""),
             status=payload.get("status", ""),
-            evidence_authority=payload.get(
-                "evidence_authority", EvidenceAuthority.NONE.value
-            ),
+            evidence_authority=payload.get("evidence_authority", EvidenceAuthority.NONE.value),
             result_payload=FrozenMap(payload.get("result_payload") or {}),
             polarity=payload.get("polarity", CachePolarity.POSITIVE.value),
             created_at=float(payload.get("created_at", 0.0)),
             entry_digest=str(payload.get("entry_digest") or ""),
             result_id=str(payload.get("result_id") or ""),
             diagnostics=tuple(payload.get("diagnostics") or ()),
-            schema_version=payload.get(
-                "schema_version", VERIFICATION_CACHE_ENTRY_SCHEMA_VERSION
-            ),
+            schema_version=payload.get("schema_version", VERIFICATION_CACHE_ENTRY_SCHEMA_VERSION),
         )
 
     @classmethod
@@ -579,9 +542,7 @@ class VerificationCacheEntry:
         """
 
         if not isinstance(result, TypedBackendResult):
-            raise VerificationCacheError(
-                "from_typed_result requires a TypedBackendResult"
-            )
+            raise VerificationCacheError("from_typed_result requires a TypedBackendResult")
         ceiling = result.translation_ceiling
         if evidence_authority is None:
             resolved_evidence = ceiling
@@ -723,9 +684,7 @@ class ExactVerificationCache:
         if positive_ttl_seconds < 0 or negative_ttl_seconds < 0:
             raise VerificationCacheError("TTL values must be non-negative")
         if negative_ttl_seconds > positive_ttl_seconds and positive_ttl_seconds > 0:
-            raise VerificationCacheError(
-                "negative_ttl_seconds cannot exceed positive_ttl_seconds"
-            )
+            raise VerificationCacheError("negative_ttl_seconds cannot exceed positive_ttl_seconds")
         self.max_entries = int(max_entries)
         self.positive_ttl_seconds = float(positive_ttl_seconds)
         self.negative_ttl_seconds = float(negative_ttl_seconds)
@@ -885,9 +844,7 @@ class ExactVerificationCache:
             else _result_authority(require_result_authority)
         )
         ceiling = (
-            None
-            if max_evidence_authority is None
-            else _evidence_authority(max_evidence_authority)
+            None if max_evidence_authority is None else _evidence_authority(max_evidence_authority)
         )
         current = time.time() if now is None else float(now)
         with self._lock:
@@ -1072,9 +1029,7 @@ class ExactVerificationCache:
                 )
             elif isinstance(produced, VerificationCacheEntry):
                 if produced.key.digest != key.digest:
-                    raise VerificationCacheError(
-                        "producer entry key does not match requested key"
-                    )
+                    raise VerificationCacheError("producer entry key does not match requested key")
                 entry = produced.verify_integrity()
             else:
                 raise VerificationCacheError(

@@ -4,6 +4,7 @@ Media processor that coordinates between different multimedia libraries.
 This module provides a unified interface for processing multimedia content
 using various backends like FFmpeg and yt-dlp.
 """
+
 from __future__ import annotations
 import anyio
 import ctypes
@@ -18,16 +19,20 @@ from pathlib import Path
 try:
     from pydantic import BaseModel, Field, NonNegativeFloat, NonNegativeInt, FilePath
 except ImportError:
-    raise ImportError("pydantic required for MediaProcessor. Please install it with 'pip install pydantic'.")
+    raise ImportError(
+        "pydantic required for MediaProcessor. Please install it with 'pip install pydantic'."
+    )
 
 # Import monitoring decorator from infrastructure
 try:
     from ..infrastructure.monitoring import monitor
+
     MONITORING_AVAILABLE = True
 except ImportError:
     # Fallback if monitoring not available
     def monitor(func):
         return func
+
     MONITORING_AVAILABLE = False
 
 
@@ -71,6 +76,7 @@ class MediaProcessorMetadata(BaseModel):
         converted_path (Optional[FilePath]): Path to converted file if conversion was performed. Defaults to None.
         conversion_result (Optional[Dict[str, Any]]): Result metadata from conversion operation. Defaults to None.
     """
+
     output_path: str
     filesize: NonNegativeInt
     format: str
@@ -78,16 +84,14 @@ class MediaProcessorMetadata(BaseModel):
     duration: NonNegativeFloat = 0.0
     resolution: str = "unknown"
     converted_path: Optional[FilePath] = None  # Path to converted file if applicable
-    conversion_result: Optional[Dict[str, Any]] = None  # Result of conversion operation if applicable
+    conversion_result: Optional[Dict[str, Any]] = (
+        None  # Result of conversion operation if applicable
+    )
 
 
-CORE_METADATA_FIELDS = [
-    "output_path", "title", "duration", "filesize", "format", "resolution"
-]
+CORE_METADATA_FIELDS = ["output_path", "title", "duration", "filesize", "format", "resolution"]
 
-OPTIONAL_METADATA_FIELDS = [
-    "converted_path", "conversion_result"
-]
+OPTIONAL_METADATA_FIELDS = ["converted_path", "conversion_result"]
 
 ALL_METADATA_FIELDS = CORE_METADATA_FIELDS + OPTIONAL_METADATA_FIELDS
 
@@ -99,21 +103,20 @@ COMPLETENESS_THRESHOLD = 0.90  # Reduced from 0.98 for practical deployment scen
 # Metadata field defaults for graceful degradation
 METADATA_DEFAULTS = {
     "title": "[Unknown Title]",  # Fallback when both video title and filename are unavailable
-    "duration": 0.0,             # Zero duration for streams/unknown
-    "resolution": "unknown",     # String format for undetectable resolution
-    "converted_path": None,      # Explicit None when no conversion
-    "conversion_result": None    # Explicit None when no conversion
+    "duration": 0.0,  # Zero duration for streams/unknown
+    "resolution": "unknown",  # String format for undetectable resolution
+    "converted_path": None,  # Explicit None when no conversion
+    "conversion_result": None,  # Explicit None when no conversion
 }
 
 
-
 def make_media_processor(
-    default_output_dir: Optional[str|Path] = None,
+    default_output_dir: Optional[str | Path] = None,
     enable_logging: bool = True,
     logger: logging.Logger = logging.getLogger(__name__),
     ytdlp: Optional[YtDlpWrapper] = None,
-    ffmpeg: Optional[FFmpegWrapper] = None
-    ) -> 'MediaProcessor':
+    ffmpeg: Optional[FFmpegWrapper] = None,
+) -> "MediaProcessor":
     """
     Factory function to create a MediaProcessor instance.
 
@@ -133,7 +136,7 @@ def make_media_processor(
         "enable_logging": enable_logging,
         "logger": logger,
         "ytdlp": ytdlp,
-        "ffmpeg": ffmpeg
+        "ffmpeg": ffmpeg,
     }
     if input_dict["ytdlp"] is None and YTDLP_AVAILABLE:
         input_dict["ytdlp"] = YtDlpWrapper(default_output_dir, enable_logging)
@@ -196,19 +199,19 @@ class MediaProcessor:
     Usage Example:
         # Basic usage with default settings
         processor = MediaProcessor()
-        
+
         # Download and convert video
         result = await processor.download_and_convert(
             url="https://youtube.com/watch?v=example",
             output_format="mp4",
             quality="720p"
         )
-        
+
         # Check available capabilities
         capabilities = processor.get_capabilities()
         if capabilities["download"]:
             print("Video downloading is available")
-        
+
         # Custom output directory and logging
         processor = MediaProcessor(
             default_output_dir="/path/to/output",
@@ -222,14 +225,15 @@ class MediaProcessor:
         - All file paths are resolved to absolute paths for consistency
         - Error handling provides both machine-readable status codes and human-readable messages
     """
-    
-    def __init__(self, 
-                default_output_dir: Optional[str|Path] = None,
-                enable_logging: bool = True,
-                logger: logging.Logger =  logging.getLogger(__name__),
-                ytdlp: Optional[YtDlpWrapper] = None,
-                ffmpeg: Optional[FFmpegWrapper] = None
-        ) -> None:
+
+    def __init__(
+        self,
+        default_output_dir: Optional[str | Path] = None,
+        enable_logging: bool = True,
+        logger: logging.Logger = logging.getLogger(__name__),
+        ytdlp: Optional[YtDlpWrapper] = None,
+        ffmpeg: Optional[FFmpegWrapper] = None,
+    ) -> None:
         """
         Initialize the MediaProcessor with specified configuration options.
 
@@ -270,13 +274,13 @@ class MediaProcessor:
         Examples:
             >>> # Basic initialization with defaults
             >>> processor = MediaProcessor()
-            
+
             >>> # Custom output directory
             >>> processor = MediaProcessor(default_output_dir="/tmp/media_output")
-            
+
             >>> # Disable logging for production use
             >>> processor = MediaProcessor(enable_logging=False)
-            
+
             >>> # Full configuration
             >>> processor = MediaProcessor(
             ...     default_output_dir="./downloads",
@@ -287,7 +291,9 @@ class MediaProcessor:
             default_output_dir = Path.cwd()
         else:
             if not isinstance(default_output_dir, (Path, str)):
-                raise TypeError(f"default_output_dir must be a string or Path, got {type(default_output_dir)}")
+                raise TypeError(
+                    f"default_output_dir must be a string or Path, got {type(default_output_dir)}"
+                )
             default_output_dir = Path(default_output_dir).resolve()
 
         self.default_output_dir: Path = default_output_dir
@@ -299,7 +305,7 @@ class MediaProcessor:
         # Initialize component wrappers
         self.ytdlp: Optional[YtDlpWrapper] = ytdlp
         self.ffmpeg: Optional[FFmpegWrapper] = ffmpeg
-        
+
         if self.logger is not None:
             self.logger.info(
                 f"MediaProcessor initialized - YT-DLP: {YTDLP_AVAILABLE}, FFmpeg: {FFMPEG_AVAILABLE}"
@@ -310,12 +316,11 @@ class MediaProcessor:
             if self.logger is not None:
                 self.logger.error("No multimedia backends available - cannot perform operations")
             raise RuntimeError("No multimedia backends available - cannot perform operations")
-    
+
     @monitor
-    async def download_and_convert(self,
-                                 url: str,
-                                 output_format: str = "mp4",
-                                 quality: str = "best") -> Dict[str, Any]:
+    async def download_and_convert(
+        self, url: str, output_format: str = "mp4", quality: str = "best"
+    ) -> Dict[str, Any]:
         """
         Download video from URL and optionally convert to specified format.
 
@@ -344,7 +349,7 @@ class MediaProcessor:
         Returns:
             Dict[str, Any]: Comprehensive result dictionary containing operation status
                 and detailed information. Structure varies based on operation outcome:
-                
+
                 Success case:
                 {
                     "status": "success",
@@ -356,7 +361,7 @@ class MediaProcessor:
                     "converted_path": str,      # Path to converted file (if conversion occurred)
                     "conversion_result": Dict   # Conversion operation details (if applicable)
                 }
-                
+
                 Error cases:
                 {
                     "status": "error",
@@ -376,14 +381,14 @@ class MediaProcessor:
             >>> # Basic video download
             >>> result = await processor.download_and_convert("https://youtube.com/watch?v=abc123")
             >>> print(f"Downloaded: {result['output_path']}")
-            
+
             >>> # Download with specific quality and format
             >>> result = await processor.download_and_convert(
             ...     url="https://vimeo.com/123456789",
             ...     output_format="avi",
             ...     quality="720p"
             ... )
-            
+
             >>> # Error handling
             >>> result = await processor.download_and_convert("invalid_url")
             >>> if result["status"] == "error":
@@ -398,33 +403,32 @@ class MediaProcessor:
         """
         try:
             if self.ytdlp is None:
-                return {
-                    "status": "error",
-                    "error": "YT-DLP not available for download"
-                }
-            
+                return {"status": "error", "error": "YT-DLP not available for download"}
+
             # Download video
             download_result = await self.ytdlp.download_video(
-                url=url,
-                quality=quality,
-                output_dir=str(self.default_output_dir)
+                url=url, quality=quality, output_dir=str(self.default_output_dir)
             )
-            
+
             if download_result.get("status") != "success":
                 return download_result
-            
+
             # Initialize conversion fields to None (may be overridden if conversion occurs)
             download_result["converted_path"] = None
             download_result["conversion_result"] = None
-            
+
             # If format conversion is needed and FFmpeg is available
             downloaded_file = download_result.get("output_path")
-            conversion_needed = downloaded_file and self.ffmpeg and not downloaded_file.endswith(f".{output_format}")
-            
+            conversion_needed = (
+                downloaded_file
+                and self.ffmpeg
+                and not downloaded_file.endswith(f".{output_format}")
+            )
+
             if conversion_needed:
                 convert_path = str(Path(downloaded_file).with_suffix(f".{output_format}"))
                 convert_result = await self.ffmpeg.convert_video(downloaded_file, convert_path)
-                
+
                 status = convert_result.get("status")
                 match status:
                     case "success":
@@ -434,11 +438,11 @@ class MediaProcessor:
                         # Conversion failure should result in overall error status
                         return {
                             "status": "error",
-                            "error": f"Conversion failed: {convert_result.get('error', 'Unknown conversion error')}"
+                            "error": f"Conversion failed: {convert_result.get('error', 'Unknown conversion error')}",
                         }
                     case _:
                         raise ValueError(f"Unexpected conversion status: '{status}'")
-            
+
             return download_result
 
         except BaseException as _exc:
@@ -447,11 +451,8 @@ class MediaProcessor:
         except Exception as e:
             if self.logger is not None:
                 self.logger.error(f"Error in download_and_convert: {e}")
-            return {
-                "status": "error",
-                "error": str(e)
-            }
-    
+            return {"status": "error", "error": str(e)}
+
         finally:
             _release_memory_to_os()
 
@@ -478,13 +479,13 @@ class MediaProcessor:
 
         Examples:
             >>> processor_can = processor.get_capabilities()
-            >>> 
+            >>>
             >>> # Check if downloading is supported
             >>> if processor_can["download"]:
             ...     print("Video downloading is available")
             ... else:
             ...     print("yt-dlp is required for video downloading")
-            >>> 
+            >>>
             >>> # Adapt UI based on capabilities
             >>> if processor_can["download"] and processor_can["convert"]:
             ...     show_full_interface()
@@ -492,7 +493,7 @@ class MediaProcessor:
             ...     show_download_only_interface()
             ... else:
             ...     show_no_capabilities_message()
-            >>> 
+            >>>
             >>> # Validate operation before attempting
             >>> if not processor_can["convert"]:
             ...     raise RuntimeError("Conversion not supported - FFmpeg required")
@@ -509,4 +510,3 @@ class MediaProcessor:
             "convert": FFMPEG_AVAILABLE,
             "extract_metadata": (YTDLP_AVAILABLE or FFMPEG_AVAILABLE),
         }
-

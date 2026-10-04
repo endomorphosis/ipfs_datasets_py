@@ -344,12 +344,7 @@ kb = TDFOLKnowledgeBase()
 kb.add_axiom(parse_tdfol("P"))
 kb.add_axiom(parse_tdfol("P → Q"))
 
-prover = OptimizedProver(
-    kb,
-    enable_cache=True,
-    enable_zkp=True,
-    workers=4
-)
+prover = OptimizedProver(kb, enable_cache=True, enable_zkp=True, workers=4)
 
 result = prover.prove(parse_tdfol("Q"))
 print(f"Proved: {result['proved']}")
@@ -359,12 +354,7 @@ print(f"Time: {result['time_ms']:.2f}ms")
 
 ### With ML Strategy Selection
 ```python
-result = prover.prove_enhanced(
-    formula,
-    prefer_zkp=True,
-    use_parallel=True,
-    timeout_seconds=60.0
-)
+result = prover.prove_enhanced(formula, prefer_zkp=True, use_parallel=True, timeout_seconds=60.0)
 
 print(f"Strategy: {result['strategy']}")
 print(f"Parallel used: {result['parallel_used']}")

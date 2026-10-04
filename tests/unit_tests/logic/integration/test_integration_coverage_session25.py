@@ -37,6 +37,7 @@ import ipfs_datasets_py.logic.integration.domain.symbolic_contracts as sc_mod
 # Helpers
 # ============================================================
 
+
 def _mock_query(value: str) -> MagicMock:
     """Return a MagicMock with .value set to *value*."""
     q = MagicMock()
@@ -56,12 +57,14 @@ def _make_symbol_mock(query_value: str) -> MagicMock:
 # Group 1 – reasoning/logic_verification.py  (15 lines)
 # ============================================================
 
+
 class TestLogicVerifierSymbolicAIPathsSession25(unittest.TestCase):
     """Cover SymbolicAI branches in LogicVerifier by forcing use_symbolic_ai=True."""
 
     def _verifier(self):
         """Create a verifier with use_symbolic_ai forced True after construction."""
         from ipfs_datasets_py.logic.integration.reasoning.logic_verification import LogicVerifier
+
         v = LogicVerifier(use_symbolic_ai=False)
         v.use_symbolic_ai = True
         return v
@@ -72,7 +75,7 @@ class TestLogicVerifierSymbolicAIPathsSession25(unittest.TestCase):
         """GIVEN Symbol.query returns 'valid' WHEN verify_formula_syntax
         THEN status='valid' via SymbolicAI path (line 238)."""
         v = self._verifier()
-        with patch.object(lv_mod, 'Symbol', return_value=_make_symbol_mock("valid")):
+        with patch.object(lv_mod, "Symbol", return_value=_make_symbol_mock("valid")):
             result = v.verify_formula_syntax("P → Q")
         self.assertEqual(result["status"], "valid")
         self.assertEqual(result["method"], "symbolic_ai")
@@ -81,7 +84,7 @@ class TestLogicVerifierSymbolicAIPathsSession25(unittest.TestCase):
         """GIVEN Symbol.query returns 'invalid' WHEN verify_formula_syntax
         THEN status='invalid' via SymbolicAI path (line 240)."""
         v = self._verifier()
-        with patch.object(lv_mod, 'Symbol', return_value=_make_symbol_mock("invalid formula")):
+        with patch.object(lv_mod, "Symbol", return_value=_make_symbol_mock("invalid formula")):
             result = v.verify_formula_syntax("P → Q")
         self.assertEqual(result["status"], "invalid")
         self.assertEqual(result["method"], "symbolic_ai")
@@ -90,7 +93,7 @@ class TestLogicVerifierSymbolicAIPathsSession25(unittest.TestCase):
         """GIVEN Symbol.query returns something not 'valid'/'invalid' WHEN verify_formula_syntax
         THEN status falls back to local check (line 242 sets 'unknown', then local check runs)."""
         v = self._verifier()
-        with patch.object(lv_mod, 'Symbol', return_value=_make_symbol_mock("uncertain")):
+        with patch.object(lv_mod, "Symbol", return_value=_make_symbol_mock("uncertain")):
             result = v.verify_formula_syntax("P → Q")
         # After 'unknown' from SymbolicAI, local check kicks in → should give 'valid'
         self.assertIn(result["status"], ("valid", "unknown"))
@@ -100,7 +103,7 @@ class TestLogicVerifierSymbolicAIPathsSession25(unittest.TestCase):
         THEN warning logged and falls back to local check (lines 248-249)."""
         v = self._verifier()
         sym_cls = MagicMock(side_effect=RuntimeError("sym error"))
-        with patch.object(lv_mod, 'Symbol', sym_cls):
+        with patch.object(lv_mod, "Symbol", sym_cls):
             result = v.verify_formula_syntax("P → Q")
         # Falls back to local validation
         self.assertIn(result["status"], ("valid", "invalid"))
@@ -111,7 +114,7 @@ class TestLogicVerifierSymbolicAIPathsSession25(unittest.TestCase):
         """GIVEN Symbol.query returns 'satisfiable' WHEN check_satisfiability
         THEN satisfiable=True via SymbolicAI path (lines 291-293)."""
         v = self._verifier()
-        with patch.object(lv_mod, 'Symbol', return_value=_make_symbol_mock("satisfiable")):
+        with patch.object(lv_mod, "Symbol", return_value=_make_symbol_mock("satisfiable")):
             result = v.check_satisfiability("P")
         self.assertTrue(result["satisfiable"])
         self.assertEqual(result["method"], "symbolic_ai")
@@ -120,7 +123,7 @@ class TestLogicVerifierSymbolicAIPathsSession25(unittest.TestCase):
         """GIVEN Symbol.query returns 'unsatisfiable' WHEN check_satisfiability
         THEN satisfiable=False via SymbolicAI path (lines 288-290)."""
         v = self._verifier()
-        with patch.object(lv_mod, 'Symbol', return_value=_make_symbol_mock("unsatisfiable")):
+        with patch.object(lv_mod, "Symbol", return_value=_make_symbol_mock("unsatisfiable")):
             result = v.check_satisfiability("P ∧ ¬P")
         self.assertFalse(result["satisfiable"])
         self.assertEqual(result["method"], "symbolic_ai")
@@ -129,7 +132,7 @@ class TestLogicVerifierSymbolicAIPathsSession25(unittest.TestCase):
         """GIVEN Symbol.query returns 'maybe' WHEN check_satisfiability
         THEN status falls back (line 295 sets 'unknown')."""
         v = self._verifier()
-        with patch.object(lv_mod, 'Symbol', return_value=_make_symbol_mock("maybe")):
+        with patch.object(lv_mod, "Symbol", return_value=_make_symbol_mock("maybe")):
             result = v.check_satisfiability("P")
         # Falls back to local heuristic check
         self.assertIn(result["status"], ("unknown", "assumed_satisfiable", "unsatisfiable"))
@@ -139,7 +142,7 @@ class TestLogicVerifierSymbolicAIPathsSession25(unittest.TestCase):
         THEN warning logged and local check runs (lines 300-301)."""
         v = self._verifier()
         sym_cls = MagicMock(side_effect=RuntimeError("boom"))
-        with patch.object(lv_mod, 'Symbol', sym_cls):
+        with patch.object(lv_mod, "Symbol", sym_cls):
             result = v.check_satisfiability("P")
         self.assertIn(result["status"], ("assumed_satisfiable", "unsatisfiable"))
 
@@ -149,7 +152,7 @@ class TestLogicVerifierSymbolicAIPathsSession25(unittest.TestCase):
         """GIVEN Symbol.query returns 'valid' WHEN check_validity
         THEN valid=True via SymbolicAI path (lines 344-346)."""
         v = self._verifier()
-        with patch.object(lv_mod, 'Symbol', return_value=_make_symbol_mock("valid")):
+        with patch.object(lv_mod, "Symbol", return_value=_make_symbol_mock("valid")):
             result = v.check_validity("P ∨ ¬P")
         self.assertTrue(result["valid"])
         self.assertEqual(result["method"], "symbolic_ai")
@@ -158,7 +161,7 @@ class TestLogicVerifierSymbolicAIPathsSession25(unittest.TestCase):
         """GIVEN Symbol.query returns 'invalid' WHEN check_validity
         THEN valid=False via SymbolicAI path (lines 348-349)."""
         v = self._verifier()
-        with patch.object(lv_mod, 'Symbol', return_value=_make_symbol_mock("invalid")):
+        with patch.object(lv_mod, "Symbol", return_value=_make_symbol_mock("invalid")):
             result = v.check_validity("P")
         self.assertFalse(result["valid"])
         self.assertEqual(result["method"], "symbolic_ai")
@@ -167,7 +170,7 @@ class TestLogicVerifierSymbolicAIPathsSession25(unittest.TestCase):
         """GIVEN Symbol.query returns 'maybe' WHEN check_validity
         THEN status='unknown' via SymbolicAI path (line 351)."""
         v = self._verifier()
-        with patch.object(lv_mod, 'Symbol', return_value=_make_symbol_mock("maybe")):
+        with patch.object(lv_mod, "Symbol", return_value=_make_symbol_mock("maybe")):
             result = v.check_validity("P")
         # 'unknown' then method=symbolic_ai is still set and returned
         self.assertEqual(result["method"], "symbolic_ai")
@@ -177,7 +180,7 @@ class TestLogicVerifierSymbolicAIPathsSession25(unittest.TestCase):
         THEN warning logged and local check runs (lines 354-355)."""
         v = self._verifier()
         sym_cls = MagicMock(side_effect=RuntimeError("boom"))
-        with patch.object(lv_mod, 'Symbol', sym_cls):
+        with patch.object(lv_mod, "Symbol", sym_cls):
             result = v.check_validity("P ∨ ¬P")
         self.assertIn(result["status"], ("tautology", "valid", "unknown"))
 
@@ -186,6 +189,7 @@ class TestLogicVerifierSymbolicAIPathsSession25(unittest.TestCase):
 # Group 2 – converters/modal_logic_extension.py  (8 lines)
 # ============================================================
 
+
 class TestModalLogicExtensionSymbolicAIPathsSession25(unittest.TestCase):
     """Cover SYMBOLIC_AI_AVAILABLE=True query branches in AdvancedLogicConverter."""
 
@@ -193,12 +197,14 @@ class TestModalLogicExtensionSymbolicAIPathsSession25(unittest.TestCase):
         from ipfs_datasets_py.logic.integration.converters.modal_logic_extension import (
             AdvancedLogicConverter,
         )
+
         return AdvancedLogicConverter()
 
     def _classification(self, logic_type: str):
         from ipfs_datasets_py.logic.integration.converters.modal_logic_extension import (
             LogicClassification,
         )
+
         return LogicClassification(
             logic_type=logic_type,
             confidence=0.9,
@@ -230,8 +236,8 @@ class TestModalLogicExtensionSymbolicAIPathsSession25(unittest.TestCase):
         c = self._converter()
         cls = self._classification("modal")
         sym = self._sym_mock("necessity")
-        with patch.object(mle_mod, 'SYMBOLIC_AI_AVAILABLE', True):
-            with patch.object(mle_mod, 'ModalLogicSymbol', return_value=sym):
+        with patch.object(mle_mod, "SYMBOLIC_AI_AVAILABLE", True):
+            with patch.object(mle_mod, "ModalLogicSymbol", return_value=sym):
                 result = c._convert_to_modal_logic("Something necessarily occurs", cls)
         self.assertEqual(result.modal_type, "alethic")
         self.assertIn("□", result.operators)
@@ -243,8 +249,8 @@ class TestModalLogicExtensionSymbolicAIPathsSession25(unittest.TestCase):
         c = self._converter()
         cls = self._classification("temporal")
         sym = self._sym_mock("always")
-        with patch.object(mle_mod, 'SYMBOLIC_AI_AVAILABLE', True):
-            with patch.object(mle_mod, 'ModalLogicSymbol', return_value=sym):
+        with patch.object(mle_mod, "SYMBOLIC_AI_AVAILABLE", True):
+            with patch.object(mle_mod, "ModalLogicSymbol", return_value=sym):
                 result = c._convert_to_temporal_logic("P is always true", cls)
         self.assertEqual(result.modal_type, "temporal")
 
@@ -255,8 +261,8 @@ class TestModalLogicExtensionSymbolicAIPathsSession25(unittest.TestCase):
         c = self._converter()
         cls = self._classification("deontic")
         sym = self._sym_mock("obligation")
-        with patch.object(mle_mod, 'SYMBOLIC_AI_AVAILABLE', True):
-            with patch.object(mle_mod, 'ModalLogicSymbol', return_value=sym):
+        with patch.object(mle_mod, "SYMBOLIC_AI_AVAILABLE", True):
+            with patch.object(mle_mod, "ModalLogicSymbol", return_value=sym):
                 result = c._convert_to_deontic_logic("You must pay taxes", cls)
         self.assertEqual(result.modal_type, "deontic")
         self.assertIn("O", result.operators)
@@ -268,8 +274,8 @@ class TestModalLogicExtensionSymbolicAIPathsSession25(unittest.TestCase):
         c = self._converter()
         cls = self._classification("epistemic")
         sym = self._sym_mock("knowledge")
-        with patch.object(mle_mod, 'SYMBOLIC_AI_AVAILABLE', True):
-            with patch.object(mle_mod, 'ModalLogicSymbol', return_value=sym):
+        with patch.object(mle_mod, "SYMBOLIC_AI_AVAILABLE", True):
+            with patch.object(mle_mod, "ModalLogicSymbol", return_value=sym):
                 result = c._convert_to_epistemic_logic("Agent knows the rule", cls)
         self.assertEqual(result.modal_type, "epistemic")
 
@@ -277,6 +283,7 @@ class TestModalLogicExtensionSymbolicAIPathsSession25(unittest.TestCase):
 # ============================================================
 # Group 3 – symbolic/symbolic_logic_primitives.py  (103 lines)
 # ============================================================
+
 
 class TestSymbolicLogicPrimitivesSymbolicAIPathsSession25(unittest.TestCase):
     """Cover SYMBOLIC_AI_AVAILABLE=True branches in LogicPrimitives methods.
@@ -288,8 +295,8 @@ class TestSymbolicLogicPrimitivesSymbolicAIPathsSession25(unittest.TestCase):
     """
 
     def setUp(self):
-        self._interpret_patcher = patch.object(slp_mod.core, 'interpret', new=self._mock_interpret)
-        self._logic_patcher = patch.object(slp_mod.core, 'logic', new=self._mock_logic)
+        self._interpret_patcher = patch.object(slp_mod.core, "interpret", new=self._mock_interpret)
+        self._logic_patcher = patch.object(slp_mod.core, "logic", new=self._mock_logic)
         self._interpret_patcher.start()
         self._logic_patcher.start()
         self.addCleanup(self._logic_patcher.stop)
@@ -299,8 +306,8 @@ class TestSymbolicLogicPrimitivesSymbolicAIPathsSession25(unittest.TestCase):
     def _mock_interpret(prompt: str):
         def decorator(func):
             def wrapper(*args, **kwargs):
-                values = [getattr(arg, 'value', str(arg)) for arg in args]
-                return ' | '.join(values) if values else prompt.strip()[:32]
+                values = [getattr(arg, "value", str(arg)) for arg in args]
+                return " | ".join(values) if values else prompt.strip()[:32]
 
             return wrapper
 
@@ -310,12 +317,12 @@ class TestSymbolicLogicPrimitivesSymbolicAIPathsSession25(unittest.TestCase):
     def _mock_logic(operator: str):
         def decorator(func):
             def wrapper(*args, **kwargs):
-                values = [getattr(arg, 'value', str(arg)) for arg in args]
+                values = [getattr(arg, "value", str(arg)) for arg in args]
                 if len(values) >= 2:
                     joiner = {
-                        'and': ' ∧ ',
-                        'or': ' ∨ ',
-                    }.get(operator, f' {operator} ')
+                        "and": " ∧ ",
+                        "or": " ∨ ",
+                    }.get(operator, f" {operator} ")
                     return joiner.join(values[:2])
                 return operator
 
@@ -332,12 +339,14 @@ class TestSymbolicLogicPrimitivesSymbolicAIPathsSession25(unittest.TestCase):
         primitives = LogicPrimitives()
         for method_name in dir(LogicPrimitives):
             if callable(getattr(LogicPrimitives, method_name, None)) and (
-                method_name.startswith('_fallback_') or method_name.startswith('_analyze_')
+                method_name.startswith("_fallback_") or method_name.startswith("_analyze_")
             ):
                 method = getattr(primitives, method_name)
 
                 def make_bound_method(bound_method, current_symbol):
-                    return lambda *args, **kwargs: bound_method.__func__(current_symbol, *args, **kwargs)
+                    return lambda *args, **kwargs: bound_method.__func__(
+                        current_symbol, *args, **kwargs
+                    )
 
                 setattr(symbol, method_name, make_bound_method(method, symbol))
 
@@ -371,7 +380,9 @@ class TestSymbolicLogicPrimitivesSymbolicAIPathsSession25(unittest.TestCase):
 
             symbol = slp_mod.create_logic_symbol(str(result), semantic=True)
             symbol._semantic = True
-            return TestSymbolicLogicPrimitivesSymbolicAIPathsSession25._attach_fallback_methods(symbol)
+            return TestSymbolicLogicPrimitivesSymbolicAIPathsSession25._attach_fallback_methods(
+                symbol
+            )
 
         return _impl
 
@@ -380,17 +391,17 @@ class TestSymbolicLogicPrimitivesSymbolicAIPathsSession25(unittest.TestCase):
         WHEN to_fol() called with symbolic format
         THEN @core.interpret decorator path executes (lines 49-53, 98-120)."""
         lp = self._primitives("All cats are animals")
-        with patch.object(slp_mod, 'SYMBOLIC_AI_AVAILABLE', True):
+        with patch.object(slp_mod, "SYMBOLIC_AI_AVAILABLE", True):
             result = lp.to_fol(output_format="symbolic")
         self.assertIsNotNone(result)
-        self.assertTrue(hasattr(result, 'value'))
+        self.assertTrue(hasattr(result, "value"))
 
     def test_to_fol_symbolic_ai_tptp_format(self):
         """GIVEN SYMBOLIC_AI_AVAILABLE=True
         WHEN to_fol() called with tptp output format
         THEN symbolic path executes and TPTP conversion applied."""
         lp = self._primitives("All cats are animals")
-        with patch.object(slp_mod, 'SYMBOLIC_AI_AVAILABLE', True):
+        with patch.object(slp_mod, "SYMBOLIC_AI_AVAILABLE", True):
             result = lp.to_fol(output_format="tptp")
         self.assertIsNotNone(result)
 
@@ -400,7 +411,7 @@ class TestSymbolicLogicPrimitivesSymbolicAIPathsSession25(unittest.TestCase):
         THEN exception caught, fallback executed (lines 121-123)."""
         lp = self._primitives("All cats are animals")
         lp._to_type = self._once_raising_to_type()
-        with patch.object(slp_mod, 'SYMBOLIC_AI_AVAILABLE', True):
+        with patch.object(slp_mod, "SYMBOLIC_AI_AVAILABLE", True):
             result = lp.to_fol(output_format="symbolic")
         # Falls back to _fallback_to_fol
         self.assertIsNotNone(result)
@@ -411,7 +422,7 @@ class TestSymbolicLogicPrimitivesSymbolicAIPathsSession25(unittest.TestCase):
         THEN formula += ')' branch covered (line 176)."""
         lp = self._primitives("if situation arises then action follows")
         # SYMBOLIC_AI_AVAILABLE=False so _fallback_to_fol is called directly
-        with patch.object(slp_mod, 'SYMBOLIC_AI_AVAILABLE', False):
+        with patch.object(slp_mod, "SYMBOLIC_AI_AVAILABLE", False):
             result = lp.to_fol(output_format="prolog")
         # The prolog conversion of a conditional produces "something :- something"
         # which doesn't end with ')', so line 176 `formula += ")"` executes.
@@ -423,7 +434,7 @@ class TestSymbolicLogicPrimitivesSymbolicAIPathsSession25(unittest.TestCase):
         WHEN extract_quantifiers() called
         THEN @core.interpret path executes (lines 197-211)."""
         lp = self._primitives("All students study hard")
-        with patch.object(slp_mod, 'SYMBOLIC_AI_AVAILABLE', True):
+        with patch.object(slp_mod, "SYMBOLIC_AI_AVAILABLE", True):
             result = lp.extract_quantifiers()
         self.assertIsNotNone(result)
 
@@ -433,7 +444,7 @@ class TestSymbolicLogicPrimitivesSymbolicAIPathsSession25(unittest.TestCase):
         THEN exception caught and fallback runs (lines 211-213)."""
         lp = self._primitives("Every person has rights")
         lp._to_type = self._once_raising_to_type()
-        with patch.object(slp_mod, 'SYMBOLIC_AI_AVAILABLE', True):
+        with patch.object(slp_mod, "SYMBOLIC_AI_AVAILABLE", True):
             result = lp.extract_quantifiers()
         self.assertIsNotNone(result)
 
@@ -442,7 +453,7 @@ class TestSymbolicLogicPrimitivesSymbolicAIPathsSession25(unittest.TestCase):
         WHEN extract_predicates() called
         THEN @core.interpret path executes (lines 247-261)."""
         lp = self._primitives("Students study and learn knowledge")
-        with patch.object(slp_mod, 'SYMBOLIC_AI_AVAILABLE', True):
+        with patch.object(slp_mod, "SYMBOLIC_AI_AVAILABLE", True):
             result = lp.extract_predicates()
         self.assertIsNotNone(result)
 
@@ -452,7 +463,7 @@ class TestSymbolicLogicPrimitivesSymbolicAIPathsSession25(unittest.TestCase):
         THEN exception caught and fallback runs (lines 261-263)."""
         lp = self._primitives("Cats are animals that have fur")
         lp._to_type = self._once_raising_to_type()
-        with patch.object(slp_mod, 'SYMBOLIC_AI_AVAILABLE', True):
+        with patch.object(slp_mod, "SYMBOLIC_AI_AVAILABLE", True):
             result = lp.extract_predicates()
         self.assertIsNotNone(result)
 
@@ -462,7 +473,7 @@ class TestSymbolicLogicPrimitivesSymbolicAIPathsSession25(unittest.TestCase):
         THEN @core.logic path executes (lines 57-61, 303-311)."""
         lp_a = self._primitives("P is true")
         lp_b = self._primitives("Q is false")
-        with patch.object(slp_mod, 'SYMBOLIC_AI_AVAILABLE', True):
+        with patch.object(slp_mod, "SYMBOLIC_AI_AVAILABLE", True):
             result = lp_a.logical_and(lp_b)
         self.assertIsNotNone(result)
 
@@ -473,7 +484,7 @@ class TestSymbolicLogicPrimitivesSymbolicAIPathsSession25(unittest.TestCase):
         lp_a = self._primitives("P is true")
         lp_b = self._primitives("Q is false")
         lp_a._to_type = self._once_raising_to_type()
-        with patch.object(slp_mod, 'SYMBOLIC_AI_AVAILABLE', True):
+        with patch.object(slp_mod, "SYMBOLIC_AI_AVAILABLE", True):
             result = lp_a.logical_and(lp_b)
         self.assertIsNotNone(result)
         self.assertIn("∧", result.value)
@@ -484,7 +495,7 @@ class TestSymbolicLogicPrimitivesSymbolicAIPathsSession25(unittest.TestCase):
         THEN @core.logic path executes (lines 333-340)."""
         lp_a = self._primitives("P is true")
         lp_b = self._primitives("Q is false")
-        with patch.object(slp_mod, 'SYMBOLIC_AI_AVAILABLE', True):
+        with patch.object(slp_mod, "SYMBOLIC_AI_AVAILABLE", True):
             result = lp_a.logical_or(lp_b)
         self.assertIsNotNone(result)
 
@@ -495,7 +506,7 @@ class TestSymbolicLogicPrimitivesSymbolicAIPathsSession25(unittest.TestCase):
         lp_a = self._primitives("P is true")
         lp_b = self._primitives("Q is false")
         lp_a._to_type = self._once_raising_to_type()
-        with patch.object(slp_mod, 'SYMBOLIC_AI_AVAILABLE', True):
+        with patch.object(slp_mod, "SYMBOLIC_AI_AVAILABLE", True):
             result = lp_a.logical_or(lp_b)
         self.assertIn("∨", result.value)
 
@@ -505,7 +516,7 @@ class TestSymbolicLogicPrimitivesSymbolicAIPathsSession25(unittest.TestCase):
         THEN @core.interpret path executes (lines 363-373)."""
         lp_a = self._primitives("If rains")
         lp_b = self._primitives("then wet")
-        with patch.object(slp_mod, 'SYMBOLIC_AI_AVAILABLE', True):
+        with patch.object(slp_mod, "SYMBOLIC_AI_AVAILABLE", True):
             result = lp_a.implies(lp_b)
         self.assertIsNotNone(result)
 
@@ -516,7 +527,7 @@ class TestSymbolicLogicPrimitivesSymbolicAIPathsSession25(unittest.TestCase):
         lp_a = self._primitives("P implies")
         lp_b = self._primitives("Q follows")
         lp_a._to_type = self._once_raising_to_type()
-        with patch.object(slp_mod, 'SYMBOLIC_AI_AVAILABLE', True):
+        with patch.object(slp_mod, "SYMBOLIC_AI_AVAILABLE", True):
             result = lp_a.implies(lp_b)
         self.assertIn("→", result.value)
 
@@ -525,7 +536,7 @@ class TestSymbolicLogicPrimitivesSymbolicAIPathsSession25(unittest.TestCase):
         WHEN negate() called
         THEN @core.interpret path executes (lines 393-402)."""
         lp = self._primitives("P is true")
-        with patch.object(slp_mod, 'SYMBOLIC_AI_AVAILABLE', True):
+        with patch.object(slp_mod, "SYMBOLIC_AI_AVAILABLE", True):
             result = lp.negate()
         self.assertIsNotNone(result)
 
@@ -535,7 +546,7 @@ class TestSymbolicLogicPrimitivesSymbolicAIPathsSession25(unittest.TestCase):
         THEN exception caught and fallback runs (lines 403-405)."""
         lp = self._primitives("P is true")
         lp._to_type = self._once_raising_to_type()
-        with patch.object(slp_mod, 'SYMBOLIC_AI_AVAILABLE', True):
+        with patch.object(slp_mod, "SYMBOLIC_AI_AVAILABLE", True):
             result = lp.negate()
         self.assertIn("¬", result.value)
 
@@ -544,7 +555,7 @@ class TestSymbolicLogicPrimitivesSymbolicAIPathsSession25(unittest.TestCase):
         WHEN analyze_logical_structure() called
         THEN @core.interpret path executes (lines 423-439)."""
         lp = self._primitives("All cats are animals and some birds can fly")
-        with patch.object(slp_mod, 'SYMBOLIC_AI_AVAILABLE', True):
+        with patch.object(slp_mod, "SYMBOLIC_AI_AVAILABLE", True):
             result = lp.analyze_logical_structure()
         self.assertIsNotNone(result)
 
@@ -554,7 +565,7 @@ class TestSymbolicLogicPrimitivesSymbolicAIPathsSession25(unittest.TestCase):
         THEN exception caught and fallback runs (lines 439-441)."""
         lp = self._primitives("P and Q are related")
         lp._to_type = self._once_raising_to_type()
-        with patch.object(slp_mod, 'SYMBOLIC_AI_AVAILABLE', True):
+        with patch.object(slp_mod, "SYMBOLIC_AI_AVAILABLE", True):
             result = lp.analyze_logical_structure()
         self.assertIsNotNone(result)
 
@@ -563,7 +574,7 @@ class TestSymbolicLogicPrimitivesSymbolicAIPathsSession25(unittest.TestCase):
         WHEN simplify_logic() called
         THEN @core.interpret path executes (lines 468-482)."""
         lp = self._primitives("(((P ∧ Q))) ∨ (R ∧ (P ∧ Q))")
-        with patch.object(slp_mod, 'SYMBOLIC_AI_AVAILABLE', True):
+        with patch.object(slp_mod, "SYMBOLIC_AI_AVAILABLE", True):
             result = lp.simplify_logic()
         self.assertIsNotNone(result)
 
@@ -573,7 +584,7 @@ class TestSymbolicLogicPrimitivesSymbolicAIPathsSession25(unittest.TestCase):
         THEN exception caught and fallback runs (lines 483-485)."""
         lp = self._primitives("P ∧ Q ∧ R")
         lp._to_type = self._once_raising_to_type()
-        with patch.object(slp_mod, 'SYMBOLIC_AI_AVAILABLE', True):
+        with patch.object(slp_mod, "SYMBOLIC_AI_AVAILABLE", True):
             result = lp.simplify_logic()
         self.assertIsNotNone(result)
 
@@ -589,11 +600,12 @@ class TestSymbolicLogicPrimitivesSymbolicAIPathsSession25(unittest.TestCase):
             LogicPrimitives,
             Symbol,
         )
+
         added_methods = []
         try:
             # Execute the extension block logic directly (mirrors lines 497-507)
             for method_name in dir(LogicPrimitives):
-                if not method_name.startswith('_') and callable(
+                if not method_name.startswith("_") and callable(
                     getattr(LogicPrimitives, method_name, None)
                 ):
                     if not hasattr(Symbol, method_name):
@@ -616,6 +628,7 @@ class TestSymbolicLogicPrimitivesSymbolicAIPathsSession25(unittest.TestCase):
 # Group 4 – domain/legal_symbolic_analyzer.py  (84 lines)
 # ============================================================
 
+
 class TestLegalSymbolicAnalyzerSymbolicAIPathsSession25(unittest.TestCase):
     """Cover LegalSymbolicAnalyzer + LegalReasoningEngine SymbolicAI branches."""
 
@@ -624,6 +637,7 @@ class TestLegalSymbolicAnalyzerSymbolicAIPathsSession25(unittest.TestCase):
         from ipfs_datasets_py.logic.integration.domain.legal_symbolic_analyzer import (
             LegalSymbolicAnalyzer,
         )
+
         # Prepare state so _initialize_symbolic_ai() fast-returns True
         orig_init_attempted = lsa_mod._SYMAI_INIT_ATTEMPTED
         orig_available = lsa_mod.SYMBOLIC_AI_AVAILABLE
@@ -650,7 +664,7 @@ class TestLegalSymbolicAnalyzerSymbolicAIPathsSession25(unittest.TestCase):
         analyzer, mock_expr = self._setup_analyzer_with_symai()
         self.assertTrue(analyzer.symbolic_ai_available)
         # Verify that _initialize_symbolic_ai() ran by checking set attributes
-        self.assertTrue(hasattr(analyzer, 'legal_context_text'))
+        self.assertTrue(hasattr(analyzer, "legal_context_text"))
 
     def test_analyzer_init_expression_none_disables_symbolic_ai(self):
         """GIVEN _SYMAI_EXPRESSION is None but SYMBOLIC_AI_AVAILABLE=True
@@ -667,6 +681,7 @@ class TestLegalSymbolicAnalyzerSymbolicAIPathsSession25(unittest.TestCase):
         from ipfs_datasets_py.logic.integration.domain.legal_symbolic_analyzer import (
             LegalSymbolicAnalyzer,
         )
+
         analyzer = LegalSymbolicAnalyzer()
 
         lsa_mod._SYMAI_INIT_ATTEMPTED = orig_init_attempted
@@ -755,8 +770,10 @@ class TestLegalReasoningEngineSymbolicAIPathsSession25(unittest.TestCase):
     def _setup_engine_with_symai(self):
         """Return a LegalReasoningEngine with SymbolicAI forced active."""
         from ipfs_datasets_py.logic.integration.domain.legal_symbolic_analyzer import (
-            LegalReasoningEngine, LegalSymbolicAnalyzer,
+            LegalReasoningEngine,
+            LegalSymbolicAnalyzer,
         )
+
         orig_init_attempted = lsa_mod._SYMAI_INIT_ATTEMPTED
         orig_available = lsa_mod.SYMBOLIC_AI_AVAILABLE
         orig_expression = lsa_mod._SYMAI_EXPRESSION
@@ -783,6 +800,7 @@ class TestLegalReasoningEngineSymbolicAIPathsSession25(unittest.TestCase):
         from ipfs_datasets_py.logic.integration.domain.legal_symbolic_analyzer import (
             LegalReasoningEngine,
         )
+
         orig_init_attempted = lsa_mod._SYMAI_INIT_ATTEMPTED
         orig_available = lsa_mod.SYMBOLIC_AI_AVAILABLE
         orig_expression = lsa_mod._SYMAI_EXPRESSION
@@ -805,7 +823,7 @@ class TestLegalReasoningEngineSymbolicAIPathsSession25(unittest.TestCase):
         THEN lines 504-532 (init + _initialize_reasoning_components) covered."""
         engine, mock_expr = self._setup_engine_with_symai()
         self.assertTrue(engine.symbolic_ai_available)
-        self.assertTrue(hasattr(engine, 'consistency_checker_text'))
+        self.assertTrue(hasattr(engine, "consistency_checker_text"))
 
     def test_infer_implicit_obligations_symbolic_ai_path(self):
         """GIVEN symbolic_ai_available=True
@@ -851,8 +869,7 @@ class TestLegalReasoningEngineSymbolicAIPathsSession25(unittest.TestCase):
         THEN simplified implementation returns dict (line 626)."""
         engine, mock_expr = self._setup_engine_with_symai()
         result = engine.analyze_legal_precedents(
-            "Current case involves breach",
-            ["Precedent A: party liable"]
+            "Current case involves breach", ["Precedent A: party liable"]
         )
         self.assertIsInstance(result, dict)
         self.assertIn("applicable_precedents", result)
@@ -862,11 +879,12 @@ class TestLegalReasoningEngineSymbolicAIPathsSession25(unittest.TestCase):
 # Group 5 – domain/symbolic_contracts.py  (5 easy lines)
 # ============================================================
 
+
 class TestSymbolicContractsFallbackStubsSession25(unittest.TestCase):
     """Cover fallback stub method bodies in symbolic_contracts.py (lines 82, 85, 88-90)."""
 
     def _reload_fallback_module(self):
-        with patch.dict(sys.modules, {'symai': None, 'symai.strategy': None}):
+        with patch.dict(sys.modules, {"symai": None, "symai.strategy": None}):
             importlib.reload(sc_mod)
         self.addCleanup(importlib.reload, sc_mod)
         return sc_mod
@@ -908,6 +926,7 @@ class TestSymbolicContractsFallbackStubsSession25(unittest.TestCase):
 # Group 6 – _initialize_symbolic_ai (lines 41-80 in legal_symbolic_analyzer.py)
 # ============================================================
 
+
 class TestLegalSymbolicAnalyzerInitializerSession25(unittest.TestCase):
     """Cover _initialize_symbolic_ai() body (lines 36-88) via sys.modules mocking."""
 
@@ -924,13 +943,13 @@ class TestLegalSymbolicAnalyzerInitializerSession25(unittest.TestCase):
         mock_ipfs_engine = MagicMock()
 
         extra_modules = {
-            'symai': mock_symai,
-            'symai.functional': MagicMock(),
-            'ipfs_datasets_py.utils': MagicMock(),
-            'ipfs_datasets_py.utils.engine_env': mock_engine_env,
-            'ipfs_datasets_py.utils.symai_config': mock_symai_config,
-            'ipfs_datasets_py.utils': MagicMock(),
-            'ipfs_datasets_py.utils.symai_ipfs_engine': mock_ipfs_engine,
+            "symai": mock_symai,
+            "symai.functional": MagicMock(),
+            "ipfs_datasets_py.utils": MagicMock(),
+            "ipfs_datasets_py.utils.engine_env": mock_engine_env,
+            "ipfs_datasets_py.utils.symai_config": mock_symai_config,
+            "ipfs_datasets_py.utils": MagicMock(),
+            "ipfs_datasets_py.utils.symai_ipfs_engine": mock_ipfs_engine,
         }
 
         # Save and reset module-level globals
@@ -962,18 +981,18 @@ class TestLegalSymbolicAnalyzerInitializerSession25(unittest.TestCase):
         mock_symai_config = MagicMock()
         mock_symai_config.choose_symai_neurosymbolic_engine.return_value = {
             "model": "codex:text-davinci-003",
-            "api_key": "test_key"
+            "api_key": "test_key",
         }
         mock_ipfs_engine = MagicMock()
         # Don't mock symai_codex_engine so it raises ImportError → covered by except
         extra_modules = {
-            'symai': mock_symai,
-            'symai.functional': MagicMock(),
-            'ipfs_datasets_py.utils': MagicMock(),
-            'ipfs_datasets_py.utils.engine_env': mock_engine_env,
-            'ipfs_datasets_py.utils.symai_config': mock_symai_config,
-            'ipfs_datasets_py.utils': MagicMock(),
-            'ipfs_datasets_py.utils.symai_ipfs_engine': mock_ipfs_engine,
+            "symai": mock_symai,
+            "symai.functional": MagicMock(),
+            "ipfs_datasets_py.utils": MagicMock(),
+            "ipfs_datasets_py.utils.engine_env": mock_engine_env,
+            "ipfs_datasets_py.utils.symai_config": mock_symai_config,
+            "ipfs_datasets_py.utils": MagicMock(),
+            "ipfs_datasets_py.utils.symai_ipfs_engine": mock_ipfs_engine,
         }
 
         orig_attempted = lsa_mod._SYMAI_INIT_ATTEMPTED
@@ -1004,10 +1023,10 @@ class TestLegalSymbolicAnalyzerInitializerSession25(unittest.TestCase):
         # Ensure utils aren't importable either to hit ImportError path
         mock_engine_env = MagicMock()
         extra_modules = {
-            'symai': None,  # Blocks symai import → ModuleNotFoundError (an ImportError)
-            'ipfs_datasets_py.logic.integration.utils': MagicMock(),
-            'ipfs_datasets_py.logic.integration.utils.engine_env': mock_engine_env,
-            'ipfs_datasets_py.logic.integration.utils.symai_config': MagicMock(),
+            "symai": None,  # Blocks symai import → ModuleNotFoundError (an ImportError)
+            "ipfs_datasets_py.logic.integration.utils": MagicMock(),
+            "ipfs_datasets_py.logic.integration.utils.engine_env": mock_engine_env,
+            "ipfs_datasets_py.logic.integration.utils.symai_config": MagicMock(),
         }
 
         with patch.dict(sys.modules, extra_modules):
@@ -1023,6 +1042,7 @@ class TestLegalSymbolicAnalyzerInitializerSession25(unittest.TestCase):
 # Group 7 – Misc small single-line targets
 # ============================================================
 
+
 class TestMiscSmallMissesSession25(unittest.TestCase):
     """Cover remaining small (1-4 line) missed targets in various modules."""
 
@@ -1030,6 +1050,7 @@ class TestMiscSmallMissesSession25(unittest.TestCase):
         """Cover cec_bridge.py lines 293-294: except in _get_cached_proof."""
         import ipfs_datasets_py.logic.integration.cec_bridge as cec_mod
         from ipfs_datasets_py.logic.integration.cec_bridge import CECBridge
+
         bridge = CECBridge()
         # Make proof_cache.get raise an exception
         mock_cache = MagicMock()
@@ -1072,7 +1093,7 @@ class TestMiscSmallMissesSession25(unittest.TestCase):
         mock_proc.stdout = "sat"  # triggers SUCCESS path (line 77)
         mock_proc.stderr = ""
 
-        with patch('subprocess.run', return_value=mock_proc):
+        with patch("subprocess.run", return_value=mock_proc):
             try:
                 result = mixin._execute_z3_proof(formula, translation)
                 # Method ran successfully
@@ -1113,7 +1134,7 @@ class TestMiscSmallMissesSession25(unittest.TestCase):
         mock_completed.stdout = "Goals accomplished"
         mock_completed.stderr = ""
 
-        with patch('subprocess.run', return_value=mock_completed):
+        with patch("subprocess.run", return_value=mock_completed):
             try:
                 result = mixin._execute_lean_proof(formula, translation)
                 # Lines 202-204 covered (AttributeError caught gracefully)
@@ -1125,6 +1146,7 @@ class TestMiscSmallMissesSession25(unittest.TestCase):
     def test_temporal_deontic_rag_store_base_vector_store_lines_25_30(self):
         """Cover temporal_deontic_rag_store.py lines 25 and 30 (fallback stub class bodies)."""
         import ipfs_datasets_py.logic.integration.domain.temporal_deontic_rag_store as tdr_mod
+
         # The BaseVectorStore and BaseEmbedding fallback stubs are defined at module level
         # when the real vector store isn't available.  Simply calling them covers the stubs.
         try:
@@ -1136,12 +1158,13 @@ class TestMiscSmallMissesSession25(unittest.TestCase):
         except (TypeError, NotImplementedError):
             pass  # Abstract stub may raise on instantiation
         # Reaching here confirms both stub classes are importable
-        self.assertTrue(hasattr(tdr_mod, 'BaseVectorStore'))
-        self.assertTrue(hasattr(tdr_mod, 'BaseEmbedding'))
+        self.assertTrue(hasattr(tdr_mod, "BaseVectorStore"))
+        self.assertTrue(hasattr(tdr_mod, "BaseEmbedding"))
 
     def test_integration_init_enable_symbolicai_already_enabled(self):
         """Cover __init__.py line 67: enable_symbolicai() fast-path when already active."""
         import ipfs_datasets_py.logic.integration as init_mod
+
         orig = init_mod.SYMBOLIC_AI_AVAILABLE
         init_mod.SYMBOLIC_AI_AVAILABLE = True
         try:
@@ -1165,8 +1188,8 @@ class TestMiscSmallMissesSession25(unittest.TestCase):
         import ipfs_datasets_py.logic.CEC.native.grammar_engine as ge_mod
 
         orig_ga = tgb_mod.GRAMMAR_AVAILABLE
-        orig_tgb_ge = getattr(tgb_mod, 'grammar_engine', None)
-        had_tgb_ge = hasattr(tgb_mod, 'grammar_engine')
+        orig_tgb_ge = getattr(tgb_mod, "grammar_engine", None)
+        had_tgb_ge = hasattr(tgb_mod, "grammar_engine")
 
         try:
             # Force the availability flag and ensure the real grammar_engine
@@ -1176,8 +1199,9 @@ class TestMiscSmallMissesSession25(unittest.TestCase):
             tgb_mod.grammar_engine = ge_mod
 
             # Patch the real GrammarEngine to raise so lines 67-69 are covered.
-            with patch.object(ge_mod, 'GrammarEngine',
-                              MagicMock(side_effect=RuntimeError("grammar init fail"))):
+            with patch.object(
+                ge_mod, "GrammarEngine", MagicMock(side_effect=RuntimeError("grammar init fail"))
+            ):
                 bridge = TDFOLGrammarBridge()
 
             self.assertFalse(bridge.available)
@@ -1185,12 +1209,13 @@ class TestMiscSmallMissesSession25(unittest.TestCase):
             tgb_mod.GRAMMAR_AVAILABLE = orig_ga
             if had_tgb_ge:
                 tgb_mod.grammar_engine = orig_tgb_ge
-            elif hasattr(tgb_mod, 'grammar_engine'):
+            elif hasattr(tgb_mod, "grammar_engine"):
                 del tgb_mod.grammar_engine
 
     def test_ipfs_proof_cache_pin_proof_not_in_cache(self):
         """Cover ipfs_proof_cache.py line 329: return False when formula not in cache."""
         from ipfs_datasets_py.logic.integration.caching.ipfs_proof_cache import IPFSProofCache
+
         cache = IPFSProofCache(enable_ipfs=False)
         result = cache.pin_proof("nonexistent_formula_xyz_abc")
         self.assertFalse(result)
@@ -1210,7 +1235,7 @@ class TestMiscSmallMissesSession25(unittest.TestCase):
                 raise ValueError("Forced validation error")
             return orig_validator(text, **kwargs)
 
-        with patch.object(sc_mod, 'validate_fol_input', patched_validator):
+        with patch.object(sc_mod, "validate_fol_input", patched_validator):
             # Also patch the converter to raise on second call
             orig_converter_cls = sc_mod.ContractedFOLConverter
 
@@ -1221,12 +1246,12 @@ class TestMiscSmallMissesSession25(unittest.TestCase):
                         raise RuntimeError("Forced converter error")
                     return super().__call__(input_data)
 
-            with patch.object(sc_mod, 'ContractedFOLConverter', RaisingConverter):
+            with patch.object(sc_mod, "ContractedFOLConverter", RaisingConverter):
                 # Run test_contracts — should hit both except handlers
                 sc_mod.test_contracts()
 
         self.assertTrue(True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

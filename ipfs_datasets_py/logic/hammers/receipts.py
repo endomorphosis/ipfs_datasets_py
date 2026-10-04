@@ -337,8 +337,7 @@ class HammerReceipt:
         if self.reconstruction_evidence is not None:
             if not isinstance(self.reconstruction_evidence, ReconstructionEvidence):
                 raise ReceiptValidationError(
-                    "HammerReceipt.reconstruction_evidence must be a "
-                    "ReconstructionEvidence"
+                    "HammerReceipt.reconstruction_evidence must be a ReconstructionEvidence"
                 )
             self.reconstruction_evidence.validate()
             if self.reconstruction_evidence.request_id != request_id:
@@ -383,9 +382,7 @@ class HammerReceipt:
                 )
 
         if not isinstance(self.normalized_evidence, list):
-            raise ReceiptValidationError(
-                "HammerReceipt.normalized_evidence must be a list"
-            )
+            raise ReceiptValidationError("HammerReceipt.normalized_evidence must be a list")
         for evidence in self.normalized_evidence:
             if not isinstance(evidence, NormalizedEvidence):
                 raise ReceiptValidationError(
@@ -416,9 +413,7 @@ class HammerReceipt:
                     "result.request.request_id"
                 )
 
-        if not isinstance(self.notes, list) or not all(
-            isinstance(n, str) for n in self.notes
-        ):
+        if not isinstance(self.notes, list) or not all(isinstance(n, str) for n in self.notes):
             raise ReceiptValidationError("HammerReceipt.notes must be a list of strings")
         if not isinstance(self.metadata, dict):
             raise ReceiptValidationError("HammerReceipt.metadata must be a dict")
@@ -434,9 +429,7 @@ class HammerReceipt:
             "receipt_id": self.receipt_id,
             "result": self.result.to_dict(),
             "reconstruction_evidence": (
-                self.reconstruction_evidence.to_dict()
-                if self.reconstruction_evidence
-                else None
+                self.reconstruction_evidence.to_dict() if self.reconstruction_evidence else None
             ),
             "solver_evidence": [e.to_dict() for e in self.solver_evidence],
             "normalized_evidence": [e.to_dict() for e in self.normalized_evidence],
@@ -467,9 +460,7 @@ class HammerReceipt:
             NormalizedEvidence.from_dict(e) for e in data.get("normalized_evidence", [])
         ]
         if data.get("decomposition_plan"):
-            data["decomposition_plan"] = DecompositionPlan.from_dict(
-                data["decomposition_plan"]
-            )
+            data["decomposition_plan"] = DecompositionPlan.from_dict(data["decomposition_plan"])
         else:
             data["decomposition_plan"] = None
         if "created_at" in data:
@@ -605,12 +596,8 @@ def build_publishable_view(receipt: HammerReceipt) -> Dict[str, Any]:
             "private-theorem-proof-text",
             redaction_notes,
         )
-        _redact_text_field(
-            reconstruction_evidence, "stdout", "kernel-stdout", redaction_notes
-        )
-        _redact_text_field(
-            reconstruction_evidence, "stderr", "kernel-stderr", redaction_notes
-        )
+        _redact_text_field(reconstruction_evidence, "stdout", "kernel-stdout", redaction_notes)
+        _redact_text_field(reconstruction_evidence, "stderr", "kernel-stderr", redaction_notes)
 
     for evidence in data.get("solver_evidence", []) or []:
         _redact_text_field(evidence, "raw_stdout", "solver-stdout", redaction_notes)
@@ -792,17 +779,13 @@ class ReceiptStore:
         except OSError as exc:  # pragma: no cover - best-effort bookkeeping
             logger.warning("Failed to persist hammer receipt index: %s", exc)
 
-    def _record_index(
-        self, digest: str, *, publishable: bool, location: StorageLocation
-    ) -> None:
+    def _record_index(self, digest: str, *, publishable: bool, location: StorageLocation) -> None:
         index = self._load_index()
         bucket = "publishable" if publishable else "full"
         index[bucket][digest] = location.to_dict()
         self._save_index(index)
 
-    def _indexed_location(
-        self, digest: str, *, publishable: bool
-    ) -> Optional[StorageLocation]:
+    def _indexed_location(self, digest: str, *, publishable: bool) -> Optional[StorageLocation]:
         index = self._load_index()
         bucket = "publishable" if publishable else "full"
         raw = index.get(bucket, {}).get(digest)
@@ -897,17 +880,13 @@ class ReceiptStore:
 
     # -- read ---------------------------------------------------------------
 
-    def _read_payload(
-        self, digest: str, *, publishable: bool
-    ) -> Optional[Dict[str, Any]]:
+    def _read_payload(self, digest: str, *, publishable: bool) -> Optional[Dict[str, Any]]:
         path = self._local_path(digest, publishable=publishable)
         if path.exists():
             try:
                 return json.loads(path.read_text(encoding="utf-8"))
             except Exception as exc:  # pragma: no cover - corrupted cache file
-                logger.warning(
-                    "Corrupted local hammer receipt cache file at %s: %s", path, exc
-                )
+                logger.warning("Corrupted local hammer receipt cache file at %s: %s", path, exc)
 
         location = self._indexed_location(digest, publishable=publishable)
         if location is None or location.cid is None:
@@ -929,9 +908,7 @@ class ReceiptStore:
         # Repopulate the local cache so future reads avoid the network.
         try:
             path.write_bytes(
-                json.dumps(data, sort_keys=True, indent=2, ensure_ascii=True).encode(
-                    "utf-8"
-                )
+                json.dumps(data, sort_keys=True, indent=2, ensure_ascii=True).encode("utf-8")
             )
         except OSError:  # pragma: no cover - best-effort cache repopulation
             pass
@@ -948,9 +925,7 @@ class ReceiptStore:
 
         data = self._read_payload(receipt_id, publishable=False)
         if data is None:
-            raise ReceiptNotFoundError(
-                f"No stored hammer receipt found for id {receipt_id!r}"
-            )
+            raise ReceiptNotFoundError(f"No stored hammer receipt found for id {receipt_id!r}")
         return HammerReceipt.from_dict(data)
 
     def get_publishable(self, receipt_id: str) -> Dict[str, Any]:
@@ -966,9 +941,7 @@ class ReceiptStore:
 
         data = self._read_payload(receipt_id, publishable=True)
         if data is None:
-            raise ReceiptNotFoundError(
-                f"No publishable hammer receipt found for id {receipt_id!r}"
-            )
+            raise ReceiptNotFoundError(f"No publishable hammer receipt found for id {receipt_id!r}")
         return data
 
     def exists(self, receipt_id: str, *, publishable: bool = False) -> bool:

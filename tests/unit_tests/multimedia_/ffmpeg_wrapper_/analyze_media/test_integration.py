@@ -9,6 +9,7 @@ Terminology:
 - comprehensive_metadata_extraction: Verifying that detailed technical information is extracted
 - performance_profiling_verification: Testing that analysis provides accurate performance characteristics
 """
+
 import pytest
 import anyio
 from pathlib import Path
@@ -18,7 +19,7 @@ from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpe
 class TestFFmpegWrapperAnalyzeMediaIntegration:
     """
     Integration scenarios for FFmpegWrapper.analyze_media method.
-    
+
     Tests the analyze_media method with actual FFmpeg operations
     and comprehensive analysis workflows to ensure complete functionality.
     """
@@ -40,7 +41,9 @@ class TestFFmpegWrapperAnalyzeMediaIntegration:
         assert "metadata" in result
         assert result["metadata"].get("analysis_depth") == "comprehensive"
 
-    async def test_when_analyzing_with_ffmpeg_unavailable_then_returns_error_response_with_dependency_message(self):
+    async def test_when_analyzing_with_ffmpeg_unavailable_then_returns_error_response_with_dependency_message(
+        self,
+    ):
         """
         GIVEN system environment with FFmpeg unavailable
         WHEN analyze_media is called without FFmpeg dependencies
@@ -112,7 +115,9 @@ class TestFFmpegWrapperAnalyzeMediaIntegration:
         assert result["status"] == "success"
         assert result.get("report_location") == "analysis_report.json"
 
-    async def test_when_performance_profiling_enabled_then_provides_accurate_computational_metrics(self):
+    async def test_when_performance_profiling_enabled_then_provides_accurate_computational_metrics(
+        self,
+    ):
         """
         GIVEN valid media file and performance_profiling parameter set to True
         WHEN analyze_media is called with performance profiling enabled
@@ -127,7 +132,9 @@ class TestFFmpegWrapperAnalyzeMediaIntegration:
         assert result["status"] == "success"
         assert "performance_metrics" in result
 
-    async def test_when_analyzing_with_all_analysis_options_then_provides_complete_media_profile(self):
+    async def test_when_analyzing_with_all_analysis_options_then_provides_complete_media_profile(
+        self,
+    ):
         """
         GIVEN valid media file with all analysis options enabled (quality, content, stream, metadata, checksum)
         WHEN analyze_media is called with comprehensive analysis configuration

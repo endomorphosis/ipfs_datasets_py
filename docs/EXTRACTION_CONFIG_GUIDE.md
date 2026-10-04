@@ -296,30 +296,26 @@ aggressive_cfg = ExtractionConfig(llm_fallback_threshold=0.95)
 **Use Cases**:
 - **Common words**: Filter grammatical artifacts.
   ```python
-  stopwords=["the", "and", "or", "is", "a", "an"]
+  stopwords = ["the", "and", "or", "is", "a", "an"]
   ```
   
 - **Domain-specific noise**: Filter frequent non-entities.
   ```python
-  stopwords=["said", "said the", "according to"]  # for news text
+  stopwords = ["said", "said the", "according to"]  # for news text
   ```
   
 - **Pronouns and articles**: Remove when they're not meaningful.
   ```python
-  stopwords=["he", "she", "it", "they", "we", "this", "that"]
+  stopwords = ["he", "she", "it", "they", "we", "this", "that"]
   ```
 
 **Example**:
 ```python
 # News article processing
-news_cfg = ExtractionConfig(
-    stopwords=["said", "told", "according to", "the", "and", "or"]
-)
+news_cfg = ExtractionConfig(stopwords=["said", "told", "according to", "the", "and", "or"])
 
 # Technical documentation
-tech_cfg = ExtractionConfig(
-    stopwords=["the", "a", "an", "is", "was", "etc"]
-)
+tech_cfg = ExtractionConfig(stopwords=["the", "a", "an", "is", "was", "etc"])
 
 # No stopwords (keep everything)
 no_stopwords_cfg = ExtractionConfig(stopwords=[])
@@ -340,25 +336,23 @@ no_stopwords_cfg = ExtractionConfig(stopwords=[])
   
 - **Legal domain**:
   ```python
-  allowed_entity_types=["Person", "Organization", "Contract", "Date", "Amount"]
+  allowed_entity_types = ["Person", "Organization", "Contract", "Date", "Amount"]
   ```
   
 - **Medical domain**:
   ```python
-  allowed_entity_types=["Disease", "Medication", "Symptom", "Dosage"]
+  allowed_entity_types = ["Disease", "Medication", "Symptom", "Dosage"]
   ```
   
 - **Financial domain**:
   ```python
-  allowed_entity_types=["Company", "Security", "Price", "Portfolio"]
+  allowed_entity_types = ["Company", "Security", "Price", "Portfolio"]
   ```
 
 **Example**:
 ```python
 # Only persons and organizations
-narrow_cfg = ExtractionConfig(
-    allowed_entity_types=["Person", "Organization"]
-)
+narrow_cfg = ExtractionConfig(allowed_entity_types=["Person", "Organization"])
 
 # All legal document types
 legal_cfg = ExtractionConfig(
@@ -420,27 +414,27 @@ conservative_cfg = ExtractionConfig(max_confidence=0.7)
 **Use Cases**:
 - **Legal domain**:
   ```python
-  domain_vocab={
+  domain_vocab = {
       "Contract": ["agreement", "contract", "deed", "terms"],
       "Party": ["plaintiff", "defendant", "buyer", "seller"],
-      "Obligation": ["shall pay", "must deliver", "agrees to"]
+      "Obligation": ["shall pay", "must deliver", "agrees to"],
   }
   ```
   
 - **Medical domain**:
   ```python
-  domain_vocab={
+  domain_vocab = {
       "Disease": ["diabetes", "flu", "hypertension", "cancer"],
       "Medication": ["aspirin", "insulin", "ibuprofen"],
-      "Symptom": ["fever", "cough", "nausea", "bleeding"]
+      "Symptom": ["fever", "cough", "nausea", "bleeding"],
   }
   ```
   
 - **Financial domain**:
   ```python
-  domain_vocab={
+  domain_vocab = {
       "Stock": ["AAPL", "MSFT", "Tesla", "Apple Inc."],
-      "Metric": ["earnings", "revenue", "EBITDA", "P/E ratio"]
+      "Metric": ["earnings", "revenue", "EBITDA", "P/E ratio"],
   }
   ```
 
@@ -450,7 +444,7 @@ legal_cfg = ExtractionConfig(
     domain_vocab={
         "Person": ["plaintiff", "defendant", "judge", "witness"],
         "Organization": ["court", "firm", "corporation"],
-        "Document": ["contract", "agreement", "deed"]
+        "Document": ["contract", "agreement", "deed"],
     }
 )
 ```
@@ -468,38 +462,34 @@ legal_cfg = ExtractionConfig(
 **Use Cases**:
 - **Email addresses**:
   ```python
-  custom_rules=[
-      (r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', 'Email')
-  ]
+  custom_rules = [(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b", "Email")]
   ```
   
 - **Phone numbers**:
   ```python
-  custom_rules=[
-      (r'\b\d{3}[-.]?\d{3}[-.]?\d{4}\b', 'PhoneNumber'),
-      (r'\+\d{1,3}\s?\d{1,14}\b', 'PhoneNumber')
+  custom_rules = [
+      (r"\b\d{3}[-.]?\d{3}[-.]?\d{4}\b", "PhoneNumber"),
+      (r"\+\d{1,3}\s?\d{1,14}\b", "PhoneNumber"),
   ]
   ```
   
 - **URLs**:
   ```python
-  custom_rules=[
-      (r'https?://\S+', 'URL')
-  ]
+  custom_rules = [(r"https?://\S+", "URL")]
   ```
   
 - **Currency amounts**:
   ```python
-  custom_rules=[
-      (r'\$\d+(?:,\d{3})*(?:\.\d{2})?', 'Amount'),
-      (r'£\d+(?:,\d{3})*(?:\.\d{2})?', 'Amount')
+  custom_rules = [
+      (r"\$\d+(?:,\d{3})*(?:\.\d{2})?", "Amount"),
+      (r"£\d+(?:,\d{3})*(?:\.\d{2})?", "Amount"),
   ]
   ```
   
 - **Legal citation format**:
   ```python
-  custom_rules=[
-      (r'\d+\s[A-Z][.a-z.]+\s\d+', 'LegalCitation'),  # "123 U.S.C. 456"
+  custom_rules = [
+      (r"\d+\s[A-Z][.a-z.]+\s\d+", "LegalCitation"),  # "123 U.S.C. 456"
   ]
   ```
 
@@ -507,9 +497,9 @@ legal_cfg = ExtractionConfig(
 ```python
 finance_cfg = ExtractionConfig(
     custom_rules=[
-        (r'\$\d+(?:,\d{3})*(?:\.\d{2})?', 'Amount'),
-        (r'\b[A-Z]{1,5}\b', 'Ticker'),
-        (r'\b\d{4}-\d{2}-\d{2}\b', 'Date')
+        (r"\$\d+(?:,\d{3})*(?:\.\d{2})?", "Amount"),
+        (r"\b[A-Z]{1,5}\b", "Ticker"),
+        (r"\b\d{4}-\d{2}-\d{2}\b", "Date"),
     ]
 )
 ```
@@ -524,7 +514,9 @@ finance_cfg = ExtractionConfig(
 
 ```python
 from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
-    ExtractionConfig, OntologyGenerator, OntologyGenerationContext
+    ExtractionConfig,
+    OntologyGenerator,
+    OntologyGenerationContext,
 )
 
 legal_config = ExtractionConfig(
@@ -532,52 +524,37 @@ legal_config = ExtractionConfig(
     confidence_threshold=0.75,
     max_entities=200,
     max_relationships=150,
-    
     # Fine-grained relationship detection
     window_size=8,
-    
     # Include rich entity descriptions
     include_properties=True,
-    
     # Minimum reasonable entity name length
     min_entity_length=3,
-    
     # Hybrid mode: LLM fallback for edge cases
     llm_fallback_threshold=0.65,
-    
     # Filter common stop words
     stopwords=["the", "and", "or", "is", "a", "an", "by", "of"],
-    
     # Only extract legal entity types
-    allowed_entity_types=[
-        "Person", "Organization", "Document", 
-        "Law", "Court", "Amount", "Date"
-    ],
-    
+    allowed_entity_types=["Person", "Organization", "Document", "Law", "Court", "Amount", "Date"],
     # Domain vocabulary for legal terms
     domain_vocab={
         "Document": ["contract", "agreement", "deed", "will", "tort"],
         "Party": ["plaintiff", "defendant", "claimant", "respondent"],
-        "Obligation": ["obligation", "duty", "right", "liability"]
+        "Obligation": ["obligation", "duty", "right", "liability"],
     },
-    
     # Custom rules for legal citations
     custom_rules=[
-        (r'\d+\s[U.S.C|F.Supp|Fed|Cal]\D*\s\d+', 'LegalCitation'),
-        (r'\$\d+(?:,\d{3})*(?:\.\d{2})?', 'Amount')
+        (r"\d+\s[U.S.C|F.Supp|Fed|Cal]\D*\s\d+", "LegalCitation"),
+        (r"\$\d+(?:,\d{3})*(?:\.\d{2})?", "Amount"),
     ],
-    
     # Conservative confidence calibration
-    max_confidence=0.95
+    max_confidence=0.95,
 )
 
 # Use in pipeline
 generator = OntologyGenerator()
 context = OntologyGenerationContext(
-    domain="legal",
-    data_source="contract",
-    data_type="text",
-    config=legal_config
+    domain="legal", data_source="contract", data_type="text", config=legal_config
 )
 result = generator.extract_entities("Your legal text here...", context)
 ```
@@ -590,34 +567,45 @@ social_config = ExtractionConfig(
     confidence_threshold=0.35,
     max_entities=50,
     max_relationships=30,
-    
     # Shorter window (tight relationships only)
     window_size=3,
-    
     # Skip properties for speed
     include_properties=False,
-    
     # Allow very short names (usernames, hashtags)
     min_entity_length=1,
-    
     # Disable LLM fallback (cost/speed)
     llm_fallback_threshold=0.0,
-    
     # Heavy stopwords list for noisy text
     stopwords=[
-        "the", "a", "an", "is", "are", "was", "were",
-        "i", "me", "my", "you", "your", "he", "she", "it",
-        "lol", "omg", "hey", "yeah", "like", "so", "just"
+        "the",
+        "a",
+        "an",
+        "is",
+        "are",
+        "was",
+        "were",
+        "i",
+        "me",
+        "my",
+        "you",
+        "your",
+        "he",
+        "she",
+        "it",
+        "lol",
+        "omg",
+        "hey",
+        "yeah",
+        "like",
+        "so",
+        "just",
     ],
-    
     # No type filtering (broad extraction)
     allowed_entity_types=[],
-    
     # Simple extraction (no custom rules)
     custom_rules=[],
-    
     # More trust in confidence scores
-    max_confidence=1.0
+    max_confidence=1.0,
 )
 ```
 
@@ -627,24 +615,19 @@ social_config = ExtractionConfig(
 realtime_config = ExtractionConfig(
     # Reasonable confidence threshold
     confidence_threshold=0.5,
-    max_entities=20,        # Keep small for latency
+    max_entities=20,  # Keep small for latency
     max_relationships=10,
-    
     window_size=5,
     include_properties=False,  # Skip for speed
     min_entity_length=2,
     llm_fallback_threshold=0.0,  # No LLM (too slow)
-    
     # Minimal stopwords
     stopwords=["the", "and", "or"],
-    
     # Liberal type acceptance
     allowed_entity_types=[],
-    
     # No custom rules (too expensive to evaluate)
     custom_rules=[],
-    
-    max_confidence=1.0
+    max_confidence=1.0,
 )
 ```
 
@@ -655,32 +638,31 @@ medical_config = ExtractionConfig(
     confidence_threshold=0.6,
     max_entities=150,
     max_relationships=120,
-    
     window_size=10,  # Longer for thematic relationships
-    include_properties=True,   # Include medication properties, dosages
+    include_properties=True,  # Include medication properties, dosages
     min_entity_length=2,
-    
     llm_fallback_threshold=0.7,  # Fallback for ambiguous terms
-    
     stopwords=["the", "and", "or", "in", "of", "to", "for"],
-    
     allowed_entity_types=[
-        "Disease", "Symptom", "Medication", "Treatment",
-        "Dosage", "TimeFrame", "BodyPart", "TestResult"
+        "Disease",
+        "Symptom",
+        "Medication",
+        "Treatment",
+        "Dosage",
+        "TimeFrame",
+        "BodyPart",
+        "TestResult",
     ],
-    
     domain_vocab={
         "Disease": ["diabetes", "hypertension", "asthma", "COPD"],
         "Medication": ["aspirin", "lisinopril", "metformin"],
-        "Symptom": ["fever", "chest pain", "shortness of breath"]
+        "Symptom": ["fever", "chest pain", "shortness of breath"],
     },
-    
     custom_rules=[
-        (r'\d+\s?(mg|g|ml|units?)\b', 'Dosage'),
-        (r'\d{1,2}-\d{1,2}\s?(?:year|month|week)s?\s?old', 'Age')
+        (r"\d+\s?(mg|g|ml|units?)\b", "Dosage"),
+        (r"\d{1,2}-\d{1,2}\s?(?:year|month|week)s?\s?old", "Age"),
     ],
-    
-    max_confidence=0.95  # Conservative for medical accuracy
+    max_confidence=0.95,  # Conservative for medical accuracy
 )
 ```
 
@@ -711,11 +693,7 @@ except ValueError as e:
 ### Loading from Dictionary (Legacy)
 
 ```python
-config_dict = {
-    "confidence_threshold": 0.8,
-    "max_entities": 100,
-    "max_relationships": 50
-}
+config_dict = {"confidence_threshold": 0.8, "max_entities": 100, "max_relationships": 50}
 
 cfg = ExtractionConfig.from_dict(config_dict)
 ```
@@ -770,9 +748,11 @@ configs_to_test = [
 
 for cfg in configs_to_test:
     results = evaluate(cfg, test_corpus)
-    print(f"Threshold {cfg.confidence_threshold}: "
-          f"Precision={results.precision:.2f}, "
-          f"Recall={results.recall:.2f}")
+    print(
+        f"Threshold {cfg.confidence_threshold}: "
+        f"Precision={results.precision:.2f}, "
+        f"Recall={results.recall:.2f}"
+    )
 ```
 
 ---

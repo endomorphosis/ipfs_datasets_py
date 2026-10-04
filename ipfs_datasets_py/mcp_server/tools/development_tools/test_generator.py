@@ -118,6 +118,7 @@ def test_generator(
     try:
         try:
             import sniffio
+
             sniffio.current_async_library()
             in_async = True
         except (ImportError, AttributeError):

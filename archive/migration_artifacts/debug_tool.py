@@ -3,9 +3,11 @@
 Debug helper for individual MCP tools.
 Use this script to debug specific MCP tools.
 """
+
 import anyio
 import sys
 from typing import Any, Dict
+
 
 async def debug_tool(tool_category: str, tool_name: str, *args, **kwargs) -> Dict[str, Any]:
     """
@@ -43,8 +45,10 @@ async def debug_tool(tool_category: str, tool_name: str, *args, **kwargs) -> Dic
     except Exception as e:
         print(f"❌ Error debugging tool: {e}")
         import traceback
+
         traceback.print_exc()
         return {"status": "error", "message": str(e)}
+
 
 async def main():
     """Main function for debugging tools."""
@@ -59,6 +63,7 @@ async def main():
     args = sys.argv[3:] if len(sys.argv) > 3 else []
 
     await debug_tool(tool_category, tool_name, *args)
+
 
 if __name__ == "__main__":
     anyio.run(main())

@@ -19,25 +19,25 @@ from ipfs_datasets_py.logic.security_models.crypto_exchange.reports.xaman_dispro
 )
 
 
-CORPUS_DIR = Path('security_ir_artifacts/corpora/xaman-app')
-DISPROOF_VECTORS_PATH = CORPUS_DIR / 'disproof-vectors.json'
-COUNTEREXAMPLE_REPORT_PATH = CORPUS_DIR / 'counterexample-report.json'
-XRPL_TRANSACTION_COVERAGE_PATH = CORPUS_DIR / 'xrpl-transaction-coverage.json'
+CORPUS_DIR = Path("security_ir_artifacts/corpora/xaman-app")
+DISPROOF_VECTORS_PATH = CORPUS_DIR / "disproof-vectors.json"
+COUNTEREXAMPLE_REPORT_PATH = CORPUS_DIR / "counterexample-report.json"
+XRPL_TRANSACTION_COVERAGE_PATH = CORPUS_DIR / "xrpl-transaction-coverage.json"
 
 
 def _write_json(path: Path, payload: dict[str, object]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
-        json.dumps(payload, indent=2, sort_keys=True) + '\n',
-        encoding='utf-8',
+        json.dumps(payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
     )
 
 
 def generate(repo_root: Path) -> tuple[dict[str, object], dict[str, object]]:
-    model_payload = json.loads((repo_root / MODEL_PATH).read_text(encoding='utf-8'))
-    model_cid = (repo_root / MODEL_CID_PATH).read_text(encoding='utf-8').strip()
+    model_payload = json.loads((repo_root / MODEL_PATH).read_text(encoding="utf-8"))
+    model_cid = (repo_root / MODEL_CID_PATH).read_text(encoding="utf-8").strip()
     xrpl_transaction_coverage = json.loads(
-        (repo_root / XRPL_TRANSACTION_COVERAGE_PATH).read_text(encoding='utf-8')
+        (repo_root / XRPL_TRANSACTION_COVERAGE_PATH).read_text(encoding="utf-8")
     )
     vectors, report = build_xaman_disproof_artifacts(
         model_payload,
@@ -52,23 +52,23 @@ def generate(repo_root: Path) -> tuple[dict[str, object], dict[str, object]]:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        '--repo-root',
+        "--repo-root",
         default=str(ROOT_DIR),
-        help='Repository root containing security_ir_artifacts.',
+        help="Repository root containing security_ir_artifacts.",
     )
     args = parser.parse_args(argv)
 
     repo_root = Path(args.repo_root).resolve()
     vectors, report = generate(repo_root)
     print(
-        'Wrote '
-        f'{DISPROOF_VECTORS_PATH} '
-        f'({len(vectors["vectors"])} vectors, '
-        f'{report["summary"]["counterexample_found_count"]} counterexamples, '
-        f'{report["summary"]["blocked_count"]} blocked)'
+        "Wrote "
+        f"{DISPROOF_VECTORS_PATH} "
+        f"({len(vectors['vectors'])} vectors, "
+        f"{report['summary']['counterexample_found_count']} counterexamples, "
+        f"{report['summary']['blocked_count']} blocked)"
     )
     return 0
 
 
-if __name__ == '__main__':  # pragma: no cover
+if __name__ == "__main__":  # pragma: no cover
     raise SystemExit(main())

@@ -35,7 +35,10 @@ async def pdf_query_corpus(
 
         valid_query_types = ["semantic", "entity", "relationship", "hybrid", "cross_document"]
         if query_type not in valid_query_types:
-            return {"status": "error", "message": f"Invalid query type. Must be one of: {valid_query_types}"}
+            return {
+                "status": "error",
+                "message": f"Invalid query type. Must be one of: {valid_query_types}",
+            }
 
         if not isinstance(query, str) or not query.strip():
             return {"status": "error", "message": "Query cannot be empty"}
@@ -44,7 +47,10 @@ async def pdf_query_corpus(
             return {"status": "error", "message": "max_documents must be greater than 0"}
 
         if not 0.0 <= confidence_threshold <= 1.0:
-            return {"status": "error", "message": "confidence_threshold must be between 0.0 and 1.0"}
+            return {
+                "status": "error",
+                "message": "confidence_threshold must be between 0.0 and 1.0",
+            }
 
         with track_operation("pdf_query_corpus"):
             if query_type == "semantic":
@@ -99,31 +105,48 @@ async def pdf_query_corpus(
                     )
 
             entities_found = result.get("entities", []) if isinstance(result, dict) else []
-            relationships_found = result.get("relationships", []) if isinstance(result, dict) else []
-            cross_document_connections = result.get("cross_document_relationships", []) if isinstance(result, dict) else []
+            relationships_found = (
+                result.get("relationships", []) if isinstance(result, dict) else []
+            )
+            cross_document_connections = (
+                result.get("cross_document_relationships", []) if isinstance(result, dict) else []
+            )
 
             return {
                 "status": "success",
                 "answer": result.get("answer", "") if isinstance(result, dict) else "",
-                "confidence_score": result.get("confidence", 0.0) if isinstance(result, dict) else 0.0,
+                "confidence_score": result.get("confidence", 0.0)
+                if isinstance(result, dict)
+                else 0.0,
                 "source_documents": source_documents,
                 "entities_found": entities_found,
                 "relationships_found": relationships_found,
                 "cross_document_connections": cross_document_connections,
                 "query_analysis": {
                     "query_type": query_type,
-                    "query_complexity": result.get("query_complexity", "medium") if isinstance(result, dict) else "unknown",
-                    "processing_strategy": result.get("strategy", "standard") if isinstance(result, dict) else "unknown",
-                    "documents_searched": result.get("documents_searched", 0) if isinstance(result, dict) else 0,
+                    "query_complexity": result.get("query_complexity", "medium")
+                    if isinstance(result, dict)
+                    else "unknown",
+                    "processing_strategy": result.get("strategy", "standard")
+                    if isinstance(result, dict)
+                    else "unknown",
+                    "documents_searched": result.get("documents_searched", 0)
+                    if isinstance(result, dict)
+                    else 0,
                     "total_matches": len(source_documents),
                 },
-                "processing_time": result.get("processing_time", 0) if isinstance(result, dict) else 0,
+                "processing_time": result.get("processing_time", 0)
+                if isinstance(result, dict)
+                else 0,
                 "message": f"Successfully processed {query_type} query with {len(source_documents)} relevant documents found",
             }
 
     except ImportError as e:
         logger.error("Query processing dependencies not available: %s", e)
-        return {"status": "error", "message": f"Query processing dependencies not available: {str(e)}"}
+        return {
+            "status": "error",
+            "message": f"Query processing dependencies not available: {str(e)}",
+        }
     except Exception as e:
         logger.error("Error querying PDF corpus: %s", e)
         return {"status": "error", "message": f"Failed to query PDF corpus: {str(e)}"}

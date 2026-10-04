@@ -20,7 +20,7 @@ from .core import (
     AdaptiveBatchProcessor,
 )
 
-# Import from schema module  
+# Import from schema module
 from .schema import (
     BaseComponent,
     DocumentChunk,
@@ -35,7 +35,7 @@ from .schema import (
     DEFAULT_TEXT_NODE_TMPL,
     DEFAULT_METADATA_TMPL,
     TRUNCATE_LENGTH,
-    WRAP_WIDTH
+    WRAP_WIDTH,
 )
 
 # Import from chunker module
@@ -47,53 +47,46 @@ from .chunker import (
     SlidingWindowChunker,
     SemanticChunker,
     chunker,
-    CHUNKING_STRATEGIES
+    CHUNKING_STRATEGIES,
 )
 
 # Import from create_embeddings module
-from .create_embeddings import (
-    create_embeddings,
-    CreateEmbeddingsProcessor
-)
+from .create_embeddings import create_embeddings, CreateEmbeddingsProcessor
 
 __all__ = [
     # Core functionality
-    'IPFSEmbeddings',
-    'CoreEmbeddingConfig',
-    'PerformanceMetrics',
-    'MemoryMonitor', 
-    'AdaptiveBatchProcessor',
-    
+    "IPFSEmbeddings",
+    "CoreEmbeddingConfig",
+    "PerformanceMetrics",
+    "MemoryMonitor",
+    "AdaptiveBatchProcessor",
     # Schema classes
-    'BaseComponent',
-    'DocumentChunk',
-    'Document',
-    'EmbeddingResult',
-    'SearchResult',
-    'ChunkingStrategy',
-    'VectorStoreType',
-    'EmbeddingConfig',
-    'VectorStoreConfig',
-    'ImageType',
-    'DEFAULT_TEXT_NODE_TMPL',
-    'DEFAULT_METADATA_TMPL',
-    'TRUNCATE_LENGTH',
-    'WRAP_WIDTH',
-    
+    "BaseComponent",
+    "DocumentChunk",
+    "Document",
+    "EmbeddingResult",
+    "SearchResult",
+    "ChunkingStrategy",
+    "VectorStoreType",
+    "EmbeddingConfig",
+    "VectorStoreConfig",
+    "ImageType",
+    "DEFAULT_TEXT_NODE_TMPL",
+    "DEFAULT_METADATA_TMPL",
+    "TRUNCATE_LENGTH",
+    "WRAP_WIDTH",
     # Chunking functionality
-    'BaseChunker',
-    'Chunker',
-    'FixedSizeChunker',
-    'SentenceChunker',
-    'SlidingWindowChunker',
-    'SemanticChunker',
-    'chunker',
-    'CHUNKING_STRATEGIES',
-    
+    "BaseChunker",
+    "Chunker",
+    "FixedSizeChunker",
+    "SentenceChunker",
+    "SlidingWindowChunker",
+    "SemanticChunker",
+    "chunker",
+    "CHUNKING_STRATEGIES",
     # Embedding creation
-    'create_embeddings',
-    'CreateEmbeddingsProcessor'
+    "create_embeddings",
+    "CreateEmbeddingsProcessor",
 ]
 
 __version__ = "1.0.0"
-

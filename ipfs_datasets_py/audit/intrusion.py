@@ -23,6 +23,7 @@ from ipfs_datasets_py.audit.audit_logger import AuditEvent, AuditCategory, Audit
 @dataclass
 class SecurityAlert:
     """Represents a security alert generated from audit events."""
+
     alert_id: str
     timestamp: str
     level: str  # 'low', 'medium', 'high', 'critical'
@@ -47,9 +48,12 @@ class AnomalyDetector:
     activity that may indicate security breaches or operational issues.
     """
 
-    def __init__(self, window_size: int = 1000,
-                baseline_period_days: int = 7,
-                threshold_multiplier: float = 2.0):
+    def __init__(
+        self,
+        window_size: int = 1000,
+        baseline_period_days: int = 7,
+        threshold_multiplier: float = 2.0,
+    ):
         """
         Initialize the anomaly detector.
 
@@ -102,7 +106,9 @@ class AnomalyDetector:
             self.metrics_history = defaultdict(list)
 
             # Filter events to baseline period
-            cutoff_time = datetime.datetime.now() - datetime.timedelta(days=self.baseline_period_days)
+            cutoff_time = datetime.datetime.now() - datetime.timedelta(
+                days=self.baseline_period_days
+            )
             cutoff_time_str = cutoff_time.isoformat()
 
             baseline_events = [e for e in events if e.timestamp > cutoff_time_str]
@@ -113,7 +119,7 @@ class AnomalyDetector:
 
             # Process events in chronological windows
             for i in range(0, len(baseline_events), self.window_size):
-                window = baseline_events[i:i+self.window_size]
+                window = baseline_events[i : i + self.window_size]
                 self.current_window = window
                 self._update_metrics()
 
@@ -121,12 +127,12 @@ class AnomalyDetector:
             for metric, values in self.metrics_history.items():
                 if values:
                     self.baseline_metrics[metric] = {
-                        'mean': statistics.mean(values),
-                        'median': statistics.median(values),
-                        'stddev': statistics.stdev(values) if len(values) > 1 else 0,
-                        'min': min(values),
-                        'max': max(values),
-                        'count': len(values)
+                        "mean": statistics.mean(values),
+                        "median": statistics.median(values),
+                        "stddev": statistics.stdev(values) if len(values) > 1 else 0,
+                        "min": min(values),
+                        "max": max(values),
+                        "count": len(values),
                     }
 
             self.logger.info(f"Established baseline from {len(baseline_events)} events")
@@ -165,7 +171,9 @@ class AnomalyDetector:
             metrics[f"count_status_{status}"] = count
 
         # Event counts by resource type
-        resource_type_counts = Counter(e.resource_type for e in self.current_window if e.resource_type)
+        resource_type_counts = Counter(
+            e.resource_type for e in self.current_window if e.resource_type
+        )
         for resource_type, count in resource_type_counts.items():
             metrics[f"count_resource_type_{resource_type}"] = count
 
@@ -179,7 +187,11 @@ class AnomalyDetector:
         # Advanced metrics for specific security concerns
 
         # Failed login rate
-        login_events = [e for e in self.current_window if e.category == AuditCategory.AUTHENTICATION and e.action == "login"]
+        login_events = [
+            e
+            for e in self.current_window
+            if e.category == AuditCategory.AUTHENTICATION and e.action == "login"
+        ]
         failed_logins = [e for e in login_events if e.status == "failure"]
         if login_events:
             metrics["rate_failed_logins"] = len(failed_logins) / len(login_events)
@@ -188,8 +200,12 @@ class AnomalyDetector:
                 self.metrics_history["rate_failed_logins"].pop(0)
 
         # Access denial rate
-        access_events = [e for e in self.current_window if e.category == AuditCategory.AUTHORIZATION]
-        access_denied = [e for e in access_events if e.status == "failure" or e.action == "access_denied"]
+        access_events = [
+            e for e in self.current_window if e.category == AuditCategory.AUTHORIZATION
+        ]
+        access_denied = [
+            e for e in access_events if e.status == "failure" or e.action == "access_denied"
+        ]
         if access_events:
             metrics["rate_access_denied"] = len(access_denied) / len(access_events)
             self.metrics_history["rate_access_denied"].append(metrics["rate_access_denied"])
@@ -229,12 +245,12 @@ class AnomalyDetector:
             baseline = self.baseline_metrics[metric]
 
             # Skip metrics with insufficient history
-            if baseline['count'] < 5:
+            if baseline["count"] < 5:
                 continue
 
             # Detect if current value is anomalous
-            mean = baseline['mean']
-            stddev = baseline['stddev']
+            mean = baseline["mean"]
+            stddev = baseline["stddev"]
 
             if stddev > 0:
                 z_score = abs(current_value - mean) / stddev
@@ -242,65 +258,67 @@ class AnomalyDetector:
 
                 if z_score > threshold:
                     anomaly = {
-                        'metric': metric,
-                        'value': current_value,
-                        'baseline_mean': mean,
-                        'baseline_stddev': stddev,
-                        'z_score': z_score,
-                        'deviation_percent': abs((current_value - mean) / mean) * 100 if mean != 0 else float('inf'),
-                        'timestamp': datetime.datetime.utcnow().isoformat() + 'Z'
+                        "metric": metric,
+                        "value": current_value,
+                        "baseline_mean": mean,
+                        "baseline_stddev": stddev,
+                        "z_score": z_score,
+                        "deviation_percent": abs((current_value - mean) / mean) * 100
+                        if mean != 0
+                        else float("inf"),
+                        "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
                     }
 
                     # Add anomaly details based on metric type
-                    if metric.startswith('count_category_'):
-                        category = metric.split('_')[-1]
-                        anomaly['type'] = 'category_volume'
-                        anomaly['category'] = category
-                        anomaly['description'] = f"Unusual volume of {category} events"
-                        anomaly['severity'] = self._calculate_severity(z_score)
+                    if metric.startswith("count_category_"):
+                        category = metric.split("_")[-1]
+                        anomaly["type"] = "category_volume"
+                        anomaly["category"] = category
+                        anomaly["description"] = f"Unusual volume of {category} events"
+                        anomaly["severity"] = self._calculate_severity(z_score)
 
-                    elif metric.startswith('count_level_'):
-                        level = metric.split('_')[-1]
-                        anomaly['type'] = 'severity_distribution'
-                        anomaly['level'] = level
-                        anomaly['description'] = f"Unusual number of {level} level events"
-                        anomaly['severity'] = self._calculate_severity(z_score)
+                    elif metric.startswith("count_level_"):
+                        level = metric.split("_")[-1]
+                        anomaly["type"] = "severity_distribution"
+                        anomaly["level"] = level
+                        anomaly["description"] = f"Unusual number of {level} level events"
+                        anomaly["severity"] = self._calculate_severity(z_score)
 
-                    elif metric.startswith('count_action_'):
-                        action = metric.split('count_action_')[-1]
-                        anomaly['type'] = 'action_frequency'
-                        anomaly['action'] = action
-                        anomaly['description'] = f"Unusual frequency of {action} actions"
-                        anomaly['severity'] = self._calculate_severity(z_score)
+                    elif metric.startswith("count_action_"):
+                        action = metric.split("count_action_")[-1]
+                        anomaly["type"] = "action_frequency"
+                        anomaly["action"] = action
+                        anomaly["description"] = f"Unusual frequency of {action} actions"
+                        anomaly["severity"] = self._calculate_severity(z_score)
 
-                    elif metric.startswith('count_user_'):
-                        user = metric.split('count_user_')[-1]
-                        anomaly['type'] = 'user_activity'
-                        anomaly['user'] = user
-                        anomaly['description'] = f"Unusual activity level for user {user}"
-                        anomaly['severity'] = self._calculate_severity(z_score)
+                    elif metric.startswith("count_user_"):
+                        user = metric.split("count_user_")[-1]
+                        anomaly["type"] = "user_activity"
+                        anomaly["user"] = user
+                        anomaly["description"] = f"Unusual activity level for user {user}"
+                        anomaly["severity"] = self._calculate_severity(z_score)
 
-                    elif metric == 'rate_failed_logins':
-                        anomaly['type'] = 'authentication_failure'
-                        anomaly['description'] = "Unusual rate of failed login attempts"
-                        anomaly['severity'] = self._calculate_severity(z_score, multiplier=1.5)
+                    elif metric == "rate_failed_logins":
+                        anomaly["type"] = "authentication_failure"
+                        anomaly["description"] = "Unusual rate of failed login attempts"
+                        anomaly["severity"] = self._calculate_severity(z_score, multiplier=1.5)
 
-                    elif metric == 'rate_access_denied':
-                        anomaly['type'] = 'authorization_failure'
-                        anomaly['description'] = "Unusual rate of access denials"
-                        anomaly['severity'] = self._calculate_severity(z_score, multiplier=1.5)
+                    elif metric == "rate_access_denied":
+                        anomaly["type"] = "authorization_failure"
+                        anomaly["description"] = "Unusual rate of access denials"
+                        anomaly["severity"] = self._calculate_severity(z_score, multiplier=1.5)
 
-                    elif metric.startswith('data_access_volume_'):
-                        user = metric.split('data_access_volume_')[-1]
-                        anomaly['type'] = 'data_access_volume'
-                        anomaly['user'] = user
-                        anomaly['description'] = f"Unusual volume of data access by user {user}"
-                        anomaly['severity'] = self._calculate_severity(z_score)
+                    elif metric.startswith("data_access_volume_"):
+                        user = metric.split("data_access_volume_")[-1]
+                        anomaly["type"] = "data_access_volume"
+                        anomaly["user"] = user
+                        anomaly["description"] = f"Unusual volume of data access by user {user}"
+                        anomaly["severity"] = self._calculate_severity(z_score)
 
                     else:
-                        anomaly['type'] = 'generic'
-                        anomaly['description'] = f"Anomaly detected in metric: {metric}"
-                        anomaly['severity'] = self._calculate_severity(z_score)
+                        anomaly["type"] = "generic"
+                        anomaly["description"] = f"Anomaly detected in metric: {metric}"
+                        anomaly["severity"] = self._calculate_severity(z_score)
 
                     anomalies.append(anomaly)
 
@@ -320,13 +338,13 @@ class AnomalyDetector:
         adjusted_score = z_score * multiplier
 
         if adjusted_score < 3:
-            return 'low'
+            return "low"
         elif adjusted_score < 5:
-            return 'medium'
+            return "medium"
         elif adjusted_score < 7:
-            return 'high'
+            return "high"
         else:
-            return 'critical'
+            return "critical"
 
 
 class IntrusionDetection:
@@ -393,8 +411,7 @@ class IntrusionDetection:
                 cutoff_time = datetime.datetime.utcnow() - datetime.timedelta(hours=24)
                 cutoff_time_str = cutoff_time.isoformat()
                 self.recent_alerts[alert_type] = [
-                    a for a in self.recent_alerts[alert_type]
-                    if a.timestamp > cutoff_time_str
+                    a for a in self.recent_alerts[alert_type] if a.timestamp > cutoff_time_str
                 ]
 
             # Dispatch alerts
@@ -422,8 +439,9 @@ class IntrusionDetection:
         with self._lock:
             self.alert_handlers.append(handler)
 
-    def add_pattern_detector(self, name: str,
-                           detector: Callable[[List[AuditEvent]], List[Dict[str, Any]]]) -> None:
+    def add_pattern_detector(
+        self, name: str, detector: Callable[[List[AuditEvent]], List[Dict[str, Any]]]
+    ) -> None:
         """
         Add a pattern detector for identifying specific intrusion patterns.
 
@@ -442,10 +460,13 @@ class IntrusionDetection:
         self.add_pattern_detector("account_compromise", self._detect_account_compromise)
         self.add_pattern_detector("privilege_escalation", self._detect_privilege_escalation)
         self.add_pattern_detector("data_exfiltration", self._detect_data_exfiltration)
-        self.add_pattern_detector("unauthorized_configuration", self._detect_unauthorized_configuration)
+        self.add_pattern_detector(
+            "unauthorized_configuration", self._detect_unauthorized_configuration
+        )
 
-    def _convert_anomalies_to_alerts(self, anomalies: List[Dict[str, Any]],
-                                  event_ids: List[str]) -> List[SecurityAlert]:
+    def _convert_anomalies_to_alerts(
+        self, anomalies: List[Dict[str, Any]], event_ids: List[str]
+    ) -> List[SecurityAlert]:
         """
         Convert anomaly detections to security alerts.
 
@@ -462,19 +483,20 @@ class IntrusionDetection:
             alert_id = f"anomaly-{int(time.time())}-{len(alerts)}"
             alert = SecurityAlert(
                 alert_id=alert_id,
-                timestamp=anomaly.get('timestamp', datetime.datetime.utcnow().isoformat() + 'Z'),
-                level=anomaly.get('severity', 'medium'),
-                type=anomaly.get('type', 'anomaly'),
-                description=anomaly.get('description', 'Anomalous activity detected'),
+                timestamp=anomaly.get("timestamp", datetime.datetime.utcnow().isoformat() + "Z"),
+                level=anomaly.get("severity", "medium"),
+                type=anomaly.get("type", "anomaly"),
+                description=anomaly.get("description", "Anomalous activity detected"),
                 source_events=event_ids,
-                details=anomaly
+                details=anomaly,
             )
             alerts.append(alert)
 
         return alerts
 
-    def _convert_patterns_to_alerts(self, patterns: List[Dict[str, Any]],
-                                 detector_name: str) -> List[SecurityAlert]:
+    def _convert_patterns_to_alerts(
+        self, patterns: List[Dict[str, Any]], detector_name: str
+    ) -> List[SecurityAlert]:
         """
         Convert pattern detections to security alerts.
 
@@ -491,12 +513,12 @@ class IntrusionDetection:
             alert_id = f"{detector_name}-{int(time.time())}-{len(alerts)}"
             alert = SecurityAlert(
                 alert_id=alert_id,
-                timestamp=pattern.get('timestamp', datetime.datetime.utcnow().isoformat() + 'Z'),
-                level=pattern.get('severity', 'medium'),
-                type=pattern.get('type', detector_name),
-                description=pattern.get('description', f'Pattern detected by {detector_name}'),
-                source_events=pattern.get('event_ids', []),
-                details=pattern
+                timestamp=pattern.get("timestamp", datetime.datetime.utcnow().isoformat() + "Z"),
+                level=pattern.get("severity", "medium"),
+                type=pattern.get("type", detector_name),
+                description=pattern.get("description", f"Pattern detected by {detector_name}"),
+                source_events=pattern.get("event_ids", []),
+                details=pattern,
             )
             alerts.append(alert)
 
@@ -531,7 +553,8 @@ class IntrusionDetection:
 
         # Filter for authentication failures
         auth_failures = [
-            e for e in events
+            e
+            for e in events
             if e.category == AuditCategory.AUTHENTICATION
             and e.action == "login"
             and e.status == "failure"
@@ -550,14 +573,14 @@ class IntrusionDetection:
         for (user, ip), failures in grouped_failures.items():
             if len(failures) >= 5:  # Threshold for brute force detection
                 pattern = {
-                    'type': 'brute_force_login',
-                    'user': user,
-                    'source_ip': ip,
-                    'failure_count': len(failures),
-                    'event_ids': [e.event_id for e in failures],
-                    'description': f"Potential brute force login attempt for user {user} from {ip}",
-                    'severity': 'high',
-                    'timestamp': datetime.datetime.utcnow().isoformat() + 'Z'
+                    "type": "brute_force_login",
+                    "user": user,
+                    "source_ip": ip,
+                    "failure_count": len(failures),
+                    "event_ids": [e.event_id for e in failures],
+                    "description": f"Potential brute force login attempt for user {user} from {ip}",
+                    "severity": "high",
+                    "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
                 }
                 patterns.append(pattern)
 
@@ -577,7 +600,8 @@ class IntrusionDetection:
 
         # Filter for access denials
         access_denials = [
-            e for e in events
+            e
+            for e in events
             if e.category == AuditCategory.AUTHORIZATION
             and (e.action == "access_denied" or e.status == "failure")
         ]
@@ -596,18 +620,20 @@ class IntrusionDetection:
             if len(denials) >= 3:  # Threshold for multiple access denials
                 # Group by resource type
                 resource_types = Counter(e.resource_type for e in denials if e.resource_type)
-                most_common_resource = resource_types.most_common(1)[0][0] if resource_types else "unknown"
+                most_common_resource = (
+                    resource_types.most_common(1)[0][0] if resource_types else "unknown"
+                )
 
                 pattern = {
-                    'type': 'multiple_access_denials',
-                    'user': user,
-                    'denial_count': len(denials),
-                    'resource_types': dict(resource_types),
-                    'most_common_resource': most_common_resource,
-                    'event_ids': [e.event_id for e in denials],
-                    'description': f"Multiple access denials for user {user}, primarily for {most_common_resource} resources",
-                    'severity': 'medium',
-                    'timestamp': datetime.datetime.utcnow().isoformat() + 'Z'
+                    "type": "multiple_access_denials",
+                    "user": user,
+                    "denial_count": len(denials),
+                    "resource_types": dict(resource_types),
+                    "most_common_resource": most_common_resource,
+                    "event_ids": [e.event_id for e in denials],
+                    "description": f"Multiple access denials for user {user}, primarily for {most_common_resource} resources",
+                    "severity": "medium",
+                    "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
                 }
                 patterns.append(pattern)
 
@@ -627,7 +653,8 @@ class IntrusionDetection:
 
         # Filter for data access events
         data_access = [
-            e for e in events
+            e
+            for e in events
             if e.category == AuditCategory.DATA_ACCESS
             and e.action in ["read", "export", "download"]
         ]
@@ -639,9 +666,10 @@ class IntrusionDetection:
         sensitive_types = ["personal_data", "financial", "health", "credentials", "keys", "secrets"]
 
         sensitive_access = [
-            e for e in data_access
-            if (e.resource_type and e.resource_type.lower() in sensitive_types) or
-               (e.details and "sensitive" in e.details.get("data_classification", "").lower())
+            e
+            for e in data_access
+            if (e.resource_type and e.resource_type.lower() in sensitive_types)
+            or (e.details and "sensitive" in e.details.get("data_classification", "").lower())
         ]
 
         if not sensitive_access:
@@ -661,14 +689,14 @@ class IntrusionDetection:
             # Look for volume-based anomalies
             if len(access_events) >= 5:  # Threshold for volume-based detection
                 pattern = {
-                    'type': 'sensitive_data_access',
-                    'user': user,
-                    'access_count': len(access_events),
-                    'resource_types': dict(resource_counts),
-                    'event_ids': [e.event_id for e in access_events],
-                    'description': f"High volume of sensitive data access by user {user}",
-                    'severity': 'medium',
-                    'timestamp': datetime.datetime.utcnow().isoformat() + 'Z'
+                    "type": "sensitive_data_access",
+                    "user": user,
+                    "access_count": len(access_events),
+                    "resource_types": dict(resource_counts),
+                    "event_ids": [e.event_id for e in access_events],
+                    "description": f"High volume of sensitive data access by user {user}",
+                    "severity": "medium",
+                    "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
                 }
                 patterns.append(pattern)
 
@@ -700,12 +728,16 @@ class IntrusionDetection:
             auth_events = [e for e in user_event_list if e.category == AuditCategory.AUTHENTICATION]
             if auth_events:
                 # Check for logins from multiple IPs
-                login_ips = set(e.client_ip for e in auth_events if e.client_ip and e.action == "login")
+                login_ips = set(
+                    e.client_ip for e in auth_events if e.client_ip and e.action == "login"
+                )
                 if len(login_ips) > 2:
                     indicators.append(f"Logins from {len(login_ips)} different IP addresses")
 
             # Unusual time of access
-            event_times = [datetime.datetime.fromisoformat(e.timestamp.rstrip('Z')) for e in user_event_list]
+            event_times = [
+                datetime.datetime.fromisoformat(e.timestamp.rstrip("Z")) for e in user_event_list
+            ]
             for time in event_times:
                 hour = time.hour
                 if hour < 5 or hour > 22:  # Assuming regular business hours
@@ -722,19 +754,21 @@ class IntrusionDetection:
                 # Check for access to many different resources
                 resource_ids = set(e.resource_id for e in data_events if e.resource_id)
                 if len(resource_ids) > 15:
-                    indicators.append(f"Access to many different resources ({len(resource_ids)} resources)")
+                    indicators.append(
+                        f"Access to many different resources ({len(resource_ids)} resources)"
+                    )
 
             # If multiple indicators are present, generate an alert
             if len(indicators) >= 2:
                 pattern = {
-                    'type': 'account_compromise',
-                    'user': user,
-                    'indicators': indicators,
-                    'event_count': len(user_event_list),
-                    'event_ids': [e.event_id for e in user_event_list],
-                    'description': f"Potential account compromise for user {user}: {', '.join(indicators)}",
-                    'severity': 'high',
-                    'timestamp': datetime.datetime.utcnow().isoformat() + 'Z'
+                    "type": "account_compromise",
+                    "user": user,
+                    "indicators": indicators,
+                    "event_count": len(user_event_list),
+                    "event_ids": [e.event_id for e in user_event_list],
+                    "description": f"Potential account compromise for user {user}: {', '.join(indicators)}",
+                    "severity": "high",
+                    "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
                 }
                 patterns.append(pattern)
 
@@ -754,10 +788,27 @@ class IntrusionDetection:
 
         # Look for privilege/permission changes
         permission_events = [
-            e for e in events
-            if (e.category in [AuditCategory.AUTHORIZATION, AuditCategory.CONFIGURATION, AuditCategory.SECURITY]) and
-               (e.action in ["permission_change", "role_change", "privilege_escalation",
-                            "sudo", "impersonation", "add_admin"])
+            e
+            for e in events
+            if (
+                e.category
+                in [
+                    AuditCategory.AUTHORIZATION,
+                    AuditCategory.CONFIGURATION,
+                    AuditCategory.SECURITY,
+                ]
+            )
+            and (
+                e.action
+                in [
+                    "permission_change",
+                    "role_change",
+                    "privilege_escalation",
+                    "sudo",
+                    "impersonation",
+                    "add_admin",
+                ]
+            )
         ]
 
         if not permission_events:
@@ -770,14 +821,14 @@ class IntrusionDetection:
             target_user = event.details.get("target_user", "unknown")
 
             pattern = {
-                'type': 'privilege_escalation',
-                'user': user,
-                'target_user': target_user,
-                'action': event.action,
-                'event_ids': [event.event_id],
-                'description': f"Potential privilege escalation by {user} affecting {target_user}",
-                'severity': 'high',
-                'timestamp': event.timestamp
+                "type": "privilege_escalation",
+                "user": user,
+                "target_user": target_user,
+                "action": event.action,
+                "event_ids": [event.event_id],
+                "description": f"Potential privilege escalation by {user} affecting {target_user}",
+                "severity": "high",
+                "timestamp": event.timestamp,
             }
             patterns.append(pattern)
 
@@ -797,9 +848,10 @@ class IntrusionDetection:
 
         # Filter for data export/download events
         data_export_events = [
-            e for e in events
-            if e.category == AuditCategory.DATA_ACCESS and
-               e.action in ["export", "download", "extract", "bulk_access"]
+            e
+            for e in events
+            if e.category == AuditCategory.DATA_ACCESS
+            and e.action in ["export", "download", "extract", "bulk_access"]
         ]
 
         if not data_export_events:
@@ -816,9 +868,9 @@ class IntrusionDetection:
             # Extract volume information when available
             total_volume = 0
             for event in exports:
-                if 'data_size_bytes' in event.details:
+                if "data_size_bytes" in event.details:
                     try:
-                        total_volume += int(event.details['data_size_bytes'])
+                        total_volume += int(event.details["data_size_bytes"])
                     except (ValueError, TypeError):
                         pass
 
@@ -828,14 +880,14 @@ class IntrusionDetection:
 
             if total_volume > volume_threshold or len(exports) >= count_threshold:
                 pattern = {
-                    'type': 'data_exfiltration',
-                    'user': user,
-                    'export_count': len(exports),
-                    'total_volume_bytes': total_volume,
-                    'event_ids': [e.event_id for e in exports],
-                    'description': f"Potential data exfiltration by user {user}: {len(exports)} exports, {total_volume / (1024*1024):.2f} MB total",
-                    'severity': 'high',
-                    'timestamp': datetime.datetime.utcnow().isoformat() + 'Z'
+                    "type": "data_exfiltration",
+                    "user": user,
+                    "export_count": len(exports),
+                    "total_volume_bytes": total_volume,
+                    "event_ids": [e.event_id for e in exports],
+                    "description": f"Potential data exfiltration by user {user}: {len(exports)} exports, {total_volume / (1024 * 1024):.2f} MB total",
+                    "severity": "high",
+                    "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
                 }
                 patterns.append(pattern)
 
@@ -854,19 +906,16 @@ class IntrusionDetection:
         patterns = []
 
         # Filter for configuration events
-        config_events = [
-            e for e in events
-            if e.category == AuditCategory.CONFIGURATION
-        ]
+        config_events = [e for e in events if e.category == AuditCategory.CONFIGURATION]
 
         if not config_events:
             return patterns
 
         # Check for failed/unauthorized changes
         unauthorized_changes = [
-            e for e in config_events
-            if e.status == "failure" or
-               (e.details and e.details.get("reason") == "unauthorized")
+            e
+            for e in config_events
+            if e.status == "failure" or (e.details and e.details.get("reason") == "unauthorized")
         ]
 
         if unauthorized_changes:
@@ -879,13 +928,13 @@ class IntrusionDetection:
             # Generate pattern for each user
             for user, changes in grouped_changes.items():
                 pattern = {
-                    'type': 'unauthorized_configuration',
-                    'user': user,
-                    'change_count': len(changes),
-                    'event_ids': [e.event_id for e in changes],
-                    'description': f"Detected {len(changes)} unauthorized configuration change attempts by user {user}",
-                    'severity': 'high',
-                    'timestamp': datetime.datetime.utcnow().isoformat() + 'Z'
+                    "type": "unauthorized_configuration",
+                    "user": user,
+                    "change_count": len(changes),
+                    "event_ids": [e.event_id for e in changes],
+                    "description": f"Detected {len(changes)} unauthorized configuration change attempts by user {user}",
+                    "severity": "high",
+                    "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
                 }
                 patterns.append(pattern)
 
@@ -1036,7 +1085,7 @@ class SecurityAlertManager:
             return
 
         try:
-            with open(self.storage_path, 'r', encoding='utf-8') as f:
+            with open(self.storage_path, "r", encoding="utf-8") as f:
                 alerts_data = json.load(f)
 
             self.alerts = {}
@@ -1058,7 +1107,7 @@ class SecurityAlertManager:
             alerts_dict = {alert_id: alert.to_dict() for alert_id, alert in self.alerts.items()}
 
             # Write to file
-            with open(self.storage_path, 'w', encoding='utf-8') as f:
+            with open(self.storage_path, "w", encoding="utf-8") as f:
                 json.dump(alerts_dict, f, indent=2)
 
             self.logger.debug(f"Saved {len(self.alerts)} alerts to storage")

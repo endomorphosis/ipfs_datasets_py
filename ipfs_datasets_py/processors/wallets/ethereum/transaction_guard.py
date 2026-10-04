@@ -70,22 +70,12 @@ from ..guard.preflight import TransactionPreflight
 # ---------------------------------------------------------------------------
 
 ETHEREUM_TRANSACTION_GUARD_INTERFACE: Final = "EthereumTransactionGuard@1"
-ETHEREUM_TRANSACTION_GUARD_SCHEMA_VERSION: Final = (
-    "wallet-guard.ethereum-transaction-guard/v1"
-)
-EVM_CANDIDATE_SCHEMA_VERSION: Final = (
-    "wallet-guard.evm-transaction-candidate/v1"
-)
-CODE_PROXY_EPOCH_SCHEMA_VERSION: Final = (
-    "wallet-guard.evm-code-proxy-epoch/v1"
-)
-APPROVAL_BINDING_SCHEMA_VERSION: Final = (
-    "wallet-guard.evm-approval-binding/v1"
-)
+ETHEREUM_TRANSACTION_GUARD_SCHEMA_VERSION: Final = "wallet-guard.ethereum-transaction-guard/v1"
+EVM_CANDIDATE_SCHEMA_VERSION: Final = "wallet-guard.evm-transaction-candidate/v1"
+CODE_PROXY_EPOCH_SCHEMA_VERSION: Final = "wallet-guard.evm-code-proxy-epoch/v1"
+APPROVAL_BINDING_SCHEMA_VERSION: Final = "wallet-guard.evm-approval-binding/v1"
 EVM_TX_BINDING_SCHEMA_VERSION: Final = "wallet-guard.evm-transaction-binding/v1"
-ETHEREUM_GUARD_DECISION_SCHEMA_VERSION: Final = (
-    "wallet-guard.ethereum-guard-decision/v1"
-)
+ETHEREUM_GUARD_DECISION_SCHEMA_VERSION: Final = "wallet-guard.ethereum-guard-decision/v1"
 
 DEFAULT_PRODUCER_ID: Final = "producer:wallet-guard-ethereum-v1"
 DEFAULT_POLICY_ID: Final = "policy:ethereum-wallet-guard-v1"
@@ -239,9 +229,7 @@ def _digest(value: Any, name: str) -> str:
 def _timestamp(value: Any, name: str) -> str:
     text = _text(value, name, max_chars=64)
     if not _ISO8601_RE.fullmatch(text):
-        raise GuardValidationError(
-            f"{name} must be an ISO-8601 UTC/offset timestamp"
-        )
+        raise GuardValidationError(f"{name} must be an ISO-8601 UTC/offset timestamp")
     return text
 
 
@@ -269,9 +257,7 @@ def _amount(value: Any, name: str) -> str:
         return str(value)
     text = _text(value, name, max_chars=128)
     if not _DECIMAL_RE.fullmatch(text):
-        raise GuardValidationError(
-            f"{name} must be a non-negative decimal integer string"
-        )
+        raise GuardValidationError(f"{name} must be a non-negative decimal integer string")
     return text
 
 
@@ -285,8 +271,7 @@ def _reject_forbidden(value: Mapping[str, Any], record_name: str) -> None:
     hit = sorted(set(value) & _FORBIDDEN_FIELDS)
     if hit:
         raise GuardForbiddenSurfaceError(
-            f"{record_name} contains forbidden custody/approval field(s): "
-            f"{', '.join(hit)}",
+            f"{record_name} contains forbidden custody/approval field(s): {', '.join(hit)}",
             details={"fields": hit},
         )
 
@@ -304,12 +289,7 @@ def _attributes(value: Mapping[str, Any] | None) -> FrozenMap:
 
 
 def _iso_now() -> str:
-    return (
-        datetime.now(timezone.utc)
-        .replace(microsecond=0)
-        .isoformat()
-        .replace("+00:00", "Z")
-    )
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
 def _jsonable(value: Any) -> Any:
@@ -588,9 +568,7 @@ class CodeProxyEpoch:
             "contract_address",
             _address(self.contract_address, "contract_address"),
         )
-        object.__setattr__(
-            self, "code_epoch", _text(self.code_epoch, "code_epoch", max_chars=256)
-        )
+        object.__setattr__(self, "code_epoch", _text(self.code_epoch, "code_epoch", max_chars=256))
         object.__setattr__(self, "chain_id", _positive_int(self.chain_id, "chain_id"))
         if self.code_hash:
             try:
@@ -635,26 +613,18 @@ class CodeProxyEpoch:
         object.__setattr__(
             self, "proxy_kind", _optional_text(self.proxy_kind, "proxy_kind", max_chars=64)
         )
-        object.__setattr__(
-            self, "proxy_admin", _optional_address(self.proxy_admin, "proxy_admin")
-        )
+        object.__setattr__(self, "proxy_admin", _optional_address(self.proxy_admin, "proxy_admin"))
         try:
-            anchor = resolve_network(
-                chain_id=self.chain_id, network=self.network or None
-            )
+            anchor = resolve_network(chain_id=self.chain_id, network=self.network or None)
             object.__setattr__(self, "network", anchor.network)
         except EVMAdapterError:
             if self.network:
-                object.__setattr__(
-                    self, "network", _text(self.network, "network", max_chars=128)
-                )
+                object.__setattr__(self, "network", _text(self.network, "network", max_chars=128))
             else:
                 object.__setattr__(self, "network", f"eip155:{self.chain_id}")
         if not isinstance(self.attributes, FrozenMap):
             object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != CODE_PROXY_EPOCH_SCHEMA_VERSION:
             raise GuardValidationError(
                 f"unsupported code/proxy epoch schema: {self.schema_version!r}"
@@ -696,9 +666,7 @@ class CodeProxyEpoch:
         value = _mapping(value, "CodeProxyEpoch")
         _reject_forbidden(value, "CodeProxyEpoch")
         return cls(
-            contract_address=value.get(
-                "contract_address", value.get("contractAddress", "")
-            ),
+            contract_address=value.get("contract_address", value.get("contractAddress", "")),
             code_epoch=value.get("code_epoch", value.get("codeEpoch", "")),
             chain_id=value.get("chain_id", value.get("chainId", 0)),
             code_hash=value.get("code_hash", value.get("codeHash", "")),
@@ -713,9 +681,7 @@ class CodeProxyEpoch:
             proxy_admin=value.get("proxy_admin", value.get("proxyAdmin", "")),
             network=value.get("network", ""),
             attributes=value.get("attributes", {}),
-            schema_version=value.get(
-                "schema_version", CODE_PROXY_EPOCH_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", CODE_PROXY_EPOCH_SCHEMA_VERSION),
         )
 
 
@@ -763,9 +729,7 @@ class ApprovalBinding:
         )
         if not isinstance(self.attributes, FrozenMap):
             object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
 
     @property
     def approval_digest(self) -> str:
@@ -810,9 +774,7 @@ class ApprovalBinding:
             selector=value.get("selector", ""),
             source=value.get("source", "calldata"),
             attributes=value.get("attributes", {}),
-            schema_version=value.get(
-                "schema_version", APPROVAL_BINDING_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", APPROVAL_BINDING_SCHEMA_VERSION),
         )
 
 
@@ -861,9 +823,7 @@ class EVMTransactionCandidate:
     kind: str = "evm_transaction_candidate"
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "intent_id", _identifier(self.intent_id, "intent_id")
-        )
+        object.__setattr__(self, "intent_id", _identifier(self.intent_id, "intent_id"))
         object.__setattr__(self, "kind", _text(self.kind, "kind", max_chars=64))
         chain_id = _positive_int(self.chain_id, "chain_id")
         object.__setattr__(self, "chain_id", chain_id)
@@ -877,23 +837,15 @@ class EVMTransactionCandidate:
             raise GuardValidationError(str(exc)) from exc
         object.__setattr__(self, "network", anchor.network)
         object.__setattr__(self, "genesis_hash", anchor.genesis_hash)
-        object.__setattr__(
-            self, "from_address", _address(self.from_address, "from_address")
-        )
-        object.__setattr__(
-            self, "to_address", _address(self.to_address, "to_address")
-        )
+        object.__setattr__(self, "from_address", _address(self.from_address, "from_address"))
+        object.__setattr__(self, "to_address", _address(self.to_address, "to_address"))
         object.__setattr__(self, "value_wei", _amount(self.value_wei, "value_wei"))
         object.__setattr__(self, "data", _hex_data(self.data, "data"))
-        object.__setattr__(
-            self, "method", _optional_text(self.method, "method", max_chars=128)
-        )
+        object.__setattr__(self, "method", _optional_text(self.method, "method", max_chars=128))
         if self.nonce is not None:
             object.__setattr__(self, "nonce", _non_negative_int(self.nonce, "nonce"))
         if self.gas_limit is not None:
-            object.__setattr__(
-                self, "gas_limit", _non_negative_int(self.gas_limit, "gas_limit")
-            )
+            object.__setattr__(self, "gas_limit", _non_negative_int(self.gas_limit, "gas_limit"))
         if self.max_fee_per_gas is not None:
             object.__setattr__(
                 self,
@@ -904,22 +856,16 @@ class EVMTransactionCandidate:
             object.__setattr__(
                 self,
                 "max_priority_fee_per_gas",
-                _non_negative_int(
-                    self.max_priority_fee_per_gas, "max_priority_fee_per_gas"
-                ),
+                _non_negative_int(self.max_priority_fee_per_gas, "max_priority_fee_per_gas"),
             )
         if self.gas_price is not None:
-            object.__setattr__(
-                self, "gas_price", _non_negative_int(self.gas_price, "gas_price")
-            )
+            object.__setattr__(self, "gas_price", _non_negative_int(self.gas_price, "gas_price"))
         object.__setattr__(
             self,
             "native_effects",
             tuple(dict(item) for item in self.native_effects),
         )
-        object.__setattr__(
-            self, "token_effects", tuple(dict(item) for item in self.token_effects)
-        )
+        object.__setattr__(self, "token_effects", tuple(dict(item) for item in self.token_effects))
         object.__setattr__(
             self,
             "internal_effects",
@@ -954,9 +900,7 @@ class EVMTransactionCandidate:
             _optional_text(self.graph_revision, "graph_revision", max_chars=128),
         )
         if self.serialized_hex:
-            ser = _text(
-                self.serialized_hex, "serialized_hex", max_chars=MAX_HEX_PAYLOAD_CHARS
-            )
+            ser = _text(self.serialized_hex, "serialized_hex", max_chars=MAX_HEX_PAYLOAD_CHARS)
             if not ser.startswith("0x"):
                 raise GuardValidationError("serialized_hex must be 0x-prefixed")
             if len(ser) > 2 and (len(ser) - 2) % 2 != 0:
@@ -964,18 +908,12 @@ class EVMTransactionCandidate:
             object.__setattr__(self, "serialized_hex", ser.lower())
         else:
             object.__setattr__(self, "serialized_hex", "")
-        object.__setattr__(
-            self, "encoding", _identifier(self.encoding, "encoding")
-        )
+        object.__setattr__(self, "encoding", _identifier(self.encoding, "encoding"))
         if not isinstance(self.attributes, FrozenMap):
             object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != EVM_CANDIDATE_SCHEMA_VERSION:
-            raise GuardValidationError(
-                f"unsupported EVM candidate schema: {self.schema_version!r}"
-            )
+            raise GuardValidationError(f"unsupported EVM candidate schema: {self.schema_version!r}")
 
     @property
     def candidate_digest(self) -> str:
@@ -1033,60 +971,34 @@ class EVMTransactionCandidate:
         return cls(
             intent_id=value.get("intent_id", value.get("intentId", "")),
             chain_id=value.get("chain_id", value.get("chainId", 0)),
-            from_address=value.get(
-                "from_address", value.get("fromAddress", value.get("from", ""))
-            ),
-            to_address=value.get(
-                "to_address", value.get("toAddress", value.get("to", ""))
-            ),
-            value_wei=value.get(
-                "value_wei", value.get("valueWei", value.get("value", "0"))
-            ),
+            from_address=value.get("from_address", value.get("fromAddress", value.get("from", ""))),
+            to_address=value.get("to_address", value.get("toAddress", value.get("to", ""))),
+            value_wei=value.get("value_wei", value.get("valueWei", value.get("value", "0"))),
             data=value.get("data", value.get("input", value.get("calldata", "0x"))),
             method=value.get("method", ""),
             nonce=value.get("nonce"),
             gas_limit=value.get("gas_limit", value.get("gasLimit", value.get("gas"))),
-            max_fee_per_gas=value.get(
-                "max_fee_per_gas", value.get("maxFeePerGas")
-            ),
+            max_fee_per_gas=value.get("max_fee_per_gas", value.get("maxFeePerGas")),
             max_priority_fee_per_gas=value.get(
                 "max_priority_fee_per_gas", value.get("maxPriorityFeePerGas")
             ),
             gas_price=value.get("gas_price", value.get("gasPrice")),
             network=value.get("network", ""),
             genesis_hash=value.get("genesis_hash", value.get("genesisHash", "")),
-            native_effects=tuple(
-                value.get("native_effects", value.get("nativeEffects", ()))
-            ),
-            token_effects=tuple(
-                value.get("token_effects", value.get("tokenEffects", ()))
-            ),
-            internal_effects=tuple(
-                value.get("internal_effects", value.get("internalEffects", ()))
-            ),
-            approval_effects=tuple(
-                value.get("approval_effects", value.get("approvalEffects", ()))
-            ),
-            recovered_sender=value.get(
-                "recovered_sender", value.get("recoveredSender", "")
-            ),
+            native_effects=tuple(value.get("native_effects", value.get("nativeEffects", ()))),
+            token_effects=tuple(value.get("token_effects", value.get("tokenEffects", ()))),
+            internal_effects=tuple(value.get("internal_effects", value.get("internalEffects", ()))),
+            approval_effects=tuple(value.get("approval_effects", value.get("approvalEffects", ()))),
+            recovered_sender=value.get("recovered_sender", value.get("recoveredSender", "")),
             sender_recovery_digest=value.get(
                 "sender_recovery_digest", value.get("senderRecoveryDigest", "")
             ),
-            list_revision=value.get(
-                "list_revision", value.get("listRevision", "")
-            ),
-            graph_revision=value.get(
-                "graph_revision", value.get("graphRevision", "")
-            ),
-            serialized_hex=value.get(
-                "serialized_hex", value.get("serializedHex", "")
-            ),
+            list_revision=value.get("list_revision", value.get("listRevision", "")),
+            graph_revision=value.get("graph_revision", value.get("graphRevision", "")),
+            serialized_hex=value.get("serialized_hex", value.get("serializedHex", "")),
             encoding=value.get("encoding", "rlp-ethereum"),
             attributes=value.get("attributes", {}),
-            schema_version=value.get(
-                "schema_version", EVM_CANDIDATE_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", EVM_CANDIDATE_SCHEMA_VERSION),
             kind=value.get("kind", "evm_transaction_candidate"),
         )
 
@@ -1142,33 +1054,19 @@ class EVMTransactionBinding:
     schema_version: str = EVM_TX_BINDING_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "binding_id", _identifier(self.binding_id, "binding_id")
-        )
-        object.__setattr__(
-            self, "intent_id", _identifier(self.intent_id, "intent_id")
-        )
-        object.__setattr__(
-            self, "candidate_id", _identifier(self.candidate_id, "candidate_id")
-        )
+        object.__setattr__(self, "binding_id", _identifier(self.binding_id, "binding_id"))
+        object.__setattr__(self, "intent_id", _identifier(self.intent_id, "intent_id"))
+        object.__setattr__(self, "candidate_id", _identifier(self.candidate_id, "candidate_id"))
         object.__setattr__(self, "chain_id", _positive_int(self.chain_id, "chain_id"))
-        object.__setattr__(
-            self, "network", _text(self.network, "network", max_chars=128)
-        )
+        object.__setattr__(self, "network", _text(self.network, "network", max_chars=128))
         object.__setattr__(
             self, "genesis_hash", _text(self.genesis_hash, "genesis_hash", max_chars=128)
         )
-        object.__setattr__(
-            self, "from_address", _address(self.from_address, "from_address")
-        )
-        object.__setattr__(
-            self, "to_address", _address(self.to_address, "to_address")
-        )
+        object.__setattr__(self, "from_address", _address(self.from_address, "from_address"))
+        object.__setattr__(self, "to_address", _address(self.to_address, "to_address"))
         object.__setattr__(self, "value_wei", _amount(self.value_wei, "value_wei"))
         object.__setattr__(self, "data", _hex_data(self.data, "data"))
-        object.__setattr__(
-            self, "method", _optional_text(self.method, "method", max_chars=128)
-        )
+        object.__setattr__(self, "method", _optional_text(self.method, "method", max_chars=128))
         object.__setattr__(
             self, "selector", _optional_text(self.selector, "selector", max_chars=16)
         )
@@ -1176,9 +1074,7 @@ class EVMTransactionBinding:
             object.__setattr__(self, "nonce", _non_negative_int(self.nonce, "nonce"))
         object.__setattr__(self, "fee_wei", _amount(self.fee_wei, "fee_wei"))
         if self.gas_limit is not None:
-            object.__setattr__(
-                self, "gas_limit", _non_negative_int(self.gas_limit, "gas_limit")
-            )
+            object.__setattr__(self, "gas_limit", _non_negative_int(self.gas_limit, "gas_limit"))
         if self.max_fee_per_gas is not None:
             object.__setattr__(
                 self,
@@ -1189,9 +1085,7 @@ class EVMTransactionBinding:
             object.__setattr__(
                 self,
                 "max_priority_fee_per_gas",
-                _non_negative_int(
-                    self.max_priority_fee_per_gas, "max_priority_fee_per_gas"
-                ),
+                _non_negative_int(self.max_priority_fee_per_gas, "max_priority_fee_per_gas"),
             )
         approvals: list[ApprovalBinding] = []
         for item in self.approvals:
@@ -1200,18 +1094,14 @@ class EVMTransactionBinding:
             elif isinstance(item, Mapping):
                 approvals.append(ApprovalBinding.from_dict(item))
             else:
-                raise GuardValidationError(
-                    "approvals items must be ApprovalBinding"
-                )
+                raise GuardValidationError("approvals items must be ApprovalBinding")
         object.__setattr__(self, "approvals", tuple(approvals))
         object.__setattr__(
             self,
             "native_effects",
             tuple(dict(item) for item in self.native_effects),
         )
-        object.__setattr__(
-            self, "token_effects", tuple(dict(item) for item in self.token_effects)
-        )
+        object.__setattr__(self, "token_effects", tuple(dict(item) for item in self.token_effects))
         object.__setattr__(
             self,
             "internal_effects",
@@ -1224,9 +1114,7 @@ class EVMTransactionBinding:
             elif isinstance(item, Mapping):
                 epochs.append(CodeProxyEpoch.from_dict(item))
             else:
-                raise GuardValidationError(
-                    "code_proxy_epochs items must be CodeProxyEpoch"
-                )
+                raise GuardValidationError("code_proxy_epochs items must be CodeProxyEpoch")
         object.__setattr__(self, "code_proxy_epochs", tuple(epochs))
         object.__setattr__(
             self,
@@ -1249,12 +1137,8 @@ class EVMTransactionBinding:
             "serialized_digest",
             _digest(self.serialized_digest, "serialized_digest"),
         )
-        object.__setattr__(
-            self, "encoding", _identifier(self.encoding, "encoding")
-        )
-        object.__setattr__(
-            self, "byte_length", _non_negative_int(self.byte_length, "byte_length")
-        )
+        object.__setattr__(self, "encoding", _identifier(self.encoding, "encoding"))
+        object.__setattr__(self, "byte_length", _non_negative_int(self.byte_length, "byte_length"))
         if self.byte_length == 0:
             raise GuardValidationError("byte_length must be positive")
         object.__setattr__(
@@ -1279,19 +1163,13 @@ class EVMTransactionBinding:
             elif isinstance(item, Mapping):
                 effects.append(ExpectedEffect.from_dict(item))
             else:
-                raise GuardValidationError(
-                    "expected_effects items must be ExpectedEffect"
-                )
+                raise GuardValidationError("expected_effects items must be ExpectedEffect")
         object.__setattr__(self, "expected_effects", tuple(effects))
         if not isinstance(self.attributes, FrozenMap):
             object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != EVM_TX_BINDING_SCHEMA_VERSION:
-            raise GuardValidationError(
-                f"unsupported EVM binding schema: {self.schema_version!r}"
-            )
+            raise GuardValidationError(f"unsupported EVM binding schema: {self.schema_version!r}")
         if not self.binding_digest:
             object.__setattr__(self, "binding_digest", self.compute_binding_digest())
         else:
@@ -1388,9 +1266,7 @@ class EVMTransactionBinding:
             expected_effects=tuple(value.get("expected_effects", ())),
             binding_digest=value.get("binding_digest", ""),
             attributes=value.get("attributes", {}),
-            schema_version=value.get(
-                "schema_version", EVM_TX_BINDING_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", EVM_TX_BINDING_SCHEMA_VERSION),
         )
 
 
@@ -1425,41 +1301,26 @@ class EthereumGuardDecision:
 
     def __post_init__(self) -> None:
         if not isinstance(self.outcome, TransactionVerdictOutcome):
-            object.__setattr__(
-                self, "outcome", TransactionVerdictOutcome(str(self.outcome))
-            )
+            object.__setattr__(self, "outcome", TransactionVerdictOutcome(str(self.outcome)))
         object.__setattr__(self, "blocks_automation", bool(self.blocks_automation))
-        object.__setattr__(
-            self, "reason_codes", tuple(str(c) for c in self.reason_codes)
-        )
+        object.__setattr__(self, "reason_codes", tuple(str(c) for c in self.reason_codes))
         object.__setattr__(self, "reasons", tuple(str(r) for r in self.reasons))
-        object.__setattr__(
-            self, "binding_digest", _digest(self.binding_digest, "binding_digest")
-        )
+        object.__setattr__(self, "binding_digest", _digest(self.binding_digest, "binding_digest"))
         if self.request_digest:
             object.__setattr__(
                 self, "request_digest", _digest(self.request_digest, "request_digest")
             )
         else:
             object.__setattr__(self, "request_digest", "")
-        object.__setattr__(
-            self, "security_results", dict(self.security_results or {})
-        )
-        object.__setattr__(
-            self, "compliance_results", dict(self.compliance_results or {})
-        )
+        object.__setattr__(self, "security_results", dict(self.security_results or {}))
+        object.__setattr__(self, "compliance_results", dict(self.compliance_results or {}))
         if not isinstance(self.attributes, FrozenMap):
             object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
 
     @property
     def allowed(self) -> bool:
-        return (
-            self.outcome is TransactionVerdictOutcome.ALLOW
-            and not self.blocks_automation
-        )
+        return self.outcome is TransactionVerdictOutcome.ALLOW and not self.blocks_automation
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -1481,9 +1342,7 @@ class EthereumGuardDecision:
 # Live resolvers
 # ---------------------------------------------------------------------------
 
-CodeProxyEpochResolver = Callable[
-    [str], CodeProxyEpoch | Mapping[str, Any] | None
-]
+CodeProxyEpochResolver = Callable[[str], CodeProxyEpoch | Mapping[str, Any] | None]
 ListRevisionChecker = Callable[[str, str], bool]
 GraphRevisionChecker = Callable[[str, str], bool]
 NonceReplayChecker = Callable[[int, str, str], bool]
@@ -1549,9 +1408,7 @@ class EthereumTransactionGuard:
         if self.preflight is None:
             self.preflight = TransactionPreflight(producer_id=self.producer_id)
         if self.interface != ETHEREUM_TRANSACTION_GUARD_INTERFACE:
-            raise GuardValidationError(
-                f"unsupported ethereum guard interface: {self.interface!r}"
-            )
+            raise GuardValidationError(f"unsupported ethereum guard interface: {self.interface!r}")
         if self.schema_version != ETHEREUM_TRANSACTION_GUARD_SCHEMA_VERSION:
             raise GuardValidationError(
                 f"unsupported ethereum guard schema: {self.schema_version!r}"
@@ -1573,8 +1430,7 @@ class EthereumTransactionGuard:
         code_proxy_epochs: Sequence[CodeProxyEpoch | Mapping[str, Any]] | None = None,
         declared_internal_effects: Sequence[Mapping[str, Any]] | None = None,
         declared_token_effects: Sequence[Mapping[str, Any]] | None = None,
-        declared_approvals: Sequence[ApprovalBinding | Mapping[str, Any]]
-        | None = None,
+        declared_approvals: Sequence[ApprovalBinding | Mapping[str, Any]] | None = None,
         list_revision: str = "",
         graph_revision: str = "",
         fee_wei: str | int | None = None,
@@ -1626,9 +1482,7 @@ class EthereumTransactionGuard:
             approvals.append(ApprovalBinding.from_dict(item))
         for item in cand.approval_effects:
             approvals.append(
-                item
-                if isinstance(item, ApprovalBinding)
-                else ApprovalBinding.from_dict(item)
+                item if isinstance(item, ApprovalBinding) else ApprovalBinding.from_dict(item)
             )
         if declared_approvals:
             for item in declared_approvals:
@@ -1637,9 +1491,7 @@ class EthereumTransactionGuard:
                 elif isinstance(item, Mapping):
                     approvals.append(ApprovalBinding.from_dict(item))
                 else:
-                    raise GuardValidationError(
-                        "declared_approvals items must be ApprovalBinding"
-                    )
+                    raise GuardValidationError("declared_approvals items must be ApprovalBinding")
 
         # Token effects: decoded + candidate + declared simulation.
         token_effects: list[dict[str, Any]] = list(decoded["token_effects"])
@@ -1666,9 +1518,7 @@ class EthereumTransactionGuard:
             )
 
         # Internal effects: only from declared simulation/traces — never invented.
-        internal_effects: list[dict[str, Any]] = [
-            dict(item) for item in cand.internal_effects
-        ]
+        internal_effects: list[dict[str, Any]] = [dict(item) for item in cand.internal_effects]
         if declared_internal_effects:
             for item in declared_internal_effects:
                 internal_effects.append(dict(item))
@@ -1724,9 +1574,7 @@ class EthereumTransactionGuard:
                 elif isinstance(item, Mapping):
                     effects.append(ExpectedEffect.from_dict(item))
                 else:
-                    raise GuardValidationError(
-                        "expected_effects items must be ExpectedEffect"
-                    )
+                    raise GuardValidationError("expected_effects items must be ExpectedEffect")
         else:
             effects = self._derive_expected_effects(
                 decoded_kind=decoded["decoded_kind"],
@@ -1794,9 +1642,7 @@ class EthereumTransactionGuard:
     ) -> TransactionPreflightRequest:
         """Project an EVM binding into the common preflight request surface."""
 
-        intent = self._intent_from_binding(
-            binding, expires_at=intent_expires_at or expiry
-        )
+        intent = self._intent_from_binding(binding, expires_at=intent_expires_at or expiry)
         candidate = TransactionCandidate(
             candidate_id=binding.candidate_id,
             intent_id=binding.intent_id,
@@ -1859,8 +1705,7 @@ class EthereumTransactionGuard:
         security_results: Mapping[str, Any] | None = None,
         compliance_results: Mapping[str, Any] | None = None,
         now: str | None = None,
-        live_code_proxy_epochs: Mapping[str, CodeProxyEpoch | Mapping[str, Any]]
-        | None = None,
+        live_code_proxy_epochs: Mapping[str, CodeProxyEpoch | Mapping[str, Any]] | None = None,
         request_id: str = "req:ethereum-guard",
         tenant_id: str = "tenant:default",
         actor_id: str = "actor:policy-engine",
@@ -1990,8 +1835,7 @@ class EthereumTransactionGuard:
         *,
         phase: PreflightPhase | EthereumGuardPhase | str = PreflightPhase.PRE_SIGN,
         now: str | None = None,
-        live_code_proxy_epochs: Mapping[str, CodeProxyEpoch | Mapping[str, Any]]
-        | None = None,
+        live_code_proxy_epochs: Mapping[str, CodeProxyEpoch | Mapping[str, Any]] | None = None,
         live_candidate: EVMTransactionCandidate | Mapping[str, Any] | None = None,
         live_list_revision: str | None = None,
         live_graph_revision: str | None = None,
@@ -2014,16 +1858,12 @@ class EthereumTransactionGuard:
             if isinstance(capability, Mapping):
                 capability = AdmissibilityCapability.from_dict(capability)
             else:
-                raise GuardValidationError(
-                    "capability must be an AdmissibilityCapability"
-                )
+                raise GuardValidationError("capability must be an AdmissibilityCapability")
         if not isinstance(live_request, TransactionPreflightRequest):
             if isinstance(live_request, Mapping):
                 live_request = TransactionPreflightRequest.from_dict(live_request)
             else:
-                raise GuardValidationError(
-                    "live_request must be a TransactionPreflightRequest"
-                )
+                raise GuardValidationError("live_request must be a TransactionPreflightRequest")
 
         if isinstance(phase, PreflightPhase):
             phase_value = phase.value
@@ -2126,12 +1966,8 @@ class EthereumTransactionGuard:
 
         # Hidden transfer: live simulation reveals effects not in binding.
         if live_internal_effects is not None:
-            expected_internal = {
-                content_sha256_hex(dict(e)) for e in binding.internal_effects
-            }
-            observed_internal = {
-                content_sha256_hex(dict(e)) for e in live_internal_effects
-            }
+            expected_internal = {content_sha256_hex(dict(e)) for e in binding.internal_effects}
+            observed_internal = {content_sha256_hex(dict(e)) for e in live_internal_effects}
             if observed_internal - expected_internal:
                 raise GuardCapabilityError(
                     "hidden internal transfer detected at consumption",
@@ -2147,12 +1983,8 @@ class EthereumTransactionGuard:
                 )
 
         if live_token_effects is not None:
-            expected_tok = {
-                content_sha256_hex(dict(e)) for e in binding.token_effects
-            }
-            observed_tok = {
-                content_sha256_hex(dict(e)) for e in live_token_effects
-            }
+            expected_tok = {content_sha256_hex(dict(e)) for e in binding.token_effects}
+            observed_tok = {content_sha256_hex(dict(e)) for e in live_token_effects}
             if observed_tok - expected_tok:
                 raise GuardCapabilityError(
                     "hidden token transfer detected at consumption",
@@ -2170,10 +2002,7 @@ class EthereumTransactionGuard:
                     "observed": live_list_revision,
                 },
             )
-        if (
-            live_graph_revision is not None
-            and live_graph_revision != binding.graph_revision
-        ):
+        if live_graph_revision is not None and live_graph_revision != binding.graph_revision:
             raise GuardCapabilityError(
                 "graph revision stale or substituted at consumption",
                 reason_code="ethereum.graph_revision_stale",
@@ -2192,8 +2021,7 @@ class EthereumTransactionGuard:
         )
         if structural["blocking"] is not None:
             raise GuardCapabilityError(
-                "; ".join(structural["reasons"])
-                or "ethereum live revalidation failed",
+                "; ".join(structural["reasons"]) or "ethereum live revalidation failed",
                 reason_code=structural["reason_codes"][0]
                 if structural["reason_codes"]
                 else "ethereum.consumption_blocked",
@@ -2235,9 +2063,7 @@ class EthereumTransactionGuard:
         if isinstance(candidate, Mapping):
             _reject_forbidden(candidate, "EVMTransactionCandidate")
             return EVMTransactionCandidate.from_dict(candidate)
-        raise GuardValidationError(
-            "candidate must be an EVMTransactionCandidate or mapping"
-        )
+        raise GuardValidationError("candidate must be an EVMTransactionCandidate or mapping")
 
     def _bind_code_epochs(
         self,
@@ -2250,11 +2076,7 @@ class EthereumTransactionGuard:
         provided: dict[str, CodeProxyEpoch] = {}
         if code_proxy_epochs is not None:
             for item in code_proxy_epochs:
-                epoch = (
-                    item
-                    if isinstance(item, CodeProxyEpoch)
-                    else CodeProxyEpoch.from_dict(item)
-                )
+                epoch = item if isinstance(item, CodeProxyEpoch) else CodeProxyEpoch.from_dict(item)
                 provided[epoch.contract_address.lower()] = epoch
 
         # Contracts that participate in effects should have epochs when any
@@ -2278,14 +2100,10 @@ class EthereumTransactionGuard:
                     # Outer call target is required; token addresses may be
                     # EOAs without code — only fail for the primary to.
                     if addr == cand.to_address.lower():
-                        raise GuardValidationError(
-                            f"missing code/proxy epoch for {addr}"
-                        )
+                        raise GuardValidationError(f"missing code/proxy epoch for {addr}")
                     continue
                 if epoch.chain_id != cand.chain_id:
-                    raise GuardValidationError(
-                        f"code/proxy epoch chain_id mismatch for {addr}"
-                    )
+                    raise GuardValidationError(f"code/proxy epoch chain_id mismatch for {addr}")
                 bound.append(epoch)
             # Keep extras that were explicitly provided.
             for addr, epoch in provided.items():
@@ -2355,10 +2173,7 @@ class EthereumTransactionGuard:
                 ExpectedEffect(
                     effect_id=f"effect:approval-{idx}",
                     kind=a.kind,
-                    summary=(
-                        f"{a.kind} token={a.token} spender={a.spender} "
-                        f"amount={a.amount}"
-                    ),
+                    summary=(f"{a.kind} token={a.token} spender={a.spender} amount={a.amount}"),
                 )
             )
         if not effects and decoded_kind:
@@ -2448,8 +2263,7 @@ class EthereumTransactionGuard:
         binding: EVMTransactionBinding,
         *,
         now: str,
-        live_code_proxy_epochs: Mapping[str, CodeProxyEpoch | Mapping[str, Any]]
-        | None,
+        live_code_proxy_epochs: Mapping[str, CodeProxyEpoch | Mapping[str, Any]] | None,
         phase: EthereumGuardPhase,
         re_resolve: bool = False,
     ) -> dict[str, Any]:
@@ -2482,13 +2296,9 @@ class EthereumTransactionGuard:
                 and blocking is not TransactionVerdictOutcome.DENY
             ):
                 blocking = outcome
-            elif (
-                outcome is TransactionVerdictOutcome.STALE
-                and blocking
-                not in (
-                    TransactionVerdictOutcome.DENY,
-                    TransactionVerdictOutcome.STALE,
-                )
+            elif outcome is TransactionVerdictOutcome.STALE and blocking not in (
+                TransactionVerdictOutcome.DENY,
+                TransactionVerdictOutcome.STALE,
             ):
                 blocking = outcome
 
@@ -2583,8 +2393,7 @@ class EthereumTransactionGuard:
                 )
             # Approvals from calldata must be covered by bound approvals.
             live_appr_digests = {
-                ApprovalBinding.from_dict(a).approval_digest
-                for a in live_decoded["approvals"]
+                ApprovalBinding.from_dict(a).approval_digest for a in live_decoded["approvals"]
             }
             bound_appr_digests = {a.approval_digest for a in binding.approvals}
             if live_appr_digests - bound_appr_digests:
@@ -2652,9 +2461,7 @@ class EthereumTransactionGuard:
         assert self.graph_revision_is_current is not None
         if binding.list_revision:
             try:
-                list_ok = bool(
-                    self.list_revision_is_current(binding.list_revision, now)
-                )
+                list_ok = bool(self.list_revision_is_current(binding.list_revision, now))
             except Exception as exc:  # noqa: BLE001
                 list_ok = False
                 _block(
@@ -2673,9 +2480,7 @@ class EthereumTransactionGuard:
                     )
         if binding.graph_revision:
             try:
-                graph_ok = bool(
-                    self.graph_revision_is_current(binding.graph_revision, now)
-                )
+                graph_ok = bool(self.graph_revision_is_current(binding.graph_revision, now))
             except Exception as exc:  # noqa: BLE001
                 graph_ok = False
                 _block(
@@ -2714,8 +2519,7 @@ class EthereumTransactionGuard:
                         _block(
                             TransactionVerdictOutcome.ERROR,
                             "ethereum.code_proxy_resolve_error",
-                            f"code/proxy re-resolve failed for "
-                            f"{epoch.contract_address}: {exc}",
+                            f"code/proxy re-resolve failed for {epoch.contract_address}: {exc}",
                             "sec:evm-code-proxy-epoch",
                         )
                         continue
@@ -2729,16 +2533,13 @@ class EthereumTransactionGuard:
                             "sec:evm-code-proxy-epoch",
                         )
                     continue
-                live_epoch = _coerce_code_epoch(
-                    live_value, field_name="live_code_proxy_epoch"
-                )
+                live_epoch = _coerce_code_epoch(live_value, field_name="live_code_proxy_epoch")
                 assert live_epoch is not None
                 if live_epoch.epoch_digest != epoch.epoch_digest:
                     _block(
                         TransactionVerdictOutcome.DENY,
                         "ethereum.proxy_upgrade",
-                        f"proxy/code upgrade detected for "
-                        f"{epoch.contract_address}",
+                        f"proxy/code upgrade detected for {epoch.contract_address}",
                         "sec:evm-code-proxy-epoch",
                     )
                 elif live_epoch.code_epoch != epoch.code_epoch:
@@ -2834,4 +2635,10 @@ def evaluate_ethereum_transaction_guard(
 
 
 # Silence unused import lint for GuardError / GuardPolicyError (public surface).
-_ = (GuardError, GuardPolicyError, ETHEREUM_MAINNET_CHAIN_ID, ETHEREUM_MAINNET_GENESIS_HASH, ETHEREUM_MAINNET_NETWORK)
+_ = (
+    GuardError,
+    GuardPolicyError,
+    ETHEREUM_MAINNET_CHAIN_ID,
+    ETHEREUM_MAINNET_GENESIS_HASH,
+    ETHEREUM_MAINNET_NETWORK,
+)

@@ -38,11 +38,7 @@ class RateLimitPolicy:
             "requests_per_second",
             _positive_number(self.requests_per_second, "requests_per_second"),
         )
-        if (
-            isinstance(self.burst, bool)
-            or not isinstance(self.burst, int)
-            or self.burst <= 0
-        ):
+        if isinstance(self.burst, bool) or not isinstance(self.burst, int) or self.burst <= 0:
             raise InvalidRequestError("burst must be a positive integer")
         object.__setattr__(
             self,

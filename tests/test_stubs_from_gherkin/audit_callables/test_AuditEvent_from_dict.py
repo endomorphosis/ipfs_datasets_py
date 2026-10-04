@@ -32,26 +32,35 @@ def a_dictionary_with_event_data_exists():
             "client_ip": "192.168.1.1",
             "session_id": "sess123",
             "process_id": 1234,
-            "hostname": "testhost"
+            "hostname": "testhost",
         }
-        
+
         # Verify dictionary was created
         if event_dict is None:
-            raise FixtureError("Failed to create fixture a_dictionary_with_event_data_exists: Dictionary is None") from None
-        
+            raise FixtureError(
+                "Failed to create fixture a_dictionary_with_event_data_exists: Dictionary is None"
+            ) from None
+
         # Verify it's actually a dict
         if not isinstance(event_dict, dict):
-            raise FixtureError(f"Failed to create fixture a_dictionary_with_event_data_exists: Object is {type(event_dict)}, expected dict") from None
-        
+            raise FixtureError(
+                f"Failed to create fixture a_dictionary_with_event_data_exists: Object is {type(event_dict)}, expected dict"
+            ) from None
+
         # Verify required keys exist
         required_keys = ["event_id", "timestamp", "level", "category", "action"]
         for key in required_keys:
             if key not in event_dict:
-                raise FixtureError(f"Failed to create fixture a_dictionary_with_event_data_exists: Missing required key '{key}'") from None
-        
+                raise FixtureError(
+                    f"Failed to create fixture a_dictionary_with_event_data_exists: Missing required key '{key}'"
+                ) from None
+
         return event_dict
     except Exception as e:
-        raise FixtureError(f"Failed to create fixture a_dictionary_with_event_data_exists: {e}") from e
+        raise FixtureError(
+            f"Failed to create fixture a_dictionary_with_event_data_exists: {e}"
+        ) from e
+
 
 @pytest.fixture
 def the_dictionary_has_event_id_set_to_evt123(a_dictionary_with_event_data_exists):
@@ -60,14 +69,19 @@ def the_dictionary_has_event_id_set_to_evt123(a_dictionary_with_event_data_exist
     """
     try:
         event_dict = a_dictionary_with_event_data_exists
-        
+
         # Verify event_id is correct
         if event_dict.get("event_id") != "evt123":
-            raise FixtureError(f"Failed to create fixture the_dictionary_has_event_id_set_to_evt123: event_id is {event_dict.get('event_id')}, expected 'evt123'") from None
-        
+            raise FixtureError(
+                f"Failed to create fixture the_dictionary_has_event_id_set_to_evt123: event_id is {event_dict.get('event_id')}, expected 'evt123'"
+            ) from None
+
         return event_dict
     except Exception as e:
-        raise FixtureError(f"Failed to create fixture the_dictionary_has_event_id_set_to_evt123: {e}") from e
+        raise FixtureError(
+            f"Failed to create fixture the_dictionary_has_event_id_set_to_evt123: {e}"
+        ) from e
+
 
 @pytest.fixture
 def the_dictionary_has_timestamp_set_to_20240101t12000(a_dictionary_with_event_data_exists):
@@ -76,14 +90,19 @@ def the_dictionary_has_timestamp_set_to_20240101t12000(a_dictionary_with_event_d
     """
     try:
         event_dict = a_dictionary_with_event_data_exists
-        
+
         # Verify timestamp is correct
         if event_dict.get("timestamp") != "2024-01-01T12:00:00Z":
-            raise FixtureError(f"Failed to create fixture the_dictionary_has_timestamp_set_to_20240101t12000: timestamp is {event_dict.get('timestamp')}, expected '2024-01-01T12:00:00Z'") from None
-        
+            raise FixtureError(
+                f"Failed to create fixture the_dictionary_has_timestamp_set_to_20240101t12000: timestamp is {event_dict.get('timestamp')}, expected '2024-01-01T12:00:00Z'"
+            ) from None
+
         return event_dict
     except Exception as e:
-        raise FixtureError(f"Failed to create fixture the_dictionary_has_timestamp_set_to_20240101t12000: {e}") from e
+        raise FixtureError(
+            f"Failed to create fixture the_dictionary_has_timestamp_set_to_20240101t12000: {e}"
+        ) from e
+
 
 @pytest.fixture
 def the_dictionary_has_level_set_to_info(a_dictionary_with_event_data_exists):
@@ -92,14 +111,19 @@ def the_dictionary_has_level_set_to_info(a_dictionary_with_event_data_exists):
     """
     try:
         event_dict = a_dictionary_with_event_data_exists
-        
+
         # Verify level is correct
         if event_dict.get("level") != "INFO":
-            raise FixtureError(f"Failed to create fixture the_dictionary_has_level_set_to_info: level is {event_dict.get('level')}, expected 'INFO'") from None
-        
+            raise FixtureError(
+                f"Failed to create fixture the_dictionary_has_level_set_to_info: level is {event_dict.get('level')}, expected 'INFO'"
+            ) from None
+
         return event_dict
     except Exception as e:
-        raise FixtureError(f"Failed to create fixture the_dictionary_has_level_set_to_info: {e}") from e
+        raise FixtureError(
+            f"Failed to create fixture the_dictionary_has_level_set_to_info: {e}"
+        ) from e
+
 
 @pytest.fixture
 def the_dictionary_has_category_set_to_data_access(a_dictionary_with_event_data_exists):
@@ -108,14 +132,19 @@ def the_dictionary_has_category_set_to_data_access(a_dictionary_with_event_data_
     """
     try:
         event_dict = a_dictionary_with_event_data_exists
-        
+
         # Verify category is correct
         if event_dict.get("category") != "DATA_ACCESS":
-            raise FixtureError(f"Failed to create fixture the_dictionary_has_category_set_to_data_access: category is {event_dict.get('category')}, expected 'DATA_ACCESS'") from None
-        
+            raise FixtureError(
+                f"Failed to create fixture the_dictionary_has_category_set_to_data_access: category is {event_dict.get('category')}, expected 'DATA_ACCESS'"
+            ) from None
+
         return event_dict
     except Exception as e:
-        raise FixtureError(f"Failed to create fixture the_dictionary_has_category_set_to_data_access: {e}") from e
+        raise FixtureError(
+            f"Failed to create fixture the_dictionary_has_category_set_to_data_access: {e}"
+        ) from e
+
 
 @pytest.fixture
 def the_dictionary_has_action_set_to_read(a_dictionary_with_event_data_exists):
@@ -124,17 +153,28 @@ def the_dictionary_has_action_set_to_read(a_dictionary_with_event_data_exists):
     """
     try:
         event_dict = a_dictionary_with_event_data_exists
-        
+
         # Verify action is correct
         if event_dict.get("action") != "read":
-            raise FixtureError(f"Failed to create fixture the_dictionary_has_action_set_to_read: action is {event_dict.get('action')}, expected 'read'") from None
-        
+            raise FixtureError(
+                f"Failed to create fixture the_dictionary_has_action_set_to_read: action is {event_dict.get('action')}, expected 'read'"
+            ) from None
+
         return event_dict
     except Exception as e:
-        raise FixtureError(f"Failed to create fixture the_dictionary_has_action_set_to_read: {e}") from e
+        raise FixtureError(
+            f"Failed to create fixture the_dictionary_has_action_set_to_read: {e}"
+        ) from e
 
 
-def test_from_dict_returns_auditevent_instance(a_dictionary_with_event_data_exists, the_dictionary_has_event_id_set_to_evt123, the_dictionary_has_timestamp_set_to_20240101t12000, the_dictionary_has_level_set_to_info, the_dictionary_has_category_set_to_data_access, the_dictionary_has_action_set_to_read):
+def test_from_dict_returns_auditevent_instance(
+    a_dictionary_with_event_data_exists,
+    the_dictionary_has_event_id_set_to_evt123,
+    the_dictionary_has_timestamp_set_to_20240101t12000,
+    the_dictionary_has_level_set_to_info,
+    the_dictionary_has_category_set_to_data_access,
+    the_dictionary_has_action_set_to_read,
+):
     """
     Scenario: From dict returns AuditEvent instance
 
@@ -148,7 +188,14 @@ def test_from_dict_returns_auditevent_instance(a_dictionary_with_event_data_exis
     pass
 
 
-def test_from_dict_sets_event_id(a_dictionary_with_event_data_exists, the_dictionary_has_event_id_set_to_evt123, the_dictionary_has_timestamp_set_to_20240101t12000, the_dictionary_has_level_set_to_info, the_dictionary_has_category_set_to_data_access, the_dictionary_has_action_set_to_read):
+def test_from_dict_sets_event_id(
+    a_dictionary_with_event_data_exists,
+    the_dictionary_has_event_id_set_to_evt123,
+    the_dictionary_has_timestamp_set_to_20240101t12000,
+    the_dictionary_has_level_set_to_info,
+    the_dictionary_has_category_set_to_data_access,
+    the_dictionary_has_action_set_to_read,
+):
     """
     Scenario: From dict sets event_id
 
@@ -162,7 +209,14 @@ def test_from_dict_sets_event_id(a_dictionary_with_event_data_exists, the_dictio
     pass
 
 
-def test_from_dict_sets_timestamp(a_dictionary_with_event_data_exists, the_dictionary_has_event_id_set_to_evt123, the_dictionary_has_timestamp_set_to_20240101t12000, the_dictionary_has_level_set_to_info, the_dictionary_has_category_set_to_data_access, the_dictionary_has_action_set_to_read):
+def test_from_dict_sets_timestamp(
+    a_dictionary_with_event_data_exists,
+    the_dictionary_has_event_id_set_to_evt123,
+    the_dictionary_has_timestamp_set_to_20240101t12000,
+    the_dictionary_has_level_set_to_info,
+    the_dictionary_has_category_set_to_data_access,
+    the_dictionary_has_action_set_to_read,
+):
     """
     Scenario: From dict sets timestamp
 
@@ -176,7 +230,14 @@ def test_from_dict_sets_timestamp(a_dictionary_with_event_data_exists, the_dicti
     pass
 
 
-def test_from_dict_converts_level_string_to_enum(a_dictionary_with_event_data_exists, the_dictionary_has_event_id_set_to_evt123, the_dictionary_has_timestamp_set_to_20240101t12000, the_dictionary_has_level_set_to_info, the_dictionary_has_category_set_to_data_access, the_dictionary_has_action_set_to_read):
+def test_from_dict_converts_level_string_to_enum(
+    a_dictionary_with_event_data_exists,
+    the_dictionary_has_event_id_set_to_evt123,
+    the_dictionary_has_timestamp_set_to_20240101t12000,
+    the_dictionary_has_level_set_to_info,
+    the_dictionary_has_category_set_to_data_access,
+    the_dictionary_has_action_set_to_read,
+):
     """
     Scenario: From dict converts level string to enum
 
@@ -190,7 +251,14 @@ def test_from_dict_converts_level_string_to_enum(a_dictionary_with_event_data_ex
     pass
 
 
-def test_from_dict_converts_category_string_to_enum(a_dictionary_with_event_data_exists, the_dictionary_has_event_id_set_to_evt123, the_dictionary_has_timestamp_set_to_20240101t12000, the_dictionary_has_level_set_to_info, the_dictionary_has_category_set_to_data_access, the_dictionary_has_action_set_to_read):
+def test_from_dict_converts_category_string_to_enum(
+    a_dictionary_with_event_data_exists,
+    the_dictionary_has_event_id_set_to_evt123,
+    the_dictionary_has_timestamp_set_to_20240101t12000,
+    the_dictionary_has_level_set_to_info,
+    the_dictionary_has_category_set_to_data_access,
+    the_dictionary_has_action_set_to_read,
+):
     """
     Scenario: From dict converts category string to enum
 
@@ -204,7 +272,14 @@ def test_from_dict_converts_category_string_to_enum(a_dictionary_with_event_data
     pass
 
 
-def test_from_dict_sets_action(a_dictionary_with_event_data_exists, the_dictionary_has_event_id_set_to_evt123, the_dictionary_has_timestamp_set_to_20240101t12000, the_dictionary_has_level_set_to_info, the_dictionary_has_category_set_to_data_access, the_dictionary_has_action_set_to_read):
+def test_from_dict_sets_action(
+    a_dictionary_with_event_data_exists,
+    the_dictionary_has_event_id_set_to_evt123,
+    the_dictionary_has_timestamp_set_to_20240101t12000,
+    the_dictionary_has_level_set_to_info,
+    the_dictionary_has_category_set_to_data_access,
+    the_dictionary_has_action_set_to_read,
+):
     """
     Scenario: From dict sets action
 
@@ -218,7 +293,14 @@ def test_from_dict_sets_action(a_dictionary_with_event_data_exists, the_dictiona
     pass
 
 
-def test_from_dict_sets_user_when_present(a_dictionary_with_event_data_exists, the_dictionary_has_event_id_set_to_evt123, the_dictionary_has_timestamp_set_to_20240101t12000, the_dictionary_has_level_set_to_info, the_dictionary_has_category_set_to_data_access, the_dictionary_has_action_set_to_read):
+def test_from_dict_sets_user_when_present(
+    a_dictionary_with_event_data_exists,
+    the_dictionary_has_event_id_set_to_evt123,
+    the_dictionary_has_timestamp_set_to_20240101t12000,
+    the_dictionary_has_level_set_to_info,
+    the_dictionary_has_category_set_to_data_access,
+    the_dictionary_has_action_set_to_read,
+):
     """
     Scenario: From dict sets user when present
 
@@ -235,7 +317,14 @@ def test_from_dict_sets_user_when_present(a_dictionary_with_event_data_exists, t
     pass
 
 
-def test_from_dict_sets_resource_id_when_present(a_dictionary_with_event_data_exists, the_dictionary_has_event_id_set_to_evt123, the_dictionary_has_timestamp_set_to_20240101t12000, the_dictionary_has_level_set_to_info, the_dictionary_has_category_set_to_data_access, the_dictionary_has_action_set_to_read):
+def test_from_dict_sets_resource_id_when_present(
+    a_dictionary_with_event_data_exists,
+    the_dictionary_has_event_id_set_to_evt123,
+    the_dictionary_has_timestamp_set_to_20240101t12000,
+    the_dictionary_has_level_set_to_info,
+    the_dictionary_has_category_set_to_data_access,
+    the_dictionary_has_action_set_to_read,
+):
     """
     Scenario: From dict sets resource_id when present
 
@@ -252,7 +341,14 @@ def test_from_dict_sets_resource_id_when_present(a_dictionary_with_event_data_ex
     pass
 
 
-def test_from_dict_sets_status_when_present(a_dictionary_with_event_data_exists, the_dictionary_has_event_id_set_to_evt123, the_dictionary_has_timestamp_set_to_20240101t12000, the_dictionary_has_level_set_to_info, the_dictionary_has_category_set_to_data_access, the_dictionary_has_action_set_to_read):
+def test_from_dict_sets_status_when_present(
+    a_dictionary_with_event_data_exists,
+    the_dictionary_has_event_id_set_to_evt123,
+    the_dictionary_has_timestamp_set_to_20240101t12000,
+    the_dictionary_has_level_set_to_info,
+    the_dictionary_has_category_set_to_data_access,
+    the_dictionary_has_action_set_to_read,
+):
     """
     Scenario: From dict sets status when present
 
@@ -269,7 +365,14 @@ def test_from_dict_sets_status_when_present(a_dictionary_with_event_data_exists,
     pass
 
 
-def test_from_dict_sets_details_when_present_returns_dictionary(a_dictionary_with_event_data_exists, the_dictionary_has_event_id_set_to_evt123, the_dictionary_has_timestamp_set_to_20240101t12000, the_dictionary_has_level_set_to_info, the_dictionary_has_category_set_to_data_access, the_dictionary_has_action_set_to_read):
+def test_from_dict_sets_details_when_present_returns_dictionary(
+    a_dictionary_with_event_data_exists,
+    the_dictionary_has_event_id_set_to_evt123,
+    the_dictionary_has_timestamp_set_to_20240101t12000,
+    the_dictionary_has_level_set_to_info,
+    the_dictionary_has_category_set_to_data_access,
+    the_dictionary_has_action_set_to_read,
+):
     """
     Scenario: From dict sets details when present returns dictionary
 
@@ -286,7 +389,14 @@ def test_from_dict_sets_details_when_present_returns_dictionary(a_dictionary_wit
     pass
 
 
-def test_from_dict_sets_details_when_present_contains_size(a_dictionary_with_event_data_exists, the_dictionary_has_event_id_set_to_evt123, the_dictionary_has_timestamp_set_to_20240101t12000, the_dictionary_has_level_set_to_info, the_dictionary_has_category_set_to_data_access, the_dictionary_has_action_set_to_read):
+def test_from_dict_sets_details_when_present_contains_size(
+    a_dictionary_with_event_data_exists,
+    the_dictionary_has_event_id_set_to_evt123,
+    the_dictionary_has_timestamp_set_to_20240101t12000,
+    the_dictionary_has_level_set_to_info,
+    the_dictionary_has_category_set_to_data_access,
+    the_dictionary_has_action_set_to_read,
+):
     """
     Scenario: From dict sets details when present contains size
 
@@ -303,7 +413,14 @@ def test_from_dict_sets_details_when_present_contains_size(a_dictionary_with_eve
     pass
 
 
-def test_from_dict_handles_missing_optional_fields(a_dictionary_with_event_data_exists, the_dictionary_has_event_id_set_to_evt123, the_dictionary_has_timestamp_set_to_20240101t12000, the_dictionary_has_level_set_to_info, the_dictionary_has_category_set_to_data_access, the_dictionary_has_action_set_to_read):
+def test_from_dict_handles_missing_optional_fields(
+    a_dictionary_with_event_data_exists,
+    the_dictionary_has_event_id_set_to_evt123,
+    the_dictionary_has_timestamp_set_to_20240101t12000,
+    the_dictionary_has_level_set_to_info,
+    the_dictionary_has_category_set_to_data_access,
+    the_dictionary_has_action_set_to_read,
+):
     """
     Scenario: From dict handles missing optional fields
 
@@ -320,7 +437,14 @@ def test_from_dict_handles_missing_optional_fields(a_dictionary_with_event_data_
     pass
 
 
-def test_from_dict_with_level_already_as_enum(a_dictionary_with_event_data_exists, the_dictionary_has_event_id_set_to_evt123, the_dictionary_has_timestamp_set_to_20240101t12000, the_dictionary_has_level_set_to_info, the_dictionary_has_category_set_to_data_access, the_dictionary_has_action_set_to_read):
+def test_from_dict_with_level_already_as_enum(
+    a_dictionary_with_event_data_exists,
+    the_dictionary_has_event_id_set_to_evt123,
+    the_dictionary_has_timestamp_set_to_20240101t12000,
+    the_dictionary_has_level_set_to_info,
+    the_dictionary_has_category_set_to_data_access,
+    the_dictionary_has_action_set_to_read,
+):
     """
     Scenario: From dict with level already as enum
 
@@ -337,7 +461,14 @@ def test_from_dict_with_level_already_as_enum(a_dictionary_with_event_data_exist
     pass
 
 
-def test_from_dict_with_category_already_as_enum(a_dictionary_with_event_data_exists, the_dictionary_has_event_id_set_to_evt123, the_dictionary_has_timestamp_set_to_20240101t12000, the_dictionary_has_level_set_to_info, the_dictionary_has_category_set_to_data_access, the_dictionary_has_action_set_to_read):
+def test_from_dict_with_category_already_as_enum(
+    a_dictionary_with_event_data_exists,
+    the_dictionary_has_event_id_set_to_evt123,
+    the_dictionary_has_timestamp_set_to_20240101t12000,
+    the_dictionary_has_level_set_to_info,
+    the_dictionary_has_category_set_to_data_access,
+    the_dictionary_has_action_set_to_read,
+):
     """
     Scenario: From dict with category already as enum
 
@@ -354,7 +485,14 @@ def test_from_dict_with_category_already_as_enum(a_dictionary_with_event_data_ex
     pass
 
 
-def test_from_dict_preserves_all_fields(a_dictionary_with_event_data_exists, the_dictionary_has_event_id_set_to_evt123, the_dictionary_has_timestamp_set_to_20240101t12000, the_dictionary_has_level_set_to_info, the_dictionary_has_category_set_to_data_access, the_dictionary_has_action_set_to_read):
+def test_from_dict_preserves_all_fields(
+    a_dictionary_with_event_data_exists,
+    the_dictionary_has_event_id_set_to_evt123,
+    the_dictionary_has_timestamp_set_to_20240101t12000,
+    the_dictionary_has_level_set_to_info,
+    the_dictionary_has_category_set_to_data_access,
+    the_dictionary_has_action_set_to_read,
+):
     """
     Scenario: From dict preserves all fields
 
@@ -369,4 +507,3 @@ def test_from_dict_preserves_all_fields(a_dictionary_with_event_data_exists, the
     """
     # TODO: Implement test
     pass
-

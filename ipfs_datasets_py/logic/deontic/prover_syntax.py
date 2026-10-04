@@ -270,47 +270,37 @@ def _validate_target_formula(
         formula_slots=alignment_summary["formula_slots"],
         omitted_formula_slots=alignment_summary["omitted_formula_slots"],
         omitted_formula_slot_names=alignment_summary["omitted_formula_slot_names"],
-        decoded_omitted_formula_slots=alignment_summary[
-            "decoded_omitted_formula_slots"
-        ],
-        grounded_omitted_formula_slots=alignment_summary[
-            "grounded_omitted_formula_slots"
-        ],
-        ungrounded_omitted_formula_slots=alignment_summary[
-            "ungrounded_omitted_formula_slots"
-        ],
+        decoded_omitted_formula_slots=alignment_summary["decoded_omitted_formula_slots"],
+        grounded_omitted_formula_slots=alignment_summary["grounded_omitted_formula_slots"],
+        ungrounded_omitted_formula_slots=alignment_summary["ungrounded_omitted_formula_slots"],
         decoded_ir_slot_alignment=alignment_summary,
         slot_alignment_fingerprint=alignment_summary["slot_alignment_fingerprint"],
         source_formula_symbols=symbol_alignment["source_formula_symbols"],
         exported_formula_symbols=symbol_alignment["exported_formula_symbols"],
         target_symbol_alignment=symbol_alignment,
-        target_symbol_alignment_fingerprint=symbol_alignment[
-            "target_symbol_alignment_fingerprint"
-        ],
+        target_symbol_alignment_fingerprint=symbol_alignment["target_symbol_alignment_fingerprint"],
         target_dialect_profile=target_dialect_profile,
         target_dialect_profile_fingerprint=target_dialect_profile[
             "target_dialect_profile_fingerprint"
         ],
         target_parse_profile=target_parse_profile,
-        target_parse_profile_fingerprint=target_parse_profile[
-            "target_parse_profile_fingerprint"
-        ],
+        target_parse_profile_fingerprint=target_parse_profile["target_parse_profile_fingerprint"],
         reconstruction_token_profile=reconstruction_token_profile,
         reconstruction_token_profile_fingerprint=reconstruction_token_profile[
             "reconstruction_token_profile_fingerprint"
         ],
         target_components=target_components,
         target_quality_gate=target_quality_gate,
-        target_quality_gate_fingerprint=target_quality_gate[
-            "target_quality_gate_fingerprint"
-        ],
+        target_quality_gate_fingerprint=target_quality_gate["target_quality_gate_fingerprint"],
         bridge_validation_status=bridge_validation_basis["status"],
         bridge_validation_basis=bridge_validation_basis,
         syntax_valid=syntax_valid,
         skipped=False,
         diagnostics=diagnostics,
         proof_ready=bool(formula_record.get("proof_ready") is True and syntax_valid),
-        requires_validation=bool(formula_record.get("requires_validation") is not False or diagnostics),
+        requires_validation=bool(
+            formula_record.get("requires_validation") is not False or diagnostics
+        ),
         schema_version=norm.schema_version,
     )
 
@@ -323,9 +313,7 @@ def _bridge_validation_basis_for_target(
 ) -> Dict[str, Any]:
     """Expose target-level local validation as an explicit bridge report signal."""
 
-    formal_complete = bool(
-        target_quality_gate.get("formal_validation_complete") is True
-    )
+    formal_complete = bool(target_quality_gate.get("formal_validation_complete") is True)
     return {
         "status": "validated" if formal_complete else "requires_validation",
         "validator": "deontic.local_prover_quality_gate",
@@ -336,9 +324,7 @@ def _bridge_validation_basis_for_target(
         "structural_checks_complete": bool(
             target_quality_gate.get("structural_checks_complete") is True
         ),
-        "failed_quality_checks": list(
-            target_quality_gate.get("failed_quality_checks") or []
-        ),
+        "failed_quality_checks": list(target_quality_gate.get("failed_quality_checks") or []),
     }
 
 
@@ -365,22 +351,40 @@ def _render_target_formula(norm: LegalNormIR, target: str, formula: str) -> str:
 def _syntax_diagnostics(target: str, exported_formula: str) -> List[Dict[str, Any]]:
     diagnostics: List[Dict[str, Any]] = []
     if target not in LOCAL_PROVER_TARGETS:
-        diagnostics.append({"code": "unknown_target", "message": f"unsupported local prover target: {target}"})
+        diagnostics.append(
+            {"code": "unknown_target", "message": f"unsupported local prover target: {target}"}
+        )
     if not exported_formula.strip():
         diagnostics.append({"code": "empty_formula", "message": "exported formula is empty"})
     if not _balanced_delimiters(exported_formula):
-        diagnostics.append({"code": "unbalanced_delimiters", "message": "formula delimiters are unbalanced"})
+        diagnostics.append(
+            {"code": "unbalanced_delimiters", "message": "formula delimiters are unbalanced"}
+        )
     if re.search(r"\bNone\b|\?\?", exported_formula):
-        diagnostics.append({"code": "placeholder_token", "message": "formula contains a placeholder token"})
-    if target in {"deontic_cec", "fol", "deontic_fol", "deontic_temporal_fol"} and re.search(r"[∀∧→¬]", exported_formula):
-        diagnostics.append({"code": "display_connective", "message": "target formula contains display-only logic connectives"})
+        diagnostics.append(
+            {"code": "placeholder_token", "message": "formula contains a placeholder token"}
+        )
+    if target in {"deontic_cec", "fol", "deontic_fol", "deontic_temporal_fol"} and re.search(
+        r"[∀∧→¬]", exported_formula
+    ):
+        diagnostics.append(
+            {
+                "code": "display_connective",
+                "message": "target formula contains display-only logic connectives",
+            }
+        )
     if (
         target in {"fol", "deontic_fol", "deontic_temporal_fol"}
         and "forall x." not in exported_formula
         and not _is_frame_style_formula(exported_formula)
         and not _contains_frame_style_formula(exported_formula)
     ):
-        diagnostics.append({"code": "missing_quantifier", "message": "FOL target lacks a quantifier or accepted frame atom"})
+        diagnostics.append(
+            {
+                "code": "missing_quantifier",
+                "message": "FOL target lacks a quantifier or accepted frame atom",
+            }
+        )
     diagnostics.extend(_target_shape_diagnostics(target, exported_formula))
     return diagnostics
 
@@ -403,9 +407,7 @@ def _decoded_slot_summary(decoded: Any) -> Dict[str, List[str]]:
             ungrounded_slots.append(slot)
 
     missing_slots = [
-        str(slot)
-        for slot in getattr(decoded, "missing_slots", []) or []
-        if str(slot).strip()
+        str(slot) for slot in getattr(decoded, "missing_slots", []) or [] if str(slot).strip()
     ]
     return {
         "decoded_slots": decoded_slots,
@@ -462,28 +464,14 @@ def _decoded_ir_slot_alignment(
     decoded_set = set(decoded_slots)
     grounded_ir_set = set(grounded_ir_slots)
     formula_set = set(formula_slots)
-    missing_decoded = [
-        slot for slot in grounded_ir_slots if slot not in decoded_set
-    ]
-    ungrounded_decoded = [
-        slot for slot in decoded_slots if slot not in grounded_ir_set
-    ]
-    formula_missing_decoded = [
-        slot for slot in formula_slots if slot not in decoded_set
-    ]
-    formula_ungrounded = [
-        slot for slot in formula_slots if slot not in grounded_ir_set
-    ]
-    decoded_formula_overlap = [
-        slot for slot in decoded_slots if slot in formula_set
-    ]
-    grounded_formula_overlap = [
-        slot for slot in grounded_ir_slots if slot in formula_set
-    ]
+    missing_decoded = [slot for slot in grounded_ir_slots if slot not in decoded_set]
+    ungrounded_decoded = [slot for slot in decoded_slots if slot not in grounded_ir_set]
+    formula_missing_decoded = [slot for slot in formula_slots if slot not in decoded_set]
+    formula_ungrounded = [slot for slot in formula_slots if slot not in grounded_ir_set]
+    decoded_formula_overlap = [slot for slot in decoded_slots if slot in formula_set]
+    grounded_formula_overlap = [slot for slot in grounded_ir_slots if slot in formula_set]
     decoded_omitted_slots = [
-        slot
-        for slot in omitted_formula_slot_names
-        if _slot_name_matches_any(slot, decoded_slots)
+        slot for slot in omitted_formula_slot_names if _slot_name_matches_any(slot, decoded_slots)
     ]
     grounded_omitted_slots = [
         slot
@@ -491,9 +479,7 @@ def _decoded_ir_slot_alignment(
         if _slot_name_matches_any(slot, grounded_ir_slots)
     ]
     ungrounded_omitted_slots = [
-        slot
-        for slot in omitted_formula_slot_names
-        if slot not in grounded_omitted_slots
+        slot for slot in omitted_formula_slot_names if slot not in grounded_omitted_slots
     ]
     omitted_alignment_complete = not ungrounded_omitted_slots
     complete = (
@@ -557,12 +543,14 @@ def _slot_name_aliases(slot: str) -> set[str]:
     aliases = {value}
     if value.endswith("s"):
         aliases.add(value[:-1])
-    aliases.update({
-        "recipients": "recipient",
-        "recipient": "recipients",
-        "overrides": "override",
-        "override": "overrides",
-    }.get(value, "").split())
+    aliases.update(
+        {
+            "recipients": "recipient",
+            "recipient": "recipients",
+            "overrides": "override",
+            "override": "overrides",
+        }.get(value, "").split()
+    )
     aliases.discard("")
     return aliases
 
@@ -589,9 +577,7 @@ def _target_components(
     ungrounded_ir_slots = list(ir_slot_summary.get("ungrounded_ir_slots") or [])
     missing_ir_slots = list(ir_slot_summary.get("missing_ir_slots") or [])
     formula_slots = list(alignment_summary.get("formula_slots") or [])
-    omitted_formula_slot_names = list(
-        alignment_summary.get("omitted_formula_slot_names") or []
-    )
+    omitted_formula_slot_names = list(alignment_summary.get("omitted_formula_slot_names") or [])
     decoded_omitted_formula_slots = list(
         alignment_summary.get("decoded_omitted_formula_slots") or []
     )
@@ -633,18 +619,14 @@ def _target_components(
         "omitted_formula_slot_alignment_complete": bool(
             alignment_summary.get("omitted_formula_slot_alignment_complete") is True
         ),
-        "slot_alignment_complete": bool(
-            alignment_summary.get("alignment_complete") is True
-        ),
+        "slot_alignment_complete": bool(alignment_summary.get("alignment_complete") is True),
         "decoded_missing_grounded_ir_slots": list(
             alignment_summary.get("decoded_missing_grounded_ir_slots") or []
         ),
         "formula_missing_decoded_slots": list(
             alignment_summary.get("formula_missing_decoded_slots") or []
         ),
-        "formula_ungrounded_slots": list(
-            alignment_summary.get("formula_ungrounded_slots") or []
-        ),
+        "formula_ungrounded_slots": list(alignment_summary.get("formula_ungrounded_slots") or []),
         "source_formula_symbols": source_symbols,
         "exported_formula_symbols": exported_symbols,
         "source_formula_symbol_count": len(source_symbols),
@@ -669,8 +651,7 @@ def _target_components(
             target_parse_profile.get("target_parse_profile_complete") is True
         ),
         "reconstruction_token_profile_complete": bool(
-            reconstruction_token_profile.get("reconstruction_token_profile_complete")
-            is True
+            reconstruction_token_profile.get("reconstruction_token_profile_complete") is True
         ),
         "source_salient_token_count": int(
             reconstruction_token_profile.get("source_salient_token_count") or 0
@@ -697,13 +678,9 @@ def _target_components(
         "parse_wrappers": list(target_parse_profile.get("wrapper_sequence") or []),
         "parse_atom_symbols": list(target_parse_profile.get("atom_symbols") or []),
         "parse_connectives": list(target_parse_profile.get("connectives") or []),
-        "parse_quantifier_variables": list(
-            target_parse_profile.get("quantifier_variables") or []
-        ),
+        "parse_quantifier_variables": list(target_parse_profile.get("quantifier_variables") or []),
         "parse_frame_slots": list(target_parse_profile.get("frame_slots") or []),
-        "parse_event_predicates": list(
-            target_parse_profile.get("event_predicates") or []
-        ),
+        "parse_event_predicates": list(target_parse_profile.get("event_predicates") or []),
     }
 
 
@@ -727,28 +704,150 @@ def _semantic_formula_family(action_predicate: str) -> str:
 
     ordered_prefixes: Sequence[tuple[Sequence[str], str]] = (
         (("Purpose",), "purpose"),
-        (("Repealed", "Omitted", "Reserved", "Transferred", "Lifecycle", "ValidFor", "ExpiresAfter"), "instrument_lifecycle"),
-        (("DocumentChainCustody", "LogCustody", "RecordEvidenceTransfer", "InventoryEvidence", "InventoryExhibit", "Accession", "PreserveEvidence"), "evidence_custody_duty"),
+        (
+            (
+                "Repealed",
+                "Omitted",
+                "Reserved",
+                "Transferred",
+                "Lifecycle",
+                "ValidFor",
+                "ExpiresAfter",
+            ),
+            "instrument_lifecycle",
+        ),
+        (
+            (
+                "DocumentChainCustody",
+                "LogCustody",
+                "RecordEvidenceTransfer",
+                "InventoryEvidence",
+                "InventoryExhibit",
+                "Accession",
+                "PreserveEvidence",
+            ),
+            "evidence_custody_duty",
+        ),
         (("RecordMinutes", "SetAgenda", "CallRoll", "NoticeMeeting"), "meeting_governance_duty"),
-        (("ReportIncident", "LogIncident", "RegisterBreach", "RegisterRisk", "RegisterIncident"), "incident_risk_reporting_duty"),
-        (("RecordRelease", "ObtainConsent", "ObtainAuthorization", "ReleaseLien"), "consent_release_instrument_duty"),
-        (("Accommodate", "ProvideAuxiliaryAid", "ProvideAccessible", "ModifyAccessibility", "PlanLanguageAccess", "FormatAccessibly", "InterpretSignLanguage"), "accessibility_accommodation_duty"),
-        (("ProvideAccess", "ProvideRecordsInspection", "PermitInspection", "ProvideCopy", "ProvidePublicAccess"), "public_access_records_duty"),
-        (("Acknowledge", "Authenticate", "Attest", "Notarize", "Ratify", "Confirm"), "document_authentication_duty"),
+        (
+            ("ReportIncident", "LogIncident", "RegisterBreach", "RegisterRisk", "RegisterIncident"),
+            "incident_risk_reporting_duty",
+        ),
+        (
+            ("RecordRelease", "ObtainConsent", "ObtainAuthorization", "ReleaseLien"),
+            "consent_release_instrument_duty",
+        ),
+        (
+            (
+                "Accommodate",
+                "ProvideAuxiliaryAid",
+                "ProvideAccessible",
+                "ModifyAccessibility",
+                "PlanLanguageAccess",
+                "FormatAccessibly",
+                "InterpretSignLanguage",
+            ),
+            "accessibility_accommodation_duty",
+        ),
+        (
+            (
+                "ProvideAccess",
+                "ProvideRecordsInspection",
+                "PermitInspection",
+                "ProvideCopy",
+                "ProvidePublicAccess",
+            ),
+            "public_access_records_duty",
+        ),
+        (
+            ("Acknowledge", "Authenticate", "Attest", "Notarize", "Ratify", "Confirm"),
+            "document_authentication_duty",
+        ),
         (("Mediate", "Arbitrate", "Settle", "Conciliate", "Negotiate"), "dispute_resolution_duty"),
-        (("Anonymize", "Decrypt", "Deidentify", "Destroy", "Detokenize", "Encrypt", "Erase", "Expunge", "Hash", "Mask", "Pseudonymize", "Redact", "Seal", "Tokenize", "Unseal"), "data_protection_duty"),
-        (("Record", "Memorialize", "Archive", "Retain", "Restore", "Preserve"), "legal_recordkeeping_duty"),
+        (
+            (
+                "Anonymize",
+                "Decrypt",
+                "Deidentify",
+                "Destroy",
+                "Detokenize",
+                "Encrypt",
+                "Erase",
+                "Expunge",
+                "Hash",
+                "Mask",
+                "Pseudonymize",
+                "Redact",
+                "Seal",
+                "Tokenize",
+                "Unseal",
+            ),
+            "data_protection_duty",
+        ),
+        (
+            ("Record", "Memorialize", "Archive", "Retain", "Restore", "Preserve"),
+            "legal_recordkeeping_duty",
+        ),
         (("Train", "Orient", "Instruct"), "training_orientation_duty"),
-        (("ReviewAccess", "RotateCredentials", "ResetPassword", "ScanVulnerabilities", "MonitorIntrusions"), "cybersecurity_access_control_duty"),
-        (("ImplementCorrectiveActionPlan", "SubmitCompliancePlan", "AssessRisk", "MaintainComplianceProgram", "PlanEmergencyResponse", "AnalyzeSafety"), "compliance_planning_duty"),
-        (("Match", "Compare", "Validate", "Normalize", "Deduplicate", "CrossCheck"), "data_quality_processing_duty"),
+        (
+            (
+                "ReviewAccess",
+                "RotateCredentials",
+                "ResetPassword",
+                "ScanVulnerabilities",
+                "MonitorIntrusions",
+            ),
+            "cybersecurity_access_control_duty",
+        ),
+        (
+            (
+                "ImplementCorrectiveActionPlan",
+                "SubmitCompliancePlan",
+                "AssessRisk",
+                "MaintainComplianceProgram",
+                "PlanEmergencyResponse",
+                "AnalyzeSafety",
+            ),
+            "compliance_planning_duty",
+        ),
+        (
+            ("Match", "Compare", "Validate", "Normalize", "Deduplicate", "CrossCheck"),
+            "data_quality_processing_duty",
+        ),
         (("Report", "FileReturn", "DeclareCompliance"), "regulatory_reporting_duty"),
         (("Map", "Geocode", "Georeference", "Survey"), "geospatial_records_duty"),
         (("Evacuate", "Shelter", "Rescue", "Drill"), "emergency_operations_duty"),
         (("Revise", "Annotate", "Supplement"), "code_maintenance_duty"),
-        (("Catalog", "Index", "Interpret", "Summarize", "Transcribe", "Translate", "Abstract", "Excerpt", "Caption", "Tag"), "records_information_processing_duty"),
-        (("Stay", "Continue", "Postpone", "Defer", "Waive", "Extend"), "administrative_relief_duty"),
-        (("DepositSecurity", "ProvideProofInsurance", "MaintainLiabilityInsurance", "PostBond", "EstablishEscrow", "ReleaseBond"), "financial_assurance_duty"),
+        (
+            (
+                "Catalog",
+                "Index",
+                "Interpret",
+                "Summarize",
+                "Transcribe",
+                "Translate",
+                "Abstract",
+                "Excerpt",
+                "Caption",
+                "Tag",
+            ),
+            "records_information_processing_duty",
+        ),
+        (
+            ("Stay", "Continue", "Postpone", "Defer", "Waive", "Extend"),
+            "administrative_relief_duty",
+        ),
+        (
+            (
+                "DepositSecurity",
+                "ProvideProofInsurance",
+                "MaintainLiabilityInsurance",
+                "PostBond",
+                "EstablishEscrow",
+                "ReleaseBond",
+            ),
+            "financial_assurance_duty",
+        ),
         (("Notice", "Notify", "Disclose"), "public_information_duty"),
     )
     for prefixes, family in ordered_prefixes:
@@ -806,12 +905,13 @@ def _has_temporal_semantic_anchor(norm: LegalNormIR) -> bool:
     for record in norm.conditions or []:
         if isinstance(record, Mapping):
             condition_type = str(record.get("type") or "").strip().lower()
-            value = str(
-                record.get("value")
-                or record.get("normalized_text")
-                or record.get("text")
-                or ""
-            ).strip().lower()
+            value = (
+                str(
+                    record.get("value") or record.get("normalized_text") or record.get("text") or ""
+                )
+                .strip()
+                .lower()
+            )
             if condition_type in {"temporal", "deadline", "duration"}:
                 return True
             if value.startswith(
@@ -847,24 +947,15 @@ def _target_quality_gate(
     ]
     syntax_valid = not diagnostic_codes
     formula_proof_ready = bool(formula_record.get("proof_ready") is True)
-    formula_requires_validation = bool(
-        formula_record.get("requires_validation") is not False
-    )
-    slot_alignment_complete = bool(
-        alignment_summary.get("alignment_complete") is True
-    )
+    formula_requires_validation = bool(formula_record.get("requires_validation") is not False)
+    slot_alignment_complete = bool(alignment_summary.get("alignment_complete") is True)
     symbol_alignment_complete = bool(
         symbol_alignment.get("target_symbol_alignment_complete") is True
     )
-    dialect_complete = bool(
-        target_dialect_profile.get("target_dialect_profile_complete") is True
-    )
-    parse_complete = bool(
-        target_parse_profile.get("target_parse_profile_complete") is True
-    )
+    dialect_complete = bool(target_dialect_profile.get("target_dialect_profile_complete") is True)
+    parse_complete = bool(target_parse_profile.get("target_parse_profile_complete") is True)
     token_complete = bool(
-        reconstruction_token_profile.get("reconstruction_token_profile_complete")
-        is True
+        reconstruction_token_profile.get("reconstruction_token_profile_complete") is True
     )
     omitted_slot_alignment_complete = bool(
         alignment_summary.get("omitted_formula_slot_alignment_complete") is True
@@ -996,9 +1087,27 @@ _RECONSTRUCTION_TOKEN_EQUIVALENTS = {
     "except": {"exception", "exempt", "other", "than", "unless"},
     "exception": {"except", "exempt", "other", "than", "unless"},
     "exempt": {"except", "exception", "other", "than", "unless"},
-    "may": {"allow", "allowed", "authorized", "authorize", "authorization", "entitled", "entitlement", "permitted"},
+    "may": {
+        "allow",
+        "allowed",
+        "authorized",
+        "authorize",
+        "authorization",
+        "entitled",
+        "entitlement",
+        "permitted",
+    },
     "other": {"except", "exception", "exempt", "than", "unless"},
-    "permitted": {"allow", "allowed", "authorized", "authorize", "authorization", "entitled", "entitlement", "may"},
+    "permitted": {
+        "allow",
+        "allowed",
+        "authorized",
+        "authorize",
+        "authorization",
+        "entitled",
+        "entitlement",
+        "may",
+    },
     "than": {"except", "exception", "exempt", "other", "unless"},
     "unless": {"except", "exception", "exempt", "other", "than"},
 }
@@ -1032,12 +1141,13 @@ def _reconstruction_token_profile(
         _RECONSTRUCTION_NEUTRAL_WARNING_BUNDLE
     )
     use_slot_basis = bool(slot_basis_tokens)
-    use_support_basis = (not use_slot_basis) and bool(support_tokens) and (
-        (
-            bool(source_tokens)
-            and len(source_tokens) > (3 * len(support_tokens))
+    use_support_basis = (
+        (not use_slot_basis)
+        and bool(support_tokens)
+        and (
+            (bool(source_tokens) and len(source_tokens) > (3 * len(support_tokens)))
+            or reconstruction_neutral_warning_bundle
         )
-        or reconstruction_neutral_warning_bundle
     )
     if use_slot_basis:
         basis_tokens = _source_ordered_token_basis(
@@ -1061,14 +1171,10 @@ def _reconstruction_token_profile(
     if not reference_source_set:
         reference_source_set.update(basis_set)
     matched_tokens = [
-        token
-        for token in basis_tokens
-        if _token_matches_with_equivalents(token, decoded_set)
+        token for token in basis_tokens if _token_matches_with_equivalents(token, decoded_set)
     ]
     unreconstructed_tokens = [
-        token
-        for token in basis_tokens
-        if not _token_matches_with_equivalents(token, decoded_set)
+        token for token in basis_tokens if not _token_matches_with_equivalents(token, decoded_set)
     ]
     added_tokens = [token for token in decoded_tokens if token not in basis_set]
     out_of_source_tokens = [
@@ -1077,10 +1183,15 @@ def _reconstruction_token_profile(
         if not _token_matches_with_equivalents(token, reference_source_set)
     ]
     coverage_rate = round(len(matched_tokens) / len(basis_tokens), 6) if basis_tokens else 1.0
-    precision_rate = round(
-        sum(1 for token in decoded_tokens if token in reference_source_set) / len(decoded_tokens),
-        6,
-    ) if decoded_tokens else 1.0
+    precision_rate = (
+        round(
+            sum(1 for token in decoded_tokens if token in reference_source_set)
+            / len(decoded_tokens),
+            6,
+        )
+        if decoded_tokens
+        else 1.0
+    )
     complete = not unreconstructed_tokens and not out_of_source_tokens
     fingerprint = _stable_fingerprint(
         target,
@@ -1118,16 +1229,8 @@ def _source_ordered_token_basis(
 ) -> List[str]:
     """Return basis tokens in source order while preserving fallback extras."""
 
-    basis_set = {
-        str(token or "").strip()
-        for token in basis_tokens
-        if str(token or "").strip()
-    }
-    ordered = [
-        token
-        for token in source_tokens
-        if token in basis_set
-    ]
+    basis_set = {str(token or "").strip() for token in basis_tokens if str(token or "").strip()}
+    ordered = [token for token in source_tokens if token in basis_set]
     for token in basis_tokens:
         value = str(token or "").strip()
         if value and value not in ordered:
@@ -1342,11 +1445,7 @@ def _target_parse_profile_shape_complete(
             "Transferred",
         }
     if target == "deontic_fol":
-        return (
-            bool(top_level_symbol)
-            and "always" not in wrappers
-            and "Happens" not in wrappers
-        )
+        return bool(top_level_symbol) and "always" not in wrappers and "Happens" not in wrappers
     if target == "deontic_temporal_fol":
         return top_level_symbol == "always" and "always" in wrappers
     return False
@@ -1503,12 +1602,8 @@ def _target_symbol_alignment(
     source_symbols = _formula_symbols(formula)
     exported_symbols = _formula_symbols(exported_formula)
     exported_symbol_set = set(exported_symbols)
-    missing_symbols = [
-        symbol for symbol in source_symbols if symbol not in exported_symbol_set
-    ]
-    extra_symbols = [
-        symbol for symbol in exported_symbols if symbol not in set(source_symbols)
-    ]
+    missing_symbols = [symbol for symbol in source_symbols if symbol not in exported_symbol_set]
+    extra_symbols = [symbol for symbol in exported_symbols if symbol not in set(source_symbols)]
     complete = not missing_symbols
     fingerprint = _stable_fingerprint(
         target,
@@ -1591,9 +1686,7 @@ def _canonical_formula_symbol(symbol: str) -> str:
     if "_" not in value:
         return value
     parts = [
-        part
-        for part in value.split("_")
-        if part and part.lower() not in _FORMULA_SYMBOL_STOPWORDS
+        part for part in value.split("_") if part and part.lower() not in _FORMULA_SYMBOL_STOPWORDS
     ]
     if not parts:
         return ""
@@ -1637,35 +1730,45 @@ def _target_shape_diagnostics(target: str, exported_formula: str) -> List[Dict[s
         r"^legal_norm\([A-Za-z0-9_]+\)\[actor->[A-Za-z][A-Za-z0-9_]*; action->[A-Za-z][A-Za-z0-9_]*; formula->[A-Za-z0-9_().,\->=]+\]$",
         text,
     ):
-        diagnostics.append({
-            "code": "frame_logic_shape",
-            "message": "frame logic target must render a legal_norm frame with actor, action, and formula slots",
-        })
+        diagnostics.append(
+            {
+                "code": "frame_logic_shape",
+                "message": "frame logic target must render a legal_norm frame with actor, action, and formula slots",
+            }
+        )
     elif target == "deontic_cec" and not re.match(
         r"^Happens\(legal_norm\([A-Za-z0-9_]+\), t\) => HoldsAt\(.+, t\)$",
         text,
     ):
-        diagnostics.append({
-            "code": "deontic_cec_shape",
-            "message": "deontic CEC target must render Happens(..., t) => HoldsAt(..., t)",
-        })
+        diagnostics.append(
+            {
+                "code": "deontic_cec_shape",
+                "message": "deontic CEC target must render Happens(..., t) => HoldsAt(..., t)",
+            }
+        )
     elif target == "deontic_temporal_fol" and not (
         text.startswith("always(") and text.endswith(")")
     ):
-        diagnostics.append({
-            "code": "temporal_wrapper",
-            "message": "deontic temporal FOL target must wrap the target formula in always(...)",
-        })
+        diagnostics.append(
+            {
+                "code": "temporal_wrapper",
+                "message": "deontic temporal FOL target must wrap the target formula in always(...)",
+            }
+        )
     elif target == "deontic_fol" and re.match(r"^(?:always|Happens|HoldsAt)\(", text):
-        diagnostics.append({
-            "code": "deontic_fol_shape",
-            "message": "deontic FOL target must not include event-calculus or temporal wrappers",
-        })
+        diagnostics.append(
+            {
+                "code": "deontic_fol_shape",
+                "message": "deontic FOL target must not include event-calculus or temporal wrappers",
+            }
+        )
     elif target == "fol" and re.match(r"^(?:O|P|F|always|Happens|HoldsAt)\(", text):
-        diagnostics.append({
-            "code": "fol_shape",
-            "message": "FOL target must not include deontic, temporal, or event-calculus wrappers",
-        })
+        diagnostics.append(
+            {
+                "code": "fol_shape",
+                "message": "FOL target must not include deontic, temporal, or event-calculus wrappers",
+            }
+        )
     return diagnostics
 
 

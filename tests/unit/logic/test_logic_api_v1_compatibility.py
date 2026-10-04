@@ -31,9 +31,7 @@ def _cli_contract() -> dict[str, list[dict[str, Any]]]:
 
     parser = create_parser()
     subparsers = next(
-        action
-        for action in parser._actions
-        if isinstance(action, argparse._SubParsersAction)
+        action for action in parser._actions if isinstance(action, argparse._SubParsersAction)
     )
     observed: dict[str, list[dict[str, Any]]] = {}
     for command, command_parser in subparsers.choices.items():
@@ -164,9 +162,7 @@ def test_operator_values_and_representative_tdfol_payloads() -> None:
         "predicate": str(authorized_alice),
         "negation": str(create_negation(authorized_alice)),
         "implication": str(create_implication(authorized_alice, audited_alice)),
-        "universal": str(
-            create_universal(x, create_implication(authorized_x, audited_x))
-        ),
+        "universal": str(create_universal(x, create_implication(authorized_x, audited_x))),
     }
     assert observed_formulas == expected["tdfol_formula"]
 
@@ -266,10 +262,7 @@ def test_flogic_cache_and_zkp_payloads_preserve_authority(
             size_bytes=2,
         )
     assert proof.to_dict() == expected["zkp_proof"]
-    assert (
-        MANIFEST["authority_semantics"]["zkp"]["simulation_is_cryptographic_proof"]
-        is False
-    )
+    assert MANIFEST["authority_semantics"]["zkp"]["simulation_is_cryptographic_proof"] is False
     assert MANIFEST["authority_semantics"]["zkp"]["attestation_increases_authority"] is False
 
 
@@ -321,18 +314,14 @@ def test_mcp_exports_and_optional_absence_envelopes(
     logic_tools = importlib.import_module(MANIFEST["mcp"]["module"])
     assert logic_tools.__all__ == MANIFEST["mcp"]["exact_exports"]
 
-    cec = importlib.import_module(
-        "ipfs_datasets_py.mcp_server.tools.logic_tools.cec_parse_tool"
-    )
+    cec = importlib.import_module("ipfs_datasets_py.mcp_server.tools.logic_tools.cec_parse_tool")
     tdfol = importlib.import_module(
         "ipfs_datasets_py.mcp_server.tools.logic_tools.tdfol_prove_tool"
     )
     health = importlib.import_module(
         "ipfs_datasets_py.mcp_server.tools.logic_tools.logic_capabilities_tool"
     )
-    flogic = importlib.import_module(
-        "ipfs_datasets_py.mcp_server.tools.logic_tools.flogic_tool"
-    )
+    flogic = importlib.import_module("ipfs_datasets_py.mcp_server.tools.logic_tools.flogic_tool")
     monkeypatch.setattr(cec, "_AVAILABLE", False)
     monkeypatch.setattr(tdfol, "_AVAILABLE", False)
     monkeypatch.setattr(health, "_AVAILABLE", False)
@@ -377,18 +366,13 @@ print(json.dumps({
     payload = json.loads(completed.stdout)
     assert completed.stderr == MANIFEST["lazy_imports"]["observable_side_effects"]["stderr"]
     assert payload["warnings"] == MANIFEST["lazy_imports"]["observable_side_effects"]["warnings"]
-    assert not (
-        set(MANIFEST["lazy_imports"]["forbidden_after_import"])
-        & set(payload["loaded"])
-    )
+    assert not (set(MANIFEST["lazy_imports"]["forbidden_after_import"]) & set(payload["loaded"]))
 
 
 def test_authority_matrix_fails_closed() -> None:
     authority = MANIFEST["authority_semantics"]
     theorem = authority["theorem_proof"]
-    assert set(theorem["authoritative_success_states"]).isdisjoint(
-        theorem["non_success_states"]
-    )
+    assert set(theorem["authoritative_success_states"]).isdisjoint(theorem["non_success_states"])
     assert {"unknown", "timeout", "error", "unavailable", "unsupported"} <= set(
         theorem["non_success_states"]
     )

@@ -5,6 +5,7 @@ Methods under test:
   - OntologyPipeline.pass_rate(threshold)
   - OntologyPipeline.score_range()
 """
+
 import pytest
 from unittest.mock import MagicMock
 
@@ -13,8 +14,10 @@ from unittest.mock import MagicMock
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_pipeline():
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     return OntologyPipeline()
 
 
@@ -29,6 +32,7 @@ def _push_run(pipeline, overall):
 # ---------------------------------------------------------------------------
 # OntologyPipeline.worst_n_runs
 # ---------------------------------------------------------------------------
+
 
 class TestWorstNRuns:
     def test_empty(self):
@@ -59,6 +63,7 @@ class TestWorstNRuns:
 # ---------------------------------------------------------------------------
 # OntologyPipeline.pass_rate
 # ---------------------------------------------------------------------------
+
 
 class TestPassRate:
     def test_empty_returns_zero(self):
@@ -93,6 +98,7 @@ class TestPassRate:
 # ---------------------------------------------------------------------------
 # OntologyPipeline.score_range
 # ---------------------------------------------------------------------------
+
 
 class TestScoreRangePipeline:
     def test_empty_returns_zero(self):

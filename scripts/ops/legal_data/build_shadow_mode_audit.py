@@ -19,7 +19,9 @@ def _write_json(path: str, payload: dict) -> None:
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description="Build shadow mode audit from baseline and hybrid formal logic reports")
+    ap = argparse.ArgumentParser(
+        description="Build shadow mode audit from baseline and hybrid formal logic reports"
+    )
     ap.add_argument("--baseline", required=True, help="Baseline report JSON path")
     ap.add_argument("--candidate", required=True, help="Hybrid/candidate report JSON path")
     ap.add_argument("--output", required=True, help="Output audit JSON path")

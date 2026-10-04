@@ -24,20 +24,22 @@ class Z3Compilation:
         if self.not_modeled_reason is not None:
             return
         if self.property_formula is None:
-            raise ValueError('modeled Z3 compilations must define a property_formula')
+            raise ValueError("modeled Z3 compilations must define a property_formula")
         z3 = z3_import()
         if self.violation_formula is None:
             self.violation_formula = z3.Not(self.property_formula)
             return
         if self.violation_scope_explanation is not None:
             return
-        if not (z3.is_not(self.violation_formula) and z3.eq(self.violation_formula.arg(0), self.property_formula)):
-            raise ValueError('custom violation_formula requires violation_scope_explanation')
+        if not (
+            z3.is_not(self.violation_formula)
+            and z3.eq(self.violation_formula.arg(0), self.property_formula)
+        ):
+            raise ValueError("custom violation_formula requires violation_scope_explanation")
 
     @property
     def modeled(self) -> bool:
         return self.not_modeled_reason is None
-
 
 
 def z3_import() -> Any:
@@ -46,7 +48,6 @@ def z3_import() -> Any:
     import z3
 
     return z3
-
 
 
 def claim_not_modeled(

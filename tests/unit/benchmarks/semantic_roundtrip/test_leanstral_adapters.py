@@ -90,9 +90,7 @@ class RecordingClient:
 
 
 def constructor_request(
-    source: str = (
-        "The controller must delete records after 30 days unless required by law."
-    ),
+    source: str = ("The controller must delete records after 30 days unless required by law."),
     config: dict[str, object] | None = None,
 ) -> ConstructorRequest:
     return ConstructorRequest(source, VOCABULARY, config or {})
@@ -131,12 +129,8 @@ def test_adapters_implement_public_protocols_and_bind_exact_identity() -> None:
 def test_constructor_uses_fixed_schema_and_tokens_without_gold_counts() -> None:
     first = RecordingClient([IR_DICT])
     second = RecordingClient([IR_DICT])
-    request_a = constructor_request(
-        config={"gold_rule_count": 1, "unrelated": "a"}
-    )
-    request_b = constructor_request(
-        config={"gold_rule_count": 99, "unrelated": "b"}
-    )
+    request_a = constructor_request(config={"gold_rule_count": 1, "unrelated": "a"})
+    request_b = constructor_request(config={"gold_rule_count": 99, "unrelated": "b"})
 
     result_a = LeanstralCanonicalConstructor(first).construct(request_a)
     result_b = LeanstralCanonicalConstructor(second).construct(request_b)
@@ -192,9 +186,7 @@ class FakeSpacy:
 class IterableDoc:
     def __init__(self) -> None:
         self.ents: tuple[object, ...] = ()
-        self._tokens = [
-            FakeToken("controller", "controller", "NOUN", "nsubj", 0)
-        ]
+        self._tokens = [FakeToken("controller", "controller", "NOUN", "nsubj", 0)]
 
     def __iter__(self):
         return iter(self._tokens)
@@ -234,9 +226,7 @@ def test_spacy_evidence_is_exposed_only_to_declared_arm() -> None:
     assert "SPACY_EVIDENCE_JSON" in evidence_client.calls[0]["prompt"]
     assert nlp.seen == [constructor_request().source_text]
     with pytest.raises(ValueError, match="may not receive"):
-        LeanstralCanonicalConstructor(
-            RecordingClient([IR_DICT]), spacy_pipeline=nlp
-        )
+        LeanstralCanonicalConstructor(RecordingClient([IR_DICT]), spacy_pipeline=nlp)
 
 
 def test_missing_or_degraded_spacy_is_capability_failure() -> None:
@@ -260,9 +250,7 @@ def test_missing_or_degraded_spacy_is_capability_failure() -> None:
 
 
 def test_realizer_receives_only_ir_and_ignores_public_config() -> None:
-    client = RecordingClient(
-        [{"text": "The controller must delete records after 30 days."}]
-    )
+    client = RecordingClient([{"text": "The controller must delete records after 30 days."}])
     result = LeanstralCanonicalRealizer(client).realize(
         realizer_request(config={"display_style": "source-like prose"})
     )
@@ -292,9 +280,7 @@ def test_client_sends_one_stateless_exchange_and_disables_prompt_cache() -> None
         }
 
     client = LeanstralClient(transport=transport)
-    result = LeanstralCanonicalConstructor(client).construct(
-        constructor_request()
-    )
+    result = LeanstralCanonicalConstructor(client).construct(constructor_request())
     assert result.status is ComponentStatus.SUCCESS
     url, payload, _ = captured[0]
     assert url == LEANSTRAL_ENDPOINT + "/chat/completions"
@@ -324,9 +310,9 @@ def test_client_sends_one_stateless_exchange_and_disables_prompt_cache() -> None
 def test_constructor_records_terminal_failures(
     failure: BaseException, reason: FailureReason
 ) -> None:
-    result = LeanstralCanonicalConstructor(
-        RecordingClient([failure])
-    ).construct(constructor_request())
+    result = LeanstralCanonicalConstructor(RecordingClient([failure])).construct(
+        constructor_request()
+    )
     assert result.status is ComponentStatus.FAILED
     assert result.failure_reason is reason
     assert result.canonical_ir is None
@@ -346,12 +332,8 @@ def test_constructor_records_terminal_failures(
         ),
     ],
 )
-def test_realizer_records_terminal_failures(
-    failure: BaseException, reason: FailureReason
-) -> None:
-    result = LeanstralCanonicalRealizer(
-        RecordingClient([failure])
-    ).realize(realizer_request())
+def test_realizer_records_terminal_failures(failure: BaseException, reason: FailureReason) -> None:
+    result = LeanstralCanonicalRealizer(RecordingClient([failure])).realize(realizer_request())
     assert result.status is ComponentStatus.FAILED
     assert result.failure_reason is reason
     assert result.text is None
@@ -373,17 +355,11 @@ def test_malformed_semantics_and_empty_or_blank_outputs_are_failures() -> None:
         )
     )
     invalid = invalid_ctor.construct(constructor_request())
-    empty_ctor = LeanstralCanonicalConstructor(
-        RecordingClient([{"rules": []}])
-    )
+    empty_ctor = LeanstralCanonicalConstructor(RecordingClient([{"rules": []}]))
     empty = empty_ctor.construct(constructor_request())
-    extra_realizer = LeanstralCanonicalRealizer(
-        RecordingClient([{"text": "ok", "source": "leak"}])
-    )
+    extra_realizer = LeanstralCanonicalRealizer(RecordingClient([{"text": "ok", "source": "leak"}]))
     extra = extra_realizer.realize(realizer_request())
-    blank_realizer = LeanstralCanonicalRealizer(
-        RecordingClient([{"text": "   "}])
-    )
+    blank_realizer = LeanstralCanonicalRealizer(RecordingClient([{"text": "   "}]))
     blank = blank_realizer.realize(realizer_request())
 
     assert invalid.failure_reason is FailureReason.INVALID_OUTPUT
@@ -391,30 +367,20 @@ def test_malformed_semantics_and_empty_or_blank_outputs_are_failures() -> None:
     assert extra.failure_reason is FailureReason.INVALID_OUTPUT
     assert blank.failure_reason is FailureReason.BLANK_T1
     assert invalid_ctor.last_call is not None
-    assert invalid_ctor.last_call.rejection_reason == (
-        ModelRejectionReason.SCHEMA.value
-    )
+    assert invalid_ctor.last_call.rejection_reason == (ModelRejectionReason.SCHEMA.value)
     assert empty_ctor.last_call is not None
-    assert empty_ctor.last_call.rejection_reason == (
-        ModelRejectionReason.EMPTY_RULES.value
-    )
+    assert empty_ctor.last_call.rejection_reason == (ModelRejectionReason.EMPTY_RULES.value)
     assert blank_realizer.last_call is not None
-    assert blank_realizer.last_call.rejection_reason == (
-        ModelRejectionReason.BLANK.value
-    )
+    assert blank_realizer.last_call.rejection_reason == (ModelRejectionReason.BLANK.value)
 
 
 def test_adapters_record_typed_rejection_taxonomy_on_every_model_call() -> None:
-    timeout_ctor = LeanstralCanonicalConstructor(
-        RecordingClient([LeanstralTimeoutError("late")])
-    )
+    timeout_ctor = LeanstralCanonicalConstructor(RecordingClient([LeanstralTimeoutError("late")]))
     timeout = timeout_ctor.construct(constructor_request())
     assert timeout.failure_reason is FailureReason.TIMEOUT
     assert timeout_ctor.last_call is not None
     assert timeout_ctor.last_call.outcome == "call_failed"
-    assert timeout_ctor.last_call.rejection_reason == (
-        ModelRejectionReason.TIMEOUT.value
-    )
+    assert timeout_ctor.last_call.rejection_reason == (ModelRejectionReason.TIMEOUT.value)
 
     unavailable = LeanstralCanonicalRealizer(
         RecordingClient([LeanstralUnavailableError("offline")])
@@ -422,9 +388,7 @@ def test_adapters_record_typed_rejection_taxonomy_on_every_model_call() -> None:
     failed = unavailable.realize(realizer_request())
     assert failed.failure_reason is FailureReason.CAPABILITY_UNAVAILABLE
     assert unavailable.last_call is not None
-    assert unavailable.last_call.rejection_reason == (
-        ModelRejectionReason.OTHER.value
-    )
+    assert unavailable.last_call.rejection_reason == (ModelRejectionReason.OTHER.value)
 
     ok_ctor = LeanstralCanonicalConstructor(RecordingClient([IR_DICT]))
     ok = ok_ctor.construct(constructor_request())
@@ -468,15 +432,11 @@ def test_single_rule_research_schema_path_on_adapters() -> None:
     ).construct(constructor_request())
     assert multi.failure_reason is FailureReason.INVALID_OUTPUT
 
-    realizer_client = RecordingClient(
-        [{"text": "The controller must delete records."}]
-    )
+    realizer_client = RecordingClient([{"text": "The controller must delete records."}])
     realizer = LeanstralCanonicalRealizer(
         realizer_client,
         schema_path=LeanstralSchemaPath.SINGLE_RULE_RESEARCH,
     )
     realized = realizer.realize(realizer_request())
     assert realized.status is ComponentStatus.SUCCESS
-    assert realizer_client.calls[0]["schema_name"] == (
-        SINGLE_RULE_RESEARCH_REALIZATION_SCHEMA_NAME
-    )
+    assert realizer_client.calls[0]["schema_name"] == (SINGLE_RULE_RESEARCH_REALIZATION_SCHEMA_NAME)

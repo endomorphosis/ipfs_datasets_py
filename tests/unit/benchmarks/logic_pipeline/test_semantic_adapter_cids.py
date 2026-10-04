@@ -45,13 +45,9 @@ class _ExactResponseEngine:
 def test_runtime_logic_aliases_match_the_cid_bound_normalization_spec() -> None:
     normalization_spec = semantic_normalization_spec_v2()
 
-    assert cid_for_dag_json(
-        normalization_spec
-    ) == SEMANTIC_NORMALIZATION_V2_CID
+    assert cid_for_dag_json(normalization_spec) == SEMANTIC_NORMALIZATION_V2_CID
     assert _SEMANTIC_LOGIC_ALIASES_V2 == normalization_spec["logic_aliases"]
-    for source_family, expected_family in (
-        normalization_spec["logic_aliases"]
-    ).items():
+    for source_family, expected_family in (normalization_spec["logic_aliases"]).items():
         projection = build_modal_semantic_projection_v2(
             producer_id="compiler",
             source_text="A source-derived target exists.",
@@ -110,9 +106,7 @@ def test_symai_v2_binds_exact_source_and_raw_response_bytes() -> None:
             max_retries=0,
             semantic_protocol_cid=SEMANTIC_PROTOCOL_V2_CID,
         ),
-        engine_factory=lambda _config, _namespace: _ExactResponseEngine(
-            raw_response
-        ),
+        engine_factory=lambda _config, _namespace: _ExactResponseEngine(raw_response),
         trace_getter=lambda: {},
         cache={},
     )
@@ -123,17 +117,11 @@ def test_symai_v2_binds_exact_source_and_raw_response_bytes() -> None:
     assert isinstance(record.data, Mapping)
     persisted_data = record.to_dict()["data"]
     assert isinstance(persisted_data, dict)
-    projection = SemanticProjection.from_dict(
-        persisted_data["semantic_projection"]
-    )
+    projection = SemanticProjection.from_dict(persisted_data["semantic_projection"])
     assert projection.source_cid == request.source_cid
-    assert projection.source_cid == cid_for_bytes(
-        source_text.encode("utf-8")
-    )
+    assert projection.source_cid == cid_for_bytes(source_text.encode("utf-8"))
     assert persisted_data["raw_output"] == raw_response
-    assert persisted_data["raw_output_cid"] == cid_for_bytes(
-        raw_response.encode("utf-8")
-    )
+    assert persisted_data["raw_output_cid"] == cid_for_bytes(raw_response.encode("utf-8"))
 
 
 def test_symai_v2_oversized_failure_retains_full_cid_not_oversized_text() -> None:
@@ -153,9 +141,7 @@ def test_symai_v2_oversized_failure_retains_full_cid_not_oversized_text() -> Non
             max_raw_output_bytes=128,
             semantic_protocol_cid=SEMANTIC_PROTOCOL_V2_CID,
         ),
-        engine_factory=lambda _config, _namespace: _ExactResponseEngine(
-            raw_response
-        ),
+        engine_factory=lambda _config, _namespace: _ExactResponseEngine(raw_response),
         trace_getter=lambda: {},
         cache={},
     )
@@ -168,9 +154,7 @@ def test_symai_v2_oversized_failure_retains_full_cid_not_oversized_text() -> Non
     assert persisted_data["raw_output"] is None
     assert persisted_data["raw_output_bytes"] == 129
     assert persisted_data["raw_output_retained_exactly"] is False
-    assert persisted_data["raw_output_cid"] == cid_for_bytes(
-        raw_response.encode("utf-8")
-    )
+    assert persisted_data["raw_output_cid"] == cid_for_bytes(raw_response.encode("utf-8"))
 
 
 @pytest.mark.parametrize(
@@ -215,9 +199,7 @@ def test_unretained_symai_failure_copies_only_paired_canonical_raw_cid(
     )
 
     assert isinstance(wrapped.data, Mapping)
-    expected_bytes = (
-        candidate_bytes if expected_cid is not None else None
-    )
+    expected_bytes = candidate_bytes if expected_cid is not None else None
     assert wrapped.data["raw_output_cid"] == expected_cid
     assert wrapped.data["raw_output_bytes"] == expected_bytes
     receipt = wrapped.data["semantic_failure"]

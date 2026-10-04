@@ -8,7 +8,10 @@ from ipfs_datasets_py.mcp_server.tool_metadata import tool_metadata
 from ._helpers import default_blob_dir, default_wallet_dir, save, service
 
 
-@tool_metadata(category="wallet_tools", mcp_description="Create a wallet snapshot for UCAN-scoped data sharing.")
+@tool_metadata(
+    category="wallet_tools",
+    mcp_description="Create a wallet snapshot for UCAN-scoped data sharing.",
+)
 async def wallet_create(
     owner_did: str,
     controller_dids: Optional[List[str]] = None,
@@ -57,4 +60,3 @@ async def wallet_create(
         }
     except Exception as exc:
         return {"status": "error", "message": f"wallet_create failed: {exc}"}
-

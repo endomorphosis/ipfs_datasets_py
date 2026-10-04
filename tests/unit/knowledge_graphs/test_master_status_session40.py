@@ -12,6 +12,7 @@ Targets (deps now installed: libipld, ipld-car, multiformats, dag-cbor, plotly):
 
 GIVEN-WHEN-THEN style, consistent with existing session test files.
 """
+
 from __future__ import annotations
 
 import os
@@ -30,9 +31,7 @@ import pytest
 # ---------------------------------------------------------------------------
 
 _libipld_available = bool(importlib.util.find_spec("libipld"))
-_skip_no_libipld = pytest.mark.skipif(
-    not _libipld_available, reason="libipld not installed"
-)
+_skip_no_libipld = pytest.mark.skipif(not _libipld_available, reason="libipld not installed")
 
 
 @_skip_no_libipld
@@ -45,6 +44,7 @@ class TestBuiltinCarSaveLoad:
             GraphData,
             NodeData,
         )
+
         node = NodeData(id="n1", labels=["Person"], properties={"name": "Alice", "age": 30})
         return GraphData(nodes=[node], relationships=[], schema=None)
 
@@ -55,6 +55,7 @@ class TestBuiltinCarSaveLoad:
         THEN it writes a non-empty .car file (lines 914, 921-930 executed)
         """
         from ipfs_datasets_py.knowledge_graphs.migration.formats import _builtin_save_car
+
         filepath = str(tmp_path / "test.car")
         graph = self._simple_graph()
 
@@ -73,6 +74,7 @@ class TestBuiltinCarSaveLoad:
             _builtin_load_car,
             _builtin_save_car,
         )
+
         filepath = str(tmp_path / "roundtrip.car")
         graph = self._simple_graph()
 
@@ -90,6 +92,7 @@ class TestBuiltinCarSaveLoad:
         THEN ImportError with helpful message is raised
         """
         from ipfs_datasets_py.knowledge_graphs.migration.formats import _builtin_save_car
+
         graph = self._simple_graph()
 
         fake_import = types.ModuleType("libipld")
@@ -134,6 +137,7 @@ class TestBuiltinCarSaveLoad:
 # B – neo4j_exporter._export_schema exception on SHOW CONSTRAINTS (lines 309-310)
 # ---------------------------------------------------------------------------
 
+
 class TestNeo4jExporterConstraintException:
     """Test _export_schema exception handling in SHOW CONSTRAINTS block."""
 
@@ -148,6 +152,7 @@ class TestNeo4jExporterConstraintException:
                 ExportConfig,
                 Neo4jExporter,
             )
+
             config = ExportConfig(
                 include_schema=True,
                 include_indexes=False,
@@ -189,6 +194,7 @@ class TestNeo4jExporterConstraintException:
         graph_data = GraphData(nodes=[], relationships=[], schema=None)
 
         import logging
+
         with patch("ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter.logger") as mock_log:
             exporter._export_schema(graph_data)
 
@@ -231,6 +237,7 @@ class TestNeo4jExporterConstraintException:
 #     (update_validation_trace in ValueError/KeyError except branch)
 # ---------------------------------------------------------------------------
 
+
 class TestWikipediaValidateTracerOnValueError:
     """Test that validate_against_wikidata calls tracer.update_validation_trace on ValueError."""
 
@@ -239,6 +246,7 @@ class TestWikipediaValidateTracerOnValueError:
         from ipfs_datasets_py.knowledge_graphs.extraction.extractor import (
             KnowledgeGraphExtractor,
         )
+
         extractor = KnowledgeGraphExtractor(use_tracer=False)
         extractor.use_tracer = True
         extractor.tracer = MagicMock()
@@ -254,6 +262,7 @@ class TestWikipediaValidateTracerOnValueError:
         extractor = self._make_extractor_with_tracer()
 
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
         kg = KnowledgeGraph()
         kg.name = "test-kg"
 
@@ -280,16 +289,18 @@ class TestWikipediaValidateTracerOnValueError:
 
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
         from ipfs_datasets_py.knowledge_graphs.extraction.extractor import Entity
+
         kg = KnowledgeGraph()
         kg.name = "test-kg"
         e = Entity(entity_id="e1", entity_type="person", name="Alice")
         kg.entities["e1"] = e
 
-        with patch.object(extractor, "_get_wikidata_id", return_value="Q123"), \
-             patch.object(
-                 extractor, "_get_wikidata_statements",
-                 side_effect=ValueError("malformed response")
-             ):
+        with (
+            patch.object(extractor, "_get_wikidata_id", return_value="Q123"),
+            patch.object(
+                extractor, "_get_wikidata_statements", side_effect=ValueError("malformed response")
+            ),
+        ):
             with pytest.raises(Exception):
                 extractor.validate_against_wikidata(kg, "Alice")
 
@@ -304,11 +315,13 @@ class TestWikipediaValidateTracerOnValueError:
         from ipfs_datasets_py.knowledge_graphs.extraction.extractor import (
             KnowledgeGraphExtractor,
         )
+
         extractor = KnowledgeGraphExtractor(use_tracer=False)
         mock_tracer = MagicMock()
         extractor.tracer = mock_tracer  # tracer set but use_tracer=False
 
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
         kg = KnowledgeGraph()
         kg.name = "test-kg"
 

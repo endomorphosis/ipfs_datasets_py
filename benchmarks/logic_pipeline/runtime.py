@@ -102,9 +102,7 @@ from .source_bound_import import import_source_bound_ipfs_accelerate
 
 
 RUNTIME_VERSION: Final = "1"
-COMPILED_OBLIGATION_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.compiled-obligation.v1"
-)
+COMPILED_OBLIGATION_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.compiled-obligation.v1"
 KERNEL_RECEIPT_SCHEMA: Final = NATIVE_KERNEL_RECEIPT_SCHEMA
 ENTAILMENT_TRANSLATION_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.reviewed-entailment-translation.v1"
@@ -113,22 +111,15 @@ NATIVE_PROOF_CANDIDATE_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.native-proof-candidate.v1"
 )
 HAMMER_TRANSLATED_ENTAILMENT_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "hammer-translated-entailment.v1"
+    "ipfs-datasets.logic-pipeline-benchmark.hammer-translated-entailment.v1"
 )
 HAMMER_PREMISE_SELECTION_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "hammer-premise-selection.v1"
+    "ipfs-datasets.logic-pipeline-benchmark.hammer-premise-selection.v1"
 )
-HAMMER_GRAPH_SELECTOR_CONTRACT: Final = (
-    "hssl-fixed-graph-selector-v1"
-)
-HAMMER_SYMAI_RANKING_CONTRACT: Final = (
-    "hssl-symai-semantic-overlap-v1"
-)
+HAMMER_GRAPH_SELECTOR_CONTRACT: Final = "hssl-fixed-graph-selector-v1"
+HAMMER_SYMAI_RANKING_CONTRACT: Final = "hssl-symai-semantic-overlap-v1"
 SYMAI_RUNTIME_CONFIGURATION_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "symai-runtime-configuration.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.symai-runtime-configuration.v2"
 )
 MAX_NATIVE_SOURCE_BYTES: Final = 64 * 1024
 _SAFE_THEOREM = re.compile(r"[^A-Za-z0-9_]")
@@ -285,22 +276,12 @@ def _semantic_context_identity(
     if semantic_binding.get("schema") == SEMANTIC_CONTEXT_SCHEMA_V2:
         value = semantic_binding.get("context_cid")
         try:
-            return {
-                "semantic_context_cid": validate_cid(
-                    value, codecs=("dag-json",)
-                )
-            }
+            return {"semantic_context_cid": validate_cid(value, codecs=("dag-json",))}
         except (TypeError, ValueError) as exc:
-            raise RuntimeBindingError(
-                "semantic-v2 context lacks a canonical DAG-JSON CID"
-            ) from exc
+            raise RuntimeBindingError("semantic-v2 context lacks a canonical DAG-JSON CID") from exc
     value = semantic_binding.get("context_sha256")
-    if not isinstance(value, str) or not re.fullmatch(
-        r"[0-9a-f]{64}", value
-    ):
-        raise RuntimeBindingError(
-            "legacy semantic context lacks its SHA-256 identity"
-        )
+    if not isinstance(value, str) or not re.fullmatch(r"[0-9a-f]{64}", value):
+        raise RuntimeBindingError("legacy semantic context lacks its SHA-256 identity")
     return {"semantic_context_sha256": value}
 
 
@@ -308,10 +289,7 @@ def _thaw_artifact_json(value: object) -> object:
     """Restore frozen stage-artifact data to canonical JSON containers."""
 
     if isinstance(value, Mapping):
-        return {
-            str(key): _thaw_artifact_json(member)
-            for key, member in value.items()
-        }
+        return {str(key): _thaw_artifact_json(member) for key, member in value.items()}
     if isinstance(value, tuple):
         return [_thaw_artifact_json(member) for member in value]
     if isinstance(value, list):
@@ -324,18 +302,13 @@ def _freeze_runtime_json(value: object) -> object:
 
     if isinstance(value, Mapping):
         return MappingProxyType(
-            {
-                str(key): _freeze_runtime_json(member)
-                for key, member in value.items()
-            }
+            {str(key): _freeze_runtime_json(member) for key, member in value.items()}
         )
     if isinstance(value, (list, tuple)):
         return tuple(_freeze_runtime_json(member) for member in value)
     if value is None or type(value) in {str, bool, int, float}:
         return value
-    raise RuntimeBindingError(
-        "causal runtime evidence contains a non-JSON value"
-    )
+    raise RuntimeBindingError("causal runtime evidence contains a non-JSON value")
 
 
 def _safe_theorem_name(obligation_id: str) -> str:
@@ -376,9 +349,7 @@ class ReviewedEntailmentTranslation:
             if not re.fullmatch(r"[0-9a-f]{64}", getattr(self, name)):
                 raise RuntimeBindingError(f"{name} is invalid")
         if self.source_template.count("{{PROOF}}") != 1:
-            raise RuntimeBindingError(
-                "translated source must retain one proof insertion point"
-            )
+            raise RuntimeBindingError("translated source must retain one proof insertion point")
         for name in ("source_template", "smt2_problem", "hammer_proof_text"):
             value = getattr(self, name)
             if not isinstance(value, str) or not value.strip():
@@ -411,9 +382,7 @@ class ReviewedEntailmentTranslation:
 
 def _source_sentences(value: str) -> tuple[str, ...]:
     return tuple(
-        sentence.strip()
-        for sentence in re.split(r"[.!?]+", value.strip())
-        if sentence.strip()
+        sentence.strip() for sentence in re.split(r"[.!?]+", value.strip()) if sentence.strip()
     )
 
 
@@ -480,20 +449,11 @@ def _translated_source_template(
             f"opaque {entity_type} : Type\n"
             f"opaque {provider_type} : Type\n"
             f"opaque {object_type} : Type\n"
-            + (
-                f"opaque {target} : {provider_type} → {entity_type} → "
-                f"{object_type} → Prop\n"
-            )
+            + (f"opaque {target} : {provider_type} → {entity_type} → {object_type} → Prop\n")
             + f"theorem {theorem_name}\n"
             + f"    (scope_witness : {entity_type})\n"
-            + (
-                f"    (rule : ∀ scope, ∃ provider, ∀ object, "
-                f"{target} provider scope object) :\n"
-            )
-            + (
-                f"    ∃ provider, ∀ object, "
-                f"{target} provider scope_witness object := by\n"
-            )
+            + (f"    (rule : ∀ scope, ∃ provider, ∀ object, {target} provider scope object) :\n")
+            + (f"    ∃ provider, ∀ object, {target} provider scope_witness object := by\n")
             + "  {{PROOF}}\n"
             + "end HSSLBenchmark\n"
         )
@@ -504,10 +464,7 @@ def _translated_source_template(
             + f"opaque {target} : {entity_type} → Prop\n"
             + f"theorem {theorem_name}\n"
             + f"    (witness : {entity_type})\n"
-            + (
-                f"    (exclusion_rule : ∀ x, "
-                f"{premise} x → ¬ {target} x)\n"
-            )
+            + (f"    (exclusion_rule : ∀ x, {premise} x → ¬ {target} x)\n")
             + f"    (fact : {premise} witness) :\n"
             + f"    ¬ {target} witness := by\n"
             + "  {{PROOF}}\n"
@@ -572,15 +529,12 @@ def _entailment_translation(
                     and nested_rule["scope"].casefold()
                     == nested_rule["scope_repeat"].casefold()
                     == nested_fact["scope"].casefold()
-                    and nested_rule["provider"].casefold()
-                    == nested_goal["provider"].casefold()
+                    and nested_rule["provider"].casefold() == nested_goal["provider"].casefold()
                     and nested_rule["predicate"].casefold()
                     == nested_goal["predicate"].casefold()
                     == semantic_target.casefold()
-                    and nested_rule["object"].casefold()
-                    == nested_goal["object"].casefold()
-                    and nested_fact["entity"].casefold()
-                    == nested_goal["entity"].casefold()
+                    and nested_rule["object"].casefold() == nested_goal["object"].casefold()
+                    and nested_fact["entity"].casefold() == nested_goal["entity"].casefold()
                 ):
                     shape = "nested_exists_forall_instantiation"
         elif len(sentences) == 4:
@@ -639,8 +593,7 @@ def _entailment_translation(
             and rule["event"].casefold() == fact["event"].casefold()
             and rule["boundary"].casefold() == fact["boundary"].casefold()
             and rule["result"].casefold() == goal["result"].casefold()
-            and rule["result_verb"].casefold()
-            == goal["result_verb"].casefold()
+            and rule["result_verb"].casefold() == goal["result_verb"].casefold()
             and rule["relation"].casefold() == goal["relation"].casefold()
             and fact["entity"].casefold() == goal["entity"].casefold()
             and semantic_target.casefold() == "after"
@@ -770,14 +723,13 @@ class CompiledObligation:
             if not isinstance(value, str) or not value.strip() or len(value) > 256:
                 raise RuntimeBindingError(f"{name} must be bounded and nonempty")
         if self.source_template.count("{{PROOF}}") != 1:
-            raise RuntimeBindingError(
-                "compiled obligation must retain one proof insertion point"
-            )
+            raise RuntimeBindingError("compiled obligation must retain one proof insertion point")
         if len(self.source_template.encode("utf-8")) > MAX_NATIVE_SOURCE_BYTES:
             raise RuntimeBindingError("compiled obligation exceeds source bound")
-        if self.source_template_sha256 != hashlib.sha256(
-            self.source_template.encode("utf-8")
-        ).hexdigest():
+        if (
+            self.source_template_sha256
+            != hashlib.sha256(self.source_template.encode("utf-8")).hexdigest()
+        ):
             raise RuntimeBindingError("compiled obligation source digest changed")
         if not re.fullmatch(r"[0-9a-f]{64}", self.obligation_sha256):
             raise RuntimeBindingError("obligation_sha256 is invalid")
@@ -794,9 +746,7 @@ class CompiledObligation:
         ):
             raise RuntimeBindingError("kernel proof candidate is empty or unbounded")
         if _FORBIDDEN_PROOF.search(proof_text):
-            raise RuntimeBindingError(
-                "kernel proof candidate contains a forbidden construct"
-            )
+            raise RuntimeBindingError("kernel proof candidate contains a forbidden construct")
         marker = "{{PROOF}}"
         marker_offset = self.source_template.index(marker)
         line_start = self.source_template.rfind("\n", 0, marker_offset) + 1
@@ -804,7 +754,7 @@ class CompiledObligation:
         if line_end < 0:
             line_end = len(self.source_template)
         indentation = self.source_template[line_start:marker_offset]
-        trailing = self.source_template[marker_offset + len(marker):line_end]
+        trailing = self.source_template[marker_offset + len(marker) : line_end]
         if indentation.strip() or trailing.strip():
             raise RuntimeBindingError(
                 "kernel proof insertion point must occupy its own indented line"
@@ -855,9 +805,7 @@ def compile_reviewed_obligation(
     if raw is None:
         return None
     if not isinstance(raw, Mapping) or set(raw) != {"kind", "logic", "target"}:
-        raise RuntimeBindingError(
-            "proof_obligation must contain exactly kind, logic, and target"
-        )
+        raise RuntimeBindingError("proof_obligation must contain exactly kind, logic, and target")
     values = {key: raw[key] for key in ("kind", "logic", "target")}
     if not all(isinstance(value, str) and value.strip() for value in values.values()):
         raise RuntimeBindingError("proof_obligation values must be nonempty strings")
@@ -906,9 +854,7 @@ def compile_reviewed_obligation(
         obligation_sha256=obligation_sha256,
         theorem_name=theorem_name,
         source_template=source_template,
-        source_template_sha256=hashlib.sha256(
-            source_template.encode("utf-8")
-        ).hexdigest(),
+        source_template_sha256=hashlib.sha256(source_template.encode("utf-8")).hexdigest(),
     )
 
 
@@ -1009,9 +955,7 @@ def _bounded_modal_ir_projection_v2(modal_ir: Mapping[str, object]) -> object:
         return retained
     return {
         "document_id": retained.get("document_id"),
-        "normalized_text_cid": cid_for_dag_json(
-            retained.get("normalized_text")
-        ),
+        "normalized_text_cid": cid_for_dag_json(retained.get("normalized_text")),
         "formulas_cid": cid_for_dag_json(retained.get("formulas")),
         "source": retained.get("source"),
         "version": retained.get("version"),
@@ -1030,22 +974,14 @@ def _current_compiler_handler(request: StageRequest) -> StageOutput:
     modal_ir, parser_name = _encode_current_modal(text, request.case_id)
     if request.semantic_protocol_cid is not None:
         if request.semantic_protocol_cid != SEMANTIC_PROTOCOL_V2_CID:
-            raise RuntimeBindingError(
-                "compiler semantic protocol identity is unsupported"
-            )
+            raise RuntimeBindingError("compiler semantic protocol identity is unsupported")
         if request.proof_context is not None:
-            raise RuntimeBindingError(
-                "compiler semantic producer cannot receive proof_context"
-            )
+            raise RuntimeBindingError("compiler semantic producer cannot receive proof_context")
         if not isinstance(modal_ir, Mapping):
-            raise RuntimeBindingError(
-                "compiler ModalIR output must be an object"
-            )
+            raise RuntimeBindingError("compiler ModalIR output must be an object")
         retained_modal_ir = _bounded_modal_ir_projection_v2(modal_ir)
         if not isinstance(retained_modal_ir, Mapping):
-            raise RuntimeBindingError(
-                "compiler retained ModalIR evidence must be an object"
-            )
+            raise RuntimeBindingError("compiler retained ModalIR evidence must be an object")
         projection = build_modal_semantic_projection_v2(
             producer_id="compiler",
             source_text=text,
@@ -1053,22 +989,14 @@ def _current_compiler_handler(request: StageRequest) -> StageOutput:
         )
         modal_ir_cid = cid_for_dag_json(modal_ir)
         semantic_payload: dict[str, object] = {
-            "schema": (
-                "ipfs-datasets.logic-pipeline-benchmark.compiler-output.v2"
-            ),
+            "schema": ("ipfs-datasets.logic-pipeline-benchmark.compiler-output.v2"),
             "semantic_protocol_cid": request.semantic_protocol_cid,
             "source_cid": request.source_cid,
             "modal_ir": retained_modal_ir,
             "modal_ir_cid": modal_ir_cid,
-            "modal_ir_canonical_bytes": len(
-                canonical_dag_json_bytes(modal_ir)
-            ),
-            "retained_modal_ir_cid": cid_for_dag_json(
-                retained_modal_ir
-            ),
-            "retained_modal_ir_canonical_bytes": len(
-                canonical_dag_json_bytes(retained_modal_ir)
-            ),
+            "modal_ir_canonical_bytes": len(canonical_dag_json_bytes(modal_ir)),
+            "retained_modal_ir_cid": cid_for_dag_json(retained_modal_ir),
+            "retained_modal_ir_canonical_bytes": len(canonical_dag_json_bytes(retained_modal_ir)),
             "modal_ir_projection": "source-only-semantic-v2",
             "parser_name": parser_name,
             "semantic_projection": projection.to_dict(),
@@ -1080,24 +1008,20 @@ def _current_compiler_handler(request: StageRequest) -> StageOutput:
                 effective_identity={
                     **dict(request.requested_identity),
                     "entrypoint": (
-                        "ipfs_datasets_py.logic.modal.codec."
-                        "DeterministicModalLogicCodec.encode"
+                        "ipfs_datasets_py.logic.modal.codec.DeterministicModalLogicCodec.encode"
                     ),
                     "semantic_protocol_cid": request.semantic_protocol_cid,
                     "source_cid": request.source_cid,
                 },
                 failure_code=FailureCode.CANONICAL_IR_REJECTION,
-                failure_detail=(
-                    "compiler semantic projection is incomplete or invalid"
-                ),
+                failure_detail=("compiler semantic projection is incomplete or invalid"),
             )
         return StageOutput(
             data=semantic_payload,
             effective_identity={
                 **dict(request.requested_identity),
                 "entrypoint": (
-                    "ipfs_datasets_py.logic.modal.codec."
-                    "DeterministicModalLogicCodec.encode"
+                    "ipfs_datasets_py.logic.modal.codec.DeterministicModalLogicCodec.encode"
                 ),
                 "semantic_protocol_cid": request.semantic_protocol_cid,
                 "source_cid": request.source_cid,
@@ -1140,12 +1064,8 @@ def _current_compiler_handler(request: StageRequest) -> StageOutput:
         "parser_name": parser_name,
         "compiled_obligation": None if compiled is None else compiled.to_dict(),
         "compiled_obligation_sha256": None if compiled is None else compiled.digest,
-        "entailment_translation": (
-            None if translation is None else translation.to_dict()
-        ),
-        "entailment_translation_sha256": (
-            None if translation is None else translation.digest
-        ),
+        "entailment_translation": (None if translation is None else translation.to_dict()),
+        "entailment_translation_sha256": (None if translation is None else translation.digest),
         "native_proof_candidate": native_candidate,
     }
     return StageOutput(
@@ -1153,8 +1073,7 @@ def _current_compiler_handler(request: StageRequest) -> StageOutput:
         effective_identity={
             **dict(request.requested_identity),
             "entrypoint": (
-                "ipfs_datasets_py.logic.modal.codec."
-                "DeterministicModalLogicCodec.encode"
+                "ipfs_datasets_py.logic.modal.codec.DeterministicModalLogicCodec.encode"
             ),
         },
     )
@@ -1181,19 +1100,12 @@ class RuntimeBackendHandlers:
                 raise RuntimeBindingError(f"{name} backend handler is not callable")
 
 
-def _record(
-    inventory: CapabilityInventory, kind: CapabilityKind
-) -> CapabilityRecord:
+def _record(inventory: CapabilityInventory, kind: CapabilityKind) -> CapabilityRecord:
     return inventory.by_kind[kind]
 
 
-def _available(
-    inventory: CapabilityInventory, *kinds: CapabilityKind
-) -> bool:
-    return all(
-        _record(inventory, kind).status is CapabilityStatus.AVAILABLE
-        for kind in kinds
-    )
+def _available(inventory: CapabilityInventory, *kinds: CapabilityKind) -> bool:
+    return all(_record(inventory, kind).status is CapabilityStatus.AVAILABLE for kind in kinds)
 
 
 def _unavailable_adapter(
@@ -1225,21 +1137,14 @@ def _leanstral_provider_config(
     provider = identity.get("provider")
     model = identity.get("model")
     endpoint = identity.get("endpoint")
-    if not all(
-        isinstance(value, str) and value.strip()
-        for value in (provider, model, endpoint)
-    ):
-        raise RuntimeBindingError(
-            "available Leanstral capability identity is incomplete"
-        )
+    if not all(isinstance(value, str) and value.strip() for value in (provider, model, endpoint)):
+        raise RuntimeBindingError("available Leanstral capability identity is incomplete")
     module = import_source_bound_ipfs_accelerate(
         "ipfs_accelerate_py.agent_supervisor.leanstral_proof_provider"
     )
     config_type = getattr(module, "LeanstralProofProviderConfig", None)
     if not callable(config_type):
-        raise RuntimeBindingError(
-            "Leanstral supervisor provider configuration is unavailable"
-        )
+        raise RuntimeBindingError("Leanstral supervisor provider configuration is unavailable")
     return config_type(
         llm_provider=provider,
         model=model,
@@ -1292,8 +1197,7 @@ def _validated_kernel_handler(
     """
 
     positive_authority_allowed = (
-        trusted_native_runner is handler
-        and type(trusted_native_runner) is NativeKernelRunner
+        trusted_native_runner is handler and type(trusted_native_runner) is NativeKernelRunner
     )
 
     def invoke(request: StageRequest) -> StageOutput:
@@ -1316,8 +1220,7 @@ def _validated_kernel_handler(
                 kernel_accepted=output.kernel_accepted,
                 kernel_receipt_sha256=output.kernel_receipt_sha256,
                 consumed_artifact_sha256s=tuple(
-                    artifact.digest
-                    for artifact in request.upstream_artifacts
+                    artifact.digest for artifact in request.upstream_artifacts
                 ),
                 failure_code=output.failure_code,
             )
@@ -1331,8 +1234,7 @@ def _validated_kernel_handler(
                 effective_identity={
                     **dict(output.effective_identity),
                     "consumed_artifact_sha256": tuple(
-                        artifact.digest
-                        for artifact in request.upstream_artifacts
+                        artifact.digest for artifact in request.upstream_artifacts
                     ),
                 },
             )
@@ -1395,21 +1297,15 @@ class CausalProofCandidate:
             certificate = certificate.encode("utf-8")
             object.__setattr__(self, "certificate", certificate)
         if not isinstance(certificate, bytes) or not certificate:
-            raise RuntimeBindingError(
-                "causal proof certificate must be nonempty exact bytes"
-            )
+            raise RuntimeBindingError("causal proof certificate must be nonempty exact bytes")
         try:
             certificate.decode("utf-8")
         except UnicodeDecodeError as exc:
-            raise RuntimeBindingError(
-                "causal proof certificate must be exact UTF-8 bytes"
-            ) from exc
+            raise RuntimeBindingError("causal proof certificate must be exact UTF-8 bytes") from exc
         try:
             validate_cid(self.artifact_cid, codecs=("raw", "dag-json"))
         except (TypeError, ValueError) as exc:
-            raise RuntimeBindingError(
-                "causal proof artifact CID is invalid"
-            ) from exc
+            raise RuntimeBindingError("causal proof artifact CID is invalid") from exc
         expected = cid_for_bytes(certificate)
         if self.candidate_cid is None:
             object.__setattr__(self, "candidate_cid", expected)
@@ -1417,13 +1313,9 @@ class CausalProofCandidate:
             try:
                 validate_cid(self.candidate_cid, codecs=("raw",))
             except (TypeError, ValueError) as exc:
-                raise RuntimeBindingError(
-                    "causal proof candidate CID is invalid"
-                ) from exc
+                raise RuntimeBindingError("causal proof candidate CID is invalid") from exc
             if self.candidate_cid != expected:
-                raise RuntimeBindingError(
-                    "causal proof candidate CID changed from exact bytes"
-                )
+                raise RuntimeBindingError("causal proof candidate CID changed from exact bytes")
 
 
 @dataclass(frozen=True, slots=True)
@@ -1443,13 +1335,9 @@ class CausalProofFailure:
             else CAUSAL_PROOF_LEANSTRAL_FAILURE_CODES_V2
         )
         if self.failure_code not in allowed:
-            raise RuntimeBindingError(
-                f"{self.source} causal failure code is not preregistered"
-            )
+            raise RuntimeBindingError(f"{self.source} causal failure code is not preregistered")
         if not isinstance(self.detail, str) or len(self.detail) > 512:
-            raise RuntimeBindingError(
-                "causal proof failure detail must be a bounded string"
-            )
+            raise RuntimeBindingError("causal proof failure detail must be a bounded string")
 
 
 @dataclass(frozen=True, slots=True)
@@ -1468,27 +1356,16 @@ class CausalKernelCheck:
         try:
             validate_cid(self.candidate_cid, codecs=("raw",))
         except (TypeError, ValueError) as exc:
-            raise RuntimeBindingError(
-                "causal kernel check candidate CID is invalid"
-            ) from exc
+            raise RuntimeBindingError("causal kernel check candidate CID is invalid") from exc
         if type(self.accepted) is not bool:
-            raise RuntimeBindingError(
-                "causal kernel acceptance must be a boolean"
-            )
+            raise RuntimeBindingError("causal kernel acceptance must be a boolean")
         if not isinstance(self.receipt, Mapping):
-            raise RuntimeBindingError(
-                "causal kernel check requires its complete receipt"
-            )
+            raise RuntimeBindingError("causal kernel check requires its complete receipt")
         receipt_value = _thaw_artifact_json(self.receipt)
         if not isinstance(receipt_value, dict):
-            raise RuntimeBindingError(
-                "causal kernel check receipt did not remain an object"
-            )
+            raise RuntimeBindingError("causal kernel check receipt did not remain an object")
         receipt = receipt_value
-        if (
-            receipt.get("independent") is not True
-            or receipt.get("accepted") is not self.accepted
-        ):
+        if receipt.get("independent") is not True or receipt.get("accepted") is not self.accepted:
             raise RuntimeBindingError(
                 "causal kernel sidecar is not an independent matching receipt"
             )
@@ -1497,46 +1374,24 @@ class CausalKernelCheck:
         object.__setattr__(self, "receipt", frozen_receipt)
         status = self.stage_status
         if status is None:
-            status = (
-                StageStatus.SUCCESS
-                if self.accepted
-                else StageStatus.FAILED
-            )
+            status = StageStatus.SUCCESS if self.accepted else StageStatus.FAILED
             object.__setattr__(self, "stage_status", status)
         if not isinstance(status, StageStatus):
-            raise RuntimeBindingError(
-                "causal kernel stage status is invalid"
-            )
+            raise RuntimeBindingError("causal kernel stage status is invalid")
         if self.accepted:
             if status is not StageStatus.SUCCESS or self.failure_code is not None:
-                raise RuntimeBindingError(
-                    "accepted causal kernel check has failure state"
-                )
+                raise RuntimeBindingError("accepted causal kernel check has failure state")
         elif status is StageStatus.SUCCESS:
-            raise RuntimeBindingError(
-                "rejected causal kernel check cannot have success status"
-            )
+            raise RuntimeBindingError("rejected causal kernel check cannot have success status")
         elif self.failure_code is None:
-            raise RuntimeBindingError(
-                "rejected causal kernel check requires a typed failure code"
-            )
-        if self.failure_code is not None and not isinstance(
-            self.failure_code, FailureCode
+            raise RuntimeBindingError("rejected causal kernel check requires a typed failure code")
+        if self.failure_code is not None and not isinstance(self.failure_code, FailureCode):
+            raise RuntimeBindingError("causal kernel failure code is invalid")
+        if not isinstance(self.consumed_artifact_sha256s, tuple) or not all(
+            isinstance(value, str) and re.fullmatch(r"[0-9a-f]{64}", value)
+            for value in self.consumed_artifact_sha256s
         ):
-            raise RuntimeBindingError(
-                "causal kernel failure code is invalid"
-            )
-        if (
-            not isinstance(self.consumed_artifact_sha256s, tuple)
-            or not all(
-                isinstance(value, str)
-                and re.fullmatch(r"[0-9a-f]{64}", value)
-                for value in self.consumed_artifact_sha256s
-            )
-        ):
-            raise RuntimeBindingError(
-                "causal kernel consumed-artifact digests are invalid"
-            )
+            raise RuntimeBindingError("causal kernel consumed-artifact digests are invalid")
         expected = cid_for_dag_json(receipt)
         if self.receipt_cid is None:
             object.__setattr__(self, "receipt_cid", expected)
@@ -1544,13 +1399,9 @@ class CausalKernelCheck:
             try:
                 validate_cid(self.receipt_cid, codecs=("dag-json",))
             except (TypeError, ValueError) as exc:
-                raise RuntimeBindingError(
-                    "causal kernel receipt CID is invalid"
-                ) from exc
+                raise RuntimeBindingError("causal kernel receipt CID is invalid") from exc
             if self.receipt_cid != expected:
-                raise RuntimeBindingError(
-                    "causal kernel receipt CID changed from its body"
-                )
+                raise RuntimeBindingError("causal kernel receipt CID changed from its body")
 
 
 @dataclass(frozen=True, slots=True)
@@ -1565,14 +1416,8 @@ class CausalProofGraphResult:
             raise RuntimeBindingError("causal proof result receipt is invalid")
         receipt_value = _thaw_artifact_json(self.receipt)
         if not isinstance(receipt_value, dict):
-            raise RuntimeBindingError(
-                "causal proof result receipt did not remain an object"
-            )
-        body = {
-            key: value
-            for key, value in receipt_value.items()
-            if key != "receipt_cid"
-        }
+            raise RuntimeBindingError("causal proof result receipt did not remain an object")
+        body = {key: value for key, value in receipt_value.items() if key != "receipt_cid"}
         if receipt_value.get("receipt_cid") != self.receipt_cid:
             raise RuntimeBindingError("causal proof result CID is inconsistent")
         if cid_for_dag_json(body) != self.receipt_cid:
@@ -1589,9 +1434,7 @@ class CausalProofGraphResult:
     def to_dict(self) -> dict[str, object]:
         value = _thaw_artifact_json(self.receipt)
         if not isinstance(value, dict):  # pragma: no cover - post-init guard
-            raise RuntimeBindingError(
-                "causal proof result did not remain an object"
-            )
+            raise RuntimeBindingError("causal proof result did not remain an object")
         return value
 
 
@@ -1605,20 +1448,14 @@ class CausalProofGraphController:
     """
 
     kernel_checker: Callable[[CausalProofCandidate], CausalKernelCheck]
-    kernel_receipt_validator: Callable[
-        [CausalProofCandidate, CausalKernelCheck], bool
-    ]
+    kernel_receipt_validator: Callable[[CausalProofCandidate, CausalKernelCheck], bool]
     protocol_cid: str = CAUSAL_PROOF_PROTOCOL_V2_CID
 
     def __post_init__(self) -> None:
         if self.protocol_cid != CAUSAL_PROOF_PROTOCOL_V2_CID:
             raise RuntimeBindingError("unsupported causal proof protocol CID")
-        if not callable(self.kernel_checker) or not callable(
-            self.kernel_receipt_validator
-        ):
-            raise RuntimeBindingError(
-                "causal proof controller requires kernel callables"
-            )
+        if not callable(self.kernel_checker) or not callable(self.kernel_receipt_validator):
+            raise RuntimeBindingError("causal proof controller requires kernel callables")
 
     def _check(
         self,
@@ -1632,26 +1469,18 @@ class CausalProofGraphController:
     ) -> CausalKernelCheck:
         check = self.kernel_checker(candidate)
         if not isinstance(check, CausalKernelCheck):
-            raise RuntimeBindingError(
-                "kernel checker returned no typed causal check"
-            )
+            raise RuntimeBindingError("kernel checker returned no typed causal check")
         if check.candidate_cid != candidate.candidate_cid:
-            raise RuntimeBindingError(
-                "kernel check is bound to a different candidate"
-            )
+            raise RuntimeBindingError("kernel check is bound to a different candidate")
         if self.kernel_receipt_validator(candidate, check) is not True:
-            raise RuntimeBindingError(
-                "independent kernel receipt failed replay validation"
-            )
+            raise RuntimeBindingError("independent kernel receipt failed replay validation")
         for field, expected in (
             ("run_id", run_id),
             ("case_id", case_id),
             ("variant_id", variant_id),
         ):
             if check.receipt.get(field) != expected:
-                raise RuntimeBindingError(
-                    f"kernel receipt {field} differs from causal coordinate"
-                )
+                raise RuntimeBindingError(f"kernel receipt {field} differs from causal coordinate")
         sidecars.append(
             {
                 "run_id": run_id,
@@ -1659,25 +1488,15 @@ class CausalProofGraphController:
                 "variant_id": variant_id,
                 "source_cid": source_cid,
                 "protocol_cid": self.protocol_cid,
-                "variant_profile_cid": (
-                    CAUSAL_PROOF_VARIANT_PROFILE_V2_CID
-                ),
+                "variant_profile_cid": (CAUSAL_PROOF_VARIANT_PROFILE_V2_CID),
                 "candidate_cid": check.candidate_cid,
-                "candidate_bytes_utf8": candidate.certificate.decode(
-                    "utf-8"
-                ),
+                "candidate_bytes_utf8": candidate.certificate.decode("utf-8"),
                 "candidate_bytes_length": len(candidate.certificate),
                 "receipt_cid": check.receipt_cid,
                 "stage_status": check.stage_status.value,
-                "failure_code": (
-                    None
-                    if check.failure_code is None
-                    else check.failure_code.value
-                ),
+                "failure_code": (None if check.failure_code is None else check.failure_code.value),
                 "kernel_accepted": check.accepted,
-                "consumed_artifact_sha256s": list(
-                    check.consumed_artifact_sha256s
-                ),
+                "consumed_artifact_sha256s": list(check.consumed_artifact_sha256s),
                 "receipt": _thaw_artifact_json(check.receipt),
             }
         )
@@ -1717,27 +1536,17 @@ class CausalProofGraphController:
             "trigger_eligible": trigger_eligible,
             "causal_credit_eligible": causal_credit_eligible,
             "invoked": invoked,
-            "candidate_cid": (
-                None if candidate is None else candidate.candidate_cid
-            ),
-            "artifact_cid": (
-                None if candidate is None else candidate.artifact_cid
-            ),
+            "candidate_cid": (None if candidate is None else candidate.candidate_cid),
+            "artifact_cid": (None if candidate is None else candidate.artifact_cid),
             "kernel_checked": check is not None,
-            "kernel_receipt_cid": (
-                None if check is None else check.receipt_cid
-            ),
+            "kernel_receipt_cid": (None if check is None else check.receipt_cid),
             "accepted": accepted,
             "overlap": overlap,
             "duplicate_of_candidate_cid": duplicate_of,
             "causal_rescue": rescue,
             "marginal_credit_millionths": 1_000_000 if rescue else 0,
-            "zero_credit_reason": (
-                None if rescue else zero_credit_reason
-            ),
-            "failure_code": (
-                None if failure is None else failure.failure_code
-            ),
+            "zero_credit_reason": (None if rescue else zero_credit_reason),
+            "failure_code": (None if failure is None else failure.failure_code),
             "continuation_kind": continuation_kind,
         }
 
@@ -1762,34 +1571,19 @@ class CausalProofGraphController:
             or not isinstance(case_id, str)
             or not case_id.strip()
         ):
-            raise RuntimeBindingError(
-                "causal proof run and case identifiers must be nonempty"
-            )
+            raise RuntimeBindingError("causal proof run and case identifiers must be nonempty")
         if not isinstance(source_text, str) or not source_text:
-            raise RuntimeBindingError(
-                "causal proof source text must be nonempty"
-            )
-        profile: CausalProofVariantProfile = (
-            get_causal_proof_variant_profile(variant_id)
-        )
-        expected_optional = tuple(
-            stage.value for stage in profile.optional_order
-        )
+            raise RuntimeBindingError("causal proof source text must be nonempty")
+        profile: CausalProofVariantProfile = get_causal_proof_variant_profile(variant_id)
+        expected_optional = tuple(stage.value for stage in profile.optional_order)
         if (
             not isinstance(optional_producers, Mapping)
             or set(optional_producers) != set(expected_optional)
             or not all(callable(value) for value in optional_producers.values())
         ):
-            raise RuntimeBindingError(
-                "causal optional producers differ from the variant profile"
-            )
-        if (
-            compiler_candidate is not None
-            and compiler_candidate.source != "compiler"
-        ):
-            raise RuntimeBindingError(
-                "compiler reference has a non-compiler source"
-            )
+            raise RuntimeBindingError("causal optional producers differ from the variant profile")
+        if compiler_candidate is not None and compiler_candidate.source != "compiler":
+            raise RuntimeBindingError("compiler reference has a non-compiler source")
 
         sidecars: list[dict[str, object]] = []
         seen: dict[str, str] = {}
@@ -1808,36 +1602,22 @@ class CausalProofGraphController:
                 variant_id=variant_id,
                 source_cid=source_cid,
             )
-            compiler_state = (
-                "accepted" if compiler_check.accepted else "rejected"
-            )
+            compiler_state = "accepted" if compiler_check.accepted else "rejected"
         compiler_reference = {
             "state": compiler_state,
             "candidate_cid": (
-                None
-                if compiler_candidate is None
-                else compiler_candidate.candidate_cid
+                None if compiler_candidate is None else compiler_candidate.candidate_cid
             ),
             "artifact_cid": (
-                None
-                if compiler_candidate is None
-                else compiler_candidate.artifact_cid
+                None if compiler_candidate is None else compiler_candidate.artifact_cid
             ),
             "invoked": compiler_candidate is not None,
             "kernel_checked": compiler_check is not None,
-            "kernel_receipt_cid": (
-                None
-                if compiler_check is None
-                else compiler_check.receipt_cid
-            ),
-            "accepted": (
-                False if compiler_check is None else compiler_check.accepted
-            ),
+            "kernel_receipt_cid": (None if compiler_check is None else compiler_check.receipt_cid),
+            "accepted": (False if compiler_check is None else compiler_check.accepted),
         }
         selected_source = (
-            "compiler"
-            if compiler_check is not None and compiler_check.accepted
-            else None
+            "compiler" if compiler_check is not None and compiler_check.accepted else None
         )
         selected_candidate_cid = (
             compiler_candidate.candidate_cid
@@ -1878,13 +1658,10 @@ class CausalProofGraphController:
             produced = optional_producers[source]()
             if isinstance(produced, CausalProofFailure):
                 if produced.source != source:
-                    raise RuntimeBindingError(
-                        "causal producer failure source changed"
-                    )
+                    raise RuntimeBindingError("causal producer failure source changed")
                 continuation = (
                     "post_model_failure_continuation"
-                    if source == "leanstral"
-                    and route_index + 1 < len(expected_optional)
+                    if source == "leanstral" and route_index + 1 < len(expected_optional)
                     else (
                         "post_solver_failure_continuation"
                         if route_index + 1 < len(expected_optional)
@@ -1908,13 +1685,8 @@ class CausalProofGraphController:
                     prior_model_failure = True
                 previous_source = source
                 continue
-            if (
-                not isinstance(produced, CausalProofCandidate)
-                or produced.source != source
-            ):
-                raise RuntimeBindingError(
-                    "causal producer returned an invalid candidate"
-                )
+            if not isinstance(produced, CausalProofCandidate) or produced.source != source:
+                raise RuntimeBindingError("causal producer returned an invalid candidate")
             assert produced.candidate_cid is not None
             duplicate_source = seen.get(produced.candidate_cid)
             if duplicate_source is not None:
@@ -1968,11 +1740,7 @@ class CausalProofGraphController:
                         else "post_kernel_rejection_continuation"
                     ),
                     zero_credit_reason=(
-                        (
-                            "post_model_failure_continuation"
-                            if prior_model_failure
-                            else None
-                        )
+                        ("post_model_failure_continuation" if prior_model_failure else None)
                         if check.accepted
                         else "kernel_rejected"
                     ),
@@ -1986,23 +1754,19 @@ class CausalProofGraphController:
             "hammer_optional_route": "hammer" in expected_optional,
             "leanstral_optional_route": "leanstral" in expected_optional,
             "hammer_escalation": any(
-                record["source"] == "hammer"
-                and record["trigger_eligible"] is True
+                record["source"] == "hammer" and record["trigger_eligible"] is True
                 for record in records
             ),
             "leanstral_escalation": any(
-                record["source"] == "leanstral"
-                and record["trigger_eligible"] is True
+                record["source"] == "leanstral" and record["trigger_eligible"] is True
                 for record in records
             ),
             "hammer_suppression": any(
-                record["source"] == "hammer"
-                and record["trigger_eligible"] is False
+                record["source"] == "hammer" and record["trigger_eligible"] is False
                 for record in records
             ),
             "leanstral_suppression": any(
-                record["source"] == "leanstral"
-                and record["trigger_eligible"] is False
+                record["source"] == "leanstral" and record["trigger_eligible"] is False
                 for record in records
             ),
             "hammer_unique_rescue": any(
@@ -2021,9 +1785,7 @@ class CausalProofGraphController:
             ),
             "overlap": any(record["overlap"] is True for record in records),
             "unnecessary_work": any(
-                record["invoked"] is True
-                and record["causal_rescue"] is False
-                for record in records
+                record["invoked"] is True and record["causal_rescue"] is False for record in records
             ),
         }
         body = {
@@ -2038,9 +1800,7 @@ class CausalProofGraphController:
             "optional_candidates": records,
             "selected_source": selected_source,
             "selected_candidate_cid": selected_candidate_cid,
-            "selected_kernel_receipt_cid": (
-                selected_kernel_receipt_cid
-            ),
+            "selected_kernel_receipt_cid": (selected_kernel_receipt_cid),
             "proof_authority": "native_kernel",
             "denominators": denominators,
             "kernel_receipts": sidecars,
@@ -2082,9 +1842,7 @@ class NativeKernelRunner:
         ):
             value = getattr(self, field_name)
             if value is not None and not isinstance(value, Mapping):
-                raise RuntimeBindingError(
-                    f"{field_name} must be an identity object"
-                )
+                raise RuntimeBindingError(f"{field_name} must be an identity object")
             if value is not None:
                 setattr(self, field_name, MappingProxyType(dict(value)))
 
@@ -2095,9 +1853,7 @@ class NativeKernelRunner:
                 ProcessSupervisor,
             )
 
-            self._supervisor = ProcessSupervisor(
-                state_directory=self.state_directory
-            )
+            self._supervisor = ProcessSupervisor(state_directory=self.state_directory)
         return self._supervisor
 
     @property
@@ -2136,31 +1892,23 @@ class NativeKernelRunner:
         # be audited independently.
         proof_input_data = request.proof_input_data
         if not isinstance(proof_input_data, Mapping):
-            raise RuntimeBindingError(
-                "kernel proof input must be an object"
-            )
+            raise RuntimeBindingError("kernel proof input must be an object")
         expected_compiled = compile_reviewed_obligation(proof_input_data)
         if compiler is None:
             if expected_compiled is not None:
-                raise RuntimeBindingError(
-                    "reviewed obligation is missing its compiler artifact"
-                )
+                raise RuntimeBindingError("reviewed obligation is missing its compiler artifact")
             return None, None, None
         if (
             not compiler.invoked
             or compiler.status is not StageStatus.SUCCESS
             or not isinstance(compiler.data, Mapping)
         ):
-            raise RuntimeBindingError(
-                "kernel received a non-successful compiler artifact"
-            )
+            raise RuntimeBindingError("kernel received a non-successful compiler artifact")
         data = compiler.data
         value = compiler.data.get("compiled_obligation")
         if value is None:
             if expected_compiled is not None:
-                raise RuntimeBindingError(
-                    "compiler artifact omitted the reviewed obligation"
-                )
+                raise RuntimeBindingError("compiler artifact omitted the reviewed obligation")
             if any(
                 data.get(name) is not None
                 for name in (
@@ -2193,16 +1941,11 @@ class NativeKernelRunner:
             logic=compiled.logic,
             semantic_target=compiled.semantic_target,
         )
-        expected_translation = (
-            None if translation is None else translation.to_dict()
-        )
-        expected_translation_sha256 = (
-            None if translation is None else translation.digest
-        )
+        expected_translation = None if translation is None else translation.to_dict()
+        expected_translation_sha256 = None if translation is None else translation.digest
         if (
             data.get("entailment_translation") != expected_translation
-            or data.get("entailment_translation_sha256")
-            != expected_translation_sha256
+            or data.get("entailment_translation_sha256") != expected_translation_sha256
         ):
             raise RuntimeBindingError(
                 "compiler entailment translation is missing or source-mismatched"
@@ -2235,16 +1978,10 @@ class NativeKernelRunner:
         """Accept only the exact source-bound live Hammer receipt."""
 
         artifact = request.artifact(StageName.HAMMER)
-        if (
-            artifact is None
-            or not artifact.invoked
-            or artifact.status is not StageStatus.SUCCESS
-        ):
+        if artifact is None or not artifact.invoked or artifact.status is not StageStatus.SUCCESS:
             return None
         if not isinstance(artifact.data, Mapping):
-            raise RuntimeBindingError(
-                "successful Hammer artifact is not an evidence object"
-            )
+            raise RuntimeBindingError("successful Hammer artifact is not an evidence object")
         data = artifact.data
         candidate_claimed = any(
             (
@@ -2259,9 +1996,7 @@ class NativeKernelRunner:
         if not candidate_claimed:
             return None
         if translation is None:
-            raise RuntimeBindingError(
-                "Hammer emitted a candidate without a reviewed translation"
-            )
+            raise RuntimeBindingError("Hammer emitted a candidate without a reviewed translation")
         measured_route = _is_frozen_ablation_request(request)
         try:
             semantic_context = _hammer_input_semantic_context(request)
@@ -2270,12 +2005,8 @@ class NativeKernelRunner:
                 "Hammer semantic context cannot be independently rebuilt"
             ) from exc
         semantic_binding = semantic_context_binding(semantic_context)
-        premise_selection = _hammer_premise_selection(
-            request, translation
-        )
-        ranked_solver_problem = _ranked_hammer_problem(
-            translation, premise_selection
-        )
+        premise_selection = _hammer_premise_selection(request, translation)
+        ranked_solver_problem = _ranked_hammer_problem(translation, premise_selection)
         expected_keys = {
             "schema",
             "case_input_sha256",
@@ -2304,9 +2035,7 @@ class NativeKernelRunner:
         if premise_selection is not None:
             expected_keys.add("premise_selection")
         if set(data) != expected_keys:
-            raise RuntimeBindingError(
-                "Hammer candidate used an unexpected evidence schema"
-            )
+            raise RuntimeBindingError("Hammer candidate used an unexpected evidence schema")
         proof_text = data.get("proof_text")
         expected_reconstruction = {
             "strategy": translation.shape,
@@ -2341,36 +2070,26 @@ class NativeKernelRunner:
             "completed",
             "completed_with_descendant_cleanup",
         }:
-            raise RuntimeBindingError(
-                "Hammer candidate has an unsafe process termination"
-            )
+            raise RuntimeBindingError("Hammer candidate has an unsafe process termination")
         if measured_route or "semantic_context" in data:
             exact_fields["semantic_context"] = semantic_binding
         if premise_selection is not None:
             exact_fields["premise_selection"] = premise_selection
         if any(
-            _thaw_artifact_json(data.get(key))
-            != _thaw_artifact_json(value)
+            _thaw_artifact_json(data.get(key)) != _thaw_artifact_json(value)
             for key, value in exact_fields.items()
         ):
-            raise RuntimeBindingError(
-                "Hammer candidate is not bound to the current translation"
-            )
+            raise RuntimeBindingError("Hammer candidate is not bound to the current translation")
         frozen_identity = self.expected_hammer_identity
         if frozen_identity is None:
-            raise RuntimeBindingError(
-                "kernel lacks the frozen Hammer capability identity"
-            )
+            raise RuntimeBindingError("kernel lacks the frozen Hammer capability identity")
         solver_path = frozen_identity.get("solver_path")
         implementation = frozen_identity.get("implementation")
         solver = frozen_identity.get("solver")
         if not all(
-            isinstance(value, str) and value
-            for value in (solver_path, implementation, solver)
+            isinstance(value, str) and value for value in (solver_path, implementation, solver)
         ):
-            raise RuntimeBindingError(
-                "frozen Hammer capability identity is incomplete"
-            )
+            raise RuntimeBindingError("frozen Hammer capability identity is incomplete")
         assert isinstance(solver_path, str)
         for field_name, expected in (
             ("solver_path", solver_path),
@@ -2379,13 +2098,10 @@ class NativeKernelRunner:
         ):
             if artifact.effective_identity.get(field_name) != expected:
                 raise RuntimeBindingError(
-                    "Hammer candidate drifted from the frozen capability "
-                    f"{field_name}"
+                    f"Hammer candidate drifted from the frozen capability {field_name}"
                 )
         if measured_route or "semantic_context" in data:
-            expected_semantic_identity = _semantic_context_identity(
-                semantic_binding
-            )
+            expected_semantic_identity = _semantic_context_identity(semantic_binding)
             if any(
                 artifact.effective_identity.get(field) != expected
                 for field, expected in expected_semantic_identity.items()
@@ -2399,29 +2115,21 @@ class NativeKernelRunner:
             or artifact.effective_identity.get("premise_ranking_contract")
             != premise_selection.get("ranking_contract")
         ):
-            raise RuntimeBindingError(
-                "Hammer candidate premise-selection identity is mismatched"
-            )
+            raise RuntimeBindingError("Hammer candidate premise-selection identity is mismatched")
         expected_command_sha256 = hashlib.sha256(
             f"{solver_path}\0--lang=smt2".encode("utf-8")
         ).hexdigest()
         if data.get("solver_command_sha256") != expected_command_sha256:
-            raise RuntimeBindingError(
-                "Hammer candidate solver command digest is mismatched"
-            )
+            raise RuntimeBindingError("Hammer candidate solver command digest is mismatched")
         for field_name in ("stdout_sha256", "stderr_sha256"):
             if not re.fullmatch(r"[0-9a-f]{64}", str(data.get(field_name, ""))):
-                raise RuntimeBindingError(
-                    f"Hammer candidate {field_name} is invalid"
-                )
+                raise RuntimeBindingError(f"Hammer candidate {field_name} is invalid")
         if (
             not isinstance(proof_text, str)
             or not proof_text.strip()
             or artifact.output_sha256 != _sha(_thaw_artifact_json(data))
         ):
-            raise RuntimeBindingError(
-                "Hammer candidate content digest is invalid"
-            )
+            raise RuntimeBindingError("Hammer candidate content digest is invalid")
         return proof_text, artifact.digest
 
     def _validated_leanstral_candidate(
@@ -2432,16 +2140,10 @@ class NativeKernelRunner:
         """Accept only the exact compiler- and generation-bound A3 evidence."""
 
         artifact = request.artifact(StageName.LEANSTRAL)
-        if (
-            artifact is None
-            or not artifact.invoked
-            or artifact.status is not StageStatus.SUCCESS
-        ):
+        if artifact is None or not artifact.invoked or artifact.status is not StageStatus.SUCCESS:
             return None
         if not isinstance(artifact.data, Mapping):
-            raise RuntimeBindingError(
-                "successful Leanstral artifact is not an evidence object"
-            )
+            raise RuntimeBindingError("successful Leanstral artifact is not an evidence object")
         evidence = artifact.data
         expected_evidence_keys = {
             "evidence_id",
@@ -2455,14 +2157,10 @@ class NativeKernelRunner:
             "resource_classes",
         }
         if set(evidence) != expected_evidence_keys:
-            raise RuntimeBindingError(
-                "Leanstral candidate used an unexpected evidence schema"
-            )
+            raise RuntimeBindingError("Leanstral candidate used an unexpected evidence schema")
         draft = evidence.get("draft")
         if not isinstance(draft, Mapping):
-            raise RuntimeBindingError(
-                "Leanstral evidence omitted its model draft"
-            )
+            raise RuntimeBindingError("Leanstral evidence omitted its model draft")
         expected_draft_keys = {
             "schema_version",
             "artifact_id",
@@ -2502,21 +2200,15 @@ class NativeKernelRunner:
             "benchmark_request_id",
         }
         if set(draft) != expected_draft_keys:
-            raise RuntimeBindingError(
-                "Leanstral draft fields do not match the pinned schema"
-            )
+            raise RuntimeBindingError("Leanstral draft fields do not match the pinned schema")
         try:
-            expected_payload, payload_obligation_id, payload_repair_attempt = (
-                _leanstral_input(
-                    request,
-                    LeanstralAdapterConfig(),
-                )
+            expected_payload, payload_obligation_id, payload_repair_attempt = _leanstral_input(
+                request,
+                LeanstralAdapterConfig(),
             )
             context_capsule = expected_payload.get("context_capsule")
             theorem = expected_payload.get("fixed_theorem")
-            if not isinstance(context_capsule, Mapping) or not isinstance(
-                theorem, Mapping
-            ):
+            if not isinstance(context_capsule, Mapping) or not isinstance(theorem, Mapping):
                 raise RuntimeBindingError(
                     "Leanstral provider payload omitted its fixed prompt context"
                 )
@@ -2533,18 +2225,10 @@ class NativeKernelRunner:
             final_context = build_context(
                 capsule,
                 theorem,
-                allowed_premises=tuple(
-                    expected_payload.get("allowed_premises") or ()
-                ),
-                trusted_prior_receipts=tuple(
-                    expected_payload.get("trusted_prior_receipts") or ()
-                ),
-                compact_failures=tuple(
-                    expected_payload.get("compact_failures") or ()
-                ),
-                reusable_drafts=tuple(
-                    expected_payload.get("reusable_drafts") or ()
-                ),
+                allowed_premises=tuple(expected_payload.get("allowed_premises") or ()),
+                trusted_prior_receipts=tuple(expected_payload.get("trusted_prior_receipts") or ()),
+                compact_failures=tuple(expected_payload.get("compact_failures") or ()),
+                reusable_drafts=tuple(expected_payload.get("reusable_drafts") or ()),
                 limits=(
                     expected_payload.get("prompt_limits")
                     if isinstance(
@@ -2570,13 +2254,8 @@ class NativeKernelRunner:
             raise RuntimeBindingError(
                 "Leanstral theorem context cannot be independently rebuilt"
             ) from exc
-        if (
-            payload_obligation_id != compiled.obligation_id
-            or payload_repair_attempt not in (0, 1)
-        ):
-            raise RuntimeBindingError(
-                "Leanstral provider payload identity is inconsistent"
-            )
+        if payload_obligation_id != compiled.obligation_id or payload_repair_attempt not in (0, 1):
+            raise RuntimeBindingError("Leanstral provider payload identity is inconsistent")
         capsule_semantics = {
             canonical_json(item.get("fields"))
             for item in context_capsule.get("untrusted_suggestions") or ()
@@ -2587,8 +2266,7 @@ class NativeKernelRunner:
             )
         }
         prompt_semantics = {
-            canonical_json(item.semantic_context)
-            for item in final_context.untrusted_semantic_hints
+            canonical_json(item.semantic_context) for item in final_context.untrusted_semantic_hints
         }
         if capsule_semantics != prompt_semantics:
             raise RuntimeBindingError(
@@ -2601,19 +2279,19 @@ class NativeKernelRunner:
         proof_sha256 = hashlib.sha256(proof_text.encode("utf-8")).hexdigest()
         repair_attempt = evidence.get("repair_attempts")
         if isinstance(repair_attempt, bool) or repair_attempt not in (0, 1):
-            raise RuntimeBindingError(
-                "Leanstral candidate repair identity is invalid"
-            )
+            raise RuntimeBindingError("Leanstral candidate repair identity is invalid")
         if repair_attempt != payload_repair_attempt:
             raise RuntimeBindingError(
                 "Leanstral candidate repair identity changed during projection"
             )
-        expected_request_id = "leanstral-" + hashlib.sha256(
-            (
-                f"{request.run_id}:{request.case_id}:"
-                f"{request.input_sha256}:{repair_attempt}"
-            ).encode("utf-8")
-        ).hexdigest()[:48]
+        expected_request_id = (
+            "leanstral-"
+            + hashlib.sha256(
+                (
+                    f"{request.run_id}:{request.case_id}:{request.input_sha256}:{repair_attempt}"
+                ).encode("utf-8")
+            ).hexdigest()[:48]
+        )
         expected_draft_fields = {
             "schema_version": LEANSTRAL_DRAFT_SCHEMA,
             "artifact_kind": "llm_output",
@@ -2621,9 +2299,7 @@ class NativeKernelRunner:
             "draft_text": proof_text,
             "request_id": expected_request_id,
             "obligation_ids": (compiled.obligation_id,),
-            "canonical_source_digest": (
-                f"sha256:{compiled.source_template_sha256}"
-            ),
+            "canonical_source_digest": (f"sha256:{compiled.source_template_sha256}"),
             "output_sha256": proof_sha256,
             "resource_class": "model",
             "theorem_id": compiled.theorem_name,
@@ -2645,49 +2321,31 @@ class NativeKernelRunner:
             "repair_attempt": repair_attempt,
             "benchmark_request_id": f"{request.run_id}:{request.case_id}",
         }
-        if any(
-            draft.get(key) != value
-            for key, value in expected_draft_fields.items()
-        ):
-            raise RuntimeBindingError(
-                "Leanstral draft is not bound to the current theorem"
-            )
+        if any(draft.get(key) != value for key, value in expected_draft_fields.items()):
+            raise RuntimeBindingError("Leanstral draft is not bound to the current theorem")
         timeout_ms = draft.get("timeout_ms")
         if (
             isinstance(timeout_ms, bool)
             or not isinstance(timeout_ms, int)
             or timeout_ms <= 0
-            or timeout_ms
-            > int(LEANSTRAL_MEASURED_TIMEOUT_SECONDS * 1000)
-            or draft.get("token_budget")
-            != LEANSTRAL_MEASURED_MAX_NEW_TOKENS
+            or timeout_ms > int(LEANSTRAL_MEASURED_TIMEOUT_SECONDS * 1000)
+            or draft.get("token_budget") != LEANSTRAL_MEASURED_MAX_NEW_TOKENS
         ):
-            raise RuntimeBindingError(
-                "Leanstral draft generation budget drifted"
-            )
+            raise RuntimeBindingError("Leanstral draft generation budget drifted")
         for field_name in ("prompt_tokens", "response_tokens"):
             value = draft.get(field_name)
             if isinstance(value, bool) or not isinstance(value, int) or value < 0:
-                raise RuntimeBindingError(
-                    f"Leanstral draft {field_name} is invalid"
-                )
+                raise RuntimeBindingError(f"Leanstral draft {field_name} is invalid")
         reused_artifact_ids = draft.get("reused_artifact_ids")
         if (
             not isinstance(reused_artifact_ids, Sequence)
             or isinstance(reused_artifact_ids, (str, bytes, bytearray))
-            or not all(
-                isinstance(item, str) and item
-                for item in reused_artifact_ids
-            )
+            or not all(isinstance(item, str) and item for item in reused_artifact_ids)
         ):
-            raise RuntimeBindingError(
-                "Leanstral draft reused_artifact_ids is invalid"
-            )
+            raise RuntimeBindingError("Leanstral draft reused_artifact_ids is invalid")
         frozen_identity = self.expected_leanstral_identity
         if frozen_identity is None:
-            raise RuntimeBindingError(
-                "kernel lacks the frozen Leanstral capability identity"
-            )
+            raise RuntimeBindingError("kernel lacks the frozen Leanstral capability identity")
         frozen_provider = frozen_identity.get("provider")
         frozen_model = frozen_identity.get("model")
         frozen_endpoint = frozen_identity.get("endpoint")
@@ -2699,9 +2357,7 @@ class NativeKernelRunner:
                 frozen_endpoint,
             )
         ):
-            raise RuntimeBindingError(
-                "frozen Leanstral capability identity is incomplete"
-            )
+            raise RuntimeBindingError("frozen Leanstral capability identity is incomplete")
         provider = draft.get("llm_provider")
         model = draft.get("model")
         if (
@@ -2710,27 +2366,18 @@ class NativeKernelRunner:
             or artifact.effective_identity.get("provider") != provider
             or artifact.effective_identity.get("model") != model
         ):
-            raise RuntimeBindingError(
-                "Leanstral candidate provider/model identity is mismatched"
-            )
+            raise RuntimeBindingError("Leanstral candidate provider/model identity is mismatched")
         metadata = draft.get("metadata")
         if not isinstance(metadata, Mapping):
-            raise RuntimeBindingError(
-                "Leanstral draft metadata is not an evidence object"
-            )
+            raise RuntimeBindingError("Leanstral draft metadata is not an evidence object")
         if (
-            metadata.get("fixed_theorem_identity_digest")
-            != theorem.get("identity_digest")
+            metadata.get("fixed_theorem_identity_digest") != theorem.get("identity_digest")
             or metadata.get("structured_output") is not True
         ):
-            raise RuntimeBindingError(
-                "Leanstral draft theorem identity digest is mismatched"
-            )
+            raise RuntimeBindingError("Leanstral draft theorem identity digest is mismatched")
         boundary = metadata.get("benchmark_generation_boundary")
         if not isinstance(boundary, Mapping):
-            raise RuntimeBindingError(
-                "Leanstral draft omitted its generation-boundary receipt"
-            )
+            raise RuntimeBindingError("Leanstral draft omitted its generation-boundary receipt")
         expected_boundary_keys = {
             "schema",
             "endpoint",
@@ -2749,9 +2396,7 @@ class NativeKernelRunner:
             "receipt_sha256",
         }
         if set(boundary) != expected_boundary_keys:
-            raise RuntimeBindingError(
-                "Leanstral generation-boundary schema is incomplete"
-            )
+            raise RuntimeBindingError("Leanstral generation-boundary schema is incomplete")
         normalized_proposal = json.dumps(
             {
                 "schema": LEANSTRAL_PROOF_OUTPUT_SCHEMA,
@@ -2780,33 +2425,19 @@ class NativeKernelRunner:
             "response_model": frozen_model,
             "cache_prompt": False,
             "prompt_sha256": draft.get("prompt_sha256"),
-            "request_payload_sha256": (
-                expected_completion_payload_sha256
-            ),
-            "normalized_proposal_sha256": hashlib.sha256(
-                normalized_proposal
-            ).hexdigest(),
+            "request_payload_sha256": (expected_completion_payload_sha256),
+            "normalized_proposal_sha256": hashlib.sha256(normalized_proposal).hexdigest(),
             "normalized_proposal_bytes": len(normalized_proposal),
         }
-        if any(
-            boundary.get(key) != value
-            for key, value in exact_boundary_fields.items()
-        ):
-            raise RuntimeBindingError(
-                "Leanstral generation receipt is not bound to the draft"
-            )
+        if any(boundary.get(key) != value for key, value in exact_boundary_fields.items()):
+            raise RuntimeBindingError("Leanstral generation receipt is not bound to the draft")
         endpoint = boundary.get("endpoint")
         raw_content_bytes = boundary.get("raw_model_content_bytes")
-        boundary_body = {
-            key: value
-            for key, value in boundary.items()
-            if key != "receipt_sha256"
-        }
+        boundary_body = {key: value for key, value in boundary.items() if key != "receipt_sha256"}
         if (
             not isinstance(endpoint, str)
             or not re.match(r"^https?://[^/?#]+(?:[/?#]|$)", endpoint)
-            or boundary.get("normalization")
-            not in {"none", "strip_single_leading_by"}
+            or boundary.get("normalization") not in {"none", "strip_single_leading_by"}
             or not re.fullmatch(
                 r"[0-9a-f]{64}",
                 str(boundary.get("raw_model_content_sha256", "")),
@@ -2823,25 +2454,17 @@ class NativeKernelRunner:
             or not isinstance(raw_content_bytes, int)
             or raw_content_bytes <= 0
             or boundary.get("receipt_sha256")
-            != hashlib.sha256(
-                canonical_json(boundary_body).encode("utf-8")
-            ).hexdigest()
-            or artifact.effective_identity.get(
-                "generation_boundary_sha256"
-            )
+            != hashlib.sha256(canonical_json(boundary_body).encode("utf-8")).hexdigest()
+            or artifact.effective_identity.get("generation_boundary_sha256")
             != boundary.get("receipt_sha256")
         ):
-            raise RuntimeBindingError(
-                "Leanstral generation-boundary receipt is invalid"
-            )
+            raise RuntimeBindingError("Leanstral generation-boundary receipt is invalid")
         identity = {
             "schema_version": LEANSTRAL_DRAFT_SCHEMA,
             "llm_provider": provider,
             "model": model,
             "obligation_ids": [compiled.obligation_id],
-            "canonical_source_digest": (
-                f"sha256:{compiled.source_template_sha256}"
-            ),
+            "canonical_source_digest": (f"sha256:{compiled.source_template_sha256}"),
             "theorem_id": compiled.theorem_name,
             "theorem_equivalence_key": theorem.get("equivalence_key"),
             "context_capsule_id": context_capsule.get("capsule_id"),
@@ -2849,18 +2472,19 @@ class NativeKernelRunner:
             "prompt_sha256": draft.get("prompt_sha256"),
             "output_sha256": proof_sha256,
         }
-        expected_artifact_id = "leanstral-draft-" + hashlib.sha256(
-            json.dumps(
-                identity,
-                ensure_ascii=True,
-                separators=(",", ":"),
-                sort_keys=True,
-            ).encode("utf-8")
-        ).hexdigest()
+        expected_artifact_id = (
+            "leanstral-draft-"
+            + hashlib.sha256(
+                json.dumps(
+                    identity,
+                    ensure_ascii=True,
+                    separators=(",", ":"),
+                    sort_keys=True,
+                ).encode("utf-8")
+            ).hexdigest()
+        )
         if draft.get("artifact_id") != expected_artifact_id:
-            raise RuntimeBindingError(
-                "Leanstral draft content identity is mismatched"
-            )
+            raise RuntimeBindingError("Leanstral draft content identity is mismatched")
         expected_trust = {
             "assurance": "unverified",
             "verified": False,
@@ -2872,26 +2496,19 @@ class NativeKernelRunner:
             "kernel_check": "kernel",
         }
         evidence_without_id = {
-            key: value
-            for key, value in evidence.items()
-            if key != "evidence_id"
+            key: value for key, value in evidence.items() if key != "evidence_id"
         }
         if (
             evidence.get("schema") != LEANSTRAL_EVIDENCE_SCHEMA
             or evidence.get("obligation_id") != compiled.obligation_id
-            or evidence.get("mode")
-            != ("repair" if repair_attempt else "synthesis")
+            or evidence.get("mode") != ("repair" if repair_attempt else "synthesis")
             or evidence.get("max_repair_attempts") != 1
             or evidence.get("trust") != expected_trust
             or evidence.get("resource_classes") != expected_resources
-            or evidence.get("evidence_id")
-            != _sha(_thaw_artifact_json(evidence_without_id))
-            or artifact.output_sha256
-            != _sha(_thaw_artifact_json(evidence))
+            or evidence.get("evidence_id") != _sha(_thaw_artifact_json(evidence_without_id))
+            or artifact.output_sha256 != _sha(_thaw_artifact_json(evidence))
         ):
-            raise RuntimeBindingError(
-                "Leanstral evidence digest or trust boundary is invalid"
-            )
+            raise RuntimeBindingError("Leanstral evidence digest or trust boundary is invalid")
         return proof_text, artifact.digest
 
     def _validated_proof_candidates(
@@ -2911,28 +2528,18 @@ class NativeKernelRunner:
                 # The deterministic translator explicitly exposes every proof
                 # it already knows. Optional backends must earn marginal value
                 # beyond that subset, not preempt a known deterministic proof.
-                candidates.append(
-                    (StageName.COMPILER.value, proof, compiler.digest)
-                )
+                candidates.append((StageName.COMPILER.value, proof, compiler.digest))
 
         for stage in get_variant_definition(request.variant_id).proof_order:
             if stage is StageName.HAMMER:
-                candidate = self._validated_hammer_candidate(
-                    request, translation
-                )
+                candidate = self._validated_hammer_candidate(request, translation)
             elif stage is StageName.LEANSTRAL:
-                candidate = self._validated_leanstral_candidate(
-                    request, compiled
-                )
+                candidate = self._validated_leanstral_candidate(request, compiled)
             else:  # pragma: no cover - guarded by VariantDefinition
-                raise RuntimeBindingError(
-                    f"unsupported proof candidate source: {stage.value}"
-                )
+                raise RuntimeBindingError(f"unsupported proof candidate source: {stage.value}")
             if candidate is not None:
                 proof, artifact_sha256 = candidate
-                candidates.append(
-                    (stage.value, proof, artifact_sha256)
-                )
+                candidates.append((stage.value, proof, artifact_sha256))
         target_fields = {
             "causal_target_candidate_source",
             "causal_target_candidate_cid",
@@ -2944,57 +2551,35 @@ class NativeKernelRunner:
         if not present_target_fields:
             return tuple(candidates)
         if (
-            identity.get("causal_proof_protocol_cid")
-            != CAUSAL_PROOF_PROTOCOL_V2_CID
+            identity.get("causal_proof_protocol_cid") != CAUSAL_PROOF_PROTOCOL_V2_CID
             or present_target_fields != target_fields
         ):
-            raise RuntimeBindingError(
-                "causal kernel target binding is incomplete or unreviewed"
-            )
+            raise RuntimeBindingError("causal kernel target binding is incomplete or unreviewed")
         target_source = identity["causal_target_candidate_source"]
         target_candidate_cid = identity["causal_target_candidate_cid"]
-        target_artifact_cid = identity[
-            "causal_target_candidate_artifact_cid"
-        ]
-        target_artifact_sha256 = identity[
-            "causal_target_candidate_artifact_sha256"
-        ]
+        target_artifact_cid = identity["causal_target_candidate_artifact_cid"]
+        target_artifact_sha256 = identity["causal_target_candidate_artifact_sha256"]
         if target_source not in CAUSAL_PROOF_CANDIDATE_SOURCES_V2:
-            raise RuntimeBindingError(
-                "causal kernel target source is unsupported"
-            )
+            raise RuntimeBindingError("causal kernel target source is unsupported")
         try:
             validate_cid(target_candidate_cid, codecs=("raw",))
             validate_cid(target_artifact_cid, codecs=("raw",))
-            artifact_multihash = sha256_digest_for_cid(
-                target_artifact_cid, codecs=("raw",)
-            )
+            artifact_multihash = sha256_digest_for_cid(target_artifact_cid, codecs=("raw",))
         except (TypeError, ValueError) as exc:
-            raise RuntimeBindingError(
-                "causal kernel target content identity is invalid"
-            ) from exc
+            raise RuntimeBindingError("causal kernel target content identity is invalid") from exc
         if target_artifact_sha256 != artifact_multihash:
-            raise RuntimeBindingError(
-                "causal kernel target artifact CID and digest disagree"
-            )
-        matches = tuple(
-            candidate
-            for candidate in candidates
-            if candidate[0] == target_source
-        )
+            raise RuntimeBindingError("causal kernel target artifact CID and digest disagree")
+        matches = tuple(candidate for candidate in candidates if candidate[0] == target_source)
         if len(matches) != 1:
             raise RuntimeBindingError(
                 "causal kernel target does not identify one present candidate"
             )
         source, proof, artifact_sha256 = matches[0]
         if (
-            cid_for_bytes(proof.encode("utf-8"))
-            != target_candidate_cid
+            cid_for_bytes(proof.encode("utf-8")) != target_candidate_cid
             or artifact_sha256 != target_artifact_sha256
         ):
-            raise RuntimeBindingError(
-                "causal kernel target differs from exact candidate bytes"
-            )
+            raise RuntimeBindingError("causal kernel target differs from exact candidate bytes")
         return ((source, proof, artifact_sha256),)
 
     def __call__(self, request: StageRequest) -> StageOutput:
@@ -3073,36 +2658,23 @@ class NativeKernelRunner:
             if (
                 not isinstance(context_cid, str)
                 or not isinstance(artifact_cids, list)
-                or not all(
-                    isinstance(value, str) for value in artifact_cids
-                )
+                or not all(isinstance(value, str) for value in artifact_cids)
             ):
-                raise RuntimeBindingError(
-                    "semantic-v2 kernel context lacks CID-bound artifacts"
-                )
+                raise RuntimeBindingError("semantic-v2 kernel context lacks CID-bound artifacts")
             semantic_receipt_fields = {
                 # Frozen native receipts retain these legacy join names.
                 # Their values are extracted only from validated sha2-256
                 # multihashes; the full CIDs remain primary in the enclosing
                 # semantic context and G210 evidence.
-                "semantic_context_sha256": sha256_digest_for_cid(
-                    context_cid, codecs=("dag-json",)
-                ),
+                "semantic_context_sha256": sha256_digest_for_cid(context_cid, codecs=("dag-json",)),
                 "semantic_artifact_sha256s": [
-                    sha256_digest_for_cid(
-                        value, codecs=("dag-json",)
-                    )
-                    for value in artifact_cids
+                    sha256_digest_for_cid(value, codecs=("dag-json",)) for value in artifact_cids
                 ],
             }
         else:
             semantic_receipt_fields = {
-                "semantic_context_sha256": semantic_binding[
-                    "context_sha256"
-                ],
-                "semantic_artifact_sha256s": semantic_binding[
-                    "artifact_sha256s"
-                ],
+                "semantic_context_sha256": semantic_binding["context_sha256"],
+                "semantic_artifact_sha256s": semantic_binding["artifact_sha256s"],
             }
         try:
             candidates = (
@@ -3166,11 +2738,7 @@ class NativeKernelRunner:
                 telemetry=TelemetryRecord(resource_lane=ResourceLane.KERNEL),
             )
         if compiled is None or not rendered_candidates:
-            reason = (
-                "no_compiled_obligation"
-                if compiled is None
-                else "no_proof_candidate"
-            )
+            reason = "no_compiled_obligation" if compiled is None else "no_proof_candidate"
             receipt = {
                 "schema": KERNEL_RECEIPT_SCHEMA,
                 "run_id": request.run_id,
@@ -3205,9 +2773,7 @@ class NativeKernelRunner:
         )
 
         command_sha256 = hashlib.sha256(
-            "\0".join(
-                (self.lean_path, "-j", "1", "Main.lean")
-            ).encode("utf-8")
+            "\0".join((self.lean_path, "-j", "1", "Main.lean")).encode("utf-8")
         ).hexdigest()
         attempts: list[dict[str, object]] = []
         total_wall_time_ms = 0.0
@@ -3245,17 +2811,14 @@ class NativeKernelRunner:
             stdout_bytes = result.stdout.encode("utf-8")
             stderr_bytes = result.stderr.encode("utf-8")
             active_process_count = self.active_process_count
-            process_group_reaped = (
-                getattr(result, "process_group_reaped", False) is True
-            )
+            process_group_reaped = getattr(result, "process_group_reaped", False) is True
             accepted = bool(
                 result.returncode == 0
                 and not result.timed_out
                 and not result.cancelled
                 and not result.resource_exhausted
                 and result.error is None
-                and result.termination_reason
-                in {"completed", "completed_with_descendant_cleanup"}
+                and result.termination_reason in {"completed", "completed_with_descendant_cleanup"}
                 and process_group_reaped
                 and active_process_count == 0
             )
@@ -3290,13 +2853,9 @@ class NativeKernelRunner:
                 or result.cancelled
                 or result.resource_exhausted
                 or result.error is not None
-                or result.termination_reason
-                in {"spawn_error", "monitor_error"}
+                or result.termination_reason in {"spawn_error", "monitor_error"}
                 or result.returncode is None
-                or (
-                    isinstance(result.returncode, int)
-                    and result.returncode < 0
-                )
+                or (isinstance(result.returncode, int) and result.returncode < 0)
                 or not process_group_reaped
                 or active_process_count
             ):
@@ -3307,14 +2866,10 @@ class NativeKernelRunner:
                     failure_detail = "native kernel process was not reaped"
                 elif result.resource_exhausted:
                     failure_code = FailureCode.OUT_OF_MEMORY
-                    failure_detail = (
-                        "native kernel resource bound was exhausted"
-                    )
+                    failure_detail = "native kernel resource bound was exhausted"
                 elif result.timed_out or result.cancelled:
                     failure_code = FailureCode.RESOURCE_LEASE_CANCELLATION
-                    failure_detail = (
-                        "native kernel execution timed out or was cancelled"
-                    )
+                    failure_detail = "native kernel execution timed out or was cancelled"
                 infrastructure_failure = (failure_code, failure_detail)
                 break
             if accepted:
@@ -3344,9 +2899,7 @@ class NativeKernelRunner:
             "compiled_obligation_sha256": compiled.digest,
             "obligation_sha256": compiled.obligation_sha256,
             "candidate_source": selected["candidate_source"],
-            "candidate_artifact_sha256": selected[
-                "candidate_artifact_sha256"
-            ],
+            "candidate_artifact_sha256": selected["candidate_artifact_sha256"],
             "source_sha256": selected["source_sha256"],
             **semantic_receipt_fields,
             "environment_sha256": self.environment_sha256,
@@ -3427,25 +2980,17 @@ class LiveRuntime:
             raise RuntimeBindingError("inventory must be a CapabilityInventory")
         if (
             self.causal_proof_protocol_cid is not None
-            and self.causal_proof_protocol_cid
-            != CAUSAL_PROOF_PROTOCOL_V2_CID
+            and self.causal_proof_protocol_cid != CAUSAL_PROOF_PROTOCOL_V2_CID
         ):
-            raise RuntimeBindingError(
-                "live runtime causal proof protocol CID is unsupported"
-            )
+            raise RuntimeBindingError("live runtime causal proof protocol CID is unsupported")
         frozen: dict[str, Mapping[StageName, StageAdapter]] = {}
         for variant_id, route in self.adapters.items():
             definition = get_variant_definition(variant_id)
             if not isinstance(route, Mapping):
                 raise RuntimeBindingError("runtime routes must be mappings")
             expected_stages = (
-                get_causal_proof_variant_profile(
-                    variant_id
-                ).effective_stages
-                if (
-                    self.causal_proof_protocol_cid is not None
-                    and variant_id != "S1"
-                )
+                get_causal_proof_variant_profile(variant_id).effective_stages
+                if (self.causal_proof_protocol_cid is not None and variant_id != "S1")
                 else definition.stages
             )
             if set(route) != set(expected_stages):
@@ -3479,9 +3024,7 @@ class LiveRuntime:
                     )
                     or (
                         stage is StageName.HAMMER
-                        and _available(
-                            self.inventory, CapabilityKind.HAMMER
-                        )
+                        and _available(self.inventory, CapabilityKind.HAMMER)
                     )
                     or (
                         stage is StageName.LEANSTRAL
@@ -3545,13 +3088,9 @@ def _capability_handler(
         )
     adapter = default_factory()
     if adapter.handler is None:
-        raise RuntimeBindingError(
-            f"available {kind.value} capability remained inert"
-        )
+        raise RuntimeBindingError(f"available {kind.value} capability remained inert")
     if adapter.adapter_version != adapter_version:
-        raise RuntimeBindingError(
-            f"{stage.value} adapter version does not match runtime protocol"
-        )
+        raise RuntimeBindingError(f"{stage.value} adapter version does not match runtime protocol")
     return adapter
 
 
@@ -3562,8 +3101,7 @@ def _hammer_input_semantic_context(
 
     definition = get_variant_definition(request.variant_id)
     measured_hammer_arm = (
-        _is_frozen_ablation_request(request)
-        and StageName.HAMMER in definition.stages
+        _is_frozen_ablation_request(request) and StageName.HAMMER in definition.stages
     )
     required_present: tuple[StageName, ...] = ()
     required_success: tuple[StageName, ...] = ()
@@ -3607,22 +3145,12 @@ def _reviewed_source_premises(
     """Recover the exact source premises used by a reviewed translation."""
 
     if not isinstance(request.input_data, Mapping):
-        raise RuntimeBindingError(
-            "premise selection requires an object-shaped benchmark input"
-        )
-    raw_text = request.input_data.get(
-        "text", request.input_data.get("source_text")
-    )
+        raise RuntimeBindingError("premise selection requires an object-shaped benchmark input")
+    raw_text = request.input_data.get("text", request.input_data.get("source_text"))
     if not isinstance(raw_text, str) or not raw_text.strip():
-        raise RuntimeBindingError(
-            "premise selection requires bounded reviewed source text"
-        )
-    if hashlib.sha256(raw_text.encode("utf-8")).hexdigest() != (
-        translation.source_sha256
-    ):
-        raise RuntimeBindingError(
-            "premise selection source differs from the reviewed translation"
-        )
+        raise RuntimeBindingError("premise selection requires bounded reviewed source text")
+    if hashlib.sha256(raw_text.encode("utf-8")).hexdigest() != (translation.source_sha256):
+        raise RuntimeBindingError("premise selection source differs from the reviewed translation")
     sentences = _source_sentences(raw_text)
     expected_counts = {
         "direct_unary_entailment": 2,
@@ -3634,20 +3162,13 @@ def _reviewed_source_premises(
     }
     expected_count = expected_counts.get(translation.shape)
     if expected_count is None or len(sentences) != expected_count + 1:
-        raise RuntimeBindingError(
-            "reviewed translation has no exact source-premise mapping"
-        )
+        raise RuntimeBindingError("reviewed translation has no exact source-premise mapping")
     premises: list[dict[str, object]] = []
     for source_index, statement in enumerate(sentences[:-1]):
-        statement_sha256 = hashlib.sha256(
-            statement.encode("utf-8")
-        ).hexdigest()
+        statement_sha256 = hashlib.sha256(statement.encode("utf-8")).hexdigest()
         premises.append(
             {
-                "premise_id": (
-                    f"source-premise-{source_index:03d}-"
-                    f"{statement_sha256[:16]}"
-                ),
+                "premise_id": (f"source-premise-{source_index:03d}-{statement_sha256[:16]}"),
                 "source_index": source_index,
                 "statement": statement,
                 "statement_sha256": statement_sha256,
@@ -3741,17 +3262,13 @@ def _learned_graph_premise_selection(
         or result.selection is None
         or len(result.selection.selected) != len(premises)
     ):
-        raise RuntimeBindingError(
-            "A10 pinned graph selector did not execute without fallback"
-        )
+        raise RuntimeBindingError("A10 pinned graph selector did not execute without fallback")
     by_id = {str(item["premise_id"]): item for item in premises}
     selected: list[dict[str, object]] = []
     for ranked in result.selection.selected:
         source = by_id.get(ranked.premise_id)
         if source is None:
-            raise RuntimeBindingError(
-                "A10 graph selector returned an unknown source premise"
-            )
+            raise RuntimeBindingError("A10 graph selector returned an unknown source premise")
         selected.append(
             {
                 "premise_id": ranked.premise_id,
@@ -3809,20 +3326,14 @@ def _collect_symai_ranking_strings(
     if isinstance(value, Mapping):
         strings: list[str] = []
         for key in sorted(value):
-            strings.extend(
-                _collect_symai_ranking_strings(value[key], depth=depth + 1)
-            )
+            strings.extend(_collect_symai_ranking_strings(value[key], depth=depth + 1))
             if len(strings) >= 256:
                 break
         return tuple(strings[:256])
-    if isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         strings = []
         for item in value[:256]:
-            strings.extend(
-                _collect_symai_ranking_strings(item, depth=depth + 1)
-            )
+            strings.extend(_collect_symai_ranking_strings(item, depth=depth + 1))
             if len(strings) >= 256:
                 break
         return tuple(strings[:256])
@@ -3838,21 +3349,16 @@ def _symai_premise_selection(
     premises, _conclusion = _reviewed_source_premises(request, translation)
     symai = request.artifact(StageName.SYMAI)
     if symai is None or symai.status is not StageStatus.SUCCESS:
-        raise RuntimeBindingError(
-            "A11 premise ranking requires a successful SyMAI stage artifact"
-        )
+        raise RuntimeBindingError("A11 premise ranking requires a successful SyMAI stage artifact")
     semantic_strings: tuple[str, ...] = ()
     if symai.invoked:
         if (
             not isinstance(symai.data, Mapping)
-            or symai.data.get("schema") != (
-                "ipfs-datasets.logic-pipeline-benchmark.symai-evidence.v1"
-            )
+            or symai.data.get("schema")
+            != ("ipfs-datasets.logic-pipeline-benchmark.symai-evidence.v1")
             or not isinstance(symai.data.get("candidate_ir"), Mapping)
             or symai.data.get("candidate_ir_sha256")
-            != _sha(
-                _thaw_artifact_json(symai.data.get("candidate_ir"))
-            )
+            != _sha(_thaw_artifact_json(symai.data.get("candidate_ir")))
         ):
             raise RuntimeBindingError(
                 "A11 premise ranking requires validated SyMAI semantic evidence"
@@ -3860,9 +3366,7 @@ def _symai_premise_selection(
         semantic_strings = _collect_symai_ranking_strings(
             {
                 "candidate_ir": symai.data.get("candidate_ir"),
-                "normalized_predicates": symai.data.get(
-                    "normalized_predicates", ()
-                ),
+                "normalized_predicates": symai.data.get("normalized_predicates", ()),
                 "quantifiers": symai.data.get("quantifiers", ()),
                 "entities": symai.data.get("entities", ()),
                 "ambiguity_flags": symai.data.get("ambiguity_flags", ()),
@@ -3873,20 +3377,15 @@ def _symai_premise_selection(
         or symai.data.get("invoked") is not False
         or symai.policy_reason != "frontend_ambiguity_gate_closed"
     ):
-        raise RuntimeBindingError(
-            "A11 non-invoked SyMAI artifact is not an ambiguity-gate receipt"
-        )
+        raise RuntimeBindingError("A11 non-invoked SyMAI artifact is not an ambiguity-gate receipt")
 
     semantic_terms = frozenset(
-        token.casefold()
-        for value in semantic_strings
-        for token in _RANKING_TOKEN.findall(value)
+        token.casefold() for value in semantic_strings for token in _RANKING_TOKEN.findall(value)
     )
     ranked: list[tuple[int, int, str, dict[str, object]]] = []
     for premise in premises:
         premise_terms = frozenset(
-            token.casefold()
-            for token in _RANKING_TOKEN.findall(str(premise["statement"]))
+            token.casefold() for token in _RANKING_TOKEN.findall(str(premise["statement"]))
         )
         overlap = len(premise_terms & semantic_terms)
         union = len(premise_terms | semantic_terms)
@@ -4010,20 +3509,12 @@ def _ranked_hammer_problem(
         ),
     }.get(translation.shape)
     lines = translation.smt2_problem.splitlines()
-    actual_assertions = tuple(
-        line for line in lines if line.startswith("(assert ")
-    )
+    actual_assertions = tuple(line for line in lines if line.startswith("(assert "))
     if expected_assertions is None or actual_assertions != expected_assertions:
-        raise RuntimeBindingError(
-            "premise ranking cannot map the reviewed solver assertions"
-        )
+        raise RuntimeBindingError("premise ranking cannot map the reviewed solver assertions")
     selected = premise_selection.get("selected")
-    if not isinstance(selected, Sequence) or isinstance(
-        selected, (str, bytes, bytearray)
-    ):
-        raise RuntimeBindingError(
-            "premise-selection receipt omitted its selected order"
-        )
+    if not isinstance(selected, Sequence) or isinstance(selected, (str, bytes, bytearray)):
+        raise RuntimeBindingError("premise-selection receipt omitted its selected order")
     source_indices: list[int] = []
     for item in selected:
         if (
@@ -4031,24 +3522,16 @@ def _ranked_hammer_problem(
             or isinstance(item.get("source_index"), bool)
             or not isinstance(item.get("source_index"), int)
         ):
-            raise RuntimeBindingError(
-                "premise-selection receipt has an invalid source index"
-            )
+            raise RuntimeBindingError("premise-selection receipt has an invalid source index")
         source_indices.append(int(item["source_index"]))
     premise_count = len(expected_assertions) - 1
     if sorted(source_indices) != list(range(premise_count)):
-        raise RuntimeBindingError(
-            "premise-selection receipt is not a complete source permutation"
-        )
+        raise RuntimeBindingError("premise-selection receipt is not a complete source permutation")
     first_assertion = lines.index(expected_assertions[0])
     prefix = lines[:first_assertion]
     suffix = lines[first_assertion + len(expected_assertions) :]
-    ranked_assertions = [
-        expected_assertions[index] for index in source_indices
-    ]
-    return "\n".join(
-        [*prefix, *ranked_assertions, expected_assertions[-1], *suffix, ""]
-    )
+    ranked_assertions = [expected_assertions[index] for index in source_indices]
+    return "\n".join([*prefix, *ranked_assertions, expected_assertions[-1], *suffix, ""])
 
 
 def _hammer_live_handler(record: CapabilityRecord) -> StageHandler:
@@ -4063,8 +3546,7 @@ def _hammer_live_handler(record: CapabilityRecord) -> StageHandler:
     solver_path = record.identity.get("solver_path")
     if not isinstance(solver_path, str) or not solver_path:
         raise RuntimeBindingError(
-            "available Hammer has no live hammer handler: identity lacks "
-            "solver_path"
+            "available Hammer has no live hammer handler: identity lacks solver_path"
         )
 
     def invoke(request: StageRequest) -> StageOutput:
@@ -4090,9 +3572,7 @@ def _hammer_live_handler(record: CapabilityRecord) -> StageHandler:
             and compiler.data.get("compiled_obligation") is not None
         ):
             try:
-                compiled = CompiledObligation.from_dict(
-                    compiler.data["compiled_obligation"]
-                )
+                compiled = CompiledObligation.from_dict(compiler.data["compiled_obligation"])
             except RuntimeBindingError as exc:
                 return StageOutput(
                     status=StageStatus.FAILED,
@@ -4117,8 +3597,7 @@ def _hammer_live_handler(record: CapabilityRecord) -> StageHandler:
             return StageOutput(
                 data={
                     "schema": (
-                        "ipfs-datasets.logic-pipeline-benchmark."
-                        "hammer-translation-terminal.v1"
+                        "ipfs-datasets.logic-pipeline-benchmark.hammer-translation-terminal.v1"
                     ),
                     "case_input_sha256": request.input_sha256,
                     "translation_status": "unsupported",
@@ -4167,20 +3646,14 @@ def _hammer_live_handler(record: CapabilityRecord) -> StageHandler:
                 telemetry=TelemetryRecord(resource_lane=ResourceLane.SOLVER),
             )
         try:
-            premise_selection = _hammer_premise_selection(
-                request, translation
-            )
-            source = _ranked_hammer_problem(
-                translation, premise_selection
-            )
+            premise_selection = _hammer_premise_selection(request, translation)
+            source = _ranked_hammer_problem(translation, premise_selection)
         except (RuntimeBindingError, ValueError) as exc:
             return StageOutput(
                 status=StageStatus.FAILED,
                 effective_identity=request.requested_identity,
                 failure_code=FailureCode.RECEIPT_OR_PROVENANCE_FAILURE,
-                failure_detail=(
-                    f"Hammer premise selection failed: {exc}"
-                )[:512],
+                failure_detail=(f"Hammer premise selection failed: {exc}")[:512],
                 telemetry=TelemetryRecord(resource_lane=ResourceLane.SOLVER),
             )
         try:
@@ -4207,9 +3680,7 @@ def _hammer_live_handler(record: CapabilityRecord) -> StageHandler:
                 ),
             )
         stdout_lines = [
-            line.strip().casefold()
-            for line in process.stdout.splitlines()
-            if line.strip()
+            line.strip().casefold() for line in process.stdout.splitlines() if line.strip()
         ]
         solver_status = (
             stdout_lines[0]
@@ -4221,17 +3692,11 @@ def _hammer_live_handler(record: CapabilityRecord) -> StageHandler:
             and process.returncode == 0
             and not process.timed_out
             and process.process_group_reaped
-            and process.termination_reason
-            in {"completed", "completed_with_descendant_cleanup"}
+            and process.termination_reason in {"completed", "completed_with_descendant_cleanup"}
         )
-        proof_text = (
-            translation.hammer_proof_text if candidate_created else None
-        )
+        proof_text = translation.hammer_proof_text if candidate_created else None
         data = {
-            "schema": (
-                "ipfs-datasets.logic-pipeline-benchmark."
-                "hammer-translated-entailment.v1"
-            ),
+            "schema": ("ipfs-datasets.logic-pipeline-benchmark.hammer-translated-entailment.v1"),
             "case_input_sha256": request.input_sha256,
             "translation_status": "success",
             "translation_sha256": translation.digest,
@@ -4242,15 +3707,9 @@ def _hammer_live_handler(record: CapabilityRecord) -> StageHandler:
             "solver_command_sha256": hashlib.sha256(
                 f"{solver_path}\0--lang=smt2".encode("utf-8")
             ).hexdigest(),
-            "solver_input_sha256": hashlib.sha256(
-                source.encode("utf-8")
-            ).hexdigest(),
-            "stdout_sha256": hashlib.sha256(
-                process.stdout.encode("utf-8")
-            ).hexdigest(),
-            "stderr_sha256": hashlib.sha256(
-                process.stderr.encode("utf-8")
-            ).hexdigest(),
+            "solver_input_sha256": hashlib.sha256(source.encode("utf-8")).hexdigest(),
+            "stdout_sha256": hashlib.sha256(process.stdout.encode("utf-8")).hexdigest(),
+            "stderr_sha256": hashlib.sha256(process.stderr.encode("utf-8")).hexdigest(),
             "returncode": process.returncode,
             "timed_out": process.timed_out,
             "process_group_reaped": process.process_group_reaped,
@@ -4263,20 +3722,14 @@ def _hammer_live_handler(record: CapabilityRecord) -> StageHandler:
                 if proof_text is None
                 else {
                     "strategy": translation.shape,
-                    "certificate_sha256": hashlib.sha256(
-                        proof_text.encode("utf-8")
-                    ).hexdigest(),
+                    "certificate_sha256": hashlib.sha256(proof_text.encode("utf-8")).hexdigest(),
                     "authoritative": False,
                     "requires_independent_kernel": True,
                 }
             ),
             "efficacy_observed": False,
             "semantic_context": semantic_binding,
-            **(
-                {}
-                if premise_selection is None
-                else {"premise_selection": premise_selection}
-            ),
+            **({} if premise_selection is None else {"premise_selection": premise_selection}),
         }
         effective_identity = {
             **dict(request.requested_identity),
@@ -4289,12 +3742,8 @@ def _hammer_live_handler(record: CapabilityRecord) -> StageHandler:
                 {}
                 if premise_selection is None
                 else {
-                    "premise_selection_sha256": premise_selection[
-                        "receipt_sha256"
-                    ],
-                    "premise_ranking_contract": premise_selection[
-                        "ranking_contract"
-                    ],
+                    "premise_selection_sha256": premise_selection["receipt_sha256"],
+                    "premise_ranking_contract": premise_selection["ranking_contract"],
                 }
             ),
         }
@@ -4303,8 +3752,7 @@ def _hammer_live_handler(record: CapabilityRecord) -> StageHandler:
             input_items=1,
             output_items=1,
             bytes_in=len(source.encode("utf-8")),
-            bytes_out=len(process.stdout.encode("utf-8"))
-            + len(process.stderr.encode("utf-8")),
+            bytes_out=len(process.stdout.encode("utf-8")) + len(process.stderr.encode("utf-8")),
             resource_lane=ResourceLane.SOLVER,
         )
         if not process.process_group_reaped:
@@ -4321,9 +3769,7 @@ def _hammer_live_handler(record: CapabilityRecord) -> StageHandler:
                 status=StageStatus.FAILED,
                 data=data,
                 effective_identity=effective_identity,
-                failure_code=(
-                    FailureCode.SOLVER_TIMEOUT_ERROR_OR_INCONCLUSIVE
-                ),
+                failure_code=(FailureCode.SOLVER_TIMEOUT_ERROR_OR_INCONCLUSIVE),
                 failure_detail="Hammer solver exceeded its wall-clock bound",
                 telemetry=telemetry,
             )
@@ -4333,9 +3779,7 @@ def _hammer_live_handler(record: CapabilityRecord) -> StageHandler:
                 data=data,
                 effective_identity=effective_identity,
                 failure_code=FailureCode.BENCHMARK_INFRASTRUCTURE_FAILURE,
-                failure_detail=(
-                    "Hammer solver process failed before a logical result"
-                ),
+                failure_detail=("Hammer solver process failed before a logical result"),
                 telemetry=telemetry,
             )
         if process.returncode != 0:
@@ -4343,13 +3787,8 @@ def _hammer_live_handler(record: CapabilityRecord) -> StageHandler:
                 status=StageStatus.FAILED,
                 data=data,
                 effective_identity=effective_identity,
-                failure_code=(
-                    FailureCode.SOLVER_TIMEOUT_ERROR_OR_INCONCLUSIVE
-                ),
-                failure_detail=(
-                    "Hammer solver exited with nonzero status "
-                    f"{process.returncode}"
-                ),
+                failure_code=(FailureCode.SOLVER_TIMEOUT_ERROR_OR_INCONCLUSIVE),
+                failure_detail=(f"Hammer solver exited with nonzero status {process.returncode}"),
                 telemetry=telemetry,
             )
         if process.termination_reason not in {
@@ -4361,9 +3800,7 @@ def _hammer_live_handler(record: CapabilityRecord) -> StageHandler:
                 data=data,
                 effective_identity=effective_identity,
                 failure_code=FailureCode.BENCHMARK_INFRASTRUCTURE_FAILURE,
-                failure_detail=(
-                    "Hammer solver reported an unsafe process-control outcome"
-                ),
+                failure_detail=("Hammer solver reported an unsafe process-control outcome"),
                 telemetry=telemetry,
             )
         return StageOutput(
@@ -4381,10 +3818,7 @@ def _legacy_symai_unavailable(request: StageRequest) -> StageOutput:
     return StageOutput(
         status=StageStatus.UNAVAILABLE,
         data={
-            "schema": (
-                "ipfs-datasets.logic-pipeline-benchmark."
-                "legacy-symai-terminal.v1"
-            ),
+            "schema": ("ipfs-datasets.logic-pipeline-benchmark.legacy-symai-terminal.v1"),
             "diagnostic_only": True,
             "authority_withheld": True,
             "reason": "legacy_symbolicai_identity_not_in_repaired_freeze",
@@ -4409,9 +3843,7 @@ def resolve_symai_runtime_provider_model(
     """Resolve the exact outer SyMAI router identity frozen by an inventory."""
 
     if not isinstance(inventory, CapabilityInventory):
-        raise RuntimeBindingError(
-            "SyMAI runtime identity requires CapabilityInventory"
-        )
+        raise RuntimeBindingError("SyMAI runtime identity requires CapabilityInventory")
     symai_record = _record(inventory, CapabilityKind.SYMAI)
     router_record = _record(inventory, CapabilityKind.LLM_ROUTER)
     provider = symai_record.identity.get(
@@ -4435,9 +3867,7 @@ def resolve_symai_runtime_provider_model(
         ),
     )
     if not isinstance(provider, str) or not isinstance(model, str):
-        raise RuntimeBindingError(
-            "available SyMAI/router identity is incomplete"
-        )
+        raise RuntimeBindingError("available SyMAI/router identity is incomplete")
     # Reuse the adapter's frozen identifier validation.
     SymaiAdapterConfig(provider=provider, model=model)
     return provider, model
@@ -4471,45 +3901,35 @@ def prepare_symai_runtime_configuration(
 
     root = Path(config_root)
     if not root.is_absolute():
-        raise RuntimeBindingError(
-            "run-scoped SyMAI configuration root must be absolute"
-        )
+        raise RuntimeBindingError("run-scoped SyMAI configuration root must be absolute")
     config_path = root / ".symai" / "symai.config.json"
     try:
         config_path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
         parent_metadata = config_path.parent.lstat()
         parent_resolved = config_path.parent.resolve(strict=True)
     except OSError as exc:
-        raise RuntimeBindingError(
-            "cannot create run-scoped SyMAI configuration directory"
-        ) from exc
+        raise RuntimeBindingError("cannot create run-scoped SyMAI configuration directory") from exc
     if (
         stat.S_ISLNK(parent_metadata.st_mode)
         or not stat.S_ISDIR(parent_metadata.st_mode)
         or stat.S_IMODE(parent_metadata.st_mode) & 0o077
         or parent_resolved != config_path.parent
     ):
-        raise RuntimeBindingError(
-            "run-scoped SyMAI configuration directory is not private"
-        )
+        raise RuntimeBindingError("run-scoped SyMAI configuration directory is not private")
     raw = symai_runtime_configuration_payload(model)
     if config_path.exists():
         try:
             metadata = config_path.lstat()
             observed = config_path.read_bytes()
         except OSError as exc:
-            raise RuntimeBindingError(
-                "cannot authenticate run-scoped SyMAI configuration"
-            ) from exc
+            raise RuntimeBindingError("cannot authenticate run-scoped SyMAI configuration") from exc
         if (
             stat.S_ISLNK(metadata.st_mode)
             or not stat.S_ISREG(metadata.st_mode)
             or stat.S_IMODE(metadata.st_mode) & 0o077
             or observed != raw
         ):
-            raise RuntimeBindingError(
-                "run-scoped SyMAI configuration drifted"
-            )
+            raise RuntimeBindingError("run-scoped SyMAI configuration drifted")
     else:
         flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
         if hasattr(os, "O_NOFOLLOW"):
@@ -4547,12 +3967,8 @@ def _configured_symai_engine_factory(
             model=config.model,
             import_package=True,
         )
-        engine_module = importlib.import_module(
-            "ipfs_datasets_py.utils.symai_ipfs_engine"
-        )
-        engine_type = getattr(
-            engine_module, "IPFSSyMAINeurosymbolicEngine", None
-        )
+        engine_module = importlib.import_module("ipfs_datasets_py.utils.symai_ipfs_engine")
+        engine_type = getattr(engine_module, "IPFSSyMAINeurosymbolicEngine", None)
         if not isinstance(engine_type, type):
             raise ImportError("IPFSSyMAINeurosymbolicEngine is unavailable")
         return engine_type(
@@ -4569,8 +3985,7 @@ def _configured_symai_engine_factory(
                     or (
                         config.semantic_protocol_cid is not None
                         and namespace.endswith(
-                            "/cache/warm/semantic-protocol/"
-                            f"{config.semantic_protocol_cid}"
+                            f"/cache/warm/semantic-protocol/{config.semantic_protocol_cid}"
                         )
                     )
                 )
@@ -4598,9 +4013,7 @@ def build_live_runtime(
     leanstral_max_new_tokens: int = LEANSTRAL_MEASURED_MAX_NEW_TOKENS,
     semantic_protocol_cid: str | None = None,
     causal_proof_protocol_cid: str | None = None,
-    stage_caches: (
-        Mapping[StageName, MutableMapping[str, object]] | None
-    ) = None,
+    stage_caches: (Mapping[StageName, MutableMapping[str, object]] | None) = None,
 ) -> LiveRuntime:
     """Build exact live adapters for every requested frozen arm.
 
@@ -4615,62 +4028,37 @@ def build_live_runtime(
         raise RuntimeBindingError("handlers must be RuntimeBackendHandlers")
     if inventory.run_id.strip() == "":
         raise RuntimeBindingError("inventory run_id is empty")
-    if (
-        semantic_protocol_cid is not None
-        and semantic_protocol_cid != SEMANTIC_PROTOCOL_V2_CID
-    ):
-        raise RuntimeBindingError(
-            "runtime semantic protocol CID is unsupported"
-        )
+    if semantic_protocol_cid is not None and semantic_protocol_cid != SEMANTIC_PROTOCOL_V2_CID:
+        raise RuntimeBindingError("runtime semantic protocol CID is unsupported")
     if (
         causal_proof_protocol_cid is not None
         and causal_proof_protocol_cid != CAUSAL_PROOF_PROTOCOL_V2_CID
     ):
-        raise RuntimeBindingError(
-            "runtime causal proof protocol CID is unsupported"
-        )
-    frontend_adapter_version = (
-        "2" if semantic_protocol_cid is not None else "1"
-    )
+        raise RuntimeBindingError("runtime causal proof protocol CID is unsupported")
+    frontend_adapter_version = "2" if semantic_protocol_cid is not None else "1"
     variants = tuple(variant_ids)
     if not variants or len(set(variants)) != len(variants):
         raise RuntimeBindingError("variant_ids must be nonempty and unique")
     for variant_id in variants:
         get_variant_definition(variant_id)
-    selected_stage_caches = (
-        {} if stage_caches is None else dict(stage_caches)
-    )
+    selected_stage_caches = {} if stage_caches is None else dict(stage_caches)
     if any(
-        stage is not StageName.SYMAI
-        or not isinstance(cache, MutableMapping)
+        stage is not StageName.SYMAI or not isinstance(cache, MutableMapping)
         for stage, cache in selected_stage_caches.items()
     ):
-        raise RuntimeBindingError(
-            "stage_caches may bind only a mutable SyMAI cache"
-        )
+        raise RuntimeBindingError("stage_caches may bind only a mutable SyMAI cache")
 
     kernel_runner: NativeKernelRunner | None = None
-    if handlers.kernel is None and _available(
-        inventory, CapabilityKind.LEAN_TOOLCHAIN
-    ):
-        lean_identity = _record(
-            inventory, CapabilityKind.LEAN_TOOLCHAIN
-        ).identity
+    if handlers.kernel is None and _available(inventory, CapabilityKind.LEAN_TOOLCHAIN):
+        lean_identity = _record(inventory, CapabilityKind.LEAN_TOOLCHAIN).identity
         lean = lean_identity.get("lean")
-        path = (
-            lean.get("path")
-            if isinstance(lean, Mapping)
-            else lean_identity.get("lean_path")
-        )
+        path = lean.get("path") if isinstance(lean, Mapping) else lean_identity.get("lean_path")
         if not isinstance(path, str) or not path:
-            raise RuntimeBindingError(
-                "available Lean toolchain lacks an executable path"
-            )
+            raise RuntimeBindingError("available Lean toolchain lacks an executable path")
         kernel_runner = NativeKernelRunner(
             path,
             inventory.sha256,
-            Path(state_directory or ".hssl-runtime-processes")
-            / inventory.run_id,
+            Path(state_directory or ".hssl-runtime-processes") / inventory.run_id,
             timeout_seconds=kernel_timeout_seconds,
             expected_hammer_identity=(
                 _record(inventory, CapabilityKind.HAMMER).identity
@@ -4678,12 +4066,8 @@ def build_live_runtime(
                 else None
             ),
             expected_leanstral_identity=(
-                _record(
-                    inventory, CapabilityKind.LEANSTRAL_SERVICE
-                ).identity
-                if _available(
-                    inventory, CapabilityKind.LEANSTRAL_SERVICE
-                )
+                _record(inventory, CapabilityKind.LEANSTRAL_SERVICE).identity
+                if _available(inventory, CapabilityKind.LEANSTRAL_SERVICE)
                 else None
             ),
         )
@@ -4719,19 +4103,21 @@ def build_live_runtime(
                         )
                     )
                 else:
-                    requested = _record(
-                        inventory, CapabilityKind.SPACY_PIPELINE
-                    ).identity.get("requested_model", "en_core_web_sm")
+                    requested = _record(inventory, CapabilityKind.SPACY_PIPELINE).identity.get(
+                        "requested_model", "en_core_web_sm"
+                    )
                     route[stage] = _capability_handler(
                         inventory=inventory,
                         kind=CapabilityKind.SPACY_PIPELINE,
                         stage=stage,
                         injected=handlers.spacy,
-                        default_factory=lambda mode=definition.spacy_mode, requested=requested: SpacyAdapter(
-                            config=SpacyAdapterConfig(
-                                requested_model=str(requested),
-                                mode=_spacy_mode(mode),
-                                semantic_protocol_cid=semantic_protocol_cid,
+                        default_factory=lambda mode=definition.spacy_mode, requested=requested: (
+                            SpacyAdapter(
+                                config=SpacyAdapterConfig(
+                                    requested_model=str(requested),
+                                    mode=_spacy_mode(mode),
+                                    semantic_protocol_cid=semantic_protocol_cid,
+                                )
                             )
                         ),
                         adapter_version=frontend_adapter_version,
@@ -4742,9 +4128,7 @@ def build_live_runtime(
                     if definition.symai_policy is StagePolicy.LEGACY_DIAGNOSTIC
                     else handlers.symai
                 )
-                leanstral_record = _record(
-                    inventory, CapabilityKind.LEANSTRAL_SERVICE
-                )
+                leanstral_record = _record(inventory, CapabilityKind.LEANSTRAL_SERVICE)
                 if not _available(
                     inventory,
                     CapabilityKind.SYMAI,
@@ -4766,15 +4150,11 @@ def build_live_runtime(
                         adapter_version=frontend_adapter_version,
                     )
                 else:
-                    provider, model = resolve_symai_runtime_provider_model(
-                        inventory
-                    )
+                    provider, model = resolve_symai_runtime_provider_model(inventory)
                     inner_provider = leanstral_record.identity.get("provider")
                     inner_model = leanstral_record.identity.get("model")
                     inner_endpoint = leanstral_record.identity.get("endpoint")
-                    inner_backend = leanstral_record.identity.get(
-                        "routing_backend"
-                    )
+                    inner_backend = leanstral_record.identity.get("routing_backend")
                     if not all(
                         isinstance(value, str) and value.strip()
                         for value in (
@@ -4798,8 +4178,7 @@ def build_live_runtime(
                             semantic_protocol_cid=semantic_protocol_cid,
                         ),
                         engine_factory=_configured_symai_engine_factory(
-                            Path(state_directory or ".hssl-runtime-processes")
-                            / inventory.run_id
+                            Path(state_directory or ".hssl-runtime-processes") / inventory.run_id
                         ),
                         cache=selected_stage_caches.get(StageName.SYMAI),
                     )
@@ -4807,10 +4186,7 @@ def build_live_runtime(
                 selected_hammer = handlers.hammer
                 if definition.hammer_policy is HammerPolicy.LEARNED_SELECTOR:
                     selected_hammer = handlers.learned_hammer
-                elif (
-                    definition.premise_ranking
-                    is PremiseRanking.SYMAI_LLM
-                ):
+                elif definition.premise_ranking is PremiseRanking.SYMAI_LLM:
                     selected_hammer = handlers.premise_ranked_hammer
                 route[stage] = _capability_handler(
                     inventory=inventory,
@@ -4818,33 +4194,25 @@ def build_live_runtime(
                     stage=stage,
                     injected=selected_hammer,
                     default_factory=lambda: HammerAdapter(
-                        _hammer_live_handler(
-                            _record(inventory, CapabilityKind.HAMMER)
-                        )
+                        _hammer_live_handler(_record(inventory, CapabilityKind.HAMMER))
                     ),
                 )
             elif stage is StageName.LEANSTRAL:
-                leanstral_record = _record(
-                    inventory, CapabilityKind.LEANSTRAL_SERVICE
-                )
+                leanstral_record = _record(inventory, CapabilityKind.LEANSTRAL_SERVICE)
                 route[stage] = _capability_handler(
                     inventory=inventory,
                     kind=CapabilityKind.LEANSTRAL_SERVICE,
                     stage=stage,
                     injected=handlers.leanstral,
-                    default_factory=lambda record=leanstral_record: (
-                        _leanstral_live_adapter(
-                            record,
-                            timeout_seconds=leanstral_timeout_seconds,
-                            max_new_tokens=leanstral_max_new_tokens,
-                        )
+                    default_factory=lambda record=leanstral_record: _leanstral_live_adapter(
+                        record,
+                        timeout_seconds=leanstral_timeout_seconds,
+                        max_new_tokens=leanstral_max_new_tokens,
                     ),
                 )
             elif stage is StageName.KERNEL:
                 injected_kernel = (
-                    None
-                    if handlers.kernel is None
-                    else _validated_kernel_handler(handlers.kernel)
+                    None if handlers.kernel is None else _validated_kernel_handler(handlers.kernel)
                 )
                 route[stage] = _capability_handler(
                     inventory=inventory,
@@ -4890,15 +4258,11 @@ def _probe_cli(args: argparse.Namespace) -> int:
         validate_frozen_capability_reprobe,
     )
 
-    requested = [
-        item.strip() for item in (args.require or "").split(",") if item.strip()
-    ]
+    requested = [item.strip() for item in (args.require or "").split(",") if item.strip()]
     duplicates = sorted({item for item in requested if requested.count(item) > 1})
     unknown = sorted(set(requested) - {kind.value for kind in CapabilityKind})
     if duplicates:
-        raise RuntimeBindingError(
-            f"duplicate required capabilities: {duplicates}"
-        )
+        raise RuntimeBindingError(f"duplicate required capabilities: {duplicates}")
     if unknown:
         raise RuntimeBindingError(f"unknown required capabilities: {unknown}")
     try:
@@ -4928,9 +4292,7 @@ def _probe_cli(args: argparse.Namespace) -> int:
         # The six names in the operator command are the optional backends.
         # Eligibility always checks cache, scheduler, and native kernel too;
         # callers cannot weaken the matrix boundary by omitting them here.
-        required = tuple(
-            CapabilityKind(item) for item in requested
-        ) or tuple(CapabilityKind)
+        required = tuple(CapabilityKind(item) for item in requested) or tuple(CapabilityKind)
         from .capabilities import require_capabilities
 
         require_capabilities(reprobe.inventory, required)
@@ -4948,8 +4310,7 @@ def _probe_cli(args: argparse.Namespace) -> int:
             canonical_json(
                 {
                     "schema": (
-                        "ipfs-datasets.logic-pipeline-benchmark."
-                        "capability-probe-failure.v1"
+                        "ipfs-datasets.logic-pipeline-benchmark.capability-probe-failure.v1"
                     ),
                     "run_id": args.run_id,
                     "status": "ineligible",
@@ -4967,9 +4328,7 @@ def _execute_cli(args: argparse.Namespace) -> int:
     from .ablation import AblationValidationError
     from .contracts import CacheMode, Split
 
-    split_values = tuple(
-        item.strip() for item in args.splits.split(",") if item.strip()
-    )
+    split_values = tuple(item.strip() for item in args.splits.split(",") if item.strip())
     try:
         splits = tuple(Split(item) for item in split_values)
     except ValueError as exc:
@@ -4980,13 +4339,9 @@ def _execute_cli(args: argparse.Namespace) -> int:
         try:
             cache_modes = (CacheMode(args.cache_mode),)
         except ValueError as exc:
-            raise RuntimeBindingError(
-                "execute contains an unsupported cache mode"
-            ) from exc
+            raise RuntimeBindingError("execute contains an unsupported cache mode") from exc
     if not args.validate_complete:
-        raise RuntimeBindingError(
-            "matrix execution requires --validate-complete"
-        )
+        raise RuntimeBindingError("matrix execution requires --validate-complete")
     try:
         result = matrix_reassessment.execute_reassessment_matrix(
             repository_root=args.repository_root,
@@ -4994,12 +4349,8 @@ def _execute_cli(args: argparse.Namespace) -> int:
             benchmark_root=args.benchmark_root,
             receipt_directory=args.receipt_directory,
             baseline_manifest=args.baseline_manifest,
-            output_root=(
-                None if args.output_root is None else Path(args.output_root)
-            ),
-            snapshot_path=(
-                None if args.snapshot is None else Path(args.snapshot)
-            ),
+            output_root=(None if args.output_root is None else Path(args.output_root)),
+            snapshot_path=(None if args.snapshot is None else Path(args.snapshot)),
             splits=splits,
             cache_modes=cache_modes,
             seed=args.seed,
@@ -5016,8 +4367,7 @@ def _execute_cli(args: argparse.Namespace) -> int:
             canonical_json(
                 {
                     "schema": (
-                        "ipfs-datasets.logic-pipeline-benchmark."
-                        "reassessment-matrix-failure.v1"
+                        "ipfs-datasets.logic-pipeline-benchmark.reassessment-matrix-failure.v1"
                     ),
                     "run_id": args.run_id,
                     "status": "incomplete",
@@ -5031,9 +4381,7 @@ def _execute_cli(args: argparse.Namespace) -> int:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(
-        description="Frozen logic-pipeline live runtime"
-    )
+    parser = argparse.ArgumentParser(description="Frozen logic-pipeline live runtime")
     subparsers = parser.add_subparsers(dest="command", required=True)
     probe = subparsers.add_parser("probe")
     probe.add_argument("--run-id", default="reassessment-v2")

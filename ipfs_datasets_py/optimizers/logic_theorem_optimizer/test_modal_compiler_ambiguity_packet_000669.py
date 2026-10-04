@@ -140,9 +140,7 @@ def test_compiler_exposes_packet_000669_explicit_adaptive_family_ambiguities(
     )
 
     for case in cases:
-        compiler = DeterministicModalCompiler(
-            config=ModalCompilerConfig(parser_backend="regex")
-        )
+        compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="regex"))
         predicted_family = str(case["predicted_family"])
         target_family = str(case["target_family"])
         family_margin = float(case["family_margin"])
@@ -152,9 +150,7 @@ def test_compiler_exposes_packet_000669_explicit_adaptive_family_ambiguities(
             target_family=target_family,
             family_margin=family_margin,
             runner_up_family=(
-                str(case["runner_up_family"])
-                if case.get("runner_up_family") is not None
-                else None
+                str(case["runner_up_family"]) if case.get("runner_up_family") is not None else None
             ),
         )
 
@@ -189,14 +185,8 @@ def test_compiler_exposes_packet_000669_explicit_adaptive_family_ambiguities(
         assert ambiguity.severity == case["expected_severity"]
         assert ambiguity.metadata.get("is_compiler_ambiguity_bundle_pair") is True
         assert ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
-        assert (
-            abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin)
-            <= 1e-12
-        )
-        assert (
-            abs(float(ambiguity.metadata.get("priority", 0.0)) - expected_priority)
-            <= 1e-12
-        )
+        assert abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin) <= 1e-12
+        assert abs(float(ambiguity.metadata.get("priority", 0.0)) - expected_priority) <= 1e-12
         assert (
             abs(float(ambiguity.metadata.get("adaptive_priority", 0.0)) - expected_priority)
             <= 1e-12

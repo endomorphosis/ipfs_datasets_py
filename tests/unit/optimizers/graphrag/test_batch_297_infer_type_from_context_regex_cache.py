@@ -61,4 +61,3 @@ def test_infer_type_from_context_uses_precompiled_patterns(monkeypatch: pytest.M
     )
 
     assert rel_type == "employs"
-

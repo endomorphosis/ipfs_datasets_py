@@ -345,9 +345,7 @@ class ScriptProgram:
         object.__setattr__(
             self,
             "script_digest",
-            _optional_digest(self.script_digest, "script_digest")
-            if self.script_digest
-            else "",
+            _optional_digest(self.script_digest, "script_digest") if self.script_digest else "",
         )
         hex_text = self.script_hex.strip().lower() if self.script_hex else ""
         if hex_text.startswith("0x"):
@@ -369,12 +367,8 @@ class ScriptProgram:
                 raise InvalidRequestError(f"ops[{index}] must be a DecodedOp")
         object.__setattr__(self, "ops", ops)
         object.__setattr__(self, "op_count", _non_negative(self.op_count, "op_count"))
-        object.__setattr__(
-            self, "byte_length", _non_negative(self.byte_length, "byte_length")
-        )
-        object.__setattr__(
-            self, "fully_decoded", _bool(self.fully_decoded, "fully_decoded")
-        )
+        object.__setattr__(self, "byte_length", _non_negative(self.byte_length, "byte_length"))
+        object.__setattr__(self, "fully_decoded", _bool(self.fully_decoded, "fully_decoded"))
         unsupported = tuple(int(x) for x in self.unsupported_opcodes)
         object.__setattr__(self, "unsupported_opcodes", unsupported)
         if self.witness_version is not None:
@@ -391,9 +385,7 @@ class ScriptProgram:
             _required_text(self.schema_version, "schema_version"),
         )
         if not self.script_digest and self.script_hex:
-            object.__setattr__(
-                self, "script_digest", bytes_digest(bytes.fromhex(self.script_hex))
-            )
+            object.__setattr__(self, "script_digest", bytes_digest(bytes.fromhex(self.script_hex)))
         ensure_secret_safe(self.to_dict())
 
     @property
@@ -452,9 +444,7 @@ class PrevoutBinding:
             or not 0 <= self.vout <= 0xFFFFFFFF
         ):
             raise InvalidRequestError("vout must be a uint32 integer")
-        object.__setattr__(
-            self, "value_sats", _non_negative(self.value_sats, "value_sats")
-        )
+        object.__setattr__(self, "value_sats", _non_negative(self.value_sats, "value_sats"))
         object.__setattr__(
             self,
             "script_pubkey_digest",
@@ -462,9 +452,7 @@ class PrevoutBinding:
             if self.script_pubkey_digest
             else "",
         )
-        hex_text = (
-            self.script_pubkey_hex.strip().lower() if self.script_pubkey_hex else ""
-        )
+        hex_text = self.script_pubkey_hex.strip().lower() if self.script_pubkey_hex else ""
         if hex_text.startswith("0x"):
             hex_text = hex_text[2:]
         if hex_text and not _HEX_RE.fullmatch(hex_text):
@@ -545,9 +533,7 @@ class SighashCommitment:
             or not 0 <= self.sighash_type <= 0xFF
         ):
             raise InvalidRequestError("sighash_type must be a byte value 0..255")
-        object.__setattr__(
-            self, "input_index", _non_negative(self.input_index, "input_index")
-        )
+        object.__setattr__(self, "input_index", _non_negative(self.input_index, "input_index"))
         base = self.sighash_type & 0x1F
         acp = bool(self.sighash_type & int(SighashFlag.ANYONECANPAY))
         object.__setattr__(self, "anyone_can_pay", acp)
@@ -566,14 +552,10 @@ class SighashCommitment:
         object.__setattr__(
             self,
             "prevout_digest",
-            _optional_digest(self.prevout_digest, "prevout_digest")
-            if self.prevout_digest
-            else "",
+            _optional_digest(self.prevout_digest, "prevout_digest") if self.prevout_digest else "",
         )
         if self.amount_sats is not None:
-            object.__setattr__(
-                self, "amount_sats", _non_negative(self.amount_sats, "amount_sats")
-            )
+            object.__setattr__(self, "amount_sats", _non_negative(self.amount_sats, "amount_sats"))
         object.__setattr__(
             self,
             "script_code_digest",
@@ -717,9 +699,7 @@ class HashlockConstraint:
             if self.commitment_digest
             else "",
         )
-        object.__setattr__(
-            self, "preimage_known", _bool(self.preimage_known, "preimage_known")
-        )
+        object.__setattr__(self, "preimage_known", _bool(self.preimage_known, "preimage_known"))
         object.__setattr__(self, "attributes", _freeze_mapping(self.attributes))
 
     def to_dict(self) -> dict[str, Any]:
@@ -794,16 +774,12 @@ class StackSemanticRecord:
         timelocks = tuple(self.timelocks)
         for index, item in enumerate(timelocks):
             if not isinstance(item, TimelockConstraint):
-                raise InvalidRequestError(
-                    f"timelocks[{index}] must be a TimelockConstraint"
-                )
+                raise InvalidRequestError(f"timelocks[{index}] must be a TimelockConstraint")
         object.__setattr__(self, "timelocks", timelocks)
         hashlocks = tuple(self.hashlocks)
         for index, item in enumerate(hashlocks):
             if not isinstance(item, HashlockConstraint):
-                raise InvalidRequestError(
-                    f"hashlocks[{index}] must be a HashlockConstraint"
-                )
+                raise InvalidRequestError(f"hashlocks[{index}] must be a HashlockConstraint")
         object.__setattr__(self, "hashlocks", hashlocks)
         status = (
             self.pass_status
@@ -829,13 +805,9 @@ class StackSemanticRecord:
                     "semantic pass forbidden with incomplete decode or unsupported opcodes"
                 )
             if self.prevout is None or not self.prevout.known:
-                raise InvalidRequestError(
-                    "semantic pass requires a known prevout binding"
-                )
+                raise InvalidRequestError("semantic pass requires a known prevout binding")
             if self.sighash is not None and self.sighash.is_weak:
-                raise InvalidRequestError(
-                    "semantic pass forbidden with weak sighash flags"
-                )
+                raise InvalidRequestError("semantic pass forbidden with weak sighash flags")
         ensure_secret_safe(self.to_dict())
 
     def to_dict(self) -> dict[str, Any]:
@@ -1308,8 +1280,7 @@ def analyze_stack_semantics(
         diagnostics.append("script decode incomplete")
     if program.unsupported_opcodes:
         diagnostics.append(
-            "unsupported opcodes: "
-            + ",".join(f"0x{c:02x}" for c in program.unsupported_opcodes)
+            "unsupported opcodes: " + ",".join(f"0x{c:02x}" for c in program.unsupported_opcodes)
         )
     if prevout is None or not prevout.known:
         diagnostics.append("prevout unknown or unbound")
@@ -1330,11 +1301,7 @@ def analyze_stack_semantics(
         claim_pass=claim_pass and not timelock_failed,
     )
     if timelock_failed:
-        status = (
-            SemanticPassStatus.FAIL_CLOSED
-            if claim_pass
-            else SemanticPassStatus.INCOMPLETE
-        )
+        status = SemanticPassStatus.FAIL_CLOSED if claim_pass else SemanticPassStatus.INCOMPLETE
         if claim_pass:
             diagnostics.append("timelock failure forces fail-closed")
 

@@ -55,12 +55,8 @@ CONTRACT_DESCRIPTOR_SCHEMA: Final[str] = (
 
 MAX_SAFE_INTEGER: Final[int] = (1 << 53) - 1
 
-_ID_RE: Final[re.Pattern[str]] = re.compile(
-    r"^[A-Za-z0-9][A-Za-z0-9._:/#@-]{0,511}$"
-)
-_TOKEN_RE: Final[re.Pattern[str]] = re.compile(
-    r"^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$"
-)
+_ID_RE: Final[re.Pattern[str]] = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/#@-]{0,511}$")
+_TOKEN_RE: Final[re.Pattern[str]] = re.compile(r"^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$")
 
 # ---------------------------------------------------------------------------
 # Closed vocabularies
@@ -272,9 +268,7 @@ FINDING_KINDS: Final[frozenset[str]] = frozenset(
     }
 )
 
-FINDING_SEVERITIES: Final[frozenset[str]] = frozenset(
-    {"info", "warning", "error", "fatal"}
-)
+FINDING_SEVERITIES: Final[frozenset[str]] = frozenset({"info", "warning", "error", "fatal"})
 
 PARAMETER_KINDS: Final[frozenset[str]] = frozenset(
     {
@@ -311,9 +305,7 @@ def _text(
     if not allow_empty and not value:
         raise ContractIRError(f"{field_name} must not be empty")
     if value and value != value.strip():
-        raise ContractIRError(
-            f"{field_name} must not contain surrounding whitespace"
-        )
+        raise ContractIRError(f"{field_name} must not contain surrounding whitespace")
     if len(value) > maximum:
         raise ContractIRError(f"{field_name} exceeds {maximum} characters")
     if unicodedata.normalize("NFC", value) != value:
@@ -348,9 +340,7 @@ def _integer(
     if type(value) is not int or isinstance(value, bool):
         raise ContractIRError(f"{field_name} must be an exact integer")
     if not minimum <= value <= maximum:
-        raise ContractIRError(
-            f"{field_name} must be an integer in {minimum}..{maximum}"
-        )
+        raise ContractIRError(f"{field_name} must be an integer in {minimum}..{maximum}")
     return value
 
 
@@ -363,9 +353,7 @@ def _boolean(value: Any, field_name: str) -> bool:
 def _choice(value: Any, field_name: str, allowed: frozenset[str]) -> str:
     result = _text(value, field_name, no_whitespace=True, maximum=128)
     if result not in allowed:
-        raise ContractIRError(
-            f"{field_name} must be one of {sorted(allowed)}, got {result!r}"
-        )
+        raise ContractIRError(f"{field_name} must be one of {sorted(allowed)}, got {result!r}")
     return result
 
 
@@ -400,13 +388,9 @@ def _records(
     try:
         result = tuple(value)
     except TypeError as exc:
-        raise ContractIRError(
-            f"{field_name} must be an ordered sequence"
-        ) from exc
+        raise ContractIRError(f"{field_name} must be an ordered sequence") from exc
     if not all(isinstance(item, expected_type) for item in result):
-        raise ContractIRError(
-            f"{field_name} may contain only {expected_type.__name__} records"
-        )
+        raise ContractIRError(f"{field_name} may contain only {expected_type.__name__} records")
     return tuple(sorted(result, key=sort_key)) if sort_key else result
 
 
@@ -425,9 +409,7 @@ def _strings(
     try:
         raw = tuple(value)
     except TypeError as exc:
-        raise ContractIRError(
-            f"{field_name} must be an ordered sequence"
-        ) from exc
+        raise ContractIRError(f"{field_name} must be an ordered sequence") from exc
     result: list[str] = []
     for index, item in enumerate(raw):
         name = f"{field_name}[{index}]"
@@ -454,17 +436,13 @@ def _closed_mapping(
     try:
         validate_structured_value(value)
     except (TypeError, ValueError) as exc:
-        raise ContractIRError(
-            f"{record_name} must be a strict canonical mapping"
-        ) from exc
+        raise ContractIRError(f"{record_name} must be a strict canonical mapping") from exc
     if type(value) is not dict:
         raise ContractIRError(f"{record_name} must be an exact mapping")
     missing = sorted(expected - set(value))
     extra = sorted(set(value) - expected)
     if missing or extra:
-        raise ContractIRError(
-            f"{record_name} fields are closed (missing={missing}, extra={extra})"
-        )
+        raise ContractIRError(f"{record_name} fields are closed (missing={missing}, extra={extra})")
     return value
 
 
@@ -480,22 +458,16 @@ def _canonical_scalar(value: Any, field_name: str) -> Any:
         return value
     if value_type is int and not isinstance(value, bool):
         if not -MAX_SAFE_INTEGER <= value <= MAX_SAFE_INTEGER:
-            raise ContractIRError(
-                f"{field_name} integer is outside the safe integer range"
-            )
+            raise ContractIRError(f"{field_name} integer is outside the safe integer range")
         return value
     if value_type is float:
-        raise ContractIRError(
-            f"{field_name} rejects float; use int or a reviewed string"
-        )
+        raise ContractIRError(f"{field_name} rejects float; use int or a reviewed string")
     if value_type is list:
         return [
-            _canonical_scalar(item, f"{field_name}[{index}]")
-            for index, item in enumerate(value)
+            _canonical_scalar(item, f"{field_name}[{index}]") for index, item in enumerate(value)
         ]
     raise ContractIRError(
-        f"{field_name} must be a canonical scalar or scalar list, "
-        f"got {value_type.__name__}"
+        f"{field_name} must be a canonical scalar or scalar list, got {value_type.__name__}"
     )
 
 
@@ -553,12 +525,8 @@ class ContractAuthority(CanonicalContractRecord):
     )
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "authority_id", _identifier(self.authority_id, "authority_id")
-        )
-        object.__setattr__(
-            self, "rank", _choice(self.rank, "rank", frozenset(AUTHORITY_RANKS))
-        )
+        object.__setattr__(self, "authority_id", _identifier(self.authority_id, "authority_id"))
+        object.__setattr__(self, "rank", _choice(self.rank, "rank", frozenset(AUTHORITY_RANKS)))
         object.__setattr__(
             self,
             "owner",
@@ -580,9 +548,7 @@ class ContractAuthority(CanonicalContractRecord):
                     maximum=1024,
                 ),
             )
-        object.__setattr__(
-            self, "source_cid", _optional_cid(self.source_cid, "source_cid")
-        )
+        object.__setattr__(self, "source_cid", _optional_cid(self.source_cid, "source_cid"))
 
     @property
     def rank_order(self) -> int:
@@ -625,9 +591,7 @@ class ContractProvenance(CanonicalContractRecord):
     )
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "fact_kind", _choice(self.fact_kind, "fact_kind", FACT_KINDS)
-        )
+        object.__setattr__(self, "fact_kind", _choice(self.fact_kind, "fact_kind", FACT_KINDS))
         if not isinstance(self.authority, ContractAuthority):
             raise ContractIRError("authority must be a ContractAuthority")
         # Inferred facts may only cite inference-rank authority.
@@ -637,13 +601,8 @@ class ContractProvenance(CanonicalContractRecord):
                 "(cannot self-promote to reviewed contract authority)"
             )
         # Declared / reviewed facts may not claim inference rank.
-        if (
-            self.fact_kind == "declared"
-            and self.authority.rank == "inference"
-        ):
-            raise ContractIRError(
-                "declared facts cannot use inference-rank authority"
-            )
+        if self.fact_kind == "declared" and self.authority.rank == "inference":
+            raise ContractIRError("declared facts cannot use inference-rank authority")
         object.__setattr__(
             self,
             "source_path",
@@ -706,9 +665,7 @@ class Assumption(CanonicalContractRecord):
     )
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "assumption_id", _identifier(self.assumption_id, "assumption_id")
-        )
+        object.__setattr__(self, "assumption_id", _identifier(self.assumption_id, "assumption_id"))
         object.__setattr__(
             self,
             "statement",
@@ -716,9 +673,7 @@ class Assumption(CanonicalContractRecord):
         )
         if not isinstance(self.provenance, ContractProvenance):
             raise ContractIRError("provenance must be a ContractProvenance")
-        object.__setattr__(
-            self, "required", _boolean(self.required, "required")
-        )
+        object.__setattr__(self, "required", _boolean(self.required, "required"))
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -764,15 +719,11 @@ class BoundedPredicate(CanonicalContractRecord):
     )
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "predicate_id", _identifier(self.predicate_id, "predicate_id")
-        )
+        object.__setattr__(self, "predicate_id", _identifier(self.predicate_id, "predicate_id"))
         object.__setattr__(self, "role", _choice(self.role, "role", PREDICATE_ROLES))
         operator = _text(self.operator, "operator", no_whitespace=True, maximum=128)
         if operator in REJECTED_PREDICATE_OPERATORS:
-            raise ContractIRError(
-                f"operator {operator!r} is unbounded/executable and rejected"
-            )
+            raise ContractIRError(f"operator {operator!r} is unbounded/executable and rejected")
         if operator not in PREDICATE_OPERATORS:
             raise ContractIRError(
                 f"operator {operator!r} is not a reviewed lowerable operator "
@@ -793,8 +744,7 @@ class BoundedPredicate(CanonicalContractRecord):
         except TypeError as exc:
             raise ContractIRError("arguments must be an ordered sequence") from exc
         normalized_args = tuple(
-            _canonical_scalar(item, f"arguments[{index}]")
-            for index, item in enumerate(raw_args)
+            _canonical_scalar(item, f"arguments[{index}]") for index, item in enumerate(raw_args)
         )
         object.__setattr__(self, "arguments", normalized_args)
         object.__setattr__(
@@ -836,18 +786,10 @@ class BoundedPredicate(CanonicalContractRecord):
                 raise ContractIRError(f"{op} requires one event identifier string")
         if op == "state_transition":
             if len(args) != 2 or not all(type(a) is str and a for a in args):
-                raise ContractIRError(
-                    "state_transition requires [from_state, to_state] strings"
-                )
+                raise ContractIRError("state_transition requires [from_state, to_state] strings")
         if op == "determinism_class":
-            if (
-                len(args) != 1
-                or type(args[0]) is not str
-                or args[0] not in DETERMINISM_CLASSES
-            ):
-                raise ContractIRError(
-                    "determinism_class requires one reviewed class token"
-                )
+            if len(args) != 1 or type(args[0]) is not str or args[0] not in DETERMINISM_CLASSES:
+                raise ContractIRError("determinism_class requires one reviewed class token")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -899,9 +841,7 @@ class EffectContract(CanonicalContractRecord):
     )
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "effect_id", _identifier(self.effect_id, "effect_id")
-        )
+        object.__setattr__(self, "effect_id", _identifier(self.effect_id, "effect_id"))
         object.__setattr__(self, "kind", _choice(self.kind, "kind", EFFECT_KINDS))
         object.__setattr__(
             self,
@@ -915,16 +855,10 @@ class EffectContract(CanonicalContractRecord):
             "subject",
             _text(self.subject, "subject", allow_empty=True, maximum=2048),
         )
-        object.__setattr__(
-            self, "permitted", _boolean(self.permitted, "permitted")
-        )
-        object.__setattr__(
-            self, "required", _boolean(self.required, "required")
-        )
+        object.__setattr__(self, "permitted", _boolean(self.permitted, "permitted"))
+        object.__setattr__(self, "required", _boolean(self.required, "required"))
         if self.required and not self.permitted:
-            raise ContractIRError(
-                "required effects must also be permitted"
-            )
+            raise ContractIRError("required effects must also be permitted")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -974,18 +908,10 @@ class ResourceContract(CanonicalContractRecord):
     )
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "resource_id", _identifier(self.resource_id, "resource_id")
-        )
-        object.__setattr__(
-            self, "kind", _choice(self.kind, "kind", RESOURCE_KINDS)
-        )
-        object.__setattr__(
-            self, "minimum", _integer(self.minimum, "minimum", minimum=0)
-        )
-        object.__setattr__(
-            self, "maximum", _integer(self.maximum, "maximum", minimum=0)
-        )
+        object.__setattr__(self, "resource_id", _identifier(self.resource_id, "resource_id"))
+        object.__setattr__(self, "kind", _choice(self.kind, "kind", RESOURCE_KINDS))
+        object.__setattr__(self, "minimum", _integer(self.minimum, "minimum", minimum=0))
+        object.__setattr__(self, "maximum", _integer(self.maximum, "maximum", minimum=0))
         if self.minimum > self.maximum:
             raise ContractIRError("resource minimum exceeds maximum")
         if not isinstance(self.provenance, ContractProvenance):
@@ -1115,12 +1041,8 @@ class CapabilityContract(CanonicalContractRecord):
             "capability_id",
             _identifier(self.capability_id, "capability_id"),
         )
-        object.__setattr__(
-            self, "capability", _token(self.capability, "capability")
-        )
-        object.__setattr__(
-            self, "required", _boolean(self.required, "required")
-        )
+        object.__setattr__(self, "capability", _token(self.capability, "capability"))
+        object.__setattr__(self, "required", _boolean(self.required, "required"))
         if not isinstance(self.provenance, ContractProvenance):
             raise ContractIRError("provenance must be a ContractProvenance")
         if self.optional_dependency is not None:
@@ -1177,9 +1099,7 @@ class TemporalConstraint(CanonicalContractRecord):
     )
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "temporal_id", _identifier(self.temporal_id, "temporal_id")
-        )
+        object.__setattr__(self, "temporal_id", _identifier(self.temporal_id, "temporal_id"))
         for name in ("earlier_event", "later_event"):
             object.__setattr__(
                 self,
@@ -1192,9 +1112,7 @@ class TemporalConstraint(CanonicalContractRecord):
                 ),
             )
         if self.earlier_event == self.later_event:
-            raise ContractIRError(
-                "temporal constraint events must be distinct"
-            )
+            raise ContractIRError("temporal constraint events must be distinct")
         if not isinstance(self.provenance, ContractProvenance):
             raise ContractIRError("provenance must be a ContractProvenance")
         object.__setattr__(self, "strict", _boolean(self.strict, "strict"))
@@ -1300,9 +1218,7 @@ class SchemaContract(CanonicalContractRecord):
             ),
         )
         if "@" not in self.schema_identifier:
-            raise ContractIRError(
-                "schema_identifier must be a versioned name@version form"
-            )
+            raise ContractIRError("schema_identifier must be a versioned name@version form")
         object.__setattr__(
             self,
             "target",
@@ -1310,9 +1226,7 @@ class SchemaContract(CanonicalContractRecord):
         )
         if not isinstance(self.provenance, ContractProvenance):
             raise ContractIRError("provenance must be a ContractProvenance")
-        object.__setattr__(
-            self, "required", _boolean(self.required, "required")
-        )
+        object.__setattr__(self, "required", _boolean(self.required, "required"))
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -1356,12 +1270,8 @@ class TrustBoundaryContract(CanonicalContractRecord):
     )
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "boundary_id", _identifier(self.boundary_id, "boundary_id")
-        )
-        object.__setattr__(
-            self, "label", _choice(self.label, "label", TRUST_LABELS)
-        )
+        object.__setattr__(self, "boundary_id", _identifier(self.boundary_id, "boundary_id"))
+        object.__setattr__(self, "label", _choice(self.label, "label", TRUST_LABELS))
         object.__setattr__(
             self,
             "site",
@@ -1424,9 +1334,7 @@ class DataContract(CanonicalContractRecord):
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "data_id", _identifier(self.data_id, "data_id"))
-        object.__setattr__(
-            self, "name", _text(self.name, "name", no_whitespace=True, maximum=512)
-        )
+        object.__setattr__(self, "name", _text(self.name, "name", no_whitespace=True, maximum=512))
         object.__setattr__(
             self,
             "type_name",
@@ -1434,9 +1342,7 @@ class DataContract(CanonicalContractRecord):
         )
         if not isinstance(self.provenance, ContractProvenance):
             raise ContractIRError("provenance must be a ContractProvenance")
-        object.__setattr__(
-            self, "nullable", _boolean(self.nullable, "nullable")
-        )
+        object.__setattr__(self, "nullable", _boolean(self.nullable, "nullable"))
         predicates = _records(
             self.predicates,
             BoundedPredicate,
@@ -1469,9 +1375,7 @@ class DataContract(CanonicalContractRecord):
             type_name=data["type_name"],
             provenance=ContractProvenance.from_dict(data["provenance"]),
             nullable=data["nullable"],
-            predicates=[
-                BoundedPredicate.from_dict(item) for item in data["predicates"]
-            ],
+            predicates=[BoundedPredicate.from_dict(item) for item in data["predicates"]],
         )
 
 
@@ -1490,15 +1394,9 @@ class ParameterContract(CanonicalContractRecord):
     )
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "name", _text(self.name, "name", no_whitespace=True, maximum=512)
-        )
-        object.__setattr__(
-            self, "kind", _choice(self.kind, "kind", PARAMETER_KINDS)
-        )
-        object.__setattr__(
-            self, "position", _integer(self.position, "position", minimum=0)
-        )
+        object.__setattr__(self, "name", _text(self.name, "name", no_whitespace=True, maximum=512))
+        object.__setattr__(self, "kind", _choice(self.kind, "kind", PARAMETER_KINDS))
+        object.__setattr__(self, "position", _integer(self.position, "position", minimum=0))
         if self.data is not None and not isinstance(self.data, DataContract):
             raise ContractIRError("data must be a DataContract or null")
         object.__setattr__(
@@ -1523,11 +1421,7 @@ class ParameterContract(CanonicalContractRecord):
             name=data["name"],
             kind=data["kind"],
             position=data["position"],
-            data=(
-                None
-                if data["data"] is None
-                else DataContract.from_dict(data["data"])
-            ),
+            data=(None if data["data"] is None else DataContract.from_dict(data["data"])),
             default_present=data["default_present"],
         )
 
@@ -1559,16 +1453,10 @@ class ContractFinding(CanonicalContractRecord):
     )
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "finding_id", _identifier(self.finding_id, "finding_id")
-        )
+        object.__setattr__(self, "finding_id", _identifier(self.finding_id, "finding_id"))
         object.__setattr__(self, "kind", _choice(self.kind, "kind", FINDING_KINDS))
-        object.__setattr__(
-            self, "severity", _choice(self.severity, "severity", FINDING_SEVERITIES)
-        )
-        object.__setattr__(
-            self, "message", _text(self.message, "message", maximum=8192)
-        )
+        object.__setattr__(self, "severity", _choice(self.severity, "severity", FINDING_SEVERITIES))
+        object.__setattr__(self, "message", _text(self.message, "message", maximum=8192))
         object.__setattr__(
             self,
             "subject",
@@ -1676,9 +1564,7 @@ class CallableContract(CanonicalContractRecord):
     )
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "contract_id", _identifier(self.contract_id, "contract_id")
-        )
+        object.__setattr__(self, "contract_id", _identifier(self.contract_id, "contract_id"))
         object.__setattr__(
             self,
             "qualified_name",
@@ -1699,9 +1585,7 @@ class CallableContract(CanonicalContractRecord):
                 maximum=1024,
             ),
         )
-        object.__setattr__(
-            self, "shape", _choice(self.shape, "shape", CALLABLE_SHAPES)
-        )
+        object.__setattr__(self, "shape", _choice(self.shape, "shape", CALLABLE_SHAPES))
         if not isinstance(self.provenance, ContractProvenance):
             raise ContractIRError("provenance must be a ContractProvenance")
         object.__setattr__(
@@ -1717,13 +1601,9 @@ class CallableContract(CanonicalContractRecord):
         )
         positions = [item.position for item in parameters]
         if positions != list(range(len(parameters))):
-            raise ContractIRError(
-                "parameter positions must be unique and contiguous from zero"
-            )
+            raise ContractIRError("parameter positions must be unique and contiguous from zero")
         object.__setattr__(self, "parameters", parameters)
-        if self.return_data is not None and not isinstance(
-            self.return_data, DataContract
-        ):
+        if self.return_data is not None and not isinstance(self.return_data, DataContract):
             raise ContractIRError("return_data must be a DataContract or null")
         object.__setattr__(
             self,
@@ -1733,9 +1613,7 @@ class CallableContract(CanonicalContractRecord):
         object.__setattr__(
             self,
             "postconditions",
-            _role_predicates(
-                self.postconditions, "postcondition", "postconditions"
-            ),
+            _role_predicates(self.postconditions, "postcondition", "postconditions"),
         )
         object.__setattr__(
             self,
@@ -1802,12 +1680,8 @@ class CallableContract(CanonicalContractRecord):
                 sort_key=lambda item: item.temporal_id,
             ),
         )
-        if self.determinism is not None and not isinstance(
-            self.determinism, DeterminismContract
-        ):
-            raise ContractIRError(
-                "determinism must be a DeterminismContract or null"
-            )
+        if self.determinism is not None and not isinstance(self.determinism, DeterminismContract):
+            raise ContractIRError("determinism must be a DeterminismContract or null")
         object.__setattr__(
             self,
             "schemas",
@@ -1843,9 +1717,7 @@ class CallableContract(CanonicalContractRecord):
             "provenance": self.provenance.to_dict(),
             "visibility": self.visibility,
             "parameters": [item.to_dict() for item in self.parameters],
-            "return_data": (
-                None if self.return_data is None else self.return_data.to_dict()
-            ),
+            "return_data": (None if self.return_data is None else self.return_data.to_dict()),
             "preconditions": [item.to_dict() for item in self.preconditions],
             "postconditions": [item.to_dict() for item in self.postconditions],
             "invariants": [item.to_dict() for item in self.invariants],
@@ -1855,13 +1727,9 @@ class CallableContract(CanonicalContractRecord):
             "capabilities": [item.to_dict() for item in self.capabilities],
             "resources": [item.to_dict() for item in self.resources],
             "temporal": [item.to_dict() for item in self.temporal],
-            "determinism": (
-                None if self.determinism is None else self.determinism.to_dict()
-            ),
+            "determinism": (None if self.determinism is None else self.determinism.to_dict()),
             "schemas": [item.to_dict() for item in self.schemas],
-            "trust_boundaries": [
-                item.to_dict() for item in self.trust_boundaries
-            ],
+            "trust_boundaries": [item.to_dict() for item in self.trust_boundaries],
             "symbol_id": self.symbol_id,
         }
 
@@ -1875,53 +1743,27 @@ class CallableContract(CanonicalContractRecord):
             shape=data["shape"],
             provenance=ContractProvenance.from_dict(data["provenance"]),
             visibility=data["visibility"],
-            parameters=[
-                ParameterContract.from_dict(item) for item in data["parameters"]
-            ],
+            parameters=[ParameterContract.from_dict(item) for item in data["parameters"]],
             return_data=(
-                None
-                if data["return_data"] is None
-                else DataContract.from_dict(data["return_data"])
+                None if data["return_data"] is None else DataContract.from_dict(data["return_data"])
             ),
-            preconditions=[
-                BoundedPredicate.from_dict(item)
-                for item in data["preconditions"]
-            ],
-            postconditions=[
-                BoundedPredicate.from_dict(item)
-                for item in data["postconditions"]
-            ],
-            invariants=[
-                BoundedPredicate.from_dict(item) for item in data["invariants"]
-            ],
-            assumptions=[
-                Assumption.from_dict(item) for item in data["assumptions"]
-            ],
+            preconditions=[BoundedPredicate.from_dict(item) for item in data["preconditions"]],
+            postconditions=[BoundedPredicate.from_dict(item) for item in data["postconditions"]],
+            invariants=[BoundedPredicate.from_dict(item) for item in data["invariants"]],
+            assumptions=[Assumption.from_dict(item) for item in data["assumptions"]],
             effects=[EffectContract.from_dict(item) for item in data["effects"]],
-            exceptions=[
-                ExceptionContract.from_dict(item) for item in data["exceptions"]
-            ],
-            capabilities=[
-                CapabilityContract.from_dict(item)
-                for item in data["capabilities"]
-            ],
-            resources=[
-                ResourceContract.from_dict(item) for item in data["resources"]
-            ],
-            temporal=[
-                TemporalConstraint.from_dict(item) for item in data["temporal"]
-            ],
+            exceptions=[ExceptionContract.from_dict(item) for item in data["exceptions"]],
+            capabilities=[CapabilityContract.from_dict(item) for item in data["capabilities"]],
+            resources=[ResourceContract.from_dict(item) for item in data["resources"]],
+            temporal=[TemporalConstraint.from_dict(item) for item in data["temporal"]],
             determinism=(
                 None
                 if data["determinism"] is None
                 else DeterminismContract.from_dict(data["determinism"])
             ),
-            schemas=[
-                SchemaContract.from_dict(item) for item in data["schemas"]
-            ],
+            schemas=[SchemaContract.from_dict(item) for item in data["schemas"]],
             trust_boundaries=[
-                TrustBoundaryContract.from_dict(item)
-                for item in data["trust_boundaries"]
+                TrustBoundaryContract.from_dict(item) for item in data["trust_boundaries"]
             ],
             symbol_id=data["symbol_id"],
         )
@@ -1940,9 +1782,7 @@ def _role_predicates(
     )
     for predicate in predicates:
         if predicate.role != expected_role:
-            raise ContractIRError(
-                f"{field_name} predicates must have role {expected_role!r}"
-            )
+            raise ContractIRError(f"{field_name} predicates must have role {expected_role!r}")
     return predicates
 
 
@@ -1969,18 +1809,14 @@ class ContractDocument(CanonicalContractRecord):
     )
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "document_id", _identifier(self.document_id, "document_id")
-        )
+        object.__setattr__(self, "document_id", _identifier(self.document_id, "document_id"))
         object.__setattr__(
             self,
             "schema",
             _text(self.schema, "schema", no_whitespace=True, maximum=256),
         )
         if self.schema != SOFTWARE_CONTRACT_SCHEMA:
-            raise ContractIRError(
-                f"schema must be exactly {SOFTWARE_CONTRACT_SCHEMA}"
-            )
+            raise ContractIRError(f"schema must be exactly {SOFTWARE_CONTRACT_SCHEMA}")
         object.__setattr__(
             self,
             "owner_goal",
@@ -2037,12 +1873,8 @@ class ContractDocument(CanonicalContractRecord):
         data = _closed_mapping(value, cls._FIELDS, cls.__name__)
         return cls(
             document_id=data["document_id"],
-            callables=[
-                CallableContract.from_dict(item) for item in data["callables"]
-            ],
-            findings=[
-                ContractFinding.from_dict(item) for item in data["findings"]
-            ],
+            callables=[CallableContract.from_dict(item) for item in data["callables"]],
+            findings=[ContractFinding.from_dict(item) for item in data["findings"]],
             registry_revision=data["registry_revision"],
             owner_goal=data["owner_goal"],
             schema=data["schema"],
@@ -2089,9 +1921,7 @@ def software_contract_schema_descriptor() -> dict[str, Any]:
             "closed_fields": True,
             "no_floats": True,
         },
-        "json_schema_path": (
-            "ipfs_datasets_py/docs/schemas/software-contract-v1.schema.json"
-        ),
+        "json_schema_path": ("ipfs_datasets_py/docs/schemas/software-contract-v1.schema.json"),
         "ast_symbols": [
             "CallableContract",
             "EffectContract",

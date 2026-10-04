@@ -240,8 +240,13 @@ def test_parse_simple_contract_spans_and_kinds(
 
     # Calls / value effects / assembly
     assert vault.calls or vault.value_effects or vault.assembly_blocks
-    assert any(v.kind is ValueEffectKind.CALL_VALUE or v.kind is ValueEffectKind.SELFDESTRUCT
-               for v in vault.value_effects) or vault.calls
+    assert (
+        any(
+            v.kind is ValueEffectKind.CALL_VALUE or v.kind is ValueEffectKind.SELFDESTRUCT
+            for v in vault.value_effects
+        )
+        or vault.calls
+    )
     assert any(a.dialect == "assembly" for a in vault.assembly_blocks) or any(
         u.construct == "assembly" for u in vault.unsupported
     )
@@ -249,7 +254,13 @@ def test_parse_simple_contract_spans_and_kinds(
     # Auth guards
     assert vault.auth_guards
     assert any(
-        g.kind in {AuthGuardKind.REQUIRE, AuthGuardKind.MODIFIER, AuthGuardKind.OWNABLE, AuthGuardKind.REVERT}
+        g.kind
+        in {
+            AuthGuardKind.REQUIRE,
+            AuthGuardKind.MODIFIER,
+            AuthGuardKind.OWNABLE,
+            AuthGuardKind.REVERT,
+        }
         for g in vault.auth_guards
     )
 
@@ -399,9 +410,7 @@ def test_injected_unavailable_backend() -> None:
     assert result.status is ParseStatus.UNSUPPORTED
 
 
-def test_protocol_parse_batch(
-    parser: SolidityContractParser, context: OperationContext
-) -> None:
+def test_protocol_parse_batch(parser: SolidityContractParser, context: OperationContext) -> None:
     artifacts = [
         SIMPLE_CONTRACT,
         {"source": "contract D {}", "path": "D.sol", "compiler": "0.8.19"},
@@ -438,9 +447,7 @@ def test_deterministic_digests() -> None:
     assert a.content_digest == b.content_digest
     assert a.source_unit is not None and b.source_unit is not None
     assert a.source_unit.content_digest == b.source_unit.content_digest
-    assert a.source_unit.source_digest == bytes_digest(
-        SIMPLE_CONTRACT.encode("utf-8")
-    )
+    assert a.source_unit.source_digest == bytes_digest(SIMPLE_CONTRACT.encode("utf-8"))
 
 
 def test_source_span_validation() -> None:
@@ -504,14 +511,18 @@ contract C {
     assert c.storage_accesses
     assert any(s.kind.value in {"write", "read"} for s in c.storage_accesses)
     kinds = {call.kind for call in c.calls}
-    assert kinds & {
-        CallKind.EXTERNAL,
-        CallKind.SUPER,
-        CallKind.DELEGATECALL,
-        CallKind.INTERNAL,
-        CallKind.LOW_LEVEL,
-        CallKind.BUILTIN,
-    } or c.calls
+    assert (
+        kinds
+        & {
+            CallKind.EXTERNAL,
+            CallKind.SUPER,
+            CallKind.DELEGATECALL,
+            CallKind.INTERNAL,
+            CallKind.LOW_LEVEL,
+            CallKind.BUILTIN,
+        }
+        or c.calls
+    )
 
 
 def test_empty_source_ok() -> None:
@@ -521,9 +532,7 @@ def test_empty_source_ok() -> None:
     assert result.source_unit.type_definitions == ()
 
 
-def test_invalid_artifact_type(
-    parser: SolidityContractParser, context: OperationContext
-) -> None:
+def test_invalid_artifact_type(parser: SolidityContractParser, context: OperationContext) -> None:
     with pytest.raises(InvalidRequestError):
         parser.parse([12345], context=context)
 

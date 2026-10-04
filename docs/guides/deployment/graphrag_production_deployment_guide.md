@@ -113,30 +113,30 @@ PROMETHEUS_URL=http://prometheus:9090
 ```python
 # File: production_config.py
 PRODUCTION_CONFIG = {
-    'processing': {
-        'max_parallel_websites': 10,
-        'max_parallel_content_items': 50,
-        'batch_size_html': 100,
-        'batch_size_pdf': 20,
-        'batch_size_media': 5,
-        'cache_ttl_hours': 24,
-        'memory_limit_gb': 8
+    "processing": {
+        "max_parallel_websites": 10,
+        "max_parallel_content_items": 50,
+        "batch_size_html": 100,
+        "batch_size_pdf": 20,
+        "batch_size_media": 5,
+        "cache_ttl_hours": 24,
+        "memory_limit_gb": 8,
     },
-    'graphrag': {
-        'vector_store_type': 'faiss',
-        'embedding_batch_size': 32,
-        'knowledge_graph_confidence_threshold': 0.8,
-        'max_graph_entities': 10000
+    "graphrag": {
+        "vector_store_type": "faiss",
+        "embedding_batch_size": 32,
+        "knowledge_graph_confidence_threshold": 0.8,
+        "max_graph_entities": 10000,
     },
-    'monitoring': {
-        'metrics_collection_interval': 30,
-        'log_retention_days': 30,
-        'alert_thresholds': {
-            'processing_time_minutes': 30,
-            'memory_usage_percent': 80,
-            'error_rate_percent': 5
-        }
-    }
+    "monitoring": {
+        "metrics_collection_interval": 30,
+        "log_retention_days": 30,
+        "alert_thresholds": {
+            "processing_time_minutes": 30,
+            "memory_usage_percent": 80,
+            "error_rate_percent": 5,
+        },
+    },
 }
 ```
 
@@ -144,17 +144,17 @@ PRODUCTION_CONFIG = {
 ```python
 # File: caching_config.py
 CACHE_CONFIG = {
-    'redis': {
-        'processed_content_ttl': 3600 * 24 * 7,  # 7 days
-        'embeddings_ttl': 3600 * 24 * 30,  # 30 days
-        'knowledge_graph_ttl': 3600 * 24 * 14,  # 14 days
-        'query_results_ttl': 3600 * 2,  # 2 hours
+    "redis": {
+        "processed_content_ttl": 3600 * 24 * 7,  # 7 days
+        "embeddings_ttl": 3600 * 24 * 30,  # 30 days
+        "knowledge_graph_ttl": 3600 * 24 * 14,  # 14 days
+        "query_results_ttl": 3600 * 2,  # 2 hours
     },
-    'filesystem': {
-        'warc_files_retention_days': 30,
-        'media_files_retention_days': 7,
-        'temp_processing_cleanup_hours': 6
-    }
+    "filesystem": {
+        "warc_files_retention_days": 30,
+        "media_files_retention_days": 7,
+        "temp_processing_cleanup_hours": 6,
+    },
 }
 ```
 
@@ -171,10 +171,10 @@ The system automatically collects comprehensive metrics:
 ### Health Checks
 ```python
 # Health check endpoints
-GET /health              # Basic health check
-GET /health/detailed     # Detailed system status
-GET /health/dependencies # External dependency status
-GET /metrics            # Prometheus metrics endpoint
+GET / health  # Basic health check
+GET / health / detailed  # Detailed system status
+GET / health / dependencies  # External dependency status
+GET / metrics  # Prometheus metrics endpoint
 ```
 
 ### Alerting Rules
@@ -208,22 +208,22 @@ groups:
 ```python
 # File: security_config.py
 SECURITY_CONFIG = {
-    'auth': {
-        'jwt_secret_key': 'your-secret-key',
-        'jwt_algorithm': 'HS256',
-        'token_expiry_hours': 24,
-        'refresh_token_expiry_days': 30
+    "auth": {
+        "jwt_secret_key": "your-secret-key",
+        "jwt_algorithm": "HS256",
+        "token_expiry_hours": 24,
+        "refresh_token_expiry_days": 30,
     },
-    'rate_limiting': {
-        'requests_per_minute': 60,
-        'processing_jobs_per_hour': 10,
-        'query_requests_per_minute': 100
+    "rate_limiting": {
+        "requests_per_minute": 60,
+        "processing_jobs_per_hour": 10,
+        "query_requests_per_minute": 100,
     },
-    'data_protection': {
-        'encrypt_stored_content': True,
-        'anonymize_user_queries': True,
-        'content_retention_days': 90
-    }
+    "data_protection": {
+        "encrypt_stored_content": True,
+        "anonymize_user_queries": True,
+        "content_retention_days": 90,
+    },
 }
 ```
 

@@ -87,19 +87,11 @@ from ..guard.preflight import TransactionPreflight
 # ---------------------------------------------------------------------------
 
 BITCOIN_TRANSACTION_GUARD_INTERFACE: Final = "BitcoinTransactionGuard@1"
-BITCOIN_TRANSACTION_GUARD_SCHEMA_VERSION: Final = (
-    "wallet-guard.bitcoin-transaction-guard/v1"
-)
-BITCOIN_CANDIDATE_SCHEMA_VERSION: Final = (
-    "wallet-guard.bitcoin-transaction-candidate/v1"
-)
+BITCOIN_TRANSACTION_GUARD_SCHEMA_VERSION: Final = "wallet-guard.bitcoin-transaction-guard/v1"
+BITCOIN_CANDIDATE_SCHEMA_VERSION: Final = "wallet-guard.bitcoin-transaction-candidate/v1"
 BITCOIN_BINDING_SCHEMA_VERSION: Final = "wallet-guard.bitcoin-tx-binding/v1"
-BITCOIN_GUARD_DECISION_SCHEMA_VERSION: Final = (
-    "wallet-guard.bitcoin-guard-decision/v1"
-)
-UTXO_AVAILABILITY_SCHEMA_VERSION: Final = (
-    "wallet-guard.bitcoin-utxo-availability/v1"
-)
+BITCOIN_GUARD_DECISION_SCHEMA_VERSION: Final = "wallet-guard.bitcoin-guard-decision/v1"
+UTXO_AVAILABILITY_SCHEMA_VERSION: Final = "wallet-guard.bitcoin-utxo-availability/v1"
 UTXO_ANCESTRY_SCHEMA_VERSION: Final = "wallet-guard.bitcoin-utxo-ancestry/v1"
 
 DEFAULT_PRODUCER_ID: Final = "producer:wallet-guard-bitcoin-v1"
@@ -219,9 +211,7 @@ def _digest(value: Any, name: str) -> str:
 def _timestamp(value: Any, name: str) -> str:
     text = _text(value, name, max_chars=64)
     if not _ISO8601_RE.fullmatch(text):
-        raise GuardValidationError(
-            f"{name} must be an ISO-8601 UTC/offset timestamp"
-        )
+        raise GuardValidationError(f"{name} must be an ISO-8601 UTC/offset timestamp")
     return text
 
 
@@ -257,8 +247,7 @@ def _reject_forbidden(value: Mapping[str, Any], record_name: str) -> None:
     hit = sorted(set(value) & _FORBIDDEN_FIELDS)
     if hit:
         raise GuardForbiddenSurfaceError(
-            f"{record_name} contains forbidden custody/approval field(s): "
-            f"{', '.join(hit)}",
+            f"{record_name} contains forbidden custody/approval field(s): {', '.join(hit)}",
             details={"fields": hit},
         )
 
@@ -276,12 +265,7 @@ def _attributes(value: Mapping[str, Any] | None) -> FrozenMap:
 
 
 def _iso_now() -> str:
-    return (
-        datetime.now(timezone.utc)
-        .replace(microsecond=0)
-        .isoformat()
-        .replace("+00:00", "Z")
-    )
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
 def _jsonable(value: Any) -> Any:
@@ -353,15 +337,9 @@ class BitcoinTransactionCandidate:
     kind: str = "transaction_candidate"
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "intent_id", _identifier(self.intent_id, "intent_id")
-        )
-        object.__setattr__(
-            self, "kind", _text(self.kind, "kind", max_chars=64)
-        )
-        object.__setattr__(
-            self, "network", _text(self.network, "network", max_chars=128)
-        )
+        object.__setattr__(self, "intent_id", _identifier(self.intent_id, "intent_id"))
+        object.__setattr__(self, "kind", _text(self.kind, "kind", max_chars=64))
+        object.__setattr__(self, "network", _text(self.network, "network", max_chars=128))
         object.__setattr__(
             self,
             "genesis_hash",
@@ -375,15 +353,11 @@ class BitcoinTransactionCandidate:
         object.__setattr__(self, "version", _non_negative_int(self.version, "version"))
         object.__setattr__(self, "locktime", _uint32(self.locktime, "locktime"))
         if not self.inputs:
-            raise GuardValidationError(
-                "BitcoinTransactionCandidate requires at least one input"
-            )
+            raise GuardValidationError("BitcoinTransactionCandidate requires at least one input")
         if len(self.inputs) > MAX_COLLECTION_ITEMS:
             raise GuardValidationError("inputs exceeds maximum collection size")
         if not self.outputs:
-            raise GuardValidationError(
-                "BitcoinTransactionCandidate requires at least one output"
-            )
+            raise GuardValidationError("BitcoinTransactionCandidate requires at least one output")
         if len(self.outputs) > MAX_COLLECTION_ITEMS:
             raise GuardValidationError("outputs exceeds maximum collection size")
         object.__setattr__(
@@ -409,18 +383,13 @@ class BitcoinTransactionCandidate:
         )
         for idx in self.change_output_indexes:
             if idx >= len(self.outputs):
-                raise GuardValidationError(
-                    f"change_output_indexes item {idx} out of range"
-                )
+                raise GuardValidationError(f"change_output_indexes item {idx} out of range")
         if self.psbt is not None and not isinstance(self.psbt, (PSBTBinding, Mapping)):
             raise GuardValidationError("psbt must be PSBTBinding, mapping, or None")
         object.__setattr__(
             self,
             "descriptor_paths",
-            tuple(
-                dict(_mapping(p, "descriptor_paths item"))
-                for p in self.descriptor_paths
-            ),
+            tuple(dict(_mapping(p, "descriptor_paths item")) for p in self.descriptor_paths),
         )
         object.__setattr__(
             self,
@@ -435,16 +404,12 @@ class BitcoinTransactionCandidate:
         object.__setattr__(
             self,
             "exposure_paths",
-            tuple(
-                dict(_mapping(p, "exposure_paths item")) for p in self.exposure_paths
-            ),
+            tuple(dict(_mapping(p, "exposure_paths item")) for p in self.exposure_paths),
         )
         object.__setattr__(
             self,
             "ancestry_edges",
-            tuple(
-                dict(_mapping(e, "ancestry_edges item")) for e in self.ancestry_edges
-            ),
+            tuple(dict(_mapping(e, "ancestry_edges item")) for e in self.ancestry_edges),
         )
         object.__setattr__(
             self,
@@ -461,9 +426,7 @@ class BitcoinTransactionCandidate:
                 "serialized_hex",
                 normalize_hex_script(self.serialized_hex, field="serialized_hex"),
             )
-        object.__setattr__(
-            self, "encoding", _identifier(self.encoding, "encoding")
-        )
+        object.__setattr__(self, "encoding", _identifier(self.encoding, "encoding"))
         if not isinstance(self.attributes, FrozenMap):
             object.__setattr__(self, "attributes", _attributes(self.attributes))
         object.__setattr__(
@@ -472,9 +435,7 @@ class BitcoinTransactionCandidate:
             _text(self.schema_version, "schema_version"),
         )
         if self.schema_version != BITCOIN_CANDIDATE_SCHEMA_VERSION:
-            raise GuardValidationError(
-                f"unsupported candidate schema: {self.schema_version!r}"
-            )
+            raise GuardValidationError(f"unsupported candidate schema: {self.schema_version!r}")
         # Resolve / validate network+genesis early.
         try:
             resolve_network(
@@ -526,9 +487,7 @@ class BitcoinTransactionCandidate:
             intent_id=value.get("intent_id", value.get("intentId", "")),
             chain_id=value.get("chain_id", value.get("chainId", "")),
             network=value.get("network", MAINNET_NETWORK),
-            genesis_hash=value.get(
-                "genesis_hash", value.get("genesisHash", MAINNET_GENESIS)
-            ),
+            genesis_hash=value.get("genesis_hash", value.get("genesisHash", MAINNET_GENESIS)),
             version=value.get("version", 2),
             locktime=value.get("locktime", value.get("lockTime", 0)),
             inputs=tuple(value.get("inputs", value.get("vin", ()))),
@@ -542,29 +501,15 @@ class BitcoinTransactionCandidate:
                 )
             ),
             psbt=value.get("psbt"),
-            descriptor_paths=tuple(
-                value.get("descriptor_paths", value.get("descriptorPaths", ()))
-            ),
-            list_revision=value.get(
-                "list_revision", value.get("listRevision", "")
-            ),
-            graph_revision=value.get(
-                "graph_revision", value.get("graphRevision", "")
-            ),
-            exposure_paths=tuple(
-                value.get("exposure_paths", value.get("exposurePaths", ()))
-            ),
-            ancestry_edges=tuple(
-                value.get("ancestry_edges", value.get("ancestryEdges", ()))
-            ),
-            serialized_hex=value.get(
-                "serialized_hex", value.get("serializedHex", "")
-            ),
+            descriptor_paths=tuple(value.get("descriptor_paths", value.get("descriptorPaths", ()))),
+            list_revision=value.get("list_revision", value.get("listRevision", "")),
+            graph_revision=value.get("graph_revision", value.get("graphRevision", "")),
+            exposure_paths=tuple(value.get("exposure_paths", value.get("exposurePaths", ()))),
+            ancestry_edges=tuple(value.get("ancestry_edges", value.get("ancestryEdges", ()))),
+            serialized_hex=value.get("serialized_hex", value.get("serializedHex", "")),
             encoding=value.get("encoding", "bitcoin-unsigned-tx"),
             attributes=value.get("attributes", {}),
-            schema_version=value.get(
-                "schema_version", BITCOIN_CANDIDATE_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", BITCOIN_CANDIDATE_SCHEMA_VERSION),
             kind=value.get("kind", "transaction_candidate"),
         )
 
@@ -593,14 +538,10 @@ class BoundPrevout:
     attributes: FrozenMap = field(default_factory=FrozenMap)
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "input_index", _non_negative_int(self.input_index, "input_index")
-        )
+        object.__setattr__(self, "input_index", _non_negative_int(self.input_index, "input_index"))
         object.__setattr__(self, "txid", normalize_txid(self.txid, field="txid"))
         object.__setattr__(self, "vout", _uint32(self.vout, "vout"))
-        object.__setattr__(
-            self, "outpoint", outpoint_key(self.txid, self.vout)
-        )
+        object.__setattr__(self, "outpoint", outpoint_key(self.txid, self.vout))
         object.__setattr__(self, "value_sats", _amount(self.value_sats, "value_sats"))
         try:
             script = normalize_hex_script(self.script_hex, field="script_hex")
@@ -608,9 +549,7 @@ class BoundPrevout:
             raise GuardValidationError(str(exc)) from exc
         object.__setattr__(self, "script_hex", script)
         if self.script_digest:
-            object.__setattr__(
-                self, "script_digest", _digest(self.script_digest, "script_digest")
-            )
+            object.__setattr__(self, "script_digest", _digest(self.script_digest, "script_digest"))
         else:
             object.__setattr__(
                 self,
@@ -620,9 +559,7 @@ class BoundPrevout:
         object.__setattr__(
             self,
             "script_type",
-            parse_script_type(self.script_type).value
-            if self.script_type
-            else "unknown",
+            parse_script_type(self.script_type).value if self.script_type else "unknown",
         )
         object.__setattr__(self, "sequence", _uint32(self.sequence, "sequence"))
         object.__setattr__(self, "rbf_signaled", bool(self.rbf_signaled))
@@ -653,9 +590,7 @@ class BoundPrevout:
             "witness_item_count",
             _non_negative_int(self.witness_item_count, "witness_item_count"),
         )
-        object.__setattr__(
-            self, "previous_output_known", bool(self.previous_output_known)
-        )
+        object.__setattr__(self, "previous_output_known", bool(self.previous_output_known))
         if not isinstance(self.attributes, FrozenMap):
             object.__setattr__(self, "attributes", _attributes(self.attributes))
 
@@ -695,18 +630,12 @@ class BoundPrevout:
                 "script_hex",
                 value.get("scriptpubkey", value.get("script_pubkey", "")),
             ),
-            script_digest=value.get(
-                "script_digest", value.get("script_commitment", "")
-            ),
-            script_type=value.get(
-                "script_type", value.get("scriptpubkey_type", "unknown")
-            ),
+            script_digest=value.get("script_digest", value.get("script_commitment", "")),
+            script_type=value.get("script_type", value.get("scriptpubkey_type", "unknown")),
             sequence=value.get("sequence", MAX_SEQUENCE),
             rbf_signaled=value.get("rbf_signaled", False),
             sighash_type=value.get("sighash_type", int(SighashFlag.ALL)),
-            sighash_commitment_digest=value.get(
-                "sighash_commitment_digest", ""
-            ),
+            sighash_commitment_digest=value.get("sighash_commitment_digest", ""),
             sighash_is_weak=value.get("sighash_is_weak", False),
             spend_path_id=value.get("spend_path_id", ""),
             descriptor=value.get("descriptor", ""),
@@ -747,9 +676,7 @@ class BoundOutput:
             raise GuardValidationError(str(exc)) from exc
         object.__setattr__(self, "script_hex", script)
         if self.script_digest:
-            object.__setattr__(
-                self, "script_digest", _digest(self.script_digest, "script_digest")
-            )
+            object.__setattr__(self, "script_digest", _digest(self.script_digest, "script_digest"))
         else:
             object.__setattr__(
                 self,
@@ -759,25 +686,16 @@ class BoundOutput:
         object.__setattr__(
             self,
             "script_type",
-            parse_script_type(self.script_type).value
-            if self.script_type
-            else "unknown",
+            parse_script_type(self.script_type).value if self.script_type else "unknown",
         )
-        object.__setattr__(
-            self, "address", _optional_text(self.address, "address", max_chars=256)
-        )
+        object.__setattr__(self, "address", _optional_text(self.address, "address", max_chars=256))
         # is_change is only true when explicitly declared.
         object.__setattr__(self, "is_explicit_change", bool(self.is_explicit_change))
-        object.__setattr__(
-            self, "is_change", bool(self.is_explicit_change and self.is_change)
-        )
+        object.__setattr__(self, "is_change", bool(self.is_explicit_change and self.is_change))
         object.__setattr__(
             self,
             "exposure_path_ids",
-            tuple(
-                _identifier(p, "exposure_path_ids item")
-                for p in self.exposure_path_ids
-            ),
+            tuple(_identifier(p, "exposure_path_ids item") for p in self.exposure_path_ids),
         )
         if not isinstance(self.attributes, FrozenMap):
             object.__setattr__(self, "attributes", _attributes(self.attributes))
@@ -808,12 +726,8 @@ class BoundOutput:
                 value.get("scriptpubkey", value.get("script_pubkey", "")),
             ),
             script_digest=value.get("script_digest", ""),
-            script_type=value.get(
-                "script_type", value.get("scriptpubkey_type", "unknown")
-            ),
-            address=value.get(
-                "address", value.get("scriptpubkey_address", "")
-            ),
+            script_type=value.get("script_type", value.get("scriptpubkey_type", "unknown")),
+            address=value.get("address", value.get("scriptpubkey_address", "")),
             is_change=value.get("is_change", False),
             is_explicit_change=value.get("is_explicit_change", False),
             exposure_path_ids=tuple(value.get("exposure_path_ids", ())),
@@ -847,9 +761,7 @@ class UtxoAvailability:
     schema_version: str = UTXO_AVAILABILITY_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "outpoint", _text(self.outpoint, "outpoint", max_chars=128)
-        )
+        object.__setattr__(self, "outpoint", _text(self.outpoint, "outpoint", max_chars=128))
         if ":" not in self.outpoint:
             raise GuardValidationError("outpoint must be txid:vout")
         if not isinstance(self.status, UtxoStatus):
@@ -866,9 +778,7 @@ class UtxoAvailability:
                 _non_negative_int(self.block_height, "block_height"),
             )
         if self.tip_height is not None:
-            object.__setattr__(
-                self, "tip_height", _non_negative_int(self.tip_height, "tip_height")
-            )
+            object.__setattr__(self, "tip_height", _non_negative_int(self.tip_height, "tip_height"))
         object.__setattr__(
             self,
             "block_hash",
@@ -885,9 +795,7 @@ class UtxoAvailability:
             _text(self.schema_version, "schema_version"),
         )
         if not self.availability_epoch:
-            object.__setattr__(
-                self, "availability_epoch", self.compute_epoch_digest()
-            )
+            object.__setattr__(self, "availability_epoch", self.compute_epoch_digest())
         else:
             object.__setattr__(
                 self,
@@ -936,9 +844,7 @@ class UtxoAvailability:
             tip_hash=value.get("tip_hash", ""),
             availability_epoch=value.get("availability_epoch", ""),
             attributes=value.get("attributes", {}),
-            schema_version=value.get(
-                "schema_version", UTXO_AVAILABILITY_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", UTXO_AVAILABILITY_SCHEMA_VERSION),
         )
 
 
@@ -971,9 +877,7 @@ class UtxoAncestryEdge:
         )
         object.__setattr__(self, "depth", _non_negative_int(self.depth, "depth"))
         if self.depth > MAX_ANCESTRY_DEPTH:
-            raise GuardValidationError(
-                f"ancestry depth exceeds maximum of {MAX_ANCESTRY_DEPTH}"
-            )
+            raise GuardValidationError(f"ancestry depth exceeds maximum of {MAX_ANCESTRY_DEPTH}")
         object.__setattr__(self, "value_sats", _amount(self.value_sats, "value_sats"))
         # Hard invariant: CoinJoin / multi-input ownership is never assumed.
         if self.ownership_assumed:
@@ -1012,9 +916,7 @@ class UtxoAncestryEdge:
             value_sats=value.get("value_sats", "0"),
             ownership_assumed=value.get("ownership_assumed", False),
             attributes=value.get("attributes", {}),
-            schema_version=value.get(
-                "schema_version", UTXO_ANCESTRY_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", UTXO_ANCESTRY_SCHEMA_VERSION),
         )
 
 
@@ -1063,21 +965,11 @@ class BitcoinTransactionBinding:
     schema_version: str = BITCOIN_BINDING_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "binding_id", _identifier(self.binding_id, "binding_id")
-        )
-        object.__setattr__(
-            self, "intent_id", _identifier(self.intent_id, "intent_id")
-        )
-        object.__setattr__(
-            self, "candidate_id", _identifier(self.candidate_id, "candidate_id")
-        )
-        object.__setattr__(
-            self, "chain_id", _text(self.chain_id, "chain_id", max_chars=128)
-        )
-        object.__setattr__(
-            self, "network", _text(self.network, "network", max_chars=128)
-        )
+        object.__setattr__(self, "binding_id", _identifier(self.binding_id, "binding_id"))
+        object.__setattr__(self, "intent_id", _identifier(self.intent_id, "intent_id"))
+        object.__setattr__(self, "candidate_id", _identifier(self.candidate_id, "candidate_id"))
+        object.__setattr__(self, "chain_id", _text(self.chain_id, "chain_id", max_chars=128))
+        object.__setattr__(self, "network", _text(self.network, "network", max_chars=128))
         object.__setattr__(
             self,
             "genesis_hash",
@@ -1124,9 +1016,7 @@ class BitcoinTransactionBinding:
             elif isinstance(item, Mapping):
                 utxos.append(UtxoAvailability.from_dict(item))
             else:
-                raise GuardValidationError(
-                    "utxo_availability items must be UtxoAvailability"
-                )
+                raise GuardValidationError("utxo_availability items must be UtxoAvailability")
         object.__setattr__(self, "utxo_availability", tuple(utxos))
         edges: list[UtxoAncestryEdge] = []
         for item in self.ancestry_edges:
@@ -1135,9 +1025,7 @@ class BitcoinTransactionBinding:
             elif isinstance(item, Mapping):
                 edges.append(UtxoAncestryEdge.from_dict(item))
             else:
-                raise GuardValidationError(
-                    "ancestry_edges items must be UtxoAncestryEdge"
-                )
+                raise GuardValidationError("ancestry_edges items must be UtxoAncestryEdge")
         object.__setattr__(self, "ancestry_edges", tuple(edges))
         object.__setattr__(
             self,
@@ -1160,9 +1048,7 @@ class BitcoinTransactionBinding:
             _optional_text(self.graph_revision, "graph_revision", max_chars=128),
         )
         if self.psbt_digest:
-            object.__setattr__(
-                self, "psbt_digest", _digest(self.psbt_digest, "psbt_digest")
-            )
+            object.__setattr__(self, "psbt_digest", _digest(self.psbt_digest, "psbt_digest"))
         else:
             object.__setattr__(self, "psbt_digest", "")
         object.__setattr__(self, "has_weak_sighash", bool(self.has_weak_sighash))
@@ -1175,12 +1061,8 @@ class BitcoinTransactionBinding:
             "serialized_digest",
             _digest(self.serialized_digest, "serialized_digest"),
         )
-        object.__setattr__(
-            self, "encoding", _identifier(self.encoding, "encoding")
-        )
-        object.__setattr__(
-            self, "byte_length", _non_negative_int(self.byte_length, "byte_length")
-        )
+        object.__setattr__(self, "encoding", _identifier(self.encoding, "encoding"))
+        object.__setattr__(self, "byte_length", _non_negative_int(self.byte_length, "byte_length"))
         if self.byte_length == 0:
             raise GuardValidationError("byte_length must be positive")
         if not isinstance(self.attributes, FrozenMap):
@@ -1191,9 +1073,7 @@ class BitcoinTransactionBinding:
             _text(self.schema_version, "schema_version"),
         )
         if self.schema_version != BITCOIN_BINDING_SCHEMA_VERSION:
-            raise GuardValidationError(
-                f"unsupported binding schema: {self.schema_version!r}"
-            )
+            raise GuardValidationError(f"unsupported binding schema: {self.schema_version!r}")
         if not self.binding_digest:
             object.__setattr__(self, "binding_digest", self.compute_binding_digest())
         else:
@@ -1278,9 +1158,7 @@ class BitcoinTransactionBinding:
             byte_length=value.get("byte_length", 0),
             binding_digest=value.get("binding_digest", ""),
             attributes=value.get("attributes", {}),
-            schema_version=value.get(
-                "schema_version", BITCOIN_BINDING_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", BITCOIN_BINDING_SCHEMA_VERSION),
         )
 
 
@@ -1315,29 +1193,19 @@ class BitcoinGuardDecision:
 
     def __post_init__(self) -> None:
         if not isinstance(self.outcome, TransactionVerdictOutcome):
-            object.__setattr__(
-                self, "outcome", TransactionVerdictOutcome(str(self.outcome))
-            )
+            object.__setattr__(self, "outcome", TransactionVerdictOutcome(str(self.outcome)))
         object.__setattr__(self, "blocks_automation", bool(self.blocks_automation))
-        object.__setattr__(
-            self, "reason_codes", tuple(str(c) for c in self.reason_codes)
-        )
+        object.__setattr__(self, "reason_codes", tuple(str(c) for c in self.reason_codes))
         object.__setattr__(self, "reasons", tuple(str(r) for r in self.reasons))
-        object.__setattr__(
-            self, "binding_digest", _digest(self.binding_digest, "binding_digest")
-        )
+        object.__setattr__(self, "binding_digest", _digest(self.binding_digest, "binding_digest"))
         if self.request_digest:
             object.__setattr__(
                 self, "request_digest", _digest(self.request_digest, "request_digest")
             )
         else:
             object.__setattr__(self, "request_digest", "")
-        object.__setattr__(
-            self, "security_results", dict(self.security_results or {})
-        )
-        object.__setattr__(
-            self, "compliance_results", dict(self.compliance_results or {})
-        )
+        object.__setattr__(self, "security_results", dict(self.security_results or {}))
+        object.__setattr__(self, "compliance_results", dict(self.compliance_results or {}))
         if not isinstance(self.attributes, FrozenMap):
             object.__setattr__(self, "attributes", _attributes(self.attributes))
         object.__setattr__(
@@ -1348,10 +1216,7 @@ class BitcoinGuardDecision:
 
     @property
     def allowed(self) -> bool:
-        return (
-            self.outcome is TransactionVerdictOutcome.ALLOW
-            and not self.blocks_automation
-        )
+        return self.outcome is TransactionVerdictOutcome.ALLOW and not self.blocks_automation
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -1373,9 +1238,7 @@ class BitcoinGuardDecision:
 # Live resolvers
 # ---------------------------------------------------------------------------
 
-UtxoAvailabilityResolver = Callable[
-    [str], UtxoAvailability | Mapping[str, Any] | None
-]
+UtxoAvailabilityResolver = Callable[[str], UtxoAvailability | Mapping[str, Any] | None]
 ListRevisionChecker = Callable[[str, str], bool]
 GraphRevisionChecker = Callable[[str, str], bool]
 
@@ -1435,13 +1298,9 @@ class BitcoinTransactionGuard:
         if self.preflight is None:
             self.preflight = TransactionPreflight(producer_id=self.producer_id)
         if self.interface != BITCOIN_TRANSACTION_GUARD_INTERFACE:
-            raise GuardValidationError(
-                f"unsupported bitcoin guard interface: {self.interface!r}"
-            )
+            raise GuardValidationError(f"unsupported bitcoin guard interface: {self.interface!r}")
         if self.schema_version != BITCOIN_TRANSACTION_GUARD_SCHEMA_VERSION:
-            raise GuardValidationError(
-                f"unsupported bitcoin guard schema: {self.schema_version!r}"
-            )
+            raise GuardValidationError(f"unsupported bitcoin guard schema: {self.schema_version!r}")
         if self.list_revision_is_current is None:
             self.list_revision_is_current = lambda _rev, _now: True
         if self.graph_revision_is_current is None:
@@ -1453,8 +1312,7 @@ class BitcoinTransactionGuard:
         self,
         candidate: BitcoinTransactionCandidate | Mapping[str, Any],
         *,
-        utxo_availability: Sequence[UtxoAvailability | Mapping[str, Any]]
-        | None = None,
+        utxo_availability: Sequence[UtxoAvailability | Mapping[str, Any]] | None = None,
         ancestry_edges: Sequence[UtxoAncestryEdge | Mapping[str, Any]] | None = None,
         serialized_bytes: bytes | str | None = None,
         candidate_id: str = "",
@@ -1497,9 +1355,7 @@ class BitcoinTransactionGuard:
         # Ancestry: explicit edges only; never invent CoinJoin ownership.
         bound_ancestry = self._bind_ancestry(
             bound_prevouts,
-            ancestry_edges=ancestry_edges
-            if ancestry_edges is not None
-            else cand.ancestry_edges,
+            ancestry_edges=ancestry_edges if ancestry_edges is not None else cand.ancestry_edges,
         )
 
         # PSBT digest (optional analysis surface).
@@ -1525,9 +1381,7 @@ class BitcoinTransactionGuard:
             else:
                 text = str(serialized_bytes)
                 try:
-                    raw = bytes.fromhex(
-                        normalize_hex_script(text, field="serialized_bytes")
-                    )
+                    raw = bytes.fromhex(normalize_hex_script(text, field="serialized_bytes"))
                 except (BitcoinAdapterError, ValueError):
                     raw = text.encode("utf-8")
             serialized_digest = hashlib.sha256(raw).hexdigest()
@@ -1622,9 +1476,7 @@ class BitcoinTransactionGuard:
     ) -> TransactionPreflightRequest:
         """Project a Bitcoin binding into the common preflight request surface."""
 
-        intent = self._intent_from_binding(
-            binding, expires_at=intent_expires_at or expiry
-        )
+        intent = self._intent_from_binding(binding, expires_at=intent_expires_at or expiry)
         candidate = TransactionCandidate(
             candidate_id=binding.candidate_id,
             intent_id=binding.intent_id,
@@ -1831,16 +1683,12 @@ class BitcoinTransactionGuard:
             if isinstance(capability, Mapping):
                 capability = AdmissibilityCapability.from_dict(capability)
             else:
-                raise GuardValidationError(
-                    "capability must be an AdmissibilityCapability"
-                )
+                raise GuardValidationError("capability must be an AdmissibilityCapability")
         if not isinstance(live_request, TransactionPreflightRequest):
             if isinstance(live_request, Mapping):
                 live_request = TransactionPreflightRequest.from_dict(live_request)
             else:
-                raise GuardValidationError(
-                    "live_request must be a TransactionPreflightRequest"
-                )
+                raise GuardValidationError("live_request must be a TransactionPreflightRequest")
 
         if isinstance(phase, PreflightPhase):
             phase_value = phase.value
@@ -1880,10 +1728,7 @@ class BitcoinTransactionGuard:
                     "observed": live_list_revision,
                 },
             )
-        if (
-            live_graph_revision is not None
-            and live_graph_revision != binding.graph_revision
-        ):
+        if live_graph_revision is not None and live_graph_revision != binding.graph_revision:
             raise GuardCapabilityError(
                 "graph revision substituted or stale at consumption",
                 reason_code="bitcoin.graph_revision_stale",
@@ -1902,8 +1747,7 @@ class BitcoinTransactionGuard:
         )
         if structural["blocking"] is not None:
             raise GuardCapabilityError(
-                "; ".join(structural["reasons"])
-                or "bitcoin live revalidation failed",
+                "; ".join(structural["reasons"]) or "bitcoin live revalidation failed",
                 reason_code=structural["reason_codes"][0]
                 if structural["reason_codes"]
                 else "bitcoin.consumption_blocked",
@@ -1944,13 +1788,9 @@ class BitcoinTransactionGuard:
         if isinstance(candidate, Mapping):
             _reject_forbidden(candidate, "BitcoinTransactionCandidate")
             return BitcoinTransactionCandidate.from_dict(candidate)
-        raise GuardValidationError(
-            "candidate must be a BitcoinTransactionCandidate or mapping"
-        )
+        raise GuardValidationError("candidate must be a BitcoinTransactionCandidate or mapping")
 
-    def _bind_prevouts(
-        self, cand: BitcoinTransactionCandidate
-    ) -> list[BoundPrevout]:
+    def _bind_prevouts(self, cand: BitcoinTransactionCandidate) -> list[BoundPrevout]:
         bound: list[BoundPrevout] = []
         for index, raw in enumerate(cand.inputs):
             item = _mapping(raw, f"inputs[{index}]")
@@ -1959,9 +1799,7 @@ class BitcoinTransactionGuard:
             # Nested prevout (Esplora-style) or flattened fields.
             prev = item.get("prevout", item.get("previous_output"))
             prev_map: Mapping[str, Any] = (
-                _mapping(prev, f"inputs[{index}].prevout")
-                if isinstance(prev, Mapping)
-                else item
+                _mapping(prev, f"inputs[{index}].prevout") if isinstance(prev, Mapping) else item
             )
 
             txid = item.get(
@@ -2072,9 +1910,7 @@ class BitcoinTransactionGuard:
                 # Offline fallback without frontend helpers.
                 base = sighash_type & 0x1F
                 acp = bool(sighash_type & int(SighashFlag.ANYONECANPAY))
-                sighash_weak = (
-                    base in {int(SighashFlag.NONE), int(SighashFlag.SINGLE)} or acp
-                )
+                sighash_weak = base in {int(SighashFlag.NONE), int(SighashFlag.SINGLE)} or acp
                 if sighash_type in {
                     int(SighashFlag.DEFAULT),
                     int(SighashFlag.ALL),
@@ -2097,9 +1933,7 @@ class BitcoinTransactionGuard:
             else:
                 witness_count = 0
 
-            spend_path = str(
-                item.get("spend_path_id", item.get("spendPathId", "")) or ""
-            )
+            spend_path = str(item.get("spend_path_id", item.get("spendPathId", "")) or "")
             descriptor = str(item.get("descriptor", "") or "")
             # Merge optional descriptor_paths by input index.
             for path in cand.descriptor_paths:
@@ -2107,12 +1941,9 @@ class BitcoinTransactionGuard:
                     continue
                 if int(path.get("input_index", path.get("inputIndex", -1))) == index:
                     spend_path = str(
-                        path.get("path_id", path.get("spend_path_id", spend_path))
-                        or spend_path
+                        path.get("path_id", path.get("spend_path_id", spend_path)) or spend_path
                     )
-                    descriptor = str(
-                        path.get("descriptor", descriptor) or descriptor
-                    )
+                    descriptor = str(path.get("descriptor", descriptor) or descriptor)
 
             bound.append(
                 BoundPrevout(
@@ -2122,9 +1953,7 @@ class BitcoinTransactionGuard:
                     vout=vout,
                     value_sats=value_sats,
                     script_hex=script_hex,
-                    script_digest=script_commitment(script_hex).removeprefix(
-                        "sha256:"
-                    ),
+                    script_digest=script_commitment(script_hex).removeprefix("sha256:"),
                     script_type=str(script_type or "unknown"),
                     sequence=sequence_i,
                     rbf_signaled=rbf,
@@ -2139,9 +1968,7 @@ class BitcoinTransactionGuard:
             )
         return bound
 
-    def _bind_outputs(
-        self, cand: BitcoinTransactionCandidate
-    ) -> list[BoundOutput]:
+    def _bind_outputs(self, cand: BitcoinTransactionCandidate) -> list[BoundOutput]:
         """Screen every output independently (no ownership clustering)."""
 
         explicit_change = set(cand.change_output_indexes)
@@ -2166,20 +1993,12 @@ class BitcoinTransactionGuard:
                     f"outputs[{index}] script unbound; every output must be screened"
                 )
             try:
-                script_hex = normalize_hex_script(
-                    str(script), field=f"outputs[{index}].script"
-                )
+                script_hex = normalize_hex_script(str(script), field=f"outputs[{index}].script")
             except BitcoinAdapterError as exc:
                 raise GuardValidationError(str(exc)) from exc
-            script_type = item.get(
-                "scriptpubkey_type", item.get("script_type", "unknown")
-            )
-            address = str(
-                item.get("scriptpubkey_address", item.get("address", "")) or ""
-            )
-            is_explicit = n_i in explicit_change or bool(
-                item.get("is_explicit_change", False)
-            )
+            script_type = item.get("scriptpubkey_type", item.get("script_type", "unknown"))
+            address = str(item.get("scriptpubkey_address", item.get("address", "")) or "")
+            is_explicit = n_i in explicit_change or bool(item.get("is_explicit_change", False))
             is_change = is_explicit and (
                 bool(item.get("is_change", True)) if is_explicit else False
             )
@@ -2201,9 +2020,7 @@ class BitcoinTransactionGuard:
                     output_index=n_i,
                     value_sats=value_sats,
                     script_hex=script_hex,
-                    script_digest=script_commitment(script_hex).removeprefix(
-                        "sha256:"
-                    ),
+                    script_digest=script_commitment(script_hex).removeprefix("sha256:"),
                     script_type=str(script_type or "unknown"),
                     address=address,
                     is_change=is_change,
@@ -2226,9 +2043,7 @@ class BitcoinTransactionGuard:
         total_out = sum(int(o.value_sats) for o in outputs)
         fee = int(fee_sats)
         if total_in < total_out:
-            raise GuardValidationError(
-                f"input sum {total_in} < output sum {total_out}"
-            )
+            raise GuardValidationError(f"input sum {total_in} < output sum {total_out}")
         expected_fee = total_in - total_out
         if fee != expected_fee:
             raise GuardValidationError(
@@ -2245,9 +2060,7 @@ class BitcoinTransactionGuard:
         if utxo_availability is not None:
             for item in utxo_availability:
                 epoch = (
-                    item
-                    if isinstance(item, UtxoAvailability)
-                    else UtxoAvailability.from_dict(item)
+                    item if isinstance(item, UtxoAvailability) else UtxoAvailability.from_dict(item)
                 )
                 provided[epoch.outpoint] = epoch
         bound: list[UtxoAvailability] = []
@@ -2255,9 +2068,7 @@ class BitcoinTransactionGuard:
             if prev.outpoint in provided:
                 bound.append(provided[prev.outpoint])
             elif utxo_availability is not None:
-                raise GuardValidationError(
-                    f"missing UTXO availability for {prev.outpoint}"
-                )
+                raise GuardValidationError(f"missing UTXO availability for {prev.outpoint}")
             else:
                 bound.append(
                     UtxoAvailability(
@@ -2286,15 +2097,9 @@ class BitcoinTransactionGuard:
             # No cross-input ownership edges are invented.
             return edges
         for item in ancestry_edges:
-            edge = (
-                item
-                if isinstance(item, UtxoAncestryEdge)
-                else UtxoAncestryEdge.from_dict(item)
-            )
+            edge = item if isinstance(item, UtxoAncestryEdge) else UtxoAncestryEdge.from_dict(item)
             if edge.ownership_assumed:
-                raise GuardValidationError(
-                    "ancestry edge must not assume CoinJoin ownership"
-                )
+                raise GuardValidationError("ancestry edge must not assume CoinJoin ownership")
             edges.append(edge)
         # Diagnostic: multi-input does not imply joint control.
         if len(prevouts) > 1:
@@ -2313,9 +2118,7 @@ class BitcoinTransactionGuard:
                     and edge.child_outpoint != edge.parent_outpoint
                     and attrs.get("implies_common_ownership")
                 ):
-                    raise GuardValidationError(
-                        "co-spent outpoints must not imply common ownership"
-                    )
+                    raise GuardValidationError("co-spent outpoints must not imply common ownership")
         return edges
 
     def _check_structural(
@@ -2356,13 +2159,9 @@ class BitcoinTransactionGuard:
                 and blocking is not TransactionVerdictOutcome.DENY
             ):
                 blocking = outcome
-            elif (
-                outcome is TransactionVerdictOutcome.STALE
-                and blocking
-                not in (
-                    TransactionVerdictOutcome.DENY,
-                    TransactionVerdictOutcome.STALE,
-                )
+            elif outcome is TransactionVerdictOutcome.STALE and blocking not in (
+                TransactionVerdictOutcome.DENY,
+                TransactionVerdictOutcome.STALE,
             ):
                 blocking = outcome
 
@@ -2478,9 +2277,7 @@ class BitcoinTransactionGuard:
                     )
                     break
             else:
-                security_results.setdefault(
-                    "sec:bitcoin-sighash-commitment", "pass"
-                )
+                security_results.setdefault("sec:bitcoin-sighash-commitment", "pass")
 
         # Spend path / descriptor surface (optional but when present must be bound).
         security_results.setdefault("sec:bitcoin-spend-path", "pass")
@@ -2501,9 +2298,7 @@ class BitcoinTransactionGuard:
         assert self.graph_revision_is_current is not None
         if binding.list_revision:
             try:
-                list_ok = bool(
-                    self.list_revision_is_current(binding.list_revision, now)
-                )
+                list_ok = bool(self.list_revision_is_current(binding.list_revision, now))
             except Exception as exc:  # noqa: BLE001
                 list_ok = False
                 _block(
@@ -2522,9 +2317,7 @@ class BitcoinTransactionGuard:
                     )
         if binding.graph_revision:
             try:
-                graph_ok = bool(
-                    self.graph_revision_is_current(binding.graph_revision, now)
-                )
+                graph_ok = bool(self.graph_revision_is_current(binding.graph_revision, now))
             except Exception as exc:  # noqa: BLE001
                 graph_ok = False
                 _block(
@@ -2565,8 +2358,7 @@ class BitcoinTransactionGuard:
                         _block(
                             TransactionVerdictOutcome.STALE,
                             "bitcoin.utxo_unresolved",
-                            f"UTXO {epoch.outpoint} could not be re-resolved at "
-                            f"{phase.value}",
+                            f"UTXO {epoch.outpoint} could not be re-resolved at {phase.value}",
                             "sec:bitcoin-utxo-availability",
                         )
                     continue
@@ -2624,10 +2416,7 @@ class BitcoinTransactionGuard:
                 security_results["sec:bitcoin-utxo-availability"] = "pass"
         else:
             # Offline default: trust bound availability if all available.
-            if any(
-                u.status is not UtxoStatus.AVAILABLE
-                for u in binding.utxo_availability
-            ):
+            if any(u.status is not UtxoStatus.AVAILABLE for u in binding.utxo_availability):
                 for u in binding.utxo_availability:
                     if u.status is UtxoStatus.SPENT:
                         _block(
@@ -2682,9 +2471,7 @@ class BitcoinTransactionGuard:
                 p.to_dict() for p in binding.prevouts
             ]:
                 # Distinguish sighash vs prevout mutation.
-                for lp, bp in zip(
-                    live_binding.prevouts, binding.prevouts, strict=False
-                ):
+                for lp, bp in zip(live_binding.prevouts, binding.prevouts, strict=False):
                     if lp.sighash_commitment_digest != bp.sighash_commitment_digest:
                         raise GuardCapabilityError(
                             "live sighash commitment mutated",
@@ -2715,13 +2502,9 @@ class BitcoinTransactionGuard:
                 "live output count mutated",
                 reason_code="bitcoin.output_mutation",
             )
-        for index, (live_raw, bound) in enumerate(
-            zip(live_outputs, binding.outputs, strict=True)
-        ):
+        for index, (live_raw, bound) in enumerate(zip(live_outputs, binding.outputs, strict=True)):
             live_map = _mapping(live_raw, f"live_outputs[{index}]")
-            value = live_map.get(
-                "value", live_map.get("value_sats", live_map.get("amount"))
-            )
+            value = live_map.get("value", live_map.get("value_sats", live_map.get("amount")))
             script = live_map.get(
                 "scriptpubkey",
                 live_map.get("script_hex", live_map.get("script_pubkey", "")),
@@ -2817,8 +2600,7 @@ class BitcoinTransactionGuard:
                     effect_id=f"effect:btc-out-{out.output_index}",
                     kind=kind,
                     summary=(
-                        f"output[{out.output_index}] {out.value_sats} sats "
-                        f"script={out.script_type}"
+                        f"output[{out.output_index}] {out.value_sats} sats script={out.script_type}"
                     ),
                 )
             )
@@ -2848,9 +2630,9 @@ class BitcoinTransactionGuard:
             for p in binding.prevouts
         )
         # Signers: one placeholder per input spend path (non-custodial).
-        signers = tuple(
-            f"signer:input-{p.input_index}" for p in binding.prevouts
-        ) or ("signer:bitcoin",)
+        signers = tuple(f"signer:input-{p.input_index}" for p in binding.prevouts) or (
+            "signer:bitcoin",
+        )
 
         method = "bitcoin.spend"
         if binding.psbt_digest:

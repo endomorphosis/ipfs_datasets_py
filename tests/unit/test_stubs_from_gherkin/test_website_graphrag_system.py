@@ -4,11 +4,13 @@ Test stubs for website_graphrag_system module.
 Feature: Website GraphRAG System
   Complete GraphRAG system for websites
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def a_processed_website():
@@ -65,6 +67,7 @@ def system_configuration():
 
 
 # Test scenarios
+
 
 def test_initialize_website_graphrag_system():
     """
@@ -156,6 +159,7 @@ def test_visualize_website_knowledge_graph():
 
 
 # Step definitions
+
 
 # Given steps
 @given("a processed website")

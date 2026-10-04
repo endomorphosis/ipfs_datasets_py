@@ -10,6 +10,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+
 def check_user_settings():
     """Check if the user settings.json has the correct MCP configuration."""
     settings_path = Path.home() / ".config" / "Code - Insiders" / "User" / "settings.json"
@@ -19,7 +20,7 @@ def check_user_settings():
         return False
 
     try:
-        with open(settings_path, 'r', encoding='utf-8') as f:
+        with open(settings_path, "r", encoding="utf-8") as f:
             content = f.read()
             # Simple approach: just check for the key strings instead of parsing JSON
             has_mcp_config = '"mcp"' in content and '"ipfs-datasets"' in content
@@ -46,6 +47,7 @@ def check_user_settings():
         print(f"❌ Error reading user settings.json: {e}")
         return False
 
+
 def check_workspace_settings():
     """Check if the workspace settings.json has the correct MCP configuration."""
     workspace_settings_path = Path("/home/barberb/ipfs_datasets_py/.vscode/settings.json")
@@ -55,11 +57,13 @@ def check_workspace_settings():
         return False
 
     try:
-        with open(workspace_settings_path, 'r', encoding='utf-8') as f:
+        with open(workspace_settings_path, "r", encoding="utf-8") as f:
             content = f.read()
             # Simple approach: just check for the key strings instead of parsing JSON
             has_mcp_config = '"mcp.servers"' in content and '"ipfs-datasets"' in content
-            has_copilot_mcp_config = '"copilot-mcp.servers"' in content and '"ipfs-datasets"' in content
+            has_copilot_mcp_config = (
+                '"copilot-mcp.servers"' in content and '"ipfs-datasets"' in content
+            )
 
             if has_mcp_config:
                 print("✅ MCP server configuration found in workspace settings")
@@ -82,11 +86,12 @@ def check_workspace_settings():
         print(f"❌ Error reading workspace settings.json: {e}")
         return False
 
+
 def check_mcp_server_running():
     """Check if the MCP server is running."""
     try:
-        result = subprocess.run(['ps', 'aux'], capture_output=True, text=True)
-        if 'ipfs_datasets_py.mcp_server' in result.stdout:
+        result = subprocess.run(["ps", "aux"], capture_output=True, text=True)
+        if "ipfs_datasets_py.mcp_server" in result.stdout:
             print("✅ IPFS datasets MCP server is running")
             return True
         else:
@@ -96,15 +101,18 @@ def check_mcp_server_running():
         print(f"❌ Error checking MCP server status: {e}")
         return False
 
+
 def check_extensions():
     """Check if the required VS Code extensions are installed."""
     try:
         # Try to list installed extensions
-        result = subprocess.run(['code-insiders', '--list-extensions'], capture_output=True, text=True)
-        extensions = result.stdout.strip().split('\n')
+        result = subprocess.run(
+            ["code-insiders", "--list-extensions"], capture_output=True, text=True
+        )
+        extensions = result.stdout.strip().split("\n")
 
-        copilot_installed = any('github.copilot' in ext for ext in extensions)
-        mcp_installed = any('automatalabs.copilot-mcp' in ext for ext in extensions)
+        copilot_installed = any("github.copilot" in ext for ext in extensions)
+        mcp_installed = any("automatalabs.copilot-mcp" in ext for ext in extensions)
 
         if copilot_installed:
             print("✅ GitHub Copilot extension is installed")
@@ -123,6 +131,7 @@ def check_extensions():
         print(f"⚠️  Could not check VS Code extensions: {e}")
         print("   This doesn't affect functionality, assuming extensions are installed")
         return True  # Don't fail the test if we can't check extensions
+
 
 def main():
     """Run all checks and report the results."""
@@ -161,6 +170,7 @@ def main():
     else:
         print("❌ Some checks failed. Please review the configuration.")
         return False
+
 
 if __name__ == "__main__":
     success = main()

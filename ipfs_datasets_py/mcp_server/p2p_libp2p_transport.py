@@ -57,7 +57,9 @@ def ensure_libp2p_installed() -> bool:
         return True
 
     if not callable(install_libp2p_runtime):
-        logger.error("MCP++ libp2p runtime provider is unavailable; install ipfs_accelerate_py[mcp-p2p]")
+        logger.error(
+            "MCP++ libp2p runtime provider is unavailable; install ipfs_accelerate_py[mcp-p2p]"
+        )
         return False
 
     logger.info("libp2p not found — delegating install to MCP++ py-libp2p runtime...")
@@ -73,7 +75,9 @@ async def ensure_libp2p_installed_async() -> bool:
         return True
 
     if not callable(install_libp2p_runtime_async):
-        logger.error("MCP++ libp2p runtime provider is unavailable; install ipfs_accelerate_py[mcp-p2p]")
+        logger.error(
+            "MCP++ libp2p runtime provider is unavailable; install ipfs_accelerate_py[mcp-p2p]"
+        )
         return False
 
     logger.info("libp2p not found — async-delegating install to MCP++ py-libp2p runtime...")
@@ -84,6 +88,7 @@ async def ensure_libp2p_installed_async() -> bool:
     except OSError as e:
         logger.error("Failed to auto-install libp2p: %s", e)
     return False
+
 
 # Protocol ID per MCP++ spec
 MCP_P2P_PROTOCOL = "/mcp+p2p/1.0.0"
@@ -102,6 +107,7 @@ DEFAULT_BOOTSTRAP_PEERS = [
 @dataclass
 class PeerInfo:
     """Information about a connected P2P peer."""
+
     peer_id: str
     multiaddrs: List[str] = field(default_factory=list)
     protocols: List[str] = field(default_factory=list)
@@ -126,6 +132,7 @@ class P2PMessage:
 
     Wire format: 4-byte big-endian length prefix + JSON payload.
     """
+
     msg_type: str  # "request" | "response" | "notification"
     method: str = ""
     params: Dict[str, Any] = field(default_factory=dict)
@@ -137,16 +144,19 @@ class P2PMessage:
 
     def encode(self) -> bytes:
         """Encode as length-prefixed JSON."""
-        payload = json.dumps({
-            "type": self.msg_type,
-            "method": self.method,
-            "params": self.params,
-            "id": self.msg_id,
-            "result": self.result,
-            "error": self.error,
-            "sender": self.sender_peer_id,
-            "timestamp": self.timestamp,
-        }, separators=(",", ":")).encode("utf-8")
+        payload = json.dumps(
+            {
+                "type": self.msg_type,
+                "method": self.method,
+                "params": self.params,
+                "id": self.msg_id,
+                "result": self.result,
+                "error": self.error,
+                "sender": self.sender_peer_id,
+                "timestamp": self.timestamp,
+            },
+            separators=(",", ":"),
+        ).encode("utf-8")
         length = len(payload).to_bytes(4, "big")
         return length + payload
 
@@ -160,7 +170,7 @@ class P2PMessage:
             raise ValueError(f"Message size {length} exceeds limit {MAX_P2P_MESSAGE_SIZE}")
         if len(data) < 4 + length:
             raise ValueError(f"Incomplete message: expected {length} bytes, got {len(data) - 4}")
-        payload = json.loads(data[4:4 + length].decode("utf-8"))
+        payload = json.loads(data[4 : 4 + length].decode("utf-8"))
         return cls(
             msg_type=payload.get("type", "request"),
             method=payload.get("method", ""),
@@ -174,7 +184,9 @@ class P2PMessage:
 
 
 async def dispatch_profile_e_jsonrpc_request(
-    request: Mapping[str, Any], *, initialized: bool = True,
+    request: Mapping[str, Any],
+    *,
+    initialized: bool = True,
     profile_g_negotiated: bool = True,
 ) -> dict[str, Any] | None:
     """Dispatch one canonical MCP++ Profile E JSON-RPC request.
@@ -201,29 +213,32 @@ async def dispatch_profile_e_jsonrpc_request(
     if not initialized and method != "initialize":
         return _jsonrpc_error(request_id, -32000, "init_required")
     if method == "initialize":
-        return _jsonrpc_result(request_id, {
-            "protocolVersion": MCP_PROTOCOL_VERSION,
-            "serverInfo": {"name": "ipfs-datasets-mcp-profile-e", "version": "1.0.0"},
-            "capabilities": {
-                "tools": {"listChanged": True},
-                "mcpPlusPlusProfiles": [
-                    "mcp++/deontic-policy",
-                    "mcp++/event-dag",
-                    "mcp++/p2p-transport",
-                    "mcp++/risk-scheduling",
-                ],
-                "experimental": {
-                    "mcp++/deontic-policy": True,
-                    "mcp++/event-dag": True,
-                    "mcp++/groth16-mpc-ceremony": True,
-                    "mcp++/p2p-transport": True,
-                    "mcp++/risk-scheduling": {
-                        "version": "1.0",
-                        "artifact_schema_major": 1,
+        return _jsonrpc_result(
+            request_id,
+            {
+                "protocolVersion": MCP_PROTOCOL_VERSION,
+                "serverInfo": {"name": "ipfs-datasets-mcp-profile-e", "version": "1.0.0"},
+                "capabilities": {
+                    "tools": {"listChanged": True},
+                    "mcpPlusPlusProfiles": [
+                        "mcp++/deontic-policy",
+                        "mcp++/event-dag",
+                        "mcp++/p2p-transport",
+                        "mcp++/risk-scheduling",
+                    ],
+                    "experimental": {
+                        "mcp++/deontic-policy": True,
+                        "mcp++/event-dag": True,
+                        "mcp++/groth16-mpc-ceremony": True,
+                        "mcp++/p2p-transport": True,
+                        "mcp++/risk-scheduling": {
+                            "version": "1.0",
+                            "artifact_schema_major": 1,
+                        },
                     },
                 },
             },
-        })
+        )
     if method == "tools/list":
         return _jsonrpc_result(request_id, {"tools": []})
     if method == "mcp++/policy/evaluate":
@@ -258,7 +273,9 @@ async def dispatch_profile_e_jsonrpc_request(
             return _jsonrpc_result(request_id, validate_groth16_mpc_ceremony(manifest).to_dict())
         except Exception as error:  # pragma: no cover - defensive transport boundary
             return _jsonrpc_error(request_id, -32603, str(error))
-    if method.startswith(("mcp++/goals/", "mcp++/tasks/", "mcp++/risk/", "mcp++/neighborhood/", "mcp++/schedule/")):
+    if method.startswith(
+        ("mcp++/goals/", "mcp++/tasks/", "mcp++/risk/", "mcp++/neighborhood/", "mcp++/schedule/")
+    ):
         from ipfs_datasets_py.logic.profile_g import ProfileGError
         from ipfs_datasets_py.mcp_server.profile_g_service import (
             get_profile_g_service,
@@ -266,9 +283,7 @@ async def dispatch_profile_e_jsonrpc_request(
         )
 
         if not profile_g_negotiated:
-            error = ProfileGError(
-                "G_CAPABILITY_NOT_NEGOTIATED", "Profile G was not negotiated"
-            )
+            error = ProfileGError("G_CAPABILITY_NOT_NEGOTIATED", "Profile G was not negotiated")
             return profile_g_jsonrpc_error(request_id, error)
         try:
             return _jsonrpc_result(request_id, get_profile_g_service().dispatch(method, params))
@@ -324,8 +339,9 @@ class MCPp2pNode:
         trio.run(main)
     """
 
-    def __init__(self, listen_addrs: Optional[List[str]] = None,
-                 bootstrap_peers: Optional[List[str]] = None):
+    def __init__(
+        self, listen_addrs: Optional[List[str]] = None, bootstrap_peers: Optional[List[str]] = None
+    ):
         self._listen_addrs = listen_addrs or ["/ip4/0.0.0.0/tcp/0"]
         self._bootstrap_peers = bootstrap_peers or DEFAULT_BOOTSTRAP_PEERS
         self._host = None
@@ -367,8 +383,7 @@ class MCPp2pNode:
         if not await ensure_libp2p_installed_async():
             logger.error(
                 "libp2p could not be installed. P2P transport in stub mode. "
-                "Manual install: pip install %r"
-                % (PY_LIBP2P_MAIN_SPEC,)
+                "Manual install: pip install %r" % (PY_LIBP2P_MAIN_SPEC,)
             )
             self._started = True
             return
@@ -468,24 +483,34 @@ class MCPp2pNode:
                 decoded = json.loads(payload.decode("utf-8"))
                 if isinstance(decoded, Mapping) and decoded.get("jsonrpc") == "2.0":
                     response = await dispatch_profile_e_jsonrpc_request(
-                        decoded, initialized=initialized,
+                        decoded,
+                        initialized=initialized,
                         profile_g_negotiated=profile_g_negotiated,
                     )
                     if response is not None:
                         await stream.write(_jsonrpc_frame(response))
                     if decoded.get("method") == "initialize":
                         initialized = True
-                        init_params = decoded.get("params") if isinstance(decoded.get("params"), Mapping) else {}
+                        init_params = (
+                            decoded.get("params")
+                            if isinstance(decoded.get("params"), Mapping)
+                            else {}
+                        )
                         experimental = (
                             init_params.get("capabilities", {}).get("experimental", {})
-                            if isinstance(init_params.get("capabilities"), Mapping) else {}
+                            if isinstance(init_params.get("capabilities"), Mapping)
+                            else {}
                         )
-                        profile_g_negotiated = bool(
-                            isinstance(experimental, Mapping)
-                            and experimental.get("mcp++/risk-scheduling")
-                        ) or init_params.get("profile") == "mcp++/risk-scheduling" or (
-                            isinstance(init_params.get("profiles"), list)
-                            and "mcp++/risk-scheduling" in init_params["profiles"]
+                        profile_g_negotiated = (
+                            bool(
+                                isinstance(experimental, Mapping)
+                                and experimental.get("mcp++/risk-scheduling")
+                            )
+                            or init_params.get("profile") == "mcp++/risk-scheduling"
+                            or (
+                                isinstance(init_params.get("profiles"), list)
+                                and "mcp++/risk-scheduling" in init_params["profiles"]
+                            )
                         )
                     continue
 
@@ -496,26 +521,33 @@ class MCPp2pNode:
                     try:
                         result = await self._tool_handler(msg.method, msg.params)
                         response = P2PMessage(
-                            msg_type="response", method=msg.method,
-                            msg_id=msg.msg_id, result=result,
+                            msg_type="response",
+                            method=msg.method,
+                            msg_id=msg.msg_id,
+                            result=result,
                             sender_peer_id=self.peer_id,
                         )
                     except Exception as error:
                         response = P2PMessage(
-                            msg_type="response", method=msg.method,
-                            msg_id=msg.msg_id, error=str(error),
+                            msg_type="response",
+                            method=msg.method,
+                            msg_id=msg.msg_id,
+                            error=str(error),
                             sender_peer_id=self.peer_id,
                         )
                     await stream.write(response.encode())
             else:
-                logger.warning("Closing Profile E stream after %d frames", MAX_PROFILE_E_FRAMES_PER_SESSION)
+                logger.warning(
+                    "Closing Profile E stream after %d frames", MAX_PROFILE_E_FRAMES_PER_SESSION
+                )
         except Exception as e:
             logger.debug(f"Stream handler error: {e}")
         finally:
             await stream.close()
 
-    async def call_tool(self, peer_id: str, method: str,
-                        params: Dict[str, Any], timeout: float = 30.0) -> Any:
+    async def call_tool(
+        self, peer_id: str, method: str, params: Dict[str, Any], timeout: float = 30.0
+    ) -> Any:
         """Call a tool on a remote peer via /mcp+p2p/1.0.0.
 
         Args:
@@ -539,8 +571,11 @@ class MCPp2pNode:
             stream = await self._host.new_stream(target, [MCP_P2P_PROTOCOL])
 
             request = P2PMessage(
-                msg_type="request", method=method, params=params,
-                msg_id=f"{method}_{time.time()}", sender_peer_id=self.peer_id,
+                msg_type="request",
+                method=method,
+                params=params,
+                msg_id=f"{method}_{time.time()}",
+                sender_peer_id=self.peer_id,
             )
             await stream.write(request.encode())
 
@@ -563,7 +598,9 @@ class MCPp2pNode:
             return response.result
 
         except ImportError:
-            raise ConnectionError(f"libp2p not available. Install via MCP++ runtime: {LIBP2P_INSTALL_HINT}")
+            raise ConnectionError(
+                f"libp2p not available. Install via MCP++ runtime: {LIBP2P_INSTALL_HINT}"
+            )
 
     async def discover_local(self, service_tag: str = "mcp-datasets") -> List[PeerInfo]:
         """Discover local peers via mDNS."""
@@ -578,11 +615,13 @@ class MCPp2pNode:
                 def add_service(self, zc, type_, name):
                     info = zc.get_service_info(type_, name)
                     if info and info.parsed_addresses():
-                        discovered.append(PeerInfo(
-                            peer_id=name.split(".")[0],
-                            multiaddrs=[f"/ip4/{info.parsed_addresses()[0]}/tcp/{info.port}"],
-                            protocols=[MCP_P2P_PROTOCOL],
-                        ))
+                        discovered.append(
+                            PeerInfo(
+                                peer_id=name.split(".")[0],
+                                multiaddrs=[f"/ip4/{info.parsed_addresses()[0]}/tcp/{info.port}"],
+                                protocols=[MCP_P2P_PROTOCOL],
+                            )
+                        )
 
                 def remove_service(self, zc, type_, name):
                     pass

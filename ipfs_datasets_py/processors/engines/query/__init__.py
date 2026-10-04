@@ -28,7 +28,7 @@ from ipfs_datasets_py.processors.query_engine import QueryEngine
 
 # Type exports
 __all__ = [
-    'QueryEngine',
+    "QueryEngine",
 ]
 
 # Type checking support

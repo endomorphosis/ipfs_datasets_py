@@ -200,7 +200,9 @@ def test_artifact_manifest_detects_truncation_and_poisoning() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_offline_fixture_transport_is_default(context: OperationContext, policy: ProviderPolicy) -> None:
+def test_offline_fixture_transport_is_default(
+    context: OperationContext, policy: ProviderPolicy
+) -> None:
     url = "https://artifacts.example/runtime"
     transport = build_offline_transport(
         {url: FixtureEntry(status_code=200, body=BYTECODE)},
@@ -295,9 +297,7 @@ def test_transport_bounds_redirects_bytes_and_requests(
             "cdn.example": ("1.2.3.5",),
         },
     )
-    body, evidence = transport.fetch_bytes(
-        "https://artifacts.example/start", context=context
-    )
+    body, evidence = transport.fetch_bytes("https://artifacts.example/start", context=context)
     assert body == BYTECODE
     assert evidence.redirect_count == 2
 
@@ -348,12 +348,8 @@ def test_transport_rejects_elapsed_time_over_budget(
             max_redirects=0,
             request_timeout_seconds=1.0,
         ),
-        source=SlowSource(
-            {"https://artifacts.example/slow": FixtureEntry(body=b"ok")}
-        ),
-        resolver=StaticAddressResolver(
-            {"artifacts.example": ("1.2.3.4",)}
-        ),
+        source=SlowSource({"https://artifacts.example/slow": FixtureEntry(body=b"ok")}),
+        resolver=StaticAddressResolver({"artifacts.example": ("1.2.3.4",)}),
     )
     with pytest.raises(ResourceLimitError, match="time"):
         transport.fetch_bytes("https://artifacts.example/slow", context=context)
@@ -513,9 +509,7 @@ def test_source_manifest_binds_toolchain_and_detects_mismatch() -> None:
         target="evm",
         optimization="200",
     )
-    files = (
-        SourceFileRecord.from_bytes("contracts/A.sol", SOURCE_A, language="solidity"),
-    )
+    files = (SourceFileRecord.from_bytes("contracts/A.sol", SOURCE_A, language="solidity"),)
     creation = b"\x00" + BYTECODE
     runtime = BYTECODE
     manifest = SourceManifest(
@@ -757,9 +751,7 @@ def test_end_to_end_offline_acquisition_pipeline(
     )
     assert dict(members)["contracts/A.sol"] == SOURCE_A
 
-    runtime_body, runtime_evidence = transport.fetch_bytes(
-        bytecode_url, context=context
-    )
+    runtime_body, runtime_evidence = transport.fetch_bytes(bytecode_url, context=context)
     cache = ContractArtifactCache(root=tmp_path / "pipeline-cas")
     source_stored = cache.put_bytes(
         SOURCE_A,
@@ -779,11 +771,7 @@ def test_end_to_end_offline_acquisition_pipeline(
         settings={"optimizer": {"enabled": False}},
     )
     source_manifest = SourceManifest(
-        files=(
-            SourceFileRecord.from_bytes(
-                "contracts/A.sol", SOURCE_A, language="solidity"
-            ),
-        ),
+        files=(SourceFileRecord.from_bytes("contracts/A.sol", SOURCE_A, language="solidity"),),
         toolchain=pin,
         request_id=context.request_id,
         observed_at=NOW,

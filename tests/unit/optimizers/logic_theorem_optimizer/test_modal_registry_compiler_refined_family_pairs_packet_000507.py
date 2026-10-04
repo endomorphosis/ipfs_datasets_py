@@ -30,10 +30,7 @@ _PACKET_000507_FAMILY_PAIRS = (
 
 
 def test_packet_000507_pairs_match_registry_constant() -> None:
-    assert (
-        tuple(COMPILER_REFINED_PACKET_000507_FAMILY_PAIRS)
-        == _PACKET_000507_FAMILY_PAIRS
-    )
+    assert tuple(COMPILER_REFINED_PACKET_000507_FAMILY_PAIRS) == _PACKET_000507_FAMILY_PAIRS
 
 
 def test_packet_000507_pairs_are_in_refined_modal_family_cue_policy_table() -> None:
@@ -64,7 +61,10 @@ def test_packet_000507_pairs_are_supported_across_compiler_ambiguity_policies() 
 
 def test_packet_000507_refined_margin_buffer_covers_target_pairs() -> None:
     for predicted_family, target_family in _PACKET_000507_FAMILY_PAIRS:
-        assert compiler_refined_modal_family_cue_margin_buffer(
-            predicted_family,
-            target_family,
-        ) > 0.0
+        assert (
+            compiler_refined_modal_family_cue_margin_buffer(
+                predicted_family,
+                target_family,
+            )
+            > 0.0
+        )

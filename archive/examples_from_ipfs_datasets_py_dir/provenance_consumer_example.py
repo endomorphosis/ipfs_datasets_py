@@ -15,8 +15,9 @@ import datetime
 from typing import Dict, List, Any, Optional
 
 # Set up logging
-logging.basicConfig(level=logging.INFO,
-                  format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 # Add parent directory to path to allow imports
@@ -25,19 +26,25 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 try:
     # Import audit system
     from ipfs_datasets_py.audit.audit_logger import (
-        AuditLogger, AuditEvent, AuditLevel, AuditCategory
+        AuditLogger,
+        AuditEvent,
+        AuditLevel,
+        AuditCategory,
     )
     from ipfs_datasets_py.audit.handlers import FileAuditHandler, ConsoleAuditHandler
     from ipfs_datasets_py.audit.integration import AuditProvenanceIntegrator
 
     # Import provenance system
     from ipfs_datasets_py.analytics.data_provenance_enhanced import (
-        EnhancedProvenanceManager, SourceRecord, TransformationRecord
+        EnhancedProvenanceManager,
+        SourceRecord,
+        TransformationRecord,
     )
 
     # Import consumer interface
     from ipfs_datasets_py.audit.provenance_consumer import (
-        ProvenanceConsumer, IntegratedProvenanceRecord
+        ProvenanceConsumer,
+        IntegratedProvenanceRecord,
     )
 
     IMPORTS_SUCCESSFUL = True
@@ -55,14 +62,12 @@ def setup_systems():
 
     # Set up provenance manager with cryptographic verification
     provenance_manager = EnhancedProvenanceManager(
-        audit_logger=audit_logger,
-        enable_crypto_verification=True
+        audit_logger=audit_logger, enable_crypto_verification=True
     )
 
     # Set up integration
     integrator = AuditProvenanceIntegrator(
-        audit_logger=audit_logger,
-        provenance_manager=provenance_manager
+        audit_logger=audit_logger, provenance_manager=provenance_manager
     )
     integrator.setup_audit_event_listener()
 
@@ -83,7 +88,7 @@ def create_sample_lineage(provenance_manager, integrator):
         source_type="file",
         source_uri="file:///data/example.csv",
         format="csv",
-        description="Example source data file"
+        description="Example source data file",
     )
 
     # Generate audit event for source record
@@ -99,7 +104,7 @@ def create_sample_lineage(provenance_manager, integrator):
         transformation_type="filter",
         parameters={"condition": "value > 10"},
         tool="pandas",
-        description="Filter values greater than 10"
+        description="Filter values greater than 10",
     )
 
     # Generate audit event for filtered record
@@ -115,7 +120,7 @@ def create_sample_lineage(provenance_manager, integrator):
         source_type="api",
         source_uri="https://api.example.com/data",
         format="json",
-        description="Additional data from API"
+        description="Additional data from API",
     )
 
     # Create transformed data record
@@ -125,7 +130,7 @@ def create_sample_lineage(provenance_manager, integrator):
         transformation_type="normalize",
         parameters={"method": "z-score"},
         tool="sklearn",
-        description="Normalize data using z-score"
+        description="Normalize data using z-score",
     )
 
     # Create merged data record
@@ -135,7 +140,7 @@ def create_sample_lineage(provenance_manager, integrator):
         transformation_type="merge",
         parameters={"join_on": "id"},
         tool="pandas",
-        description="Merge normalized data with API data"
+        description="Merge normalized data with API data",
     )
 
     # Create verification record
@@ -145,7 +150,7 @@ def create_sample_lineage(provenance_manager, integrator):
         validation_rules=[{"field": "value", "type": "number"}],
         pass_count=100,
         fail_count=0,
-        description="Validate schema of merged data"
+        description="Validate schema of merged data",
     )
 
     return {
@@ -160,8 +165,8 @@ def create_sample_lineage(provenance_manager, integrator):
             "source2": source2_record_id,
             "transformed": transformed_record_id,
             "merged": merged_record_id,
-            "verification": verification_record_id
-        }
+            "verification": verification_record_id,
+        },
     }
 
 
@@ -171,7 +176,7 @@ def demonstrate_consumer_usage(provenance_manager, integrator, data_ids):
     consumer = ProvenanceConsumer(
         provenance_manager=provenance_manager,
         audit_logger=AuditLogger.get_instance(),
-        integrator=integrator
+        integrator=integrator,
     )
 
     # 1. Get a single integrated record
@@ -196,11 +201,11 @@ def demonstrate_consumer_usage(provenance_manager, integrator, data_ids):
     # 3. Get lineage graph
     logger.info("\n3. Getting lineage graph for merged data")
     lineage_graph = consumer.get_lineage_graph(
-        data_ids["merged_id"],
-        max_depth=10,
-        include_audit_events=True
+        data_ids["merged_id"], max_depth=10, include_audit_events=True
     )
-    logger.info(f"Lineage graph contains {len(lineage_graph['nodes'])} nodes and {len(lineage_graph['edges'])} edges")
+    logger.info(
+        f"Lineage graph contains {len(lineage_graph['nodes'])} nodes and {len(lineage_graph['edges'])} edges"
+    )
 
     # 4. Verify data lineage
     logger.info("\n4. Verifying data lineage integrity")
@@ -215,9 +220,7 @@ def demonstrate_consumer_usage(provenance_manager, integrator, data_ids):
     # 5. Export provenance information
     logger.info("\n5. Exporting provenance information")
     export_dict = consumer.export_provenance(
-        data_ids["merged_id"],
-        format="dict",
-        include_audit_events=True
+        data_ids["merged_id"], format="dict", include_audit_events=True
     )
     logger.info(f"Exported {len(export_dict['records'])} records")
 

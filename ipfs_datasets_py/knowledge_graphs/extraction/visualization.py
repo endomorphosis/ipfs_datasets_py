@@ -48,6 +48,7 @@ if TYPE_CHECKING:  # pragma: no cover
 # Internal escaping helpers
 # ---------------------------------------------------------------------------
 
+
 def _escape_dot_label(text: str) -> str:
     """Escape characters that are special in a Graphviz label string."""
     return (
@@ -64,17 +65,13 @@ def _escape_dot_label(text: str) -> str:
 
 def _escape_mermaid(text: str) -> str:
     """Escape characters that would break a Mermaid node or edge label."""
-    return (
-        text.replace('"', "'")
-        .replace("\n", " ")
-        .replace("[", "(")
-        .replace("]", ")")
-    )
+    return text.replace('"', "'").replace("\n", " ").replace("[", "(").replace("]", ")")
 
 
 # ---------------------------------------------------------------------------
 # KnowledgeGraphVisualizer
 # ---------------------------------------------------------------------------
+
 
 class KnowledgeGraphVisualizer:
     """Visualization exporter for a :class:`KnowledgeGraph`.
@@ -140,17 +137,12 @@ class KnowledgeGraphVisualizer:
         lines.append("  edge [fontname=Helvetica];")
 
         for entity in kg.entities.values():
-            label = (
-                f"{_escape_dot_label(entity.name)}"
-                f"\\n({_escape_dot_label(entity.entity_type)})"
-            )
+            label = f"{_escape_dot_label(entity.name)}\\n({_escape_dot_label(entity.entity_type)})"
             lines.append(f'  "{entity.entity_id}" [label="{label}"];')
 
         for rel in kg.relationships.values():
             label = _escape_dot_label(rel.relationship_type)
-            lines.append(
-                f'  "{rel.source_id}" {edge_op} "{rel.target_id}" [label="{label}"];'
-            )
+            lines.append(f'  "{rel.source_id}" {edge_op} "{rel.target_id}" [label="{label}"];')
 
         lines.append("}")
         return "\n".join(lines)
@@ -194,16 +186,11 @@ class KnowledgeGraphVisualizer:
         included_ids = {e.entity_id for e in entities}
 
         for entity in entities:
-            label = _escape_mermaid(
-                f"{entity.name}\\n({entity.entity_type})"
-            )
+            label = _escape_mermaid(f"{entity.name}\\n({entity.entity_type})")
             lines.append(f'  {entity.entity_id}["{label}"]')
 
         for rel in kg.relationships.values():
-            if (
-                rel.source_id not in included_ids
-                or rel.target_id not in included_ids
-            ):
+            if rel.source_id not in included_ids or rel.target_id not in included_ids:
                 continue
             rtype = _escape_mermaid(rel.relationship_type)
             lines.append(f'  {rel.source_id} -->|"{rtype}"| {rel.target_id}')
@@ -328,10 +315,7 @@ class KnowledgeGraphVisualizer:
             branch = "└─" if is_last_entity else "├─"
             lines.append(f"{branch} {entity.name} ({entity.entity_type})")
 
-            out_rels = [
-                r for r in kg.relationships.values()
-                if r.source_id == entity.entity_id
-            ]
+            out_rels = [r for r in kg.relationships.values() if r.source_id == entity.entity_id]
             indent = "   " if is_last_entity else "│  "
             for ridx, rel in enumerate(out_rels):
                 is_last_rel = ridx == len(out_rels) - 1
@@ -358,19 +342,14 @@ class KnowledgeGraphVisualizer:
             if depth > max_depth or entity_id in visited:
                 return
             visited.add(entity_id)
-            out_rels = [
-                r for r in kg.relationships.values()
-                if r.source_id == entity_id
-            ]
+            out_rels = [r for r in kg.relationships.values() if r.source_id == entity_id]
             for ridx, rel in enumerate(out_rels):
                 is_last = ridx == len(out_rels) - 1
                 branch = "└" if is_last else "├"
                 target = kg.entities.get(rel.target_id)
                 tname = target.name if target else rel.target_id
                 ttype = target.entity_type if target else "?"
-                lines.append(
-                    f"{prefix}{branch}─[{rel.relationship_type}]→ {tname} ({ttype})"
-                )
+                lines.append(f"{prefix}{branch}─[{rel.relationship_type}]→ {tname} ({ttype})")
                 child_prefix = prefix + ("   " if is_last else "│  ")
                 if target:
                     _recurse(rel.target_id, child_prefix, depth + 1)

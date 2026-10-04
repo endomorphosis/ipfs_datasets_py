@@ -37,13 +37,9 @@ def test_checkpoint_serialization_runs_on_worker_and_renames_atomically(
         def copy(self) -> "ObservableState":
             copied = ObservableState(
                 decoded_embeddings={
-                    key: list(value)
-                    for key, value in self.decoded_embeddings.items()
+                    key: list(value) for key, value in self.decoded_embeddings.items()
                 },
-                family_logits={
-                    key: dict(value)
-                    for key, value in self.family_logits.items()
-                },
+                family_logits={key: dict(value) for key, value in self.family_logits.items()},
             )
             return copied
 
@@ -124,10 +120,7 @@ def test_append_jsonl_uses_manifest_replay_without_duplicate_records(
 
     assert len(receipts) == 1
     assert receipts[0].replayed is True
-    records = [
-        json.loads(line)
-        for line in destination.read_text(encoding="utf-8").splitlines()
-    ]
+    records = [json.loads(line) for line in destination.read_text(encoding="utf-8").splitlines()]
     assert [record["evidence_id"] for record in records] == ["already", "new"]
     assert not manifest_path.exists()
     assert not payload_path.exists()
@@ -166,9 +159,7 @@ def test_state_delta_is_append_only_with_stable_schema(tmp_path: Path) -> None:
         assert receipt.kind == "state_delta"
         [record] = [
             json.loads(line)
-            for line in (tmp_path / "state-deltas.jsonl")
-            .read_text(encoding="utf-8")
-            .splitlines()
+            for line in (tmp_path / "state-deltas.jsonl").read_text(encoding="utf-8").splitlines()
         ]
         assert record["schema_version"] == STATE_DELTA_SCHEMA_VERSION
         assert record["cycle"] == 4
@@ -205,9 +196,7 @@ def test_nonblocking_disagreement_batch_returns_future_until_worker_commits(
         assert receipt.checksum
         records = [
             json.loads(line)
-            for line in (tmp_path / "disagreements.jsonl")
-            .read_text(encoding="utf-8")
-            .splitlines()
+            for line in (tmp_path / "disagreements.jsonl").read_text(encoding="utf-8").splitlines()
         ]
         assert records == [{"cycle": 1, "evidence_id": "packet-a"}]
     finally:
@@ -246,9 +235,7 @@ def test_replay_updates_summary_and_removes_stale_temp_files(tmp_path: Path) -> 
     stale_payload_tmp.write_text("stale", encoding="utf-8")
     stale_manifest_tmp.write_text("stale", encoding="utf-8")
 
-    payload = json.dumps({"cycle": 9, "status": "ok"}, sort_keys=True).encode(
-        "utf-8"
-    ) + b"\n"
+    payload = json.dumps({"cycle": 9, "status": "ok"}, sort_keys=True).encode("utf-8") + b"\n"
     payload_path = spool / "summary.payload"
     payload_path.write_bytes(payload)
     checksum = hashlib.sha256(payload).hexdigest()
@@ -374,8 +361,7 @@ def test_runner_disagreement_export_enqueues_without_waiting_for_write(
         writer.start()
         assert writer.wait_until_idle(timeout=2.0)
         records = [
-            json.loads(line)
-            for line in destination.read_text(encoding="utf-8").splitlines()
+            json.loads(line) for line in destination.read_text(encoding="utf-8").splitlines()
         ]
         assert records[0]["run_context"]["cycle"] == 2
         assert records[0]["run_context"]["frozen_canary"]["index"] == 11

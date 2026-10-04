@@ -32,9 +32,7 @@ from ipfs_datasets_py.logic.ir_core.provenance import SourceRef, SourceSpan
 
 AUTHORIZATION_IR_INTERFACE: Final = "AuthorizationIR@1"
 AUTHORIZATION_IR_SCHEMA_VERSION: Final = "authorization-ir/v1"
-AUTHORIZATION_IR_IDENTITY_DOMAIN: Final = (
-    "logic.software-verification.authorization"
-)
+AUTHORIZATION_IR_IDENTITY_DOMAIN: Final = "logic.software-verification.authorization"
 
 PRINCIPAL_SCHEMA_VERSION: Final = "authorization-principal/v1"
 ROLE_SCHEMA_VERSION: Final = "authorization-role/v1"
@@ -204,12 +202,7 @@ class TermKind(StrEnum):
 def _text(value: object, label: str, *, optional: bool = False) -> str:
     if optional and value == "":
         return ""
-    if (
-        not isinstance(value, str)
-        or not value
-        or value.strip() != value
-        or "\x00" in value
-    ):
+    if not isinstance(value, str) or not value or value.strip() != value or "\x00" in value:
         qualifier = "an empty or " if optional else "a "
         raise AuthorizationValidationError(
             f"{label} must be {qualifier}non-empty trimmed string without NUL bytes"
@@ -229,9 +222,7 @@ def _enum(value: object, enum_type: type[StrEnum], label: str) -> Any:
         return value if isinstance(value, enum_type) else enum_type(value)
     except (TypeError, ValueError) as error:
         choices = ", ".join(repr(member.value) for member in enum_type)
-        raise AuthorizationValidationError(
-            f"{label} must be one of {choices}"
-        ) from error
+        raise AuthorizationValidationError(f"{label} must be one of {choices}") from error
 
 
 def _sequence(value: object, label: str) -> Sequence[Any]:
@@ -247,9 +238,7 @@ def _identifiers(
     sort: bool = True,
     required: bool = False,
 ) -> tuple[str, ...]:
-    result = tuple(
-        _identifier(item, f"{label} item") for item in _sequence(values, label)
-    )
+    result = tuple(_identifier(item, f"{label} item") for item in _sequence(values, label))
     if len(result) != len(set(result)):
         raise AuthorizationValidationError(f"{label} must not contain duplicates")
     if required and not result:
@@ -272,14 +261,10 @@ def _frozen(value: Mapping[str, Any] | FrozenMap, label: str) -> FrozenMap:
         ) from error
 
 
-def _reject_unknown(
-    value: Mapping[str, Any], allowed: frozenset[str], label: str
-) -> None:
+def _reject_unknown(value: Mapping[str, Any], allowed: frozenset[str], label: str) -> None:
     unknown = sorted(set(value) - allowed)
     if unknown:
-        raise AuthorizationValidationError(
-            f"unknown {label} field(s): {', '.join(unknown)}"
-        )
+        raise AuthorizationValidationError(f"unknown {label} field(s): {', '.join(unknown)}")
 
 
 def _bool(value: object, label: str) -> bool:
@@ -292,9 +277,7 @@ def _non_bool_int(value: object, label: str, *, minimum: int = 0) -> int:
     if isinstance(value, bool) or not isinstance(value, int):
         raise AuthorizationValidationError(f"{label} must be an integer")
     if value < minimum:
-        raise AuthorizationValidationError(
-            f"{label} must be >= {minimum}"
-        )
+        raise AuthorizationValidationError(f"{label} must be >= {minimum}")
     return value
 
 
@@ -356,9 +339,7 @@ def _reject_observations(value: Mapping[str, Any], *, label: str) -> None:
 def _known(values: Sequence[str], known: set[str], label: str) -> None:
     missing = sorted(set(values) - known)
     if missing:
-        raise AuthorizationValidationError(
-            f"{label} references unknown ids {missing}"
-        )
+        raise AuthorizationValidationError(f"{label} references unknown ids {missing}")
 
 
 @dataclass(frozen=True, slots=True)
@@ -425,13 +406,9 @@ class AuthorizationAtom:
             for item in _sequence(self.arguments, "atom.arguments")
         )
         if len(arguments) > MAX_FACT_ARITY:
-            raise AuthorizationValidationError(
-                f"atom arity exceeds {MAX_FACT_ARITY}"
-            )
+            raise AuthorizationValidationError(f"atom arity exceeds {MAX_FACT_ARITY}")
         object.__setattr__(self, "arguments", arguments)
-        object.__setattr__(
-            self, "polarity", _enum(self.polarity, AtomPolarity, "atom.polarity")
-        )
+        object.__setattr__(self, "polarity", _enum(self.polarity, AtomPolarity, "atom.polarity"))
 
     @property
     def is_ground(self) -> bool:
@@ -479,16 +456,10 @@ class AuthorizationPrincipal:
         sources, spans = _source_map(
             self.source_ref_ids, self.span_ids, owner="AuthorizationPrincipal"
         )
-        object.__setattr__(
-            self, "principal_id", _identifier(self.principal_id, "principal_id")
-        )
+        object.__setattr__(self, "principal_id", _identifier(self.principal_id, "principal_id"))
         object.__setattr__(self, "name", _text(self.name, "principal.name"))
-        object.__setattr__(
-            self, "kind", _enum(self.kind, PrincipalKind, "principal.kind")
-        )
-        object.__setattr__(
-            self, "attributes", _frozen(self.attributes, "principal.attributes")
-        )
+        object.__setattr__(self, "kind", _enum(self.kind, PrincipalKind, "principal.kind"))
+        object.__setattr__(self, "attributes", _frozen(self.attributes, "principal.attributes"))
         object.__setattr__(self, "source_ref_ids", sources)
         object.__setattr__(self, "span_ids", spans)
         if self.schema_version != PRINCIPAL_SCHEMA_VERSION:
@@ -530,9 +501,7 @@ class AuthorizationPrincipal:
             principal_id=value.get("principal_id", ""),
             name=value.get("name", ""),
             kind=value.get("kind", PrincipalKind.AGENT.value),
-            attributes=_frozen(
-                _mapping(value.get("attributes", {}), "attributes"), "attributes"
-            ),
+            attributes=_frozen(_mapping(value.get("attributes", {}), "attributes"), "attributes"),
             source_ref_ids=sources,
             span_ids=spans,
             schema_version=value.get("schema_version", PRINCIPAL_SCHEMA_VERSION),
@@ -552,9 +521,7 @@ class AuthorizationRole:
     schema_version: str = ROLE_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        sources, spans = _source_map(
-            self.source_ref_ids, self.span_ids, owner="AuthorizationRole"
-        )
+        sources, spans = _source_map(self.source_ref_ids, self.span_ids, owner="AuthorizationRole")
         object.__setattr__(self, "role_id", _identifier(self.role_id, "role_id"))
         object.__setattr__(self, "name", _text(self.name, "role.name"))
         object.__setattr__(
@@ -562,9 +529,7 @@ class AuthorizationRole:
             "member_principal_ids",
             _identifiers(self.member_principal_ids, "role.member_principal_ids"),
         )
-        object.__setattr__(
-            self, "attributes", _frozen(self.attributes, "role.attributes")
-        )
+        object.__setattr__(self, "attributes", _frozen(self.attributes, "role.attributes"))
         object.__setattr__(self, "source_ref_ids", sources)
         object.__setattr__(self, "span_ids", spans)
         if self.schema_version != ROLE_SCHEMA_VERSION:
@@ -606,9 +571,7 @@ class AuthorizationRole:
             role_id=value.get("role_id", ""),
             name=value.get("name", ""),
             member_principal_ids=tuple(value.get("member_principal_ids", ())),
-            attributes=_frozen(
-                _mapping(value.get("attributes", {}), "attributes"), "attributes"
-            ),
+            attributes=_frozen(_mapping(value.get("attributes", {}), "attributes"), "attributes"),
             source_ref_ids=sources,
             span_ids=spans,
             schema_version=value.get("schema_version", ROLE_SCHEMA_VERSION),
@@ -629,26 +592,16 @@ class PredicateSignature:
     schema_version: str = PREDICATE_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        sources, spans = _source_map(
-            self.source_ref_ids, self.span_ids, owner="PredicateSignature"
-        )
-        object.__setattr__(
-            self, "predicate_id", _identifier(self.predicate_id, "predicate_id")
-        )
+        sources, spans = _source_map(self.source_ref_ids, self.span_ids, owner="PredicateSignature")
+        object.__setattr__(self, "predicate_id", _identifier(self.predicate_id, "predicate_id"))
         object.__setattr__(self, "name", _text(self.name, "predicate.name"))
         arity = _non_bool_int(self.arity, "predicate.arity", minimum=0)
         if arity > MAX_FACT_ARITY:
-            raise AuthorizationValidationError(
-                f"predicate arity exceeds {MAX_FACT_ARITY}"
-            )
+            raise AuthorizationValidationError(f"predicate arity exceeds {MAX_FACT_ARITY}")
         object.__setattr__(self, "arity", arity)
-        sorts = _identifiers(
-            self.argument_sorts, "predicate.argument_sorts", sort=False
-        )
+        sorts = _identifiers(self.argument_sorts, "predicate.argument_sorts", sort=False)
         if sorts and len(sorts) != arity:
-            raise AuthorizationValidationError(
-                "predicate.argument_sorts length must equal arity"
-            )
+            raise AuthorizationValidationError("predicate.argument_sorts length must equal arity")
         object.__setattr__(self, "argument_sorts", sorts)
         object.__setattr__(
             self,
@@ -719,9 +672,7 @@ class AuthorizationFact:
     schema_version: str = FACT_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        sources, spans = _source_map(
-            self.source_ref_ids, self.span_ids, owner="AuthorizationFact"
-        )
+        sources, spans = _source_map(self.source_ref_ids, self.span_ids, owner="AuthorizationFact")
         object.__setattr__(self, "fact_id", _identifier(self.fact_id, "fact_id"))
         atom = (
             self.atom
@@ -743,9 +694,7 @@ class AuthorizationFact:
                 "issuer_principal_id",
                 _identifier(self.issuer_principal_id, "fact.issuer_principal_id"),
             )
-        object.__setattr__(
-            self, "attributes", _frozen(self.attributes, "fact.attributes")
-        )
+        object.__setattr__(self, "attributes", _frozen(self.attributes, "fact.attributes"))
         object.__setattr__(self, "source_ref_ids", sources)
         object.__setattr__(self, "span_ids", spans)
         if self.schema_version != FACT_SCHEMA_VERSION:
@@ -787,9 +736,7 @@ class AuthorizationFact:
             fact_id=value.get("fact_id", ""),
             atom=value.get("atom", {}),
             issuer_principal_id=value.get("issuer_principal_id", ""),
-            attributes=_frozen(
-                _mapping(value.get("attributes", {}), "attributes"), "attributes"
-            ),
+            attributes=_frozen(_mapping(value.get("attributes", {}), "attributes"), "attributes"),
             source_ref_ids=sources,
             span_ids=spans,
             schema_version=value.get("schema_version", FACT_SCHEMA_VERSION),
@@ -812,15 +759,9 @@ class AuthorizationConstraint:
         sources, spans = _source_map(
             self.source_ref_ids, self.span_ids, owner="AuthorizationConstraint"
         )
-        object.__setattr__(
-            self, "constraint_id", _identifier(self.constraint_id, "constraint_id")
-        )
-        object.__setattr__(
-            self, "kind", _enum(self.kind, ConstraintKind, "constraint.kind")
-        )
-        object.__setattr__(
-            self, "expression", _frozen(self.expression, "constraint.expression")
-        )
+        object.__setattr__(self, "constraint_id", _identifier(self.constraint_id, "constraint_id"))
+        object.__setattr__(self, "kind", _enum(self.kind, ConstraintKind, "constraint.kind"))
+        object.__setattr__(self, "expression", _frozen(self.expression, "constraint.expression"))
         object.__setattr__(
             self,
             "statement",
@@ -866,9 +807,7 @@ class AuthorizationConstraint:
         return cls(
             constraint_id=value.get("constraint_id", ""),
             kind=value.get("kind", ""),
-            expression=_frozen(
-                _mapping(value.get("expression", {}), "expression"), "expression"
-            ),
+            expression=_frozen(_mapping(value.get("expression", {}), "expression"), "expression"),
             statement=value.get("statement", ""),
             source_ref_ids=sources,
             span_ids=spans,
@@ -901,9 +840,7 @@ class AuthorizationRule:
     schema_version: str = RULE_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        sources, spans = _source_map(
-            self.source_ref_ids, self.span_ids, owner="AuthorizationRule"
-        )
+        sources, spans = _source_map(self.source_ref_ids, self.span_ids, owner="AuthorizationRule")
         object.__setattr__(self, "rule_id", _identifier(self.rule_id, "rule_id"))
         head = (
             self.head
@@ -911,9 +848,7 @@ class AuthorizationRule:
             else AuthorizationAtom.from_dict(_mapping(self.head, "rule.head"))
         )
         if head.is_negative:
-            raise AuthorizationValidationError(
-                "rule heads must be positive; negation is body-only"
-            )
+            raise AuthorizationValidationError("rule heads must be positive; negation is body-only")
         object.__setattr__(self, "head", head)
         body = tuple(
             item
@@ -922,9 +857,7 @@ class AuthorizationRule:
             for item in _sequence(self.body, "rule.body")
         )
         if len(body) > MAX_RULE_BODY_SIZE:
-            raise AuthorizationValidationError(
-                f"rule body size exceeds {MAX_RULE_BODY_SIZE}"
-            )
+            raise AuthorizationValidationError(f"rule body size exceeds {MAX_RULE_BODY_SIZE}")
         object.__setattr__(self, "body", body)
         object.__setattr__(
             self,
@@ -932,14 +865,10 @@ class AuthorizationRule:
             _identifiers(self.constraint_ids, "rule.constraint_ids"),
         )
         object.__setattr__(self, "kind", _enum(self.kind, RuleKind, "rule.kind"))
-        object.__setattr__(
-            self, "effect", _enum(self.effect, EffectKind, "rule.effect")
-        )
+        object.__setattr__(self, "effect", _enum(self.effect, EffectKind, "rule.effect"))
         stratum = _non_bool_int(self.stratum, "rule.stratum", minimum=0)
         if stratum > MAX_STRATUM:
-            raise AuthorizationValidationError(
-                f"rule stratum exceeds {MAX_STRATUM}"
-            )
+            raise AuthorizationValidationError(f"rule stratum exceeds {MAX_STRATUM}")
         object.__setattr__(self, "stratum", stratum)
         if self.issuer_principal_id:
             object.__setattr__(
@@ -948,12 +877,8 @@ class AuthorizationRule:
                 _identifier(self.issuer_principal_id, "rule.issuer_principal_id"),
             )
         elif self.kind is RuleKind.SECPAL_SAYS:
-            raise AuthorizationValidationError(
-                "secpal_says rules require issuer_principal_id"
-            )
-        object.__setattr__(
-            self, "attributes", _frozen(self.attributes, "rule.attributes")
-        )
+            raise AuthorizationValidationError("secpal_says rules require issuer_principal_id")
+        object.__setattr__(self, "attributes", _frozen(self.attributes, "rule.attributes"))
         object.__setattr__(self, "source_ref_ids", sources)
         object.__setattr__(self, "span_ids", spans)
         if self.schema_version != RULE_SCHEMA_VERSION:
@@ -1010,9 +935,7 @@ class AuthorizationRule:
             effect=value.get("effect", EffectKind.DERIVE.value),
             stratum=value.get("stratum", 0),
             issuer_principal_id=value.get("issuer_principal_id", ""),
-            attributes=_frozen(
-                _mapping(value.get("attributes", {}), "attributes"), "attributes"
-            ),
+            attributes=_frozen(_mapping(value.get("attributes", {}), "attributes"), "attributes"),
             source_ref_ids=sources,
             span_ids=spans,
             schema_version=value.get("schema_version", RULE_SCHEMA_VERSION),
@@ -1039,12 +962,8 @@ class SpeaksForRelation:
     schema_version: str = SPEAKS_FOR_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        sources, spans = _source_map(
-            self.source_ref_ids, self.span_ids, owner="SpeaksForRelation"
-        )
-        object.__setattr__(
-            self, "speaks_for_id", _identifier(self.speaks_for_id, "speaks_for_id")
-        )
+        sources, spans = _source_map(self.source_ref_ids, self.span_ids, owner="SpeaksForRelation")
+        object.__setattr__(self, "speaks_for_id", _identifier(self.speaks_for_id, "speaks_for_id"))
         object.__setattr__(
             self,
             "speaker_principal_id",
@@ -1056,12 +975,8 @@ class SpeaksForRelation:
             _identifier(self.subject_principal_id, "subject_principal_id"),
         )
         if self.speaker_principal_id == self.subject_principal_id:
-            raise AuthorizationValidationError(
-                "speaks-for speaker and subject must differ"
-            )
-        depth = _non_bool_int(
-            self.max_composition_depth, "max_composition_depth", minimum=1
-        )
+            raise AuthorizationValidationError("speaks-for speaker and subject must differ")
+        depth = _non_bool_int(self.max_composition_depth, "max_composition_depth", minimum=1)
         if depth > MAX_DELEGATION_DEPTH:
             raise AuthorizationValidationError(
                 f"max_composition_depth exceeds {MAX_DELEGATION_DEPTH}"
@@ -1072,9 +987,7 @@ class SpeaksForRelation:
             "constraint_ids",
             _identifiers(self.constraint_ids, "speaks_for.constraint_ids"),
         )
-        object.__setattr__(
-            self, "attributes", _frozen(self.attributes, "speaks_for.attributes")
-        )
+        object.__setattr__(self, "attributes", _frozen(self.attributes, "speaks_for.attributes"))
         object.__setattr__(self, "source_ref_ids", sources)
         object.__setattr__(self, "span_ids", spans)
         if self.schema_version != SPEAKS_FOR_SCHEMA_VERSION:
@@ -1122,9 +1035,7 @@ class SpeaksForRelation:
             subject_principal_id=value.get("subject_principal_id", ""),
             max_composition_depth=value.get("max_composition_depth", 1),
             constraint_ids=tuple(value.get("constraint_ids", ())),
-            attributes=_frozen(
-                _mapping(value.get("attributes", {}), "attributes"), "attributes"
-            ),
+            attributes=_frozen(_mapping(value.get("attributes", {}), "attributes"), "attributes"),
             source_ref_ids=sources,
             span_ids=spans,
             schema_version=value.get("schema_version", SPEAKS_FOR_SCHEMA_VERSION),
@@ -1157,9 +1068,7 @@ class DelegationStatement:
         sources, spans = _source_map(
             self.source_ref_ids, self.span_ids, owner="DelegationStatement"
         )
-        object.__setattr__(
-            self, "delegation_id", _identifier(self.delegation_id, "delegation_id")
-        )
+        object.__setattr__(self, "delegation_id", _identifier(self.delegation_id, "delegation_id"))
         object.__setattr__(
             self,
             "issuer_principal_id",
@@ -1170,14 +1079,10 @@ class DelegationStatement:
             "subject_principal_id",
             _identifier(self.subject_principal_id, "subject_principal_id"),
         )
-        object.__setattr__(
-            self, "capability", _identifier(self.capability, "capability")
-        )
+        object.__setattr__(self, "capability", _identifier(self.capability, "capability"))
         depth = _non_bool_int(self.delegation_depth, "delegation_depth", minimum=0)
         if depth > MAX_DELEGATION_DEPTH:
-            raise AuthorizationValidationError(
-                f"delegation_depth exceeds {MAX_DELEGATION_DEPTH}"
-            )
+            raise AuthorizationValidationError(f"delegation_depth exceeds {MAX_DELEGATION_DEPTH}")
         object.__setattr__(self, "delegation_depth", depth)
         if self.parent_delegation_id:
             object.__setattr__(
@@ -1195,9 +1100,7 @@ class DelegationStatement:
             "constraint_ids",
             _identifiers(self.constraint_ids, "delegation.constraint_ids"),
         )
-        object.__setattr__(
-            self, "attributes", _frozen(self.attributes, "delegation.attributes")
-        )
+        object.__setattr__(self, "attributes", _frozen(self.attributes, "delegation.attributes"))
         object.__setattr__(self, "source_ref_ids", sources)
         object.__setattr__(self, "span_ids", spans)
         if self.schema_version != DELEGATION_SCHEMA_VERSION:
@@ -1258,9 +1161,7 @@ class DelegationStatement:
             parent_delegation_id=value.get("parent_delegation_id", ""),
             resource_scope=tuple(value.get("resource_scope", ())),
             constraint_ids=tuple(value.get("constraint_ids", ())),
-            attributes=_frozen(
-                _mapping(value.get("attributes", {}), "attributes"), "attributes"
-            ),
+            attributes=_frozen(_mapping(value.get("attributes", {}), "attributes"), "attributes"),
             source_ref_ids=sources,
             span_ids=spans,
             schema_version=value.get("schema_version", DELEGATION_SCHEMA_VERSION),
@@ -1284,9 +1185,7 @@ class PolicyBounds:
     schema_version: str = BOUNDS_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        max_delegation = _non_bool_int(
-            self.max_delegation_depth, "max_delegation_depth", minimum=0
-        )
+        max_delegation = _non_bool_int(self.max_delegation_depth, "max_delegation_depth", minimum=0)
         if max_delegation > MAX_DELEGATION_DEPTH:
             raise AuthorizationValidationError(
                 f"max_delegation_depth exceeds hard ceiling {MAX_DELEGATION_DEPTH}"
@@ -1295,15 +1194,11 @@ class PolicyBounds:
         object.__setattr__(
             self,
             "max_derivation_depth",
-            _non_bool_int(
-                self.max_derivation_depth, "max_derivation_depth", minimum=1
-            ),
+            _non_bool_int(self.max_derivation_depth, "max_derivation_depth", minimum=1),
         )
         max_stratum = _non_bool_int(self.max_stratum, "max_stratum", minimum=0)
         if max_stratum > MAX_STRATUM:
-            raise AuthorizationValidationError(
-                f"max_stratum exceeds hard ceiling {MAX_STRATUM}"
-            )
+            raise AuthorizationValidationError(f"max_stratum exceeds hard ceiling {MAX_STRATUM}")
         object.__setattr__(self, "max_stratum", max_stratum)
         object.__setattr__(
             self,
@@ -1356,9 +1251,7 @@ class PolicyBounds:
             "policy bounds",
         )
         return cls(
-            max_delegation_depth=value.get(
-                "max_delegation_depth", MAX_DELEGATION_DEPTH
-            ),
+            max_delegation_depth=value.get("max_delegation_depth", MAX_DELEGATION_DEPTH),
             max_derivation_depth=value.get("max_derivation_depth", 1024),
             max_stratum=value.get("max_stratum", MAX_STRATUM),
             max_facts=value.get("max_facts", 100_000),
@@ -1385,9 +1278,7 @@ class PrecedencePolicy:
             "resolution",
             _enum(self.resolution, ConflictResolution, "precedence.resolution"),
         )
-        object.__setattr__(
-            self, "statement", _text(self.statement, "precedence.statement")
-        )
+        object.__setattr__(self, "statement", _text(self.statement, "precedence.statement"))
         if self.schema_version != PRECEDENCE_SCHEMA_VERSION:
             raise AuthorizationValidationError(
                 f"unsupported precedence schema_version {self.schema_version!r}"
@@ -1441,9 +1332,7 @@ class PrecedencePolicy:
             "precedence",
         )
         return cls(
-            resolution=value.get(
-                "resolution", ConflictResolution.DENY_OVERRIDES.value
-            ),
+            resolution=value.get("resolution", ConflictResolution.DENY_OVERRIDES.value),
             statement=value.get(
                 "statement",
                 "When allow and deny evidence co-exist, deny overrides unless "
@@ -1469,20 +1358,14 @@ class DecisionQuery:
     schema_version: str = QUERY_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        sources, spans = _source_map(
-            self.source_ref_ids, self.span_ids, owner="DecisionQuery"
-        )
+        sources, spans = _source_map(self.source_ref_ids, self.span_ids, owner="DecisionQuery")
         object.__setattr__(self, "query_id", _identifier(self.query_id, "query_id"))
         object.__setattr__(
             self, "principal_id", _identifier(self.principal_id, "query.principal_id")
         )
         object.__setattr__(self, "action", _identifier(self.action, "query.action"))
-        object.__setattr__(
-            self, "resource", _text(self.resource, "query.resource", optional=True)
-        )
-        object.__setattr__(
-            self, "context", _frozen(self.context, "query.context")
-        )
+        object.__setattr__(self, "resource", _text(self.resource, "query.resource", optional=True))
+        object.__setattr__(self, "context", _frozen(self.context, "query.context"))
         object.__setattr__(
             self,
             "constraint_ids",
@@ -1492,14 +1375,10 @@ class DecisionQuery:
             goal = (
                 self.goal_atom
                 if isinstance(self.goal_atom, AuthorizationAtom)
-                else AuthorizationAtom.from_dict(
-                    _mapping(self.goal_atom, "query.goal_atom")
-                )
+                else AuthorizationAtom.from_dict(_mapping(self.goal_atom, "query.goal_atom"))
             )
             if goal.is_negative:
-                raise AuthorizationValidationError(
-                    "decision query goal_atom must be positive"
-                )
+                raise AuthorizationValidationError("decision query goal_atom must be positive")
             object.__setattr__(self, "goal_atom", goal)
         object.__setattr__(self, "source_ref_ids", sources)
         object.__setattr__(self, "span_ids", spans)
@@ -1550,9 +1429,7 @@ class DecisionQuery:
             principal_id=value.get("principal_id", ""),
             action=value.get("action", ""),
             resource=value.get("resource", ""),
-            context=_frozen(
-                _mapping(value.get("context", {}), "context"), "context"
-            ),
+            context=_frozen(_mapping(value.get("context", {}), "context"), "context"),
             constraint_ids=tuple(value.get("constraint_ids", ())),
             goal_atom=raw_goal,
             source_ref_ids=sources,
@@ -1573,18 +1450,14 @@ class ExplanationStep:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "step_id", _identifier(self.step_id, "step_id"))
-        object.__setattr__(
-            self, "kind", _enum(self.kind, ExplanationStepKind, "step.kind")
-        )
+        object.__setattr__(self, "kind", _enum(self.kind, ExplanationStepKind, "step.kind"))
         object.__setattr__(
             self, "reference_id", _identifier(self.reference_id, "step.reference_id")
         )
         object.__setattr__(
             self, "statement", _text(self.statement, "step.statement", optional=True)
         )
-        object.__setattr__(
-            self, "attributes", _frozen(self.attributes, "step.attributes")
-        )
+        object.__setattr__(self, "attributes", _frozen(self.attributes, "step.attributes"))
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -1616,9 +1489,7 @@ class ExplanationStep:
             kind=value.get("kind", ""),
             reference_id=value.get("reference_id", ""),
             statement=value.get("statement", ""),
-            attributes=_frozen(
-                _mapping(value.get("attributes", {}), "attributes"), "attributes"
-            ),
+            attributes=_frozen(_mapping(value.get("attributes", {}), "attributes"), "attributes"),
         )
 
 
@@ -1647,9 +1518,7 @@ class DecisionExplanation:
             "explanation_id",
             _identifier(self.explanation_id, "explanation_id"),
         )
-        object.__setattr__(
-            self, "query_id", _identifier(self.query_id, "explanation.query_id")
-        )
+        object.__setattr__(self, "query_id", _identifier(self.query_id, "explanation.query_id"))
         object.__setattr__(
             self, "outcome", _enum(self.outcome, DecisionOutcome, "explanation.outcome")
         )
@@ -1661,13 +1530,9 @@ class DecisionExplanation:
         )
         step_ids = [item.step_id for item in steps]
         if len(step_ids) != len(set(step_ids)):
-            raise AuthorizationValidationError(
-                "explanation step_id values must be unique"
-            )
+            raise AuthorizationValidationError("explanation step_id values must be unique")
         object.__setattr__(self, "steps", steps)
-        object.__setattr__(
-            self, "attributes", _frozen(self.attributes, "explanation.attributes")
-        )
+        object.__setattr__(self, "attributes", _frozen(self.attributes, "explanation.attributes"))
         object.__setattr__(self, "source_ref_ids", sources)
         object.__setattr__(self, "span_ids", spans)
         if self.schema_version != EXPLANATION_SCHEMA_VERSION:
@@ -1712,9 +1577,7 @@ class DecisionExplanation:
             query_id=value.get("query_id", ""),
             outcome=value.get("outcome", ""),
             steps=tuple(value.get("steps", ())),
-            attributes=_frozen(
-                _mapping(value.get("attributes", {}), "attributes"), "attributes"
-            ),
+            attributes=_frozen(_mapping(value.get("attributes", {}), "attributes"), "attributes"),
             source_ref_ids=sources,
             span_ids=spans,
             schema_version=value.get("schema_version", EXPLANATION_SCHEMA_VERSION),
@@ -1735,9 +1598,7 @@ class PolicyDecision:
     query_id: str
     outcome: DecisionOutcome | str
     explanation_id: str = ""
-    authority: AuthorizationEvidenceAuthority | str = (
-        AuthorizationEvidenceAuthority.AUTHORIZATION
-    )
+    authority: AuthorizationEvidenceAuthority | str = AuthorizationEvidenceAuthority.AUTHORIZATION
     generated_code_correctness: GeneratedCodeCorrectness | str = (
         GeneratedCodeCorrectness.NOT_ESTABLISHED
     )
@@ -1753,12 +1614,8 @@ class PolicyDecision:
             owner="PolicyDecision",
             required=False,
         )
-        object.__setattr__(
-            self, "decision_id", _identifier(self.decision_id, "decision_id")
-        )
-        object.__setattr__(
-            self, "query_id", _identifier(self.query_id, "decision.query_id")
-        )
+        object.__setattr__(self, "decision_id", _identifier(self.decision_id, "decision_id"))
+        object.__setattr__(self, "query_id", _identifier(self.query_id, "decision.query_id"))
         object.__setattr__(
             self, "outcome", _enum(self.outcome, DecisionOutcome, "decision.outcome")
         )
@@ -1789,9 +1646,7 @@ class PolicyDecision:
                 "authorization decisions never establish generated-code correctness"
             )
         object.__setattr__(self, "generated_code_correctness", correctness)
-        object.__setattr__(
-            self, "attributes", _frozen(self.attributes, "decision.attributes")
-        )
+        object.__setattr__(self, "attributes", _frozen(self.attributes, "decision.attributes"))
         object.__setattr__(self, "source_ref_ids", sources)
         object.__setattr__(self, "span_ids", spans)
         if self.schema_version != DECISION_SCHEMA_VERSION:
@@ -1846,16 +1701,12 @@ class PolicyDecision:
             query_id=value.get("query_id", ""),
             outcome=value.get("outcome", ""),
             explanation_id=value.get("explanation_id", ""),
-            authority=value.get(
-                "authority", AuthorizationEvidenceAuthority.AUTHORIZATION.value
-            ),
+            authority=value.get("authority", AuthorizationEvidenceAuthority.AUTHORIZATION.value),
             generated_code_correctness=value.get(
                 "generated_code_correctness",
                 GeneratedCodeCorrectness.NOT_ESTABLISHED.value,
             ),
-            attributes=_frozen(
-                _mapping(value.get("attributes", {}), "attributes"), "attributes"
-            ),
+            attributes=_frozen(_mapping(value.get("attributes", {}), "attributes"), "attributes"),
             source_ref_ids=sources,
             span_ids=spans,
             schema_version=value.get("schema_version", DECISION_SCHEMA_VERSION),
@@ -2038,19 +1889,14 @@ class AuthorizationIR:
             "precedence": self.precedence.to_dict(),
             "schema_version": self.schema_version,
             "sources": [
-                item.to_dict()
-                for item in sorted(self.sources, key=lambda item: item.ref_id)
+                item.to_dict() for item in sorted(self.sources, key=lambda item: item.ref_id)
             ],
-            "spans": [
-                item.to_dict()
-                for item in sorted(self.spans, key=lambda item: item.span_id)
-            ],
+            "spans": [item.to_dict() for item in sorted(self.spans, key=lambda item: item.span_id)],
             "trust_root_principal_ids": list(self.trust_root_principal_ids),
         }
         for name, values, id_field in groups:
             result[name] = [
-                item.to_dict()
-                for item in sorted(values, key=lambda item: getattr(item, id_field))
+                item.to_dict() for item in sorted(values, key=lambda item: getattr(item, id_field))
             ]
         return result
 
@@ -2109,9 +1955,7 @@ class AuthorizationIR:
             sources=tuple(value.get("sources", ())),
             spans=tuple(value.get("spans", ())),
             principals=tuple(value.get("principals", ())),
-            trust_root_principal_ids=tuple(
-                value.get("trust_root_principal_ids", ())
-            ),
+            trust_root_principal_ids=tuple(value.get("trust_root_principal_ids", ())),
             roles=tuple(value.get("roles", ())),
             predicates=tuple(value.get("predicates", ())),
             facts=tuple(value.get("facts", ())),
@@ -2124,17 +1968,13 @@ class AuthorizationIR:
             queries=tuple(value.get("queries", ())),
             explanations=tuple(value.get("explanations", ())),
             decisions=tuple(value.get("decisions", ())),
-            metadata=_frozen(
-                _mapping(value.get("metadata", {}), "metadata"), "metadata"
-            ),
+            metadata=_frozen(_mapping(value.get("metadata", {}), "metadata"), "metadata"),
             observations=_frozen(
                 _mapping(value.get("observations", {}), "observations"),
                 "observations",
             ),
             document_id=value.get("document_id", ""),
-            schema_version=value.get(
-                "schema_version", AUTHORIZATION_IR_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", AUTHORIZATION_IR_SCHEMA_VERSION),
         )
 
     @classmethod
@@ -2143,9 +1983,7 @@ class AuthorizationIR:
 
         payload = json.loads(text)
         if not isinstance(payload, Mapping):
-            raise AuthorizationValidationError(
-                "authorization IR JSON must decode to an object"
-            )
+            raise AuthorizationValidationError("authorization IR JSON must decode to an object")
         return cls.from_dict(payload)
 
     def validate(self) -> None:
@@ -2183,8 +2021,7 @@ class AuthorizationIR:
             self._unique(values, id_field, label)
 
         semantic_id_groups = [
-            {getattr(item, id_field) for item in values}
-            for values, id_field, _ in groups[2:]
+            {getattr(item, id_field) for item in values} for values, id_field, _ in groups[2:]
         ]
         semantic_ids: set[str] = set()
         for identifiers in semantic_id_groups:
@@ -2239,13 +2076,11 @@ class AuthorizationIR:
         )
         if len(self.facts) > self.bounds.max_facts:
             raise AuthorizationValidationError(
-                f"fact count {len(self.facts)} exceeds bounds.max_facts "
-                f"{self.bounds.max_facts}"
+                f"fact count {len(self.facts)} exceeds bounds.max_facts {self.bounds.max_facts}"
             )
         if len(self.rules) > self.bounds.max_rules:
             raise AuthorizationValidationError(
-                f"rule count {len(self.rules)} exceeds bounds.max_rules "
-                f"{self.bounds.max_rules}"
+                f"rule count {len(self.rules)} exceeds bounds.max_rules {self.bounds.max_rules}"
             )
 
         for role in self.roles:
@@ -2256,9 +2091,7 @@ class AuthorizationIR:
             )
 
         for fact in self.facts:
-            self._validate_atom(
-                fact.atom, predicates_by_id, f"fact {fact.fact_id}.atom"
-            )
+            self._validate_atom(fact.atom, predicates_by_id, f"fact {fact.fact_id}.atom")
             if fact.issuer_principal_id:
                 _known(
                     (fact.issuer_principal_id,),
@@ -2272,9 +2105,7 @@ class AuthorizationIR:
                     f"rule {rule.rule_id!r} stratum {rule.stratum} exceeds "
                     f"bounds.max_stratum {self.bounds.max_stratum}"
                 )
-            self._validate_atom(
-                rule.head, predicates_by_id, f"rule {rule.rule_id}.head"
-            )
+            self._validate_atom(rule.head, predicates_by_id, f"rule {rule.rule_id}.head")
             for index, atom in enumerate(rule.body):
                 self._validate_atom(
                     atom,
@@ -2351,8 +2182,7 @@ class AuthorizationIR:
                     )
                 if parent.subject_principal_id != delegation.issuer_principal_id:
                     raise AuthorizationValidationError(
-                        f"delegation {delegation.delegation_id!r} issuer must "
-                        "be the parent subject"
+                        f"delegation {delegation.delegation_id!r} issuer must be the parent subject"
                     )
 
         for query in self.queries:
@@ -2409,8 +2239,7 @@ class AuthorizationIR:
                 )
                 if explanation.query_id != decision.query_id:
                     raise AuthorizationValidationError(
-                        f"decision {decision.decision_id!r} explanation binds "
-                        "a different query"
+                        f"decision {decision.decision_id!r} explanation binds a different query"
                     )
                 if explanation.outcome != decision.outcome:
                     raise AuthorizationValidationError(
@@ -2422,9 +2251,7 @@ class AuthorizationIR:
                     "authorization decisions cannot claim theorem authority"
                 )
 
-    def _validate_stratification(
-        self, predicates_by_id: Mapping[str, PredicateSignature]
-    ) -> None:
+    def _validate_stratification(self, predicates_by_id: Mapping[str, PredicateSignature]) -> None:
         """Ensure negation is stratified over a finite stratum assignment."""
 
         defining_strata: dict[str, set[int]] = {
@@ -2491,9 +2318,7 @@ class AuthorizationIR:
         elif step.kind is ExplanationStepKind.RULE:
             _known((step.reference_id,), rule_ids, "explanation step rule")
         elif step.kind is ExplanationStepKind.SPEAKS_FOR:
-            _known(
-                (step.reference_id,), speaks_for_ids, "explanation step speaks-for"
-            )
+            _known((step.reference_id,), speaks_for_ids, "explanation step speaks-for")
         elif step.kind is ExplanationStepKind.DELEGATION:
             _known(
                 (step.reference_id,),
@@ -2529,8 +2354,7 @@ class AuthorizationIR:
                 "max_stratum",
             }:
                 raise AuthorizationValidationError(
-                    "explanation bound step has unknown reference_id "
-                    f"{step.reference_id!r}"
+                    f"explanation bound step has unknown reference_id {step.reference_id!r}"
                 )
 
     def _validate_source_map(
@@ -2542,9 +2366,7 @@ class AuthorizationIR:
         _known(item.source_ref_ids, source_ids, "source_ref_ids")
         unknown_spans = sorted(set(item.span_ids) - set(spans))
         if unknown_spans:
-            raise AuthorizationValidationError(
-                f"span_ids reference unknown spans {unknown_spans}"
-            )
+            raise AuthorizationValidationError(f"span_ids reference unknown spans {unknown_spans}")
         for span_id in item.span_ids:
             span = spans[span_id]
             if item.source_ref_ids and span.source_ref_id not in item.source_ref_ids:
@@ -2556,9 +2378,7 @@ class AuthorizationIR:
     def _unique(values: Sequence[Any], id_field: str, label: str) -> None:
         identities = [getattr(item, id_field) for item in values]
         if len(identities) != len(set(identities)):
-            raise AuthorizationValidationError(
-                f"{label} identifiers must be unique"
-            )
+            raise AuthorizationValidationError(f"{label} identifiers must be unique")
 
 
 def distinct_decision_outcomes() -> frozenset[str]:

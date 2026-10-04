@@ -4,6 +4,7 @@ Adds the legal_data directory to sys.path early (via pytest_configure)
 so that `from reasoner.X import ...` resolves correctly for the WS11
 reasoner tests, even with --import-mode=importlib.
 """
+
 from __future__ import annotations
 
 import importlib
@@ -32,7 +33,9 @@ def _ensure_pytest_plugin(module_name: str, package_name: str) -> bool:
     try:
         from ipfs_datasets_py.auto_installer import DependencyInstaller
 
-        installer = DependencyInstaller(auto_install=True, verbose=_truthy_env("IPFS_INSTALL_VERBOSE"))
+        installer = DependencyInstaller(
+            auto_install=True, verbose=_truthy_env("IPFS_INSTALL_VERBOSE")
+        )
         if not installer.install_python_dependency(package_name):
             return False
         importlib.invalidate_caches()

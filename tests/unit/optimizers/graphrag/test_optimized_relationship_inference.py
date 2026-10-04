@@ -20,6 +20,7 @@ def optimizer():
 @pytest.fixture
 def mock_entities():
     """Create mock entities for testing."""
+
     class MockEntity:
         def __init__(self, entity_id: str, text: str, entity_type: str):
             self.id = entity_id
@@ -131,9 +132,7 @@ def test_no_self_relationships(optimizer, mock_entities, sample_text):
     relationships = optimizer.infer_relationships_optimized(mock_entities, sample_text)
 
     for rel in relationships:
-        assert (
-            rel["source_id"] != rel["target_id"]
-        ), "Self-relationship found"
+        assert rel["source_id"] != rel["target_id"], "Self-relationship found"
 
 
 def test_empty_text(optimizer, mock_entities):
@@ -154,6 +153,7 @@ def test_no_entities(optimizer):
 
 def test_entities_not_in_text(optimizer):
     """Test inference when entities are not in the text."""
+
     class MockEntity:
         def __init__(self, entity_id: str, text: str, entity_type: str):
             self.id = entity_id
@@ -175,6 +175,7 @@ def test_entities_not_in_text(optimizer):
 
 def test_verb_pattern_relationships(optimizer):
     """Test that verb patterns are correctly detected."""
+
     class MockEntity:
         def __init__(self, entity_id: str, text: str, entity_type: str):
             self.id = entity_id
@@ -210,6 +211,7 @@ def test_type_confidence_calculation():
 
 def test_distance_based_confidence(optimizer):
     """Test that confidence decays with distance."""
+
     class MockEntity:
         def __init__(self, entity_id: str, text: str, entity_type: str):
             self.id = entity_id

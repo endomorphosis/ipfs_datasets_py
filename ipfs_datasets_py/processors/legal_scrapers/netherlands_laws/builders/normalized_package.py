@@ -18,7 +18,12 @@ from .common import (
     write_jsonl,
     write_parquet,
 )
-from ..paths import DEFAULT_HF_REPO_IDS, HF_DATA_DIR, NORMALIZED_DATASET_NAME, PACKAGE_RAW_OUTPUT_DIR
+from ..paths import (
+    DEFAULT_HF_REPO_IDS,
+    HF_DATA_DIR,
+    NORMALIZED_DATASET_NAME,
+    PACKAGE_RAW_OUTPUT_DIR,
+)
 
 
 DEFAULT_REPO_ID = DEFAULT_HF_REPO_IDS["normalized"]
@@ -28,8 +33,16 @@ DEFAULT_OUT_DIR = HF_DATA_DIR / NORMALIZED_DATASET_NAME
 
 def coverage_note(run_metadata: dict[str, Any], record_counts: dict[str, int]) -> str:
     max_documents = run_metadata.get("max_documents")
-    parsed = run_metadata.get("output_records_count") or run_metadata.get("documents_parsed") or record_counts.get("laws", 0)
-    discovered = run_metadata.get("total_unique_laws_discovered") or run_metadata.get("unique_laws_discovered") or "unknown"
+    parsed = (
+        run_metadata.get("output_records_count")
+        or run_metadata.get("documents_parsed")
+        or record_counts.get("laws", 0)
+    )
+    discovered = (
+        run_metadata.get("total_unique_laws_discovered")
+        or run_metadata.get("unique_laws_discovered")
+        or "unknown"
+    )
     failed = run_metadata.get("documents_failed", "unknown")
     if max_documents:
         return (
@@ -342,7 +355,9 @@ def build_normalized_package(
     raw_laws = read_jsonl(raw_dir / "netherlands_laws_index_latest.jsonl")
     raw_articles = read_jsonl(raw_dir / "netherlands_laws_articles_index_latest.jsonl")
     raw_search_rows = count_jsonl(raw_dir / "netherlands_laws_search_index_latest.jsonl")
-    run_metadata = json.loads((raw_dir / "netherlands_laws_run_metadata_latest.json").read_text(encoding="utf-8"))
+    run_metadata = json.loads(
+        (raw_dir / "netherlands_laws_run_metadata_latest.json").read_text(encoding="utf-8")
+    )
 
     laws = normalize_laws(raw_laws)
     articles = normalize_articles(raw_articles)
@@ -377,7 +392,9 @@ def build_normalized_package(
             "articles_rows": len(articles),
             "article_jsonl_bytes": normalized_article_bytes,
             "article_reduction_bytes": raw_article_bytes - normalized_article_bytes,
-            "article_reduction_pct": round(100 * (raw_article_bytes - normalized_article_bytes) / raw_article_bytes, 2)
+            "article_reduction_pct": round(
+                100 * (raw_article_bytes - normalized_article_bytes) / raw_article_bytes, 2
+            )
             if raw_article_bytes
             else 0.0,
         },
@@ -393,14 +410,18 @@ def build_normalized_package(
             "search_records_count": run_metadata.get("search_records_count"),
             "law_status_counts": run_metadata.get("law_status_counts"),
             "current_laws_count": run_metadata.get("current_laws_count"),
-            "historical_repealed_superseded_laws_count": run_metadata.get("historical_repealed_superseded_laws_count"),
+            "historical_repealed_superseded_laws_count": run_metadata.get(
+                "historical_repealed_superseded_laws_count"
+            ),
             "unknown_status_laws_count": run_metadata.get("unknown_status_laws_count"),
             "ambiguous_status_laws_count": run_metadata.get("ambiguous_status_laws_count"),
         },
     }
 
     write_json(out_dir / "analysis" / "size_inflation_report.json", report)
-    write_json(out_dir / "data" / "metadata" / "netherlands_laws_run_metadata_latest.json", run_metadata)
+    write_json(
+        out_dir / "data" / "metadata" / "netherlands_laws_run_metadata_latest.json", run_metadata
+    )
 
     manifest = {
         "dataset_name": NORMALIZED_DATASET_NAME,
@@ -452,7 +473,9 @@ def build_normalized_package(
 
 def main() -> None:
     out_dir = build_normalized_package()
-    report = json.loads((out_dir / "analysis" / "size_inflation_report.json").read_text(encoding="utf-8"))
+    report = json.loads(
+        (out_dir / "analysis" / "size_inflation_report.json").read_text(encoding="utf-8")
+    )
     print(json.dumps(report, indent=2, ensure_ascii=False))
 
 

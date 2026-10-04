@@ -204,6 +204,7 @@ graph query     →    graph/query      →    GraphQuery
 ```python
 from ipfs_datasets_py.core_operations import DatasetLoader
 
+
 async def load_dataset(source, format=None, options=None):
     loader = DatasetLoader()  # Core module
     result = await loader.load(source, ...)  # Delegate
@@ -222,6 +223,7 @@ async def load_dataset(source, format=None, options=None):
 **Should be:**
 ```python
 from ipfs_datasets_py.logic.deontic import DeonticParser
+
 
 async def parse_deontic(text, options=None):
     parser = DeonticParser()  # Core module

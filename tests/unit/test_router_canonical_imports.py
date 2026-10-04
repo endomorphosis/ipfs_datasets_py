@@ -26,12 +26,8 @@ def test_datasets_router_is_canonical_accelerator_module(
     datasets_name: str,
     accelerator_name: str,
 ) -> None:
-    datasets_router = importlib.import_module(
-        f"ipfs_datasets_py.{datasets_name}"
-    )
-    accelerator_router = importlib.import_module(
-        f"ipfs_accelerate_py.{accelerator_name}"
-    )
+    datasets_router = importlib.import_module(f"ipfs_datasets_py.{datasets_name}")
+    accelerator_router = importlib.import_module(f"ipfs_accelerate_py.{accelerator_name}")
 
     assert datasets_router is accelerator_router
 

@@ -6,6 +6,7 @@ Covers:
 - Confidence decay already present in infer_relationships (verify)
 - OntologyOptimizer.analyze_batch parallel already exists (check)
 """
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock
@@ -17,12 +18,14 @@ import pytest
 # Per-entity-type completeness in CriticScore.metadata
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestEntityTypeCountsInMetadata:
     """CriticScore.metadata should include entity_type_counts and fractions."""
 
     @pytest.fixture
     def critic(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
         return OntologyCritic(use_llm=False)
 
     @pytest.fixture
@@ -114,6 +117,7 @@ class TestEntityTypeCountsInMetadata:
 # split_entity refinement action
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestSplitEntityAction:
     """Mediator split_entity action splits compound entities."""
 
@@ -122,6 +126,7 @@ class TestSplitEntityAction:
         from ipfs_datasets_py.optimizers.graphrag.ontology_mediator import OntologyMediator
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
         return OntologyMediator(
             generator=OntologyGenerator(),
             critic=OntologyCritic(use_llm=False),
@@ -206,7 +211,13 @@ class TestSplitEntityAction:
                 {"id": "e2", "text": "Acme", "type": "Organization", "confidence": 0.9},
             ],
             "relationships": [
-                {"id": "r1", "source_id": "e1", "target_id": "e2", "type": "worksAt", "confidence": 0.7},
+                {
+                    "id": "r1",
+                    "source_id": "e1",
+                    "target_id": "e2",
+                    "type": "worksAt",
+                    "confidence": 0.7,
+                },
             ],
         }
         feedback = self._make_feedback(["split entity — too broad"])
@@ -220,12 +231,14 @@ class TestSplitEntityAction:
 # Confidence decay in co-occurrence (verify existing behavior)
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestCoOccurrenceConfidenceDecay:
     """Distance-based confidence decay was already implemented; verify it."""
 
     @pytest.fixture
     def generator(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
         return OntologyGenerator()
 
     @pytest.fixture
@@ -233,12 +246,12 @@ class TestCoOccurrenceConfidenceDecay:
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
             OntologyGenerationContext,
         )
-        return OntologyGenerationContext(
-            data_source="test", data_type="text", domain="general"
-        )
+
+        return OntologyGenerationContext(data_source="test", data_type="text", domain="general")
 
     def test_close_entities_have_higher_confidence_than_far(self, generator, ctx):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
         e1 = Entity(id="e1", type="Person", text="Alice", confidence=0.9)
         e2_near = Entity(id="e2", type="Person", text="Bob", confidence=0.9)
         e2_far = Entity(id="e3", type="Person", text="Charlie", confidence=0.9)
@@ -258,6 +271,7 @@ class TestCoOccurrenceConfidenceDecay:
 
     def test_entities_far_apart_produce_no_relationship(self, generator, ctx):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
         e1 = Entity(id="e1", type="Person", text="Alice", confidence=0.9)
         e2 = Entity(id="e2", type="Person", text="Zephyr", confidence=0.9)
         # 500 words of padding >> 200 char window
@@ -272,16 +286,19 @@ class TestCoOccurrenceConfidenceDecay:
 # analyze_batch_parallel already covers the parallelization TODO
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestAnalyzeBatchParallelExists:
     """Verify analyze_batch_parallel is available (covers the parallelization TODO)."""
 
     def test_analyze_batch_parallel_exists(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
         assert hasattr(OntologyOptimizer, "analyze_batch_parallel")
         assert callable(OntologyOptimizer.analyze_batch_parallel)
 
     def test_analyze_batch_parallel_accepts_max_workers(self):
         import inspect
         from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
         sig = inspect.signature(OntologyOptimizer.analyze_batch_parallel)
         assert "max_workers" in sig.parameters

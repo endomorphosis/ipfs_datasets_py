@@ -137,20 +137,11 @@ _LEANSTRAL_FAMILY_CANDIDATE_PREDICATES: Dict[str, tuple[str, ...]] = {
     ),
 }
 _LEANSTRAL_FAMILY_CANDIDATE_EXAMPLES = {
-    "deontic": (
-        "obligation(actor:a1, action:x1) unless exception(condition:c1)"
-    ),
-    "event_calculus": (
-        "initiates(event:e1, fluent:f1, time:t1) and "
-        "holds_at(fluent:f1, time:t2)"
-    ),
+    "deontic": ("obligation(actor:a1, action:x1) unless exception(condition:c1)"),
+    "event_calculus": ("initiates(event:e1, fluent:f1, time:t1) and holds_at(fluent:f1, time:t2)"),
     "frame_logic": "frame_role(frame:f1, role:r1, value:v1)",
-    "graph_projection": (
-        "relation(subject:s1, predicate:p1, object:o1)"
-    ),
-    "temporal_first_order": (
-        "temporal_anchor(event:e1, time:t1) and before(time:t1, time:t2)"
-    ),
+    "graph_projection": ("relation(subject:s1, predicate:p1, object:o1)"),
+    "temporal_first_order": ("temporal_anchor(event:e1, time:t1) and before(time:t1, time:t2)"),
 }
 _SAFE_LEAN_IDENTIFIER = re.compile(r"[^A-Za-z0-9_]+")
 _ALLOWED_RULE_HINT_ACTIONS = frozenset(
@@ -307,7 +298,9 @@ class ProjectionEvidence:
         hint: Optional[Any] = None,
     ) -> "ProjectionEvidence":
         source_span_hashes = {
-            formula.formula_id: _source_span_hash(sample, formula.provenance.start_char, formula.provenance.end_char)
+            formula.formula_id: _source_span_hash(
+                sample, formula.provenance.start_char, formula.provenance.end_char
+            )
             for formula in sample.modal_ir.formulas
         }
         losses = _numeric_mapping(autoencoder_guidance.get("legal_ir_view_metrics"))
@@ -336,9 +329,12 @@ class ProjectionEvidence:
             "synthesis_focus": synthesis_focus,
             "target_component": str(getattr(hint, "target_component", "") or ""),
         }
-        evidence_id = "projection-" + hashlib.sha256(
-            json.dumps(payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
-        ).hexdigest()[:16]
+        evidence_id = (
+            "projection-"
+            + hashlib.sha256(
+                json.dumps(payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
+            ).hexdigest()[:16]
+        )
         return cls(
             evidence_id=evidence_id,
             sample_id=sample.sample_id,
@@ -395,9 +391,12 @@ class CompilerChangeSpec:
             "evidence_id": evidence.evidence_id,
             "target_component": target_component,
         }
-        spec_id = "compiler-change-" + hashlib.sha256(
-            json.dumps(payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
-        ).hexdigest()[:16]
+        spec_id = (
+            "compiler-change-"
+            + hashlib.sha256(
+                json.dumps(payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
+            ).hexdigest()[:16]
+        )
         return cls(
             spec_id=spec_id,
             evidence_id=evidence.evidence_id,
@@ -486,9 +485,7 @@ class LegalIRLeanTask:
 
         formula = sample.modal_ir.formulas[0]
         span = sample.normalized_text[
-            max(0, int(formula.provenance.start_char)) : max(
-                0, int(formula.provenance.end_char)
-            )
+            max(0, int(formula.provenance.start_char)) : max(0, int(formula.provenance.end_char))
         ].strip()
         if not span:
             span = sample.text[
@@ -527,9 +524,12 @@ class LegalIRLeanTask:
                 ).encode("utf-8")
             ).hexdigest()[:16],
         }
-        task_id = "leanstral-" + hashlib.sha256(
-            json.dumps(task_payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
-        ).hexdigest()[:16]
+        task_id = (
+            "leanstral-"
+            + hashlib.sha256(
+                json.dumps(task_payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
+            ).hexdigest()[:16]
+        )
         return cls(
             task_id=task_id,
             sample_id=sample.sample_id,
@@ -603,9 +603,7 @@ class LeanstralProposal:
                     {
                         "action": str(hint.get("action", "")).strip(),
                         "rationale": str(hint.get("rationale", "")).strip(),
-                        "target_component": str(
-                            hint.get("target_component", "")
-                        ).strip(),
+                        "target_component": str(hint.get("target_component", "")).strip(),
                     }
                 )
         theorem_proofs = data.get("theorem_proofs", data.get("proofs", {}))
@@ -714,9 +712,7 @@ class LeanstralFailureBranchSanitization:
     accepted: bool
     candidates: Sequence[Dict[str, Any]] = field(default_factory=tuple)
     reasons: Sequence[str] = field(default_factory=tuple)
-    validations: Sequence[LeanstralFailureBranchCandidateValidation] = field(
-        default_factory=tuple
-    )
+    validations: Sequence[LeanstralFailureBranchCandidateValidation] = field(default_factory=tuple)
     schema_version: str = LEANSTRAL_FAILURE_BRANCH_RESPONSE_SCHEMA_VERSION
 
     @property
@@ -775,9 +771,7 @@ class LeanstralDraftGuidance:
             "action": self.action,
             "allowed_paths": list(self.allowed_paths),
             "compiler_change_spec_id": self.compiler_change_spec_id,
-            "deterministic_rule_hints": [
-                dict(hint) for hint in self.deterministic_rule_hints
-            ],
+            "deterministic_rule_hints": [dict(hint) for hint in self.deterministic_rule_hints],
             "drafted_logic_candidates": [
                 dict(candidate) for candidate in self.drafted_logic_candidates
             ],
@@ -1146,7 +1140,9 @@ def leanstral_draft_guidance(
 ) -> LeanstralDraftGuidance:
     """Distill one Leanstral result into guidance for autoencoder/Codex loops."""
 
-    change_spec = task.compiler_change_spec if isinstance(task.compiler_change_spec, Mapping) else {}
+    change_spec = (
+        task.compiler_change_spec if isinstance(task.compiler_change_spec, Mapping) else {}
+    )
     projection_evidence = (
         task.projection_evidence if isinstance(task.projection_evidence, Mapping) else {}
     )
@@ -1155,9 +1151,7 @@ def leanstral_draft_guidance(
     )
     action = str(change_spec.get("action") or projection_evidence.get("action") or "").strip()
     target_component = str(
-        change_spec.get("target_component")
-        or projection_evidence.get("target_component")
-        or ""
+        change_spec.get("target_component") or projection_evidence.get("target_component") or ""
     ).strip()
     accepted = bool(validation.accepted)
     candidates = (
@@ -1166,13 +1160,10 @@ def leanstral_draft_guidance(
         else []
     )
     rule_hints = (
-        [dict(hint) for hint in proposal.deterministic_rule_hints]
-        if proposal is not None
-        else []
+        [dict(hint) for hint in proposal.deterministic_rule_hints] if proposal is not None else []
     )
     legal_ir_view_metrics = _numeric_mapping(
-        autoencoder_evidence.get("legal_ir_view_metrics")
-        or projection_evidence.get("losses")
+        autoencoder_evidence.get("legal_ir_view_metrics") or projection_evidence.get("losses")
     )
     legal_ir_view_gaps = _numeric_mapping(
         autoencoder_evidence.get("legal_ir_view_gap_distribution")
@@ -1214,9 +1205,12 @@ def leanstral_draft_guidance(
         "task_id": task.task_id,
         "validation_reasons": list(validation.reasons),
     }
-    guidance_id = "leanstral-guidance-" + hashlib.sha256(
-        json.dumps(payload, ensure_ascii=True, sort_keys=True, default=str).encode("utf-8")
-    ).hexdigest()[:16]
+    guidance_id = (
+        "leanstral-guidance-"
+        + hashlib.sha256(
+            json.dumps(payload, ensure_ascii=True, sort_keys=True, default=str).encode("utf-8")
+        ).hexdigest()[:16]
+    )
     return LeanstralDraftGuidance(
         schema_version=LEANSTRAL_DRAFT_GUIDANCE_SCHEMA_VERSION,
         guidance_id=guidance_id,
@@ -1262,9 +1256,7 @@ def merge_leanstral_guidance_into_compiler_guidance(
     if not guidance:
         return base
     external = [
-        dict(item)
-        for item in base.get("external_guidance", [])
-        if isinstance(item, Mapping)
+        dict(item) for item in base.get("external_guidance", []) if isinstance(item, Mapping)
     ]
     external.append(guidance)
     base["external_guidance"] = external[-16:]
@@ -1295,9 +1287,7 @@ def merge_leanstral_guidance_into_compiler_guidance(
         if isinstance(item, Mapping)
     ]
     ranked.extend(
-        dict(item)
-        for item in base.get("ranked_guidance_features", [])
-        if isinstance(item, Mapping)
+        dict(item) for item in base.get("ranked_guidance_features", []) if isinstance(item, Mapping)
     )
     base["ranked_guidance_features"] = _dedupe_guidance_features(ranked)[:64]
     base["synthesis_focus"] = _unique_string_values(
@@ -1380,8 +1370,7 @@ def _proposal_rejection_reasons(
             reasons.append("missing_obligation_id")
             break
         if accepted_obligation_ids and any(
-            obligation_id not in accepted_obligation_ids
-            for obligation_id in proof_obligation_ids
+            obligation_id not in accepted_obligation_ids for obligation_id in proof_obligation_ids
         ):
             reasons.append("unknown_drafted_logic_proof_obligation_id")
             break
@@ -1533,8 +1522,10 @@ def _is_failed_hammer_item(item: Mapping[str, Any]) -> bool:
 
     if item.get("trusted") is True:
         return False
-    if item.get("proved") is True and not item.get("failure_reason") and not item.get(
-        "rejection_reasons"
+    if (
+        item.get("proved") is True
+        and not item.get("failure_reason")
+        and not item.get("rejection_reasons")
     ):
         return False
     return True
@@ -1562,12 +1553,8 @@ def _failed_obligation_branches(
     *,
     failed_obligation_ids: Sequence[str] = (),
 ) -> list[Dict[str, Any]]:
-    grounding_catalog = _leanstral_candidate_grounding_catalog(
-        task.modal_formula
-    )
-    grounding_symbols = _leanstral_candidate_grounding_symbols(
-        task.modal_formula
-    )
+    grounding_catalog = _leanstral_candidate_grounding_catalog(task.modal_formula)
+    grounding_symbols = _leanstral_candidate_grounding_symbols(task.modal_formula)
     obligations = {
         str(item.get("obligation_id") or ""): dict(item)
         for item in _legal_ir_proof_obligations(task)
@@ -1619,8 +1606,7 @@ def _failed_obligation_branches(
                     "allowed_predicate_heads": list(allowed_predicate_heads),
                     "grounding_symbols": list(grounding_symbols),
                     "grounding_symbols_by_role": {
-                        key: list(values)
-                        for key, values in grounding_catalog.items()
+                        key: list(values) for key, values in grounding_catalog.items()
                     },
                     "grounding_required": bool(grounding_symbols),
                     "grounded_candidate_seed": grounded_candidate_seed,
@@ -1771,15 +1757,9 @@ def _logic_family_candidate_rejection_reason(
     """
 
     text = str(candidate_text or "").strip().lower()
-    family = (
-        f"{logic_family or ''} {target_view or ''}"
-        .lower()
-        .replace("-", "_")
-        .replace(".", "_")
-    )
+    family = f"{logic_family or ''} {target_view or ''}".lower().replace("-", "_").replace(".", "_")
     heads = " ".join(
-        match.group(1).lower()
-        for match in re.finditer(r"\b([A-Za-z_][A-Za-z0-9_.:-]*)\s*\(", text)
+        match.group(1).lower() for match in re.finditer(r"\b([A-Za-z_][A-Za-z0-9_.:-]*)\s*\(", text)
     )
     if any(token in family for token in ("tdfol", "temporal_first")):
         required = (
@@ -1818,7 +1798,9 @@ def _logic_family_candidate_rejection_reason(
             "object",
             "subclass",
         )
-        return "" if any(token in heads for token in required) else "flogic_candidate_shape_mismatch"
+        return (
+            "" if any(token in heads for token in required) else "flogic_candidate_shape_mismatch"
+        )
     return ""
 
 
@@ -1826,12 +1808,7 @@ def _leanstral_candidate_family(
     logic_family: Any,
     target_view: Any = "",
 ) -> str:
-    family = (
-        f"{logic_family or ''} {target_view or ''}"
-        .lower()
-        .replace("-", "_")
-        .replace(".", "_")
-    )
+    family = f"{logic_family or ''} {target_view or ''}".lower().replace("-", "_").replace(".", "_")
     if any(token in family for token in ("tdfol", "temporal_first")):
         return "temporal_first_order"
     if any(token in family for token in ("dcec", "event_calculus", "cec_native")):
@@ -1907,11 +1884,7 @@ def _leanstral_candidate_grounding_catalog(
 
     def add(bucket: str, value: Any) -> None:
         normalized = _leanstral_candidate_symbol(value)
-        if (
-            len(normalized) >= 3
-            and not normalized.isdigit()
-            and normalized not in buckets[bucket]
-        ):
+        if len(normalized) >= 3 and not normalized.isdigit() and normalized not in buckets[bucket]:
             buckets[bucket].append(normalized)
 
     for raw_formula in items:
@@ -1937,9 +1910,7 @@ def _leanstral_candidate_grounding_catalog(
         )
         add(
             "cue_symbols",
-            metadata.get("cue")
-            or operator.get("label")
-            or operator.get("symbol"),
+            metadata.get("cue") or operator.get("label") or operator.get("symbol"),
         )
         if sum(len(values) for values in buckets.values()) >= max(
             1,
@@ -1977,28 +1948,14 @@ def _leanstral_grounded_candidate_seed(
     """Build a family-shaped candidate using only compiler-owned identifiers."""
 
     predicates = tuple(
-        str(value)
-        for value in grounding_catalog.get("predicate_symbols", ())
-        if str(value)
+        str(value) for value in grounding_catalog.get("predicate_symbols", ()) if str(value)
     )
     arguments = tuple(
-        str(value)
-        for value in grounding_catalog.get("argument_symbols", ())
-        if str(value)
+        str(value) for value in grounding_catalog.get("argument_symbols", ()) if str(value)
     )
-    roles = tuple(
-        str(value)
-        for value in grounding_catalog.get("role_symbols", ())
-        if str(value)
-    )
-    cues = tuple(
-        str(value)
-        for value in grounding_catalog.get("cue_symbols", ())
-        if str(value)
-    )
-    all_symbols = tuple(
-        dict.fromkeys((*predicates, *arguments, *roles, *cues))
-    )
+    roles = tuple(str(value) for value in grounding_catalog.get("role_symbols", ()) if str(value))
+    cues = tuple(str(value) for value in grounding_catalog.get("cue_symbols", ()) if str(value))
+    all_symbols = tuple(dict.fromkeys((*predicates, *arguments, *roles, *cues)))
     if not all_symbols:
         return ""
 
@@ -2022,10 +1979,7 @@ def _leanstral_grounded_candidate_seed(
         return f"frame_role(frame:{first}, role:{role}, value:{first})"
     if family == "graph_projection":
         predicate = pick(roles, 0, 1)
-        return (
-            f"relation(subject:{first}, predicate:{predicate}, "
-            f"object:{first})"
-        )
+        return f"relation(subject:{first}, predicate:{predicate}, object:{first})"
     if family == "temporal_first_order":
         time_one = pick(cues, 0, 1)
         return f"temporal_anchor(event:{first}, time:{time_one})"
@@ -2221,9 +2175,7 @@ def validate_leanstral_failure_branch_candidate(
                 statement,
             ):
                 reasons.append("candidate_copies_obligation")
-            candidate_heads = set(
-                _leanstral_logic_predicate_heads(candidate_text)
-            )
+            candidate_heads = set(_leanstral_logic_predicate_heads(candidate_text))
             candidate_language = dict(branch.get("candidate_language") or {})
             allowed_heads = {
                 str(value).strip().lower()
@@ -2340,7 +2292,9 @@ def sanitize_leanstral_failure_branch_candidates(
 
     parsed = response
     if isinstance(response, (str, bytes)):
-        raw_text = response.decode("utf-8", errors="replace") if isinstance(response, bytes) else response
+        raw_text = (
+            response.decode("utf-8", errors="replace") if isinstance(response, bytes) else response
+        )
         if raw_text != raw_text.strip() or raw_text.lstrip().startswith("```"):
             return LeanstralFailureBranchSanitization(
                 accepted=False, reasons=("response_must_be_strict_json",)
@@ -2429,10 +2383,7 @@ def _drafted_logic_candidates(value: Any) -> Sequence[Dict[str, Any]]:
         if not candidate_text:
             continue
         logic_family = _feature_key_part(
-            item.get("logic_family")
-            or item.get("family")
-            or item.get("view")
-            or "legal_ir"
+            item.get("logic_family") or item.get("family") or item.get("view") or "legal_ir"
         )
         proof_obligation_ids = _string_sequence(
             item.get("proof_obligation_ids")
@@ -2440,9 +2391,7 @@ def _drafted_logic_candidates(value: Any) -> Sequence[Dict[str, Any]]:
             or item.get("obligation_id")
         )
         premise_hints = _string_sequence(
-            item.get("premise_hints")
-            or item.get("selected_premises")
-            or item.get("premises")
+            item.get("premise_hints") or item.get("selected_premises") or item.get("premises")
         )
         target_view = _feature_key_part(
             item.get("target_view")
@@ -2481,9 +2430,7 @@ def _drafted_logic_candidates(value: Any) -> Sequence[Dict[str, Any]]:
             "logic_family": logic_family,
             "premise_hints": premise_hints,
             "proof_obligation_ids": proof_obligation_ids,
-            "repair_scope": str(
-                item.get("repair_scope") or "failed_obligation_subtree"
-            ).strip(),
+            "repair_scope": str(item.get("repair_scope") or "failed_obligation_subtree").strip(),
             "schema_version": LEANSTRAL_HAMMER_CANDIDATE_SCHEMA_VERSION,
             "source_copy_policy": "reject_full_span_copy",
             "source_copy_rejected": _optional_bool(
@@ -2572,9 +2519,7 @@ def _theorem_registry_ids(registry: Optional[Mapping[str, Any]]) -> list[str]:
     if not isinstance(raw_theorems, Sequence) or isinstance(raw_theorems, (str, bytes)):
         return []
     return _unique_string_values(
-        theorem.get("theorem_id")
-        for theorem in raw_theorems
-        if isinstance(theorem, Mapping)
+        theorem.get("theorem_id") for theorem in raw_theorems if isinstance(theorem, Mapping)
     )
 
 
@@ -2587,8 +2532,7 @@ def _legal_ir_proof_obligations(task: "LegalIRLeanTask") -> list[Mapping[str, An
 
 def _legal_ir_proof_obligation_ids(task: "LegalIRLeanTask") -> list[str]:
     return _unique_string_values(
-        obligation.get("obligation_id")
-        for obligation in _legal_ir_proof_obligations(task)
+        obligation.get("obligation_id") for obligation in _legal_ir_proof_obligations(task)
     )
 
 
@@ -2683,7 +2627,9 @@ def _leanstral_guidance_features(
                     "source": "leanstral_hammer_obligation",
                 }
             )
-        target_view = _feature_key_part(candidate.get("target_view") or candidate.get("legal_ir_view"))
+        target_view = _feature_key_part(
+            candidate.get("target_view") or candidate.get("legal_ir_view")
+        )
         if target_view != "unknown":
             target_view_feature = f"leanstral:hammer_target_view:{target_view}"
             feature_groups["leanstral_hammer_target_views"].append(target_view_feature)
@@ -2773,9 +2719,7 @@ def _leanstral_guidance_features(
         )
 
     feature_groups = {
-        key: _unique_string_values(values)
-        for key, values in feature_groups.items()
-        if values
+        key: _unique_string_values(values) for key, values in feature_groups.items() if values
     }
     return _dedupe_guidance_features(features), feature_groups
 
@@ -2960,12 +2904,16 @@ def _leanstral_prompt(task: LegalIRLeanTask) -> str:
             "logic_family": "deontic",
             "premise_hints": _first_proof_obligation_hints(task),
             "proof_obligation_id": _first_proof_obligation_id(task),
-            "proof_obligation_ids": [_first_proof_obligation_id(task)] if _first_proof_obligation_id(task) else [],
+            "proof_obligation_ids": [_first_proof_obligation_id(task)]
+            if _first_proof_obligation_id(task)
+            else [],
             "repair_scope": "failed_obligation_subtree",
             "schema_version": LEANSTRAL_HAMMER_CANDIDATE_SCHEMA_VERSION,
             "source_copy_policy": "reject_full_span_copy",
             "source_copy_rejected": False,
-            "target_view": _first_proof_obligation_value(task, "legal_ir_view", "modal.frame_logic"),
+            "target_view": _first_proof_obligation_value(
+                task, "legal_ir_view", "modal.frame_logic"
+            ),
         },
         "proposal_schema_version": LEANSTRAL_PROPOSAL_SCHEMA_VERSION,
         "python_patch_shape": {

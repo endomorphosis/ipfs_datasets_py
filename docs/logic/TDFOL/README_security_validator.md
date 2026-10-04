@@ -102,7 +102,7 @@ else:
 from ipfs_datasets_py.logic.TDFOL.security_validator import (
     SecurityValidator,
     SecurityConfig,
-    SecurityLevel
+    SecurityLevel,
 )
 
 # Create high-security validator
@@ -117,9 +117,9 @@ result = validator.validate_formula(formula)
 ```python
 # Audit a ZKP proof
 proof = {
-    'commitment': 'a' * 64,
-    'challenge': 'b' * 64,
-    'response': 'c' * 64,
+    "commitment": "a" * 64,
+    "challenge": "b" * 64,
+    "response": "c" * 64,
 }
 
 audit = validator.audit_zkp_proof(proof)
@@ -291,7 +291,7 @@ process = psutil.Process()
 if not validator.check_resource_limits(
     formula,
     memory_mb=process.memory_info().rss / 1024 / 1024,
-    time_seconds=time.time() - start_time
+    time_seconds=time.time() - start_time,
 ):
     raise ResourceExhaustedError("Resource limits exceeded")
 ```
@@ -317,11 +317,11 @@ verify_proof(proof)
 # Periodically check security report
 report = validator.get_security_report()
 
-if report['total_events'] > 100:
+if report["total_events"] > 100:
     alert_security_team(report)
 
 # Check for specific threats
-if 'injection' in report['threat_breakdown']:
+if "injection" in report["threat_breakdown"]:
     investigate_injection_attempts()
 ```
 
@@ -368,18 +368,17 @@ if not result.valid:
 # Schedule periodic security audits
 def scheduled_security_audit():
     report = validator.get_security_report()
-    
+
     # Generate audit report
     audit_report = {
-        'timestamp': datetime.now(),
-        'total_events': report['total_events'],
-        'threat_breakdown': report['threat_breakdown'],
-        'high_risk_events': [
-            e for e in report['recent_events']
-            if e['threat_type'] in ['injection', 'dos']
-        ]
+        "timestamp": datetime.now(),
+        "total_events": report["total_events"],
+        "threat_breakdown": report["threat_breakdown"],
+        "high_risk_events": [
+            e for e in report["recent_events"] if e["threat_type"] in ["injection", "dos"]
+        ],
     }
-    
+
     save_audit_report(audit_report)
     validator.clear_security_events()
 ```
@@ -521,18 +520,19 @@ validator = SecurityValidator(config)
 from ipfs_datasets_py.logic.TDFOL.prover import TDFOLProver
 from ipfs_datasets_py.logic.TDFOL.security_validator import SecurityValidator
 
+
 # Create integrated prover with security
 class SecureTDFOLProver(TDFOLProver):
     def __init__(self):
         super().__init__()
         self.validator = SecurityValidator()
-    
+
     def prove(self, formula: str) -> ProofResult:
         # Validate before proving
         validation = self.validator.validate_formula(formula)
         if not validation.valid:
             raise SecurityError(f"Formula validation failed: {validation.errors}")
-        
+
         # Proceed with proof
         return super().prove(formula)
 ```
@@ -546,19 +546,22 @@ from ipfs_datasets_py.logic.TDFOL.security_validator import SecurityValidator
 app = Flask(__name__)
 validator = SecurityValidator()
 
-@app.route('/validate', methods=['POST'])
+
+@app.route("/validate", methods=["POST"])
 def validate_endpoint():
-    formula = request.json.get('formula')
-    user_id = request.headers.get('User-ID', 'anonymous')
-    
+    formula = request.json.get("formula")
+    user_id = request.headers.get("User-ID", "anonymous")
+
     result = validator.validate_formula(formula, identifier=user_id)
-    
-    return jsonify({
-        'valid': result.valid,
-        'errors': result.errors,
-        'warnings': result.warnings,
-        'threats': [t.value for t in result.threats]
-    })
+
+    return jsonify(
+        {
+            "valid": result.valid,
+            "errors": result.errors,
+            "warnings": result.warnings,
+            "threats": [t.value for t in result.threats],
+        }
+    )
 ```
 
 ## Contributing

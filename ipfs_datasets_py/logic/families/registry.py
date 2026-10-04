@@ -137,19 +137,13 @@ class LogicFamilyRegistry:
             self.register_runtime(descriptor)
         for descriptor in sorted(evidence, key=lambda item: item.evidence_id):
             self.register_evidence(descriptor)
-        for descriptor in sorted(
-            boundedness, key=lambda item: item.boundedness_id
-        ):
+        for descriptor in sorted(boundedness, key=lambda item: item.boundedness_id):
             self.register_boundedness(descriptor)
         for descriptor in sorted(families, key=lambda item: item.family_id):
             self.register_family(descriptor)
-        for descriptor in sorted(
-            translations, key=lambda item: item.translation_id
-        ):
+        for descriptor in sorted(translations, key=lambda item: item.translation_id):
             self.register_translation(descriptor)
-        for descriptor in sorted(
-            provider_capabilities, key=lambda item: item.capability_id
-        ):
+        for descriptor in sorted(provider_capabilities, key=lambda item: item.capability_id):
             self.register_provider_capability(descriptor)
         if frozen:
             self.freeze()
@@ -177,9 +171,7 @@ class LogicFamilyRegistry:
     ) -> None:
         self._require_mutable()
         if descriptor_id in target:
-            raise DuplicateDescriptorError(
-                f"{kind} {descriptor_id!r} is already registered"
-            )
+            raise DuplicateDescriptorError(f"{kind} {descriptor_id!r} is already registered")
         target[descriptor_id] = descriptor
 
     def _require_ids(
@@ -191,33 +183,21 @@ class LogicFamilyRegistry:
     ) -> None:
         missing = sorted(set(values) - set(target))
         if missing:
-            raise UnknownDescriptorError(
-                f"{owner} references unknown {kind}: {', '.join(missing)}"
-            )
+            raise UnknownDescriptorError(f"{owner} references unknown {kind}: {', '.join(missing)}")
 
-    def register_fragment(
-        self, descriptor: LogicFragmentDescriptor
-    ) -> LogicFragmentDescriptor:
+    def register_fragment(self, descriptor: LogicFragmentDescriptor) -> LogicFragmentDescriptor:
         if not isinstance(descriptor, LogicFragmentDescriptor):
             raise TypeError("descriptor must be a LogicFragmentDescriptor")
-        self._insert(
-            self._fragments, descriptor.fragment_id, descriptor, "fragment"
-        )
+        self._insert(self._fragments, descriptor.fragment_id, descriptor, "fragment")
         return descriptor
 
-    def register_property(
-        self, descriptor: LogicPropertyDescriptor
-    ) -> LogicPropertyDescriptor:
+    def register_property(self, descriptor: LogicPropertyDescriptor) -> LogicPropertyDescriptor:
         if not isinstance(descriptor, LogicPropertyDescriptor):
             raise TypeError("descriptor must be a LogicPropertyDescriptor")
-        self._insert(
-            self._properties, descriptor.property_id, descriptor, "property"
-        )
+        self._insert(self._properties, descriptor.property_id, descriptor, "property")
         return descriptor
 
-    def register_operation(
-        self, descriptor: LogicOperationDescriptor
-    ) -> LogicOperationDescriptor:
+    def register_operation(self, descriptor: LogicOperationDescriptor) -> LogicOperationDescriptor:
         if not isinstance(descriptor, LogicOperationDescriptor):
             raise TypeError("descriptor must be a LogicOperationDescriptor")
         self._require_ids(
@@ -226,9 +206,7 @@ class LogicFamilyRegistry:
             "properties",
             f"operation {descriptor.operation_id!r}",
         )
-        self._insert(
-            self._operations, descriptor.operation_id, descriptor, "operation"
-        )
+        self._insert(self._operations, descriptor.operation_id, descriptor, "operation")
         return descriptor
 
     def register_runtime(self, descriptor: RuntimeDescriptor) -> RuntimeDescriptor:
@@ -240,14 +218,10 @@ class LogicFamilyRegistry:
     def register_evidence(self, descriptor: EvidenceDescriptor) -> EvidenceDescriptor:
         if not isinstance(descriptor, EvidenceDescriptor):
             raise TypeError("descriptor must be an EvidenceDescriptor")
-        self._insert(
-            self._evidence, descriptor.evidence_id, descriptor, "evidence"
-        )
+        self._insert(self._evidence, descriptor.evidence_id, descriptor, "evidence")
         return descriptor
 
-    def register_boundedness(
-        self, descriptor: BoundednessDescriptor
-    ) -> BoundednessDescriptor:
+    def register_boundedness(self, descriptor: BoundednessDescriptor) -> BoundednessDescriptor:
         if not isinstance(descriptor, BoundednessDescriptor):
             raise TypeError("descriptor must be a BoundednessDescriptor")
         self._require_ids(
@@ -264,16 +238,12 @@ class LogicFamilyRegistry:
         )
         return descriptor
 
-    def register_family(
-        self, descriptor: LogicFamilyDescriptor
-    ) -> LogicFamilyDescriptor:
+    def register_family(self, descriptor: LogicFamilyDescriptor) -> LogicFamilyDescriptor:
         if not isinstance(descriptor, LogicFamilyDescriptor):
             raise TypeError("descriptor must be a LogicFamilyDescriptor")
         self._require_mutable()
         if descriptor.family_id in self._families:
-            raise DuplicateDescriptorError(
-                f"family {descriptor.family_id!r} is already registered"
-            )
+            raise DuplicateDescriptorError(f"family {descriptor.family_id!r} is already registered")
         self._require_ids(
             descriptor.fragment_ids,
             self._fragments,
@@ -293,9 +263,7 @@ class LogicFamilyRegistry:
             f"family {descriptor.family_id!r}",
         )
 
-        existing_semantic_family = self._semantic_identities.get(
-            descriptor.semantic_identity
-        )
+        existing_semantic_family = self._semantic_identities.get(descriptor.semantic_identity)
         if descriptor.equivalent_to is not None:
             equivalent = self._families.get(descriptor.equivalent_to)
             if equivalent is None:
@@ -333,22 +301,17 @@ class LogicFamilyRegistry:
             owner = self._family_names.get(normalized)
             if owner is not None:
                 raise AliasCollisionError(
-                    f"family name {claimed_name!r} collides with registered family "
-                    f"{owner!r}"
+                    f"family name {claimed_name!r} collides with registered family {owner!r}"
                 )
 
         self._families[descriptor.family_id] = descriptor
         if existing_semantic_family is None:
-            self._semantic_identities[
-                descriptor.semantic_identity
-            ] = descriptor.family_id
+            self._semantic_identities[descriptor.semantic_identity] = descriptor.family_id
         for normalized in normalized_claims:
             self._family_names[normalized] = descriptor.family_id
         return descriptor
 
-    def register_translation(
-        self, descriptor: TranslationDescriptor
-    ) -> TranslationDescriptor:
+    def register_translation(self, descriptor: TranslationDescriptor) -> TranslationDescriptor:
         if not isinstance(descriptor, TranslationDescriptor):
             raise TypeError("descriptor must be a TranslationDescriptor")
         owner = f"translation {descriptor.translation_id!r}"
@@ -364,16 +327,11 @@ class LogicFamilyRegistry:
             "properties",
             owner,
         )
-        self._require_ids(
-            descriptor.evidence_ids, self._evidence, "evidence", owner
-        )
+        self._require_ids(descriptor.evidence_ids, self._evidence, "evidence", owner)
         source = self._families[descriptor.source_family_id]
         source_properties = set(source.property_ids)
         outside_source = sorted(
-            (
-                set(descriptor.preserves_property_ids)
-                | set(descriptor.loses_property_ids)
-            )
+            (set(descriptor.preserves_property_ids) | set(descriptor.loses_property_ids))
             - source_properties
         )
         if outside_source:
@@ -397,12 +355,8 @@ class LogicFamilyRegistry:
         if not isinstance(descriptor, ProviderCapabilityDescriptor):
             raise TypeError("descriptor must be a ProviderCapabilityDescriptor")
         owner = f"provider capability {descriptor.capability_id!r}"
-        self._require_ids(
-            descriptor.runtime_ids, self._runtimes, "runtimes", owner
-        )
-        self._require_ids(
-            descriptor.evidence_ids, self._evidence, "evidence", owner
-        )
+        self._require_ids(descriptor.runtime_ids, self._runtimes, "runtimes", owner)
+        self._require_ids(descriptor.evidence_ids, self._evidence, "evidence", owner)
         self._require_ids(
             descriptor.boundedness_ids,
             self._boundedness,
@@ -432,11 +386,10 @@ class LogicFamilyRegistry:
                         f"{owner} claims {kind} outside family "
                         f"{family.family_id!r}: {', '.join(outside)}"
                     )
-            if (
-                family.declaration_only
-                and support.support_level
-                not in {SupportLevel.DECLARATION_ONLY, SupportLevel.UNSUPPORTED}
-            ):
+            if family.declaration_only and support.support_level not in {
+                SupportLevel.DECLARATION_ONLY,
+                SupportLevel.UNSUPPORTED,
+            }:
                 raise InvalidCapabilityError(
                     f"{owner} cannot claim executable support for declaration-only "
                     f"family {family.family_id!r}"
@@ -519,17 +472,13 @@ class LogicFamilyRegistry:
     def family(self, family_name: str) -> LogicFamilyDescriptor:
         return self.resolve(family_name)
 
-    def get_family(
-        self, family_name: str, default: Any = None
-    ) -> LogicFamilyDescriptor | Any:
+    def get_family(self, family_name: str, default: Any = None) -> LogicFamilyDescriptor | Any:
         try:
             return self.resolve(family_name)
         except UnknownDescriptorError:
             return default
 
-    def capability(
-        self, provider_id: str, provider_version: str
-    ) -> ProviderCapabilityDescriptor:
+    def capability(self, provider_id: str, provider_version: str) -> ProviderCapabilityDescriptor:
         capability_id = f"{provider_id}@{provider_version}"
         try:
             return self._provider_capabilities[capability_id]
@@ -558,37 +507,21 @@ class LogicFamilyRegistry:
         """Return a deterministic, JSON-compatible registry envelope."""
 
         return {
-            "boundedness": [
-                self._boundedness[key].to_dict()
-                for key in sorted(self._boundedness)
-            ],
-            "evidence": [
-                self._evidence[key].to_dict() for key in sorted(self._evidence)
-            ],
-            "families": [
-                self._families[key].to_dict() for key in sorted(self._families)
-            ],
-            "fragments": [
-                self._fragments[key].to_dict() for key in sorted(self._fragments)
-            ],
-            "operations": [
-                self._operations[key].to_dict() for key in sorted(self._operations)
-            ],
-            "properties": [
-                self._properties[key].to_dict() for key in sorted(self._properties)
-            ],
+            "boundedness": [self._boundedness[key].to_dict() for key in sorted(self._boundedness)],
+            "evidence": [self._evidence[key].to_dict() for key in sorted(self._evidence)],
+            "families": [self._families[key].to_dict() for key in sorted(self._families)],
+            "fragments": [self._fragments[key].to_dict() for key in sorted(self._fragments)],
+            "operations": [self._operations[key].to_dict() for key in sorted(self._operations)],
+            "properties": [self._properties[key].to_dict() for key in sorted(self._properties)],
             "provider_capabilities": [
                 self._provider_capabilities[key].to_dict()
                 for key in sorted(self._provider_capabilities)
             ],
             "registry_version": self.version,
-            "runtimes": [
-                self._runtimes[key].to_dict() for key in sorted(self._runtimes)
-            ],
+            "runtimes": [self._runtimes[key].to_dict() for key in sorted(self._runtimes)],
             "schema_version": self.schema_version,
             "translations": [
-                self._translations[key].to_dict()
-                for key in sorted(self._translations)
+                self._translations[key].to_dict() for key in sorted(self._translations)
             ],
         }
 
@@ -605,45 +538,27 @@ class LogicFamilyRegistry:
         )
 
     @classmethod
-    def from_dict(
-        cls, value: Mapping[str, Any], *, frozen: bool = False
-    ) -> "LogicFamilyRegistry":
+    def from_dict(cls, value: Mapping[str, Any], *, frozen: bool = False) -> "LogicFamilyRegistry":
         if value.get("schema_version") != TAXONOMY_SCHEMA_VERSION:
-            raise LogicFamilyRegistryError(
-                "unsupported or missing taxonomy schema_version"
-            )
+            raise LogicFamilyRegistryError("unsupported or missing taxonomy schema_version")
         return cls(
             fragments=(
-                LogicFragmentDescriptor.from_dict(item)
-                for item in value.get("fragments", ())
+                LogicFragmentDescriptor.from_dict(item) for item in value.get("fragments", ())
             ),
             properties=(
-                LogicPropertyDescriptor.from_dict(item)
-                for item in value.get("properties", ())
+                LogicPropertyDescriptor.from_dict(item) for item in value.get("properties", ())
             ),
             operations=(
-                LogicOperationDescriptor.from_dict(item)
-                for item in value.get("operations", ())
+                LogicOperationDescriptor.from_dict(item) for item in value.get("operations", ())
             ),
-            runtimes=(
-                RuntimeDescriptor.from_dict(item)
-                for item in value.get("runtimes", ())
-            ),
-            evidence=(
-                EvidenceDescriptor.from_dict(item)
-                for item in value.get("evidence", ())
-            ),
+            runtimes=(RuntimeDescriptor.from_dict(item) for item in value.get("runtimes", ())),
+            evidence=(EvidenceDescriptor.from_dict(item) for item in value.get("evidence", ())),
             boundedness=(
-                BoundednessDescriptor.from_dict(item)
-                for item in value.get("boundedness", ())
+                BoundednessDescriptor.from_dict(item) for item in value.get("boundedness", ())
             ),
-            families=(
-                LogicFamilyDescriptor.from_dict(item)
-                for item in value.get("families", ())
-            ),
+            families=(LogicFamilyDescriptor.from_dict(item) for item in value.get("families", ())),
             translations=(
-                TranslationDescriptor.from_dict(item)
-                for item in value.get("translations", ())
+                TranslationDescriptor.from_dict(item) for item in value.get("translations", ())
             ),
             provider_capabilities=(
                 ProviderCapabilityDescriptor.from_dict(item)
@@ -654,9 +569,7 @@ class LogicFamilyRegistry:
         )
 
     @classmethod
-    def from_json(
-        cls, value: str, *, frozen: bool = False
-    ) -> "LogicFamilyRegistry":
+    def from_json(cls, value: str, *, frozen: bool = False) -> "LogicFamilyRegistry":
         try:
             decoded = json.loads(value)
         except (TypeError, json.JSONDecodeError) as error:
@@ -796,9 +709,7 @@ def build_default_registry(*, frozen: bool = True) -> LogicFamilyRegistry:
             ("hyperproperty", "noninterference"),
             bounded=True,
         ),
-        _operation(
-            "check_refinement", "Check refinement", ("refinement",), bounded=True
-        ),
+        _operation("check_refinement", "Check refinement", ("refinement",), bounded=True),
         _operation(
             "check_satisfiability",
             "Check satisfiability",
@@ -865,13 +776,9 @@ def build_default_registry(*, frozen: bool = True) -> LogicFamilyRegistry:
             requires_isolation=False,
         ),
         RuntimeDescriptor("jvm_process", "Bounded JVM process", RuntimeKind.JVM),
-        RuntimeDescriptor(
-            "native_process", "Bounded native process", RuntimeKind.NATIVE_PROCESS
-        ),
+        RuntimeDescriptor("native_process", "Bounded native process", RuntimeKind.NATIVE_PROCESS),
         RuntimeDescriptor("ocaml_process", "Bounded OCaml process", RuntimeKind.OCAML),
-        RuntimeDescriptor(
-            "remote_service", "Remote service", RuntimeKind.REMOTE_SERVICE
-        ),
+        RuntimeDescriptor("remote_service", "Remote service", RuntimeKind.REMOTE_SERVICE),
         RuntimeDescriptor("wasm_sandbox", "WASM sandbox", RuntimeKind.WASM),
     )
     evidence = (

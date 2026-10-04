@@ -22,6 +22,7 @@ import pytest
 # 1. core/query_executor.py – lines 118, 221, 238, 253, 270
 # ===========================================================================
 
+
 class TestQueryExecutorMissedPaths:
     """GIVEN a QueryExecutor with mocked internals,
     WHEN Cypher-pattern detection and error branches are exercised,
@@ -29,6 +30,7 @@ class TestQueryExecutorMissedPaths:
 
     def _executor(self):
         from ipfs_datasets_py.knowledge_graphs.core.query_executor import QueryExecutor
+
         return QueryExecutor(graph_engine=MagicMock())
 
     # -----------------------------------------------------------------------
@@ -87,9 +89,7 @@ class TestQueryExecutorMissedPaths:
 
         qe = self._executor()
         with pytest.raises(QueryExecutionError):
-            self._execute_with_side_effect(
-                qe, StorageError("disk full"), raise_on_error=True
-            )
+            self._execute_with_side_effect(qe, StorageError("disk full"), raise_on_error=True)
 
     # -----------------------------------------------------------------------
     # Line 221: StorageError with raise_on_error=False → returns empty Result
@@ -100,9 +100,7 @@ class TestQueryExecutorMissedPaths:
         from ipfs_datasets_py.knowledge_graphs.exceptions import StorageError
 
         qe = self._executor()
-        result = self._execute_with_side_effect(
-            qe, StorageError("io error"), raise_on_error=False
-        )
+        result = self._execute_with_side_effect(qe, StorageError("io error"), raise_on_error=False)
         assert result is not None
         assert len(list(result)) == 0
 
@@ -148,14 +146,13 @@ class TestQueryExecutorMissedPaths:
 
         qe = self._executor()
         with pytest.raises(QueryExecutionError):
-            self._execute_with_side_effect(
-                qe, ValueError("unexpected"), raise_on_error=True
-            )
+            self._execute_with_side_effect(qe, ValueError("unexpected"), raise_on_error=True)
 
 
 # ===========================================================================
 # 2. core/_legacy_graph_engine.py – lines 513, 519, 588
 # ===========================================================================
+
 
 class TestLegacyGraphEngineMissedPaths:
     """GIVEN a _LegacyGraphEngine with controlled cache state,
@@ -240,6 +237,7 @@ class TestLegacyGraphEngineMissedPaths:
 # 3. lineage/enhanced.py – lines 259, 424 (430)
 # ===========================================================================
 
+
 class TestLineageEnhancedMissedPaths:
     """GIVEN a ConfidenceScorer and EnhancedLineageTracker,
     WHEN the empty-path confidence and self-loop skip paths are exercised,
@@ -284,6 +282,7 @@ class TestLineageEnhancedMissedPaths:
 #    (detect_circular_dependencies networkx ImportError fallback)
 # ===========================================================================
 
+
 class TestLineageMetricsMissedPaths:
     """GIVEN a DependencyAnalyzer whose networkx is patched to be unavailable,
     WHEN detect_circular_dependencies is called,
@@ -307,6 +306,7 @@ class TestLineageMetricsMissedPaths:
 # 5. transactions/manager.py – line 261
 #    (commit TransactionAbortedError is re-raised unchanged)
 # ===========================================================================
+
 
 class TestTransactionManagerMissedPaths:
     """GIVEN a TransactionManager whose _apply_operations raises
@@ -340,6 +340,7 @@ class TestTransactionManagerMissedPaths:
 # 6. indexing/btree.py – line 60
 #    (BTreeNode.insert: key in keys but entries not yet initialised)
 # ===========================================================================
+
 
 class TestBTreeMissedPaths:
     """GIVEN a BTreeNode whose entries dict has been manually cleared WHEN a

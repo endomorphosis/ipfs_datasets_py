@@ -147,7 +147,6 @@ def _make_ont(nodes, edges):
 
 
 class TestScoreEntropyRate:
-
     def test_empty_returns_zero(self):
         opt = _make_opt()
         assert opt.score_entropy_rate() == 0.0
@@ -203,7 +202,6 @@ class TestScoreEntropyRate:
 
 
 class TestScoreDimensionMaxZ:
-
     def test_uniform_returns_zero(self):
         critic = _make_critic()
         s = _make_score()  # all dims == 0.5
@@ -238,9 +236,12 @@ class TestScoreDimensionMaxZ:
         # Two dims at 1.0, two at 0.5, two at 0.0 → asymmetric → nonzero
         critic = _make_critic()
         s = _make_score(
-            completeness=1.0, consistency=0.0,
-            clarity=0.5, granularity=0.5,
-            relationship_coherence=1.0, domain_alignment=0.0,
+            completeness=1.0,
+            consistency=0.0,
+            clarity=0.5,
+            granularity=0.5,
+            relationship_coherence=1.0,
+            domain_alignment=0.0,
         )
         result = critic.score_dimension_max_z(s)
         assert result > 0.0
@@ -261,9 +262,12 @@ class TestScoreDimensionMaxZ:
         # 0.0 and 1.0 alternating across dims → non-zero result
         critic = _make_critic()
         s = _make_score(
-            completeness=0.0, consistency=1.0,
-            clarity=0.0, granularity=1.0,
-            relationship_coherence=0.0, domain_alignment=1.0,
+            completeness=0.0,
+            consistency=1.0,
+            clarity=0.0,
+            granularity=1.0,
+            relationship_coherence=0.0,
+            domain_alignment=1.0,
         )
         result = critic.score_dimension_max_z(s)
         assert result > 0.0
@@ -271,10 +275,22 @@ class TestScoreDimensionMaxZ:
     def test_greater_variance_yields_greater_max_z(self):
         # High variance should produce a higher max-z than low variance
         critic = _make_critic()
-        s_low_var = _make_score(completeness=0.4, consistency=0.5, clarity=0.5,
-                                granularity=0.5, relationship_coherence=0.6, domain_alignment=0.5)
-        s_high_var = _make_score(completeness=0.0, consistency=0.5, clarity=0.5,
-                                 granularity=0.5, relationship_coherence=1.0, domain_alignment=0.5)
+        s_low_var = _make_score(
+            completeness=0.4,
+            consistency=0.5,
+            clarity=0.5,
+            granularity=0.5,
+            relationship_coherence=0.6,
+            domain_alignment=0.5,
+        )
+        s_high_var = _make_score(
+            completeness=0.0,
+            consistency=0.5,
+            clarity=0.5,
+            granularity=0.5,
+            relationship_coherence=1.0,
+            domain_alignment=0.5,
+        )
         assert critic.score_dimension_max_z(s_high_var) >= critic.score_dimension_max_z(s_low_var)
 
 
@@ -284,7 +300,6 @@ class TestScoreDimensionMaxZ:
 
 
 class TestFeedbackPlateauFraction:
-
     def test_empty_returns_zero(self):
         adapter = _make_adapter()
         assert adapter.feedback_plateau_fraction() == 0.0
@@ -356,7 +371,6 @@ class TestFeedbackPlateauFraction:
 
 
 class TestRunScoreVelocityMin:
-
     def test_empty_returns_zero(self):
         p = _make_pipeline([])
         assert p.run_score_velocity_min() == 0.0
@@ -409,7 +423,6 @@ class TestRunScoreVelocityMin:
 
 
 class TestSccSingletonFraction:
-
     def test_empty_graph_returns_zero(self):
         lv = _make_lv()
         ont = _make_ont([], [])

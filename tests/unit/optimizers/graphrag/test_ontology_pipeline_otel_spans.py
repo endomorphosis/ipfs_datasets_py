@@ -81,7 +81,9 @@ def test_pipeline_run_records_otel_span_when_enabled(monkeypatch) -> None:
     pipeline._otel_tracer = tracer
     pipeline._otel_enabled = True
 
-    result = pipeline.run("Alice signed contract", data_source="unit-test", data_type="text", refine=True)
+    result = pipeline.run(
+        "Alice signed contract", data_source="unit-test", data_type="text", refine=True
+    )
 
     assert result.score.overall == 0.8
     assert len(tracer.spans) == 1

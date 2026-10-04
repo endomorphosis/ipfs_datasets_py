@@ -89,7 +89,9 @@ class GraphShardManifest:
         )
 
 
-def build_type_bloom(types: list[str], *, num_bits: int = 8192, num_hashes: int = 7) -> dict[str, Any]:
+def build_type_bloom(
+    types: list[str], *, num_bits: int = 8192, num_hashes: int = 7
+) -> dict[str, Any]:
     bf = BloomFilter.create(num_bits=num_bits, num_hashes=num_hashes)
     for t in types:
         bf.add(t)

@@ -64,9 +64,7 @@ class OwnedCompilerSurface:
             or float(self.base_formal_severity) < 0.0
             or float(self.base_formal_severity) > 1.0
         ):
-            raise IntrospectionAnalysisSchemaError(
-                "base_formal_severity must be between 0 and 1"
-            )
+            raise IntrospectionAnalysisSchemaError("base_formal_severity must be between 0 and 1")
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -204,9 +202,13 @@ class IntrospectionAnalysisConfig:
         ):
             value = float(getattr(self, key))
             if not math.isfinite(value) or value < 0.0:
-                raise IntrospectionAnalysisSchemaError(f"{key} must be a non-negative finite number")
+                raise IntrospectionAnalysisSchemaError(
+                    f"{key} must be a non-negative finite number"
+                )
         if not isinstance(self.max_gaps_per_cluster, int) or self.max_gaps_per_cluster <= 0:
-            raise IntrospectionAnalysisSchemaError("max_gaps_per_cluster must be a positive integer")
+            raise IntrospectionAnalysisSchemaError(
+                "max_gaps_per_cluster must be a positive integer"
+            )
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -358,7 +360,9 @@ class LegalIRGapCluster:
                 f"unknown owned compiler surface: {self.compiler_surface!r}"
             )
         if self.recurrence < len(self.gaps):
-            raise IntrospectionAnalysisSchemaError("cluster recurrence cannot be smaller than gap count")
+            raise IntrospectionAnalysisSchemaError(
+                "cluster recurrence cannot be smaller than gap count"
+            )
         if self.recurrence <= 0:
             raise IntrospectionAnalysisSchemaError("cluster must include at least one gap")
         for key in ("heldout_impact", "confidence", "formal_severity"):
@@ -379,13 +383,16 @@ class LegalIRGapCluster:
         return tuple(sorted({gap.sample_id for gap in self.gaps if gap.sample_id}))
 
     def expected_cluster_id(self) -> str:
-        return "lir-cluster-" + _hash_json(
-            {
-                "compiler_surface": self.compiler_surface,
-                "semantic_family": self.semantic_family,
-                "semantic_signature": self.semantic_signature,
-            }
-        )[:16]
+        return (
+            "lir-cluster-"
+            + _hash_json(
+                {
+                    "compiler_surface": self.compiler_surface,
+                    "semantic_family": self.semantic_family,
+                    "semantic_signature": self.semantic_signature,
+                }
+            )[:16]
+        )
 
     def to_dict(self, *, include_gaps: bool = True) -> Dict[str, Any]:
         payload: Dict[str, Any] = {
@@ -433,7 +440,9 @@ class LegalIRGapAnalysis:
                 f"unsupported analysis schema_version: {self.schema_version}"
             )
         if tuple(self.required_gap_families) != REQUIRED_LEGAL_IR_GAP_FAMILIES:
-            raise IntrospectionAnalysisSchemaError("required_gap_families does not match frozen set")
+            raise IntrospectionAnalysisSchemaError(
+                "required_gap_families does not match frozen set"
+            )
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -505,8 +514,7 @@ def cluster_legal_ir_gaps(
 
     analysis_config = config or IntrospectionAnalysisConfig()
     typed_gaps = [
-        gap if isinstance(gap, NormalizedLegalIRGap) else _gap_from_mapping(gap)
-        for gap in gaps
+        gap if isinstance(gap, NormalizedLegalIRGap) else _gap_from_mapping(gap) for gap in gaps
     ]
     grouped: Dict[Tuple[str, str], List[NormalizedLegalIRGap]] = {}
     for gap in typed_gaps:
@@ -655,14 +663,25 @@ class _AnalysisContext:
     root: Mapping[str, Any]
 
 
-def _explicit_gaps(root: Mapping[str, Any], context: _AnalysisContext) -> List[NormalizedLegalIRGap]:
+def _explicit_gaps(
+    root: Mapping[str, Any], context: _AnalysisContext
+) -> List[NormalizedLegalIRGap]:
     rows: List[NormalizedLegalIRGap] = []
     for source_key in ("normalized_gaps", "legal_ir_gaps", "gaps"):
         for index, item in enumerate(_mapping_sequence(root.get(source_key))):
-            metric = str(item.get("metric_name") or item.get("metric") or item.get("name") or source_key)
-            raw_value = _float_from(item, "raw_value", _float_from(item, "gap", _float_from(item, "value", 0.0)))
+            metric = str(
+                item.get("metric_name") or item.get("metric") or item.get("name") or source_key
+            )
+            raw_value = _float_from(
+                item, "raw_value", _float_from(item, "gap", _float_from(item, "value", 0.0))
+            )
             surface = _surface_for(
-                str(item.get("compiler_surface") or item.get("surface") or item.get("component") or metric),
+                str(
+                    item.get("compiler_surface")
+                    or item.get("surface")
+                    or item.get("component")
+                    or metric
+                ),
                 metric,
             )
             semantic_family = _semantic_family_for(
@@ -681,7 +700,9 @@ def _explicit_gaps(root: Mapping[str, Any], context: _AnalysisContext) -> List[N
                     source_key=f"{source_key}[{index}]",
                     metadata=_compact_metadata(item),
                     confidence=_optional_probability(item, "confidence"),
-                    heldout_impact=_optional_heldout(item, context, surface, semantic_family, metric),
+                    heldout_impact=_optional_heldout(
+                        item, context, surface, semantic_family, metric
+                    ),
                     formal_severity=_optional_probability(item, "formal_severity"),
                     target_family=str(item.get("target_family") or context.target_family),
                     predicted_family=str(item.get("predicted_family") or context.predicted_family),
@@ -690,7 +711,9 @@ def _explicit_gaps(root: Mapping[str, Any], context: _AnalysisContext) -> List[N
     return rows
 
 
-def _component_gaps(root: Mapping[str, Any], context: _AnalysisContext) -> List[NormalizedLegalIRGap]:
+def _component_gaps(
+    root: Mapping[str, Any], context: _AnalysisContext
+) -> List[NormalizedLegalIRGap]:
     component_gaps = _numeric_mapping(root.get("legal_ir_component_gaps"))
     compiler_round_trip = _mapping(root.get("compiler_round_trip_gaps"))
     component_gaps.update(_numeric_mapping(compiler_round_trip.get("component_gaps")))
@@ -710,13 +733,17 @@ def _component_gaps(root: Mapping[str, Any], context: _AnalysisContext) -> List[
                 raw_value=value,
                 source_key=f"legal_ir_component_gaps.{component}",
                 metadata={"component": component},
-                heldout_impact=_heldout_impact_for(context.root, surface, semantic_family, component),
+                heldout_impact=_heldout_impact_for(
+                    context.root, surface, semantic_family, component
+                ),
             )
         )
     return rows
 
 
-def _per_family_gaps(root: Mapping[str, Any], context: _AnalysisContext) -> List[NormalizedLegalIRGap]:
+def _per_family_gaps(
+    root: Mapping[str, Any], context: _AnalysisContext
+) -> List[NormalizedLegalIRGap]:
     rows: List[NormalizedLegalIRGap] = []
     for index, item in enumerate(_mapping_sequence(root.get("per_family_gaps"))):
         family = _semantic_family_for(str(item.get("family") or ""), "", "")
@@ -742,7 +769,9 @@ def _per_family_gaps(root: Mapping[str, Any], context: _AnalysisContext) -> List
                     _probability_or_default(item.get("predicted_probability"), 0.5),
                     _probability_or_default(item.get("target_probability"), 0.5),
                 ),
-                heldout_impact=_heldout_impact_for(context.root, surface, family, f"{family}_family_probability_gap"),
+                heldout_impact=_heldout_impact_for(
+                    context.root, surface, family, f"{family}_family_probability_gap"
+                ),
                 target_family=str(item.get("family") or context.target_family),
                 predicted_family=context.predicted_family,
             )
@@ -805,7 +834,9 @@ def _learned_view_component_gaps(
     return rows
 
 
-def _compiler_round_trip_gaps(root: Mapping[str, Any], context: _AnalysisContext) -> List[NormalizedLegalIRGap]:
+def _compiler_round_trip_gaps(
+    root: Mapping[str, Any], context: _AnalysisContext
+) -> List[NormalizedLegalIRGap]:
     container = _mapping(root.get("compiler_round_trip_gaps")) or root
     metric_surface = {
         "embedding_cosine_gap": "modal.ir_decompiler",
@@ -837,7 +868,9 @@ def _compiler_round_trip_gaps(root: Mapping[str, Any], context: _AnalysisContext
     return rows
 
 
-def _proof_route_gaps(root: Mapping[str, Any], context: _AnalysisContext) -> List[NormalizedLegalIRGap]:
+def _proof_route_gaps(
+    root: Mapping[str, Any], context: _AnalysisContext
+) -> List[NormalizedLegalIRGap]:
     proof = _mapping(root.get("proof_route_status") or root.get("prover_signal"))
     if not proof:
         return []
@@ -872,7 +905,9 @@ def _proof_route_gaps(root: Mapping[str, Any], context: _AnalysisContext) -> Lis
     ]
 
 
-def _metric_record_gaps(root: Mapping[str, Any], context: _AnalysisContext) -> List[NormalizedLegalIRGap]:
+def _metric_record_gaps(
+    root: Mapping[str, Any], context: _AnalysisContext
+) -> List[NormalizedLegalIRGap]:
     rows: List[NormalizedLegalIRGap] = []
     learned = _mapping(root.get("learned_ir_view_by_family"))
     for family_name, payload in sorted(learned.items()):
@@ -933,7 +968,10 @@ def _metric_record_gaps(root: Mapping[str, Any], context: _AnalysisContext) -> L
         )
     validity = _mapping(root.get("validity"))
     if validity:
-        if not bool(validity.get("prover_compiles", True)) or _float_from(validity, "failure_ratio", 0.0) > 0.0:
+        if (
+            not bool(validity.get("prover_compiles", True))
+            or _float_from(validity, "failure_ratio", 0.0) > 0.0
+        ):
             rows.append(
                 _make_gap(
                     context=context,
@@ -941,13 +979,18 @@ def _metric_record_gaps(root: Mapping[str, Any], context: _AnalysisContext) -> L
                     compiler_surface="external_provers.router",
                     metric_name="validity_failure_ratio",
                     gap_kind="formal_prover_gap",
-                    raw_value=max(_float_from(validity, "failure_ratio", 0.0), 1.0 if not bool(validity.get("prover_compiles", True)) else 0.0),
+                    raw_value=max(
+                        _float_from(validity, "failure_ratio", 0.0),
+                        1.0 if not bool(validity.get("prover_compiles", True)) else 0.0,
+                    ),
                     source_key="validity.failure_ratio",
                     metadata={"prover_compiles": bool(validity.get("prover_compiles", True))},
                     formal_severity=1.0,
                 )
             )
-        if not bool(validity.get("structural_valid", True)) or not bool(validity.get("modal_ir_valid", True)):
+        if not bool(validity.get("structural_valid", True)) or not bool(
+            validity.get("modal_ir_valid", True)
+        ):
             rows.append(
                 _make_gap(
                     context=context,
@@ -967,7 +1010,9 @@ def _metric_record_gaps(root: Mapping[str, Any], context: _AnalysisContext) -> L
     return rows
 
 
-def _anti_copy_gaps(root: Mapping[str, Any], context: _AnalysisContext) -> List[NormalizedLegalIRGap]:
+def _anti_copy_gaps(
+    root: Mapping[str, Any], context: _AnalysisContext
+) -> List[NormalizedLegalIRGap]:
     anti_copy = _mapping(root.get("anti_copy") or root.get("anti_copy_evidence"))
     rows: List[NormalizedLegalIRGap] = []
     for metric_name in ("anti_copy_penalty", "source_copy_loss", "source_span_copy_ratio"):
@@ -994,7 +1039,9 @@ def _anti_copy_gaps(root: Mapping[str, Any], context: _AnalysisContext) -> List[
     return rows
 
 
-def _synthesis_focus_gaps(root: Mapping[str, Any], context: _AnalysisContext) -> List[NormalizedLegalIRGap]:
+def _synthesis_focus_gaps(
+    root: Mapping[str, Any], context: _AnalysisContext
+) -> List[NormalizedLegalIRGap]:
     rows: List[NormalizedLegalIRGap] = []
     for index, hint in enumerate(_mapping_sequence(root.get("synthesis_hints"))):
         component = str(hint.get("target_component") or "")
@@ -1008,7 +1055,9 @@ def _synthesis_focus_gaps(root: Mapping[str, Any], context: _AnalysisContext) ->
                 context=context,
                 semantic_family=family,
                 compiler_surface=surface,
-                metric_name=_canonical_token(str(hint.get("action") or component or "synthesis_hint")),
+                metric_name=_canonical_token(
+                    str(hint.get("action") or component or "synthesis_hint")
+                ),
                 gap_kind="synthesis_focus_gap",
                 raw_value=priority,
                 source_key=f"synthesis_hints[{index}]",
@@ -1059,8 +1108,16 @@ def _make_gap(
     target_family: Optional[str] = None,
     predicted_family: Optional[str] = None,
 ) -> NormalizedLegalIRGap:
-    surface = compiler_surface if compiler_surface in OWNED_COMPILER_SURFACES else _surface_for(compiler_surface, metric_name)
-    family = semantic_family if semantic_family in REQUIRED_LEGAL_IR_GAP_FAMILIES else OWNED_COMPILER_SURFACES[surface].semantic_family
+    surface = (
+        compiler_surface
+        if compiler_surface in OWNED_COMPILER_SURFACES
+        else _surface_for(compiler_surface, metric_name)
+    )
+    family = (
+        semantic_family
+        if semantic_family in REQUIRED_LEGAL_IR_GAP_FAMILIES
+        else OWNED_COMPILER_SURFACES[surface].semantic_family
+    )
     target = str(target_family if target_family is not None else context.target_family)
     predicted = str(predicted_family if predicted_family is not None else context.predicted_family)
     normalized_score = _normalize_gap_value(raw_value)
@@ -1107,7 +1164,9 @@ def _make_gap(
         source_key=source_key,
         metadata=compact_metadata,
     )
-    return NormalizedLegalIRGap(**{**gap.to_dict(include_gap_id=False), "gap_id": gap.expected_gap_id()})
+    return NormalizedLegalIRGap(
+        **{**gap.to_dict(include_gap_id=False), "gap_id": gap.expected_gap_id()}
+    )
 
 
 def _gap_from_mapping(data: Mapping[str, Any]) -> NormalizedLegalIRGap:
@@ -1158,13 +1217,37 @@ def _dedupe_gaps(gaps: Sequence[NormalizedLegalIRGap]) -> List[NormalizedLegalIR
 
 def _surface_for(component: str, metric_name: str) -> str:
     text = f"{component} {metric_name}".lower()
-    if any(token in text for token in ("source_decompiled", "decompiler", "decoded", "round_trip", "reconstruction")):
+    if any(
+        token in text
+        for token in ("source_decompiled", "decompiler", "decoded", "round_trip", "reconstruction")
+    ):
         return "modal.ir_decompiler"
-    if any(token in text for token in ("source_span", "source_cid", "provenance", "anti_copy", "copy_ratio", "structural_modal_ir")):
+    if any(
+        token in text
+        for token in (
+            "source_span",
+            "source_cid",
+            "provenance",
+            "anti_copy",
+            "copy_ratio",
+            "structural_modal_ir",
+        )
+    ):
         return "modal.source_provenance"
     if any(token in text for token in ("tdfol", "fol.", "first_order", "quantifier")):
         return "TDFOL.prover"
-    if any(token in text for token in ("external_provers", "prover", "proof", "lean", "z3", "vampire", "validity_failure")):
+    if any(
+        token in text
+        for token in (
+            "external_provers",
+            "prover",
+            "proof",
+            "lean",
+            "z3",
+            "vampire",
+            "validity_failure",
+        )
+    ):
         return "external_provers.router"
     if any(
         token in text
@@ -1179,13 +1262,29 @@ def _surface_for(component: str, metric_name: str) -> str:
         )
     ):
         return "event_calculus.core"
-    if any(token in text for token in ("knowledge_graph", "knowledge_graphs", "neo4j", "graph_projection", "kg.")):
+    if any(
+        token in text
+        for token in ("knowledge_graph", "knowledge_graphs", "neo4j", "graph_projection", "kg.")
+    ):
         return "knowledge_graphs.neo4j_compat"
     if any(token in text for token in ("frame_logic", "flogic", "frame.", "ontology", "slot")):
         return "modal.frame_logic"
-    if any(token in text for token in ("temporal", "deadline", "interval", "before", "after", "duration")):
+    if any(
+        token in text
+        for token in ("temporal", "deadline", "interval", "before", "after", "duration")
+    ):
         return "modal.temporal"
-    if any(token in text for token in ("deontic", "obligation", "permission", "prohibition", "normative", "conditional_normative")):
+    if any(
+        token in text
+        for token in (
+            "deontic",
+            "obligation",
+            "permission",
+            "prohibition",
+            "normative",
+            "conditional_normative",
+        )
+    ):
         return "deontic.ir"
     return "modal.ir_decompiler"
 
@@ -1218,7 +1317,11 @@ def _semantic_family_for(family: str, component_or_surface: str, metric_name: st
     }
     if token in aliases:
         return aliases[token]
-    surface = component_or_surface if component_or_surface in OWNED_COMPILER_SURFACES else _surface_for(component_or_surface, metric_name)
+    surface = (
+        component_or_surface
+        if component_or_surface in OWNED_COMPILER_SURFACES
+        else _surface_for(component_or_surface, metric_name)
+    )
     return OWNED_COMPILER_SURFACES[surface].semantic_family
 
 
@@ -1261,7 +1364,7 @@ def _semantic_slot(metric_name: str, metadata: Mapping[str, Any]) -> str:
         "source_to_decoded_",
     ):
         if text.startswith(prefix):
-            text = text[len(prefix):]
+            text = text[len(prefix) :]
     pieces = [piece for piece in text.split("_") if piece]
     if len(pieces) > 3:
         return "_".join(pieces[-3:])
@@ -1334,7 +1437,9 @@ def _optional_heldout(
     return _heldout_impact_for(context.root, surface, semantic_family, metric_name)
 
 
-def _formal_severity_for(surface: str, metric_name: str, gap_kind: str, root: Mapping[str, Any]) -> float:
+def _formal_severity_for(
+    surface: str, metric_name: str, gap_kind: str, root: Mapping[str, Any]
+) -> float:
     severity = OWNED_COMPILER_SURFACES[surface].base_formal_severity
     text = f"{metric_name} {gap_kind}".lower()
     if any(token in text for token in ("proof", "prover", "validity", "compile")):
@@ -1369,8 +1474,13 @@ def _family_context(root: Mapping[str, Any]) -> Tuple[str, str]:
     if not target:
         target = _top_distribution_key(_numeric_mapping(canonical_view.get("family_distribution")))
     if not predicted:
-        predicted = _top_distribution_key(_numeric_mapping(predicted_view.get("family_distribution")))
-    return (_canonical_token(target) if target else "", _canonical_token(predicted) if predicted else "")
+        predicted = _top_distribution_key(
+            _numeric_mapping(predicted_view.get("family_distribution"))
+        )
+    return (
+        _canonical_token(target) if target else "",
+        _canonical_token(predicted) if predicted else "",
+    )
 
 
 def _evidence_id(root: Mapping[str, Any]) -> str:
@@ -1378,7 +1488,10 @@ def _evidence_id(root: Mapping[str, Any]) -> str:
     if value:
         return value
     sample_id = _sample_id(root)
-    return "lir-evidence-" + _hash_json({"sample_id": sample_id, "payload": _compact_for_id(root)})[:16]
+    return (
+        "lir-evidence-"
+        + _hash_json({"sample_id": sample_id, "payload": _compact_for_id(root)})[:16]
+    )
 
 
 def _sample_id(root: Mapping[str, Any]) -> str:
@@ -1430,14 +1543,22 @@ def _compact_metadata(data: Mapping[str, Any]) -> Dict[str, Any]:
     compact: Dict[str, Any] = {}
     for key, value in sorted(dict(data).items()):
         key_text = str(key)
-        if not key_text or key_text in {"decoded_embedding", "residual_vector", "raw_dense_weights"}:
+        if not key_text or key_text in {
+            "decoded_embedding",
+            "residual_vector",
+            "raw_dense_weights",
+        }:
             continue
         if isinstance(value, Mapping):
             nested = _compact_metadata(value)
             if nested:
                 compact[key_text] = nested
         elif isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
-            if all(not isinstance(item, (Mapping, Sequence)) or isinstance(item, (str, bytes, bytearray)) for item in value):
+            if all(
+                not isinstance(item, (Mapping, Sequence))
+                or isinstance(item, (str, bytes, bytearray))
+                for item in value
+            ):
                 compact[key_text] = [_json_safe(item) for item in list(value)[:8]]
         else:
             compact[key_text] = _json_safe(value)

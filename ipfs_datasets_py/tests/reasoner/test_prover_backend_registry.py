@@ -2,6 +2,7 @@
 
 Covers issue #1172 (Prover Certificate Contract).
 """
+
 from __future__ import annotations
 
 import pytest
@@ -9,18 +10,28 @@ import pytest
 # Path is set up by the layered conftest.py files (root, tests/, and this directory)
 from reasoner.hybrid_v2_blueprint import parse_cnl_to_ir, check_compliance, clear_v2_proof_store
 from reasoner.prover_backends import (
-    create_default_prover_registry, normalize_prover_result,
-    MockSMTBackend, MockFOLBackend, SMTStyleProverAdapter, FirstOrderProverAdapter,
-    ProverResult, PROVER_ENVELOPE_SCHEMA_VERSION,
+    create_default_prover_registry,
+    normalize_prover_result,
+    MockSMTBackend,
+    MockFOLBackend,
+    SMTStyleProverAdapter,
+    FirstOrderProverAdapter,
+    ProverResult,
+    PROVER_ENVELOPE_SCHEMA_VERSION,
 )
 from reasoner.models import (
-    ProofObject, ProofStep, ProofCertificate, IRReference, SourceProvenance,
+    ProofObject,
+    ProofStep,
+    ProofCertificate,
+    IRReference,
+    SourceProvenance,
 )
 
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture(autouse=True)
 def clear_proof_store():
@@ -43,6 +54,7 @@ def compliance_result():
 # ---------------------------------------------------------------------------
 # TestProverCertificateContract
 # ---------------------------------------------------------------------------
+
 
 class TestProverCertificateContract:
     def test_smt_certificate_has_required_keys(self, registry):
@@ -114,11 +126,13 @@ class TestProverCertificateContract:
 # TestProofStepIRRefs
 # ---------------------------------------------------------------------------
 
+
 class TestProofStepIRRefs:
     def test_proof_steps_require_ir_refs(self, compliance_result):
         # GIVEN a compliance check result
         proof_id = compliance_result["proof_id"]
         from reasoner.hybrid_v2_blueprint import explain_proof
+
         expl = explain_proof(proof_id, format="json")
         steps = expl["steps"]
         # THEN each step has ir_refs (non-empty)
@@ -130,6 +144,7 @@ class TestProofStepIRRefs:
         # GIVEN a compliance check result
         proof_id = compliance_result["proof_id"]
         from reasoner.hybrid_v2_blueprint import explain_proof
+
         expl = explain_proof(proof_id, format="json")
         steps = expl["steps"]
         # THEN at least one step has source_refs
@@ -140,6 +155,7 @@ class TestProofStepIRRefs:
         # GIVEN a compliance check result
         proof_id = compliance_result["proof_id"]
         from reasoner.hybrid_v2_blueprint import explain_proof
+
         expl = explain_proof(proof_id, format="json")
         steps = expl["steps"]
         # THEN the first step's ir_refs are non-empty
@@ -149,6 +165,7 @@ class TestProofStepIRRefs:
 # ---------------------------------------------------------------------------
 # TestProofHashReplay
 # ---------------------------------------------------------------------------
+
 
 class TestProofHashReplay:
     def test_proof_hash_is_deterministic(self):
@@ -166,6 +183,7 @@ class TestProofHashReplay:
         proof_id = result["proof_id"]
         # WHEN explained
         from reasoner.hybrid_v2_blueprint import explain_proof
+
         expl = explain_proof(proof_id, format="nl")
         # THEN the proof_id in the explanation matches
         assert expl["proof_id"] == proof_id
@@ -181,6 +199,7 @@ class TestProofHashReplay:
 # ---------------------------------------------------------------------------
 # TestProverEnvelopeValidation
 # ---------------------------------------------------------------------------
+
 
 class TestProverEnvelopeValidation:
     def test_envelope_schema_version(self, registry):

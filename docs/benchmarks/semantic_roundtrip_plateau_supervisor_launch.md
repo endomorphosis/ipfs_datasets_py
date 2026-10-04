@@ -236,7 +236,7 @@ else:
 
 receipt = materialize_packets([packet])
 print(receipt.merge_target_branch)  # benchmark/semantic-roundtrip-20260726
-print(receipt.max_lanes)            # 4
+print(receipt.max_lanes)  # 4
 
 spec = default_launch_spec()
 assert "--max-lanes 4" in spec.to_command()

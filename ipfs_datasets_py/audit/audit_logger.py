@@ -21,6 +21,7 @@ from dataclasses import dataclass, field, asdict
 # Try to import security module for integration with AuditLogEntry if available
 try:
     from ipfs_datasets_py.security import AuditLogEntry
+
     SECURITY_MODULE_AVAILABLE = True
 except ImportError:
     SECURITY_MODULE_AVAILABLE = False
@@ -28,6 +29,7 @@ except ImportError:
 
 class AuditLevel(Enum):
     """Audit event severity levels."""
+
     DEBUG = 10
     INFO = 20
     NOTICE = 25  # Significant but normal events
@@ -39,20 +41,21 @@ class AuditLevel(Enum):
 
 class AuditCategory(Enum):
     """Categories of audit events."""
+
     AUTHENTICATION = auto()  # User login/logout events
-    AUTHORIZATION = auto()   # Permission checks and access control
-    DATA_ACCESS = auto()     # Reading data or metadata
+    AUTHORIZATION = auto()  # Permission checks and access control
+    DATA_ACCESS = auto()  # Reading data or metadata
     DATA_MODIFICATION = auto()  # Writing, updating, or deleting data
-    CONFIGURATION = auto()   # System configuration changes
-    RESOURCE = auto()        # Resource creation, deletion, modification
-    SECURITY = auto()        # Security-related events
-    SYSTEM = auto()          # System-level events
-    API = auto()             # API calls and responses
-    COMPLIANCE = auto()      # Compliance-related events
-    PROVENANCE = auto()      # Data provenance tracking
-    OPERATIONAL = auto()     # General operational events
+    CONFIGURATION = auto()  # System configuration changes
+    RESOURCE = auto()  # Resource creation, deletion, modification
+    SECURITY = auto()  # Security-related events
+    SYSTEM = auto()  # System-level events
+    API = auto()  # API calls and responses
+    COMPLIANCE = auto()  # Compliance-related events
+    PROVENANCE = auto()  # Data provenance tracking
+    OPERATIONAL = auto()  # General operational events
     INTRUSION_DETECTION = auto()  # Possible security breaches
-    CUSTOM = auto()          # Custom event categories
+    CUSTOM = auto()  # Custom event categories
 
 
 @dataclass
@@ -63,6 +66,7 @@ class AuditEvent:
     This class defines the structure of audit events with rich metadata
     for security analysis, compliance reporting, and operational monitoring.
     """
+
     event_id: str
     timestamp: str
     level: AuditLevel
@@ -91,7 +95,7 @@ class AuditEvent:
             self.event_id = str(uuid.uuid4())
 
         if not self.timestamp:
-            self.timestamp = datetime.datetime.utcnow().isoformat() + 'Z'
+            self.timestamp = datetime.datetime.utcnow().isoformat() + "Z"
 
         if not self.hostname:
             self.hostname = socket.gethostname()
@@ -103,8 +107,8 @@ class AuditEvent:
         """Convert the audit event to a dictionary."""
         event_dict = asdict(self)
         # Convert enum values to strings for serialization
-        event_dict['level'] = self.level.name
-        event_dict['category'] = self.category.name
+        event_dict["level"] = self.level.name
+        event_dict["category"] = self.category.name
         return event_dict
 
     def to_json(self, pretty=False) -> str:
@@ -114,22 +118,22 @@ class AuditEvent:
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'AuditEvent':
+    def from_dict(cls, data: Dict[str, Any]) -> "AuditEvent":
         """Create an AuditEvent from a dictionary."""
         # Convert string values back to enums
-        if 'level' in data and isinstance(data['level'], str):
-            data['level'] = AuditLevel[data['level']]
-        if 'category' in data and isinstance(data['category'], str):
-            data['category'] = AuditCategory[data['category']]
+        if "level" in data and isinstance(data["level"], str):
+            data["level"] = AuditLevel[data["level"]]
+        if "category" in data and isinstance(data["category"], str):
+            data["category"] = AuditCategory[data["category"]]
         return cls(**data)
 
     @classmethod
-    def from_json(cls, json_str: str) -> 'AuditEvent':
+    def from_json(cls, json_str: str) -> "AuditEvent":
         """Create an AuditEvent from a JSON string."""
         return cls.from_dict(json.loads(json_str))
 
     @classmethod
-    def from_security_audit_entry(cls, entry: Any) -> 'AuditEvent':
+    def from_security_audit_entry(cls, entry: Any) -> "AuditEvent":
         """
         Create an AuditEvent from a security module AuditLogEntry.
 
@@ -163,6 +167,7 @@ class AuditEvent:
             raise ImportError("Security module is not available")
 
         from ipfs_datasets_py.security import AuditLogEntry
+
         return AuditLogEntry(
             event_id=self.event_id,
             timestamp=self.timestamp,
@@ -174,7 +179,7 @@ class AuditEvent:
             status=self.status,
             details=self.details,
             source_ip=self.client_ip,
-            success=self.status == "success"
+            success=self.status == "success",
         )
 
 
@@ -187,8 +192,12 @@ class AuditHandler:
     actions like generating alerts.
     """
 
-    def __init__(self, name: str, min_level: AuditLevel = AuditLevel.INFO,
-                 formatter: Optional[Callable[[AuditEvent], str]] = None):
+    def __init__(
+        self,
+        name: str,
+        min_level: AuditLevel = AuditLevel.INFO,
+        formatter: Optional[Callable[[AuditEvent], str]] = None,
+    ):
         """
         Initialize the audit handler.
 
@@ -266,7 +275,7 @@ class AuditLogger:
     _instance = None
 
     @classmethod
-    def get_instance(cls) -> 'AuditLogger':
+    def get_instance(cls) -> "AuditLogger":
         """Get the singleton instance."""
         if cls._instance is None:
             cls._instance = cls()
@@ -285,7 +294,7 @@ class AuditLogger:
         self.excluded_categories: Set[AuditCategory] = set()
         self._lock = threading.RLock()
         self._thread_local = threading.local()
-        self._events = [] # Store events for testing or retrieval
+        self._events = []  # Store events for testing or retrieval
 
         # Event listeners for integration with other systems
         # Map from category to list of listener functions
@@ -328,10 +337,13 @@ class AuditLogger:
                     return True
             return False
 
-    def set_context(self, user: Optional[str] = None,
-                  session_id: Optional[str] = None,
-                  client_ip: Optional[str] = None,
-                  application: Optional[str] = None) -> None:
+    def set_context(
+        self,
+        user: Optional[str] = None,
+        session_id: Optional[str] = None,
+        client_ip: Optional[str] = None,
+        application: Optional[str] = None,
+    ) -> None:
         """
         Set context for future audit events.
 
@@ -344,51 +356,59 @@ class AuditLogger:
             client_ip: Client IP address
             application: Application name
         """
-        if not hasattr(self._thread_local, 'context'):
+        if not hasattr(self._thread_local, "context"):
             self._thread_local.context = {}
 
         if user is not None:
-            self._thread_local.context['user'] = user
+            self._thread_local.context["user"] = user
         if session_id is not None:
-            self._thread_local.context['session_id'] = session_id
+            self._thread_local.context["session_id"] = session_id
         if client_ip is not None:
-            self._thread_local.context['client_ip'] = client_ip
+            self._thread_local.context["client_ip"] = client_ip
         if application is not None:
-            self._thread_local.context['application'] = application
+            self._thread_local.context["application"] = application
 
     def clear_context(self) -> None:
         """Clear the thread-local context."""
-        if hasattr(self._thread_local, 'context'):
-            delattr(self._thread_local, 'context')
+        if hasattr(self._thread_local, "context"):
+            delattr(self._thread_local, "context")
 
     def _apply_context(self, event_data: Dict[str, Any]) -> Dict[str, Any]:
         """Apply thread-local context to event data."""
         result = event_data.copy()
 
         # Apply global defaults
-        if 'user' not in result or result['user'] is None:
-            result['user'] = self.default_user
-        if 'application' not in result or result['application'] is None:
-            result['application'] = self.default_application
-        if 'session_id' not in result or result['session_id'] is None:
-            result['session_id'] = self.session_id
-        if 'client_ip' not in result or result['client_ip'] is None:
-            result['client_ip'] = self.client_ip
+        if "user" not in result or result["user"] is None:
+            result["user"] = self.default_user
+        if "application" not in result or result["application"] is None:
+            result["application"] = self.default_application
+        if "session_id" not in result or result["session_id"] is None:
+            result["session_id"] = self.session_id
+        if "client_ip" not in result or result["client_ip"] is None:
+            result["client_ip"] = self.client_ip
 
         # Apply thread-local context if available
-        if hasattr(self._thread_local, 'context'):
+        if hasattr(self._thread_local, "context"):
             for key, value in self._thread_local.context.items():
                 if key not in result or result[key] is None:
                     result[key] = value
 
         return result
 
-    def log(self, level: AuditLevel, category: AuditCategory, action: str,
-           user: Optional[str] = None, resource_id: Optional[str] = None,
-           resource_type: Optional[str] = None, status: str = "success",
-           details: Optional[Dict[str, Any]] = None,
-           client_ip: Optional[str] = None, session_id: Optional[str] = None,
-           **kwargs) -> Optional[str]:
+    def log(
+        self,
+        level: AuditLevel,
+        category: AuditCategory,
+        action: str,
+        user: Optional[str] = None,
+        resource_id: Optional[str] = None,
+        resource_type: Optional[str] = None,
+        status: str = "success",
+        details: Optional[Dict[str, Any]] = None,
+        client_ip: Optional[str] = None,
+        session_id: Optional[str] = None,
+        **kwargs,
+    ) -> Optional[str]:
         """
         Log an audit event.
 
@@ -424,30 +444,44 @@ class AuditLogger:
 
         # Create base event data
         base_details = details or {}
-        
+
         # Add any additional kwargs to details instead of root level
-        extra_kwargs = {k: v for k, v in kwargs.items() if k not in [
-            'event_id', 'timestamp', 'level', 'category', 'action',
-            'user', 'resource_id', 'resource_type', 'status', 'details',
-            'client_ip', 'session_id'
-        ]}
-        
+        extra_kwargs = {
+            k: v
+            for k, v in kwargs.items()
+            if k
+            not in [
+                "event_id",
+                "timestamp",
+                "level",
+                "category",
+                "action",
+                "user",
+                "resource_id",
+                "resource_type",
+                "status",
+                "details",
+                "client_ip",
+                "session_id",
+            ]
+        }
+
         if extra_kwargs:
             base_details.update(extra_kwargs)
-        
+
         event_data = {
-            'event_id': kwargs.get('event_id', str(uuid.uuid4())),
-            'timestamp': kwargs.get('timestamp', datetime.datetime.utcnow().isoformat() + 'Z'),
-            'level': level,
-            'category': category,
-            'action': action,
-            'user': user,
-            'resource_id': resource_id,
-            'resource_type': resource_type,
-            'status': status,
-            'details': base_details,
-            'client_ip': client_ip,
-            'session_id': session_id,
+            "event_id": kwargs.get("event_id", str(uuid.uuid4())),
+            "timestamp": kwargs.get("timestamp", datetime.datetime.utcnow().isoformat() + "Z"),
+            "level": level,
+            "category": category,
+            "action": action,
+            "user": user,
+            "resource_id": resource_id,
+            "resource_type": resource_type,
+            "status": status,
+            "details": base_details,
+            "client_ip": client_ip,
+            "session_id": session_id,
         }
 
         # Apply context
@@ -461,7 +495,7 @@ class AuditLogger:
         # Skip the current frame and AuditLogger methods
         frame = None
         for f in reversed(stack[:-1]):
-            if 'audit_logger.py' not in f.filename:
+            if "audit_logger.py" not in f.filename:
                 frame = f
                 break
 
@@ -523,11 +557,15 @@ class AuditLogger:
         """Log an authorization event."""
         return self.log(level, AuditCategory.AUTHORIZATION, action, **kwargs)
 
-    def data_access(self, action: str, level: AuditLevel = AuditLevel.INFO, **kwargs) -> Optional[str]:
+    def data_access(
+        self, action: str, level: AuditLevel = AuditLevel.INFO, **kwargs
+    ) -> Optional[str]:
         """Log a data access event."""
         return self.log(level, AuditCategory.DATA_ACCESS, action, **kwargs)
 
-    def data_modify(self, action: str, level: AuditLevel = AuditLevel.INFO, **kwargs) -> Optional[str]:
+    def data_modify(
+        self, action: str, level: AuditLevel = AuditLevel.INFO, **kwargs
+    ) -> Optional[str]:
         """Log a data modification event."""
         return self.log(level, AuditCategory.DATA_MODIFICATION, action, **kwargs)
 
@@ -539,13 +577,15 @@ class AuditLogger:
         """Log a security event."""
         return self.log(level, AuditCategory.SECURITY, action, **kwargs)
 
-    def compliance(self, action: str, level: AuditLevel = AuditLevel.INFO, **kwargs) -> Optional[str]:
+    def compliance(
+        self, action: str, level: AuditLevel = AuditLevel.INFO, **kwargs
+    ) -> Optional[str]:
         """Log a compliance event."""
         return self.log(level, AuditCategory.COMPLIANCE, action, **kwargs)
 
-    def add_event_listener(self,
-                     listener: Callable[[AuditEvent], None],
-                     category: Optional[AuditCategory] = None) -> None:
+    def add_event_listener(
+        self, listener: Callable[[AuditEvent], None], category: Optional[AuditCategory] = None
+    ) -> None:
         """
         Add an event listener for audit events.
 
@@ -561,9 +601,9 @@ class AuditLogger:
                 self.event_listeners[category] = []
             self.event_listeners[category].append(listener)
 
-    def remove_event_listener(self,
-                           listener: Callable[[AuditEvent], None],
-                           category: Optional[AuditCategory] = None) -> bool:
+    def remove_event_listener(
+        self, listener: Callable[[AuditEvent], None], category: Optional[AuditCategory] = None
+    ) -> bool:
         """
         Remove an event listener.
 
@@ -608,7 +648,9 @@ class AuditLogger:
                 try:
                     listener(event)
                 except Exception as e:
-                    logging.error(f"Error in audit event listener for category {event.category.name}: {str(e)}")
+                    logging.error(
+                        f"Error in audit event listener for category {event.category.name}: {str(e)}"
+                    )
 
     def reset(self) -> None:
         """Reset the audit logger, closing all handlers and clearing listeners."""
@@ -626,33 +668,33 @@ class AuditLogger:
             config: Configuration dictionary
         """
         with self._lock:
-            if 'enabled' in config:
-                self.enabled = config['enabled']
+            if "enabled" in config:
+                self.enabled = config["enabled"]
 
-            if 'min_level' in config:
-                level_name = config['min_level']
+            if "min_level" in config:
+                level_name = config["min_level"]
                 if isinstance(level_name, str):
                     self.min_level = AuditLevel[level_name]
                 else:
                     self.min_level = level_name
 
-            if 'default_user' in config:
-                self.default_user = config['default_user']
+            if "default_user" in config:
+                self.default_user = config["default_user"]
 
-            if 'default_application' in config:
-                self.default_application = config['default_application']
+            if "default_application" in config:
+                self.default_application = config["default_application"]
 
-            if 'included_categories' in config:
+            if "included_categories" in config:
                 self.included_categories = set()
-                for cat in config['included_categories']:
+                for cat in config["included_categories"]:
                     if isinstance(cat, str):
                         self.included_categories.add(AuditCategory[cat])
                     else:
                         self.included_categories.add(cat)
 
-            if 'excluded_categories' in config:
+            if "excluded_categories" in config:
                 self.excluded_categories = set()
-                for cat in config['excluded_categories']:
+                for cat in config["excluded_categories"]:
                     if isinstance(cat, str):
                         self.excluded_categories.add(AuditCategory[cat])
                     else:

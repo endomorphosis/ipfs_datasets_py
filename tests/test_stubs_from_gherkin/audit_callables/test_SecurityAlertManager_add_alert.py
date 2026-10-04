@@ -19,19 +19,28 @@ def a_securityalertmanager_instance_is_initialized():
     """
     try:
         manager = SecurityAlertManager()
-        
+
         if manager is None:
-            raise FixtureError("Failed to create fixture a_securityalertmanager_instance_is_initialized: SecurityAlertManager instance is None") from None
-        
-        if not hasattr(manager, 'add_alert'):
-            raise FixtureError("Failed to create fixture a_securityalertmanager_instance_is_initialized: SecurityAlertManager missing 'add_alert' method") from None
-        
-        if not hasattr(manager, 'alerts'):
-            raise FixtureError("Failed to create fixture a_securityalertmanager_instance_is_initialized: SecurityAlertManager missing 'alerts' attribute") from None
-        
+            raise FixtureError(
+                "Failed to create fixture a_securityalertmanager_instance_is_initialized: SecurityAlertManager instance is None"
+            ) from None
+
+        if not hasattr(manager, "add_alert"):
+            raise FixtureError(
+                "Failed to create fixture a_securityalertmanager_instance_is_initialized: SecurityAlertManager missing 'add_alert' method"
+            ) from None
+
+        if not hasattr(manager, "alerts"):
+            raise FixtureError(
+                "Failed to create fixture a_securityalertmanager_instance_is_initialized: SecurityAlertManager missing 'alerts' attribute"
+            ) from None
+
         return manager
     except Exception as e:
-        raise FixtureError(f"Failed to create fixture a_securityalertmanager_instance_is_initialized: {e}") from e
+        raise FixtureError(
+            f"Failed to create fixture a_securityalertmanager_instance_is_initialized: {e}"
+        ) from e
+
 
 @pytest.fixture
 def no_alerts_exist(a_securityalertmanager_instance_is_initialized):
@@ -40,20 +49,24 @@ def no_alerts_exist(a_securityalertmanager_instance_is_initialized):
     """
     try:
         manager = a_securityalertmanager_instance_is_initialized
-        
+
         # Clear all alerts
         manager.alerts = {}
-        
+
         # Verify no alerts exist
         if len(manager.alerts) != 0:
-            raise FixtureError(f"Failed to create fixture no_alerts_exist: {len(manager.alerts)} alerts exist, expected 0") from None
-        
+            raise FixtureError(
+                f"Failed to create fixture no_alerts_exist: {len(manager.alerts)} alerts exist, expected 0"
+            ) from None
+
         return manager
     except Exception as e:
         raise FixtureError(f"Failed to create fixture no_alerts_exist: {e}") from e
 
 
-def test_add_alert_stores_alert_in_alerts_dictionary(a_securityalertmanager_instance_is_initialized, no_alerts_exist):
+def test_add_alert_stores_alert_in_alerts_dictionary(
+    a_securityalertmanager_instance_is_initialized, no_alerts_exist
+):
     """
     Scenario: Add alert stores alert in alerts dictionary
 
@@ -70,7 +83,9 @@ def test_add_alert_stores_alert_in_alerts_dictionary(a_securityalertmanager_inst
     pass
 
 
-def test_add_alert_creates_entry_with_alert_id_key(a_securityalertmanager_instance_is_initialized, no_alerts_exist):
+def test_add_alert_creates_entry_with_alert_id_key(
+    a_securityalertmanager_instance_is_initialized, no_alerts_exist
+):
     """
     Scenario: Add alert creates entry with alert_id key
 
@@ -87,7 +102,9 @@ def test_add_alert_creates_entry_with_alert_id_key(a_securityalertmanager_instan
     pass
 
 
-def test_add_alert_returns_alert_id(a_securityalertmanager_instance_is_initialized, no_alerts_exist):
+def test_add_alert_returns_alert_id(
+    a_securityalertmanager_instance_is_initialized, no_alerts_exist
+):
     """
     Scenario: Add alert returns alert_id
 
@@ -104,7 +121,9 @@ def test_add_alert_returns_alert_id(a_securityalertmanager_instance_is_initializ
     pass
 
 
-def test_add_alert_increments_alert_count(a_securityalertmanager_instance_is_initialized, no_alerts_exist):
+def test_add_alert_increments_alert_count(
+    a_securityalertmanager_instance_is_initialized, no_alerts_exist
+):
     """
     Scenario: Add alert increments alert count
 
@@ -121,7 +140,9 @@ def test_add_alert_increments_alert_count(a_securityalertmanager_instance_is_ini
     pass
 
 
-def test_add_alert_saves_to_storage_when_path_configured(a_securityalertmanager_instance_is_initialized, no_alerts_exist):
+def test_add_alert_saves_to_storage_when_path_configured(
+    a_securityalertmanager_instance_is_initialized, no_alerts_exist
+):
     """
     Scenario: Add alert saves to storage when path configured
 
@@ -138,7 +159,9 @@ def test_add_alert_saves_to_storage_when_path_configured(a_securityalertmanager_
     pass
 
 
-def test_add_alert_notifies_all_handlers(a_securityalertmanager_instance_is_initialized, no_alerts_exist):
+def test_add_alert_notifies_all_handlers(
+    a_securityalertmanager_instance_is_initialized, no_alerts_exist
+):
     """
     Scenario: Add alert notifies all handlers
 
@@ -155,7 +178,9 @@ def test_add_alert_notifies_all_handlers(a_securityalertmanager_instance_is_init
     pass
 
 
-def test_add_alert_is_thread_safe_stores_all_alerts(a_securityalertmanager_instance_is_initialized, no_alerts_exist):
+def test_add_alert_is_thread_safe_stores_all_alerts(
+    a_securityalertmanager_instance_is_initialized, no_alerts_exist
+):
     """
     Scenario: Add alert is thread-safe stores all alerts
 
@@ -172,7 +197,9 @@ def test_add_alert_is_thread_safe_stores_all_alerts(a_securityalertmanager_insta
     pass
 
 
-def test_add_alert_is_thread_safe_loses_no_alerts(a_securityalertmanager_instance_is_initialized, no_alerts_exist):
+def test_add_alert_is_thread_safe_loses_no_alerts(
+    a_securityalertmanager_instance_is_initialized, no_alerts_exist
+):
     """
     Scenario: Add alert is thread-safe loses no alerts
 
@@ -189,7 +216,9 @@ def test_add_alert_is_thread_safe_loses_no_alerts(a_securityalertmanager_instanc
     pass
 
 
-def test_add_alert_with_duplicate_alert_id_overwrites(a_securityalertmanager_instance_is_initialized, no_alerts_exist):
+def test_add_alert_with_duplicate_alert_id_overwrites(
+    a_securityalertmanager_instance_is_initialized, no_alerts_exist
+):
     """
     Scenario: Add alert with duplicate alert_id overwrites
 
@@ -206,7 +235,9 @@ def test_add_alert_with_duplicate_alert_id_overwrites(a_securityalertmanager_ins
     pass
 
 
-def test_add_alert_handles_notification_handler_exceptions_completes_without_error(a_securityalertmanager_instance_is_initialized, no_alerts_exist):
+def test_add_alert_handles_notification_handler_exceptions_completes_without_error(
+    a_securityalertmanager_instance_is_initialized, no_alerts_exist
+):
     """
     Scenario: Add alert handles notification handler exceptions completes without error
 
@@ -224,7 +255,9 @@ def test_add_alert_handles_notification_handler_exceptions_completes_without_err
     pass
 
 
-def test_add_alert_handles_notification_handler_exceptions_preserves_alert(a_securityalertmanager_instance_is_initialized, no_alerts_exist):
+def test_add_alert_handles_notification_handler_exceptions_preserves_alert(
+    a_securityalertmanager_instance_is_initialized, no_alerts_exist
+):
     """
     Scenario: Add alert handles notification handler exceptions preserves alert
 
@@ -242,7 +275,9 @@ def test_add_alert_handles_notification_handler_exceptions_preserves_alert(a_sec
     pass
 
 
-def test_add_alert_preserves_alert_properties_level(a_securityalertmanager_instance_is_initialized, no_alerts_exist):
+def test_add_alert_preserves_alert_properties_level(
+    a_securityalertmanager_instance_is_initialized, no_alerts_exist
+):
     """
     Scenario: Add alert preserves alert properties level
 
@@ -259,7 +294,9 @@ def test_add_alert_preserves_alert_properties_level(a_securityalertmanager_insta
     pass
 
 
-def test_add_alert_preserves_alert_properties_type(a_securityalertmanager_instance_is_initialized, no_alerts_exist):
+def test_add_alert_preserves_alert_properties_type(
+    a_securityalertmanager_instance_is_initialized, no_alerts_exist
+):
     """
     Scenario: Add alert preserves alert properties type
 
@@ -274,4 +311,3 @@ def test_add_alert_preserves_alert_properties_type(a_securityalertmanager_instan
     """
     # TODO: Implement test
     pass
-

@@ -50,24 +50,12 @@ from .contracts import (
 )
 
 
-STATISTICAL_PLAN_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.statistical-plan.v1"
-)
-PAIRED_OBSERVATION_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.paired-observation.v1"
-)
-COMPARISON_SPEC_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.comparison-spec.v1"
-)
-PAIRED_ANALYSIS_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.paired-analysis.v1"
-)
-PARETO_RESULT_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.pareto-result.v1"
-)
-STATISTICS_REPORT_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.statistics-report.v1"
-)
+STATISTICAL_PLAN_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.statistical-plan.v1"
+PAIRED_OBSERVATION_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.paired-observation.v1"
+COMPARISON_SPEC_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.comparison-spec.v1"
+PAIRED_ANALYSIS_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.paired-analysis.v1"
+PARETO_RESULT_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.pareto-result.v1"
+STATISTICS_REPORT_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.statistics-report.v1"
 CAUSAL_BINOMIAL_RATE_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.causal-binomial-rate.v2"
 )
@@ -151,14 +139,8 @@ class MissingKind(str, Enum):
 
 
 def _safe_id(value: object, field: str) -> str:
-    if (
-        not isinstance(value, str)
-        or value in {".", ".."}
-        or not _SAFE_ID.fullmatch(value)
-    ):
-        raise StatisticsError(
-            f"{field} must be a safe 1-128 character identifier"
-        )
+    if not isinstance(value, str) or value in {".", ".."} or not _SAFE_ID.fullmatch(value):
+        raise StatisticsError(f"{field} must be a safe 1-128 character identifier")
     return value
 
 
@@ -172,21 +154,15 @@ def _dag_json_cid(value: object, field: str) -> str:
     try:
         return validate_cid(value, codecs=("dag-json",))
     except ValueError as exc:
-        raise StatisticsError(
-            f"{field} must be a canonical DAG-JSON CIDv1"
-        ) from exc
+        raise StatisticsError(f"{field} must be a canonical DAG-JSON CIDv1") from exc
 
 
 def _cid_tuple(value: object, field: str) -> tuple[str, ...]:
     if not isinstance(value, (list, tuple)):
         raise StatisticsError(f"{field} must be an array")
-    result = tuple(
-        _dag_json_cid(item, f"{field}[]") for item in value
-    )
+    result = tuple(_dag_json_cid(item, f"{field}[]") for item in value)
     if result != tuple(sorted(result)) or len(result) != len(set(result)):
-        raise StatisticsError(
-            f"{field} must be unique and in canonical CID order"
-        )
+        raise StatisticsError(f"{field} must be unique and in canonical CID order")
     return result
 
 
@@ -205,9 +181,7 @@ def _boolean(value: object, field: str) -> bool:
     return value
 
 
-def _integer(
-    value: object, field: str, *, minimum: int = 0, maximum: int | None = None
-) -> int:
+def _integer(value: object, field: str, *, minimum: int = 0, maximum: int | None = None) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or value < minimum:
         raise StatisticsError(f"{field} must be an integer >= {minimum}")
     if maximum is not None and value > maximum:
@@ -216,9 +190,7 @@ def _integer(
 
 
 def _mapping(value: object, field: str) -> Mapping[str, object]:
-    if not isinstance(value, Mapping) or any(
-        not isinstance(key, str) for key in value
-    ):
+    if not isinstance(value, Mapping) or any(not isinstance(key, str) for key in value):
         raise StatisticsError(f"{field} must be an object with string keys")
     return value
 
@@ -229,15 +201,11 @@ def _array(value: object, field: str) -> list[object]:
     return value
 
 
-def _exact_keys(
-    value: Mapping[str, object], expected: set[str], field: str
-) -> None:
+def _exact_keys(value: Mapping[str, object], expected: set[str], field: str) -> None:
     missing = sorted(expected - set(value))
     unknown = sorted(set(value) - expected)
     if missing or unknown:
-        raise StatisticsError(
-            f"{field} keys changed; missing={missing}, unknown={unknown}"
-        )
+        raise StatisticsError(f"{field} keys changed; missing={missing}, unknown={unknown}")
 
 
 def _enum(enum_type: type[Enum], value: object, field: str) -> Enum:
@@ -255,9 +223,7 @@ def _sha256_json(value: object) -> str:
 
 def _freeze_json(value: object) -> object:
     if isinstance(value, Mapping):
-        return MappingProxyType(
-            {str(key): _freeze_json(item) for key, item in value.items()}
-        )
+        return MappingProxyType({str(key): _freeze_json(item) for key, item in value.items()})
     if isinstance(value, (list, tuple)):
         return tuple(_freeze_json(item) for item in value)
     return value
@@ -317,9 +283,7 @@ def _wilson_interval_95(
     estimate = numerator / denominator
     z_squared = _WILSON_95_Z * _WILSON_95_Z
     scale = 1.0 + z_squared / denominator
-    center = (
-        estimate + z_squared / (2.0 * denominator)
-    ) / scale
+    center = (estimate + z_squared / (2.0 * denominator)) / scale
     radius = (
         _WILSON_95_Z
         * math.sqrt(
@@ -356,23 +320,12 @@ class CausalBinomialRate:
         _safe_id(self.metric_id, "metric_id")
         _safe_id(self.event_label, "event_label")
         _safe_id(self.population_label, "population_label")
-        events = _cid_tuple(
-            self.event_receipt_cids, "event_receipt_cids"
-        )
-        population = _cid_tuple(
-            self.population_receipt_cids, "population_receipt_cids"
-        )
+        events = _cid_tuple(self.event_receipt_cids, "event_receipt_cids")
+        population = _cid_tuple(self.population_receipt_cids, "population_receipt_cids")
         if not set(events).issubset(population):
-            raise StatisticsError(
-                "causal-rate events must be a subset of its population"
-            )
-        if (
-            isinstance(self.confidence_millionths, bool)
-            or self.confidence_millionths != 950_000
-        ):
-            raise StatisticsError(
-                "G210 causal rates require the frozen 95% confidence level"
-            )
+            raise StatisticsError("causal-rate events must be a subset of its population")
+        if isinstance(self.confidence_millionths, bool) or self.confidence_millionths != 950_000:
+            raise StatisticsError("G210 causal rates require the frozen 95% confidence level")
         object.__setattr__(self, "event_receipt_cids", events)
         object.__setattr__(self, "population_receipt_cids", population)
 
@@ -402,9 +355,7 @@ class CausalBinomialRate:
             "event_label": self.event_label,
             "population_label": self.population_label,
             "event_receipt_cids": list(self.event_receipt_cids),
-            "population_receipt_cids": list(
-                self.population_receipt_cids
-            ),
+            "population_receipt_cids": list(self.population_receipt_cids),
             "numerator": self.numerator,
             "denominator": self.denominator,
             "estimate": self.estimate,
@@ -458,9 +409,7 @@ class CausalBinomialRate:
             ),
         )
         if dict(data) != record.to_dict():
-            raise StatisticsError(
-                "causal-binomial-rate derived fields or CID changed"
-            )
+            raise StatisticsError("causal-binomial-rate derived fields or CID changed")
         return record
 
 
@@ -516,9 +465,7 @@ def build_causal_rescue_rate_bundle(
             f"{component_id} rate_populations",
         )
         if set(populations) != set(_CAUSAL_RATE_LABELS):
-            raise StatisticsError(
-                f"{component_id} causal rate population set changed"
-            )
+            raise StatisticsError(f"{component_id} causal rate population set changed")
         for rate_id in sorted(populations):
             population = _mapping(
                 populations[rate_id],
@@ -544,9 +491,7 @@ def build_causal_rescue_rate_bundle(
                     event_label=event_label,
                     population_label=f"{component_id}_{population_label}",
                     event_receipt_cids=tuple(event_cids),  # type: ignore[arg-type]
-                    population_receipt_cids=tuple(
-                        population_cids
-                    ),  # type: ignore[arg-type]
+                    population_receipt_cids=tuple(population_cids),  # type: ignore[arg-type]
                 )
             )
     body = {
@@ -575,19 +520,13 @@ def validate_causal_rescue_rate_bundle(
     }
     _exact_keys(data, expected, "causal rescue rate bundle")
     if data.get("schema") != CAUSAL_RESCUE_RATE_BUNDLE_SCHEMA:
-        raise StatisticsError(
-            "unsupported causal rescue rate-bundle schema"
-        )
+        raise StatisticsError("unsupported causal rescue rate-bundle schema")
     try:
         rebuilt = build_causal_rescue_rate_bundle(data["aggregate"])
     except ProtocolContractError as exc:
-        raise StatisticsError(
-            f"causal rescue aggregate is invalid: {exc}"
-        ) from exc
+        raise StatisticsError(f"causal rescue aggregate is invalid: {exc}") from exc
     if dict(data) != rebuilt:
-        raise StatisticsError(
-            "causal rescue rate bundle fields or CID changed"
-        )
+        raise StatisticsError("causal rescue rate bundle fields or CID changed")
     return rebuilt
 
 
@@ -618,9 +557,7 @@ class StatisticalPlan:
         if not 0 < confidence < 1:
             raise StatisticsError("confidence_level must be strictly between 0 and 1")
         if confidence != DEFAULT_PROTOCOL.thresholds.confidence_level:
-            raise StatisticsError(
-                "confidence_level differs from the frozen protocol"
-            )
+            raise StatisticsError("confidence_level differs from the frozen protocol")
         if self.bootstrap_method != "paired_stratified_percentile":
             raise StatisticsError("unsupported bootstrap_method")
         if self.quantile_method != "linear_r7":
@@ -631,9 +568,7 @@ class StatisticalPlan:
             raise StatisticsError("unsupported multiplicity_method")
 
     def to_dict(self) -> dict[str, object]:
-        return {
-            field: getattr(self, field) for field in self.__dataclass_fields__
-        }
+        return {field: getattr(self, field) for field in self.__dataclass_fields__}
 
     @classmethod
     def from_dict(cls, value: object) -> Self:
@@ -641,12 +576,8 @@ class StatisticalPlan:
         _exact_keys(data, set(cls.__dataclass_fields__), "statistical_plan")
         return cls(
             seed=_integer(data["seed"], "seed"),
-            bootstrap_samples=_integer(
-                data["bootstrap_samples"], "bootstrap_samples"
-            ),
-            confidence_level=_number(
-                data["confidence_level"], "confidence_level"
-            ),
+            bootstrap_samples=_integer(data["bootstrap_samples"], "bootstrap_samples"),
+            confidence_level=_number(data["confidence_level"], "confidence_level"),
             schema=str(data["schema"]),
             bootstrap_method=str(data["bootstrap_method"]),
             quantile_method=str(data["quantile_method"]),
@@ -711,15 +642,9 @@ class ComparisonSpec:
             or candidate.paired_against != "A0"
             or candidate.safety_diagnostic_only
         ):
-            raise StatisticsError(
-                "candidate must be a registered non-diagnostic A0-paired arm"
-            )
+            raise StatisticsError("candidate must be a registered non-diagnostic A0-paired arm")
         metric = next(
-            (
-                item
-                for item in DEFAULT_PROTOCOL.metrics
-                if item.metric_id == self.metric_id
-            ),
+            (item for item in DEFAULT_PROTOCOL.metrics if item.metric_id == self.metric_id),
             None,
         )
         if metric is None:
@@ -735,17 +660,13 @@ class ComparisonSpec:
         if not isinstance(self.domain, AnalysisDomain):
             raise StatisticsError("domain must be AnalysisDomain")
         if not isinstance(self.stratum_dimension, StratumDimension):
-            raise StatisticsError(
-                "stratum_dimension must be StratumDimension"
-            )
+            raise StatisticsError("stratum_dimension must be StratumDimension")
         if not isinstance(self.role, AnalysisRole):
             raise StatisticsError("role must be AnalysisRole")
         if self.role is AnalysisRole.EXPLORATORY:
             _safe_id(self.multiplicity_family, "multiplicity_family")
         elif self.multiplicity_family is not None:
-            raise StatisticsError(
-                "primary comparisons cannot declare an exploratory family"
-            )
+            raise StatisticsError("primary comparisons cannot declare an exploratory family")
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -792,34 +713,22 @@ class ComparisonSpec:
             schema=str(data["schema"]),
             comparison_id=str(data["comparison_id"]),
             metric_id=str(data["metric_id"]),
-            category=_enum(
-                MetricCategory, data["category"], "category"
-            ),  # type: ignore[arg-type]
-            direction=_enum(
-                MetricDirection, data["direction"], "direction"
-            ),  # type: ignore[arg-type]
+            category=_enum(MetricCategory, data["category"], "category"),  # type: ignore[arg-type]
+            direction=_enum(MetricDirection, data["direction"], "direction"),  # type: ignore[arg-type]
             unit=str(data["unit"]),
             kind=_enum(MetricKind, data["kind"], "kind"),  # type: ignore[arg-type]
-            estimator=_enum(
-                Estimator, data["estimator"], "estimator"
-            ),  # type: ignore[arg-type]
+            estimator=_enum(Estimator, data["estimator"], "estimator"),  # type: ignore[arg-type]
             baseline_variant_id=str(data["baseline_variant_id"]),
             candidate_variant_id=str(data["candidate_variant_id"]),
-            domain=_enum(
-                AnalysisDomain, data["domain"], "domain"
-            ),  # type: ignore[arg-type]
+            domain=_enum(AnalysisDomain, data["domain"], "domain"),  # type: ignore[arg-type]
             stratum_dimension=_enum(
                 StratumDimension,
                 data["stratum_dimension"],
                 "stratum_dimension",
             ),  # type: ignore[arg-type]
-            role=_enum(
-                AnalysisRole, data["role"], "role"
-            ),  # type: ignore[arg-type]
+            role=_enum(AnalysisRole, data["role"], "role"),  # type: ignore[arg-type]
             multiplicity_family=(
-                None
-                if data["multiplicity_family"] is None
-                else str(data["multiplicity_family"])
+                None if data["multiplicity_family"] is None else str(data["multiplicity_family"])
             ),
         )
 
@@ -867,17 +776,13 @@ class PairedCaseObservation:
             "candidate_variant_id",
         ):
             _safe_id(getattr(self, field), field)
-        if not isinstance(self.split, Split) or not isinstance(
-            self.cache_mode, CacheMode
-        ):
+        if not isinstance(self.split, Split) or not isinstance(self.cache_mode, CacheMode):
             raise StatisticsError("split and cache_mode must use protocol enums")
         if self.baseline_variant_id == self.candidate_variant_id:
             raise StatisticsError("pair variants must be distinct")
         present = self.baseline_value is not None
         if present != (self.candidate_value is not None):
-            raise StatisticsError(
-                "paired values must both be numeric or both be missing"
-            )
+            raise StatisticsError("paired values must both be numeric or both be missing")
         if present:
             object.__setattr__(
                 self,
@@ -890,9 +795,7 @@ class PairedCaseObservation:
                 _number(self.candidate_value, "candidate_value"),
             )
             if self.missing_kind is not None or self.missing_reason is not None:
-                raise StatisticsError(
-                    "measured pairs cannot carry missingness metadata"
-                )
+                raise StatisticsError("measured pairs cannot carry missingness metadata")
         else:
             if not isinstance(self.missing_kind, MissingKind):
                 raise StatisticsError("missing pairs require a MissingKind")
@@ -925,9 +828,7 @@ class PairedCaseObservation:
             "candidate_result_sha256": self.candidate_result_sha256,
             "baseline_value": self.baseline_value,
             "candidate_value": self.candidate_value,
-            "missing_kind": (
-                None if self.missing_kind is None else self.missing_kind.value
-            ),
+            "missing_kind": (None if self.missing_kind is None else self.missing_kind.value),
             "missing_reason": self.missing_reason,
         }
 
@@ -963,9 +864,7 @@ class PairedCaseObservation:
             case_id=str(data["case_id"]),
             case_manifest_sha256=str(data["case_manifest_sha256"]),
             split=_enum(Split, data["split"], "split"),  # type: ignore[arg-type]
-            cache_mode=_enum(
-                CacheMode, data["cache_mode"], "cache_mode"
-            ),  # type: ignore[arg-type]
+            cache_mode=_enum(CacheMode, data["cache_mode"], "cache_mode"),  # type: ignore[arg-type]
             stratum=str(data["stratum"]),
             baseline_variant_id=str(data["baseline_variant_id"]),
             candidate_variant_id=str(data["candidate_variant_id"]),
@@ -984,14 +883,10 @@ class PairedCaseObservation:
             missing_kind=(
                 None
                 if data["missing_kind"] is None
-                else _enum(
-                    MissingKind, data["missing_kind"], "missing_kind"
-                )  # type: ignore[arg-type]
+                else _enum(MissingKind, data["missing_kind"], "missing_kind")  # type: ignore[arg-type]
             ),
             missing_reason=(
-                None
-                if data["missing_reason"] is None
-                else str(data["missing_reason"])
+                None if data["missing_reason"] is None else str(data["missing_reason"])
             ),
         )
 
@@ -1090,9 +985,7 @@ def observation_from_case_results(
 ) -> PairedCaseObservation:
     """Build an observation directly from durable case-result receipts."""
 
-    if not isinstance(baseline, CaseResultRecord) or not isinstance(
-        candidate, CaseResultRecord
-    ):
+    if not isinstance(baseline, CaseResultRecord) or not isinstance(candidate, CaseResultRecord):
         raise StatisticsError("pair members must be CaseResultRecord values")
     return observation_from_outcomes(
         baseline.to_outcome(invalid_control=baseline_invalid_control),
@@ -1118,13 +1011,8 @@ class AnalysisRequest:
             raise StatisticsError("request spec must be ComparisonSpec")
         if not isinstance(self.observations, tuple) or not self.observations:
             raise StatisticsError("request requires observations")
-        if any(
-            not isinstance(item, PairedCaseObservation)
-            for item in self.observations
-        ):
-            raise StatisticsError(
-                "request observations must be PairedCaseObservation values"
-            )
+        if any(not isinstance(item, PairedCaseObservation) for item in self.observations):
+            raise StatisticsError("request observations must be PairedCaseObservation values")
         canonical = tuple(
             sorted(
                 self.observations,
@@ -1201,16 +1089,14 @@ def _validate_request(request: AnalysisRequest) -> None:
     if len(case_ids) != len(set(case_ids)):
         raise StatisticsError("comparison contains duplicate case observations")
     receipt_pairs = [
-        (row.baseline_result_sha256, row.candidate_result_sha256)
-        for row in request.observations
+        (row.baseline_result_sha256, row.candidate_result_sha256) for row in request.observations
     ]
     if len(receipt_pairs) != len(set(receipt_pairs)):
         raise StatisticsError("comparison reuses a source-result pair")
     if spec.kind is MetricKind.BINARY:
         for row in request.observations:
             if row.measured and (
-                row.baseline_value not in {0.0, 1.0}
-                or row.candidate_value not in {0.0, 1.0}
+                row.baseline_value not in {0.0, 1.0} or row.candidate_value not in {0.0, 1.0}
             ):
                 raise StatisticsError("binary measurements must be exactly 0 or 1")
 
@@ -1233,9 +1119,7 @@ def _bootstrap_interval(
 ) -> tuple[float, float]:
     groups: dict[str, tuple[float, ...]] = {}
     for stratum in sorted({row.stratum for row in rows}):
-        groups[stratum] = tuple(
-            float(row.delta) for row in rows if row.stratum == stratum
-        )
+        groups[stratum] = tuple(float(row.delta) for row in rows if row.stratum == stratum)
     rng = random.Random(_derived_seed(plan, spec, scope))
     replicates: list[float] = []
     for _ in range(plan.bootstrap_samples):
@@ -1253,9 +1137,7 @@ def _exact_mcnemar(left_only: int, right_only: int) -> float:
     if discordant == 0:
         return 1.0
     extreme = min(left_only, right_only)
-    cumulative = math.fsum(
-        math.comb(discordant, k) for k in range(extreme + 1)
-    ) / (2**discordant)
+    cumulative = math.fsum(math.comb(discordant, k) for k in range(extreme + 1)) / (2**discordant)
     return min(1.0, 2.0 * cumulative)
 
 
@@ -1264,14 +1146,10 @@ def _binary_table(
 ) -> dict[str, object]:
     both = [row.case_id for row in rows if row.baseline_value == row.candidate_value == 1]
     baseline_only = [
-        row.case_id
-        for row in rows
-        if row.baseline_value == 1 and row.candidate_value == 0
+        row.case_id for row in rows if row.baseline_value == 1 and row.candidate_value == 0
     ]
     candidate_only = [
-        row.case_id
-        for row in rows
-        if row.baseline_value == 0 and row.candidate_value == 1
+        row.case_id for row in rows if row.baseline_value == 0 and row.candidate_value == 1
     ]
     neither = [row.case_id for row in rows if row.baseline_value == row.candidate_value == 0]
     p_value = _exact_mcnemar(len(baseline_only), len(candidate_only))
@@ -1286,9 +1164,7 @@ def _binary_table(
         "neither_success_case_ids": neither,
         "discordant_count": len(baseline_only) + len(candidate_only),
         "test_status": (
-            "no_discordant_pairs"
-            if not baseline_only and not candidate_only
-            else "computed"
+            "no_discordant_pairs" if not baseline_only and not candidate_only else "computed"
         ),
         "p_value_raw": p_value,
     }
@@ -1325,9 +1201,7 @@ def _summary(
     # The paired effect is the estimator over within-case differences.  This
     # matters for the median, where it is not generally a difference of medians.
     delta = _statistic(deltas, spec.estimator)
-    low, high = _bootstrap_interval(
-        rows, plan=plan, spec=spec, scope=scope
-    )
+    low, high = _bootstrap_interval(rows, plan=plan, spec=spec, scope=scope)
     relative = None if baseline_estimate == 0 else delta / abs(baseline_estimate)
     distribution = lambda values: {
         "p50": _quantile(values, 0.50),
@@ -1339,25 +1213,15 @@ def _summary(
         "baseline_estimate": baseline_estimate,
         "candidate_estimate": candidate_estimate,
         "candidate_minus_baseline": delta,
-        "percentage_point_delta": (
-            delta * 100.0 if spec.kind is MetricKind.BINARY else None
-        ),
-        "improvement": (
-            delta
-            if spec.direction is MetricDirection.MAXIMIZE
-            else -delta
-        ),
+        "percentage_point_delta": (delta * 100.0 if spec.kind is MetricKind.BINARY else None),
+        "improvement": (delta if spec.direction is MetricDirection.MAXIMIZE else -delta),
         "confidence_interval_low": low,
         "confidence_interval_high": high,
         "relative_delta": relative,
-        "relative_delta_missing_reason": (
-            "baseline_estimate_zero" if relative is None else None
-        ),
+        "relative_delta_missing_reason": ("baseline_estimate_zero" if relative is None else None),
         "baseline_distribution": distribution(baseline_values),
         "candidate_distribution": distribution(candidate_values),
-        "binary": (
-            _binary_table(rows) if spec.kind is MetricKind.BINARY else None
-        ),
+        "binary": (_binary_table(rows) if spec.kind is MetricKind.BINARY else None),
     }
 
 
@@ -1387,9 +1251,7 @@ class PairedAnalysis:
         if not isinstance(self.spec, ComparisonSpec):
             raise StatisticsError("analysis spec must be ComparisonSpec")
         _digest(self.plan_sha256, "plan_sha256")
-        if not isinstance(self.split, Split) or not isinstance(
-            self.cache_mode, CacheMode
-        ):
+        if not isinstance(self.split, Split) or not isinstance(self.cache_mode, CacheMode):
             raise StatisticsError("analysis split/cache must use protocol enums")
         for field in ("scheduled_count", "measured_count", "missing_count"):
             _integer(getattr(self, field), field)
@@ -1448,9 +1310,7 @@ def analyze_paired(
     missing = tuple(row for row in rows if not row.measured)
     split = rows[0].split
     cache_mode = rows[0].cache_mode
-    summary = _summary(
-        measured, plan=plan, spec=spec, scope="overall"
-    )
+    summary = _summary(measured, plan=plan, spec=spec, scope="overall")
     strata: list[dict[str, object]] = []
     for stratum in sorted({row.stratum for row in rows}):
         scheduled_rows = tuple(row for row in rows if row.stratum == stratum)
@@ -1474,15 +1334,9 @@ def analyze_paired(
     kind_counts = {kind.value: 0 for kind in MissingKind}
     for row in missing:
         kind_counts[row.missing_kind.value] += 1  # type: ignore[union-attr]
-        reason_counts[str(row.missing_reason)] = (
-            reason_counts.get(str(row.missing_reason), 0) + 1
-        )
+        reason_counts[str(row.missing_reason)] = reason_counts.get(str(row.missing_reason), 0) + 1
     binary = summary["binary"]
-    p_value = (
-        None
-        if not isinstance(binary, Mapping)
-        else float(binary["p_value_raw"])
-    )
+    p_value = None if not isinstance(binary, Mapping) else float(binary["p_value_raw"])
     multiplicity = {
         "role": spec.role.value,
         "family": spec.multiplicity_family,
@@ -1493,9 +1347,7 @@ def analyze_paired(
         ),
         "family_size": 1 if spec.role is AnalysisRole.PRIMARY else None,
         "adjustment_status": (
-            "not_applicable"
-            if spec.role is AnalysisRole.PRIMARY
-            else "pending_family_adjustment"
+            "not_applicable" if spec.role is AnalysisRole.PRIMARY else "pending_family_adjustment"
         ),
     }
     case_traces = tuple(
@@ -1509,9 +1361,7 @@ def analyze_paired(
             "baseline_value": row.baseline_value,
             "candidate_value": row.candidate_value,
             "candidate_minus_baseline": row.delta,
-            "missing_kind": (
-                None if row.missing_kind is None else row.missing_kind.value
-            ),
+            "missing_kind": (None if row.missing_kind is None else row.missing_kind.value),
             "missing_reason": row.missing_reason,
         }
         for row in rows
@@ -1538,9 +1388,7 @@ def analyze_paired(
         },
         case_traces=case_traces,
         p_value_raw=p_value,
-        p_value_adjusted=(
-            p_value if spec.role is AnalysisRole.PRIMARY else None
-        ),
+        p_value_adjusted=(p_value if spec.role is AnalysisRole.PRIMARY else None),
         multiplicity=multiplicity,
     )
 
@@ -1568,9 +1416,7 @@ def adjust_exploratory_multiplicity(
             if item.spec.role is AnalysisRole.EXPLORATORY
             and item.spec.multiplicity_family == family
         ]
-        tested = [
-            index for index in indexes if records[index].p_value_raw is not None
-        ]
+        tested = [index for index in indexes if records[index].p_value_raw is not None]
         ordered = sorted(
             tested,
             key=lambda index: (
@@ -1597,9 +1443,7 @@ def adjust_exploratory_multiplicity(
                 "family_size": len(indexes),
                 "tested_hypothesis_count": len(tested),
                 "adjustment_status": (
-                    "adjusted"
-                    if current.p_value_raw is not None
-                    else "no_test_statistic"
+                    "adjusted" if current.p_value_raw is not None else "no_test_statistic"
                 ),
             }
             result[index] = replace(
@@ -1617,19 +1461,14 @@ def analyze_requests(
 ) -> tuple[PairedAnalysis, ...]:
     """Analyze a canonical request set and finish family-wise adjustment."""
 
-    records = tuple(
-        sorted(requests, key=lambda item: item.spec.comparison_id)
-    )
+    records = tuple(sorted(requests, key=lambda item: item.spec.comparison_id))
     if not records:
         raise StatisticsError("at least one analysis request is required")
     if len(records) > MAX_REPORT_REQUESTS:
         raise StatisticsError("statistics report contains too many requests")
     if len({item.spec.comparison_id for item in records}) != len(records):
         raise StatisticsError("comparison IDs must be unique")
-    analyses = tuple(
-        analyze_paired(item.spec, item.observations, plan=plan)
-        for item in records
-    )
+    analyses = tuple(analyze_paired(item.spec, item.observations, plan=plan) for item in records)
     return adjust_exploratory_multiplicity(analyses)
 
 
@@ -1712,9 +1551,7 @@ class ParetoObjective:
         _exact_keys(data, {"metric_id", "direction"}, "pareto_objective")
         return cls(
             metric_id=str(data["metric_id"]),
-            direction=_enum(
-                MetricDirection, data["direction"], "direction"
-            ),  # type: ignore[arg-type]
+            direction=_enum(MetricDirection, data["direction"], "direction"),  # type: ignore[arg-type]
         )
 
 
@@ -1739,13 +1576,9 @@ class ParetoCandidate:
             normalized[metric_id] = (
                 None if value is None else _number(value, f"metrics.{metric_id}")
             )
-        object.__setattr__(
-            self, "metrics", MappingProxyType(dict(sorted(normalized.items())))
-        )
+        object.__setattr__(self, "metrics", MappingProxyType(dict(sorted(normalized.items()))))
         if not self.analysis_sha256s or not self.case_result_sha256s:
-            raise StatisticsError(
-                "Pareto candidates require aggregate and case-result links"
-            )
+            raise StatisticsError("Pareto candidates require aggregate and case-result links")
         for field in ("analysis_sha256s", "case_result_sha256s"):
             values = getattr(self, field)
             if len(values) != len(set(values)):
@@ -1758,8 +1591,7 @@ class ParetoCandidate:
         if self.safety_feasible and self.safety_reason is not None:
             raise StatisticsError("safe candidates cannot carry a safety reason")
         if not self.safety_feasible and (
-            not isinstance(self.safety_reason, str)
-            or not self.safety_reason.strip()
+            not isinstance(self.safety_reason, str) or not self.safety_reason.strip()
         ):
             raise StatisticsError("unsafe candidates require a safety reason")
 
@@ -1796,25 +1628,13 @@ class ParetoCandidate:
                 for key, item in metrics.items()
             },
             analysis_sha256s=tuple(
-                str(item)
-                for item in _array(
-                    data["analysis_sha256s"], "analysis_sha256s"
-                )
+                str(item) for item in _array(data["analysis_sha256s"], "analysis_sha256s")
             ),
             case_result_sha256s=tuple(
-                str(item)
-                for item in _array(
-                    data["case_result_sha256s"], "case_result_sha256s"
-                )
+                str(item) for item in _array(data["case_result_sha256s"], "case_result_sha256s")
             ),
-            safety_feasible=_boolean(
-                data["safety_feasible"], "safety_feasible"
-            ),
-            safety_reason=(
-                None
-                if data["safety_reason"] is None
-                else str(data["safety_reason"])
-            ),
+            safety_feasible=_boolean(data["safety_feasible"], "safety_feasible"),
+            safety_reason=(None if data["safety_reason"] is None else str(data["safety_reason"])),
         )
 
 
@@ -1855,9 +1675,7 @@ def pareto_frontier(
         raise StatisticsError("Pareto candidate IDs must be unique")
     if len({item.metric_id for item in dimensions}) != len(dimensions):
         raise StatisticsError("Pareto objective metric IDs must be unique")
-    active = tuple(
-        item for item in dimensions if item.direction is not MetricDirection.REPORT
-    )
+    active = tuple(item for item in dimensions if item.direction is not MetricDirection.REPORT)
     if not active:
         raise StatisticsError("Pareto analysis requires a directional objective")
     records: list[dict[str, object]] = []
@@ -1866,8 +1684,7 @@ def pareto_frontier(
         missing = [
             item.metric_id
             for item in active
-            if item.metric_id not in candidate.metrics
-            or candidate.metrics[item.metric_id] is None
+            if item.metric_id not in candidate.metrics or candidate.metrics[item.metric_id] is None
         ]
         if not candidate.safety_feasible:
             eligible = False
@@ -1917,16 +1734,12 @@ def pareto_frontier(
             "no worse on every maximize/minimize objective and strictly better "
             "on at least one; report-only objectives do not dominate"
         ),
-        "safety_policy": (
-            "safety is a hard feasibility constraint and is never scalarized"
-        ),
+        "safety_policy": ("safety is a hard feasibility constraint and is never scalarized"),
     }
 
 
 def _artifact_digest(value: Mapping[str, object]) -> str:
-    return _sha256_json(
-        {key: item for key, item in value.items() if key != "artifact_sha256"}
-    )
+    return _sha256_json({key: item for key, item in value.items() if key != "artifact_sha256"})
 
 
 def build_statistics_report(
@@ -1938,25 +1751,17 @@ def build_statistics_report(
 ) -> dict[str, object]:
     """Build and self-validate a reproducible statistics report."""
 
-    request_records = tuple(
-        sorted(requests, key=lambda item: item.spec.comparison_id)
-    )
+    request_records = tuple(sorted(requests, key=lambda item: item.spec.comparison_id))
     if sum(len(item.observations) for item in request_records) > MAX_REPORT_OBSERVATIONS:
         raise StatisticsError("statistics report contains too many observations")
     analyses = analyze_requests(request_records, plan=plan)
-    objectives = tuple(
-        sorted(pareto_objectives, key=lambda item: item.metric_id)
-    )
-    candidates = tuple(
-        sorted(pareto_candidates, key=lambda item: item.candidate_id)
-    )
+    objectives = tuple(sorted(pareto_objectives, key=lambda item: item.metric_id))
+    candidates = tuple(sorted(pareto_candidates, key=lambda item: item.candidate_id))
     if bool(objectives) != bool(candidates):
         raise StatisticsError(
             "Pareto objectives and candidates must both be supplied or both omitted"
         )
-    pareto = (
-        None if not objectives else pareto_frontier(candidates, objectives)
-    )
+    pareto = None if not objectives else pareto_frontier(candidates, objectives)
     value: dict[str, object] = {
         "schema": STATISTICS_REPORT_SCHEMA,
         "evidence": HSSLEV0608F63(),
@@ -2006,27 +1811,18 @@ def validate_statistics_report(value: object) -> dict[str, object]:
         raise StatisticsError("statistics report protocol changed")
     plan = StatisticalPlan.from_dict(data["plan"])
     requests = tuple(
-        AnalysisRequest.from_dict(item)
-        for item in _array(data["requests"], "requests")
+        AnalysisRequest.from_dict(item) for item in _array(data["requests"], "requests")
     )
-    canonical_requests = tuple(
-        sorted(requests, key=lambda item: item.spec.comparison_id)
-    )
+    canonical_requests = tuple(sorted(requests, key=lambda item: item.spec.comparison_id))
     if requests != canonical_requests:
         raise StatisticsError("statistics requests are not in canonical order")
     if data["requests"] != [item.to_dict() for item in canonical_requests]:
-        raise StatisticsError(
-            "statistics request observations are not in canonical order"
-        )
+        raise StatisticsError("statistics request observations are not in canonical order")
     if sum(len(item.observations) for item in requests) > MAX_REPORT_OBSERVATIONS:
         raise StatisticsError("statistics report contains too many observations")
-    derived_analyses = [
-        item.to_dict() for item in analyze_requests(requests, plan=plan)
-    ]
+    derived_analyses = [item.to_dict() for item in analyze_requests(requests, plan=plan)]
     if data["analyses"] != derived_analyses:
-        raise StatisticsError(
-            "serialized statistical analyses differ from case observations"
-        )
+        raise StatisticsError("serialized statistical analyses differ from case observations")
     raw_inputs = data["pareto_inputs"]
     if raw_inputs is None:
         if data["pareto"] is not None:
@@ -2035,41 +1831,26 @@ def validate_statistics_report(value: object) -> dict[str, object]:
         inputs = _mapping(raw_inputs, "pareto_inputs")
         _exact_keys(inputs, {"objectives", "candidates"}, "pareto_inputs")
         objectives = tuple(
-            ParetoObjective.from_dict(item)
-            for item in _array(inputs["objectives"], "objectives")
+            ParetoObjective.from_dict(item) for item in _array(inputs["objectives"], "objectives")
         )
         candidates = tuple(
-            ParetoCandidate.from_dict(item)
-            for item in _array(inputs["candidates"], "candidates")
+            ParetoCandidate.from_dict(item) for item in _array(inputs["candidates"], "candidates")
         )
-        if objectives != tuple(
-            sorted(objectives, key=lambda item: item.metric_id)
-        ):
+        if objectives != tuple(sorted(objectives, key=lambda item: item.metric_id)):
             raise StatisticsError("Pareto objectives are not in canonical order")
-        if candidates != tuple(
-            sorted(candidates, key=lambda item: item.candidate_id)
-        ):
+        if candidates != tuple(sorted(candidates, key=lambda item: item.candidate_id)):
             raise StatisticsError("Pareto candidates are not in canonical order")
-        analyses_by_digest = {
-            _sha256_json(item): item for item in derived_analyses
-        }
+        analyses_by_digest = {_sha256_json(item): item for item in derived_analyses}
         for candidate in candidates:
-            unknown = sorted(
-                set(candidate.analysis_sha256s) - set(analyses_by_digest)
-            )
+            unknown = sorted(set(candidate.analysis_sha256s) - set(analyses_by_digest))
             if unknown:
                 raise StatisticsError(
-                    f"Pareto candidate {candidate.candidate_id} links unknown "
-                    f"analyses: {unknown}"
+                    f"Pareto candidate {candidate.candidate_id} links unknown analyses: {unknown}"
                 )
             linked_case_receipts: set[str] = set()
             for analysis_sha256 in candidate.analysis_sha256s:
-                analysis = _mapping(
-                    analyses_by_digest[analysis_sha256], "linked_analysis"
-                )
-                for trace_value in _array(
-                    analysis["case_traces"], "case_traces"
-                ):
+                analysis = _mapping(analyses_by_digest[analysis_sha256], "linked_analysis")
+                for trace_value in _array(analysis["case_traces"], "case_traces"):
                     trace = _mapping(trace_value, "case_trace")
                     linked_case_receipts.add(
                         _digest(
@@ -2090,9 +1871,7 @@ def validate_statistics_report(value: object) -> dict[str, object]:
                 )
         derived_pareto = pareto_frontier(candidates, objectives)
         if data["pareto"] != derived_pareto:
-            raise StatisticsError(
-                "serialized Pareto result differs from linked inputs"
-            )
+            raise StatisticsError("serialized Pareto result differs from linked inputs")
     if data["artifact_sha256"] != _artifact_digest(data):
         raise StatisticsError("statistics report artifact digest changed")
     return dict(data)
@@ -2116,9 +1895,7 @@ def load_statistics_report(path: str | Path) -> dict[str, object]:
     try:
         text = report_path.read_text(encoding="utf-8")
     except (OSError, UnicodeError) as exc:
-        raise StatisticsError(
-            f"cannot read statistics report: {report_path}"
-        ) from exc
+        raise StatisticsError(f"cannot read statistics report: {report_path}") from exc
     if not text.endswith("\n"):
         raise StatisticsError("statistics report is not canonical newline JSON")
     try:
@@ -2150,12 +1927,10 @@ def statistics_summary(value: object) -> dict[str, object]:
         "artifact_sha256": report["artifact_sha256"],
         "comparison_count": len(analyses),
         "scheduled_pair_count": sum(
-            int(_mapping(item, "analysis")["scheduled_count"])
-            for item in analyses
+            int(_mapping(item, "analysis")["scheduled_count"]) for item in analyses
         ),
         "missing_pair_count": sum(
-            int(_mapping(item, "analysis")["missing_count"])
-            for item in analyses
+            int(_mapping(item, "analysis")["missing_count"]) for item in analyses
         ),
         "frontier_candidate_ids": frontier,
     }

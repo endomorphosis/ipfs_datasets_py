@@ -9,13 +9,13 @@ from typing import Annotated as Ann, Optional
 
 
 from pydantic import (
-    AfterValidator as AV, 
-    BaseModel, 
-    BeforeValidator as BV, 
+    AfterValidator as AV,
+    BaseModel,
+    BeforeValidator as BV,
     DirectoryPath,
-    Field, 
-    PrivateAttr, 
-    SecretStr
+    Field,
+    PrivateAttr,
+    SecretStr,
 )
 import yaml
 
@@ -51,6 +51,7 @@ def _deep_merge_dicts(defaults: dict, overrides: dict) -> dict:
         else:
             merged[key] = value
     return merged
+
 
 class Paths(BaseModel):
     _ROOT_DIR: DirectoryPath = _TOP_LEVEL_DIR
@@ -146,7 +147,7 @@ class _PathsProxy:
 paths: Paths = _PathsProxy()  # type: ignore[assignment]
 
 
-def _make_log_level_an_int(value: str|int) -> int:
+def _make_log_level_an_int(value: str | int) -> int:
     if isinstance(value, int):
         return value
     else:
@@ -164,6 +165,7 @@ def _make_log_level_an_int(value: str|int) -> int:
             case _:
                 raise ValueError(f"Invalid log level: {value}")
 
+
 def _check_if_this_type_is_supported(value: str) -> str:
     normalized = value[1:] if value.startswith(".") else value
     if normalized not in _SUPPORTED_FILE_TYPES:
@@ -172,14 +174,17 @@ def _check_if_this_type_is_supported(value: str) -> str:
         )
     return normalized
 
+
 class Tables(BaseModel):
     """Tables in the database"""
+
     DATA_TABLE_NAMES: list[str]
     METADATA_TABLE_NAMES: list[str]
-    
+
 
 class Sql(BaseModel):
     """SQL database connection details"""
+
     HOST: str
     USER: str
     PORT: int
@@ -205,22 +210,22 @@ class Sql(BaseModel):
             raise ValueError("Tables configuration for configs has not been set.")
         return self._tables
 
+
 class Configs(BaseModel):
     """General configuration for the program"""
+
     HUGGING_FACE_USER_ACCESS_TOKEN: str
     REPO_ID: str
     TARGET_DIR_NAME: str
 
     BATCH_SIZE: int = Field(default=100, ge=1, le=5000)
     CLEAR_HASHES_CSV: bool = Field(default=True)
-    FILE_PATH_ENDING: Ann[
-        str, AV(_check_if_this_type_is_supported)
-    ] = Field(default="parquet")
+    FILE_PATH_ENDING: Ann[str, AV(_check_if_this_type_is_supported)] = Field(default="parquet")
 
     HUGGING_FACE_UPLOAD_CONCURRENCY_LIMIT: int = Field(default=4, ge=1, le=10)
-    LOG_LEVEL: Ann[
-        int, BV(_make_log_level_an_int)
-    ] = Field(default=logging.INFO, ge=logging.DEBUG, le=logging.CRITICAL)
+    LOG_LEVEL: Ann[int, BV(_make_log_level_an_int)] = Field(
+        default=logging.INFO, ge=logging.DEBUG, le=logging.CRITICAL
+    )
     GET_FROM_SQL: bool = Field(default=False)
     OPENAI_API_KEY: SecretStr = Field(default_factory=lambda: SecretStr(""))
 
@@ -249,7 +254,6 @@ class Configs(BaseModel):
         if self._sql is None:
             raise ValueError("SQL configuration for configs has not been set.")
         return self._sql
-
 
 
 _configs_instance: Configs | None = None

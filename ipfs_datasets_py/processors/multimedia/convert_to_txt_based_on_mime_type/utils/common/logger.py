@@ -3,12 +3,13 @@ from logging.handlers import RotatingFileHandler
 import os
 
 
-def get_logger(name: str,
-                log_file: str = 'app.log',
-                level: int = logging.DEBUG,
-                max_size: int = 5*1024*1024,
-                backup_count: int = 3
-                ) -> logging.Logger:
+def get_logger(
+    name: str,
+    log_file: str = "app.log",
+    level: int = logging.DEBUG,
+    max_size: int = 5 * 1024 * 1024,
+    backup_count: int = 3,
+) -> logging.Logger:
     """Sets up a logger with both file and console handlers.
 
     Args:
@@ -33,14 +34,14 @@ def get_logger(name: str,
     console_handler = logging.StreamHandler()
 
     # Create 'logs' directory in the current working directory if it doesn't exist
-    logs_dir = os.path.join(os.getcwd(), 'logs')
+    logs_dir = os.path.join(os.getcwd(), "logs")
     os.makedirs(logs_dir, exist_ok=True)
 
     log_file_path = os.path.join(logs_dir, log_file)
     file_handler = RotatingFileHandler(log_file_path, maxBytes=max_size, backupCount=backup_count)
 
     # Create formatters and add it to handlers
-    log_format = '%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s'
+    log_format = "%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s"
     formatter = logging.Formatter(log_format)
     console_handler.setFormatter(formatter)
     file_handler.setFormatter(formatter)

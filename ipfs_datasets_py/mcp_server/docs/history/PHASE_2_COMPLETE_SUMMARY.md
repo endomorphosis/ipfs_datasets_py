@@ -474,9 +474,9 @@ result = await mcplusplus_workflow_tools.workflow_submit(
     name="Process Dataset",
     steps=[
         {"step_id": "download", "action": "fetch_data"},
-        {"step_id": "process", "action": "transform", "depends_on": ["download"]}
+        {"step_id": "process", "action": "transform", "depends_on": ["download"]},
     ],
-    priority=1.5
+    priority=1.5,
 )
 ```
 
@@ -489,7 +489,7 @@ task_result = await mcplusplus_taskqueue_tools.task_submit(
     task_id="task-001",
     task_type="download",
     payload={"url": "https://example.com/data.json"},
-    priority=2.0
+    priority=2.0,
 )
 
 # Check queue stats
@@ -503,17 +503,14 @@ from ipfs_datasets_py.mcp_server.tools import mcplusplus_peer_tools
 
 # Discover peers
 peers = await mcplusplus_peer_tools.peer_discover(
-    capability_filter=["storage", "compute"],
-    max_peers=10,
-    include_metrics=True
+    capability_filter=["storage", "compute"], max_peers=10, include_metrics=True
 )
 
 # Connect to best peer
-if peers['peers']:
-    best_peer = peers['peers'][0]
+if peers["peers"]:
+    best_peer = peers["peers"][0]
     connection = await mcplusplus_peer_tools.peer_connect(
-        peer_id=best_peer['peer_id'],
-        multiaddr=best_peer['multiaddr']
+        peer_id=best_peer["peer_id"], multiaddr=best_peer["multiaddr"]
     )
 ```
 

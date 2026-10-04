@@ -37,6 +37,4 @@ def test_low_rank_shadow_round_trip_preserves_full_rank_vectors() -> None:
     payload = state.materialize_low_rank_shadow_state(rank=3)
     reconstructed = state.reconstruct_low_rank_embedding_maps(payload)
 
-    assert reconstructed["feature_embedding_weights"]["semantic"] == pytest.approx(
-        [1.0, -2.0, 3.0]
-    )
+    assert reconstructed["feature_embedding_weights"]["semantic"] == pytest.approx([1.0, -2.0, 3.0])

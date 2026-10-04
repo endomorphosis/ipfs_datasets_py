@@ -11,6 +11,7 @@ Methods under test:
   - LogicValidator.orphan_entities(ontology)
   - LogicValidator.hub_entities(ontology, min_degree)
 """
+
 import pytest
 
 
@@ -18,8 +19,10 @@ import pytest
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
@@ -41,45 +44,64 @@ def _opt_with_history(scores):
 
 def _entity(eid, etype="Person", text="Alice", confidence=0.9, properties=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
-    return Entity(id=eid, type=etype, text=text, confidence=confidence,
-                  properties=properties or {})
+
+    return Entity(id=eid, type=etype, text=text, confidence=confidence, properties=properties or {})
 
 
 def _result(entities=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
     return EntityExtractionResult(entities=entities or [], relationships=[], confidence=1.0)
 
 
 def _make_gen():
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
     return OntologyGenerator()
 
 
 def _make_critic():
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
     return OntologyCritic(use_llm=False)
 
 
 def _make_score(v):
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
-    return CriticScore(completeness=v, consistency=v, clarity=v,
-                       granularity=v, relationship_coherence=v, domain_alignment=v)
+
+    return CriticScore(
+        completeness=v,
+        consistency=v,
+        clarity=v,
+        granularity=v,
+        relationship_coherence=v,
+        domain_alignment=v,
+    )
 
 
 def _make_mixed_score(c, cn, cl, g, da):
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
-    return CriticScore(completeness=c, consistency=cn, clarity=cl,
-                       granularity=g, relationship_coherence=da, domain_alignment=da)
+
+    return CriticScore(
+        completeness=c,
+        consistency=cn,
+        clarity=cl,
+        granularity=g,
+        relationship_coherence=da,
+        domain_alignment=da,
+    )
 
 
 def _make_validator():
     from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator, ProverConfig
+
     return LogicValidator(ProverConfig())
 
 
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.rolling_best
 # ---------------------------------------------------------------------------
+
 
 class TestRollingBest:
     def test_empty_returns_none(self):
@@ -112,6 +134,7 @@ class TestRollingBest:
 # OntologyOptimizer.plateau_count
 # ---------------------------------------------------------------------------
 
+
 class TestPlateauCount:
     @pytest.mark.parametrize(
         "scores,tol,expected",
@@ -136,6 +159,7 @@ class TestPlateauCount:
 # OntologyGenerator.entity_confidence_map
 # ---------------------------------------------------------------------------
 
+
 class TestEntityConfidenceMap:
     def test_empty_result(self):
         gen = _make_gen()
@@ -144,10 +168,12 @@ class TestEntityConfidenceMap:
 
     def test_basic(self):
         gen = _make_gen()
-        r = _result([
-            _entity("e1", confidence=0.7),
-            _entity("e2", confidence=0.9),
-        ])
+        r = _result(
+            [
+                _entity("e1", confidence=0.7),
+                _entity("e2", confidence=0.9),
+            ]
+        )
         m = gen.entity_confidence_map(r)
         assert m["e1"] == pytest.approx(0.7)
         assert m["e2"] == pytest.approx(0.9)
@@ -161,6 +187,7 @@ class TestEntityConfidenceMap:
 # ---------------------------------------------------------------------------
 # EntityExtractionResult.top_confidence_entity
 # ---------------------------------------------------------------------------
+
 
 class TestTopConfidenceEntity:
     @pytest.mark.parametrize(
@@ -192,6 +219,7 @@ class TestTopConfidenceEntity:
 # EntityExtractionResult.entities_with_properties
 # ---------------------------------------------------------------------------
 
+
 class TestEntitiesWithProperties:
     def test_empty_result(self):
         r = _result()
@@ -202,10 +230,12 @@ class TestEntitiesWithProperties:
         assert r.entities_with_properties() == []
 
     def test_with_properties(self):
-        r = _result([
-            _entity("e1", properties={"role": "CEO"}),
-            _entity("e2", properties={}),
-        ])
+        r = _result(
+            [
+                _entity("e1", properties={"role": "CEO"}),
+                _entity("e2", properties={}),
+            ]
+        )
         result = r.entities_with_properties()
         assert len(result) == 1
         assert result[0].id == "e1"
@@ -215,13 +245,21 @@ class TestEntitiesWithProperties:
 # OntologyCritic.dimension_rankings
 # ---------------------------------------------------------------------------
 
+
 class TestDimensionRankings:
     def test_returns_all_dims(self):
         c = _make_critic()
         s = _make_score(0.7)
         rankings = c.dimension_rankings(s)
         assert len(rankings) == 6
-        dims = {"completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment"}
+        dims = {
+            "completeness",
+            "consistency",
+            "clarity",
+            "granularity",
+            "relationship_coherence",
+            "domain_alignment",
+        }
         assert set(rankings) == dims
 
     def test_best_first(self):
@@ -242,6 +280,7 @@ class TestDimensionRankings:
 # ---------------------------------------------------------------------------
 # OntologyCritic.weakest_scores
 # ---------------------------------------------------------------------------
+
 
 class TestWeakestScores:
     def test_empty(self):
@@ -265,6 +304,7 @@ class TestWeakestScores:
 # ---------------------------------------------------------------------------
 # LogicValidator.orphan_entities
 # ---------------------------------------------------------------------------
+
 
 class TestOrphanEntities:
     def test_all_connected(self):
@@ -297,6 +337,7 @@ class TestOrphanEntities:
 # ---------------------------------------------------------------------------
 # LogicValidator.hub_entities
 # ---------------------------------------------------------------------------
+
 
 class TestHubEntities:
     @pytest.mark.parametrize(

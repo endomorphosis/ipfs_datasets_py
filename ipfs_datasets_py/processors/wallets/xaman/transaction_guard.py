@@ -71,16 +71,10 @@ from ..xrpl.transaction_guard import (
 # ---------------------------------------------------------------------------
 
 XAMAN_TRANSACTION_GUARD_INTERFACE: Final = "XamanTransactionGuard@1"
-XAMAN_TRANSACTION_GUARD_SCHEMA_VERSION: Final = (
-    "wallet-guard.xaman-transaction-guard/v1"
-)
-XAMAN_PAYLOAD_IDENTITY_SCHEMA_VERSION: Final = (
-    "wallet-guard.xaman-payload-identity/v1"
-)
+XAMAN_TRANSACTION_GUARD_SCHEMA_VERSION: Final = "wallet-guard.xaman-transaction-guard/v1"
+XAMAN_PAYLOAD_IDENTITY_SCHEMA_VERSION: Final = "wallet-guard.xaman-payload-identity/v1"
 XAMAN_BINDING_SCHEMA_VERSION: Final = "wallet-guard.xaman-transaction-binding/v1"
-XAMAN_GUARD_DECISION_SCHEMA_VERSION: Final = (
-    "wallet-guard.xaman-guard-decision/v1"
-)
+XAMAN_GUARD_DECISION_SCHEMA_VERSION: Final = "wallet-guard.xaman-guard-decision/v1"
 
 DEFAULT_PRODUCER_ID: Final = "producer:wallet-guard-xaman-v1"
 DEFAULT_POLICY_ID: Final = "policy:xaman-wallet-guard-v1"
@@ -259,9 +253,7 @@ def _payload_id(value: Any, name: str = "payload_id") -> str:
         return text.lower()
     if _ID_RE.fullmatch(text):
         return text
-    raise GuardValidationError(
-        f"{name} must be a UUID or stable payload identifier"
-    )
+    raise GuardValidationError(f"{name} must be a UUID or stable payload identifier")
 
 
 # ---------------------------------------------------------------------------
@@ -290,9 +282,7 @@ class XamanPayloadIdentity:
     schema_version: str = XAMAN_PAYLOAD_IDENTITY_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "payload_id", _payload_id(self.payload_id, "payload_id")
-        )
+        object.__setattr__(self, "payload_id", _payload_id(self.payload_id, "payload_id"))
         object.__setattr__(
             self,
             "application_id",
@@ -324,9 +314,7 @@ class XamanPayloadIdentity:
             elif isinstance(self.workflow_observation, Mapping):
                 # Strip any forbidden approval authority keys before freeze.
                 cleaned = {
-                    k: v
-                    for k, v in self.workflow_observation.items()
-                    if k not in _FORBIDDEN_FIELDS
+                    k: v for k, v in self.workflow_observation.items() if k not in _FORBIDDEN_FIELDS
                 }
                 # Only allow known observation fields + free audit strings.
                 safe = {
@@ -335,16 +323,12 @@ class XamanPayloadIdentity:
                     if k in _WORKFLOW_OBSERVATION_FIELDS
                     or (isinstance(k, str) and k.startswith("obs:"))
                 }
-                object.__setattr__(
-                    self, "workflow_observation", FrozenMap(safe)
-                )
+                object.__setattr__(self, "workflow_observation", FrozenMap(safe))
             else:
                 raise GuardValidationError("workflow_observation must be a mapping")
         if not isinstance(self.attributes, FrozenMap):
             object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != XAMAN_PAYLOAD_IDENTITY_SCHEMA_VERSION:
             raise GuardValidationError(
                 f"unsupported Xaman payload identity schema: {self.schema_version!r}"
@@ -390,23 +374,15 @@ class XamanPayloadIdentity:
             application_id=value.get(
                 "application_id", value.get("applicationId", value.get("app_id", ""))
             ),
-            application_name=value.get(
-                "application_name", value.get("applicationName", "")
-            ),
-            payload_type=value.get(
-                "payload_type", value.get("payloadType", "transaction")
-            ),
-            network_type=value.get(
-                "network_type", value.get("networkType", "mainnet")
-            ),
+            application_name=value.get("application_name", value.get("applicationName", "")),
+            payload_type=value.get("payload_type", value.get("payloadType", "transaction")),
+            network_type=value.get("network_type", value.get("networkType", "mainnet")),
             created_at=value.get("created_at", value.get("createdAt", "")),
             workflow_observation=value.get(
                 "workflow_observation", value.get("workflowObservation", {})
             ),
             attributes=value.get("attributes", {}),
-            schema_version=value.get(
-                "schema_version", XAMAN_PAYLOAD_IDENTITY_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", XAMAN_PAYLOAD_IDENTITY_SCHEMA_VERSION),
         )
 
 
@@ -439,27 +415,19 @@ class XamanTransactionBinding:
                     XRPLTransactionBinding.from_dict(self.xrpl_binding),
                 )
             else:
-                raise GuardValidationError(
-                    "xrpl_binding must be XRPLTransactionBinding"
-                )
+                raise GuardValidationError("xrpl_binding must be XRPLTransactionBinding")
         if not isinstance(self.payload, XamanPayloadIdentity):
             if isinstance(self.payload, Mapping):
-                object.__setattr__(
-                    self, "payload", XamanPayloadIdentity.from_dict(self.payload)
-                )
+                object.__setattr__(self, "payload", XamanPayloadIdentity.from_dict(self.payload))
             else:
                 raise GuardValidationError("payload must be XamanPayloadIdentity")
         bind_id = self.binding_id or f"binding:xaman:{self.payload.payload_id}"
         object.__setattr__(self, "binding_id", _identifier(bind_id, "binding_id"))
         if not isinstance(self.attributes, FrozenMap):
             object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != XAMAN_BINDING_SCHEMA_VERSION:
-            raise GuardValidationError(
-                f"unsupported Xaman binding schema: {self.schema_version!r}"
-            )
+            raise GuardValidationError(f"unsupported Xaman binding schema: {self.schema_version!r}")
         if not self.binding_digest:
             object.__setattr__(self, "binding_digest", self.compute_binding_digest())
         else:
@@ -548,41 +516,26 @@ class XamanGuardDecision:
 
     def __post_init__(self) -> None:
         if not isinstance(self.outcome, TransactionVerdictOutcome):
-            object.__setattr__(
-                self, "outcome", TransactionVerdictOutcome(str(self.outcome))
-            )
+            object.__setattr__(self, "outcome", TransactionVerdictOutcome(str(self.outcome)))
         object.__setattr__(self, "blocks_automation", bool(self.blocks_automation))
-        object.__setattr__(
-            self, "reason_codes", tuple(str(c) for c in self.reason_codes)
-        )
+        object.__setattr__(self, "reason_codes", tuple(str(c) for c in self.reason_codes))
         object.__setattr__(self, "reasons", tuple(str(r) for r in self.reasons))
-        object.__setattr__(
-            self, "binding_digest", _digest(self.binding_digest, "binding_digest")
-        )
+        object.__setattr__(self, "binding_digest", _digest(self.binding_digest, "binding_digest"))
         if self.request_digest:
             object.__setattr__(
                 self, "request_digest", _digest(self.request_digest, "request_digest")
             )
         else:
             object.__setattr__(self, "request_digest", "")
-        object.__setattr__(
-            self, "security_results", dict(self.security_results or {})
-        )
-        object.__setattr__(
-            self, "compliance_results", dict(self.compliance_results or {})
-        )
+        object.__setattr__(self, "security_results", dict(self.security_results or {}))
+        object.__setattr__(self, "compliance_results", dict(self.compliance_results or {}))
         if not isinstance(self.attributes, FrozenMap):
             object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
 
     @property
     def allowed(self) -> bool:
-        return (
-            self.outcome is TransactionVerdictOutcome.ALLOW
-            and not self.blocks_automation
-        )
+        return self.outcome is TransactionVerdictOutcome.ALLOW and not self.blocks_automation
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -631,13 +584,9 @@ class XamanTransactionGuard:
         if self.preflight is None:
             self.preflight = self.xrpl_guard.preflight
         if self.interface != XAMAN_TRANSACTION_GUARD_INTERFACE:
-            raise GuardValidationError(
-                f"unsupported xaman guard interface: {self.interface!r}"
-            )
+            raise GuardValidationError(f"unsupported xaman guard interface: {self.interface!r}")
         if self.schema_version != XAMAN_TRANSACTION_GUARD_SCHEMA_VERSION:
-            raise GuardValidationError(
-                f"unsupported xaman guard schema: {self.schema_version!r}"
-            )
+            raise GuardValidationError(f"unsupported xaman guard schema: {self.schema_version!r}")
 
     # -- binding ------------------------------------------------------------
 
@@ -648,8 +597,7 @@ class XamanTransactionGuard:
         *,
         ledger_epoch: LedgerEpoch | Mapping[str, Any] | None = None,
         signer_list: SignerListBinding | Mapping[str, Any] | None = None,
-        declared_effects: Sequence[NormalizedXRPLEffect | Mapping[str, Any]]
-        | None = None,
+        declared_effects: Sequence[NormalizedXRPLEffect | Mapping[str, Any]] | None = None,
         serialized_bytes: bytes | str | None = None,
         encoding: str = "xaman-xrpl-tx-json",
         candidate_id: str = "",

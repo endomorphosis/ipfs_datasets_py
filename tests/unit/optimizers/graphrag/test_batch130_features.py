@@ -5,6 +5,7 @@ Methods under test:
   - OntologyOptimizer.improvement_from_start()
   - OntologyOptimizer.is_improving_overall()
 """
+
 import pytest
 
 
@@ -12,8 +13,10 @@ import pytest
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
@@ -33,6 +36,7 @@ def _push(opt, avg):
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.score_at_index
 # ---------------------------------------------------------------------------
+
 
 class TestScoreAtIndex:
     def test_empty_returns_zero(self):
@@ -60,6 +64,7 @@ class TestScoreAtIndex:
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.improvement_from_start
 # ---------------------------------------------------------------------------
+
 
 class TestImprovementFromStart:
     def test_empty_returns_zero(self):
@@ -93,6 +98,7 @@ class TestImprovementFromStart:
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.is_improving_overall
 # ---------------------------------------------------------------------------
+
 
 class TestIsImprovingOverall:
     def test_empty_is_false(self):

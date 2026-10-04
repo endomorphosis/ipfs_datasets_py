@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 try:
     from ipfs_datasets_py.processors.legal_scrapers import LegalSearchReportGenerator
+
     _GENERATOR_AVAILABLE = True
 except ImportError:
     _GENERATOR_AVAILABLE = False
@@ -46,7 +47,10 @@ async def generate_legal_report(
         if not search_results or not isinstance(search_results, list):
             return {"status": "error", "message": "search_results must be a non-empty list"}
         if template not in ("compliance", "research", "monitoring"):
-            return {"status": "error", "message": "template must be 'compliance', 'research', or 'monitoring'"}
+            return {
+                "status": "error",
+                "message": "template must be 'compliance', 'research', or 'monitoring'",
+            }
         if max_results is not None and (max_results < 1 or max_results > 1000):
             return {"status": "error", "message": "max_results must be between 1 and 1000"}
 
@@ -92,7 +96,11 @@ async def generate_legal_report(
         }
     except Exception as exc:
         logger.error(f"Error in generate_legal_report: {exc}")
-        return {"status": "error", "message": str(exc), "total_results": len(search_results) if search_results else 0}
+        return {
+            "status": "error",
+            "message": str(exc),
+            "total_results": len(search_results) if search_results else 0,
+        }
 
 
 async def export_legal_report(
@@ -111,7 +119,10 @@ async def export_legal_report(
         if not report_data or not isinstance(report_data, dict):
             return {"status": "error", "message": "report_data must be a non-empty dictionary"}
         if format not in ("markdown", "html", "pdf", "docx", "json"):
-            return {"status": "error", "message": "format must be 'markdown', 'html', 'pdf', 'docx', or 'json'"}
+            return {
+                "status": "error",
+                "message": "format must be 'markdown', 'html', 'pdf', 'docx', or 'json'",
+            }
 
         generator = LegalSearchReportGenerator()
         export_result = generator.export_report(
@@ -200,7 +211,10 @@ async def schedule_report_generation(
         if not report_config or not isinstance(report_config, dict):
             return {"status": "error", "message": "report_config must be a non-empty dictionary"}
         if not schedule:
-            return {"status": "error", "message": "schedule is required (daily, weekly, monthly, or cron expression)"}
+            return {
+                "status": "error",
+                "message": "schedule is required (daily, weekly, monthly, or cron expression)",
+            }
         if not output_directory:
             return {"status": "error", "message": "output_directory is required"}
 

@@ -374,7 +374,7 @@ class TDFOLPatternMatcher:
         self.patterns = load_patterns()
         self.matcher = spacy.matcher.Matcher()
         self._register_patterns()
-    
+
     def match(self, doc: spacy.Doc) -> List[PatternMatch]:
         """Match patterns against preprocessed document."""
         matches = []
@@ -384,7 +384,7 @@ class TDFOLPatternMatcher:
                 pattern=pattern,
                 span=doc[start:end],
                 entities=extract_entities(doc, start, end),
-                confidence=calculate_confidence(pattern, doc)
+                confidence=calculate_confidence(pattern, doc),
             )
             matches.append(match)
         return matches
@@ -470,22 +470,18 @@ formula = parse_natural_language("All contractors must pay taxes")
 # Advanced API with options
 from ipfs_datasets_py.logic.TDFOL.nl import NLParser
 
-parser = NLParser(
-    use_spacy=True,
-    pattern_file="custom_patterns.json",
-    confidence_threshold=0.7
-)
+parser = NLParser(use_spacy=True, pattern_file="custom_patterns.json", confidence_threshold=0.7)
 
 result = parser.parse(
     "All contractors must pay taxes within 30 days.",
     context={"domain": "legal"},
-    return_alternatives=True
+    return_alternatives=True,
 )
 
-print(result.formula)           # Best formula
-print(result.confidence)        # 0.85
-print(result.alternatives)      # Other interpretations
-print(result.explanation)       # How it was parsed
+print(result.formula)  # Best formula
+print(result.confidence)  # 0.85
+print(result.alternatives)  # Other interpretations
+print(result.explanation)  # How it was parsed
 ```
 
 ### 3.4 Test Plan
@@ -700,13 +696,13 @@ O(P(φ)): It was obligatory that φ (where P is "previously")
 ```python
 class ModalAxiom:
     """Modal logic axioms for different systems."""
-    
-    K = "□(φ → ψ) → (□φ → □ψ)"      # Distribution
-    T = "□φ → φ"                      # Reflexivity
-    D = "□φ → ◊φ"                     # Seriality (deontic)
-    S4 = "□φ → □□φ"                   # Transitivity
-    S5 = "◊φ → □◊φ"                   # Euclidean
-    B = "φ → □◊φ"                     # Symmetry
+
+    K = "□(φ → ψ) → (□φ → □ψ)"  # Distribution
+    T = "□φ → φ"  # Reflexivity
+    D = "□φ → ◊φ"  # Seriality (deontic)
+    S4 = "□φ → □□φ"  # Transitivity
+    S5 = "◊φ → □◊φ"  # Euclidean
+    B = "φ → □◊φ"  # Symmetry
 ```
 
 #### 4.3.2 Tableaux Rules
@@ -714,16 +710,16 @@ class ModalAxiom:
 ```python
 class TableauRule:
     """Tableaux expansion rules."""
-    
+
     # Propositional rules
     ALPHA = "α: conjunctive formulas (expand both branches)"
     BETA = "β: disjunctive formulas (branch on alternatives)"
-    
+
     # Modal rules
     BOX = "□φ: add φ to all accessible worlds"
     DIAMOND = "◊φ: create new accessible world with φ"
-    
-    # Quantifier rules  
+
+    # Quantifier rules
     GAMMA = "∀x.φ: instantiate with fresh constants"
     DELTA = "∃x.φ: instantiate with witness"
 ```
@@ -733,40 +729,34 @@ class TableauRule:
 ```python
 class TDFOLModalTableau:
     """Modal tableaux prover for TDFOL."""
-    
+
     def __init__(self, logic_type: ModalLogicType = ModalLogicType.K):
         self.logic_type = logic_type
         self.axioms = self._load_axioms(logic_type)
-    
+
     def prove(self, formula: Formula) -> TableauResult:
         """
         Prove formula using modal tableaux.
-        
+
         Returns:
             TableauResult with proof status, tableau tree, countermodel
         """
         # Start with negation of goal (proof by contradiction)
         root = TableauNode(create_negation(formula))
         tableau = Tableau(root, self.logic_type)
-        
+
         # Expand tableau
         while not tableau.is_closed() and not tableau.is_saturated():
             node = tableau.select_node()
             rule = tableau.select_rule(node)
             tableau.apply_rule(node, rule)
-        
+
         if tableau.is_closed():
-            return TableauResult(
-                status=ProofStatus.PROVED,
-                tableau=tableau,
-                countermodel=None
-            )
+            return TableauResult(status=ProofStatus.PROVED, tableau=tableau, countermodel=None)
         else:
             countermodel = tableau.extract_countermodel()
             return TableauResult(
-                status=ProofStatus.DISPROVED,
-                tableau=tableau,
-                countermodel=countermodel
+                status=ProofStatus.DISPROVED, tableau=tableau, countermodel=countermodel
             )
 ```
 
@@ -783,13 +773,13 @@ class TDFOLProver:
         use_modal_tableaux: bool = True,
         use_advanced_rules: bool = True,  # NEW: Enable 30+ new rules
         enable_cache: bool = True,
-        timeout_seconds: float = 30.0
+        timeout_seconds: float = 30.0,
     ):
         # ... existing initialization ...
-        
+
         if use_advanced_rules:
             self._load_advanced_rules()  # NEW
-        
+
         if use_modal_tableaux:
             self.modal_prover = TDFOLModalTableau(logic_type=ModalLogicType.K)
 ```
@@ -848,14 +838,14 @@ class TDFOLProver:
 ```python
 class ProofStrategy(Enum):
     """Available proof strategies."""
-    
-    FORWARD_CHAINING = "forward"      # Current default
-    BACKWARD_CHAINING = "backward"    # Goal-directed
-    BIDIRECTIONAL = "bidirectional"   # Meet-in-the-middle
-    MODAL_TABLEAUX = "tableaux"       # For modal formulas
-    RESOLUTION = "resolution"         # Clause-based
-    NATURAL_DEDUCTION = "natural"     # Natural deduction rules
-    AUTO = "auto"                     # Automatic selection
+
+    FORWARD_CHAINING = "forward"  # Current default
+    BACKWARD_CHAINING = "backward"  # Goal-directed
+    BIDIRECTIONAL = "bidirectional"  # Meet-in-the-middle
+    MODAL_TABLEAUX = "tableaux"  # For modal formulas
+    RESOLUTION = "resolution"  # Clause-based
+    NATURAL_DEDUCTION = "natural"  # Natural deduction rules
+    AUTO = "auto"  # Automatic selection
 ```
 
 #### 5.1.2 Strategy Selector
@@ -919,12 +909,9 @@ class StrategySelector:
 ```python
 class ParallelProver:
     """Parallel proof search with multiple strategies."""
-    
+
     def __init__(
-        self,
-        kb: TDFOLKnowledgeBase,
-        num_workers: int = 4,
-        strategies: List[ProofStrategy] = None
+        self, kb: TDFOLKnowledgeBase, num_workers: int = 4, strategies: List[ProofStrategy] = None
     ):
         self.kb = kb
         self.num_workers = num_workers
@@ -932,28 +919,23 @@ class ParallelProver:
             ProofStrategy.FORWARD_CHAINING,
             ProofStrategy.BACKWARD_CHAINING,
             ProofStrategy.MODAL_TABLEAUX,
-            ProofStrategy.RESOLUTION
+            ProofStrategy.RESOLUTION,
         ]
         self.cache = get_global_proof_cache()
-    
+
     def prove(self, goal: Formula, timeout: float = 30.0) -> ProofResult:
         """
         Prove goal using parallel search.
-        
+
         Each worker tries a different strategy.
         First to find proof wins.
         """
         with ThreadPoolExecutor(max_workers=self.num_workers) as executor:
             futures = []
-            for strategy in self.strategies[:self.num_workers]:
-                future = executor.submit(
-                    self._prove_with_strategy,
-                    goal,
-                    strategy,
-                    timeout
-                )
+            for strategy in self.strategies[: self.num_workers]:
+                future = executor.submit(self._prove_with_strategy, goal, strategy, timeout)
                 futures.append(future)
-            
+
             # Wait for first success
             for future in as_completed(futures, timeout=timeout):
                 result = future.result()
@@ -962,7 +944,7 @@ class ParallelProver:
                     for f in futures:
                         f.cancel()
                     return result
-            
+
             # All failed
             return ProofResult(status=ProofStatus.TIMEOUT)
 ```
@@ -976,38 +958,38 @@ class ParallelProver:
 ```python
 class HeuristicSearch:
     """Heuristic-guided proof search."""
-    
+
     def a_star_search(
         self,
         initial_state: ProofState,
         goal: Formula,
-        heuristic: Callable[[ProofState, Formula], float]
+        heuristic: Callable[[ProofState, Formula], float],
     ) -> Optional[ProofPath]:
         """
         A* search for proof.
-        
+
         Heuristic estimates distance to goal.
         """
         open_set = PriorityQueue()
         open_set.put((0, initial_state))
         came_from = {}
         g_score = {initial_state: 0}
-        
+
         while not open_set.empty():
             current = open_set.get()[1]
-            
+
             if self._is_goal(current, goal):
                 return self._reconstruct_path(came_from, current)
-            
+
             for neighbor in self._get_neighbors(current):
                 tentative_g = g_score[current] + self._cost(current, neighbor)
-                
-                if tentative_g < g_score.get(neighbor, float('inf')):
+
+                if tentative_g < g_score.get(neighbor, float("inf")):
                     came_from[neighbor] = current
                     g_score[neighbor] = tentative_g
                     f_score = tentative_g + heuristic(neighbor, goal)
                     open_set.put((f_score, neighbor))
-        
+
         return None
 ```
 
@@ -1022,12 +1004,10 @@ def formula_distance_heuristic(state: ProofState, goal: Formula) -> float:
     missing = goal_preds - derived_preds
     return len(missing)
 
+
 def structural_similarity_heuristic(state: ProofState, goal: Formula) -> float:
     """Measure structural similarity between state and goal."""
-    best_match = max(
-        (similarity(f, goal) for f in state.derived_formulas),
-        default=0.0
-    )
+    best_match = max((similarity(f, goal) for f in state.derived_formulas), default=0.0)
     return 1.0 - best_match  # Lower is better
 ```
 
@@ -1038,11 +1018,11 @@ def structural_similarity_heuristic(state: ProofState, goal: Formula) -> float:
 ```python
 class AdaptiveTimeout:
     """Dynamically adjust timeout based on formula complexity."""
-    
+
     def estimate_timeout(self, formula: Formula, kb: TDFOLKnowledgeBase) -> float:
         """
         Estimate reasonable timeout for proof attempt.
-        
+
         Factors:
         - Formula size and nesting depth
         - Number of quantifiers
@@ -1050,20 +1030,20 @@ class AdaptiveTimeout:
         - Historical proof times
         """
         base_timeout = 1.0  # seconds
-        
+
         # Adjust for formula complexity
         complexity = self._calculate_complexity(formula)
         timeout = base_timeout * (1 + complexity / 10)
-        
+
         # Adjust for KB size
         if len(kb.axioms) > 100:
             timeout *= 1.5
         if len(kb.axioms) > 1000:
             timeout *= 2.0
-        
+
         # Cap at reasonable limit
         return min(timeout, 60.0)
-    
+
     def _calculate_complexity(self, formula: Formula) -> int:
         """Calculate formula complexity score."""
         if isinstance(formula, Predicate):
@@ -1071,8 +1051,11 @@ class AdaptiveTimeout:
         elif isinstance(formula, QuantifiedFormula):
             return 5 + self._calculate_complexity(formula.formula)
         elif isinstance(formula, BinaryFormula):
-            return 2 + self._calculate_complexity(formula.left) + \
-                   self._calculate_complexity(formula.right)
+            return (
+                2
+                + self._calculate_complexity(formula.left)
+                + self._calculate_complexity(formula.right)
+            )
         # ... handle other types
 ```
 
@@ -1138,24 +1121,25 @@ class AdaptiveTimeout:
 ```python
 # tests/unit_tests/logic/TDFOL/test_tdfol_core_comprehensive.py
 
+
 class TestFormulas:
     """Comprehensive formula tests."""
-    
+
     def test_predicate_creation(self):
         """Test predicate with various argument types."""
-        
+
     def test_binary_formula_all_operators(self):
         """Test all binary operators."""
-        
+
     def test_quantified_formula_variable_binding(self):
         """Test variable binding in quantifiers."""
-        
+
     def test_deontic_formula_agent_handling(self):
         """Test deontic formulas with agents."""
-        
+
     def test_temporal_formula_time_bounds(self):
         """Test temporal formulas with time bounds."""
-    
+
     # ... 25 more tests
 ```
 
@@ -1163,30 +1147,31 @@ class TestFormulas:
 ```python
 # tests/unit_tests/logic/TDFOL/test_tdfol_parser_comprehensive.py
 
+
 class TestTDFOLParser:
     """Comprehensive parser tests."""
-    
+
     def test_parse_simple_predicate(self):
         """Parse: Person(john)"""
-        
+
     def test_parse_quantified_formula(self):
         """Parse: forall x. P(x) -> Q(x)"""
-        
+
     def test_parse_deontic_formula(self):
         """Parse: O(P(x))"""
-        
+
     def test_parse_temporal_formula(self):
         """Parse: G(Safe)"""
-        
+
     def test_parse_complex_nested(self):
         """Parse: forall x. (P(x) -> O(G(Q(x))))"""
-        
+
     def test_parse_error_recovery(self):
         """Test error handling and recovery."""
-        
+
     def test_parse_ambiguous_input(self):
         """Test ambiguity handling."""
-    
+
     # ... 43 more tests
 ```
 
@@ -1251,9 +1236,10 @@ Using `hypothesis` library:
 ```python
 from hypothesis import given, strategies as st
 
+
 class TestTDFOLProperties:
     """Property-based tests for TDFOL."""
-    
+
     @given(st.text(min_size=1, max_size=100))
     def test_parser_never_crashes(self, text):
         """Parser should handle any text without crashing."""
@@ -1262,14 +1248,14 @@ class TestTDFOLProperties:
             assert result is not None or result is None  # May fail to parse
         except Exception as e:
             pytest.fail(f"Parser crashed: {e}")
-    
+
     @given(formula=generate_formula())
     def test_to_string_roundtrip(self, formula):
         """to_string() → parse_tdfol() should roundtrip."""
         text = formula.to_string()
         parsed = parse_tdfol(text)
         assert parsed == formula
-    
+
     @given(formula=generate_formula(), var=generate_variable(), term=generate_term())
     def test_substitution_idempotent(self, formula, var, term):
         """Substituting twice should equal substituting once."""
@@ -1314,6 +1300,7 @@ class TestTDFOLPerformance:
 import pytest
 from ipfs_datasets_py.logic.TDFOL import *
 
+
 @pytest.fixture
 def simple_kb():
     """Knowledge base with simple axioms."""
@@ -1322,6 +1309,7 @@ def simple_kb():
     kb.add_axiom(parse_tdfol("P -> Q"))
     return kb
 
+
 @pytest.fixture
 def legal_kb():
     """Knowledge base with legal rules."""
@@ -1329,6 +1317,7 @@ def legal_kb():
     kb.add_axiom(parse_tdfol("forall x. Contractor(x) -> O(PayTax(x))"))
     kb.add_axiom(parse_tdfol("forall x. O(P(x)) -> P(P(x))"))
     return kb
+
 
 @pytest.fixture
 def prover(simple_kb):
@@ -1343,27 +1332,31 @@ def prover(simple_kb):
 
 from hypothesis import strategies as st
 
+
 def generate_variable():
     """Generate random variable."""
     return st.builds(Variable, name=st.text(min_size=1, max_size=10))
 
+
 def generate_constant():
     """Generate random constant."""
     return st.builds(Constant, name=st.text(min_size=1, max_size=10))
+
 
 def generate_predicate():
     """Generate random predicate."""
     return st.builds(
         Predicate,
         name=st.text(min_size=1, max_size=20),
-        arguments=st.lists(generate_term(), min_size=0, max_size=3)
+        arguments=st.lists(generate_term(), min_size=0, max_size=3),
     )
+
 
 def generate_formula(max_depth=3):
     """Generate random formula with bounded depth."""
     if max_depth == 0:
         return generate_predicate()
-    
+
     return st.one_of(
         generate_predicate(),
         st.builds(BinaryFormula, ...),
@@ -1433,37 +1426,37 @@ class ProofTreeVisualizer:
 def to_graphviz(self, proof_result: ProofResult) -> str:
     """
     Generate GraphViz DOT format.
-    
+
     Returns DOT string that can be rendered with:
         dot -Tpng proof_tree.dot -o proof_tree.png
     """
     dot = ["digraph ProofTree {"]
-    dot.append('  rankdir=TB;')
-    dot.append('  node [shape=box];')
-    
+    dot.append("  rankdir=TB;")
+    dot.append("  node [shape=box];")
+
     node_id = 0
     node_ids = {}
-    
+
     def add_node(node: ProofNode):
         nonlocal node_id
         current_id = node_id
         node_id += 1
         node_ids[id(node)] = current_id
-        
+
         label = node.formula.to_string()
         if node.rule:
             label += f"\\n[{node.rule.name}]"
-        
+
         dot.append(f'  n{current_id} [label="{label}"];')
-        
+
         for premise in node.premises:
             premise_id = add_node(premise)
-            dot.append(f'  n{premise_id} -> n{current_id};')
-        
+            dot.append(f"  n{premise_id} -> n{current_id};")
+
         return current_id
-    
+
     add_node(proof_result.proof_tree)
-    dot.append('}')
+    dot.append("}")
     return "\n".join(dot)
 ```
 
@@ -1549,54 +1542,48 @@ class DependencyExtractor:
 ```python
 class DependencyVisualizer:
     """Visualize formula dependency graphs."""
-    
+
     def to_graphviz(self, dep_graph: DependencyGraph) -> str:
         """Generate GraphViz visualization of dependencies."""
         dot = ["digraph Dependencies {"]
-        dot.append('  rankdir=LR;')
-        
+        dot.append("  rankdir=LR;")
+
         for node_id in dep_graph.graph.nodes():
-            formula = dep_graph.graph.nodes[node_id]['formula']
+            formula = dep_graph.graph.nodes[node_id]["formula"]
             label = self._truncate(formula.to_string(), 50)
             dot.append(f'  n{node_id} [label="{label}"];')
-        
+
         for source, target in dep_graph.graph.edges():
-            dot.append(f'  n{source} -> n{target};')
-        
-        dot.append('}')
+            dot.append(f"  n{source} -> n{target};")
+
+        dot.append("}")
         return "\n".join(dot)
-    
+
     def to_plotly(self, dep_graph: DependencyGraph):
         """Generate interactive Plotly visualization."""
         import plotly.graph_objects as go
-        
+
         # Use networkx spring layout
         pos = nx.spring_layout(dep_graph.graph)
-        
+
         # Create edges
         edge_trace = go.Scatter(
-            x=[], y=[],
-            line=dict(width=0.5, color='#888'),
-            hoverinfo='none',
-            mode='lines'
+            x=[], y=[], line=dict(width=0.5, color="#888"), hoverinfo="none", mode="lines"
         )
-        
+
         for edge in dep_graph.graph.edges():
             x0, y0 = pos[edge[0]]
             x1, y1 = pos[edge[1]]
-            edge_trace['x'] += (x0, x1, None)
-            edge_trace['y'] += (y0, y1, None)
-        
+            edge_trace["x"] += (x0, x1, None)
+            edge_trace["y"] += (y0, y1, None)
+
         # Create nodes
         node_trace = go.Scatter(
-            x=[], y=[],
-            mode='markers+text',
-            hoverinfo='text',
-            marker=dict(size=10, color='blue')
+            x=[], y=[], mode="markers+text", hoverinfo="text", marker=dict(size=10, color="blue")
         )
-        
+
         # ... add nodes with labels
-        
+
         fig = go.Figure(data=[edge_trace, node_trace])
         return fig
 ```
@@ -1637,16 +1624,17 @@ class InferenceTraceVisualizer:
 ```python
 # Add to TDFOLProver
 
+
 class TDFOLProver:
     def prove(self, goal: Formula, visualize: bool = False) -> ProofResult:
         """Prove goal and optionally generate visualizations."""
         result = self._prove_internal(goal)
-        
+
         if visualize and result.is_proved():
             result.visualization = self._generate_visualization(result)
-        
+
         return result
-    
+
     def _generate_visualization(self, result: ProofResult) -> ProofVisualization:
         """Generate all visualizations for proof result."""
         viz = ProofVisualization()
@@ -1654,6 +1642,7 @@ class TDFOLProver:
         viz.graphviz_dot = ProofTreeVisualizer().to_graphviz(result)
         viz.html = ProofTreeVisualizer().to_html(result)
         return viz
+
 
 # Usage:
 result = prover.prove(goal, visualize=True)
@@ -1704,15 +1693,16 @@ result.visualization.save_html("proof_tree.html")
 ```python
 # Add profiling infrastructure
 
+
 class TDFOLProfiler:
     """Profile TDFOL operations for performance optimization."""
-    
+
     def profile_parsing(self, formulas: List[str]) -> ProfilingReport:
         """Profile parser performance."""
-        
+
     def profile_proving(self, goals: List[Formula], kb: TDFOLKnowledgeBase) -> ProfilingReport:
         """Profile prover performance."""
-        
+
     def generate_report(self) -> str:
         """Generate performance report."""
 ```
@@ -1763,17 +1753,14 @@ class SecurityValidator:
 ```python
 class ResourceLimiter:
     """Enforce resource limits on proof search."""
-    
+
     def __init__(
-        self,
-        max_steps: int = 10000,
-        max_memory_mb: int = 1000,
-        timeout_seconds: float = 60.0
+        self, max_steps: int = 10000, max_memory_mb: int = 1000, timeout_seconds: float = 60.0
     ):
         self.max_steps = max_steps
         self.max_memory_mb = max_memory_mb
         self.timeout_seconds = timeout_seconds
-    
+
     def enforce_limits(self, prover: TDFOLProver):
         """Wrap prover with resource limits."""
         # Monitor proof search and abort if limits exceeded
@@ -1787,18 +1774,23 @@ class ResourceLimiter:
 class TDFOLError(Exception):
     """Base exception for TDFOL module."""
 
+
 class ParseError(TDFOLError):
     """Error parsing TDFOL formula."""
+
     def __init__(self, message: str, position: int, context: str):
         self.position = position
         self.context = context
         super().__init__(f"{message} at position {position}: {context}")
 
+
 class ProofError(TDFOLError):
     """Error during proof search."""
 
+
 class TimeoutError(TDFOLError):
     """Proof search exceeded timeout."""
+
 
 class ResourceExhaustedError(TDFOLError):
     """Resource limits exceeded."""

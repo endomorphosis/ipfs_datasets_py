@@ -46,9 +46,13 @@ def test_package_exports_forbid_signing_surface() -> None:
     assert lowered.isdisjoint(PROHIBITED)
     for name in exported:
         assert "psbt" not in name.lower()
-        assert "sign" not in name.lower() or name in {
-            # no exceptions expected
-        }
+        assert (
+            "sign" not in name.lower()
+            or name
+            in {
+                # no exceptions expected
+            }
+        )
 
 
 def test_provider_and_processor_have_no_prohibited_methods() -> None:

@@ -41,16 +41,26 @@ logger = logging.getLogger(__name__)
 
 
 DEFAULT_CAP_HF_DATASET_ID = get_canonical_legal_corpus("caselaw_access_project").hf_dataset_id
-DEFAULT_CAP_HF_PARQUET_FILE = get_canonical_legal_corpus("caselaw_access_project").combined_parquet_path()
-DEFAULT_CAP_CHUNK_HF_PARQUET_FILE = get_canonical_legal_corpus("caselaw_access_project").combined_embeddings_path()
+DEFAULT_CAP_HF_PARQUET_FILE = get_canonical_legal_corpus(
+    "caselaw_access_project"
+).combined_parquet_path()
+DEFAULT_CAP_CHUNK_HF_PARQUET_FILE = get_canonical_legal_corpus(
+    "caselaw_access_project"
+).combined_embeddings_path()
 
 DEFAULT_USCODE_HF_DATASET_ID = get_canonical_legal_corpus("us_code").hf_dataset_id
 DEFAULT_USCODE_HF_PARQUET_PREFIX = get_canonical_legal_corpus("us_code").parquet_dir_name
 DEFAULT_STATE_LAWS_HF_DATASET_ID = get_canonical_legal_corpus("state_laws").hf_dataset_id
-DEFAULT_STATE_ADMIN_RULES_HF_DATASET_ID = get_canonical_legal_corpus("state_admin_rules").hf_dataset_id
+DEFAULT_STATE_ADMIN_RULES_HF_DATASET_ID = get_canonical_legal_corpus(
+    "state_admin_rules"
+).hf_dataset_id
 DEFAULT_COURT_RULES_HF_DATASET_ID = get_canonical_legal_corpus("state_court_rules").hf_dataset_id
-DEFAULT_FEDERAL_REGISTER_HF_DATASET_ID = get_canonical_legal_corpus("federal_register").hf_dataset_id
-DEFAULT_NETHERLANDS_LAWS_HF_DATASET_ID = get_canonical_legal_corpus("netherlands_laws").hf_dataset_id
+DEFAULT_FEDERAL_REGISTER_HF_DATASET_ID = get_canonical_legal_corpus(
+    "federal_register"
+).hf_dataset_id
+DEFAULT_NETHERLANDS_LAWS_HF_DATASET_ID = get_canonical_legal_corpus(
+    "netherlands_laws"
+).hf_dataset_id
 
 
 def _normalize_state_code(value: Any, *, default: str = "OR") -> str:
@@ -155,7 +165,9 @@ def _parse_netherlands_citation_query(value: Any) -> Dict[str, Any]:
             re.IGNORECASE,
         )
         if articles_match:
-            for token in re.findall(r"\b([0-9]+(?:[.:][0-9]+)*(?:[a-z])?)\b", articles_match.group(1), re.IGNORECASE):
+            for token in re.findall(
+                r"\b([0-9]+(?:[.:][0-9]+)*(?:[a-z])?)\b", articles_match.group(1), re.IGNORECASE
+            ):
                 normalized_token = token.strip()
                 if normalized_token and normalized_token not in article_numbers:
                     article_numbers.append(normalized_token)
@@ -182,7 +194,11 @@ def _parse_netherlands_citation_query(value: Any) -> Dict[str, Any]:
         "article_numbers": article_numbers,
         "hierarchy_segments": hierarchy_segments,
     }
-    if not parsed["law_identifier"] and not parsed["law_reference"] and not parsed["article_number"]:
+    if (
+        not parsed["law_identifier"]
+        and not parsed["law_reference"]
+        and not parsed["article_number"]
+    ):
         return {}
     return parsed
 
@@ -217,7 +233,9 @@ def _extract_netherlands_article_references(text: Any) -> List[str]:
         normalized,
         re.IGNORECASE,
     ):
-        for token in re.findall(r"\b([0-9]+(?:[.:][0-9]+)*(?:[a-z])?)\b", match.group(1), re.IGNORECASE):
+        for token in re.findall(
+            r"\b([0-9]+(?:[.:][0-9]+)*(?:[a-z])?)\b", match.group(1), re.IGNORECASE
+        ):
             if token not in references:
                 references.append(token)
     return references
@@ -273,12 +291,16 @@ def _score_netherlands_citation_match(
             return 0
 
     if query_articles or query_article:
-        if (query_articles and case_article in query_articles) or (query_article and query_article == case_article):
+        if (query_articles and case_article in query_articles) or (
+            query_article and query_article == case_article
+        ):
             score += 10
         else:
             return 0
 
-    hierarchy_labels = [_normalize_match_text(item) for item in (case.get("hierarchy_labels") or [])]
+    hierarchy_labels = [
+        _normalize_match_text(item) for item in (case.get("hierarchy_labels") or [])
+    ]
     for segment in parsed_citation.get("hierarchy_segments") or []:
         if _normalize_match_text(segment) in hierarchy_labels:
             score += 2
@@ -288,7 +310,9 @@ def _score_netherlands_citation_match(
     return score
 
 
-def _determine_netherlands_match_reason(case: Dict[str, Any], parsed_citation: Dict[str, Any]) -> str:
+def _determine_netherlands_match_reason(
+    case: Dict[str, Any], parsed_citation: Dict[str, Any]
+) -> str:
     query_identifier = str(parsed_citation.get("law_identifier") or "").upper()
     query_reference = _normalize_match_text(parsed_citation.get("law_reference") or "")
     case_identifier = str(case.get("law_identifier") or case.get("identifier") or "").upper()
@@ -318,16 +342,25 @@ def _format_netherlands_article_answer(
     return {
         "canonical_citation": str(case.get("citation") or case.get("document_citation") or ""),
         "law_identifier": str(case.get("law_identifier") or case.get("identifier") or ""),
-        "law_version_identifier": str(case.get("law_version_identifier") or case.get("version_specific_identifier") or ""),
+        "law_version_identifier": str(
+            case.get("law_version_identifier") or case.get("version_specific_identifier") or ""
+        ),
         "canonical_title": str(case.get("canonical_title") or case.get("title") or ""),
         "aliases": list(case.get("aliases") or []),
         "article_number": str(case.get("article_number") or ""),
         "hierarchy_path": list(case.get("hierarchy_path") or []),
         "hierarchy_labels": list(case.get("hierarchy_labels") or []),
         "effective_date": str(case.get("effective_date") or ""),
-        "version_start_date": str(case.get("version_start_date") or case.get("effective_date") or ""),
+        "version_start_date": str(
+            case.get("version_start_date") or case.get("effective_date") or ""
+        ),
         "version_end_date": str(case.get("version_end_date") or ""),
-        "source_url": str(case.get("source_url") or case.get("versioned_law_url") or case.get("canonical_law_url") or ""),
+        "source_url": str(
+            case.get("source_url")
+            or case.get("versioned_law_url")
+            or case.get("canonical_law_url")
+            or ""
+        ),
         "information_url": str(case.get("information_url") or ""),
         "article_text": _clean_answer_text(case.get("text") or ""),
         "referenced_articles": _extract_netherlands_article_references(case.get("text") or ""),
@@ -343,10 +376,17 @@ def _compact_netherlands_context_article(case: Dict[str, Any]) -> Dict[str, Any]
     return {
         "canonical_citation": str(case.get("citation") or case.get("document_citation") or ""),
         "law_identifier": str(case.get("law_identifier") or case.get("identifier") or ""),
-        "law_version_identifier": str(case.get("law_version_identifier") or case.get("version_specific_identifier") or ""),
+        "law_version_identifier": str(
+            case.get("law_version_identifier") or case.get("version_specific_identifier") or ""
+        ),
         "article_number": str(case.get("article_number") or ""),
         "hierarchy_labels": list(case.get("hierarchy_labels") or []),
-        "source_url": str(case.get("source_url") or case.get("versioned_law_url") or case.get("canonical_law_url") or ""),
+        "source_url": str(
+            case.get("source_url")
+            or case.get("versioned_law_url")
+            or case.get("canonical_law_url")
+            or ""
+        ),
     }
 
 
@@ -373,7 +413,9 @@ def _enrich_netherlands_answers_with_context(
     cases = [_extract_temporal_case(row) for row in results]
     by_version: Dict[str, List[Dict[str, Any]]] = {}
     for case in cases:
-        version_id = str(case.get("law_version_identifier") or case.get("version_specific_identifier") or "")
+        version_id = str(
+            case.get("law_version_identifier") or case.get("version_specific_identifier") or ""
+        )
         by_version.setdefault(version_id, []).append(case)
 
     for version_id, version_cases in by_version.items():
@@ -396,15 +438,20 @@ def _enrich_netherlands_answers_with_context(
         current_case = version_cases[current_index]
         if normalized_mode in {"neighbors", "hierarchy"}:
             if current_index > 0:
-                answer["previous_article"] = _compact_netherlands_context_article(version_cases[current_index - 1])
+                answer["previous_article"] = _compact_netherlands_context_article(
+                    version_cases[current_index - 1]
+                )
             if current_index + 1 < len(version_cases):
-                answer["next_article"] = _compact_netherlands_context_article(version_cases[current_index + 1])
+                answer["next_article"] = _compact_netherlands_context_article(
+                    version_cases[current_index + 1]
+                )
 
         if normalized_mode == "hierarchy":
             siblings = [
                 _compact_netherlands_context_article(case)
                 for case in version_cases
-                if case is not current_case and _same_netherlands_hierarchy_scope(current_case, case)
+                if case is not current_case
+                and _same_netherlands_hierarchy_scope(current_case, case)
             ]
             answer["sibling_articles"] = siblings
 
@@ -584,7 +631,7 @@ def _run_cap_vector_operation_in_venv(
         / "vector_search_integration.py"
     )
 
-    script = r'''
+    script = r"""
 from ipfs_datasets_py.utils import anyio_compat as asyncio
 import importlib.util
 import json
@@ -1121,7 +1168,7 @@ async def _main() -> None:
 
 
 asyncio.run(_main())
-'''
+"""
 
     completed = subprocess.run(
         [str(python_path), "-c", script],
@@ -1222,9 +1269,7 @@ def _search_federal_register_hf_index_sync(payload: Dict[str, Any]) -> Dict[str,
     )
     metadata_rows = metadata_table.to_pylist()
     metadata_by_vid = {
-        int(row.get("vector_id")): row
-        for row in metadata_rows
-        if row.get("vector_id") is not None
+        int(row.get("vector_id")): row for row in metadata_rows if row.get("vector_id") is not None
     }
 
     hits: List[Dict[str, Any]] = []
@@ -1389,7 +1434,9 @@ async def scrape_state_admin_rules_from_parameters(
             per_state_timeout_seconds=parameters.get("per_state_timeout_seconds", 86400.0),
             include_dc=parameters.get("include_dc", False),
             agentic_fallback_enabled=parameters.get("agentic_fallback_enabled", True),
-            agentic_max_candidates_per_state=parameters.get("agentic_max_candidates_per_state", 1000),
+            agentic_max_candidates_per_state=parameters.get(
+                "agentic_max_candidates_per_state", 1000
+            ),
             agentic_max_fetch_per_state=parameters.get("agentic_max_fetch_per_state", 1000),
             agentic_max_results_per_domain=parameters.get("agentic_max_results_per_domain", 1000),
             agentic_max_hops=parameters.get("agentic_max_hops", 4),
@@ -1783,7 +1830,9 @@ async def search_caselaw_access_cases_from_parameters(
             "hf_parquet_prefix": parameters.get("hf_parquet_prefix"),
             "cid_metadata_field": parameters.get("cid_metadata_field", "cid"),
             "cid_column": parameters.get("cid_column", "cid"),
-            "text_field_candidates": parameters.get("text_field_candidates", ["head_matter", "text"]),
+            "text_field_candidates": parameters.get(
+                "text_field_candidates", ["head_matter", "text"]
+            ),
             "snippet_chars": int(parameters.get("snippet_chars", 320)),
             "local_case_parquet_file": parameters.get("local_case_parquet_file"),
             "chunk_lookup_enabled": bool(parameters.get("chunk_lookup_enabled", True)),
@@ -2043,7 +2092,9 @@ async def search_netherlands_law_corpus_from_parameters(
             temporally_filtered_results = _apply_netherlands_temporal_filters(
                 list(result.get("results") or []),
                 prefer_current_versions=bool(nl_params.get("prefer_current_versions", True)),
-                include_historical_versions=bool(nl_params.get("include_historical_versions", True)),
+                include_historical_versions=bool(
+                    nl_params.get("include_historical_versions", True)
+                ),
                 as_of_date=str(nl_params.get("as_of_date") or ""),
                 effective_date=str(nl_params.get("effective_date") or ""),
             )
@@ -2063,7 +2114,9 @@ async def search_netherlands_law_corpus_from_parameters(
             "temporal_parameters",
             {
                 "prefer_current_versions": bool(nl_params.get("prefer_current_versions", True)),
-                "include_historical_versions": bool(nl_params.get("include_historical_versions", True)),
+                "include_historical_versions": bool(
+                    nl_params.get("include_historical_versions", True)
+                ),
                 "as_of_date": str(nl_params.get("as_of_date") or ""),
                 "effective_date": str(nl_params.get("effective_date") or ""),
             },
@@ -2223,7 +2276,9 @@ async def recover_missing_legal_citation_source_from_parameters(
     metadata = dict(parameters.get("metadata") or {})
     candidate_corpora = [
         str(item).strip()
-        for item in list(parameters.get("candidate_corpora") or metadata.get("candidate_corpora") or [])
+        for item in list(
+            parameters.get("candidate_corpora") or metadata.get("candidate_corpora") or []
+        )
         if str(item).strip()
     ]
     if candidate_corpora:
@@ -2325,7 +2380,9 @@ async def merge_recovery_manifest_into_canonical_dataset_from_parameters(
         }
 
     output_dir = str(parameters.get("output_dir") or "").strip() or None
-    target_local_parquet_path = str(parameters.get("target_local_parquet_path") or "").strip() or None
+    target_local_parquet_path = (
+        str(parameters.get("target_local_parquet_path") or "").strip() or None
+    )
     hf_cache_dir = str(parameters.get("hf_cache_dir") or "").strip() or None
     result = await anyio.to_thread.run_sync(
         lambda: merge_recovery_manifest_into_canonical_dataset(
@@ -2499,7 +2556,9 @@ async def search_federal_register_hf_index_from_parameters(
             )
 
         payload = {
-            "hf_dataset_id": parameters.get("hf_dataset_id", DEFAULT_FEDERAL_REGISTER_HF_DATASET_ID),
+            "hf_dataset_id": parameters.get(
+                "hf_dataset_id", DEFAULT_FEDERAL_REGISTER_HF_DATASET_ID
+            ),
             "hf_index_file": parameters.get("hf_index_file", "federal_register_gte_small.faiss"),
             "hf_metadata_file": parameters.get(
                 "hf_metadata_file",
@@ -2632,7 +2691,9 @@ async def search_caselaw_access_vectors_with_centroids_from_parameters(
             "cluster_cids_parquet_file": parameters.get("cluster_cids_parquet_file"),
             "cid_metadata_field": parameters.get("cid_metadata_field", "cid"),
             "cid_list_field": parameters.get("cid_list_field", "cids"),
-            "cluster_id_field_in_cid_map": parameters.get("cluster_id_field_in_cid_map", "cluster_id"),
+            "cluster_id_field_in_cid_map": parameters.get(
+                "cluster_id_field_in_cid_map", "cluster_id"
+            ),
             "cid_candidate_multiplier": int(parameters.get("cid_candidate_multiplier", 20)),
             "base_filter_dict": parameters.get("base_filter_dict"),
         }

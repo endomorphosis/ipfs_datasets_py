@@ -28,9 +28,7 @@ _BRIDGE_CONTRACT_CORE_COMPONENTS = (
     "TDFOL.prover",
     "knowledge_graphs.neo4j_compat",
 )
-_BRIDGE_CONTRACT_TAIL_PRESERVED_COMPONENTS = (
-    "zkp.circuits",
-)
+_BRIDGE_CONTRACT_TAIL_PRESERVED_COMPONENTS = ("zkp.circuits",)
 _BRIDGE_CONTRACT_EXCLUDED_COMPONENTS: tuple[str, ...] = ()
 _BRIDGE_VIEW_SIGNAL_WEIGHT_CAP = 2.0
 _BRIDGE_CONTRACT_DENSE_LANE_MIN_COUNT = 4
@@ -754,10 +752,7 @@ class MultiViewLegalIRReport:
     @property
     def proof_failure_ratio(self) -> float:
         return _mean_with_failures(
-            [
-                report.effective_proof_failure_ratio
-                for report in self.reports.values()
-            ],
+            [report.effective_proof_failure_ratio for report in self.reports.values()],
             failure_count=len(self.failures),
             expected_count=self.attempted_count,
         )
@@ -765,10 +760,7 @@ class MultiViewLegalIRReport:
     @property
     def graph_failure_penalty(self) -> float:
         return _mean_with_failures(
-            [
-                report.graph_projection.graph_failure_penalty
-                for report in self.reports.values()
-            ],
+            [report.graph_projection.graph_failure_penalty for report in self.reports.values()],
             failure_count=len(self.failures),
             expected_count=self.attempted_count,
         )
@@ -806,12 +798,8 @@ class MultiViewLegalIRReport:
             losses[f"{prefix}.graph_failure_penalty"] = float(
                 report.graph_projection.graph_failure_penalty
             )
-            losses[f"{prefix}.proof_failure_ratio"] = float(
-                report.effective_proof_failure_ratio
-            )
-            losses[f"{prefix}.raw_proof_failure_ratio"] = float(
-                report.proof_gate.failure_ratio
-            )
+            losses[f"{prefix}.proof_failure_ratio"] = float(report.effective_proof_failure_ratio)
+            losses[f"{prefix}.raw_proof_failure_ratio"] = float(report.proof_gate.failure_ratio)
             losses[f"{prefix}.reconstruction_loss"] = float(round_trip.reconstruction_loss)
             losses[f"{prefix}.text_reconstruction_loss"] = float(
                 round_trip.text_reconstruction_loss
@@ -833,9 +821,7 @@ class MultiViewLegalIRReport:
                         0.0,
                         1.0 - self.acceptance_rate,
                     ),
-                    "legal_ir_view_cross_entropy_loss": (
-                        self._legal_ir_view_cross_entropy_loss()
-                    ),
+                    "legal_ir_view_cross_entropy_loss": (self._legal_ir_view_cross_entropy_loss()),
                     "legal_ir_multiview_cosine_loss": self._round_trip_mean("cosine_loss"),
                     "legal_ir_multiview_cross_entropy_loss": (
                         self._bridge_contract_cross_entropy_loss()
@@ -854,9 +840,7 @@ class MultiViewLegalIRReport:
                     "legal_ir_multiview_total_loss": self.total_loss,
                     "legal_ir_multiview_view_coverage_loss": self.view_coverage_loss(),
                     "source_decompiled_text_embedding_cosine_loss": (
-                        self._round_trip_extra_mean(
-                            "source_decompiled_text_embedding_cosine_loss"
-                        )
+                        self._round_trip_extra_mean("source_decompiled_text_embedding_cosine_loss")
                     ),
                     "source_decompiled_text_token_loss": self._round_trip_extra_mean(
                         "source_decompiled_text_token_loss"
@@ -939,10 +923,7 @@ class MultiViewLegalIRReport:
         total = float(sum(counts.values()))
         if total <= 0.0:
             return {}
-        return {
-            component: count / total
-            for component, count in sorted(counts.items())
-        }
+        return {component: count / total for component, count in sorted(counts.items())}
 
     def view_coverage_loss(self) -> float:
         """Return missing expected bridge views as a compact loss."""
@@ -1012,10 +993,7 @@ class MultiViewLegalIRReport:
         total = sum(kept.values())
         if total <= 0.0:
             return {}
-        normalized = {
-            lane: weight / total
-            for lane, weight in sorted(kept.items())
-        }
+        normalized = {lane: weight / total for lane, weight in sorted(kept.items())}
         rebalanced = _rebalance_dense_contract_distribution(
             normalized,
             text=self.document.normalized_text or self.document.source_text,
@@ -1039,10 +1017,7 @@ class MultiViewLegalIRReport:
         rebalance_total = sum(rebalanced.values())
         if rebalance_total <= 0.0:
             return normalized
-        return {
-            lane: weight / rebalance_total
-            for lane, weight in sorted(rebalanced.items())
-        }
+        return {lane: weight / rebalance_total for lane, weight in sorted(rebalanced.items())}
 
     def _round_trip_mean(self, metric_name: str) -> float:
         return _mean_with_failures(
@@ -1095,10 +1070,7 @@ class MultiViewLegalIRReport:
             "graph_failure_penalty": self.graph_failure_penalty,
             "loss_vector": self.loss_vector(),
             "proof_failure_ratio": self.proof_failure_ratio,
-            "reports": {
-                name: report.to_dict()
-                for name, report in sorted(self.reports.items())
-            },
+            "reports": {name: report.to_dict() for name, report in sorted(self.reports.items())},
             "total_loss": self.total_loss,
             "training_target": self.training_target().to_dict(),
             "view_count": self.view_count,
@@ -1330,10 +1302,7 @@ def _compiler_guidance_bridge_contract_metadata(
         ):
             underrepresented_values = _guidance_sequence(mapping.get(key))
             underrepresented_score = 1.0
-            if (
-                len(underrepresented_values) >= 2
-                and _guidance_modal_family_cue_mismatch(mapping)
-            ):
+            if len(underrepresented_values) >= 2 and _guidance_modal_family_cue_mismatch(mapping):
                 underrepresented_score = 1.6
             for value in _guidance_sequence(mapping.get(key)):
                 add_lane(value, underrepresented_score)
@@ -1359,21 +1328,15 @@ def _compiler_guidance_bridge_contract_metadata(
                     component_gaps.get(lane, 0.0),
                     confidence,
                 )
-            for lane, direction, score in _guidance_gap_direction_items(
-                mapping.get(key)
-            ):
+            for lane, direction, score in _guidance_gap_direction_items(mapping.get(key)):
                 if score <= 0.0:
                     continue
                 if direction == "underrepresented":
                     signed_underrepresented_lanes.add(lane)
                 elif direction == "overrepresented":
                     signed_overrepresented_lanes.add(lane)
-        for lane, score in _guidance_distribution_items(
-            mapping.get("legal_ir_component_gaps")
-        ):
-            canonical_lane = _bridge_contract_lane_component(
-                _canonical_bridge_component_name(lane)
-            )
+        for lane, score in _guidance_distribution_items(mapping.get("legal_ir_component_gaps")):
+            canonical_lane = _bridge_contract_lane_component(_canonical_bridge_component_name(lane))
             if canonical_lane:
                 component_gaps[canonical_lane] = _merge_guidance_component_gap(
                     component_gaps.get(canonical_lane),
@@ -1383,14 +1346,10 @@ def _compiler_guidance_bridge_contract_metadata(
                     add_lane(lane, score)
         diagnostics = mapping.get("pipeline_stage_diagnostics")
         if isinstance(diagnostics, Mapping):
-            probability_gap = _float_or_zero(
-                diagnostics.get("modal_family_target_probability_gap")
-            )
+            probability_gap = _float_or_zero(diagnostics.get("modal_family_target_probability_gap"))
             if probability_gap > 0.0:
                 diagnostic_probability_gaps.append(probability_gap)
-            component_gap = _float_or_zero(
-                diagnostics.get("legal_ir_component_gap_max")
-            )
+            component_gap = _float_or_zero(diagnostics.get("legal_ir_component_gap_max"))
             if component_gap > 0.0:
                 diagnostic_component_gap_max.append(component_gap)
         support = max(
@@ -1408,9 +1367,7 @@ def _compiler_guidance_bridge_contract_metadata(
             diagnostic_probability_gaps.append(0.10)
         if (
             _guidance_quality_gate_passes(mapping.get("quality_gate"))
-            or _guidance_quality_gate_passes(
-                mapping.get("compiler_guidance_quality_gate")
-            )
+            or _guidance_quality_gate_passes(mapping.get("compiler_guidance_quality_gate"))
         ) and _mapping_targets_bridge_contracts(mapping):
             diagnostic_probability_gaps.append(0.16)
 
@@ -1427,8 +1384,7 @@ def _compiler_guidance_bridge_contract_metadata(
 
     target_distribution = _normalize_positive_mapping(lane_scores)
     if not target_distribution and (
-        "repair_multiview_legal_ir_loss" in routes
-        or "bridge.contracts" in target_components
+        "repair_multiview_legal_ir_loss" in routes or "bridge.contracts" in target_components
     ):
         target_distribution = dict(_BRIDGE_CONTRACT_GENERIC_LOSS_TARGET_DISTRIBUTION)
     if not target_distribution:
@@ -1485,17 +1441,10 @@ def _compiler_guidance_projection_strength(
         )
     )
     probability_gap = max((gap for gap in probability_gaps if gap > 0.0), default=0.0)
-    target_count = len(
-        [
-            lane
-            for lane, weight in target_distribution.items()
-            if weight > 0.0
-        ]
-    )
+    target_count = len([lane for lane, weight in target_distribution.items() if weight > 0.0])
     confidence_boost = min(
         0.24,
-        (0.55 * min(0.32, positive_component_gap))
-        + (0.30 * min(0.50, probability_gap)),
+        (0.55 * min(0.32, positive_component_gap)) + (0.30 * min(0.50, probability_gap)),
     )
     if target_count >= 3:
         confidence_boost *= 0.85
@@ -1531,9 +1480,7 @@ def _compiler_guidance_component_gap_floors(
 
     floors: Dict[str, float] = {}
     for raw_lane, raw_gap in dict(component_gaps or {}).items():
-        lane = _bridge_contract_lane_component(
-            _canonical_bridge_component_name(str(raw_lane))
-        )
+        lane = _bridge_contract_lane_component(_canonical_bridge_component_name(str(raw_lane)))
         gap = _float_or_zero(raw_gap)
         if not lane or gap <= 0.0:
             continue
@@ -1707,10 +1654,7 @@ def _mapping_is_compiler_guidance_evidence(mapping: Mapping[str, Any]) -> bool:
 
 def _guidance_quality_gate_passes(value: Any) -> bool:
     if isinstance(value, Mapping):
-        return any(
-            _guidance_quality_gate_passes(nested)
-            for nested in value.values()
-        )
+        return any(_guidance_quality_gate_passes(nested) for nested in value.values())
     normalized = str(value or "").strip().lower()
     return normalized in {
         "pass",
@@ -1728,9 +1672,7 @@ def _guidance_modal_family_cue_mismatch(mapping: Mapping[str, Any]) -> bool:
     if bool(mapping.get("modal_family_cue_mismatch")):
         return True
     diagnostics = mapping.get("pipeline_stage_diagnostics")
-    return isinstance(diagnostics, Mapping) and bool(
-        diagnostics.get("modal_family_cue_mismatch")
-    )
+    return isinstance(diagnostics, Mapping) and bool(diagnostics.get("modal_family_cue_mismatch"))
 
 
 def _add_modal_family_mismatch_stage_lanes(
@@ -1904,15 +1846,11 @@ def _lane_from_guidance_feature(value: Any) -> str:
         direction, _separator, lane_text = remainder.partition(":")
         if direction.strip().lower() != "underrepresented":
             return ""
-        return _bridge_contract_lane_component(
-            _canonical_bridge_component_name(lane_text)
-        )
+        return _bridge_contract_lane_component(_canonical_bridge_component_name(lane_text))
     for separator in ("||", "|"):
         if separator in text:
             _prefix, _separator, lane_text = text.rpartition(separator)
-            lane = _bridge_contract_lane_component(
-                _canonical_bridge_component_name(lane_text)
-            )
+            lane = _bridge_contract_lane_component(_canonical_bridge_component_name(lane_text))
             if lane:
                 return lane
     for prefix in (
@@ -1929,9 +1867,7 @@ def _lane_from_guidance_feature(value: Any) -> str:
             _prefix, _separator, lane_text = text.partition(":")
             if "||" in lane_text:
                 _family, _family_separator, lane_text = lane_text.rpartition("||")
-            return _bridge_contract_lane_component(
-                _canonical_bridge_component_name(lane_text)
-            )
+            return _bridge_contract_lane_component(_canonical_bridge_component_name(lane_text))
     return _bridge_contract_lane_component(_canonical_bridge_component_name(text))
 
 
@@ -2078,9 +2014,7 @@ def _bridge_contract_lane_from_guidance_gap_key(value: Any) -> tuple[str, str]:
     normalized_lane_key = re.sub(r"[^a-z0-9]+", "_", lane_key.lower()).strip("_")
     lane = _BRIDGE_CONTRACT_GUIDANCE_GAP_LANE_ALIASES.get(normalized_lane_key, "")
     if not lane:
-        lane = _bridge_contract_lane_component(
-            _canonical_bridge_component_name(lane_key)
-        )
+        lane = _bridge_contract_lane_component(_canonical_bridge_component_name(lane_key))
     return lane, direction.strip().lower()
 
 
@@ -2114,10 +2048,7 @@ def _add_metric_target_lanes(
         add_lane("CEC.native", 1.0)
     if "prover" in normalized and "external" in normalized:
         add_lane("external_provers.router", 1.0)
-    if (
-        "source_copy" in normalized
-        or "cosine" in normalized
-    ):
+    if "source_copy" in normalized or "cosine" in normalized:
         add_lane("modal.frame_logic", 0.75)
     if normalized in {
         "legal_ir_multiview_total_loss",
@@ -2199,8 +2130,7 @@ def _evaluate_adapter(
         except (TypeError, ValueError):
             parameters = {}
         accepts_kwargs = any(
-            parameter.kind == inspect.Parameter.VAR_KEYWORD
-            for parameter in parameters.values()
+            parameter.kind == inspect.Parameter.VAR_KEYWORD for parameter in parameters.values()
         )
         if "compiler_guidance" in parameters or accepts_kwargs:
             kwargs["compiler_guidance"] = dict(compiler_guidance)
@@ -2214,8 +2144,7 @@ def _bridge_names(bridge_names: Optional[Sequence[str]]) -> tuple[str, ...]:
         dict.fromkeys(
             str(name).strip()
             for name in bridge_names
-            if str(name).strip()
-            and str(name).strip().lower() not in {"none", "off", "false"}
+            if str(name).strip() and str(name).strip().lower() not in {"none", "off", "false"}
         )
     )
 
@@ -2477,10 +2406,13 @@ def _rebalance_dense_contract_distribution(
         _BRIDGE_CONTRACT_STATUTE_STRUCTURE_CUE_RE,
         normalized_text,
     )
-    structural_frame_cue_count = _cue_count(
-        _BRIDGE_CONTRACT_STRUCTURAL_FRAME_CUE_RE,
-        normalized_text,
-    ) + statute_structure_cue_count
+    structural_frame_cue_count = (
+        _cue_count(
+            _BRIDGE_CONTRACT_STRUCTURAL_FRAME_CUE_RE,
+            normalized_text,
+        )
+        + statute_structure_cue_count
+    )
     statute_scaffold_cue_count = _cue_count(
         _BRIDGE_CONTRACT_STATUTE_SCAFFOLD_CUE_RE,
         normalized_text,
@@ -2489,15 +2421,12 @@ def _rebalance_dense_contract_distribution(
     has_deontic_cue = deontic_cue_count > 0
     has_temporal_cue = temporal_cue_count > 0
     has_explicit_temporal_deadline_cue = (
-        by_date_temporal_cue_count > 0
-        or repeal_temporal_cue_count > 0
+        by_date_temporal_cue_count > 0 or repeal_temporal_cue_count > 0
     )
     has_frame_definition_cue = bool(
         _BRIDGE_CONTRACT_FRAME_DEFINITION_CUE_RE.search(normalized_text)
     )
-    has_authority_frame_cue = bool(
-        _BRIDGE_CONTRACT_FRAME_AUTHORITY_CUE_RE.search(normalized_text)
-    )
+    has_authority_frame_cue = bool(_BRIDGE_CONTRACT_FRAME_AUTHORITY_CUE_RE.search(normalized_text))
     has_title_transfer_authority = bool(
         _BRIDGE_CONTRACT_TITLE_TRANSFER_AUTHORITY_RE.search(normalized_text)
     )
@@ -2535,9 +2464,7 @@ def _rebalance_dense_contract_distribution(
         and not has_admin_notice_hearing_frame_cue
     )
     has_epistemic_cue = bool(_BRIDGE_CONTRACT_EPISTEMIC_CUE_RE.search(normalized_text))
-    has_dense_statute_scaffold = (
-        statute_scaffold_cue_count > 0 and structural_frame_cue_count >= 2
-    )
+    has_dense_statute_scaffold = statute_scaffold_cue_count > 0 and structural_frame_cue_count >= 2
     has_governance_cross_reference_cue = bool(
         _BRIDGE_CONTRACT_GOVERNANCE_CROSS_REFERENCE_CUE_RE.search(normalized_text)
     )
@@ -2562,10 +2489,7 @@ def _rebalance_dense_contract_distribution(
     has_temporal_priority_without_normative_cue = (
         has_temporal_cue
         and not has_deontic_cue
-        and (
-            strong_temporal_cue_count > 0
-            or has_explicit_temporal_deadline_cue
-        )
+        and (strong_temporal_cue_count > 0 or has_explicit_temporal_deadline_cue)
     )
     has_sparse_statutory_reference = _has_sparse_statutory_reference(normalized_text)
     legislative_history_cue_count = _cue_count(
@@ -2587,9 +2511,7 @@ def _rebalance_dense_contract_distribution(
     if has_repealed_history_frame_cue:
         has_temporal_priority_without_normative_cue = False
     has_permission_only_deontic_signal = (
-        has_deontic_cue
-        and permission_deontic_cue_count > 0
-        and obligation_deontic_cue_count == 0
+        has_deontic_cue and permission_deontic_cue_count > 0 and obligation_deontic_cue_count == 0
     )
     has_appropriation_norm_cue = bool(
         _BRIDGE_CONTRACT_APPROPRIATION_NORM_CUE_RE.search(normalized_text)
@@ -2720,11 +2642,7 @@ def _rebalance_dense_contract_distribution(
             caps["CEC.native"] = max(caps["CEC.native"], 0.25)
             caps["deontic.ir"] = min(caps["deontic.ir"], 0.26)
             caps["TDFOL.prover"] = min(caps.get("TDFOL.prover", 1.0), 0.17)
-        if (
-            has_authority_frame_cue
-            and has_permission_only_deontic_signal
-            and not has_temporal_cue
-        ):
+        if has_authority_frame_cue and has_permission_only_deontic_signal and not has_temporal_cue:
             caps["knowledge_graphs.neo4j_compat"] = max(
                 caps["knowledge_graphs.neo4j_compat"],
                 0.23,
@@ -2732,11 +2650,7 @@ def _rebalance_dense_contract_distribution(
             caps["CEC.native"] = max(caps["CEC.native"], 0.25)
             caps["deontic.ir"] = min(caps["deontic.ir"], 0.24)
             caps["TDFOL.prover"] = min(caps.get("TDFOL.prover", 1.0), 0.17)
-        if (
-            has_permission_only_deontic_signal
-            and has_authority_frame_cue
-            and not has_temporal_cue
-        ):
+        if has_permission_only_deontic_signal and has_authority_frame_cue and not has_temporal_cue:
             # Preserve deontic->frame supervision signal for delegated authority
             # passages where permissive norm text co-occurs with frame semantics.
             caps["deontic.ir"] = max(caps.get("deontic.ir", 0.0), 0.12)
@@ -2762,11 +2676,7 @@ def _rebalance_dense_contract_distribution(
                     caps["knowledge_graphs.neo4j_compat"],
                     0.12,
                 )
-        if (
-            for_purposes_cue_count > 0
-            and not has_temporal_cue
-            and not has_frame_definition_cue
-        ):
+        if for_purposes_cue_count > 0 and not has_temporal_cue and not has_frame_definition_cue:
             caps["knowledge_graphs.neo4j_compat"] = min(
                 caps["knowledge_graphs.neo4j_compat"],
                 0.11,
@@ -2777,10 +2687,7 @@ def _rebalance_dense_contract_distribution(
         caps["deontic.ir"] = min(caps.get("deontic.ir", 1.0), 0.76)
         if has_direct_appropriation_authorization:
             caps["CEC.native"] = max(caps.get("CEC.native", 0.0), 0.22)
-        if (
-            strong_temporal_cue_count > 0
-            or temporal_cue_count > deontic_cue_count
-        ):
+        if strong_temporal_cue_count > 0 or temporal_cue_count > deontic_cue_count:
             caps["deontic.ir"] = min(caps["deontic.ir"], 0.72)
             caps["TDFOL.prover"] = max(caps["TDFOL.prover"], 0.20)
             if has_permission_only_deontic_signal:
@@ -2902,10 +2809,7 @@ def _rebalance_dense_contract_distribution(
             has_conditional_cue
             and has_deontic_cue
             and has_temporal_cue
-            and (
-                strong_temporal_cue_count > 0
-                or has_explicit_temporal_deadline_cue
-            )
+            and (strong_temporal_cue_count > 0 or has_explicit_temporal_deadline_cue)
         ):
             # Keep scaffold-heavy temporal norms from collapsing into a static
             # frame-dominant lane mix.
@@ -2954,10 +2858,7 @@ def _rebalance_dense_contract_distribution(
             caps["TDFOL.prover"] = min(caps.get("TDFOL.prover", 1.0), 0.14)
             caps["zkp.circuits"] = min(caps.get("zkp.circuits", 1.0), 0.10)
             caps["deontic.ir"] = min(caps.get("deontic.ir", 1.0), 0.74)
-        if (
-            has_temporal_priority_without_normative_cue
-            and has_structural_only_frame_cue
-        ):
+        if has_temporal_priority_without_normative_cue and has_structural_only_frame_cue:
             caps["CEC.native"] = min(caps["CEC.native"], 0.19)
             caps["knowledge_graphs.neo4j_compat"] = min(
                 caps["knowledge_graphs.neo4j_compat"],
@@ -2994,9 +2895,8 @@ def _rebalance_dense_contract_distribution(
             )
         return adjusted
 
-    if (
-        has_temporal_priority_without_normative_cue
-        and (not has_frame_cue or has_structural_only_frame_cue)
+    if has_temporal_priority_without_normative_cue and (
+        not has_frame_cue or has_structural_only_frame_cue
     ):
         target_mix = (
             ("TDFOL.prover", 0.74),
@@ -3004,11 +2904,7 @@ def _rebalance_dense_contract_distribution(
             ("knowledge_graphs.neo4j_compat", 0.07),
             ("deontic.ir", 0.03),
         )
-    elif (
-        has_sparse_statutory_reference
-        and not has_deontic_cue
-        and not has_temporal_cue
-    ):
+    elif has_sparse_statutory_reference and not has_deontic_cue and not has_temporal_cue:
         # Short citation-heavy references are usually structural/contextual.
         # Keep CEC + graph lanes prominent so bridge.contracts targets do not
         # collapse into a deontic-default mix.
@@ -3018,11 +2914,7 @@ def _rebalance_dense_contract_distribution(
             ("TDFOL.prover", 0.10),
             ("deontic.ir", 0.04),
         )
-    elif (
-        has_authority_frame_cue
-        and has_permission_only_deontic_signal
-        and not has_temporal_cue
-    ):
+    elif has_authority_frame_cue and has_permission_only_deontic_signal and not has_temporal_cue:
         target_mix = (
             ("knowledge_graphs.neo4j_compat", 0.40),
             ("CEC.native", 0.42),
@@ -3134,10 +3026,7 @@ def _rebalance_dense_contract_distribution(
                 has_conditional_cue
                 and has_deontic_cue
                 and has_temporal_cue
-                and (
-                    strong_temporal_cue_count > 0
-                    or has_explicit_temporal_deadline_cue
-                )
+                and (strong_temporal_cue_count > 0 or has_explicit_temporal_deadline_cue)
             ):
                 target_mix = (
                     ("deontic.ir", 0.48),
@@ -3336,10 +3225,7 @@ def _rebalance_dense_contract_distribution(
             ("TDFOL.prover", 0.08),
         )
     elif has_deontic_cue and has_temporal_cue:
-        if (
-            strong_temporal_cue_count > 0
-            or temporal_cue_count > deontic_cue_count
-        ):
+        if strong_temporal_cue_count > 0 or temporal_cue_count > deontic_cue_count:
             if has_direct_appropriation_authorization:
                 target_mix = (
                     ("deontic.ir", 0.44),
@@ -3393,11 +3279,7 @@ def _rebalance_dense_contract_distribution(
         prover_weight=0.06 if has_conditional_cue or has_temporal_cue else 0.04,
     )
 
-    present_targets = [
-        (lane, weight)
-        for lane, weight in target_mix
-        if lane in adjusted
-    ]
+    present_targets = [(lane, weight) for lane, weight in target_mix if lane in adjusted]
     if not present_targets:
         top_lane = max(adjusted.items(), key=lambda item: (item[1], item[0]))[0]
         adjusted[top_lane] += excess_mass
@@ -3426,10 +3308,7 @@ def _rebalance_dense_contract_distribution(
             has_mandatory_application_rule
             or has_compliance_enforcement_norm
             or has_fiscal_availability_norm
-            or (
-                has_status_operation_cue
-                and (has_deontic_cue or not has_omitted_codification_cue)
-            )
+            or (has_status_operation_cue and (has_deontic_cue or not has_omitted_codification_cue))
         ),
         has_structural_status_operation_signal=has_structural_status_operation_signal,
     ):
@@ -3539,9 +3418,7 @@ def _rebalance_dense_contract_distribution(
         kg_value = adjusted.get(kg_lane, 0.0)
         if kg_value > kg_cap:
             adjusted[kg_lane] = kg_cap
-            adjusted["deontic.ir"] = adjusted.get("deontic.ir", 0.0) + (
-                kg_value - kg_cap
-            )
+            adjusted["deontic.ir"] = adjusted.get("deontic.ir", 0.0) + (kg_value - kg_cap)
     if (
         has_status_operation_cue
         and not has_repealed_history_frame_cue
@@ -3576,10 +3453,7 @@ def _contract_target_mix_with_auxiliary_lanes(
     present = {lane for lane, _weight in augmented}
     if "modal.frame_logic" in lanes and "modal.frame_logic" not in present:
         augmented.append(("modal.frame_logic", max(0.0, float(frame_weight))))
-    if (
-        "external_provers.router" in lanes
-        and "external_provers.router" not in present
-    ):
+    if "external_provers.router" in lanes and "external_provers.router" not in present:
         augmented.append(("external_provers.router", max(0.0, float(prover_weight))))
     return tuple(augmented)
 
@@ -3647,8 +3521,7 @@ def _project_contract_distribution_toward_target(
         return adjusted
 
     target_distribution = {
-        lane: weight / target_total
-        for lane, weight in present_target_weights.items()
+        lane: weight / target_total for lane, weight in present_target_weights.items()
     }
     total = sum(adjusted.values())
     if total <= 0.0:
@@ -3664,10 +3537,7 @@ def _project_contract_distribution_toward_target(
     projected_total = sum(projected.values())
     if projected_total <= 0.0:
         return adjusted
-    return {
-        lane: value / projected_total
-        for lane, value in projected.items()
-    }
+    return {lane: value / projected_total for lane, value in projected.items()}
 
 
 def _project_guided_contract_distribution(
@@ -3685,9 +3555,7 @@ def _project_guided_contract_distribution(
     if not adjusted:
         return adjusted
 
-    raw_target_value = (metadata or {}).get(
-        "compiler_guidance_bridge_contract_target_distribution"
-    )
+    raw_target_value = (metadata or {}).get("compiler_guidance_bridge_contract_target_distribution")
     if not isinstance(raw_target_value, Mapping):
         return adjusted
     raw_target = dict(raw_target_value)
@@ -3698,9 +3566,7 @@ def _project_guided_contract_distribution(
         for lane, weight in raw_target.items()
     }
     target_distribution = {
-        lane: weight
-        for lane, weight in target_distribution.items()
-        if lane and weight > 0.0
+        lane: weight for lane, weight in target_distribution.items() if lane and weight > 0.0
     }
     if not target_distribution:
         return adjusted
@@ -3725,14 +3591,10 @@ def _project_guided_contract_distribution(
         for lane, weight in target_distribution.items()
         if lane in projected
     }
-    raw_gap_floors = (metadata or {}).get(
-        "compiler_guidance_bridge_contract_gap_floors"
-    )
+    raw_gap_floors = (metadata or {}).get("compiler_guidance_bridge_contract_gap_floors")
     if isinstance(raw_gap_floors, Mapping):
         for raw_lane, raw_floor in raw_gap_floors.items():
-            lane = _bridge_contract_lane_component(
-                _canonical_bridge_component_name(str(raw_lane))
-            )
+            lane = _bridge_contract_lane_component(_canonical_bridge_component_name(str(raw_lane)))
             if lane in projected:
                 floors[lane] = max(floors.get(lane, 0.0), _float_or_zero(raw_floor))
     return _enforce_contract_lane_floors(
@@ -3759,8 +3621,7 @@ def _enforce_contract_lane_floors(
     """Apply deterministic lane floors by shifting mass from donor lanes."""
 
     adjusted = {
-        str(name): max(0.0, float(value))
-        for name, value in dict(distribution or {}).items()
+        str(name): max(0.0, float(value)) for name, value in dict(distribution or {}).items()
     }
     if not adjusted:
         return adjusted
@@ -3899,36 +3760,27 @@ def _rebalance_sparse_contract_distribution(
         and _BRIDGE_CONTRACT_USC_SECTION_MARKER_RE.search(normalized_text) is not None
         and repeal_cue_count > 0
         and (
-            _BRIDGE_CONTRACT_LEGISLATIVE_HISTORY_CUE_RE.search(normalized_text)
-            is not None
-            or _BRIDGE_CONTRACT_STATUTES_AT_LARGE_CUE_RE.search(normalized_text)
-            is not None
+            _BRIDGE_CONTRACT_LEGISLATIVE_HISTORY_CUE_RE.search(normalized_text) is not None
+            or _BRIDGE_CONTRACT_STATUTES_AT_LARGE_CUE_RE.search(normalized_text) is not None
         )
         and structural_count > 0
     )
-    if (
-        not has_short_official_status_signal
-        and (
-            scaffold_count < _BRIDGE_CONTRACT_SPARSE_SCAFFOLD_MIN_COUNT
-            or structural_count < _BRIDGE_CONTRACT_SPARSE_STRUCTURAL_MIN_COUNT
-        )
+    if not has_short_official_status_signal and (
+        scaffold_count < _BRIDGE_CONTRACT_SPARSE_SCAFFOLD_MIN_COUNT
+        or structural_count < _BRIDGE_CONTRACT_SPARSE_STRUCTURAL_MIN_COUNT
     ):
         return lanes
 
-    has_repeal_scaffold_signal = (
-        repeal_cue_count > 0
-        and (
-            scaffold_count >= (_BRIDGE_CONTRACT_SPARSE_SCAFFOLD_MIN_COUNT + 1)
-            or has_short_official_status_signal
-        )
+    has_repeal_scaffold_signal = repeal_cue_count > 0 and (
+        scaffold_count >= (_BRIDGE_CONTRACT_SPARSE_SCAFFOLD_MIN_COUNT + 1)
+        or has_short_official_status_signal
     )
     has_epistemic_heading_signal = bool(
         _BRIDGE_CONTRACT_EPISTEMIC_HEADING_CUE_RE.search(normalized_text)
     )
     has_substantive_operational_norm = (
         deontic_cue_count > 0
-        and _BRIDGE_CONTRACT_SUBSTANTIVE_OPERATIONAL_NORM_RE.search(normalized_text)
-        is not None
+        and _BRIDGE_CONTRACT_SUBSTANTIVE_OPERATIONAL_NORM_RE.search(normalized_text) is not None
     )
     if deontic_cue_count <= 0 and not has_repeal_scaffold_signal:
         return lanes
@@ -4041,53 +3893,39 @@ def _compact_official_usc_contract_distribution(
         len(normalized_text) >= _BRIDGE_CONTRACT_SHORT_OFFICIAL_USC_MIN_CHARS
         and _BRIDGE_CONTRACT_USC_SECTION_MARKER_RE.search(normalized_text) is not None
         and (
-            _BRIDGE_CONTRACT_LEGISLATIVE_HISTORY_CUE_RE.search(normalized_text)
-            is not None
-            or _BRIDGE_CONTRACT_STATUTES_AT_LARGE_CUE_RE.search(normalized_text)
-            is not None
+            _BRIDGE_CONTRACT_LEGISLATIVE_HISTORY_CUE_RE.search(normalized_text) is not None
+            or _BRIDGE_CONTRACT_STATUTES_AT_LARGE_CUE_RE.search(normalized_text) is not None
         )
     )
     is_short_editorial_status_section = (
         len(normalized_text) >= _BRIDGE_CONTRACT_STATUS_OFFICIAL_USC_MIN_CHARS
         and _BRIDGE_CONTRACT_USC_SECTION_MARKER_RE.search(normalized_text) is not None
         and (
-            _BRIDGE_CONTRACT_STATUS_OPERATION_CUE_RE.search(normalized_text)
-            is not None
-            or _BRIDGE_CONTRACT_REPEAL_TEMPORAL_CUE_RE.search(normalized_text)
-            is not None
+            _BRIDGE_CONTRACT_STATUS_OPERATION_CUE_RE.search(normalized_text) is not None
+            or _BRIDGE_CONTRACT_REPEAL_TEMPORAL_CUE_RE.search(normalized_text) is not None
         )
         and (
-            _BRIDGE_CONTRACT_STRUCTURAL_FRAME_CUE_RE.search(normalized_text)
-            is not None
-            or _BRIDGE_CONTRACT_LEGISLATIVE_HISTORY_CUE_RE.search(normalized_text)
-            is not None
+            _BRIDGE_CONTRACT_STRUCTURAL_FRAME_CUE_RE.search(normalized_text) is not None
+            or _BRIDGE_CONTRACT_LEGISLATIVE_HISTORY_CUE_RE.search(normalized_text) is not None
         )
     )
     is_official_header_editorial_status_section = (
         len(normalized_text) >= _BRIDGE_CONTRACT_STATUS_OFFICIAL_USC_MIN_CHARS
-        and _BRIDGE_CONTRACT_OFFICIAL_USC_EXCERPT_RE.search(normalized_text)
-        is not None
+        and _BRIDGE_CONTRACT_OFFICIAL_USC_EXCERPT_RE.search(normalized_text) is not None
         and (
-            _BRIDGE_CONTRACT_STATUS_OPERATION_CUE_RE.search(normalized_text)
-            is not None
-            or _BRIDGE_CONTRACT_REPEAL_TEMPORAL_CUE_RE.search(normalized_text)
-            is not None
-            or _BRIDGE_CONTRACT_OMITTED_CODIFICATION_CUE_RE.search(normalized_text)
-            is not None
+            _BRIDGE_CONTRACT_STATUS_OPERATION_CUE_RE.search(normalized_text) is not None
+            or _BRIDGE_CONTRACT_REPEAL_TEMPORAL_CUE_RE.search(normalized_text) is not None
+            or _BRIDGE_CONTRACT_OMITTED_CODIFICATION_CUE_RE.search(normalized_text) is not None
         )
         and (
-            _BRIDGE_CONTRACT_STRUCTURAL_FRAME_CUE_RE.search(normalized_text)
-            is not None
-            or _BRIDGE_CONTRACT_LEGISLATIVE_HISTORY_CUE_RE.search(normalized_text)
-            is not None
+            _BRIDGE_CONTRACT_STRUCTURAL_FRAME_CUE_RE.search(normalized_text) is not None
+            or _BRIDGE_CONTRACT_LEGISLATIVE_HISTORY_CUE_RE.search(normalized_text) is not None
         )
     )
     is_official_admin_notice_review_section = (
         len(normalized_text) >= _BRIDGE_CONTRACT_STATUS_OFFICIAL_USC_MIN_CHARS
-        and _BRIDGE_CONTRACT_OFFICIAL_USC_EXCERPT_RE.search(normalized_text)
-        is not None
-        and _BRIDGE_CONTRACT_ADMIN_NOTICE_REVIEW_PROCEDURE_RE.search(normalized_text)
-        is not None
+        and _BRIDGE_CONTRACT_OFFICIAL_USC_EXCERPT_RE.search(normalized_text) is not None
+        and _BRIDGE_CONTRACT_ADMIN_NOTICE_REVIEW_PROCEDURE_RE.search(normalized_text) is not None
     )
     if not (
         is_long_official_excerpt
@@ -4109,10 +3947,7 @@ def _compact_official_usc_contract_distribution(
     total = sum(primary.values())
     if total <= 0.0:
         return lanes
-    compacted = {
-        lane: value / total
-        for lane, value in sorted(primary.items())
-    }
+    compacted = {lane: value / total for lane, value in sorted(primary.items())}
     projected = _project_official_usc_primary_contract_distribution(
         compacted,
         text=normalized_text,
@@ -4149,21 +3984,14 @@ def _compact_bare_usc_citation_contract_distribution(
         "deontic.ir": 0.12,
         "modal.frame_logic": 0.08,
     }
-    relevant = {
-        lane: lanes.get(lane, 0.0)
-        for lane in target_mix
-        if lanes.get(lane, 0.0) > 0.0
-    }
+    relevant = {lane: lanes.get(lane, 0.0) for lane in target_mix if lanes.get(lane, 0.0) > 0.0}
     if len(relevant) < 2:
         return lanes
 
     total = sum(target_mix[lane] for lane in relevant)
     if total <= 0.0:
         return lanes
-    return {
-        lane: target_mix[lane] / total
-        for lane in sorted(relevant)
-    }
+    return {lane: target_mix[lane] / total for lane in sorted(relevant)}
 
 
 def _project_official_usc_primary_contract_distribution(
@@ -4186,15 +4014,19 @@ def _project_official_usc_primary_contract_distribution(
         _BRIDGE_CONTRACT_DEONTIC_CUE_RE,
         normalized_text,
     )
-    temporal_cue_count = _cue_count(
-        _BRIDGE_CONTRACT_TEMPORAL_CUE_RE,
-        normalized_text,
-    ) + _cue_count(
-        _BRIDGE_CONTRACT_STRONG_TEMPORAL_CUE_RE,
-        normalized_text,
-    ) + _cue_count(
-        _BRIDGE_CONTRACT_REPEAL_TEMPORAL_CUE_RE,
-        normalized_text,
+    temporal_cue_count = (
+        _cue_count(
+            _BRIDGE_CONTRACT_TEMPORAL_CUE_RE,
+            normalized_text,
+        )
+        + _cue_count(
+            _BRIDGE_CONTRACT_STRONG_TEMPORAL_CUE_RE,
+            normalized_text,
+        )
+        + _cue_count(
+            _BRIDGE_CONTRACT_REPEAL_TEMPORAL_CUE_RE,
+            normalized_text,
+        )
     )
     legislative_history_cue_count = _cue_count(
         _BRIDGE_CONTRACT_LEGISLATIVE_HISTORY_CUE_RE,
@@ -4231,12 +4063,8 @@ def _project_official_usc_primary_contract_distribution(
     has_fiscal_fee_deposit_rule = bool(
         _BRIDGE_CONTRACT_FISCAL_FEE_DEPOSIT_RULE_RE.search(normalized_text)
     )
-    has_liability_provision = bool(
-        _BRIDGE_CONTRACT_LIABILITY_PROVISION_RE.search(normalized_text)
-    )
-    has_reporting_duty = bool(
-        _BRIDGE_CONTRACT_REPORTING_DUTY_RE.search(normalized_text)
-    )
+    has_liability_provision = bool(_BRIDGE_CONTRACT_LIABILITY_PROVISION_RE.search(normalized_text))
+    has_reporting_duty = bool(_BRIDGE_CONTRACT_REPORTING_DUTY_RE.search(normalized_text))
     has_determination_condition = bool(
         _BRIDGE_CONTRACT_DETERMINATION_CONDITION_RE.search(normalized_text)
     )
@@ -4268,9 +4096,7 @@ def _project_official_usc_primary_contract_distribution(
         _BRIDGE_CONTRACT_DEFINITION_PROVISION_RE.search(normalized_text)
         or _BRIDGE_CONTRACT_STATUTORY_DEFINITION_SECTION_RE.search(normalized_text)
     )
-    has_asset_transfer_rule = bool(
-        _BRIDGE_CONTRACT_ASSET_TRANSFER_RULE_RE.search(normalized_text)
-    )
+    has_asset_transfer_rule = bool(_BRIDGE_CONTRACT_ASSET_TRANSFER_RULE_RE.search(normalized_text))
     has_title_transfer_authority = bool(
         _BRIDGE_CONTRACT_TITLE_TRANSFER_AUTHORITY_RE.search(normalized_text)
     )
@@ -4311,9 +4137,7 @@ def _project_official_usc_primary_contract_distribution(
     has_agency_technology_goal = bool(
         _BRIDGE_CONTRACT_AGENCY_TECHNOLOGY_GOAL_RE.search(normalized_text)
     )
-    has_county_payment_duty = bool(
-        _BRIDGE_CONTRACT_COUNTY_PAYMENT_DUTY_RE.search(normalized_text)
-    )
+    has_county_payment_duty = bool(_BRIDGE_CONTRACT_COUNTY_PAYMENT_DUTY_RE.search(normalized_text))
     has_private_school_participation = bool(
         _BRIDGE_CONTRACT_PRIVATE_SCHOOL_PARTICIPATION_RE.search(normalized_text)
     )
@@ -4330,9 +4154,7 @@ def _project_official_usc_primary_contract_distribution(
         _BRIDGE_CONTRACT_MINING_LEASE_TAX_PROVISO_RE.search(normalized_text)
     )
     has_intergovernmental_negotiation_report = bool(
-        _BRIDGE_CONTRACT_INTERGOVERNMENTAL_NEGOTIATION_REPORT_RE.search(
-            normalized_text
-        )
+        _BRIDGE_CONTRACT_INTERGOVERNMENTAL_NEGOTIATION_REPORT_RE.search(normalized_text)
     )
     has_subsidy_payment_contract = bool(
         _BRIDGE_CONTRACT_SUBSIDY_PAYMENT_CONTRACT_RE.search(normalized_text)
@@ -4362,9 +4184,7 @@ def _project_official_usc_primary_contract_distribution(
         _BRIDGE_CONTRACT_BANKRUPTCY_CLAIM_DUTY_RE.search(normalized_text)
     )
     has_historic_preservation_consultation = bool(
-        _BRIDGE_CONTRACT_HISTORIC_PRESERVATION_CONSULTATION_RE.search(
-            normalized_text
-        )
+        _BRIDGE_CONTRACT_HISTORIC_PRESERVATION_CONSULTATION_RE.search(normalized_text)
     )
     has_federal_charter_governance = bool(
         _BRIDGE_CONTRACT_FEDERAL_CHARTER_GOVERNANCE_RE.search(normalized_text)
@@ -4377,13 +4197,12 @@ def _project_official_usc_primary_contract_distribution(
         normalized_text,
     )
     has_editorial_status_operation = (
-        status_operation_cue_count > 0
-        or _cue_count(_BRIDGE_CONTRACT_REPEAL_TEMPORAL_CUE_RE, normalized_text) > 0
-    ) and (
-        structural_frame_cue_count > 0
-        or legislative_history_cue_count > 0
-    ) and (
-        not has_judicial_review_procedure
+        (
+            status_operation_cue_count > 0
+            or _cue_count(_BRIDGE_CONTRACT_REPEAL_TEMPORAL_CUE_RE, normalized_text) > 0
+        )
+        and (structural_frame_cue_count > 0 or legislative_history_cue_count > 0)
+        and (not has_judicial_review_procedure)
     )
 
     target_mix: Sequence[tuple[str, float]]
@@ -4684,9 +4503,7 @@ def _project_official_usc_primary_contract_distribution(
             ("knowledge_graphs.neo4j_compat", 0.08),
         )
         strength = 0.34
-    elif (
-        has_admin_notice_review_procedure or has_admin_review_deadline
-    ) and deontic_cue_count > 0:
+    elif (has_admin_notice_review_procedure or has_admin_review_deadline) and deontic_cue_count > 0:
         target_mix = (
             ("deontic.ir", 0.42),
             ("TDFOL.prover", 0.30),

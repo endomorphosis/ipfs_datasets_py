@@ -54,7 +54,9 @@ def import_world_id_state(
     # top-level list as its compatibility contract. Preserve that behavior
     # for old wallet snapshots while allowing state-only processor snapshots.
     legacy_wallet_snapshot = "wallet" in snapshot
-    if isinstance(state, Mapping) and (not legacy_wallet_snapshot or "world_id_bindings" in snapshot):
+    if isinstance(state, Mapping) and (
+        not legacy_wallet_snapshot or "world_id_bindings" in snapshot
+    ):
         binding_state = state.get("bindings")
         if isinstance(binding_state, Mapping):
             bindings.restore(binding_state)

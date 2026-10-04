@@ -62,19 +62,10 @@ def test_bm25_posting_export_preserves_column_frequencies() -> None:
         ],
     )
     connection.execute(
-        "CREATE VIRTUAL TABLE documents_vocab USING "
-        "fts5vocab(documents_fts, 'instance')"
+        "CREATE VIRTUAL TABLE documents_vocab USING fts5vocab(documents_fts, 'instance')"
     )
-    connection.execute(
-        "CREATE VIRTUAL TABLE vocab_row USING "
-        "fts5vocab(documents_fts, 'row')"
-    )
-    terms = [
-        str(row[0])
-        for row in connection.execute(
-            "SELECT term FROM vocab_row ORDER BY term"
-        )
-    ]
+    connection.execute("CREATE VIRTUAL TABLE vocab_row USING fts5vocab(documents_fts, 'row')")
+    terms = [str(row[0]) for row in connection.execute("SELECT term FROM vocab_row ORDER BY term")]
     rows, postings, instances = release._bm25_posting_rows(
         connection,
         first_term=terms[0],
@@ -252,9 +243,7 @@ def test_retarget_release_regenerates_publication_support_and_omits_caches(
             graph_edges=1,
             vector_rows=1,
             vector_chunks=1,
-            manifest_sha256=release._sha256_file(
-                release_root / "manifest.json"
-            ),
+            manifest_sha256=release._sha256_file(release_root / "manifest.json"),
         )
 
     monkeypatch.setattr(
@@ -275,20 +264,14 @@ def test_retarget_release_regenerates_publication_support_and_omits_caches(
     assert target_manifest["dataset_repo_id"] == "Publicus/skillcenter-ir"
     assert target_manifest["publication"] == {
         "source_dataset_repo_id": "Tommysha/skillcenter-ir",
-        "source_manifest_sha256": release._sha256_file(
-            source / "manifest.json"
-        ),
+        "source_manifest_sha256": release._sha256_file(source / "manifest.json"),
         "target_dataset_repo_id": "Publicus/skillcenter-ir",
     }
     assert "Publicus/skillcenter-ir" in (output / "README.md").read_text()
-    assert "Publicus/skillcenter-ir" in (
-        output / "skill" / skill_dir.name / "SKILL.md"
-    ).read_text()
+    assert "Publicus/skillcenter-ir" in (output / "skill" / skill_dir.name / "SKILL.md").read_text()
     assert not list(output.rglob("*.pyc"))
     assert not list(output.rglob("__pycache__"))
-    assert data_path.stat().st_ino == (
-        output / data_path.relative_to(source)
-    ).stat().st_ino
+    assert data_path.stat().st_ino == (output / data_path.relative_to(source)).stat().st_ino
     assert json.loads((source / "manifest.json").read_bytes()) == manifest
     assert summary.output_dir == str(output)
 
@@ -490,9 +473,7 @@ def test_local_remote_graph_node_neighbors_and_bounded_walk(
         limit=2,
         hydrate=True,
     )
-    assert [
-        row["neighbor_cid"] for row in neighbors["results"]
-    ] == ["cid-b", "cid-c"]
+    assert [row["neighbor_cid"] for row in neighbors["results"]] == ["cid-b", "cid-c"]
     assert neighbors["diagnostics"]["adjacency_shards_fetched"] == 1
     walk = index.graph_walk(
         "cid-a",
@@ -535,12 +516,9 @@ def test_local_remote_graph_node_neighbors_and_bounded_walk(
     )
     assert node_limited["diagnostics"]["stop_reason"] == "max_nodes"
     assert len(node_limited["nodes"]) == 2
-    returned_node_cids = {
-        row["node_cid"] for row in node_limited["nodes"]
-    }
+    returned_node_cids = {row["node_cid"] for row in node_limited["nodes"]}
     assert all(
-        edge["source_cid"] in returned_node_cids
-        and edge["target_cid"] in returned_node_cids
+        edge["source_cid"] in returned_node_cids and edge["target_cid"] in returned_node_cids
         for edge in node_limited["edges"]
     )
 
@@ -558,9 +536,7 @@ def test_local_remote_graph_node_neighbors_and_bounded_walk(
     assert {
         edge_limited["edges"][0]["source_cid"],
         edge_limited["edges"][0]["target_cid"],
-    }.issubset(
-        {row["node_cid"] for row in edge_limited["nodes"]}
-    )
+    }.issubset({row["node_cid"] for row in edge_limited["nodes"]})
 
 
 def test_remote_semantic_graph_walk_uses_bounded_centroid_vectors(
@@ -603,9 +579,7 @@ def test_remote_semantic_graph_walk_uses_bounded_centroid_vectors(
         adjacency_rows.append(
             {
                 "direction": "outgoing",
-                "edge_cids": [
-                    f"edge-{source}-{target}" for target in targets
-                ],
+                "edge_cids": [f"edge-{source}-{target}" for target in targets],
                 "edge_types": ["RELATED_TO"] * len(targets),
                 "neighbor_cids": targets,
                 "neighbor_count": len(targets),
@@ -614,9 +588,7 @@ def test_remote_semantic_graph_walk_uses_bounded_centroid_vectors(
                 "page_count": 1,
                 "page_index": 0,
                 "retrieval_methods": ["test"] * len(targets),
-                "schema_version": (
-                    release.SKILLCENTER_HF_GRAPH_ADJACENCY_SCHEMA_VERSION
-                ),
+                "schema_version": (release.SKILLCENTER_HF_GRAPH_ADJACENCY_SCHEMA_VERSION),
                 "scores": [1.0] * len(targets),
                 "total_neighbor_count": len(targets),
             }
@@ -755,9 +727,7 @@ def test_remote_semantic_graph_walk_uses_bounded_centroid_vectors(
     assert result["diagnostics"]["adjacency_shards_fetched"] == 1
     assert result["diagnostics"]["traversal_strategy"] == "semantic_beam"
     assert result["nodes"][-1]["semantic_proximity"] == pytest.approx(1.0)
-    assert {
-        item["relative_path"] for item in result["fetch_trace"]["files"]
-    } <= {
+    assert {item["relative_path"] for item in result["fetch_trace"]["files"]} <= {
         "manifest.json",
         "indexes/graph_node_chunks.parquet",
         "indexes/graph_outgoing_adjacency.parquet",
@@ -850,10 +820,7 @@ def test_local_remote_bm25_and_vector_query_fetch_bounded_shards(
                 "source_type": ["repo"] * 3,
                 "language": ["en"] * 3,
                 "embedding": embedding,
-                "schema_version": [
-                    release.SKILLCENTER_HF_VECTOR_CHUNK_SCHEMA_VERSION
-                ]
-                * 3,
+                "schema_version": [release.SKILLCENTER_HF_VECTOR_CHUNK_SCHEMA_VERSION] * 3,
             }
         ),
     )
@@ -957,9 +924,7 @@ def test_local_remote_bm25_and_vector_query_fetch_bounded_shards(
         query_vector=[1.0, 0.0],
     )
     assert vector["results"][0]["entry_cid"] == "cid-0"
-    assert {
-        item["relative_path"] for item in vector["fetch_trace"]["files"]
-    } <= {
+    assert {item["relative_path"] for item in vector["fetch_trace"]["files"]} <= {
         "manifest.json",
         "indexes/bm25_keyword_shards.parquet",
         "indexes/corpus_chunks.parquet",

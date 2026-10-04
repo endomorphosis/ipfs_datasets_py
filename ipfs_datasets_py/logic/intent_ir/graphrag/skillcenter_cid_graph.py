@@ -33,21 +33,15 @@ from .skillcenter_corpus_bm25 import (
 
 
 SKILLCENTER_CID_GRAPH_SCHEMA_VERSION: Final = "skillcenter-cid-graph/v1"
-SKILLCENTER_CID_GRAPH_NODE_SCHEMA_VERSION: Final = (
-    "skillcenter-cid-graph-node/v1"
-)
-SKILLCENTER_CID_GRAPH_EDGE_SCHEMA_VERSION: Final = (
-    "skillcenter-cid-graph-edge/v1"
-)
+SKILLCENTER_CID_GRAPH_NODE_SCHEMA_VERSION: Final = "skillcenter-cid-graph-node/v1"
+SKILLCENTER_CID_GRAPH_EDGE_SCHEMA_VERSION: Final = "skillcenter-cid-graph-edge/v1"
 DEFAULT_NEIGHBOR_K: Final = 8
 DEFAULT_BATCH_SIZE: Final = 256
 DEFAULT_QUERY_WORKERS: Final = 8
 
 _MAX_MANIFEST_BYTES = 16 * 1024 * 1024
 _NODE_TYPES = frozenset({"BUNDLE", "CONTENT", "DOMAIN", "LICENSE", "SKILL"})
-_BASE_EDGE_TYPES = frozenset(
-    {"HAS_CONTENT", "HAS_LICENSE", "IN_BUNDLE", "IN_DOMAIN"}
-)
+_BASE_EDGE_TYPES = frozenset({"HAS_CONTENT", "HAS_LICENSE", "IN_BUNDLE", "IN_DOMAIN"})
 _NEIGHBOR_EDGE_TYPE = "BM25_NEIGHBOR_OF"
 
 
@@ -68,14 +62,8 @@ class SkillCenterCIDGraphConfig:
             ("query_workers", 1, 64),
         ):
             value = getattr(self, name)
-            if (
-                isinstance(value, bool)
-                or not isinstance(value, int)
-                or not low <= value <= high
-            ):
-                raise SkillCenterCIDGraphError(
-                    f"{name} must be between {low} and {high}"
-                )
+            if isinstance(value, bool) or not isinstance(value, int) or not low <= value <= high:
+                raise SkillCenterCIDGraphError(f"{name} must be between {low} and {high}")
 
     def to_dict(self) -> dict[str, int]:
         return {
@@ -147,9 +135,7 @@ class SkillCenterCIDGraphIndex:
             or not manifest_path.is_file()
             or manifest_path.stat().st_size > _MAX_MANIFEST_BYTES
         ):
-            raise SkillCenterCIDGraphError(
-                "graph must contain a bounded regular manifest"
-            )
+            raise SkillCenterCIDGraphError("graph must contain a bounded regular manifest")
         manifest_bytes = manifest_path.read_bytes()
         try:
             manifest = json.loads(manifest_bytes)
@@ -157,10 +143,8 @@ class SkillCenterCIDGraphIndex:
             raise SkillCenterCIDGraphError("graph manifest is malformed") from exc
         if (
             not isinstance(manifest, Mapping)
-            or manifest.get("schema_version")
-            != SKILLCENTER_CID_GRAPH_SCHEMA_VERSION
-            or manifest.get("primary_key")
-            != SKILLCENTER_CORPUS_PRIMARY_KEY
+            or manifest.get("schema_version") != SKILLCENTER_CID_GRAPH_SCHEMA_VERSION
+            or manifest.get("primary_key") != SKILLCENTER_CORPUS_PRIMARY_KEY
         ):
             raise SkillCenterCIDGraphError("unsupported graph manifest")
         database_path = _verify_file_descriptor(
@@ -170,23 +154,14 @@ class SkillCenterCIDGraphIndex:
         uri = f"{database_path.as_uri()}?mode=ro&immutable=1"
         with closing(sqlite3.connect(uri, uri=True)) as connection:
             if verify_integrity:
-                result = connection.execute(
-                    "PRAGMA integrity_check"
-                ).fetchone()
+                result = connection.execute("PRAGMA integrity_check").fetchone()
                 if result is None or result[0] != "ok":
-                    raise SkillCenterCIDGraphError(
-                        "graph SQLite integrity check failed"
-                    )
-            node_count = int(
-                connection.execute("SELECT COUNT(*) FROM nodes").fetchone()[0]
-            )
-            edge_count = int(
-                connection.execute("SELECT COUNT(*) FROM edges").fetchone()[0]
-            )
+                    raise SkillCenterCIDGraphError("graph SQLite integrity check failed")
+            node_count = int(connection.execute("SELECT COUNT(*) FROM nodes").fetchone()[0])
+            edge_count = int(connection.execute("SELECT COUNT(*) FROM edges").fetchone()[0])
             skill_count = int(
                 connection.execute(
-                    "SELECT COUNT(*) FROM nodes "
-                    "WHERE node_type = 'SKILL' AND node_cid = entry_cid"
+                    "SELECT COUNT(*) FROM nodes WHERE node_type = 'SKILL' AND node_cid = entry_cid"
                 ).fetchone()[0]
             )
             neighbor_count = int(
@@ -201,9 +176,7 @@ class SkillCenterCIDGraphIndex:
                 or skill_count != int(manifest.get("skill_nodes", -1))
                 or neighbor_count != int(manifest.get("neighbor_edges", -1))
             ):
-                raise SkillCenterCIDGraphError(
-                    "graph counts do not match its manifest"
-                )
+                raise SkillCenterCIDGraphError("graph counts do not match its manifest")
             invalid_neighbors = int(
                 connection.execute(
                     "SELECT COUNT(*) FROM edges e "
@@ -217,9 +190,7 @@ class SkillCenterCIDGraphIndex:
                 ).fetchone()[0]
             )
             if invalid_neighbors:
-                raise SkillCenterCIDGraphError(
-                    "graph contains invalid BM25 neighbor edges"
-                )
+                raise SkillCenterCIDGraphError("graph contains invalid BM25 neighbor edges")
         loaded = cls(
             root=graph_root,
             manifest=manifest,
@@ -240,9 +211,7 @@ class SkillCenterCIDGraphIndex:
             neighbor_edges=int(self.manifest["neighbor_edges"]),
             graph_cid=str(self.manifest["graph_cid"]),
             sqlite_cid=str(self.manifest["sqlite"]["cid"]),
-            manifest_sha256=hashlib.sha256(
-                (self.root / "manifest.json").read_bytes()
-            ).hexdigest(),
+            manifest_sha256=hashlib.sha256((self.root / "manifest.json").read_bytes()).hexdigest(),
         )
 
     def neighbors(
@@ -283,18 +252,14 @@ class SkillCenterCIDGraphIndex:
         if corpus_dir is not None:
             corpus = SkillCenterCorpusIndex.load(corpus_dir, verify_rows=False)
             if self.manifest.get("corpus_input") != _corpus_input(corpus):
-                raise SkillCenterCIDGraphError(
-                    "graph is not bound to this corpus"
-                )
+                raise SkillCenterCIDGraphError("graph is not bound to this corpus")
         if bm25_dir is not None:
             bm25 = SkillCenterCorpusBM25Index.load(
                 bm25_dir,
                 verify_integrity=False,
             )
             if self.manifest.get("bm25_input") != _bm25_input(bm25):
-                raise SkillCenterCIDGraphError(
-                    "graph is not bound to this BM25 index"
-                )
+                raise SkillCenterCIDGraphError("graph is not bound to this BM25 index")
 
 
 def build_skillcenter_cid_graph(
@@ -317,9 +282,7 @@ def build_skillcenter_cid_graph(
         or not isinstance(max_neighbor_sources, int)
         or max_neighbor_sources < 0
     ):
-        raise SkillCenterCIDGraphError(
-            "max_neighbor_sources must be non-negative or None"
-        )
+        raise SkillCenterCIDGraphError("max_neighbor_sources must be non-negative or None")
     active_config = config or SkillCenterCIDGraphConfig()
     corpus = SkillCenterCorpusIndex.load(corpus_dir, verify_rows=False)
     bm25 = SkillCenterCorpusBM25Index.load(
@@ -336,9 +299,7 @@ def build_skillcenter_cid_graph(
         "primary_key": SKILLCENTER_CORPUS_PRIMARY_KEY,
         "schema_version": SKILLCENTER_CID_GRAPH_SCHEMA_VERSION,
     }
-    build_identity_sha256 = hashlib.sha256(
-        canonical_json_bytes(identity_payload)
-    ).hexdigest()
+    build_identity_sha256 = hashlib.sha256(canonical_json_bytes(identity_payload)).hexdigest()
     output = Path(output_dir).expanduser().resolve()
     output.mkdir(parents=True, exist_ok=True)
     if output.is_symlink() or not output.is_dir():
@@ -350,13 +311,8 @@ def build_skillcenter_cid_graph(
                 corpus_dir=corpus.root,
                 bm25_dir=bm25.root,
             )
-            if (
-                existing.manifest.get("build_identity_sha256")
-                != build_identity_sha256
-            ):
-                raise SkillCenterCIDGraphError(
-                    "existing graph was built from different inputs"
-                )
+            if existing.manifest.get("build_identity_sha256") != build_identity_sha256:
+                raise SkillCenterCIDGraphError("existing graph was built from different inputs")
             return existing.summary
         partial_path = output / "graph.partial.sqlite"
         connection = sqlite3.connect(partial_path)
@@ -383,9 +339,7 @@ def build_skillcenter_cid_graph(
                 progress_callback=progress_callback,
                 max_sources=max_neighbor_sources,
             )
-            total_sources = int(
-                _state(connection, "neighbor_sources_processed") or "0"
-            )
+            total_sources = int(_state(connection, "neighbor_sources_processed") or "0")
             expected_sources = int(corpus.manifest["source_records"])
             if total_sources < expected_sources:
                 connection.commit()
@@ -404,14 +358,10 @@ def build_skillcenter_cid_graph(
         descriptor = _file_descriptor(final_path, root=output)
         with closing(sqlite3.connect(final_path)) as verified:
             node_counts = dict(
-                verified.execute(
-                    "SELECT node_type, COUNT(*) FROM nodes GROUP BY node_type"
-                )
+                verified.execute("SELECT node_type, COUNT(*) FROM nodes GROUP BY node_type")
             )
             edge_counts = dict(
-                verified.execute(
-                    "SELECT edge_type, COUNT(*) FROM edges GROUP BY edge_type"
-                )
+                verified.execute("SELECT edge_type, COUNT(*) FROM edges GROUP BY edge_type")
             )
         graph_root_payload = {
             "bm25_input": bm25_input,
@@ -501,9 +451,7 @@ def _verify_partial_identity(
     build_identity_sha256: str,
 ) -> None:
     if _state(connection, "build_identity_sha256") != build_identity_sha256:
-        raise SkillCenterCIDGraphError(
-            "partial graph belongs to different inputs or configuration"
-        )
+        raise SkillCenterCIDGraphError("partial graph belongs to different inputs or configuration")
 
 
 def _build_base_graph(
@@ -628,13 +576,9 @@ def _build_neighbor_edges(
     max_sources: int | None,
 ) -> int:
     last_entry_cid = _state(connection, "neighbor_last_entry_cid") or ""
-    processed_total = int(
-        _state(connection, "neighbor_sources_processed") or "0"
-    )
+    processed_total = int(_state(connection, "neighbor_sources_processed") or "0")
     processed_now = 0
-    bm25_uri = (
-        f"{bm25.database_path.as_uri()}?mode=ro&immutable=1"
-    )
+    bm25_uri = f"{bm25.database_path.as_uri()}?mode=ro&immutable=1"
     with closing(sqlite3.connect(bm25_uri, uri=True)) as source:
         source.row_factory = sqlite3.Row
         while max_sources is None or processed_now < max_sources:
@@ -702,17 +646,13 @@ def _query_neighbor_batch(
     *,
     k: int,
     workers: int,
-) -> list[
-    tuple[str, tuple[str, ...], tuple[SkillCenterCorpusBM25Hit, ...]]
-]:
+) -> list[tuple[str, tuple[str, ...], tuple[SkillCenterCorpusBM25Hit, ...]]]:
     chunks = [list(rows[index::workers]) for index in range(workers)]
     chunks = [chunk for chunk in chunks if chunk]
 
     def query_chunk(
         chunk: Sequence[tuple[str, str, str]],
-    ) -> list[
-        tuple[str, tuple[str, ...], tuple[SkillCenterCorpusBM25Hit, ...]]
-    ]:
+    ) -> list[tuple[str, tuple[str, ...], tuple[SkillCenterCorpusBM25Hit, ...]]]:
         uri = f"{bm25.database_path.as_uri()}?mode=ro&immutable=1"
         output = []
         with closing(sqlite3.connect(uri, uri=True)) as connection:
@@ -771,9 +711,7 @@ def _insert_node(
         (node_cid,),
     ).fetchone()
     if existing != payload[1:]:
-        raise SkillCenterCIDGraphError(
-            f"conflicting node payload for CID {node_cid}"
-        )
+        raise SkillCenterCIDGraphError(f"conflicting node payload for CID {node_cid}")
 
 
 def _insert_edge(
@@ -820,9 +758,7 @@ def _insert_edge(
         (edge_cid,),
     ).fetchone()
     if existing != payload[1:]:
-        raise SkillCenterCIDGraphError(
-            f"conflicting edge payload for CID {edge_cid}"
-        )
+        raise SkillCenterCIDGraphError(f"conflicting edge payload for CID {edge_cid}")
 
 
 def _facet_cid(kind: str, value: str) -> str:
@@ -855,9 +791,7 @@ def _finalize_database(connection: sqlite3.Connection) -> None:
     connection.commit()
     result = connection.execute("PRAGMA integrity_check").fetchone()
     if result is None or result[0] != "ok":
-        raise SkillCenterCIDGraphError(
-            "graph database failed final integrity check"
-        )
+        raise SkillCenterCIDGraphError("graph database failed final integrity check")
     connection.execute("PRAGMA wal_checkpoint(TRUNCATE)")
     connection.execute("PRAGMA journal_mode = DELETE")
     connection.commit()

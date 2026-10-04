@@ -1,6 +1,3 @@
-
-
-
 from pathlib import Path
 from functools import partial
 import json
@@ -18,51 +15,55 @@ from utils.common.logger import get_logger
 
 logger = get_logger(__name__)
 
-def _json_load(file_path: str | Path, content: Any, encoding: str = 'utf-8'):
-    with open(file_path, 'r',encoding=encoding) as file:
+
+def _json_load(file_path: str | Path, content: Any, encoding: str = "utf-8"):
+    with open(file_path, "r", encoding=encoding) as file:
         json.load(content, file)
 
-def _json_str_load(file_path: str | Path, content: Any, encoding: str = 'utf-8'):
-    with open(file_path, 'r',encoding=encoding) as file:
+
+def _json_str_load(file_path: str | Path, content: Any, encoding: str = "utf-8"):
+    with open(file_path, "r", encoding=encoding) as file:
         json.loads(content, file)
 
-def _txt_load(file_path: str | Path, content: str, encoding: str = 'utf-8'):
-    with open(file_path, 'r', encoding=encoding) as file:
+
+def _txt_load(file_path: str | Path, content: str, encoding: str = "utf-8"):
+    with open(file_path, "r", encoding=encoding) as file:
         file.read(content)
 
-def _yaml_load(file_path: str | Path, content: Any, encoding: str = 'utf-8'):
-    with open(file_path, 'r', encoding=encoding) as file:
+
+def _yaml_load(file_path: str | Path, content: Any, encoding: str = "utf-8"):
+    with open(file_path, "r", encoding=encoding) as file:
         yaml.load(content, file)
+
 
 def _print(msg):
     print(msg)
     return lambda x: x
 
+
 _FUNCTION_DICT = {
-    '.txt': _txt_load,
-    '.json': _json_load,
-    '.jsonl': _json_str_load,
-    '.csv': _txt_load,
-    '.xml': _txt_load,
-    '.yaml': _yaml_load,
-    '.ini': _txt_load,
-    '.log': _txt_load,
-    '.md': _txt_load,
-    '.py': _txt_load,
-    '.html': _txt_load,
-    '.css': _txt_load,
-    '.js': _txt_load,
-    '.sql': _txt_load,
-    '.tsv': _txt_load,
-    '.toml': _txt_load,
-    '.yml': _yaml_load,
-    '.rst': _txt_load,
-    '.xml': _txt_load,
-    '.svg': _txt_load,
-    '.tex': _txt_load,
-
+    ".txt": _txt_load,
+    ".json": _json_load,
+    ".jsonl": _json_str_load,
+    ".csv": _txt_load,
+    ".xml": _txt_load,
+    ".yaml": _yaml_load,
+    ".ini": _txt_load,
+    ".log": _txt_load,
+    ".md": _txt_load,
+    ".py": _txt_load,
+    ".html": _txt_load,
+    ".css": _txt_load,
+    ".js": _txt_load,
+    ".sql": _txt_load,
+    ".tsv": _txt_load,
+    ".toml": _txt_load,
+    ".yml": _yaml_load,
+    ".rst": _txt_load,
+    ".xml": _txt_load,
+    ".svg": _txt_load,
+    ".tex": _txt_load,
 }
-
 
 
 # def file_converter(file: FileUnit):
@@ -86,6 +87,7 @@ _FUNCTION_DICT = {
 
 from .define_function import define_function
 
+
 def file_loader(file_unit: FileUnit):
     """
     Write content to a file using the appropriate function based on the file extension.
@@ -102,8 +104,8 @@ def file_loader(file_unit: FileUnit):
     file_name = file_unit.file_path.name
 
     # Get the partial function for the given file type
-    _load = define_function(file_unit, 'load')
-    
+    _load = define_function(file_unit, "load")
+
     # Use the monadic pipeline to load the content.
     loading = start(file_unit, Async) >> _print(f"Loading {file_name}...") >> _load
 
@@ -113,6 +115,4 @@ def file_loader(file_unit: FileUnit):
     else:
         file_unit.data = loading.value
         print("Loading successful.")
-        return Async(file_unit) # Return the File object as an Async monad
-
-
+        return Async(file_unit)  # Return the File object as an Async monad

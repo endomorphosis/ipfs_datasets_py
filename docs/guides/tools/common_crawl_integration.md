@@ -62,23 +62,21 @@ engine = CommonCrawlSearchEngine(mode="local")
 if engine.is_available():
     # Search for a domain
     results = engine.search_domain("example.com", max_matches=100)
-    
+
     for result in results:
         print(f"URL: {result['url']}")
         print(f"Timestamp: {result['timestamp']}")
         print(f"WARC: {result['warc_filename']}")
-        
+
     # List collections
     collections = engine.list_collections()
-    
+
     # Get collection info
     info = engine.get_collection_info("CC-MAIN-2024-10")
-    
+
     # Fetch WARC record
     content = engine.fetch_warc_record(
-        warc_filename="crawl-data/...",
-        warc_offset=12345,
-        warc_length=1000
+        warc_filename="crawl-data/...", warc_offset=12345, warc_length=1000
     )
 ```
 
@@ -89,8 +87,7 @@ from ipfs_datasets_py.processors.web_archiving import CommonCrawlSearchEngine
 
 # Initialize in remote mode
 engine = CommonCrawlSearchEngine(
-    mode="remote",
-    mcp_endpoint="http://ccindex-server.example.com:8787"
+    mode="remote", mcp_endpoint="http://ccindex-server.example.com:8787"
 )
 
 # Same API as local mode
@@ -106,10 +103,7 @@ from ipfs_datasets_py.processors.web_archiving import CommonCrawlSearchEngine
 engine = CommonCrawlSearchEngine(mode="cli")
 
 # Or remote CLI via SSH
-engine = CommonCrawlSearchEngine(
-    mode="cli",
-    ssh_host="ccindex-server.example.com"
-)
+engine = CommonCrawlSearchEngine(mode="cli", ssh_host="ccindex-server.example.com")
 
 # Same API
 results = engine.search_domain("example.com")
@@ -157,14 +151,10 @@ The Common Crawl integration is exposed via MCP tools for AI assistant access:
 **Example Usage in MCP Client:**
 
 ```python
-from ipfs_datasets_py.mcp_server.tools.web_archive_tools import (
-    search_common_crawl_advanced
-)
+from ipfs_datasets_py.mcp_server.tools.web_archive_tools import search_common_crawl_advanced
 
 result = await search_common_crawl_advanced(
-    domain="example.com",
-    max_matches=100,
-    collection="CC-MAIN-2024-10"
+    domain="example.com", max_matches=100, collection="CC-MAIN-2024-10"
 )
 
 print(result)  # Returns structured result dict
@@ -180,7 +170,7 @@ from ipfs_datasets_py.dashboards import common_crawl_dashboard
 # Create dashboard integration
 integration = common_crawl_dashboard.create_dashboard_integration(
     mode="embedded",  # or "remote"
-    port=8788
+    port=8788,
 )
 
 # Start embedded dashboard
@@ -251,7 +241,7 @@ engine = CommonCrawlSearchEngine(
     master_db_path="/path/to/master.duckdb",  # Optional
     state_dir="state",  # Default
     rowgroup_index_dir="/path/to/indexes",  # Optional
-    year_index_dir="/path/to/year/indexes"  # Optional
+    year_index_dir="/path/to/year/indexes",  # Optional
 )
 ```
 
@@ -283,8 +273,7 @@ ccindex-dashboard --host 0.0.0.0 --port 8787
 ```python
 # Connect via remote mode
 engine = CommonCrawlSearchEngine(
-    mode="remote",
-    mcp_endpoint="http://ccindex-server.example.com:8787"
+    mode="remote", mcp_endpoint="http://ccindex-server.example.com:8787"
 )
 ```
 
@@ -297,8 +286,7 @@ from ipfs_datasets_py.dashboards.common_crawl_dashboard import CommonCrawlDashbo
 
 # Remote dashboard
 integration = CommonCrawlDashboardIntegration(
-    mode="remote",
-    remote_endpoint="http://ccindex-server:8787"
+    mode="remote", remote_endpoint="http://ccindex-server:8787"
 )
 
 # Get iframe config for main dashboard

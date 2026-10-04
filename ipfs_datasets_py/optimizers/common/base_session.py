@@ -152,7 +152,9 @@ class BaseSession:
 
     def __repr__(self) -> str:
         """Concise REPL-friendly representation."""
-        status = "converged" if self.converged else "active" if self.finished_at is None else "finished"
+        status = (
+            "converged" if self.converged else "active" if self.finished_at is None else "finished"
+        )
         best = self.best_score
         return (
             f"BaseSession(id={self.session_id!r}, domain={self.domain!r}, "
@@ -269,6 +271,7 @@ class BaseSession:
             JSON string representation of the session.
         """
         import json as _json
+
         return _json.dumps(self.to_dict(), **json_kwargs)
 
     @classmethod
@@ -312,6 +315,7 @@ class BaseSession:
             json_str: JSON string as produced by :meth:`to_json`.
         """
         import json as _json
+
         return cls.from_dict(_json.loads(json_str))
 
 

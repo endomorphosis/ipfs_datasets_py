@@ -29,11 +29,7 @@ def _sha256_json(value: object) -> str:
 
 def _redigest(value: dict[str, object]) -> dict[str, object]:
     value["artifact_sha256"] = _sha256_json(
-        {
-            key: item
-            for key, item in value.items()
-            if key != "artifact_sha256"
-        }
+        {key: item for key, item in value.items() if key != "artifact_sha256"}
     )
     return value
 
@@ -67,14 +63,11 @@ def test_source_binding_revalidates_pilot_gate(
     assert binding == {
         "kind": "pilot_shortlist_gate",
         "path": holdout_gate.PILOT_SOURCE_PATH.as_posix(),
-        "schema": "ipfs-datasets.logic-pipeline-benchmark."
-        "pilot-shortlist-gate.v1",
+        "schema": "ipfs-datasets.logic-pipeline-benchmark.pilot-shortlist-gate.v1",
         "content_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
         "semantic_sha256": source_value["artifact_sha256"],
     }
-    assert holdout_gate.ALLOWED_SOURCE_PATHS == {
-        holdout_gate.PILOT_SOURCE_PATH.as_posix()
-    }
+    assert holdout_gate.ALLOWED_SOURCE_PATHS == {holdout_gate.PILOT_SOURCE_PATH.as_posix()}
 
 
 def test_prerequisite_blocks_access_and_baseline_only_execution(
@@ -121,9 +114,7 @@ def test_holdout_manifest_is_frozen_without_inspecting_outcomes(
     corpus = load_reviewed_corpus()
     holdout = corpus.split_integrity.holdout
     assert isinstance(manifest, dict)
-    assert manifest["corpus_manifest_sha256"] == (
-        FROZEN_CORPUS_MANIFEST_SHA256
-    )
+    assert manifest["corpus_manifest_sha256"] == (FROZEN_CORPUS_MANIFEST_SHA256)
     assert manifest["split_sha256"] == FROZEN_SPLIT_SHA256[Split.HOLDOUT]
     assert manifest["case_ids"] == list(holdout.case_ids)
     assert manifest["case_sha256s"] == list(holdout.case_sha256s)
@@ -143,13 +134,9 @@ def test_future_evaluation_contract_freezes_every_acceptance_boundary(
     assert contract["evaluation_variant_ids"] == []
     assert contract["cache_modes"] == ["cold", "warm"]
     assert contract["identical_case_manifest_required"] is True
-    assert contract["identical_manifest_sha256"] == (
-        FROZEN_SPLIT_SHA256[Split.HOLDOUT]
-    )
+    assert contract["identical_manifest_sha256"] == (FROZEN_SPLIT_SHA256[Split.HOLDOUT])
     assert contract["expected_pair_count"] == 0
-    assert contract["kernel_success_authority"] == (
-        "independent_native_kernel"
-    )
+    assert contract["kernel_success_authority"] == ("independent_native_kernel")
     assert contract["success_receipt_required"] is True
     assert contract["fresh_worktree_replay_required"] is True
     assert contract["sampled_failure_replay_required"] is True
@@ -176,9 +163,7 @@ def test_all_nonbaseline_candidates_are_explicitly_ineligible(
 ) -> None:
     eligibility = canonical_report["candidate_eligibility"]
     assert isinstance(eligibility, list)
-    assert [item["variant_id"] for item in eligibility] == [
-        f"A{index}" for index in range(1, 13)
-    ]
+    assert [item["variant_id"] for item in eligibility] == [f"A{index}" for index in range(1, 13)]
     assert all(
         item["status"] == "ineligible_before_holdout"
         and item["selection_eligible"] is False
@@ -186,9 +171,7 @@ def test_all_nonbaseline_candidates_are_explicitly_ineligible(
         and item["reasons"]
         for item in eligibility
     )
-    assert canonical_report["outcomes"][
-        "capability_ineligible_candidate_count"
-    ] == 12
+    assert canonical_report["outcomes"]["capability_ineligible_candidate_count"] == 12
 
 
 def test_null_metrics_cover_every_required_domain(
@@ -209,9 +192,7 @@ def test_null_metrics_cover_every_required_domain(
     assert metrics["cold_warm_collapsed"] is False
     domains = metrics["domains"]
     assert isinstance(domains, list)
-    assert [item["domain"] for item in domains] == metrics[
-        "required_domains"
-    ]
+    assert [item["domain"] for item in domains] == metrics["required_domains"]
     for item in domains:
         assert item["measurement_status"] == "not_observed"
         assert item["complete"] is False
@@ -258,9 +239,7 @@ def test_redigested_state_invention_is_rejected(
 ) -> None:
     changed = copy.deepcopy(canonical_report)
     changed[section][key] = replacement
-    with pytest.raises(
-        holdout_gate.HoldoutGateError, match="allowlisted source evidence"
-    ):
+    with pytest.raises(holdout_gate.HoldoutGateError, match="allowlisted source evidence"):
         holdout_gate.validate_holdout_gate_report(_redigest(changed))
 
 
@@ -268,12 +247,8 @@ def test_redigested_non_null_metric_is_rejected(
     canonical_report: dict[str, object],
 ) -> None:
     changed = copy.deepcopy(canonical_report)
-    changed["metrics"]["domains"][0]["values"][
-        "invalid_control_kernel_false_positive_count"
-    ] = 0
-    with pytest.raises(
-        holdout_gate.HoldoutGateError, match="allowlisted source evidence"
-    ):
+    changed["metrics"]["domains"][0]["values"]["invalid_control_kernel_false_positive_count"] = 0
+    with pytest.raises(holdout_gate.HoldoutGateError, match="allowlisted source evidence"):
         holdout_gate.validate_holdout_gate_report(_redigest(changed))
 
 
@@ -301,12 +276,8 @@ def test_writer_round_trip_and_overwrite_protection(
         repository_root=ROOT,
     )
     assert written == path
-    assert path.read_text(encoding="utf-8") == (
-        canonical_json(canonical_report) + "\n"
-    )
-    assert holdout_gate.load_holdout_gate_report(
-        path, repository_root=ROOT
-    ) == canonical_report
+    assert path.read_text(encoding="utf-8") == (canonical_json(canonical_report) + "\n")
+    assert holdout_gate.load_holdout_gate_report(path, repository_root=ROOT) == canonical_report
     with pytest.raises(holdout_gate.HoldoutGateError, match="overwrite"):
         holdout_gate.write_holdout_gate_report(
             canonical_report,
@@ -324,9 +295,7 @@ def test_writer_round_trip_and_overwrite_protection(
         '{"value":1}\n\n',
     ],
 )
-def test_loader_rejects_noncanonical_or_nonstrict_json(
-    tmp_path: Path, payload: str
-) -> None:
+def test_loader_rejects_noncanonical_or_nonstrict_json(tmp_path: Path, payload: str) -> None:
     path = tmp_path / "bad.json"
     path.write_text(payload, encoding="utf-8")
     with pytest.raises(holdout_gate.HoldoutGateError):
@@ -337,9 +306,7 @@ def test_generic_ablation_executor_cannot_bypass_holdout_gate(
     tmp_path: Path,
 ) -> None:
     corpus = load_reviewed_corpus()
-    holdout_cases = [
-        case for case in corpus.cases if case.split is Split.HOLDOUT
-    ]
+    holdout_cases = [case for case in corpus.cases if case.split is Split.HOLDOUT]
     plan = ablation.build_ablation_plan(
         "unauthorized-holdout",
         holdout_cases,
@@ -377,9 +344,7 @@ def test_summary_and_required_cli(
         "efficacy_claimed": False,
         "production_promotion_authorized": False,
     }
-    assert holdout_gate.holdout_gate_summary(
-        canonical_report, repository_root=ROOT
-    ) == expected
+    assert holdout_gate.holdout_gate_summary(canonical_report, repository_root=ROOT) == expected
 
     completed = subprocess.run(
         [

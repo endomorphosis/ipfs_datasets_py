@@ -68,6 +68,7 @@ belief = container.create_belief("agent", "taskComplete")
 
 # Use theorem prover
 from ipfs_datasets_py.logic.CEC.native.prover_core import TheoremProver
+
 prover = TheoremProver()
 prover.add_axiom("A → B")
 prover.add_axiom("A")
@@ -137,10 +138,7 @@ framework = CECFramework()
 init_results = framework.initialize()
 
 # Convert natural language to logic
-task = framework.reason_about(
-    "The agent must fulfill their obligation",
-    prove=False
-)
+task = framework.reason_about("The agent must fulfill their obligation", prove=False)
 
 print(f"DCEC Formula: {task.dcec_formula}")
 print(f"Success: {task.success}")
@@ -155,10 +153,7 @@ print(f"Success: {task.success}")
 framework.add_knowledge("O(act(agent))")
 
 # Add from natural language
-framework.add_knowledge(
-    "The agent is obligated to act",
-    is_natural_language=True
-)
+framework.add_knowledge("The agent is obligated to act", is_natural_language=True)
 ```
 
 ### Theorem Proving
@@ -166,9 +161,7 @@ framework.add_knowledge(
 ```python
 # Prove a theorem
 proof = framework.prove_theorem(
-    conjecture="O(act(agent))",
-    axioms=["K(agent, obligation)"],
-    use_temporal=False
+    conjecture="O(act(agent))", axioms=["K(agent, obligation)"], use_temporal=False
 )
 
 print(f"Proof result: {proof.result}")
@@ -180,9 +173,7 @@ print(f"Proof tree: {proof.proof_tree}")
 ```python
 # Full pipeline: NL -> Logic -> Prove
 task = framework.reason_about(
-    "The agent is obligated to perform action X",
-    prove=True,
-    axioms=["rule1", "rule2"]
+    "The agent is obligated to perform action X", prove=True, axioms=["rule1", "rule2"]
 )
 
 if task.success:
@@ -198,7 +189,7 @@ else:
 statements = [
     "The agent has an obligation",
     "The agent has permission",
-    "The agent believes something"
+    "The agent believes something",
 ]
 
 tasks = framework.batch_reason(statements, prove=False)
@@ -214,10 +205,7 @@ config = FrameworkConfig(reasoning_mode=ReasoningMode.TEMPORAL)
 temporal_framework = CECFramework(config)
 temporal_framework.initialize()
 
-task = temporal_framework.reason_about(
-    "Eventually the agent will act",
-    prove=True
-)
+task = temporal_framework.reason_about("Eventually the agent will act", prove=True)
 ```
 
 ## Configuration
@@ -226,14 +214,14 @@ Customize the framework behavior:
 
 ```python
 config = FrameworkConfig(
-    use_dcec=True,              # Enable DCEC Library
-    use_talos=True,             # Enable Talos prover
-    use_eng_dcec=True,          # Enable Eng-DCEC converter
-    use_shadow_prover=False,    # Enable ShadowProver
+    use_dcec=True,  # Enable DCEC Library
+    use_talos=True,  # Enable Talos prover
+    use_eng_dcec=True,  # Enable Eng-DCEC converter
+    use_shadow_prover=False,  # Enable ShadowProver
     reasoning_mode=ReasoningMode.SIMULTANEOUS,
     gf_server_url="http://127.0.0.1:41296",  # GF server URL
-    spass_path="/path/to/spass",             # SPASS binary path
-    shadow_prover_docker=True                # Use Docker for ShadowProver
+    spass_path="/path/to/spass",  # SPASS binary path
+    shadow_prover_docker=True,  # Use Docker for ShadowProver
 )
 
 framework = CECFramework(config)

@@ -1,6 +1,7 @@
 """
 Test suite for interfaces/options.py converted from unittest to pytest.
 """
+
 import pytest
 from unittest.mock import patch, MagicMock
 import argparse
@@ -16,7 +17,7 @@ from interfaces.options import (
     _validate_max_memory,
     _validate_max_vram,
     Options,
-    OutputFormat
+    OutputFormat,
 )
 
 try:
@@ -47,7 +48,7 @@ class TestValidateMaxWorkers:
     Valid input: Worker count less than or equal to CPU cores
     """
 
-    @patch('os.cpu_count')
+    @patch("os.cpu_count")
     def test_when_valid_worker_count_provided_then_returns_same_value(self, mock_cpu_count):
         """
         GIVEN a max_threads value less than CPU cores
@@ -55,12 +56,12 @@ class TestValidateMaxWorkers:
         THEN expect function returns the same value
         """
         mock_cpu_count.return_value = TOTAL_CPU_CORES
-        
+
         result = _validate_max_workers(VALID_WORKER_COUNT)
-        
+
         assert result == VALID_WORKER_COUNT, f"Expected {VALID_WORKER_COUNT}, got {result}"
 
-    @patch('os.cpu_count')
+    @patch("os.cpu_count")
     def test_when_excessive_worker_count_provided_then_raises_value_error(self, mock_cpu_count):
         """
         GIVEN a max_threads value greater than available CPU cores
@@ -68,11 +69,13 @@ class TestValidateMaxWorkers:
         THEN expect ValueError is raised
         """
         mock_cpu_count.return_value = TOTAL_CPU_CORES
-        
+
         with pytest.raises(ValueError) as exc_info:
             _validate_max_workers(INVALID_WORKER_COUNT)
-        
-        assert "cpu" in str(exc_info.value).lower(), f"Expected 'cpu' in error message, got: {exc_info.value}"
+
+        assert "cpu" in str(exc_info.value).lower(), (
+            f"Expected 'cpu' in error message, got: {exc_info.value}"
+        )
 
 
 @pytest.mark.unit
@@ -83,7 +86,7 @@ class TestValidateMaxMemory:
     Valid input: Memory value less than total system memory
     """
 
-    @patch('interfaces.options.Hardware.get_total_memory_in_gb')
+    @patch("interfaces.options.Hardware.get_total_memory_in_gb")
     def test_when_valid_memory_limit_provided_then_returns_same_value(self, mock_get_memory):
         """
         GIVEN a max_memory value less than current total memory
@@ -91,12 +94,12 @@ class TestValidateMaxMemory:
         THEN expect function returns the same value
         """
         mock_get_memory.return_value = TOTAL_SYSTEM_MEMORY
-        
+
         result = _validate_max_memory(VALID_MEMORY_LIMIT)
-        
+
         assert result == VALID_MEMORY_LIMIT, f"Expected {VALID_MEMORY_LIMIT}, got {result}"
 
-    @patch('interfaces.options.Hardware.get_total_memory_in_gb')
+    @patch("interfaces.options.Hardware.get_total_memory_in_gb")
     def test_when_excessive_memory_limit_provided_then_raises_value_error(self, mock_get_memory):
         """
         GIVEN a max_memory value greater than current total memory
@@ -124,7 +127,7 @@ class TestValidateMaxVram:
         THEN expect function returns the same value
         """
         result = _validate_max_vram(VALID_VRAM_LIMIT)
-        
+
         assert result == VALID_VRAM_LIMIT, f"Expected {VALID_VRAM_LIMIT}, got {result}"
 
 
@@ -141,7 +144,9 @@ class TestOutputFormatTxt:
         WHEN accessing OutputFormat.TXT
         THEN expect value equals txt string constant
         """
-        assert OutputFormat.TXT == TXT_FORMAT_VALUE, f"Expected {TXT_FORMAT_VALUE}, got {OutputFormat.TXT}"
+        assert OutputFormat.TXT == TXT_FORMAT_VALUE, (
+            f"Expected {TXT_FORMAT_VALUE}, got {OutputFormat.TXT}"
+        )
 
     def test_when_accessing_txt_format_then_is_str_enum_instance(self):
         """
@@ -149,7 +154,9 @@ class TestOutputFormatTxt:
         WHEN accessing OutputFormat.TXT
         THEN expect instance is StrEnum type
         """
-        assert isinstance(OutputFormat.TXT, StrEnum), f"Expected StrEnum instance, got {type(OutputFormat.TXT)}"
+        assert isinstance(OutputFormat.TXT, StrEnum), (
+            f"Expected StrEnum instance, got {type(OutputFormat.TXT)}"
+        )
 
 
 @pytest.mark.unit
@@ -165,7 +172,9 @@ class TestOutputFormatMd:
         WHEN accessing OutputFormat.MD
         THEN expect value equals md string constant
         """
-        assert OutputFormat.MD == MD_FORMAT_VALUE, f"Expected {MD_FORMAT_VALUE}, got {OutputFormat.MD}"
+        assert OutputFormat.MD == MD_FORMAT_VALUE, (
+            f"Expected {MD_FORMAT_VALUE}, got {OutputFormat.MD}"
+        )
 
     def test_when_accessing_md_format_then_is_str_enum_instance(self):
         """
@@ -173,7 +182,9 @@ class TestOutputFormatMd:
         WHEN accessing OutputFormat.MD
         THEN expect instance is StrEnum type
         """
-        assert isinstance(OutputFormat.MD, StrEnum), f"Expected StrEnum instance, got {type(OutputFormat.MD)}"
+        assert isinstance(OutputFormat.MD, StrEnum), (
+            f"Expected StrEnum instance, got {type(OutputFormat.MD)}"
+        )
 
 
 @pytest.mark.unit
@@ -189,7 +200,9 @@ class TestOutputFormatJson:
         WHEN accessing OutputFormat.JSON
         THEN expect value equals json string constant
         """
-        assert OutputFormat.JSON == JSON_FORMAT_VALUE, f"Expected {JSON_FORMAT_VALUE}, got {OutputFormat.JSON}"
+        assert OutputFormat.JSON == JSON_FORMAT_VALUE, (
+            f"Expected {JSON_FORMAT_VALUE}, got {OutputFormat.JSON}"
+        )
 
     def test_when_accessing_json_format_then_is_str_enum_instance(self):
         """
@@ -197,7 +210,9 @@ class TestOutputFormatJson:
         WHEN accessing OutputFormat.JSON
         THEN expect instance is StrEnum type
         """
-        assert isinstance(OutputFormat.JSON, StrEnum), f"Expected StrEnum instance, got {type(OutputFormat.JSON)}"
+        assert isinstance(OutputFormat.JSON, StrEnum), (
+            f"Expected StrEnum instance, got {type(OutputFormat.JSON)}"
+        )
 
 
 # Additional Test Constants
@@ -220,11 +235,11 @@ def temp_files():
     """Create temporary files and directories for testing."""
     temp_dir = tempfile.mkdtemp()
     temp_file = os.path.join(temp_dir, "test_file.txt")
-    with open(temp_file, 'w') as f:
+    with open(temp_file, "w") as f:
         f.write("test content")
-    
-    yield {'temp_dir': temp_dir, 'temp_file': temp_file}
-    
+
+    yield {"temp_dir": temp_dir, "temp_file": temp_file}
+
     # Cleanup
     if os.path.exists(temp_file):
         os.remove(temp_file)
@@ -246,8 +261,8 @@ class TestOptionsCreationMinimal:
         WHEN Options is created with input file path
         THEN expect Options instance is created
         """
-        options = Options(input=temp_files['temp_file'])
-        
+        options = Options(input=temp_files["temp_file"])
+
         assert isinstance(options, Options), f"Expected Options instance, got {type(options)}"
 
     def test_when_minimal_input_provided_then_sets_input_path(self, temp_files):
@@ -256,9 +271,11 @@ class TestOptionsCreationMinimal:
         WHEN Options is created with input file path
         THEN expect input attribute matches provided path
         """
-        options = Options(input=temp_files['temp_file'])
-        
-        assert str(options.input) == temp_files['temp_file'], f"Expected {temp_files['temp_file']}, got {options.input}"
+        options = Options(input=temp_files["temp_file"])
+
+        assert str(options.input) == temp_files["temp_file"], (
+            f"Expected {temp_files['temp_file']}, got {options.input}"
+        )
 
     def test_when_minimal_input_provided_then_sets_default_output(self, temp_files):
         """
@@ -266,9 +283,11 @@ class TestOptionsCreationMinimal:
         WHEN Options is created with input file path
         THEN expect output attribute equals default home path
         """
-        options = Options(input=temp_files['temp_file'])
-        
-        assert options.output == DEFAULT_OUTPUT_PATH, f"Expected {DEFAULT_OUTPUT_PATH}, got {options.output}"
+        options = Options(input=temp_files["temp_file"])
+
+        assert options.output == DEFAULT_OUTPUT_PATH, (
+            f"Expected {DEFAULT_OUTPUT_PATH}, got {options.output}"
+        )
 
     def test_when_minimal_input_provided_then_sets_default_walk(self, temp_files):
         """
@@ -276,9 +295,11 @@ class TestOptionsCreationMinimal:
         WHEN Options is created with input file path
         THEN expect walk attribute equals default walk value
         """
-        options = Options(input=temp_files['temp_file'])
-        
-        assert options.walk is DEFAULT_WALK_VALUE, f"Expected {DEFAULT_WALK_VALUE}, got {options.walk}"
+        options = Options(input=temp_files["temp_file"])
+
+        assert options.walk is DEFAULT_WALK_VALUE, (
+            f"Expected {DEFAULT_WALK_VALUE}, got {options.walk}"
+        )
 
     def test_when_minimal_input_provided_then_sets_default_normalize(self, temp_files):
         """
@@ -286,9 +307,11 @@ class TestOptionsCreationMinimal:
         WHEN Options is created with input file path
         THEN expect normalize attribute equals default normalize value
         """
-        options = Options(input=temp_files['temp_file'])
-        
-        assert options.normalize is DEFAULT_NORMALIZE_VALUE, f"Expected {DEFAULT_NORMALIZE_VALUE}, got {options.normalize}"
+        options = Options(input=temp_files["temp_file"])
+
+        assert options.normalize is DEFAULT_NORMALIZE_VALUE, (
+            f"Expected {DEFAULT_NORMALIZE_VALUE}, got {options.normalize}"
+        )
 
 
 @pytest.mark.unit
@@ -305,9 +328,11 @@ class TestOptionsCreationWithFormat:
         WHEN Options is created with format=OutputFormat.JSON
         THEN expect format attribute equals JSON output format
         """
-        options = Options(input=temp_files['temp_file'], format=OutputFormat.JSON)
-        
-        assert options.format == OutputFormat.JSON, f"Expected {OutputFormat.JSON}, got {options.format}"
+        options = Options(input=temp_files["temp_file"], format=OutputFormat.JSON)
+
+        assert options.format == OutputFormat.JSON, (
+            f"Expected {OutputFormat.JSON}, got {options.format}"
+        )
 
     def test_when_custom_batch_size_specified_then_sets_batch_size(self, temp_files):
         """
@@ -315,9 +340,11 @@ class TestOptionsCreationWithFormat:
         WHEN Options is created with batch_size parameter
         THEN expect batch_size attribute equals provided value
         """
-        options = Options(input=temp_files['temp_file'], batch_size=TEST_BATCH_SIZE)
-        
-        assert options.batch_size == TEST_BATCH_SIZE, f"Expected {TEST_BATCH_SIZE}, got {options.batch_size}"
+        options = Options(input=temp_files["temp_file"], batch_size=TEST_BATCH_SIZE)
+
+        assert options.batch_size == TEST_BATCH_SIZE, (
+            f"Expected {TEST_BATCH_SIZE}, got {options.batch_size}"
+        )
 
     def test_when_custom_retries_specified_then_sets_retries(self, temp_files):
         """
@@ -325,8 +352,8 @@ class TestOptionsCreationWithFormat:
         WHEN Options is created with retries parameter
         THEN expect retries attribute equals provided value
         """
-        options = Options(input=temp_files['temp_file'], retries=TEST_RETRIES)
-        
+        options = Options(input=temp_files["temp_file"], retries=TEST_RETRIES)
+
         assert options.retries == TEST_RETRIES, f"Expected {TEST_RETRIES}, got {options.retries}"
 
 
@@ -344,8 +371,8 @@ class TestOptionsInputValidation:
         WHEN Options is created with input file path
         THEN expect input path exists as file
         """
-        options = Options(input=temp_files['temp_file'])
-        
+        options = Options(input=temp_files["temp_file"])
+
         assert Path(options.input).exists(), f"Expected path {options.input} to exist"
 
     def test_when_existing_file_provided_then_input_is_file(self, temp_files):
@@ -354,8 +381,8 @@ class TestOptionsInputValidation:
         WHEN Options is created with input file path
         THEN expect input path is a file
         """
-        options = Options(input=temp_files['temp_file'])
-        
+        options = Options(input=temp_files["temp_file"])
+
         assert Path(options.input).is_file(), f"Expected {options.input} to be a file"
 
     def test_when_existing_directory_provided_then_input_path_exists(self, temp_files):
@@ -364,8 +391,8 @@ class TestOptionsInputValidation:
         WHEN Options is created with input directory path
         THEN expect input path exists
         """
-        options = Options(input=temp_files['temp_dir'])
-        
+        options = Options(input=temp_files["temp_dir"])
+
         assert Path(options.input).exists(), f"Expected path {options.input} to exist"
 
     def test_when_existing_directory_provided_then_input_is_directory(self, temp_files):
@@ -374,8 +401,8 @@ class TestOptionsInputValidation:
         WHEN Options is created with input directory path
         THEN expect input path is a directory
         """
-        options = Options(input=temp_files['temp_dir'])
-        
+        options = Options(input=temp_files["temp_dir"])
+
         assert Path(options.input).is_dir(), f"Expected {options.input} to be a directory"
 
     def test_options_input_list_of_files(self, temp_files):
@@ -386,12 +413,12 @@ class TestOptionsInputValidation:
             - input field accepts list[FilePath]
             - All files exist validation passes
         """
-        temp_file2 = os.path.join(temp_files['temp_dir'], "test_file2.txt")
-        with open(temp_file2, 'w') as f:
+        temp_file2 = os.path.join(temp_files["temp_dir"], "test_file2.txt")
+        with open(temp_file2, "w") as f:
             f.write("test content 2")
-        
+
         try:
-            options = Options(input=[temp_files['temp_file'], temp_file2])
+            options = Options(input=[temp_files["temp_file"], temp_file2])
             assert isinstance(options.input, list)
             assert len(options.input) == 2
         finally:
@@ -406,7 +433,7 @@ class TestOptionsInputValidation:
             - output defaults to Path.home()
             - Is DirectoryPath type
         """
-        options = Options(input=temp_files['temp_file'])
+        options = Options(input=temp_files["temp_file"])
         assert options.output == Path.home()
 
     def test_options_format_validation(self, temp_files):
@@ -418,7 +445,7 @@ class TestOptionsInputValidation:
             - Error mentions valid formats
         """
         with pytest.raises(ValidationError) as exc_info:
-            Options(input=temp_files['temp_file'], format="invalid")
+            Options(input=temp_files["temp_file"], format="invalid")
         assert "format" in str(exc_info.value).lower()
 
     def test_options_max_cpu_range(self, temp_files):
@@ -430,7 +457,7 @@ class TestOptionsInputValidation:
             - Error mentions maximum of 100
         """
         with pytest.raises(ValidationError) as exc_info:
-            Options(input=temp_files['temp_file'], max_cpu=150)
+            Options(input=temp_files["temp_file"], max_cpu=150)
         assert "100" in str(exc_info.value)
 
     def test_options_quality_threshold_range(self, temp_files):
@@ -442,7 +469,7 @@ class TestOptionsInputValidation:
             - Error mentions maximum of 1.0
         """
         with pytest.raises(ValidationError) as exc_info:
-            Options(input=temp_files['temp_file'], quality_threshold=1.5)
+            Options(input=temp_files["temp_file"], quality_threshold=1.5)
         assert "1" in str(exc_info.value)
 
 
@@ -460,25 +487,25 @@ class TestOptionsToDict:
             - No missing fields
         """
         options = Options(
-            input=temp_files['temp_file'],
-            output=temp_files['temp_dir'],
+            input=temp_files["temp_file"],
+            output=temp_files["temp_dir"],
             walk=True,
             normalize=False,
-            format=OutputFormat.JSON
+            format=OutputFormat.JSON,
         )
         result_dict = options.to_dict()
         logger.debug(f"Options to_dict result: {result_dict}")
-        
+
         assert isinstance(result_dict, dict)
-        assert 'input' in result_dict
-        assert 'output' in result_dict
-        assert 'walk' in result_dict
-        assert 'normalize' in result_dict
-        assert 'format' in result_dict
+        assert "input" in result_dict
+        assert "output" in result_dict
+        assert "walk" in result_dict
+        assert "normalize" in result_dict
+        assert "format" in result_dict
 
         # Check values match instance attributes
-        assert result_dict['walk'] is True
-        assert result_dict['normalize'] is False
+        assert result_dict["walk"] is True
+        assert result_dict["normalize"] is False
 
     def test_to_dict_defaults_only(self, temp_files):
         """
@@ -488,20 +515,20 @@ class TestOptionsToDict:
             - Returns dictionary with all fields
             - All values are defaults
         """
-        options = Options(input=temp_files['temp_file'])
+        options = Options(input=temp_files["temp_file"])
         result_dict = options.to_dict()
-        
+
         assert isinstance(result_dict, dict)
-        assert result_dict['walk'] is False
-        assert result_dict['normalize'] is True
-        assert result_dict['format'] == OutputFormat.TXT
+        assert result_dict["walk"] is False
+        assert result_dict["normalize"] is True
+        assert result_dict["format"] == OutputFormat.TXT
 
 
 @pytest.mark.unit
 class TestOptionsPrintOptions:
     """Test the print_options method of Options."""
 
-    @patch('builtins.print')
+    @patch("builtins.print")
     def test_print_options_defaults(self, mock_print, temp_files):
         """
         GIVEN an Options instance
@@ -511,15 +538,15 @@ class TestOptionsPrintOptions:
             - Includes field descriptions
             - Output formatted correctly
         """
-        options = Options(input=temp_files['temp_file'])
+        options = Options(input=temp_files["temp_file"])
         options.print_options(type_="defaults")
-        
+
         mock_print.assert_called()
         # Check that print was called with some expected content
-        printed_content = ''.join([str(call.args[0]) for call in mock_print.call_args_list])
+        printed_content = "".join([str(call.args[0]) for call in mock_print.call_args_list])
         assert "default" in printed_content.lower()
 
-    @patch('builtins.print')
+    @patch("builtins.print")
     def test_print_options_current(self, mock_print, temp_files):
         """
         GIVEN an Options instance with custom values
@@ -529,11 +556,11 @@ class TestOptionsPrintOptions:
             - Shows both current and default values
             - Output formatted correctly
         """
-        options = Options(input=temp_files['temp_file'], walk=True, normalize=False)
+        options = Options(input=temp_files["temp_file"], walk=True, normalize=False)
         options.print_options(type_="current")
-        
+
         mock_print.assert_called()
-        printed_content = ''.join([str(call.args[0]) for call in mock_print.call_args_list])
+        printed_content = "".join([str(call.args[0]) for call in mock_print.call_args_list])
         assert "current" in printed_content.lower()
 
     def test_print_options_invalid_type(self, temp_files):
@@ -544,7 +571,7 @@ class TestOptionsPrintOptions:
             - Raises ValueError
             - Error message mentions valid types
         """
-        options = Options(input=temp_files['temp_file'])
+        options = Options(input=temp_files["temp_file"])
         with pytest.raises(ValueError) as exc_info:
             options.print_options(type_="invalid")
         assert "valid" in str(exc_info.value).lower()
@@ -568,11 +595,11 @@ class TestOptionsMakeArgparse:
             - Correct types assigned
             - Help text included
         """
-        options = Options(input=temp_files['temp_file'])
+        options = Options(input=temp_files["temp_file"])
         result_parser = options.add_arguments_to_parser(parser)
-        
+
         assert isinstance(result_parser, argparse.ArgumentParser)
-        
+
         # Check that some key arguments were added
         help_text = result_parser.format_help()
         assert "input" in help_text.lower()
@@ -587,15 +614,15 @@ class TestOptionsMakeArgparse:
             - All arguments have correct defaults
             - Defaults match field definitions
         """
-        options = Options(input=temp_files['temp_file'])
+        options = Options(input=temp_files["temp_file"])
         result_parser = options.add_arguments_to_parser(parser)
-        
+
         # Parse with minimal required args to get defaults
-        args = result_parser.parse_args(['--input', temp_files['temp_file']])
+        args = result_parser.parse_args(["--input", temp_files["temp_file"]])
         print(f"args: {args}")
-        
+
         # Check all default values
-        assert args.input == temp_files['temp_file']  # Required field, provided
+        assert args.input == temp_files["temp_file"]  # Required field, provided
         assert str(args.output) == str(Path.home())
         assert args.walk is False
         assert args.normalize is True

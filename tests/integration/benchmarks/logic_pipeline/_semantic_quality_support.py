@@ -70,9 +70,7 @@ def semantic_target(
     return SemanticCalibrationTargetV2(
         case_id=case_id,
         source_text=(
-            source_text
-            if source_text is not None
-            else f"Agency {token} must publish its notice."
+            source_text if source_text is not None else f"Agency {token} must publish its notice."
         ),
         logic_family="deontic",
         target=target,
@@ -115,9 +113,7 @@ def target_population(
     entries = []
     reviewed_sha256s: dict[str, str] = {}
     for target in sorted(targets, key=lambda item: item.case_id):
-        split = (
-            "pilot" if target.case_id in set(pilot_ids) else "development"
-        )
+        split = "pilot" if target.case_id in set(pilot_ids) else "development"
         reviewed_case = {
             "schema": "synthetic-reviewed-case.v1",
             "case_id": target.case_id,
@@ -125,9 +121,7 @@ def target_population(
             "source_cid": target.source_cid,
             "expected_semantics": target.semantic_fields(),
         }
-        reviewed_sha256 = hashlib.sha256(
-            canonical_json(reviewed_case).encode("utf-8")
-        ).hexdigest()
+        reviewed_sha256 = hashlib.sha256(canonical_json(reviewed_case).encode("utf-8")).hexdigest()
         reviewed_sha256s[target.case_id] = reviewed_sha256
         entries.append(
             {
@@ -157,34 +151,25 @@ def target_population(
             "corpus_manifest_sha256": manifest_sha256,
             "split": split,
             "case_ids": case_ids,
-            "case_sha256s": [
-                reviewed_sha256s[case_id] for case_id in case_ids
-            ],
+            "case_sha256s": [reviewed_sha256s[case_id] for case_id in case_ids],
             "source_sha256s": [
-                hashlib.sha256(
-                    by_id[case_id].source_text.encode("utf-8")
-                ).hexdigest()
+                hashlib.sha256(by_id[case_id].source_text.encode("utf-8")).hexdigest()
                 for case_id in case_ids
             ],
             "normalized_source_sha256s": [
-                normalized_source_sha256(by_id[case_id].source_text)
-                for case_id in case_ids
+                normalized_source_sha256(by_id[case_id].source_text) for case_id in case_ids
             ],
         }
         split_identities[split] = {
             **split_body,
             "split_manifest_cid": cid_for_dag_json(split_body),
-            "split_sha256": hashlib.sha256(
-                canonical_json(split_body).encode("utf-8")
-            ).hexdigest(),
+            "split_sha256": hashlib.sha256(canonical_json(split_body).encode("utf-8")).hexdigest(),
         }
     manifest_body: dict[str, object] = {
         "schema": SEMANTIC_TARGET_MANIFEST_SCHEMA_V2,
         "semantic_protocol_cid": SEMANTIC_PROTOCOL_V2_CID,
         "producer_registry_cid": SEMANTIC_PRODUCER_REGISTRY_V2_CID,
-        "reviewed_target_source_cid": (
-            SEMANTIC_REVIEWED_TARGET_SOURCE_V2_CID
-        ),
+        "reviewed_target_source_cid": (SEMANTIC_REVIEWED_TARGET_SOURCE_V2_CID),
         "case_manifest_sha256": manifest_sha256,
         "reviewed_split_identities": split_identities,
         "case_count": 20,
@@ -253,9 +238,7 @@ def projection_payload(
     )
     if producer_id == "compiler":
         return {
-            "schema": (
-                "ipfs-datasets.logic-pipeline-benchmark.compiler-output.v2"
-            ),
+            "schema": ("ipfs-datasets.logic-pipeline-benchmark.compiler-output.v2"),
             "semantic_protocol_cid": SEMANTIC_PROTOCOL_V2_CID,
             "source_cid": target.source_cid,
             "modal_ir": modal_ir,
@@ -265,9 +248,7 @@ def projection_payload(
         }, projection
     if producer_id.startswith("spacy_"):
         return {
-            "schema": (
-                "ipfs-datasets.logic-pipeline-benchmark.spacy-evidence.v2"
-            ),
+            "schema": ("ipfs-datasets.logic-pipeline-benchmark.spacy-evidence.v2"),
             "semantic_protocol_cid": SEMANTIC_PROTOCOL_V2_CID,
             "document": {"source_cid": target.source_cid},
             "modal_ir": modal_ir,
@@ -276,9 +257,7 @@ def projection_payload(
         }, projection
     raw_output = canonical_json(response)
     return {
-        "schema": (
-            "ipfs-datasets.logic-pipeline-benchmark.symai-evidence.v2"
-        ),
+        "schema": ("ipfs-datasets.logic-pipeline-benchmark.symai-evidence.v2"),
         "semantic_protocol_cid": SEMANTIC_PROTOCOL_V2_CID,
         "source_cid": target.source_cid,
         "raw_output": raw_output,
@@ -313,9 +292,7 @@ def _stage(
         requested_identity=definition.requested_identity(stage_name),
         environment_sha256=environment_sha256,
         source=("synthetic-g201-source-safe",),
-        upstream_stage_digests=tuple(
-            item.digest for item in upstream
-        ),
+        upstream_stage_digests=tuple(item.digest for item in upstream),
         semantic_protocol_cid=SEMANTIC_PROTOCOL_V2_CID,
     )
     payload, _projection = projection_payload(
@@ -332,10 +309,7 @@ def _stage(
         context_body = {
             "schema": "synthetic-semantic-context.v2",
             "source_cid": target.source_cid,
-            "upstream_stage_cids": [
-                cid_for_dag_json(_plain(item.to_dict()))
-                for item in upstream
-            ],
+            "upstream_stage_cids": [cid_for_dag_json(_plain(item.to_dict())) for item in upstream],
         }
         context_cid = cid_for_dag_json(context_body)
         config = SymaiAdapterConfig(
@@ -368,10 +342,7 @@ def _stage(
                 "hit": False,
             },
             "semantic_context": {
-                "schema": (
-                    "ipfs-datasets.logic-pipeline-benchmark."
-                    "semantic-context-binding.v2"
-                ),
+                "schema": ("ipfs-datasets.logic-pipeline-benchmark.semantic-context-binding.v2"),
                 "context_cid": context_cid,
                 "source_cid": target.source_cid,
                 "artifact_cids": [],
@@ -417,11 +388,7 @@ def result_for_route(
         stage_name=StageName.COMPILER,
         producer_id="compiler",
         upstream=(),
-        validation_errors=(
-            ("synthetic_contract_error",)
-            if all_validation_error
-            else ()
-        ),
+        validation_errors=(("synthetic_contract_error",) if all_validation_error else ()),
         manifest_sha256=manifest_sha256,
         environment_sha256=environment_sha256,
     )
@@ -440,11 +407,7 @@ def result_for_route(
             stage_name=StageName.SPACY,
             producer_id=producer_id,
             upstream=tuple(records),
-            validation_errors=(
-                ("synthetic_contract_error",)
-                if all_validation_error
-                else ()
-            ),
+            validation_errors=(("synthetic_contract_error",) if all_validation_error else ()),
             manifest_sha256=manifest_sha256,
             environment_sha256=environment_sha256,
         )
@@ -512,12 +475,8 @@ def complete_g201_index(
                     by_id[job.case_id],
                     split=split,
                     variant_id=job.variant_id,
-                    symai_validation_error=(
-                        job.case_id == symai_validation_error_case_id
-                    ),
-                    all_validation_error=(
-                        job.case_id in set(validation_error_case_ids)
-                    ),
+                    symai_validation_error=(job.case_id == symai_validation_error_case_id),
+                    all_validation_error=(job.case_id in set(validation_error_case_ids)),
                     manifest_sha256=manifest_sha256,
                     environment_sha256=environment_sha256,
                 )

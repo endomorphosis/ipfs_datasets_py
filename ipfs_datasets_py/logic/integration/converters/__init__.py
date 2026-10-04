@@ -25,7 +25,7 @@ except ImportError:
     ModalLogicExtension = None
 
 __all__ = [
-    'DeonticLogicConverter',
-    'LogicTranslationCore',
-    'ModalLogicExtension',
+    "DeonticLogicConverter",
+    "LogicTranslationCore",
+    "ModalLogicExtension",
 ]

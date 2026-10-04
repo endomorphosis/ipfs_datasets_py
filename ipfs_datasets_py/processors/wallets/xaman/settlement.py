@@ -122,8 +122,7 @@ def verify_settlement_against_xrpl(
         if (
             payload.account
             and ledger_account
-            and _normalize_account(payload.account)
-            != _normalize_account(str(ledger_account))
+            and _normalize_account(payload.account) != _normalize_account(str(ledger_account))
         ):
             # Destination-bound payloads may sign as a different account;
             # only fail when the payload account is set and conflicts with
@@ -135,18 +134,21 @@ def verify_settlement_against_xrpl(
             else:
                 return payload.with_settlement(
                     SettlementVerdict.ACCOUNT_MISMATCH,
-                    detail=(
-                        f"payload_account={payload.account} "
-                        f"ledger_account={ledger_account}"
-                    ),
+                    detail=(f"payload_account={payload.account} ledger_account={ledger_account}"),
                 )
 
-        if match.get("validated") is True and match.get("outcome") == TxOutcome.VALIDATED_SUCCESS.value:
+        if (
+            match.get("validated") is True
+            and match.get("outcome") == TxOutcome.VALIDATED_SUCCESS.value
+        ):
             return payload.with_settlement(
                 SettlementVerdict.XRPL_VALIDATED,
                 detail=f"ledger_index={match.get('ledger_index')}",
             )
-        if match.get("validated") is True and match.get("outcome") == TxOutcome.VALIDATED_FAILED.value:
+        if (
+            match.get("validated") is True
+            and match.get("outcome") == TxOutcome.VALIDATED_FAILED.value
+        ):
             return payload.with_settlement(
                 SettlementVerdict.XRPL_FAILED,
                 detail=match.get("transaction_result") or "validated_failed",
@@ -174,9 +176,7 @@ def correlate_account_activity(
     if not account or not str(account).strip():
         raise InvalidRequestError("account must not be empty")
     account = str(account).strip()
-    settled = verify_settlement_against_xrpl(
-        payload, xrpl_transactions=xrpl_transactions
-    )
+    settled = verify_settlement_against_xrpl(payload, xrpl_transactions=xrpl_transactions)
     matching: list[str] = []
     for match in _find_matching(payload.transaction_hash or "", xrpl_transactions):
         h = match.get("hash")

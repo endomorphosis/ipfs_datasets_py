@@ -13,16 +13,19 @@ MCP thin wrapper for vector/search index lifecycle management. Business logic li
 
 ```python
 from ipfs_datasets_py.mcp_server.tools.index_management_tools import (
-    create_index, list_indices, rebuild_index, get_index_stats
+    create_index,
+    list_indices,
+    rebuild_index,
+    get_index_stats,
 )
 
 # Create a new vector index
 idx = await create_index(
     name="legal_corpus_v2",
-    index_type="hnsw",          # "hnsw" | "flat" | "ivf" | "pq"
+    index_type="hnsw",  # "hnsw" | "flat" | "ivf" | "pq"
     dimensions=384,
     metric="cosine",
-    backend="faiss"             # "faiss" | "qdrant" | "elasticsearch"
+    backend="faiss",  # "faiss" | "qdrant" | "elasticsearch"
 )
 
 # List all indices

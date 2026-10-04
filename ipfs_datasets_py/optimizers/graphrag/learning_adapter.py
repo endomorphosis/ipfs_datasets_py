@@ -59,7 +59,10 @@ def check_learning_cycle(host: Any) -> None:
         return
 
     # Check circuit breaker for repeated failures
-    if hasattr(host, "_learning_circuit_breaker_tripped") and host._learning_circuit_breaker_tripped:
+    if (
+        hasattr(host, "_learning_circuit_breaker_tripped")
+        and host._learning_circuit_breaker_tripped
+    ):
         retry_after_interval = getattr(host, "_circuit_breaker_retry_time", None)
 
         if retry_after_interval is not None:
@@ -123,12 +126,17 @@ def check_learning_cycle(host: Any) -> None:
                 if hasattr(host, "_learning_failure_count"):
                     host._learning_failure_count = 0
 
-                if hasattr(host, "learning_metrics_collector") and host.learning_metrics_collector is not None:
+                if (
+                    hasattr(host, "learning_metrics_collector")
+                    and host.learning_metrics_collector is not None
+                ):
                     try:
                         duration = time.time() - start_time if "start_time" in locals() else None
                         host.learning_metrics_collector.record_learning_cycle(
                             cycle_id=f"cycle-{int(time.time())}",
-                            time_started=start_time if "start_time" in locals() else time.time() - (duration or 0),
+                            time_started=start_time
+                            if "start_time" in locals()
+                            else time.time() - (duration or 0),
                             query_count=queries_since_last_learning,
                             is_success=True,
                             duration=duration,
@@ -174,7 +182,14 @@ def check_learning_cycle(host: Any) -> None:
                             )
                     except (AttributeError, TypeError, RuntimeError):
                         pass
-            except (AttributeError, TypeError, ValueError, RuntimeError, KeyError, OptimizerError) as exc:
+            except (
+                AttributeError,
+                TypeError,
+                ValueError,
+                RuntimeError,
+                KeyError,
+                OptimizerError,
+            ) as exc:
                 error_msg = f"Error during learning cycle: {str(exc)}"
                 print(f"Statistical learning error: {error_msg}")
                 increment_failure_counter(host, error_msg)
@@ -274,7 +289,10 @@ def increment_failure_counter(host: Any, error_message: str, is_critical: bool =
                     category="error",
                 )
 
-                if hasattr(host, "_learning_circuit_breaker_tripped") and host._learning_circuit_breaker_tripped:
+                if (
+                    hasattr(host, "_learning_circuit_breaker_tripped")
+                    and host._learning_circuit_breaker_tripped
+                ):
                     host.metrics_collector.record_additional_metric(
                         name="circuit_breaker_tripped",
                         value=(

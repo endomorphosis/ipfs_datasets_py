@@ -3,6 +3,7 @@ GPU Provisioning Prediction Engine — canonical package module.
 
 Business logic extracted from mcp_server/tools/software_engineering_tools/gpu_provisioning_predictor.py.
 """
+
 from __future__ import annotations
 
 import logging
@@ -29,26 +30,30 @@ def predict_gpu_needs(
         }
 
         if not workflow_history:
-            result["recommendations"].append({
-                "message": "No historical data available for prediction",
-                "action": "Collect workflow execution data to enable predictions",
-            })
+            result["recommendations"].append(
+                {
+                    "message": "No historical data available for prediction",
+                    "action": "Collect workflow execution data to enable predictions",
+                }
+            )
             return result
 
         similar = [
-            w for w in workflow_history
-            if (
-                hist_stack := w.get("call_stack", [])
-            ) and len(current_call_stack) <= len(hist_stack)
+            w
+            for w in workflow_history
+            if (hist_stack := w.get("call_stack", []))
+            and len(current_call_stack) <= len(hist_stack)
             and hist_stack[: len(current_call_stack)] == current_call_stack
         ]
 
         if not similar:
             result["confidence"] = 0.0
-            result["recommendations"].append({
-                "message": "No similar workflows found in history",
-                "action": "GPU needs cannot be predicted reliably",
-            })
+            result["recommendations"].append(
+                {
+                    "message": "No similar workflows found in history",
+                    "action": "GPU needs cannot be predicted reliably",
+                }
+            )
             return result
 
         avg_gpu = sum(w.get("gpu_usage", 0) for w in similar) / len(similar)
@@ -56,23 +61,29 @@ def predict_gpu_needs(
         result["confidence"] = min(len(similar) / 10.0, 1.0)
 
         for step in range(1, look_ahead_steps + 1):
-            result["timeline"].append({
-                "step": step,
-                "estimated_gpus": int(avg_gpu * (1 + (step - 1) * 0.1)),
-                "estimated_time": f"+{step * 300}s",
-            })
+            result["timeline"].append(
+                {
+                    "step": step,
+                    "estimated_gpus": int(avg_gpu * (1 + (step - 1) * 0.1)),
+                    "estimated_time": f"+{step * 300}s",
+                }
+            )
 
         if result["predicted_gpu_count"] > 0:
-            result["recommendations"].append({
-                "message": f"Provision {result['predicted_gpu_count']} GPUs proactively",
-                "action": f"Scale GPU resources to {result['predicted_gpu_count']} units",
-                "confidence": f"{result['confidence'] * 100:.0f}%",
-            })
+            result["recommendations"].append(
+                {
+                    "message": f"Provision {result['predicted_gpu_count']} GPUs proactively",
+                    "action": f"Scale GPU resources to {result['predicted_gpu_count']} units",
+                    "confidence": f"{result['confidence'] * 100:.0f}%",
+                }
+            )
         if result["confidence"] < 0.5:
-            result["recommendations"].append({
-                "message": "Low confidence in prediction",
-                "action": "Collect more workflow execution data to improve predictions",
-            })
+            result["recommendations"].append(
+                {
+                    "message": "Low confidence in prediction",
+                    "action": "Collect more workflow execution data to improve predictions",
+                }
+            )
 
         return result
 

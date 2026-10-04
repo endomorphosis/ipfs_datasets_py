@@ -113,7 +113,7 @@ from .hierarchical_tool_manager import (
     tools_list_categories,
     tools_list_tools,
     tools_get_schema,
-    tools_dispatch
+    tools_dispatch,
 )
 
 # Register with MCP server
@@ -260,11 +260,13 @@ HierarchicalToolManager
 ```python
 # From CLI
 from ipfs_datasets_py.core_operations import DatasetSaver
+
 saver = DatasetSaver()
 result = saver.save(data, "output.json")
 
 # From Python API
 from ipfs_datasets_py.core_operations import DatasetSaver
+
 saver = DatasetSaver()
 result = saver.save(data, "output.json")
 

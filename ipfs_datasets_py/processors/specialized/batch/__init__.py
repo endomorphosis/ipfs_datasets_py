@@ -16,7 +16,7 @@ Main Classes:
 
 Example:
     from ipfs_datasets_py.processors.specialized.batch import BatchProcessor
-    
+
     processor = BatchProcessor()
     result = processor.process_batch(jobs)
 """
@@ -28,9 +28,11 @@ try:
         BatchJobResult,
         BatchStatus,
     )
+
     _processor_available = True
 except ImportError as e:
     import warnings
+
     warnings.warn(f"Batch processor unavailable: {e}", ImportWarning)
     BatchProcessor = None
     ProcessingJob = None
@@ -44,9 +46,11 @@ try:
         ResourceLimits,
         CacheManager,
     )
+
     _file_converter_available = True
 except ImportError as e:
     import warnings
+
     warnings.warn(f"File converter batch processor unavailable: {e}", ImportWarning)
     BatchProgress = None
     ResourceLimits = None
@@ -54,11 +58,11 @@ except ImportError as e:
     _file_converter_available = False
 
 __all__ = [
-    'BatchProcessor',
-    'ProcessingJob',
-    'BatchJobResult',
-    'BatchStatus',
-    'BatchProgress',
-    'ResourceLimits',
-    'CacheManager',
+    "BatchProcessor",
+    "ProcessingJob",
+    "BatchJobResult",
+    "BatchStatus",
+    "BatchProgress",
+    "ResourceLimits",
+    "CacheManager",
 ]

@@ -51,14 +51,14 @@ def evaluate_relationship_coherence(
         1 for rt in rel_types if rt and len(rt) > 3 and rt.lower() not in _GENERIC_RELS
     )
     type_quality_score = (
-        (meaningful / len(rel_types)) * 0.7 + (specific_but_not_generic / len(rel_types)) * 0.3
-    ) if rel_types else 0.0
+        ((meaningful / len(rel_types)) * 0.7 + (specific_but_not_generic / len(rel_types)) * 0.3)
+        if rel_types
+        else 0.0
+    )
 
     # Sub-score 2: Directionality
     directed_count = sum(
-        1
-        for r in relationships
-        if isinstance(r, dict) and r.get("source_id") != r.get("target_id")
+        1 for r in relationships if isinstance(r, dict) and r.get("source_id") != r.get("target_id")
     )
     directionality_score = directed_count / len(relationships) if relationships else 0.5
 
@@ -107,7 +107,9 @@ def evaluate_relationship_coherence(
         else:
             coherent_relationships += 0.5
 
-    semantic_consistency_score = coherent_relationships / len(relationships) if relationships else 0.5
+    semantic_consistency_score = (
+        coherent_relationships / len(relationships) if relationships else 0.5
+    )
 
     overall = (
         type_quality_score * 0.35

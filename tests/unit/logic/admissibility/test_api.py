@@ -111,12 +111,8 @@ def _envelope(**overrides: Any) -> InvocationIntentEnvelope:
         "tenant_id": "tenant:acme",
         "actor": ActorBinding(actor_id="actor:alice"),
         "audience": AudienceBinding(audience_id="audience:dispatcher-1"),
-        "tool": ToolBinding(
-            tool_id="tool:ledger.transfer", tool_version="1.2.3"
-        ),
-        "arguments": ArgumentCommitment.from_redacted(
-            {"amount": 10, "currency": "USD"}
-        ),
+        "tool": ToolBinding(tool_id="tool:ledger.transfer", tool_version="1.2.3"),
+        "arguments": ArgumentCommitment.from_redacted({"amount": 10, "currency": "USD"}),
         "nonce": "nonce-api-001",
         "created_at": "2026-07-28T12:00:00Z",
         "deadline": "2026-07-28T12:05:00Z",
@@ -256,9 +252,7 @@ def _offline_deps(*, allow: bool = True) -> OfflineAuthorizationDependencies:
     def which(_name: str) -> str | None:
         return f"/fake/bin/{_name}"
 
-    def solver(
-        job: ProofJob, backend_id: str, probe: Any
-    ) -> PortfolioAttemptRecord:
+    def solver(job: ProofJob, backend_id: str, probe: Any) -> PortfolioAttemptRecord:
         return _attempt(job, backend_id, JobVerdict.PROVED)
 
     deps = OfflineAuthorizationDependencies(
@@ -632,13 +626,16 @@ class TestFailClosed:
         )
         assert result.is_allow is False
         assert result.wire_status is AdmissibilityStatus.ABSTAIN
-        assert any(
-            "backend" in c or "unavailable" in r.lower()
-            for c, r in zip(
-                result.reason_codes or ("",),
-                result.reasons or ("",),
+        assert (
+            any(
+                "backend" in c or "unavailable" in r.lower()
+                for c, r in zip(
+                    result.reason_codes or ("",),
+                    result.reasons or ("",),
+                )
             )
-        ) or "auth.api.backend_unavailable" in result.reason_codes
+            or "auth.api.backend_unavailable" in result.reason_codes
+        )
 
     def test_api_never_derives_capability_on_allow(self) -> None:
         result = _run(deps=_offline_deps(allow=True))
@@ -763,6 +760,4 @@ class TestFingerprint:
         }
         other = dict(base)
         other["actor_id"] = "actor:bob"
-        assert stable_request_fingerprint(**base) != stable_request_fingerprint(
-            **other
-        )
+        assert stable_request_fingerprint(**base) != stable_request_fingerprint(**other)

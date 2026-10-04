@@ -40,8 +40,7 @@ class XamanResponseBackend(Protocol):
         payload_uuid: str,
         *,
         context: OperationContext,
-    ) -> Mapping[str, Any]:
-        ...
+    ) -> Mapping[str, Any]: ...
 
     async def list_payloads(
         self,
@@ -49,8 +48,7 @@ class XamanResponseBackend(Protocol):
         cursor: str | None,
         limit: int,
         context: OperationContext,
-    ) -> Mapping[str, Any]:
-        ...
+    ) -> Mapping[str, Any]: ...
 
 
 @dataclass
@@ -247,9 +245,7 @@ class XamanPayloadProvider:
         raw = await self.backend.get_payload(payload_uuid, context=context)
         if not raw:
             raise ProviderError(f"empty payload response for {payload_uuid}")
-        return parse_xaman_payload(
-            raw, network=self.network, privacy=self._privacy
-        )
+        return parse_xaman_payload(raw, network=self.network, privacy=self._privacy)
 
     async def ingest_payloads(
         self,
@@ -283,15 +279,11 @@ class XamanPayloadProvider:
                     break
                 if not isinstance(raw, Mapping):
                     raise ProviderError("payload list item must be a mapping")
-                payload = parse_xaman_payload(
-                    raw, network=self.network, privacy=self._privacy
-                )
+                payload = parse_xaman_payload(raw, network=self.network, privacy=self._privacy)
                 records.append(payload)
                 items += 1
                 response_bytes += len(
-                    json.dumps(dict(raw), default=str, separators=(",", ":")).encode(
-                        "utf-8"
-                    )
+                    json.dumps(dict(raw), default=str, separators=(",", ":")).encode("utf-8")
                 )
             batch = RecordBatch(
                 records=tuple(records),
@@ -322,11 +314,7 @@ def fixture_backend_from_payloads(
             if not isinstance(item, Mapping):
                 raise InvalidRequestError("fixture payload must be a mapping")
             meta = item.get("meta") if isinstance(item.get("meta"), Mapping) else {}
-            uuid = (
-                (meta or {}).get("uuid")
-                or item.get("uuid")
-                or item.get("payload_uuid")
-            )
+            uuid = (meta or {}).get("uuid") or item.get("uuid") or item.get("payload_uuid")
             if not uuid:
                 raise InvalidRequestError("fixture payload missing uuid")
             store[str(uuid)] = item

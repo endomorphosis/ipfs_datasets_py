@@ -42,7 +42,9 @@ async def run_in_trio(func: Callable[..., T], /, *args: Any, **kwargs: Any) -> T
         raise RuntimeExecutionError(f"Trio runtime unavailable: {e}")
     except Exception as e:
         # If detection fails for any reason, fall back to thread runner.
-        logger.debug("Async library detection failed; falling back to Trio thread runner", exc_info=True)
+        logger.debug(
+            "Async library detection failed; falling back to Trio thread runner", exc_info=True
+        )
 
     def _runner() -> T:
         result = func(*args, **kwargs)

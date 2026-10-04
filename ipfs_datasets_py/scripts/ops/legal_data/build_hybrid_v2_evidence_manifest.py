@@ -3,6 +3,7 @@
 Builds a deterministic evidence manifest that hashes all required WS12
 artifacts and produces a bundle description for release sign-off.
 """
+
 from __future__ import annotations
 
 import hashlib

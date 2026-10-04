@@ -3,7 +3,7 @@ Property-based tests for optimizer components using hypothesis.
 
 These tests verify invariants that should always hold:
 - Query optimization always terminates
-- Ontology merging is deterministic and idempotent 
+- Ontology merging is deterministic and idempotent
 - Score aggregation preserves mathematical properties
 - Trend detection is consistent across equivalent inputs
 - Relationship inference handles all syntactically valid inputs
@@ -105,7 +105,7 @@ class TestBatchAnalysisInvariants:
     def test_batch_analysis_always_terminates(self, scores):
         """
         Property: Analyzing any batch of scores always terminates.
-        
+
         For any list of scores, analysis should:
         - Terminate within reasonable time
         - Return a valid OptimizationReport
@@ -125,7 +125,7 @@ class TestBatchAnalysisInvariants:
     def test_ontology_optimization_terminates(self, ontology):
         """
         Property: Analyzing any batch always terminates.
-        
+
         For any batch (even empty), analysis should:
         - Terminate without infinite loops
         - Return deterministic output
@@ -146,7 +146,7 @@ class TestBatchAnalysisInvariants:
     def test_batch_analysis_deterministic(self, scores):
         """
         Property: Batch analysis is deterministic.
-        
+
         Same input should produce same average score; trend may vary slightly
         due to randomization in some scoring logic.
         """
@@ -183,7 +183,7 @@ class TestOntologyGenerationRobustness:
     def test_entity_extraction_no_crash(self, documents):
         """
         Property: Entity extraction handles any text input without crashing.
-        
+
         For any list of documents, extraction should either:
         - Return valid entity list
         - Return empty entity list
@@ -214,7 +214,7 @@ class TestBatchReportProperties:
     def test_average_score_within_bounds(self, scores):
         """
         Property: Average score is within the bounds of all scores.
-        
+
         For any set of scores, the average should be between min and max.
         """
         optimizer = OntologyOptimizer()
@@ -231,7 +231,7 @@ class TestBatchReportProperties:
     def test_trend_is_valid_enum(self, scores):
         """
         Property: Trend is always a valid trend value.
-        
+
         Trend should be one of: 'improving', 'degrading', 'stable', etc.
         """
         optimizer = OntologyOptimizer()
@@ -256,7 +256,7 @@ class TestBatchReportProperties:
     def test_recommendations_is_list(self, scores):
         """
         Property: Recommendations is always a list (may be empty).
-        
+
         Recommendations should be a valid list structure, even if empty.
         """
         optimizer = OntologyOptimizer()
@@ -288,7 +288,7 @@ class TestRelationshipInferenceRobustness:
     def test_relationship_inference_no_crash(self, entities):
         """
         Property: Relationship inference handles any entity text without crashing.
-        
+
         For any valid text input, inference should either:
         - Return valid relationships
         - Return empty relationships
@@ -324,7 +324,7 @@ class TestLogicOptimizerRobustness:
     def test_logic_optimizer_no_crash_on_any_input(self, statements):
         """
         Property: Logic optimizer handles any text input without crashing.
-        
+
         For any list of string statements, operations should:
         - Not raise unhandled exceptions
         - Return some result
@@ -336,7 +336,9 @@ class TestLogicOptimizerRobustness:
             for stmt in statements[:5]:  # Limit to 5 to avoid timeout
                 result = optimizer.validate_statements([stmt])
                 # Should return something, doesn't matter what type
-                assert result is not None or result is None  # Always true, just testing it doesn't crash
+                assert (
+                    result is not None or result is None
+                )  # Always true, just testing it doesn't crash
         except (ValueError, TypeError, AttributeError):
             # These are acceptable for malformed input
             pass
@@ -355,7 +357,7 @@ class TestRecommendationInvariants:
     def test_batch_report_always_has_recommendations(self, scores):
         """
         Property: Batch reports always include recommendations list.
-        
+
         Even with edge case scores, recommendations should be a valid list.
         """
         optimizer = OntologyOptimizer()
@@ -379,7 +381,7 @@ class TestConvergenceProperties:
     def test_trend_analysis_consistent(self, scores):
         """
         Property: Trend analysis returns valid trend values.
-        
+
         Analyzing same batch should return valid trend strings.
         """
         optimizer = OntologyOptimizer()
@@ -399,7 +401,7 @@ class TestConvergenceProperties:
     def test_empty_batch_graceful_degradation(self, _):
         """
         Property: Empty batch doesn't crash and returns reasonable defaults.
-        
+
         Analyzing empty batch should gracefully return defaults, not crash.
         """
         optimizer = OntologyOptimizer()

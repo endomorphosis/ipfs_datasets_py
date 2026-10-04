@@ -23,7 +23,11 @@ async def test_state_admin_rules_disables_justia_fallback_for_state_laws_calls(
         return {"status": "success", "state_blocks": [], "kg_rows": [], "report": {}}
 
     monkeypatch.setattr(scraper_module, "scrape_state_laws", _fake_scrape_state_laws)
-    monkeypatch.setattr(scraper_module, "_agentic_discover_admin_state_blocks", _fake_agentic_discover_admin_state_blocks)
+    monkeypatch.setattr(
+        scraper_module,
+        "_agentic_discover_admin_state_blocks",
+        _fake_agentic_discover_admin_state_blocks,
+    )
     monkeypatch.setattr(scraper_module, "_collect_admin_source_diagnostics", lambda states: {})
     monkeypatch.setattr(scraper_module, "_DIRECT_AGENTIC_RECOVERY_STATES", set())
 

@@ -59,6 +59,7 @@ async def test_discover_all_categories():
     assert len(categories) >= 51
     assert "graph_tools" in [c["name"] for c in categories]
 
+
 @pytest.mark.anyio
 async def test_discover_tools_in_category():
     """Test discovering tools within a specific category."""
@@ -66,6 +67,7 @@ async def test_discover_tools_in_category():
     result = await manager.list_tools("graph_tools")
     assert result["status"] == "success"
     assert len(result["tools"]) >= 11  # 10 new + 1 existing
+
 
 @pytest.mark.anyio
 async def test_tool_schema_validation():
@@ -78,6 +80,7 @@ async def test_tool_schema_validation():
     assert "parameters" in schema
     assert isinstance(schema["parameters"], dict)
 
+
 @pytest.mark.anyio
 async def test_missing_tool_handling():
     """Test graceful handling of missing tools."""
@@ -86,10 +89,12 @@ async def test_missing_tool_handling():
     assert result["status"] == "error"
     assert "not found" in result["error"].lower()
 
+
 @pytest.mark.anyio
 async def test_discovery_performance():
     """Test that discovery is fast (<1 second for all categories)."""
     import time
+
     manager = HierarchicalToolManager()
     start = time.time()
     await manager.list_categories()
@@ -103,57 +108,67 @@ async def test_discovery_performance():
 async def test_execute_graph_create():
     """Test executing graph_create tool."""
     manager = HierarchicalToolManager()
-    result = await manager.dispatch("graph_tools", "graph_create", {
-        "driver_url": "ipfs://localhost:5001"
-    })
+    result = await manager.dispatch(
+        "graph_tools", "graph_create", {"driver_url": "ipfs://localhost:5001"}
+    )
     assert isinstance(result, dict)
+
 
 @pytest.mark.anyio
 async def test_execute_graph_add_entity():
     """Test executing graph_add_entity tool."""
     manager = HierarchicalToolManager()
-    result = await manager.dispatch("graph_tools", "graph_add_entity", {
-        "entity_id": "test1",
-        "entity_type": "Test",
-        "properties": {"name": "Test Entity"}
-    })
+    result = await manager.dispatch(
+        "graph_tools",
+        "graph_add_entity",
+        {"entity_id": "test1", "entity_type": "Test", "properties": {"name": "Test Entity"}},
+    )
     assert isinstance(result, dict)
+
 
 @pytest.mark.anyio
 async def test_parameter_validation():
     """Test that tools validate parameters correctly."""
     manager = HierarchicalToolManager()
-    result = await manager.dispatch("graph_tools", "graph_add_entity", {
-        # Missing required parameters
-    })
+    result = await manager.dispatch(
+        "graph_tools",
+        "graph_add_entity",
+        {
+            # Missing required parameters
+        },
+    )
     # Should handle gracefully
     assert isinstance(result, dict)
+
 
 @pytest.mark.anyio
 async def test_error_propagation():
     """Test that tool errors are properly propagated."""
     manager = HierarchicalToolManager()
-    result = await manager.dispatch("graph_tools", "graph_query_cypher", {
-        "cypher": "INVALID QUERY SYNTAX"
-    })
+    result = await manager.dispatch(
+        "graph_tools", "graph_query_cypher", {"cypher": "INVALID QUERY SYNTAX"}
+    )
     # Should return error, not crash
     assert isinstance(result, dict)
+
 
 @pytest.mark.anyio
 async def test_concurrent_execution():
     """Test executing multiple tools concurrently."""
     import asyncio
+
     manager = HierarchicalToolManager()
-    
+
     tasks = [
         manager.dispatch("graph_tools", "graph_create", {}),
         manager.dispatch("dataset_tools", "load_dataset", {"source": "test"}),
         manager.dispatch("ipfs_tools", "pin_to_ipfs", {"content_source": {"test": "data"}}),
     ]
-    
+
     results = await asyncio.gather(*tasks, return_exceptions=True)
     assert len(results) == 3
     assert all(isinstance(r, (dict, Exception)) for r in results)
+
 
 # 5 more execution tests...
 ```
@@ -165,10 +180,11 @@ async def test_dispatch_to_all_categories():
     """Test dispatching to tools in different categories."""
     manager = HierarchicalToolManager()
     categories = ["graph_tools", "dataset_tools", "ipfs_tools"]
-    
+
     for category in categories:
         result = await manager.list_tools(category)
         assert result["status"] == "success"
+
 
 @pytest.mark.anyio
 async def test_parameter_transformation():
@@ -178,47 +194,49 @@ async def test_parameter_transformation():
     result = await manager.dispatch("graph_tools", "graph_add_entity", params)
     assert isinstance(result, dict)
 
+
 @pytest.mark.anyio
 async def test_result_aggregation():
     """Test aggregating results from multiple tool calls."""
     manager = HierarchicalToolManager()
     results = []
-    
+
     for i in range(3):
         result = await manager.dispatch("graph_tools", "graph_create", {})
         results.append(result)
-    
+
     assert len(results) == 3
+
 
 @pytest.mark.anyio
 async def test_error_recovery():
     """Test that one error doesn't break subsequent calls."""
     manager = HierarchicalToolManager()
-    
+
     # First call with error
     result1 = await manager.dispatch("invalid_category", "tool", {})
     assert result1["status"] == "error"
-    
+
     # Second call should still work
     result2 = await manager.list_categories()
     assert result2["status"] == "success"
+
 
 @pytest.mark.anyio
 async def test_performance_under_load():
     """Test performance with many concurrent dispatches."""
     import asyncio
+
     manager = HierarchicalToolManager()
-    
-    tasks = [
-        manager.dispatch("graph_tools", "graph_create", {})
-        for _ in range(50)
-    ]
-    
+
+    tasks = [manager.dispatch("graph_tools", "graph_create", {}) for _ in range(50)]
+
     import time
+
     start = time.time()
     await asyncio.gather(*tasks, return_exceptions=True)
     duration = time.time() - start
-    
+
     assert duration < 5.0, f"50 calls took {duration}s, should be <5s"
 ```
 
@@ -232,15 +250,18 @@ def test_cli_graph_create():
     # Test CLI execution
     # Verify output format
 
+
 def test_cli_graph_add_entity():
     """Test graph add-entity CLI command."""
     # Test with valid parameters
     # Verify JSON output
 
+
 def test_cli_graph_query():
     """Test graph query CLI command."""
     # Test Cypher query execution
     # Verify results format
+
 
 # 7 more CLI tests for different commands...
 ```
@@ -251,17 +272,21 @@ def test_cli_existing_dataset_commands():
     """Test that existing dataset commands still work."""
     # Verify backward compatibility
 
+
 def test_cli_existing_ipfs_commands():
     """Test that existing IPFS commands still work."""
     # Verify backward compatibility
+
 
 def test_cli_help_text():
     """Test that help text displays correctly."""
     # Verify all commands listed
 
+
 def test_cli_version():
     """Test version command."""
     # Verify version info
+
 
 def test_cli_error_messages():
     """Test that error messages are helpful."""
@@ -279,11 +304,13 @@ def test_cold_start_discovery():
     # Measure first-time discovery speed
     # Target: <1 second for all categories
 
+
 @pytest.mark.benchmark
 def test_warm_start_discovery():
     """Benchmark cached discovery speed."""
     # Measure cached discovery speed
     # Target: <0.1 second
+
 
 @pytest.mark.benchmark
 def test_large_scale_discovery():
@@ -300,17 +327,20 @@ async def test_simple_query_performance():
     # Measure query execution time
     # Target: <100ms
 
+
 @pytest.mark.benchmark
 async def test_complex_query_performance():
     """Benchmark complex Cypher queries."""
     # Measure complex query time
     # Target: <500ms
 
+
 @pytest.mark.benchmark
 async def test_hybrid_search_performance():
     """Benchmark hybrid search queries."""
     # Measure search time
     # Target: <200ms
+
 
 @pytest.mark.benchmark
 async def test_concurrent_query_performance():
@@ -327,11 +357,13 @@ def test_base_memory_footprint():
     # Measure memory at startup
     # Target: <100MB
 
+
 @pytest.mark.benchmark
 async def test_memory_under_load():
     """Measure memory usage under load."""
     # Measure memory during 1000 operations
     # Target: <500MB
+
 
 @pytest.mark.benchmark
 async def test_memory_leak_detection():
@@ -350,11 +382,13 @@ async def test_flat_tools_still_work():
     # Verify old tools can still be called
     # Ensure no breaking changes
 
+
 @pytest.mark.anyio
 async def test_flat_tool_execution():
     """Test executing flat tools directly."""
     # Call old-style tools
     # Verify results match new tools
+
 
 @pytest.mark.anyio
 async def test_result_compatibility():
@@ -362,11 +396,13 @@ async def test_result_compatibility():
     # Compare old vs new tool results
     # Verify format consistency
 
+
 @pytest.mark.anyio
 async def test_no_breaking_changes():
     """Verify no breaking changes to public API."""
     # Test all public interfaces
     # Verify signatures unchanged
+
 
 @pytest.mark.anyio
 async def test_migration_path():
@@ -383,11 +419,13 @@ async def test_mcp_server_starts():
     # Start server
     # Verify no errors
 
+
 @pytest.mark.integration
 def test_cli_works():
     """Test that CLI works end-to-end."""
     # Execute various CLI commands
     # Verify all work correctly
+
 
 @pytest.mark.integration
 def test_python_imports():
@@ -395,11 +433,13 @@ def test_python_imports():
     # Import all modules
     # Verify no import errors
 
+
 @pytest.mark.integration
 async def test_all_dependencies():
     """Test that all dependencies are resolved."""
     # Check all imports
     # Verify no missing dependencies
+
 
 @pytest.mark.integration
 async def test_full_workflow():

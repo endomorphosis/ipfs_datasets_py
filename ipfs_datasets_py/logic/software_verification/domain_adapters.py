@@ -141,9 +141,8 @@ def _source_from_fixture(
         or fixture.get("path")
         or f"{domain}/{domain_identity.replace(':', '/')}.fixture"
     ).replace("\\", "/")
-    digest = (
-        str(source_payload.get("content_sha256") or "").strip()
-        or _sha256_hex(text or domain_identity)
+    digest = str(source_payload.get("content_sha256") or "").strip() or _sha256_hex(
+        text or domain_identity
     )
     if len(digest) != 64 or any(ch not in "0123456789abcdef" for ch in digest.lower()):
         digest = _sha256_hex(digest)
@@ -264,9 +263,7 @@ def _intent_kind(fixture: Mapping[str, Any]) -> str:
 
 
 def _security_kind(fixture: Mapping[str, Any]) -> str:
-    kind = str(
-        fixture.get("kind") or fixture.get("view_kind") or "transition_system"
-    ).strip()
+    kind = str(fixture.get("kind") or fixture.get("view_kind") or "transition_system").strip()
     if kind not in _SECURITY_KINDS:
         raise DomainAdapterError(
             f"security kind must be one of {sorted(_SECURITY_KINDS)}; got {kind!r}"
@@ -354,7 +351,9 @@ def adapt_intent_view(
     declarations: list[VerificationDeclaration] = [
         VerificationDeclaration(
             declaration_id=decl_id,
-            kind=DeclarationKind.POLICY if kind in {"workflow", "safety"} else DeclarationKind.CONTRACT,
+            kind=DeclarationKind.POLICY
+            if kind in {"workflow", "safety"}
+            else DeclarationKind.CONTRACT,
             name=domain_identity,
             payload={
                 "domain": "intent",
@@ -454,9 +453,7 @@ def adapt_intent_view(
     )
     bound = VerificationBound(
         bound_id=_safe_id("bound", "intent", domain_identity),
-        kind=BoundednessKind.NOT_APPLICABLE
-        if kind != "vc"
-        else BoundednessKind.STEP_BOUNDED,
+        kind=BoundednessKind.NOT_APPLICABLE if kind != "vc" else BoundednessKind.STEP_BOUNDED,
         limits={} if kind != "vc" else {"max_vc_steps": int(fixture.get("max_vc_steps") or 64)},
         description="Intent view bound carried into shared IR.",
         source_ref_ids=(source_ref.ref_id,),
@@ -531,7 +528,9 @@ def adapt_intent_view(
         },
     )
     status = SourceAdapterStatus.SUCCESS
-    if unsupported or (source_result is not None and source_result.status is not SourceAdapterStatus.SUCCESS):
+    if unsupported or (
+        source_result is not None and source_result.status is not SourceAdapterStatus.SUCCESS
+    ):
         status = SourceAdapterStatus.PARTIAL
     return DomainAdapterResult(
         domain=DomainKind.INTENT,
@@ -607,9 +606,7 @@ def adapt_security_view(
     transitions = fixture.get("transitions") or fixture.get("actions") or ()
     if not isinstance(states, Sequence) or isinstance(states, (str, bytes, bytearray)):
         raise DomainAdapterError("states must be a sequence when provided")
-    if not isinstance(transitions, Sequence) or isinstance(
-        transitions, (str, bytes, bytearray)
-    ):
+    if not isinstance(transitions, Sequence) or isinstance(transitions, (str, bytes, bytearray)):
         raise DomainAdapterError("transitions must be a sequence when provided")
 
     declarations: list[VerificationDeclaration] = [
@@ -738,7 +735,11 @@ def adapt_security_view(
     bound = VerificationBound(
         bound_id=_safe_id("bound", "security", domain_identity),
         kind=BoundednessKind.STEP_BOUNDED,
-        limits={"max_transitions": int(fixture.get("max_transitions") or max(len(tuple(transitions)), 1))},
+        limits={
+            "max_transitions": int(
+                fixture.get("max_transitions") or max(len(tuple(transitions)), 1)
+            )
+        },
         description="Security transition exploration bound.",
         source_ref_ids=(source_ref.ref_id,),
     )

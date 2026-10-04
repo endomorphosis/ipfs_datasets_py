@@ -83,10 +83,55 @@ def _aggregate_bm25_terms(path: str, *, top_k: int) -> List[Dict[str, int]]:
         df.update(seen)
 
     stop_terms = {
-        "the", "of", "and", "or", "to", "a", "in", "for", "by", "is", "be", "as", "this", "that",
-        "with", "on", "from", "any", "all", "an", "are", "not", "shall", "must", "may", "will",
-        "city", "code", "section", "chapter", "title", "portland", "oregon", "label", "effective",
-        "ordinance", "amended", "b", "c", "d", "e", "s", "1", "2", "3", "4", "5", "6", "10",
+        "the",
+        "of",
+        "and",
+        "or",
+        "to",
+        "a",
+        "in",
+        "for",
+        "by",
+        "is",
+        "be",
+        "as",
+        "this",
+        "that",
+        "with",
+        "on",
+        "from",
+        "any",
+        "all",
+        "an",
+        "are",
+        "not",
+        "shall",
+        "must",
+        "may",
+        "will",
+        "city",
+        "code",
+        "section",
+        "chapter",
+        "title",
+        "portland",
+        "oregon",
+        "label",
+        "effective",
+        "ordinance",
+        "amended",
+        "b",
+        "c",
+        "d",
+        "e",
+        "s",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "10",
     }
     terms: List[Dict[str, int]] = []
     for term, count in tf.most_common(max(1, int(top_k or 200)) * 3):
@@ -98,7 +143,9 @@ def _aggregate_bm25_terms(path: str, *, top_k: int) -> List[Dict[str, int]]:
     return terms
 
 
-def _build_prompt(base: Dict[str, Any], samples: List[Dict[str, str]], bm25_terms: List[Dict[str, int]]) -> str:
+def _build_prompt(
+    base: Dict[str, Any], samples: List[Dict[str, str]], bm25_terms: List[Dict[str, int]]
+) -> str:
     allowed_classes = [str(item.get("id") or "") for item in list(base.get("classes") or [])]
     return (
         "Return strict JSON only. You are designing a municipal-code ontology for knowledge graphs, "
@@ -121,7 +168,9 @@ def _build_prompt(base: Dict[str, Any], samples: List[Dict[str, str]], bm25_term
     )
 
 
-def _derive_with_llm(prompt: str, *, provider: str, model_name: str, max_tokens: int) -> Dict[str, Any]:
+def _derive_with_llm(
+    prompt: str, *, provider: str, model_name: str, max_tokens: int
+) -> Dict[str, Any]:
     from ipfs_datasets_py.llm_router import generate_text, get_last_generation_trace
 
     raw = generate_text(
@@ -144,14 +193,20 @@ def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Build municipal-law ontology JSON artifact.")
     parser.add_argument("--input", required=True, help="Canonical municipal parquet.")
     parser.add_argument("--output", required=True, help="Ontology JSON output path.")
-    parser.add_argument("--bm25-input", default="", help="Optional BM25 bag-of-words parquet used for corpus-wide ontology term review.")
+    parser.add_argument(
+        "--bm25-input",
+        default="",
+        help="Optional BM25 bag-of-words parquet used for corpus-wide ontology term review.",
+    )
     parser.add_argument("--bm25-top-k", type=int, default=220, help="Top BM25 terms sent to LLM.")
     parser.add_argument("--provider", default="codex_cli", help="llm_router provider.")
     parser.add_argument("--model", default="gpt-5.3-codex-spark", help="llm_router model.")
     parser.add_argument("--max-rows", type=int, default=24, help="Sample rows sent to LLM.")
     parser.add_argument("--max-chars", type=int, default=2200, help="Max chars per sample.")
     parser.add_argument("--max-tokens", type=int, default=1600, help="LLM output token budget.")
-    parser.add_argument("--no-llm", action="store_true", help="Write base ontology without LLM extension.")
+    parser.add_argument(
+        "--no-llm", action="store_true", help="Write base ontology without LLM extension."
+    )
     parser.add_argument("--json", action="store_true", help="Print summary JSON.")
     return parser.parse_args()
 
@@ -173,7 +228,11 @@ def main() -> int:
     extension = {k: v for k, v in llm_payload.items() if not str(k).startswith("_")}
     ontology = merge_llm_ontology_extensions(base, extension)
     ontology["source_corpus"] = str(Path(args.input).expanduser().resolve())
-    ontology["bm25_source"] = str(Path(args.bm25_input).expanduser().resolve()) if str(args.bm25_input or "").strip() else ""
+    ontology["bm25_source"] = (
+        str(Path(args.bm25_input).expanduser().resolve())
+        if str(args.bm25_input or "").strip()
+        else ""
+    )
     ontology["bm25_review_term_count"] = len(bm25_terms)
     ontology["bm25_review_terms"] = bm25_terms
     ontology["sample_count"] = len(samples)
@@ -187,7 +246,9 @@ def main() -> int:
     }
     out_path = Path(args.output).expanduser()
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(json.dumps(ontology, indent=2, ensure_ascii=False, sort_keys=False) + "\n", encoding="utf-8")
+    out_path.write_text(
+        json.dumps(ontology, indent=2, ensure_ascii=False, sort_keys=False) + "\n", encoding="utf-8"
+    )
     summary = {
         "output": str(out_path.resolve()),
         "classes": len(ontology.get("classes") or []),

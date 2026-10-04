@@ -43,10 +43,12 @@ Comprehensive enhancement of IPLD vector database from functional prototype to p
 ```python
 # OLD (deprecated)
 from ipfs_datasets_py.vector_stores.ipld import IPLDVectorStore
+
 store = IPLDVectorStore(dimension=768, metric="cosine")
 
 # NEW (recommended)
 from ipfs_datasets_py.vector_stores import IPLDVectorStore, create_ipld_config
+
 config = create_ipld_config("collection", 768)
 store = IPLDVectorStore(config)
 ```

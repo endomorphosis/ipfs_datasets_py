@@ -40,7 +40,7 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
 
 def generate_sample_entities(size: str = "medium") -> List[Entity]:
     """Generate realistic entity sets for profiling."""
-    
+
     sizes = {
         "small": 20,
         "medium": 100,
@@ -48,29 +48,39 @@ def generate_sample_entities(size: str = "medium") -> List[Entity]:
         "xlarge": 1000,
     }
     n_entities = sizes.get(size, 100)
-    
+
     entity_types = [
-        "Person", "Organization", "Location", "Document", "Event",
-        "Obligation", "Contract", "Payment", "Statute", "Case"
+        "Person",
+        "Organization",
+        "Location",
+        "Document",
+        "Event",
+        "Obligation",
+        "Contract",
+        "Payment",
+        "Statute",
+        "Case",
     ]
-    
+
     entities = []
     for i in range(n_entities):
         entity_type = entity_types[i % len(entity_types)]
-        entities.append(Entity(
-            id=f"e{i:04d}",
-            text=f"{entity_type} Entity {i}",
-            type=entity_type,
-            confidence=0.8 + (i % 20) * 0.01,  # 0.8-0.99
-            properties={"index": i}
-        ))
-    
+        entities.append(
+            Entity(
+                id=f"e{i:04d}",
+                text=f"{entity_type} Entity {i}",
+                type=entity_type,
+                confidence=0.8 + (i % 20) * 0.01,  # 0.8-0.99
+                properties={"index": i},
+            )
+        )
+
     return entities
 
 
 def generate_sample_data(entities: List[Entity]) -> str:
     """Generate realistic text data containing entity mentions."""
-    
+
     # Simulate legal complaint text with verb frames
     templates = [
         "{subj} owns {obj}.",
@@ -84,7 +94,7 @@ def generate_sample_data(entities: List[Entity]) -> str:
         "According to the statute, {subj} must {obj}.",
         "{subj} cites {obj} in the filing.",
     ]
-    
+
     # Create a realistic text corpus
     lines = []
     for i in range(0, len(entities) - 1, 2):
@@ -93,7 +103,7 @@ def generate_sample_data(entities: List[Entity]) -> str:
         obj = entities[i + 1].text
         line = template.format(subj=subj, obj=obj)
         lines.append(line)
-    
+
     # Add some natural language filler to make it realistic
     filler = [
         "The court finds that the evidence supports this conclusion.",
@@ -102,14 +112,14 @@ def generate_sample_data(entities: List[Entity]) -> str:
         "The parties entered into negotiations in good faith.",
         "Discovery revealed substantial documentation.",
     ]
-    
+
     # Interleave entity mentions with filler
     result = []
     for i, line in enumerate(lines):
         result.append(line)
         if i % 3 == 0:
             result.append(filler[i % len(filler)])
-    
+
     return " ".join(result)
 
 
@@ -120,26 +130,26 @@ def profile_infer_relationships(
     profile_enabled: bool = True,
 ) -> Dict[str, Any]:
     """Profile the infer_relationships method."""
-    
+
     generator = OntologyGenerator()
-    
+
     # Warm-up run (populates pattern caches)
     generator.infer_relationships(entities[:10], context, data[:1000])
-    
+
     # Profiled run
     if profile_enabled:
         profiler = cProfile.Profile()
         profiler.enable()
-    
+
     start_time = time.perf_counter()
     relationships = generator.infer_relationships(entities, context, data)
     elapsed = time.perf_counter() - start_time
-    
+
     if profile_enabled:
         profiler.disable()
     else:
         profiler = None
-    
+
     return {
         "elapsed_seconds": elapsed,
         "num_entities": len(entities),
@@ -151,23 +161,23 @@ def profile_infer_relationships(
 
 def print_profile_stats(profiler: cProfile.Profile, top_n: int = 25):
     """Print top-N time-consuming function calls."""
-    
+
     if profiler is None:
         return
-    
+
     s = io.StringIO()
     ps = pstats.Stats(profiler, stream=s)
-    
+
     print("\n" + "=" * 80)
     print("TOP FUNCTIONS BY CUMULATIVE TIME")
     print("=" * 80)
     ps.sort_stats(pstats.SortKey.CUMULATIVE)
     ps.print_stats(top_n)
     print(s.getvalue())
-    
+
     s = io.StringIO()
     ps = pstats.Stats(profiler, stream=s)
-    
+
     print("\n" + "=" * 80)
     print("TOP FUNCTIONS BY TOTAL TIME")
     print("=" * 80)
@@ -178,14 +188,14 @@ def print_profile_stats(profiler: cProfile.Profile, top_n: int = 25):
 
 def benchmark_sizes():
     """Benchmark across different entity set sizes."""
-    
+
     print("\n" + "=" * 80)
     print("BENCHMARK: Relationship Inference Scaling")
     print("=" * 80)
-    
+
     sizes = ["small", "medium", "large", "xlarge"]
     results = []
-    
+
     for size in sizes:
         entities = generate_sample_entities(size)
         data = generate_sample_data(entities)
@@ -195,24 +205,18 @@ def benchmark_sizes():
             data_type=DataType.TEXT,
             domain="legal",
             extraction_strategy=ExtractionStrategy.HYBRID,
-            config=config
+            config=config,
         )
-        
+
         print(f"\nBenchmarking {size} ({len(entities)} entities)...")
-        result = profile_infer_relationships(
-            entities, data, context, profile_enabled=False
-        )
-        
+        result = profile_infer_relationships(entities, data, context, profile_enabled=False)
+
         print(f"  Elapsed: {result['elapsed_seconds']:.4f}s")
         print(f"  Relationships: {result['num_relationships']}")
         print(f"  Throughput: {result['relationships_per_second']:.2f} rels/sec")
-        
-        results.append({
-            "size": size,
-            "n_entities": len(entities),
-            **result
-        })
-    
+
+        results.append({"size": size, "n_entities": len(entities), **result})
+
     print("\n" + "=" * 80)
     print("SCALING SUMMARY")
     print("=" * 80)
@@ -224,32 +228,32 @@ def benchmark_sizes():
             f"{r['num_relationships']:>10} {r['elapsed_seconds']:>12.4f} "
             f"{r['relationships_per_second']:>12.2f}"
         )
-    
+
     return results
 
 
 def identify_bottlenecks(profiler: cProfile.Profile) -> List[str]:
     """Analyze profiler output and identify optimization opportunities."""
-    
+
     if profiler is None:
         return []
-    
+
     bottlenecks = []
-    
+
     s = io.StringIO()
     ps = pstats.Stats(profiler, stream=s)
     ps.sort_stats(pstats.SortKey.CUMULATIVE)
-    
+
     # Check for common bottlenecks
     stats_dict = ps.stats
-    
+
     total_time = sum(stat[2] for stat in stats_dict.values())
-    
+
     for func, stat in stats_dict.items():
         func_name = func[2]
         cumtime = stat[3]
         percent = (cumtime / total_time) * 100 if total_time > 0 else 0
-        
+
         # Identify high-impact functions (>5% of total time)
         if percent > 5:
             if "finditer" in func_name or "re.compile" in func_name:
@@ -272,46 +276,37 @@ def identify_bottlenecks(profiler: cProfile.Profile) -> List[str]:
                     f"⚠️  Pattern lookup overhead: {func_name} ({percent:.1f}% of time) "
                     "→ Verify lazy loading is working correctly"
                 )
-    
+
     return bottlenecks
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Profile infer_relationships() performance"
-    )
+    parser = argparse.ArgumentParser(description="Profile infer_relationships() performance")
     parser.add_argument(
         "--size",
         choices=["small", "medium", "large", "xlarge"],
         default="medium",
-        help="Entity set size for profiling"
+        help="Entity set size for profiling",
     )
+    parser.add_argument("--benchmark", action="store_true", help="Run benchmark across all sizes")
     parser.add_argument(
-        "--benchmark",
-        action="store_true",
-        help="Run benchmark across all sizes"
-    )
-    parser.add_argument(
-        "--top-n",
-        type=int,
-        default=25,
-        help="Number of top functions to show in profile"
+        "--top-n", type=int, default=25, help="Number of top functions to show in profile"
     )
     parser.add_argument(
         "--visualize",
         action="store_true",
-        help="Generate visualization (requires gprof2dot, graphviz)"
+        help="Generate visualization (requires gprof2dot, graphviz)",
     )
-    
+
     args = parser.parse_args()
-    
+
     if args.benchmark:
         benchmark_sizes()
         return
-    
+
     # Single profiling run
     print(f"\n🔍 Profiling infer_relationships() with {args.size} entity set...")
-    
+
     entities = generate_sample_entities(args.size)
     data = generate_sample_data(entities)
     config = ExtractionConfig()
@@ -320,11 +315,11 @@ def main():
         data_type=DataType.TEXT,
         domain="legal",
         extraction_strategy=ExtractionStrategy.HYBRID,
-        config=config
+        config=config,
     )
-    
+
     result = profile_infer_relationships(entities, data, context, profile_enabled=True)
-    
+
     print("\n" + "=" * 80)
     print("PROFILING RESULTS")
     print("=" * 80)
@@ -332,9 +327,9 @@ def main():
     print(f"Relationships found:  {result['num_relationships']}")
     print(f"Elapsed time:         {result['elapsed_seconds']:.4f} seconds")
     print(f"Throughput:           {result['relationships_per_second']:.2f} rels/sec")
-    
+
     print_profile_stats(result["profiler"], top_n=args.top_n)
-    
+
     # Identify optimization opportunities
     bottlenecks = identify_bottlenecks(result["profiler"])
     if bottlenecks:
@@ -345,38 +340,28 @@ def main():
             print(f"\n{b}")
     else:
         print("\n✅ No major bottlenecks detected (all functions < 5% of total time)")
-    
+
     # Visualization
     if args.visualize:
         print("\n📊 Generating call graph visualization...")
         try:
             import subprocess
-            
+
             # Save profile data
             profile_file = "/tmp/infer_relationships.prof"
             result["profiler"].dump_stats(profile_file)
-            
+
             # Generate DOT file
             dot_file = "/tmp/infer_relationships.dot"
-            subprocess.run([
-                "gprof2dot",
-                "-f", "pstats",
-                profile_file,
-                "-o", dot_file
-            ], check=True)
-            
+            subprocess.run(["gprof2dot", "-f", "pstats", profile_file, "-o", dot_file], check=True)
+
             # Generate PNG
             png_file = "/tmp/infer_relationships.png"
-            subprocess.run([
-                "dot",
-                "-Tpng",
-                dot_file,
-                "-o", png_file
-            ], check=True)
-            
+            subprocess.run(["dot", "-Tpng", dot_file, "-o", png_file], check=True)
+
             print(f"✅ Visualization saved to: {png_file}")
             print(f"   Open with: xdg-open {png_file}")
-            
+
         except subprocess.CalledProcessError as e:
             print(f"❌ Visualization failed: {e}")
             print("   Install dependencies: pip install gprof2dot && sudo apt install graphviz")

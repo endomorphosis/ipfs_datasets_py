@@ -87,21 +87,13 @@ ASF_DISABLE_INCOMING_TRUSTLINE: Final[int] = 15
 ASF_ALLOW_TRUSTLINE_CLAWBACK: Final[int] = 16
 
 # Classic address: starts with 'r', length typically 25–35 base58 chars
-_CLASSIC_ADDRESS_RE: Final[re.Pattern[str]] = re.compile(
-    r"^r[1-9A-HJ-NP-Za-km-z]{24,34}$"
-)
-_X_ADDRESS_RE: Final[re.Pattern[str]] = re.compile(
-    r"^[XT][1-9A-HJ-NP-Za-km-z]{45,55}$"
-)
+_CLASSIC_ADDRESS_RE: Final[re.Pattern[str]] = re.compile(r"^r[1-9A-HJ-NP-Za-km-z]{24,34}$")
+_X_ADDRESS_RE: Final[re.Pattern[str]] = re.compile(r"^[XT][1-9A-HJ-NP-Za-km-z]{45,55}$")
 _HASH_RE: Final[re.Pattern[str]] = re.compile(r"^(?:0x)?[0-9A-Fa-f]{64}$")
-_CURRENCY_STANDARD: Final[re.Pattern[str]] = re.compile(
-    r"^[A-Za-z0-9?!@#$%^&*<>(){}[\]|]{3}$"
-)
+_CURRENCY_STANDARD: Final[re.Pattern[str]] = re.compile(r"^[A-Za-z0-9?!@#$%^&*<>(){}[\]|]{3}$")
 _CURRENCY_HEX: Final[re.Pattern[str]] = re.compile(r"^[0-9A-Fa-f]{40}$")
 _DECIMAL_INTEGER: Final[re.Pattern[str]] = re.compile(r"^-?(0|[1-9][0-9]*)$")
-_DECIMAL_AMOUNT: Final[re.Pattern[str]] = re.compile(
-    r"^-?(0|[1-9][0-9]*)(\.[0-9]+)?$"
-)
+_DECIMAL_AMOUNT: Final[re.Pattern[str]] = re.compile(r"^-?(0|[1-9][0-9]*)(\.[0-9]+)?$")
 
 _KNOWN_XRPL: Final[dict[str, dict[str, str]]] = {
     XRPL_MAINNET_CHAIN_ID: {
@@ -377,9 +369,7 @@ def normalize_currency(value: str) -> str:
         return text.upper()
     if _CURRENCY_STANDARD.fullmatch(text):
         return text
-    raise InvalidRequestError(
-        "currency must be a 3-char code or 40-hex nonstandard currency"
-    )
+    raise InvalidRequestError("currency must be a 3-char code or 40-hex nonstandard currency")
 
 
 def map_transaction_type(value: str | XRPLTransactionType) -> XRPLTransactionType:
@@ -465,9 +455,7 @@ class IssuedAsset:
     attributes: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "issuer", normalize_classic_address(self.issuer, field="issuer")
-        )
+        object.__setattr__(self, "issuer", normalize_classic_address(self.issuer, field="issuer"))
         currency = normalize_currency(self.currency)
         object.__setattr__(self, "currency", currency)
         object.__setattr__(
@@ -524,9 +512,7 @@ class IssuerPolicy:
     schema_version: str = SEMANTICS_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "issuer", normalize_classic_address(self.issuer, field="issuer")
-        )
+        object.__setattr__(self, "issuer", normalize_classic_address(self.issuer, field="issuer"))
         for name in (
             "require_auth",
             "default_ripple",
@@ -539,15 +525,11 @@ class IssuerPolicy:
         object.__setattr__(
             self, "account_flags", _non_negative(self.account_flags, "account_flags")
         )
-        amendments = tuple(
-            _required_text(item, "amendment") for item in self.enabled_amendments
-        )
+        amendments = tuple(_required_text(item, "amendment") for item in self.enabled_amendments)
         object.__setattr__(self, "enabled_amendments", amendments)
         # Consistency: no_freeze forbids global_freeze.
         if self.no_freeze and self.global_freeze:
-            raise InvalidRequestError(
-                "IssuerPolicy cannot set both no_freeze and global_freeze"
-            )
+            raise InvalidRequestError("IssuerPolicy cannot set both no_freeze and global_freeze")
         object.__setattr__(self, "attributes", _freeze_mapping(self.attributes))
         object.__setattr__(
             self,
@@ -612,16 +594,12 @@ class IssuerPolicy:
             default_ripple=bool(value.get("default_ripple", False)),
             global_freeze=bool(value.get("global_freeze", False)),
             no_freeze=bool(value.get("no_freeze", False)),
-            allow_trustline_clawback=bool(
-                value.get("allow_trustline_clawback", False)
-            ),
+            allow_trustline_clawback=bool(value.get("allow_trustline_clawback", False)),
             deposit_auth=bool(value.get("deposit_auth", False)),
             account_flags=int(value.get("account_flags", 0) or 0),
             enabled_amendments=tuple(value.get("enabled_amendments", ()) or ()),
             attributes=value.get("attributes", {}),
-            schema_version=str(
-                value.get("schema_version", SEMANTICS_SCHEMA_VERSION)
-            ),
+            schema_version=str(value.get("schema_version", SEMANTICS_SCHEMA_VERSION)),
         )
 
     @classmethod
@@ -646,8 +624,10 @@ class IssuerPolicy:
         global_freeze = bool(flags_i & (1 << 22))  # lsfGlobalFreeze
         no_freeze = bool(flags_i & (1 << 21))  # lsfNoFreeze
         deposit_auth = bool(flags_i & (1 << 24))  # lsfDepositAuth
-        clawback = bool(flags_i & (1 << 28)) if allow_trustline_clawback is None else (
-            bool(allow_trustline_clawback)
+        clawback = (
+            bool(flags_i & (1 << 28))
+            if allow_trustline_clawback is None
+            else (bool(allow_trustline_clawback))
         )
         # SetFlag / ClearFlag override when provided (AccountSet semantics).
         if set_flag is not None:
@@ -736,9 +716,7 @@ class HookCapability:
             "capability_evidence",
             _optional_text(self.capability_evidence, "capability_evidence"),
         )
-        object.__setattr__(
-            self, "network", self.network.strip() or anchor["network"]
-        )
+        object.__setattr__(self, "network", self.network.strip() or anchor["network"])
         if self.ledger_index is not None:
             object.__setattr__(
                 self,
@@ -748,17 +726,11 @@ class HookCapability:
         # Invariant: proven requires amendment_enabled and evidence.
         if state is HookCapabilityState.PROVEN:
             if not self.amendment_enabled:
-                raise InvalidRequestError(
-                    "HookCapability PROVEN requires amendment_enabled=True"
-                )
+                raise InvalidRequestError("HookCapability PROVEN requires amendment_enabled=True")
             if not self.capability_evidence:
-                raise InvalidRequestError(
-                    "HookCapability PROVEN requires capability_evidence"
-                )
+                raise InvalidRequestError("HookCapability PROVEN requires capability_evidence")
         if state is HookCapabilityState.ABSENT and self.amendment_enabled:
-            raise InvalidRequestError(
-                "HookCapability ABSENT cannot claim amendment_enabled"
-            )
+            raise InvalidRequestError("HookCapability ABSENT cannot claim amendment_enabled")
         object.__setattr__(
             self,
             "diagnostics",
@@ -823,8 +795,7 @@ class HookCapability:
             amendment_enabled=False,
             capability_evidence="",
             network=network,
-            diagnostics=tuple(diagnostics)
-            or ("Hooks amendment not proven present",),
+            diagnostics=tuple(diagnostics) or ("Hooks amendment not proven present",),
         )
 
     @classmethod
@@ -842,9 +813,7 @@ class HookCapability:
             state=HookCapabilityState.PROVEN,
             amendment_name=amendment_name,
             amendment_enabled=True,
-            capability_evidence=_required_text(
-                capability_evidence, "capability_evidence"
-            ),
+            capability_evidence=_required_text(capability_evidence, "capability_evidence"),
             network=network,
             ledger_index=ledger_index,
         )
@@ -863,9 +832,7 @@ class HookCapability:
             ledger_index=value.get("ledger_index"),
             diagnostics=tuple(value.get("diagnostics", ()) or ()),
             attributes=value.get("attributes", {}),
-            schema_version=str(
-                value.get("schema_version", SEMANTICS_SCHEMA_VERSION)
-            ),
+            schema_version=str(value.get("schema_version", SEMANTICS_SCHEMA_VERSION)),
         )
 
 
@@ -896,9 +863,7 @@ class ValidatedLedgerEpoch:
         resolved = resolve_xrpl_chain_id(self.chain_id)
         anchor = xrpl_network_anchor(resolved)
         object.__setattr__(self, "chain_id", resolved)
-        object.__setattr__(
-            self, "ledger_index", _non_negative(self.ledger_index, "ledger_index")
-        )
+        object.__setattr__(self, "ledger_index", _non_negative(self.ledger_index, "ledger_index"))
         object.__setattr__(
             self,
             "ledger_hash",
@@ -919,12 +884,8 @@ class ValidatedLedgerEpoch:
         else:
             object.__setattr__(self, "parent_hash", "")
         if self.close_time is not None:
-            object.__setattr__(
-                self, "close_time", _non_negative(self.close_time, "close_time")
-            )
-        object.__setattr__(
-            self, "network", self.network.strip() or anchor["network"]
-        )
+            object.__setattr__(self, "close_time", _non_negative(self.close_time, "close_time"))
+        object.__setattr__(self, "network", self.network.strip() or anchor["network"])
         object.__setattr__(
             self,
             "genesis_hash",
@@ -942,9 +903,7 @@ class ValidatedLedgerEpoch:
         object.__setattr__(
             self,
             "enabled_amendments",
-            tuple(
-                _required_text(item, "amendment") for item in self.enabled_amendments
-            ),
+            tuple(_required_text(item, "amendment") for item in self.enabled_amendments),
         )
         object.__setattr__(self, "attributes", _freeze_mapping(self.attributes))
         object.__setattr__(
@@ -996,9 +955,7 @@ class ValidatedLedgerEpoch:
             owner_reserve_drops=str(value.get("owner_reserve_drops", "")),
             enabled_amendments=tuple(value.get("enabled_amendments", ()) or ()),
             attributes=value.get("attributes", {}),
-            schema_version=str(
-                value.get("schema_version", SEMANTICS_SCHEMA_VERSION)
-            ),
+            schema_version=str(value.get("schema_version", SEMANTICS_SCHEMA_VERSION)),
         )
 
 
@@ -1031,9 +988,7 @@ class SignerQuorum:
             )
             weight = item.get("weight", item.get("SignerWeight", 0))
             if isinstance(weight, bool) or not isinstance(weight, int) or weight <= 0:
-                raise InvalidRequestError(
-                    f"signers[{index}].weight must be a positive integer"
-                )
+                raise InvalidRequestError(f"signers[{index}].weight must be a positive integer")
             total_weight += weight
             frozen_signers.append(
                 MappingProxyType(
@@ -1135,9 +1090,7 @@ class LedgerObjectTransition:
         object.__setattr__(
             self, "account", normalize_classic_address(self.account, field="account")
         )
-        object.__setattr__(
-            self, "object_kind", map_ledger_object_kind(self.object_kind)
-        )
+        object.__setattr__(self, "object_kind", map_ledger_object_kind(self.object_kind))
         if self.destination:
             object.__setattr__(
                 self,
@@ -1153,9 +1106,7 @@ class LedgerObjectTransition:
                 _non_negative(self.destination_tag, "destination_tag"),
             )
         if self.source_tag is not None:
-            object.__setattr__(
-                self, "source_tag", _non_negative(self.source_tag, "source_tag")
-            )
+            object.__setattr__(self, "source_tag", _non_negative(self.source_tag, "source_tag"))
         for name in (
             "amount_kind",
             "amount_value",
@@ -1189,51 +1140,37 @@ class LedgerObjectTransition:
         object.__setattr__(self, "partial_payment", partial)
         if self.amount_kind:
             kind = self.amount_kind.lower()
-            if kind not in {AmountKind.XRP.value, AmountKind.ISSUED.value, AmountKind.UNKNOWN.value}:
-                raise InvalidRequestError(
-                    "amount_kind must be 'xrp', 'issued', or 'unknown'"
-                )
+            if kind not in {
+                AmountKind.XRP.value,
+                AmountKind.ISSUED.value,
+                AmountKind.UNKNOWN.value,
+            }:
+                raise InvalidRequestError("amount_kind must be 'xrp', 'issued', or 'unknown'")
             object.__setattr__(self, "amount_kind", kind)
         if self.amount_value and self.amount_kind == AmountKind.XRP.value:
             if not _DECIMAL_INTEGER.fullmatch(self.amount_value):
-                raise InvalidRequestError(
-                    "XRP amount_value must be integer drops string"
-                )
+                raise InvalidRequestError("XRP amount_value must be integer drops string")
         if self.amount_value and self.amount_kind == AmountKind.ISSUED.value:
             if not _DECIMAL_AMOUNT.fullmatch(self.amount_value):
-                raise InvalidRequestError(
-                    "issued amount_value must be a decimal string"
-                )
-        if self.issued_asset is not None and not isinstance(
-            self.issued_asset, IssuedAsset
-        ):
+                raise InvalidRequestError("issued amount_value must be a decimal string")
+        if self.issued_asset is not None and not isinstance(self.issued_asset, IssuedAsset):
             raise InvalidRequestError("issued_asset must be IssuedAsset or None")
         if self.delivered_issued_asset is not None and not isinstance(
             self.delivered_issued_asset, IssuedAsset
         ):
-            raise InvalidRequestError(
-                "delivered_issued_asset must be IssuedAsset or None"
-            )
+            raise InvalidRequestError("delivered_issued_asset must be IssuedAsset or None")
         if self.amount_kind == AmountKind.ISSUED.value and self.issued_asset is None:
-            raise InvalidRequestError(
-                "issued amount_kind requires issued_asset"
-            )
+            raise InvalidRequestError("issued amount_kind requires issued_asset")
         if self.amount_kind == AmountKind.XRP.value and self.issued_asset is not None:
-            raise InvalidRequestError(
-                "XRP amount_kind must not carry issued_asset"
-            )
+            raise InvalidRequestError("XRP amount_kind must not carry issued_asset")
         for name in ("sequence", "ticket_sequence", "last_ledger_sequence", "ledger_index"):
             val = getattr(self, name)
             if val is not None:
                 object.__setattr__(self, name, _non_negative(val, name))
         # Sequence XOR ticket: both may be absent (incomplete), but both set is invalid.
         if self.sequence is not None and self.ticket_sequence is not None:
-            raise InvalidRequestError(
-                "sequence and ticket_sequence are mutually exclusive"
-            )
-        if self.signer_quorum is not None and not isinstance(
-            self.signer_quorum, SignerQuorum
-        ):
+            raise InvalidRequestError("sequence and ticket_sequence are mutually exclusive")
+        if self.signer_quorum is not None and not isinstance(self.signer_quorum, SignerQuorum):
             raise InvalidRequestError("signer_quorum must be SignerQuorum or None")
         if self.validated is not None:
             object.__setattr__(self, "validated", _bool(self.validated, "validated"))
@@ -1247,16 +1184,12 @@ class LedgerObjectTransition:
             if not isinstance(self.trust_line, Mapping):
                 raise InvalidRequestError("trust_line must be a mapping or None")
             object.__setattr__(self, "trust_line", _freeze_mapping(self.trust_line))
-        if self.issuer_policy is not None and not isinstance(
-            self.issuer_policy, IssuerPolicy
-        ):
+        if self.issuer_policy is not None and not isinstance(self.issuer_policy, IssuerPolicy):
             raise InvalidRequestError("issuer_policy must be IssuerPolicy or None")
         if self.hooks_capability is not None and not isinstance(
             self.hooks_capability, HookCapability
         ):
-            raise InvalidRequestError(
-                "hooks_capability must be HookCapability or None"
-            )
+            raise InvalidRequestError("hooks_capability must be HookCapability or None")
         effects: list[Mapping[str, Any]] = []
         for index, effect in enumerate(self.hooks_effects):
             if not isinstance(effect, Mapping):
@@ -1270,9 +1203,7 @@ class LedgerObjectTransition:
                     "hooks_effects require proven HookCapability; "
                     "absent Hooks must return UNSUPPORTED"
                 )
-        object.__setattr__(
-            self, "previous_fields", _freeze_mapping(self.previous_fields)
-        )
+        object.__setattr__(self, "previous_fields", _freeze_mapping(self.previous_fields))
         object.__setattr__(self, "final_fields", _freeze_mapping(self.final_fields))
         object.__setattr__(self, "attributes", _freeze_mapping(self.attributes))
         object.__setattr__(
@@ -1330,9 +1261,7 @@ class LedgerObjectTransition:
             if self.hooks_capability is not None
             else None,
             "hooks_effects": [thaw_json(e) for e in self.hooks_effects],
-            "issued_asset": self.issued_asset.to_dict()
-            if self.issued_asset is not None
-            else None,
+            "issued_asset": self.issued_asset.to_dict() if self.issued_asset is not None else None,
             "issuer_policy": self.issuer_policy.to_dict()
             if self.issuer_policy is not None
             else None,
@@ -1358,9 +1287,7 @@ class LedgerObjectTransition:
             if isinstance(self.transaction_type, XRPLTransactionType)
             else str(self.transaction_type),
             "transition_id": self.transition_id,
-            "trust_line": thaw_json(self.trust_line)
-            if self.trust_line is not None
-            else None,
+            "trust_line": thaw_json(self.trust_line) if self.trust_line is not None else None,
             "validated": self.validated,
         }
 
@@ -1378,21 +1305,15 @@ class LedgerObjectTransition:
         quorum = value.get("signer_quorum")
         return cls(
             transition_id=str(value.get("transition_id", "")),
-            transaction_type=map_transaction_type(
-                str(value.get("transaction_type", "Unknown"))
-            ),
+            transaction_type=map_transaction_type(str(value.get("transaction_type", "Unknown"))),
             account=str(value.get("account", "")),
-            object_kind=map_ledger_object_kind(
-                str(value.get("object_kind", "Unknown"))
-            ),
+            object_kind=map_ledger_object_kind(str(value.get("object_kind", "Unknown"))),
             destination=str(value.get("destination", "")),
             destination_tag=value.get("destination_tag"),
             source_tag=value.get("source_tag"),
             amount_kind=str(value.get("amount_kind", "")),
             amount_value=str(value.get("amount_value", "")),
-            issued_asset=IssuedAsset.from_dict(issued)
-            if isinstance(issued, Mapping)
-            else None,
+            issued_asset=IssuedAsset.from_dict(issued) if isinstance(issued, Mapping) else None,
             delivered_amount_kind=str(value.get("delivered_amount_kind", "")),
             delivered_amount_value=str(value.get("delivered_amount_value", "")),
             delivered_issued_asset=IssuedAsset.from_dict(del_issued)
@@ -1404,9 +1325,7 @@ class LedgerObjectTransition:
             sequence=value.get("sequence"),
             ticket_sequence=value.get("ticket_sequence"),
             last_ledger_sequence=value.get("last_ledger_sequence"),
-            signer_quorum=SignerQuorum.from_dict(quorum)
-            if isinstance(quorum, Mapping)
-            else None,
+            signer_quorum=SignerQuorum.from_dict(quorum) if isinstance(quorum, Mapping) else None,
             ledger_index=value.get("ledger_index"),
             ledger_hash=str(value.get("ledger_hash", "")),
             transaction_hash=str(value.get("transaction_hash", "")),
@@ -1414,9 +1333,7 @@ class LedgerObjectTransition:
             engine_result=str(value.get("engine_result", "")),
             memos=tuple(value.get("memos", ()) or ()),
             trust_line=value.get("trust_line"),
-            issuer_policy=IssuerPolicy.from_dict(policy)
-            if isinstance(policy, Mapping)
-            else None,
+            issuer_policy=IssuerPolicy.from_dict(policy) if isinstance(policy, Mapping) else None,
             hooks_capability=HookCapability.from_dict(hooks)
             if isinstance(hooks, Mapping)
             else None,
@@ -1425,9 +1342,7 @@ class LedgerObjectTransition:
             previous_fields=value.get("previous_fields", {}),
             final_fields=value.get("final_fields", {}),
             attributes=value.get("attributes", {}),
-            schema_version=str(
-                value.get("schema_version", SEMANTICS_SCHEMA_VERSION)
-            ),
+            schema_version=str(value.get("schema_version", SEMANTICS_SCHEMA_VERSION)),
         )
 
 

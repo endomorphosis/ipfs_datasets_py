@@ -27,22 +27,20 @@ _TOML_EXTRAS_BLOCK_SIZE = 500
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _read(rel: str) -> str:
     return (ROOT / rel).read_text()
 
 
 def _numpy_dep_lines(text: str) -> list[str]:
     """Return stripped non-comment lines that mention 'numpy'."""
-    return [
-        l.strip()
-        for l in text.splitlines()
-        if "numpy" in l and not l.strip().startswith("#")
-    ]
+    return [l.strip() for l in text.splitlines() if "numpy" in l and not l.strip().startswith("#")]
 
 
 # ---------------------------------------------------------------------------
 # setup.py
 # ---------------------------------------------------------------------------
+
 
 class TestSetupPyNumpyDep:
     """numpy is in install_requires with proper version bounds."""
@@ -50,18 +48,16 @@ class TestSetupPyNumpyDep:
     def test_numpy_in_install_requires_lt_314(self):
         src = _read("setup.py")
         lines = _numpy_dep_lines(src)
-        assert any(
-            "numpy>=1.21.0" in l and "python_version < '3.14'" in l
-            for l in lines
-        ), f"Missing numpy<3.14 entry in setup.py install_requires; found: {lines}"
+        assert any("numpy>=1.21.0" in l and "python_version < '3.14'" in l for l in lines), (
+            f"Missing numpy<3.14 entry in setup.py install_requires; found: {lines}"
+        )
 
     def test_numpy_in_install_requires_gte_314(self):
         src = _read("setup.py")
         lines = _numpy_dep_lines(src)
-        assert any(
-            "numpy>=2.0.0" in l and "python_version >= '3.14'" in l
-            for l in lines
-        ), f"Missing numpy>=3.14 entry in setup.py install_requires; found: {lines}"
+        assert any("numpy>=2.0.0" in l and "python_version >= '3.14'" in l for l in lines), (
+            f"Missing numpy>=3.14 entry in setup.py install_requires; found: {lines}"
+        )
 
     def test_numpy_not_duplicated_in_knowledge_graphs_extras(self):
         src = _read("setup.py")
@@ -72,12 +68,12 @@ class TestSetupPyNumpyDep:
         # numpy should not appear in the extras any more (moved to base deps)
         assert "numpy" not in block, (
             "numpy is still listed in knowledge_graphs extras — "
-            "it should only appear in install_requires. Block: "
-            + block[:300]
+            "it should only appear in install_requires. Block: " + block[:300]
         )
 
     def test_setup_py_is_valid_python(self):
         import ast
+
         src = _read("setup.py")
         try:
             ast.parse(src)
@@ -89,6 +85,7 @@ class TestSetupPyNumpyDep:
 # pyproject.toml
 # ---------------------------------------------------------------------------
 
+
 class TestPyprojectTomlNumpyDep:
     """pyproject.toml exists and declares numpy in [project] dependencies."""
 
@@ -98,18 +95,16 @@ class TestPyprojectTomlNumpyDep:
     def test_numpy_in_project_dependencies_lt_314(self):
         toml = _read("pyproject.toml")
         lines = _numpy_dep_lines(toml)
-        assert any(
-            "numpy>=1.21.0" in l and "python_version < '3.14'" in l
-            for l in lines
-        ), f"Missing numpy<3.14 in pyproject.toml; found: {lines}"
+        assert any("numpy>=1.21.0" in l and "python_version < '3.14'" in l for l in lines), (
+            f"Missing numpy<3.14 in pyproject.toml; found: {lines}"
+        )
 
     def test_numpy_in_project_dependencies_gte_314(self):
         toml = _read("pyproject.toml")
         lines = _numpy_dep_lines(toml)
-        assert any(
-            "numpy>=2.0.0" in l and "python_version >= '3.14'" in l
-            for l in lines
-        ), f"Missing numpy>=3.14 in pyproject.toml; found: {lines}"
+        assert any("numpy>=2.0.0" in l and "python_version >= '3.14'" in l for l in lines), (
+            f"Missing numpy>=3.14 in pyproject.toml; found: {lines}"
+        )
 
     def test_pyproject_toml_has_build_system(self):
         toml = _read("pyproject.toml")
@@ -122,14 +117,13 @@ class TestPyprojectTomlNumpyDep:
         if start == -1:
             return  # no knowledge_graphs extras in pyproject.toml — that's fine
         block = toml[start : start + _TOML_EXTRAS_BLOCK_SIZE]
-        assert "numpy" not in block, (
-            "numpy is duplicated in pyproject.toml knowledge_graphs extras"
-        )
+        assert "numpy" not in block, "numpy is duplicated in pyproject.toml knowledge_graphs extras"
 
 
 # ---------------------------------------------------------------------------
 # requirements.txt
 # ---------------------------------------------------------------------------
+
 
 class TestRequirementsTxtNumpyDep:
     """requirements.txt has matching numpy entries."""
@@ -137,21 +131,22 @@ class TestRequirementsTxtNumpyDep:
     def test_numpy_in_requirements_lt_314(self):
         reqs = _read("requirements.txt")
         numpy_lines = [l for l in reqs.splitlines() if l.startswith("numpy")]
-        assert any(
-            "python_version < '3.14'" in l for l in numpy_lines
-        ), f"Missing numpy<3.14 in requirements.txt; found: {numpy_lines}"
+        assert any("python_version < '3.14'" in l for l in numpy_lines), (
+            f"Missing numpy<3.14 in requirements.txt; found: {numpy_lines}"
+        )
 
     def test_numpy_in_requirements_gte_314(self):
         reqs = _read("requirements.txt")
         numpy_lines = [l for l in reqs.splitlines() if l.startswith("numpy")]
-        assert any(
-            "python_version >= '3.14'" in l for l in numpy_lines
-        ), f"Missing numpy>=3.14 in requirements.txt; found: {numpy_lines}"
+        assert any("python_version >= '3.14'" in l for l in numpy_lines), (
+            f"Missing numpy>=3.14 in requirements.txt; found: {numpy_lines}"
+        )
 
 
 # ---------------------------------------------------------------------------
 # Consistency
 # ---------------------------------------------------------------------------
+
 
 class TestNumpyVersionConsistency:
     """Version bounds are consistent across all three files."""
@@ -166,9 +161,7 @@ class TestNumpyVersionConsistency:
             ("pyproject.toml", toml_lines),
             ("requirements.txt", req_lines),
         ]:
-            lt_line = next(
-                (l for l in lines if "python_version < '3.14'" in l), None
-            )
+            lt_line = next((l for l in lines if "python_version < '3.14'" in l), None)
             assert lt_line is not None, f"{src_name}: missing python_version < '3.14' numpy entry"
             assert "numpy>=1.21.0" in lt_line, (
                 f"{src_name}: python<3.14 entry should use numpy>=1.21.0; got: {lt_line}"

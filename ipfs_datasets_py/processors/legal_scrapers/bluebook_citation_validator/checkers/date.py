@@ -81,8 +81,7 @@ def check_date(citation: dict, documents: Optional[list[dict]] = None) -> Option
     if documents:
         year_str = str(year)
         found_in_doc = any(
-            year_str in (doc.get("html_body") or doc.get("content") or "")
-            for doc in documents
+            year_str in (doc.get("html_body") or doc.get("content") or "") for doc in documents
         )
         if not found_in_doc:
             return f"Year {year} not found in any source document"

@@ -46,13 +46,9 @@ _PROFILE_RE: Final = re.compile(r"^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$")
 _DIGEST_RE: Final = re.compile(r"^sha256:[0-9a-f]{64}$")
 _BARE_DIGEST_RE: Final = re.compile(r"^[0-9a-f]{64}$")
 _IDENTIFIER_RE: Final = re.compile(r"^[a-z][a-z0-9_]{0,127}$")
-_NAMESPACE_RE: Final = re.compile(
-    r"^[a-z][a-z0-9]*(?:[-./][a-z0-9]+)*$"
-)
+_NAMESPACE_RE: Final = re.compile(r"^[a-z][a-z0-9]*(?:[-./][a-z0-9]+)*$")
 _CID_RE: Final = re.compile(r"^b[a-z2-7]{10,200}$")
-_MUTABLE_LATEST_RE: Final = re.compile(
-    r"(^|[./_-])latest($|[./_-])", re.IGNORECASE
-)
+_MUTABLE_LATEST_RE: Final = re.compile(r"(^|[./_-])latest($|[./_-])", re.IGNORECASE)
 
 _MANIFEST_FIELDS: Final[frozenset[str]] = frozenset(
     {
@@ -160,9 +156,7 @@ def _as_mapping(value: Any, label: str) -> Mapping[str, Any]:
 
 def _require_text(value: Any, field_name: str) -> str:
     if not isinstance(value, str) or not value.strip() or value != value.strip():
-        raise ProofCorpusManifestError(
-            f"{field_name} must be a non-empty trimmed string"
-        )
+        raise ProofCorpusManifestError(f"{field_name} must be a non-empty trimmed string")
     return value
 
 
@@ -177,9 +171,7 @@ def _require_digest(value: Any, field_name: str) -> str:
     if _BARE_DIGEST_RE.fullmatch(digest):
         digest = f"sha256:{digest}"
     if not _DIGEST_RE.fullmatch(digest):
-        raise ProofCorpusManifestError(
-            f"{field_name} must be a sha256:<hex> digest"
-        )
+        raise ProofCorpusManifestError(f"{field_name} must be a sha256:<hex> digest")
     return digest
 
 
@@ -192,9 +184,7 @@ def _optional_digest(value: Any, field_name: str) -> str:
 def _require_cid(value: Any, field_name: str) -> str:
     cid = _require_text(value, field_name)
     if not _CID_RE.fullmatch(cid):
-        raise ProofCorpusManifestError(
-            f"{field_name} must be a CIDv1 base32 string"
-        )
+        raise ProofCorpusManifestError(f"{field_name} must be a CIDv1 base32 string")
     return cid
 
 
@@ -208,8 +198,7 @@ def _require_identifier(value: Any, field_name: str) -> str:
     text = _require_text(value, field_name)
     if not _IDENTIFIER_RE.fullmatch(text):
         raise ProofCorpusManifestError(
-            f"{field_name} must be a lowercase identifier "
-            "(letters, digits, underscore)"
+            f"{field_name} must be a lowercase identifier (letters, digits, underscore)"
         )
     return text
 
@@ -217,9 +206,7 @@ def _require_identifier(value: Any, field_name: str) -> str:
 def _require_profile(value: Any, field_name: str) -> str:
     profile = _require_text(value, field_name)
     if not _PROFILE_RE.fullmatch(profile):
-        raise ProofCorpusManifestError(
-            f"{field_name} must be a lowercase hyphenated identifier"
-        )
+        raise ProofCorpusManifestError(f"{field_name} must be a lowercase hyphenated identifier")
     return profile
 
 
@@ -237,9 +224,7 @@ def _require_non_negative_int(value: Any, field_name: str) -> int:
     if isinstance(value, bool) or not isinstance(value, int):
         raise ProofCorpusManifestError(f"{field_name} must be an int")
     if value < 0:
-        raise ProofCorpusManifestError(
-            f"{field_name} must be a non-negative int"
-        )
+        raise ProofCorpusManifestError(f"{field_name} must be a non-negative int")
     return value
 
 
@@ -250,14 +235,10 @@ def _require_positive_int(value: Any, field_name: str) -> int:
     return number
 
 
-def _reject_unknown(
-    value: Mapping[str, Any], allowed: frozenset[str], record_name: str
-) -> None:
+def _reject_unknown(value: Mapping[str, Any], allowed: frozenset[str], record_name: str) -> None:
     unknown = sorted(set(value) - allowed)
     if unknown:
-        raise ProofCorpusManifestError(
-            f"unknown {record_name} field(s): {', '.join(unknown)}"
-        )
+        raise ProofCorpusManifestError(f"unknown {record_name} field(s): {', '.join(unknown)}")
 
 
 def _parse_enum(value: Any, enum_cls: type[Enum], field_name: str) -> Enum:
@@ -267,9 +248,7 @@ def _parse_enum(value: Any, enum_cls: type[Enum], field_name: str) -> Enum:
         return enum_cls(value)
     except (TypeError, ValueError) as exc:
         allowed = ", ".join(item.value for item in enum_cls)
-        raise ProofCorpusManifestError(
-            f"{field_name} must be one of: {allowed}"
-        ) from exc
+        raise ProofCorpusManifestError(f"{field_name} must be one of: {allowed}") from exc
 
 
 def _reject_mutable_latest(value: str, field_name: str) -> None:
@@ -346,16 +325,10 @@ class ManifestEntry:
     schema_version: str = MANIFEST_ENTRY_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "entry_id", _require_identifier(self.entry_id, "entry_id")
-        )
+        object.__setattr__(self, "entry_id", _require_identifier(self.entry_id, "entry_id"))
         _reject_mutable_latest(self.entry_id, "entry_id")
-        object.__setattr__(
-            self, "path", require_safe_relative_path(self.path, "path")
-        )
-        object.__setattr__(
-            self, "content_cid", _require_cid(self.content_cid, "content_cid")
-        )
+        object.__setattr__(self, "path", require_safe_relative_path(self.path, "path"))
+        object.__setattr__(self, "content_cid", _require_cid(self.content_cid, "content_cid"))
         object.__setattr__(
             self,
             "content_digest",
@@ -364,20 +337,15 @@ class ManifestEntry:
         expected_cid = cid_for_digest(self.content_digest)
         if self.content_cid != expected_cid:
             raise ProofCorpusManifestIntegrityError(
-                f"entry {self.entry_id!r} content_cid does not match "
-                "content_digest"
+                f"entry {self.entry_id!r} content_cid does not match content_digest"
             )
         object.__setattr__(
             self,
             "size_bytes",
             _require_non_negative_int(self.size_bytes, "size_bytes"),
         )
-        object.__setattr__(
-            self, "ordinal", _require_non_negative_int(self.ordinal, "ordinal")
-        )
-        object.__setattr__(
-            self, "source_id", _optional_text(self.source_id, "source_id")
-        )
+        object.__setattr__(self, "ordinal", _require_non_negative_int(self.ordinal, "ordinal"))
+        object.__setattr__(self, "source_id", _optional_text(self.source_id, "source_id"))
         if self.source_id:
             _reject_mutable_latest(self.source_id, "source_id")
         object.__setattr__(
@@ -385,9 +353,7 @@ class ManifestEntry:
             "envelope_cid",
             _optional_cid(self.envelope_cid, "envelope_cid"),
         )
-        object.__setattr__(
-            self, "media_type", _optional_text(self.media_type, "media_type")
-        )
+        object.__setattr__(self, "media_type", _optional_text(self.media_type, "media_type"))
         kind = _parse_enum(self.kind, EntryKind, "kind")
         if kind is not EntryKind.BODY:
             raise ProofCorpusManifestIntegrityError(
@@ -455,9 +421,7 @@ class ManifestEntry:
             envelope_cid=payload.get("envelope_cid", ""),
             media_type=payload.get("media_type", ""),
             kind=payload.get("kind", EntryKind.BODY),
-            schema_version=payload.get(
-                "schema_version", MANIFEST_ENTRY_SCHEMA_VERSION
-            ),
+            schema_version=payload.get("schema_version", MANIFEST_ENTRY_SCHEMA_VERSION),
         )
 
 
@@ -472,9 +436,7 @@ class SourceBinding:
     schema_version: str = SOURCE_BINDING_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "source_id", _require_text(self.source_id, "source_id")
-        )
+        object.__setattr__(self, "source_id", _require_text(self.source_id, "source_id"))
         _reject_mutable_latest(self.source_id, "source_id")
         object.__setattr__(
             self,
@@ -486,9 +448,7 @@ class SourceBinding:
             "snapshot_digest",
             _optional_digest(self.snapshot_digest, "snapshot_digest"),
         )
-        object.__setattr__(
-            self, "license_id", _optional_text(self.license_id, "license_id")
-        )
+        object.__setattr__(self, "license_id", _optional_text(self.license_id, "license_id"))
         object.__setattr__(
             self,
             "schema_version",
@@ -531,9 +491,7 @@ class SourceBinding:
             snapshot_cid=payload["snapshot_cid"],
             snapshot_digest=payload.get("snapshot_digest", ""),
             license_id=payload.get("license_id", ""),
-            schema_version=payload.get(
-                "schema_version", SOURCE_BINDING_SCHEMA_VERSION
-            ),
+            schema_version=payload.get("schema_version", SOURCE_BINDING_SCHEMA_VERSION),
         )
 
 
@@ -557,15 +515,9 @@ class RegistryBinding:
             _require_text(self.registry_id, "registry_id"),
         )
         _reject_mutable_latest(self.registry_id, "registry_id")
-        object.__setattr__(
-            self, "root_cid", _require_cid(self.root_cid, "root_cid")
-        )
-        object.__setattr__(
-            self, "version", _require_positive_int(self.version, "version")
-        )
-        object.__setattr__(
-            self, "digest", _optional_digest(self.digest, "digest")
-        )
+        object.__setattr__(self, "root_cid", _require_cid(self.root_cid, "root_cid"))
+        object.__setattr__(self, "version", _require_positive_int(self.version, "version"))
+        object.__setattr__(self, "digest", _optional_digest(self.digest, "digest"))
         object.__setattr__(
             self,
             "schema_version",
@@ -622,9 +574,7 @@ class RegistryBinding:
             root_cid=payload["root_cid"],
             version=int(payload.get("version", 1) or 1),
             digest=payload.get("digest", ""),
-            schema_version=payload.get(
-                "schema_version", REGISTRY_BINDING_SCHEMA_VERSION
-            ),
+            schema_version=payload.get("schema_version", REGISTRY_BINDING_SCHEMA_VERSION),
         )
 
 
@@ -643,13 +593,9 @@ class IndexManifestRef:
     schema_version: str = INDEX_MANIFEST_REF_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "index_id", _require_identifier(self.index_id, "index_id")
-        )
+        object.__setattr__(self, "index_id", _require_identifier(self.index_id, "index_id"))
         _reject_mutable_latest(self.index_id, "index_id")
-        object.__setattr__(
-            self, "index_cid", _require_cid(self.index_cid, "index_cid")
-        )
+        object.__setattr__(self, "index_cid", _require_cid(self.index_cid, "index_cid"))
         object.__setattr__(
             self,
             "index_digest",
@@ -658,8 +604,7 @@ class IndexManifestRef:
         expected_cid = cid_for_digest(self.index_digest)
         if self.index_cid != expected_cid:
             raise ProofCorpusManifestIntegrityError(
-                f"index {self.index_id!r} index_cid does not match "
-                "index_digest"
+                f"index {self.index_id!r} index_cid does not match index_digest"
             )
         object.__setattr__(
             self,
@@ -673,8 +618,7 @@ class IndexManifestRef:
         )
         if self.schema_version != INDEX_MANIFEST_REF_SCHEMA_VERSION:
             raise ProofCorpusManifestError(
-                f"unsupported index manifest ref schema: "
-                f"{self.schema_version!r}"
+                f"unsupported index manifest ref schema: {self.schema_version!r}"
             )
 
     def to_dict(self) -> dict[str, Any]:
@@ -714,9 +658,7 @@ class IndexManifestRef:
             index_cid=payload["index_cid"],
             index_digest=payload["index_digest"],
             index_kind=payload.get("index_kind", IndexManifestKind.COMPOSITE),
-            schema_version=payload.get(
-                "schema_version", INDEX_MANIFEST_REF_SCHEMA_VERSION
-            ),
+            schema_version=payload.get("schema_version", INDEX_MANIFEST_REF_SCHEMA_VERSION),
         )
 
 
@@ -738,9 +680,7 @@ class PolicyBinding:
             "privacy_policy_id",
             "tenant_policy_id",
         ):
-            object.__setattr__(
-                self, name, _optional_text(getattr(self, name), name)
-            )
+            object.__setattr__(self, name, _optional_text(getattr(self, name), name))
             value = getattr(self, name)
             if value:
                 _reject_mutable_latest(value, name)
@@ -796,9 +736,7 @@ class PolicyBinding:
             privacy_policy_id=payload.get("privacy_policy_id", ""),
             tenant_policy_id=payload.get("tenant_policy_id", ""),
             policy_root_cid=payload.get("policy_root_cid", ""),
-            schema_version=payload.get(
-                "schema_version", POLICY_BINDING_SCHEMA_VERSION
-            ),
+            schema_version=payload.get("schema_version", POLICY_BINDING_SCHEMA_VERSION),
         )
 
 
@@ -816,16 +754,10 @@ class PromotionReceipt:
     schema_version: str = PROMOTION_RECEIPT_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "receipt_id", _require_text(self.receipt_id, "receipt_id")
-        )
+        object.__setattr__(self, "receipt_id", _require_text(self.receipt_id, "receipt_id"))
         _reject_mutable_latest(self.receipt_id, "receipt_id")
-        object.__setattr__(
-            self, "producer_id", _require_text(self.producer_id, "producer_id")
-        )
-        object.__setattr__(
-            self, "promoted_at", _require_text(self.promoted_at, "promoted_at")
-        )
+        object.__setattr__(self, "producer_id", _require_text(self.producer_id, "producer_id"))
+        object.__setattr__(self, "promoted_at", _require_text(self.promoted_at, "promoted_at"))
         object.__setattr__(
             self,
             "source_manifest_cid",
@@ -838,9 +770,7 @@ class PromotionReceipt:
         )
         if self.target_namespace:
             _reject_mutable_latest(self.target_namespace, "target_namespace")
-        object.__setattr__(
-            self, "reviewer_id", _optional_text(self.reviewer_id, "reviewer_id")
-        )
+        object.__setattr__(self, "reviewer_id", _optional_text(self.reviewer_id, "reviewer_id"))
         object.__setattr__(
             self,
             "approval_digest",
@@ -853,8 +783,7 @@ class PromotionReceipt:
         )
         if self.schema_version != PROMOTION_RECEIPT_SCHEMA_VERSION:
             raise ProofCorpusManifestError(
-                f"unsupported promotion receipt schema: "
-                f"{self.schema_version!r}"
+                f"unsupported promotion receipt schema: {self.schema_version!r}"
             )
 
     def to_dict(self) -> dict[str, Any]:
@@ -874,9 +803,7 @@ class PromotionReceipt:
         if isinstance(value, PromotionReceipt):
             return value
         if value in (None, ""):
-            raise ProofCorpusManifestError(
-                "promotion_receipt is required when provided as a field"
-            )
+            raise ProofCorpusManifestError("promotion_receipt is required when provided as a field")
         payload = dict(_as_mapping(value, "promotion receipt"))
         _reject_unknown(
             payload,
@@ -902,9 +829,7 @@ class PromotionReceipt:
             target_namespace=payload.get("target_namespace", ""),
             reviewer_id=payload.get("reviewer_id", ""),
             approval_digest=payload.get("approval_digest", ""),
-            schema_version=payload.get(
-                "schema_version", PROMOTION_RECEIPT_SCHEMA_VERSION
-            ),
+            schema_version=payload.get("schema_version", PROMOTION_RECEIPT_SCHEMA_VERSION),
         )
 
 
@@ -919,14 +844,10 @@ def _normalize_registry_list(
     if value in (None, ()):
         return ()
     if isinstance(value, (str, bytes, bytearray, Mapping, RegistryBinding)):
-        raise ProofCorpusManifestError(
-            f"{field_name} must be a sequence of registry bindings"
-        )
+        raise ProofCorpusManifestError(f"{field_name} must be a sequence of registry bindings")
     try:
         items = tuple(
-            item
-            if isinstance(item, RegistryBinding)
-            else RegistryBinding.from_dict(item)
+            item if isinstance(item, RegistryBinding) else RegistryBinding.from_dict(item)
             for item in value
         )
     except TypeError as exc:
@@ -942,8 +863,7 @@ def _normalize_registry_list(
             )
         if item.registry_id in seen_ids:
             raise ProofCorpusManifestIntegrityError(
-                f"{field_name} contains duplicate registry_id "
-                f"{item.registry_id!r}"
+                f"{field_name} contains duplicate registry_id {item.registry_id!r}"
             )
         seen_ids.add(item.registry_id)
     return items
@@ -953,18 +873,14 @@ def _normalize_sources(value: Any) -> tuple[SourceBinding, ...]:
     if value in (None, ()):
         return ()
     if isinstance(value, (str, bytes, bytearray, Mapping, SourceBinding)):
-        raise ProofCorpusManifestError(
-            "sources must be a sequence of source bindings"
-        )
+        raise ProofCorpusManifestError("sources must be a sequence of source bindings")
     try:
         items = tuple(
             item if isinstance(item, SourceBinding) else SourceBinding.from_dict(item)
             for item in value
         )
     except TypeError as exc:
-        raise ProofCorpusManifestError(
-            "sources must be a sequence of source bindings"
-        ) from exc
+        raise ProofCorpusManifestError("sources must be a sequence of source bindings") from exc
     seen: set[str] = set()
     for item in items:
         if item.source_id in seen:
@@ -979,14 +895,10 @@ def _normalize_index_manifests(value: Any) -> tuple[IndexManifestRef, ...]:
     if value in (None, ()):
         return ()
     if isinstance(value, (str, bytes, bytearray, Mapping, IndexManifestRef)):
-        raise ProofCorpusManifestError(
-            "index_manifests must be a sequence of index manifest refs"
-        )
+        raise ProofCorpusManifestError("index_manifests must be a sequence of index manifest refs")
     try:
         items = tuple(
-            item
-            if isinstance(item, IndexManifestRef)
-            else IndexManifestRef.from_dict(item)
+            item if isinstance(item, IndexManifestRef) else IndexManifestRef.from_dict(item)
             for item in value
         )
     except TypeError as exc:
@@ -1007,18 +919,14 @@ def _normalize_entries(value: Any) -> tuple[ManifestEntry, ...]:
     if value in (None, ()):
         return ()
     if isinstance(value, (str, bytes, bytearray, Mapping, ManifestEntry)):
-        raise ProofCorpusManifestError(
-            "entries must be a sequence of manifest entries"
-        )
+        raise ProofCorpusManifestError("entries must be a sequence of manifest entries")
     try:
         items = tuple(
             item if isinstance(item, ManifestEntry) else ManifestEntry.from_dict(item)
             for item in value
         )
     except TypeError as exc:
-        raise ProofCorpusManifestError(
-            "entries must be a sequence of manifest entries"
-        ) from exc
+        raise ProofCorpusManifestError("entries must be a sequence of manifest entries") from exc
     return items
 
 
@@ -1026,9 +934,7 @@ def _normalize_approved_roots(value: Any) -> tuple[str, ...]:
     if value in (None, ()):
         return ()
     if isinstance(value, (str, bytes, bytearray)):
-        raise ProofCorpusManifestError(
-            "approved_registry_roots must be a sequence of CIDs"
-        )
+        raise ProofCorpusManifestError("approved_registry_roots must be a sequence of CIDs")
     try:
         items = tuple(_require_cid(item, "approved_registry_roots") for item in value)
     except TypeError as exc:
@@ -1036,9 +942,7 @@ def _normalize_approved_roots(value: Any) -> tuple[str, ...]:
             "approved_registry_roots must be a sequence of CIDs"
         ) from exc
     if len(items) != len(set(items)):
-        raise ProofCorpusManifestIntegrityError(
-            "approved_registry_roots values must be unique"
-        )
+        raise ProofCorpusManifestIntegrityError("approved_registry_roots values must be unique")
     return items
 
 
@@ -1056,17 +960,11 @@ class ProofCorpusManifest:
     namespace: str
     entries: tuple[ManifestEntry, ...] | Sequence[ManifestEntry] = ()
     sources: tuple[SourceBinding, ...] | Sequence[SourceBinding] = ()
-    compiler_registry: (
-        tuple[RegistryBinding, ...] | Sequence[RegistryBinding]
-    ) = ()
+    compiler_registry: tuple[RegistryBinding, ...] | Sequence[RegistryBinding] = ()
     solver_registry: tuple[RegistryBinding, ...] | Sequence[RegistryBinding] = ()
-    circuit_registry: (
-        tuple[RegistryBinding, ...] | Sequence[RegistryBinding]
-    ) = ()
+    circuit_registry: tuple[RegistryBinding, ...] | Sequence[RegistryBinding] = ()
     vk_registry: tuple[RegistryBinding, ...] | Sequence[RegistryBinding] = ()
-    index_manifests: (
-        tuple[IndexManifestRef, ...] | Sequence[IndexManifestRef]
-    ) = ()
+    index_manifests: tuple[IndexManifestRef, ...] | Sequence[IndexManifestRef] = ()
     revocation_root_cid: str = ""
     policy: PolicyBinding | Mapping[str, Any] | None = None
     producer_id: str = ""
@@ -1082,19 +980,12 @@ class ProofCorpusManifest:
     interface: str = PROOF_CORPUS_MANIFEST_INTERFACE
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "domain", _require_identifier(self.domain, "domain")
-        )
-        object.__setattr__(
-            self, "namespace", _require_namespace(self.namespace, "namespace")
-        )
-        object.__setattr__(
-            self, "entries", _normalize_entries(self.entries)
-        )
+        object.__setattr__(self, "domain", _require_identifier(self.domain, "domain"))
+        object.__setattr__(self, "namespace", _require_namespace(self.namespace, "namespace"))
+        object.__setattr__(self, "entries", _normalize_entries(self.entries))
         if len(self.entries) > DEFAULT_MAX_MANIFEST_ENTRIES:
             raise ProofCorpusManifestIntegrityError(
-                f"entries exceed max_manifest_entries "
-                f"({DEFAULT_MAX_MANIFEST_ENTRIES})"
+                f"entries exceed max_manifest_entries ({DEFAULT_MAX_MANIFEST_ENTRIES})"
             )
 
         # Ordered entries: ordinals must be unique and sorted non-decreasing.
@@ -1104,9 +995,7 @@ class ProofCorpusManifest:
                 "entries must be ordered by non-decreasing ordinal"
             )
         if len(ordinals) != len(set(ordinals)):
-            raise ProofCorpusManifestIntegrityError(
-                "entries must have unique ordinals"
-            )
+            raise ProofCorpusManifestIntegrityError("entries must have unique ordinals")
 
         entry_ids = [entry.entry_id for entry in self.entries]
         if len(entry_ids) != len(set(entry_ids)):
@@ -1121,8 +1010,7 @@ class ProofCorpusManifest:
         body_cids = [entry.content_cid for entry in self.entries]
         if len(body_cids) != len(set(body_cids)):
             raise ProofCorpusManifestIntegrityError(
-                "entries contain duplicate content_cid "
-                "(duplicate bodies rejected)"
+                "entries contain duplicate content_cid (duplicate bodies rejected)"
             )
 
         object.__setattr__(self, "sources", _normalize_sources(self.sources))
@@ -1144,9 +1032,7 @@ class ProofCorpusManifest:
         object.__setattr__(
             self,
             "solver_registry",
-            _normalize_registry_list(
-                self.solver_registry, RegistryKind.SOLVER, "solver_registry"
-            ),
+            _normalize_registry_list(self.solver_registry, RegistryKind.SOLVER, "solver_registry"),
         )
         object.__setattr__(
             self,
@@ -1158,9 +1044,7 @@ class ProofCorpusManifest:
         object.__setattr__(
             self,
             "vk_registry",
-            _normalize_registry_list(
-                self.vk_registry, RegistryKind.VK, "vk_registry"
-            ),
+            _normalize_registry_list(self.vk_registry, RegistryKind.VK, "vk_registry"),
         )
         object.__setattr__(
             self,
@@ -1195,9 +1079,7 @@ class ProofCorpusManifest:
             policy = PolicyBinding.from_dict(policy)
         object.__setattr__(self, "policy", policy)
 
-        object.__setattr__(
-            self, "producer_id", _optional_text(self.producer_id, "producer_id")
-        )
+        object.__setattr__(self, "producer_id", _optional_text(self.producer_id, "producer_id"))
 
         receipt = self.promotion_receipt
         if receipt is None:
@@ -1215,9 +1097,7 @@ class ProofCorpusManifest:
         if receipt_obj is not None and not self.producer_id:
             object.__setattr__(self, "producer_id", receipt_obj.producer_id)
 
-        object.__setattr__(
-            self, "parent_cid", _optional_cid(self.parent_cid, "parent_cid")
-        )
+        object.__setattr__(self, "parent_cid", _optional_cid(self.parent_cid, "parent_cid"))
         object.__setattr__(
             self,
             "generation",
@@ -1265,13 +1145,11 @@ class ProofCorpusManifest:
 
         if self.schema_version != PROOF_CORPUS_MANIFEST_SCHEMA_VERSION:
             raise ProofCorpusManifestError(
-                f"unsupported proof corpus manifest schema: "
-                f"{self.schema_version!r}"
+                f"unsupported proof corpus manifest schema: {self.schema_version!r}"
             )
         if self.interface != PROOF_CORPUS_MANIFEST_INTERFACE:
             raise ProofCorpusManifestError(
-                f"unsupported proof corpus manifest interface: "
-                f"{self.interface!r}"
+                f"unsupported proof corpus manifest interface: {self.interface!r}"
             )
 
         body = self._identity_payload()
@@ -1281,8 +1159,7 @@ class ProofCorpusManifest:
             recorded = _require_digest(self.content_digest, "content_digest")
             if recorded != digest:
                 raise ProofCorpusManifestIntegrityError(
-                    "manifest content_digest does not match payload "
-                    "(hash mismatch)"
+                    "manifest content_digest does not match payload (hash mismatch)"
                 )
         if self.content_cid:
             recorded_cid = _require_cid(self.content_cid, "content_cid")
@@ -1307,15 +1184,11 @@ class ProofCorpusManifest:
         return {
             "approved_registry_roots": list(self.approved_registry_roots),
             "circuit_registry": [item.to_dict() for item in self.circuit_registry],
-            "compiler_registry": [
-                item.to_dict() for item in self.compiler_registry
-            ],
+            "compiler_registry": [item.to_dict() for item in self.compiler_registry],
             "domain": self.domain,
             "entries": [item.to_dict() for item in self.entries],
             "generation": self.generation,
-            "index_manifests": [
-                item.to_dict() for item in self.index_manifests
-            ],
+            "index_manifests": [item.to_dict() for item in self.index_manifests],
             "interface": self.interface,
             "max_entry_bytes": self.max_entry_bytes,
             "namespace": self.namespace,
@@ -1323,9 +1196,7 @@ class ProofCorpusManifest:
             "policy": self.policy.to_dict(),
             "producer_id": self.producer_id,
             "promotion_receipt": (
-                self.promotion_receipt.to_dict()
-                if self.promotion_receipt is not None
-                else None
+                self.promotion_receipt.to_dict() if self.promotion_receipt is not None else None
             ),
             "revocation_root_cid": self.revocation_root_cid,
             "schema_version": self.schema_version,
@@ -1363,22 +1234,15 @@ class ProofCorpusManifest:
             promotion_receipt=payload.get("promotion_receipt"),
             parent_cid=payload.get("parent_cid", ""),
             generation=int(payload.get("generation", 1) or 1),
-            approved_registry_roots=tuple(
-                payload.get("approved_registry_roots", ()) or ()
-            ),
+            approved_registry_roots=tuple(payload.get("approved_registry_roots", ()) or ()),
             max_entry_bytes=int(
-                payload.get("max_entry_bytes", DEFAULT_MAX_ENTRY_BYTES)
-                or DEFAULT_MAX_ENTRY_BYTES
+                payload.get("max_entry_bytes", DEFAULT_MAX_ENTRY_BYTES) or DEFAULT_MAX_ENTRY_BYTES
             ),
             content_digest=payload.get("content_digest", ""),
             content_cid=payload.get("content_cid", ""),
             root_cid=payload.get("root_cid", ""),
-            schema_version=payload.get(
-                "schema_version", PROOF_CORPUS_MANIFEST_SCHEMA_VERSION
-            ),
-            interface=payload.get(
-                "interface", PROOF_CORPUS_MANIFEST_INTERFACE
-            ),
+            schema_version=payload.get("schema_version", PROOF_CORPUS_MANIFEST_SCHEMA_VERSION),
+            interface=payload.get("interface", PROOF_CORPUS_MANIFEST_INTERFACE),
         )
 
     def verify_integrity(self) -> None:
@@ -1386,13 +1250,9 @@ class ProofCorpusManifest:
 
         restored = ProofCorpusManifest.from_dict(self.to_dict())
         if restored.content_digest != self.content_digest:
-            raise ProofCorpusManifestIntegrityError(
-                "manifest content_digest drifted on rehash"
-            )
+            raise ProofCorpusManifestIntegrityError("manifest content_digest drifted on rehash")
         if restored.root_cid != self.root_cid:
-            raise ProofCorpusManifestIntegrityError(
-                "manifest root_cid drifted on rehash"
-            )
+            raise ProofCorpusManifestIntegrityError("manifest root_cid drifted on rehash")
 
     def body_paths(self) -> tuple[str, ...]:
         return tuple(entry.path for entry in self.entries)
@@ -1490,9 +1350,7 @@ def verify_manifest_bodies(
     """
 
     if not isinstance(manifest, ProofCorpusManifest):
-        raise ProofCorpusManifestError(
-            "manifest must be a ProofCorpusManifest"
-        )
+        raise ProofCorpusManifestError("manifest must be a ProofCorpusManifest")
     if not isinstance(bodies, Mapping):
         raise ProofCorpusManifestError("bodies must be a mapping of path→bytes")
 
@@ -1509,8 +1367,7 @@ def verify_manifest_bodies(
         unbound = sorted(provided_paths - bound_paths)
         if unbound:
             raise ProofCorpusManifestIntegrityError(
-                f"unbound bodies not declared in manifest: "
-                f"{', '.join(unbound)}"
+                f"unbound bodies not declared in manifest: {', '.join(unbound)}"
             )
 
     for entry in manifest.entries:
@@ -1519,14 +1376,11 @@ def verify_manifest_bodies(
         require_safe_relative_path(entry.path, "body path")
         raw = bodies[entry.path]
         if not isinstance(raw, (bytes, bytearray)):
-            raise ProofCorpusManifestIntegrityError(
-                f"body for {entry.path!r} must be bytes"
-            )
+            raise ProofCorpusManifestIntegrityError(f"body for {entry.path!r} must be bytes")
         data = bytes(raw)
         if len(data) > manifest.max_entry_bytes:
             raise ProofCorpusManifestIntegrityError(
-                f"body for {entry.path!r} exceeds max_entry_bytes "
-                f"(oversize content rejected)"
+                f"body for {entry.path!r} exceeds max_entry_bytes (oversize content rejected)"
             )
         if len(data) != entry.size_bytes:
             raise ProofCorpusManifestIntegrityError(
@@ -1536,8 +1390,7 @@ def verify_manifest_bodies(
         digest = digest_bytes(data)
         if digest != entry.content_digest:
             raise ProofCorpusManifestIntegrityError(
-                f"body for {entry.path!r} content_digest mismatch "
-                f"(hash mismatch)"
+                f"body for {entry.path!r} content_digest mismatch (hash mismatch)"
             )
         cid = cid_for_digest(digest)
         if cid != entry.content_cid:
@@ -1569,8 +1422,7 @@ def detect_parent_cycle(
     parent = _require_cid(parent_cid, "parent_cid")
     if parent == child:
         raise ProofCorpusManifestIntegrityError(
-            "manifest parent_cid must not equal its own root_cid "
-            "(parent cycle rejected)"
+            "manifest parent_cid must not equal its own root_cid (parent cycle rejected)"
         )
     if lineage is None:
         return
@@ -1614,9 +1466,7 @@ def check_append_only_lineage(
             "child manifest must declare parent_cid for lineage check"
         )
     if child.parent_cid != parent.root_cid:
-        raise ProofCorpusManifestIntegrityError(
-            "child.parent_cid must equal parent.root_cid"
-        )
+        raise ProofCorpusManifestIntegrityError("child.parent_cid must equal parent.root_cid")
     if child.generation <= parent.generation:
         raise ProofCorpusManifestIntegrityError(
             f"child generation {child.generation} must be strictly greater "
@@ -1625,8 +1475,7 @@ def check_append_only_lineage(
         )
     if child.domain != parent.domain or child.namespace != parent.namespace:
         raise ProofCorpusManifestIntegrityError(
-            "child domain/namespace must match parent "
-            "(cross-namespace lineage rejected)"
+            "child domain/namespace must match parent (cross-namespace lineage rejected)"
         )
 
     detect_parent_cycle(

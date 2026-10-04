@@ -63,9 +63,7 @@ CAPABILITIES = Capabilities(
 class FakeProvider:
     capabilities = CAPABILITIES
 
-    async def validate_address(
-        self, address: str, *, context: OperationContext
-    ) -> object:
+    async def validate_address(self, address: str, *, context: OperationContext) -> object:
         context.check_active()
         return {"canonical": address.lower()}
 
@@ -104,9 +102,7 @@ class FakeCheckpointStore:
         self.value: object | None = None
         self.revision: str | None = None
 
-    async def load(
-        self, scope: str, *, context: OperationContext
-    ) -> object | None:
+    async def load(self, scope: str, *, context: OperationContext) -> object | None:
         context.check_active()
         return self.value
 
@@ -132,17 +128,13 @@ class FakeSink:
         self.committed = False
         self.aborted = False
 
-    async def write(
-        self, batch: RecordBatch, *, context: OperationContext
-    ) -> object:
+    async def write(self, batch: RecordBatch, *, context: OperationContext) -> object:
         context.check_active()
         batch.enforce(context.limits)
         self.batches.append(batch)
         return {"count": len(batch.records)}
 
-    async def commit(
-        self, manifest: object, *, context: OperationContext
-    ) -> object:
+    async def commit(self, manifest: object, *, context: OperationContext) -> object:
         context.check_active()
         self.committed = True
         return manifest
@@ -154,18 +146,14 @@ class FakeSink:
 class FakeExporter:
     capabilities = CAPABILITIES
 
-    async def export_wallet(
-        self, request: BoundedRequest, sink: DatasetSink
-    ) -> object:
+    async def export_wallet(self, request: BoundedRequest, sink: DatasetSink) -> object:
         batch = RecordBatch(({"record_id": "one"},), response_bytes=12)
         await sink.write(batch, context=request.context)
         return await sink.commit({"complete": True}, context=request.context)
 
 
 class FakeTransport:
-    async def request(
-        self, request: HttpRequest, *, context: OperationContext
-    ) -> HttpResponse:
+    async def request(self, request: HttpRequest, *, context: OperationContext) -> HttpResponse:
         context.check_active()
         body = b"{}"
         if len(body) > request.max_response_bytes:
@@ -174,9 +162,7 @@ class FakeTransport:
 
 
 class FakeSecretResolver:
-    async def resolve(
-        self, reference: str, *, context: OperationContext
-    ) -> SecretValue:
+    async def resolve(self, reference: str, *, context: OperationContext) -> SecretValue:
         context.check_active()
         return SecretValue(b"fixture-secret")
 
@@ -232,10 +218,7 @@ def test_bounded_wallet_and_ledger_streams_are_consumable() -> None:
         )
         provider = FakeProvider()
         wallet = [
-            batch
-            async for batch in provider.ingest_wallet(
-                BoundedRequest("wallet:0xabc", context)
-            )
+            batch async for batch in provider.ingest_wallet(BoundedRequest("wallet:0xabc", context))
         ]
         ledger = [
             batch
@@ -320,9 +303,7 @@ def test_sink_checkpoint_transport_export_and_secret_fakes() -> None:
         )
 
         sink = FakeSink()
-        receipt = await FakeExporter().export_wallet(
-            BoundedRequest("wallet", context), sink
-        )
+        receipt = await FakeExporter().export_wallet(BoundedRequest("wallet", context), sink)
         assert receipt == {"complete": True}
         assert sink.committed and len(sink.batches) == 1
 

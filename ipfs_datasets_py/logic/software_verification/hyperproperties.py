@@ -774,9 +774,7 @@ class InformationFlowPolicy:
             declassifications=tuple(value.get("declassifications") or ()),
             subject_fields=tuple(value.get("subject_fields") or ()),
             description=value.get("description", ""),
-            schema_version=value.get(
-                "schema_version", INFORMATION_FLOW_POLICY_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", INFORMATION_FLOW_POLICY_SCHEMA_VERSION),
         )
         claimed = value.get("content_id")
         if claimed and claimed != result.policy_identity.cid:
@@ -799,9 +797,7 @@ class RelationalAtom:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "atom_id", _identifier(self.atom_id, "atom_id"))
-        object.__setattr__(
-            self, "operator", _enum(self.operator, RelationalOperator, "operator")
-        )
+        object.__setattr__(self, "operator", _enum(self.operator, RelationalOperator, "operator"))
         object.__setattr__(self, "field", _field_path(self.field, "field"))
         variables = _ids(
             self.trace_variable_ids,
@@ -819,9 +815,7 @@ class RelationalAtom:
         if self.operator is RelationalOperator.PREDICATE and not predicate:
             raise HyperpropertyValidationError("predicate atoms require a predicate statement")
         if self.operator is not RelationalOperator.PREDICATE and predicate:
-            raise HyperpropertyValidationError(
-                "predicate text is only valid for PREDICATE atoms"
-            )
+            raise HyperpropertyValidationError("predicate text is only valid for PREDICATE atoms")
         object.__setattr__(self, "predicate", predicate)
         if self.schema_version != RELATIONAL_ATOM_SCHEMA_VERSION:
             raise HyperpropertyValidationError(
@@ -876,9 +870,7 @@ class RelationalCondition:
     schema_version: str = RELATIONAL_CONDITION_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "condition_id", _identifier(self.condition_id, "condition_id")
-        )
+        object.__setattr__(self, "condition_id", _identifier(self.condition_id, "condition_id"))
         object.__setattr__(self, "role", _enum(self.role, RelationalRole, "role"))
         atoms = _records(self.atoms, RelationalAtom, "atoms")
         if not atoms:
@@ -930,9 +922,7 @@ class RelationalCondition:
             role=value.get("role", ""),
             atoms=tuple(value.get("atoms") or ()),
             description=value.get("description", ""),
-            schema_version=value.get(
-                "schema_version", RELATIONAL_CONDITION_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", RELATIONAL_CONDITION_SCHEMA_VERSION),
         )
 
 
@@ -998,9 +988,7 @@ class SelfCompositionBound:
             max_pairs=value.get("max_pairs", DEFAULT_MAX_COMPOSITION_PAIRS),
             max_steps=value.get("max_steps"),
             description=value.get("description", ""),
-            schema_version=value.get(
-                "schema_version", SELF_COMPOSITION_BOUND_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", SELF_COMPOSITION_BOUND_SCHEMA_VERSION),
         )
 
 
@@ -1073,11 +1061,15 @@ class HyperpropertyFormula:
             "information_flow_policy_id",
             optional=True,
         )
-        if self.kind in {
-            HyperpropertyKind.NONINTERFERENCE,
-            HyperpropertyKind.OBSERVATIONAL_DETERMINISM,
-            HyperpropertyKind.DECLASSIFICATION,
-        } and not policy_id:
+        if (
+            self.kind
+            in {
+                HyperpropertyKind.NONINTERFERENCE,
+                HyperpropertyKind.OBSERVATIONAL_DETERMINISM,
+                HyperpropertyKind.DECLASSIFICATION,
+            }
+            and not policy_id
+        ):
             raise HyperpropertyValidationError(
                 f"{self.kind.value} formulas require an information_flow_policy_id"
             )
@@ -1188,9 +1180,7 @@ class HyperpropertyFormula:
             postconditions=tuple(value.get("postconditions") or ()),
             assumptions=tuple(value.get("assumptions") or ()),
             description=value.get("description", ""),
-            schema_version=value.get(
-                "schema_version", HYPERPROPERTY_FORMULA_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", HYPERPROPERTY_FORMULA_SCHEMA_VERSION),
         )
         claimed_cardinality = value.get("trace_cardinality")
         if claimed_cardinality is not None and claimed_cardinality != result.trace_cardinality:
@@ -1587,9 +1577,7 @@ class HyperpropertyEvaluation:
     schema_version: str = HYPERPROPERTY_EVALUATION_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "verdict", _enum(self.verdict, HyperpropertyVerdict, "verdict")
-        )
+        object.__setattr__(self, "verdict", _enum(self.verdict, HyperpropertyVerdict, "verdict"))
         object.__setattr__(
             self,
             "evidence_kind",
@@ -1635,7 +1623,10 @@ class HyperpropertyEvaluation:
                 raise HyperpropertyValidationError(
                     "unsupported authority ceiling for local hyperproperty evidence"
                 )
-            if not self.bounded and self.evidence_kind is not HyperpropertyEvidenceKind.DECLARATION_ONLY:
+            if (
+                not self.bounded
+                and self.evidence_kind is not HyperpropertyEvidenceKind.DECLARATION_ONLY
+            ):
                 raise HyperpropertyValidationError(
                     "self-composition and sample evidence must remain bounded"
                 )
@@ -1648,9 +1639,7 @@ class HyperpropertyEvaluation:
                     WitnessTraceBundle.from_dict(self.witness_bundle),
                 )
             if not isinstance(self.witness_bundle, WitnessTraceBundle):
-                raise HyperpropertyValidationError(
-                    "witness_bundle must be a WitnessTraceBundle"
-                )
+                raise HyperpropertyValidationError("witness_bundle must be a WitnessTraceBundle")
             if self.witness_bundle.formula_id != self.formula_id:
                 raise HyperpropertyValidationError(
                     "witness bundle formula_id does not match evaluation"
@@ -1664,9 +1653,7 @@ class HyperpropertyEvaluation:
                         "violated evaluations require a violation/counterexample bundle"
                     )
             if self.witness_bundle.authorizes_universal_proof:
-                raise AuthorityPromotionError(
-                    "evaluation witness cannot authorize universal proof"
-                )
+                raise AuthorityPromotionError("evaluation witness cannot authorize universal proof")
 
         if (
             self.verdict is HyperpropertyVerdict.VIOLATED
@@ -1692,9 +1679,7 @@ class HyperpropertyEvaluation:
             return True
         if self.verdict is HyperpropertyVerdict.VIOLATED:
             return False
-        raise HyperpropertyValidationError(
-            "inconclusive evaluations have no boolean holds value"
-        )
+        raise HyperpropertyValidationError("inconclusive evaluations have no boolean holds value")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -1764,9 +1749,7 @@ class HyperpropertyEvaluation:
                 if raw_bundle is None
                 else WitnessTraceBundle.from_dict(_mapping(raw_bundle, "witness_bundle"))
             ),
-            schema_version=value.get(
-                "schema_version", HYPERPROPERTY_EVALUATION_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", HYPERPROPERTY_EVALUATION_SCHEMA_VERSION),
         )
 
 
@@ -1786,15 +1769,9 @@ class ExecutionTrace:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "trace_id", _identifier(self.trace_id, "trace_id"))
-        object.__setattr__(
-            self, "public_inputs", _frozen(self.public_inputs, "public_inputs")
-        )
-        object.__setattr__(
-            self, "observations", _frozen(self.observations, "observations")
-        )
-        object.__setattr__(
-            self, "private_inputs", _frozen(self.private_inputs, "private_inputs")
-        )
+        object.__setattr__(self, "public_inputs", _frozen(self.public_inputs, "public_inputs"))
+        object.__setattr__(self, "observations", _frozen(self.observations, "observations"))
+        object.__setattr__(self, "private_inputs", _frozen(self.private_inputs, "private_inputs"))
         object.__setattr__(self, "subject", _frozen(self.subject, "subject"))
 
     def subject_projection(self, fields: Sequence[str]) -> tuple[Any, ...]:
@@ -1808,9 +1785,7 @@ class ExecutionTrace:
     ) -> WitnessTrace:
         observations = dict(self.observations)
         if observation_fields is not None:
-            observations = {
-                field: _path_value(observations, field) for field in observation_fields
-            }
+            observations = {field: _path_value(observations, field) for field in observation_fields}
         return WitnessTrace.from_execution(
             trace_id=self.trace_id,
             variable_id=variable_id,
@@ -1896,9 +1871,7 @@ class HyperpropertyIR:
                 )
         object.__setattr__(self, "witness_bundles", bundles)
         object.__setattr__(self, "metadata", _frozen(self.metadata, "metadata"))
-        object.__setattr__(
-            self, "observations", _frozen(self.observations, "observations")
-        )
+        object.__setattr__(self, "observations", _frozen(self.observations, "observations"))
 
         if self.schema_version != HYPERPROPERTY_IR_SCHEMA_VERSION:
             raise HyperpropertyValidationError(
@@ -2009,12 +1982,8 @@ class HyperpropertyIR:
                 differences = tuple(
                     ObservationDifference(
                         field=field_name,
-                        left_digest=_digest(
-                            _path_value(dict(left.observations), field_name)
-                        ),
-                        right_digest=_digest(
-                            _path_value(dict(right.observations), field_name)
-                        ),
+                        left_digest=_digest(_path_value(dict(left.observations), field_name)),
+                        right_digest=_digest(_path_value(dict(right.observations), field_name)),
                     )
                     for field_name in policy.observation_fields
                     if _path_value(dict(left.observations), field_name)
@@ -2027,9 +1996,7 @@ class HyperpropertyIR:
                         role=WitnessRole.COUNTEREXAMPLE,
                         formula_id=self.formula.formula_id,
                         traces=(
-                            left.to_witness(
-                                left_var, observation_fields=policy.observation_fields
-                            ),
+                            left.to_witness(left_var, observation_fields=policy.observation_fields),
                             right.to_witness(
                                 right_var, observation_fields=policy.observation_fields
                             ),
@@ -2069,9 +2036,7 @@ class HyperpropertyIR:
             evidence = HyperpropertyEvidenceKind.BOUNDED_SELF_COMPOSITION
         else:
             verdict = HyperpropertyVerdict.HOLDS
-            reason = (
-                "all bounded low-equivalent high-varying pairs preserved approved observations"
-            )
+            reason = "all bounded low-equivalent high-varying pairs preserved approved observations"
             evidence = HyperpropertyEvidenceKind.CLEAN_SAMPLE
 
         sample_bundle: WitnessTraceBundle | None = None
@@ -2159,9 +2124,7 @@ class HyperpropertyIR:
         if value.get("interface", HYPERPROPERTY_IR_INTERFACE) != HYPERPROPERTY_IR_INTERFACE:
             raise HyperpropertyValidationError("unsupported hyperproperty interface")
         return cls(
-            formula=HyperpropertyFormula.from_dict(
-                _mapping(value.get("formula", {}), "formula")
-            ),
+            formula=HyperpropertyFormula.from_dict(_mapping(value.get("formula", {}), "formula")),
             information_flow_policy=InformationFlowPolicy.from_dict(
                 _mapping(value.get("information_flow_policy", {}), "information_flow_policy")
             ),
@@ -2201,7 +2164,10 @@ def refuse_universal_proof(evaluation: HyperpropertyEvaluation) -> None:
         raise AuthorityPromotionError(
             "local hyperproperty evidence cannot claim authoritative ceiling"
         )
-    if evaluation.evidence_kind in _BOUNDED_EVIDENCE and evaluation.verdict is HyperpropertyVerdict.HOLDS:
+    if (
+        evaluation.evidence_kind in _BOUNDED_EVIDENCE
+        and evaluation.verdict is HyperpropertyVerdict.HOLDS
+    ):
         # Clean samples and bounded holds remain non-universal by construction.
         return
 

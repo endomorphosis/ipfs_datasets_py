@@ -157,12 +157,7 @@ def normalize_prover_name(prover_name: str) -> str:
     """Return the canonical lazy-installer name for a prover."""
 
     normalized = (
-        str(prover_name or "")
-        .strip()
-        .lower()
-        .replace("-", "_")
-        .replace(".", "_")
-        .replace(" ", "_")
+        str(prover_name or "").strip().lower().replace("-", "_").replace(".", "_").replace(" ", "_")
     )
     return _ALIASES.get(normalized, normalized)
 
@@ -365,9 +360,7 @@ def _lazy_install_prover_once(
     """
 
     prover = normalize_prover_name(prover_name)
-    if import_time_install_forbidden() and os.environ.get(
-        "IPFS_DATASETS_PY_IMPORT_CONTEXT"
-    ):
+    if import_time_install_forbidden() and os.environ.get("IPFS_DATASETS_PY_IMPORT_CONTEXT"):
         _emit(
             ProverInstallEvent(
                 prover,
@@ -378,9 +371,10 @@ def _lazy_install_prover_once(
         )
         return False
 
-    if prover in declared_install_gap_providers() or normalize_prover_name(
-        prover
-    ) in declared_install_gap_providers():
+    if (
+        prover in declared_install_gap_providers()
+        or normalize_prover_name(prover) in declared_install_gap_providers()
+    ):
         _emit(
             ProverInstallEvent(
                 prover,
@@ -413,7 +407,9 @@ def _lazy_install_prover_once(
     try:
         from ipfs_datasets_py.logic.integration.bridges import prover_installer
 
-        ensure_name = "ensure_cvc5_cli" if prover == "cvc5" and allow_automatic else f"ensure_{prover}"
+        ensure_name = (
+            "ensure_cvc5_cli" if prover == "cvc5" and allow_automatic else f"ensure_{prover}"
+        )
         ensure = getattr(prover_installer, ensure_name, None)
         if ensure is None:
             logger.debug("No lazy installer is registered for prover %s", prover)
@@ -430,12 +426,28 @@ def _lazy_install_prover_once(
             )
 
         if progress is not None and prover in {
-            "z3", "cvc5", "vampire", "eprover", "lean", "coq", "isabelle", "apalache", "tamarin", "maude", "proverif", "symbolicai", "ergoai"
+            "z3",
+            "cvc5",
+            "vampire",
+            "eprover",
+            "lean",
+            "coq",
+            "isabelle",
+            "apalache",
+            "tamarin",
+            "maude",
+            "proverif",
+            "symbolicai",
+            "ergoai",
         }:
+
             def forward_progress(phase: str, message: str) -> None:
-                normalized_phase = phase if phase in {
-                    "checking", "available", "installing", "installed", "blocked", "failed"
-                } else "installing"
+                normalized_phase = (
+                    phase
+                    if phase
+                    in {"checking", "available", "installing", "installed", "blocked", "failed"}
+                    else "installing"
+                )
                 event = ProverInstallEvent(prover, normalized_phase, message)
                 logger.info("%s: %s", prover, message)
                 if progress is not None:
@@ -458,7 +470,9 @@ def _lazy_install_prover_once(
             ProverInstallEvent(
                 prover,
                 "installed" if ok else "failed",
-                "installation completed" if ok else "installation did not make the prover available",
+                "installation completed"
+                if ok
+                else "installation did not make the prover available",
             ),
             progress,
         )
@@ -495,9 +509,7 @@ def lazy_install_prover(
 
     prover = normalize_prover_name(prover_name)
     allowed = prover_lazy_install_enabled(prover) or (
-        allow_automatic
-        and not _explicitly_disabled()
-        and not minimal_imports_enabled()
+        allow_automatic and not _explicitly_disabled() and not minimal_imports_enabled()
     )
     if not allowed:
         return _lazy_install_prover_once(
@@ -576,12 +588,18 @@ def ensure_prover_executable(
         if explicit_ergoai:
             path = Path(explicit_ergoai).expanduser()
             if path.is_file() and os.access(str(path), os.X_OK):
-                _emit(ProverInstallEvent(prover, "installed", f"using installed executable {path}"), progress)
+                _emit(
+                    ProverInstallEvent(prover, "installed", f"using installed executable {path}"),
+                    progress,
+                )
                 return str(path)
     for candidate in candidates:
         executable = find_executable(candidate)
         if executable:
-            _emit(ProverInstallEvent(prover, "installed", f"using installed executable {executable}"), progress)
+            _emit(
+                ProverInstallEvent(prover, "installed", f"using installed executable {executable}"),
+                progress,
+            )
             return executable
     return None
 

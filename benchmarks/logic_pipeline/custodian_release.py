@@ -76,92 +76,70 @@ from .semantic_quality import (
 
 
 G241_SOURCE_INDEX_SCHEMA_V1: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "g241-source-decision-index.v1"
+    "ipfs-datasets.logic-pipeline-benchmark.g241-source-decision-index.v1"
 )
 G241_G211_GRAPH_SCHEMA_V1: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "g241-persisted-runtime-graph.v1"
+    "ipfs-datasets.logic-pipeline-benchmark.g241-persisted-runtime-graph.v1"
 )
 G241_G212_GRAPH_SCHEMA_V1: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "g241-causal-resource-graph.v1"
+    "ipfs-datasets.logic-pipeline-benchmark.g241-causal-resource-graph.v1"
 )
 G241_SELECTION_EVIDENCE_SCHEMA_V1: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "g241-source-derived-shortlist.v1"
+    "ipfs-datasets.logic-pipeline-benchmark.g241-source-derived-shortlist.v1"
 )
 G241_PILOT_DECISION_SCHEMA_V1: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "g241-recomputed-g232-pilot-decision.v1"
+    "ipfs-datasets.logic-pipeline-benchmark.g241-recomputed-g232-pilot-decision.v1"
 )
 G241_PARENT_LEDGER_SCHEMA_V1: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "g241-parent-completion-ledger.v1"
+    "ipfs-datasets.logic-pipeline-benchmark.g241-parent-completion-ledger.v1"
 )
 G241_ARTIFACT_SLOT_SCHEMA_V1: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "g241-external-artifact-slot.v1"
+    "ipfs-datasets.logic-pipeline-benchmark.g241-external-artifact-slot.v1"
 )
 G241_EXTERNAL_PROJECTION_SCHEMA_V1: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "g241-g239-external-evaluation-projection.v1"
+    "ipfs-datasets.logic-pipeline-benchmark.g241-g239-external-evaluation-projection.v1"
 )
 G241_CUSTODIAN_TRUST_ROOT_SCHEMA_V1: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "g241-custodian-trust-root.v1"
+    "ipfs-datasets.logic-pipeline-benchmark.g241-custodian-trust-root.v1"
 )
 G241_RELEASE_REQUEST_SCHEMA_V1: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "g241-custodian-release-request.v1"
+    "ipfs-datasets.logic-pipeline-benchmark.g241-custodian-release-request.v1"
 )
 G241_RELEASE_RECEIPT_SCHEMA_V1: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "g241-externally-governed-custodian-release.v1"
+    "ipfs-datasets.logic-pipeline-benchmark.g241-externally-governed-custodian-release.v1"
 )
 G241_GIT_TREE_IDENTITY_SCHEMA_V1: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "g241-git-tree-identity.v1"
+    "ipfs-datasets.logic-pipeline-benchmark.g241-git-tree-identity.v1"
 )
 G241_ACCESS_LEDGER_SNAPSHOT_SCHEMA_V1: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "g241-pre-release-access-ledger-snapshot.v1"
+    "ipfs-datasets.logic-pipeline-benchmark.g241-pre-release-access-ledger-snapshot.v1"
 )
 G241_VALIDATOR_KEY_SCHEMA_V1: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "g241-ed25519-validator-key.v1"
+    "ipfs-datasets.logic-pipeline-benchmark.g241-ed25519-validator-key.v1"
 )
 G241_VALIDATOR_CLAIM_SCHEMA_V1: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "g241-g239-validator-claim.v1"
+    "ipfs-datasets.logic-pipeline-benchmark.g241-g239-validator-claim.v1"
 )
 G241_VALIDATOR_SIGNED_PAYLOAD_SCHEMA_V1: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "g241-g239-validator-signed-payload.v1"
+    "ipfs-datasets.logic-pipeline-benchmark.g241-g239-validator-signed-payload.v1"
 )
 G241_VALIDATOR_ATTESTATION_SCHEMA_V1: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "g241-g239-validator-attestation.v1"
+    "ipfs-datasets.logic-pipeline-benchmark.g241-g239-validator-attestation.v1"
 )
 G241_EXTERNAL_ARTIFACT_SET_SCHEMA_V1: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "g241-g239-external-artifact-set.v1"
+    "ipfs-datasets.logic-pipeline-benchmark.g241-g239-external-artifact-set.v1"
 )
 G241_GIT_EXECUTABLE_IDENTITY_SCHEMA_V1: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "g241-git-executable-identity.v1"
+    "ipfs-datasets.logic-pipeline-benchmark.g241-git-executable-identity.v1"
 )
 G241_RELEASE_LEDGER_AUTHORITY_SCHEMA_V1: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "g241-release-ledger-authority.v1"
+    "ipfs-datasets.logic-pipeline-benchmark.g241-release-ledger-authority.v1"
 )
 G241_RELEASE_CONSUMPTION_TOMBSTONE_SCHEMA_V1: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "g241-release-consumption-tombstone.v1"
+    "ipfs-datasets.logic-pipeline-benchmark.g241-release-consumption-tombstone.v1"
 )
 G241_LEDGER_FILE_IDENTITY_SCHEMA_V1: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "g241-ledger-file-identity.v1"
+    "ipfs-datasets.logic-pipeline-benchmark.g241-ledger-file-identity.v1"
 )
 
 _MAX_EXTERNAL_FILE_BYTES: Final = 16 * 1024 * 1024
@@ -190,16 +168,13 @@ G239_EXTERNAL_ARTIFACT_SCHEMA: Final = (
     "ipfs_accelerate_py.agent_supervisor.external-artifact-identity.v1"
 )
 G239_EXTERNAL_REQUIREMENT_SCHEMA: Final = (
-    "ipfs_accelerate_py.agent_supervisor."
-    "external-completion-requirement.v1"
+    "ipfs_accelerate_py.agent_supervisor.external-completion-requirement.v1"
 )
 G239_EXTERNAL_RECEIPT_SCHEMA: Final = (
-    "ipfs_accelerate_py.agent_supervisor."
-    "external-operational-completion.v1"
+    "ipfs_accelerate_py.agent_supervisor.external-operational-completion.v1"
 )
 G239_EXTERNAL_AUTHORITY_SCHEMA: Final = (
-    "ipfs_accelerate_py.agent_supervisor."
-    "external-completion-authority.v1"
+    "ipfs_accelerate_py.agent_supervisor.external-completion-authority.v1"
 )
 
 G241_GOVERNED_GOAL_ID: Final = "HSSL-G232"
@@ -237,42 +212,26 @@ class CustodianReleaseError(ValueError):
 def _plain(value: object) -> object:
     if isinstance(value, Mapping):
         if not all(isinstance(key, str) for key in value):
-            raise CustodianReleaseError(
-                "G241 DAG-JSON objects require string keys"
-            )
-        return {
-            str(key): _plain(member)
-            for key, member in value.items()
-        }
+            raise CustodianReleaseError("G241 DAG-JSON objects require string keys")
+        return {str(key): _plain(member) for key, member in value.items()}
     if isinstance(value, (tuple, list)):
         return [_plain(member) for member in value]
     if value is None or type(value) in {str, bool, int, float}:
         return value
-    raise CustodianReleaseError(
-        f"G241 value is not DAG-JSON: {type(value).__name__}"
-    )
+    raise CustodianReleaseError(f"G241 value is not DAG-JSON: {type(value).__name__}")
 
 
 def _freeze(value: object) -> object:
     if isinstance(value, Mapping):
-        return MappingProxyType(
-            {
-                str(key): _freeze(member)
-                for key, member in value.items()
-            }
-        )
+        return MappingProxyType({str(key): _freeze(member) for key, member in value.items()})
     if isinstance(value, (tuple, list)):
         return tuple(_freeze(member) for member in value)
     return value
 
 
 def _mapping(value: object, field_name: str) -> Mapping[str, object]:
-    if not isinstance(value, Mapping) or not all(
-        isinstance(key, str) for key in value
-    ):
-        raise CustodianReleaseError(
-            f"{field_name} must be an object with string keys"
-        )
+    if not isinstance(value, Mapping) or not all(isinstance(key, str) for key in value):
+        raise CustodianReleaseError(f"{field_name} must be an object with string keys")
     return value
 
 
@@ -295,25 +254,19 @@ def _cid(value: object, field_name: str) -> str:
     try:
         return validate_cid(value)
     except (TypeError, ValueError) as exc:
-        raise CustodianReleaseError(
-            f"{field_name} must be a canonical CIDv1"
-        ) from exc
+        raise CustodianReleaseError(f"{field_name} must be a canonical CIDv1") from exc
 
 
 def _dag_cid(value: object, field_name: str) -> str:
     try:
         return validate_cid(value, codecs=("dag-json",))
     except (TypeError, ValueError) as exc:
-        raise CustodianReleaseError(
-            f"{field_name} must be a canonical DAG-JSON CIDv1"
-        ) from exc
+        raise CustodianReleaseError(f"{field_name} must be a canonical DAG-JSON CIDv1") from exc
 
 
 def _git_object(value: object, field_name: str) -> str:
     if not isinstance(value, str) or not _GIT_OBJECT.fullmatch(value):
-        raise CustodianReleaseError(
-            f"{field_name} must be a full lowercase Git object identity"
-        )
+        raise CustodianReleaseError(f"{field_name} must be a full lowercase Git object identity")
     return value
 
 
@@ -331,16 +284,9 @@ def _positive_gate(
         or gate.get("passed") is not True
         or gate.get("status") != "passed"
     ):
-        raise CustodianReleaseError(
-            f"{field_name} is not a complete positive source gate"
-        )
-    if (
-        gate.get("holdout_accessed") is True
-        or gate.get("holdout_included") is True
-    ):
-        raise CustodianReleaseError(
-            f"{field_name} contains premature holdout activity"
-        )
+        raise CustodianReleaseError(f"{field_name} is not a complete positive source gate")
+    if gate.get("holdout_accessed") is True or gate.get("holdout_included") is True:
+        raise CustodianReleaseError(f"{field_name} contains premature holdout activity")
     return gate
 
 
@@ -375,16 +321,13 @@ def g241_artifact_slot_cid(name: str) -> str:
 def _zero_activity(value: object) -> Mapping[str, int]:
     activity = _mapping(value, "pre-release activity")
     if set(activity) != set(G241_ACTIVITY_KEYS):
-        raise CustodianReleaseError(
-            "pre-release activity must contain every exact counter"
-        )
+        raise CustodianReleaseError("pre-release activity must contain every exact counter")
     normalized: dict[str, int] = {}
     for key in G241_ACTIVITY_KEYS:
         count = activity[key]
         if type(count) is not int or count != 0:
             raise CustodianReleaseError(
-                "any pre-release holdout activity permanently invalidates "
-                "the seal"
+                "any pre-release holdout activity permanently invalidates the seal"
             )
         normalized[key] = count
     return MappingProxyType(normalized)
@@ -401,8 +344,7 @@ def _candidate_rows(
     field_name: str,
 ) -> tuple[Mapping[str, object], ...]:
     return tuple(
-        _mapping(row, f"{field_name}[]")
-        for row in _array(gate.get(field_name), field_name)
+        _mapping(row, f"{field_name}[]") for row in _array(gate.get(field_name), field_name)
     )
 
 
@@ -410,10 +352,7 @@ def _relative_reduction(
     baseline: object,
     candidate: object,
 ) -> float | None:
-    if (
-        type(baseline) not in {int, float}
-        or type(candidate) not in {int, float}
-    ):
+    if type(baseline) not in {int, float} or type(candidate) not in {int, float}:
         return None
     baseline_value = float(baseline)
     candidate_value = float(candidate)
@@ -450,9 +389,7 @@ def derive_g232_shortlist_from_validated_gates_v1(
         or bundle.get("holdout_accessed") is not False
         or bundle.get("holdout_outcomes_inspected") is not False
     ):
-        raise CustodianReleaseError(
-            "G231 bundle is not a source-recomputed non-holdout bundle"
-        )
+        raise CustodianReleaseError("G231 bundle is not a source-recomputed non-holdout bundle")
     candidates = tuple(
         str(item)
         for item in _array(
@@ -461,20 +398,14 @@ def derive_g232_shortlist_from_validated_gates_v1(
         )
     )
     if candidates != G231_EVALUATED_CANDIDATE_IDS:
-        raise CustodianReleaseError(
-            "G231 must evaluate the complete frozen candidate population"
-        )
+        raise CustodianReleaseError("G231 must evaluate the complete frozen candidate population")
 
-    semantic = _positive_gate(
-        semantic_quality_gate, "semantic-quality gate"
-    )
+    semantic = _positive_gate(semantic_quality_gate, "semantic-quality gate")
     efficacy = _positive_gate(efficacy_gate, "efficacy gate")
     _positive_gate(reliability_gate, "reliability gate")
     _positive_gate(routing_gate, "routing gate")
     _positive_gate(safety_gate, "safety gate")
-    resources = _positive_gate(
-        resource_statistics_gate, "resource/statistics gate"
-    )
+    resources = _positive_gate(resource_statistics_gate, "resource/statistics gate")
     _positive_gate(detached_replay_gate, "detached replay gate")
 
     child_receipts = _mapping(
@@ -488,18 +419,13 @@ def derive_g232_shortlist_from_validated_gates_v1(
         ("g234_routing", _mapping(routing_gate, "routing")),
         ("g236_safety", _mapping(safety_gate, "safety")),
         ("g237_resource_statistics", resources),
-        ("g238_detached_replay", _mapping(
-            detached_replay_gate, "detached replay"
-        )),
+        ("g238_detached_replay", _mapping(detached_replay_gate, "detached replay")),
     ):
         if child_receipts.get(key) != gate.get("receipt_cid"):
-            raise CustodianReleaseError(
-                "G231 child receipt identities changed after source replay"
-            )
+            raise CustodianReleaseError("G231 child receipt identities changed after source replay")
 
     semantic_rows = {
-        str(row.get("variant_id")): row
-        for row in _candidate_rows(semantic, "per_arm_metrics")
+        str(row.get("variant_id")): row for row in _candidate_rows(semantic, "per_arm_metrics")
     }
     if set(semantic_rows) != {"A0", *candidates}:
         raise CustodianReleaseError(
@@ -510,14 +436,10 @@ def derive_g232_shortlist_from_validated_gates_v1(
         for variant_id, row in semantic_rows.items()
     }
     if any(type(value) is not int for value in quality_values.values()):
-        raise CustodianReleaseError(
-            "semantic evidence contains null or non-integral quality"
-        )
+        raise CustodianReleaseError("semantic evidence contains null or non-integral quality")
     best_quality = max(int(value) for value in quality_values.values())
 
-    efficacy_evidence = _mapping(
-        efficacy.get("evidence"), "efficacy evidence"
-    )
+    efficacy_evidence = _mapping(efficacy.get("evidence"), "efficacy evidence")
     comparisons = tuple(
         _mapping(row, "efficacy comparison")
         for row in _array(
@@ -539,32 +461,18 @@ def derive_g232_shortlist_from_validated_gates_v1(
         )
         for row in comparisons
     }
-    if actual_cells != expected_cells or len(comparisons) != len(
-        expected_cells
-    ):
-        raise CustodianReleaseError(
-            "paired efficacy cells are incomplete, duplicated, or foreign"
-        )
+    if actual_cells != expected_cells or len(comparisons) != len(expected_cells):
+        raise CustodianReleaseError("paired efficacy cells are incomplete, duplicated, or foreign")
 
     cost_rows = {
-        str(row.get("variant_id")): row
-        for row in _candidate_rows(resources, "cost_evidence")
+        str(row.get("variant_id")): row for row in _candidate_rows(resources, "cost_evidence")
     }
     if set(cost_rows) != {"A0", *candidates}:
-        raise CustodianReleaseError(
-            "cost evidence does not exactly cover A0 and all candidates"
-        )
-    pareto = _mapping(
-        resources.get("pareto_evidence"), "Pareto evidence"
-    )
-    pareto_rows = {
-        str(row.get("variant_id")): row
-        for row in _candidate_rows(pareto, "candidates")
-    }
+        raise CustodianReleaseError("cost evidence does not exactly cover A0 and all candidates")
+    pareto = _mapping(resources.get("pareto_evidence"), "Pareto evidence")
+    pareto_rows = {str(row.get("variant_id")): row for row in _candidate_rows(pareto, "candidates")}
     if set(pareto_rows) != {"A0", *candidates}:
-        raise CustodianReleaseError(
-            "Pareto evidence does not exactly cover A0 and all candidates"
-        )
+        raise CustodianReleaseError("Pareto evidence does not exactly cover A0 and all candidates")
     frontier = tuple(
         str(item)
         for item in _array(
@@ -578,23 +486,15 @@ def derive_g232_shortlist_from_validated_gates_v1(
         raise CustodianReleaseError("Pareto frontier is duplicated or foreign")
 
     thresholds = DEFAULT_PROTOCOL.thresholds
-    baseline_costs = _mapping(
-        cost_rows["A0"].get("metrics"), "A0 cost metrics"
-    )
+    baseline_costs = _mapping(cost_rows["A0"].get("metrics"), "A0 cost metrics")
     evidence_rows: list[dict[str, object]] = []
     selected: list[str] = []
     for candidate in candidates:
-        rows = tuple(
-            row
-            for row in comparisons
-            if row.get("candidate_variant_id") == candidate
-        )
+        rows = tuple(row for row in comparisons if row.get("candidate_variant_id") == candidate)
         scheduled = sum(int(row["scheduled_pair_count"]) for row in rows)
         measured = sum(int(row["measured_pair_count"]) for row in rows)
         net_gain = sum(int(row["net_verified_gain_count"]) for row in rows)
-        baseline_only = sum(
-            int(row["baseline_only_verified_count"]) for row in rows
-        )
+        baseline_only = sum(int(row["baseline_only_verified_count"]) for row in rows)
         deltas = tuple(row.get("net_verified_delta") for row in rows)
         complete_pairs = (
             scheduled > 0
@@ -603,25 +503,17 @@ def derive_g232_shortlist_from_validated_gates_v1(
         )
         regression_floor_passed = bool(
             complete_pairs
-            and min(float(value) for value in deltas)
-            >= thresholds.paired_regression_floor
+            and min(float(value) for value in deltas) >= thresholds.paired_regression_floor
         )
-        hard_case_gain = (
-            net_gain / scheduled if complete_pairs else None
-        )
-        baseline_regression_rate = (
-            baseline_only / scheduled if complete_pairs else None
-        )
+        hard_case_gain = net_gain / scheduled if complete_pairs else None
+        baseline_regression_rate = baseline_only / scheduled if complete_pairs else None
         efficacy_passed = bool(
             regression_floor_passed
             and hard_case_gain is not None
-            and hard_case_gain
-            >= thresholds.hard_case_verified_gain_min
+            and hard_case_gain >= thresholds.hard_case_verified_gain_min
             and baseline_regression_rate is not None
-            and baseline_regression_rate
-            <= thresholds.baseline_solved_regression_rate_max
-            and baseline_only
-            <= thresholds.unexplained_baseline_regressions_max
+            and baseline_regression_rate <= thresholds.baseline_solved_regression_rate_max
+            and baseline_only <= thresholds.unexplained_baseline_regressions_max
         )
 
         semantic_row = semantic_rows[candidate]
@@ -642,15 +534,12 @@ def derive_g232_shortlist_from_validated_gates_v1(
             )
             for metric in ("wall_time_ms", "model_calls")
         }
-        measured_reductions = tuple(
-            value for value in reductions.values() if value is not None
-        )
+        measured_reductions = tuple(value for value in reductions.values() if value is not None)
         efficiency_passed = bool(
             semantic_passed
             and quality_gap <= thresholds.near_best_quality_margin_max
             and measured_reductions
-            and max(measured_reductions)
-            >= thresholds.efficiency_reduction_min
+            and max(measured_reductions) >= thresholds.efficiency_reduction_min
         )
 
         pareto_row = pareto_rows[candidate]
@@ -659,9 +548,7 @@ def derive_g232_shortlist_from_validated_gates_v1(
             and pareto_row.get("eligible") is True
             and pareto_row.get("safety_feasible") is True
             and pareto_row.get("on_frontier") is True
-            and not _array(
-                pareto_row.get("dominated_by"), "Pareto dominators"
-            )
+            and not _array(pareto_row.get("dominated_by"), "Pareto dominators")
         )
         materiality_passed = efficacy_passed or efficiency_passed
         eligible = semantic_passed and materiality_passed and frontier_passed
@@ -684,16 +571,12 @@ def derive_g232_shortlist_from_validated_gates_v1(
             "semantic_quality_millionths": quality,
             "quality_gap_from_best": quality_gap,
             "semantic_passed": semantic_passed,
-            "efficacy_comparison_cids": sorted(
-                str(row["comparison_cid"]) for row in rows
-            ),
+            "efficacy_comparison_cids": sorted(str(row["comparison_cid"]) for row in rows),
             "scheduled_pair_count": scheduled,
             "measured_pair_count": measured,
             "hard_case_verified_gain": hard_case_gain,
             "paired_regression_floor_passed": regression_floor_passed,
-            "baseline_solved_regression_rate": (
-                baseline_regression_rate
-            ),
+            "baseline_solved_regression_rate": (baseline_regression_rate),
             "unexplained_baseline_regressions": baseline_only,
             "efficacy_materiality_passed": efficacy_passed,
             "efficiency_reductions": reductions,
@@ -712,10 +595,7 @@ def derive_g232_shortlist_from_validated_gates_v1(
         if eligible:
             selected.append(candidate)
 
-    if (
-        not selected
-        or len(selected) > thresholds.shortlist_candidate_max
-    ):
+    if not selected or len(selected) > thresholds.shortlist_candidate_max:
         raise CustodianReleaseError(
             "deterministic eligible frontier must contain one to four "
             "candidates; ranking and truncation are forbidden"
@@ -723,9 +603,7 @@ def derive_g232_shortlist_from_validated_gates_v1(
     body = {
         "schema": G241_SELECTION_EVIDENCE_SCHEMA_V1,
         "g231_bundle_cid": bundle.get("bundle_cid"),
-        "shortlist_selection_policy_cid": (
-            G202_SHORTLIST_SELECTION_POLICY_V2_CID
-        ),
+        "shortlist_selection_policy_cid": (G202_SHORTLIST_SELECTION_POLICY_V2_CID),
         "evaluated_candidate_ids": list(candidates),
         "candidate_evidence": evidence_rows,
         "selected_candidate_ids": selected,
@@ -737,9 +615,7 @@ def derive_g232_shortlist_from_validated_gates_v1(
         "source_recomputed": True,
         "holdout_accessed": False,
     }
-    return _freeze(
-        {**body, "selection_cid": cid_for_dag_json(body)}
-    )  # type: ignore[return-value]
+    return _freeze({**body, "selection_cid": cid_for_dag_json(body)})  # type: ignore[return-value]
 
 
 @dataclass(frozen=True, slots=True)
@@ -754,9 +630,7 @@ class G241PersistedBatchSourceV1:
     def __post_init__(self) -> None:
         root = Path(self.output_root)
         if not root.is_absolute():
-            raise CustodianReleaseError(
-                "G211 persisted source root must be absolute"
-            )
+            raise CustodianReleaseError("G211 persisted source root must be absolute")
         object.__setattr__(self, "output_root", root)
 
 
@@ -767,20 +641,14 @@ def _replay_g211_batches(
     try:
         from .causal_batch import validate_causal_runtime_batch_v2
     except ImportError as exc:
-        raise CustodianReleaseError(
-            "G211 persisted-runtime validator is unavailable"
-        ) from exc
+        raise CustodianReleaseError("G211 persisted-runtime validator is unavailable") from exc
 
     if not sources:
-        raise CustodianReleaseError(
-            "G241 requires persisted G211 pilot/development batches"
-        )
+        raise CustodianReleaseError("G241 requires persisted G211 pilot/development batches")
     batches: list[object] = []
     for source in sources:
         if not isinstance(source, G241PersistedBatchSourceV1):
-            raise CustodianReleaseError(
-                "G211 sources must use G241PersistedBatchSourceV1"
-            )
+            raise CustodianReleaseError("G211 sources must use G241PersistedBatchSourceV1")
         try:
             batch = validate_causal_runtime_batch_v2(
                 source.plan,  # type: ignore[arg-type]
@@ -799,62 +667,34 @@ def _replay_g211_batches(
             or batch.identity_body().get("holdout_included") is not False
         ):
             raise CustodianReleaseError(
-                "G211 batch lacks complete runtime namespace and live "
-                "source-orchestration evidence"
+                "G211 batch lacks complete runtime namespace and live source-orchestration evidence"
             )
         batches.append(batch)
 
-    by_split = {
-        str(batch.plan.split.value): batch for batch in batches
-    }
-    if (
-        set(by_split) != {"pilot", "development"}
-        or len(by_split) != len(batches)
-    ):
-        raise CustodianReleaseError(
-            "G211 batches must exactly cover pilot and development"
-        )
+    by_split = {str(batch.plan.split.value): batch for batch in batches}
+    if set(by_split) != {"pilot", "development"} or len(by_split) != len(batches):
+        raise CustodianReleaseError("G211 batches must exactly cover pilot and development")
     batches = [by_split["pilot"], by_split["development"]]
     evidence_cids = tuple(
-        sorted(
-            str(item.receipt_cid)
-            for batch in batches
-            for item in batch.evidence
-        )
+        sorted(str(item.receipt_cid) for batch in batches for item in batch.evidence)
     )
-    matrix_cids = tuple(
-        sorted(str(item.receipt_cid) for item in matrix.runtime_evidence)
-    )
-    if (
-        evidence_cids != matrix_cids
-        or len(evidence_cids) != len(set(evidence_cids))
-    ):
+    matrix_cids = tuple(sorted(str(item.receipt_cid) for item in matrix.runtime_evidence))
+    if evidence_cids != matrix_cids or len(evidence_cids) != len(set(evidence_cids)):
         raise CustodianReleaseError(
             "G211 persisted evidence does not exactly equal the G212 matrix"
         )
     body = {
         "schema": G241_G211_GRAPH_SCHEMA_V1,
-        "batch_receipt_cids": [
-            str(batch.receipt_cid) for batch in batches
-        ],
-        "plan_cids": [
-            str(batch.receipt["plan_cid"]) for batch in batches
-        ],
+        "batch_receipt_cids": [str(batch.receipt_cid) for batch in batches],
+        "plan_cids": [str(batch.receipt["plan_cid"]) for batch in batches],
         "runtime_namespace_evidence_set_cids": [
-            str(
-                batch.runtime_namespace_evidence_set.evidence_set_cid
-            )
-            for batch in batches
+            str(batch.runtime_namespace_evidence_set.evidence_set_cid) for batch in batches
         ],
         "runtime_namespace_policy_cids": [
-            str(batch.runtime_namespace_evidence_set.policy.policy_cid)
-            for batch in batches
+            str(batch.runtime_namespace_evidence_set.policy.policy_cid) for batch in batches
         ],
         "source_orchestration_evidence_set_cids": [
-            str(
-                batch.source_orchestration_evidence_set.evidence_set_cid
-            )
-            for batch in batches
+            str(batch.source_orchestration_evidence_set.evidence_set_cid) for batch in batches
         ],
         "causal_runtime_evidence_cids": list(evidence_cids),
         "complete": True,
@@ -912,16 +752,10 @@ class G241SourceDecisionIndexV1:
             "g232_pilot_decision_cid",
             "access_ledger_authority_cid",
         ):
-            object.__setattr__(
-                self, name, _dag_cid(getattr(self, name), name)
-            )
-        if self.source_commit_cid != g238_git_commit_cid(
-            self.source_commit
-        ):
+            object.__setattr__(self, name, _dag_cid(getattr(self, name), name))
+        if self.source_commit_cid != g238_git_commit_cid(self.source_commit):
             raise CustodianReleaseError("source commit CID changed")
-        namespaces = _mapping(
-            self.namespace_identity_cids, "namespace identities"
-        )
+        namespaces = _mapping(self.namespace_identity_cids, "namespace identities")
         expected_namespaces = {
             "worktree",
             "cache_policy",
@@ -936,9 +770,7 @@ class G241SourceDecisionIndexV1:
             "source_orchestration_evidence_development",
         }
         if set(namespaces) != expected_namespaces:
-            raise CustodianReleaseError(
-                "G202 namespace identity set is incomplete or foreign"
-            )
+            raise CustodianReleaseError("G202 namespace identity set is incomplete or foreign")
         object.__setattr__(
             self,
             "namespace_identity_cids",
@@ -949,13 +781,9 @@ class G241SourceDecisionIndexV1:
                 }
             ),
         )
-        authority_roles = _mapping(
-            self.upstream_authority_cids, "upstream authority identities"
-        )
+        authority_roles = _mapping(self.upstream_authority_cids, "upstream authority identities")
         if set(authority_roles) != set(G241_UPSTREAM_AUTHORITY_ROLES):
-            raise CustodianReleaseError(
-                "upstream authority role set is incomplete or foreign"
-            )
+            raise CustodianReleaseError("upstream authority role set is incomplete or foreign")
         normalized_authorities = {
             role: _dag_cid(
                 authority_roles[role],
@@ -963,42 +791,30 @@ class G241SourceDecisionIndexV1:
             )
             for role in G241_UPSTREAM_AUTHORITY_ROLES
         }
-        if len(set(normalized_authorities.values())) != len(
-            normalized_authorities
-        ):
+        if len(set(normalized_authorities.values())) != len(normalized_authorities):
             raise CustodianReleaseError(
-                "upstream execution, review, measurement, and validation "
-                "authorities overlap"
+                "upstream execution, review, measurement, and validation authorities overlap"
             )
         object.__setattr__(
             self,
             "upstream_authority_cids",
             MappingProxyType(normalized_authorities),
         )
-        parents = _mapping(
-            self.parent_artifact_cids, "parent artifact identities"
-        )
+        parents = _mapping(self.parent_artifact_cids, "parent artifact identities")
         if set(parents) != set(G241_PARENT_KEYS):
-            raise CustodianReleaseError(
-                "G241 parent ledger is incomplete or foreign"
-            )
+            raise CustodianReleaseError("G241 parent ledger is incomplete or foreign")
         object.__setattr__(
             self,
             "parent_artifact_cids",
             MappingProxyType(
-                {
-                    key: _dag_cid(parents[key], f"parent.{key}")
-                    for key in G241_PARENT_KEYS
-                }
+                {key: _dag_cid(parents[key], f"parent.{key}") for key in G241_PARENT_KEYS}
             ),
         )
         batches = tuple(
-            _dag_cid(value, "G211 batch receipt")
-            for value in self.g211_batch_receipt_cids
+            _dag_cid(value, "G211 batch receipt") for value in self.g211_batch_receipt_cids
         )
         runtime = tuple(
-            _dag_cid(value, "G212 runtime evidence")
-            for value in self.g212_runtime_evidence_cids
+            _dag_cid(value, "G212 runtime evidence") for value in self.g212_runtime_evidence_cids
         )
         if (
             not batches
@@ -1015,10 +831,7 @@ class G241SourceDecisionIndexV1:
         expected = cid_for_dag_json(self.identity_payload())
         if self.source_index_cid is None:
             object.__setattr__(self, "source_index_cid", expected)
-        elif (
-            _dag_cid(self.source_index_cid, "source_index_cid")
-            != expected
-        ):
+        elif _dag_cid(self.source_index_cid, "source_index_cid") != expected:
             raise CustodianReleaseError("G241 source index CID changed")
 
     def identity_payload(self) -> dict[str, object]:
@@ -1031,24 +844,14 @@ class G241SourceDecisionIndexV1:
             "run_plan_cid": self.run_plan_cid,
             "capability_inventory_cid": self.capability_inventory_cid,
             "environment_cid": self.environment_cid,
-            "namespace_identity_cids": dict(
-                self.namespace_identity_cids
-            ),
-            "upstream_authority_cids": dict(
-                self.upstream_authority_cids
-            ),
+            "namespace_identity_cids": dict(self.namespace_identity_cids),
+            "upstream_authority_cids": dict(self.upstream_authority_cids),
             "parent_artifact_cids": dict(self.parent_artifact_cids),
-            "g211_batch_receipt_cids": list(
-                self.g211_batch_receipt_cids
-            ),
-            "g212_runtime_evidence_cids": list(
-                self.g212_runtime_evidence_cids
-            ),
+            "g211_batch_receipt_cids": list(self.g211_batch_receipt_cids),
+            "g212_runtime_evidence_cids": list(self.g212_runtime_evidence_cids),
             "shortlist_selection_cid": self.shortlist_selection_cid,
             "g232_pilot_decision_cid": self.g232_pilot_decision_cid,
-            "access_ledger_authority_cid": (
-                self.access_ledger_authority_cid
-            ),
+            "access_ledger_authority_cid": (self.access_ledger_authority_cid),
         }
 
     def to_dict(self) -> dict[str, object]:
@@ -1076,22 +879,12 @@ class G241SourceReplayResultV1:
 
     def __post_init__(self) -> None:
         if not isinstance(self.source_index, G241SourceDecisionIndexV1):
-            raise CustodianReleaseError(
-                "source replay requires a typed G241 source index"
-            )
-        object.__setattr__(
-            self, "selection_evidence", _freeze(self.selection_evidence)
-        )
-        object.__setattr__(
-            self, "pilot_decision", _freeze(self.pilot_decision)
-        )
-        artifacts = _mapping(
-            self.external_artifact_cids, "external artifact identities"
-        )
+            raise CustodianReleaseError("source replay requires a typed G241 source index")
+        object.__setattr__(self, "selection_evidence", _freeze(self.selection_evidence))
+        object.__setattr__(self, "pilot_decision", _freeze(self.pilot_decision))
+        artifacts = _mapping(self.external_artifact_cids, "external artifact identities")
         if set(artifacts) != set(G241_EXTERNAL_ARTIFACT_KEYS):
-            raise CustodianReleaseError(
-                "external artifact graph is incomplete or foreign"
-            )
+            raise CustodianReleaseError("external artifact graph is incomplete or foreign")
         object.__setattr__(
             self,
             "external_artifact_cids",
@@ -1124,9 +917,7 @@ def _build_expected_g232_authorization(
         "sealed_manifest_cid": seal.sealed_manifest_cid,
         "protocol_cids": {
             key: seal.protocol_cids[key]
-            for key in sorted(
-                REPLACEMENT_HOLDOUT_AUTHORIZED_PROTOCOL_KEYS
-            )
+            for key in sorted(REPLACEMENT_HOLDOUT_AUTHORIZED_PROTOCOL_KEYS)
         },
         "source_commit": source_commit,
         "authorized_variant_ids": ["A0", *selected_candidates],
@@ -1167,13 +958,9 @@ def validate_g232_proposal_against_source_replay_v1(
         or selection.get("source_recomputed") is not True
         or selection.get("holdout_accessed") is not False
     ):
-        raise CustodianReleaseError(
-            "shortlist evidence is not a source-recomputed G241 selection"
-        )
+        raise CustodianReleaseError("shortlist evidence is not a source-recomputed G241 selection")
     selection_body = {
-        key: _plain(value)
-        for key, value in selection.items()
-        if key != "selection_cid"
+        key: _plain(value) for key, value in selection.items() if key != "selection_cid"
     }
     selection_cid = cid_for_dag_json(selection_body)
     if selection.get("selection_cid") != selection_cid:
@@ -1196,9 +983,7 @@ def validate_g232_proposal_against_source_replay_v1(
             "pilot decision does not exactly bind the source-derived shortlist"
         )
     decision_body = {
-        key: _plain(value)
-        for key, value in decision.items()
-        if key != "pilot_decision_cid"
+        key: _plain(value) for key, value in decision.items() if key != "pilot_decision_cid"
     }
     pilot_cid = cid_for_dag_json(decision_body)
     if decision.get("pilot_decision_cid") != pilot_cid:
@@ -1218,20 +1003,15 @@ def validate_g232_proposal_against_source_replay_v1(
     )
     try:
         supplied = (
-            G232ReplacementHoldoutAuthorization.from_dict(
-                proposal.to_dict()
-            )
+            G232ReplacementHoldoutAuthorization.from_dict(proposal.to_dict())
             if isinstance(proposal, G232ReplacementHoldoutAuthorization)
             else G232ReplacementHoldoutAuthorization.from_dict(proposal)
         )
     except (TypeError, ValueError, KeyError) as exc:
-        raise CustodianReleaseError(
-            "G232 proposal failed strict typed parsing"
-        ) from exc
+        raise CustodianReleaseError("G232 proposal failed strict typed parsing") from exc
     if supplied.to_dict() != expected.to_dict():
         raise CustodianReleaseError(
-            "G232 proposal differs from the deterministic source-derived "
-            "pilot decision"
+            "G232 proposal differs from the deterministic source-derived pilot decision"
         )
     supplied.validate_against(seal)
     return supplied
@@ -1253,8 +1033,7 @@ def _g231_persisted_batch_sources(
             )
         ):
             raise CustodianReleaseError(
-                "G231 sources do not contain exact persisted G211 "
-                "pilot/development batches"
+                "G231 sources do not contain exact persisted G211 pilot/development batches"
             )
         result.append(
             G241PersistedBatchSourceV1(
@@ -1271,13 +1050,9 @@ def _single_authority(
     values: Sequence[object],
     role: str,
 ) -> str:
-    normalized = {
-        _dag_cid(value, f"{role} authority") for value in values
-    }
+    normalized = {_dag_cid(value, f"{role} authority") for value in values}
     if len(normalized) != 1:
-        raise CustodianReleaseError(
-            f"{role} authority changed across the source graph"
-        )
+        raise CustodianReleaseError(f"{role} authority changed across the source graph")
     return next(iter(normalized))
 
 
@@ -1291,13 +1066,8 @@ def _derive_upstream_authorities(
     manifest = freeze.authority_role_manifest
     manifested = dict(manifest.role_identity_cids)
     manifested_roles = G241_UPSTREAM_AUTHORITY_ROLES
-    if (
-        set(manifested) != set(manifested_roles)
-        or len(set(manifested.values())) != len(manifested)
-    ):
-        raise CustodianReleaseError(
-            "G202 authority-role manifest is incomplete or overlapping"
-        )
+    if set(manifested) != set(manifested_roles) or len(set(manifested.values())) != len(manifested):
+        raise CustodianReleaseError("G202 authority-role manifest is incomplete or overlapping")
     control_index = sources.get("control_index")
     if control_index is None or any(
         not hasattr(control_index, name)
@@ -1306,43 +1076,23 @@ def _derive_upstream_authorities(
             "execution_authority_cid",
         )
     ):
-        raise CustodianReleaseError(
-            "G236 control authorities are unavailable"
-        )
-    resource_receipts = tuple(
-        _array(sources.get("resource_receipts"), "resource receipts")
-    )
+        raise CustodianReleaseError("G236 control authorities are unavailable")
+    resource_receipts = tuple(_array(sources.get("resource_receipts"), "resource receipts"))
     if not resource_receipts:
-        raise CustodianReleaseError(
-            "G237 resource authority population is empty"
-        )
-    namespace_sets = tuple(
-        batch.runtime_namespace_evidence_set for batch in batches
-    )
-    orchestration_sets = tuple(
-        batch.source_orchestration_evidence_set for batch in batches
-    )
+        raise CustodianReleaseError("G237 resource authority population is empty")
+    namespace_sets = tuple(batch.runtime_namespace_evidence_set for batch in batches)
+    orchestration_sets = tuple(batch.source_orchestration_evidence_set for batch in batches)
     if any(item is None for item in (*namespace_sets, *orchestration_sets)):
-        raise CustodianReleaseError(
-            "G211/G240 authority evidence is incomplete"
-        )
+        raise CustodianReleaseError("G211/G240 authority evidence is incomplete")
     orchestration_receipts = tuple(
-        receipt
-        for evidence_set in orchestration_sets
-        for receipt in evidence_set.receipts
+        receipt for evidence_set in orchestration_sets for receipt in evidence_set.receipts
     )
     source_executor = _single_authority(
         (
             freeze.source_executor_authority_cid,
             control_index.execution_authority_cid,
-            *(
-                receipt.producer_identity_cid
-                for receipt in resource_receipts
-            ),
-            *(
-                receipt.executor_identity_cid
-                for receipt in orchestration_receipts
-            ),
+            *(receipt.producer_identity_cid for receipt in resource_receipts),
+            *(receipt.executor_identity_cid for receipt in orchestration_receipts),
         ),
         "source executor",
     )
@@ -1351,44 +1101,28 @@ def _derive_upstream_authorities(
         "operational replay sources",
     )
     if not operational_replays:
-        raise CustodianReleaseError(
-            "G238 operational replay authority population is empty"
-        )
+        raise CustodianReleaseError("G238 operational replay authority population is empty")
     replay_namespaces = tuple(
-        getattr(item, "namespace_receipt", None)
-        for item in operational_replays.values()
+        getattr(item, "namespace_receipt", None) for item in operational_replays.values()
     )
     replay_orchestrations = tuple(
-        getattr(item, "orchestration_receipt", None)
-        for item in operational_replays.values()
+        getattr(item, "orchestration_receipt", None) for item in operational_replays.values()
     )
-    if any(
-        item is None
-        for item in (*replay_namespaces, *replay_orchestrations)
-    ):
-        raise CustodianReleaseError(
-            "G238 replay authority receipts are unavailable"
-        )
+    if any(item is None for item in (*replay_namespaces, *replay_orchestrations)):
+        raise CustodianReleaseError("G238 replay authority receipts are unavailable")
     observed = {
         "source_executor": source_executor,
         "namespace_authority": _single_authority(
-            tuple(
-                item.policy.namespace_authority_cid
-                for item in namespace_sets
-            ),
+            tuple(item.policy.namespace_authority_cid for item in namespace_sets),
             "namespace authority",
         ),
         "namespace_observer": _single_authority(
-            tuple(
-                receipt.namespace_observer_identity_cid
-                for receipt in orchestration_receipts
-            ),
+            tuple(receipt.namespace_observer_identity_cid for receipt in orchestration_receipts),
             "namespace observer",
         ),
         "source_orchestration_observer": _single_authority(
             tuple(
-                receipt.orchestration_observer_identity_cid
-                for receipt in orchestration_receipts
+                receipt.orchestration_observer_identity_cid for receipt in orchestration_receipts
             ),
             "source orchestration observer",
         ),
@@ -1397,55 +1131,35 @@ def _derive_upstream_authorities(
             "runtime namespace validator",
         ),
         "source_orchestration_validator": _single_authority(
-            tuple(
-                item.validator_identity_cid
-                for item in orchestration_sets
-            ),
+            tuple(item.validator_identity_cid for item in orchestration_sets),
             "source orchestration validator",
         ),
         "resource_meter": _single_authority(
-            tuple(
-                receipt.meter_identity_cid
-                for receipt in resource_receipts
-            ),
+            tuple(receipt.meter_identity_cid for receipt in resource_receipts),
             "resource meter",
         ),
         "resource_validator": _single_authority(
-            tuple(
-                receipt.validator_identity_cid
-                for receipt in resource_receipts
-            ),
+            tuple(receipt.validator_identity_cid for receipt in resource_receipts),
             "resource validator",
         ),
         "replay_executor": _single_authority(
-            tuple(
-                receipt.replay_executor_identity_cid
-                for receipt in replay_namespaces
-            ),
+            tuple(receipt.replay_executor_identity_cid for receipt in replay_namespaces),
             "replay executor",
         ),
         "replay_namespace_observer": _single_authority(
             (
-                *(
-                    receipt.replay_observer_identity_cid
-                    for receipt in replay_namespaces
-                ),
+                *(receipt.replay_observer_identity_cid for receipt in replay_namespaces),
                 sources.get("replay_validator_authority_cid"),
             ),
             "replay namespace observer",
         ),
         "replay_orchestration_observer": _single_authority(
-            tuple(
-                receipt.orchestration_observer_identity_cid
-                for receipt in replay_orchestrations
-            ),
+            tuple(receipt.orchestration_observer_identity_cid for receipt in replay_orchestrations),
             "replay orchestration observer",
         ),
         "freeze_producer": freeze.freeze_producer_identity_cid,
         "freeze_validator": freeze.freeze_validator_identity_cid,
-        "runtime_identity_policy_authority": (
-            freeze.runtime_identity_policy.policy_authority_cid
-        ),
+        "runtime_identity_policy_authority": (freeze.runtime_identity_policy.policy_authority_cid),
         "artifact_validator": artifacts.validator_identity_cid,
         "control_reviewer": control_index.review_authority_cid,
     }
@@ -1455,12 +1169,8 @@ def _derive_upstream_authorities(
             "pre-execution G202 authority-role manifest"
         )
     roles = {role: manifested[role] for role in manifested_roles}
-    if set(roles) != set(G241_UPSTREAM_AUTHORITY_ROLES) or len(
-        set(roles.values())
-    ) != len(roles):
-        raise CustodianReleaseError(
-            "full upstream authority roles overlap or are incomplete"
-        )
+    if set(roles) != set(G241_UPSTREAM_AUTHORITY_ROLES) or len(set(roles.values())) != len(roles):
+        raise CustodianReleaseError("full upstream authority roles overlap or are incomplete")
     return MappingProxyType(roles)
 
 
@@ -1471,36 +1181,21 @@ def _join_g211_to_g231_bindings(
     batches: Sequence[object],
     authority_role_manifest_cid: str,
 ) -> None:
-    bindings = _mapping(
-        rebuilt_bundle.get("source_bindings"), "G231 source bindings"
-    )
+    bindings = _mapping(rebuilt_bundle.get("source_bindings"), "G231 source bindings")
     expected_batches = {
         split: str(batches[index].receipt_cid)
         for index, split in enumerate(("pilot", "development"))
     }
     expected_namespace_policies = {
-        split: str(
-            batches[index]
-            .runtime_namespace_evidence_set
-            .policy
-            .policy_cid
-        )
+        split: str(batches[index].runtime_namespace_evidence_set.policy.policy_cid)
         for index, split in enumerate(("pilot", "development"))
     }
     expected_namespace_sets = {
-        split: str(
-            batches[index]
-            .runtime_namespace_evidence_set
-            .evidence_set_cid
-        )
+        split: str(batches[index].runtime_namespace_evidence_set.evidence_set_cid)
         for index, split in enumerate(("pilot", "development"))
     }
     expected_orchestration_sets = {
-        split: str(
-            batches[index]
-            .source_orchestration_evidence_set
-            .evidence_set_cid
-        )
+        split: str(batches[index].source_orchestration_evidence_set.evidence_set_cid)
         for index, split in enumerate(("pilot", "development"))
     }
     if (
@@ -1509,26 +1204,13 @@ def _join_g211_to_g231_bindings(
             authority_role_manifest_cid,
             "G202 authority-role manifest CID",
         )
-        or _plain(bindings.get("g211_runtime_batch_receipt_cids"))
-        != expected_batches
-        or _plain(
-            bindings.get("g240_runtime_namespace_policy_cids")
-        )
-        != expected_namespace_policies
-        or _plain(
-            bindings.get(
-                "g240_runtime_namespace_evidence_set_cids"
-            )
-        )
+        or _plain(bindings.get("g211_runtime_batch_receipt_cids")) != expected_batches
+        or _plain(bindings.get("g240_runtime_namespace_policy_cids")) != expected_namespace_policies
+        or _plain(bindings.get("g240_runtime_namespace_evidence_set_cids"))
         != expected_namespace_sets
-        or _plain(
-            bindings.get(
-                "g240_source_orchestration_evidence_set_cids"
-            )
-        )
+        or _plain(bindings.get("g240_source_orchestration_evidence_set_cids"))
         != expected_orchestration_sets
-        or tuple(g211_graph["batch_receipt_cids"])
-        != tuple(expected_batches.values())
+        or tuple(g211_graph["batch_receipt_cids"]) != tuple(expected_batches.values())
     ):
         raise CustodianReleaseError(
             "G211 batch/namespace/orchestration identities differ from "
@@ -1541,14 +1223,10 @@ def _join_g211_to_g231_bindings(
         if (
             namespace_set.policy.plan_cids != (plan_cid,)
             or orchestration_set.plan_cids != (plan_cid,)
-            or any(
-                receipt.plan_cid != plan_cid
-                for receipt in orchestration_set.receipts
-            )
+            or any(receipt.plan_cid != plan_cid for receipt in orchestration_set.receipts)
         ):
             raise CustodianReleaseError(
-                "G211 plan identities differ from their namespace or "
-                "orchestration graphs"
+                "G211 plan identities differ from their namespace or orchestration graphs"
             )
 
 
@@ -1591,16 +1269,12 @@ def recompute_g241_source_chain_v1(
     if not isinstance(seal_value, ReplacementHoldoutSeal):
         raise CustodianReleaseError("G241 requires typed G220 seal metadata")
     if not isinstance(bindings_value, G231ArtifactBindingsV2):
-        raise CustodianReleaseError(
-            "G241 requires typed G231 artifact bindings"
-        )
+        raise CustodianReleaseError("G241 requires typed G231 artifact bindings")
     freeze = G202FrozenRunInputsV2.from_dict(freeze_value.to_dict())
     index = validate_g201_semantic_evidence_index_v2(index_value)
     matrix = G210RuntimeReceiptMatrixV2.from_dict(matrix_value.to_dict())
     seal = ReplacementHoldoutSeal.from_dict(seal_value.to_dict())
-    bindings = G231ArtifactBindingsV2.from_dict(
-        bindings_value.to_dict()
-    )
+    bindings = G231ArtifactBindingsV2.from_dict(bindings_value.to_dict())
     if (
         freeze.frozen is not True
         or freeze.holdout_accessed is not False
@@ -1608,44 +1282,34 @@ def recompute_g241_source_chain_v1(
         or matrix.complete is not True
         or index.absolute_quality_passed is not True
     ):
-        raise CustodianReleaseError(
-            "G201/G202/G212 sources are not complete, clean, and frozen"
-        )
+        raise CustodianReleaseError("G201/G202/G212 sources are not complete, clean, and frozen")
 
-    g211_graph, batches = _replay_g211_batches(
-        _g231_persisted_batch_sources(sources), matrix
-    )
+    g211_graph, batches = _replay_g211_batches(_g231_persisted_batch_sources(sources), matrix)
     _join_g211_to_g231_bindings(
         rebuilt_bundle=rebuilt_bundle,
         g211_graph=g211_graph,
         batches=batches,
-        authority_role_manifest_cid=(
-            freeze.authority_role_manifest.manifest_cid
-        ),
+        authority_role_manifest_cid=(freeze.authority_role_manifest.manifest_cid),
     )
     g212_body = {
         "schema": G241_G212_GRAPH_SCHEMA_V1,
         "runtime_matrix_cid": matrix.runtime_matrix_cid,
-        "runtime_evidence_cids": sorted(
-            item.receipt_cid for item in matrix.runtime_evidence
-        ),
+        "runtime_evidence_cids": sorted(item.receipt_cid for item in matrix.runtime_evidence),
         "g211_persisted_runtime_graph_cid": g211_graph["graph_cid"],
-        "resource_evidence_set_cid": bindings.artifact_cids[
-            "g237_resource_evidence_set"
-        ],
+        "resource_evidence_set_cid": bindings.artifact_cids["g237_resource_evidence_set"],
         "resource_statistics_receipt_cid": _mapping(
             sources.get("resource_statistics_gate"),
             "resource statistics gate",
         ).get("receipt_cid"),
-        "efficacy_receipt_cid": _mapping(
-            sources.get("efficacy_gate"), "efficacy gate"
-        ).get("receipt_cid"),
+        "efficacy_receipt_cid": _mapping(sources.get("efficacy_gate"), "efficacy gate").get(
+            "receipt_cid"
+        ),
         "reliability_receipt_cid": _mapping(
             sources.get("reliability_gate"), "reliability gate"
         ).get("receipt_cid"),
-        "routing_receipt_cid": _mapping(
-            sources.get("routing_gate"), "routing gate"
-        ).get("receipt_cid"),
+        "routing_receipt_cid": _mapping(sources.get("routing_gate"), "routing gate").get(
+            "receipt_cid"
+        ),
         "complete": True,
         "holdout_included": False,
         "source_recomputed": True,
@@ -1661,9 +1325,7 @@ def recompute_g241_source_chain_v1(
         reliability_gate=sources.get("reliability_gate"),
         routing_gate=sources.get("routing_gate"),
         safety_gate=sources.get("safety_gate"),
-        resource_statistics_gate=sources.get(
-            "resource_statistics_gate"
-        ),
+        resource_statistics_gate=sources.get("resource_statistics_gate"),
         detached_replay_gate=sources.get("detached_replay_gate"),
     )
     selected = tuple(
@@ -1717,29 +1379,17 @@ def recompute_g241_source_chain_v1(
         "g212_causal_resource_graph": g212_graph["graph_cid"],
         "g220_replacement_holdout_seal": seal.seal_contract_cid,
         "g231_positive_gate_bundle": rebuilt_bundle["bundle_cid"],
-        "g232_authorization_proposal": (
-            expected_proposal.authorization_cid
-        ),
+        "g232_authorization_proposal": (expected_proposal.authorization_cid),
     }
     namespaces = {
         "worktree": freeze.source_worktree_cid,
         "cache_policy": freeze.cache_policy.policy_cid,
-        "runtime_identity_policy": (
-            freeze.runtime_identity_policy.policy_cid
-        ),
+        "runtime_identity_policy": (freeze.runtime_identity_policy.policy_cid),
         "execution_identities": freeze.execution_identities.bundle_cid,
-        "runtime_orchestration_policy": (
-            freeze.runtime_orchestration_policy_cid
-        ),
-        "runtime_namespace_policy_pilot": (
-            g211_graph["runtime_namespace_policy_cids"][0]
-        ),
-        "runtime_namespace_policy_development": (
-            g211_graph["runtime_namespace_policy_cids"][1]
-        ),
-        "runtime_namespace_evidence_pilot": (
-            g211_graph["runtime_namespace_evidence_set_cids"][0]
-        ),
+        "runtime_orchestration_policy": (freeze.runtime_orchestration_policy_cid),
+        "runtime_namespace_policy_pilot": (g211_graph["runtime_namespace_policy_cids"][0]),
+        "runtime_namespace_policy_development": (g211_graph["runtime_namespace_policy_cids"][1]),
+        "runtime_namespace_evidence_pilot": (g211_graph["runtime_namespace_evidence_set_cids"][0]),
         "runtime_namespace_evidence_development": (
             g211_graph["runtime_namespace_evidence_set_cids"][1]
         ),
@@ -1778,12 +1428,8 @@ def recompute_g241_source_chain_v1(
             sorted(item.receipt_cid for item in matrix.runtime_evidence)
         ),
         shortlist_selection_cid=str(selection["selection_cid"]),
-        g232_pilot_decision_cid=str(
-            pilot_decision["pilot_decision_cid"]
-        ),
-        access_ledger_authority_cid=(
-            seal.access_ledger_authority_cid
-        ),
+        g232_pilot_decision_cid=str(pilot_decision["pilot_decision_cid"]),
+        access_ledger_authority_cid=(seal.access_ledger_authority_cid),
     )
     artifacts = {
         **parents,
@@ -1793,9 +1439,7 @@ def recompute_g241_source_chain_v1(
         "schema": G241_PARENT_LEDGER_SCHEMA_V1,
         "goal_id": G241_GOVERNED_GOAL_ID,
         "source_index_cid": source_index.source_index_cid,
-        "ordered_parent_artifact_cids": {
-            key: parents[key] for key in G241_PARENT_KEYS
-        },
+        "ordered_parent_artifact_cids": {key: parents[key] for key in G241_PARENT_KEYS},
         "shortlist_selection_cid": selection["selection_cid"],
         "complete": True,
         "holdout_accessed": False,
@@ -1830,9 +1474,7 @@ def _git_executable_identity_from_fd(
         or before.st_nlink != 1
         or before.st_mode & (stat.S_IWGRP | stat.S_IWOTH)
     ):
-        raise CustodianReleaseError(
-            "pinned Git executable is not a safe regular executable"
-        )
+        raise CustodianReleaseError("pinned Git executable is not a safe regular executable")
     raw = _read_bounded_fd(
         descriptor,
         field_name="pinned Git executable",
@@ -1852,9 +1494,7 @@ def _git_executable_identity_from_fd(
         after.st_mtime_ns,
         after.st_ctime_ns,
     ):
-        raise CustodianReleaseError(
-            "pinned Git executable changed while it was being read"
-        )
+        raise CustodianReleaseError("pinned Git executable changed while it was being read")
     return cid_for_dag_json(
         {
             "schema": G241_GIT_EXECUTABLE_IDENTITY_SCHEMA_V1,
@@ -1867,9 +1507,7 @@ def _git_executable_identity_from_fd(
 def _open_pinned_git_executable(
     executable_path: Path,
 ) -> tuple[Path, int, str]:
-    candidate = _canonical_absolute_path(
-        Path(executable_path), "pinned Git executable"
-    )
+    candidate = _canonical_absolute_path(Path(executable_path), "pinned Git executable")
     descriptor = -1
     try:
         descriptor = _open_secure_file(
@@ -1880,9 +1518,7 @@ def _open_pinned_git_executable(
             create=False,
             private=False,
         )
-        identity_cid = _git_executable_identity_from_fd(
-            candidate, descriptor
-        )
+        identity_cid = _git_executable_identity_from_fd(candidate, descriptor)
         return candidate, descriptor, identity_cid
     except Exception:
         if descriptor >= 0:
@@ -1900,14 +1536,10 @@ def g241_git_executable_cid_v1(executable_path: Path) -> str:
 
     descriptor = -1
     try:
-        _, descriptor, identity_cid = _open_pinned_git_executable(
-            Path(executable_path)
-        )
+        _, descriptor, identity_cid = _open_pinned_git_executable(Path(executable_path))
         return identity_cid
     except (OSError, ValueError) as exc:
-        raise CustodianReleaseError(
-            "pinned Git executable is unavailable"
-        ) from exc
+        raise CustodianReleaseError("pinned Git executable is unavailable") from exc
     finally:
         if descriptor >= 0:
             os.close(descriptor)
@@ -1922,18 +1554,12 @@ def _git(
 ) -> tuple[int, str | bytes]:
     descriptor = -1
     try:
-        candidate, descriptor, executable_cid = (
-            _open_pinned_git_executable(Path(executable_path))
-        )
+        candidate, descriptor, executable_cid = _open_pinned_git_executable(Path(executable_path))
     except (OSError, ValueError):
         return 1, b"" if binary else ""
-    if (
-        expected_executable_cid is not None
-        and executable_cid
-        != _dag_cid(
-            expected_executable_cid,
-            "trusted Git executable CID",
-        )
+    if expected_executable_cid is not None and executable_cid != _dag_cid(
+        expected_executable_cid,
+        "trusted Git executable CID",
     ):
         os.close(descriptor)
         return 1, b"" if binary else ""
@@ -2056,11 +1682,7 @@ def _git_clean(
     )
     if flags_code != 0 or not isinstance(flags_output, bytes):
         return False
-    if any(
-        not entry.startswith(b"H ")
-        for entry in flags_output.split(b"\0")
-        if entry
-    ):
+    if any(not entry.startswith(b"H ") for entry in flags_output.split(b"\0") if entry):
         return False
 
     tree_code, tree_output = _git(
@@ -2094,9 +1716,7 @@ def _git_clean(
         index_entries = _parse_git_index_entries(index_output)
     except (UnicodeError, ValueError):
         return False
-    if tuple(
-        (mode, oid, raw_path) for mode, _, oid, raw_path in tree_entries
-    ) != index_entries:
+    if tuple((mode, oid, raw_path) for mode, _, oid, raw_path in tree_entries) != index_entries:
         return False
     if not _live_tracked_tree_matches(root, tree_entries):
         return False
@@ -2142,9 +1762,7 @@ def _parse_git_tree_entries(
         kind = parts[1].decode("ascii")
         oid = parts[2].decode("ascii")
         _git_object(oid, "tracked object")
-        path = PurePosixPath(
-            raw_path.decode("utf-8", errors="surrogateescape")
-        )
+        path = PurePosixPath(raw_path.decode("utf-8", errors="surrogateescape"))
         if path.is_absolute() or ".." in path.parts or "." in path.parts:
             raise ValueError("unsafe tracked path")
         entries.append((mode, kind, oid, raw_path))
@@ -2160,12 +1778,7 @@ def _parse_git_index_entries(
             continue
         metadata, separator, raw_path = record.partition(b"\t")
         parts = metadata.split()
-        if (
-            not separator
-            or len(parts) != 3
-            or parts[2] != b"0"
-            or not raw_path
-        ):
+        if not separator or len(parts) != 3 or parts[2] != b"0" or not raw_path:
             raise ValueError("invalid Git index entry")
         mode = parts[0].decode("ascii")
         oid = parts[1].decode("ascii")
@@ -2183,10 +1796,10 @@ def _git_blob_oid(path: Path, metadata: os.stat_result, oid: str) -> str:
     descriptor = os.open(path, flags)
     try:
         before = os.fstat(descriptor)
-        if (
-            not stat.S_ISREG(before.st_mode)
-            or (before.st_dev, before.st_ino, before.st_size)
-            != (metadata.st_dev, metadata.st_ino, metadata.st_size)
+        if not stat.S_ISREG(before.st_mode) or (before.st_dev, before.st_ino, before.st_size) != (
+            metadata.st_dev,
+            metadata.st_ino,
+            metadata.st_size,
         ):
             return ""
         while True:
@@ -2238,9 +1851,7 @@ def _live_tracked_tree_matches(
                 target = os.fsencode(os.readlink(path))
             except OSError:
                 return False
-            algorithm = (
-                hashlib.sha1() if len(oid) == 40 else hashlib.sha256()
-            )
+            algorithm = hashlib.sha1() if len(oid) == 40 else hashlib.sha256()
             algorithm.update(f"blob {len(target)}\0".encode("ascii"))
             algorithm.update(target)
             if algorithm.hexdigest() != oid:
@@ -2305,9 +1916,7 @@ def _gitlinks_at(
         expected_executable_cid=expected_executable_cid,
     )
     if code != 0 or not isinstance(output, bytes):
-        raise CustodianReleaseError(
-            "current recursive Gitlink map is unavailable"
-        )
+        raise CustodianReleaseError("current recursive Gitlink map is unavailable")
     rows: list[tuple[str, str]] = []
     for raw in output.split(b"\0"):
         if not raw or b"\t" not in raw:
@@ -2317,9 +1926,7 @@ def _gitlinks_at(
         if len(parts) == 3 and parts[0] == b"160000":
             rows.append(
                 (
-                    raw_path.decode(
-                        "utf-8", errors="surrogateescape"
-                    ),
+                    raw_path.decode("utf-8", errors="surrogateescape"),
                     parts[2].decode("ascii"),
                 )
             )
@@ -2341,9 +1948,7 @@ def _inspect_current_source(
         expected_executable_cid=expected_git_executable_cid,
     )
     if code != 0 or Path(str(output)).resolve() != root:
-        raise CustodianReleaseError(
-            "G241 source must name one Git worktree root"
-        )
+        raise CustodianReleaseError("G241 source must name one Git worktree root")
     commit_code, commit_value = _git(
         root,
         "rev-parse",
@@ -2376,9 +1981,7 @@ def _inspect_current_source(
             expected_executable_cid=expected_git_executable_cid,
         )
     ):
-        raise CustodianReleaseError(
-            "G241 requires a clean detached committed source tree"
-        )
+        raise CustodianReleaseError("G241 requires a clean detached committed source tree")
     commit = _git_object(commit_value, "current source commit")
     tree = _git_object(tree_value, "current source tree")
     entries: list[dict[str, object]] = []
@@ -2395,9 +1998,7 @@ def _inspect_current_source(
     ) -> None:
         identity = (checkout.resolve(), pinned_commit)
         if identity in visited or depth > 16:
-            raise CustodianReleaseError(
-                "recursive Gitlink map is cyclic or too deep"
-            )
+            raise CustodianReleaseError("recursive Gitlink map is cyclic or too deep")
         visited.add(identity)
         for relative, recorded_commit in _gitlinks_at(
             checkout,
@@ -2417,9 +2018,7 @@ def _inspect_current_source(
             try:
                 child.relative_to(root)
             except ValueError as exc:
-                raise CustodianReleaseError(
-                    "Gitlink checkout escaped the source worktree"
-                ) from exc
+                raise CustodianReleaseError("Gitlink checkout escaped the source worktree") from exc
             child_code, child_head = _git(
                 child,
                 "rev-parse",
@@ -2450,9 +2049,7 @@ def _inspect_current_source(
             entry = {
                 "schema": G239_EXTERNAL_GITLINK_SCHEMA,
                 "gitlink_id": link_id,
-                "commit": _git_object(
-                    recorded_commit, "Gitlink commit"
-                ),
+                "commit": _git_object(recorded_commit, "Gitlink commit"),
                 "tree": _git_object(child_tree, "Gitlink tree"),
                 "parent_gitlink_id": parent_gitlink_id,
                 "depth": depth,
@@ -2503,13 +2100,9 @@ def _inspect_current_source(
     try:
         from .namespace_provenance import g240_recursive_gitlinks_cid
 
-        g240_gitlinks = g240_recursive_gitlinks_cid(
-            tuple(sorted(g240_records))
-        )
+        g240_gitlinks = g240_recursive_gitlinks_cid(tuple(sorted(g240_records)))
     except (ImportError, TypeError, ValueError) as exc:
-        raise CustodianReleaseError(
-            "current G240 recursive Gitlink projection failed"
-        ) from exc
+        raise CustodianReleaseError("current G240 recursive Gitlink projection failed") from exc
     return _CurrentSourceV1(
         outer_commit=commit,
         outer_tree=tree,
@@ -2548,9 +2141,7 @@ def _external_file(
             after.st_size,
             after.st_mtime_ns,
         ):
-            raise CustodianReleaseError(
-                f"{field_name} changed while it was being read"
-            )
+            raise CustodianReleaseError(f"{field_name} changed while it was being read")
     finally:
         os.close(descriptor)
     return _mapping(_strict_json(raw, field_name), field_name)
@@ -2564,9 +2155,7 @@ def _canonical_absolute_path(path: Path, field_name: str) -> Path:
         or str(candidate) != os.path.normpath(str(candidate))
         or candidate.name in {"", ".", ".."}
     ):
-        raise CustodianReleaseError(
-            f"{field_name} must use canonical absolute spelling"
-        )
+        raise CustodianReleaseError(f"{field_name} must use canonical absolute spelling")
     return candidate
 
 
@@ -2579,19 +2168,13 @@ def g241_release_ledger_authority_cid_v1(
 ) -> str:
     """Bind an externally pinned store policy to one lexical ledger path."""
 
-    candidate = _canonical_absolute_path(
-        Path(ledger_path), "custodian release ledger"
-    )
+    candidate = _canonical_absolute_path(Path(ledger_path), "custodian release ledger")
     return cid_for_dag_json(
         {
             "schema": G241_RELEASE_LEDGER_AUTHORITY_SCHEMA_V1,
             "canonical_absolute_ledger_path": str(candidate),
-            "ledger_genesis_cid": _dag_cid(
-                ledger_genesis_cid, "ledger_genesis_cid"
-            ),
-            "monotonic_store_id": _actor(
-                monotonic_store_id, "monotonic_store_id"
-            ),
+            "ledger_genesis_cid": _dag_cid(ledger_genesis_cid, "ledger_genesis_cid"),
+            "monotonic_store_id": _actor(monotonic_store_id, "monotonic_store_id"),
             "monotonic_store_policy_cid": _dag_cid(
                 monotonic_store_policy_cid,
                 "monotonic_store_policy_cid",
@@ -2612,9 +2195,7 @@ def _ledger_file_identity_cid(
         or metadata.st_nlink != 1
         or stat.S_IMODE(metadata.st_mode) & 0o077
     ):
-        raise CustodianReleaseError(
-            f"{ledger_role} is no longer a private single-link file"
-        )
+        raise CustodianReleaseError(f"{ledger_role} is no longer a private single-link file")
     return cid_for_dag_json(
         {
             "schema": G241_LEDGER_FILE_IDENTITY_SCHEMA_V1,
@@ -2636,9 +2217,7 @@ def _require_external_path(
         candidate.relative_to(root)
     except ValueError:
         return
-    raise CustodianReleaseError(
-        f"{field_name} must be independently stored outside source"
-    )
+    raise CustodianReleaseError(f"{field_name} must be independently stored outside source")
 
 
 def _open_secure_file(
@@ -2666,12 +2245,8 @@ def _open_secure_file(
         )
     required_flags = ("O_NOFOLLOW", "O_DIRECTORY", "O_CLOEXEC")
     if any(not hasattr(os, name) for name in required_flags):
-        raise CustodianReleaseError(
-            "G241 requires no-follow descriptor support"
-        )
-    directory_flags = (
-        os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC
-    )
+        raise CustodianReleaseError("G241 requires no-follow descriptor support")
+    directory_flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC
     directory_descriptor = -1
     descriptor = -1
     try:
@@ -2720,19 +2295,11 @@ def _open_secure_file(
             or descriptor_metadata.st_nlink != 1
             or (descriptor_metadata.st_dev, descriptor_metadata.st_ino)
             != (path_metadata.st_dev, path_metadata.st_ino)
-            or (
-                private
-                and stat.S_IMODE(descriptor_metadata.st_mode) & 0o077
-            )
-            or (
-                not private
-                and descriptor_metadata.st_mode
-                & (stat.S_IWGRP | stat.S_IWOTH)
-            )
+            or (private and stat.S_IMODE(descriptor_metadata.st_mode) & 0o077)
+            or (not private and descriptor_metadata.st_mode & (stat.S_IWGRP | stat.S_IWOTH))
         ):
             raise CustodianReleaseError(
-                f"{field_name} must be a stable, single-link regular file "
-                "with safe permissions"
+                f"{field_name} must be a stable, single-link regular file with safe permissions"
             )
         if created:
             # A file fsync alone does not portably persist its new directory
@@ -2744,9 +2311,7 @@ def _open_secure_file(
     except (OSError, RuntimeError) as exc:
         if descriptor >= 0:
             os.close(descriptor)
-        raise CustodianReleaseError(
-            f"{field_name} cannot be securely opened"
-        ) from exc
+        raise CustodianReleaseError(f"{field_name} cannot be securely opened") from exc
     except Exception:
         if descriptor >= 0:
             os.close(descriptor)
@@ -2772,15 +2337,11 @@ def _read_bounded_fd(
                 break
             size += len(chunk)
             if size > maximum_bytes:
-                raise CustodianReleaseError(
-                    f"{field_name} exceeds the bounded validation size"
-                )
+                raise CustodianReleaseError(f"{field_name} exceeds the bounded validation size")
             chunks.append(chunk)
         return b"".join(chunks)
     except OSError as exc:
-        raise CustodianReleaseError(
-            f"{field_name} cannot be read"
-        ) from exc
+        raise CustodianReleaseError(f"{field_name} cannot be read") from exc
 
 
 def _strict_json(raw: bytes, field_name: str) -> object:
@@ -2790,9 +2351,7 @@ def _strict_json(raw: bytes, field_name: str) -> object:
         result: dict[str, object] = {}
         for key, value in pairs:
             if key in result:
-                raise CustodianReleaseError(
-                    f"{field_name} contains duplicate JSON key {key!r}"
-                )
+                raise CustodianReleaseError(f"{field_name} contains duplicate JSON key {key!r}")
             result[key] = value
         return result
 
@@ -2802,27 +2361,19 @@ def _strict_json(raw: bytes, field_name: str) -> object:
     except CustodianReleaseError:
         raise
     except (UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
-        raise CustodianReleaseError(
-            f"{field_name} must contain strict UTF-8 JSON"
-        ) from exc
+        raise CustodianReleaseError(f"{field_name} must contain strict UTF-8 JSON") from exc
 
 
 def _parse_time(value: object, field_name: str) -> datetime:
     if not isinstance(value, str) or not value:
-        raise CustodianReleaseError(
-            f"{field_name} must be an ISO-8601 timestamp"
-        )
+        raise CustodianReleaseError(f"{field_name} must be an ISO-8601 timestamp")
     text = value[:-1] + "+00:00" if value.endswith("Z") else value
     try:
         result = datetime.fromisoformat(text)
     except ValueError as exc:
-        raise CustodianReleaseError(
-            f"{field_name} must be an ISO-8601 timestamp"
-        ) from exc
+        raise CustodianReleaseError(f"{field_name} must be an ISO-8601 timestamp") from exc
     if result.tzinfo is None:
-        raise CustodianReleaseError(
-            f"{field_name} must include a timezone"
-        )
+        raise CustodianReleaseError(f"{field_name} must include a timezone")
     return result.astimezone(timezone.utc)
 
 
@@ -2848,16 +2399,11 @@ def _validate_g239_source(
         raise CustodianReleaseError("unsupported G239 source schema")
     commit = _git_object(source.get("outer_commit"), "G239 source commit")
     tree = _git_object(source.get("outer_tree"), "G239 source tree")
-    if (
-        source.get("clean") is not True
-        or source.get("recursive_gitlinks_complete") is not True
-    ):
+    if source.get("clean") is not True or source.get("recursive_gitlinks_complete") is not True:
         raise CustodianReleaseError("G239 source is dirty or incomplete")
     entries = tuple(
         _mapping(item, "G239 Gitlink")
-        for item in _array(
-            source.get("recursive_gitlinks"), "G239 Gitlinks"
-        )
+        for item in _array(source.get("recursive_gitlinks"), "G239 Gitlinks")
     )
     normalized_entries: list[dict[str, object]] = []
     seen: set[str] = set()
@@ -2884,33 +2430,23 @@ def _validate_g239_source(
         if parent:
             parent = _dag_cid(parent, "G239 parent Gitlink ID")
         elif parent != "":
-            raise CustodianReleaseError(
-                "G239 parent Gitlink ID must be a CID or empty"
-            )
+            raise CustodianReleaseError("G239 parent Gitlink ID must be a CID or empty")
         depth = entry.get("depth")
         if type(depth) is not int or depth < 0:
-            raise CustodianReleaseError(
-                "G239 Gitlink depth must be nonnegative"
-            )
+            raise CustodianReleaseError("G239 Gitlink depth must be nonnegative")
         normalized_entries.append(
             {
                 "schema": G239_EXTERNAL_GITLINK_SCHEMA,
                 "gitlink_id": link_id,
-                "commit": _git_object(
-                    entry.get("commit"), "G239 Gitlink commit"
-                ),
-                "tree": _git_object(
-                    entry.get("tree"), "G239 Gitlink tree"
-                ),
+                "commit": _git_object(entry.get("commit"), "G239 Gitlink commit"),
+                "tree": _git_object(entry.get("tree"), "G239 Gitlink tree"),
                 "parent_gitlink_id": parent,
                 "depth": depth,
             }
         )
     normalized_entries.sort(key=lambda item: str(item["gitlink_id"]))
     if list(entries) != normalized_entries:
-        raise CustodianReleaseError(
-            "G239 Gitlinks are not in canonical identity order"
-        )
+        raise CustodianReleaseError("G239 Gitlinks are not in canonical identity order")
     map_cid = cid_for_dag_json(
         {
             "schema": G239_EXTERNAL_SOURCE_SCHEMA + "/submodule-map",
@@ -2937,16 +2473,11 @@ def _validate_g239_source(
 def _g241_artifact_set_cid(
     artifact_cids: Mapping[str, str],
 ) -> str:
-    artifacts = _mapping(
-        artifact_cids, "G239 external artifact identities"
-    )
+    artifacts = _mapping(artifact_cids, "G239 external artifact identities")
     if set(artifacts) != set(G241_EXTERNAL_ARTIFACT_KEYS):
-        raise CustodianReleaseError(
-            "G239 external artifact set is incomplete or foreign"
-        )
+        raise CustodianReleaseError("G239 external artifact set is incomplete or foreign")
     ordered = {
-        key: _dag_cid(artifacts[key], f"artifact_cids.{key}")
-        for key in G241_EXTERNAL_ARTIFACT_KEYS
+        key: _dag_cid(artifacts[key], f"artifact_cids.{key}") for key in G241_EXTERNAL_ARTIFACT_KEYS
     }
     return cid_for_dag_json(
         {
@@ -2963,25 +2494,15 @@ def _canonical_base64(
     expected_bytes: int | None = None,
 ) -> bytes:
     if not isinstance(value, str) or not value:
-        raise CustodianReleaseError(
-            f"{field_name} must be canonical base64"
-        )
+        raise CustodianReleaseError(f"{field_name} must be canonical base64")
     try:
         decoded = base64.b64decode(value, validate=True)
     except (binascii.Error, ValueError) as exc:
-        raise CustodianReleaseError(
-            f"{field_name} must be canonical base64"
-        ) from exc
-    if (
-        base64.b64encode(decoded).decode("ascii") != value
-        or (
-            expected_bytes is not None
-            and len(decoded) != expected_bytes
-        )
+        raise CustodianReleaseError(f"{field_name} must be canonical base64") from exc
+    if base64.b64encode(decoded).decode("ascii") != value or (
+        expected_bytes is not None and len(decoded) != expected_bytes
     ):
-        raise CustodianReleaseError(
-            f"{field_name} has a noncanonical or invalid length"
-        )
+        raise CustodianReleaseError(f"{field_name} has a noncanonical or invalid length")
     return decoded
 
 
@@ -3012,16 +2533,10 @@ def _g241_validator_claim_cid(
         {
             "schema": G241_VALIDATOR_CLAIM_SCHEMA_V1,
             "validator_id": _actor(validator_id, "validator_id"),
-            "source_identity_cid": _dag_cid(
-                source_identity_cid, "source_identity_cid"
-            ),
+            "source_identity_cid": _dag_cid(source_identity_cid, "source_identity_cid"),
             "run_plan_cid": _dag_cid(run_plan_cid, "run_plan_cid"),
-            "parent_ledger_cid": _dag_cid(
-                parent_ledger_cid, "parent_ledger_cid"
-            ),
-            "artifact_set_cid": _dag_cid(
-                artifact_set_cid, "artifact_set_cid"
-            ),
+            "parent_ledger_cid": _dag_cid(parent_ledger_cid, "parent_ledger_cid"),
+            "artifact_set_cid": _dag_cid(artifact_set_cid, "artifact_set_cid"),
             "status": "verified",
         }
     )
@@ -3062,15 +2577,11 @@ def _validate_g241_validator_attestation(
         "G239 validator attestation",
     )
     if (
-        attestation.get("schema")
-        != G241_VALIDATOR_ATTESTATION_SCHEMA_V1
+        attestation.get("schema") != G241_VALIDATOR_ATTESTATION_SCHEMA_V1
         or attestation.get("algorithm") != "ed25519"
-        or attestation.get("validator_key_id")
-        != trust_root.validator_key_id
+        or attestation.get("validator_key_id") != trust_root.validator_key_id
     ):
-        raise CustodianReleaseError(
-            "G239 validator attestation key or schema changed"
-        )
+        raise CustodianReleaseError("G239 validator attestation key or schema changed")
     signed_payload = _mapping(
         attestation.get("signed_payload"),
         "G239 validator signed payload",
@@ -3106,14 +2617,10 @@ def _validate_g241_validator_attestation(
         "observed_at": observed_at,
     }
     if _plain(signed_payload) != expected_payload:
-        raise CustodianReleaseError(
-            "G239 validator attestation differs from the operational graph"
-        )
+        raise CustodianReleaseError("G239 validator attestation differs from the operational graph")
     payload_cid = cid_for_dag_json(expected_payload)
     if attestation.get("signed_payload_cid") != payload_cid:
-        raise CustodianReleaseError(
-            "G239 validator signed-payload CID changed"
-        )
+        raise CustodianReleaseError("G239 validator signed-payload CID changed")
     signature = _canonical_base64(
         attestation.get("signature_base64"),
         "G239 validator signature",
@@ -3125,30 +2632,18 @@ def _validate_g241_validator_attestation(
             Ed25519PublicKey,
         )
     except ImportError as exc:
-        raise CustodianReleaseError(
-            "G239 Ed25519 validator support is unavailable"
-        ) from exc
+        raise CustodianReleaseError("G239 Ed25519 validator support is unavailable") from exc
     try:
-        public_key = Ed25519PublicKey.from_public_bytes(
-            trust_root.validator_public_key
-        )
+        public_key = Ed25519PublicKey.from_public_bytes(trust_root.validator_public_key)
         public_key.verify(
             signature,
             canonical_dag_json_bytes(expected_payload),
         )
     except InvalidSignature as exc:
-        raise CustodianReleaseError(
-            "G239 validator signature is invalid"
-        ) from exc
+        raise CustodianReleaseError("G239 validator signature is invalid") from exc
     except (TypeError, ValueError) as exc:
-        raise CustodianReleaseError(
-            "G239 Ed25519 validator key is invalid"
-        ) from exc
-    body = {
-        key: _plain(value)
-        for key, value in attestation.items()
-        if key != "attestation_cid"
-    }
+        raise CustodianReleaseError("G239 Ed25519 validator key is invalid") from exc
+    body = {key: _plain(value) for key, value in attestation.items() if key != "attestation_cid"}
     attestation_cid = cid_for_dag_json(body)
     if (
         attestation.get("attestation_cid") != attestation_cid
@@ -3158,9 +2653,7 @@ def _validate_g241_validator_attestation(
         )
         != attestation_cid
     ):
-        raise CustodianReleaseError(
-            "G239 validator attestation does not match its independent pin"
-        )
+        raise CustodianReleaseError("G239 validator attestation does not match its independent pin")
     return attestation_cid
 
 
@@ -3188,9 +2681,7 @@ class G241G239ExternalProjectionV1:
 
     def __post_init__(self) -> None:
         if self.schema != G241_EXTERNAL_PROJECTION_SCHEMA_V1:
-            raise CustodianReleaseError(
-                "unsupported G239 evaluation projection"
-            )
+            raise CustodianReleaseError("unsupported G239 evaluation projection")
         for name in (
             "authority_cid",
             "requirement_cid",
@@ -3205,18 +2696,12 @@ class G241G239ExternalProjectionV1:
             "parent_ledger_cid",
             "artifact_set_cid",
         ):
-            object.__setattr__(
-                self, name, _dag_cid(getattr(self, name), name)
-            )
+            object.__setattr__(self, name, _dag_cid(getattr(self, name), name))
         if self.producer_id == self.validator_id:
-            raise CustodianReleaseError(
-                "external producer and validator must be independent"
-            )
+            raise CustodianReleaseError("external producer and validator must be independent")
         artifacts = _mapping(self.artifact_cids, "G239 artifact CIDs")
         if set(artifacts) != set(G241_EXTERNAL_ARTIFACT_KEYS):
-            raise CustodianReleaseError(
-                "G239 artifacts do not exactly cover the G241 source chain"
-            )
+            raise CustodianReleaseError("G239 artifacts do not exactly cover the G241 source chain")
         object.__setattr__(
             self,
             "artifact_cids",
@@ -3227,20 +2712,14 @@ class G241G239ExternalProjectionV1:
                 }
             ),
         )
-        if self.artifact_set_cid != _g241_artifact_set_cid(
-            self.artifact_cids
-        ):
-            raise CustodianReleaseError(
-                "G239 external artifact-set CID changed"
-            )
+        if self.artifact_set_cid != _g241_artifact_set_cid(self.artifact_cids):
+            raise CustodianReleaseError("G239 external artifact-set CID changed")
         _parse_time(self.observed_at, "observed_at")
         _parse_time(self.evaluated_at, "evaluated_at")
         expected = cid_for_dag_json(self.identity_payload())
         if self.evaluation_cid is None:
             object.__setattr__(self, "evaluation_cid", expected)
-        elif (
-            _dag_cid(self.evaluation_cid, "evaluation_cid") != expected
-        ):
+        elif _dag_cid(self.evaluation_cid, "evaluation_cid") != expected:
             raise CustodianReleaseError("G239 evaluation CID changed")
 
     def identity_payload(self) -> dict[str, object]:
@@ -3250,9 +2729,7 @@ class G241G239ExternalProjectionV1:
             "requirement_cid": self.requirement_cid,
             "operational_receipt_cid": self.operational_receipt_cid,
             "validator_claim_cid": self.validator_claim_cid,
-            "validator_attestation_cid": (
-                self.validator_attestation_cid
-            ),
+            "validator_attestation_cid": (self.validator_attestation_cid),
             "validator_key_id": self.validator_key_id,
             "source_identity_cid": self.source_identity_cid,
             "producer_id": self.producer_id,
@@ -3299,15 +2776,9 @@ def _evaluate_g239_for_g241_v1(
         source_replay,
         (G241SourceReplayResultV1, _G241DurableReplayView),
     ):
-        raise CustodianReleaseError(
-            "G239 evaluation requires complete G241 source replay"
-        )
-    if not isinstance(
-        custodian_trust_root, G241CustodianTrustRootV1
-    ):
-        raise CustodianReleaseError(
-            "G239 evaluation requires a typed custodian trust root"
-        )
+        raise CustodianReleaseError("G239 evaluation requires complete G241 source replay")
+    if not isinstance(custodian_trust_root, G241CustodianTrustRootV1):
+        raise CustodianReleaseError("G239 evaluation requires a typed custodian trust root")
     authority = _external_file(
         authority_path,
         repo_root=repo_root,
@@ -3328,10 +2799,7 @@ def _evaluate_g239_for_g241_v1(
     authority_cid = cid_for_dag_json(authority_body)
     if (
         authority.get("authority_cid") != authority_cid
-        or _dag_cid(
-            trusted_authority_cid, "trusted G239 authority CID"
-        )
-        != authority_cid
+        or _dag_cid(trusted_authority_cid, "trusted G239 authority CID") != authority_cid
         or custodian_trust_root.g239_authority_cid != authority_cid
     ):
         raise CustodianReleaseError(
@@ -3339,9 +2807,7 @@ def _evaluate_g239_for_g241_v1(
         )
     requirements = tuple(
         _mapping(item, "G239 requirement")
-        for item in _array(
-            authority.get("requirements"), "G239 requirements"
-        )
+        for item in _array(authority.get("requirements"), "G239 requirements")
     )
     receipts = tuple(
         _mapping(item, "G239 receipt")
@@ -3357,8 +2823,7 @@ def _evaluate_g239_for_g241_v1(
         for item in requirements
         if (
             item.get("goal_id") == G241_GOVERNED_GOAL_ID
-            and item.get("evidence_term")
-            == G241_GOVERNED_EVIDENCE_TERM
+            and item.get("evidence_term") == G241_GOVERNED_EVIDENCE_TERM
         )
     )
     selected_receipts = tuple(
@@ -3366,8 +2831,7 @@ def _evaluate_g239_for_g241_v1(
         for item in receipts
         if (
             item.get("goal_id") == G241_GOVERNED_GOAL_ID
-            and item.get("evidence_term")
-            == G241_GOVERNED_EVIDENCE_TERM
+            and item.get("evidence_term") == G241_GOVERNED_EVIDENCE_TERM
         )
     )
     if len(selected_requirements) != 1 or len(selected_receipts) != 1:
@@ -3402,21 +2866,15 @@ def _evaluate_g239_for_g241_v1(
         )
     )
     expected_artifacts = dict(source_replay.external_artifact_cids)
-    expected_ids = tuple(
-        sorted(g241_artifact_slot_cid(key) for key in expected_artifacts)
-    )
+    expected_ids = tuple(sorted(g241_artifact_slot_cid(key) for key in expected_artifacts))
     if (
         required_ids != tuple(sorted(required_ids))
         or required_ids != expected_ids
         or len(required_ids) != len(set(required_ids))
     ):
-        raise CustodianReleaseError(
-            "G239 requirement does not exactly name every source artifact"
-        )
+        raise CustodianReleaseError("G239 requirement does not exactly name every source artifact")
     requirement_body = {
-        key: _plain(value)
-        for key, value in requirement.items()
-        if key != "requirement_cid"
+        key: _plain(value) for key, value in requirement.items() if key != "requirement_cid"
     }
     requirement_cid = cid_for_dag_json(requirement_body)
     if requirement.get("requirement_cid") != requirement_cid:
@@ -3446,9 +2904,7 @@ def _evaluate_g239_for_g241_v1(
         receipt.get("schema") != G239_EXTERNAL_RECEIPT_SCHEMA
         or receipt.get("status") != "completed"
     ):
-        raise CustodianReleaseError(
-            "G239 operational receipt is not completed"
-        )
+        raise CustodianReleaseError("G239 operational receipt is not completed")
     receipt_source = _validate_g239_source(receipt.get("source"))
     receipt_artifacts = tuple(
         _mapping(item, "G239 artifact")
@@ -3463,39 +2919,24 @@ def _evaluate_g239_for_g241_v1(
             "G239 artifact",
         )
         if artifact.get("schema") != G239_EXTERNAL_ARTIFACT_SCHEMA:
-            raise CustodianReleaseError(
-                "unsupported G239 artifact schema"
-            )
-        artifact_id = _dag_cid(
-            artifact.get("artifact_id"), "G239 artifact ID"
-        )
-        artifact_cid = _dag_cid(
-            artifact.get("artifact_cid"), "G239 artifact CID"
-        )
+            raise CustodianReleaseError("unsupported G239 artifact schema")
+        artifact_id = _dag_cid(artifact.get("artifact_id"), "G239 artifact ID")
+        artifact_cid = _dag_cid(artifact.get("artifact_cid"), "G239 artifact CID")
         if artifact_id in artifact_by_id:
             raise CustodianReleaseError("G239 artifacts are duplicated")
         artifact_by_id[artifact_id] = artifact_cid
         artifact_id_order.append(artifact_id)
     expected_by_id = {
-        g241_artifact_slot_cid(key): value
-        for key, value in expected_artifacts.items()
+        g241_artifact_slot_cid(key): value for key, value in expected_artifacts.items()
     }
     if (
         tuple(artifact_id_order) != tuple(sorted(expected_by_id))
         or artifact_by_id != expected_by_id
     ):
-        raise CustodianReleaseError(
-            "G239 artifact CIDs differ from the source-recomputed chain"
-        )
+        raise CustodianReleaseError("G239 artifact CIDs differ from the source-recomputed chain")
     if len(set(artifact_by_id.values())) != len(artifact_by_id):
-        raise CustodianReleaseError(
-            "G239 external artifact content identities are duplicated"
-        )
-    receipt_body = {
-        key: _plain(value)
-        for key, value in receipt.items()
-        if key != "receipt_cid"
-    }
+        raise CustodianReleaseError("G239 external artifact content identities are duplicated")
+    receipt_body = {key: _plain(value) for key, value in receipt.items() if key != "receipt_cid"}
     operational_receipt_cid = cid_for_dag_json(receipt_body)
     if receipt.get("receipt_cid") != operational_receipt_cid:
         raise CustodianReleaseError("G239 operational receipt CID changed")
@@ -3512,14 +2953,10 @@ def _evaluate_g239_for_g241_v1(
     )
     if (
         requirement.get("source_identity_cid") != source_identity_cid
-        or requirement.get("run_plan_cid")
-        != source_replay.source_index.run_plan_cid
-        or receipt.get("run_plan_cid")
-        != source_replay.source_index.run_plan_cid
-        or requirement.get("parent_ledger_cid")
-        != source_replay.parent_ledger_cid
-        or receipt.get("parent_ledger_cid")
-        != source_replay.parent_ledger_cid
+        or requirement.get("run_plan_cid") != source_replay.source_index.run_plan_cid
+        or receipt.get("run_plan_cid") != source_replay.source_index.run_plan_cid
+        or requirement.get("parent_ledger_cid") != source_replay.parent_ledger_cid
+        or receipt.get("parent_ledger_cid") != source_replay.parent_ledger_cid
         or requirement.get("expected_producer_id") != producer
         or requirement.get("expected_validator_id") != validator
         or receipt.get("goal_id") != requirement.get("goal_id")
@@ -3537,70 +2974,43 @@ def _evaluate_g239_for_g241_v1(
         parent_ledger_cid=source_replay.parent_ledger_cid,
         artifact_set_cid=artifact_set_cid,
     )
-    if (
-        validator != custodian_trust_root.validator_id
-        or validator_receipt != validator_claim_cid
-    ):
-        raise CustodianReleaseError(
-            "G239 validator receipt is not the separately trusted claim"
-        )
+    if validator != custodian_trust_root.validator_id or validator_receipt != validator_claim_cid:
+        raise CustodianReleaseError("G239 validator receipt is not the separately trusted claim")
 
     current = _inspect_current_source(
         Path(repo_root),
-        git_executable_path=Path(
-            custodian_trust_root.git_executable_path
-        ),
-        expected_git_executable_cid=(
-            custodian_trust_root.git_executable_cid
-        ),
+        git_executable_path=Path(custodian_trust_root.git_executable_path),
+        expected_git_executable_cid=(custodian_trust_root.git_executable_cid),
     )
     source_index = source_replay.source_index
     if (
         current.outer_commit != source_index.source_commit
-        or source_index.source_commit_cid
-        != g238_git_commit_cid(current.outer_commit)
-        or source_index.source_tree_cid
-        != g241_git_tree_cid(current.outer_tree)
-        or source_index.recursive_gitlinks_cid
-        != current.g240_recursive_gitlinks_cid
+        or source_index.source_commit_cid != g238_git_commit_cid(current.outer_commit)
+        or source_index.source_tree_cid != g241_git_tree_cid(current.outer_tree)
+        or source_index.recursive_gitlinks_cid != current.g240_recursive_gitlinks_cid
         or receipt_source.get("outer_commit") != current.outer_commit
         or receipt_source.get("outer_tree") != current.outer_tree
-        or receipt_source.get("submodule_map_cid")
-        != current.submodule_map_cid
+        or receipt_source.get("submodule_map_cid") != current.submodule_map_cid
         or source_identity_cid != current.source_identity_cid
     ):
         raise CustodianReleaseError(
-            "G202/G239 source commit, tree, or recursive Gitlinks are stale "
-            "or rebased"
+            "G202/G239 source commit, tree, or recursive Gitlinks are stale or rebased"
         )
 
-    if (
-        evaluated_at.tzinfo is None
-        or freshness_reference_at.tzinfo is None
-    ):
-        raise CustodianReleaseError(
-            "G239 trusted clock values must include a timezone"
-        )
+    if evaluated_at.tzinfo is None or freshness_reference_at.tzinfo is None:
+        raise CustodianReleaseError("G239 trusted clock values must include a timezone")
     evaluated_at = evaluated_at.astimezone(timezone.utc)
-    freshness_reference_at = freshness_reference_at.astimezone(
-        timezone.utc
-    )
+    freshness_reference_at = freshness_reference_at.astimezone(timezone.utc)
     observed_at = _parse_time(receipt.get("observed_at"), "observed_at")
     fresh_until_value = receipt.get("fresh_until")
     if fresh_until_value in {None, ""}:
         fresh_until = None
     else:
         fresh_until = _parse_time(fresh_until_value, "fresh_until")
-    if (
-        receipt.get("observed_at") != observed_at.isoformat()
-        or (
-            fresh_until is not None
-            and receipt.get("fresh_until") != fresh_until.isoformat()
-        )
+    if receipt.get("observed_at") != observed_at.isoformat() or (
+        fresh_until is not None and receipt.get("fresh_until") != fresh_until.isoformat()
     ):
-        raise CustodianReleaseError(
-            "G239 receipt timestamps are not canonically normalized"
-        )
+        raise CustodianReleaseError("G239 receipt timestamps are not canonically normalized")
     max_age = timedelta(seconds=max(0.0, freshness_seconds))
     skew = timedelta(seconds=max(0.0, clock_skew_seconds))
     if (
@@ -3608,10 +3018,7 @@ def _evaluate_g239_for_g241_v1(
         or freshness_reference_at - observed_at > max_age
         or (
             fresh_until is not None
-            and (
-                fresh_until < observed_at
-                or freshness_reference_at > fresh_until
-            )
+            and (fresh_until < observed_at or freshness_reference_at > fresh_until)
         )
     ):
         raise CustodianReleaseError("G239 operational receipt is stale")
@@ -3671,9 +3078,7 @@ class G241CustodianTrustRootV1:
 
     def __post_init__(self) -> None:
         if self.schema != G241_CUSTODIAN_TRUST_ROOT_SCHEMA_V1:
-            raise CustodianReleaseError(
-                "unsupported G241 custodian trust root"
-            )
+            raise CustodianReleaseError("unsupported G241 custodian trust root")
         for name in (
             "g239_authority_cid",
             "git_executable_cid",
@@ -3686,9 +3091,7 @@ class G241CustodianTrustRootV1:
             "executor_id",
             "ledger_genesis_cid",
         ):
-            object.__setattr__(
-                self, name, _dag_cid(getattr(self, name), name)
-            )
+            object.__setattr__(self, name, _dag_cid(getattr(self, name), name))
         public_key = _canonical_base64(
             self.validator_public_key_base64,
             "validator_public_key_base64",
@@ -3699,43 +3102,35 @@ class G241CustodianTrustRootV1:
             "git_executable_path",
         )
         object.__setattr__(self, "git_executable_path", str(git_path))
-        if self.git_executable_cid != g241_git_executable_cid_v1(
-            git_path
-        ):
+        if self.git_executable_cid != g241_git_executable_cid_v1(git_path):
             raise CustodianReleaseError(
-                "custodian trust root does not pin the validated system Git "
-                "executable"
+                "custodian trust root does not pin the validated system Git executable"
             )
         if self.validator_key_id != _g241_validator_key_id(
             validator_id=self.validator_id,
             public_key_base64=self.validator_public_key_base64,
         ):
-            raise CustodianReleaseError(
-                "validator key ID does not bind the trusted Ed25519 key"
+            raise CustodianReleaseError("validator key ID does not bind the trusted Ed25519 key")
+        if (
+            len(
+                {
+                    self.monotonic_store_id,
+                    self.validator_id,
+                    self.custodian_id,
+                    self.executor_id,
+                }
             )
-        if len(
-            {
-                self.monotonic_store_id,
-                self.validator_id,
-                self.custodian_id,
-                self.executor_id,
-            }
-        ) != 4:
+            != 4
+        ):
             raise CustodianReleaseError(
-                "monotonic store, validator, custodian, and holdout executor "
-                "must differ"
+                "monotonic store, validator, custodian, and holdout executor must differ"
             )
         if not public_key:
-            raise CustodianReleaseError(
-                "validator public key must not be empty"
-            )
+            raise CustodianReleaseError("validator public key must not be empty")
         expected = cid_for_dag_json(self.identity_payload())
         if self.trust_root_cid is None:
             object.__setattr__(self, "trust_root_cid", expected)
-        elif (
-            _dag_cid(self.trust_root_cid, "trust_root_cid")
-            != expected
-        ):
+        elif _dag_cid(self.trust_root_cid, "trust_root_cid") != expected:
             raise CustodianReleaseError("custodian trust-root CID changed")
 
     def identity_payload(self) -> dict[str, object]:
@@ -3745,17 +3140,11 @@ class G241CustodianTrustRootV1:
             "git_executable_path": self.git_executable_path,
             "git_executable_cid": self.git_executable_cid,
             "monotonic_store_id": self.monotonic_store_id,
-            "monotonic_store_policy_cid": (
-                self.monotonic_store_policy_cid
-            ),
-            "release_ledger_authority_cid": (
-                self.release_ledger_authority_cid
-            ),
+            "monotonic_store_policy_cid": (self.monotonic_store_policy_cid),
+            "release_ledger_authority_cid": (self.release_ledger_authority_cid),
             "validator_id": self.validator_id,
             "validator_key_id": self.validator_key_id,
-            "validator_public_key_base64": (
-                self.validator_public_key_base64
-            ),
+            "validator_public_key_base64": (self.validator_public_key_base64),
             "custodian_id": self.custodian_id,
             "executor_id": self.executor_id,
             "ledger_genesis_cid": self.ledger_genesis_cid,
@@ -3797,12 +3186,8 @@ def load_g241_custodian_trust_root_v1(
             field_name="custodian trust root",
         )
     )
-    if root.trust_root_cid != _dag_cid(
-        trusted_trust_root_cid, "trusted custodian trust-root CID"
-    ):
-        raise CustodianReleaseError(
-            "custodian trust root does not match its out-of-band pin"
-        )
+    if root.trust_root_cid != _dag_cid(trusted_trust_root_cid, "trusted custodian trust-root CID"):
+        raise CustodianReleaseError("custodian trust root does not match its out-of-band pin")
     return root
 
 
@@ -3814,9 +3199,7 @@ def _validate_release_ledger_authority(
         ledger_path=Path(ledger_path),
         ledger_genesis_cid=trust_root.ledger_genesis_cid,
         monotonic_store_id=trust_root.monotonic_store_id,
-        monotonic_store_policy_cid=(
-            trust_root.monotonic_store_policy_cid
-        ),
+        monotonic_store_policy_cid=(trust_root.monotonic_store_policy_cid),
     )
     if trust_root.release_ledger_authority_cid != expected:
         raise CustodianReleaseError(
@@ -3848,9 +3231,7 @@ def evaluate_g239_for_g241_v1(
         authority_path=authority_path,
         trusted_authority_cid=trusted_authority_cid,
         validator_attestation_path=validator_attestation_path,
-        trusted_validator_attestation_cid=(
-            trusted_validator_attestation_cid
-        ),
+        trusted_validator_attestation_cid=(trusted_validator_attestation_cid),
         custodian_trust_root=custodian_trust_root,
         source_replay=source_replay,
         repo_root=repo_root,
@@ -3904,9 +3285,7 @@ class G241CustodianReleaseRequestV1:
 
     def __post_init__(self) -> None:
         if self.schema != G241_RELEASE_REQUEST_SCHEMA_V1:
-            raise CustodianReleaseError(
-                "unsupported G241 release request"
-            )
+            raise CustodianReleaseError("unsupported G241 release request")
         for name in (
             "source_index_cid",
             "source_tree_cid",
@@ -3935,9 +3314,7 @@ class G241CustodianReleaseRequestV1:
             "release_ledger_file_identity_cid",
             "previous_ledger_receipt_cid",
         ):
-            object.__setattr__(
-                self, name, _cid(getattr(self, name), name)
-            )
+            object.__setattr__(self, name, _cid(getattr(self, name), name))
         object.__setattr__(
             self,
             "source_commit",
@@ -3945,9 +3322,7 @@ class G241CustodianReleaseRequestV1:
         )
         artifacts = _mapping(self.artifact_cids, "artifact_cids")
         if set(artifacts) != set(G241_EXTERNAL_ARTIFACT_KEYS):
-            raise CustodianReleaseError(
-                "release request artifact graph is incomplete or foreign"
-            )
+            raise CustodianReleaseError("release request artifact graph is incomplete or foreign")
         normalized_artifacts = {
             key: _dag_cid(artifacts[key], f"artifact_cids.{key}")
             for key in G241_EXTERNAL_ARTIFACT_KEYS
@@ -3957,20 +3332,14 @@ class G241CustodianReleaseRequestV1:
             "artifact_cids",
             MappingProxyType(normalized_artifacts),
         )
-        if self.artifact_set_cid != _g241_artifact_set_cid(
-            normalized_artifacts
-        ):
-            raise CustodianReleaseError(
-                "release request artifact-set CID changed"
-            )
+        if self.artifact_set_cid != _g241_artifact_set_cid(normalized_artifacts):
+            raise CustodianReleaseError("release request artifact-set CID changed")
         authorities = _mapping(
             self.upstream_authority_cids,
             "upstream_authority_cids",
         )
         if set(authorities) != set(G241_UPSTREAM_AUTHORITY_ROLES):
-            raise CustodianReleaseError(
-                "release request upstream authority graph is incomplete"
-            )
+            raise CustodianReleaseError("release request upstream authority graph is incomplete")
         normalized_authorities = {
             role: _actor(
                 authorities[role],
@@ -3978,12 +3347,8 @@ class G241CustodianReleaseRequestV1:
             )
             for role in G241_UPSTREAM_AUTHORITY_ROLES
         }
-        if len(set(normalized_authorities.values())) != len(
-            normalized_authorities
-        ):
-            raise CustodianReleaseError(
-                "release request upstream authorities overlap"
-            )
+        if len(set(normalized_authorities.values())) != len(normalized_authorities):
+            raise CustodianReleaseError("release request upstream authorities overlap")
         object.__setattr__(
             self,
             "upstream_authority_cids",
@@ -4002,15 +3367,15 @@ class G241CustodianReleaseRequestV1:
             )
         if actors & set(normalized_authorities.values()):
             raise CustodianReleaseError(
-                "G241 producer, validator, custodian, or executor overlaps "
-                "an upstream authority"
+                "G241 producer, validator, custodian, or executor overlaps an upstream authority"
             )
         variants = tuple(self.authorized_variant_ids)
         if (
             len(variants) < 2
             or len(variants) > 5
             or variants[0] != "A0"
-            or tuple(variants[1:]) != tuple(
+            or tuple(variants[1:])
+            != tuple(
                 candidate
                 for candidate in G231_EVALUATED_CANDIDATE_IDS
                 if candidate in set(variants[1:])
@@ -4018,52 +3383,34 @@ class G241CustodianReleaseRequestV1:
             or len(variants) != len(set(variants))
         ):
             raise CustodianReleaseError(
-                "release variants must be A0 plus one to four ordered "
-                "frozen candidates"
+                "release variants must be A0 plus one to four ordered frozen candidates"
             )
         object.__setattr__(self, "authorized_variant_ids", variants)
-        if (
-            type(self.access_ledger_event_count) is not int
-            or self.access_ledger_event_count != 0
-        ):
-            raise CustodianReleaseError(
-                "any pre-release access-ledger event invalidates G241"
-            )
+        if type(self.access_ledger_event_count) is not int or self.access_ledger_event_count != 0:
+            raise CustodianReleaseError("any pre-release access-ledger event invalidates G241")
         expected_access_head = cid_for_dag_json(
             {
                 "schema": G241_ACCESS_LEDGER_SNAPSHOT_SCHEMA_V1,
                 "seal_contract_cid": self.seal_contract_cid,
                 "sealed_manifest_cid": self.sealed_manifest_cid,
-                "access_ledger_authority_cid": (
-                    self.access_ledger_authority_cid
-                ),
+                "access_ledger_authority_cid": (self.access_ledger_authority_cid),
                 "event_count": 0,
                 "last_receipt_cid": None,
-                "ledger_file_identity_cid": (
-                    self.access_ledger_file_identity_cid
-                ),
+                "ledger_file_identity_cid": (self.access_ledger_file_identity_cid),
             }
         )
         if self.access_ledger_head_cid != expected_access_head:
-            raise CustodianReleaseError(
-                "pre-release access-ledger head changed"
-            )
+            raise CustodianReleaseError("pre-release access-ledger head changed")
         if type(self.ledger_sequence) is not int or self.ledger_sequence < 0:
-            raise CustodianReleaseError(
-                "ledger sequence must be a nonnegative integer"
-            )
+            raise CustodianReleaseError("ledger sequence must be a nonnegative integer")
         observed = _parse_time(self.g239_observed_at, "g239_observed_at")
-        evaluated = _parse_time(
-            self.g239_evaluated_at, "g239_evaluated_at"
-        )
+        evaluated = _parse_time(self.g239_evaluated_at, "g239_evaluated_at")
         if (
             self.g239_observed_at != observed.isoformat()
             or self.g239_evaluated_at != evaluated.isoformat()
             or evaluated < observed
         ):
-            raise CustodianReleaseError(
-                "G239 request timestamps are noncanonical or reversed"
-            )
+            raise CustodianReleaseError("G239 request timestamps are noncanonical or reversed")
         expected = cid_for_dag_json(self.identity_payload())
         if self.request_cid is None:
             object.__setattr__(self, "request_cid", expected)
@@ -4082,24 +3429,16 @@ class G241CustodianReleaseRequestV1:
             "parent_ledger_cid": self.parent_ledger_cid,
             "artifact_cids": dict(self.artifact_cids),
             "artifact_set_cid": self.artifact_set_cid,
-            "upstream_authority_cids": dict(
-                self.upstream_authority_cids
-            ),
+            "upstream_authority_cids": dict(self.upstream_authority_cids),
             "g232_authorization_cid": self.g232_authorization_cid,
             "seal_contract_cid": self.seal_contract_cid,
             "sealed_manifest_cid": self.sealed_manifest_cid,
             "authorized_variant_ids": list(self.authorized_variant_ids),
             "g239_evaluation_cid": self.g239_evaluation_cid,
             "g239_authority_cid": self.g239_authority_cid,
-            "g239_operational_receipt_cid": (
-                self.g239_operational_receipt_cid
-            ),
-            "g239_validator_claim_cid": (
-                self.g239_validator_claim_cid
-            ),
-            "g239_validator_attestation_cid": (
-                self.g239_validator_attestation_cid
-            ),
+            "g239_operational_receipt_cid": (self.g239_operational_receipt_cid),
+            "g239_validator_claim_cid": (self.g239_validator_claim_cid),
+            "g239_validator_attestation_cid": (self.g239_validator_attestation_cid),
             "g239_validator_key_id": self.g239_validator_key_id,
             "g239_observed_at": self.g239_observed_at,
             "g239_evaluated_at": self.g239_evaluated_at,
@@ -4108,21 +3447,13 @@ class G241CustodianReleaseRequestV1:
             "custodian_id": self.custodian_id,
             "executor_id": self.executor_id,
             "trust_root_cid": self.trust_root_cid,
-            "access_ledger_authority_cid": (
-                self.access_ledger_authority_cid
-            ),
-            "access_ledger_file_identity_cid": (
-                self.access_ledger_file_identity_cid
-            ),
+            "access_ledger_authority_cid": (self.access_ledger_authority_cid),
+            "access_ledger_file_identity_cid": (self.access_ledger_file_identity_cid),
             "access_ledger_head_cid": self.access_ledger_head_cid,
             "access_ledger_event_count": self.access_ledger_event_count,
-            "release_ledger_file_identity_cid": (
-                self.release_ledger_file_identity_cid
-            ),
+            "release_ledger_file_identity_cid": (self.release_ledger_file_identity_cid),
             "ledger_sequence": self.ledger_sequence,
-            "previous_ledger_receipt_cid": (
-                self.previous_ledger_receipt_cid
-            ),
+            "previous_ledger_receipt_cid": (self.previous_ledger_receipt_cid),
             "holdout_content_included": False,
             "release_authorized": False,
             "production_promotion_authorized": False,
@@ -4177,35 +3508,22 @@ class G241ExternallyGovernedCustodianReleaseReceiptV1:
 
     def __post_init__(self) -> None:
         if self.schema != G241_RELEASE_RECEIPT_SCHEMA_V1:
-            raise CustodianReleaseError(
-                "unsupported G241 release receipt schema"
-            )
+            raise CustodianReleaseError("unsupported G241 release receipt schema")
         request = self.as_request()
-        if request.request_cid != _dag_cid(
-            self.request_cid, "request_cid"
-        ):
-            raise CustodianReleaseError(
-                "release receipt request CID changed"
-            )
+        if request.request_cid != _dag_cid(self.request_cid, "request_cid"):
+            raise CustodianReleaseError("release receipt request CID changed")
         timestamp = _parse_time(self.recorded_at, "recorded_at")
-        if (
-            self.recorded_at != timestamp.isoformat()
-            or timestamp
-            < _parse_time(
-                self.g239_evaluated_at, "g239_evaluated_at"
-            )
+        if self.recorded_at != timestamp.isoformat() or timestamp < _parse_time(
+            self.g239_evaluated_at, "g239_evaluated_at"
         ):
             raise CustodianReleaseError(
-                "release receipt timestamp is noncanonical or predates "
-                "G239 evaluation"
+                "release receipt timestamp is noncanonical or predates G239 evaluation"
             )
         expected = cid_for_dag_json(self.identity_payload())
         if self.receipt_cid is None:
             object.__setattr__(self, "receipt_cid", expected)
         elif _dag_cid(self.receipt_cid, "receipt_cid") != expected:
-            raise CustodianReleaseError(
-                "custodian release-receipt CID changed"
-            )
+            raise CustodianReleaseError("custodian release-receipt CID changed")
 
     @classmethod
     def _from_request(
@@ -4215,9 +3533,7 @@ class G241ExternallyGovernedCustodianReleaseReceiptV1:
         recorded_at: datetime,
     ) -> Self:
         if recorded_at.tzinfo is None:
-            raise CustodianReleaseError(
-                "release receipt clock must include a timezone"
-            )
+            raise CustodianReleaseError("release receipt clock must include a timezone")
         values = {
             name: getattr(request, name)
             for name in (
@@ -4259,9 +3575,7 @@ class G241ExternallyGovernedCustodianReleaseReceiptV1:
             request_cid=str(request.request_cid),
             **values,  # type: ignore[arg-type]
             sequence=request.ledger_sequence,
-            previous_receipt_cid=(
-                request.previous_ledger_receipt_cid
-            ),
+            previous_receipt_cid=(request.previous_ledger_receipt_cid),
             recorded_at=recorded_at.astimezone(timezone.utc).isoformat(),
         )
 
@@ -4324,24 +3638,16 @@ class G241ExternallyGovernedCustodianReleaseReceiptV1:
             "parent_ledger_cid": self.parent_ledger_cid,
             "artifact_cids": dict(self.artifact_cids),
             "artifact_set_cid": self.artifact_set_cid,
-            "upstream_authority_cids": dict(
-                self.upstream_authority_cids
-            ),
+            "upstream_authority_cids": dict(self.upstream_authority_cids),
             "g232_authorization_cid": self.g232_authorization_cid,
             "seal_contract_cid": self.seal_contract_cid,
             "sealed_manifest_cid": self.sealed_manifest_cid,
             "authorized_variant_ids": list(self.authorized_variant_ids),
             "g239_evaluation_cid": self.g239_evaluation_cid,
             "g239_authority_cid": self.g239_authority_cid,
-            "g239_operational_receipt_cid": (
-                self.g239_operational_receipt_cid
-            ),
-            "g239_validator_claim_cid": (
-                self.g239_validator_claim_cid
-            ),
-            "g239_validator_attestation_cid": (
-                self.g239_validator_attestation_cid
-            ),
+            "g239_operational_receipt_cid": (self.g239_operational_receipt_cid),
+            "g239_validator_claim_cid": (self.g239_validator_claim_cid),
+            "g239_validator_attestation_cid": (self.g239_validator_attestation_cid),
             "g239_validator_key_id": self.g239_validator_key_id,
             "g239_observed_at": self.g239_observed_at,
             "g239_evaluated_at": self.g239_evaluated_at,
@@ -4350,17 +3656,11 @@ class G241ExternallyGovernedCustodianReleaseReceiptV1:
             "custodian_id": self.custodian_id,
             "executor_id": self.executor_id,
             "trust_root_cid": self.trust_root_cid,
-            "access_ledger_authority_cid": (
-                self.access_ledger_authority_cid
-            ),
-            "access_ledger_file_identity_cid": (
-                self.access_ledger_file_identity_cid
-            ),
+            "access_ledger_authority_cid": (self.access_ledger_authority_cid),
+            "access_ledger_file_identity_cid": (self.access_ledger_file_identity_cid),
             "access_ledger_head_cid": self.access_ledger_head_cid,
             "access_ledger_event_count": self.access_ledger_event_count,
-            "release_ledger_file_identity_cid": (
-                self.release_ledger_file_identity_cid
-            ),
+            "release_ledger_file_identity_cid": (self.release_ledger_file_identity_cid),
             "sequence": self.sequence,
             "previous_receipt_cid": self.previous_receipt_cid,
             "recorded_at": self.recorded_at,
@@ -4388,17 +3688,13 @@ class G241ExternallyGovernedCustodianReleaseReceiptV1:
             or data.pop("release_authorized") is not True
             or data.pop("production_promotion_authorized") is not False
         ):
-            raise CustodianReleaseError(
-                "G241 release receipt state changed"
-            )
+            raise CustodianReleaseError("G241 release receipt state changed")
         variants = _array(
             data.get("authorized_variant_ids"),
             "authorized_variant_ids",
         )
         data["authorized_variant_ids"] = tuple(variants)
-        data["artifact_cids"] = _mapping(
-            data.get("artifact_cids"), "artifact_cids"
-        )
+        data["artifact_cids"] = _mapping(data.get("artifact_cids"), "artifact_cids")
         data["upstream_authority_cids"] = _mapping(
             data.get("upstream_authority_cids"),
             "upstream_authority_cids",
@@ -4429,9 +3725,7 @@ class G241ReleaseConsumptionTombstoneV1:
 
     def __post_init__(self) -> None:
         if self.schema != G241_RELEASE_CONSUMPTION_TOMBSTONE_SCHEMA_V1:
-            raise CustodianReleaseError(
-                "unsupported G241 release-consumption tombstone"
-            )
+            raise CustodianReleaseError("unsupported G241 release-consumption tombstone")
         for name in (
             "release_receipt_cid",
             "access_grant_receipt_cid",
@@ -4445,61 +3739,39 @@ class G241ReleaseConsumptionTombstoneV1:
             "release_ledger_authority_cid",
             "previous_receipt_cid",
         ):
-            object.__setattr__(
-                self, name, _dag_cid(getattr(self, name), name)
-            )
+            object.__setattr__(self, name, _dag_cid(getattr(self, name), name))
         if self.release_receipt_cid != self.previous_receipt_cid:
             raise CustodianReleaseError(
                 "G241 consumption tombstone must directly spend its release"
             )
         if self.purpose not in {"evaluation", "replay"}:
-            raise CustodianReleaseError(
-                "G241 consumption purpose must be evaluation or replay"
-            )
+            raise CustodianReleaseError("G241 consumption purpose must be evaluation or replay")
         if type(self.sequence) is not int or self.sequence < 1:
-            raise CustodianReleaseError(
-                "G241 consumption sequence must be positive"
-            )
+            raise CustodianReleaseError("G241 consumption sequence must be positive")
         timestamp = _parse_time(self.recorded_at, "recorded_at")
         if self.recorded_at != timestamp.isoformat():
-            raise CustodianReleaseError(
-                "G241 consumption timestamp is noncanonical"
-            )
+            raise CustodianReleaseError("G241 consumption timestamp is noncanonical")
         expected = cid_for_dag_json(self.identity_payload())
         if self.tombstone_cid is None:
             object.__setattr__(self, "tombstone_cid", expected)
-        elif _dag_cid(
-            self.tombstone_cid, "tombstone_cid"
-        ) != expected:
-            raise CustodianReleaseError(
-                "G241 consumption tombstone CID changed"
-            )
+        elif _dag_cid(self.tombstone_cid, "tombstone_cid") != expected:
+            raise CustodianReleaseError("G241 consumption tombstone CID changed")
 
     def identity_payload(self) -> dict[str, object]:
         return {
             "schema": self.schema,
             "goal_id": "HSSL-G241",
             "release_receipt_cid": self.release_receipt_cid,
-            "access_grant_receipt_cid": (
-                self.access_grant_receipt_cid
-            ),
-            "access_ledger_file_identity_cid": (
-                self.access_ledger_file_identity_cid
-            ),
-            "release_ledger_file_identity_cid": (
-                self.release_ledger_file_identity_cid
-            ),
+            "access_grant_receipt_cid": (self.access_grant_receipt_cid),
+            "access_ledger_file_identity_cid": (self.access_ledger_file_identity_cid),
+            "release_ledger_file_identity_cid": (self.release_ledger_file_identity_cid),
             "purpose": self.purpose,
             "executor_id": self.executor_id,
             "custodian_id": self.custodian_id,
             "trust_root_cid": self.trust_root_cid,
             "monotonic_store_id": self.monotonic_store_id,
-            "monotonic_store_policy_cid": (
-                self.monotonic_store_policy_cid
-            ),
-            "release_ledger_authority_cid": (
-                self.release_ledger_authority_cid
-            ),
+            "monotonic_store_policy_cid": (self.monotonic_store_policy_cid),
+            "release_ledger_authority_cid": (self.release_ledger_authority_cid),
             "sequence": self.sequence,
             "previous_receipt_cid": self.previous_receipt_cid,
             "recorded_at": self.recorded_at,
@@ -4530,24 +3802,19 @@ class G241ReleaseConsumptionTombstoneV1:
             or data.pop("holdout_content_included") is not False
             or data.pop("production_promotion_authorized") is not False
         ):
-            raise CustodianReleaseError(
-                "G241 consumption tombstone state changed"
-            )
+            raise CustodianReleaseError("G241 consumption tombstone state changed")
         return cls(**data)  # type: ignore[arg-type]
 
 
 G241ReleaseLedgerRecordV1 = (
-    G241ExternallyGovernedCustodianReleaseReceiptV1
-    | G241ReleaseConsumptionTombstoneV1
+    G241ExternallyGovernedCustodianReleaseReceiptV1 | G241ReleaseConsumptionTombstoneV1
 )
 
 
 def _release_ledger_record_cid(
     record: G241ReleaseLedgerRecordV1,
 ) -> str:
-    if isinstance(
-        record, G241ExternallyGovernedCustodianReleaseReceiptV1
-    ):
+    if isinstance(record, G241ExternallyGovernedCustodianReleaseReceiptV1):
         return str(record.receipt_cid)
     return str(record.tombstone_cid)
 
@@ -4562,19 +3829,13 @@ def _ledger_records(
     if not raw:
         return ()
     if not raw.endswith(b"\n"):
-        raise CustodianReleaseError(
-            "custodian ledger contains a torn final record"
-        )
+        raise CustodianReleaseError("custodian ledger contains a torn final record")
     records: list[G241ReleaseLedgerRecordV1] = []
-    previous = _dag_cid(
-        genesis_cid, "custodian ledger genesis CID"
-    )
+    previous = _dag_cid(genesis_cid, "custodian ledger genesis CID")
     previous_time: datetime | None = None
     for sequence, line in enumerate(raw.splitlines(keepends=True)):
         if line == b"\n" or not line.endswith(b"\n"):
-            raise CustodianReleaseError(
-                "custodian ledger contains an empty or torn record"
-            )
+            raise CustodianReleaseError("custodian ledger contains an empty or torn record")
         value = _mapping(
             _strict_json(
                 line[:-1],
@@ -4585,32 +3846,19 @@ def _ledger_records(
         schema = value.get("schema")
         if schema == G241_RELEASE_RECEIPT_SCHEMA_V1:
             record: G241ReleaseLedgerRecordV1 = (
-                G241ExternallyGovernedCustodianReleaseReceiptV1.from_dict(
-                    value
-                )
+                G241ExternallyGovernedCustodianReleaseReceiptV1.from_dict(value)
             )
         elif schema == G241_RELEASE_CONSUMPTION_TOMBSTONE_SCHEMA_V1:
-            record = G241ReleaseConsumptionTombstoneV1.from_dict(
-                value
-            )
+            record = G241ReleaseConsumptionTombstoneV1.from_dict(value)
         else:
-            raise CustodianReleaseError(
-                "custodian ledger record schema changed"
-            )
+            raise CustodianReleaseError("custodian ledger record schema changed")
         if canonical_dag_json_bytes(record.to_dict()) != line[:-1]:
-            raise CustodianReleaseError(
-                "custodian ledger record is not canonical DAG-JSON"
-            )
-        timestamp = _parse_time(
-            record.recorded_at, "custodian ledger recorded_at"
-        )
+            raise CustodianReleaseError("custodian ledger record is not canonical DAG-JSON")
+        timestamp = _parse_time(record.recorded_at, "custodian ledger recorded_at")
         if (
             record.sequence != sequence
             or record.previous_receipt_cid != previous
-            or (
-                previous_time is not None
-                and timestamp <= previous_time
-            )
+            or (previous_time is not None and timestamp <= previous_time)
         ):
             raise CustodianReleaseError(
                 "custodian ledger sequence, parent, or monotonic time changed"
@@ -4622,31 +3870,24 @@ def _ledger_records(
                     records[-1],
                     G241ExternallyGovernedCustodianReleaseReceiptV1,
                 )
-                or record.release_receipt_cid
-                != records[-1].receipt_cid
+                or record.release_receipt_cid != records[-1].receipt_cid
                 or record.access_ledger_file_identity_cid
                 != records[-1].access_ledger_file_identity_cid
                 or record.release_ledger_file_identity_cid
                 != records[-1].release_ledger_file_identity_cid
                 or record.executor_id != records[-1].executor_id
                 or record.custodian_id != records[-1].custodian_id
-                or record.trust_root_cid
-                != records[-1].trust_root_cid
+                or record.trust_root_cid != records[-1].trust_root_cid
             ):
                 raise CustodianReleaseError(
-                    "G241 consumption tombstone does not spend the "
-                    "immediately preceding release"
+                    "G241 consumption tombstone does not spend the immediately preceding release"
                 )
         previous = _release_ledger_record_cid(record)
         previous_time = timestamp
         records.append(record)
-    record_cids = tuple(
-        _release_ledger_record_cid(item) for item in records
-    )
+    record_cids = tuple(_release_ledger_record_cid(item) for item in records)
     if len(record_cids) != len(set(record_cids)):
-        raise CustodianReleaseError(
-            "custodian ledger contains duplicate record CIDs"
-        )
+        raise CustodianReleaseError("custodian ledger contains duplicate record CIDs")
     return tuple(records)
 
 
@@ -4689,40 +3930,27 @@ def _parse_access_ledger(
             {"schema", "receipt"},
             "replacement access ledger record",
         )
-        if (
-            wrapper.get("schema")
-            != REPLACEMENT_HOLDOUT_ACCESS_LEDGER_SCHEMA
-        ):
-            raise CustodianReleaseError(
-                "replacement access ledger schema changed"
-            )
+        if wrapper.get("schema") != REPLACEMENT_HOLDOUT_ACCESS_LEDGER_SCHEMA:
+            raise CustodianReleaseError("replacement access ledger schema changed")
         try:
-            receipt = ReplacementHoldoutAccessReceipt.from_dict(
-                wrapper.get("receipt")
-            )
+            receipt = ReplacementHoldoutAccessReceipt.from_dict(wrapper.get("receipt"))
         except (TypeError, ValueError, KeyError) as exc:
-            raise CustodianReleaseError(
-                "replacement access ledger receipt is invalid"
-            ) from exc
-        if canonical_dag_json_bytes(
-            {
-                "schema": REPLACEMENT_HOLDOUT_ACCESS_LEDGER_SCHEMA,
-                "receipt": receipt.to_dict(),
-            }
-        ) != line[:-1]:
+            raise CustodianReleaseError("replacement access ledger receipt is invalid") from exc
+        if (
+            canonical_dag_json_bytes(
+                {
+                    "schema": REPLACEMENT_HOLDOUT_ACCESS_LEDGER_SCHEMA,
+                    "receipt": receipt.to_dict(),
+                }
+            )
+            != line[:-1]
+        ):
             raise CustodianReleaseError(
                 "replacement access ledger record is not canonical DAG-JSON"
             )
-        expected_previous = (
-            None if sequence == 0 else records[-1].receipt_cid
-        )
-        if (
-            receipt.sequence != sequence
-            or receipt.previous_receipt_cid != expected_previous
-        ):
-            raise CustodianReleaseError(
-                "replacement access ledger chain is broken"
-            )
+        expected_previous = None if sequence == 0 else records[-1].receipt_cid
+        if receipt.sequence != sequence or receipt.previous_receipt_cid != expected_previous:
+            raise CustodianReleaseError("replacement access ledger chain is broken")
         records.append(receipt)
     return tuple(records)
 
@@ -4734,24 +3962,16 @@ def _open_access_ledger(
     seal: ReplacementHoldoutSeal,
     create: bool = True,
 ) -> int:
-    candidate = _canonical_absolute_path(
-        Path(path), "replacement access ledger"
-    )
+    candidate = _canonical_absolute_path(Path(path), "replacement access ledger")
     try:
         authority_cid = replacement_holdout_ledger_authority_cid(
             seal.sealed_manifest_cid,
             candidate,
         )
     except (TypeError, ValueError) as exc:
-        raise CustodianReleaseError(
-            "replacement access-ledger authority is invalid"
-        ) from exc
-    if (
-        seal.access_ledger_authority_cid != authority_cid
-    ):
-        raise CustodianReleaseError(
-            "replacement access ledger is not the exact seal-bound ledger"
-        )
+        raise CustodianReleaseError("replacement access-ledger authority is invalid") from exc
+    if seal.access_ledger_authority_cid != authority_cid:
+        raise CustodianReleaseError("replacement access ledger is not the exact seal-bound ledger")
     return _open_secure_file(
         candidate,
         repo_root=Path(repo_root),
@@ -4776,24 +3996,18 @@ def _empty_access_ledger_snapshot(
     if records:
         if any(
             receipt.seal_contract_cid != seal.seal_contract_cid
-            or receipt.sealed_manifest_cid
-            != seal.sealed_manifest_cid
+            or receipt.sealed_manifest_cid != seal.sealed_manifest_cid
             for receipt in records
         ):
-            raise CustodianReleaseError(
-                "replacement access ledger mixes seal identities"
-            )
+            raise CustodianReleaseError("replacement access ledger mixes seal identities")
         raise CustodianReleaseError(
-            "pre-release access-ledger activity permanently invalidates "
-            "the G241 release"
+            "pre-release access-ledger activity permanently invalidates the G241 release"
         )
     snapshot = {
         "schema": G241_ACCESS_LEDGER_SNAPSHOT_SCHEMA_V1,
         "seal_contract_cid": seal.seal_contract_cid,
         "sealed_manifest_cid": seal.sealed_manifest_cid,
-        "access_ledger_authority_cid": (
-            seal.access_ledger_authority_cid
-        ),
+        "access_ledger_authority_cid": (seal.access_ledger_authority_cid),
         "event_count": 0,
         "last_receipt_cid": None,
         "ledger_file_identity_cid": _ledger_file_identity_cid(
@@ -4819,18 +4033,14 @@ def _open_source_lock(
         expected_executable_cid=expected_git_executable_cid,
     )
     if code != 0 or not isinstance(value, str) or not value:
-        raise CustodianReleaseError(
-            "G241 Git common directory is unavailable"
-        )
+        raise CustodianReleaseError("G241 Git common directory is unavailable")
     common = Path(value)
     if not common.is_absolute():
         common = repo_root / common
     try:
         common = common.resolve(strict=True)
     except OSError as exc:
-        raise CustodianReleaseError(
-            "G241 Git common directory cannot be resolved"
-        ) from exc
+        raise CustodianReleaseError("G241 Git common directory cannot be resolved") from exc
     return _open_secure_file(
         common / "g241-custodian-release.lock",
         repo_root=None,
@@ -4847,13 +4057,9 @@ def _write_all(descriptor: int, payload: bytes) -> None:
         try:
             written = os.write(descriptor, pending)
         except OSError as exc:
-            raise CustodianReleaseError(
-                "custodian ledger append failed"
-            ) from exc
+            raise CustodianReleaseError("custodian ledger append failed") from exc
         if written <= 0:
-            raise CustodianReleaseError(
-                "custodian ledger append did not complete"
-            )
+            raise CustodianReleaseError("custodian ledger append did not complete")
         pending = pending[written:]
 
 
@@ -4890,9 +4096,7 @@ def _revalidate_private_path(
             reopened_metadata.st_dev,
             reopened_metadata.st_ino,
         ):
-            raise CustodianReleaseError(
-                f"{field_name} path changed after it was locked"
-            )
+            raise CustodianReleaseError(f"{field_name} path changed after it was locked")
     finally:
         os.close(reopened)
 
@@ -4910,16 +4114,11 @@ def _validate_receipt_source(
 ) -> None:
     if (
         receipt.source_commit != current.outer_commit
-        or receipt.source_tree_cid
-        != g241_git_tree_cid(current.outer_tree)
-        or receipt.recursive_gitlinks_cid
-        != current.g240_recursive_gitlinks_cid
-        or receipt.source_identity_cid
-        != current.source_identity_cid
+        or receipt.source_tree_cid != g241_git_tree_cid(current.outer_tree)
+        or receipt.recursive_gitlinks_cid != current.g240_recursive_gitlinks_cid
+        or receipt.source_identity_cid != current.source_identity_cid
     ):
-        raise CustodianReleaseError(
-            "durable G241 receipt source is dirty, stale, or rebased"
-        )
+        raise CustodianReleaseError("durable G241 receipt source is dirty, stale, or rebased")
 
 
 @dataclass(frozen=True, slots=True)
@@ -4944,9 +4143,7 @@ def _g239_replay_view(
     return _G241DurableReplayView(
         source_index=_G241DurableSourceIndexView(
             source_commit=receipt.source_commit,
-            source_commit_cid=g238_git_commit_cid(
-                receipt.source_commit
-            ),
+            source_commit_cid=g238_git_commit_cid(receipt.source_commit),
             source_tree_cid=receipt.source_tree_cid,
             recursive_gitlinks_cid=receipt.recursive_gitlinks_cid,
             run_plan_cid=receipt.run_plan_cid,
@@ -4975,28 +4172,20 @@ def _authorize_g241_custodian_release_v1(
     """Private clock-injection seam used only by deterministic tests."""
 
     root = Path(repo_root).resolve(strict=True)
-    seal_value = _mapping(g231_sources, "G231 sources").get(
-        "replacement_holdout_seal"
-    )
+    seal_value = _mapping(g231_sources, "G231 sources").get("replacement_holdout_seal")
     if not isinstance(seal_value, ReplacementHoldoutSeal):
-        raise CustodianReleaseError(
-            "G241 requires the typed G231 replacement seal"
-        )
+        raise CustodianReleaseError("G241 requires the typed G231 replacement seal")
     seal = ReplacementHoldoutSeal.from_dict(seal_value.to_dict())
     trust_root = load_g241_custodian_trust_root_v1(
         path=custodian_trust_root_path,
         trusted_trust_root_cid=trusted_custodian_trust_root_cid,
         repo_root=root,
     )
-    _validate_release_ledger_authority(
-        trust_root, Path(ledger_path)
-    )
+    _validate_release_ledger_authority(trust_root, Path(ledger_path))
     if trust_root.g239_authority_cid != _dag_cid(
         trusted_authority_cid, "trusted G239 authority CID"
     ):
-        raise CustodianReleaseError(
-            "custodian and G239 trust roots name different authorities"
-        )
+        raise CustodianReleaseError("custodian and G239 trust roots name different authorities")
 
     source_lock = _open_source_lock(
         root,
@@ -5013,16 +4202,12 @@ def _authorize_g241_custodian_release_v1(
             seal=seal,
         )
         fcntl.flock(access_descriptor, fcntl.LOCK_EX)
-        access_head, access_count = _empty_access_ledger_snapshot(
-            access_descriptor, seal=seal
-        )
+        access_head, access_count = _empty_access_ledger_snapshot(access_descriptor, seal=seal)
         access_file_identity_cid = _ledger_file_identity_cid(
             access_descriptor,
             ledger_role="replacement-access",
         )
-        ledger_descriptor = _open_ledger(
-            Path(ledger_path), repo_root=root
-        )
+        ledger_descriptor = _open_ledger(Path(ledger_path), repo_root=root)
         fcntl.flock(ledger_descriptor, fcntl.LOCK_EX)
         release_file_identity_cid = _ledger_file_identity_cid(
             ledger_descriptor,
@@ -5057,29 +4242,21 @@ def _authorize_g241_custodian_release_v1(
             source_replay.source_index.access_ledger_authority_cid
             != seal.access_ledger_authority_cid
         ):
-            raise CustodianReleaseError(
-                "source replay names a different access-ledger authority"
-            )
+            raise CustodianReleaseError("source replay names a different access-ledger authority")
         timestamp = clock()
         if not isinstance(timestamp, datetime) or timestamp.tzinfo is None:
-            raise CustodianReleaseError(
-                "G241 trusted clock must return a timezone-aware datetime"
-            )
+            raise CustodianReleaseError("G241 trusted clock must return a timezone-aware datetime")
         timestamp = timestamp.astimezone(timezone.utc)
         if records and timestamp <= _parse_time(
             records[-1].recorded_at,
             "previous custodian ledger timestamp",
         ):
-            raise CustodianReleaseError(
-                "G241 trusted clock did not advance monotonically"
-            )
+            raise CustodianReleaseError("G241 trusted clock did not advance monotonically")
         external = _evaluate_g239_for_g241_v1(
             authority_path=authority_path,
             trusted_authority_cid=trusted_authority_cid,
             validator_attestation_path=validator_attestation_path,
-            trusted_validator_attestation_cid=(
-                trusted_validator_attestation_cid
-            ),
+            trusted_validator_attestation_cid=(trusted_validator_attestation_cid),
             custodian_trust_root=trust_root,
             source_replay=source_replay,
             repo_root=root,
@@ -5094,16 +4271,11 @@ def _authorize_g241_custodian_release_v1(
         index = source_replay.source_index
         if (
             current.outer_commit != index.source_commit
-            or g241_git_tree_cid(current.outer_tree)
-            != index.source_tree_cid
-            or current.g240_recursive_gitlinks_cid
-            != index.recursive_gitlinks_cid
-            or current.source_identity_cid
-            != external.source_identity_cid
+            or g241_git_tree_cid(current.outer_tree) != index.source_tree_cid
+            or current.g240_recursive_gitlinks_cid != index.recursive_gitlinks_cid
+            or current.source_identity_cid != external.source_identity_cid
         ):
-            raise CustodianReleaseError(
-                "G241 source changed after external validation"
-            )
+            raise CustodianReleaseError("G241 source changed after external validation")
         request = G241CustodianReleaseRequestV1(
             source_index_cid=str(index.source_index_cid),
             source_commit=index.source_commit,
@@ -5121,13 +4293,9 @@ def _authorize_g241_custodian_release_v1(
             authorized_variant_ids=authorization.authorized_variant_ids,
             g239_evaluation_cid=str(external.evaluation_cid),
             g239_authority_cid=external.authority_cid,
-            g239_operational_receipt_cid=(
-                external.operational_receipt_cid
-            ),
+            g239_operational_receipt_cid=(external.operational_receipt_cid),
             g239_validator_claim_cid=external.validator_claim_cid,
-            g239_validator_attestation_cid=(
-                external.validator_attestation_cid
-            ),
+            g239_validator_attestation_cid=(external.validator_attestation_cid),
             g239_validator_key_id=external.validator_key_id,
             g239_observed_at=external.observed_at,
             g239_evaluated_at=external.evaluated_at,
@@ -5136,42 +4304,27 @@ def _authorize_g241_custodian_release_v1(
             custodian_id=trust_root.custodian_id,
             executor_id=trust_root.executor_id,
             trust_root_cid=str(trust_root.trust_root_cid),
-            access_ledger_authority_cid=(
-                seal.access_ledger_authority_cid
-            ),
-            access_ledger_file_identity_cid=(
-                access_file_identity_cid
-            ),
+            access_ledger_authority_cid=(seal.access_ledger_authority_cid),
+            access_ledger_file_identity_cid=(access_file_identity_cid),
             access_ledger_head_cid=access_head,
             access_ledger_event_count=access_count,
-            release_ledger_file_identity_cid=(
-                release_file_identity_cid
-            ),
+            release_ledger_file_identity_cid=(release_file_identity_cid),
             ledger_sequence=len(records),
             previous_ledger_receipt_cid=previous,
         )
-        receipt = (
-            G241ExternallyGovernedCustodianReleaseReceiptV1._from_request(
-                request=request,
-                recorded_at=timestamp,
-            )
+        receipt = G241ExternallyGovernedCustodianReleaseReceiptV1._from_request(
+            request=request,
+            recorded_at=timestamp,
         )
 
-        final_access_head, _ = _empty_access_ledger_snapshot(
-            access_descriptor, seal=seal
-        )
+        final_access_head, _ = _empty_access_ledger_snapshot(access_descriptor, seal=seal)
         final_source = _inspect_current_source(
             root,
             git_executable_path=Path(trust_root.git_executable_path),
             expected_git_executable_cid=trust_root.git_executable_cid,
         )
-        if (
-            final_access_head != access_head
-            or not _same_current_source(current, final_source)
-        ):
-            raise CustodianReleaseError(
-                "source or access ledger changed before durable append"
-            )
+        if final_access_head != access_head or not _same_current_source(current, final_source):
+            raise CustodianReleaseError("source or access ledger changed before durable append")
         _revalidate_private_path(
             access_descriptor,
             Path(access_ledger_path),
@@ -5197,9 +4350,7 @@ def _authorize_g241_custodian_release_v1(
             ),
             genesis_cid=trust_root.ledger_genesis_cid,
         )
-        durable_access_head, _ = _empty_access_ledger_snapshot(
-            access_descriptor, seal=seal
-        )
+        durable_access_head, _ = _empty_access_ledger_snapshot(access_descriptor, seal=seal)
         _revalidate_private_path(
             access_descriptor,
             Path(access_ledger_path),
@@ -5223,22 +4374,17 @@ def _authorize_g241_custodian_release_v1(
                 durable_records[-1],
                 G241ExternallyGovernedCustodianReleaseReceiptV1,
             )
-            or durable_records[-1].receipt_cid
-            != receipt.receipt_cid
+            or durable_records[-1].receipt_cid != receipt.receipt_cid
             or durable_access_head != access_head
             or not _same_current_source(current, durable_source)
         ):
-            raise CustodianReleaseError(
-                "G241 durable release revalidation failed closed"
-            )
+            raise CustodianReleaseError("G241 durable release revalidation failed closed")
         durable_receipt = durable_records[-1]
         if not isinstance(
             durable_receipt,
             G241ExternallyGovernedCustodianReleaseReceiptV1,
         ):  # pragma: no cover - guarded above
-            raise CustodianReleaseError(
-                "G241 durable ledger head is not a release receipt"
-            )
+            raise CustodianReleaseError("G241 durable ledger head is not a release receipt")
         return durable_receipt
     finally:
         for descriptor in (
@@ -5277,13 +4423,9 @@ def authorize_g241_custodian_release_v1(
         authority_path=authority_path,
         trusted_authority_cid=trusted_authority_cid,
         validator_attestation_path=validator_attestation_path,
-        trusted_validator_attestation_cid=(
-            trusted_validator_attestation_cid
-        ),
+        trusted_validator_attestation_cid=(trusted_validator_attestation_cid),
         custodian_trust_root_path=custodian_trust_root_path,
-        trusted_custodian_trust_root_cid=(
-            trusted_custodian_trust_root_cid
-        ),
+        trusted_custodian_trust_root_cid=(trusted_custodian_trust_root_cid),
         ledger_path=ledger_path,
         access_ledger_path=access_ledger_path,
         repo_root=repo_root,
@@ -5308,13 +4450,9 @@ def _append_locked_access_event(
         )
     )
     if purpose not in {"evaluation", "replay"}:
-        raise CustodianReleaseError(
-            "replacement holdout purpose must be evaluation or replay"
-        )
+        raise CustodianReleaseError("replacement holdout purpose must be evaluation or replay")
     executor = _actor(executor_id, "holdout executor")
-    release_cid = _dag_cid(
-        g241_release_receipt_cid, "G241 release receipt CID"
-    )
+    release_cid = _dag_cid(g241_release_receipt_cid, "G241 release receipt CID")
     outcomes = {
         "custody_integrity_failure",
         "custody_release_failed",
@@ -5322,28 +4460,20 @@ def _append_locked_access_event(
     }
     if event == "access_granted":
         if records:
-            raise CustodianReleaseError(
-                "validated G241 release is already consumed"
-            )
+            raise CustodianReleaseError("validated G241 release is already consumed")
     elif event in outcomes:
         if (
             not records
             or records[-1].event != "access_granted"
-            or records[-1].authorization_cid
-            != authorization.authorization_cid
-            or records[-1].pilot_artifact_cid
-            != authorization.pilot_artifact_cid
+            or records[-1].authorization_cid != authorization.authorization_cid
+            or records[-1].pilot_artifact_cid != authorization.pilot_artifact_cid
             or records[-1].g241_release_receipt_cid != release_cid
             or records[-1].purpose != purpose
             or records[-1].executor_id != executor
         ):
-            raise CustodianReleaseError(
-                "custody outcome does not match the locked access grant"
-            )
+            raise CustodianReleaseError("custody outcome does not match the locked access grant")
     else:
-        raise CustodianReleaseError(
-            "unsupported locked replacement access event"
-        )
+        raise CustodianReleaseError("unsupported locked replacement access event")
     flags = {
         "access_granted": (True, False, False),
         "custody_integrity_failure": (True, True, True),
@@ -5353,9 +4483,7 @@ def _append_locked_access_event(
     body = {
         "schema": REPLACEMENT_HOLDOUT_ACCESS_RECEIPT_SCHEMA,
         "sequence": len(records),
-        "previous_receipt_cid": (
-            records[-1].receipt_cid if records else None
-        ),
+        "previous_receipt_cid": (records[-1].receipt_cid if records else None),
         "event": event,
         "seal_contract_cid": seal.seal_contract_cid,
         "sealed_manifest_cid": seal.sealed_manifest_cid,
@@ -5389,9 +4517,7 @@ def _append_locked_access_event(
         )
     )
     if not durable or durable[-1].receipt_cid != receipt.receipt_cid:
-        raise CustodianReleaseError(
-            "locked access event was not durably appended"
-        )
+        raise CustodianReleaseError("locked access event was not durably appended")
     return durable[-1]
 
 
@@ -5423,57 +4549,35 @@ def _append_locked_release_consumption(
         )
         or records[-1].receipt_cid != release_receipt.receipt_cid
         or access_grant.event != "access_granted"
-        or access_grant.g241_release_receipt_cid
-        != release_receipt.receipt_cid
+        or access_grant.g241_release_receipt_cid != release_receipt.receipt_cid
         or access_grant.executor_id != executor_id
         or release_receipt.executor_id != executor_id
         or release_receipt.custodian_id != custodian_id
-        or release_receipt.trust_root_cid
-        != trust_root.trust_root_cid
-        or release_receipt.access_ledger_file_identity_cid
-        != access_ledger_file_identity_cid
+        or release_receipt.trust_root_cid != trust_root.trust_root_cid
+        or release_receipt.access_ledger_file_identity_cid != access_ledger_file_identity_cid
     ):
-        raise CustodianReleaseError(
-            "G241 release consumption does not match the locked heads"
-        )
+        raise CustodianReleaseError("G241 release consumption does not match the locked heads")
     release_file_identity_cid = _ledger_file_identity_cid(
         descriptor,
         ledger_role="custodian-release",
     )
-    if (
-        release_receipt.release_ledger_file_identity_cid
-        != release_file_identity_cid
-    ):
-        raise CustodianReleaseError(
-            "G241 release-ledger identity changed before consumption"
-        )
+    if release_receipt.release_ledger_file_identity_cid != release_file_identity_cid:
+        raise CustodianReleaseError("G241 release-ledger identity changed before consumption")
     timestamp = datetime.now(timezone.utc)
-    if timestamp <= _parse_time(
-        release_receipt.recorded_at, "release recorded_at"
-    ):
-        raise CustodianReleaseError(
-            "trusted clock did not advance for G241 consumption"
-        )
+    if timestamp <= _parse_time(release_receipt.recorded_at, "release recorded_at"):
+        raise CustodianReleaseError("trusted clock did not advance for G241 consumption")
     tombstone = G241ReleaseConsumptionTombstoneV1(
         release_receipt_cid=str(release_receipt.receipt_cid),
         access_grant_receipt_cid=str(access_grant.receipt_cid),
-        access_ledger_file_identity_cid=(
-            access_ledger_file_identity_cid
-        ),
-        release_ledger_file_identity_cid=(
-            release_file_identity_cid
-        ),
+        access_ledger_file_identity_cid=(access_ledger_file_identity_cid),
+        release_ledger_file_identity_cid=(release_file_identity_cid),
         purpose=purpose,
         executor_id=executor_id,
         custodian_id=custodian_id,
         trust_root_cid=str(trust_root.trust_root_cid),
         monotonic_store_id=trust_root.monotonic_store_id,
-        monotonic_store_policy_cid=(
-            trust_root.monotonic_store_policy_cid
-        ),
-        release_ledger_authority_cid=(
-            trust_root.release_ledger_authority_cid
-        ),
+        monotonic_store_policy_cid=(trust_root.monotonic_store_policy_cid),
+        release_ledger_authority_cid=(trust_root.release_ledger_authority_cid),
         sequence=len(records),
         previous_receipt_cid=str(release_receipt.receipt_cid),
         recorded_at=timestamp.isoformat(),
@@ -5493,14 +4597,10 @@ def _append_locked_release_consumption(
     )
     if (
         not durable
-        or not isinstance(
-            durable[-1], G241ReleaseConsumptionTombstoneV1
-        )
+        or not isinstance(durable[-1], G241ReleaseConsumptionTombstoneV1)
         or durable[-1].tombstone_cid != tombstone.tombstone_cid
     ):
-        raise CustodianReleaseError(
-            "G241 consumption tombstone was not durably appended"
-        )
+        raise CustodianReleaseError("G241 consumption tombstone was not durably appended")
     return durable[-1]
 
 
@@ -5525,20 +4625,14 @@ class G241CustodyAccessTransactionV1:
     _release_ledger_path: Path
     terminal_receipt: ReplacementHoldoutAccessReceipt | None = None
 
-    def _record_terminal(
-        self, event: str
-    ) -> ReplacementHoldoutAccessReceipt:
+    def _record_terminal(self, event: str) -> ReplacementHoldoutAccessReceipt:
         if self.terminal_receipt is not None:
-            raise CustodianReleaseError(
-                "G241 custody transaction already has a terminal outcome"
-            )
+            raise CustodianReleaseError("G241 custody transaction already has a terminal outcome")
         receipt = _append_locked_access_event(
             self._descriptor,
             seal=self._seal,
             authorization=self._authorization,
-            g241_release_receipt_cid=str(
-                self.release_receipt.receipt_cid
-            ),
+            g241_release_receipt_cid=str(self.release_receipt.receipt_cid),
             purpose=self._purpose,
             executor_id=self._executor_id,
             event=event,
@@ -5553,14 +4647,10 @@ class G241CustodyAccessTransactionV1:
             current = _inspect_current_source(
                 self._repo_root,
                 git_executable_path=self._git_executable_path,
-                expected_git_executable_cid=(
-                    self._git_executable_cid
-                ),
+                expected_git_executable_cid=(self._git_executable_cid),
             )
             if not _same_current_source(self._source, current):
-                raise CustodianReleaseError(
-                    "source changed before the custody success receipt"
-                )
+                raise CustodianReleaseError("source changed before the custody success receipt")
             _revalidate_private_path(
                 self._descriptor,
                 self._access_ledger_path,
@@ -5586,9 +4676,7 @@ class G241CustodyAccessTransactionV1:
         integrity_failure: bool = False,
     ) -> ReplacementHoldoutAccessReceipt:
         return self._record_terminal(
-            "custody_integrity_failure"
-            if integrity_failure
-            else "custody_release_failed"
+            "custody_integrity_failure" if integrity_failure else "custody_release_failed"
         )
 
 
@@ -5622,10 +4710,8 @@ def _locked_g241_release_receipt_v1(
     root = Path(repo_root).resolve(strict=True)
     try:
         canonical_seal = ReplacementHoldoutSeal.from_dict(seal.to_dict())
-        canonical_authorization = (
-            G232ReplacementHoldoutAuthorization.from_dict(
-                authorization.to_dict()
-            )
+        canonical_authorization = G232ReplacementHoldoutAuthorization.from_dict(
+            authorization.to_dict()
         )
         canonical_authorization.validate_against(canonical_seal)
     except (AttributeError, TypeError, ValueError, KeyError) as exc:
@@ -5637,9 +4723,7 @@ def _locked_g241_release_receipt_v1(
         trusted_trust_root_cid=trusted_custodian_trust_root_cid,
         repo_root=root,
     )
-    _validate_release_ledger_authority(
-        trust_root, Path(ledger_path)
-    )
+    _validate_release_ledger_authority(trust_root, Path(ledger_path))
     source_lock = _open_source_lock(
         root,
         git_executable_path=Path(trust_root.git_executable_path),
@@ -5664,9 +4748,7 @@ def _locked_g241_release_receipt_v1(
             access_descriptor,
             ledger_role="replacement-access",
         )
-        ledger_descriptor = _open_ledger(
-            Path(ledger_path), repo_root=root, create=False
-        )
+        ledger_descriptor = _open_ledger(Path(ledger_path), repo_root=root, create=False)
         fcntl.flock(ledger_descriptor, fcntl.LOCK_EX)
         release_file_identity_cid = _ledger_file_identity_cid(
             ledger_descriptor,
@@ -5681,14 +4763,10 @@ def _locked_g241_release_receipt_v1(
         )
         if (
             records
-            and isinstance(
-                records[-1], G241ReleaseConsumptionTombstoneV1
-            )
+            and isinstance(records[-1], G241ReleaseConsumptionTombstoneV1)
             and records[-1].release_receipt_cid == requested_cid
         ):
-            raise CustodianReleaseError(
-                "requested G241 release receipt is durably spent"
-            )
+            raise CustodianReleaseError("requested G241 release receipt is durably spent")
         if (
             not records
             or not isinstance(
@@ -5702,24 +4780,16 @@ def _locked_g241_release_receipt_v1(
             )
         receipt = records[-1]
         if (
-            receipt.g232_authorization_cid
-            != canonical_authorization.authorization_cid
-            or receipt.seal_contract_cid
-            != canonical_seal.seal_contract_cid
-            or receipt.sealed_manifest_cid
-            != canonical_seal.sealed_manifest_cid
-            or receipt.authorized_variant_ids
-            != canonical_authorization.authorized_variant_ids
-            or receipt.source_commit
-            != canonical_authorization.source_commit
-            or receipt.access_ledger_authority_cid
-            != canonical_seal.access_ledger_authority_cid
-            or receipt.access_ledger_file_identity_cid
-            != access_file_identity_cid
+            receipt.g232_authorization_cid != canonical_authorization.authorization_cid
+            or receipt.seal_contract_cid != canonical_seal.seal_contract_cid
+            or receipt.sealed_manifest_cid != canonical_seal.sealed_manifest_cid
+            or receipt.authorized_variant_ids != canonical_authorization.authorized_variant_ids
+            or receipt.source_commit != canonical_authorization.source_commit
+            or receipt.access_ledger_authority_cid != canonical_seal.access_ledger_authority_cid
+            or receipt.access_ledger_file_identity_cid != access_file_identity_cid
             or receipt.access_ledger_head_cid != access_head
             or receipt.access_ledger_event_count != access_count
-            or receipt.release_ledger_file_identity_cid
-            != release_file_identity_cid
+            or receipt.release_ledger_file_identity_cid != release_file_identity_cid
             or receipt.artifact_cids["g220_replacement_holdout_seal"]
             != canonical_seal.seal_contract_cid
             or receipt.artifact_cids["g232_authorization_proposal"]
@@ -5733,12 +4803,9 @@ def _locked_g241_release_receipt_v1(
             )
         if (
             receipt.trust_root_cid != trust_root.trust_root_cid
-            or receipt.g239_authority_cid
-            != trust_root.g239_authority_cid
-            or receipt.g239_validator_key_id
-            != trust_root.validator_key_id
-            or receipt.external_validator_id
-            != trust_root.validator_id
+            or receipt.g239_authority_cid != trust_root.g239_authority_cid
+            or receipt.g239_validator_key_id != trust_root.validator_key_id
+            or receipt.external_validator_id != trust_root.validator_id
             or receipt.custodian_id != trust_root.custodian_id
             or receipt.executor_id != trust_root.executor_id
             or receipt.g239_validator_attestation_cid
@@ -5747,9 +4814,7 @@ def _locked_g241_release_receipt_v1(
                 "trusted G239 validator-attestation CID",
             )
         ):
-            raise CustodianReleaseError(
-                "durable G241 receipt differs from the custody trust root"
-            )
+            raise CustodianReleaseError("durable G241 receipt differs from the custody trust root")
         current = _inspect_current_source(
             root,
             git_executable_path=Path(trust_root.git_executable_path),
@@ -5761,9 +4826,7 @@ def _locked_g241_release_receipt_v1(
             authority_path=authority_path,
             trusted_authority_cid=trusted_authority_cid,
             validator_attestation_path=validator_attestation_path,
-            trusted_validator_attestation_cid=(
-                trusted_validator_attestation_cid
-            ),
+            trusted_validator_attestation_cid=(trusted_validator_attestation_cid),
             custodian_trust_root=trust_root,
             source_replay=_g239_replay_view(receipt),
             repo_root=root,
@@ -5776,22 +4839,16 @@ def _locked_g241_release_receipt_v1(
         if (
             external.evaluation_cid != receipt.g239_evaluation_cid
             or external.authority_cid != receipt.g239_authority_cid
-            or external.operational_receipt_cid
-            != receipt.g239_operational_receipt_cid
-            or external.validator_claim_cid
-            != receipt.g239_validator_claim_cid
-            or external.validator_attestation_cid
-            != receipt.g239_validator_attestation_cid
-            or external.validator_key_id
-            != receipt.g239_validator_key_id
-            or external.source_identity_cid
-            != receipt.source_identity_cid
+            or external.operational_receipt_cid != receipt.g239_operational_receipt_cid
+            or external.validator_claim_cid != receipt.g239_validator_claim_cid
+            or external.validator_attestation_cid != receipt.g239_validator_attestation_cid
+            or external.validator_key_id != receipt.g239_validator_key_id
+            or external.source_identity_cid != receipt.source_identity_cid
             or external.producer_id != receipt.decision_producer_id
             or external.validator_id != receipt.external_validator_id
             or external.run_plan_cid != receipt.run_plan_cid
             or external.parent_ledger_cid != receipt.parent_ledger_cid
-            or dict(external.artifact_cids)
-            != dict(receipt.artifact_cids)
+            or dict(external.artifact_cids) != dict(receipt.artifact_cids)
             or external.artifact_set_cid != receipt.artifact_set_cid
             or external.observed_at != receipt.g239_observed_at
             or external.evaluated_at != receipt.g239_evaluated_at
@@ -5808,13 +4865,8 @@ def _locked_g241_release_receipt_v1(
             git_executable_path=Path(trust_root.git_executable_path),
             expected_git_executable_cid=trust_root.git_executable_cid,
         )
-        if (
-            final_access_head != access_head
-            or not _same_current_source(current, final_source)
-        ):
-            raise CustodianReleaseError(
-                "source or access ledger changed during G241 consumption"
-            )
+        if final_access_head != access_head or not _same_current_source(current, final_source):
+            raise CustodianReleaseError("source or access ledger changed during G241 consumption")
         _revalidate_private_path(
             access_descriptor,
             Path(access_ledger_path),
@@ -5831,9 +4883,7 @@ def _locked_g241_release_receipt_v1(
         if any(value is not None for value in consume_values) and not all(
             value is not None for value in consume_values
         ):
-            raise CustodianReleaseError(
-                "G241 consumption requires purpose and executor"
-            )
+            raise CustodianReleaseError("G241 consumption requires purpose and executor")
 
         transaction: G241CustodyAccessTransactionV1 | None = None
         if all(value is not None for value in consume_values):
@@ -5844,24 +4894,14 @@ def _locked_g241_release_receipt_v1(
                 raise CustodianReleaseError(
                     "replacement holdout purpose must be evaluation or replay"
                 )
-            executor = _actor(
-                consume_executor_id, "holdout executor"
-            )
+            executor = _actor(consume_executor_id, "holdout executor")
             custodian = _dag_cid(
-                (
-                    receipt.custodian_id
-                    if consume_custodian_id is None
-                    else consume_custodian_id
-                ),
+                (receipt.custodian_id if consume_custodian_id is None else consume_custodian_id),
                 "holdout custodian",
             )
-            if (
-                executor != receipt.executor_id
-                or custodian != receipt.custodian_id
-            ):
+            if executor != receipt.executor_id or custodian != receipt.custodian_id:
                 raise CustodianReleaseError(
-                    "G241 release does not authorize this executor or "
-                    "custodian"
+                    "G241 release does not authorize this executor or custodian"
                 )
             grant = _append_locked_access_event(
                 access_descriptor,
@@ -5878,9 +4918,7 @@ def _locked_g241_release_receipt_v1(
                     trust_root=trust_root,
                     release_receipt=receipt,
                     access_grant=grant,
-                    access_ledger_file_identity_cid=(
-                        access_file_identity_cid
-                    ),
+                    access_ledger_file_identity_cid=(access_file_identity_cid),
                     purpose=purpose,
                     executor_id=executor,
                     custodian_id=custodian,
@@ -5890,9 +4928,7 @@ def _locked_g241_release_receipt_v1(
                     access_descriptor,
                     seal=canonical_seal,
                     authorization=canonical_authorization,
-                    g241_release_receipt_cid=str(
-                        receipt.receipt_cid
-                    ),
+                    g241_release_receipt_cid=str(receipt.receipt_cid),
                     purpose=purpose,
                     executor_id=executor,
                     event="custody_release_failed",
@@ -5909,9 +4945,7 @@ def _locked_g241_release_receipt_v1(
                 _purpose=purpose,
                 _executor_id=executor,
                 _repo_root=root,
-                _git_executable_path=Path(
-                    trust_root.git_executable_path
-                ),
+                _git_executable_path=Path(trust_root.git_executable_path),
                 _git_executable_cid=trust_root.git_executable_cid,
                 _source=current,
                 _access_ledger_path=Path(access_ledger_path),
@@ -5921,24 +4955,16 @@ def _locked_g241_release_receipt_v1(
         try:
             yield receipt, transaction
         finally:
-            if (
-                transaction is not None
-                and transaction.terminal_receipt is None
-            ):
+            if transaction is not None and transaction.terminal_receipt is None:
                 transaction.record_custody_failure()
             final_source = _inspect_current_source(
                 root,
-                git_executable_path=Path(
-                    trust_root.git_executable_path
-                ),
-                expected_git_executable_cid=(
-                    trust_root.git_executable_cid
-                ),
+                git_executable_path=Path(trust_root.git_executable_path),
+                expected_git_executable_cid=(trust_root.git_executable_cid),
             )
             if not _same_current_source(current, final_source):
                 raise CustodianReleaseError(
-                    "source changed during the locked G241 custody "
-                    "transaction"
+                    "source changed during the locked G241 custody transaction"
                 )
             _revalidate_private_path(
                 access_descriptor,
@@ -5997,19 +5023,13 @@ def load_and_validate_g241_release_receipt_v1(
         authority_path=authority_path,
         trusted_authority_cid=trusted_authority_cid,
         validator_attestation_path=validator_attestation_path,
-        trusted_validator_attestation_cid=(
-            trusted_validator_attestation_cid
-        ),
+        trusted_validator_attestation_cid=(trusted_validator_attestation_cid),
         custodian_trust_root_path=custodian_trust_root_path,
-        trusted_custodian_trust_root_cid=(
-            trusted_custodian_trust_root_cid
-        ),
+        trusted_custodian_trust_root_cid=(trusted_custodian_trust_root_cid),
         repo_root=repo_root,
     ) as (receipt, transaction):
         if transaction is not None:  # pragma: no cover - invariant
-            raise CustodianReleaseError(
-                "read-only G241 validation unexpectedly granted access"
-            )
+            raise CustodianReleaseError("read-only G241 validation unexpectedly granted access")
         return receipt
 
 
@@ -6043,22 +5063,16 @@ def consume_g241_release_for_access_v1(
         authority_path=authority_path,
         trusted_authority_cid=trusted_authority_cid,
         validator_attestation_path=validator_attestation_path,
-        trusted_validator_attestation_cid=(
-            trusted_validator_attestation_cid
-        ),
+        trusted_validator_attestation_cid=(trusted_validator_attestation_cid),
         custodian_trust_root_path=custodian_trust_root_path,
-        trusted_custodian_trust_root_cid=(
-            trusted_custodian_trust_root_cid
-        ),
+        trusted_custodian_trust_root_cid=(trusted_custodian_trust_root_cid),
         repo_root=repo_root,
         consume_purpose=purpose,
         consume_executor_id=executor_id,
         consume_custodian_id=custodian_id,
     ) as (_, transaction):
         if transaction is None:  # pragma: no cover - invariant
-            raise CustodianReleaseError(
-                "G241 consumption did not create an access transaction"
-            )
+            raise CustodianReleaseError("G241 consumption did not create an access transaction")
         yield transaction
 
 

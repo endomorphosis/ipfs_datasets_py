@@ -34,11 +34,18 @@ while not os.path.exists(os.path.join(work_dir, "__pyproject.toml")):
     if parent == work_dir:
         break
     work_dir = parent
-file_path = os.path.join(work_dir, "ipfs_datasets_py/data_transformation/multimedia/media_processor.py")
-md_path = os.path.join(work_dir, "ipfs_datasets_py/data_transformation/multimedia/media_processor_stubs.md")
+file_path = os.path.join(
+    work_dir, "ipfs_datasets_py/data_transformation/multimedia/media_processor.py"
+)
+md_path = os.path.join(
+    work_dir, "ipfs_datasets_py/data_transformation/multimedia/media_processor_stubs.md"
+)
 
 # Import the MediaProcessor class and its class dependencies
-from ipfs_datasets_py.data_transformation.multimedia.media_processor import MediaProcessor, make_media_processor
+from ipfs_datasets_py.data_transformation.multimedia.media_processor import (
+    MediaProcessor,
+    make_media_processor,
+)
 from ipfs_datasets_py.data_transformation.multimedia.ytdlp_wrapper import YtDlpWrapper
 from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
@@ -48,7 +55,7 @@ from tests._test_utils import (
     raise_on_bad_callable_code_quality,
     get_ast_tree,
     BadDocumentationError,
-    BadSignatureError
+    BadSignatureError,
 )
 
 # No test-specific constants needed - using fixtures
@@ -57,13 +64,13 @@ from tests._test_utils import (
 class TestConcurrentOperationScaling:
     """
     Test error isolation and sequential operation handling.
-    
+
     This test class validates MediaProcessor's ability to handle multiple operations
     and maintain isolation between operations when errors occur. Tests focus on
     externally observable behaviors through the public API.
-    
+
     Production method tested: MediaProcessor.download_and_convert()
-    
+
     Shared terminology:
     - Operation isolation: Failed operations do not affect subsequent operations
     - Sequential execution: Operations executed one after another
@@ -71,10 +78,12 @@ class TestConcurrentOperationScaling:
     """
 
     @pytest.mark.asyncio
-    async def test_when_multiple_downloads_executed_then_operations_complete_successfully(self, mock_processor, test_url):
+    async def test_when_multiple_downloads_executed_then_operations_complete_successfully(
+        self, mock_processor, test_url
+    ):
         """
         Test multiple sequential download operations complete successfully.
-        
+
         GIVEN: A MediaProcessor and multiple download URLs
         WHEN: Multiple download_and_convert operations are executed sequentially
         THEN: All operations return success status
@@ -82,23 +91,27 @@ class TestConcurrentOperationScaling:
         # Arrange
         urls = [f"{test_url}_{i}" for i in range(3)]
         expected_status = "success"
-        
+
         # Act
         results = []
         for url in urls:
             result = await mock_processor.download_and_convert(url)
             results.append(result)
-        
+
         # Assert
-        assert all(result["status"] == expected_status for result in results), f"Expected all operations to return status '{expected_status}', but got statuses: {[r['status'] for r in results]}"
+        assert all(result["status"] == expected_status for result in results), (
+            f"Expected all operations to return status '{expected_status}', but got statuses: {[r['status'] for r in results]}"
+        )
 
     @pytest.mark.asyncio
-    async def test_when_download_fails_then_other_operations_unaffected(self, tmp_path, test_url, mock_factory):
+    async def test_when_download_fails_then_other_operations_unaffected(
+        self, tmp_path, test_url, mock_factory
+    ):
         """
         Test error in one operation does not affect subsequent operations.
-        
+
         GIVEN: A MediaProcessor where first operation fails and second succeeds
-        WHEN: Two download_and_convert operations are executed sequentially  
+        WHEN: Two download_and_convert operations are executed sequentially
         THEN: Second operation returns success status despite first operation failure
         """
         # Arrange
@@ -107,28 +120,33 @@ class TestConcurrentOperationScaling:
         successful_url = f"{test_url}_success"
         expected_first_status = "error"
         expected_second_status = "success"
-        
+
         # Mock the ytdlp wrapper to fail on first URL but succeed on second
-        with patch.object(processor.ytdlp, 'download_video') as mock_download:
+        with patch.object(processor.ytdlp, "download_video") as mock_download:
             mock_download.side_effect = [
-                Exception("Download failed"), 
+                Exception("Download failed"),
                 {
                     "status": "success",
                     "output_path": str(tmp_path / "success_video.mp4"),
                     "title": "Success Video",
                     "duration": 120,
                     "filesize": 1048576,
-                    "format": "mp4"
-                }
+                    "format": "mp4",
+                },
             ]
-            
+
             # Act
             first_result = await processor.download_and_convert(failing_url)
             second_result = await processor.download_and_convert(successful_url)
-        
+
         # Assert
-        assert first_result["status"] == expected_first_status, f"Expected first operation to return status '{expected_first_status}', but got '{first_result['status']}'"
-        assert second_result["status"] == expected_second_status, f"Expected second operation to return status '{expected_second_status}', but got '{second_result['status']}'"
+        assert first_result["status"] == expected_first_status, (
+            f"Expected first operation to return status '{expected_first_status}', but got '{first_result['status']}'"
+        )
+        assert second_result["status"] == expected_second_status, (
+            f"Expected second operation to return status '{expected_second_status}', but got '{second_result['status']}'"
+        )
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

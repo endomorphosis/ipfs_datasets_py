@@ -143,23 +143,18 @@ from ipfs_datasets_py.optimizers.graphrag import (
     OntologyGenerator,
     OntologyGenerationContext,
     ExtractionStrategy,
-    DataType
+    DataType,
 )
 
 # Setup generator
-generator = OntologyGenerator(
-    ipfs_accelerate_config={
-        'model': 'bert-base-uncased',
-        'task': 'ner'
-    }
-)
+generator = OntologyGenerator(ipfs_accelerate_config={"model": "bert-base-uncased", "task": "ner"})
 
 # Create context
 context = OntologyGenerationContext(
-    data_source='legal_document.pdf',
+    data_source="legal_document.pdf",
     data_type=DataType.PDF,
-    domain='legal',
-    extraction_strategy=ExtractionStrategy.LLM_BASED
+    domain="legal",
+    extraction_strategy=ExtractionStrategy.LLM_BASED,
 )
 
 # Generate ontology
@@ -302,7 +297,7 @@ print(f"Best score: {best.final_score:.2f}")
 from ipfs_datasets_py.optimizers.graphrag import (
     MetricsCollector,
     MetricsVisualizer,
-    OntologyVisualizer
+    OntologyVisualizer,
 )
 
 # Collect metrics
@@ -326,8 +321,8 @@ graph = ontology_viz.visualize_ontology(best.ontology)
 print(ontology_viz.export_to_text(graph))
 
 # Export metrics
-with open('metrics.json', 'w') as f:
-    f.write(metrics.export_metrics('json'))
+with open("metrics.json", "w") as f:
+    f.write(metrics.export_metrics("json"))
 ```
 
 ### Using Domain Templates
@@ -339,21 +334,21 @@ from ipfs_datasets_py.optimizers.graphrag import OntologyTemplateLibrary
 library = OntologyTemplateLibrary()
 
 # Use legal template
-legal_template = library.get_template('legal')
+legal_template = library.get_template("legal")
 print(f"Legal entities: {legal_template.entity_types}")
 print(f"Legal relationships: {legal_template.relationship_types}")
 
 # Generate from template
 ontology = library.generate_from_template(
-    'legal',
+    "legal",
     parameters={
-        'parties': ['John Doe', 'Jane Smith'],
-        'obligations': ['Payment of $1000', 'Delivery of goods']
-    }
+        "parties": ["John Doe", "Jane Smith"],
+        "obligations": ["Payment of $1000", "Delivery of goods"],
+    },
 )
 
 # Merge templates for hybrid domains
-medical_legal = library.merge_templates(['medical', 'legal'])
+medical_legal = library.merge_templates(["medical", "legal"])
 ```
 
 ---
@@ -426,29 +421,35 @@ medical_legal = library.merge_templates(['medical', 'legal'])
 #### ipfs_accelerate_py
 ```python
 # Use any HuggingFace pipeline for extraction
-generator = OntologyGenerator(ipfs_accelerate_config={
-    'model': 'bert-base-uncased',
-    'task': 'token-classification',
-    'device': 'cuda'
-})
+generator = OntologyGenerator(
+    ipfs_accelerate_config={
+        "model": "bert-base-uncased",
+        "task": "token-classification",
+        "device": "cuda",
+    }
+)
 ```
 
 #### TDFOL Theorem Provers
 ```python
 # Automatic integration with all TDFOL provers
-validator = LogicValidator(prover_config={
-    'strategy': 'AUTO',  # Selects best available prover
-    'provers': ['z3', 'cvc5', 'symbolic_ai']
-})
+validator = LogicValidator(
+    prover_config={
+        "strategy": "AUTO",  # Selects best available prover
+        "provers": ["z3", "cvc5", "symbolic_ai"],
+    }
+)
 ```
 
 #### External Provers
 ```python
 # Use Z3, CVC5, SymbolicAI
-validator = LogicValidator(prover_config={
-    'provers': ['z3', 'cvc5'],
-    'strategy': 'PARALLEL'  # Run provers in parallel
-})
+validator = LogicValidator(
+    prover_config={
+        "provers": ["z3", "cvc5"],
+        "strategy": "PARALLEL",  # Run provers in parallel
+    }
+)
 ```
 
 ---

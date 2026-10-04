@@ -28,18 +28,40 @@ def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Convert the municipal-laws dataset into canonical CID-keyed parquet, KG, and vector artifacts."
     )
-    parser.add_argument("--input-root", required=True, help="Directory containing the raw *_citation.parquet and *_html.parquet files.")
-    parser.add_argument("--output-root", default="", help="Destination root for canonical parquet outputs and sidecars.")
+    parser.add_argument(
+        "--input-root",
+        required=True,
+        help="Directory containing the raw *_citation.parquet and *_html.parquet files.",
+    )
+    parser.add_argument(
+        "--output-root",
+        default="",
+        help="Destination root for canonical parquet outputs and sidecars.",
+    )
     parser.add_argument("--states", default="", help="Optional comma-separated state filter.")
     parser.add_argument("--provider", default="", help="Embeddings provider override.")
-    parser.add_argument("--model", default="thenlper/gte-small", help="Embedding model passed through the shared semantic-index builder.")
+    parser.add_argument(
+        "--model",
+        default="thenlper/gte-small",
+        help="Embedding model passed through the shared semantic-index builder.",
+    )
     parser.add_argument("--device", default="", help="Optional embeddings device override.")
     parser.add_argument("--no-faiss", action="store_true", help="Skip FAISS sidecar generation.")
-    parser.add_argument("--publish-to-hf", action="store_true", help="Upload generated artifacts to the municipal dataset repo.")
+    parser.add_argument(
+        "--publish-to-hf",
+        action="store_true",
+        help="Upload generated artifacts to the municipal dataset repo.",
+    )
     parser.add_argument("--hf-token", default="", help="Optional Hugging Face token.")
     parser.add_argument("--repo-id", default="", help="Optional Hugging Face dataset override.")
-    parser.add_argument("--no-canonical-upload", action="store_true", help="Skip uploading the canonical parquet files when publishing.")
-    parser.add_argument("--json", action="store_true", help="Print JSON instead of a short text summary.")
+    parser.add_argument(
+        "--no-canonical-upload",
+        action="store_true",
+        help="Skip uploading the canonical parquet files when publishing.",
+    )
+    parser.add_argument(
+        "--json", action="store_true", help="Print JSON instead of a short text summary."
+    )
     return parser.parse_args()
 
 
@@ -68,7 +90,9 @@ def main() -> int:
         print(f"Output root: {result['output_root']}")
         print(f"Combined parquet: {result['combined_parquet_path']}")
         print(f"Rows converted: {result['row_count']}")
-        print(f"States written: {', '.join(sorted(result['state_parquet_paths'].keys())) or 'none'}")
+        print(
+            f"States written: {', '.join(sorted(result['state_parquet_paths'].keys())) or 'none'}"
+        )
         print(f"Artifacts built: {len(result['artifact_results'])}")
     return 0
 

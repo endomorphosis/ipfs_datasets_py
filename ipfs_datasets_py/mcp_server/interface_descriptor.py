@@ -22,9 +22,7 @@ __all__ = [
 
 
 def _canonicalize(obj: Any) -> bytes:
-    return json.dumps(
-        obj, sort_keys=True, separators=(",", ":"), ensure_ascii=True
-    ).encode("utf-8")
+    return json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("utf-8")
 
 
 _CID_B32 = "abcdefghijklmnopqrstuvwxyz234567"
@@ -57,7 +55,7 @@ def compute_cid(content: bytes, *, prefix: str = "bafy") -> str:
     if prefix == "sha256:":
         return f"sha256:{hashlib.sha256(content).hexdigest()}"
     digest = hashlib.sha256(content).digest()
-    multihash = b"\x12\x20" + digest          # sha2-256 (0x12), length 32 (0x20)
+    multihash = b"\x12\x20" + digest  # sha2-256 (0x12), length 32 (0x20)
     return "b" + _multibase_base32(b"\x01\x70" + multihash)  # CIDv1 + dag-pb codec
 
 
@@ -70,7 +68,7 @@ def cid_digest(cid: str) -> str:
     s = str(cid)
     for prefix in ("bafy-mock-", "sha256:"):
         if s.startswith(prefix):
-            return s[len(prefix):][:52]
+            return s[len(prefix) :][:52]
     return s
 
 
@@ -129,10 +127,16 @@ class InterfaceDescriptor:
     methods: List[MethodSignature] = field(default_factory=list)
     errors: List[str] = field(default_factory=list)
     requires: List[str] = field(default_factory=list)
-    compatibility: CompatibilityInfo | Dict[str, List[str]] = field(default_factory=CompatibilityInfo)
+    compatibility: CompatibilityInfo | Dict[str, List[str]] = field(
+        default_factory=CompatibilityInfo
+    )
     semantic_tags: List[str] = field(default_factory=list)
-    observability: Dict[str, bool] = field(default_factory=lambda: {"trace": False, "provenance": False})
-    interaction_patterns: Dict[str, bool] = field(default_factory=lambda: {"request_response": True, "event_streams": False})
+    observability: Dict[str, bool] = field(
+        default_factory=lambda: {"trace": False, "provenance": False}
+    )
+    interaction_patterns: Dict[str, bool] = field(
+        default_factory=lambda: {"request_response": True, "event_streams": False}
+    )
     resource_cost_hints: Optional[Dict[str, Any]] = None
 
     _interface_cid: Optional[str] = field(default=None, repr=False, compare=False)

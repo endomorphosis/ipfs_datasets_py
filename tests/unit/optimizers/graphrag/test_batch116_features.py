@@ -5,6 +5,7 @@ Methods under test:
   - OntologyLearningAdapter.score_range()
   - OntologyLearningAdapter.feedback_count_above(threshold)
 """
+
 import pytest
 from unittest.mock import MagicMock
 
@@ -13,15 +14,20 @@ from unittest.mock import MagicMock
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_mediator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_mediator import OntologyMediator
+
     gen = MagicMock()
     critic = MagicMock()
     return OntologyMediator(generator=gen, critic=critic)
 
 
 def _make_adapter():
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter()
 
 
@@ -32,6 +38,7 @@ def _push_feedback(adapter, score):
 # ---------------------------------------------------------------------------
 # OntologyMediator.apply_action_bulk
 # ---------------------------------------------------------------------------
+
 
 class TestApplyActionBulk:
     def test_empty_list(self):
@@ -68,6 +75,7 @@ class TestApplyActionBulk:
 # OntologyLearningAdapter.score_range
 # ---------------------------------------------------------------------------
 
+
 class TestScoreRange:
     def test_no_feedback_zero_range(self):
         a = _make_adapter()
@@ -99,6 +107,7 @@ class TestScoreRange:
 # ---------------------------------------------------------------------------
 # OntologyLearningAdapter.feedback_count_above
 # ---------------------------------------------------------------------------
+
 
 class TestFeedbackCountAbove:
     def test_no_feedback(self):

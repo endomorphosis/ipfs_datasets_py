@@ -339,9 +339,7 @@ def _bound_value(value: Any, *, depth: int = 0) -> Any:
         items = list(value.items())
         if len(items) > MAX_COLLECTION_ITEMS:
             items = items[:MAX_COLLECTION_ITEMS]
-        return {
-            str(key)[:256]: _bound_value(item, depth=depth + 1) for key, item in items
-        }
+        return {str(key)[:256]: _bound_value(item, depth=depth + 1) for key, item in items}
     if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         seq = list(value)[:MAX_COLLECTION_ITEMS]
         return [_bound_value(item, depth=depth + 1) for item in seq]
@@ -448,7 +446,13 @@ def _error_envelope(
         "witnesses": [],
         "unsupported_features": list(extra.pop("unsupported_features", []) or []),
         "diagnostics": [_redact_text(error)],
-        "cache": {"source": "mcp", "hit": False, "cache_key": "", "scope": "none", "freshness": "not_cached"},
+        "cache": {
+            "source": "mcp",
+            "hit": False,
+            "cache_key": "",
+            "scope": "none",
+            "freshness": "not_cached",
+        },
         "request_id": str(extra.pop("request_id", "") or ""),
         "property_id": "",
         "provider_id": str(extra.pop("provider_id", "") or ""),
@@ -573,9 +577,7 @@ async def verification_compile(
         )
     return _run_facade(
         "verification_compile",
-        lambda: _get_api().compile_verification_artifact(
-            parsed, target=tgt, request_id=rid
-        ),
+        lambda: _get_api().compile_verification_artifact(parsed, target=tgt, request_id=rid),
     )
 
 
@@ -613,9 +615,7 @@ async def verification_monitor(
     """Evaluate a runtime MTL formula over observations."""
 
     try:
-        formula_value = (
-            _parse_jsonish(formula, "formula") if isinstance(formula, str) else formula
-        )
+        formula_value = _parse_jsonish(formula, "formula") if isinstance(formula, str) else formula
         obs_value = (
             _parse_jsonish(observations, "observations")
             if isinstance(observations, str)
@@ -781,11 +781,7 @@ async def verification_verify_receipt(
 
     try:
         parsed = _parse_jsonish(receipt, "receipt") if receipt is not None else None
-        exp = (
-            _parse_jsonish(expectation, "expectation")
-            if expectation is not None
-            else None
-        )
+        exp = _parse_jsonish(expectation, "expectation") if expectation is not None else None
         rid = _optional_str(request_id, "request_id")
     except (TypeError, ValueError) as error:
         return _error_envelope(
@@ -911,9 +907,7 @@ async def verification_install_provider(
     rid = _optional_str(request_id, "request_id")
     return _run_facade(
         "verification_install_provider",
-        lambda: _get_api().install_provider(
-            pid, allow_install=bool(allow_install), request_id=rid
-        ),
+        lambda: _get_api().install_provider(pid, allow_install=bool(allow_install), request_id=rid),
     )
 
 

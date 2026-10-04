@@ -309,12 +309,10 @@ class SolidityParseBackend(Protocol):
     """Optional injectable parse backend (never auto-installed)."""
 
     @property
-    def backend_id(self) -> str:
-        ...
+    def backend_id(self) -> str: ...
 
     @property
-    def available(self) -> bool:
-        ...
+    def available(self) -> bool: ...
 
     def parse_source(
         self,
@@ -324,8 +322,7 @@ class SolidityParseBackend(Protocol):
         bounds: ParserBounds,
         config: ParserConfig,
         context: OperationContext | None,
-    ) -> SolidityParseResult:
-        ...
+    ) -> SolidityParseResult: ...
 
 
 def _line_col_map(text: str) -> list[int]:
@@ -454,7 +451,9 @@ def _match_braces(text: str, open_brace_index: int, max_nesting: int) -> tuple[i
     return -1, max_depth
 
 
-def _parse_params(params_text: str, base_offset: int, starts: list[int]) -> tuple[ParameterFact, ...]:
+def _parse_params(
+    params_text: str, base_offset: int, starts: list[int]
+) -> tuple[ParameterFact, ...]:
     if not params_text.strip():
         return ()
     parts: list[str] = []
@@ -536,7 +535,9 @@ def _parse_params(params_text: str, base_offset: int, starts: list[int]) -> tupl
     return tuple(facts)
 
 
-def _parse_suffix_flags(suffix: str) -> tuple[Visibility, StateMutability, tuple[str, ...], bool, bool]:
+def _parse_suffix_flags(
+    suffix: str,
+) -> tuple[Visibility, StateMutability, tuple[str, ...], bool, bool]:
     visibility = Visibility.DEFAULT
     mutability = StateMutability.UNKNOWN
     modifiers: list[str] = []
@@ -584,7 +585,9 @@ def _parse_returns(suffix: str, match_start: int, starts: list[int]) -> tuple[Pa
     return _parse_params(m.group(1), match_start + m.start(1), starts)
 
 
-def _parse_inheritance(bases: str, base_offset: int, starts: list[int]) -> tuple[InheritanceRef, ...]:
+def _parse_inheritance(
+    bases: str, base_offset: int, starts: list[int]
+) -> tuple[InheritanceRef, ...]:
     if not bases or not bases.strip():
         return ()
     parts: list[str] = []
@@ -619,12 +622,8 @@ def _parse_inheritance(bases: str, base_offset: int, starts: list[int]) -> tuple
         args: tuple[str, ...] = ()
         arg_m = re.search(r"\((.*)\)\s*$", piece)
         if arg_m:
-            args = tuple(
-                a.strip() for a in arg_m.group(1).split(",") if a.strip()
-            )
-        span = _span_at(
-            starts, base_offset + rel, base_offset + rel + len(piece)
-        )
+            args = tuple(a.strip() for a in arg_m.group(1).split(",") if a.strip())
+        span = _span_at(starts, base_offset + rel, base_offset + rel + len(piece))
         refs.append(InheritanceRef(name=name, span=span, arguments=args))
     return tuple(refs)
 
@@ -787,15 +786,12 @@ class InertSolidityBackend:
                 identity=identity,
                 bounds=bounds,
                 config=config,
-                usage=ParseUsage(
-                    source_bytes=byte_length, elapsed_ms=_elapsed_ms()
-                ),
+                usage=ParseUsage(source_bytes=byte_length, elapsed_ms=_elapsed_ms()),
                 diagnostics=(
                     ParseDiagnostic(
                         code="max_source_bytes",
                         message=(
-                            f"source is {byte_length} bytes; "
-                            f"limit is {bounds.max_source_bytes}"
+                            f"source is {byte_length} bytes; limit is {bounds.max_source_bytes}"
                         ),
                         severity=DiagnosticSeverity.LIMIT,
                     ),
@@ -900,9 +896,7 @@ class InertSolidityBackend:
         for m in _IMPORT_NAMED_RE.finditer(cleaned):
             _check_context()
             symbols = tuple(
-                s.strip().split()[0]
-                for s in m.group("symbols").split(",")
-                if s.strip()
+                s.strip().split()[0] for s in m.group("symbols").split(",") if s.strip()
             )
             _add_import(
                 m.group("path"),
@@ -952,9 +946,7 @@ class InertSolidityBackend:
                 kind = ContractKind.UNKNOWN
             name = m.group("name")
             open_brace = m.end() - 1  # points at '{'
-            close, depth = _match_braces(
-                cleaned, open_brace, bounds.max_nesting
-            )
+            close, depth = _match_braces(cleaned, open_brace, bounds.max_nesting)
             budget.note_nesting(depth)
             if close < 0:
                 span = _span_at(starts, m.start(), m.end())
@@ -998,9 +990,7 @@ class InertSolidityBackend:
             type_unsupported: list[UnsupportedSyntaxFact] = []
 
             def abs_span(rel_start: int, rel_end: int) -> SourceSpan:
-                return _span_at(
-                    starts, body_start + rel_start, body_start + rel_end
-                )
+                return _span_at(starts, body_start + rel_start, body_start + rel_end)
 
             # Nested type markers as unsupported-for-deep-extraction (still noted).
             for um in _STRUCT_RE.finditer(body):
@@ -1138,9 +1128,7 @@ class InertSolidityBackend:
             ) -> FunctionFact | None:
                 if budget.limited or not budget.use_decl() or not budget.use_node():
                     return None
-                visibility, mutability, mods, is_virtual, is_override = (
-                    _parse_suffix_flags(suffix)
-                )
+                visibility, mutability, mods, is_virtual, is_override = _parse_suffix_flags(suffix)
                 params = _parse_params(params_text, params_abs, starts)
                 returns = _parse_returns(suffix, body_start + start, starts)
                 # Body: search after the full match end.
@@ -1150,16 +1138,16 @@ class InertSolidityBackend:
                 body_span: SourceSpan | None = None
                 body_text = ""
                 if j < len(body) and body[j] == "{":
-                    close_i, depth_i = _match_braces(
-                        body, j, bounds.max_nesting
-                    )
+                    close_i, depth_i = _match_braces(body, j, bounds.max_nesting)
                     budget.note_nesting(depth_i)
                     if close_i >= 0:
                         body_span = abs_span(j, close_i + 1)
                         body_text = body[j + 1 : close_i]
                 fact = FunctionFact(
                     name=name,
-                    span=abs_span(start, end if body_span is None else body_span.end_offset - body_start),
+                    span=abs_span(
+                        start, end if body_span is None else body_span.end_offset - body_start
+                    ),
                     kind=kind,
                     visibility=visibility,
                     state_mutability=mutability,
@@ -1255,10 +1243,7 @@ class InertSolidityBackend:
                 )
                 if fact is not None:
                     functions.append(fact)
-                    if (
-                        config.extract_value_effects
-                        and budget.use_fact()
-                    ):
+                    if config.extract_value_effects and budget.use_fact():
                         value_effects.append(
                             ValueEffectFact(
                                 kind=ValueEffectKind.PAYABLE_RECEIVE,
@@ -1277,11 +1262,7 @@ class InertSolidityBackend:
                     end=fbm.end(),
                     params_text=fbm.group("params") or "",
                     params_abs=body_start
-                    + (
-                        fbm.start("params")
-                        if fbm.group("params") is not None
-                        else fbm.start()
-                    ),
+                    + (fbm.start("params") if fbm.group("params") is not None else fbm.start()),
                     suffix=fbm.group("suffix") or "",
                 )
                 if fact is not None:
@@ -1548,9 +1529,7 @@ class InertSolidityBackend:
                 )
 
         if config.extract_storage:
-            known_state_ish = re.findall(
-                r"\b([A-Za-z_][\w$]*)\b", body_text
-            )
+            known_state_ish = re.findall(r"\b([A-Za-z_][\w$]*)\b", body_text)
             # Assignment writes
             for m in _ASSIGNMENT_RE.finditer(body_text):
                 if not budget.use_fact():
@@ -1580,9 +1559,7 @@ class InertSolidityBackend:
                 )
             # Simple reads: bare identifier followed by non-assign operators
             # Keep light to avoid noise; mark known this.x reads.
-            for m in re.finditer(
-                r"\bthis\.([A-Za-z_][\w$]*)\b", body_text
-            ):
+            for m in re.finditer(r"\bthis\.([A-Za-z_][\w$]*)\b", body_text):
                 if not budget.use_fact():
                     return
                 storage_accesses.append(
@@ -1600,9 +1577,7 @@ class InertSolidityBackend:
                 if not budget.use_fact() or not budget.use_node():
                     return
                 open_i = m.end() - 1
-                close_i, depth_i = _match_braces(
-                    body_text, open_i, budget.bounds.max_nesting
-                )
+                close_i, depth_i = _match_braces(body_text, open_i, budget.bounds.max_nesting)
                 budget.note_nesting(depth_i)
                 if close_i < 0:
                     type_unsupported.append(
@@ -1861,9 +1836,7 @@ def _coerce_artifact(
             elif isinstance(raw, (bytes, bytearray)):
                 source = bytes(raw).decode("utf-8")
         if not isinstance(source, str):
-            raise InvalidRequestError(
-                "artifact mapping must include string source/text/content"
-            )
+            raise InvalidRequestError("artifact mapping must include string source/text/content")
         path = str(artifact.get("path") or artifact.get("name") or "")
         evidence = {
             k: artifact[k]

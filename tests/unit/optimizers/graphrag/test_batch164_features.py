@@ -7,15 +7,21 @@ Methods under test:
   - OntologyPipeline.run_score_variance()
   - OntologyOptimizer.score_moving_sum(n)
 """
+
 import pytest
 from unittest.mock import MagicMock
 
 
 def _make_score(**kwargs):
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+
     defaults = dict(
-        completeness=0.5, consistency=0.5, clarity=0.5,
-        granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5,
+        completeness=0.5,
+        consistency=0.5,
+        clarity=0.5,
+        granularity=0.5,
+        relationship_coherence=0.5,
+        domain_alignment=0.5,
     )
     defaults.update(kwargs)
     return CriticScore(**defaults)
@@ -23,16 +29,19 @@ def _make_score(**kwargs):
 
 def _make_critic():
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
     return OntologyCritic(use_llm=False)
 
 
 def _make_entity(eid, text):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
     return Entity(id=eid, type="T", text=text)
 
 
 def _make_result(entities):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
     return EntityExtractionResult(
         entities=entities,
         relationships=[],
@@ -44,11 +53,13 @@ def _make_result(entities):
 
 def _make_generator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
     return OntologyGenerator()
 
 
 def _make_pipeline():
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     return OntologyPipeline()
 
 
@@ -60,6 +71,7 @@ def _push_run(p, score):
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
@@ -77,6 +89,7 @@ def _push_opt(o, avg):
 # OntologyCritic.dimension_mean
 # ---------------------------------------------------------------------------
 
+
 class TestDimensionMean:
     def test_all_equal(self):
         critic = _make_critic()
@@ -85,27 +98,46 @@ class TestDimensionMean:
 
     def test_mixed(self):
         critic = _make_critic()
-        score = _make_score(completeness=1.0, consistency=0.0, clarity=0.5,
-                            granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5)
+        score = _make_score(
+            completeness=1.0,
+            consistency=0.0,
+            clarity=0.5,
+            granularity=0.5,
+            relationship_coherence=0.5,
+            domain_alignment=0.5,
+        )
         mean = critic.dimension_mean(score)
         assert 0.0 < mean < 1.0
 
     def test_all_zero(self):
         critic = _make_critic()
-        score = _make_score(completeness=0.0, consistency=0.0, clarity=0.0,
-                            granularity=0.0, relationship_coherence=0.0, domain_alignment=0.0)
+        score = _make_score(
+            completeness=0.0,
+            consistency=0.0,
+            clarity=0.0,
+            granularity=0.0,
+            relationship_coherence=0.0,
+            domain_alignment=0.0,
+        )
         assert critic.dimension_mean(score) == pytest.approx(0.0)
 
     def test_all_one(self):
         critic = _make_critic()
-        score = _make_score(completeness=1.0, consistency=1.0, clarity=1.0,
-                            granularity=1.0, relationship_coherence=1.0, domain_alignment=1.0)
+        score = _make_score(
+            completeness=1.0,
+            consistency=1.0,
+            clarity=1.0,
+            granularity=1.0,
+            relationship_coherence=1.0,
+            domain_alignment=1.0,
+        )
         assert critic.dimension_mean(score) == pytest.approx(1.0)
 
 
 # ---------------------------------------------------------------------------
 # OntologyCritic.dimension_count_above
 # ---------------------------------------------------------------------------
+
 
 class TestDimensionCountAbove:
     def test_none_above(self):
@@ -115,8 +147,14 @@ class TestDimensionCountAbove:
 
     def test_all_above(self):
         critic = _make_critic()
-        score = _make_score(completeness=0.9, consistency=0.8, clarity=0.7,
-                            granularity=0.6, relationship_coherence=0.75, domain_alignment=0.85)
+        score = _make_score(
+            completeness=0.9,
+            consistency=0.8,
+            clarity=0.7,
+            granularity=0.6,
+            relationship_coherence=0.75,
+            domain_alignment=0.85,
+        )
         assert critic.dimension_count_above(score, threshold=0.5) == 6
 
     def test_partial(self):
@@ -128,6 +166,7 @@ class TestDimensionCountAbove:
 # ---------------------------------------------------------------------------
 # OntologyGenerator.entity_text_lengths
 # ---------------------------------------------------------------------------
+
 
 class TestEntityTextLengths:
     def test_empty_result(self):
@@ -150,6 +189,7 @@ class TestEntityTextLengths:
 # ---------------------------------------------------------------------------
 # OntologyPipeline.run_score_variance
 # ---------------------------------------------------------------------------
+
 
 class TestRunScoreVariance:
     def test_empty_returns_zero(self):
@@ -178,6 +218,7 @@ class TestRunScoreVariance:
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.score_moving_sum
 # ---------------------------------------------------------------------------
+
 
 class TestScoreMovingSum:
     def test_empty_returns_zero(self):

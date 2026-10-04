@@ -61,16 +61,11 @@ def test_python_frontend_emits_normalized_semantic_facts() -> None:
     assert record.frontend.language == "python"
     assert record.frontend.frontend_name == "cpython-ast"
     assert record.frontend.frontend_version == "1.2.1"
-    assert record.provenance.source_cid == cid_for_bytes(
-        REPRESENTATIVE_SOURCE.encode()
-    )
+    assert record.provenance.source_cid == cid_for_bytes(REPRESENTATIVE_SOURCE.encode())
     assert record.module.name == "pkg.service"
     assert record.module.export_names == ("Service",)
 
-    imports = {
-        (item.module, item.imported_name, item.local_name)
-        for item in record.imports
-    }
+    imports = {(item.module, item.imported_name, item.local_name) for item in record.imports}
     assert ("collections", "defaultdict", "dd") in imports
     assert (".helpers", "helper", "helper") in imports
 
@@ -112,9 +107,7 @@ def test_python_frontend_emits_normalized_semantic_facts() -> None:
         "object_state",
     }
     assert any(
-        item.kind == "object_state"
-        and item.operation == "write"
-        and item.subject == "cls.state"
+        item.kind == "object_state" and item.operation == "write" and item.subject == "cls.state"
         for item in record.effects
     )
 
@@ -131,16 +124,12 @@ def value():
     definitions = [item for item in record.symbols if item.name == "value"]
     assert [item.definition_ordinal for item in definitions] == [0, 1, 2]
     assert len({item.symbol_id for item in definitions}) == 3
-    assert any(
-        item.code == "python.duplicate_definition"
-        for item in record.diagnostics
-    )
+    assert any(item.code == "python.duplicate_definition" for item in record.diagnostics)
     missing = [item for item in record.references if item.name == "missing"]
     assert missing
     assert all(item.context in {"call", "read"} for item in missing)
     assert any(
-        item.code == "python.undefined_reference_candidate"
-        and item.span == missing[0].span
+        item.code == "python.undefined_reference_candidate" and item.span == missing[0].span
         for item in record.diagnostics
     )
     for payload in [item.to_dict() for item in missing]:
@@ -203,30 +192,20 @@ match payload:
     comprehension_scope = next(
         item.scope_id for item in record.scopes if item.kind == "comprehension"
     )
-    lambda_scope = next(
-        item.scope_id for item in record.scopes if item.kind == "lambda"
-    )
+    lambda_scope = next(item.scope_id for item in record.scopes if item.kind == "lambda")
 
     missing_call = next(item for item in record.calls if item.callee_name == "missing")
     source_read = next(
-        item
-        for item in record.references
-        if item.name == "source" and item.context == "read"
+        item for item in record.references if item.name == "source" and item.context == "read"
     )
     item_reads = [
-        item
-        for item in record.references
-        if item.name == "item" and item.context == "read"
+        item for item in record.references if item.name == "item" and item.context == "read"
     ]
     assert missing_call.scope_id == module_scope
     assert source_read.scope_id == module_scope
-    assert item_reads and {item.scope_id for item in item_reads} == {
-        comprehension_scope
-    }
+    assert item_reads and {item.scope_id for item in item_reads} == {comprehension_scope}
     assert any(
-        item.name == "value"
-        and item.context == "read"
-        and item.scope_id == lambda_scope
+        item.name == "value" and item.context == "read" and item.scope_id == lambda_scope
         for item in record.references
     )
 
@@ -235,9 +214,7 @@ match payload:
         for item in record.diagnostics
         if item.code == "python.undefined_reference_candidate"
     }
-    assert {"missing", "source", "class_value", "operation", "payload"} <= (
-        undefined_names
-    )
+    assert {"missing", "source", "class_value", "operation", "payload"} <= (undefined_names)
     assert {"module_value", "item", "value", "error", "captured", "rest"}.isdisjoint(
         undefined_names
     )
@@ -261,37 +238,23 @@ class hidden_public_name:
     kept = next(item for item in record.symbols if item.name == "kept")
     assert record.module.export_names == ("kept",)
     assert kept.decorator_names == ("decorate",)
-    assert any(
-        item.code == "python.repeated_decorator"
-        for item in record.unsupported
-    )
+    assert any(item.code == "python.repeated_decorator" for item in record.unsupported)
 
     implicit = extract("import public_module as imported\n_private = 1\n")
     assert implicit.module.export_names == ("imported",)
 
     dynamic = extract("__all__ = exported_names\npublic_name = 1\n")
     assert dynamic.module.export_names == ()
-    assert any(
-        item.code == "python.dynamic_exports"
-        for item in dynamic.unsupported
-    )
+    assert any(item.code == "python.dynamic_exports" for item in dynamic.unsupported)
 
 
 def test_malformed_dynamic_and_wildcard_constructs_fail_explicitly() -> None:
     malformed = extract("def broken(:\n")
-    assert {item.code for item in malformed.diagnostics} == {
-        "python.parse_error"
-    }
-    assert {item.code for item in malformed.unsupported} == {
-        "python.parse_error"
-    }
+    assert {item.code for item in malformed.diagnostics} == {"python.parse_error"}
+    assert {item.code for item in malformed.unsupported} == {"python.parse_error"}
     assert not malformed.symbols
 
-    dynamic = extract(
-        "from plugin import *\n"
-        "exec(payload)\n"
-        "module = __import__(name)\n"
-    )
+    dynamic = extract("from plugin import *\nexec(payload)\nmodule = __import__(name)\n")
     codes = {item.code for item in dynamic.unsupported}
     assert "python.wildcard_import" in codes
     assert "python.dynamic_execution" in codes
@@ -310,8 +273,7 @@ binary = b"\\x00".hex()
         "str_literal.join",
     }
     assert all(
-        not any(character.isspace() for character in item.name)
-        for item in record.references
+        not any(character.isspace() for character in item.name) for item in record.references
     )
     assert all(
         not any(not character.isprintable() for character in item.name)
@@ -324,9 +286,7 @@ def test_resource_and_encoding_failures_are_durable_unsupported_records() -> Non
         "value = 1\n",
         path="value.py",
     )
-    assert [item.code for item in bounded.unsupported] == [
-        "python.resource_limit"
-    ]
+    assert [item.code for item in bounded.unsupported] == ["python.resource_limit"]
     assert not bounded.symbols
 
     invalid = PythonASTExtractor().extract(
@@ -334,20 +294,14 @@ def test_resource_and_encoding_failures_are_durable_unsupported_records() -> Non
         path="invalid.py",
     )
     assert invalid.provenance.source_cid == cid_for_bytes(b"# \xff\n")
-    assert [item.code for item in invalid.unsupported] == [
-        "python.invalid_encoding"
-    ]
+    assert [item.code for item in invalid.unsupported] == ["python.invalid_encoding"]
 
     deeply_nested = PythonASTExtractor().extract(
         "value = " + "+".join(["1"] * 500) + "\n",
         path="deep.py",
     )
-    assert [item.construct for item in deeply_nested.unsupported] == [
-        "frontend_traversal"
-    ]
-    assert [item.code for item in deeply_nested.diagnostics] == [
-        "python.resource_limit"
-    ]
+    assert [item.construct for item in deeply_nested.unsupported] == ["frontend_traversal"]
+    assert [item.code for item in deeply_nested.diagnostics] == ["python.resource_limit"]
 
 
 def test_utf8_byte_spans_are_exact_across_unicode_and_crlf() -> None:
@@ -355,13 +309,9 @@ def test_utf8_byte_spans_are_exact_across_unicode_and_crlf() -> None:
     record = extract(source)
     source_bytes = source.encode("utf-8")
     read = next(
-        item
-        for item in record.references
-        if item.name == "café" and item.context == "read"
+        item for item in record.references if item.name == "café" and item.context == "read"
     )
-    assert source_bytes[read.span.start_byte : read.span.end_byte] == "café".encode(
-        "utf-8"
-    )
+    assert source_bytes[read.span.start_byte : read.span.end_byte] == "café".encode("utf-8")
     assert read.span.start_line == 2
     assert read.span.start_column == len("print(".encode("utf-8"))
 
@@ -380,11 +330,7 @@ def test_analyzed_source_is_never_imported_or_executed(tmp_path: Path) -> None:
 
 
 def test_monolith_duplicate_definitions_are_reproduced() -> None:
-    monolith = (
-        Path(__file__).resolve().parents[4]
-        / "ipfs_datasets_py"
-        / "ipfs_datasets.py"
-    )
+    monolith = Path(__file__).resolve().parents[4] / "ipfs_datasets_py" / "ipfs_datasets.py"
     record = PythonASTExtractor().extract(
         monolith.read_bytes(),
         path="ipfs_datasets_py/ipfs_datasets.py",
@@ -413,10 +359,7 @@ def test_compatibility_constructor_round_trip_and_golden_root() -> None:
     assert record.verify_cid(record.cid) == record.cid
     # Golden identity binds source, frontend/toolchain, normalized facts and
     # the shared AST schema.  Update only with an explicit compatibility review.
-    assert (
-        record.cid
-        == "baguqeeragsxt4uifydwte5ujqp7ndtnm65blcjqxmynhuyosto3tecnl7qcq"
-    )
+    assert record.cid == "baguqeeragsxt4uifydwte5ujqp7ndtnm65blcjqxmynhuyosto3tecnl7qcq"
 
 
 def test_frontend_is_deterministic_across_fresh_processes() -> None:

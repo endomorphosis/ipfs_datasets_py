@@ -207,9 +207,7 @@ def test_validate_identities_and_single_use_access(tmp_path: Path) -> None:
     freeze = load_candidate_freeze()
     auth = load_holdout_authorization()
     seal = load_frozen_blind_holdout_seal()
-    identities = validate_identities_for_access(
-        authorization=auth, freeze=freeze, seal=seal
-    )
+    identities = validate_identities_for_access(authorization=auth, freeze=freeze, seal=seal)
     assert identities["authorization_cid"]
     assert identities["powered"] is True
 
@@ -430,8 +428,7 @@ def test_selection_gates_and_named_residuals() -> None:
     assert any(row["case_id"] == "residual" for row in residuals)
     assert all(row["population"] == "blind_holdout" for row in residuals)
     assert all(
-        "newly authored blind population" in str(row["recommended_next_wave"])
-        for row in residuals
+        "newly authored blind population" in str(row["recommended_next_wave"]) for row in residuals
     )
 
 
@@ -494,16 +491,9 @@ def test_one_shot_evaluation_with_synthetic_scorer_writes_public_artifacts(
     assert remeasure["access_ledger_cid"] == bundle["access_ledger"]["ledger_cid"]
 
     promotion = bundle["promotion_decision"]
-    assert promotion["decision"]["decision_outcome"] == (
-        DECISION_GENERALIZATION_NO_IMPROVEMENT
-    )
+    assert promotion["decision"]["decision_outcome"] == (DECISION_GENERALIZATION_NO_IMPROVEMENT)
     assert promotion["post_access_policy"]["retune_against_this_blind_holdout"] is False
-    assert (
-        promotion["post_access_policy"][
-            "seed_new_board_requires_fresh_blind_population"
-        ]
-        is True
-    )
+    assert promotion["post_access_policy"]["seed_new_board_requires_fresh_blind_population"] is True
 
     # Public artifacts must not embed gold or source bodies.
     for payload in (remeasure, promotion, bundle["access_ledger"]):

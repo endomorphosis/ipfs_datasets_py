@@ -18,63 +18,61 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
 # Import the necessary modules
 from ipfs_datasets_py.optimizers.optimizer_visualization_integration import (
     LiveOptimizerVisualization,
-    setup_optimizer_visualization
+    setup_optimizer_visualization,
 )
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
+
 def parse_arguments():
     """Parse command line arguments."""
-    parser = argparse.ArgumentParser(description='RAG Query Optimizer Visualization Demo')
+    parser = argparse.ArgumentParser(description="RAG Query Optimizer Visualization Demo")
     parser.add_argument(
-        '--output-dir',
+        "--output-dir",
         type=str,
         default=None,
-        help='Directory for output visualizations (default: temp directory)'
+        help="Directory for output visualizations (default: temp directory)",
     )
     parser.add_argument(
-        '--interval',
+        "--interval",
         type=int,
         default=300,  # 5 minutes
-        help='Update interval in seconds for visualizations (default: 300)'
+        help="Update interval in seconds for visualizations (default: 300)",
     )
     parser.add_argument(
-        '--cycles',
-        type=int,
-        default=15,
-        help='Number of learning cycles to simulate (default: 15)'
+        "--cycles", type=int, default=15, help="Number of learning cycles to simulate (default: 15)"
     )
     parser.add_argument(
-        '--adaptations',
+        "--adaptations",
         type=int,
         default=30,
-        help='Number of parameter adaptations to simulate (default: 30)'
+        help="Number of parameter adaptations to simulate (default: 30)",
     )
     parser.add_argument(
-        '--strategies',
+        "--strategies",
         type=int,
         default=45,
-        help='Number of strategy evaluations to simulate (default: 45)'
+        help="Number of strategy evaluations to simulate (default: 45)",
     )
     parser.add_argument(
-        '--run-time',
+        "--run-time",
         type=int,
         default=600,  # 10 minutes
-        help='Total run time in seconds (default: 600)'
+        help="Total run time in seconds (default: 600)",
     )
     parser.add_argument(
-        '--dashboard-name',
+        "--dashboard-name",
         type=str,
-        default='optimizer_learning_dashboard.html',
-        help='Filename for the HTML dashboard (default: optimizer_learning_dashboard.html)'
+        default="optimizer_learning_dashboard.html",
+        help="Filename for the HTML dashboard (default: optimizer_learning_dashboard.html)",
     )
 
     return parser.parse_args()
+
 
 def main():
     """Run the main demo."""
@@ -95,15 +93,13 @@ def main():
         metrics_dir=os.path.join(output_dir, "metrics"),
         visualization_dir=os.path.join(output_dir, "visualizations"),
         visualization_interval=args.interval,
-        dashboard_filename=args.dashboard_name
+        dashboard_filename=args.dashboard_name,
     )
 
     # Inject sample data
     logger.info("Injecting initial sample data...")
     visualization.inject_sample_data(
-        num_cycles=args.cycles,
-        num_adaptations=args.adaptations,
-        num_strategies=args.strategies
+        num_cycles=args.cycles, num_adaptations=args.adaptations, num_strategies=args.strategies
     )
 
     # Update visualizations
@@ -135,9 +131,9 @@ def main():
                 visualization.inject_sample_data(
                     num_cycles=max(1, args.cycles // 5),
                     num_adaptations=max(2, args.adaptations // 5),
-                    num_strategies=max(3, args.strategies // 5)
+                    num_strategies=max(3, args.strategies // 5),
                 )
-                logger.info(f"Injected additional sample data (update {num_updates+1})")
+                logger.info(f"Injected additional sample data (update {num_updates + 1})")
 
             num_updates += 1
 
@@ -157,20 +153,24 @@ def main():
         final_results = visualization.update_visualizations()
 
         # Print final dashboard path
-        if 'dashboard' in final_results:
-            dashboard_path = final_results['dashboard']
+        if "dashboard" in final_results:
+            dashboard_path = final_results["dashboard"]
             logger.info(f"Final dashboard available at: {dashboard_path}")
 
             # Try to open the dashboard in a browser
             try:
                 import webbrowser
+
                 webbrowser.open(f"file://{os.path.abspath(dashboard_path)}")
                 logger.info("Opened dashboard in web browser")
             except:
                 logger.warning("Could not open dashboard in web browser automatically")
 
         logger.info(f"Demo complete! All visualization files are in {output_dir}")
-        logger.info(f"To view the dashboard directly, open: {os.path.join(output_dir, 'visualizations', args.dashboard_name)}")
+        logger.info(
+            f"To view the dashboard directly, open: {os.path.join(output_dir, 'visualizations', args.dashboard_name)}"
+        )
+
 
 if __name__ == "__main__":
     main()

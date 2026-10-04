@@ -36,9 +36,7 @@ from ipfs_datasets_py.logic.security_ir.model import (
 
 
 def _cid(label: str) -> str:
-    return canonical_identity(
-        {"label": label}, domain="test", schema_version="test/v1"
-    ).cid
+    return canonical_identity({"label": label}, domain="test", schema_version="test/v1").cid
 
 
 SOURCE_SNAPSHOT_CID = _cid("source-snapshot")
@@ -76,12 +74,8 @@ def _attributes() -> CVEfixesPolicyAttributes:
                 "missing_canonicalization",
             ),
         ),
-        effects=(
-            term(CVEfixesTermKind.EFFECT, "read_outside_allowed_root"),
-        ),
-        mitigations=(
-            term(CVEfixesTermKind.MITIGATION, "canonicalize_and_confine"),
-        ),
+        effects=(term(CVEfixesTermKind.EFFECT, "read_outside_allowed_root"),),
+        mitigations=(term(CVEfixesTermKind.MITIGATION, "canonicalize_and_confine"),),
         language=term(CVEfixesTermKind.LANGUAGE, "python"),
         scope=term(CVEfixesTermKind.SCOPE, "filesystem"),
         cve_ids=("CVE-2024-12345",),
@@ -133,28 +127,23 @@ def test_grounded_candidate_maps_to_canonical_declaration_without_authority() ->
 
     assert isinstance(declaration, SecurityIR)
     assert len(declaration.sources) == 1
-    assert declaration.sources[0].revision == (
-        "d4f5c4ea65329d9ccbb8a3b3149e5d06eda5edb2"
-    )
+    assert declaration.sources[0].revision == ("d4f5c4ea65329d9ccbb8a3b3149e5d06eda5edb2")
     assert declaration.sources[0].review_status == "observed_candidate"
     assert len(declaration.resources) == 1
     assert declaration.resources[0].kind == "filesystem"
     assert declaration.policies[0].effect is PolicyEffect.DENY
-    assert declaration.policies[0].resource_ids == (
-        declaration.resources[0].resource_id,
-    )
+    assert declaration.policies[0].resource_ids == (declaration.resources[0].resource_id,)
     assert len(declaration.assumptions) == 2
     assert declaration.claims[0].assumption_ids == tuple(
         item.assumption_id for item in declaration.assumptions
     )
-    assert declaration.claims[0].policy_ids == (
-        declaration.policies[0].policy_id,
-    )
+    assert declaration.claims[0].policy_ids == (declaration.policies[0].policy_id,)
 
     policy_attributes = declaration.policies[0].attributes
-    assert CVEfixesPolicyAttributes.from_dict(
-        policy_attributes[CVEFIXES_POLICY_ATTRIBUTES_KEY]
-    ) == _attributes()
+    assert (
+        CVEfixesPolicyAttributes.from_dict(policy_attributes[CVEFIXES_POLICY_ATTRIBUTES_KEY])
+        == _attributes()
+    )
     adapter_attributes = policy_attributes[CVEFIXES_ADAPTER_ATTRIBUTES_KEY]
     assert adapter_attributes["grants_execution_authority"] is False
     assert adapter_attributes["requires_authoritative_adoption"] is True
@@ -180,9 +169,7 @@ def test_mapping_is_loss_aware_round_trippable_and_tamper_evident() -> None:
 
     assert to_cvefixes_candidate(result) == candidate
     assert CVEfixesAdapterResult.from_json(result.to_json()) == result
-    assert SecurityIR.from_dict(result.declaration.to_dict()) == (
-        result.declaration
-    )
+    assert SecurityIR.from_dict(result.declaration.to_dict()) == (result.declaration)
     declaration_json = result.declaration.canonical_json()
     assert '"evaluation"' not in declaration_json
     assert '"verdict"' not in declaration_json
@@ -265,9 +252,7 @@ def test_wildcard_and_generalized_scope_requires_explicit_review(
         sources=(_source(),),
         review=_reviewed(),
     )
-    metadata = result.declaration.policies[0].attributes[
-        CVEFIXES_ADAPTER_ATTRIBUTES_KEY
-    ]
+    metadata = result.declaration.policies[0].attributes[CVEFIXES_ADAPTER_ATTRIBUTES_KEY]
     assert metadata["generalized_scope"] is True
     assert metadata["review"]["state"] == "reviewed_pattern"
     assert metadata["grants_execution_authority"] is False
@@ -301,9 +286,7 @@ def test_optional_state_machine_is_declarative_and_source_bound() -> None:
     machine = result.declaration.state_machines[0]
     assert machine.states == ("vulnerable", "fixed")
     assert machine.transitions[0].event == "apply_mitigation"
-    assert machine.source_ids == (
-        result.declaration.sources[0].source_id,
-    )
+    assert machine.source_ids == (result.declaration.sources[0].source_id,)
     serialized = json.dumps(machine.to_dict(), sort_keys=True)
     assert "runtime_trace" not in serialized
     assert "verification_result" not in serialized

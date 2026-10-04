@@ -1,12 +1,9 @@
-
-
-
 from __future__ import annotations
 from typing import TypeVar
 
 
-T = TypeVar('T')
-U = TypeVar('U')
+T = TypeVar("T")
+U = TypeVar("U")
 
 
 from .monad import Monad
@@ -14,7 +11,6 @@ from .nothing import Nothing
 
 
 class Maybe(Monad[T]):
-
     def __init__(self, value):
         super().__init__(value)
 
@@ -31,7 +27,7 @@ class Maybe(Monad[T]):
             return Nothing(None)
         else:
             return Maybe(func(self._value))
-        
+
     def __rshift__(self, func):
         return self.bind(func)
 
@@ -49,9 +45,9 @@ class Maybe(Monad[T]):
 
     def __str__(self):
         if self._value is None:
-            return 'Nothing'
+            return "Nothing"
         else:
-            return 'Just {}'.format(self._value)
+            return "Just {}".format(self._value)
 
     def __repr__(self):
         return str(self)

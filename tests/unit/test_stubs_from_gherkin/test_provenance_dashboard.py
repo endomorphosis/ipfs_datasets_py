@@ -4,11 +4,13 @@ Test stubs for provenance_dashboard module.
 Feature: Provenance Dashboard
   Visual interface for data provenance tracking
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def a_data_artifact():
@@ -83,6 +85,7 @@ def provenance_data_exists():
 
 
 # Test scenarios
+
 
 def test_display_provenance_graph():
     """
@@ -173,6 +176,7 @@ def test_compare_provenance_across_versions():
 
 
 # Step definitions
+
 
 # Given steps
 @given("a data artifact")
@@ -343,4 +347,3 @@ def the_source_lineage_is_displayed():
     """Step: Then the source lineage is displayed"""
     # TODO: Implement step
     pass
-

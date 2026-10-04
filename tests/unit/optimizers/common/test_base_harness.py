@@ -2,6 +2,7 @@
 
 Uses a simple concrete subclass that doesn't require external LLM/prover deps.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -24,6 +25,7 @@ class _CountingHarness(BaseHarness):
     def _generate(self, data, context):
         if self._fail_generate:
             from ipfs_datasets_py.optimizers.common.exceptions import ExtractionError
+
             raise ExtractionError("generate failed")
         return {"data": data, "round": self._round}
 

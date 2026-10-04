@@ -40,8 +40,9 @@ from ipfs_datasets_py import (
     LLMConfig,
     GraphRAGLLMProcessor,
     ReasoningEnhancer,
-    enhance_dataset_with_llm
+    enhance_dataset_with_llm,
 )
+
 
 def original_example():
     """The original example from the file."""
@@ -50,7 +51,7 @@ def original_example():
     print(dir(dataset))
     ## OPTIONAL S3 Caching ##
 
-    #model = T5Model.from_auto_download(
+    # model = T5Model.from_auto_download(
     #    model_name="google-bert/t5_11b_trueteacher_and_anli",
     #    s3cfg={
     #        "bucket": "cloud",
@@ -58,8 +59,9 @@ def original_example():
     #        "secret_key": "",
     #        "access_key": "",
     #    }
-    #)
-    #print(dir(model))
+    # )
+    # print(dir(model))
+
 
 def ipld_example():
     """Example showing IPLD-based dataset handling."""
@@ -68,6 +70,7 @@ def ipld_example():
 
     # Create a temporary directory for our examples
     import tempfile
+
     temp_dir = tempfile.mkdtemp()
     print(f"Using temporary directory: {temp_dir}")
 
@@ -85,14 +88,14 @@ def ipld_example():
                 "fields": [
                     {"name": "id", "type": "integer"},
                     {"name": "name", "type": "string"},
-                    {"name": "value", "type": "float"}
+                    {"name": "value", "type": "float"},
                 ]
             },
             "rows": [
                 {"id": 1, "name": "Item 1", "value": 10.5},
                 {"id": 2, "name": "Item 2", "value": 20.3},
-                {"id": 3, "name": "Item 3", "value": 15.7}
-            ]
+                {"id": 3, "name": "Item 3", "value": 15.7},
+            ],
         }
 
         # Store with schema validation
@@ -107,14 +110,16 @@ def ipld_example():
         print("\nExample 2: Vector similarity search")
         print("--------------------------------")
         # Create some vectors
-        vectors = np.array([
-            [1.0, 0.0, 0.0],  # Item pointing in x direction
-            [0.0, 1.0, 0.0],  # Item pointing in y direction
-            [0.0, 0.0, 1.0],  # Item pointing in z direction
-            [0.7, 0.7, 0.0],  # Item in xy plane
-            [0.0, 0.7, 0.7],  # Item in yz plane
-            [0.7, 0.0, 0.7]   # Item in xz plane
-        ])
+        vectors = np.array(
+            [
+                [1.0, 0.0, 0.0],  # Item pointing in x direction
+                [0.0, 1.0, 0.0],  # Item pointing in y direction
+                [0.0, 0.0, 1.0],  # Item pointing in z direction
+                [0.7, 0.7, 0.0],  # Item in xy plane
+                [0.0, 0.7, 0.7],  # Item in yz plane
+                [0.7, 0.0, 0.7],  # Item in xz plane
+            ]
+        )
 
         # Create metadata for each vector
         metadata = [
@@ -123,7 +128,7 @@ def ipld_example():
             {"id": "item3", "description": "Z axis"},
             {"id": "item4", "description": "XY plane"},
             {"id": "item5", "description": "YZ plane"},
-            {"id": "item6", "description": "XZ plane"}
+            {"id": "item6", "description": "XZ plane"},
         ]
 
         # Create and populate a KNN index
@@ -136,7 +141,7 @@ def ipld_example():
 
         print("Query results for vector [0.9, 0.1, 0.0]:")
         for i, (idx, similarity, meta) in enumerate(results):
-            print(f"  {i+1}. {meta['id']} - {meta['description']} (similarity: {similarity:.3f})")
+            print(f"  {i + 1}. {meta['id']} - {meta['description']} (similarity: {similarity:.3f})")
 
         # Save the index to IPFS
         index_cid = index.save_to_ipfs()
@@ -196,6 +201,7 @@ def ipld_example():
     finally:
         # Clean up
         import shutil
+
         shutil.rmtree(temp_dir)
         print("\nCleaned up temporary directory")
 
@@ -207,6 +213,7 @@ def graph_rag_example():
 
     # Create a temporary directory for our examples
     import tempfile
+
     temp_dir = tempfile.mkdtemp()
     print(f"Using temporary directory: {temp_dir}")
 
@@ -219,7 +226,7 @@ def graph_rag_example():
             name="knowledge_graph",
             vector_dimension=3,  # Using small dimension for example
             vector_metric="cosine",
-            storage=storage
+            storage=storage,
         )
 
         # Step 1: Create nodes with embeddings for a document graph
@@ -233,8 +240,8 @@ def graph_rag_example():
             data={
                 "title": "Introduction to Machine Learning",
                 "content": "Machine learning is a field of AI that enables systems to learn from data.",
-                "author": "Alice Smith"
-            }
+                "author": "Alice Smith",
+            },
         )
         document2 = GraphNode(
             id="doc2",
@@ -242,8 +249,8 @@ def graph_rag_example():
             data={
                 "title": "Deep Learning Fundamentals",
                 "content": "Deep learning uses neural networks with multiple layers.",
-                "author": "Bob Johnson"
-            }
+                "author": "Bob Johnson",
+            },
         )
         document3 = GraphNode(
             id="doc3",
@@ -251,8 +258,8 @@ def graph_rag_example():
             data={
                 "title": "Python Programming",
                 "content": "Python is a versatile programming language used in many fields.",
-                "author": "Charlie Davis"
-            }
+                "author": "Charlie Davis",
+            },
         )
         document4 = GraphNode(
             id="doc4",
@@ -260,8 +267,8 @@ def graph_rag_example():
             data={
                 "title": "Machine Learning with Python",
                 "content": "Python is widely used for implementing machine learning algorithms.",
-                "author": "Alice Smith"
-            }
+                "author": "Alice Smith",
+            },
         )
         document5 = GraphNode(
             id="doc5",
@@ -269,8 +276,8 @@ def graph_rag_example():
             data={
                 "title": "Neural Network Architectures",
                 "content": "Various neural network architectures are used in deep learning applications.",
-                "author": "Bob Johnson"
-            }
+                "author": "Bob Johnson",
+            },
         )
 
         # Create simple embeddings (in a real application, these would come from a language model)
@@ -296,17 +303,13 @@ def graph_rag_example():
         author1 = GraphNode(
             id="author1",
             type="author",
-            data={"name": "Alice Smith", "expertise": "Machine Learning"}
+            data={"name": "Alice Smith", "expertise": "Machine Learning"},
         )
         author2 = GraphNode(
-            id="author2",
-            type="author",
-            data={"name": "Bob Johnson", "expertise": "Deep Learning"}
+            id="author2", type="author", data={"name": "Bob Johnson", "expertise": "Deep Learning"}
         )
         author3 = GraphNode(
-            id="author3",
-            type="author",
-            data={"name": "Charlie Davis", "expertise": "Programming"}
+            id="author3", type="author", data={"name": "Charlie Davis", "expertise": "Programming"}
         )
 
         graph.add_node(author1)
@@ -317,17 +320,17 @@ def graph_rag_example():
         concept1 = GraphNode(
             id="concept1",
             type="concept",
-            data={"name": "Machine Learning", "definition": "Field of AI that uses data to learn"}
+            data={"name": "Machine Learning", "definition": "Field of AI that uses data to learn"},
         )
         concept2 = GraphNode(
             id="concept2",
             type="concept",
-            data={"name": "Deep Learning", "definition": "Subset of ML using neural networks"}
+            data={"name": "Deep Learning", "definition": "Subset of ML using neural networks"},
         )
         concept3 = GraphNode(
             id="concept3",
             type="concept",
-            data={"name": "Python", "definition": "Programming language"}
+            data={"name": "Python", "definition": "Programming language"},
         )
 
         graph.add_node(concept1)
@@ -373,7 +376,9 @@ def graph_rag_example():
         # Print graph stats
         print(f"Graph has {len(graph.nodes)} nodes of {len(graph.node_types)} types")
         print(f"Node types: {', '.join(graph.node_types)}")
-        print(f"Graph has {sum(len(edges) for edges in graph._edges_by_type.values())} edges of {len(graph.edge_types)} types")
+        print(
+            f"Graph has {sum(len(edges) for edges in graph._edges_by_type.values())} edges of {len(graph.edge_types)} types"
+        )
         print(f"Edge types: {', '.join(graph.edge_types)}")
 
         # Step 3: Vector similarity search
@@ -386,7 +391,7 @@ def graph_rag_example():
 
         print("Documents related to machine learning:")
         for i, (node, similarity) in enumerate(results):
-            print(f"  {i+1}. {node.data['title']} (similarity: {similarity:.3f})")
+            print(f"  {i + 1}. {node.data['title']} (similarity: {similarity:.3f})")
 
         # Step 4: Basic graph traversal
         print("\nStep 4: Basic graph traversal")
@@ -401,7 +406,7 @@ def graph_rag_example():
             start_node_id="author1",
             edge_type="authored_by",
             direction="incoming",  # Follow authored_by edges backwards
-            max_depth=1
+            max_depth=1,
         )
 
         for doc in authored_docs:
@@ -414,19 +419,19 @@ def graph_rag_example():
         # Query for content related to machine learning and python
         ml_python_query = np.array([0.7, 0.7, 0.2])  # ML + Programming
         results = graph.graph_rag_search(
-            query_vector=ml_python_query,
-            max_vector_results=2,
-            max_traversal_depth=2
+            query_vector=ml_python_query, max_vector_results=2, max_traversal_depth=2
         )
 
         print("Documents related to both machine learning and python with context:")
         for i, (node, similarity, context) in enumerate(results):
-            print(f"  {i+1}. {node.data['title']} (similarity: {similarity:.3f})")
-            print(f"     Context: {len(context)-1} related documents/concepts")
+            print(f"  {i + 1}. {node.data['title']} (similarity: {similarity:.3f})")
+            print(f"     Context: {len(context) - 1} related documents/concepts")
             for ctx_node in context[1:3]:  # Show first two context nodes
-                print(f"     - {ctx_node.type}: {ctx_node.data.get('title', ctx_node.data.get('name', 'unknown'))}")
+                print(
+                    f"     - {ctx_node.type}: {ctx_node.data.get('title', ctx_node.data.get('name', 'unknown'))}"
+                )
             if len(context) > 3:
-                print(f"     - ...and {len(context)-3} more")
+                print(f"     - ...and {len(context) - 3} more")
 
         # Step 6: Advanced GraphRAG with weighted paths
         print("\nStep 6: Advanced GraphRAG with weighted paths")
@@ -434,10 +439,10 @@ def graph_rag_example():
 
         # Define relation weights
         relation_weights = {
-            "about": 1.0,        # Direct topic relationship
-            "references": 0.8,   # Referenced documents
+            "about": 1.0,  # Direct topic relationship
+            "references": 0.8,  # Referenced documents
             "authored_by": 0.5,  # Same author
-            "used_in": 0.7       # Related concepts
+            "used_in": 0.7,  # Related concepts
         }
 
         # Perform weighted path search
@@ -446,24 +451,24 @@ def graph_rag_example():
             max_initial_results=2,
             max_path_length=2,
             path_weight_strategy="decay",
-            relation_weights=relation_weights
+            relation_weights=relation_weights,
         )
 
         print("Weighted paths between relevant documents:")
         for i, result in enumerate(weighted_results[:3]):  # Show top 3 paths
-            start = result["start_node"].data['title']
-            end = result["end_node"].data['title']
+            start = result["start_node"].data["title"]
+            end = result["end_node"].data["title"]
             weight = result["weight"]
             path_len = len(result["path"])
 
-            print(f"  {i+1}. Path: {start} → {end} (weight: {weight:.3f}, length: {path_len})")
+            print(f"  {i + 1}. Path: {start} → {end} (weight: {weight:.3f}, length: {path_len})")
             print(f"     Semantic relevance: {result['semantic_weight']:.3f}")
             print(f"     Relation strength: {result['relation_weight']:.3f}")
 
             # Show the path
             path_str = []
             for j, (node, edge_type, props) in enumerate(result["path"]):
-                node_name = node.data.get('title', node.data.get('name', node.id))
+                node_name = node.data.get("title", node.data.get("name", node.id))
                 if j < len(result["path"]) - 1:
                     path_str.append(f"{node_name} -[{edge_type}]→")
                 else:
@@ -487,11 +492,14 @@ def graph_rag_example():
 
         # Load from IPFS to verify
         loaded_graph = VectorAugmentedGraphDataset.load_from_ipfs(cid, storage=storage)
-        print(f"Successfully loaded graph with {len(loaded_graph.nodes)} nodes and {len(loaded_graph.vector_index._metadata)} vectors")
+        print(
+            f"Successfully loaded graph with {len(loaded_graph.nodes)} nodes and {len(loaded_graph.vector_index._metadata)} vectors"
+        )
 
     finally:
         # Clean up
         import shutil
+
         shutil.rmtree(temp_dir)
         print("\nCleaned up temporary directory")
 
@@ -503,6 +511,7 @@ def optimized_graphrag_example():
 
     # Create a temporary directory for our examples
     import tempfile
+
     temp_dir = tempfile.mkdtemp()
     print(f"Using temporary directory: {temp_dir}")
 
@@ -536,17 +545,21 @@ def optimized_graphrag_example():
         # Print knowledge graph statistics
         print(f"Extracted {len(kg.entities)} entities of {len(kg.entity_types)} types")
         print(f"Entity types: {', '.join(kg.entity_types)}")
-        print(f"Extracted {len(kg.relationships)} relationships of {len(kg.relationship_types)} types")
+        print(
+            f"Extracted {len(kg.relationships)} relationships of {len(kg.relationship_types)} types"
+        )
         print(f"Relationship types: {', '.join(kg.relationship_types)}")
 
         # Print some entities and relationships
         print("\nSample entities:")
         for i, entity in enumerate(list(kg.entities.values())[:3]):
-            print(f"  {i+1}. {entity.name} ({entity.entity_type})")
+            print(f"  {i + 1}. {entity.name} ({entity.entity_type})")
 
         print("\nSample relationships:")
         for i, rel in enumerate(list(kg.relationships.values())[:3]):
-            print(f"  {i+1}. {rel.source_entity.name} --[{rel.relation_type}]--> {rel.target_entity.name}")
+            print(
+                f"  {i + 1}. {rel.source_entity.name} --[{rel.relation_type}]--> {rel.target_entity.name}"
+            )
 
         # Step 2: Create a vector-augmented graph dataset
         print("\nStep 2: Creating vector-augmented graph dataset with knowledge graph")
@@ -578,10 +591,7 @@ def optimized_graphrag_example():
 
         # Create a vector-augmented graph dataset
         graph = VectorAugmentedGraphDataset(
-            name="knowledge_graph",
-            vector_dimension=3,
-            vector_metric="cosine",
-            storage=storage
+            name="knowledge_graph", vector_dimension=3, vector_metric="cosine", storage=storage
         )
 
         # Create a mock embedding model
@@ -603,11 +613,7 @@ def optimized_graphrag_example():
         print("-------------------------------")
 
         # Enable query optimization
-        graph.enable_query_optimization(
-            vector_weight=0.7,
-            graph_weight=0.3,
-            cache_enabled=True
-        )
+        graph.enable_query_optimization(vector_weight=0.7, graph_weight=0.3, cache_enabled=True)
 
         # Enable vector partitioning
         graph.enable_vector_partitioning(num_partitions=2)
@@ -628,29 +634,26 @@ def optimized_graphrag_example():
             query_vector=person_query,
             max_vector_results=2,
             max_traversal_depth=2,
-            use_optimizer=True
+            use_optimizer=True,
         )
 
         print("Person query results:")
         for i, (node, similarity, context) in enumerate(person_results):
-            print(f"  {i+1}. {node.data.get('name', 'Unknown')} (similarity: {similarity:.3f})")
-            print(f"     Related nodes: {len(context)-1}")
+            print(f"  {i + 1}. {node.data.get('name', 'Unknown')} (similarity: {similarity:.3f})")
+            print(f"     Related nodes: {len(context) - 1}")
             for ctx in context[1:3]:
                 print(f"      - {ctx.type}: {ctx.data.get('name', 'Unknown')}")
 
         # Query for organization entities
         org_query = np.array([0.3, 0.9, 0.2])
         org_results = graph.graph_rag_search(
-            query_vector=org_query,
-            max_vector_results=2,
-            max_traversal_depth=2,
-            use_optimizer=True
+            query_vector=org_query, max_vector_results=2, max_traversal_depth=2, use_optimizer=True
         )
 
         print("\nOrganization query results:")
         for i, (node, similarity, context) in enumerate(org_results):
-            print(f"  {i+1}. {node.data.get('name', 'Unknown')} (similarity: {similarity:.3f})")
-            print(f"     Related nodes: {len(context)-1}")
+            print(f"  {i + 1}. {node.data.get('name', 'Unknown')} (similarity: {similarity:.3f})")
+            print(f"     Related nodes: {len(context) - 1}")
             for ctx in context[1:3]:
                 print(f"      - {ctx.type}: {ctx.data.get('name', 'Unknown')}")
 
@@ -665,14 +668,14 @@ def optimized_graphrag_example():
             max_traversal_depth=2,
             semantic_weight=0.6,
             structural_weight=0.4,
-            path_decay_factor=0.8
+            path_decay_factor=0.8,
         )
 
         print("Advanced GraphRAG search results:")
         for i, result in enumerate(weighted_results[:2]):
             node = result["node"]
             score = result["score"]
-            print(f"  {i+1}. {node.data.get('name', 'Unknown')} (score: {score:.3f})")
+            print(f"  {i + 1}. {node.data.get('name', 'Unknown')} (score: {score:.3f})")
             print(f"     Semantic score: {result['semantic_score']:.3f}")
             print(f"     Structural score: {result['structural_score']:.3f}")
 
@@ -697,11 +700,14 @@ def optimized_graphrag_example():
 
         # Load from IPFS to verify
         loaded_graph = VectorAugmentedGraphDataset.load_from_ipfs(cid, storage=storage)
-        print(f"Successfully loaded graph with {len(loaded_graph.nodes)} nodes and {len(loaded_graph.vector_index._metadata)} vectors")
+        print(
+            f"Successfully loaded graph with {len(loaded_graph.nodes)} nodes and {len(loaded_graph.vector_index._metadata)} vectors"
+        )
 
     finally:
         # Clean up
         import shutil
+
         shutil.rmtree(temp_dir)
         print("\nCleaned up temporary directory")
 
@@ -713,6 +719,7 @@ def llm_graphrag_example():
 
     # Create a temporary directory for our examples
     import tempfile
+
     temp_dir = tempfile.mkdtemp()
     print(f"Using temporary directory: {temp_dir}")
 
@@ -720,12 +727,14 @@ def llm_graphrag_example():
     storage = IPLDStorage(base_dir=os.path.join(temp_dir, "ipld_blocks"))
 
     # Initialize LLM components
-    llm = MockLLMInterface(LLMConfig(
-        model_name="mock-graphrag-llm",
-        temperature=0.7,
-        max_tokens=1024,
-        embedding_dimensions=3  # Match our example's dimension
-    ))
+    llm = MockLLMInterface(
+        LLMConfig(
+            model_name="mock-graphrag-llm",
+            temperature=0.7,
+            max_tokens=1024,
+            embedding_dimensions=3,  # Match our example's dimension
+        )
+    )
 
     processor = GraphRAGLLMProcessor(llm)
 
@@ -742,10 +751,7 @@ def llm_graphrag_example():
 
     # Create a vector-augmented graph dataset
     graph = VectorAugmentedGraphDataset(
-        name="example_graph",
-        vector_dimension=3,
-        vector_metric="cosine",
-        storage=storage
+        name="example_graph", vector_dimension=3, vector_metric="cosine", storage=storage
     )
 
     # Create document nodes
@@ -754,8 +760,8 @@ def llm_graphrag_example():
         type="document",
         data={
             "title": "Climate Change Effects on Marine Ecosystems",
-            "content": "This document discusses how rising ocean temperatures are affecting coral reefs."
-        }
+            "content": "This document discusses how rising ocean temperatures are affecting coral reefs.",
+        },
     )
 
     doc2 = GraphNode(
@@ -763,8 +769,8 @@ def llm_graphrag_example():
         type="document",
         data={
             "title": "Conservation Efforts for Ocean Life",
-            "content": "This document outlines conservation strategies to protect marine biodiversity."
-        }
+            "content": "This document outlines conservation strategies to protect marine biodiversity.",
+        },
     )
 
     doc3 = GraphNode(
@@ -772,8 +778,8 @@ def llm_graphrag_example():
         type="document",
         data={
             "title": "Economic Impact of Climate Change",
-            "content": "This document analyzes the cost of climate change on global economies."
-        }
+            "content": "This document analyzes the cost of climate change on global economies.",
+        },
     )
 
     # Create concept nodes
@@ -782,8 +788,8 @@ def llm_graphrag_example():
         type="concept",
         data={
             "name": "Climate Change",
-            "definition": "Long-term changes in temperature and weather patterns."
-        }
+            "definition": "Long-term changes in temperature and weather patterns.",
+        },
     )
 
     concept2 = GraphNode(
@@ -791,8 +797,8 @@ def llm_graphrag_example():
         type="concept",
         data={
             "name": "Marine Conservation",
-            "definition": "The protection and preservation of marine ecosystems."
-        }
+            "definition": "The protection and preservation of marine ecosystems.",
+        },
     )
 
     concept3 = GraphNode(
@@ -800,8 +806,8 @@ def llm_graphrag_example():
         type="concept",
         data={
             "name": "Economics",
-            "definition": "The study of production, consumption, and wealth transfer."
-        }
+            "definition": "The study of production, consumption, and wealth transfer.",
+        },
     )
 
     # Add nodes with embeddings (simplified for example)
@@ -854,10 +860,7 @@ def llm_graphrag_example():
 
     # Run basic reasoning
     basic_result = enhanced_graph.cross_document_reasoning(
-        query=basic_query,
-        document_node_types=["document"],
-        max_hops=2,
-        reasoning_depth="basic"
+        query=basic_query, document_node_types=["document"], max_hops=2, reasoning_depth="basic"
     )
 
     print(f"Basic reasoning query: '{basic_query}'")
@@ -875,10 +878,7 @@ def llm_graphrag_example():
 
     # Run deep reasoning
     deep_result = enhanced_graph.cross_document_reasoning(
-        query=complex_query,
-        document_node_types=["document"],
-        max_hops=2,
-        reasoning_depth="deep"
+        query=complex_query, document_node_types=["document"], max_hops=2, reasoning_depth="deep"
     )
 
     print(f"Deep reasoning query: '{complex_query}'")
@@ -896,17 +896,13 @@ def llm_graphrag_example():
         name="example_graph_without_llm",
         vector_dimension=3,
         vector_metric="cosine",
-        storage=storage
+        storage=storage,
     )
 
     # Copy all nodes and edges from the original graph
     for node_id, node in graph.nodes.items():
         # Copy the node
-        node_copy = GraphNode(
-            id=node.id,
-            type=node.type,
-            data=node.data.copy()
-        )
+        node_copy = GraphNode(id=node.id, type=node.type, data=node.data.copy())
 
         # Get the node's embedding
         node_idx = graph._node_to_vector_idx.get(node.id)
@@ -933,14 +929,16 @@ def llm_graphrag_example():
     print("Created a copy of the graph without LLM enhancement")
 
     # Run the same query on both graphs
-    comparison_query = "What is the relationship between climate change, marine conservation, and economics?"
+    comparison_query = (
+        "What is the relationship between climate change, marine conservation, and economics?"
+    )
 
     # Run with LLM enhancement
     llm_result = enhanced_graph.cross_document_reasoning(
         query=comparison_query,
         document_node_types=["document"],
         max_hops=2,
-        reasoning_depth="moderate"
+        reasoning_depth="moderate",
     )
 
     print(f"Query: '{comparison_query}'")
@@ -956,9 +954,12 @@ def llm_graphrag_example():
         "documents": basic_result["documents"][:2],
         "reasoning_trace": [
             {"step": "Retrieved documents", "description": "Found documents related to the query"},
-            {"step": "Found connections", "description": "Identified connections between documents"},
-            {"step": "Generated answer", "description": "Simple synthesis of information"}
-        ]
+            {
+                "step": "Found connections",
+                "description": "Identified connections between documents",
+            },
+            {"step": "Generated answer", "description": "Simple synthesis of information"},
+        ],
     }
 
     print("\nWithout LLM enhancement (simulated):")
@@ -966,8 +967,11 @@ def llm_graphrag_example():
     print(f"Answer: {mock_result['answer']}")
 
     print("\nComparison:")
-    print(f"Confidence improvement: {(llm_result['confidence'] - mock_result['confidence']) * 100:.1f}%")
+    print(
+        f"Confidence improvement: {(llm_result['confidence'] - mock_result['confidence']) * 100:.1f}%"
+    )
     print(f"Answer complexity: LLM enhanced provides more nuanced synthesis across documents")
+
 
 def advanced_graphrag_example():
     """Example showcasing the advanced GraphRAG methods for knowledge graphs and semantic search."""
@@ -976,6 +980,7 @@ def advanced_graphrag_example():
 
     # Create a temporary directory for our examples
     import tempfile
+
     temp_dir = tempfile.mkdtemp()
     print(f"Using temporary directory: {temp_dir}")
 
@@ -988,7 +993,7 @@ def advanced_graphrag_example():
             name="research_knowledge_graph",
             vector_dimension=3,  # Using small dimension for example
             vector_metric="cosine",
-            storage=storage
+            storage=storage,
         )
 
         # Step 1: Create nodes with embeddings for a research paper graph
@@ -1003,8 +1008,8 @@ def advanced_graphrag_example():
                 "title": "Advances in Artificial Intelligence",
                 "year": 2020,
                 "citation_count": 150,
-                "keywords": ["AI", "machine learning", "neural networks"]
-            }
+                "keywords": ["AI", "machine learning", "neural networks"],
+            },
         )
 
         ml_paper = GraphNode(
@@ -1014,8 +1019,8 @@ def advanced_graphrag_example():
                 "title": "Machine Learning Applications in Healthcare",
                 "year": 2021,
                 "citation_count": 75,
-                "keywords": ["machine learning", "healthcare", "prediction models"]
-            }
+                "keywords": ["machine learning", "healthcare", "prediction models"],
+            },
         )
 
         nlp_paper = GraphNode(
@@ -1025,8 +1030,8 @@ def advanced_graphrag_example():
                 "title": "Natural Language Processing with Transformers",
                 "year": 2022,
                 "citation_count": 90,
-                "keywords": ["NLP", "transformers", "BERT"]
-            }
+                "keywords": ["NLP", "transformers", "BERT"],
+            },
         )
 
         cv_paper = GraphNode(
@@ -1036,8 +1041,8 @@ def advanced_graphrag_example():
                 "title": "Computer Vision Techniques for Autonomous Vehicles",
                 "year": 2021,
                 "citation_count": 120,
-                "keywords": ["computer vision", "autonomous vehicles", "object detection"]
-            }
+                "keywords": ["computer vision", "autonomous vehicles", "object detection"],
+            },
         )
 
         rl_paper = GraphNode(
@@ -1047,39 +1052,27 @@ def advanced_graphrag_example():
                 "title": "Reinforcement Learning Algorithms",
                 "year": 2019,
                 "citation_count": 110,
-                "keywords": ["reinforcement learning", "Q-learning", "policy gradients"]
-            }
+                "keywords": ["reinforcement learning", "Q-learning", "policy gradients"],
+            },
         )
 
         # Create author nodes
         author1 = GraphNode(
             id="author1",
             type="author",
-            data={
-                "name": "Dr. Alice Johnson",
-                "affiliation": "Stanford University",
-                "h_index": 25
-            }
+            data={"name": "Dr. Alice Johnson", "affiliation": "Stanford University", "h_index": 25},
         )
 
         author2 = GraphNode(
             id="author2",
             type="author",
-            data={
-                "name": "Prof. Bob Smith",
-                "affiliation": "MIT",
-                "h_index": 32
-            }
+            data={"name": "Prof. Bob Smith", "affiliation": "MIT", "h_index": 32},
         )
 
         author3 = GraphNode(
             id="author3",
             type="author",
-            data={
-                "name": "Dr. Carol Davis",
-                "affiliation": "Google Research",
-                "h_index": 19
-            }
+            data={"name": "Dr. Carol Davis", "affiliation": "Google Research", "h_index": 19},
         )
 
         # Create concept nodes
@@ -1088,8 +1081,8 @@ def advanced_graphrag_example():
             type="concept",
             data={
                 "name": "Artificial Intelligence",
-                "definition": "The simulation of human intelligence in machines"
-            }
+                "definition": "The simulation of human intelligence in machines",
+            },
         )
 
         ml_concept = GraphNode(
@@ -1097,8 +1090,8 @@ def advanced_graphrag_example():
             type="concept",
             data={
                 "name": "Machine Learning",
-                "definition": "Systems that learn from data without explicit programming"
-            }
+                "definition": "Systems that learn from data without explicit programming",
+            },
         )
 
         nlp_concept = GraphNode(
@@ -1106,8 +1099,8 @@ def advanced_graphrag_example():
             type="concept",
             data={
                 "name": "Natural Language Processing",
-                "definition": "Processing and analyzing natural language text"
-            }
+                "definition": "Processing and analyzing natural language text",
+            },
         )
 
         cv_concept = GraphNode(
@@ -1115,8 +1108,8 @@ def advanced_graphrag_example():
             type="concept",
             data={
                 "name": "Computer Vision",
-                "definition": "Systems that can interpret visual information"
-            }
+                "definition": "Systems that can interpret visual information",
+            },
         )
 
         rl_concept = GraphNode(
@@ -1124,8 +1117,8 @@ def advanced_graphrag_example():
             type="concept",
             data={
                 "name": "Reinforcement Learning",
-                "definition": "Learning through interaction with an environment"
-            }
+                "definition": "Learning through interaction with an environment",
+            },
         )
 
         # Create embeddings for all nodes (simplified for example)
@@ -1181,7 +1174,9 @@ def advanced_graphrag_example():
 
         # Paper citations
         graph.add_edge("paper2", "cites", "paper1", {"relevance": "high", "section": "background"})
-        graph.add_edge("paper3", "cites", "paper1", {"relevance": "medium", "section": "related work"})
+        graph.add_edge(
+            "paper3", "cites", "paper1", {"relevance": "medium", "section": "related work"}
+        )
         graph.add_edge("paper3", "cites", "paper2", {"relevance": "high", "section": "methodology"})
         graph.add_edge("paper4", "cites", "paper1", {"relevance": "low", "section": "introduction"})
         graph.add_edge("paper4", "cites", "paper5", {"relevance": "high", "section": "methodology"})
@@ -1209,7 +1204,9 @@ def advanced_graphrag_example():
         # Print graph stats
         print(f"Graph has {len(graph.nodes)} nodes of {len(graph.node_types)} types")
         print(f"Node types: {', '.join(graph.node_types)}")
-        print(f"Graph has {sum(len(edges) for edges in graph._edges_by_type.values())} edges of {len(graph.edge_types)} types")
+        print(
+            f"Graph has {sum(len(edges) for edges in graph._edges_by_type.values())} edges of {len(graph.edge_types)} types"
+        )
         print(f"Edge types: {', '.join(graph.edge_types)}")
 
         # Step 3: Find similar connected nodes
@@ -1225,7 +1222,7 @@ def advanced_graphrag_example():
             max_hops=2,
             min_similarity=0.7,
             edge_filters=[("relevance", "=", "high")],
-            max_results=5
+            max_results=5,
         )
 
         print("Papers that are semantically similar and connected by high relevance citations:")
@@ -1234,7 +1231,7 @@ def advanced_graphrag_example():
             end_node = result["end_node"]
             combined_score = result["combined_score"]
 
-            print(f"  {i+1}. {start_node.data['title']} → {end_node.data['title']}")
+            print(f"  {i + 1}. {start_node.data['title']} → {end_node.data['title']}")
             print(f"     Combined score: {combined_score:.3f}")
             print(f"     Start similarity: {result['start_similarity']:.3f}")
             print(f"     End similarity: {result['end_similarity']:.3f}")
@@ -1249,18 +1246,20 @@ def advanced_graphrag_example():
             query_vector=query_vector,
             similarity_threshold=0.7,
             include_connections=True,
-            max_distance=2
+            max_distance=2,
         )
 
-        print(f"Extracted subgraph with {len(subgraph.nodes)} nodes and {sum(len(edges) for edges in subgraph._edges_by_type.values())} edges")
+        print(
+            f"Extracted subgraph with {len(subgraph.nodes)} nodes and {sum(len(edges) for edges in subgraph._edges_by_type.values())} edges"
+        )
         print("Nodes in subgraph:")
         for i, (node_id, node) in enumerate(list(subgraph.nodes.items())[:5]):
             if node.type == "paper":
-                print(f"  {i+1}. Paper: {node.data['title']}")
+                print(f"  {i + 1}. Paper: {node.data['title']}")
             elif node.type == "concept":
-                print(f"  {i+1}. Concept: {node.data['name']}")
+                print(f"  {i + 1}. Concept: {node.data['name']}")
             else:
-                print(f"  {i+1}. {node.type}: {node.data.get('name', node_id)}")
+                print(f"  {i + 1}. {node.type}: {node.data.get('name', node_id)}")
 
         # Step 5: Perform logical query operations
         print("\nStep 5: Performing logical query operations")
@@ -1268,19 +1267,19 @@ def advanced_graphrag_example():
 
         # Create query vectors
         theoretical_vector = np.array([0.9, 0.3, 0.4])  # Theoretical research
-        applied_vector = np.array([0.3, 0.9, 0.5])      # Applied research
+        applied_vector = np.array([0.3, 0.9, 0.5])  # Applied research
 
         # Find papers that are both theoretical AND applied
         and_results = graph.logical_query(
             query_vectors=[theoretical_vector, applied_vector],
             operators=["AND"],
-            similarity_threshold=0.65
+            similarity_threshold=0.65,
         )
 
         print("Papers that are both theoretical AND applied:")
         for i, (node, score) in enumerate(and_results):
             if node.type == "paper":  # Only show papers
-                print(f"  {i+1}. {node.data['title']} (score: {score:.3f})")
+                print(f"  {i + 1}. {node.data['title']} (score: {score:.3f})")
 
         # Find papers that are theoretical OR experimental but NOT applied
         experimental_vector = np.array([0.4, 0.4, 0.9])  # Experimental research
@@ -1288,13 +1287,13 @@ def advanced_graphrag_example():
         complex_results = graph.logical_query(
             query_vectors=[theoretical_vector, experimental_vector, applied_vector],
             operators=["OR", "NOT"],
-            similarity_threshold=0.6
+            similarity_threshold=0.6,
         )
 
         print("\nPapers that are theoretical OR experimental but NOT applied:")
         for i, (node, score) in enumerate(complex_results):
             if node.type == "paper":  # Only show papers
-                print(f"  {i+1}. {node.data['title']} (score: {score:.3f})")
+                print(f"  {i + 1}. {node.data['title']} (score: {score:.3f})")
 
         # Step 6: Use incremental graph updates
         print("\nStep 6: Performing incremental graph updates")
@@ -1308,8 +1307,8 @@ def advanced_graphrag_example():
                 "title": "Survey of Deep Learning Models",
                 "year": 2023,
                 "citation_count": 40,
-                "keywords": ["deep learning", "survey", "neural networks"]
-            }
+                "keywords": ["deep learning", "survey", "neural networks"],
+            },
         )
 
         # Edges to add
@@ -1317,7 +1316,7 @@ def advanced_graphrag_example():
             ("paper6", "authored_by", "author3", {"contribution": "primary"}),
             ("paper6", "cites", "paper1", {"relevance": "high", "section": "introduction"}),
             ("paper6", "cites", "paper3", {"relevance": "high", "section": "methodology"}),
-            ("paper6", "about", "concept2", {"centrality": "primary"})
+            ("paper6", "about", "concept2", {"centrality": "primary"}),
         ]
 
         # Edges to remove
@@ -1331,7 +1330,7 @@ def advanced_graphrag_example():
             edges_to_add=new_edges,
             nodes_to_remove=[],
             edges_to_remove=edges_to_remove,
-            maintain_index=True
+            maintain_index=True,
         )
 
         print(f"Incremental update stats:")
@@ -1345,17 +1344,9 @@ def advanced_graphrag_example():
         print(f"\nAdded new paper: {new_paper_node.data['title']}")
 
         # Check its connections
-        authors = graph.traverse(
-            start_node_id="paper6",
-            edge_type="authored_by",
-            max_depth=1
-        )
+        authors = graph.traverse(start_node_id="paper6", edge_type="authored_by", max_depth=1)
 
-        cites = graph.traverse(
-            start_node_id="paper6",
-            edge_type="cites",
-            max_depth=1
-        )
+        cites = graph.traverse(start_node_id="paper6", edge_type="cites", max_depth=1)
 
         print(f"  - Authors: {', '.join([a.data['name'] for a in authors])}")
         print(f"  - Cites: {', '.join([c.data['title'] for c in cites])}")
@@ -1367,20 +1358,22 @@ def advanced_graphrag_example():
         # Find paths between two papers and explain them
         explanations = graph.explain_path(
             start_node_id="paper6",  # Our new paper
-            end_node_id="paper2",    # Machine Learning in Healthcare paper
+            end_node_id="paper2",  # Machine Learning in Healthcare paper
             max_paths=3,
-            max_depth=3
+            max_depth=3,
         )
 
         print(f"Found {len(explanations)} paths between papers")
 
         for i, explanation in enumerate(explanations):
-            print(f"\nPath {i+1} (confidence: {explanation['confidence']:.2f}):")
+            print(f"\nPath {i + 1} (confidence: {explanation['confidence']:.2f}):")
             print(f"Explanation: {explanation['explanation']}")
 
             print("Nodes in path:")
             for j, node_info in enumerate(explanation["nodes"]):
-                print(f"  {j+1}. {node_info['type']}: {node_info['data'].get('title', node_info['data'].get('name', node_info['id']))}")
+                print(
+                    f"  {j + 1}. {node_info['type']}: {node_info['data'].get('title', node_info['data'].get('name', node_info['id']))}"
+                )
 
         # Step 8: Hybrid structured semantic search
         print("\nStep 8: Performing hybrid structured semantic search")
@@ -1392,19 +1385,17 @@ def advanced_graphrag_example():
             query_vector=np.array([0.8, 0.5, 0.4]),  # Theoretical AI research
             node_filters=[
                 ("citation_count", ">=", 90),  # Only highly cited papers
-                ("year", ">", 2019)            # Recent papers
+                ("year", ">", 2019),  # Recent papers
             ],
             relationship_patterns=[
                 {
                     "direction": "outgoing",
                     "edge_type": "cites",
-                    "edge_filters": [
-                        ("relevance", "=", "high")
-                    ]
+                    "edge_filters": [("relevance", "=", "high")],
                 }
             ],
             max_results=5,
-            min_similarity=0.6
+            min_similarity=0.6,
         )
 
         print(f"Found {len(results)} papers matching all criteria:")
@@ -1412,10 +1403,12 @@ def advanced_graphrag_example():
             node = result["node"]
             similarity = result["similarity"]
 
-            print(f"  {i+1}. {node['data']['title']} (similarity: {similarity:.3f})")
+            print(f"  {i + 1}. {node['data']['title']} (similarity: {similarity:.3f})")
             print(f"     Citation count: {node['data']['citation_count']}")
             print(f"     Year: {node['data']['year']}")
-            print(f"     Matches all filters: {result['matches_filters'] and result['matches_patterns']}")
+            print(
+                f"     Matches all filters: {result['matches_filters'] and result['matches_patterns']}"
+            )
 
         # Step 9: Rank nodes by centrality
         print("\nStep 9: Ranking nodes by centrality (PageRank)")
@@ -1425,18 +1418,24 @@ def advanced_graphrag_example():
         centrality_results = graph.rank_nodes_by_centrality(
             query_vector=np.array([0.7, 0.7, 0.3]),  # Both theoretical and applied research
             damping_by_similarity=True,  # Adjust PageRank based on similarity to query
-            weight_by_edge_properties={"cites": "relevance", "about": "centrality"}  # Weight edges by properties
+            weight_by_edge_properties={
+                "cites": "relevance",
+                "about": "centrality",
+            },  # Weight edges by properties
         )
 
         print("Most central nodes in the knowledge graph:")
         for i, (node, score) in enumerate(centrality_results[:5]):
-            print(f"  {i+1}. {node.type.capitalize()}: {node.data.get('title', node.data.get('name', node.id))}")
+            print(
+                f"  {i + 1}. {node.type.capitalize()}: {node.data.get('title', node.data.get('name', node.id))}"
+            )
             print(f"     Centrality score: {score:.4f}")
 
             # Show connections
             outgoing_edges = sum(len(edges) for edges in node.edges.values())
             incoming_edges = sum(
-                1 for source in graph.nodes.values()
+                1
+                for source in graph.nodes.values()
                 for edges in source.edges.values()
                 for edge in edges
                 if edge["target"].id == node.id
@@ -1453,7 +1452,7 @@ def advanced_graphrag_example():
             start_node_id="author1",  # First author
             relationship_pattern=["authored", "cites", "authored_by"],
             confidence_threshold=0.3,
-            max_results=5
+            max_results=5,
         )
 
         print(f"Inferred potential collaborators for {graph.nodes['author1'].data['name']}:")
@@ -1461,7 +1460,9 @@ def advanced_graphrag_example():
             end_node = inferred["end_node"]
             confidence = inferred["confidence"]
 
-            print(f"  {i+1}. {end_node.data.get('name', end_node.id)} (confidence: {confidence:.2f})")
+            print(
+                f"  {i + 1}. {end_node.data.get('name', end_node.id)} (confidence: {confidence:.2f})"
+            )
             print(f"     Inferred relationship: {inferred['inferred_relationship']}")
 
             # Print the path
@@ -1469,18 +1470,18 @@ def advanced_graphrag_example():
             for j, (node, edge_type, props) in enumerate(inferred["path"]):
                 if j == 0:
                     # First node
-                    path_str.append(node.data.get('name', node.id))
+                    path_str.append(node.data.get("name", node.id))
 
                 if edge_type:
                     # Add edge
                     path_str.append(f"-[{edge_type}]->")
                     # Add next node if not the last step
                     if j < len(inferred["path"]) - 1:
-                        next_node = inferred["path"][j+1][0]
+                        next_node = inferred["path"][j + 1][0]
                         if next_node.type == "paper":
-                            path_str.append(next_node.data.get('title', next_node.id))
+                            path_str.append(next_node.data.get("title", next_node.id))
                         else:
-                            path_str.append(next_node.data.get('name', next_node.id))
+                            path_str.append(next_node.data.get("name", next_node.id))
 
             print(f"     Path: {' '.join(path_str)}")
 
@@ -1493,7 +1494,7 @@ def advanced_graphrag_example():
             similarity_threshold=0.65,
             min_community_size=2,
             max_communities=3,
-            relationship_weight=0.4  # Weight of structural relationships vs semantic similarity
+            relationship_weight=0.4,  # Weight of structural relationships vs semantic similarity
         )
 
         print(f"Found {len(clusters)} entity clusters:")
@@ -1503,7 +1504,7 @@ def advanced_graphrag_example():
             size = cluster["size"]
             themes = cluster["themes"]
 
-            print(f"  Cluster {i+1} (size: {size}, cohesion: {cohesion:.2f})")
+            print(f"  Cluster {i + 1} (size: {size}, cohesion: {cohesion:.2f})")
             print(f"     Themes: {', '.join(themes[:3]) if themes else 'None identified'}")
 
             # Show some cluster members
@@ -1529,9 +1530,9 @@ def advanced_graphrag_example():
 
         # Try different expansion strategies
         expansion_strategies = [
-            "neighbor_vectors",     # Use vectors of semantically similar nodes
-            "cluster_centroids",    # Use centroids of relevant clusters
-            "concept_enrichment"    # Emphasize conceptual dimensions
+            "neighbor_vectors",  # Use vectors of semantically similar nodes
+            "cluster_centroids",  # Use centroids of relevant clusters
+            "concept_enrichment",  # Emphasize conceptual dimensions
         ]
 
         for strategy in expansion_strategies:
@@ -1540,8 +1541,8 @@ def advanced_graphrag_example():
                 query_vector=original_query,
                 expansion_strategy=strategy,
                 expansion_factor=0.3,  # Weight of expansion terms
-                max_terms=3,           # Max number of expansion terms
-                min_similarity=0.6     # Minimum similarity threshold
+                max_terms=3,  # Max number of expansion terms
+                min_similarity=0.6,  # Minimum similarity threshold
             )
 
             # Show the expanded query
@@ -1558,11 +1559,15 @@ def advanced_graphrag_example():
 
             print(f"\n  Top results with original query:")
             for i, (node, score) in enumerate(results_original):
-                print(f"    {i+1}. {node.data.get('title', node.data.get('name', node.id))} (score: {score:.3f})")
+                print(
+                    f"    {i + 1}. {node.data.get('title', node.data.get('name', node.id))} (score: {score:.3f})"
+                )
 
             print(f"\n  Top results with expanded query:")
             for i, (node, score) in enumerate(results_expanded):
-                print(f"    {i+1}. {node.data.get('title', node.data.get('name', node.id))} (score: {score:.3f})")
+                print(
+                    f"    {i + 1}. {node.data.get('title', node.data.get('name', node.id))} (score: {score:.3f})"
+                )
 
         # Step 13: Entity resolution
         print("\nStep 13: Entity resolution and deduplication")
@@ -1576,8 +1581,8 @@ def advanced_graphrag_example():
             data={
                 "title": original_paper.data["title"] + " (Preprint)",
                 "year": original_paper.data["year"] - 1,  # Published a year earlier
-                "citation_count": original_paper.data["citation_count"] // 2  # Fewer citations
-            }
+                "citation_count": original_paper.data["citation_count"] // 2,  # Fewer citations
+            },
         )
 
         # Add the duplicate with the same embedding
@@ -1596,8 +1601,8 @@ def advanced_graphrag_example():
             data={
                 "title": "Advances in Machine Intelligence",  # Similar but different title
                 "year": original_paper.data["year"] + 1,
-                "citation_count": original_paper.data["citation_count"] + 20
-            }
+                "citation_count": original_paper.data["citation_count"] + 20,
+            },
         )
 
         # Add with a similar but not identical vector
@@ -1615,22 +1620,22 @@ def advanced_graphrag_example():
             graph.nodes["paper1"],
             graph.nodes["paper1_duplicate"],
             graph.nodes["paper1_similar"],
-            graph.nodes["paper2"]
+            graph.nodes["paper2"],
         ]
 
         print("Running entity resolution:")
         for strategy in ["vector_similarity", "property_matching", "hybrid"]:
             entity_groups = graph.resolve_entities(
-                candidate_nodes=candidates,
-                resolution_strategy=strategy,
-                similarity_threshold=0.7
+                candidate_nodes=candidates, resolution_strategy=strategy, similarity_threshold=0.7
             )
 
             print(f"\n  Using {strategy} strategy:")
             for canonical_id, group in entity_groups.items():
                 if len(group) > 1:  # Only show groups with more than one entity
                     canonical_entity = group[0]
-                    print(f"    Group for {canonical_entity.data.get('title', canonical_id)} has {len(group)} entities:")
+                    print(
+                        f"    Group for {canonical_entity.data.get('title', canonical_id)} has {len(group)} entities:"
+                    )
                     for entity in group:
                         print(f"      - {entity.id}: {entity.data.get('title')}")
 
@@ -1644,9 +1649,9 @@ def advanced_graphrag_example():
 
         # Show the different context strategies
         context_strategies = [
-            "neighborhood",    # Simple neighborhood averaging
+            "neighborhood",  # Simple neighborhood averaging
             "weighted_edges",  # Weight by edge properties
-            "type_specific"    # Node type-specific context rules
+            "type_specific",  # Node type-specific context rules
         ]
 
         print(f"Generating contextual embeddings for paper: {graph.nodes[paper_id].data['title']}")
@@ -1666,7 +1671,7 @@ def advanced_graphrag_example():
                 node_id=paper_id,
                 context_strategy=strategy,
                 context_depth=1,
-                edge_weight_property="relevance"  # For weighted_edges strategy
+                edge_weight_property="relevance",  # For weighted_edges strategy
             )
 
             # Show the contextual embedding and compare to original
@@ -1679,14 +1684,16 @@ def advanced_graphrag_example():
             contextual_results = graph.vector_search(contextual_embedding, k=3)
             print(f"    Top matches for contextual embedding:")
             for i, (node, score) in enumerate(contextual_results):
-                print(f"      {i+1}. {node.data.get('title', node.data.get('name', node.id))} (score: {score:.3f})")
+                print(
+                    f"      {i + 1}. {node.data.get('title', node.data.get('name', node.id))} (score: {score:.3f})"
+                )
 
         # Also show author contextual embedding
-        print(f"\nGenerating contextual embedding for author: {graph.nodes[author_id].data['name']}")
+        print(
+            f"\nGenerating contextual embedding for author: {graph.nodes[author_id].data['name']}"
+        )
         author_contextual = graph.generate_contextual_embeddings(
-            node_id=author_id,
-            context_strategy="type_specific",
-            context_depth=1
+            node_id=author_id, context_strategy="type_specific", context_depth=1
         )
 
         # Show top matches for the author's contextual embedding
@@ -1694,7 +1701,9 @@ def advanced_graphrag_example():
             author_results = graph.vector_search(author_contextual, k=3)
             print(f"  Top matches for author's contextual embedding:")
             for i, (node, score) in enumerate(author_results):
-                print(f"    {i+1}. {node.data.get('title', node.data.get('name', node.id))} (score: {score:.3f})")
+                print(
+                    f"    {i + 1}. {node.data.get('title', node.data.get('name', node.id))} (score: {score:.3f})"
+                )
 
         # Step 15: Compare subgraphs
         print("\nStep 15: Comparing subgraphs")
@@ -1703,15 +1712,11 @@ def advanced_graphrag_example():
         cv_focus_query = np.array([0.3, 0.2, 0.9])  # Focus on CV/deep learning
 
         ml_subgraph = graph.semantic_subgraph(
-            query_vector=ml_focus_query,
-            similarity_threshold=0.7,
-            include_connections=True
+            query_vector=ml_focus_query, similarity_threshold=0.7, include_connections=True
         )
 
         cv_subgraph = graph.semantic_subgraph(
-            query_vector=cv_focus_query,
-            similarity_threshold=0.7,
-            include_connections=True
+            query_vector=cv_focus_query, similarity_threshold=0.7, include_connections=True
         )
 
         # Compare the subgraphs
@@ -1720,7 +1725,7 @@ def advanced_graphrag_example():
             subgraph2=cv_subgraph,
             comparison_method="hybrid",
             semantic_weight=0.6,
-            structural_weight=0.4
+            structural_weight=0.4,
         )
 
         print(f"Comparison results between ML and CV subgraphs:")
@@ -1744,12 +1749,12 @@ def advanced_graphrag_example():
             time_property="year",
             time_intervals=time_intervals,
             metrics=["node_count", "edge_count", "density", "centrality"],
-            reference_node_id="paper1"  # Track a specific paper over time
+            reference_node_id="paper1",  # Track a specific paper over time
         )
 
         print(f"Temporal analysis across {len(time_analysis['snapshots'])} time periods:")
         for i, snapshot in enumerate(time_analysis["snapshots"]):
-            print(f"  Time period {i+1} ({snapshot['interval'][0]}-{snapshot['interval'][1]}):")
+            print(f"  Time period {i + 1} ({snapshot['interval'][0]}-{snapshot['interval'][1]}):")
             print(f"    Nodes: {snapshot.get('node_count', 0)}")
             print(f"    Edges: {snapshot.get('edge_count', 0)}")
             print(f"    Density: {snapshot.get('density', 0):.3f}")
@@ -1768,7 +1773,7 @@ def advanced_graphrag_example():
             completion_method="combined",
             target_relation_types=["cites"],
             min_confidence=0.5,
-            max_candidates=5
+            max_candidates=5,
         )
 
         if predicted_edges:
@@ -1779,7 +1784,7 @@ def advanced_graphrag_example():
                 confidence = prediction["confidence"]
                 reason = prediction["explanation"]
 
-                print(f"  {i+1}. {source} should cite {target}")
+                print(f"  {i + 1}. {source} should cite {target}")
                 print(f"     Confidence: {confidence:.2f}")
                 print(f"     Reason: {reason}")
         else:
@@ -1793,14 +1798,16 @@ def advanced_graphrag_example():
             if paper_id in graph.nodes:
                 paper = graph.nodes[paper_id]
                 title = paper.data.get("title", "")
-                paper.data["content"] = f"This paper discusses {title} in detail, focusing on recent advances."
+                paper.data["content"] = (
+                    f"This paper discusses {title} in detail, focusing on recent advances."
+                )
 
         # Perform cross-document reasoning with a complex query
         reasoning_result = graph.cross_document_reasoning(
             query="How has deep learning influenced computer vision?",
             document_node_types=["paper"],
             max_hops=2,
-            reasoning_depth="moderate"
+            reasoning_depth="moderate",
         )
 
         # Show the reasoning results
@@ -1812,14 +1819,14 @@ def advanced_graphrag_example():
 
         print("\nReasoning process:")
         for i, step in enumerate(reasoning_result["reasoning_trace"]):
-            print(f"  {i+1}. {step}")
+            print(f"  {i + 1}. {step}")
 
         # Try a more complex query with deep reasoning
         deep_reasoning = graph.cross_document_reasoning(
             query="What potential collaborations exist between researchers with different expertise areas?",
             document_node_types=["paper"],
             max_hops=3,
-            reasoning_depth="deep"
+            reasoning_depth="deep",
         )
 
         print("\nComplex query using deep reasoning:")
@@ -1830,6 +1837,7 @@ def advanced_graphrag_example():
     finally:
         # Clean up
         import shutil
+
         shutil.rmtree(temp_dir)
         print("\nCleaned up temporary directory")
 
@@ -1849,7 +1857,7 @@ def sharded_dataset_example():
         from ipfs_datasets_py.p2p_networking.libp2p_kit import (
             DistributedDatasetManager,
             NodeRole,
-            LibP2PNotAvailableError
+            LibP2PNotAvailableError,
         )
     except ImportError:
         print("LibP2P is not available. Install with: pip install py-libp2p")
@@ -1857,6 +1865,7 @@ def sharded_dataset_example():
 
     # Create a temporary directory for our examples
     import tempfile
+
     temp_dir = tempfile.mkdtemp()
     print(f"Using temporary directory: {temp_dir}")
 
@@ -1869,7 +1878,7 @@ def sharded_dataset_example():
             node_id="coordinator-node",
             listen_addresses=["/ip4/127.0.0.1/tcp/0"],
             role=NodeRole.COORDINATOR,
-            auto_start=True
+            auto_start=True,
         )
 
         # Initialize worker nodes
@@ -1879,31 +1888,37 @@ def sharded_dataset_example():
             storage_dir=os.path.join(temp_dir, "worker1"),
             node_id="worker-node-1",
             listen_addresses=["/ip4/127.0.0.1/tcp/0"],
-            bootstrap_peers=[f"/ip4/127.0.0.1/tcp/{addr.port}/p2p/{addr.peer_id}"
-                            for addr in coordinator.node.host.get_addrs()],
+            bootstrap_peers=[
+                f"/ip4/127.0.0.1/tcp/{addr.port}/p2p/{addr.peer_id}"
+                for addr in coordinator.node.host.get_addrs()
+            ],
             role=NodeRole.WORKER,
-            auto_start=True
+            auto_start=True,
         )
 
         worker2 = DistributedDatasetManager(
             storage_dir=os.path.join(temp_dir, "worker2"),
             node_id="worker-node-2",
             listen_addresses=["/ip4/127.0.0.1/tcp/0"],
-            bootstrap_peers=[f"/ip4/127.0.0.1/tcp/{addr.port}/p2p/{addr.peer_id}"
-                            for addr in coordinator.node.host.get_addrs()],
+            bootstrap_peers=[
+                f"/ip4/127.0.0.1/tcp/{addr.port}/p2p/{addr.peer_id}"
+                for addr in coordinator.node.host.get_addrs()
+            ],
             role=NodeRole.WORKER,
-            auto_start=True
+            auto_start=True,
         )
 
         # Create a sample dataset
         print("\nStep 3: Creating a sample dataset")
         print("------------------------------")
-        sample_data = pd.DataFrame({
-            "id": list(range(1000)),
-            "text": [f"Sample text {i}" for i in range(1000)],
-            "value": [float(i) for i in range(1000)],
-            "vector": [np.random.rand(128).tolist() for _ in range(1000)]
-        })
+        sample_data = pd.DataFrame(
+            {
+                "id": list(range(1000)),
+                "text": [f"Sample text {i}" for i in range(1000)],
+                "value": [float(i) for i in range(1000)],
+                "vector": [np.random.rand(128).tolist() for _ in range(1000)],
+            }
+        )
         print(f"Created sample dataset with {len(sample_data)} records")
 
         async def distribute_dataset():
@@ -1912,9 +1927,14 @@ def sharded_dataset_example():
                 dataset = coordinator.create_dataset(
                     name="Sharded Test Dataset",
                     description="A test dataset distributed across nodes",
-                    schema={"id": "integer", "text": "string", "value": "float", "vector": "float[]"},
+                    schema={
+                        "id": "integer",
+                        "text": "string",
+                        "value": "float",
+                        "vector": "float[]",
+                    },
                     vector_dimensions=128,
-                    tags=["example", "sharded", "test"]
+                    tags=["example", "sharded", "test"],
                 )
                 print(f"Created dataset with ID: {dataset.dataset_id}")
 
@@ -1927,7 +1947,7 @@ def sharded_dataset_example():
                     format="parquet",
                     shard_size=200,  # 5 shards of 200 records each
                     replication_factor=2,  # Replicate each shard to 2 nodes
-                    use_consistent_hashing=True
+                    use_consistent_hashing=True,
                 )
                 print(f"Created {len(shards)} shards")
 
@@ -1971,9 +1991,7 @@ def sharded_dataset_example():
                 print("--------------------------------------------")
                 query_vector = np.random.rand(128)
                 search_results = await coordinator.vector_search(
-                    dataset_id=dataset.dataset_id,
-                    query_vector=query_vector,
-                    top_k=5
+                    dataset_id=dataset.dataset_id, query_vector=query_vector, top_k=5
                 )
 
                 print(f"Search results: Found {search_results.get('total_results', 0)} matches")
@@ -1983,8 +2001,7 @@ def sharded_dataset_example():
                 print("\nStep 8: Rebalancing shards across nodes")
                 print("------------------------------------")
                 rebalance_results = await coordinator.rebalance_shards(
-                    dataset_id=dataset.dataset_id,
-                    target_replication=2
+                    dataset_id=dataset.dataset_id, target_replication=2
                 )
                 print(f"Rebalanced {rebalance_results.get('total_shards_rebalanced', 0)} shards")
 
@@ -2005,6 +2022,7 @@ def sharded_dataset_example():
     finally:
         # Clean up
         import shutil
+
         shutil.rmtree(temp_dir)
         print("\nCleaned up temporary directory")
 
@@ -2025,14 +2043,14 @@ def federated_search_example():
         from ipfs_datasets_py.p2p_networking.libp2p_kit import (
             DistributedDatasetManager,
             NodeRole,
-            LibP2PNotAvailableError
+            LibP2PNotAvailableError,
         )
         from ipfs_datasets_py.federated_search import (
             FederatedSearch,
             SearchQuery,
             SearchType,
             RankingStrategy,
-            DistributedSearchIndex
+            DistributedSearchIndex,
         )
     except ImportError:
         print("Required dependencies are not available. Install with: pip install py-libp2p")
@@ -2040,6 +2058,7 @@ def federated_search_example():
 
     # Create a temporary directory for our examples
     import tempfile
+
     temp_dir = tempfile.mkdtemp()
     print(f"Using temporary directory: {temp_dir}")
 
@@ -2052,7 +2071,7 @@ def federated_search_example():
             node_id="coordinator-node",
             listen_addresses=["/ip4/127.0.0.1/tcp/0"],
             role=NodeRole.COORDINATOR,
-            auto_start=True
+            auto_start=True,
         )
 
         # Wait for the coordinator to start
@@ -2065,7 +2084,7 @@ def federated_search_example():
             listen_addresses=["/ip4/127.0.0.1/tcp/0"],
             bootstrap_peers=[coordinator_address],
             role=NodeRole.WORKER,
-            auto_start=True
+            auto_start=True,
         )
 
         worker2 = DistributedDatasetManager(
@@ -2074,7 +2093,7 @@ def federated_search_example():
             listen_addresses=["/ip4/127.0.0.1/tcp/0"],
             bootstrap_peers=[coordinator_address],
             role=NodeRole.WORKER,
-            auto_start=True
+            auto_start=True,
         )
 
         print(f"Created coordinator and 2 worker nodes")
@@ -2115,7 +2134,7 @@ def federated_search_example():
                 "category": category,
                 "date": f"2023-{random.randint(1, 12):02d}-{random.randint(1, 28):02d}",
                 "rating": round(random.uniform(1, 5), 1),
-                "views": random.randint(100, 10000)
+                "views": random.randint(100, 10000),
             }
 
         # Generate 1000 documents
@@ -2143,7 +2162,9 @@ def federated_search_example():
 
         # Create a pandas DataFrame
         sample_data = pd.DataFrame(documents)
-        print(f"Created sample dataset with {len(sample_data)} documents across {len(categories)} categories")
+        print(
+            f"Created sample dataset with {len(sample_data)} documents across {len(categories)} categories"
+        )
 
         async def setup_and_search():
             try:
@@ -2159,10 +2180,10 @@ def federated_search_example():
                         "date": "string",
                         "rating": "float",
                         "views": "integer",
-                        "vector": "float[]"
+                        "vector": "float[]",
                     },
                     vector_dimensions=128,
-                    tags=["example", "federated", "search"]
+                    tags=["example", "federated", "search"],
                 )
                 print(f"Created dataset with ID: {dataset.dataset_id}")
 
@@ -2177,7 +2198,7 @@ def federated_search_example():
                     format="parquet",
                     shard_size=100,  # 10 shards of 100 records each
                     replication_factor=2,  # Replicate each shard to 2 nodes
-                    use_consistent_hashing=True
+                    use_consistent_hashing=True,
                 )
                 print(f"Created {len(shards)} shards")
 
@@ -2200,19 +2221,19 @@ def federated_search_example():
                 coordinator_search = FederatedSearch(
                     node=coordinator.node,
                     storage_dir=os.path.join(temp_dir, "coordinator_search"),
-                    ranking_strategy=RankingStrategy.SCORE
+                    ranking_strategy=RankingStrategy.SCORE,
                 )
 
                 worker1_search = FederatedSearch(
                     node=worker1.node,
                     storage_dir=os.path.join(temp_dir, "worker1_search"),
-                    ranking_strategy=RankingStrategy.SCORE
+                    ranking_strategy=RankingStrategy.SCORE,
                 )
 
                 worker2_search = FederatedSearch(
                     node=worker2.node,
                     storage_dir=os.path.join(temp_dir, "worker2_search"),
-                    ranking_strategy=RankingStrategy.SCORE
+                    ranking_strategy=RankingStrategy.SCORE,
                 )
 
                 print("Federated search engines initialized")
@@ -2230,7 +2251,7 @@ def federated_search_example():
                     distance_metric="cosine",
                     vector_field="vector",
                     text_fields=["title", "text", "category"],
-                    include_all_text_fields=True
+                    include_all_text_fields=True,
                 )
 
                 # Build indices on workers
@@ -2242,7 +2263,7 @@ def federated_search_example():
                     distance_metric="cosine",
                     vector_field="vector",
                     text_fields=["title", "text", "category"],
-                    include_all_text_fields=True
+                    include_all_text_fields=True,
                 )
 
                 worker2_index = await DistributedSearchIndex.build_for_dataset(
@@ -2253,7 +2274,7 @@ def federated_search_example():
                     distance_metric="cosine",
                     vector_field="vector",
                     text_fields=["title", "text", "category"],
-                    include_all_text_fields=True
+                    include_all_text_fields=True,
                 )
 
                 print("Search indices built on all nodes")
@@ -2265,7 +2286,9 @@ def federated_search_example():
                 # Create a technology-biased query vector
                 tech_query_vector = np.random.normal(0, 0.3, 128)
                 tech_dimensions = list(range(0, 25))  # Technology category dimensions
-                tech_query_vector[tech_dimensions] += np.random.uniform(0.5, 1.0, len(tech_dimensions))
+                tech_query_vector[tech_dimensions] += np.random.uniform(
+                    0.5, 1.0, len(tech_dimensions)
+                )
                 tech_query_vector = tech_query_vector / np.linalg.norm(tech_query_vector)
 
                 # Perform vector search from coordinator
@@ -2274,7 +2297,7 @@ def federated_search_example():
                     query_vector=tech_query_vector.tolist(),
                     top_k=5,
                     distance_metric="cosine",
-                    include_metadata=True
+                    include_metadata=True,
                 )
 
                 print(f"Vector search results: {vector_results.total_results} total matches")
@@ -2283,7 +2306,7 @@ def federated_search_example():
                 print("Top results:")
 
                 for i, result in enumerate(vector_results.results[:3]):
-                    print(f"  {i+1}. {result.metadata.get('title')} (Score: {result.score:.3f})")
+                    print(f"  {i + 1}. {result.metadata.get('title')} (Score: {result.score:.3f})")
                     print(f"     Category: {result.metadata.get('category')}")
                     print(f"     Text: {result.metadata.get('text')[:100]}...")
                     print(f"     From node: {result.node_id}, Shard: {result.shard_id}")
@@ -2297,7 +2320,7 @@ def federated_search_example():
                     query_text="AI technology advances",
                     fields=["title", "text"],
                     top_k=5,
-                    include_metadata=True
+                    include_metadata=True,
                 )
 
                 print(f"Keyword search results: {keyword_results.total_results} total matches")
@@ -2306,7 +2329,7 @@ def federated_search_example():
                 print("Top results:")
 
                 for i, result in enumerate(keyword_results.results[:3]):
-                    print(f"  {i+1}. {result.metadata.get('title')} (Score: {result.score:.3f})")
+                    print(f"  {i + 1}. {result.metadata.get('title')} (Score: {result.score:.3f})")
                     print(f"     Category: {result.metadata.get('category')}")
                     print(f"     Matched terms: {', '.join(result.matched_terms or [])}")
                     print(f"     From node: {result.node_id}, Shard: {result.shard_id}")
@@ -2323,7 +2346,7 @@ def federated_search_example():
                     top_k=5,
                     vector_weight=0.6,
                     text_weight=0.4,
-                    include_metadata=True
+                    include_metadata=True,
                 )
 
                 print(f"Hybrid search results: {hybrid_results.total_results} total matches")
@@ -2332,7 +2355,7 @@ def federated_search_example():
                 print("Top results:")
 
                 for i, result in enumerate(hybrid_results.results[:3]):
-                    print(f"  {i+1}. {result.metadata.get('title')} (Score: {result.score:.3f})")
+                    print(f"  {i + 1}. {result.metadata.get('title')} (Score: {result.score:.3f})")
                     print(f"     Category: {result.metadata.get('category')}")
                     print(f"     Text: {result.metadata.get('text')[:100]}...")
                     print(f"     From node: {result.node_id}, Shard: {result.shard_id}")
@@ -2345,10 +2368,10 @@ def federated_search_example():
                     dataset_id=dataset.dataset_id,
                     filters=[
                         {"field": "category", "operator": "eq", "value": "health"},
-                        {"field": "rating", "operator": "gte", "value": 4.0}
+                        {"field": "rating", "operator": "gte", "value": 4.0},
                     ],
                     top_k=5,
-                    include_metadata=True
+                    include_metadata=True,
                 )
 
                 print(f"Filter search results: {filter_results.total_results} total matches")
@@ -2357,7 +2380,7 @@ def federated_search_example():
                 print("Top results:")
 
                 for i, result in enumerate(filter_results.results[:3]):
-                    print(f"  {i+1}. {result.metadata.get('title')}")
+                    print(f"  {i + 1}. {result.metadata.get('title')}")
                     print(f"     Category: {result.metadata.get('category')}")
                     print(f"     Rating: {result.metadata.get('rating')}")
                     print(f"     From node: {result.node_id}, Shard: {result.shard_id}")
@@ -2376,6 +2399,7 @@ def federated_search_example():
             except Exception as e:
                 print(f"Error in federated search operations: {str(e)}")
                 import traceback
+
                 traceback.print_exc()
                 return f"Error: {str(e)}"
 
@@ -2389,10 +2413,12 @@ def federated_search_example():
     except Exception as e:
         print(f"Error running federated search example: {str(e)}")
         import traceback
+
         traceback.print_exc()
     finally:
         # Clean up
         import shutil
+
         shutil.rmtree(temp_dir)
         print("\nCleaned up temporary directory")
 
@@ -2401,10 +2427,13 @@ def resilient_operations_example():
     """Example showing resilient operations for distributed datasets."""
 
     # Import the resilient operations example module
-    from ipfs_datasets_py.examples.resilient_operations_example import resilient_operations_example as run_example
+    from ipfs_datasets_py.examples.resilient_operations_example import (
+        resilient_operations_example as run_example,
+    )
 
     # Run the example
     import anyio
+
     anyio.run(run_example())
 
 
@@ -2432,7 +2461,9 @@ def admin_dashboard_example():
     """Example showing the admin dashboard for system monitoring and management."""
 
     # Import the admin dashboard example module
-    from ipfs_datasets_py.examples.admin_dashboard_example import admin_dashboard_example as run_example
+    from ipfs_datasets_py.examples.admin_dashboard_example import (
+        admin_dashboard_example as run_example,
+    )
 
     # Run the example
     run_example()

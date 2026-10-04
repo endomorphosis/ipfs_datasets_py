@@ -23,15 +23,11 @@ from enum import StrEnum
 from typing import Any, Final, Protocol, runtime_checkable
 
 LOGIC_PROVIDER_PROTOCOL_VERSION: Final = 1
-LOGIC_PROVIDER_SUPPORTED_PROTOCOL_VERSIONS: Final = (
-    LOGIC_PROVIDER_PROTOCOL_VERSION,
-)
+LOGIC_PROVIDER_SUPPORTED_PROTOCOL_VERSIONS: Final = (LOGIC_PROVIDER_PROTOCOL_VERSION,)
 LOGIC_PROVIDER_REQUEST_SCHEMA: Final = "ipfs_datasets_py/logic-provider-request@1"
 LOGIC_PROVIDER_RESPONSE_SCHEMA: Final = "ipfs_datasets_py/logic-provider-response@1"
 LOGIC_PROVIDER_RESOURCE_SCHEMA: Final = "ipfs_datasets_py/logic-provider-resource-budget@1"
-LOGIC_PROVIDER_CANCELLATION_SCHEMA: Final = (
-    "ipfs_datasets_py/logic-provider-cancellation@1"
-)
+LOGIC_PROVIDER_CANCELLATION_SCHEMA: Final = "ipfs_datasets_py/logic-provider-cancellation@1"
 
 
 class LogicProviderContractError(ValueError):
@@ -71,14 +67,10 @@ def _strict_json_value(value: Any, field_name: str) -> Any:
         if item is None or isinstance(item, (str, bool, int)):
             return
         if isinstance(item, float):
-            raise LogicProviderContractError(
-                f"{field_name} cannot contain floating-point values"
-            )
+            raise LogicProviderContractError(f"{field_name} cannot contain floating-point values")
         if isinstance(item, Mapping):
             if not all(isinstance(key, str) for key in item):
-                raise LogicProviderContractError(
-                    f"{field_name} object keys must be strings"
-                )
+                raise LogicProviderContractError(f"{field_name} object keys must be strings")
             for nested in item.values():
                 validate(nested)
             return
@@ -104,9 +96,7 @@ def _strict_json_value(value: Any, field_name: str) -> Any:
     except (TypeError, ValueError, json.JSONDecodeError) as error:
         if isinstance(error, LogicProviderContractError):
             raise
-        raise LogicProviderContractError(
-            f"{field_name} must contain strict JSON values"
-        ) from error
+        raise LogicProviderContractError(f"{field_name} must contain strict JSON values") from error
 
 
 def _strict_json_object(value: Any, field_name: str) -> dict[str, Any]:
@@ -142,20 +132,14 @@ def _text(
 
 def _nonnegative_int(value: Any, field_name: str) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or value < 0:
-        raise LogicProviderContractError(
-            f"{field_name} must be a non-negative integer"
-        )
+        raise LogicProviderContractError(f"{field_name} must be a non-negative integer")
     return value
 
 
-def _reject_unknown(
-    value: Mapping[str, Any], allowed: frozenset[str], record_name: str
-) -> None:
+def _reject_unknown(value: Mapping[str, Any], allowed: frozenset[str], record_name: str) -> None:
     unknown = sorted(set(value) - allowed)
     if unknown:
-        raise LogicProviderContractError(
-            f"unknown {record_name} field(s): {', '.join(unknown)}"
-        )
+        raise LogicProviderContractError(f"unknown {record_name} field(s): {', '.join(unknown)}")
 
 
 def canonical_provider_json(value: Mapping[str, Any]) -> str:
@@ -187,9 +171,7 @@ def _strict_json_loads(value: str, field_name: str) -> Any:
             value,
             object_pairs_hook=no_duplicate_keys,
             parse_constant=lambda constant: (_ for _ in ()).throw(
-                LogicProviderContractError(
-                    f"{field_name} contains non-finite number {constant}"
-                )
+                LogicProviderContractError(f"{field_name} contains non-finite number {constant}")
             ),
         )
     except (TypeError, json.JSONDecodeError) as error:
@@ -220,9 +202,7 @@ class ProviderResourceBudget:
 
     def __post_init__(self) -> None:
         if self.schema_version != LOGIC_PROVIDER_RESOURCE_SCHEMA:
-            raise LogicProviderContractError(
-                "unsupported logic-provider resource schema"
-            )
+            raise LogicProviderContractError("unsupported logic-provider resource schema")
         for field_name in (
             "wall_time_ms",
             "cpu_time_ms",
@@ -240,9 +220,7 @@ class ProviderResourceBudget:
                 _nonnegative_int(getattr(self, field_name), field_name),
             )
         if not isinstance(self.network_allowed, bool):
-            raise LogicProviderContractError(
-                "resource budget network_allowed must be a boolean"
-            )
+            raise LogicProviderContractError("resource budget network_allowed must be a boolean")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -280,11 +258,7 @@ class ProviderResourceBudget:
         )
         _reject_unknown(value, allowed, "resource budget")
         return cls(
-            **{
-                field_name: value[field_name]
-                for field_name in allowed
-                if field_name in value
-            }
+            **{field_name: value[field_name] for field_name in allowed if field_name in value}
         )
 
 
@@ -299,9 +273,7 @@ class ProviderCancellation:
 
     def __post_init__(self) -> None:
         if self.schema_version != LOGIC_PROVIDER_CANCELLATION_SCHEMA:
-            raise LogicProviderContractError(
-                "unsupported logic-provider cancellation schema"
-            )
+            raise LogicProviderContractError("unsupported logic-provider cancellation schema")
         object.__setattr__(
             self,
             "cancellation_id",
@@ -315,9 +287,7 @@ class ProviderCancellation:
             _text(self.reason, "cancellation reason", optional=True, maximum=512),
         )
         if self.reason and not self.cancelled:
-            raise LogicProviderContractError(
-                "a cancellation reason requires cancelled=true"
-            )
+            raise LogicProviderContractError("a cancellation reason requires cancelled=true")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -333,15 +303,11 @@ class ProviderCancellation:
             raise LogicProviderContractError("cancellation must be an object")
         _reject_unknown(
             value,
-            frozenset(
-                {"schema_version", "cancellation_id", "cancelled", "reason"}
-            ),
+            frozenset({"schema_version", "cancellation_id", "cancelled", "reason"}),
             "cancellation",
         )
         return cls(
-            schema_version=value.get(
-                "schema_version", LOGIC_PROVIDER_CANCELLATION_SCHEMA
-            ),
+            schema_version=value.get("schema_version", LOGIC_PROVIDER_CANCELLATION_SCHEMA),
             cancellation_id=value.get("cancellation_id", ""),
             cancelled=value.get("cancelled", False),
             reason=value.get("reason", ""),
@@ -359,17 +325,11 @@ class LogicProviderFailure:
 
     def __post_init__(self) -> None:
         try:
-            code = LogicProviderFailureCode(
-                str(getattr(self.code, "value", self.code))
-            )
+            code = LogicProviderFailureCode(str(getattr(self.code, "value", self.code)))
         except ValueError as error:
-            raise LogicProviderContractError(
-                "unknown logic-provider failure code"
-            ) from error
+            raise LogicProviderContractError("unknown logic-provider failure code") from error
         object.__setattr__(self, "code", code)
-        object.__setattr__(
-            self, "message", _text(self.message, "failure message", maximum=4096)
-        )
+        object.__setattr__(self, "message", _text(self.message, "failure message", maximum=4096))
         if not isinstance(self.retryable, bool):
             raise LogicProviderContractError("retryable must be a boolean")
         object.__setattr__(
@@ -425,21 +385,15 @@ class LogicProviderRequest:
                 str(getattr(self.operation, "value", self.operation))
             )
         except ValueError as error:
-            raise LogicProviderContractError(
-                "unsupported logic-provider operation"
-            ) from error
+            raise LogicProviderContractError("unsupported logic-provider operation") from error
         if (
             isinstance(self.protocol_version, bool)
             or not isinstance(self.protocol_version, int)
             or self.protocol_version not in LOGIC_PROVIDER_SUPPORTED_PROTOCOL_VERSIONS
         ):
-            raise LogicProviderContractError(
-                "unsupported logic-provider protocol version"
-            )
+            raise LogicProviderContractError("unsupported logic-provider protocol version")
         if self.schema_version != LOGIC_PROVIDER_REQUEST_SCHEMA:
-            raise LogicProviderContractError(
-                "unsupported logic-provider request schema"
-            )
+            raise LogicProviderContractError("unsupported logic-provider request schema")
         if not isinstance(self.network_allowed, bool):
             raise LogicProviderContractError("network_allowed must be a boolean")
         if self.deadline_unix_ms is not None:
@@ -451,22 +405,14 @@ class LogicProviderRequest:
             else ProviderResourceBudget.from_dict(self.resource_budget)
         )
         cancellation = self.cancellation
-        if cancellation is not None and not isinstance(
-            cancellation, ProviderCancellation
-        ):
+        if cancellation is not None and not isinstance(cancellation, ProviderCancellation):
             cancellation = ProviderCancellation.from_dict(cancellation)
         if self.network_allowed and not budget.network_allowed:
-            raise LogicProviderContractError(
-                "request network access exceeds its resource budget"
-            )
+            raise LogicProviderContractError("request network access exceeds its resource budget")
 
         object.__setattr__(self, "operation", operation)
-        object.__setattr__(
-            self, "request_id", _text(self.request_id, "request_id", maximum=128)
-        )
-        object.__setattr__(
-            self, "payload", _strict_json_object(self.payload, "request payload")
-        )
+        object.__setattr__(self, "request_id", _text(self.request_id, "request_id", maximum=128))
+        object.__setattr__(self, "payload", _strict_json_object(self.payload, "request payload"))
         object.__setattr__(self, "resource_budget", budget)
         object.__setattr__(self, "cancellation", cancellation)
 
@@ -477,8 +423,7 @@ class LogicProviderRequest:
     @property
     def expired(self) -> bool:
         return (
-            self.deadline_unix_ms is not None
-            and int(time.time() * 1000) >= self.deadline_unix_ms
+            self.deadline_unix_ms is not None and int(time.time() * 1000) >= self.deadline_unix_ms
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -489,9 +434,7 @@ class LogicProviderRequest:
             "operation": self.operation.value,
             "payload": dict(self.payload),
             "resource_budget": self.resource_budget.to_dict(),
-            "cancellation": (
-                None if self.cancellation is None else self.cancellation.to_dict()
-            ),
+            "cancellation": (None if self.cancellation is None else self.cancellation.to_dict()),
             "network_allowed": self.network_allowed,
             "deadline_unix_ms": self.deadline_unix_ms,
         }
@@ -566,37 +509,25 @@ class LogicProviderResponse:
             or not isinstance(self.protocol_version, int)
             or self.protocol_version not in LOGIC_PROVIDER_SUPPORTED_PROTOCOL_VERSIONS
         ):
-            raise LogicProviderContractError(
-                "unsupported logic-provider response protocol version"
-            )
+            raise LogicProviderContractError("unsupported logic-provider response protocol version")
         if self.schema_version != LOGIC_PROVIDER_RESPONSE_SCHEMA:
-            raise LogicProviderContractError(
-                "unsupported logic-provider response schema"
-            )
+            raise LogicProviderContractError("unsupported logic-provider response schema")
         if not isinstance(self.ok, bool):
             raise LogicProviderContractError("response ok must be a boolean")
         duration_ms = _nonnegative_int(self.duration_ms, "duration_ms")
         result = (
-            None
-            if self.result is None
-            else _strict_json_object(self.result, "response result")
+            None if self.result is None else _strict_json_object(self.result, "response result")
         )
         error = self.error
         if error is not None and not isinstance(error, LogicProviderFailure):
             error = LogicProviderFailure.from_dict(error)
         if self.ok and (result is None or error is not None):
-            raise LogicProviderContractError(
-                "successful provider response requires only a result"
-            )
+            raise LogicProviderContractError("successful provider response requires only a result")
         if not self.ok and (error is None or result is not None):
-            raise LogicProviderContractError(
-                "failed provider response requires only an error"
-            )
+            raise LogicProviderContractError("failed provider response requires only an error")
 
         object.__setattr__(self, "operation", operation)
-        object.__setattr__(
-            self, "request_id", _text(self.request_id, "request_id", maximum=128)
-        )
+        object.__setattr__(self, "request_id", _text(self.request_id, "request_id", maximum=128))
         object.__setattr__(self, "result", result)
         object.__setattr__(self, "error", error)
         object.__setattr__(
@@ -733,33 +664,25 @@ class LogicProvider(Protocol):
 
     def capability(
         self, request: LogicProviderRequest
-    ) -> Mapping[str, Any] | LogicProviderResponse:
-        ...
+    ) -> Mapping[str, Any] | LogicProviderResponse: ...
 
     def translate(
         self, request: LogicProviderRequest
-    ) -> Mapping[str, Any] | LogicProviderResponse:
-        ...
+    ) -> Mapping[str, Any] | LogicProviderResponse: ...
 
-    def prove(
-        self, request: LogicProviderRequest
-    ) -> Mapping[str, Any] | LogicProviderResponse:
-        ...
+    def prove(self, request: LogicProviderRequest) -> Mapping[str, Any] | LogicProviderResponse: ...
 
     def reconstruct(
         self, request: LogicProviderRequest
-    ) -> Mapping[str, Any] | LogicProviderResponse:
-        ...
+    ) -> Mapping[str, Any] | LogicProviderResponse: ...
 
     def verify(
         self, request: LogicProviderRequest
-    ) -> Mapping[str, Any] | LogicProviderResponse:
-        ...
+    ) -> Mapping[str, Any] | LogicProviderResponse: ...
 
     def attest(
         self, request: LogicProviderRequest
-    ) -> Mapping[str, Any] | LogicProviderResponse:
-        ...
+    ) -> Mapping[str, Any] | LogicProviderResponse: ...
 
 
 def dispatch_logic_provider_request(

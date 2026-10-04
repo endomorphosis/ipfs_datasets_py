@@ -124,20 +124,20 @@ python -m ipfs_datasets_py.optimizers.logic_theorem_optimizer.cli_wrapper prove 
 for iteration in range(5):
     # Run optimization session
     result = optimizer.run_session(data, context)
-    
-    score = result['score']
-    valid = result['valid']
-    
-    print(f"Iteration {iteration+1}: score={score:.2f}, valid={valid}")
-    
+
+    score = result["score"]
+    valid = result["valid"]
+
+    print(f"Iteration {iteration + 1}: score={score:.2f}, valid={valid}")
+
     # Check convergence
     if score >= config.target_score:
-        print(f"Converged at iteration {iteration+1}!")
+        print(f"Converged at iteration {iteration + 1}!")
         break
-    
+
     # Apply feedback from critic to refine approach
-    feedback = optimizer.critique(result['artifact'])
-    context['feedback'] = feedback.feedback
+    feedback = optimizer.critique(result["artifact"])
+    context["feedback"] = feedback.feedback
 ```
 
 ## Generate → Critique → Optimize Cycle
@@ -165,30 +165,18 @@ print(f"Improved: {optimized['score'] > critique.overall}")
 ```python
 # Modus Ponens: From P and P→Q, infer Q
 theorems = [
-    {
-        "axioms": ["P", "P → Q"],
-        "theorem": "Q",
-        "rule": "Modus Ponens"
-    },
-    {
-        "axioms": ["¬Q", "P → Q"],
-        "theorem": "¬P",
-        "rule": "Modus Tollens"
-    },
-    {
-        "axioms": ["P ∧ Q"],
-        "theorem": "P",
-        "rule": "Conjunction Elimination"
-    },
+    {"axioms": ["P", "P → Q"], "theorem": "Q", "rule": "Modus Ponens"},
+    {"axioms": ["¬Q", "P → Q"], "theorem": "¬P", "rule": "Modus Tollens"},
+    {"axioms": ["P ∧ Q"], "theorem": "P", "rule": "Conjunction Elimination"},
 ]
 
 for t in theorems:
     context = {"domain": "propositional_logic", "rule": t["rule"]}
     data = {"axioms": t["axioms"], "theorem": t["theorem"]}
-    
+
     result = optimizer.run_session(data, context)
-    valid = result['valid']
-    
+    valid = result["valid"]
+
     print(f"{t['rule']}: {'✓' if valid else '✗'}")
 ```
 
@@ -212,9 +200,7 @@ samples = [
 ]
 
 autoencoder = AdaptiveModalAutoencoder(
-    feature_codec=SpaCyModalCodec(
-        encoder=SpaCyLegalEncoder(model_name="en_core_web_sm")
-    )
+    feature_codec=SpaCyModalCodec(encoder=SpaCyLegalEncoder(model_name="en_core_web_sm"))
 )
 supervisor = ModalTodoSupervisor()
 
@@ -283,9 +269,7 @@ samples = load_uscode_samples_from_parquet(
 run = ModalTodoSupervisor().optimize(
     samples,
     autoencoder=AdaptiveModalAutoencoder(
-        feature_codec=SpaCyModalCodec(
-            encoder=SpaCyLegalEncoder(model_name="en_core_web_sm")
-        )
+        feature_codec=SpaCyModalCodec(encoder=SpaCyLegalEncoder(model_name="en_core_web_sm"))
     ),
     max_iterations=3,
     max_items=8,
@@ -307,11 +291,11 @@ IPFS_DATASETS_PY_RUN_HF_USCODE_LIVE=1 \
 from ipfs_datasets_py.optimizers.common import OptimizerConfig
 
 config = OptimizerConfig(
-    max_iterations=5,           # Max optimization rounds
-    target_score=0.90,          # Target quality score
-    early_stopping=True,        # Stop if target reached
-    validation_enabled=True,    # Validate proofs
-    metrics_enabled=True,       # Track metrics
+    max_iterations=5,  # Max optimization rounds
+    target_score=0.90,  # Target quality score
+    early_stopping=True,  # Stop if target reached
+    validation_enabled=True,  # Validate proofs
+    metrics_enabled=True,  # Track metrics
 )
 
 optimizer = LogicTheoremOptimizer(config=config, llm_backend=None)

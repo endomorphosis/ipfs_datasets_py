@@ -50,8 +50,7 @@ class FakeStream:
 
 def _frame(obj: dict) -> bytes:
     payload = json.dumps(obj, ensure_ascii=False).encode("utf-8")
-    return struct.pack(">I", len(payload)
-    ) + payload
+    return struct.pack(">I", len(payload)) + payload
 
 
 def _parse_first_write(stream: FakeStream) -> dict:
@@ -129,7 +128,9 @@ def test_mcp_p2p_tools_list_after_initialize() -> None:
     lst = {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}}
     stream = FakeStream([_frame(init), _frame(lst)])
 
-    asyncio.run(handle_mcp_p2p_stream(stream, local_peer_id="peer", registry=registry, max_frame_bytes=4096))
+    asyncio.run(
+        handle_mcp_p2p_stream(stream, local_peer_id="peer", registry=registry, max_frame_bytes=4096)
+    )
     assert len(stream.writes) >= 2
 
 
@@ -140,7 +141,9 @@ def test_mcp_p2p_notifications_do_not_get_responses() -> None:
     lst = {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}}
     stream = FakeStream([_frame(init), _frame(notif), _frame(lst)])
 
-    asyncio.run(handle_mcp_p2p_stream(stream, local_peer_id="peer", registry=registry, max_frame_bytes=4096))
+    asyncio.run(
+        handle_mcp_p2p_stream(stream, local_peer_id="peer", registry=registry, max_frame_bytes=4096)
+    )
     assert stream.closed is True
 
     # Expect exactly two responses: initialize ack + tools/list response.
@@ -198,7 +201,9 @@ def test_mcp_p2p_tools_call_after_initialize() -> None:
     }
     stream = FakeStream([_frame(init), _frame(call)])
 
-    asyncio.run(handle_mcp_p2p_stream(stream, local_peer_id="peer", registry=registry, max_frame_bytes=4096))
+    asyncio.run(
+        handle_mcp_p2p_stream(stream, local_peer_id="peer", registry=registry, max_frame_bytes=4096)
+    )
     assert len(stream.writes) >= 2
 
 
@@ -219,7 +224,9 @@ def test_mcp_p2p_unauthorized_closes() -> None:
     init = {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}}
     stream = FakeStream([_frame(init)])
 
-    asyncio.run(handle_mcp_p2p_stream(stream, local_peer_id="peer", registry=registry, max_frame_bytes=4096))
+    asyncio.run(
+        handle_mcp_p2p_stream(stream, local_peer_id="peer", registry=registry, max_frame_bytes=4096)
+    )
     assert stream.closed is True
     assert stream.writes
     resp = _parse_first_write(stream)

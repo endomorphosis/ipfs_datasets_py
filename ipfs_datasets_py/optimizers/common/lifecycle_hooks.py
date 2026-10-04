@@ -38,4 +38,3 @@ class LifecycleHooksMixin:
 
     def on_session_complete(self, result: Dict[str, Any], context: Any) -> None:
         """Called once at the end of ``run_session``."""
-

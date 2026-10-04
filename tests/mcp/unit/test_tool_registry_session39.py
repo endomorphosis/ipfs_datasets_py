@@ -12,6 +12,7 @@ Covers:
 - ToolRegistry.get_tool_statistics()
 - _register_* helper functions (smoke tests)
 """
+
 import pytest
 import asyncio
 from unittest.mock import patch
@@ -30,6 +31,7 @@ from ipfs_datasets_py.mcp_server.tool_registry import (
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 class _Tool(ClaudeMCPTool):
     """Minimal concrete implementation for testing."""
@@ -55,6 +57,7 @@ class _Tool(ClaudeMCPTool):
 # ---------------------------------------------------------------------------
 # ClaudeMCPTool.get_schema() and run()
 # ---------------------------------------------------------------------------
+
 
 class TestClaudeMCPToolSchema:
     """Tests for ClaudeMCPTool.get_schema()."""
@@ -134,6 +137,7 @@ class TestClaudeMCPToolRun:
 # ToolRegistry.list_tools()
 # ---------------------------------------------------------------------------
 
+
 class TestToolRegistryListTools:
     """Tests for list_tools()."""
 
@@ -170,6 +174,7 @@ class TestToolRegistryListTools:
 # ToolRegistry.get_tools_by_category()
 # ---------------------------------------------------------------------------
 
+
 class TestToolRegistryGetByCategory:
     """Tests for get_tools_by_category()."""
 
@@ -203,6 +208,7 @@ class TestToolRegistryGetByCategory:
 # ---------------------------------------------------------------------------
 # ToolRegistry.get_tools_by_tag()
 # ---------------------------------------------------------------------------
+
 
 class TestToolRegistryGetByTag:
     """Tests for get_tools_by_tag()."""
@@ -238,6 +244,7 @@ class TestToolRegistryGetByTag:
 # ToolRegistry.get_categories()
 # ---------------------------------------------------------------------------
 
+
 class TestToolRegistryGetCategories:
     """Tests for get_categories()."""
 
@@ -265,6 +272,7 @@ class TestToolRegistryGetCategories:
 # ---------------------------------------------------------------------------
 # ToolRegistry.search_tools()
 # ---------------------------------------------------------------------------
+
 
 class TestToolRegistrySearchTools:
     """Tests for search_tools()."""
@@ -314,6 +322,7 @@ class TestToolRegistrySearchTools:
 # ToolRegistry.validate_tool_parameters()
 # ---------------------------------------------------------------------------
 
+
 class TestToolRegistryValidateParameters:
     """Tests for validate_tool_parameters()."""
 
@@ -344,6 +353,7 @@ class TestToolRegistryValidateParameters:
 # ---------------------------------------------------------------------------
 # ToolRegistry.get_tool_statistics()
 # ---------------------------------------------------------------------------
+
 
 class TestToolRegistryStatistics:
     """Tests for get_tool_statistics()."""
@@ -396,6 +406,7 @@ class TestToolRegistryStatistics:
 # ---------------------------------------------------------------------------
 # _register_* helper functions (smoke tests — should not raise)
 # ---------------------------------------------------------------------------
+
 
 class TestRegisterHelperFunctions:
     """Smoke tests — _register_* helpers import tools without crashing."""

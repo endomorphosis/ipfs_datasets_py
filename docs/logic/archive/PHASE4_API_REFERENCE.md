@@ -316,7 +316,7 @@ Represents a grammar rule.
 rule = GrammarRule(
     lhs=Category.SENTENCE,
     rhs=[Category.NOUN, Category.VERB],
-    semantic_action=lambda n, v: f"{v}({n})"
+    semantic_action=lambda n, v: f"{v}({n})",
 )
 ```
 
@@ -331,11 +331,7 @@ Lexical entry in the grammar.
 
 **Example:**
 ```python
-entry = LexicalEntry(
-    word="believes",
-    category=Category.VERB,
-    semantics="B"
-)
+entry = LexicalEntry(word="believes", category=Category.VERB, semantics="B")
 ```
 
 ### Enumerations

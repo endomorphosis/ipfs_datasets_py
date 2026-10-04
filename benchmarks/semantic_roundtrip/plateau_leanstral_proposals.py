@@ -110,12 +110,8 @@ from benchmarks.semantic_roundtrip.structural_admission import (
 
 
 PLATEAU_LEANSTRAL_PROPOSALS_INTERFACE: Final = "PlateauLeanstralProposals@1"
-PLATEAU_LEANSTRAL_PROPOSAL_RECEIPT_INTERFACE: Final = (
-    "PlateauLeanstralProposalCaseReceipt@1"
-)
-PLATEAU_LEANSTRAL_PROPOSAL_RECEIPTS_INTERFACE: Final = (
-    "PlateauLeanstralProposalReceipts@1"
-)
+PLATEAU_LEANSTRAL_PROPOSAL_RECEIPT_INTERFACE: Final = "PlateauLeanstralProposalCaseReceipt@1"
+PLATEAU_LEANSTRAL_PROPOSAL_RECEIPTS_INTERFACE: Final = "PlateauLeanstralProposalReceipts@1"
 PLATEAU_LEANSTRAL_PROPOSALS_SCHEMA: Final = (
     "ipfs-datasets.semantic-roundtrip-plateau-leanstral-proposals.v1"
 )
@@ -130,8 +126,7 @@ PROVIDER_ID: Final = "leanstral-local"
 DRY_RUN_FIXTURE_PACK_ID: Final = "plateau-leanstral-proposal-dry-run-fixtures@1"
 
 DEFAULT_RECEIPTS_RELATIVE_PATH: Final = Path(
-    "workspace/benchmarks/semantic-roundtrip-compositions/"
-    "plateau_leanstral_proposal_receipts.json"
+    "workspace/benchmarks/semantic-roundtrip-compositions/plateau_leanstral_proposal_receipts.json"
 )
 
 DEFAULT_BASELINE_ARM_ID: Final = DEFAULT_DETERMINISTIC_BASELINE_ARM_ID
@@ -208,17 +203,13 @@ def _finite_unit(value: object, field: str) -> float:
         or not math.isfinite(float(value))
         or not 0.0 <= float(value) <= 1.0
     ):
-        raise PlateauLeanstralProposalError(
-            f"{field} must be a finite number from zero to one"
-        )
+        raise PlateauLeanstralProposalError(f"{field} must be a finite number from zero to one")
     return float(value)
 
 
 def _nonneg_int(value: object, field: str) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or value < 0:
-        raise PlateauLeanstralProposalError(
-            f"{field} must be a nonnegative integer"
-        )
+        raise PlateauLeanstralProposalError(f"{field} must be a nonnegative integer")
     return value
 
 
@@ -229,9 +220,7 @@ def trigger_paths(triggers: Sequence[RepairTrigger]) -> tuple[str, ...]:
     seen: set[str] = set()
     for item in triggers:
         if not isinstance(item, RepairTrigger):
-            raise PlateauLeanstralProposalError(
-                "triggers must be RepairTrigger records"
-            )
+            raise PlateauLeanstralProposalError("triggers must be RepairTrigger records")
         if item.path not in seen:
             seen.add(item.path)
             paths.append(item.path)
@@ -248,31 +237,23 @@ def apply_field_patch(
     """Return a copy of *baseline_l1* with one rule field replaced."""
 
     if not isinstance(baseline_l1, CanonicalRuleIR):
-        raise PlateauLeanstralProposalError(
-            "baseline_l1 must be CanonicalRuleIR"
-        )
+        raise PlateauLeanstralProposalError("baseline_l1 must be CanonicalRuleIR")
     if canonical_field not in RULE_FIELDS:
-        raise PlateauLeanstralProposalError(
-            f"unknown canonical field: {canonical_field!r}"
-        )
+        raise PlateauLeanstralProposalError(f"unknown canonical field: {canonical_field!r}")
     if (
         isinstance(rule_index, bool)
         or not isinstance(rule_index, int)
         or rule_index < 0
         or rule_index >= len(baseline_l1.rules)
     ):
-        raise PlateauLeanstralProposalError(
-            f"rule_index out of range: {rule_index!r}"
-        )
+        raise PlateauLeanstralProposalError(f"rule_index out of range: {rule_index!r}")
 
     if canonical_field in LIST_FIELDS:
         if value is None:
             normalized: object = ()
         elif isinstance(value, str):
             normalized = (value,) if value else ()
-        elif isinstance(value, Sequence) and not isinstance(
-            value, (str, bytes, bytearray)
-        ):
+        elif isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
             normalized = tuple(str(item) for item in value)
         else:
             raise PlateauLeanstralProposalError(
@@ -287,9 +268,7 @@ def apply_field_patch(
             normalized = str(value)
 
     rules = list(baseline_l1.rules)
-    rules[rule_index] = replace(
-        rules[rule_index], **{canonical_field: normalized}
-    )
+    rules[rule_index] = replace(rules[rule_index], **{canonical_field: normalized})
     return CanonicalRuleIR(tuple(rules))
 
 
@@ -300,18 +279,14 @@ def apply_trigger_patches(
     """Apply path→value patches, restricted to triggered slots when keys are paths."""
 
     if not isinstance(baseline_l1, CanonicalRuleIR):
-        raise PlateauLeanstralProposalError(
-            "baseline_l1 must be CanonicalRuleIR"
-        )
+        raise PlateauLeanstralProposalError("baseline_l1 must be CanonicalRuleIR")
     candidate = baseline_l1
     if isinstance(patches, Mapping):
         items = list(patches.items())
         for path, value in items:
             path_s = _nonblank(path, "patch path")
             if not path_s.startswith("rules[") or "]." not in path_s:
-                raise PlateauLeanstralProposalError(
-                    f"patch path has invalid shape: {path_s!r}"
-                )
+                raise PlateauLeanstralProposalError(f"patch path has invalid shape: {path_s!r}")
             head, field = path_s.split("].", 1)
             index_text = head[len("rules[") :]
             try:
@@ -328,23 +303,17 @@ def apply_trigger_patches(
             )
         return candidate
 
-    if isinstance(patches, Sequence) and not isinstance(
-        patches, (str, bytes, bytearray)
-    ):
+    if isinstance(patches, Sequence) and not isinstance(patches, (str, bytes, bytearray)):
         for item in patches:
             if (
                 not isinstance(item, Sequence)
                 or isinstance(item, (str, bytes, bytearray))
                 or len(item) != 2
             ):
-                raise PlateauLeanstralProposalError(
-                    "patch pairs must be (RepairTrigger, value)"
-                )
+                raise PlateauLeanstralProposalError("patch pairs must be (RepairTrigger, value)")
             trigger, value = item
             if not isinstance(trigger, RepairTrigger):
-                raise PlateauLeanstralProposalError(
-                    "patch trigger must be RepairTrigger"
-                )
+                raise PlateauLeanstralProposalError("patch trigger must be RepairTrigger")
             candidate = apply_field_patch(
                 candidate,
                 rule_index=trigger.rule_index,
@@ -382,24 +351,14 @@ class DryRunFixtureCase:
     vocabulary: AllowedAtomVocabulary | None = None
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "case_id", _nonblank(self.case_id, "case_id")
-        )
+        object.__setattr__(self, "case_id", _nonblank(self.case_id, "case_id"))
         if not isinstance(self.baseline_l1, CanonicalRuleIR):
-            raise PlateauLeanstralProposalError(
-                "baseline_l1 must be CanonicalRuleIR"
-            )
+            raise PlateauLeanstralProposalError("baseline_l1 must be CanonicalRuleIR")
         object.__setattr__(self, "triggers", tuple(self.triggers))
         if not all(isinstance(item, RepairTrigger) for item in self.triggers):
-            raise PlateauLeanstralProposalError(
-                "triggers must be RepairTrigger records"
-            )
-        if self.candidate_l1 is not None and not isinstance(
-            self.candidate_l1, CanonicalRuleIR
-        ):
-            raise PlateauLeanstralProposalError(
-                "candidate_l1 must be CanonicalRuleIR or None"
-            )
+            raise PlateauLeanstralProposalError("triggers must be RepairTrigger records")
+        if self.candidate_l1 is not None and not isinstance(self.candidate_l1, CanonicalRuleIR):
+            raise PlateauLeanstralProposalError("candidate_l1 must be CanonicalRuleIR or None")
         if not isinstance(self.expected_outcome, ProposalOutcome):
             try:
                 object.__setattr__(
@@ -408,37 +367,26 @@ class DryRunFixtureCase:
                     ProposalOutcome(self.expected_outcome),
                 )
             except (TypeError, ValueError) as exc:
-                raise PlateauLeanstralProposalError(
-                    "expected_outcome is invalid"
-                ) from exc
+                raise PlateauLeanstralProposalError("expected_outcome is invalid") from exc
         object.__setattr__(
             self,
             "residual_field_paths",
             tuple(
-                _nonblank(item, "residual_field_paths item")
-                for item in self.residual_field_paths
+                _nonblank(item, "residual_field_paths item") for item in self.residual_field_paths
             )
             or trigger_paths(self.triggers),
         )
         if self.detail is not None:
-            object.__setattr__(
-                self, "detail", _detail(self.detail, "fixture detail")
-            )
+            object.__setattr__(self, "detail", _detail(self.detail, "fixture detail"))
         if not isinstance(self.force_retry_exhausted, bool):
-            raise PlateauLeanstralProposalError(
-                "force_retry_exhausted must be boolean"
-            )
+            raise PlateauLeanstralProposalError("force_retry_exhausted must be boolean")
         object.__setattr__(
             self,
             "source_text",
             _nonblank(self.source_text, "source_text"),
         )
-        if self.vocabulary is not None and not isinstance(
-            self.vocabulary, AllowedAtomVocabulary
-        ):
-            raise PlateauLeanstralProposalError(
-                "vocabulary must be AllowedAtomVocabulary or None"
-            )
+        if self.vocabulary is not None and not isinstance(self.vocabulary, AllowedAtomVocabulary):
+            raise PlateauLeanstralProposalError("vocabulary must be AllowedAtomVocabulary or None")
 
     @property
     def allowed_field_paths(self) -> tuple[str, ...]:
@@ -461,11 +409,7 @@ class DryRunFixtureCase:
         return {
             "allowed_field_paths": list(self.allowed_field_paths),
             "baseline_l1": self.baseline_l1.to_dict(),
-            "candidate_l1": (
-                None
-                if self.candidate_l1 is None
-                else self.candidate_l1.to_dict()
-            ),
+            "candidate_l1": (None if self.candidate_l1 is None else self.candidate_l1.to_dict()),
             "case_id": self.case_id,
             "detail": self.detail,
             "expected_outcome": self.expected_outcome.value,
@@ -473,11 +417,7 @@ class DryRunFixtureCase:
             "residual_field_paths": list(self.residual_field_paths),
             "source_text": self.source_text,
             "triggers": [item.to_dict() for item in self.triggers],
-            "vocabulary": (
-                None
-                if self.vocabulary is None
-                else self.vocabulary.to_dict()
-            ),
+            "vocabulary": (None if self.vocabulary is None else self.vocabulary.to_dict()),
         }
 
 
@@ -551,9 +491,7 @@ def dry_run_fixture_pack() -> tuple[DryRunFixtureCase, ...]:
             candidate_l1=illegal_candidate,
             expected_outcome=ProposalOutcome.ADMISSION_REJECTED,
             residual_field_paths=("rules[0].object",),
-            detail=(
-                "dry-run candidate changes untriggered field; gate retains prior L1"
-            ),
+            detail=("dry-run candidate changes untriggered field; gate retains prior L1"),
         ),
         DryRunFixtureCase(
             case_id="fixture_retry_exhausted",
@@ -606,13 +544,9 @@ class ProposalReliabilityMetrics:
             "failed_proposals",
             "model_calls",
         ):
-            object.__setattr__(
-                self, name, _nonneg_int(getattr(self, name), name)
-            )
+            object.__setattr__(self, name, _nonneg_int(getattr(self, name), name))
         if self.accepted_proposals > self.proposal_attempts:
-            raise PlateauLeanstralProposalError(
-                "accepted_proposals exceeds proposal_attempts"
-            )
+            raise PlateauLeanstralProposalError("accepted_proposals exceeds proposal_attempts")
         if self.retry_exhausted_proposals > self.proposal_attempts:
             raise PlateauLeanstralProposalError(
                 "retry_exhausted_proposals exceeds proposal_attempts"
@@ -654,12 +588,8 @@ def aggregate_proposal_reliability(
 ) -> ProposalReliabilityMetrics:
     """Aggregate accept / retry_exhausted rates across case receipts."""
 
-    if not isinstance(receipts, Sequence) or isinstance(
-        receipts, (str, bytes, bytearray)
-    ):
-        raise PlateauLeanstralProposalError(
-            "receipts must be a sequence of case receipts"
-        )
+    if not isinstance(receipts, Sequence) or isinstance(receipts, (str, bytes, bytearray)):
+        raise PlateauLeanstralProposalError("receipts must be a sequence of case receipts")
 
     attempts = 0
     accepted = 0
@@ -737,18 +667,12 @@ class LeanstralProposalCaseReceipt:
     packet: PlateauCodexPacket | None = None
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "case_id", _nonblank(self.case_id, "case_id")
-        )
+        object.__setattr__(self, "case_id", _nonblank(self.case_id, "case_id"))
         if not isinstance(self.outcome, ProposalOutcome):
             try:
-                object.__setattr__(
-                    self, "outcome", ProposalOutcome(self.outcome)
-                )
+                object.__setattr__(self, "outcome", ProposalOutcome(self.outcome))
             except (TypeError, ValueError) as exc:
-                raise PlateauLeanstralProposalError(
-                    "outcome is invalid"
-                ) from exc
+                raise PlateauLeanstralProposalError("outcome is invalid") from exc
         if not isinstance(self.mode, ProposalMode):
             try:
                 object.__setattr__(self, "mode", ProposalMode(self.mode))
@@ -773,24 +697,16 @@ class LeanstralProposalCaseReceipt:
             if not isinstance(getattr(self, name), bool):
                 raise PlateauLeanstralProposalError(f"{name} must be boolean")
         if self.semantic_authority is not False:
-            raise PlateauLeanstralProposalError(
-                "teacher receipts cannot claim semantic authority"
-            )
+            raise PlateauLeanstralProposalError("teacher receipts cannot claim semantic authority")
         object.__setattr__(self, "triggers", tuple(self.triggers))
-        object.__setattr__(
-            self, "allowed_field_paths", tuple(self.allowed_field_paths)
-        )
+        object.__setattr__(self, "allowed_field_paths", tuple(self.allowed_field_paths))
         object.__setattr__(self, "field_changes", tuple(self.field_changes))
-        object.__setattr__(
-            self, "model_calls", _nonneg_int(self.model_calls, "model_calls")
-        )
+        object.__setattr__(self, "model_calls", _nonneg_int(self.model_calls, "model_calls"))
         if self.admission_disposition is not None:
             object.__setattr__(
                 self,
                 "admission_disposition",
-                _nonblank(
-                    self.admission_disposition, "admission_disposition"
-                ),
+                _nonblank(self.admission_disposition, "admission_disposition"),
             )
         for optional in (
             "proposal_id",
@@ -801,16 +717,12 @@ class LeanstralProposalCaseReceipt:
         ):
             value = getattr(self, optional)
             if value is not None:
-                object.__setattr__(
-                    self, optional, _nonblank(value, optional)
-                )
+                object.__setattr__(self, optional, _nonblank(value, optional))
 
         # Fail-closed implementable consistency.
         if self.implementable:
             if self.outcome is not ProposalOutcome.ACCEPTED:
-                raise PlateauLeanstralProposalError(
-                    "implementable=true requires outcome=accepted"
-                )
+                raise PlateauLeanstralProposalError("implementable=true requires outcome=accepted")
             if self.admission_disposition != AdmissionDisposition.ACCEPTED.value:
                 raise PlateauLeanstralProposalError(
                     "implementable=true requires StructuralAdmissionGate accept"
@@ -824,41 +736,26 @@ class LeanstralProposalCaseReceipt:
                     "implementable=true requires only triggered fields changed"
                 )
             if self.retry_exhausted:
-                raise PlateauLeanstralProposalError(
-                    "implementable=true cannot be retry_exhausted"
-                )
-        if self.retry_exhausted and self.outcome is not (
-            ProposalOutcome.RETRY_EXHAUSTED
-        ):
+                raise PlateauLeanstralProposalError("implementable=true cannot be retry_exhausted")
+        if self.retry_exhausted and self.outcome is not (ProposalOutcome.RETRY_EXHAUSTED):
             raise PlateauLeanstralProposalError(
                 "retry_exhausted flag requires outcome=retry_exhausted"
             )
-        if (
-            self.outcome is ProposalOutcome.RETRY_EXHAUSTED
-            and not self.retry_exhausted
-        ):
+        if self.outcome is ProposalOutcome.RETRY_EXHAUSTED and not self.retry_exhausted:
             raise PlateauLeanstralProposalError(
                 "outcome=retry_exhausted requires retry_exhausted=true"
             )
         if self.outcome is ProposalOutcome.ADMISSION_REJECTED:
             if not self.prior_l1_unchanged:
-                raise PlateauLeanstralProposalError(
-                    "admission reject must retain prior L1"
-                )
+                raise PlateauLeanstralProposalError("admission reject must retain prior L1")
             if self.implementable:
-                raise PlateauLeanstralProposalError(
-                    "admission reject cannot be implementable"
-                )
+                raise PlateauLeanstralProposalError("admission reject cannot be implementable")
         if self.packet is not None:
             if self.packet.implementable != self.implementable:
-                raise PlateauLeanstralProposalError(
-                    "packet.implementable must match case receipt"
-                )
+                raise PlateauLeanstralProposalError("packet.implementable must match case receipt")
             packet_payload = self.packet.to_dict()
             if packet_payload.get("semantic_authority") is not False:
-                raise PlateauLeanstralProposalError(
-                    "packet cannot claim semantic authority"
-                )
+                raise PlateauLeanstralProposalError("packet cannot claim semantic authority")
             for proposal in self.packet.proposals:
                 if proposal.semantic_authority is not False:
                     raise PlateauLeanstralProposalError(
@@ -873,19 +770,11 @@ class LeanstralProposalCaseReceipt:
     def to_dict(self) -> dict[str, object]:
         return {
             "admission_disposition": self.admission_disposition,
-            "admitted_l1": (
-                None
-                if self.admitted_l1 is None
-                else self.admitted_l1.to_dict()
-            ),
+            "admitted_l1": (None if self.admitted_l1 is None else self.admitted_l1.to_dict()),
             "admitted_l1_digest": self.admitted_l1_digest,
             "allowed_field_paths": list(self.allowed_field_paths),
             "baseline_l1_digest": self.baseline_l1_digest,
-            "candidate_l1": (
-                None
-                if self.candidate_l1 is None
-                else self.candidate_l1.to_dict()
-            ),
+            "candidate_l1": (None if self.candidate_l1 is None else self.candidate_l1.to_dict()),
             "case_id": self.case_id,
             "detail": self.detail,
             "field_changes": [item.to_dict() for item in self.field_changes],
@@ -893,9 +782,7 @@ class LeanstralProposalCaseReceipt:
             "interface": PLATEAU_LEANSTRAL_PROPOSAL_RECEIPT_INTERFACE,
             "mode": self.mode.value,
             "model_calls": self.model_calls,
-            "only_triggered_fields_changed": (
-                self.only_triggered_fields_changed
-            ),
+            "only_triggered_fields_changed": (self.only_triggered_fields_changed),
             "outcome": self.outcome.value,
             "packet_digest": self.packet_digest,
             "packet_id": self.packet_id,
@@ -910,9 +797,7 @@ class LeanstralProposalCaseReceipt:
     @classmethod
     def from_dict(cls, value: object) -> "LeanstralProposalCaseReceipt":
         if not isinstance(value, Mapping):
-            raise PlateauLeanstralProposalError(
-                "case receipt must be an object"
-            )
+            raise PlateauLeanstralProposalError("case receipt must be an object")
         triggers = tuple(
             item
             if isinstance(item, RepairTrigger)
@@ -941,9 +826,7 @@ class LeanstralProposalCaseReceipt:
                     )
                 )
             else:
-                raise PlateauLeanstralProposalError(
-                    "field_changes items are invalid"
-                )
+                raise PlateauLeanstralProposalError("field_changes items are invalid")
         candidate_raw = value.get("candidate_l1")
         admitted_raw = value.get("admitted_l1")
         return cls(
@@ -953,15 +836,11 @@ class LeanstralProposalCaseReceipt:
             baseline_l1_digest=value.get("baseline_l1_digest"),  # type: ignore[arg-type]
             admitted_l1_digest=value.get("admitted_l1_digest"),  # type: ignore[arg-type]
             prior_l1_unchanged=bool(value.get("prior_l1_unchanged")),
-            only_triggered_fields_changed=bool(
-                value.get("only_triggered_fields_changed", True)
-            ),
+            only_triggered_fields_changed=bool(value.get("only_triggered_fields_changed", True)),
             implementable=bool(value.get("implementable")),
             admission_disposition=value.get("admission_disposition"),  # type: ignore[arg-type]
             triggers=triggers,
-            allowed_field_paths=tuple(
-                value.get("allowed_field_paths") or ()
-            ),
+            allowed_field_paths=tuple(value.get("allowed_field_paths") or ()),
             field_changes=tuple(changes),
             proposal_id=value.get("proposal_id"),  # type: ignore[arg-type]
             packet_id=value.get("packet_id"),  # type: ignore[arg-type]
@@ -972,15 +851,9 @@ class LeanstralProposalCaseReceipt:
             semantic_authority=False,
             detail=value.get("detail"),  # type: ignore[arg-type]
             candidate_l1=(
-                None
-                if candidate_raw is None
-                else CanonicalRuleIR.from_dict(candidate_raw)
+                None if candidate_raw is None else CanonicalRuleIR.from_dict(candidate_raw)
             ),
-            admitted_l1=(
-                None
-                if admitted_raw is None
-                else CanonicalRuleIR.from_dict(admitted_raw)
-            ),
+            admitted_l1=(None if admitted_raw is None else CanonicalRuleIR.from_dict(admitted_raw)),
         )
 
 
@@ -1008,27 +881,20 @@ class PlateauLeanstralProposalReceipts:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "cases", tuple(self.cases))
-        if not all(
-            isinstance(item, LeanstralProposalCaseReceipt)
-            for item in self.cases
-        ):
+        if not all(isinstance(item, LeanstralProposalCaseReceipt) for item in self.cases):
             raise PlateauLeanstralProposalError(
                 "cases must be LeanstralProposalCaseReceipt records"
             )
         case_ids = [item.case_id for item in self.cases]
         if len(set(case_ids)) != len(case_ids):
-            raise PlateauLeanstralProposalError(
-                "case_ids must be unique within proposal receipts"
-            )
+            raise PlateauLeanstralProposalError("case_ids must be unique within proposal receipts")
         if not isinstance(self.mode, ProposalMode):
             try:
                 object.__setattr__(self, "mode", ProposalMode(self.mode))
             except (TypeError, ValueError) as exc:
                 raise PlateauLeanstralProposalError("mode is invalid") from exc
         if not isinstance(self.reliability, ProposalReliabilityMetrics):
-            raise PlateauLeanstralProposalError(
-                "reliability must be ProposalReliabilityMetrics"
-            )
+            raise PlateauLeanstralProposalError("reliability must be ProposalReliabilityMetrics")
         if self.leanstral_is_default_realizer is not False:
             raise PlateauLeanstralProposalError(
                 "Leanstral must never be marked as the default realizer"
@@ -1041,18 +907,13 @@ class PlateauLeanstralProposalReceipts:
             raise PlateauLeanstralProposalError(
                 "structural admission is required before implementable=true"
             )
-        object.__setattr__(
-            self, "teacher", _nonblank(self.teacher, "teacher").lower()
-        )
+        object.__setattr__(self, "teacher", _nonblank(self.teacher, "teacher").lower())
         if self.teacher != TEACHER_IDENTITY:
-            raise PlateauLeanstralProposalError(
-                f"teacher must be {TEACHER_IDENTITY!r}"
-            )
+            raise PlateauLeanstralProposalError(f"teacher must be {TEACHER_IDENTITY!r}")
         # Implementable cases must have gone through accepted admission.
         for item in self.cases:
             if item.implementable and (
-                item.admission_disposition
-                != AdmissionDisposition.ACCEPTED.value
+                item.admission_disposition != AdmissionDisposition.ACCEPTED.value
             ):
                 raise PlateauLeanstralProposalError(
                     f"{item.case_id}: implementable without admission accept"
@@ -1143,20 +1004,13 @@ def parse_plateau_leanstral_proposal_receipts(
     if not isinstance(value, Mapping):
         raise PlateauLeanstralProposalError("receipts payload must be an object")
     if value.get("interface") != PLATEAU_LEANSTRAL_PROPOSAL_RECEIPTS_INTERFACE:
-        raise PlateauLeanstralProposalError(
-            "receipts interface mismatch"
-        )
+        raise PlateauLeanstralProposalError("receipts interface mismatch")
     if value.get("schema_version") != PLATEAU_LEANSTRAL_PROPOSAL_RECEIPTS_SCHEMA:
-        raise PlateauLeanstralProposalError(
-            "receipts schema_version mismatch"
-        )
+        raise PlateauLeanstralProposalError("receipts schema_version mismatch")
     if value.get("leanstral_is_default_realizer") is not False:
-        raise PlateauLeanstralProposalError(
-            "leanstral_is_default_realizer must be false"
-        )
+        raise PlateauLeanstralProposalError("leanstral_is_default_realizer must be false")
     cases = tuple(
-        LeanstralProposalCaseReceipt.from_dict(item)
-        for item in (value.get("cases") or ())
+        LeanstralProposalCaseReceipt.from_dict(item) for item in (value.get("cases") or ())
     )
     rel_raw = value.get("reliability") or {}
     if not isinstance(rel_raw, Mapping):
@@ -1164,15 +1018,9 @@ def parse_plateau_leanstral_proposal_receipts(
     reliability = ProposalReliabilityMetrics(
         proposal_attempts=int(rel_raw.get("proposal_attempts") or 0),
         accepted_proposals=int(rel_raw.get("accepted_proposals") or 0),
-        retry_exhausted_proposals=int(
-            rel_raw.get("retry_exhausted_proposals") or 0
-        ),
-        admission_rejected_proposals=int(
-            rel_raw.get("admission_rejected_proposals") or 0
-        ),
-        model_rejected_proposals=int(
-            rel_raw.get("model_rejected_proposals") or 0
-        ),
+        retry_exhausted_proposals=int(rel_raw.get("retry_exhausted_proposals") or 0),
+        admission_rejected_proposals=int(rel_raw.get("admission_rejected_proposals") or 0),
+        model_rejected_proposals=int(rel_raw.get("model_rejected_proposals") or 0),
         not_triggered=int(rel_raw.get("not_triggered") or 0),
         failed_proposals=int(rel_raw.get("failed_proposals") or 0),
         model_calls=int(rel_raw.get("model_calls") or 0),
@@ -1182,12 +1030,9 @@ def parse_plateau_leanstral_proposal_receipts(
     if (
         recomputed.proposal_attempts != reliability.proposal_attempts
         or recomputed.accepted_proposals != reliability.accepted_proposals
-        or recomputed.retry_exhausted_proposals
-        != reliability.retry_exhausted_proposals
+        or recomputed.retry_exhausted_proposals != reliability.retry_exhausted_proposals
     ):
-        raise PlateauLeanstralProposalError(
-            "reliability metrics do not match case receipts"
-        )
+        raise PlateauLeanstralProposalError("reliability metrics do not match case receipts")
     receipts = PlateauLeanstralProposalReceipts(
         cases=cases,
         mode=ProposalMode(value.get("mode")),  # type: ignore[arg-type]
@@ -1197,20 +1042,12 @@ def parse_plateau_leanstral_proposal_receipts(
         receipts_cid=value.get("receipts_cid"),  # type: ignore[arg-type]
         teacher=str(value.get("teacher") or TEACHER_IDENTITY),
         task_id=str(value.get("task_id") or PLATEAU_BREAK_TASK_ID),
-        board_namespace=str(
-            value.get("board_namespace") or PLATEAU_BREAK_BOARD_NAMESPACE
-        ),
-        baseline_arm_id=str(
-            value.get("baseline_arm_id") or DEFAULT_BASELINE_ARM_ID
-        ),
-        production_realizer=str(
-            value.get("production_realizer") or DEFAULT_PRODUCTION_REALIZER
-        ),
+        board_namespace=str(value.get("board_namespace") or PLATEAU_BREAK_BOARD_NAMESPACE),
+        baseline_arm_id=str(value.get("baseline_arm_id") or DEFAULT_BASELINE_ARM_ID),
+        production_realizer=str(value.get("production_realizer") or DEFAULT_PRODUCTION_REALIZER),
         leanstral_is_default_realizer=False,
         production_runtime_unchanged=True,
-        evidence=str(
-            value.get("evidence") or PLATEAU_LEANSTRAL_PROPOSALS_EVIDENCE
-        ),
+        evidence=str(value.get("evidence") or PLATEAU_LEANSTRAL_PROPOSALS_EVIDENCE),
     )
     if receipts.receipts_cid is not None:
         payload = receipts.to_dict()
@@ -1219,9 +1056,7 @@ def parse_plateau_leanstral_proposal_receipts(
         payload.pop("receipts_cid_scope", None)
         expected = cid_for_dag_json(payload)
         if receipts.receipts_cid != expected:
-            raise PlateauLeanstralProposalError(
-                "receipts_cid does not match payload"
-            )
+            raise PlateauLeanstralProposalError("receipts_cid does not match payload")
         validate_cid(receipts.receipts_cid, codecs=(RECEIPTS_CID_CODEC,))
     return receipts
 
@@ -1252,15 +1087,11 @@ class LeanstralSelectiveProposalTeacher:
             try:
                 mode = ProposalMode(mode)
             except (TypeError, ValueError) as exc:
-                raise PlateauLeanstralProposalError(
-                    "mode must be dry_run or live"
-                ) from exc
+                raise PlateauLeanstralProposalError("mode must be dry_run or live") from exc
         self._mode = mode
         self._policy = repair_policy or SelectiveRepairPolicy()
         if not isinstance(self._policy, SelectiveRepairPolicy):
-            raise PlateauLeanstralProposalError(
-                "repair_policy must be SelectiveRepairPolicy"
-            )
+            raise PlateauLeanstralProposalError("repair_policy must be SelectiveRepairPolicy")
         # Default gate: local structural constraints only (no live provers).
         # Callers may inject Hammer/cvc5 + Lean bindings for the live path.
         self._gate = admission_gate or StructuralAdmissionGate(
@@ -1271,9 +1102,7 @@ class LeanstralSelectiveProposalTeacher:
             validators=(),
         )
         if not isinstance(self._gate, StructuralAdmissionGate):
-            raise PlateauLeanstralProposalError(
-                "admission_gate must be StructuralAdmissionGate"
-            )
+            raise PlateauLeanstralProposalError("admission_gate must be StructuralAdmissionGate")
         self._client = client
         self._selective_repair = selective_repair
         if self._mode is ProposalMode.LIVE:
@@ -1368,9 +1197,7 @@ class LeanstralSelectiveProposalTeacher:
             detail=detail,
         )
         # Hard fail-closed: never trust a packet that skipped admission accept.
-        if packet.implementable and admission.disposition is not (
-            AdmissionDisposition.ACCEPTED
-        ):
+        if packet.implementable and admission.disposition is not (AdmissionDisposition.ACCEPTED):
             raise PlateauLeanstralProposalError(
                 "implementable packet without StructuralAdmissionGate accept"
             )
@@ -1419,38 +1246,32 @@ class LeanstralSelectiveProposalTeacher:
                     None,
                     ProposalOutcome.RETRY_EXHAUSTED,
                     model_calls,
-                    construction.receipt.detail
-                    or "all Leanstral repair calls failed",
+                    construction.receipt.detail or "all Leanstral repair calls failed",
                 )
             # Failed with returned-but-invalid calls still counts as model reject
             # when no candidate was selected; retry_exhausted only when no returns.
             returned = [
-                call
-                for call in construction.receipt.model_calls
-                if call.status.value == "returned"
+                call for call in construction.receipt.model_calls if call.status.value == "returned"
             ]
             if not returned:
                 return (
                     None,
                     ProposalOutcome.RETRY_EXHAUSTED,
                     model_calls,
-                    construction.receipt.detail
-                    or "retry exhausted without returned candidates",
+                    construction.receipt.detail or "retry exhausted without returned candidates",
                 )
             return (
                 None,
                 ProposalOutcome.MODEL_REJECTED,
                 model_calls,
-                construction.receipt.detail
-                or "repair candidates failed structural selection",
+                construction.receipt.detail or "repair candidates failed structural selection",
             )
         if status is RepairAttemptStatus.REJECTED:
             return (
                 None,
                 ProposalOutcome.MODEL_REJECTED,
                 model_calls,
-                construction.receipt.detail
-                or "every returned repair candidate was rejected",
+                construction.receipt.detail or "every returned repair candidate was rejected",
             )
         return (
             None,
@@ -1480,16 +1301,10 @@ class LeanstralSelectiveProposalTeacher:
 
         case = _nonblank(case_id, "case_id")
         if not isinstance(baseline_l1, CanonicalRuleIR):
-            raise PlateauLeanstralProposalError(
-                "baseline_l1 must be CanonicalRuleIR"
-            )
+            raise PlateauLeanstralProposalError("baseline_l1 must be CanonicalRuleIR")
         normalized_triggers = tuple(triggers)
-        if not all(
-            isinstance(item, RepairTrigger) for item in normalized_triggers
-        ):
-            raise PlateauLeanstralProposalError(
-                "triggers must be RepairTrigger records"
-            )
+        if not all(isinstance(item, RepairTrigger) for item in normalized_triggers):
+            raise PlateauLeanstralProposalError("triggers must be RepairTrigger records")
         baseline_digest = baseline_l1_digest(baseline_l1)
         allowed = trigger_paths(normalized_triggers)
         residual = residual_ref or self._residual_ref(
@@ -1544,14 +1359,11 @@ class LeanstralSelectiveProposalTeacher:
             if active_candidate is None:
                 model_outcome = ProposalOutcome.NOT_APPLICABLE
                 active_detail = (
-                    active_detail
-                    or "dry-run without candidate_l1; no model call issued"
+                    active_detail or "dry-run without candidate_l1; no model call issued"
                 )
         else:
             if request is None:
-                raise PlateauLeanstralProposalError(
-                    "live propose() requires a ConstructorRequest"
-                )
+                raise PlateauLeanstralProposalError("live propose() requires a ConstructorRequest")
             if active_candidate is None:
                 try:
                     (
@@ -1559,9 +1371,7 @@ class LeanstralSelectiveProposalTeacher:
                         model_outcome,
                         model_calls,
                         live_detail,
-                    ) = self._live_candidate(
-                        request, baseline_l1, normalized_triggers
-                    )
+                    ) = self._live_candidate(request, baseline_l1, normalized_triggers)
                 except (
                     LeanstralClientError,
                     LeanstralTimeoutError,
@@ -1576,9 +1386,7 @@ class LeanstralSelectiveProposalTeacher:
                         raise
                     active_candidate = None
                     model_outcome = ProposalOutcome.FAILED
-                    active_detail = _detail(
-                        exc, f"proposal failed: {type(exc).__name__}"
-                    )
+                    active_detail = _detail(exc, f"proposal failed: {type(exc).__name__}")
                 else:
                     if live_detail and not active_detail:
                         active_detail = live_detail
@@ -1721,16 +1529,10 @@ class LeanstralSelectiveProposalTeacher:
             and only_triggered
             and not admission.prior_l1_unchanged
         )
-        if implementable and admission.disposition is not (
-            AdmissionDisposition.ACCEPTED
-        ):
-            raise PlateauLeanstralProposalError(
-                "internal: implementable without admission accept"
-            )
+        if implementable and admission.disposition is not (AdmissionDisposition.ACCEPTED):
+            raise PlateauLeanstralProposalError("internal: implementable without admission accept")
 
-        if admission.disposition is AdmissionDisposition.ACCEPTED and (
-            only_triggered
-        ):
+        if admission.disposition is AdmissionDisposition.ACCEPTED and (only_triggered):
             outcome = ProposalOutcome.ACCEPTED
         elif admission.disposition in {
             AdmissionDisposition.VALIDATOR_REJECT,
@@ -1754,9 +1556,7 @@ class LeanstralSelectiveProposalTeacher:
         # Rejects / fail-closed must retain prior L1.
         if outcome is not ProposalOutcome.ACCEPTED:
             if admitted != baseline_l1:
-                raise PlateauLeanstralProposalError(
-                    "non-accepted admission must retain prior L1"
-                )
+                raise PlateauLeanstralProposalError("non-accepted admission must retain prior L1")
             prior_unchanged = True
             implementable = False
 
@@ -1785,15 +1585,11 @@ class LeanstralSelectiveProposalTeacher:
             packet=packet if implementable or packet is not None else None,
         )
 
-    def propose_fixture(
-        self, fixture: DryRunFixtureCase
-    ) -> LeanstralProposalCaseReceipt:
+    def propose_fixture(self, fixture: DryRunFixtureCase) -> LeanstralProposalCaseReceipt:
         """Run one dry-run fixture case through the teacher pipeline."""
 
         if not isinstance(fixture, DryRunFixtureCase):
-            raise PlateauLeanstralProposalError(
-                "fixture must be DryRunFixtureCase"
-            )
+            raise PlateauLeanstralProposalError("fixture must be DryRunFixtureCase")
         # Fixtures always use dry-run semantics even if the teacher was
         # constructed for live (fixtures never require a network client).
         return self.propose(
@@ -1815,9 +1611,7 @@ class LeanstralSelectiveProposalTeacher:
 
         pack = tuple(fixtures) if fixtures is not None else dry_run_fixture_pack()
         if not pack:
-            raise PlateauLeanstralProposalError(
-                "dry-run fixture pack must be nonempty"
-            )
+            raise PlateauLeanstralProposalError("dry-run fixture pack must be nonempty")
         # Force dry-run mode for the fixture path.
         teacher = self
         if self._mode is not ProposalMode.DRY_RUN:
@@ -1851,9 +1645,7 @@ class LeanstralSelectiveProposalTeacher:
         """Run the live Leanstral path for explicit (case, L1, triggers, request) rows."""
 
         if self._mode is not ProposalMode.LIVE:
-            raise PlateauLeanstralProposalError(
-                "run_live_cases requires mode=live"
-            )
+            raise PlateauLeanstralProposalError("run_live_cases requires mode=live")
         if not cases:
             raise PlateauLeanstralProposalError("live cases must be nonempty")
         receipts: list[LeanstralProposalCaseReceipt] = []
@@ -1900,19 +1692,11 @@ def write_plateau_leanstral_proposal_receipts(
     """Atomically write the sealed proposal receipts JSON artifact."""
 
     root = repo_root if repo_root is not None else _repo_root()
-    out = (
-        path
-        if path is not None
-        else root / DEFAULT_RECEIPTS_RELATIVE_PATH
-    )
+    out = path if path is not None else root / DEFAULT_RECEIPTS_RELATIVE_PATH
     if receipts is None:
         sealed = build_dry_run_proposal_receipts()
     elif isinstance(receipts, PlateauLeanstralProposalReceipts):
-        sealed = (
-            receipts
-            if receipts.receipts_cid is not None
-            else receipts.with_receipts_cid()
-        )
+        sealed = receipts if receipts.receipts_cid is not None else receipts.with_receipts_cid()
     else:
         sealed = parse_plateau_leanstral_proposal_receipts(receipts)
         if sealed.receipts_cid is None:
@@ -1958,9 +1742,7 @@ def load_plateau_leanstral_proposal_receipts(
     """Load and validate the checked-in proposal receipts artifact."""
 
     root = repo_root if repo_root is not None else _repo_root()
-    receipts_path = (
-        path if path is not None else root / DEFAULT_RECEIPTS_RELATIVE_PATH
-    )
+    receipts_path = path if path is not None else root / DEFAULT_RECEIPTS_RELATIVE_PATH
     payload = json.loads(receipts_path.read_text(encoding="utf-8"))
     return parse_plateau_leanstral_proposal_receipts(payload)
 
@@ -1972,16 +1754,12 @@ def validate_dry_run_fixture_pack(
 
     sealed = receipts or build_dry_run_proposal_receipts()
     if sealed.mode is not ProposalMode.DRY_RUN:
-        raise PlateauLeanstralProposalError(
-            "fixture pack validation requires dry_run mode"
-        )
+        raise PlateauLeanstralProposalError("fixture pack validation requires dry_run mode")
     by_id = sealed.by_case_id()
     expected = {item.case_id: item for item in dry_run_fixture_pack()}
     for case_id, fixture in expected.items():
         if case_id not in by_id:
-            raise PlateauLeanstralProposalError(
-                f"missing dry-run fixture receipt: {case_id}"
-            )
+            raise PlateauLeanstralProposalError(f"missing dry-run fixture receipt: {case_id}")
         receipt = by_id[case_id]
         if receipt.outcome is not fixture.expected_outcome:
             raise PlateauLeanstralProposalError(
@@ -2001,20 +1779,10 @@ def validate_dry_run_fixture_pack(
             raise PlateauLeanstralProposalError(
                 f"{case_id}: accepted proposal changed untriggered fields"
             )
-        if (
-            receipt.outcome is ProposalOutcome.ADMISSION_REJECTED
-            and not receipt.prior_l1_unchanged
-        ):
-            raise PlateauLeanstralProposalError(
-                f"{case_id}: reject must retain prior L1"
-            )
-        if (
-            receipt.outcome is ProposalOutcome.RETRY_EXHAUSTED
-            and not receipt.retry_exhausted
-        ):
-            raise PlateauLeanstralProposalError(
-                f"{case_id}: retry_exhausted outcome missing flag"
-            )
+        if receipt.outcome is ProposalOutcome.ADMISSION_REJECTED and not receipt.prior_l1_unchanged:
+            raise PlateauLeanstralProposalError(f"{case_id}: reject must retain prior L1")
+        if receipt.outcome is ProposalOutcome.RETRY_EXHAUSTED and not receipt.retry_exhausted:
+            raise PlateauLeanstralProposalError(f"{case_id}: retry_exhausted outcome missing flag")
     # Reliability must expose accept_rate and retry_exhausted separately.
     rel = sealed.reliability
     if rel.accept_rate is None or rel.retry_exhausted_rate is None:
@@ -2023,17 +1791,13 @@ def validate_dry_run_fixture_pack(
         )
     rel_payload = rel.to_dict()
     if rel_payload.get("end_to_end_loss") is not None:
-        raise PlateauLeanstralProposalError(
-            "proposal reliability must not report end_to_end_loss"
-        )
+        raise PlateauLeanstralProposalError("proposal reliability must not report end_to_end_loss")
     if rel_payload.get("separate_from_end_to_end_loss") is not True:
         raise PlateauLeanstralProposalError(
             "accept_rate/retry_exhausted must be separate from e2e loss"
         )
     if sealed.leanstral_is_default_realizer is not False:
-        raise PlateauLeanstralProposalError(
-            "Leanstral must not be the default realizer"
-        )
+        raise PlateauLeanstralProposalError("Leanstral must not be the default realizer")
     return sealed
 
 

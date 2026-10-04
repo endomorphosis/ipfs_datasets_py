@@ -76,8 +76,8 @@ LegalWebArchiveSearch(
     knowledge_base_dir=None,
     archive_dir=None,
     auto_archive=False,
-    index_local_dir=None,      # NEW: Local index directory
-    use_hf_indexes=True         # NEW: Enable HF fallback
+    index_local_dir=None,  # NEW: Local index directory
+    use_hf_indexes=True,  # NEW: Enable HF fallback
 )
 ```
 
@@ -86,15 +86,12 @@ LegalWebArchiveSearch(
 ### Basic Usage
 
 ```python
-from ipfs_datasets_py.processors.legal_scrapers import (
-    CommonCrawlIndexLoader,
-    LegalWebArchiveSearch
-)
+from ipfs_datasets_py.processors.legal_scrapers import CommonCrawlIndexLoader, LegalWebArchiveSearch
 
 # Initialize loader with local directory
 loader = CommonCrawlIndexLoader(
     local_base_dir="/path/to/indexes",  # Checked first
-    use_hf_fallback=True  # Download from HF if not found
+    use_hf_fallback=True,  # Download from HF if not found
 )
 
 # Load indexes (checks local first, then HF)
@@ -118,19 +115,19 @@ from ipfs_datasets_py.processors.legal_scrapers import LegalWebArchiveSearch
 # Initialize with HF index support
 searcher = LegalWebArchiveSearch(
     index_local_dir="/data/cc_indexes",  # Optional local path
-    use_hf_indexes=True  # Enable HuggingFace fallback
+    use_hf_indexes=True,  # Enable HuggingFace fallback
 )
 
 # Search using indexes (fast, no API calls)
 results = searcher.search_with_indexes(
     "EPA water pollution regulations",
-    jurisdiction_type="federal"  # Can be auto-detected
+    jurisdiction_type="federal",  # Can be auto-detected
 )
 
 print(f"Found {results['total_results']} results")
 print(f"Used local index: {results['metadata']['used_local_index']}")
 
-for result in results['results']:
+for result in results["results"]:
     print(f"  {result['title']}")
     print(f"  {result['url']}")
     print()
@@ -141,9 +138,7 @@ for result in results['results']:
 ```python
 # Search California state indexes
 ca_results = searcher.search_with_indexes(
-    "housing discrimination laws",
-    jurisdiction_type="state",
-    state_code="CA"
+    "housing discrimination laws", jurisdiction_type="state", state_code="CA"
 )
 
 print(f"Found {ca_results['total_results']} California results")
@@ -153,14 +148,10 @@ print(f"Found {ca_results['total_results']} California results")
 
 ```python
 # Jurisdiction type is auto-detected from query
-results = searcher.search_with_indexes(
-    "OSHA workplace safety regulations"
-)
+results = searcher.search_with_indexes("OSHA workplace safety regulations")
 # Auto-detects: federal (OSHA is federal agency)
 
-results = searcher.search_with_indexes(
-    "California housing laws"
-)
+results = searcher.search_with_indexes("California housing laws")
 # Auto-detects: state=CA
 ```
 
@@ -171,7 +162,7 @@ results = searcher.search_with_indexes(
 info = searcher.get_index_info()
 
 print("Index Availability:")
-for index_type, details in info['indexes'].items():
+for index_type, details in info["indexes"].items():
     print(f"\n{index_type}:")
     print(f"  Local: {details['local_available']}")
     print(f"  Path: {details['local_path']}")
@@ -267,7 +258,7 @@ if federal is None:
 ```python
 # Provides clear error message
 results = searcher.search_with_indexes("query")
-if results['status'] == 'error':
+if results["status"] == "error":
     print(f"Error: {results['error']}")
     # "Failed to load federal index. May still be uploading to HuggingFace."
 ```
@@ -320,7 +311,7 @@ Check availability before relying on indexes:
 
 ```python
 info = searcher.get_index_info()
-if not info['indexes']['federal']['local_available']:
+if not info["indexes"]["federal"]["local_available"]:
     print("Warning: Federal index will download from HuggingFace")
     print("This may take a few minutes on first run")
 ```

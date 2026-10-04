@@ -95,9 +95,7 @@ PACKAGE_ROOT = Path(__file__).resolve().parents[4]
 DOCS_ROOT = PACKAGE_ROOT / "docs" / "crypto_ir"
 RELEASE_PATH = DOCS_ROOT / "RELEASE_AND_ROLLBACK.md"
 OPERATIONS_PATH = DOCS_ROOT / "OPERATIONS.md"
-SOLANA_RPC_FIXTURE = (
-    PACKAGE_ROOT / "tests" / "fixtures" / "wallets" / "solana" / "rpc_session.json"
-)
+SOLANA_RPC_FIXTURE = PACKAGE_ROOT / "tests" / "fixtures" / "wallets" / "solana" / "rpc_session.json"
 
 GOAL_ID: Final[str] = "CRYPTOIR-G610"
 TASK_ID: Final[str] = "CRYPTOIR-035"
@@ -861,18 +859,21 @@ def test_adapter_reorg_or_retraction_stays_explicit(family: str) -> None:
     if result.status.value in {"succeeded", "partial"}:
         blob = json.dumps(result.to_dict(), sort_keys=True)
         # Retraction/reorg markers or unknown status should remain visible.
-        assert any(
-            token in blob.lower()
-            for token in (
-                "retract",
-                "reorg",
-                "unknown",
-                "processed",
-                "not_final",
-                "commitment",
-                "finality",
+        assert (
+            any(
+                token in blob.lower()
+                for token in (
+                    "retract",
+                    "reorg",
+                    "unknown",
+                    "processed",
+                    "not_final",
+                    "commitment",
+                    "finality",
+                )
             )
-        ) or result.status.value == "partial"
+            or result.status.value == "partial"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -1054,9 +1055,7 @@ def test_forbidden_secret_surfaces_rejected_on_models() -> None:
     with pytest.raises(GuardForbiddenSurfaceError):
         TransactionIntent.from_dict({**_intent("evm").to_dict(), "mnemonic": "alpha"})
     with pytest.raises(GuardForbiddenSurfaceError):
-        TransactionCandidate.from_dict(
-            {**_candidate("evm").to_dict(), "broadcast": True}
-        )
+        TransactionCandidate.from_dict({**_candidate("evm").to_dict(), "broadcast": True})
 
 
 def test_processors_have_no_inline_reporting_on_preflight_result() -> None:

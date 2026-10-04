@@ -31,18 +31,18 @@ Update the `GraphRAGQueryOptimizer.__init__` method to accept and initialize the
 
 ```python
 def __init__(
-    self, 
+    self,
     query_stats: Optional[GraphRAGQueryStats] = None,
     vector_weight: float = 0.7,
     graph_weight: float = 0.3,
     cache_enabled: bool = True,
     cache_ttl: float = 300.0,
     cache_size_limit: int = 100,
-    learning_metrics_collector: Optional[OptimizerLearningMetricsCollector] = None
+    learning_metrics_collector: Optional[OptimizerLearningMetricsCollector] = None,
 ):
     """
     Initialize the query optimizer.
-    
+
     Args:
         query_stats (GraphRAGQueryStats, optional): Query statistics tracker
         vector_weight (float): Weight for vector similarity in hybrid queries
@@ -50,7 +50,7 @@ def __init__(
         cache_enabled (bool): Whether to enable query caching
         cache_ttl (float): Time-to-live for cached results in seconds
         cache_size_limit (int): Maximum number of entries in the cache
-        learning_metrics_collector (OptimizerLearningMetricsCollector, optional): 
+        learning_metrics_collector (OptimizerLearningMetricsCollector, optional):
             Collector for learning-related metrics
     """
     self.query_stats = query_stats or GraphRAGQueryStats()
@@ -61,7 +61,7 @@ def __init__(
     self.cache_size_limit = cache_size_limit
     self.cache = {}
     self.cache_stats = {"hits": 0, "misses": 0}
-    
+
     # Initialize learning-related fields
     self.statistical_learning_enabled = False
     self.learning_interval = 50  # Learn after every 50 queries
@@ -69,7 +69,7 @@ def __init__(
     self.learning_cycle_count = 0
     self.learning_failures = 0
     self.max_failures = 3
-    
+
     # Initialize learning metrics collector
     self.learning_metrics_collector = learning_metrics_collector
 ```

@@ -137,9 +137,7 @@ def _snapshot(
         "evaluation_lane_complete": True,
         "proof_lane_complete": True,
         "metrics": _metrics(delta),
-        "metric_confidence": {
-            name: {"confidence": 0.97} for name in TENSORIZED_OBJECTIVE_METRICS
-        },
+        "metric_confidence": {name: {"confidence": 0.97} for name in TENSORIZED_OBJECTIVE_METRICS},
         "family_metrics": _family_metrics(delta),
         "snapshot_id": f"{candidate_id}-rung-{rung}",
     }
@@ -169,11 +167,15 @@ def test_successive_halving_jointly_ranks_every_quality_dimension() -> None:
 
     for index, candidate_id in enumerate(candidate_ids):
         scheduler.record_result(_snapshot(scheduler, candidate_id, delta=0.01 * (index + 1)))
-    assert {item.candidate.candidate_id for item in scheduler.ready_work()} == set(candidate_ids[-2:])
+    assert {item.candidate.candidate_id for item in scheduler.ready_work()} == set(
+        candidate_ids[-2:]
+    )
 
     rung_one = scheduler.ready_work()
     for index, item in enumerate(rung_one):
-        scheduler.record_result(_snapshot(scheduler, item.candidate.candidate_id, rung=1, delta=0.04 + index * 0.01))
+        scheduler.record_result(
+            _snapshot(scheduler, item.candidate.candidate_id, rung=1, delta=0.04 + index * 0.01)
+        )
     assert len(scheduler.ready_work()) == 1
     winner = scheduler.ready_work()[0].candidate
     scheduler.record_result(_snapshot(scheduler, winner.candidate_id, rung=2, delta=0.06))
@@ -337,8 +339,11 @@ def test_second_trainer_requires_fresh_low_unified_memory_and_service_pressure(
     )
 
     assert scheduler.trainer_limit(resources, healthy) == 2
-    assert scheduler.trainer_limit(
-        resources,
-        HParamResourcePressure(**{**healthy.to_dict(), "service_pressure": 0.95}),
-    ) == 1
+    assert (
+        scheduler.trainer_limit(
+            resources,
+            HParamResourcePressure(**{**healthy.to_dict(), "service_pressure": 0.95}),
+        )
+        == 1
+    )
     assert scheduler.trainer_limit(resources, None) == 1

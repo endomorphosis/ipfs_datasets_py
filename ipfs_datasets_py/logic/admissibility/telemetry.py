@@ -36,9 +36,7 @@ from typing import Any, Final
 AUTHORIZATION_TELEMETRY_INTERFACE: Final = "AuthorizationTelemetry@1"
 AUTHORIZATION_TELEMETRY_SCHEMA_VERSION: Final = "authorization-telemetry/v1"
 AUTHORIZATION_ROLLOUT_POLICY_INTERFACE: Final = "AuthorizationRolloutPolicy@1"
-AUTHORIZATION_ROLLOUT_POLICY_SCHEMA_VERSION: Final = (
-    "authorization-rollout-policy/v1"
-)
+AUTHORIZATION_ROLLOUT_POLICY_SCHEMA_VERSION: Final = "authorization-rollout-policy/v1"
 ROLLOUT_CONFIG_SCHEMA: Final = "intent-authorization-rollout/v1"
 
 DEFAULT_ROLLOUT_CONFIG_RELATIVE: Final = "config/intent_authorization_rollout.json"
@@ -344,9 +342,7 @@ def parse_rollout_stage(value: Any) -> RolloutStage:
         return RolloutStage(value)
     except (TypeError, ValueError) as exc:
         allowed = ", ".join(ROLLOUT_STAGE_WIRE_VALUES)
-        raise RolloutPolicyError(
-            f"rollout stage must be one of: {allowed}; fail closed"
-        ) from exc
+        raise RolloutPolicyError(f"rollout stage must be one of: {allowed}; fail closed") from exc
 
 
 def is_forward_transition(
@@ -443,9 +439,7 @@ def redact_metric_labels(
         return {}
     mapping = _mapping(labels, "labels")
     if len(mapping) > MAX_LABELS_PER_EVENT:
-        raise TelemetryError(
-            f"labels exceeds maximum of {MAX_LABELS_PER_EVENT} entries"
-        )
+        raise TelemetryError(f"labels exceeds maximum of {MAX_LABELS_PER_EVENT} entries")
 
     redacted: dict[str, str] = {}
     for raw_key, raw_value in mapping.items():
@@ -453,9 +447,7 @@ def redact_metric_labels(
         if not _ID_RE.fullmatch(key):
             raise TelemetryError(f"label key {key!r} is not a stable identifier")
         if allowed_keys is not None and key not in allowed_keys:
-            raise TelemetryError(
-                f"label key {key!r} is not in the closed vocabulary"
-            )
+            raise TelemetryError(f"label key {key!r} is not in the closed vocabulary")
         if isinstance(raw_value, Enum):
             value = str(raw_value.value)
         elif isinstance(raw_value, str):
@@ -466,9 +458,7 @@ def redact_metric_labels(
                 f"label value for {key!r} must be a bounded string enum, not a number"
             )
         else:
-            raise TelemetryError(
-                f"label value for {key!r} must be a string or enum"
-            )
+            raise TelemetryError(f"label value for {key!r} must be a string or enum")
         if not isinstance(value, str):
             raise TelemetryError(f"label value for {key!r} must be a string")
         # Privacy filters run before length limits so CID/digest dumps and
@@ -510,9 +500,7 @@ class TelemetryMetricName(str, Enum):
     ROLLOUT_DISABLE_COUNT = "authorization.rollout.disable_count"
 
 
-STANDARD_METRIC_NAMES: Final[frozenset[str]] = frozenset(
-    item.value for item in TelemetryMetricName
-)
+STANDARD_METRIC_NAMES: Final[frozenset[str]] = frozenset(item.value for item in TelemetryMetricName)
 
 _DECISION_LABEL_KEYS: Final[frozenset[str]] = frozenset(
     {"source", "outcome", "policy", "authority"}
@@ -521,13 +509,9 @@ _CACHE_LABEL_KEYS: Final[frozenset[str]] = frozenset({"cache_class"})
 _FILTER_LABEL_KEYS: Final[frozenset[str]] = frozenset({"filter_class"})
 _REJECTION_LABEL_KEYS: Final[frozenset[str]] = frozenset({"rejection_class"})
 _BACKEND_LABEL_KEYS: Final[frozenset[str]] = frozenset({"backend_event"})
-_ADJUDICATION_LABEL_KEYS: Final[frozenset[str]] = frozenset(
-    {"adjudication_class"}
-)
+_ADJUDICATION_LABEL_KEYS: Final[frozenset[str]] = frozenset({"adjudication_class"})
 _RECEIPT_LABEL_KEYS: Final[frozenset[str]] = frozenset({"receipt_event"})
-_ROLLOUT_LABEL_KEYS: Final[frozenset[str]] = frozenset(
-    {"from_stage", "to_stage", "direction"}
-)
+_ROLLOUT_LABEL_KEYS: Final[frozenset[str]] = frozenset({"from_stage", "to_stage", "direction"})
 
 
 # ---------------------------------------------------------------------------
@@ -569,23 +553,21 @@ class AuthorizationTelemetry:
     _counters: dict[tuple[str, tuple[tuple[str, str], ...]], int] = field(
         default_factory=dict, repr=False
     )
-    _latency_sums_ms: dict[tuple[str, tuple[tuple[str, str], ...]], float] = (
-        field(default_factory=dict, repr=False)
+    _latency_sums_ms: dict[tuple[str, tuple[tuple[str, str], ...]], float] = field(
+        default_factory=dict, repr=False
     )
     _latency_counts: dict[tuple[str, tuple[tuple[str, str], ...]], int] = field(
         default_factory=dict, repr=False
     )
-    _latency_max_ms: dict[tuple[str, tuple[tuple[str, str], ...]], float] = (
-        field(default_factory=dict, repr=False)
+    _latency_max_ms: dict[tuple[str, tuple[tuple[str, str], ...]], float] = field(
+        default_factory=dict, repr=False
     )
     _samples: list[MetricSample] = field(default_factory=list, repr=False)
     _retain_samples: bool = False
 
     def __post_init__(self) -> None:
         if self.interface != AUTHORIZATION_TELEMETRY_INTERFACE:
-            raise TelemetryError(
-                f"interface must be {AUTHORIZATION_TELEMETRY_INTERFACE!r}"
-            )
+            raise TelemetryError(f"interface must be {AUTHORIZATION_TELEMETRY_INTERFACE!r}")
         if self.schema_version != AUTHORIZATION_TELEMETRY_SCHEMA_VERSION:
             raise TelemetryError(
                 f"schema_version must be {AUTHORIZATION_TELEMETRY_SCHEMA_VERSION!r}"
@@ -624,9 +606,7 @@ class AuthorizationTelemetry:
         labels: Mapping[str, str],
         latency_ms: float,
     ) -> None:
-        if not isinstance(latency_ms, (int, float)) or isinstance(
-            latency_ms, bool
-        ):
+        if not isinstance(latency_ms, (int, float)) or isinstance(latency_ms, bool):
             raise TelemetryError("latency_ms must be a number")
         if latency_ms < 0:
             raise TelemetryError("latency_ms must be non-negative")
@@ -634,16 +614,12 @@ class AuthorizationTelemetry:
         key = (name, _labels_key(labels))
         now = time.monotonic()
         with self._lock:
-            self._latency_sums_ms[key] = (
-                self._latency_sums_ms.get(key, 0.0) + float(latency_ms)
-            )
+            self._latency_sums_ms[key] = self._latency_sums_ms.get(key, 0.0) + float(latency_ms)
             self._latency_counts[key] = self._latency_counts.get(key, 0) + 1
             prev_max = self._latency_max_ms.get(key, 0.0)
             if float(latency_ms) > prev_max:
                 self._latency_max_ms[key] = float(latency_ms)
-            if self._retain_samples and (
-                len(self._samples) < MAX_LATENCY_SAMPLES_PER_KEY
-            ):
+            if self._retain_samples and (len(self._samples) < MAX_LATENCY_SAMPLES_PER_KEY):
                 self._samples.append(
                     MetricSample(
                         name=name,
@@ -673,15 +649,11 @@ class AuthorizationTelemetry:
                 "source": _enum(source, TelemetrySourceKind, "source").value,
                 "outcome": _enum(outcome, TelemetryOutcome, "outcome").value,
                 "policy": _enum(policy, TelemetryPolicyProfile, "policy").value,
-                "authority": _enum(
-                    authority, TelemetryProofAuthority, "authority"
-                ).value,
+                "authority": _enum(authority, TelemetryProofAuthority, "authority").value,
             },
             allowed_keys=_DECISION_LABEL_KEYS,
         )
-        self._record_counter(
-            TelemetryMetricName.DECISION_COUNT.value, labels, amount=count
-        )
+        self._record_counter(TelemetryMetricName.DECISION_COUNT.value, labels, amount=count)
         if latency_ms is not None:
             self._record_latency_ms(
                 TelemetryMetricName.DECISION_LATENCY_MS.value,
@@ -699,18 +671,12 @@ class AuthorizationTelemetry:
 
         labels = redact_metric_labels(
             {
-                "filter_class": _enum(
-                    filter_class, TelemetryFilterClass, "filter_class"
-                ).value,
+                "filter_class": _enum(filter_class, TelemetryFilterClass, "filter_class").value,
             },
             allowed_keys=_FILTER_LABEL_KEYS,
         )
-        self._record_counter(
-            TelemetryMetricName.CANDIDATE_COUNT.value, labels, amount=count
-        )
-        self._record_counter(
-            TelemetryMetricName.FILTER_COUNT.value, labels, amount=count
-        )
+        self._record_counter(TelemetryMetricName.CANDIDATE_COUNT.value, labels, amount=count)
+        self._record_counter(TelemetryMetricName.FILTER_COUNT.value, labels, amount=count)
 
     def record_cache(
         self,
@@ -722,15 +688,11 @@ class AuthorizationTelemetry:
 
         labels = redact_metric_labels(
             {
-                "cache_class": _enum(
-                    cache_class, TelemetryCacheClass, "cache_class"
-                ).value,
+                "cache_class": _enum(cache_class, TelemetryCacheClass, "cache_class").value,
             },
             allowed_keys=_CACHE_LABEL_KEYS,
         )
-        self._record_counter(
-            TelemetryMetricName.CACHE_COUNT.value, labels, amount=count
-        )
+        self._record_counter(TelemetryMetricName.CACHE_COUNT.value, labels, amount=count)
 
     def record_rejection(
         self,
@@ -750,9 +712,7 @@ class AuthorizationTelemetry:
             },
             allowed_keys=_REJECTION_LABEL_KEYS,
         )
-        self._record_counter(
-            TelemetryMetricName.REJECTION_COUNT.value, labels, amount=count
-        )
+        self._record_counter(TelemetryMetricName.REJECTION_COUNT.value, labels, amount=count)
 
     def record_backend_event(
         self,
@@ -764,15 +724,11 @@ class AuthorizationTelemetry:
 
         labels = redact_metric_labels(
             {
-                "backend_event": _enum(
-                    backend_event, TelemetryBackendEvent, "backend_event"
-                ).value,
+                "backend_event": _enum(backend_event, TelemetryBackendEvent, "backend_event").value,
             },
             allowed_keys=_BACKEND_LABEL_KEYS,
         )
-        self._record_counter(
-            TelemetryMetricName.BACKEND_EVENT_COUNT.value, labels, amount=count
-        )
+        self._record_counter(TelemetryMetricName.BACKEND_EVENT_COUNT.value, labels, amount=count)
 
     def record_adjudication(
         self,
@@ -792,9 +748,7 @@ class AuthorizationTelemetry:
             },
             allowed_keys=_ADJUDICATION_LABEL_KEYS,
         )
-        self._record_counter(
-            TelemetryMetricName.ADJUDICATION_COUNT.value, labels, amount=count
-        )
+        self._record_counter(TelemetryMetricName.ADJUDICATION_COUNT.value, labels, amount=count)
 
     def record_receipt_event(
         self,
@@ -806,15 +760,11 @@ class AuthorizationTelemetry:
 
         labels = redact_metric_labels(
             {
-                "receipt_event": _enum(
-                    receipt_event, TelemetryReceiptEvent, "receipt_event"
-                ).value,
+                "receipt_event": _enum(receipt_event, TelemetryReceiptEvent, "receipt_event").value,
             },
             allowed_keys=_RECEIPT_LABEL_KEYS,
         )
-        self._record_counter(
-            TelemetryMetricName.RECEIPT_EVENT_COUNT.value, labels, amount=count
-        )
+        self._record_counter(TelemetryMetricName.RECEIPT_EVENT_COUNT.value, labels, amount=count)
 
     def record_rollout_transition(
         self,
@@ -827,9 +777,7 @@ class AuthorizationTelemetry:
 
         direction = _text(direction, "direction", max_chars=32)
         if direction not in {"promote", "demote", "rollback", "disable"}:
-            raise TelemetryError(
-                "direction must be one of: promote, demote, rollback, disable"
-            )
+            raise TelemetryError("direction must be one of: promote, demote, rollback, disable")
         labels = redact_metric_labels(
             {
                 "from_stage": parse_rollout_stage(from_stage).value,
@@ -838,9 +786,7 @@ class AuthorizationTelemetry:
             },
             allowed_keys=_ROLLOUT_LABEL_KEYS,
         )
-        self._record_counter(
-            TelemetryMetricName.ROLLOUT_TRANSITION_COUNT.value, labels
-        )
+        self._record_counter(TelemetryMetricName.ROLLOUT_TRANSITION_COUNT.value, labels)
 
     def record_immediate_disable(self) -> None:
         """Record an immediate receipt-consumption disable event."""
@@ -851,12 +797,8 @@ class AuthorizationTelemetry:
             },
             allowed_keys=_RECEIPT_LABEL_KEYS,
         )
-        self._record_counter(
-            TelemetryMetricName.ROLLOUT_DISABLE_COUNT.value, labels
-        )
-        self._record_counter(
-            TelemetryMetricName.RECEIPT_EVENT_COUNT.value, labels
-        )
+        self._record_counter(TelemetryMetricName.ROLLOUT_DISABLE_COUNT.value, labels)
+        self._record_counter(TelemetryMetricName.RECEIPT_EVENT_COUNT.value, labels)
 
     # -- snapshots ---------------------------------------------------------
 
@@ -977,9 +919,7 @@ class RolloutApproval:
         mapping = _mapping(data, "approval")
         return cls(
             approval_id=_identifier(mapping.get("approval_id"), "approval_id"),
-            approver_role=_identifier(
-                mapping.get("approver_role"), "approver_role"
-            ),
+            approver_role=_identifier(mapping.get("approver_role"), "approver_role"),
             scope=_text(mapping.get("scope", "stage_transition"), "scope"),
             issued_at=_text(
                 mapping.get("issued_at", ""),
@@ -1053,9 +993,7 @@ class CanaryScope:
                 mapping.get("reversible_effects_only", True),
                 "reversible_effects_only",
             ),
-            max_population=_optional_non_negative_int(
-                max_pop, "max_population"
-            ),
+            max_population=_optional_non_negative_int(max_pop, "max_population"),
         )
 
 
@@ -1082,9 +1020,7 @@ class AuthorizationRolloutPolicy:
     interface: str = AUTHORIZATION_ROLLOUT_POLICY_INTERFACE
     schema_version: str = AUTHORIZATION_ROLLOUT_POLICY_SCHEMA_VERSION
     schema: str = ROLLOUT_CONFIG_SCHEMA
-    _telemetry: AuthorizationTelemetry | None = field(
-        default=None, repr=False, compare=False
-    )
+    _telemetry: AuthorizationTelemetry | None = field(default=None, repr=False, compare=False)
     _lock: threading.RLock = field(default_factory=threading.RLock, repr=False)
 
     def __post_init__(self) -> None:
@@ -1096,8 +1032,7 @@ class AuthorizationRolloutPolicy:
             )
         if self.schema_version != AUTHORIZATION_ROLLOUT_POLICY_SCHEMA_VERSION:
             raise RolloutPolicyError(
-                "schema_version must be "
-                f"{AUTHORIZATION_ROLLOUT_POLICY_SCHEMA_VERSION!r}"
+                f"schema_version must be {AUTHORIZATION_ROLLOUT_POLICY_SCHEMA_VERSION!r}"
             )
         # Safe defaults: off/audit never enable receipt consumption.
         if self.stage in (RolloutStage.OFF, RolloutStage.AUDIT):
@@ -1122,16 +1057,11 @@ class AuthorizationRolloutPolicy:
 
     @property
     def allows_allow_tokens(self) -> bool:
-        return (
-            self.stage in _ALLOW_TOKEN_STAGES
-            and self.receipt_consumption_enabled
-        )
+        return self.stage in _ALLOW_TOKEN_STAGES and self.receipt_consumption_enabled
 
     @property
     def evaluates_offline(self) -> bool:
-        return self.stage is not RolloutStage.OFF or (
-            self.offline_stage is not RolloutStage.OFF
-        )
+        return self.stage is not RolloutStage.OFF or (self.offline_stage is not RolloutStage.OFF)
 
     # -- transition rules --------------------------------------------------
 
@@ -1165,20 +1095,15 @@ class AuthorizationRolloutPolicy:
         if enable_receipt_consumption is True:
             if target_stage not in _ALLOW_TOKEN_STAGES:
                 raise RolloutPolicyError(
-                    "receipt consumption may only be enabled under "
-                    "allow-token-canary or enforce"
+                    "receipt consumption may only be enabled under allow-token-canary or enforce"
                 )
             if not effects:
-                raise RolloutPolicyError(
-                    "receipt consumption requires an effect allowlist"
-                )
+                raise RolloutPolicyError("receipt consumption requires an effect allowlist")
 
         if target_stage is current:
             return target_stage
 
-        if self.require_adjacent_transitions and transition_skips_stages(
-            current, target_stage
-        ):
+        if self.require_adjacent_transitions and transition_skips_stages(current, target_stage):
             raise RolloutPolicyError(
                 f"rejected skipped transition from {current.value!r} to "
                 f"{target_stage.value!r}; stages must move one step at a time"
@@ -1190,8 +1115,7 @@ class AuthorizationRolloutPolicy:
         if promoting and self.require_approvals:
             if target_stage in _LIVE_EFFECT_STAGES and not parsed_approvals:
                 raise RolloutPolicyError(
-                    f"promotion to {target_stage.value!r} requires human "
-                    "approvals"
+                    f"promotion to {target_stage.value!r} requires human approvals"
                 )
             # Any promotion past shadow needs at least one approval when
             # the require_approvals flag is set.
@@ -1200,9 +1124,7 @@ class AuthorizationRolloutPolicy:
                 and not parsed_approvals
                 and not self.approvals
             ):
-                raise RolloutPolicyError(
-                    f"promotion to {target_stage.value!r} requires approvals"
-                )
+                raise RolloutPolicyError(f"promotion to {target_stage.value!r} requires approvals")
 
         if target_stage in _ALLOW_TOKEN_STAGES:
             if not effects:
@@ -1213,9 +1135,7 @@ class AuthorizationRolloutPolicy:
             if self.require_reversible_effects:
                 scope = self._coerce_canary_scope(canary_scope)
                 if scope is not None and not scope.reversible_effects_only:
-                    raise RolloutPolicyError(
-                        "allow-token stages require reversible_effects_only"
-                    )
+                    raise RolloutPolicyError("allow-token stages require reversible_effects_only")
 
         return target_stage
 
@@ -1251,8 +1171,7 @@ class AuthorizationRolloutPolicy:
 
             if effect_allowlist is not None:
                 self.effect_allowlist = tuple(
-                    _identifier(item, "effect_allowlist[]")
-                    for item in effect_allowlist
+                    _identifier(item, "effect_allowlist[]") for item in effect_allowlist
                 )
             if canary_scope is not None:
                 self.canary_scope = self._coerce_canary_scope(canary_scope)
@@ -1265,9 +1184,7 @@ class AuthorizationRolloutPolicy:
                     if previous not in _ALLOW_TOKEN_STAGES:
                         self.receipt_consumption_enabled = False
                 else:
-                    self.receipt_consumption_enabled = bool(
-                        enable_receipt_consumption
-                    )
+                    self.receipt_consumption_enabled = bool(enable_receipt_consumption)
             else:
                 self.receipt_consumption_enabled = False
 
@@ -1308,8 +1225,7 @@ class AuthorizationRolloutPolicy:
                 # Disable path may jump downward for emergency rollback.
                 if stage_index(target) > stage_index(previous_stage):
                     raise RolloutPolicyError(
-                        "immediate disable may only demote or hold stage; "
-                        "promotion is forbidden"
+                        "immediate disable may only demote or hold stage; promotion is forbidden"
                     )
                 self.stage = target
                 # Off/audit/shadow already force consumption false above.
@@ -1348,9 +1264,7 @@ class AuthorizationRolloutPolicy:
         """Bind a telemetry sink for transition / disable observations."""
 
         if not isinstance(telemetry, AuthorizationTelemetry):
-            raise TelemetryError(
-                "telemetry must be an AuthorizationTelemetry instance"
-            )
+            raise TelemetryError("telemetry must be an AuthorizationTelemetry instance")
         self._telemetry = telemetry
 
     # -- serialization -----------------------------------------------------
@@ -1360,22 +1274,14 @@ class AuthorizationRolloutPolicy:
             return {
                 "approvals": [item.to_dict() for item in self.approvals],
                 "canary_scope": (
-                    self.canary_scope.to_dict()
-                    if self.canary_scope is not None
-                    else None
+                    self.canary_scope.to_dict() if self.canary_scope is not None else None
                 ),
                 "effect_allowlist": list(self.effect_allowlist),
                 "interface": self.interface,
                 "offline_stage": self.offline_stage.value,
-                "preserve_evidence_on_rollback": (
-                    self.preserve_evidence_on_rollback
-                ),
-                "receipt_consumption_enabled": (
-                    self.receipt_consumption_enabled
-                ),
-                "require_adjacent_transitions": (
-                    self.require_adjacent_transitions
-                ),
+                "preserve_evidence_on_rollback": (self.preserve_evidence_on_rollback),
+                "receipt_consumption_enabled": (self.receipt_consumption_enabled),
+                "require_adjacent_transitions": (self.require_adjacent_transitions),
                 "require_approvals": self.require_approvals,
                 "require_reversible_effects": self.require_reversible_effects,
                 "schema": self.schema,
@@ -1395,47 +1301,29 @@ class AuthorizationRolloutPolicy:
         mapping = _mapping(data, "rollout config")
         schema = mapping.get("schema", ROLLOUT_CONFIG_SCHEMA)
         if schema != ROLLOUT_CONFIG_SCHEMA:
-            raise RolloutPolicyError(
-                f"unsupported rollout config schema {schema!r}"
-            )
+            raise RolloutPolicyError(f"unsupported rollout config schema {schema!r}")
 
-        interface = mapping.get(
-            "interface", AUTHORIZATION_ROLLOUT_POLICY_INTERFACE
-        )
-        schema_version = mapping.get(
-            "schema_version", AUTHORIZATION_ROLLOUT_POLICY_SCHEMA_VERSION
-        )
+        interface = mapping.get("interface", AUTHORIZATION_ROLLOUT_POLICY_INTERFACE)
+        schema_version = mapping.get("schema_version", AUTHORIZATION_ROLLOUT_POLICY_SCHEMA_VERSION)
 
         approvals_raw = mapping.get("approvals") or []
-        if not isinstance(approvals_raw, Sequence) or isinstance(
-            approvals_raw, (str, bytes)
-        ):
+        if not isinstance(approvals_raw, Sequence) or isinstance(approvals_raw, (str, bytes)):
             raise RolloutPolicyError("approvals must be a list")
-        approvals = [
-            RolloutApproval.from_mapping(item) for item in approvals_raw
-        ]
+        approvals = [RolloutApproval.from_mapping(item) for item in approvals_raw]
 
         effects_raw = mapping.get("effect_allowlist") or []
-        if not isinstance(effects_raw, Sequence) or isinstance(
-            effects_raw, (str, bytes)
-        ):
+        if not isinstance(effects_raw, Sequence) or isinstance(effects_raw, (str, bytes)):
             raise RolloutPolicyError("effect_allowlist must be a list")
-        effect_allowlist = tuple(
-            _identifier(item, "effect_allowlist[]") for item in effects_raw
-        )
+        effect_allowlist = tuple(_identifier(item, "effect_allowlist[]") for item in effects_raw)
 
         policy = cls(
             stage=parse_rollout_stage(mapping.get("stage", DEFAULT_ROLLOUT_STAGE)),
-            offline_stage=parse_rollout_stage(
-                mapping.get("offline_stage", DEFAULT_OFFLINE_STAGE)
-            ),
+            offline_stage=parse_rollout_stage(mapping.get("offline_stage", DEFAULT_OFFLINE_STAGE)),
             receipt_consumption_enabled=_bool(
                 mapping.get("receipt_consumption_enabled", False),
                 "receipt_consumption_enabled",
             ),
-            require_approvals=_bool(
-                mapping.get("require_approvals", True), "require_approvals"
-            ),
+            require_approvals=_bool(mapping.get("require_approvals", True), "require_approvals"),
             require_adjacent_transitions=_bool(
                 mapping.get("require_adjacent_transitions", True),
                 "require_adjacent_transitions",
@@ -1448,9 +1336,7 @@ class AuthorizationRolloutPolicy:
                 mapping.get("preserve_evidence_on_rollback", True),
                 "preserve_evidence_on_rollback",
             ),
-            canary_scope=CanaryScope.from_mapping(
-                mapping.get("canary_scope")
-            ),
+            canary_scope=CanaryScope.from_mapping(mapping.get("canary_scope")),
             effect_allowlist=effect_allowlist,
             approvals=list(approvals),
             interface=str(interface),
@@ -1479,9 +1365,7 @@ class AuthorizationRolloutPolicy:
             elif isinstance(item, Mapping):
                 parsed.append(RolloutApproval.from_mapping(item))
             else:
-                raise RolloutPolicyError(
-                    "approvals entries must be mappings or RolloutApproval"
-                )
+                raise RolloutPolicyError("approvals entries must be mappings or RolloutApproval")
         if len(parsed) > MAX_APPROVAL_IDS:
             raise RolloutPolicyError("approvals exceeds maximum size")
         return parsed
@@ -1493,10 +1377,7 @@ class AuthorizationRolloutPolicy:
     ) -> tuple[str, ...]:
         effects: list[str] = list(self.effect_allowlist)
         if effect_allowlist is not None:
-            effects.extend(
-                _identifier(item, "effect_allowlist[]")
-                for item in effect_allowlist
-            )
+            effects.extend(_identifier(item, "effect_allowlist[]") for item in effect_allowlist)
         scope = self._coerce_canary_scope(canary_scope)
         if scope is None:
             scope = self.canary_scope
@@ -1566,9 +1447,7 @@ def load_rollout_policy(
 
     config_path = Path(path)
     if not config_path.is_file():
-        raise RolloutPolicyError(
-            f"rollout config not found: {config_path}"
-        )
+        raise RolloutPolicyError(f"rollout config not found: {config_path}")
     try:
         raw = json.loads(config_path.read_text(encoding="utf-8"))
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:

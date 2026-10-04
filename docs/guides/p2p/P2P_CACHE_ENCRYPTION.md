@@ -80,17 +80,17 @@ Added **end-to-end encryption** to P2P cache messages using the GitHub token as 
 def _init_encryption(self) -> None:
     # Get GitHub token from env or gh CLI
     github_token = os.environ.get("GITHUB_TOKEN") or subprocess.run(["gh", "auth", "token"])
-    
+
     # Derive encryption key using PBKDF2
     kdf = PBKDF2HMAC(
         algorithm=hashes.SHA256(),
         length=32,
         salt=b"github-cache-p2p",  # Fixed salt for deterministic keys
         iterations=100000,
-        backend=default_backend()
+        backend=default_backend(),
     )
-    
-    key = base64.urlsafe_b64encode(kdf.derive(github_token.encode('utf-8')))
+
+    key = base64.urlsafe_b64encode(kdf.derive(github_token.encode("utf-8")))
     self._cipher = Fernet(key)
 ```
 
@@ -108,7 +108,7 @@ def _init_encryption(self) -> None:
 
 ```python
 def _encrypt_message(self, data: Dict[str, Any]) -> bytes:
-    plaintext = json.dumps(data).encode('utf-8')
+    plaintext = json.dumps(data).encode("utf-8")
     encrypted = self._cipher.encrypt(plaintext)
     return encrypted
 ```
@@ -131,7 +131,7 @@ Ciphertext (variable) || HMAC (32 bytes)
 def _decrypt_message(self, encrypted_data: bytes) -> Optional[Dict[str, Any]]:
     try:
         decrypted = self._cipher.decrypt(encrypted_data)
-        return json.loads(decrypted.decode('utf-8'))
+        return json.loads(decrypted.decode("utf-8"))
     except Exception as e:
         logger.warning(f"Failed to decrypt message (wrong key or corrupted): {e}")
         return None
@@ -203,6 +203,7 @@ from ipfs_accelerate_py.github_cli import GitHubCLI
 
 # Ensure GitHub token available
 import os
+
 os.environ["GITHUB_TOKEN"] = "ghp_..."  # Or use gh auth login
 
 # Use GitHub CLI normally
@@ -331,28 +332,29 @@ If `cryptography` unavailable:
 def test_encryption_decryption():
     """Test message encryption and decryption."""
     cache = GitHubAPICache(enable_p2p=True)
-    
+
     message = {"key": "test", "entry": {"data": "test_data"}}
-    
+
     # Encrypt
     encrypted = cache._encrypt_message(message)
     assert encrypted != json.dumps(message).encode()
-    
+
     # Decrypt
     decrypted = cache._decrypt_message(encrypted)
     assert decrypted == message
+
 
 def test_wrong_key():
     """Test decryption with wrong key fails."""
     cache1 = GitHubAPICache(enable_p2p=True)
     cache2 = GitHubAPICache(enable_p2p=True)
-    
+
     # Simulate different GitHub tokens
     cache2._cipher = Fernet(Fernet.generate_key())
-    
+
     message = {"key": "test", "entry": {"data": "test_data"}}
     encrypted = cache1._encrypt_message(message)
-    
+
     # Should fail to decrypt
     decrypted = cache2._decrypt_message(encrypted)
     assert decrypted is None

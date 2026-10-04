@@ -81,9 +81,9 @@ def _counted_plan(counters: dict[str, int], *, sleep: float = 0.0) -> LegalIRArt
 
     return LegalIRArtifactGraphBuildPlan(
         sample=sample,
-        normalize=lambda item: (bump("normalize") or item.text.lower()),
-        tokenize=lambda text: (bump("tokenize") or text.split()),
-        embed=lambda item: (bump("embed") or item.embedding_vector),
+        normalize=lambda item: bump("normalize") or item.text.lower(),
+        tokenize=lambda text: bump("tokenize") or text.split(),
+        embed=lambda item: bump("embed") or item.embedding_vector,
         compile=compile_result,
         view_contracts=lambda _result, _item: (
             bump("view_contract")
@@ -101,9 +101,7 @@ def _counted_plan(counters: dict[str, int], *, sleep: float = 0.0) -> LegalIRArt
                 "obligations": [{"obligation_id": "obligation-1"}],
             }
         ),
-        baseline_metrics=lambda result, _item: (
-            bump("baseline_metric") or dict(result.losses)
-        ),
+        baseline_metrics=lambda result, _item: bump("baseline_metric") or dict(result.losses),
         producer_namespace="unit-test",
     )
 
@@ -211,9 +209,7 @@ def test_concurrent_misses_are_single_flighted(tmp_path) -> None:
     assert len({bundle.graph_digest for bundle in bundles}) == 1
     assert counters["compile"] == 1
     assert store.summary()["coalesced_waiters"] == 7
-    assert store.summary()["avoided_node_materializations"] == 7 * len(
-        LEGAL_IR_ARTIFACT_NODE_ORDER
-    )
+    assert store.summary()["avoided_node_materializations"] == 7 * len(LEGAL_IR_ARTIFACT_NODE_ORDER)
 
 
 def test_cache_provenance_rejects_cross_state_graphs_without_leakage(tmp_path) -> None:

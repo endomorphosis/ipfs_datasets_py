@@ -7,6 +7,7 @@ Modules under test (loaded via importlib to bypass __init__.py pydantic guard):
   - _check_format.py                   →  check_format
   - _calculate_sample_sizes.py         →  calculate_sample_sizes
 """
+
 from __future__ import annotations
 
 import importlib.util

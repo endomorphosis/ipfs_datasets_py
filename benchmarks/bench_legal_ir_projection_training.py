@@ -136,23 +136,66 @@ def _synthetic_profile(*, optimized: bool) -> Mapping[str, Any]:
         family = families[attempt % len(families)]
         head = heads[attempt % len(heads)]
         if optimized:
-            profiler.transfer(0.0015, stage="warm_update", legal_family=family, count=1, bytes_moved=512)
+            profiler.transfer(
+                0.0015, stage="warm_update", legal_family=family, count=1, bytes_moved=512
+            )
             profiler.kernel(0.008, stage="warm_metric", legal_family=family, count=1)
             profiler.record("synchronization", 0.0008, stage="deferred_sync", legal_family=family)
-            profiler.record("python_loop", 0.0015, stage="hard_example_selection", legal_family=family)
-            profiler.record("optimizer", 0.006, stage="projection_update_batch", legal_family=family, feature_head=head)
-            profiler.record("feature_head", 0.002, stage="projection_update_head", legal_family=family, feature_head=head)
-            profiler.count("host_device_transfer_avoided_count", 4, legal_family=family, feature_head=head)
-            profiler.count("redundant_cuda_update_sync_avoided_count", 1, legal_family=family, feature_head=head)
-            profiler.count("projection_update_batch_count", 1, legal_family=family, feature_head=head)
+            profiler.record(
+                "python_loop", 0.0015, stage="hard_example_selection", legal_family=family
+            )
+            profiler.record(
+                "optimizer",
+                0.006,
+                stage="projection_update_batch",
+                legal_family=family,
+                feature_head=head,
+            )
+            profiler.record(
+                "feature_head",
+                0.002,
+                stage="projection_update_head",
+                legal_family=family,
+                feature_head=head,
+            )
+            profiler.count(
+                "host_device_transfer_avoided_count", 4, legal_family=family, feature_head=head
+            )
+            profiler.count(
+                "redundant_cuda_update_sync_avoided_count",
+                1,
+                legal_family=family,
+                feature_head=head,
+            )
+            profiler.count(
+                "projection_update_batch_count", 1, legal_family=family, feature_head=head
+            )
         else:
-            profiler.transfer(0.014, stage="legacy_update", legal_family=family, count=4, bytes_moved=4096)
+            profiler.transfer(
+                0.014, stage="legacy_update", legal_family=family, count=4, bytes_moved=4096
+            )
             profiler.kernel(0.011, stage="legacy_metric", legal_family=family, count=4)
             profiler.record("synchronization", 0.009, stage="legacy_sync", legal_family=family)
-            profiler.record("python_loop", 0.003, stage="hard_example_selection", legal_family=family)
-            profiler.record("optimizer", 0.018, stage="legacy_sample_loop", legal_family=family, feature_head=head)
-            profiler.record("feature_head", 0.009, stage="legacy_feature_head", legal_family=family, feature_head=head)
-            profiler.count("projection_update_batch_count", 0, legal_family=family, feature_head=head)
+            profiler.record(
+                "python_loop", 0.003, stage="hard_example_selection", legal_family=family
+            )
+            profiler.record(
+                "optimizer",
+                0.018,
+                stage="legacy_sample_loop",
+                legal_family=family,
+                feature_head=head,
+            )
+            profiler.record(
+                "feature_head",
+                0.009,
+                stage="legacy_feature_head",
+                legal_family=family,
+                feature_head=head,
+            )
+            profiler.count(
+                "projection_update_batch_count", 0, legal_family=family, feature_head=head
+            )
     return profiler.summarize()
 
 
@@ -240,8 +283,7 @@ def _execute(args: argparse.Namespace) -> Mapping[str, Any]:
         "baseline_profile": baseline_profile,
         "optimized_profile": optimized_profile,
         "deterministic_outputs_equal": (
-            baseline_reports[-1]["training_digest"]
-            == optimized_reports[-1]["training_digest"]
+            baseline_reports[-1]["training_digest"] == optimized_reports[-1]["training_digest"]
         ),
     }
 
@@ -249,7 +291,9 @@ def _execute(args: argparse.Namespace) -> Mapping[str, Any]:
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dry-run", action="store_true", help="run deterministic smoke benchmark")
-    parser.add_argument("--compute-device", default="auto", help="auto, python, cpu, cuda, or cuda:N")
+    parser.add_argument(
+        "--compute-device", default="auto", help="auto, python, cpu, cuda, or cuda:N"
+    )
     parser.add_argument("--runs", type=int, default=5, help="measured runs for execute mode")
     parser.add_argument("--max-line-search-attempts", type=int, default=3)
     parser.add_argument("--output", type=Path, default=None, help="optional JSON output path")

@@ -5,13 +5,12 @@ including IPLD/IPFS-native storage with content addressing.
 """
 
 try:
-
     # Base classes and errors
     from .base import (
         BaseVectorStore,
         VectorStoreError,
         VectorStoreConnectionError,
-        VectorStoreOperationError
+        VectorStoreOperationError,
     )
 
     # Configuration
@@ -19,7 +18,7 @@ try:
         UnifiedVectorStoreConfig,
         create_ipld_config,
         create_faiss_config,
-        create_qdrant_config
+        create_qdrant_config,
     )
 
     # Schema
@@ -30,7 +29,7 @@ try:
         IPLDSearchResult,
         CollectionMetadata,
         VectorBlock,
-        VectorStoreType
+        VectorStoreType,
     )
 
     # Router integration
@@ -58,48 +57,48 @@ try:
         migrate_collection,
         export_collection_to_ipfs,
         import_collection_from_ipfs,
-        create_manager
+        create_manager,
     )
 
     __all__ = [
         # Base classes and errors
-        'BaseVectorStore',
-        'VectorStoreError',
-        'VectorStoreConnectionError',
-        'VectorStoreOperationError',
+        "BaseVectorStore",
+        "VectorStoreError",
+        "VectorStoreConnectionError",
+        "VectorStoreOperationError",
         # Configuration
-        'UnifiedVectorStoreConfig',
-        'create_ipld_config',
-        'create_faiss_config',
-        'create_qdrant_config',
+        "UnifiedVectorStoreConfig",
+        "create_ipld_config",
+        "create_faiss_config",
+        "create_qdrant_config",
         # Schema
-        'EmbeddingResult',
-        'SearchResult',
-        'IPLDEmbeddingResult',
-        'IPLDSearchResult',
-        'CollectionMetadata',
-        'VectorBlock',
-        'VectorStoreType',
+        "EmbeddingResult",
+        "SearchResult",
+        "IPLDEmbeddingResult",
+        "IPLDSearchResult",
+        "CollectionMetadata",
+        "VectorBlock",
+        "VectorStoreType",
         # Router integration
-        'RouterIntegration',
-        'create_router_integration',
+        "RouterIntegration",
+        "create_router_integration",
         # Vector stores
-        'FAISSVectorStore',
-        'QdrantVectorStore',
-        'IPLDVectorStore',
-        'ElasticsearchVectorStore',
+        "FAISSVectorStore",
+        "QdrantVectorStore",
+        "IPLDVectorStore",
+        "ElasticsearchVectorStore",
         # Bridges
-        'create_bridge',
-        'VectorStoreBridge',
+        "create_bridge",
+        "VectorStoreBridge",
         # Manager and API
-        'VectorStoreManager',
-        'create_vector_store',
-        'add_texts_to_store',
-        'search_texts',
-        'migrate_collection',
-        'export_collection_to_ipfs',
-        'import_collection_from_ipfs',
-        'create_manager',
+        "VectorStoreManager",
+        "create_vector_store",
+        "add_texts_to_store",
+        "search_texts",
+        "migrate_collection",
+        "export_collection_to_ipfs",
+        "import_collection_from_ipfs",
+        "create_manager",
     ]
 
 

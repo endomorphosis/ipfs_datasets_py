@@ -151,10 +151,7 @@ def _source_text(sample: Any) -> str:
         return sample
     if isinstance(sample, Mapping):
         return str(
-            sample.get("normalized_text")
-            or sample.get("text")
-            or sample.get("source_text")
-            or ""
+            sample.get("normalized_text") or sample.get("text") or sample.get("source_text") or ""
         )
     return str(
         getattr(sample, "normalized_text", None)
@@ -200,9 +197,7 @@ def _default_embedding_model(sample: Any) -> str:
 
 def _modal_document(compilation_result: Any, sample: Any) -> Any:
     return (
-        getattr(compilation_result, "modal_ir", None)
-        or getattr(sample, "modal_ir", None)
-        or sample
+        getattr(compilation_result, "modal_ir", None) or getattr(sample, "modal_ir", None) or sample
     )
 
 
@@ -354,9 +349,7 @@ class LegalIRArtifactNode:
             kind=str(payload.get("kind") or ""),
             key_digest=str(payload.get("key_digest") or ""),
             payload=(
-                payload.get("payload", {})
-                if isinstance(payload.get("payload"), Mapping)
-                else {}
+                payload.get("payload", {}) if isinstance(payload.get("payload"), Mapping) else {}
             ),
             dependencies=tuple(str(item) for item in payload.get("dependencies", ()) or ()),
             producer_id=str(payload.get("producer_id") or ""),
@@ -438,9 +431,7 @@ class LegalIRArtifactGraphBundle:
             {
                 "complete_digest": self.complete_digest,
                 "key": self.key.to_dict(),
-                "node_payloads": {
-                    kind: node.payload_sha256 for kind, node in self.nodes.items()
-                },
+                "node_payloads": {kind: node.payload_sha256 for kind, node in self.nodes.items()},
                 "schema_version": self.schema_version,
             }
         )
@@ -763,9 +754,7 @@ class LegalIRArtifactGraphStore:
                 "avoided_graph_materializations": int(
                     stats.get("avoided_graph_materializations", 0)
                 ),
-                "avoided_node_materializations": int(
-                    stats.get("avoided_node_materializations", 0)
-                ),
+                "avoided_node_materializations": int(stats.get("avoided_node_materializations", 0)),
                 "provenance_rejections": int(stats.get("provenance_rejections", 0)),
                 "memory_evictions": int(stats.get("memory_evictions", 0)),
                 "saved_wall_time_seconds": round(self._saved_wall_time_seconds, 9),

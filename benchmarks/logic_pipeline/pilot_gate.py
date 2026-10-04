@@ -37,16 +37,10 @@ from benchmarks.logic_pipeline.variants import (
 )
 
 
-PILOT_GATE_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.pilot-shortlist-gate.v1"
-)
+PILOT_GATE_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.pilot-shortlist-gate.v1"
 PILOT_SHORTLIST_SCHEMA: Final = PILOT_GATE_SCHEMA
-PILOT_OUTCOME_CELL_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.pilot-outcome-cell.v1"
-)
-PILOT_FREEZE_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.pilot-deep-freeze.v1"
-)
+PILOT_OUTCOME_CELL_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.pilot-outcome-cell.v1"
+PILOT_FREEZE_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.pilot-deep-freeze.v1"
 MEASURED_PILOT_GATE_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.measured-pilot-authorization-gate.v1"
 )
@@ -56,21 +50,17 @@ MEASURED_PILOT_FREEZE_SCHEMA: Final = (
 PILOT_GATE_RUN_ID: Final = "pilot-shortlist-v1"
 REPOSITORY_ROOT: Final = Path(__file__).resolve().parents[2]
 DEFAULT_PILOT_GATE_PATH: Final = Path(
-    "workspace/benchmarks/hammer-symai-spacy-leanstral/results/"
-    "pilot-shortlist-v1.json"
+    "workspace/benchmarks/hammer-symai-spacy-leanstral/results/pilot-shortlist-v1.json"
 )
 DEFAULT_PILOT_SHORTLIST_PATH: Final = DEFAULT_PILOT_GATE_PATH
 FRONTEND_SOURCE_PATH: Final = Path(
-    "workspace/benchmarks/hammer-symai-spacy-leanstral/results/"
-    "frontend-overlap-v1.json"
+    "workspace/benchmarks/hammer-symai-spacy-leanstral/results/frontend-overlap-v1.json"
 )
 PROOF_SOURCE_PATH: Final = Path(
-    "workspace/benchmarks/hammer-symai-spacy-leanstral/results/"
-    "proof-overlap-ordering-v1.json"
+    "workspace/benchmarks/hammer-symai-spacy-leanstral/results/proof-overlap-ordering-v1.json"
 )
 BASELINE_SOURCE_PATH: Final = Path(
-    "workspace/benchmarks/hammer-symai-spacy-leanstral/a0-baseline-v1/"
-    "state/baseline-manifest.json"
+    "workspace/benchmarks/hammer-symai-spacy-leanstral/a0-baseline-v1/state/baseline-manifest.json"
 )
 ALLOWED_SOURCE_PATHS: Final = frozenset(
     {
@@ -158,9 +148,7 @@ def HSSLEV1159F06() -> str:
 
 
 def _mapping(value: object, field: str) -> Mapping[str, object]:
-    if not isinstance(value, Mapping) or not all(
-        isinstance(key, str) for key in value
-    ):
+    if not isinstance(value, Mapping) or not all(isinstance(key, str) for key in value):
         raise PilotGateError(f"{field} must be an object with string keys")
     return value
 
@@ -195,9 +183,7 @@ def _sha256_json(value: object) -> str:
 
 
 def _artifact_digest(value: Mapping[str, object]) -> str:
-    return _sha256_json(
-        {key: item for key, item in value.items() if key != "artifact_sha256"}
-    )
+    return _sha256_json({key: item for key, item in value.items() if key != "artifact_sha256"})
 
 
 def _resolve_repository_root(repository_root: str | Path) -> Path:
@@ -211,9 +197,7 @@ def _resolve_repository_root(repository_root: str | Path) -> Path:
     return resolved
 
 
-def _resolve_allowlisted_source(
-    repository_root: Path, relative_path: str | Path
-) -> Path:
+def _resolve_allowlisted_source(repository_root: Path, relative_path: str | Path) -> Path:
     raw = Path(relative_path).as_posix()
     pure = PurePosixPath(raw)
     if (
@@ -316,9 +300,7 @@ def _load_portable_frozen_baseline(
         or protocol["sha256"] != DEFAULT_PROTOCOL_SHA256
     ):
         raise PilotGateError("frozen A0 protocol binding changed")
-    configuration = _mapping(
-        baseline["configuration"], "baseline.configuration"
-    )
+    configuration = _mapping(baseline["configuration"], "baseline.configuration")
     if (
         configuration.get("requested_variant_id") != "A0"
         or configuration.get("effective_variant_id") != "A0"
@@ -341,13 +323,9 @@ def _load_portable_frozen_baseline(
         try:
             actual_sha256 = _sha256_bytes(source_path.read_bytes())
         except OSError as exc:
-            raise PilotGateError(
-                f"cannot read frozen A0 route file: {item['path']}"
-            ) from exc
+            raise PilotGateError(f"cannot read frozen A0 route file: {item['path']}") from exc
         if actual_sha256 != item["sha256"]:
-            raise PilotGateError(
-                f"frozen A0 route file drifted: {item['path']}"
-            )
+            raise PilotGateError(f"frozen A0 route file drifted: {item['path']}")
 
     contracts = [
         _mapping(item, "baseline.run_contracts[]")
@@ -406,13 +384,9 @@ def _load_sources(
         load_baseline_manifest,
     )
 
-    frontend_path = _resolve_allowlisted_source(
-        repository_root, FRONTEND_SOURCE_PATH
-    )
+    frontend_path = _resolve_allowlisted_source(repository_root, FRONTEND_SOURCE_PATH)
     proof_path = _resolve_allowlisted_source(repository_root, PROOF_SOURCE_PATH)
-    baseline_path = _resolve_allowlisted_source(
-        repository_root, BASELINE_SOURCE_PATH
-    )
+    baseline_path = _resolve_allowlisted_source(repository_root, BASELINE_SOURCE_PATH)
     try:
         frontend = load_frontend_report(frontend_path)
         proof = load_proof_report(proof_path)
@@ -422,9 +396,7 @@ def _load_sources(
         baseline_manifest = load_baseline_manifest(baseline_path)
     except BaselineValidationError as exc:
         if str(exc) != "recorded submodule gitlinks drifted":
-            raise PilotGateError(
-                "the frozen A0 manifest failed revalidation"
-            ) from exc
+            raise PilotGateError("the frozen A0 manifest failed revalidation") from exc
         baseline, baseline_semantic_sha256 = _load_portable_frozen_baseline(
             baseline_path, repository_root
         )
@@ -493,10 +465,7 @@ def _frontend_semantic(row: Mapping[str, object] | None) -> bool | None:
         return False
     if status != "semantically_correct":
         return None
-    return bool(
-        row["normalized_ir_exact_match"]
-        or row["deterministic_semantic_equivalence"]
-    )
+    return bool(row["normalized_ir_exact_match"] or row["deterministic_semantic_equivalence"])
 
 
 def _proof_verified(row: Mapping[str, object] | None) -> bool | None:
@@ -509,9 +478,7 @@ def _proof_verified(row: Mapping[str, object] | None) -> bool | None:
             or row["verification_authority"] != "native_kernel"
             or not isinstance(row["kernel_receipt_sha256"], str)
         ):
-            raise PilotGateError(
-                "a verified proof observation is not native-kernel bound"
-            )
+            raise PilotGateError("a verified proof observation is not native-kernel bound")
         return True
     if status in {"not_verified", "rejected"}:
         return False
@@ -529,9 +496,7 @@ def _proof_terminal_kernel_accepted(
         result = CaseResultRecord.from_dict(row["case_result"])
         return result.terminal_kernel_accepted
     except (ProtocolContractError, TypeError, ValueError) as exc:
-        raise PilotGateError(
-            "proof observation contains an invalid case result"
-        ) from exc
+        raise PilotGateError("proof observation contains an invalid case result") from exc
 
 
 def _available_frontend(row: Mapping[str, object]) -> bool:
@@ -575,9 +540,7 @@ def _cell_status(
 ) -> str:
     if synthetic_exclusion:
         return "excluded_nonproof"
-    statuses = {
-        str(row["status"]) for row in (frontend, proof) if row is not None
-    }
+    statuses = {str(row["status"]) for row in (frontend, proof) if row is not None}
     if "infrastructure_failure" in statuses:
         return "infrastructure_failure"
     if statuses & {"unavailable", "excluded"}:
@@ -595,15 +558,12 @@ def _normalize_ledger(
     front_index = _observation_index(frontend, include_split=True)
     proof_index = _observation_index(proof, include_split=False)
     frontend_variants = tuple(
-        str(item)
-        for item in _array(frontend["variant_ids"], "frontend.variant_ids")
+        str(item) for item in _array(frontend["variant_ids"], "frontend.variant_ids")
     )
     proof_variants = tuple(
         str(item)
         for item in (
-            *_array(
-                proof["primary_variant_ids"], "proof.primary_variant_ids"
-            ),
+            *_array(proof["primary_variant_ids"], "proof.primary_variant_ids"),
             *_array(
                 proof["diagnostic_variant_ids"],
                 "proof.diagnostic_variant_ids",
@@ -611,25 +571,18 @@ def _normalize_ledger(
         )
     )
     proof_eligible = tuple(
-        str(item)
-        for item in _array(
-            proof["eligible_case_ids"], "proof.eligible_case_ids"
-        )
+        str(item) for item in _array(proof["eligible_case_ids"], "proof.eligible_case_ids")
     )
     proof_excluded = tuple(
-        str(item)
-        for item in _array(
-            proof["excluded_case_ids"], "proof.excluded_case_ids"
-        )
+        str(item) for item in _array(proof["excluded_case_ids"], "proof.excluded_case_ids")
     )
     if set(proof_eligible) & set(proof_excluded):
         raise PilotGateError("proof eligible and excluded case scopes overlap")
     # The report validator freezes each list; this additionally proves that
     # together they cover the complete pilot ledger without unknown cases.
-    if (
-        len(proof_eligible) + len(proof_excluded) != len(PILOT_CASE_IDS)
-        or set((*proof_eligible, *proof_excluded)) != set(PILOT_CASE_IDS)
-    ):
+    if len(proof_eligible) + len(proof_excluded) != len(PILOT_CASE_IDS) or set(
+        (*proof_eligible, *proof_excluded)
+    ) != set(PILOT_CASE_IDS):
         raise PilotGateError("proof scopes do not partition all pilot cases")
 
     baseline_corpus = _mapping(baseline["corpus"], "baseline.corpus")
@@ -638,9 +591,7 @@ def _normalize_ledger(
         for item in _array(baseline_corpus["cases"], "baseline.corpus.cases")
     ]
     baseline_ids = tuple(str(item["case_id"]) for item in baseline_cases)
-    front_case_ids = _mapping(
-        frontend["case_ids_by_split"], "frontend.case_ids_by_split"
-    )
+    front_case_ids = _mapping(frontend["case_ids_by_split"], "frontend.case_ids_by_split")
     if (
         baseline_ids != PILOT_CASE_IDS
         or tuple(front_case_ids["pilot"]) != PILOT_CASE_IDS  # type: ignore[arg-type]
@@ -650,8 +601,7 @@ def _normalize_ledger(
     if (
         frontend["protocol_sha256"] != DEFAULT_PROTOCOL_SHA256
         or proof["protocol_sha256"] != DEFAULT_PROTOCOL_SHA256
-        or _mapping(baseline["protocol"], "baseline.protocol")["sha256"]
-        != DEFAULT_PROTOCOL_SHA256
+        or _mapping(baseline["protocol"], "baseline.protocol")["sha256"] != DEFAULT_PROTOCOL_SHA256
     ):
         raise PilotGateError("source artifacts disagree on protocol identity")
     if (
@@ -670,14 +620,10 @@ def _normalize_ledger(
     expected_classes: dict[str, str] = {}
     for case_id in PILOT_CASE_IDS:
         candidates = {
-            str(row["expected_class"])
-            for row in front_index.values()
-            if row["case_id"] == case_id
+            str(row["expected_class"]) for row in front_index.values() if row["case_id"] == case_id
         }
         if len(candidates) != 1:
-            raise PilotGateError(
-                f"front-end evidence does not fix expected class for {case_id}"
-            )
+            raise PilotGateError(f"front-end evidence does not fix expected class for {case_id}")
         expected_classes[case_id] = candidates.pop()
 
     ledger: list[dict[str, object]] = []
@@ -694,32 +640,21 @@ def _normalize_ledger(
                 front = front_index.get(coordinate)
                 proof_row = proof_index.get(coordinate)
                 is_proof_variant = variant_id in proof_variants
-                excluded_from_proof = (
-                    is_proof_variant and case_id in proof_excluded
-                )
-                synthetic_exclusion = (
-                    front is None
-                    and proof_row is None
-                    and excluded_from_proof
-                )
+                excluded_from_proof = is_proof_variant and case_id in proof_excluded
+                synthetic_exclusion = front is None and proof_row is None and excluded_from_proof
                 if front is None and proof_row is None and not synthetic_exclusion:
-                    raise PilotGateError(
-                        f"pilot evidence is incomplete at {coordinate!r}"
-                    )
+                    raise PilotGateError(f"pilot evidence is incomplete at {coordinate!r}")
                 if front is not None and variant_id not in frontend_variants:
                     raise PilotGateError("unexpected front-end variant coordinate")
                 if proof_row is not None and (
-                    variant_id not in proof_variants
-                    or case_id not in proof_eligible
+                    variant_id not in proof_variants or case_id not in proof_eligible
                 ):
                     raise PilotGateError("unexpected proof variant/case coordinate")
                 if front is not None and proof_row is not None:
                     if variant_id not in OVERLAP_VARIANT_IDS:
                         raise PilotGateError("unregistered source-report overlap")
                     if _available_frontend(front) != _available_proof(proof_row):
-                        raise PilotGateError(
-                            f"overlap availability disagrees at {coordinate!r}"
-                        )
+                        raise PilotGateError(f"overlap availability disagrees at {coordinate!r}")
                     observation_kind = "frontend_and_proof"
                 elif front is not None:
                     observation_kind = "frontend_only"
@@ -732,15 +667,9 @@ def _normalize_ledger(
                 semantic_success = _frontend_semantic(front)
                 kernel_verified = _proof_verified(proof_row)
                 expected_class = expected_classes[case_id]
-                is_invalid_control = (
-                    expected_class in INVALID_CONTROL_EXPECTED_CLASSES
-                )
+                is_invalid_control = expected_class in INVALID_CONTROL_EXPECTED_CLASSES
                 invalid_false_positive = (
-                    (
-                        True
-                        if _proof_terminal_kernel_accepted(proof_row)
-                        else kernel_verified
-                    )
+                    (True if _proof_terminal_kernel_accepted(proof_row) else kernel_verified)
                     if is_invalid_control
                     else None
                 )
@@ -775,22 +704,15 @@ def _normalize_ledger(
                         "proof_scope": (
                             "excluded_nonproof"
                             if excluded_from_proof
-                            else (
-                                "eligible"
-                                if is_proof_variant
-                                else "not_applicable"
-                            )
+                            else ("eligible" if is_proof_variant else "not_applicable")
                         ),
                         "source_observations": source_observations,
                         "semantic_success": semantic_success,
                         "kernel_verified": kernel_verified,
                         "invalid_control": is_invalid_control,
-                        "invalid_control_kernel_false_positive": (
-                            invalid_false_positive
-                        ),
+                        "invalid_control_kernel_false_positive": (invalid_false_positive),
                         "efficacy_observed": (
-                            semantic_success is not None
-                            or kernel_verified is not None
+                            semantic_success is not None or kernel_verified is not None
                         ),
                         "missing_reasons": _missing_reasons(
                             front,
@@ -809,9 +731,7 @@ def _normalize_ledger(
         "excluded_nonproof": 48,
     }
     if kind_counts != expected_kind_counts:
-        raise PilotGateError(
-            f"source normalization shape changed: {kind_counts!r}"
-        )
+        raise PilotGateError(f"source normalization shape changed: {kind_counts!r}")
     normalization = {
         "variant_ids": list(ALL_VARIANT_IDS),
         "candidate_variant_ids": list(NONBASELINE_CANDIDATE_IDS),
@@ -863,13 +783,9 @@ def _variant_dispositions(
     result: list[dict[str, object]] = []
     for variant_id in NONBASELINE_CANDIDATE_IDS:
         rows = [row for row in ledger if row["variant_id"] == variant_id]
-        development = [
-            row for row in development_rows if row["variant_id"] == variant_id
-        ]
+        development = [row for row in development_rows if row["variant_id"] == variant_id]
         pilot_efficacy_count = sum(bool(row["efficacy_observed"]) for row in rows)
-        development_efficacy_count = sum(
-            _frontend_semantic(row) is not None for row in development
-        )
+        development_efficacy_count = sum(_frontend_semantic(row) is not None for row in development)
         reasons: list[str] = []
         if pilot_efficacy_count == 0:
             reasons.append("no_pilot_efficacy_observed")
@@ -889,22 +805,15 @@ def _variant_dispositions(
                 "pilot_cell_count": len(rows),
                 "pilot_efficacy_observation_count": pilot_efficacy_count,
                 "development_observation_count": len(development),
-                "development_efficacy_observation_count": (
-                    development_efficacy_count
-                ),
+                "development_efficacy_observation_count": (development_efficacy_count),
                 "proof_excluded_cell_count": sum(
                     row["proof_scope"] == "excluded_nonproof" for row in rows
                 ),
                 "infrastructure_failure_count": sum(
-                    row["evidence_status"] == "infrastructure_failure"
-                    for row in rows
+                    row["evidence_status"] == "infrastructure_failure" for row in rows
                 ),
-                "kernel_verified_count": sum(
-                    row["kernel_verified"] is True for row in rows
-                ),
-                "semantic_success_count": sum(
-                    row["semantic_success"] is True for row in rows
-                ),
+                "kernel_verified_count": sum(row["kernel_verified"] is True for row in rows),
+                "semantic_success_count": sum(row["semantic_success"] is True for row in rows),
                 "efficacy_rates": {
                     "kernel_verified_rate": None,
                     "semantic_success_rate": None,
@@ -937,16 +846,9 @@ def _deep_freeze(
             "variant_id": variant_id,
             "symai_policy": VARIANT_REGISTRY[variant_id].symai_policy.value,
             "hammer_policy": VARIANT_REGISTRY[variant_id].hammer_policy.value,
-            "leanstral_policy": (
-                VARIANT_REGISTRY[variant_id].leanstral_policy.value
-            ),
-            "proof_order": [
-                stage.value
-                for stage in VARIANT_REGISTRY[variant_id].proof_order
-            ],
-            "premise_ranking": (
-                VARIANT_REGISTRY[variant_id].premise_ranking.value
-            ),
+            "leanstral_policy": (VARIANT_REGISTRY[variant_id].leanstral_policy.value),
+            "proof_order": [stage.value for stage in VARIANT_REGISTRY[variant_id].proof_order],
+            "premise_ranking": (VARIANT_REGISTRY[variant_id].premise_ranking.value),
         }
         for variant_id in ALL_VARIANT_IDS
     ]
@@ -975,23 +877,14 @@ def _deep_freeze(
             ),
             "authority_claims_forbidden": True,
             "max_text_bytes": adapter_contracts.SYMAI_MAX_TEXT_BYTES,
-            "max_raw_output_bytes": (
-                adapter_contracts.SYMAI_MAX_RAW_OUTPUT_BYTES
-            ),
-            "max_candidate_bytes": (
-                adapter_contracts.SYMAI_MAX_CANDIDATE_BYTES
-            ),
+            "max_raw_output_bytes": (adapter_contracts.SYMAI_MAX_RAW_OUTPUT_BYTES),
+            "max_candidate_bytes": (adapter_contracts.SYMAI_MAX_CANDIDATE_BYTES),
             "max_retries": adapter_contracts.SYMAI_MAX_RETRIES,
         },
         "leanstral": {
             "draft_schema": adapter_contracts.LEANSTRAL_DRAFT_SCHEMA,
-            "input_builder": (
-                "benchmarks.logic_pipeline.adapters._leanstral_input"
-            ),
-            "draft_validator": (
-                "benchmarks.logic_pipeline.adapters."
-                "_validate_leanstral_draft"
-            ),
+            "input_builder": ("benchmarks.logic_pipeline.adapters._leanstral_input"),
+            "draft_validator": ("benchmarks.logic_pipeline.adapters._validate_leanstral_draft"),
             "one_fixed_obligation_per_request": True,
             "unverified_model_draft_only": True,
             "forbidden_constructs_fail_closed": True,
@@ -1062,9 +955,7 @@ def _deep_freeze(
         "cross_variant_reuse_forbidden": True,
         "selection_splits": ["pilot", "development"],
         "reserved_unopened_namespaces": cache_namespaces,
-        "frozen_a0_namespaces": [
-            contract["cache_namespace"] for contract in baseline_contracts
-        ],
+        "frozen_a0_namespaces": [contract["cache_namespace"] for contract in baseline_contracts],
         "execution_claimed_for_reserved_namespaces": False,
     }
     resource_policy_values = ResourcePolicy().to_dict()
@@ -1144,14 +1035,11 @@ def _deep_freeze(
                 "protocol_sha256": DEFAULT_PROTOCOL_SHA256,
                 "registry_sha256": VARIANT_REGISTRY_SHA256,
                 "variant_configuration_sha256s": [
-                    item["configuration_sha256"]
-                    for item in variant_configurations
+                    item["configuration_sha256"] for item in variant_configurations
                 ],
                 "prompt_sha256": _sha256_json(prompt_body),
                 "cache_policy_sha256": _sha256_json(cache_policy_body),
-                "resource_policy_sha256": _sha256_json(
-                    resource_policy_body
-                ),
+                "resource_policy_sha256": _sha256_json(resource_policy_body),
                 "policy_sha256": _sha256_json(policies),
                 "model_identity_sha256": _sha256_json(model_identity_body),
                 "threshold_sha256": _sha256_json(thresholds),
@@ -1169,35 +1057,24 @@ def _derive_report(repository_root: Path) -> dict[str, object]:
 
     control_rows = [row for row in ledger if row["invalid_control"] is True]
     observed_control_rows = [
-        row
-        for row in control_rows
-        if row["invalid_control_kernel_false_positive"] is not None
+        row for row in control_rows if row["invalid_control_kernel_false_positive"] is not None
     ]
     false_positive_count = sum(
-        row["invalid_control_kernel_false_positive"] is True
-        for row in observed_control_rows
+        row["invalid_control_kernel_false_positive"] is True for row in observed_control_rows
     )
     if false_positive_count > DEFAULT_PROTOCOL.thresholds.invalid_control_verified_max:
         raise PilotGateError("a kernel-verified invalid control is a fatal incident")
-    efficacy_observation_count = sum(
-        bool(row["efficacy_observed"]) for row in ledger
-    )
+    efficacy_observation_count = sum(bool(row["efficacy_observed"]) for row in ledger)
     infrastructure_failure_count = sum(
         row["evidence_status"] == "infrastructure_failure" for row in ledger
     )
     safety = {
-        "invalid_control_case_ids": sorted(
-            {str(row["case_id"]) for row in control_rows}
-        ),
+        "invalid_control_case_ids": sorted({str(row["case_id"]) for row in control_rows}),
         "invalid_control_cell_count": len(control_rows),
         "observed_invalid_control_cell_count": len(observed_control_rows),
-        "kernel_verified_invalid_control_false_positive_count": (
-            false_positive_count
-        ),
+        "kernel_verified_invalid_control_false_positive_count": (false_positive_count),
         "kernel_verified_invalid_control_false_positive_rate": (
-            false_positive_count / len(observed_control_rows)
-            if observed_control_rows
-            else None
+            false_positive_count / len(observed_control_rows) if observed_control_rows else None
         ),
         "threshold": DEFAULT_PROTOCOL.thresholds.invalid_control_verified_max,
         "fatal_safety_incident": false_positive_count > 0,
@@ -1266,9 +1143,7 @@ def _derive_report(repository_root: Path) -> dict[str, object]:
     return report
 
 
-def build_pilot_gate_report(
-    *, repository_root: str | Path = REPOSITORY_ROOT
-) -> dict[str, object]:
+def build_pilot_gate_report(*, repository_root: str | Path = REPOSITORY_ROOT) -> dict[str, object]:
     """Build the deterministic HSSL-G080 gate from allowlisted source evidence."""
 
     root = _resolve_repository_root(repository_root)
@@ -1322,9 +1197,7 @@ def _measured_source_reports(
         try:
             result[kind] = validator(value)
         except (TypeError, ValueError) as exc:
-            raise PilotGateError(
-                f"{kind} source report failed validation"
-            ) from exc
+            raise PilotGateError(f"{kind} source report failed validation") from exc
     return result
 
 
@@ -1351,14 +1224,10 @@ def _normalize_measured_source_bindings(
             row = _mapping(raw, "source_bindings[]")
             kind = row.get("kind")
             if not isinstance(kind, str) or kind in supplied:
-                raise PilotGateError(
-                    "source binding kinds must be unique strings"
-                )
+                raise PilotGateError("source binding kinds must be unique strings")
             supplied[kind] = row
     else:
-        raise PilotGateError(
-            "source_bindings must be a mapping or sequence of records"
-        )
+        raise PilotGateError("source_bindings must be a mapping or sequence of records")
     expected = set(MEASURED_SOURCE_KINDS)
     if set(supplied) != expected:
         raise PilotGateError(
@@ -1381,9 +1250,7 @@ def _normalize_measured_source_bindings(
             or not _SHA256_PATTERN.fullmatch(digest)
             or digest != expected_digest
         ):
-            raise PilotGateError(
-                f"{kind} source binding does not match its validated artifact"
-            )
+            raise PilotGateError(f"{kind} source binding does not match its validated artifact")
         schema = reports[kind].get("schema")
         if not isinstance(schema, str) or not schema:
             raise PilotGateError(f"{kind} source has no schema identity")
@@ -1425,9 +1292,7 @@ def _normalize_measured_freeze_inputs(
         try:
             digest = _sha256_json(snapshot)
         except (TypeError, ValueError) as exc:
-            raise PilotGateError(
-                f"freeze_inputs.{kind} is not canonical JSON"
-            ) from exc
+            raise PilotGateError(f"freeze_inputs.{kind} is not canonical JSON") from exc
         frozen[kind] = {
             "frozen": True,
             "snapshot": snapshot,
@@ -1454,20 +1319,14 @@ def _measured_completeness(
         for item in _array(frontend.get("observations"), "frontend.observations")
     ]
     frontend_missing = sum(
-        row.get("status") in {"unavailable", "infrastructure_failure"}
-        for row in frontend_rows
+        row.get("status") in {"unavailable", "infrastructure_failure"} for row in frontend_rows
     )
     if frontend_missing:
         reasons.append("frontend_missing_or_infrastructure_evidence")
-    frontend_analysis = _mapping(
-        frontend.get("analysis"), "frontend.analysis"
-    )
-    frontend_coverage = _mapping(
-        frontend_analysis.get("coverage"), "frontend.analysis.coverage"
-    )
-    if (
-        frontend_coverage.get("expected_observation_count")
-        != frontend_coverage.get("observed_observation_count")
+    frontend_analysis = _mapping(frontend.get("analysis"), "frontend.analysis")
+    frontend_coverage = _mapping(frontend_analysis.get("coverage"), "frontend.analysis.coverage")
+    if frontend_coverage.get("expected_observation_count") != frontend_coverage.get(
+        "observed_observation_count"
     ):
         reasons.append("frontend_matrix_incomplete")
     core_frontend_metrics = (
@@ -1484,8 +1343,7 @@ def _measured_completeness(
         )
     ]
     if any(
-        _mapping(row.get("metrics"), "frontend.variant.metrics").get(metric)
-        is None
+        _mapping(row.get("metrics"), "frontend.variant.metrics").get(metric) is None
         for row in frontend_metric_rows
         for metric in core_frontend_metrics
     ):
@@ -1498,18 +1356,14 @@ def _measured_completeness(
         for item in _array(proof.get("observations"), "proof.observations")
     ]
     proof_missing = sum(
-        row.get("status") in {"unavailable", "infrastructure_failure"}
-        for row in proof_rows
+        row.get("status") in {"unavailable", "infrastructure_failure"} for row in proof_rows
     )
     if proof_missing:
         reasons.append("proof_missing_or_infrastructure_evidence")
     proof_analysis = _mapping(proof.get("analysis"), "proof.analysis")
-    proof_coverage = _mapping(
-        proof_analysis.get("coverage"), "proof.analysis.coverage"
-    )
-    if (
-        proof_coverage.get("expected_observation_count")
-        != proof_coverage.get("observed_observation_count")
+    proof_coverage = _mapping(proof_analysis.get("coverage"), "proof.analysis.coverage")
+    if proof_coverage.get("expected_observation_count") != proof_coverage.get(
+        "observed_observation_count"
     ):
         reasons.append("proof_matrix_incomplete")
     proof_metric_rows = [
@@ -1526,18 +1380,12 @@ def _measured_completeness(
     ):
         reasons.append("proof_efficacy_latency_or_resource_metric_missing")
 
-    efficiency_analysis = _mapping(
-        efficiency.get("analysis"), "efficiency.analysis"
-    )
+    efficiency_analysis = _mapping(efficiency.get("analysis"), "efficiency.analysis")
     efficiency_rows = [
         _mapping(item, "efficiency.observations[]")
-        for item in _array(
-            efficiency.get("observations"), "efficiency.observations"
-        )
+        for item in _array(efficiency.get("observations"), "efficiency.observations")
     ]
-    invalid_control_count = sum(
-        row.get("invalid_control") is True for row in efficiency_rows
-    )
+    invalid_control_count = sum(row.get("invalid_control") is True for row in efficiency_rows)
     if (
         efficiency.get("execution_mode") != "measured"
         or efficiency_analysis.get("measured") is not True
@@ -1562,11 +1410,7 @@ def _measured_completeness(
     ):
         reasons.append("statistics_pair_missingness_retained")
     analysis_splits = sorted(
-        {
-            str(row.get("split"))
-            for row in analyses
-            if row.get("split") in {"pilot", "development"}
-        }
+        {str(row.get("split")) for row in analyses if row.get("split") in {"pilot", "development"}}
     )
     if analysis_splits != ["development", "pilot"]:
         reasons.append("statistics_selection_splits_incomplete")
@@ -1577,22 +1421,14 @@ def _measured_completeness(
             "reasons": reasons,
             "frontend": {
                 "execution_mode": frontend.get("execution_mode"),
-                "expected_observation_count": frontend_coverage.get(
-                    "expected_observation_count"
-                ),
-                "observed_observation_count": frontend_coverage.get(
-                    "observed_observation_count"
-                ),
+                "expected_observation_count": frontend_coverage.get("expected_observation_count"),
+                "observed_observation_count": frontend_coverage.get("observed_observation_count"),
                 "missing_or_infrastructure_count": frontend_missing,
             },
             "proof": {
                 "execution_mode": proof.get("execution_mode"),
-                "expected_observation_count": proof_coverage.get(
-                    "expected_observation_count"
-                ),
-                "observed_observation_count": proof_coverage.get(
-                    "observed_observation_count"
-                ),
+                "expected_observation_count": proof_coverage.get("expected_observation_count"),
+                "observed_observation_count": proof_coverage.get("observed_observation_count"),
                 "missing_or_infrastructure_count": proof_missing,
             },
             "efficiency": {
@@ -1604,9 +1440,7 @@ def _measured_completeness(
             "statistics": {
                 "analysis_count": len(analyses),
                 "selection_splits": analysis_splits,
-                "missing_pair_count": sum(
-                    int(row.get("missing_count", 0)) for row in analyses
-                ),
+                "missing_pair_count": sum(int(row.get("missing_count", 0)) for row in analyses),
             },
             "null_is_never_zero": True,
         },
@@ -1631,16 +1465,10 @@ def _measured_safety(
             result = CaseResultRecord.from_dict(result_value)
             terminal_accepted = result.terminal_kernel_accepted
         except (ProtocolContractError, TypeError, ValueError) as exc:
-            raise PilotGateError(
-                "invalid-control observation has an invalid case result"
-            ) from exc
+            raise PilotGateError("invalid-control observation has an invalid case result") from exc
         if terminal_accepted:
             kernel = next(
-                (
-                    stage
-                    for stage in result.stages
-                    if stage.stage.value == "kernel"
-                ),
+                (stage for stage in result.stages if stage.stage.value == "kernel"),
                 None,
             )
             receipt = (
@@ -1650,12 +1478,8 @@ def _measured_safety(
                 if isinstance(kernel.data, Mapping)
                 else None
             )
-            if not isinstance(receipt, str) or not _SHA256_PATTERN.fullmatch(
-                receipt
-            ):
-                raise PilotGateError(
-                    "accepted invalid control has no native-kernel receipt"
-                )
+            if not isinstance(receipt, str) or not _SHA256_PATTERN.fullmatch(receipt):
+                raise PilotGateError("accepted invalid control has no native-kernel receipt")
             false_positive_receipts.append(receipt)
     count = len(false_positive_receipts)
     threshold = DEFAULT_PROTOCOL.thresholds.invalid_control_verified_max
@@ -1680,9 +1504,7 @@ def _measured_receipt_binding(
 
     source_receipts: set[str] = set()
     for kind in ("frontend", "proof"):
-        for raw in _array(
-            reports[kind].get("observations"), f"{kind}.observations"
-        ):
+        for raw in _array(reports[kind].get("observations"), f"{kind}.observations"):
             row = _mapping(raw, f"{kind}.observations[]")
             receipt = row.get("source_receipt_sha256")
             if isinstance(receipt, str) and _SHA256_PATTERN.fullmatch(receipt):
@@ -1698,16 +1520,12 @@ def _measured_receipt_binding(
 
     statistics_receipts: set[str] = set()
     observation_count = 0
-    for raw_request in _array(
-        reports["statistics"].get("requests"), "statistics.requests"
-    ):
+    for raw_request in _array(reports["statistics"].get("requests"), "statistics.requests"):
         request = _mapping(raw_request, "statistics.requests[]")
         for raw_observation in _array(
             request.get("observations"), "statistics.request.observations"
         ):
-            observation = _mapping(
-                raw_observation, "statistics.request.observations[]"
-            )
+            observation = _mapping(raw_observation, "statistics.request.observations[]")
             observation_count += 1
             if observation.get("run_id") != run_id:
                 raise PilotGateError(
@@ -1718,40 +1536,25 @@ def _measured_receipt_binding(
                 "candidate_result_sha256",
             ):
                 receipt = observation.get(field)
-                if (
-                    not isinstance(receipt, str)
-                    or not _SHA256_PATTERN.fullmatch(receipt)
-                ):
-                    raise PilotGateError(
-                        f"statistics observation has no valid {field}"
-                    )
+                if not isinstance(receipt, str) or not _SHA256_PATTERN.fullmatch(receipt):
+                    raise PilotGateError(f"statistics observation has no valid {field}")
                 statistics_receipts.add(receipt)
     if observation_count == 0:
         raise PilotGateError("statistics report has no source observations")
 
-    pareto = _mapping(
-        reports["statistics"].get("pareto"), "statistics.pareto"
-    )
+    pareto = _mapping(reports["statistics"].get("pareto"), "statistics.pareto")
     pareto_receipts = {
         str(receipt)
-        for raw_candidate in _array(
-            pareto.get("candidates"), "statistics.pareto.candidates"
-        )
+        for raw_candidate in _array(pareto.get("candidates"), "statistics.pareto.candidates")
         for receipt in _array(
-            _mapping(
-                raw_candidate, "statistics.pareto.candidates[]"
-            ).get("case_result_sha256s"),
+            _mapping(raw_candidate, "statistics.pareto.candidates[]").get("case_result_sha256s"),
             "statistics.pareto.candidate.case_result_sha256s",
         )
     }
     if not pareto_receipts <= statistics_receipts:
-        raise PilotGateError(
-            "Pareto case-result links are absent from statistics observations"
-        )
+        raise PilotGateError("Pareto case-result links are absent from statistics observations")
     unbound = sorted(pareto_receipts - source_receipts)
-    reasons = (
-        ["statistics_case_receipts_not_in_measured_sources"] if unbound else []
-    )
+    reasons = ["statistics_case_receipts_not_in_measured_sources"] if unbound else []
     return (
         {
             "statistics_observation_count": observation_count,
@@ -1787,9 +1590,7 @@ def _measured_candidate_evidence(
         _mapping(item, "pareto.candidates[]")
         for item in _array(pareto_map.get("candidates"), "pareto.candidates")
     ]
-    efficiency_analysis = _mapping(
-        efficiency.get("analysis"), "efficiency.analysis"
-    )
+    efficiency_analysis = _mapping(efficiency.get("analysis"), "efficiency.analysis")
     points = {
         str(row["variant_id"]): row
         for row in (
@@ -1819,11 +1620,7 @@ def _measured_candidate_evidence(
             reasons.append(f"efficiency_evidence_missing:{variant_id}")
             continue
         costs = _mapping(point.get("costs"), "efficiency.point.costs")
-        missing_costs = [
-            field
-            for field in _MEASURED_COST_FIELDS
-            if costs.get(field) is None
-        ]
+        missing_costs = [field for field in _MEASURED_COST_FIELDS if costs.get(field) is None]
         if point.get("unnecessary_call_rate") is None:
             missing_costs.append("unnecessary_call_rate")
         if point.get("failed_attempts") is None:
@@ -1831,10 +1628,7 @@ def _measured_candidate_evidence(
         if point.get("kernel_verified_rate") is None:
             missing_costs.append("kernel_verified_rate")
         if missing_costs:
-            reasons.append(
-                f"efficiency_metric_missing:{variant_id}:"
-                + ",".join(missing_costs)
-            )
+            reasons.append(f"efficiency_metric_missing:{variant_id}:" + ",".join(missing_costs))
         if point.get("eligible") is not True:
             reasons.append(f"efficiency_ineligible:{variant_id}")
         if row.get("eligible") is not True or row.get("safety_feasible") is not True:
@@ -1853,13 +1647,9 @@ def _measured_candidate_evidence(
                 },
                 "efficiency": {
                     "eligible": point.get("eligible"),
-                    "kernel_verified_rate": point.get(
-                        "kernel_verified_rate"
-                    ),
+                    "kernel_verified_rate": point.get("kernel_verified_rate"),
                     "costs": dict(costs),
-                    "unnecessary_call_rate": point.get(
-                        "unnecessary_call_rate"
-                    ),
+                    "unnecessary_call_rate": point.get("unnecessary_call_rate"),
                     "failed_attempts": point.get("failed_attempts"),
                 },
             }
@@ -1868,10 +1658,7 @@ def _measured_candidate_evidence(
     expected_frontier = sorted(
         str(row["variant_id"])
         for row in evidence
-        if _mapping(row["statistics"], "candidate.statistics").get(
-            "on_frontier"
-        )
-        is True
+        if _mapping(row["statistics"], "candidate.statistics").get("on_frontier") is True
     )
     if frontier != expected_frontier:
         reasons.append("statistics_frontier_identity_mismatch")
@@ -1908,9 +1695,7 @@ def build_measured_pilot_gate_report(
     )
     frontend_run_id = reports["frontend"].get("run_id")
     proof_run_id = reports["proof"].get("run_id")
-    efficiency_analysis = _mapping(
-        reports["efficiency"].get("analysis"), "efficiency.analysis"
-    )
+    efficiency_analysis = _mapping(reports["efficiency"].get("analysis"), "efficiency.analysis")
     efficiency_run_id = efficiency_analysis.get("run_id")
     effective_run_id = frontend_run_id if run_id is None else run_id
     if (
@@ -1920,26 +1705,20 @@ def build_measured_pilot_gate_report(
         or proof_run_id != effective_run_id
         or efficiency_run_id != effective_run_id
     ):
-        raise PilotGateError(
-            "measured reports do not share the requested run identity"
-        )
+        raise PilotGateError("measured reports do not share the requested run identity")
     for kind, source in reports.items():
         if source.get("protocol_sha256") != DEFAULT_PROTOCOL_SHA256:
             raise PilotGateError(f"{kind} protocol identity changed")
     if (
-        reports["frontend"].get("registry_sha256")
-        != VARIANT_REGISTRY_SHA256
-        or reports["proof"].get("registry_sha256")
-        != VARIANT_REGISTRY_SHA256
+        reports["frontend"].get("registry_sha256") != VARIANT_REGISTRY_SHA256
+        or reports["proof"].get("registry_sha256") != VARIANT_REGISTRY_SHA256
     ):
         raise PilotGateError("measured report registry identity changed")
 
     bindings = _normalize_measured_source_bindings(source_bindings, reports)
     frozen_inputs = _normalize_measured_freeze_inputs(freeze_inputs)
     completeness, incomplete_reasons = _measured_completeness(reports)
-    receipt_binding, receipt_reasons = _measured_receipt_binding(
-        reports, effective_run_id
-    )
+    receipt_binding, receipt_reasons = _measured_receipt_binding(reports, effective_run_id)
     completeness["receipt_binding"] = receipt_binding
     incomplete_reasons.extend(receipt_reasons)
     completeness["reasons"] = incomplete_reasons
@@ -1968,9 +1747,7 @@ def build_measured_pilot_gate_report(
 
     source_digest = _sha256_json(bindings)
     selection_inputs = {
-        "statistics_pareto_sha256": _sha256_json(
-            reports["statistics"]["pareto"]
-        ),
+        "statistics_pareto_sha256": _sha256_json(reports["statistics"]["pareto"]),
         "candidate_evidence_sha256": _sha256_json(candidates),
         "source_bindings_sha256": source_digest,
         "selection_splits": ["pilot", "development"],
@@ -1991,12 +1768,8 @@ def build_measured_pilot_gate_report(
             "selected_configurations": [
                 {
                     "variant_id": variant_id,
-                    "configuration_sha256": VARIANT_REGISTRY[
-                        variant_id
-                    ].digest,
-                    "configuration": VARIANT_REGISTRY[
-                        variant_id
-                    ].to_dict(),
+                    "configuration_sha256": VARIANT_REGISTRY[variant_id].digest,
+                    "configuration": VARIANT_REGISTRY[variant_id].to_dict(),
                 }
                 for variant_id in selected
             ],
@@ -2007,11 +1780,7 @@ def build_measured_pilot_gate_report(
         "freeze_sha256": "",
     }
     deep_freeze["freeze_sha256"] = _sha256_json(
-        {
-            key: value
-            for key, value in deep_freeze.items()
-            if key != "freeze_sha256"
-        }
+        {key: value for key, value in deep_freeze.items() if key != "freeze_sha256"}
     )
 
     report: dict[str, object] = {
@@ -2061,9 +1830,7 @@ def build_measured_pilot_gate_report(
             "status": status,
             "structurally_valid": True,
             "efficacy_status": "measured" if completeness["complete"] else "incomplete",
-            "shortlist_status": (
-                "frozen_nonempty" if eligible else "frozen_empty"
-            ),
+            "shortlist_status": ("frozen_nonempty" if eligible else "frozen_empty"),
             "holdout_authorized": eligible,
             "production_promotion_authorized": False,
             "reason": reason,
@@ -2113,9 +1880,7 @@ def validate_measured_pilot_gate_report(
         run_id=str(data.get("run_id")),
     )
     if data != expected:
-        raise PilotGateError(
-            "measured pilot gate differs from recomputed source evidence"
-        )
+        raise PilotGateError("measured pilot gate differs from recomputed source evidence")
     return data
 
 
@@ -2145,9 +1910,7 @@ def validate_pilot_gate_report(
     root = _resolve_repository_root(repository_root)
     expected = _derive_report(root)
     if dict(data) != expected:
-        raise PilotGateError(
-            "pilot gate differs from recomputed allowlisted source evidence"
-        )
+        raise PilotGateError("pilot gate differs from recomputed allowlisted source evidence")
     return dict(data)
 
 
@@ -2164,9 +1927,7 @@ def canonical_pilot_shortlist_json(
 ) -> str:
     """Return canonical JSON only after full source-backed revalidation."""
 
-    value = validate_pilot_gate_report(
-        report, repository_root=repository_root
-    )
+    value = validate_pilot_gate_report(report, repository_root=repository_root)
     return canonical_json(value)
 
 
@@ -2261,9 +2022,7 @@ def write_pilot_gate_report(
                 f"refusing to overwrite existing pilot gate: {destination}"
             ) from exc
         except OSError as exc:
-            raise PilotGateError(
-                f"cannot write pilot gate: {destination}"
-            ) from exc
+            raise PilotGateError(f"cannot write pilot gate: {destination}") from exc
         return destination
 
     if destination.is_symlink():
@@ -2316,9 +2075,7 @@ def pilot_gate_summary(
 ) -> dict[str, object]:
     """Return the stable CLI receipt for a fully revalidated gate."""
 
-    value = validate_pilot_gate_report(
-        report, repository_root=repository_root
-    )
+    value = validate_pilot_gate_report(report, repository_root=repository_root)
     decision = _mapping(value["decision"], "decision")
     normalization = _mapping(value["normalization"], "normalization")
     shortlist = _mapping(value["shortlist"], "shortlist")
@@ -2330,12 +2087,8 @@ def pilot_gate_summary(
         "structurally_valid": decision["structurally_valid"],
         "artifact_sha256": value["artifact_sha256"],
         "outcome_cell_count": normalization["observed_cell_count"],
-        "pilot_case_count": len(
-            _array(normalization["pilot_case_ids"], "pilot_case_ids")
-        ),
-        "variant_count": len(
-            _array(normalization["variant_ids"], "variant_ids")
-        ),
+        "pilot_case_count": len(_array(normalization["pilot_case_ids"], "pilot_case_ids")),
+        "variant_count": len(_array(normalization["variant_ids"], "variant_ids")),
         "efficacy_observation_count": safety["efficacy_observation_count"],
         "kernel_verified_invalid_control_false_positive_count": safety[
             "kernel_verified_invalid_control_false_positive_count"

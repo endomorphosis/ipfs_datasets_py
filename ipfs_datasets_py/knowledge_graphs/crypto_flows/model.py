@@ -228,9 +228,7 @@ def _as_mapping(value: Any, name: str) -> Mapping[str, Any]:
 def _known_fields(value: Mapping[str, Any], allowed: frozenset[str], name: str) -> None:
     unknown = sorted(set(value) - allowed)
     if unknown:
-        raise CryptoFlowValidationError(
-            f"unknown {name} field(s): {', '.join(unknown)}"
-        )
+        raise CryptoFlowValidationError(f"unknown {name} field(s): {', '.join(unknown)}")
 
 
 def _attributes(value: Mapping[str, Any] | None) -> Mapping[str, Any]:
@@ -259,9 +257,7 @@ def _confidence(value: Any, name: str = "confidence") -> str:
         return str(value)
     text = _text(value, name)
     if not _CONFIDENCE_RE.fullmatch(text):
-        raise CryptoFlowValidationError(
-            f"{name} must be a canonical decimal string in [0, 1]"
-        )
+        raise CryptoFlowValidationError(f"{name} must be a canonical decimal string in [0, 1]")
     return text
 
 
@@ -372,9 +368,7 @@ def default_ledger_model(chain: ChainIdentity) -> LedgerModel:
     return LedgerModel.UNKNOWN
 
 
-def assert_ledger_model_chain_correct(
-    chain: ChainIdentity, ledger_model: LedgerModel
-) -> None:
+def assert_ledger_model_chain_correct(chain: ChainIdentity, ledger_model: LedgerModel) -> None:
     """Fail closed when an explicit ledger model contradicts the chain."""
     expected = default_ledger_model(chain)
     if expected is LedgerModel.UNKNOWN:
@@ -447,9 +441,7 @@ class FlowNode:
         )
         if self.chain is not None and self.ledger_model is not LedgerModel.UNKNOWN:
             assert_ledger_model_chain_correct(self.chain, self.ledger_model)
-        object.__setattr__(
-            self, "coordinate", _optional_coordinate(self.coordinate, "coordinate")
-        )
+        object.__setattr__(self, "coordinate", _optional_coordinate(self.coordinate, "coordinate"))
         object.__setattr__(self, "asset", _optional_asset(self.asset, "asset"))
         object.__setattr__(self, "amount", _optional_amount(self.amount, "amount"))
         object.__setattr__(
@@ -465,15 +457,9 @@ class FlowNode:
                 "observed_address plane must not carry entity_ref authority"
             )
         if self.plane is GraphPlane.ASSERTED_ENTITY and self.kind is NodeKind.ADDRESS:
-            raise CryptoFlowValidationError(
-                "asserted_entity plane must not host raw ADDRESS nodes"
-            )
-        object.__setattr__(
-            self, "finality", _enum(FinalityStatus, self.finality, "finality")
-        )
-        object.__setattr__(
-            self, "source", _text(self.source, "source", allow_empty=True)
-        )
+            raise CryptoFlowValidationError("asserted_entity plane must not host raw ADDRESS nodes")
+        object.__setattr__(self, "finality", _enum(FinalityStatus, self.finality, "finality"))
+        object.__setattr__(self, "source", _text(self.source, "source", allow_empty=True))
         object.__setattr__(self, "confidence", _confidence(self.confidence))
         object.__setattr__(self, "validity", _require_validity(self.validity))
         object.__setattr__(
@@ -484,18 +470,12 @@ class FlowNode:
         object.__setattr__(
             self, "retraction", _enum(RetractionStatus, self.retraction, "retraction")
         )
-        object.__setattr__(
-            self, "ambiguity", _enum(AmbiguityKind, self.ambiguity, "ambiguity")
-        )
-        object.__setattr__(
-            self, "provider_ids", _unique_ids(self.provider_ids, "provider_ids")
-        )
+        object.__setattr__(self, "ambiguity", _enum(AmbiguityKind, self.ambiguity, "ambiguity"))
+        object.__setattr__(self, "provider_ids", _unique_ids(self.provider_ids, "provider_ids"))
         object.__setattr__(
             self, "assumption_ids", _unique_ids(self.assumption_ids, "assumption_ids")
         )
-        object.__setattr__(
-            self, "provenance", _optional_provenance(self.provenance, "provenance")
-        )
+        object.__setattr__(self, "provenance", _optional_provenance(self.provenance, "provenance"))
         if self.provenance is not None:
             if self.provenance.authority.kind not in (
                 AuthorityKind.OBSERVATION,
@@ -507,9 +487,7 @@ class FlowNode:
                     "FlowNode provenance authority must not be authorization"
                 )
         object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -521,9 +499,7 @@ class FlowNode:
             "attributes": thaw_json(self.attributes),
             "chain": None if self.chain is None else self.chain.to_dict(),
             "confidence": self.confidence,
-            "coordinate": None
-            if self.coordinate is None
-            else self.coordinate.to_dict(),
+            "coordinate": None if self.coordinate is None else self.coordinate.to_dict(),
             "derivation": self.derivation.value,
             "entity_ref": self.entity_ref,
             "finality": self.finality.value,
@@ -599,9 +575,7 @@ class FlowNode:
             finality=value.get("finality", FinalityStatus.UNKNOWN.value),
             source=value.get("source", ""),
             confidence=value.get("confidence", "1"),
-            validity=ValidityWindow.from_dict(
-                _as_mapping(value.get("validity", {}), "validity")
-            ),
+            validity=ValidityWindow.from_dict(_as_mapping(value.get("validity", {}), "validity")),
             derivation=value.get("derivation", DerivationMethod.UNKNOWN.value),
             retraction=value.get("retraction", RetractionStatus.NOT_RETRACTED.value),
             ambiguity=value.get("ambiguity", AmbiguityKind.NONE.value),
@@ -611,15 +585,11 @@ class FlowNode:
             if prov_raw is None
             else CryptoIRProvenance.from_dict(_as_mapping(prov_raw, "provenance")),
             attributes=value.get("attributes", {}),
-            schema_version=value.get(
-                "schema_version", CRYPTO_FLOWS_NODE_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", CRYPTO_FLOWS_NODE_SCHEMA_VERSION),
         )
 
     def canonical_bytes(self) -> bytes:
-        return canonical_json_bytes(
-            self.to_dict(), collection_schema=FLOW_NODE_COLLECTION_SCHEMA
-        )
+        return canonical_json_bytes(self.to_dict(), collection_schema=FLOW_NODE_COLLECTION_SCHEMA)
 
     @property
     def identity(self) -> CanonicalIdentity:
@@ -691,20 +661,12 @@ class FlowEdge:
         )
         if self.chain is not None and self.ledger_model is not LedgerModel.UNKNOWN:
             assert_ledger_model_chain_correct(self.chain, self.ledger_model)
-        object.__setattr__(
-            self, "coordinate", _optional_coordinate(self.coordinate, "coordinate")
-        )
+        object.__setattr__(self, "coordinate", _optional_coordinate(self.coordinate, "coordinate"))
         object.__setattr__(self, "asset", _optional_asset(self.asset, "asset"))
         object.__setattr__(self, "amount", _optional_amount(self.amount, "amount"))
-        object.__setattr__(
-            self, "direction", _enum(FlowDirection, self.direction, "direction")
-        )
-        object.__setattr__(
-            self, "finality", _enum(FinalityStatus, self.finality, "finality")
-        )
-        object.__setattr__(
-            self, "source", _text(self.source, "source", allow_empty=True)
-        )
+        object.__setattr__(self, "direction", _enum(FlowDirection, self.direction, "direction"))
+        object.__setattr__(self, "finality", _enum(FinalityStatus, self.finality, "finality"))
+        object.__setattr__(self, "source", _text(self.source, "source", allow_empty=True))
         object.__setattr__(self, "confidence", _confidence(self.confidence))
         object.__setattr__(self, "validity", _require_validity(self.validity))
         object.__setattr__(
@@ -715,9 +677,7 @@ class FlowEdge:
         object.__setattr__(
             self, "retraction", _enum(RetractionStatus, self.retraction, "retraction")
         )
-        object.__setattr__(
-            self, "ambiguity", _enum(AmbiguityKind, self.ambiguity, "ambiguity")
-        )
+        object.__setattr__(self, "ambiguity", _enum(AmbiguityKind, self.ambiguity, "ambiguity"))
         # Heuristic / GraphRAG edges cannot claim direct-observation certainty.
         if self.derivation in (
             DerivationMethod.HEURISTIC_CLUSTER,
@@ -735,27 +695,19 @@ class FlowEdge:
                 raise CryptoFlowValidationError(
                     f"derivation {self.derivation.value} must not claim confidence=1"
                 )
-        object.__setattr__(
-            self, "provider_ids", _unique_ids(self.provider_ids, "provider_ids")
-        )
+        object.__setattr__(self, "provider_ids", _unique_ids(self.provider_ids, "provider_ids"))
         object.__setattr__(
             self, "assumption_ids", _unique_ids(self.assumption_ids, "assumption_ids")
         )
-        object.__setattr__(
-            self, "timestamp", _text(self.timestamp, "timestamp", allow_empty=True)
-        )
-        object.__setattr__(
-            self, "provenance", _optional_provenance(self.provenance, "provenance")
-        )
+        object.__setattr__(self, "timestamp", _text(self.timestamp, "timestamp", allow_empty=True))
+        object.__setattr__(self, "provenance", _optional_provenance(self.provenance, "provenance"))
         if self.provenance is not None:
             if self.provenance.authority.kind is AuthorityKind.AUTHORIZATION:
                 raise CryptoFlowValidationError(
                     "FlowEdge provenance must not carry authorization authority"
                 )
         object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -766,9 +718,7 @@ class FlowEdge:
             "attributes": thaw_json(self.attributes),
             "chain": None if self.chain is None else self.chain.to_dict(),
             "confidence": self.confidence,
-            "coordinate": None
-            if self.coordinate is None
-            else self.coordinate.to_dict(),
+            "coordinate": None if self.coordinate is None else self.coordinate.to_dict(),
             "derivation": self.derivation.value,
             "direction": self.direction.value,
             "edge_id": self.edge_id,
@@ -850,9 +800,7 @@ class FlowEdge:
             finality=value.get("finality", FinalityStatus.UNKNOWN.value),
             source=value.get("source", ""),
             confidence=value.get("confidence", "1"),
-            validity=ValidityWindow.from_dict(
-                _as_mapping(value.get("validity", {}), "validity")
-            ),
+            validity=ValidityWindow.from_dict(_as_mapping(value.get("validity", {}), "validity")),
             derivation=value.get("derivation", DerivationMethod.UNKNOWN.value),
             retraction=value.get("retraction", RetractionStatus.NOT_RETRACTED.value),
             ambiguity=value.get("ambiguity", AmbiguityKind.NONE.value),
@@ -863,15 +811,11 @@ class FlowEdge:
             if prov_raw is None
             else CryptoIRProvenance.from_dict(_as_mapping(prov_raw, "provenance")),
             attributes=value.get("attributes", {}),
-            schema_version=value.get(
-                "schema_version", CRYPTO_FLOWS_EDGE_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", CRYPTO_FLOWS_EDGE_SCHEMA_VERSION),
         )
 
     def canonical_bytes(self) -> bytes:
-        return canonical_json_bytes(
-            self.to_dict(), collection_schema=FLOW_EDGE_COLLECTION_SCHEMA
-        )
+        return canonical_json_bytes(self.to_dict(), collection_schema=FLOW_EDGE_COLLECTION_SCHEMA)
 
     @property
     def identity(self) -> CanonicalIdentity:
@@ -921,9 +865,7 @@ class CryptoFlowGraph:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "graph_id", _identifier(self.graph_id, "graph_id"))
-        nodes = _sequence_of(
-            self.nodes, FlowNode, "nodes", from_dict=FlowNode.from_dict
-        )
+        nodes = _sequence_of(self.nodes, FlowNode, "nodes", from_dict=FlowNode.from_dict)
         # Deterministic node order by node_id for stable iteration (set-like
         # identity still applies for content addressing).
         nodes = tuple(sorted(nodes, key=lambda n: n.node_id))
@@ -932,9 +874,7 @@ class CryptoFlowGraph:
         if len(node_ids) != len(nodes):
             raise CryptoFlowValidationError("node_id values must be unique")
 
-        edges = _sequence_of(
-            self.edges, FlowEdge, "edges", from_dict=FlowEdge.from_dict
-        )
+        edges = _sequence_of(self.edges, FlowEdge, "edges", from_dict=FlowEdge.from_dict)
         edges = tuple(sorted(edges, key=lambda e: e.edge_id))
         object.__setattr__(self, "edges", edges)
         edge_ids = {e.edge_id for e in edges}
@@ -954,9 +894,7 @@ class CryptoFlowGraph:
             src = node_by_id[edge.source_node_id]
             tgt = node_by_id[edge.target_node_id]
             if edge.plane is not src.plane or edge.plane is not tgt.plane:
-                raise CryptoFlowValidationError(
-                    f"edge {edge.edge_id} must not cross graph planes"
-                )
+                raise CryptoFlowValidationError(f"edge {edge.edge_id} must not cross graph planes")
 
         receipts = _sequence_of(
             self.completeness_receipts,
@@ -966,15 +904,11 @@ class CryptoFlowGraph:
         )
         receipts = tuple(sorted(receipts, key=lambda r: r.receipt_id))
         object.__setattr__(self, "completeness_receipts", receipts)
-        object.__setattr__(
-            self, "provider_ids", _unique_ids(self.provider_ids, "provider_ids")
-        )
+        object.__setattr__(self, "provider_ids", _unique_ids(self.provider_ids, "provider_ids"))
         object.__setattr__(self, "asset_ids", _unique_ids(self.asset_ids, "asset_ids"))
         object.__setattr__(self, "chain_ids", _unique_ids(self.chain_ids, "chain_ids"))
         object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
 
     def node_map(self) -> Mapping[str, FlowNode]:
         return {n.node_id: n for n in self.nodes}
@@ -1004,9 +938,7 @@ class CryptoFlowGraph:
             "asset_ids": list(self.asset_ids),
             "attributes": thaw_json(self.attributes),
             "chain_ids": list(self.chain_ids),
-            "completeness_receipts": [
-                r.to_dict() for r in self.completeness_receipts
-            ],
+            "completeness_receipts": [r.to_dict() for r in self.completeness_receipts],
             "edges": [e.to_dict() for e in self.edges],
             "graph_id": self.graph_id,
             "nodes": [n.to_dict() for n in self.nodes],
@@ -1036,12 +968,8 @@ class CryptoFlowGraph:
         )
         return cls(
             graph_id=value.get("graph_id", ""),
-            nodes=tuple(
-                FlowNode.from_dict(item) for item in value.get("nodes", ())
-            ),
-            edges=tuple(
-                FlowEdge.from_dict(item) for item in value.get("edges", ())
-            ),
+            nodes=tuple(FlowNode.from_dict(item) for item in value.get("nodes", ())),
+            edges=tuple(FlowEdge.from_dict(item) for item in value.get("edges", ())),
             completeness_receipts=tuple(
                 CompletenessReceipt.from_dict(item)
                 for item in value.get("completeness_receipts", ())
@@ -1101,9 +1029,7 @@ class GraphSnapshot:
     schema_version: str = CRYPTO_FLOWS_SNAPSHOT_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "snapshot_id", _identifier(self.snapshot_id, "snapshot_id")
-        )
+        object.__setattr__(self, "snapshot_id", _identifier(self.snapshot_id, "snapshot_id"))
         if not isinstance(self.graph, CryptoFlowGraph):
             object.__setattr__(
                 self,
@@ -1161,9 +1087,7 @@ class GraphSnapshot:
             self, "created_at", _text(self.created_at, "created_at", allow_empty=True)
         )
         object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
 
     @property
     def graph_digest(self) -> str:
@@ -1177,9 +1101,7 @@ class GraphSnapshot:
         return {
             "attributes": thaw_json(self.attributes),
             "completeness": self.completeness.value,
-            "completeness_receipts": [
-                r.to_dict() for r in self.completeness_receipts
-            ],
+            "completeness_receipts": [r.to_dict() for r in self.completeness_receipts],
             "covered_assets": list(self.covered_assets),
             "covered_chains": list(self.covered_chains),
             "covered_providers": list(self.covered_providers),
@@ -1231,18 +1153,14 @@ class GraphSnapshot:
             covered_assets=tuple(value.get("covered_assets", ())),
             covered_chains=tuple(value.get("covered_chains", ())),
             covered_ranges=tuple(
-                LedgerCoordinate.from_dict(item)
-                for item in value.get("covered_ranges", ())
+                LedgerCoordinate.from_dict(item) for item in value.get("covered_ranges", ())
             ),
             missing_ranges=tuple(
-                LedgerCoordinate.from_dict(item)
-                for item in value.get("missing_ranges", ())
+                LedgerCoordinate.from_dict(item) for item in value.get("missing_ranges", ())
             ),
             created_at=value.get("created_at", ""),
             attributes=value.get("attributes", {}),
-            schema_version=value.get(
-                "schema_version", CRYPTO_FLOWS_SNAPSHOT_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", CRYPTO_FLOWS_SNAPSHOT_SCHEMA_VERSION),
         )
 
     def canonical_bytes(self) -> bytes:
@@ -1251,9 +1169,7 @@ class GraphSnapshot:
         # circular dependency; graph content is already embedded.
         payload.pop("graph_digest", None)
         payload.pop("graph_cid", None)
-        return canonical_json_bytes(
-            payload, collection_schema=GRAPH_SNAPSHOT_COLLECTION_SCHEMA
-        )
+        return canonical_json_bytes(payload, collection_schema=GRAPH_SNAPSHOT_COLLECTION_SCHEMA)
 
     @property
     def identity(self) -> CanonicalIdentity:

@@ -28,7 +28,9 @@ class HuggingFaceRepositoryError(ValueError):
 
 def _text(value: Any, *, label: str) -> str:
     if not isinstance(value, str) or not value or value.strip() != value:
-        raise HuggingFaceRepositoryError(f"{label} must be a non-empty string without surrounding whitespace")
+        raise HuggingFaceRepositoryError(
+            f"{label} must be a non-empty string without surrounding whitespace"
+        )
     if "\x00" in value:
         raise HuggingFaceRepositoryError(f"{label} must not contain NUL")
     return value
@@ -37,7 +39,9 @@ def _text(value: Any, *, label: str) -> str:
 def _commit_sha(value: Any, *, label: str = "commit_sha") -> str:
     sha = _text(value, label=label)
     if not _COMMIT_SHA_RE.fullmatch(sha):
-        raise HuggingFaceRepositoryError(f"{label} must be a 40-64 character lowercase hexadecimal commit SHA")
+        raise HuggingFaceRepositoryError(
+            f"{label} must be a 40-64 character lowercase hexadecimal commit SHA"
+        )
     return sha
 
 
@@ -59,7 +63,9 @@ class HuggingFaceRepositoryRevision:
         if repository_type not in _REPO_TYPES:
             raise HuggingFaceRepositoryError("repository_type must be dataset, model, or space")
         if self.schema_version != HUGGINGFACE_REPOSITORY_REVISION_SCHEMA_VERSION:
-            raise HuggingFaceRepositoryError("unsupported Hugging Face repository revision schema_version")
+            raise HuggingFaceRepositoryError(
+                "unsupported Hugging Face repository revision schema_version"
+            )
         object.__setattr__(self, "repository_id", repository_id)
         object.__setattr__(self, "requested_revision", requested)
         object.__setattr__(self, "commit_sha", commit_sha)
@@ -146,7 +152,9 @@ class HuggingFaceRepository:
         if not callable(repo_info):
             repo_info = self.client if callable(self.client) else None
         if not callable(repo_info):
-            raise HuggingFaceRepositoryError("repository client must be callable or provide repo_info")
+            raise HuggingFaceRepositoryError(
+                "repository client must be callable or provide repo_info"
+            )
         try:
             info = repo_info(
                 repo_id=self.repository_id,
@@ -154,7 +162,9 @@ class HuggingFaceRepository:
                 repo_type=self.repository_type,
             )
         except Exception as exc:
-            raise HuggingFaceRepositoryError(f"failed to resolve repository revision: {exc}") from exc
+            raise HuggingFaceRepositoryError(
+                f"failed to resolve repository revision: {exc}"
+            ) from exc
         commit = info.get("sha") if isinstance(info, Mapping) else getattr(info, "sha", None)
         return HuggingFaceRepositoryRevision(
             repository_id=self.repository_id,
@@ -176,7 +186,9 @@ class HuggingFaceRepository:
 
         resolved = self.resolve_revision(revision)
         if self.repository_type != "dataset":
-            raise HuggingFaceRepositoryError("the compatibility snapshot/cache currently supports datasets")
+            raise HuggingFaceRepositoryError(
+                "the compatibility snapshot/cache currently supports datasets"
+            )
         return HuggingFaceSnapshot(
             dataset_id=self.repository_id,
             dataset_revision=resolved.commit_sha,
@@ -221,7 +233,9 @@ class HuggingFaceRepositoryFetcher:
                 raise OSError("download did not return a file")
             shutil.copyfile(source, destination)
         except Exception as exc:
-            raise HuggingFaceSnapshotFetchError(f"failed to fetch {snapshot.logical_source}: {exc}") from exc
+            raise HuggingFaceSnapshotFetchError(
+                f"failed to fetch {snapshot.logical_source}: {exc}"
+            ) from exc
         return destination
 
 

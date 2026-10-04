@@ -25,17 +25,13 @@ def parse_drops(value: Any, *, field: str = "amount") -> int:
     if isinstance(value, bool):
         raise NormalizationError(f"{field} must not be a boolean")
     if isinstance(value, float):
-        raise InvalidRequestError(
-            f"{field} must not be a binary float; use integer drops"
-        )
+        raise InvalidRequestError(f"{field} must not be a binary float; use integer drops")
     if isinstance(value, int):
         drops = value
     elif isinstance(value, str):
         text = value.strip()
         if not _CANONICAL_INT.fullmatch(text):
-            raise NormalizationError(
-                f"{field} must be a canonical decimal integer string of drops"
-            )
+            raise NormalizationError(f"{field} must be a canonical decimal integer string of drops")
         drops = int(text, 10)
     else:
         raise NormalizationError(f"{field} must be an int or decimal integer string")
@@ -68,9 +64,7 @@ def parse_issued_value(
     if isinstance(value, bool):
         raise NormalizationError(f"{field} must not be a boolean")
     if isinstance(value, float):
-        raise InvalidRequestError(
-            f"{field} must not be a binary float; use a decimal string"
-        )
+        raise InvalidRequestError(f"{field} must not be a binary float; use a decimal string")
     if isinstance(value, int):
         if value < 0:
             raise NormalizationError(f"{field} must not be negative")
@@ -113,9 +107,7 @@ def exact_issued(
 ) -> ExactAmount:
     """Return an :class:`ExactAmount` for an issued currency value string."""
 
-    base, decimals = parse_issued_value(
-        value, field=field, max_decimals=max_decimals
-    )
+    base, decimals = parse_issued_value(value, field=field, max_decimals=max_decimals)
     return ExactAmount.from_int(base, decimals=decimals)
 
 

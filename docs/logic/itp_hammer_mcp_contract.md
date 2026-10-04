@@ -358,16 +358,22 @@ Example -- `forall x. p(x) => p(x)`:
 ```python
 import asyncio
 from ipfs_datasets_py.mcp_server.tools.logic_hammer import (
-    hammer_inspect, hammer_translate, hammer_reconstruct,
+    hammer_inspect,
+    hammer_translate,
+    hammer_reconstruct,
 )
 
 correlation_id = "trace-42"
 source = "theorem demo : 1 = 1 := by sorry"
 
+
 async def main():
     inspected = await hammer_inspect(
-        itp="lean", theorem_id="demo", native_source=source,
-        confirm_native_execution=True, correlation_id=correlation_id,
+        itp="lean",
+        theorem_id="demo",
+        native_source=source,
+        confirm_native_execution=True,
+        correlation_id=correlation_id,
     )
     assert inspected["status"] == "ok"
 
@@ -375,19 +381,28 @@ async def main():
 
     reconstructed = await hammer_reconstruct(
         request={
-            "request_id": "req-demo", "itp": "lean", "theorem_id": "demo",
+            "request_id": "req-demo",
+            "itp": "lean",
+            "theorem_id": "demo",
             "goal_statement": inspected["data"]["goal_snapshot"]["goal_text"],
-            "corpus_revision": "sha256:...", "policy": {"allowed_solvers": []},
+            "corpus_revision": "sha256:...",
+            "policy": {"allowed_solvers": []},
         },
         candidate={
-            "candidate_id": "req-demo:candidate", "request_id": "req-demo",
-            "solver_attempt_id": "native-automation-fallback", "premise_ids": [],
+            "candidate_id": "req-demo:candidate",
+            "request_id": "req-demo",
+            "solver_attempt_id": "native-automation-fallback",
+            "premise_ids": [],
         },
-        itp="lean", theorem_id="demo", native_source=source,
-        confirm_native_execution=True, correlation_id=correlation_id,
+        itp="lean",
+        theorem_id="demo",
+        native_source=source,
+        confirm_native_execution=True,
+        correlation_id=correlation_id,
     )
     assert reconstructed["data"]["status"] == "verified"
     assert reconstructed["data"]["reconstruction"]["kernel_accepted"] is True
+
 
 asyncio.run(main())
 ```

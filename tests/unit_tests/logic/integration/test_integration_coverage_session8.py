@@ -30,10 +30,13 @@ import anyio
 # Shared helpers
 # ---------------------------------------------------------------------------
 
+
 def _obligation(prop="pay", agent="Contractor"):
     from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-        create_obligation, LegalAgent,
+        create_obligation,
+        LegalAgent,
     )
+
     a = LegalAgent(agent, agent, "organization")
     return create_obligation(prop, a)
 
@@ -51,11 +54,13 @@ def _run_async(coro):
 # 1. LogicVerifierBackendsMixin — 44% -> ~90%
 # ---------------------------------------------------------------------------
 
+
 class TestLogicVerifierBackendsMixin:
     """GIVEN the LogicVerifierBackendsMixin methods directly accessible via LogicVerifier."""
 
     def _make_verifier(self, use_symbolic=False, fallback=True):
         from ipfs_datasets_py.logic.integration.reasoning.logic_verification import LogicVerifier
+
         v = LogicVerifier(use_symbolic_ai=use_symbolic, fallback_enabled=fallback)
         # Force use_symbolic_ai so we can exercise symbolic paths with mock Symbol
         v.use_symbolic_ai = use_symbolic
@@ -130,7 +135,7 @@ class TestLogicVerifierBackendsMixin:
         verifier = self._make_verifier(use_symbolic=True, fallback=True)
         with patch(
             "ipfs_datasets_py.logic.integration.reasoning._logic_verifier_backends_mixin.Symbol",
-            side_effect=RuntimeError("mock error")
+            side_effect=RuntimeError("mock error"),
         ):
             result = verifier._check_consistency_symbolic(["P"])
         assert result.method_used == "pattern_matching"
@@ -203,7 +208,7 @@ class TestLogicVerifierBackendsMixin:
         verifier = self._make_verifier(use_symbolic=True, fallback=True)
         with patch(
             "ipfs_datasets_py.logic.integration.reasoning._logic_verifier_backends_mixin.Symbol",
-            side_effect=RuntimeError("err")
+            side_effect=RuntimeError("err"),
         ):
             result = verifier._check_entailment_symbolic(["P → Q", "P"], "Q")
         assert isinstance(result.entails, bool)
@@ -247,7 +252,7 @@ class TestLogicVerifierBackendsMixin:
         verifier = self._make_verifier(use_symbolic=True, fallback=True)
         with patch(
             "ipfs_datasets_py.logic.integration.reasoning._logic_verifier_backends_mixin.Symbol",
-            side_effect=RuntimeError("err")
+            side_effect=RuntimeError("err"),
         ):
             result = verifier._generate_proof_symbolic(["P → Q", "P"], "Q")
         assert result.method_used in ("fallback_modus_ponens", "fallback_failed")
@@ -273,15 +278,18 @@ class TestLogicVerifierBackendsMixin:
 # 2. proof_execution_engine.py — 58% -> ~78%
 # ---------------------------------------------------------------------------
 
+
 class TestProofExecutionEngineSession8:
     """GIVEN ProofExecutionEngine with no real provers available."""
 
     def _make_engine(self):
         import os
+
         os.environ["IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS"] = "0"
         from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine import (
             ProofExecutionEngine,
         )
+
         e = ProofExecutionEngine(
             enable_rate_limiting=False,
             enable_validation=False,
@@ -296,6 +304,7 @@ class TestProofExecutionEngineSession8:
         from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
             ProofStatus,
         )
+
         engine = self._make_engine()
         formula = _obligation()
         result = engine.prove_deontic_formula(formula, prover="z3")
@@ -306,6 +315,7 @@ class TestProofExecutionEngineSession8:
         from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
             ProofStatus,
         )
+
         engine = self._make_engine()
         engine.available_provers["mythicprover"] = False
         formula = _obligation()
@@ -318,6 +328,7 @@ class TestProofExecutionEngineSession8:
         from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
             ProofStatus,
         )
+
         engine = self._make_engine()
         rule_set = DeonticRuleSet(name="test", formulas=[_obligation()])
         result = engine.prove_consistency(rule_set, prover="lean")
@@ -329,6 +340,7 @@ class TestProofExecutionEngineSession8:
         from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
             ProofStatus,
         )
+
         engine = self._make_engine()
         rule_set = DeonticRuleSet(name="test", formulas=[_obligation()])
         result = engine.prove_consistency(rule_set, prover="z3")
@@ -340,6 +352,7 @@ class TestProofExecutionEngineSession8:
         from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
             ProofStatus,
         )
+
         engine = self._make_engine()
         rule_set = DeonticRuleSet(name="test", formulas=[_obligation()])
         result = engine.prove_consistency(rule_set, prover="cvc5")
@@ -348,6 +361,7 @@ class TestProofExecutionEngineSession8:
     def test_prove_rule_set_returns_list(self):
         """GIVEN rule set with two formulas, WHEN prove, THEN two results returned."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticRuleSet
+
         engine = self._make_engine()
         rule_set = DeonticRuleSet(name="t", formulas=[_obligation("pay"), _obligation("file")])
         results = engine.prove_rule_set(rule_set, prover="z3")
@@ -358,6 +372,7 @@ class TestProofExecutionEngineSession8:
         from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
             ProofStatus,
         )
+
         engine = self._make_engine()
         formula = _obligation()
         results = engine.prove_multiple_provers(formula, provers=["z3", "cvc5"])
@@ -382,6 +397,7 @@ class TestProofExecutionEngineSession8:
     def test_maybe_auto_install_disabled(self):
         """GIVEN auto-install env var=0, WHEN _maybe_auto_install_provers, THEN no subprocess."""
         import os
+
         os.environ["IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS"] = "0"
         engine = self._make_engine()
         # Should return immediately without trying to spawn subprocess
@@ -423,6 +439,7 @@ class TestProofExecutionEngineSession8:
         from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
             ProofStatus,
         )
+
         engine = self._make_engine()
         formula = _obligation("pay_taxes")
         formula_str = formula.to_fol_string() if hasattr(formula, "to_fol_string") else str(formula)
@@ -447,6 +464,7 @@ class TestProofExecutionEngineSession8:
 # 3. deontological_reasoning.py — 61% -> ~83%
 # ---------------------------------------------------------------------------
 
+
 class TestDeontologicalReasoningEngineSession8:
     """GIVEN DeontologicalReasoningEngine with real text corpus."""
 
@@ -454,6 +472,7 @@ class TestDeontologicalReasoningEngineSession8:
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning import (
             DeontologicalReasoningEngine,
         )
+
         return DeontologicalReasoningEngine()
 
     # DeonticExtractor -------------------------------------------------------
@@ -466,6 +485,7 @@ class TestDeontologicalReasoningEngineSession8:
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
             DeonticModality,
         )
+
         extractor = DeonticExtractor()
         stmts = extractor.extract_statements("Citizens must pay taxes.", "doc1")
         # May or may not match depending on regex — just check no exception raised
@@ -476,6 +496,7 @@ class TestDeontologicalReasoningEngineSession8:
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning import (
             DeonticExtractor,
         )
+
         extractor = DeonticExtractor()
         text = "If a citizen earns income, the citizen must file a tax return."
         stmts = extractor.extract_statements(text, "doc_cond")
@@ -486,6 +507,7 @@ class TestDeontologicalReasoningEngineSession8:
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning import (
             DeonticExtractor,
         )
+
         extractor = DeonticExtractor()
         text = "The contractor must deliver reports unless delayed by force majeure."
         stmts = extractor.extract_statements(text, "doc_exc")
@@ -499,8 +521,11 @@ class TestDeontologicalReasoningEngineSession8:
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
             DeonticModality,
         )
+
         extractor = DeonticExtractor()
-        conf_should = extractor._calculate_confidence("should pay taxes", DeonticModality.OBLIGATION)
+        conf_should = extractor._calculate_confidence(
+            "should pay taxes", DeonticModality.OBLIGATION
+        )
         conf_must = extractor._calculate_confidence("must pay taxes", DeonticModality.OBLIGATION)
         assert conf_should < conf_must
 
@@ -509,6 +534,7 @@ class TestDeontologicalReasoningEngineSession8:
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning import (
             DeonticExtractor,
         )
+
         extractor = DeonticExtractor()
         ctx = extractor._extract_context("Hello world foo bar baz", 6, 11)
         assert "surrounding_text" in ctx
@@ -519,6 +545,7 @@ class TestDeontologicalReasoningEngineSession8:
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning import (
             DeonticExtractor,
         )
+
         extractor = DeonticExtractor()
         assert extractor._is_valid_entity_action("it", "pay taxes") is False
 
@@ -527,6 +554,7 @@ class TestDeontologicalReasoningEngineSession8:
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning import (
             DeonticExtractor,
         )
+
         extractor = DeonticExtractor()
         assert extractor._is_valid_entity_action("citizen", "x") is False
 
@@ -535,6 +563,7 @@ class TestDeontologicalReasoningEngineSession8:
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning import (
             DeonticExtractor,
         )
+
         extractor = DeonticExtractor()
         assert extractor._is_valid_entity_action("citizen", "pay taxes") is True
 
@@ -571,8 +600,10 @@ class TestDeontologicalReasoningEngineSession8:
     def test_count_by_modality(self):
         """GIVEN list of statements, WHEN _count_by_modality, THEN counts by value."""
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
-            DeonticStatement, DeonticModality,
+            DeonticStatement,
+            DeonticModality,
         )
+
         engine = self._make_engine()
         stmts = [
             DeonticStatement("s1", "entity", "action", DeonticModality.OBLIGATION, "doc"),
@@ -586,8 +617,10 @@ class TestDeontologicalReasoningEngineSession8:
     def test_count_by_entity(self):
         """GIVEN statements with varied entities, WHEN _count_by_entity, THEN entity counts."""
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
-            DeonticStatement, DeonticModality,
+            DeonticStatement,
+            DeonticModality,
         )
+
         engine = self._make_engine()
         stmts = [
             DeonticStatement("s1", "Alice", "pay", DeonticModality.OBLIGATION, "doc"),
@@ -601,8 +634,10 @@ class TestDeontologicalReasoningEngineSession8:
     def test_query_deontic_statements_by_entity(self):
         """GIVEN populated engine, WHEN query by entity, THEN filters correctly."""
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
-            DeonticStatement, DeonticModality,
+            DeonticStatement,
+            DeonticModality,
         )
+
         engine = self._make_engine()
         stmt = DeonticStatement("s1", "citizen", "pay taxes", DeonticModality.OBLIGATION, "doc")
         engine.statement_database["s1"] = stmt
@@ -612,8 +647,10 @@ class TestDeontologicalReasoningEngineSession8:
     def test_query_deontic_statements_by_modality(self):
         """GIVEN populated engine, WHEN query by modality, THEN filters correctly."""
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
-            DeonticStatement, DeonticModality,
+            DeonticStatement,
+            DeonticModality,
         )
+
         engine = self._make_engine()
         s1 = DeonticStatement("s1", "citizen", "pay", DeonticModality.OBLIGATION, "doc")
         s2 = DeonticStatement("s2", "citizen", "vote", DeonticModality.PERMISSION, "doc")
@@ -625,8 +662,10 @@ class TestDeontologicalReasoningEngineSession8:
     def test_query_deontic_statements_by_keywords(self):
         """GIVEN populated engine, WHEN query by action keywords, THEN filters correctly."""
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
-            DeonticStatement, DeonticModality,
+            DeonticStatement,
+            DeonticModality,
         )
+
         engine = self._make_engine()
         s1 = DeonticStatement("s1", "citizen", "pay taxes", DeonticModality.OBLIGATION, "doc")
         s2 = DeonticStatement("s2", "citizen", "vote", DeonticModality.PERMISSION, "doc")
@@ -643,13 +682,31 @@ class TestDeontologicalReasoningEngineSession8:
     def test_query_conflicts_by_severity(self):
         """GIVEN conflicts with different severity, WHEN filter by min_severity=high, THEN only high."""
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
-            DeonticStatement, DeonticModality, DeonticConflict, ConflictType,
+            DeonticStatement,
+            DeonticModality,
+            DeonticConflict,
+            ConflictType,
         )
+
         engine = self._make_engine()
         s1 = DeonticStatement("s1", "e", "a1", DeonticModality.OBLIGATION, "d1")
         s2 = DeonticStatement("s2", "e", "a2", DeonticModality.PROHIBITION, "d1")
-        high = DeonticConflict(statement1=s1, statement2=s2, conflict_type=ConflictType.OBLIGATION_PROHIBITION, severity="high", explanation="conflict", id="c1")
-        low = DeonticConflict(statement1=s1, statement2=s2, conflict_type=ConflictType.OBLIGATION_PROHIBITION, severity="low", explanation="conflict", id="c2")
+        high = DeonticConflict(
+            statement1=s1,
+            statement2=s2,
+            conflict_type=ConflictType.OBLIGATION_PROHIBITION,
+            severity="high",
+            explanation="conflict",
+            id="c1",
+        )
+        low = DeonticConflict(
+            statement1=s1,
+            statement2=s2,
+            conflict_type=ConflictType.OBLIGATION_PROHIBITION,
+            severity="low",
+            explanation="conflict",
+            id="c2",
+        )
         engine.conflict_database = {"c1": high, "c2": low}
         results = anyio.run(engine.query_conflicts, None, None, "high")
         assert all(c.severity == "high" for c in results)
@@ -657,13 +714,31 @@ class TestDeontologicalReasoningEngineSession8:
     def test_query_conflicts_by_type(self):
         """GIVEN conflicts of different types, WHEN filter by type, THEN only matching type."""
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
-            DeonticStatement, DeonticModality, DeonticConflict, ConflictType,
+            DeonticStatement,
+            DeonticModality,
+            DeonticConflict,
+            ConflictType,
         )
+
         engine = self._make_engine()
         s1 = DeonticStatement("s1", "e", "a1", DeonticModality.OBLIGATION, "d1")
         s2 = DeonticStatement("s2", "e", "a2", DeonticModality.PROHIBITION, "d2")
-        c1 = DeonticConflict(statement1=s1, statement2=s2, conflict_type=ConflictType.JURISDICTIONAL, severity="low", explanation="j", id="c1")
-        c2 = DeonticConflict(statement1=s1, statement2=s2, conflict_type=ConflictType.OBLIGATION_PROHIBITION, severity="high", explanation="op", id="c2")
+        c1 = DeonticConflict(
+            statement1=s1,
+            statement2=s2,
+            conflict_type=ConflictType.JURISDICTIONAL,
+            severity="low",
+            explanation="j",
+            id="c1",
+        )
+        c2 = DeonticConflict(
+            statement1=s1,
+            statement2=s2,
+            conflict_type=ConflictType.OBLIGATION_PROHIBITION,
+            severity="high",
+            explanation="op",
+            id="c2",
+        )
         engine.conflict_database = {"c1": c1, "c2": c2}
         results = anyio.run(engine.query_conflicts, None, ConflictType.JURISDICTIONAL)
         assert len(results) == 1
@@ -674,13 +749,16 @@ class TestDeontologicalReasoningEngineSession8:
 # 4. _deontic_conflict_mixin.py — 62% -> ~88%
 # ---------------------------------------------------------------------------
 
+
 class TestDeonticConflictMixinSession8:
     """GIVEN ConflictDetector and DeonticConflictMixin methods."""
 
     def _make_stmt(self, sid, entity, action, modality, source_doc="doc1"):
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
-            DeonticStatement, DeonticModality,
+            DeonticStatement,
+            DeonticModality,
         )
+
         return DeonticStatement(sid, entity, action, modality, source_doc)
 
     def test_check_statement_pair_permission_prohibition(self):
@@ -689,8 +767,10 @@ class TestDeonticConflictMixinSession8:
             ConflictDetector,
         )
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
-            DeonticModality, ConflictType,
+            DeonticModality,
+            ConflictType,
         )
+
         detector = ConflictDetector()
         s1 = self._make_stmt("s1", "citizen", "vote in election", DeonticModality.PERMISSION)
         s2 = self._make_stmt("s2", "citizen", "vote in election", DeonticModality.PROHIBITION)
@@ -705,8 +785,10 @@ class TestDeonticConflictMixinSession8:
             ConflictDetector,
         )
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
-            DeonticModality, ConflictType,
+            DeonticModality,
+            ConflictType,
         )
+
         detector = ConflictDetector()
         s1 = self._make_stmt("s1", "citizen", "pay taxes obligation", DeonticModality.OBLIGATION)
         s2 = self._make_stmt("s2", "citizen", "pay taxes prohibition", DeonticModality.PROHIBITION)
@@ -722,6 +804,7 @@ class TestDeonticConflictMixinSession8:
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
             DeonticModality,
         )
+
         detector = ConflictDetector()
         s1 = self._make_stmt("s1", "citizen", "vote", DeonticModality.OBLIGATION)
         s2 = self._make_stmt("s2", "citizen", "drive", DeonticModality.PROHIBITION)
@@ -734,19 +817,28 @@ class TestDeonticConflictMixinSession8:
             ConflictDetector,
         )
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
-            DeonticStatement, DeonticModality, ConflictType,
+            DeonticStatement,
+            DeonticModality,
+            ConflictType,
         )
+
         detector = ConflictDetector()
         # Use dataclass directly with conditions field
         s1 = DeonticStatement(
-            "s1", "citizen", "pay income taxes taxes taxes",
-            DeonticModality.CONDITIONAL, "doc1",
-            conditions=["if annual income exceeds threshold"]
+            "s1",
+            "citizen",
+            "pay income taxes taxes taxes",
+            DeonticModality.CONDITIONAL,
+            "doc1",
+            conditions=["if annual income exceeds threshold"],
         )
         s2 = DeonticStatement(
-            "s2", "citizen", "pay income taxes taxes taxes",
-            DeonticModality.CONDITIONAL, "doc1",
-            conditions=["if annual income exceeds threshold"]
+            "s2",
+            "citizen",
+            "pay income taxes taxes taxes",
+            DeonticModality.CONDITIONAL,
+            "doc1",
+            conditions=["if annual income exceeds threshold"],
         )
         conflict = detector._check_statement_pair(s1, s2)
         if conflict:
@@ -758,14 +850,27 @@ class TestDeonticConflictMixinSession8:
             ConflictDetector,
         )
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
-            DeonticModality, ConflictType,
+            DeonticModality,
+            ConflictType,
         )
+
         detector = ConflictDetector()
-        s1 = self._make_stmt("s1", "citizen", "file annual return taxes", DeonticModality.OBLIGATION, "federal_law")
-        s2 = self._make_stmt("s2", "citizen", "file annual return taxes", DeonticModality.PROHIBITION, "local_ordinance")
+        s1 = self._make_stmt(
+            "s1", "citizen", "file annual return taxes", DeonticModality.OBLIGATION, "federal_law"
+        )
+        s2 = self._make_stmt(
+            "s2",
+            "citizen",
+            "file annual return taxes",
+            DeonticModality.PROHIBITION,
+            "local_ordinance",
+        )
         conflict = detector._check_statement_pair(s1, s2)
         if conflict:
-            assert conflict.conflict_type in (ConflictType.JURISDICTIONAL, ConflictType.OBLIGATION_PROHIBITION)
+            assert conflict.conflict_type in (
+                ConflictType.JURISDICTIONAL,
+                ConflictType.OBLIGATION_PROHIBITION,
+            )
 
     def test_generate_resolution_suggestions_jurisdictional(self):
         """GIVEN JURISDICTIONAL conflict, WHEN generate suggestions, THEN jurisdiction advice included."""
@@ -773,8 +878,10 @@ class TestDeonticConflictMixinSession8:
             ConflictDetector,
         )
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
-            DeonticModality, ConflictType,
+            DeonticModality,
+            ConflictType,
         )
+
         detector = ConflictDetector()
         s1 = self._make_stmt("s1", "e", "pay", DeonticModality.OBLIGATION)
         s2 = self._make_stmt("s2", "e", "pay", DeonticModality.OBLIGATION)
@@ -787,12 +894,16 @@ class TestDeonticConflictMixinSession8:
             ConflictDetector,
         )
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
-            DeonticModality, ConflictType,
+            DeonticModality,
+            ConflictType,
         )
+
         detector = ConflictDetector()
         s1 = self._make_stmt("s1", "e", "pay", DeonticModality.OBLIGATION)
         s2 = self._make_stmt("s2", "e", "pay", DeonticModality.PROHIBITION)
-        suggestions = detector._generate_resolution_suggestions(s1, s2, ConflictType.OBLIGATION_PROHIBITION)
+        suggestions = detector._generate_resolution_suggestions(
+            s1, s2, ConflictType.OBLIGATION_PROHIBITION
+        )
         assert len(suggestions) > 0
 
     def test_generate_resolution_suggestions_conditional(self):
@@ -801,12 +912,16 @@ class TestDeonticConflictMixinSession8:
             ConflictDetector,
         )
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
-            DeonticModality, ConflictType,
+            DeonticModality,
+            ConflictType,
         )
+
         detector = ConflictDetector()
         s1 = self._make_stmt("s1", "e", "pay", DeonticModality.CONDITIONAL)
         s2 = self._make_stmt("s2", "e", "pay", DeonticModality.CONDITIONAL)
-        suggestions = detector._generate_resolution_suggestions(s1, s2, ConflictType.CONDITIONAL_CONFLICT)
+        suggestions = detector._generate_resolution_suggestions(
+            s1, s2, ConflictType.CONDITIONAL_CONFLICT
+        )
         assert any("condition" in s.lower() for s in suggestions)
 
     def test_analyze_conflicts_by_type_and_severity(self):
@@ -815,14 +930,32 @@ class TestDeonticConflictMixinSession8:
             DeonticConflictMixin,
         )
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
-            DeonticStatement, DeonticModality, DeonticConflict, ConflictType,
+            DeonticStatement,
+            DeonticModality,
+            DeonticConflict,
+            ConflictType,
         )
+
         mixin = DeonticConflictMixin()
         s1 = DeonticStatement("s1", "e", "a1", DeonticModality.OBLIGATION, "d1")
         s2 = DeonticStatement("s2", "e", "a2", DeonticModality.PROHIBITION, "d1")
         conflicts = [
-            DeonticConflict(statement1=s1, statement2=s2, conflict_type=ConflictType.OBLIGATION_PROHIBITION, severity="high", explanation="exp", id="c1"),
-            DeonticConflict(statement1=s1, statement2=s2, conflict_type=ConflictType.JURISDICTIONAL, severity="medium", explanation="exp", id="c2"),
+            DeonticConflict(
+                statement1=s1,
+                statement2=s2,
+                conflict_type=ConflictType.OBLIGATION_PROHIBITION,
+                severity="high",
+                explanation="exp",
+                id="c1",
+            ),
+            DeonticConflict(
+                statement1=s1,
+                statement2=s2,
+                conflict_type=ConflictType.JURISDICTIONAL,
+                severity="medium",
+                explanation="exp",
+                id="c2",
+            ),
         ]
         result = mixin._analyze_conflicts(conflicts)
         assert "obligation_prohibition" in result["by_type"]
@@ -835,12 +968,23 @@ class TestDeonticConflictMixinSession8:
             DeonticConflictMixin,
         )
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
-            DeonticStatement, DeonticModality, DeonticConflict, ConflictType,
+            DeonticStatement,
+            DeonticModality,
+            DeonticConflict,
+            ConflictType,
         )
+
         mixin = DeonticConflictMixin()
         s1 = DeonticStatement("s1", "citizen", "pay taxes", DeonticModality.OBLIGATION, "d1")
         s2 = DeonticStatement("s2", "citizen", "avoid taxes", DeonticModality.PROHIBITION, "d1")
-        conflict = DeonticConflict(statement1=s1, statement2=s2, conflict_type=ConflictType.OBLIGATION_PROHIBITION, severity="high", explanation="conflict", id="c1")
+        conflict = DeonticConflict(
+            statement1=s1,
+            statement2=s2,
+            conflict_type=ConflictType.OBLIGATION_PROHIBITION,
+            severity="high",
+            explanation="conflict",
+            id="c1",
+        )
         reports = mixin._generate_entity_reports([s1, s2], [conflict])
         assert "citizen" in reports
         assert reports["citizen"]["total_statements"] == 2
@@ -851,12 +995,23 @@ class TestDeonticConflictMixinSession8:
             DeonticConflictMixin,
         )
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
-            DeonticStatement, DeonticModality, DeonticConflict, ConflictType,
+            DeonticStatement,
+            DeonticModality,
+            DeonticConflict,
+            ConflictType,
         )
+
         mixin = DeonticConflictMixin()
         s1 = DeonticStatement("s1", "e", "action1", DeonticModality.OBLIGATION, "d1")
         s2 = DeonticStatement("s2", "e", "action1", DeonticModality.PROHIBITION, "d1")
-        conflict = DeonticConflict(statement1=s1, statement2=s2, conflict_type=ConflictType.OBLIGATION_PROHIBITION, severity="high", explanation="conflict", id="c1")
+        conflict = DeonticConflict(
+            statement1=s1,
+            statement2=s2,
+            conflict_type=ConflictType.OBLIGATION_PROHIBITION,
+            severity="high",
+            explanation="conflict",
+            id="c1",
+        )
         summary = mixin._format_conflict_summary(conflict)
         assert summary["id"] == "c1"
         assert summary["severity"] == "high"
@@ -868,12 +1023,25 @@ class TestDeonticConflictMixinSession8:
             DeonticConflictMixin,
         )
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
-            DeonticStatement, DeonticModality, DeonticConflict, ConflictType,
+            DeonticStatement,
+            DeonticModality,
+            DeonticConflict,
+            ConflictType,
         )
+
         mixin = DeonticConflictMixin()
         s1 = DeonticStatement("s1", "e", "a", DeonticModality.OBLIGATION, "d")
         s2 = DeonticStatement("s2", "e", "a", DeonticModality.PROHIBITION, "d")
-        conflicts = [DeonticConflict(statement1=s1, statement2=s2, conflict_type=ConflictType.OBLIGATION_PROHIBITION, severity="high", explanation="exp", id="c1")]
+        conflicts = [
+            DeonticConflict(
+                statement1=s1,
+                statement2=s2,
+                conflict_type=ConflictType.OBLIGATION_PROHIBITION,
+                severity="high",
+                explanation="exp",
+                id="c1",
+            )
+        ]
         recs = mixin._generate_analysis_recommendations(conflicts)
         assert any("high" in r.lower() for r in recs)
 
@@ -883,12 +1051,25 @@ class TestDeonticConflictMixinSession8:
             DeonticConflictMixin,
         )
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
-            DeonticStatement, DeonticModality, DeonticConflict, ConflictType,
+            DeonticStatement,
+            DeonticModality,
+            DeonticConflict,
+            ConflictType,
         )
+
         mixin = DeonticConflictMixin()
         s1 = DeonticStatement("s1", "e", "a", DeonticModality.OBLIGATION, "d1")
         s2 = DeonticStatement("s2", "e", "a", DeonticModality.OBLIGATION, "d2")
-        conflicts = [DeonticConflict(statement1=s1, statement2=s2, conflict_type=ConflictType.JURISDICTIONAL, severity="medium", explanation="exp", id="c1")]
+        conflicts = [
+            DeonticConflict(
+                statement1=s1,
+                statement2=s2,
+                conflict_type=ConflictType.JURISDICTIONAL,
+                severity="medium",
+                explanation="exp",
+                id="c1",
+            )
+        ]
         recs = mixin._generate_analysis_recommendations(conflicts)
         assert any("jurisdictional" in r.lower() for r in recs)
 
@@ -898,12 +1079,25 @@ class TestDeonticConflictMixinSession8:
             DeonticConflictMixin,
         )
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
-            DeonticStatement, DeonticModality, DeonticConflict, ConflictType,
+            DeonticStatement,
+            DeonticModality,
+            DeonticConflict,
+            ConflictType,
         )
+
         mixin = DeonticConflictMixin()
         s1 = DeonticStatement("s1", "e", "a", DeonticModality.CONDITIONAL, "d")
         s2 = DeonticStatement("s2", "e", "a", DeonticModality.CONDITIONAL, "d")
-        conflicts = [DeonticConflict(statement1=s1, statement2=s2, conflict_type=ConflictType.CONDITIONAL_CONFLICT, severity="medium", explanation="exp", id="c1")]
+        conflicts = [
+            DeonticConflict(
+                statement1=s1,
+                statement2=s2,
+                conflict_type=ConflictType.CONDITIONAL_CONFLICT,
+                severity="medium",
+                explanation="exp",
+                id="c1",
+            )
+        ]
         recs = mixin._generate_analysis_recommendations(conflicts)
         assert any("conditional" in r.lower() for r in recs)
 
@@ -912,6 +1106,7 @@ class TestDeonticConflictMixinSession8:
         from ipfs_datasets_py.logic.integration.reasoning._deontic_conflict_mixin import (
             DeonticConflictMixin,
         )
+
         mixin = DeonticConflictMixin()
         recs = mixin._generate_analysis_recommendations([])
         assert len(recs) >= 1
@@ -921,6 +1116,7 @@ class TestDeonticConflictMixinSession8:
 # 5. medical_theorem_framework.py — 0% -> ~65%
 # ---------------------------------------------------------------------------
 
+
 class TestMedicalTheoremFramework:
     """GIVEN the medical theorem framework classes."""
 
@@ -929,6 +1125,7 @@ class TestMedicalTheoremFramework:
         from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import (
             MedicalEntity,
         )
+
         entity = MedicalEntity("substance", "tide_pods", {"route": "ingestion"})
         assert entity.entity_type == "substance"
         assert entity.name == "tide_pods"
@@ -939,6 +1136,7 @@ class TestMedicalTheoremFramework:
         from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import (
             TemporalConstraint,
         )
+
         tc = TemporalConstraint()
         assert tc.time_to_effect is None
         assert tc.duration is None
@@ -948,6 +1146,7 @@ class TestMedicalTheoremFramework:
         from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import (
             TemporalConstraint,
         )
+
         tc = TemporalConstraint(
             time_to_effect=timedelta(hours=2),
             duration=timedelta(days=3),
@@ -957,8 +1156,12 @@ class TestMedicalTheoremFramework:
     def test_medical_theorem_creation(self):
         """GIVEN all required fields, WHEN create MedicalTheorem, THEN fields set."""
         from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import (
-            MedicalEntity, MedicalTheorem, MedicalTheoremType, ConfidenceLevel,
+            MedicalEntity,
+            MedicalTheorem,
+            MedicalTheoremType,
+            ConfidenceLevel,
         )
+
         ant = MedicalEntity("substance", "tide_pods", {})
         con = MedicalEntity("condition", "poisoning", {})
         theorem = MedicalTheorem(
@@ -976,6 +1179,7 @@ class TestMedicalTheoremFramework:
         from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import (
             MedicalTheoremGenerator,
         )
+
         gen = MedicalTheoremGenerator()
         assert gen.validation_threshold == 0.5
         assert gen.theorems == []
@@ -985,6 +1189,7 @@ class TestMedicalTheoremFramework:
         from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import (
             MedicalTheoremGenerator,
         )
+
         gen = MedicalTheoremGenerator()
         trial_data = {
             "nct_id": "NCT001",
@@ -992,7 +1197,9 @@ class TestMedicalTheoremFramework:
             "conditions": ["Condition Y"],
         }
         outcomes_data = {
-            "primary_outcomes": [{"measure": "Outcome A", "description": "desc", "time_frame": "6 months"}],
+            "primary_outcomes": [
+                {"measure": "Outcome A", "description": "desc", "time_frame": "6 months"}
+            ],
             "adverse_events": [],
         }
         theorems = gen.generate_from_clinical_trial(trial_data, outcomes_data)
@@ -1001,8 +1208,10 @@ class TestMedicalTheoremFramework:
     def test_generate_from_clinical_trial_with_adverse_events(self):
         """GIVEN trial with adverse events, WHEN generate, THEN adverse event theorems included."""
         from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import (
-            MedicalTheoremGenerator, MedicalTheoremType,
+            MedicalTheoremGenerator,
+            MedicalTheoremType,
         )
+
         gen = MedicalTheoremGenerator()
         trial_data = {"nct_id": "NCT002", "interventions": ["Drug Y"], "conditions": []}
         outcomes_data = {
@@ -1016,8 +1225,10 @@ class TestMedicalTheoremFramework:
     def test_calculate_confidence_from_frequency(self):
         """GIVEN various frequencies, WHEN calculate, THEN correct confidence levels."""
         from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import (
-            MedicalTheoremGenerator, ConfidenceLevel,
+            MedicalTheoremGenerator,
+            ConfidenceLevel,
         )
+
         gen = MedicalTheoremGenerator()
         assert gen._calculate_confidence_from_frequency(150) == ConfidenceLevel.VERY_HIGH
         assert gen._calculate_confidence_from_frequency(75) == ConfidenceLevel.HIGH
@@ -1030,14 +1241,17 @@ class TestMedicalTheoremFramework:
         from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import (
             MedicalTheoremGenerator,
         )
+
         gen = MedicalTheoremGenerator()
         assert gen._parse_time_frame("") is None
 
     def test_parse_time_frame_with_text(self):
         """GIVEN time frame text, WHEN parse, THEN returns TemporalConstraint."""
         from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import (
-            MedicalTheoremGenerator, TemporalConstraint,
+            MedicalTheoremGenerator,
+            TemporalConstraint,
         )
+
         gen = MedicalTheoremGenerator()
         result = gen._parse_time_frame("6 months")
         assert result is None or isinstance(result, TemporalConstraint)
@@ -1047,6 +1261,7 @@ class TestMedicalTheoremFramework:
         from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import (
             MedicalTheoremGenerator,
         )
+
         gen = MedicalTheoremGenerator()
         result = gen.generate_from_pubmed_research([])
         assert result == []
@@ -1056,6 +1271,7 @@ class TestMedicalTheoremFramework:
         from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import (
             MedicalTheoremGenerator,
         )
+
         gen = MedicalTheoremGenerator()
         articles = [{"abstract": "This study describes findings.", "mesh_terms": ["A", "B"]}]
         result = gen.generate_from_pubmed_research(articles)
@@ -1066,6 +1282,7 @@ class TestMedicalTheoremFramework:
         from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import (
             MedicalTheoremGenerator,
         )
+
         gen = MedicalTheoremGenerator()
         articles = [{"abstract": "Drug X may cause side effects in patients.", "mesh_terms": []}]
         # Real implementation is placeholder — just ensure no exception
@@ -1075,12 +1292,19 @@ class TestMedicalTheoremFramework:
     def test_fuzzy_logic_validator_treatment_outcome(self):
         """GIVEN treatment theorem, WHEN validate, THEN returns fuzzy confidence result."""
         from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import (
-            FuzzyLogicValidator, MedicalEntity, MedicalTheorem, MedicalTheoremType, ConfidenceLevel,
+            FuzzyLogicValidator,
+            MedicalEntity,
+            MedicalTheorem,
+            MedicalTheoremType,
+            ConfidenceLevel,
         )
+
         validator = FuzzyLogicValidator()
         ant = MedicalEntity("treatment", "Drug X", {})
         con = MedicalEntity("outcome", "Improvement", {})
-        theorem = MedicalTheorem("T1", MedicalTheoremType.TREATMENT_OUTCOME, ant, con, ConfidenceLevel.HIGH)
+        theorem = MedicalTheorem(
+            "T1", MedicalTheoremType.TREATMENT_OUTCOME, ant, con, ConfidenceLevel.HIGH
+        )
         result = validator.validate_theorem(theorem, {"trial_data": {}})
         assert result["validated"] is True
         assert "fuzzy_confidence" in result
@@ -1088,66 +1312,101 @@ class TestMedicalTheoremFramework:
     def test_fuzzy_logic_validator_adverse_event(self):
         """GIVEN adverse event theorem, WHEN validate, THEN returns fuzzy confidence."""
         from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import (
-            FuzzyLogicValidator, MedicalEntity, MedicalTheorem, MedicalTheoremType, ConfidenceLevel,
+            FuzzyLogicValidator,
+            MedicalEntity,
+            MedicalTheorem,
+            MedicalTheoremType,
+            ConfidenceLevel,
         )
+
         validator = FuzzyLogicValidator()
         ant = MedicalEntity("treatment", "Drug X", {})
         con = MedicalEntity("adverse_event", "Nausea", {"frequency": 30})
-        theorem = MedicalTheorem("T2", MedicalTheoremType.ADVERSE_EVENT, ant, con, ConfidenceLevel.MODERATE)
+        theorem = MedicalTheorem(
+            "T2", MedicalTheoremType.ADVERSE_EVENT, ant, con, ConfidenceLevel.MODERATE
+        )
         result = validator.validate_theorem(theorem, {})
         assert result["validated"] is True
 
     def test_fuzzy_logic_validator_unsupported_type(self):
         """GIVEN unsupported theorem type, WHEN validate, THEN returns not validated."""
         from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import (
-            FuzzyLogicValidator, MedicalEntity, MedicalTheorem, MedicalTheoremType, ConfidenceLevel,
+            FuzzyLogicValidator,
+            MedicalEntity,
+            MedicalTheorem,
+            MedicalTheoremType,
+            ConfidenceLevel,
         )
+
         validator = FuzzyLogicValidator()
         ant = MedicalEntity("substance", "aspirin", {})
         con = MedicalEntity("condition", "fever reduction", {})
-        theorem = MedicalTheorem("T3", MedicalTheoremType.RISK_ASSESSMENT, ant, con, ConfidenceLevel.MODERATE)
+        theorem = MedicalTheorem(
+            "T3", MedicalTheoremType.RISK_ASSESSMENT, ant, con, ConfidenceLevel.MODERATE
+        )
         result = validator.validate_theorem(theorem, {})
         assert result["validated"] is False
 
     def test_time_series_validator_without_temporal_constraint(self):
         """GIVEN theorem without temporal constraint, WHEN validate, THEN not validated."""
         from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import (
-            TimeSeriesTheoremValidator, MedicalEntity, MedicalTheorem,
-            MedicalTheoremType, ConfidenceLevel,
+            TimeSeriesTheoremValidator,
+            MedicalEntity,
+            MedicalTheorem,
+            MedicalTheoremType,
+            ConfidenceLevel,
         )
+
         validator = TimeSeriesTheoremValidator()
         ant = MedicalEntity("t", "Drug", {})
         con = MedicalEntity("o", "outcome", {})
-        theorem = MedicalTheorem("T4", MedicalTheoremType.TREATMENT_OUTCOME, ant, con, ConfidenceLevel.MODERATE)
+        theorem = MedicalTheorem(
+            "T4", MedicalTheoremType.TREATMENT_OUTCOME, ant, con, ConfidenceLevel.MODERATE
+        )
         result = validator.validate_temporal_theorem(theorem, [])
         assert result["validated"] is False
 
     def test_time_series_validator_with_temporal_constraint(self):
         """GIVEN theorem with temporal constraint, WHEN validate, THEN returns result dict."""
         from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import (
-            TimeSeriesTheoremValidator, MedicalEntity, MedicalTheorem,
-            MedicalTheoremType, ConfidenceLevel, TemporalConstraint,
+            TimeSeriesTheoremValidator,
+            MedicalEntity,
+            MedicalTheorem,
+            MedicalTheoremType,
+            ConfidenceLevel,
+            TemporalConstraint,
         )
+
         validator = TimeSeriesTheoremValidator()
         ant = MedicalEntity("t", "Drug", {})
         con = MedicalEntity("o", "outcome", {})
         tc = TemporalConstraint(time_to_effect=timedelta(hours=1))
         theorem = MedicalTheorem(
-            "T5", MedicalTheoremType.TREATMENT_OUTCOME, ant, con,
-            ConfidenceLevel.HIGH, temporal_constraint=tc,
+            "T5",
+            MedicalTheoremType.TREATMENT_OUTCOME,
+            ant,
+            con,
+            ConfidenceLevel.HIGH,
+            temporal_constraint=tc,
         )
         result = validator.validate_temporal_theorem(theorem, [{"time": 1}])
         assert "validated" in result
 
     def test_confidence_level_enum_values(self):
         """GIVEN ConfidenceLevel enum, WHEN access values, THEN correct strings."""
-        from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import ConfidenceLevel
+        from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import (
+            ConfidenceLevel,
+        )
+
         assert ConfidenceLevel.VERY_HIGH.value == "very_high"
         assert ConfidenceLevel.LOW.value == "low"
 
     def test_medical_theorem_type_enum_values(self):
         """GIVEN MedicalTheoremType enum, WHEN access values, THEN correct strings."""
-        from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import MedicalTheoremType
+        from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import (
+            MedicalTheoremType,
+        )
+
         assert MedicalTheoremType.CAUSAL_RELATIONSHIP.value == "causal"
         assert MedicalTheoremType.ADVERSE_EVENT.value == "adverse"
 
@@ -1156,6 +1415,7 @@ class TestMedicalTheoremFramework:
 # 6. symbolic_logic_primitives.py — 62% -> ~73%
 # ---------------------------------------------------------------------------
 
+
 class TestSymbolicLogicPrimitives:
     """GIVEN LogicPrimitives fallback methods (SymbolicAI not installed)."""
 
@@ -1163,6 +1423,7 @@ class TestSymbolicLogicPrimitives:
         from ipfs_datasets_py.logic.integration.symbolic.symbolic_logic_primitives import (
             create_logic_symbol,
         )
+
         return create_logic_symbol(text)
 
     def test_create_logic_symbol_returns_symbol(self):
@@ -1176,6 +1437,7 @@ class TestSymbolicLogicPrimitives:
         from ipfs_datasets_py.logic.integration.symbolic.symbolic_logic_primitives import (
             get_available_primitives,
         )
+
         prims = get_available_primitives()
         assert "to_fol" in prims
         assert "negate" in prims
@@ -1214,8 +1476,10 @@ class TestSymbolicLogicPrimitives:
     def test_fallback_to_fol_prolog_format(self):
         """GIVEN 'All cats are animals', WHEN to_fol with prolog format, THEN forall in result."""
         from ipfs_datasets_py.logic.integration.symbolic.symbolic_logic_primitives import (
-            create_logic_symbol, LogicPrimitives,
+            create_logic_symbol,
+            LogicPrimitives,
         )
+
         sym = create_logic_symbol("All cats are animals")
         prims = LogicPrimitives()
         result = prims._fallback_to_fol.__func__(sym, "prolog")
@@ -1224,8 +1488,10 @@ class TestSymbolicLogicPrimitives:
     def test_fallback_to_fol_tptp_format(self):
         """GIVEN universal statement, WHEN to_fol with tptp format, THEN ! [] in result."""
         from ipfs_datasets_py.logic.integration.symbolic.symbolic_logic_primitives import (
-            create_logic_symbol, LogicPrimitives,
+            create_logic_symbol,
+            LogicPrimitives,
         )
+
         sym = create_logic_symbol("All birds fly")
         prims = LogicPrimitives()
         result = prims._fallback_to_fol.__func__(sym, "tptp")
@@ -1299,11 +1565,13 @@ class TestSymbolicLogicPrimitives:
 # 7. logic_verification.py — 66% -> ~80%
 # ---------------------------------------------------------------------------
 
+
 class TestLogicVerifierSession8:
     """GIVEN LogicVerifier using fallback mode (no SymbolicAI)."""
 
     def _make(self, fallback=True):
         from ipfs_datasets_py.logic.integration.reasoning.logic_verification import LogicVerifier
+
         return LogicVerifier(use_symbolic_ai=False, fallback_enabled=fallback)
 
     def test_verify_formula_syntax_empty(self):
@@ -1389,6 +1657,7 @@ class TestLogicVerifierSession8:
     def test_add_axiom_valid(self):
         """GIVEN valid axiom, WHEN add_axiom, THEN returns True and axiom in list."""
         from ipfs_datasets_py.logic.integration.reasoning.logic_verification_types import LogicAxiom
+
         v = self._make()
         axiom = LogicAxiom(name="test_axiom", formula="P ∧ Q", description="test")
         result = v.add_axiom(axiom)
@@ -1399,6 +1668,7 @@ class TestLogicVerifierSession8:
     def test_add_axiom_duplicate_rejected(self):
         """GIVEN axiom with same name already in list, WHEN add_axiom, THEN returns False."""
         from ipfs_datasets_py.logic.integration.reasoning.logic_verification_types import LogicAxiom
+
         v = self._make()
         axiom = LogicAxiom(name="dup_axiom", formula="P ∧ Q", description="test")
         v.add_axiom(axiom)
@@ -1408,6 +1678,7 @@ class TestLogicVerifierSession8:
     def test_add_axiom_invalid_syntax_rejected(self):
         """GIVEN axiom with unbalanced parens, WHEN add_axiom, THEN returns False."""
         from ipfs_datasets_py.logic.integration.reasoning.logic_verification_types import LogicAxiom
+
         v = self._make()
         axiom = LogicAxiom(name="bad_formula", formula="P ∧ (Q", description="test")
         result = v.add_axiom(axiom)
@@ -1418,6 +1689,7 @@ class TestLogicVerifierSession8:
 # 8. logic_verification_utils.py — 72% -> ~95%
 # ---------------------------------------------------------------------------
 
+
 class TestLogicVerificationUtilsSession8:
     """GIVEN utility functions in logic_verification_utils."""
 
@@ -1426,6 +1698,7 @@ class TestLogicVerificationUtilsSession8:
         from ipfs_datasets_py.logic.integration.reasoning.logic_verification_utils import (
             validate_formula_syntax,
         )
+
         assert validate_formula_syntax("P ∧ Q") is True
 
     def test_validate_formula_syntax_empty(self):
@@ -1433,6 +1706,7 @@ class TestLogicVerificationUtilsSession8:
         from ipfs_datasets_py.logic.integration.reasoning.logic_verification_utils import (
             validate_formula_syntax,
         )
+
         assert validate_formula_syntax("") is False
 
     def test_validate_formula_syntax_unbalanced(self):
@@ -1440,6 +1714,7 @@ class TestLogicVerificationUtilsSession8:
         from ipfs_datasets_py.logic.integration.reasoning.logic_verification_utils import (
             validate_formula_syntax,
         )
+
         assert validate_formula_syntax("P ∧ (Q") is False
 
     def test_validate_formula_syntax_extra_close(self):
@@ -1447,6 +1722,7 @@ class TestLogicVerificationUtilsSession8:
         from ipfs_datasets_py.logic.integration.reasoning.logic_verification_utils import (
             validate_formula_syntax,
         )
+
         assert validate_formula_syntax("P ∧ Q)") is False
 
     def test_parse_proof_steps_valid(self):
@@ -1454,6 +1730,7 @@ class TestLogicVerificationUtilsSession8:
         from ipfs_datasets_py.logic.integration.reasoning.logic_verification_utils import (
             parse_proof_steps,
         )
+
         text = "Step 1: P → Q (premise)\nStep 2: P (premise)\nStep 3: Q (modus ponens)"
         steps = parse_proof_steps(text)
         assert len(steps) == 3
@@ -1466,6 +1743,7 @@ class TestLogicVerificationUtilsSession8:
         from ipfs_datasets_py.logic.integration.reasoning.logic_verification_utils import (
             parse_proof_steps,
         )
+
         assert parse_proof_steps("") == []
 
     def test_parse_proof_steps_no_matches(self):
@@ -1473,6 +1751,7 @@ class TestLogicVerificationUtilsSession8:
         from ipfs_datasets_py.logic.integration.reasoning.logic_verification_utils import (
             parse_proof_steps,
         )
+
         assert parse_proof_steps("Some random text with no steps") == []
 
     def test_get_basic_proof_rules(self):
@@ -1480,6 +1759,7 @@ class TestLogicVerificationUtilsSession8:
         from ipfs_datasets_py.logic.integration.reasoning.logic_verification_utils import (
             get_basic_proof_rules,
         )
+
         rules = get_basic_proof_rules()
         assert len(rules) >= 3
         names = [r["name"] for r in rules]
@@ -1490,6 +1770,7 @@ class TestLogicVerificationUtilsSession8:
         from ipfs_datasets_py.logic.integration.reasoning.logic_verification_utils import (
             are_contradictory,
         )
+
         assert are_contradictory("P", "¬P") is True
 
     def test_are_contradictory_unrelated(self):
@@ -1497,6 +1778,7 @@ class TestLogicVerificationUtilsSession8:
         from ipfs_datasets_py.logic.integration.reasoning.logic_verification_utils import (
             are_contradictory,
         )
+
         assert are_contradictory("P", "Q") is False
 
 
@@ -1504,16 +1786,19 @@ class TestLogicVerificationUtilsSession8:
 # 9. proof_execution_engine_utils.py — 57% -> ~95%
 # ---------------------------------------------------------------------------
 
+
 class TestProofExecutionEngineUtilsSession8:
     """GIVEN utility factory functions in proof_execution_engine_utils."""
 
     def test_create_proof_engine_returns_engine(self):
         """GIVEN factory call, WHEN create_proof_engine, THEN ProofExecutionEngine returned."""
         import os
+
         os.environ["IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS"] = "0"
         from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_utils import (
             create_proof_engine,
         )
+
         engine = create_proof_engine(timeout=30)
         assert hasattr(engine, "prove_deontic_formula")
         assert engine.timeout == 30
@@ -1523,6 +1808,7 @@ class TestProofExecutionEngineUtilsSession8:
         from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_utils import (
             get_lean_template,
         )
+
         template = get_lean_template()
         assert "Obligatory" in template
         assert "Lean" in template or "lean" in template.lower() or "def" in template
@@ -1532,6 +1818,7 @@ class TestProofExecutionEngineUtilsSession8:
         from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_utils import (
             get_coq_template,
         )
+
         template = get_coq_template()
         assert "Obligatory" in template
         assert "Coq" in template or "Proof" in template
@@ -1539,6 +1826,7 @@ class TestProofExecutionEngineUtilsSession8:
     def test_all_exports(self):
         """GIVEN module, WHEN check __all__, THEN expected functions exported."""
         import ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_utils as m
+
         assert "create_proof_engine" in m.__all__
         assert "get_lean_template" in m.__all__
         assert "get_coq_template" in m.__all__
@@ -1548,6 +1836,7 @@ class TestProofExecutionEngineUtilsSession8:
 # 10. Reasoning coordinator — additional coverage
 # ---------------------------------------------------------------------------
 
+
 class TestReasoningCoordinatorSession8:
     """GIVEN ReasoningCoordinator in symbolic-only mode (no embeddings)."""
 
@@ -1555,6 +1844,7 @@ class TestReasoningCoordinatorSession8:
         from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic.reasoning_coordinator import (
             NeuralSymbolicCoordinator,
         )
+
         return NeuralSymbolicCoordinator(use_cec=False, use_modal=False, use_embeddings=False)
 
     def test_init_no_embeddings(self):
@@ -1579,6 +1869,7 @@ class TestReasoningCoordinatorSession8:
         from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic.reasoning_coordinator import (
             ReasoningStrategy,
         )
+
         coord = self._make()
         mock_goal = MagicMock()
         mock_goal.__str__ = lambda s: "P"
@@ -1590,10 +1881,13 @@ class TestReasoningCoordinatorSession8:
         from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic.reasoning_coordinator import (
             ReasoningStrategy,
         )
+
         coord = self._make()
         # Create fake complex goal via mock
         mock_goal = MagicMock()
-        mock_goal.__str__ = lambda s: "P->Q & Q->R & R->S & A->B & B->C & C->D & D->E & E->F & F->G & G->H & H->I"
+        mock_goal.__str__ = lambda s: (
+            "P->Q & Q->R & R->S & A->B & B->C & C->D & D->E & E->F & F->G & G->H & H->I"
+        )
         strategy = coord._choose_strategy(mock_goal, [])
         assert strategy == ReasoningStrategy.SYMBOLIC_ONLY
 
@@ -1610,6 +1904,7 @@ class TestReasoningCoordinatorSession8:
         from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic.reasoning_coordinator import (
             ReasoningStrategy,
         )
+
         coord = self._make()
         mock_goal = MagicMock()
         mock_goal.__str__ = lambda s: "P"
@@ -1631,11 +1926,13 @@ class TestReasoningCoordinatorSession8:
 #     230-249, 281-301, 337-355, 370-377
 # ---------------------------------------------------------------------------
 
+
 class TestLogicVerifierSymbolicPathsSession8:
     """GIVEN LogicVerifier with use_symbolic_ai forced=True using mock Symbol.query."""
 
     def _make_symbolic(self):
         from ipfs_datasets_py.logic.integration.reasoning.logic_verification import LogicVerifier
+
         v = LogicVerifier(use_symbolic_ai=False, fallback_enabled=True)
         # Force the symbolic path (bypass SYMBOLIC_AI_AVAILABLE=False restriction)
         v.use_symbolic_ai = True
@@ -1644,6 +1941,7 @@ class TestLogicVerifierSymbolicPathsSession8:
     def _mock_symbol(self, query_return_value: str):
         """Patch the Symbol in logic_verification so .query() returns given text."""
         import ipfs_datasets_py.logic.integration.reasoning.logic_verification as lv_mod
+
         mock_sym_instance = MagicMock()
         mock_query_result = MagicMock()
         mock_query_result.value = query_return_value
@@ -1709,6 +2007,7 @@ class TestLogicVerifierSymbolicPathsSession8:
     def test_verify_formula_syntax_symbolic_exception_fallback(self):
         """GIVEN use_symbolic_ai=True, Symbol raises, WHEN verify, THEN fallback used."""
         import ipfs_datasets_py.logic.integration.reasoning.logic_verification as lv_mod
+
         v = self._make_symbolic()
         with patch.object(lv_mod, "Symbol", side_effect=RuntimeError("error")):
             result = v.verify_formula_syntax("P ∧ Q")
@@ -1740,6 +2039,7 @@ class TestLogicVerifierSymbolicPathsSession8:
     def test_check_satisfiability_symbolic_exception_fallback(self):
         """GIVEN Symbol raises, WHEN check_satisfiability, THEN fallback."""
         import ipfs_datasets_py.logic.integration.reasoning.logic_verification as lv_mod
+
         v = self._make_symbolic()
         with patch.object(lv_mod, "Symbol", side_effect=RuntimeError("err")):
             result = v.check_satisfiability("P → Q")
@@ -1772,6 +2072,7 @@ class TestLogicVerifierSymbolicPathsSession8:
     def test_check_validity_symbolic_exception_fallback(self):
         """GIVEN Symbol raises, WHEN check_validity, THEN fallback."""
         import ipfs_datasets_py.logic.integration.reasoning.logic_verification as lv_mod
+
         v = self._make_symbolic()
         with patch.object(lv_mod, "Symbol", side_effect=RuntimeError("err")):
             result = v.check_validity("P ∨ ¬P")
@@ -1782,6 +2083,7 @@ class TestLogicVerifierSymbolicPathsSession8:
     def test_initialize_proof_rules(self):
         """GIVEN verifier, WHEN _initialize_proof_rules, THEN returns extended rules list."""
         from ipfs_datasets_py.logic.integration.reasoning.logic_verification import LogicVerifier
+
         v = LogicVerifier(use_symbolic_ai=False)
         rules = v._initialize_proof_rules()
         assert len(rules) >= 7
@@ -1795,15 +2097,18 @@ class TestLogicVerifierSymbolicPathsSession8:
 #     _maybe_auto_install_provers, prove_deontic_formula main body
 # ---------------------------------------------------------------------------
 
+
 class TestProofExecutionEngineExtendedSession8:
     """GIVEN ProofExecutionEngine with additional edge case tests."""
 
     def _make_engine(self, auto_install=False):
         import os
+
         os.environ["IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS"] = "1" if auto_install else "0"
         from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine import (
             ProofExecutionEngine,
         )
+
         e = ProofExecutionEngine(
             enable_rate_limiting=False,
             enable_validation=False,
@@ -1815,9 +2120,11 @@ class TestProofExecutionEngineExtendedSession8:
     def test_find_executable_with_extra_paths(self):
         """GIVEN extra paths provided, WHEN _find_executable, THEN tries extra paths."""
         import os
+
         engine = self._make_engine()
         # Provide a nonexistent extra path to exercise the candidates loop
         from pathlib import Path
+
         result = engine._find_executable("nonexistent_binary_xyz", extra=[Path("/tmp/fake_dir")])
         assert result is None  # Not found, but no error
 
@@ -1830,6 +2137,7 @@ class TestProofExecutionEngineExtendedSession8:
     def test_maybe_auto_install_provers_disabled_by_env(self):
         """GIVEN auto-install disabled, WHEN _maybe_auto_install_provers, THEN no subprocess."""
         import os
+
         os.environ["IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS"] = "0"
         engine = self._make_engine(auto_install=False)
         # Should return immediately without spawning subprocess
@@ -1838,6 +2146,7 @@ class TestProofExecutionEngineExtendedSession8:
     def test_maybe_auto_install_provers_already_running(self):
         """GIVEN recursion guard env var set, WHEN call, THEN returns early."""
         import os
+
         os.environ["IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS"] = "1"
         os.environ["IPFS_DATASETS_PY_PROVER_AUTO_INSTALL_RUNNING"] = "1"
         engine = self._make_engine(auto_install=True)
@@ -1847,6 +2156,7 @@ class TestProofExecutionEngineExtendedSession8:
     def test_maybe_auto_install_all_provers_available(self):
         """GIVEN all provers available, WHEN auto-install, THEN no subprocess (nothing missing)."""
         import os
+
         os.environ["IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS"] = "1"
         os.environ.pop("IPFS_DATASETS_PY_PROVER_AUTO_INSTALL_RUNNING", None)
         engine = self._make_engine(auto_install=False)
@@ -1879,14 +2189,20 @@ class TestProofExecutionEngineExtendedSession8:
 
     def test_get_translator_z3(self):
         """GIVEN z3 prover, WHEN _get_translator, THEN returns SMTTranslator."""
-        from ipfs_datasets_py.logic.integration.converters.logic_translation_core import SMTTranslator
+        from ipfs_datasets_py.logic.integration.converters.logic_translation_core import (
+            SMTTranslator,
+        )
+
         engine = self._make_engine()
         translator = engine._get_translator("z3")
         assert isinstance(translator, SMTTranslator)
 
     def test_get_translator_lean(self):
         """GIVEN lean prover, WHEN _get_translator, THEN returns LeanTranslator."""
-        from ipfs_datasets_py.logic.integration.converters.logic_translation_core import LeanTranslator
+        from ipfs_datasets_py.logic.integration.converters.logic_translation_core import (
+            LeanTranslator,
+        )
+
         engine = self._make_engine()
         translator = engine._get_translator("lean")
         assert isinstance(translator, LeanTranslator)
@@ -1907,11 +2223,13 @@ class TestProofExecutionEngineExtendedSession8:
 # 13. proof_execution_engine_utils.py utility functions (lines 66-68, 95-97, 127-129)
 # ---------------------------------------------------------------------------
 
+
 class TestProofExecutionEngineUtilsBodySession8:
     """GIVEN proof_execution_engine_utils utility function bodies."""
 
     def setup_method(self):
         import os
+
         os.environ["IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS"] = "0"
 
     def test_prove_formula_utility(self):
@@ -1919,6 +2237,7 @@ class TestProofExecutionEngineUtilsBodySession8:
         from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_utils import (
             prove_formula,
         )
+
         formula = _obligation("pay_taxes")
         result = prove_formula(formula, prover="z3", timeout=5)
         # Result should be returned (status may be error/unsupported since z3 not installed)
@@ -1929,6 +2248,7 @@ class TestProofExecutionEngineUtilsBodySession8:
         from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_utils import (
             prove_with_all_provers,
         )
+
         formula = _obligation("file_report")
         results = prove_with_all_provers(formula, timeout=5)
         assert isinstance(results, list)
@@ -1939,6 +2259,7 @@ class TestProofExecutionEngineUtilsBodySession8:
             check_consistency,
         )
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticRuleSet
+
         rule_set = DeonticRuleSet(name="test", formulas=[_obligation("pay")])
         result = check_consistency(rule_set, prover="lean", timeout=5)
         assert result is not None
@@ -1948,6 +2269,7 @@ class TestProofExecutionEngineUtilsBodySession8:
 # 14. symbolic_logic_primitives.py fallback branches (lines 141-143,152,161,176)
 # ---------------------------------------------------------------------------
 
+
 class TestSymbolicLogicPrimitivesBranchesSession8:
     """GIVEN LogicPrimitives fallback branches not yet covered."""
 
@@ -1955,6 +2277,7 @@ class TestSymbolicLogicPrimitivesBranchesSession8:
         from ipfs_datasets_py.logic.integration.symbolic.symbolic_logic_primitives import (
             create_logic_symbol,
         )
+
         return create_logic_symbol(text)
 
     def test_fallback_to_fol_some_x_are_y(self):
@@ -1978,8 +2301,10 @@ class TestSymbolicLogicPrimitivesBranchesSession8:
     def test_fallback_to_fol_prolog_universal(self):
         """GIVEN 'All X are Y', prolog format, WHEN to_fol, THEN formula ends with ')'."""
         from ipfs_datasets_py.logic.integration.symbolic.symbolic_logic_primitives import (
-            create_logic_symbol, LogicPrimitives,
+            create_logic_symbol,
+            LogicPrimitives,
         )
+
         sym = create_logic_symbol("All dogs are mammals")
         prims = LogicPrimitives()
         result = prims._fallback_to_fol.__func__(sym, "prolog")
@@ -1990,6 +2315,7 @@ class TestSymbolicLogicPrimitivesBranchesSession8:
 # 15. logic_verification_utils.py missing lines (219, 221, 321-322)
 # ---------------------------------------------------------------------------
 
+
 class TestLogicVerificationUtilsMissingSession8:
     """GIVEN utility functions — covering remaining 4 lines."""
 
@@ -1998,6 +2324,7 @@ class TestLogicVerificationUtilsMissingSession8:
         from ipfs_datasets_py.logic.integration.reasoning.logic_verification_utils import (
             are_contradictory,
         )
+
         # " ¬P " doesn't start with ¬ (starts with space), skips lines 209-212
         # f1_clean = "¬P", f1_clean[1:] = "P" == f2_clean = "P" → line 218-219
         assert are_contradictory(" ¬P ", "P") is True
@@ -2007,6 +2334,7 @@ class TestLogicVerificationUtilsMissingSession8:
         from ipfs_datasets_py.logic.integration.reasoning.logic_verification_utils import (
             are_contradictory,
         )
+
         # formula2 = " ¬P " doesn't start with ¬, skips 211-212
         # f2_clean = "¬P", f2_clean[1:] = "P" == f1_clean = "P" → line 220-221
         assert are_contradictory("P", " ¬P ") is True
@@ -2016,6 +2344,7 @@ class TestLogicVerificationUtilsMissingSession8:
         from ipfs_datasets_py.logic.integration.reasoning.logic_verification_utils import (
             create_logic_verifier,
         )
+
         verifier = create_logic_verifier(use_symbolic_ai=False)
         assert hasattr(verifier, "check_consistency")
         assert hasattr(verifier, "check_entailment")
@@ -2026,16 +2355,19 @@ class TestLogicVerificationUtilsMissingSession8:
 #     and get_prover_status with available provers (lines 424-435)
 # ---------------------------------------------------------------------------
 
+
 class TestProofExecutionEngineMaybeInstallSession8:
     """GIVEN ProofExecutionEngine auto-install scenarios."""
 
     def _make_engine_for_test(self):
         """Create engine with AUTO_INSTALL disabled."""
         import os
+
         os.environ["IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS"] = "0"
         from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine import (
             ProofExecutionEngine,
         )
+
         e = ProofExecutionEngine(
             enable_rate_limiting=False,
             enable_validation=False,
@@ -2047,6 +2379,7 @@ class TestProofExecutionEngineMaybeInstallSession8:
     def test_maybe_auto_install_all_provers_available_skips(self):
         """GIVEN all provers available + AUTO_INSTALL=1, WHEN call, THEN returns at missing check."""
         import os
+
         engine = self._make_engine_for_test()
         engine.available_provers = {"z3": True, "cvc5": True, "lean": True, "coq": True}
         os.environ["IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS"] = "1"
@@ -2058,6 +2391,7 @@ class TestProofExecutionEngineMaybeInstallSession8:
     def test_maybe_auto_install_missing_but_none_enabled_skips(self):
         """GIVEN z3 missing + all specific install env=0, WHEN call, THEN to_install is empty."""
         import os
+
         engine = self._make_engine_for_test()
         engine.available_provers = {"z3": False, "cvc5": False, "lean": False, "coq": False}
         os.environ["IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS"] = "1"
@@ -2074,6 +2408,7 @@ class TestProofExecutionEngineMaybeInstallSession8:
         """GIVEN z3 missing + AUTO_INSTALL_Z3=1, WHEN call, THEN subprocess.run called."""
         import os
         from unittest.mock import patch
+
         engine = self._make_engine_for_test()
         engine.available_provers = {"z3": False, "cvc5": True, "lean": True, "coq": True}
         os.environ["IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS"] = "1"
@@ -2091,6 +2426,7 @@ class TestProofExecutionEngineMaybeInstallSession8:
         """GIVEN subprocess raises, WHEN auto-install, THEN logs and continues."""
         import os
         from unittest.mock import patch
+
         engine = self._make_engine_for_test()
         engine.available_provers = {"z3": False, "cvc5": True, "lean": True, "coq": True}
         os.environ["IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS"] = "1"
@@ -2104,11 +2440,14 @@ class TestProofExecutionEngineMaybeInstallSession8:
         """GIVEN one prover marked available, WHEN get_prover_status, THEN test key in dict."""
         import os
         from unittest.mock import patch
+
         engine = self._make_engine_for_test()
         engine.available_provers = {"z3": True, "cvc5": False, "lean": False, "coq": False}
         from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
-            ProofResult, ProofStatus,
+            ProofResult,
+            ProofStatus,
         )
+
         mock_result = ProofResult(
             prover="z3", statement="test", status=ProofStatus.SUCCESS, execution_time=0.01
         )
@@ -2132,15 +2471,18 @@ class TestProofExecutionEngineMaybeInstallSession8:
 #     via mocked prover
 # ---------------------------------------------------------------------------
 
+
 class TestProofExecutionEngineMainBodySession8:
     """GIVEN ProofExecutionEngine with mocked prover for prove_deontic_formula body."""
 
     def _make_engine_z3_available(self):
         import os
+
         os.environ["IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS"] = "0"
         from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine import (
             ProofExecutionEngine,
         )
+
         e = ProofExecutionEngine(
             enable_rate_limiting=False,
             enable_validation=False,
@@ -2154,6 +2496,7 @@ class TestProofExecutionEngineMainBodySession8:
         from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
             ProofStatus,
         )
+
         engine = self._make_engine_z3_available()
         formula = _obligation()
         with patch.object(engine, "_get_translator", return_value=None):
@@ -2165,6 +2508,7 @@ class TestProofExecutionEngineMainBodySession8:
         from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
             ProofStatus,
         )
+
         engine = self._make_engine_z3_available()
         formula = _obligation()
         mock_translator = MagicMock()
@@ -2179,8 +2523,10 @@ class TestProofExecutionEngineMainBodySession8:
     def test_prove_deontic_formula_z3_execution(self):
         """GIVEN z3 available + successful translation, WHEN prove, THEN z3 execution attempted."""
         from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
-            ProofStatus, ProofResult,
+            ProofStatus,
+            ProofResult,
         )
+
         engine = self._make_engine_z3_available()
         formula = _obligation()
         mock_translator = MagicMock()
@@ -2198,8 +2544,10 @@ class TestProofExecutionEngineMainBodySession8:
     def test_prove_deontic_formula_cvc5_execution(self):
         """GIVEN cvc5 available + successful translation, WHEN prove, THEN cvc5 execution attempted."""
         from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
-            ProofStatus, ProofResult,
+            ProofStatus,
+            ProofResult,
         )
+
         engine = self._make_engine_z3_available()
         engine.available_provers["cvc5"] = True
         formula = _obligation()
@@ -2218,8 +2566,10 @@ class TestProofExecutionEngineMainBodySession8:
     def test_prove_deontic_formula_lean_execution(self):
         """GIVEN lean available + translation, WHEN prove, THEN lean execution attempted."""
         from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
-            ProofStatus, ProofResult,
+            ProofStatus,
+            ProofResult,
         )
+
         engine = self._make_engine_z3_available()
         engine.available_provers["lean"] = True
         formula = _obligation()
@@ -2238,8 +2588,10 @@ class TestProofExecutionEngineMainBodySession8:
     def test_prove_deontic_formula_coq_execution(self):
         """GIVEN coq available + translation, WHEN prove, THEN coq execution attempted."""
         from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
-            ProofStatus, ProofResult,
+            ProofStatus,
+            ProofResult,
         )
+
         engine = self._make_engine_z3_available()
         engine.available_provers["coq"] = True
         formula = _obligation()
@@ -2258,8 +2610,10 @@ class TestProofExecutionEngineMainBodySession8:
     def test_prove_multiple_provers_available_one(self):
         """GIVEN z3 available, WHEN prove_multiple_provers with no list, THEN z3 results returned."""
         from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
-            ProofStatus, ProofResult,
+            ProofStatus,
+            ProofResult,
         )
+
         engine = self._make_engine_z3_available()
         formula = _obligation()
         mock_result = ProofResult(prover="z3", statement="test", status=ProofStatus.FAILURE)
@@ -2274,15 +2628,18 @@ class TestProofExecutionEngineMainBodySession8:
 #     + cache status deserialization (lines 255-258)
 # ---------------------------------------------------------------------------
 
+
 class TestProofExecutionEngineRateLimitValidationSession8:
     """GIVEN ProofExecutionEngine with rate limiting / validation enabled."""
 
     def _make_engine_rate(self):
         import os
+
         os.environ["IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS"] = "0"
         from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine import (
             ProofExecutionEngine,
         )
+
         e = ProofExecutionEngine(
             enable_rate_limiting=True,
             enable_validation=False,
@@ -2293,10 +2650,12 @@ class TestProofExecutionEngineRateLimitValidationSession8:
 
     def _make_engine_validate(self):
         import os
+
         os.environ["IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS"] = "0"
         from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine import (
             ProofExecutionEngine,
         )
+
         e = ProofExecutionEngine(
             enable_rate_limiting=False,
             enable_validation=True,
@@ -2310,9 +2669,12 @@ class TestProofExecutionEngineRateLimitValidationSession8:
         from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
             ProofStatus,
         )
+
         engine = self._make_engine_rate()
         formula = _obligation()
-        engine.rate_limiter.check_rate_limit = MagicMock(side_effect=Exception("rate limit exceeded"))
+        engine.rate_limiter.check_rate_limit = MagicMock(
+            side_effect=Exception("rate limit exceeded")
+        )
         result = engine.prove_deontic_formula(formula, prover="z3")
         assert result.status == ProofStatus.ERROR
         assert any("rate limit" in e.lower() for e in result.errors)
@@ -2322,6 +2684,7 @@ class TestProofExecutionEngineRateLimitValidationSession8:
         from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
             ProofStatus,
         )
+
         engine = self._make_engine_validate()
         formula = _obligation()
         engine.validator.validate_formula = MagicMock(side_effect=ValueError("invalid formula"))
@@ -2332,10 +2695,12 @@ class TestProofExecutionEngineRateLimitValidationSession8:
     def test_cache_status_invalid_falls_back_to_error(self):
         """GIVEN cached result with unrecognized status, WHEN retrieve, THEN defaults to ERROR."""
         import os
+
         os.environ["IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS"] = "0"
         from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine import (
             ProofExecutionEngine,
         )
+
         engine = ProofExecutionEngine(
             enable_rate_limiting=False,
             enable_validation=False,
@@ -2359,12 +2724,14 @@ class TestProofExecutionEngineRateLimitValidationSession8:
         from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
             ProofStatus,
         )
+
         assert result.status == ProofStatus.ERROR
 
 
 # ---------------------------------------------------------------------------
 # 19. reasoning_coordinator.py — embedding init + strategy routing + axioms
 # ---------------------------------------------------------------------------
+
 
 class TestReasoningCoordinatorExtendedSession8:
     """GIVEN NeuralSymbolicCoordinator with embeddings enabled (ImportError path)."""
@@ -2374,6 +2741,7 @@ class TestReasoningCoordinatorExtendedSession8:
         from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic.reasoning_coordinator import (
             NeuralSymbolicCoordinator,
         )
+
         coord = NeuralSymbolicCoordinator(use_cec=False, use_modal=False, use_embeddings=True)
         # Either embedding_prover is set (if available) or use_embeddings is False (fallback)
         if coord.embedding_prover is None:
@@ -2384,8 +2752,10 @@ class TestReasoningCoordinatorExtendedSession8:
     def test_prove_neural_only_strategy(self):
         """GIVEN NEURAL_ONLY strategy, WHEN prove, THEN falls back to symbolic (no embeddings)."""
         from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic.reasoning_coordinator import (
-            NeuralSymbolicCoordinator, ReasoningStrategy,
+            NeuralSymbolicCoordinator,
+            ReasoningStrategy,
         )
+
         coord = NeuralSymbolicCoordinator(use_cec=False, use_modal=False, use_embeddings=False)
         mock_goal = MagicMock()
         mock_goal.__str__ = lambda s: "P"
@@ -2393,11 +2763,16 @@ class TestReasoningCoordinatorExtendedSession8:
             from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic.reasoning_coordinator import (
                 CoordinatedResult,
             )
+
             mock_neural.return_value = CoordinatedResult(
-                is_proved=False, confidence=0.0,
-                symbolic_result=None, neural_confidence=None,
+                is_proved=False,
+                confidence=0.0,
+                symbolic_result=None,
+                neural_confidence=None,
                 strategy_used=ReasoningStrategy.NEURAL_ONLY,
-                reasoning_path="neural", proof_steps=[], metadata={}
+                reasoning_path="neural",
+                proof_steps=[],
+                metadata={},
             )
             result = coord.prove(mock_goal, strategy=ReasoningStrategy.NEURAL_ONLY)
         assert result is not None
@@ -2405,8 +2780,10 @@ class TestReasoningCoordinatorExtendedSession8:
     def test_choose_strategy_medium_complexity_no_embeddings(self):
         """GIVEN medium complexity (3-10 operators), no embeddings, WHEN choose, THEN SYMBOLIC_ONLY."""
         from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic.reasoning_coordinator import (
-            NeuralSymbolicCoordinator, ReasoningStrategy,
+            NeuralSymbolicCoordinator,
+            ReasoningStrategy,
         )
+
         coord = NeuralSymbolicCoordinator(use_cec=False, use_modal=False, use_embeddings=False)
         mock_goal = MagicMock()
         mock_goal.__str__ = lambda s: "P->Q & Q->R & R->S & A->B"  # 4 operators
@@ -2418,6 +2795,7 @@ class TestReasoningCoordinatorExtendedSession8:
         from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic.reasoning_coordinator import (
             NeuralSymbolicCoordinator,
         )
+
         coord = NeuralSymbolicCoordinator(use_cec=False, use_modal=False, use_embeddings=False)
         mock_goal = MagicMock()
         mock_goal.__str__ = lambda s: "P"

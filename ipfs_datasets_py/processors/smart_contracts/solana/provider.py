@@ -132,9 +132,7 @@ class SolanaProgramFixture:
             if type(payload) is not bytes:
                 raise InvalidRequestError(f"source_files[{path}] must be exact bytes")
             if path.startswith("/") or ".." in path.split("/"):
-                raise InvalidRequestError(
-                    "source path must be relative without traversal"
-                )
+                raise InvalidRequestError("source path must be relative without traversal")
         object.__setattr__(self, "source_files", MappingProxyType(sources))
         object.__setattr__(
             self,
@@ -145,9 +143,7 @@ class SolanaProgramFixture:
             object.__setattr__(
                 self,
                 "program_data_address",
-                normalize_pubkey(
-                    self.program_data_address, field="program_data_address"
-                ),
+                normalize_pubkey(self.program_data_address, field="program_data_address"),
             )
         else:
             object.__setattr__(self, "program_data_address", "")
@@ -156,9 +152,7 @@ class SolanaProgramFixture:
             object.__setattr__(
                 self,
                 "upgrade_authority",
-                normalize_pubkey(
-                    self.upgrade_authority, field="upgrade_authority"
-                ),
+                normalize_pubkey(self.upgrade_authority, field="upgrade_authority"),
             )
         if self.deployment_slot is not None:
             if (
@@ -166,23 +160,15 @@ class SolanaProgramFixture:
                 or not isinstance(self.deployment_slot, int)
                 or self.deployment_slot < 0
             ):
-                raise InvalidRequestError(
-                    "deployment_slot must be a non-negative integer"
-                )
-        object.__setattr__(
-            self, "code_epoch", self.code_epoch.strip() if self.code_epoch else ""
-        )
-        object.__setattr__(
-            self, "compiler", self.compiler.strip() if self.compiler else ""
-        )
+                raise InvalidRequestError("deployment_slot must be a non-negative integer")
+        object.__setattr__(self, "code_epoch", self.code_epoch.strip() if self.code_epoch else "")
+        object.__setattr__(self, "compiler", self.compiler.strip() if self.compiler else "")
         object.__setattr__(
             self,
             "compiler_version",
             self.compiler_version.strip() if self.compiler_version else "",
         )
-        object.__setattr__(
-            self, "compiler_flags", _freeze_mapping(self.compiler_flags)
-        )
+        object.__setattr__(self, "compiler_flags", _freeze_mapping(self.compiler_flags))
         owners = {
             normalize_pubkey(k, field="account"): normalize_pubkey(v, field="owner")
             for k, v in dict(self.account_owners).items()
@@ -320,15 +306,12 @@ class SolanaProgramFixture:
             "deployment_slot": self.deployment_slot,
             "idl_digest": bytes_digest(self.idl_json) if self.idl_json else "",
             "loader_program_id": self.loader_program_id,
-            "metadata_digest": bytes_digest(self.metadata_json)
-            if self.metadata_json
-            else "",
+            "metadata_digest": bytes_digest(self.metadata_json) if self.metadata_json else "",
             "program_data_address": self.program_data_address,
             "program_id": self.program_id,
             "sbf_elf_digest": self.sbf_elf_digest,
             "source_digests": {
-                path: bytes_digest(payload)
-                for path, payload in self.source_files.items()
+                path: bytes_digest(payload) for path, payload in self.source_files.items()
             },
             "upgrade_authority": self.upgrade_authority,
         }
@@ -354,17 +337,13 @@ class OfflineSolanaProvider:
         index: dict[str, SolanaProgramFixture] = {}
         for fixture in fixtures:
             if not isinstance(fixture, SolanaProgramFixture):
-                raise InvalidRequestError(
-                    "fixtures must be SolanaProgramFixture instances"
-                )
+                raise InvalidRequestError("fixtures must be SolanaProgramFixture instances")
             keys = {
                 f"{fixture.chain_id}:{fixture.program_id}",
                 fixture.fixture_key,
             }
             if fixture.deployment_slot is not None:
-                keys.add(
-                    f"{fixture.chain_id}:{fixture.program_id}@{fixture.deployment_slot}"
-                )
+                keys.add(f"{fixture.chain_id}:{fixture.program_id}@{fixture.deployment_slot}")
             for key in keys:
                 if key in index and index[key] is not fixture:
                     raise InvalidRequestError(f"duplicate Solana fixture key: {key}")
@@ -412,9 +391,7 @@ class OfflineSolanaProvider:
             fixture.fixture_key,
         }
         if fixture.deployment_slot is not None:
-            keys.add(
-                f"{fixture.chain_id}:{fixture.program_id}@{fixture.deployment_slot}"
-            )
+            keys.add(f"{fixture.chain_id}:{fixture.program_id}@{fixture.deployment_slot}")
         for key in keys:
             current[key] = fixture
         self._fixtures = MappingProxyType(current)
@@ -448,9 +425,7 @@ class OfflineSolanaProvider:
             rest = text[len("solana://") :]
             parts = rest.split("/", 1)
             if len(parts) != 2:
-                raise InvalidRequestError(
-                    "solana locator must be solana://{chain_id}/{program_id}"
-                )
+                raise InvalidRequestError("solana locator must be solana://{chain_id}/{program_id}")
             chain_part, prog_part = parts
             if "@" in prog_part:
                 prog_part, slot_s = prog_part.rsplit("@", 1)
@@ -468,9 +443,7 @@ class OfflineSolanaProvider:
         except InvalidRequestError as exc:
             raise InvalidRequestError("unsupported Solana locator form") from exc
         if not chain_id:
-            raise InvalidRequestError(
-                "bare program id locator requires request chain_id"
-            )
+            raise InvalidRequestError("bare program id locator requires request chain_id")
         return _required_text(chain_id, "chain_id"), program_id, None
 
     async def acquire(
@@ -488,9 +461,7 @@ class OfflineSolanaProvider:
             return ContractAcquisitionResult(
                 request_id=request.request_id,
                 status=AcquisitionStatus.UNSUPPORTED,
-                diagnostics=(
-                    f"provider {self._provider_id!r} is not allowlisted",
-                ),
+                diagnostics=(f"provider {self._provider_id!r} is not allowlisted",),
             )
 
         try:
@@ -502,9 +473,7 @@ class OfflineSolanaProvider:
 
         chain_id = request.chain.chain_id or request.chain.network or ""
         try:
-            parsed_chain, program_id, slot = self.parse_locator(
-                request.locator, chain_id=chain_id
-            )
+            parsed_chain, program_id, slot = self.parse_locator(request.locator, chain_id=chain_id)
         except InvalidRequestError as exc:
             return ContractAcquisitionResult(
                 request_id=request.request_id,
@@ -519,9 +488,7 @@ class OfflineSolanaProvider:
             return ContractAcquisitionResult(
                 request_id=request.request_id,
                 status=AcquisitionStatus.UNAVAILABLE,
-                diagnostics=(
-                    f"no offline fixture for {parsed_chain}:{program_id}",
-                ),
+                diagnostics=(f"no offline fixture for {parsed_chain}:{program_id}",),
             )
 
         kind = (
@@ -557,13 +524,9 @@ class OfflineSolanaProvider:
             request_digest=bytes_digest(
                 f"{request.request_id}:{request.locator}:{kind.value}".encode("utf-8")
             ),
-            response_digest=bytes_digest(
-                b"".join(item.raw_bytes for _, item in stored_entries)
-            ),
+            response_digest=bytes_digest(b"".join(item.raw_bytes for _, item in stored_entries)),
             final_url_digest=bytes_digest(
-                f"offline://{self._provider_id}/{parsed_chain}/{program_id}".encode(
-                    "utf-8"
-                )
+                f"offline://{self._provider_id}/{parsed_chain}/{program_id}".encode("utf-8")
             ),
             status_code=200,
             byte_length=total_bytes,

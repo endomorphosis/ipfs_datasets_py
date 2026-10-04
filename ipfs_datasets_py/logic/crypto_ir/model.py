@@ -128,14 +128,10 @@ def _as_mapping(value: Any, name: str) -> Mapping[str, Any]:
     return value
 
 
-def _known_fields(
-    value: Mapping[str, Any], allowed: frozenset[str], name: str
-) -> None:
+def _known_fields(value: Mapping[str, Any], allowed: frozenset[str], name: str) -> None:
     unknown = sorted(set(value) - allowed)
     if unknown:
-        raise CryptoIRValidationError(
-            f"unknown {name} field(s): {', '.join(unknown)}"
-        )
+        raise CryptoIRValidationError(f"unknown {name} field(s): {', '.join(unknown)}")
 
 
 def _attributes(value: Mapping[str, Any] | None) -> Mapping[str, Any]:
@@ -215,9 +211,7 @@ def _sequence_of(
         elif from_dict is not None and isinstance(item, Mapping):
             converted.append(from_dict(item))
         else:
-            raise CryptoIRValidationError(
-                f"{name} items must be {item_type.__name__} or mappings"
-            )
+            raise CryptoIRValidationError(f"{name} items must be {item_type.__name__} or mappings")
     return tuple(converted)
 
 
@@ -238,15 +232,9 @@ class ExactAmount:
             raise CryptoIRValidationError("ExactAmount rejects binary floats")
         if type(self.base_units) is int and not isinstance(self.base_units, bool):
             object.__setattr__(self, "base_units", str(self.base_units))
-        if not isinstance(self.base_units, str) or not _DECIMAL_INTEGER.fullmatch(
-            self.base_units
-        ):
-            raise CryptoIRValidationError(
-                "base_units must be a canonical decimal integer string"
-            )
-        object.__setattr__(
-            self, "decimals", _non_negative_int(self.decimals, "decimals")
-        )
+        if not isinstance(self.base_units, str) or not _DECIMAL_INTEGER.fullmatch(self.base_units):
+            raise CryptoIRValidationError("base_units must be a canonical decimal integer string")
+        object.__setattr__(self, "decimals", _non_negative_int(self.decimals, "decimals"))
         if self.decimals > 255:
             raise CryptoIRValidationError("decimals must not exceed 255")
 
@@ -281,9 +269,7 @@ class LedgerCoordinate:
     event_index: int | None = None
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "sequence", _optional_non_negative_int(self.sequence, "sequence")
-        )
+        object.__setattr__(self, "sequence", _optional_non_negative_int(self.sequence, "sequence"))
         object.__setattr__(self, "hash", _text(self.hash, "hash", allow_empty=True))
         object.__setattr__(
             self,
@@ -358,9 +344,7 @@ class TimeBoundedEpoch:
         object.__setattr__(self, "epoch_id", _identifier(self.epoch_id, "epoch_id"))
         object.__setattr__(self, "kind", _text(self.kind, "kind"))
         object.__setattr__(self, "subject_id", _identifier(self.subject_id, "subject_id"))
-        object.__setattr__(
-            self, "value_digest", _digest(self.value_digest, "value_digest")
-        )
+        object.__setattr__(self, "value_digest", _digest(self.value_digest, "value_digest"))
         if not isinstance(self.validity, ValidityWindow):
             object.__setattr__(
                 self,
@@ -401,9 +385,7 @@ class TimeBoundedEpoch:
             kind=value.get("kind", ""),
             subject_id=value.get("subject_id", ""),
             value_digest=value.get("value_digest", ""),
-            validity=ValidityWindow.from_dict(
-                _as_mapping(value.get("validity", {}), "validity")
-            ),
+            validity=ValidityWindow.from_dict(_as_mapping(value.get("validity", {}), "validity")),
             attributes=value.get("attributes", {}),
         )
 
@@ -428,25 +410,17 @@ class ChainIdentity:
     LAYER: ClassVar[AuthorityKind] = AuthorityKind.DECLARATION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "chain_namespace", _text(self.chain_namespace, "chain_namespace")
-        )
+        object.__setattr__(self, "chain_namespace", _text(self.chain_namespace, "chain_namespace"))
         object.__setattr__(self, "network", _text(self.network, "network"))
-        object.__setattr__(
-            self, "genesis_digest", _digest(self.genesis_digest, "genesis_digest")
-        )
-        object.__setattr__(
-            self, "chain_id", _text(self.chain_id, "chain_id", allow_empty=True)
-        )
+        object.__setattr__(self, "genesis_digest", _digest(self.genesis_digest, "genesis_digest"))
+        object.__setattr__(self, "chain_id", _text(self.chain_id, "chain_id", allow_empty=True))
         object.__setattr__(
             self,
             "display_name",
             _text(self.display_name, "display_name", allow_empty=True),
         )
         object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -527,9 +501,7 @@ class AccountIdentity:
         )
         object.__setattr__(self, "account_kind", _text(self.account_kind, "account_kind"))
         object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -624,9 +596,7 @@ class WalletDescriptor:
         )
         return cls(
             wallet_id=value.get("wallet_id", ""),
-            accounts=tuple(
-                AccountIdentity.from_dict(item) for item in value.get("accounts", ())
-            ),
+            accounts=tuple(AccountIdentity.from_dict(item) for item in value.get("accounts", ())),
             label=value.get("label", ""),
             attributes=value.get("attributes", {}),
         )
@@ -650,20 +620,12 @@ class AssetIdentity:
             object.__setattr__(
                 self, "chain", ChainIdentity.from_dict(_as_mapping(self.chain, "chain"))
             )
-        object.__setattr__(
-            self, "asset_namespace", _text(self.asset_namespace, "asset_namespace")
-        )
-        object.__setattr__(
-            self, "asset_reference", _text(self.asset_reference, "asset_reference")
-        )
-        object.__setattr__(
-            self, "decimals", _non_negative_int(self.decimals, "decimals")
-        )
+        object.__setattr__(self, "asset_namespace", _text(self.asset_namespace, "asset_namespace"))
+        object.__setattr__(self, "asset_reference", _text(self.asset_reference, "asset_reference"))
+        object.__setattr__(self, "decimals", _non_negative_int(self.decimals, "decimals"))
         if self.decimals > 255:
             raise CryptoIRValidationError("decimals must not exceed 255")
-        object.__setattr__(
-            self, "symbol", _text(self.symbol, "symbol", allow_empty=True)
-        )
+        object.__setattr__(self, "symbol", _text(self.symbol, "symbol", allow_empty=True))
         object.__setattr__(self, "attributes", _attributes(self.attributes))
 
     def to_dict(self) -> dict[str, Any]:
@@ -751,9 +713,7 @@ class SignerRequirement:
             "SignerRequirement",
         )
         return cls(
-            account=AccountIdentity.from_dict(
-                _as_mapping(value.get("account", {}), "account")
-            ),
+            account=AccountIdentity.from_dict(_as_mapping(value.get("account", {}), "account")),
             role=value.get("role", "signer"),
             threshold_weight=value.get("threshold_weight", 1),
             attributes=value.get("attributes", {}),
@@ -809,9 +769,7 @@ class TransferIntent:
         value = _as_mapping(value, "TransferIntent")
         _known_fields(
             value,
-            frozenset(
-                {"asset", "amount", "from_account", "to_account", "attributes"}
-            ),
+            frozenset({"asset", "amount", "from_account", "to_account", "attributes"}),
             "TransferIntent",
         )
         return cls(
@@ -870,16 +828,12 @@ class CallIntent:
         value = _as_mapping(value, "CallIntent")
         _known_fields(
             value,
-            frozenset(
-                {"target", "method", "calldata_digest", "value", "attributes"}
-            ),
+            frozenset({"target", "method", "calldata_digest", "value", "attributes"}),
             "CallIntent",
         )
         raw_value = value.get("value")
         return cls(
-            target=AccountIdentity.from_dict(
-                _as_mapping(value.get("target", {}), "target")
-            ),
+            target=AccountIdentity.from_dict(_as_mapping(value.get("target", {}), "target")),
             method=value.get("method", ""),
             calldata_digest=value.get("calldata_digest", ""),
             value=None
@@ -994,9 +948,7 @@ class UnsignedTransactionIntent:
         object.__setattr__(
             self,
             "calls",
-            _sequence_of(
-                self.calls, CallIntent, "calls", from_dict=CallIntent.from_dict
-            ),
+            _sequence_of(self.calls, CallIntent, "calls", from_dict=CallIntent.from_dict),
         )
         object.__setattr__(
             self,
@@ -1013,9 +965,7 @@ class UnsignedTransactionIntent:
         )
         object.__setattr__(self, "memo", _text(self.memo, "memo", allow_empty=True))
         object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -1057,19 +1007,12 @@ class UnsignedTransactionIntent:
         return cls(
             intent_id=value.get("intent_id", ""),
             chain=ChainIdentity.from_dict(_as_mapping(value.get("chain", {}), "chain")),
-            origin=AccountIdentity.from_dict(
-                _as_mapping(value.get("origin", {}), "origin")
-            ),
-            signers=tuple(
-                SignerRequirement.from_dict(item) for item in value.get("signers", ())
-            ),
-            transfers=tuple(
-                TransferIntent.from_dict(item) for item in value.get("transfers", ())
-            ),
+            origin=AccountIdentity.from_dict(_as_mapping(value.get("origin", {}), "origin")),
+            signers=tuple(SignerRequirement.from_dict(item) for item in value.get("signers", ())),
+            transfers=tuple(TransferIntent.from_dict(item) for item in value.get("transfers", ())),
             calls=tuple(CallIntent.from_dict(item) for item in value.get("calls", ())),
             expected_effects=tuple(
-                ExpectedEffect.from_dict(item)
-                for item in value.get("expected_effects", ())
+                ExpectedEffect.from_dict(item) for item in value.get("expected_effects", ())
             ),
             assumption_ids=tuple(value.get("assumption_ids", ())),
             memo=value.get("memo", ""),
@@ -1110,25 +1053,17 @@ class SerializedTransactionCandidate:
     LAYER: ClassVar[AuthorityKind] = AuthorityKind.DECLARATION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "candidate_id", _identifier(self.candidate_id, "candidate_id")
-        )
+        object.__setattr__(self, "candidate_id", _identifier(self.candidate_id, "candidate_id"))
         object.__setattr__(self, "intent_id", _identifier(self.intent_id, "intent_id"))
         if not isinstance(self.chain, ChainIdentity):
             object.__setattr__(
                 self, "chain", ChainIdentity.from_dict(_as_mapping(self.chain, "chain"))
             )
-        object.__setattr__(
-            self, "payload_digest", _digest(self.payload_digest, "payload_digest")
-        )
+        object.__setattr__(self, "payload_digest", _digest(self.payload_digest, "payload_digest"))
         object.__setattr__(self, "encoding", _text(self.encoding, "encoding"))
-        object.__setattr__(
-            self, "byte_length", _non_negative_int(self.byte_length, "byte_length")
-        )
+        object.__setattr__(self, "byte_length", _non_negative_int(self.byte_length, "byte_length"))
         object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -1210,29 +1145,21 @@ class ContractArtifact:
     LAYER: ClassVar[AuthorityKind] = AuthorityKind.DECLARATION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "artifact_id", _identifier(self.artifact_id, "artifact_id")
-        )
+        object.__setattr__(self, "artifact_id", _identifier(self.artifact_id, "artifact_id"))
         if not isinstance(self.chain, ChainIdentity):
             object.__setattr__(
                 self, "chain", ChainIdentity.from_dict(_as_mapping(self.chain, "chain"))
             )
         object.__setattr__(self, "kind", _enum(ArtifactKind, self.kind, "kind"))
-        object.__setattr__(
-            self, "content_digest", _digest(self.content_digest, "content_digest")
-        )
+        object.__setattr__(self, "content_digest", _digest(self.content_digest, "content_digest"))
         object.__setattr__(self, "media_type", _text(self.media_type, "media_type"))
-        object.__setattr__(
-            self, "byte_length", _non_negative_int(self.byte_length, "byte_length")
-        )
+        object.__setattr__(self, "byte_length", _non_negative_int(self.byte_length, "byte_length"))
         object.__setattr__(
             self, "content_cid", _text(self.content_cid, "content_cid", allow_empty=True)
         )
         object.__setattr__(self, "label", _text(self.label, "label", allow_empty=True))
         object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -1334,9 +1261,7 @@ class ObservedTransaction:
                 "coordinate",
                 LedgerCoordinate.from_dict(_as_mapping(self.coordinate, "coordinate")),
             )
-        object.__setattr__(
-            self, "finality", _enum(FinalityStatus, self.finality, "finality")
-        )
+        object.__setattr__(self, "finality", _enum(FinalityStatus, self.finality, "finality"))
         object.__setattr__(
             self, "retraction", _enum(RetractionStatus, self.retraction, "retraction")
         )
@@ -1346,19 +1271,13 @@ class ObservedTransaction:
                 "validity",
                 ValidityWindow.from_dict(_as_mapping(self.validity, "validity")),
             )
-        if self.from_account is not None and not isinstance(
-            self.from_account, AccountIdentity
-        ):
+        if self.from_account is not None and not isinstance(self.from_account, AccountIdentity):
             object.__setattr__(
                 self,
                 "from_account",
-                AccountIdentity.from_dict(
-                    _as_mapping(self.from_account, "from_account")
-                ),
+                AccountIdentity.from_dict(_as_mapping(self.from_account, "from_account")),
             )
-        if self.to_account is not None and not isinstance(
-            self.to_account, AccountIdentity
-        ):
+        if self.to_account is not None and not isinstance(self.to_account, AccountIdentity):
             object.__setattr__(
                 self,
                 "to_account",
@@ -1369,9 +1288,7 @@ class ObservedTransaction:
                 object.__setattr__(
                     self,
                     "provenance",
-                    CryptoIRProvenance.from_dict(
-                        _as_mapping(self.provenance, "provenance")
-                    ),
+                    CryptoIRProvenance.from_dict(_as_mapping(self.provenance, "provenance")),
                 )
             if self.provenance.authority.kind is not AuthorityKind.OBSERVATION:
                 raise CryptoIRValidationError(
@@ -1385,9 +1302,7 @@ class ObservedTransaction:
             "chain": self.chain.to_dict(),
             "coordinate": self.coordinate.to_dict(),
             "finality": self.finality.value,
-            "from_account": None
-            if self.from_account is None
-            else self.from_account.to_dict(),
+            "from_account": None if self.from_account is None else self.from_account.to_dict(),
             "observation_id": self.observation_id,
             "provenance": None if self.provenance is None else self.provenance.to_dict(),
             "retraction": self.retraction.value,
@@ -1430,9 +1345,7 @@ class ObservedTransaction:
             ),
             finality=value.get("finality", FinalityStatus.UNKNOWN.value),
             retraction=value.get("retraction", RetractionStatus.UNKNOWN.value),
-            validity=ValidityWindow.from_dict(
-                _as_mapping(value.get("validity", {}), "validity")
-            ),
+            validity=ValidityWindow.from_dict(_as_mapping(value.get("validity", {}), "validity")),
             from_account=None
             if from_raw is None
             else AccountIdentity.from_dict(_as_mapping(from_raw, "from_account")),
@@ -1458,13 +1371,9 @@ class CryptoAssumption:
     LAYER: ClassVar[AuthorityKind] = AuthorityKind.ASSUMPTION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "assumption_id", _identifier(self.assumption_id, "assumption_id")
-        )
+        object.__setattr__(self, "assumption_id", _identifier(self.assumption_id, "assumption_id"))
         object.__setattr__(self, "statement", _text(self.statement, "statement"))
-        object.__setattr__(
-            self, "source_refs", _unique_ids(self.source_refs, "source_refs")
-        )
+        object.__setattr__(self, "source_refs", _unique_ids(self.source_refs, "source_refs"))
         object.__setattr__(self, "attributes", _attributes(self.attributes))
 
     def to_dict(self) -> dict[str, Any]:
@@ -1503,9 +1412,7 @@ class CryptoExtension:
     attributes: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "extension_id", _identifier(self.extension_id, "extension_id")
-        )
+        object.__setattr__(self, "extension_id", _identifier(self.extension_id, "extension_id"))
         object.__setattr__(self, "vocabulary", _identifier(self.vocabulary, "vocabulary"))
         object.__setattr__(self, "version", _text(self.version, "version"))
         if not isinstance(self.required, bool):
@@ -1601,9 +1508,7 @@ class CompletenessReceipt:
             "completeness",
             _enum(CompletenessStatus, self.completeness, "completeness"),
         )
-        object.__setattr__(
-            self, "finality", _enum(FinalityStatus, self.finality, "finality")
-        )
+        object.__setattr__(self, "finality", _enum(FinalityStatus, self.finality, "finality"))
         if not isinstance(self.validity, ValidityWindow):
             object.__setattr__(
                 self,
@@ -1633,9 +1538,7 @@ class CompletenessReceipt:
                 from_dict=LedgerCoordinate.from_dict,
             ),
         )
-        object.__setattr__(
-            self, "provider_ids", _unique_ids(self.provider_ids, "provider_ids")
-        )
+        object.__setattr__(self, "provider_ids", _unique_ids(self.provider_ids, "provider_ids"))
         object.__setattr__(
             self, "assumption_ids", _unique_ids(self.assumption_ids, "assumption_ids")
         )
@@ -1656,32 +1559,25 @@ class CompletenessReceipt:
         for extension in self.extensions:
             if extension.required and extension.vocabulary not in accepted:
                 raise CryptoIRValidationError(
-                    "unknown required extension vocabulary fails closed: "
-                    f"{extension.vocabulary}"
+                    f"unknown required extension vocabulary fails closed: {extension.vocabulary}"
                 )
         if self.provenance is not None:
             if not isinstance(self.provenance, CryptoIRProvenance):
                 object.__setattr__(
                     self,
                     "provenance",
-                    CryptoIRProvenance.from_dict(
-                        _as_mapping(self.provenance, "provenance")
-                    ),
+                    CryptoIRProvenance.from_dict(_as_mapping(self.provenance, "provenance")),
                 )
             if self.provenance.authority.kind is not AuthorityKind.OBSERVATION:
                 raise CryptoIRValidationError(
                     "CompletenessReceipt provenance must have observation authority"
                 )
         object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "accepted_extension_vocabularies": list(
-                self.accepted_extension_vocabularies
-            ),
+            "accepted_extension_vocabularies": list(self.accepted_extension_vocabularies),
             "assumption_ids": list(self.assumption_ids),
             "attributes": thaw_json(self.attributes),
             "chain": self.chain.to_dict(),
@@ -1733,26 +1629,20 @@ class CompletenessReceipt:
             scope=value.get("scope", ""),
             completeness=value.get("completeness", CompletenessStatus.UNKNOWN.value),
             finality=value.get("finality", FinalityStatus.UNKNOWN.value),
-            validity=ValidityWindow.from_dict(
-                _as_mapping(value.get("validity", {}), "validity")
-            ),
+            validity=ValidityWindow.from_dict(_as_mapping(value.get("validity", {}), "validity")),
             retraction=value.get("retraction", RetractionStatus.UNKNOWN.value),
             covered_ranges=tuple(
-                LedgerCoordinate.from_dict(item)
-                for item in value.get("covered_ranges", ())
+                LedgerCoordinate.from_dict(item) for item in value.get("covered_ranges", ())
             ),
             missing_ranges=tuple(
-                LedgerCoordinate.from_dict(item)
-                for item in value.get("missing_ranges", ())
+                LedgerCoordinate.from_dict(item) for item in value.get("missing_ranges", ())
             ),
             provider_ids=tuple(value.get("provider_ids", ())),
             assumption_ids=tuple(value.get("assumption_ids", ())),
             extensions=tuple(
                 CryptoExtension.from_dict(item) for item in value.get("extensions", ())
             ),
-            accepted_extension_vocabularies=tuple(
-                value.get("accepted_extension_vocabularies", ())
-            ),
+            accepted_extension_vocabularies=tuple(value.get("accepted_extension_vocabularies", ())),
             provenance=None
             if prov_raw is None
             else CryptoIRProvenance.from_dict(_as_mapping(prov_raw, "provenance")),
@@ -1819,9 +1709,7 @@ class AnalysisResultRef:
         value = _as_mapping(value, "AnalysisResultRef")
         _known_fields(
             value,
-            frozenset(
-                {"result_id", "kind", "subject_identity", "outcome", "attributes"}
-            ),
+            frozenset({"result_id", "kind", "subject_identity", "outcome", "attributes"}),
             "AnalysisResultRef",
         )
         return cls(
@@ -1846,12 +1734,8 @@ class AuthorizationDecisionRef:
     LAYER: ClassVar[AuthorityKind] = AuthorityKind.AUTHORIZATION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "decision_id", _identifier(self.decision_id, "decision_id")
-        )
-        object.__setattr__(
-            self, "candidate_id", _identifier(self.candidate_id, "candidate_id")
-        )
+        object.__setattr__(self, "decision_id", _identifier(self.decision_id, "decision_id"))
+        object.__setattr__(self, "candidate_id", _identifier(self.candidate_id, "candidate_id"))
         object.__setattr__(self, "verdict", _text(self.verdict, "verdict"))
         object.__setattr__(self, "policy_id", _text(self.policy_id, "policy_id"))
         object.__setattr__(self, "attributes", _attributes(self.attributes))
@@ -1895,9 +1779,7 @@ def record_layer(record: Any) -> AuthorityKind:
 
     layer = getattr(type(record), "LAYER", None)
     if not isinstance(layer, AuthorityKind):
-        raise CryptoIRValidationError(
-            f"{type(record).__name__} does not declare a record layer"
-        )
+        raise CryptoIRValidationError(f"{type(record).__name__} does not declare a record layer")
     return layer
 
 
@@ -1923,9 +1805,7 @@ def observation_provenance(
 ) -> CryptoIRProvenance:
     """Build observation-layer provenance with required observation bindings."""
 
-    finality_value = (
-        finality.value if isinstance(finality, FinalityStatus) else str(finality)
-    )
+    finality_value = finality.value if isinstance(finality, FinalityStatus) else str(finality)
     retraction_value = (
         retraction_status.value
         if isinstance(retraction_status, RetractionStatus)

@@ -231,15 +231,11 @@ def test_bind_rejects_forbidden_custody_fields() -> None:
 
 def test_bind_requires_sequence_or_ticket() -> None:
     with pytest.raises(GuardValidationError, match="sequence or ticket"):
-        XRPLTransactionCandidate.from_dict(
-            _xrp_payment(sequence=None, ticket_sequence=None)
-        )
+        XRPLTransactionCandidate.from_dict(_xrp_payment(sequence=None, ticket_sequence=None))
 
 
 def test_bind_ticket_sequence() -> None:
-    cand = XRPLTransactionCandidate.from_dict(
-        _xrp_payment(sequence=None, ticket_sequence=55)
-    )
+    cand = XRPLTransactionCandidate.from_dict(_xrp_payment(sequence=None, ticket_sequence=55))
     assert cand.ticket_sequence == 55
     guard = _guard()
     binding = guard.bind_transaction(cand, ledger_epoch=_ledger_epoch())
@@ -309,9 +305,7 @@ def test_evaluate_allows_clean_xrp_payment() -> None:
 
 def test_evaluate_allows_issued_and_partial_with_delivered() -> None:
     guard = _guard()
-    binding = guard.bind_transaction(
-        _partial_payment(), ledger_epoch=_ledger_epoch()
-    )
+    binding = guard.bind_transaction(_partial_payment(), ledger_epoch=_ledger_epoch())
     assert binding.effects[0].delivered_amount_value == "1000000"
     request = _request_for(guard, binding, "req:partial-ok")
     decision = guard.evaluate(
@@ -323,9 +317,7 @@ def test_evaluate_allows_issued_and_partial_with_delivered() -> None:
     )
     assert decision.allowed is True
 
-    issued_binding = guard.bind_transaction(
-        _issued_payment(), ledger_epoch=_ledger_epoch()
-    )
+    issued_binding = guard.bind_transaction(_issued_payment(), ledger_epoch=_ledger_epoch())
     assert issued_binding.effects[0].issuer == ISSUER
     request2 = _request_for(guard, issued_binding, "req:issued-ok")
     decision2 = guard.evaluate(
@@ -346,9 +338,7 @@ def test_evaluate_stale_compliance_blocks() -> None:
         binding,
         request=request,
         security_results={req: "pass" for req in request.security_requirement_ids},
-        compliance_results={
-            req: "stale" for req in request.compliance_requirement_ids
-        },
+        compliance_results={req: "stale" for req in request.compliance_requirement_ids},
         now=_NOW_OK,
     )
     assert decision.outcome is TransactionVerdictOutcome.STALE

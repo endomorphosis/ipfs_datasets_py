@@ -60,9 +60,7 @@ def _validate_cid(value: str, label: str) -> str:
         encoded = value[1:].upper()
         raw = base64.b32decode(encoded + ("=" * ((-len(encoded)) % 8)))
     except (ValueError, base64.binascii.Error) as exc:
-        raise ProjectionError(
-            f"{label} must be an ir_core raw/sha2-256 CIDv1"
-        ) from exc
+        raise ProjectionError(f"{label} must be an ir_core raw/sha2-256 CIDv1") from exc
     if len(raw) != 36 or not raw.startswith(_IR_CORE_CID_HEADER):
         raise ProjectionError(f"{label} must be an ir_core raw/sha2-256 CIDv1")
     return value
@@ -137,9 +135,7 @@ class ProjectorConfig:
             if type(getattr(self, name)) is not int or getattr(self, name) <= 0:
                 raise ProjectionError(f"{name} must be a positive integer")
         if self.schema_version != PROJECTOR_CONFIG_SCHEMA_VERSION:
-            raise ProjectionError(
-                f"unsupported projector config schema {self.schema_version!r}"
-            )
+            raise ProjectionError(f"unsupported projector config schema {self.schema_version!r}")
         if type(self.emit_inferred_candidates) is not bool:
             raise ProjectionError("emit_inferred_candidates must be a bool")
 
@@ -155,9 +151,7 @@ class ProjectorConfig:
 
     @property
     def cid(self) -> str:
-        return canonical_config_cid(
-            self.to_dict(), schema_version=self.schema_version
-        )
+        return canonical_config_cid(self.to_dict(), schema_version=self.schema_version)
 
 
 @dataclass(frozen=True, slots=True)
@@ -220,17 +214,10 @@ class SuppliedEvidenceFact:
             SolidityAuthorityType.REVIEWED_CLAIM,
             SolidityAuthorityType.VERIFIED_RESULT,
         }:
-            raise ProjectionError(
-                "supplied facts must use reviewed_claim or verified_result"
-            )
+            raise ProjectionError("supplied facts must use reviewed_claim or verified_result")
         for name in ("predicate", "code_unit_cid"):
             value = getattr(self, name)
-            if (
-                not isinstance(value, str)
-                or not value
-                or value != value.strip()
-                or "\x00" in value
-            ):
+            if not isinstance(value, str) or not value or value != value.strip() or "\x00" in value:
                 raise ProjectionError(f"supplied fact {name} is invalid")
         _validate_cid(self.code_unit_cid, "supplied fact code_unit_cid")
         if (
@@ -238,13 +225,8 @@ class SuppliedEvidenceFact:
             or not isinstance(self.confidence, (int, float))
             or not 0.0 <= float(self.confidence) <= 1.0
         ):
-            raise ProjectionError(
-                "supplied fact confidence must be between zero and one"
-            )
-        if (
-            self.authority_type is SolidityAuthorityType.REVIEWED_CLAIM
-            and not self.review_id
-        ):
+            raise ProjectionError("supplied fact confidence must be between zero and one")
+        if self.authority_type is SolidityAuthorityType.REVIEWED_CLAIM and not self.review_id:
             raise ProjectionError("reviewed_claim requires review_id")
         if (
             self.authority_type is SolidityAuthorityType.VERIFIED_RESULT
@@ -288,12 +270,7 @@ class StructuralFact:
             raise ProjectionError("extraction method is invalid")
         for name in ("predicate", "code_unit_cid", "source_cid", "config_cid"):
             value = getattr(self, name)
-            if (
-                not isinstance(value, str)
-                or not value
-                or value != value.strip()
-                or "\x00" in value
-            ):
+            if not isinstance(value, str) or not value or value != value.strip() or "\x00" in value:
                 raise ProjectionError(f"structural {name} is invalid")
         for name in ("code_unit_cid", "source_cid", "config_cid"):
             _validate_cid(getattr(self, name), f"structural {name}")
@@ -305,36 +282,25 @@ class StructuralFact:
             raise ProjectionError("confidence must be between zero and one")
         object.__setattr__(self, "confidence", float(self.confidence))
         if self.schema_version != PROJECTOR_SCHEMA_VERSION:
-            raise ProjectionError(
-                f"unsupported structural fact schema {self.schema_version!r}"
-            )
+            raise ProjectionError(f"unsupported structural fact schema {self.schema_version!r}")
         if self.extraction_method is ExtractionMethod.DETERMINISTIC_SYNTAX:
             if self.authority_type is not SolidityAuthorityType.OBSERVED_SYNTAX:
-                raise ProjectionError(
-                    "deterministic syntax must use observed_syntax authority"
-                )
+                raise ProjectionError("deterministic syntax must use observed_syntax authority")
             if self.confidence != 1.0 or self.model_id or self.model_revision:
                 raise ProjectionError(
-                    "deterministic facts cannot carry model identity or "
-                    "reduced confidence"
+                    "deterministic facts cannot carry model identity or reduced confidence"
                 )
         elif self.extraction_method is ExtractionMethod.HEURISTIC_INFERENCE:
             if self.authority_type is not SolidityAuthorityType.INFERRED_CANDIDATE:
-                raise ProjectionError(
-                    "heuristic inference must use inferred_candidate authority"
-                )
+                raise ProjectionError("heuristic inference must use inferred_candidate authority")
         elif self.extraction_method is ExtractionMethod.REVIEWED_SUPPLIED:
             if self.authority_type is not SolidityAuthorityType.REVIEWED_CLAIM:
-                raise ProjectionError(
-                    "reviewed supply must use reviewed_claim authority"
-                )
+                raise ProjectionError("reviewed supply must use reviewed_claim authority")
             if not self.review_id:
                 raise ProjectionError("reviewed facts require review_id")
         elif self.extraction_method is ExtractionMethod.VERIFIED_SUPPLIED:
             if self.authority_type is not SolidityAuthorityType.VERIFIED_RESULT:
-                raise ProjectionError(
-                    "verified supply must use verified_result authority"
-                )
+                raise ProjectionError("verified supply must use verified_result authority")
             if not self.verification_id:
                 raise ProjectionError("verified facts require verification_id")
         computed = self.identity.cid
@@ -396,31 +362,23 @@ class ProjectionResult:
 
     def __post_init__(self) -> None:
         if not self.source_cid or not self.config_cid:
-            raise ProjectionError(
-                "projection source_cid and config_cid are required"
-            )
+            raise ProjectionError("projection source_cid and config_cid are required")
         _validate_cid(self.source_cid, "projection source_cid")
         _validate_cid(self.config_cid, "projection config_cid")
         if self.schema_version != PROJECTOR_SCHEMA_VERSION:
-            raise ProjectionError(
-                f"unsupported projection schema {self.schema_version!r}"
-            )
+            raise ProjectionError(f"unsupported projection schema {self.schema_version!r}")
         if self.language != _LANGUAGE:
             raise ProjectionError("projection language must be solidity")
         if not isinstance(self.path, str) or not self.path:
             raise ProjectionError("projection path must be non-empty")
         if self.quality_is_security_label is not False:
-            raise ProjectionError(
-                "corpus quality must never become a security label"
-            )
+            raise ProjectionError("corpus quality must never become a security label")
         if self.quality_score is not None and (
             isinstance(self.quality_score, bool)
             or not isinstance(self.quality_score, (int, float))
             or not 0.0 <= float(self.quality_score) <= 1.0
         ):
-            raise ProjectionError(
-                "quality_score must be between zero and one when present"
-            )
+            raise ProjectionError("quality_score must be between zero and one when present")
         if self.quality_score is not None:
             object.__setattr__(self, "quality_score", float(self.quality_score))
         units = tuple(sorted(self.code_units, key=lambda item: item.cid))
@@ -443,9 +401,7 @@ class ProjectionResult:
             raise ProjectionError("projection contains duplicate structural facts")
         unit_ids = {item.cid for item in units}
         if any(item.code_unit_cid not in unit_ids for item in facts):
-            raise ProjectionError(
-                "structural fact references a code unit outside the result"
-            )
+            raise ProjectionError("structural fact references a code unit outside the result")
         object.__setattr__(self, "code_units", units)
         object.__setattr__(self, "structural_facts", facts)
         object.__setattr__(self, "diagnostics", diagnostics)
@@ -469,11 +425,7 @@ class ProjectionResult:
         self, authority: SolidityAuthorityType | str
     ) -> tuple[StructuralFact, ...]:
         authority = require_authority_type(authority)
-        return tuple(
-            item
-            for item in self.structural_facts
-            if item.authority_type is authority
-        )
+        return tuple(item for item in self.structural_facts if item.authority_type is authority)
 
     def deterministic_dict(self) -> dict[str, Any]:
         return {
@@ -487,9 +439,7 @@ class ProjectionResult:
             "quality_score": self.quality_score,
             "schema_version": self.schema_version,
             "source_cid": self.source_cid,
-            "structural_facts": [
-                item.to_dict() for item in self.structural_facts
-            ],
+            "structural_facts": [item.to_dict() for item in self.structural_facts],
         }
 
     @property
@@ -591,13 +541,10 @@ class _ProjectionBuilder:
             "prefix and full-content digest"
         )
         if not any(
-            item.code is DiagnosticCode.LIMIT_EXCEEDED
-            and item.message == message
+            item.code is DiagnosticCode.LIMIT_EXCEEDED and item.message == message
             for item in self.diagnostics
         ):
-            self.diagnostics.append(
-                ProjectionDiagnostic(DiagnosticCode.LIMIT_EXCEEDED, message)
-            )
+            self.diagnostics.append(ProjectionDiagnostic(DiagnosticCode.LIMIT_EXCEEDED, message))
         return _bounded_text(value, self.config.max_predicate_chars)
 
     def add_unit(
@@ -619,9 +566,7 @@ class _ProjectionBuilder:
                 )
             )
             # Still fail closed by raising so identities stay consistent.
-            raise ProjectionError(
-                f"code unit budget {self.config.max_code_units} exceeded"
-            )
+            raise ProjectionError(f"code unit budget {self.config.max_code_units} exceeded")
         clean = dict(payload)
         clean["grants_execution_authority"] = False
         clean["authority_type"] = SolidityAuthorityType.OBSERVED_SYNTAX.value
@@ -655,13 +600,11 @@ class _ProjectionBuilder:
             self.diagnostics.append(
                 ProjectionDiagnostic(
                     DiagnosticCode.LIMIT_EXCEEDED,
-                    f"structural fact budget "
-                    f"{self.config.max_structural_facts} exceeded",
+                    f"structural fact budget {self.config.max_structural_facts} exceeded",
                 )
             )
             raise ProjectionError(
-                f"structural fact budget {self.config.max_structural_facts} "
-                "exceeded"
+                f"structural fact budget {self.config.max_structural_facts} exceeded"
             )
         fact = StructuralFact(
             kind=kind,
@@ -870,9 +813,7 @@ class _ProjectionBuilder:
                 parent_cids=(type_unit.cid, self.source_cid),
                 payload={
                     "enclosing": guard.enclosing or type_def.name,
-                    "expression": _bounded_text(
-                        guard.expression, self.config.max_excerpt_chars
-                    ),
+                    "expression": _bounded_text(guard.expression, self.config.max_excerpt_chars),
                     "guard_kind": guard.kind.value,
                     "span": _span_dict(guard.span),
                     "unit_index": index,
@@ -893,9 +834,7 @@ class _ProjectionBuilder:
                 payload={
                     "effect_kind": effect.kind.value,
                     "enclosing": effect.enclosing or type_def.name,
-                    "expression": _bounded_text(
-                        effect.expression, self.config.max_excerpt_chars
-                    ),
+                    "expression": _bounded_text(effect.expression, self.config.max_excerpt_chars),
                     "span": _span_dict(effect.span),
                     "unit_index": index,
                 },
@@ -960,19 +899,13 @@ class SolidityGraphProjector:
         else:
             raise TypeError("source_body must be str or SolidityCPTSourceBody")
         if body_sha256 != row.source_body_sha256:
-            raise ProjectionError(
-                "source body digest does not match row.source_body_sha256"
-            )
+            raise ProjectionError("source body digest does not match row.source_body_sha256")
         if isinstance(supplied_facts, (str, bytes, bytearray)) or not isinstance(
             supplied_facts, Sequence
         ):
             raise TypeError("supplied_facts must be a sequence")
-        if not all(
-            isinstance(item, SuppliedEvidenceFact) for item in supplied_facts
-        ):
-            raise TypeError(
-                "every supplied fact must be SuppliedEvidenceFact"
-            )
+        if not all(isinstance(item, SuppliedEvidenceFact) for item in supplied_facts):
+            raise TypeError("every supplied fact must be SuppliedEvidenceFact")
 
         source_cid = canonical_source_row_cid(row)
         builder = _ProjectionBuilder(
@@ -1122,13 +1055,10 @@ class SolidityGraphProjector:
         unit_ids = {item.cid for item in builder.units}
         for supplied in supplied_facts:
             if supplied.code_unit_cid not in unit_ids:
-                raise ProjectionError(
-                    "supplied fact references a code unit outside the projection"
-                )
+                raise ProjectionError("supplied fact references a code unit outside the projection")
             method = (
                 ExtractionMethod.VERIFIED_SUPPLIED
-                if supplied.authority_type
-                is SolidityAuthorityType.VERIFIED_RESULT
+                if supplied.authority_type is SolidityAuthorityType.VERIFIED_RESULT
                 else ExtractionMethod.REVIEWED_SUPPLIED
             )
             builder.add_fact(

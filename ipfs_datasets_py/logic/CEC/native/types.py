@@ -6,8 +6,17 @@ type safety and code clarity across the CEC implementation.
 """
 
 from typing import (
-    Dict, List, Set, Tuple, Optional, Union, Any,
-    Protocol, TypeVar, Callable, TypedDict
+    Dict,
+    List,
+    Set,
+    Tuple,
+    Optional,
+    Union,
+    Any,
+    Protocol,
+    TypeVar,
+    Callable,
+    TypedDict,
 )
 from typing_extensions import NotRequired
 from abc import abstractmethod
@@ -46,8 +55,10 @@ ConfigDict = Dict[str, ConfigValue]
 # TypedDict Definitions
 # ============================================================================
 
+
 class FormulaDict(TypedDict, total=False):
     """Dictionary representation of a formula."""
+
     type: str  # Formula type (atomic, deontic, cognitive, etc.)
     operator: NotRequired[str]  # Operator (O, P, B, K, etc.)
     arguments: NotRequired[List[Any]]  # Formula arguments
@@ -59,6 +70,7 @@ class FormulaDict(TypedDict, total=False):
 
 class ProofResultDict(TypedDict, total=False):
     """Dictionary representation of a proof result."""
+
     is_valid: bool  # Whether proof succeeded
     proof_tree: NotRequired[Any]  # Tree of proof steps
     steps: NotRequired[List[Dict[str, Any]]]  # List of proof steps
@@ -70,6 +82,7 @@ class ProofResultDict(TypedDict, total=False):
 
 class ConversionResultDict(TypedDict, total=False):
     """Dictionary representation of NL conversion result."""
+
     formula: Any  # Converted formula
     confidence: float  # Confidence score (0-1)
     patterns_matched: List[str]  # Patterns that matched
@@ -80,6 +93,7 @@ class ConversionResultDict(TypedDict, total=False):
 
 class NamespaceExport(TypedDict, total=False):
     """Dictionary representation of namespace export."""
+
     sorts: Dict[str, Any]  # Sort definitions
     variables: Dict[str, Any]  # Variable definitions
     functions: Dict[str, Any]  # Function definitions
@@ -90,6 +104,7 @@ class NamespaceExport(TypedDict, total=False):
 
 class GrammarConfig(TypedDict, total=False):
     """Configuration for grammar engine."""
+
     language: str  # Language code (en, es, fr, etc.)
     lexicon_file: NotRequired[str]  # Path to lexicon file
     rules_file: NotRequired[str]  # Path to rules file
@@ -100,6 +115,7 @@ class GrammarConfig(TypedDict, total=False):
 
 class ProverConfig(TypedDict, total=False):
     """Configuration for theorem prover."""
+
     max_depth: int  # Maximum proof depth
     timeout: NotRequired[float]  # Timeout in seconds
     enable_caching: NotRequired[bool]  # Enable proof caching
@@ -112,19 +128,20 @@ class ProverConfig(TypedDict, total=False):
 # Protocols
 # ============================================================================
 
+
 class Formula(Protocol):
     """Protocol for formula objects."""
-    
+
     @abstractmethod
     def __str__(self) -> str:
         """Return string representation of formula."""
         ...
-    
+
     @abstractmethod
     def __eq__(self, other: Any) -> bool:
         """Check formula equality."""
         ...
-    
+
     @abstractmethod
     def free_variables(self) -> Set[str]:
         """Return set of free variables in formula."""
@@ -133,12 +150,12 @@ class Formula(Protocol):
 
 class Term(Protocol):
     """Protocol for term objects."""
-    
+
     @abstractmethod
     def __str__(self) -> str:
         """Return string representation of term."""
         ...
-    
+
     @abstractmethod
     def __eq__(self, other: Any) -> bool:
         """Check term equality."""
@@ -147,30 +164,30 @@ class Term(Protocol):
 
 class Prover(Protocol):
     """Protocol for theorem prover implementations."""
-    
+
     @abstractmethod
     def prove(self, formula: Any, premises: Optional[List[Any]] = None) -> Any:
         """
         Prove a formula given optional premises.
-        
+
         Args:
             formula: Formula to prove
             premises: Optional list of premise formulas
-            
+
         Returns:
             ProofResult object
         """
         ...
-    
+
     @abstractmethod
     def is_provable(self, formula: Any, premises: Optional[List[Any]] = None) -> bool:
         """
         Check if formula is provable without generating full proof.
-        
+
         Args:
             formula: Formula to check
             premises: Optional list of premise formulas
-            
+
         Returns:
             True if provable, False otherwise
         """
@@ -179,26 +196,26 @@ class Prover(Protocol):
 
 class Converter(Protocol):
     """Protocol for NL to DCEC converters."""
-    
+
     @abstractmethod
     def convert(self, text: str, language: str = "en") -> Any:
         """
         Convert natural language text to DCEC formula.
-        
+
         Args:
             text: Natural language text
             language: Language code (default: en)
-            
+
         Returns:
             ConversionResult object
         """
         ...
-    
+
     @abstractmethod
     def add_pattern(self, pattern: str, template: str) -> None:
         """
         Add a new conversion pattern.
-        
+
         Args:
             pattern: Regex pattern for matching
             template: Formula template for conversion
@@ -208,41 +225,41 @@ class Converter(Protocol):
 
 class KnowledgeBase(Protocol):
     """Protocol for knowledge base implementations."""
-    
+
     @abstractmethod
     def add(self, formula: Any) -> str:
         """
         Add formula to knowledge base.
-        
+
         Args:
             formula: Formula to add
-            
+
         Returns:
             Formula ID
         """
         ...
-    
+
     @abstractmethod
     def query(self, pattern: Any) -> List[Any]:
         """
         Query knowledge base for matching formulas.
-        
+
         Args:
             pattern: Query pattern
-            
+
         Returns:
             List of matching formulas
         """
         ...
-    
+
     @abstractmethod
     def remove(self, formula_id: str) -> bool:
         """
         Remove formula from knowledge base.
-        
+
         Args:
             formula_id: ID of formula to remove
-            
+
         Returns:
             True if removed, False if not found
         """
@@ -253,10 +270,10 @@ class KnowledgeBase(Protocol):
 # Generic Type Variables
 # ============================================================================
 
-T = TypeVar('T')  # Generic type variable
-F = TypeVar('F', bound=Formula)  # Formula type variable
-T_co = TypeVar('T_co', covariant=True)  # Covariant type variable
-T_contra = TypeVar('T_contra', contravariant=True)  # Contravariant type variable
+T = TypeVar("T")  # Generic type variable
+F = TypeVar("F", bound=Formula)  # Formula type variable
+T_co = TypeVar("T_co", covariant=True)  # Covariant type variable
+T_contra = TypeVar("T_contra", contravariant=True)  # Contravariant type variable
 
 
 # ============================================================================
@@ -313,9 +330,11 @@ PatternMatch = Tuple[PatternString, float]  # (pattern, confidence)
 # Utility Types
 # ============================================================================
 
+
 # Result types
 class Result(TypedDict, total=False):
     """Generic result type for operations."""
+
     success: bool
     value: NotRequired[Any]
     error: NotRequired[str]
@@ -325,6 +344,7 @@ class Result(TypedDict, total=False):
 # Cache entry
 class CacheEntry(TypedDict):
     """Cache entry with value and metadata."""
+
     value: Any
     timestamp: float
     hits: int
@@ -334,6 +354,7 @@ class CacheEntry(TypedDict):
 # Statistics
 class Statistics(TypedDict, total=False):
     """Statistics for operations."""
+
     total_operations: int
     successful: int
     failed: int
@@ -346,15 +367,16 @@ class Statistics(TypedDict, total=False):
 # Proof Statistics
 # ============================================================================
 
+
 @dataclass
 class ProofStatistics:
     """
     Unified statistics tracking for theorem proving.
-    
+
     This dataclass consolidates proof statistics tracking that was previously
     duplicated across multiple modules (prover_core, shadow_prover, etc.) into
     a single, type-safe structure.
-    
+
     Attributes:
         attempts: Total number of proof attempts
         succeeded: Number of successful proofs
@@ -363,26 +385,27 @@ class ProofStatistics:
         avg_time: Average time per proof in seconds
         cache_hits: Number of cache hits (if caching enabled)
         rules_applied: Count of each rule application by rule name
-    
+
     Methods:
         record_success(steps, time): Record a successful proof
         record_failure(time): Record a failed proof
         record_rule(rule_name): Record an inference rule application
         get_success_rate(): Calculate success rate percentage
         get_stats_dict(): Export as dictionary for compatibility
-    
+
     Examples:
         >>> stats = ProofStatistics()
         >>> stats.record_success(steps=5, time=0.1)
         >>> stats.record_rule("Modus Ponens")
         >>> print(stats.get_success_rate())
         100.0
-    
+
     Notes:
         - This replaces duplicate dict-based statistics tracking
         - Type-safe with dataclass validation
         - Provides consistent API across all provers
     """
+
     attempts: int = 0
     succeeded: int = 0
     failed: int = 0
@@ -390,11 +413,11 @@ class ProofStatistics:
     avg_time: float = 0.0
     cache_hits: int = 0
     rules_applied: Dict[str, int] = field(default_factory=dict)
-    
+
     def record_success(self, steps: int, time: float) -> None:
         """
         Record a successful proof.
-        
+
         Args:
             steps: Number of inference steps taken
             time: Time taken in seconds
@@ -403,46 +426,46 @@ class ProofStatistics:
         self.succeeded += 1
         self.steps_taken += steps
         self._update_avg_time(time)
-    
+
     def record_failure(self, time: float) -> None:
         """
         Record a failed proof.
-        
+
         Args:
             time: Time taken in seconds
         """
         self.attempts += 1
         self.failed += 1
         self._update_avg_time(time)
-    
+
     def record_rule(self, rule_name: str) -> None:
         """
         Record an inference rule application.
-        
+
         Args:
             rule_name: Name of the inference rule that was applied
         """
         self.rules_applied[rule_name] = self.rules_applied.get(rule_name, 0) + 1
-    
+
     def record_cache_hit(self) -> None:
         """Record a cache hit."""
         self.cache_hits += 1
-    
+
     def get_success_rate(self) -> float:
         """
         Calculate success rate percentage.
-        
+
         Returns:
             Success rate as percentage (0-100), or 0 if no attempts
         """
         if self.attempts == 0:
             return 0.0
         return (self.succeeded / self.attempts) * 100.0
-    
+
     def get_stats_dict(self) -> Dict[str, Any]:
         """
         Export statistics as dictionary for backward compatibility.
-        
+
         Returns:
             Dictionary with all statistics
         """
@@ -456,11 +479,11 @@ class ProofStatistics:
             "rules_applied": self.rules_applied.copy(),
             "success_rate": self.get_success_rate(),
         }
-    
+
     def _update_avg_time(self, time: float) -> None:
         """
         Update average time using incremental mean formula.
-        
+
         Args:
             time: Time for this proof attempt in seconds
         """
@@ -468,7 +491,7 @@ class ProofStatistics:
             self.avg_time = time
         else:
             self.avg_time = (self.avg_time * (self.attempts - 1) + time) / self.attempts
-    
+
     def reset(self) -> None:
         """Reset all statistics to initial state."""
         self.attempts = 0

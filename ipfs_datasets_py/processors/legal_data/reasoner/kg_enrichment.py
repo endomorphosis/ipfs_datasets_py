@@ -81,8 +81,7 @@ def build_relation_enrichment_adapter(
 ) -> Dict[str, Any]:
     """Build frame-role enrichment records using previously linked entities."""
     link_by_entity = {
-        row["entity_ref"]: row
-        for row in (entity_link_adapter.get("entity_links") or [])
+        row["entity_ref"]: row for row in (entity_link_adapter.get("entity_links") or [])
     }
 
     relations: List[Dict[str, Any]] = []
@@ -113,7 +112,8 @@ def build_relation_enrichment_adapter(
         relation_confidence = min(confidences)
         frame_kind = str(getattr(frame, "kind", "frame"))
         relation_src = f"{frame_ref}|{frame_kind}|" + "|".join(
-            f"{role}:{data['kg_id']}" for role, data in sorted(role_links.items(), key=lambda kv: kv[0])
+            f"{role}:{data['kg_id']}"
+            for role, data in sorted(role_links.items(), key=lambda kv: kv[0])
         )
         relation_id = "kg:relation:" + hashlib.sha1(relation_src.encode("utf-8")).hexdigest()[:12]
         relations.append(
@@ -284,7 +284,9 @@ def build_kg_drift_assessment(
     """Assess KG enrichment drift risk to guard against relation explosion."""
     relations = list(candidate_relation_adapter.get("relations") or [])
     candidate_relation_count = len(relations)
-    candidate_frame_count = int((candidate_relation_adapter.get("summary") or {}).get("frame_count") or 0)
+    candidate_frame_count = int(
+        (candidate_relation_adapter.get("summary") or {}).get("frame_count") or 0
+    )
 
     baseline_relation_count = int(max(0, baseline_relation_count))
     baseline_frame_count = int(max(0, baseline_frame_count))

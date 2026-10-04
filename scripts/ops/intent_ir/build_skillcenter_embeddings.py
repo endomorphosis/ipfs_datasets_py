@@ -36,9 +36,7 @@ from ipfs_datasets_py.logic.intent_ir.source_adapters.snapshot import (  # noqa:
 )
 
 
-DEFAULT_MANIFEST = (
-    REPOSITORY_ROOT / "tests/fixtures/intent_ir/skillcenter/manifest.json"
-)
+DEFAULT_MANIFEST = REPOSITORY_ROOT / "tests/fixtures/intent_ir/skillcenter/manifest.json"
 
 
 def _positive_int(value: str) -> int:
@@ -85,28 +83,21 @@ def _load_accelerate_router() -> tuple[Callable[..., Any], Callable[[], dict[str
             sys.path.remove(candidate_text)
         sys.path.insert(0, candidate_text)
         for module_name in tuple(sys.modules):
-            if module_name == "ipfs_accelerate_py" or module_name.startswith(
-                "ipfs_accelerate_py."
-            ):
+            if module_name == "ipfs_accelerate_py" or module_name.startswith("ipfs_accelerate_py."):
                 sys.modules.pop(module_name, None)
         importlib.invalidate_caches()
         try:
-            module = importlib.import_module(
-                "ipfs_accelerate_py.embeddings_router"
-            )
+            module = importlib.import_module("ipfs_accelerate_py.embeddings_router")
             return module.embed_texts_batched, module.get_last_embedding_trace
         except (ImportError, AttributeError):
             continue
-    raise RuntimeError(
-        "ipfs_accelerate_py.embeddings_router with embed_texts_batched is required"
-    )
+    raise RuntimeError("ipfs_accelerate_py.embeddings_router with embed_texts_batched is required")
 
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
-            "Embed one pinned SkillCenter pilot bundle into atomic, resumable "
-            "Parquet checkpoints."
+            "Embed one pinned SkillCenter pilot bundle into atomic, resumable Parquet checkpoints."
         )
     )
     parser.add_argument(
@@ -186,8 +177,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     snapshot = pilot.snapshot_for(bundle)
 
     cache_dir = args.cache_dir or (
-        _xdg_path("XDG_CACHE_HOME", "~/.cache")
-        / "ipfs_datasets_py/skillcenter"
+        _xdg_path("XDG_CACHE_HOME", "~/.cache") / "ipfs_datasets_py/skillcenter"
     )
     output_dir = args.output_dir or (
         _xdg_path("XDG_DATA_HOME", "~/.local/share")
@@ -198,9 +188,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     cache = SkillCenterSnapshotCache(
         cache_dir,
-        fetcher=HuggingFaceSkillCenterFetcher(
-            local_files_only=bool(args.offline)
-        ),
+        fetcher=HuggingFaceSkillCenterFetcher(local_files_only=bool(args.offline)),
     )
     reader = cache.open_reader(snapshot)
     embed_texts_batched, get_last_embedding_trace = _load_accelerate_router()

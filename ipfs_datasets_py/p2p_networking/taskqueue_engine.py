@@ -5,6 +5,7 @@ Business logic extracted from mcplusplus_taskqueue_tools.py (1454 lines → thin
 All methods mirror the corresponding tool functions but live outside the MCP layer so
 they can be used, tested, and imported independently.
 """
+
 from __future__ import annotations
 
 import logging
@@ -32,6 +33,7 @@ except (ImportError, ModuleNotFoundError):
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _unavailable(extra: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Standard response when MCP++ task queue is not available."""
@@ -74,6 +76,7 @@ def _get_wrapper() -> Any:
 # ---------------------------------------------------------------------------
 # TaskQueueEngine
 # ---------------------------------------------------------------------------
+
 
 class TaskQueueEngine:
     """Core task queue operations, independent of MCP tool layer."""
@@ -187,7 +190,13 @@ class TaskQueueEngine:
         """List tasks in the P2P queue with filtering."""
         wrapper = _get_wrapper()
         if wrapper is None:
-            return {**_unavailable(), "tasks": [], "total_count": 0, "returned_count": 0, "has_more": False}
+            return {
+                **_unavailable(),
+                "tasks": [],
+                "total_count": 0,
+                "returned_count": 0,
+                "has_more": False,
+            }
         try:
             result = await wrapper.list_tasks(
                 status_filter=status_filter,

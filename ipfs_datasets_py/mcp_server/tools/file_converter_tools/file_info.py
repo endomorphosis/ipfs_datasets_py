@@ -7,9 +7,7 @@ Get information about a file using the file_converter package exports.
 from ipfs_datasets_py.processors.file_converter.exports import get_file_info
 
 
-async def file_info_tool(
-    input_path: str
-) -> dict:
+async def file_info_tool(input_path: str) -> dict:
     """
     Get information about a file.
 

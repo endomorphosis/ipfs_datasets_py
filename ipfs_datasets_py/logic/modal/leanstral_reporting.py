@@ -30,9 +30,7 @@ from .leanstral_verifier import (
 
 
 LEANSTRAL_RULE_GAP_REPORT_SCHEMA_VERSION = "legal-ir-leanstral-rule-gap-report-v1"
-LEANSTRAL_PATCH_FEEDBACK_REPORT_SCHEMA_VERSION = (
-    "legal-ir-leanstral-patch-feedback-report-v1"
-)
+LEANSTRAL_PATCH_FEEDBACK_REPORT_SCHEMA_VERSION = "legal-ir-leanstral-patch-feedback-report-v1"
 LEANSTRAL_PATCH_OUTCOME_ACCEPTED_IMPROVEMENT = "accepted_improvement"
 LEANSTRAL_PATCH_OUTCOME_QUALITY_REGRESSION = "quality_regression"
 LEANSTRAL_PATCH_OUTCOME_UNSUPPORTED_HYPOTHESIS = "unsupported_hypothesis"
@@ -273,9 +271,7 @@ class LeanstralRuleGapEvidence:
                 dict(artifact) for artifact in self.hammer_guidance_artifacts
             ],
             "hammer_proof_status": _json_ready(self.hammer_proof_status),
-            "hammer_reconstruction_status": _json_ready(
-                self.hammer_reconstruction_status
-            ),
+            "hammer_reconstruction_status": _json_ready(self.hammer_reconstruction_status),
             "metric_attribution": _json_ready(self.metric_attribution),
             "proof_obligation_ids": list(self.proof_obligation_ids),
             "reasons": list(self.reasons),
@@ -315,17 +311,13 @@ class LeanstralRuleGap:
         return {
             "action": self.action,
             "affected_ir_families": list(self.affected_ir_families),
-            "conflicting_evidence": [
-                evidence.to_dict() for evidence in self.conflicting_evidence
-            ],
+            "conflicting_evidence": [evidence.to_dict() for evidence in self.conflicting_evidence],
             "gap_id": self.gap_id,
             "missing_semantic_rule": dict(self.missing_semantic_rule),
             "normalized_rule_key": self.normalized_rule_key,
             "priority": self.priority,
             "status": self.status,
-            "supporting_evidence": [
-                evidence.to_dict() for evidence in self.supporting_evidence
-            ],
+            "supporting_evidence": [evidence.to_dict() for evidence in self.supporting_evidence],
             "target_component": self.target_component,
             "target_surface": self.target_surface.to_dict(),
             "title": self.title,
@@ -459,8 +451,7 @@ class LeanstralPatchOutcomeRecord:
             "feature_cluster_id": self.feature_cluster_id,
             "lineage": self.lineage.to_dict(),
             "metric_deltas": {
-                str(key): float(value)
-                for key, value in sorted(self.metric_deltas.items())
+                str(key): float(value) for key, value in sorted(self.metric_deltas.items())
             },
             "outcome": self.outcome,
             "outcome_id": self.outcome_id,
@@ -602,9 +593,7 @@ def aggregate_verified_audits(
                 )
                 accumulators[signature] = accumulator
             else:
-                accumulator.families = _dedupe_strings(
-                    [*accumulator.families, *families]
-                )
+                accumulator.families = _dedupe_strings([*accumulator.families, *families])
             accumulator.supporting.append(evidence)
             supporting_count += 1
             for conflict in pending_conflicts.pop(signature, []):
@@ -623,8 +612,7 @@ def aggregate_verified_audits(
             pending_orphan_rejections.setdefault(signature, []).append(
                 _rejected_audit(
                     record,
-                    tuple(_verification_reasons(verification))
-                    or ("no_verified_supporting_audit",),
+                    tuple(_verification_reasons(verification)) or ("no_verified_supporting_audit",),
                 )
             )
 
@@ -691,8 +679,7 @@ def build_leanstral_patch_feedback_report(
     compiler_targets = tuple(
         record.compiler_target
         for record in outcomes
-        if record.compiler_target
-        and record.outcome == LEANSTRAL_PATCH_OUTCOME_ACCEPTED_IMPROVEMENT
+        if record.compiler_target and record.outcome == LEANSTRAL_PATCH_OUTCOME_ACCEPTED_IMPROVEMENT
     )
     return LeanstralPatchFeedbackReport(
         schema_version=LEANSTRAL_PATCH_FEEDBACK_REPORT_SCHEMA_VERSION,
@@ -718,31 +705,41 @@ def classify_leanstral_patch_outcome(record: Any) -> str:
     if bool(metadata.get("leanstral_stale_evidence")) or status == "stale":
         return LEANSTRAL_PATCH_OUTCOME_STALE_EVIDENCE
 
-    patch_status = str(
-        data.get("patch_status")
-        or metadata.get("completed_patch_status")
-        or metadata.get("failed_validation_patch_status")
-        or metadata.get("last_transient_patch_status")
-        or ""
-    ).strip().lower()
-    exec_status = str(
-        data.get("codex_exec_status")
-        or metadata.get("completed_codex_exec_status")
-        or metadata.get("failed_validation_codex_exec_status")
-        or metadata.get("last_transient_codex_exec_status")
-        or ""
-    ).strip().lower()
+    patch_status = (
+        str(
+            data.get("patch_status")
+            or metadata.get("completed_patch_status")
+            or metadata.get("failed_validation_patch_status")
+            or metadata.get("last_transient_patch_status")
+            or ""
+        )
+        .strip()
+        .lower()
+    )
+    exec_status = (
+        str(
+            data.get("codex_exec_status")
+            or metadata.get("completed_codex_exec_status")
+            or metadata.get("failed_validation_codex_exec_status")
+            or metadata.get("last_transient_codex_exec_status")
+            or ""
+        )
+        .strip()
+        .lower()
+    )
     validation = _patch_feedback_validation_report(data, metadata)
-    validation_status = str(
-        validation.get("main_apply_validation_status")
-        or validation.get("validation_status")
-        or validation.get("status")
-        or ""
-    ).strip().lower()
+    validation_status = (
+        str(
+            validation.get("main_apply_validation_status")
+            or validation.get("validation_status")
+            or validation.get("status")
+            or ""
+        )
+        .strip()
+        .lower()
+    )
     target_status = str(validation.get("target_metric_status") or "").strip().lower()
-    holdout_status = str(
-        validation.get("holdout_target_metric_status") or ""
-    ).strip().lower()
+    holdout_status = str(validation.get("holdout_target_metric_status") or "").strip().lower()
     regressed = bool(
         _sequence_values(validation.get("regressed_metrics"))
         or _sequence_values(validation.get("hard_regressed_metrics"))
@@ -800,9 +797,7 @@ def leanstral_compiler_target_from_patch_record(record: Any) -> Optional[Dict[st
         else {}
     )
     pre_patch_metrics = _numeric_metric_map(
-        metadata.get("pre_patch_metrics")
-        or attribution.get("pre_patch_metrics")
-        or {}
+        metadata.get("pre_patch_metrics") or attribution.get("pre_patch_metrics") or {}
     )
     post_patch_metrics = _numeric_metric_map(
         metadata.get("post_patch_metrics")
@@ -823,16 +818,15 @@ def leanstral_compiler_target_from_patch_record(record: Any) -> Optional[Dict[st
         "evidence_ids": list(_dedupe_strings(_sequence_values(metadata.get("evidence_ids")))),
         "feature_cluster_id": _feature_cluster_id(data, metadata),
         "gap_id": str(metadata.get("leanstral_gap_id") or ""),
-        "leanstral_drafted_logic_candidates": _drafted_logic_candidates_from_metadata(
-            metadata
-        ),
+        "leanstral_drafted_logic_candidates": _drafted_logic_candidates_from_metadata(metadata),
         "leanstral_guidance_mode": str(
-            metadata.get("leanstral_guidance_mode")
-            or "draft_logic_guidance_only"
+            metadata.get("leanstral_guidance_mode") or "draft_logic_guidance_only"
         ),
         "mutation_cases": list(_dedupe_strings(_sequence_values(metadata.get("mutation_cases")))),
         "normalized_rule_key": str(metadata.get("normalized_rule_key") or ""),
-        "owned_ast_scope": str(metadata.get("owned_ast_scope") or metadata.get("program_synthesis_scope") or ""),
+        "owned_ast_scope": str(
+            metadata.get("owned_ast_scope") or metadata.get("program_synthesis_scope") or ""
+        ),
         "metric_attribution": {
             "metric_deltas": metric_deltas,
             "post_patch_metrics": post_patch_metrics,
@@ -873,9 +867,12 @@ def _patch_feedback_record(item: Any) -> Optional[LeanstralPatchOutcomeRecord]:
         "patch_status": lineage.patch_status,
         "todo_id": lineage.todo_id,
     }
-    outcome_id = "leanstral-patch-outcome-" + hashlib.sha256(
-        json.dumps(payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
-    ).hexdigest()[:16]
+    outcome_id = (
+        "leanstral-patch-outcome-"
+        + hashlib.sha256(
+            json.dumps(payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
+        ).hexdigest()[:16]
+    )
     return LeanstralPatchOutcomeRecord(
         outcome_id=outcome_id,
         outcome=outcome,
@@ -901,11 +898,7 @@ def _patch_feedback_data(item: Any) -> tuple[Dict[str, Any], Dict[str, Any]]:
         if "todo" in item and isinstance(item.get("todo"), Mapping):
             data = dict(item["todo"])
             data.update(
-                {
-                    key: value
-                    for key, value in item.items()
-                    if key not in {"todo", "metadata"}
-                }
+                {key: value for key, value in item.items() if key not in {"todo", "metadata"}}
             )
         else:
             data = dict(item)
@@ -943,11 +936,11 @@ def _patch_feedback_lineage(
         gap_id=str(metadata.get("leanstral_gap_id") or metadata.get("gap_id") or ""),
         normalized_rule_key=str(metadata.get("normalized_rule_key") or ""),
         feature_cluster_id=_feature_cluster_id(data, metadata),
-        target_component=str(metadata.get("target_component") or data.get("target_component") or ""),
+        target_component=str(
+            metadata.get("target_component") or data.get("target_component") or ""
+        ),
         owned_ast_scope=str(
-            metadata.get("owned_ast_scope")
-            or metadata.get("program_synthesis_scope")
-            or ""
+            metadata.get("owned_ast_scope") or metadata.get("program_synthesis_scope") or ""
         ),
         todo_id=str(data.get("todo_id") or ""),
         todo_status=str(data.get("status") or data.get("todo_status") or ""),
@@ -1030,15 +1023,17 @@ def _leanstral_patch_verified(
     if isinstance(gate, Mapping) and gate.get("accepted") is False:
         return False
     target_status = str(validation.get("target_metric_status") or "").strip().lower()
-    holdout_status = str(
-        validation.get("holdout_target_metric_status") or ""
-    ).strip().lower()
-    validation_status = str(
-        validation.get("main_apply_validation_status")
-        or validation.get("validation_status")
-        or validation.get("status")
-        or ""
-    ).strip().lower()
+    holdout_status = str(validation.get("holdout_target_metric_status") or "").strip().lower()
+    validation_status = (
+        str(
+            validation.get("main_apply_validation_status")
+            or validation.get("validation_status")
+            or validation.get("status")
+            or ""
+        )
+        .strip()
+        .lower()
+    )
     if target_status in {"regressed", "failed", "timeout", "unavailable"}:
         return False
     if holdout_status in {"regressed", "failed", "timeout", "unavailable"}:
@@ -1133,11 +1128,7 @@ def _drafted_logic_candidates_from_metadata(
         candidate_text = _bounded_string(item.get("candidate"), 240)
         if not candidate_text:
             continue
-        payload = {
-            str(key): value
-            for key, value in dict(item).items()
-            if str(key) in allowed_keys
-        }
+        payload = {str(key): value for key, value in dict(item).items() if str(key) in allowed_keys}
         payload["candidate"] = candidate_text
         payload["guidance_only"] = True
         payload["intended_use"] = "guidance_only"
@@ -1155,11 +1146,7 @@ def _sequence_values(value: Any) -> List[str]:
     if value is None:
         return []
     if isinstance(value, Mapping):
-        return [
-            str(key)
-            for key, item in value.items()
-            if item not in (None, "", [], {})
-        ]
+        return [str(key) for key, item in value.items() if item not in (None, "", [], {})]
     if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         return [str(item) for item in value if str(item)]
     text = str(value).strip()
@@ -1175,9 +1162,7 @@ def _gap_from_accumulator(
     support = _dedupe_evidence(accumulator.supporting)
     conflicts = _dedupe_evidence(accumulator.conflicting)
     all_obligations = _dedupe_strings(
-        obligation
-        for evidence in support
-        for obligation in evidence.proof_obligation_ids
+        obligation for evidence in support for obligation in evidence.proof_obligation_ids
     )
     validation_set = _validation_set(
         accumulator.surface,
@@ -1192,9 +1177,12 @@ def _gap_from_accumulator(
         "surface": accumulator.surface.component,
         "supporting": [evidence.response_hash for evidence in support],
     }
-    gap_id = "leanstral-gap-" + hashlib.sha256(
-        json.dumps(payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
-    ).hexdigest()[:16]
+    gap_id = (
+        "leanstral-gap-"
+        + hashlib.sha256(
+            json.dumps(payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
+        ).hexdigest()[:16]
+    )
     return LeanstralRuleGap(
         gap_id=gap_id,
         status=LeanstralVerificationOutcome.ACCEPTED.value,
@@ -1413,9 +1401,9 @@ def _owned_surface_alias(
     response: LeanstralAuditResponse,
 ) -> str:
     normalized = component.lower().replace("_", ".").replace("-", ".")
-    raw_normalized = str(
-        surface.get("component", surface.get("target_component", ""))
-    ).strip().lower()
+    raw_normalized = (
+        str(surface.get("component", surface.get("target_component", ""))).strip().lower()
+    )
     raw_normalized = re.sub(r"[^a-z0-9]+", ".", raw_normalized).strip(".")
     rule_text = json.dumps(response.missing_semantic_rule, ensure_ascii=True).lower()
     surface_text = _surface_text(surface).lower()
@@ -1473,9 +1461,7 @@ def _surface_text(surface: Mapping[str, Any]) -> str:
 
 
 def _coerce_audit_record(item: Any) -> _AuditRecord:
-    if isinstance(item, tuple) or (
-        isinstance(item, list) and not isinstance(item, (str, bytes))
-    ):
+    if isinstance(item, tuple) or (isinstance(item, list) and not isinstance(item, (str, bytes))):
         values = list(item)
         if len(values) >= 4:
             request_id = str(getattr(values[0], "request_id", "") or "")
@@ -1504,9 +1490,7 @@ def _coerce_audit_record(item: Any) -> _AuditRecord:
             return _AuditRecord(_coerce_response(values[0]), values[1])
     if isinstance(item, Mapping):
         response = _coerce_response(
-            item.get("response")
-            or item.get("audit_response")
-            or item.get("leanstral_response")
+            item.get("response") or item.get("audit_response") or item.get("leanstral_response")
         )
         verification = (
             item.get("verification")
@@ -1531,9 +1515,8 @@ def _coerce_audit_record(item: Any) -> _AuditRecord:
     response = _coerce_response(getattr(item, "response", None))
     verification = getattr(item, "verification", None) or getattr(item, "verification_result", None)
     request_id = str(getattr(item, "request_id", "") or "").strip()
-    hammer_verification = (
-        getattr(item, "hammer_verification", None)
-        or getattr(item, "hammer_verification_report", None)
+    hammer_verification = getattr(item, "hammer_verification", None) or getattr(
+        item, "hammer_verification_report", None
     )
     return _AuditRecord(
         response,
@@ -1569,7 +1552,9 @@ def _verification_accepted(value: Any) -> bool:
 
 
 def _verification_outcome(value: Any) -> str:
-    outcome = value.get("outcome", "") if isinstance(value, Mapping) else getattr(value, "outcome", "")
+    outcome = (
+        value.get("outcome", "") if isinstance(value, Mapping) else getattr(value, "outcome", "")
+    )
     if isinstance(outcome, LeanstralVerificationOutcome):
         return outcome.value
     return _normalize_record_status(outcome)
@@ -1598,13 +1583,17 @@ def _normalize_record_status(value: Any) -> str:
 
 
 def _verification_reasons(value: Any) -> Sequence[str]:
-    reasons = value.get("reasons", ()) if isinstance(value, Mapping) else getattr(value, "reasons", ())
+    reasons = (
+        value.get("reasons", ()) if isinstance(value, Mapping) else getattr(value, "reasons", ())
+    )
     return _dedupe_strings(str(reason) for reason in reasons or () if str(reason).strip())
 
 
 def _verification_verified_by(value: Any) -> Sequence[str]:
     verified_by = (
-        value.get("verified_by", ()) if isinstance(value, Mapping) else getattr(value, "verified_by", ())
+        value.get("verified_by", ())
+        if isinstance(value, Mapping)
+        else getattr(value, "verified_by", ())
     )
     return _dedupe_strings(str(name) for name in verified_by or () if str(name).strip())
 
@@ -1640,7 +1629,9 @@ def _hammer_guidance_artifacts_from_value(
         hammer_report = candidate.get("hammer_report")
         if isinstance(hammer_report, Mapping):
             artifacts = hammer_report.get("artifacts")
-            if isinstance(artifacts, Sequence) and not isinstance(artifacts, (str, bytes, bytearray)):
+            if isinstance(artifacts, Sequence) and not isinstance(
+                artifacts, (str, bytes, bytearray)
+            ):
                 raw_artifacts.extend(
                     item
                     for item in artifacts
@@ -1803,9 +1794,12 @@ def _evidence_from_record(
         "response_hash": response_hash,
         "role": role,
     }
-    evidence_id = "leanstral-evidence-" + hashlib.sha256(
-        json.dumps(payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
-    ).hexdigest()[:16]
+    evidence_id = (
+        "leanstral-evidence-"
+        + hashlib.sha256(
+            json.dumps(payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
+        ).hexdigest()[:16]
+    )
     hammer_artifacts = _hammer_guidance_artifacts_from_value(record.hammer_verification)
     hammer_reasons = _verification_reasons(record.hammer_verification)
     return LeanstralRuleGapEvidence(
@@ -1871,9 +1865,7 @@ def _drafted_logic_candidates_from_response(
             "candidate": candidate_text,
             "guidance_only": True,
             "intended_use": "guidance_only",
-            "logic_family": _slug(
-                str(item.get("logic_family") or item.get("family") or "legal_ir")
-            )
+            "logic_family": _slug(str(item.get("logic_family") or item.get("family") or "legal_ir"))
             or "legal_ir",
             "request_id": response.request_id,
         }
@@ -1936,9 +1928,12 @@ def _rejected_audit(
         "response_hash": _record_response_hash(record),
         "reasons": list(reasons),
     }
-    audit_id = "leanstral-rejected-" + hashlib.sha256(
-        json.dumps(material, ensure_ascii=True, sort_keys=True).encode("utf-8")
-    ).hexdigest()[:16]
+    audit_id = (
+        "leanstral-rejected-"
+        + hashlib.sha256(
+            json.dumps(material, ensure_ascii=True, sort_keys=True).encode("utf-8")
+        ).hexdigest()[:16]
+    )
     return LeanstralRejectedAudit(
         audit_id=audit_id,
         reasons=tuple(dict.fromkeys(str(reason) for reason in reasons if reason)),
@@ -1948,8 +1943,7 @@ def _rejected_audit(
         verification_outcome=_verification_outcome(record.verification),
         classification=response.classification if response is not None else "",
         proposed_surfaces=tuple(
-            dict(surface)
-            for surface in (response.proposed_compiler_surface if response else ())
+            dict(surface) for surface in (response.proposed_compiler_surface if response else ())
         ),
     )
 
@@ -2010,17 +2004,13 @@ def _request_referenced_examples(record: _AuditRecord) -> List[Dict[str, Any]]:
         span_hashes = sample_hashes.get("source_span_hashes")
         packets.append(
             {
-                "compiler_decompiler_metrics": dict(
-                    packet.get("compiler_decompiler_metrics") or {}
-                )
+                "compiler_decompiler_metrics": dict(packet.get("compiler_decompiler_metrics") or {})
                 if isinstance(packet.get("compiler_decompiler_metrics"), Mapping)
                 else {},
                 "evidence_id": str(packet.get("evidence_id") or ""),
                 "expected_modal_ir_hash": str(sample_hashes.get("modal_ir_hash") or ""),
                 "sample_id": str(sample_hashes.get("sample_id") or ""),
-                "source_span_hashes": dict(span_hashes)
-                if isinstance(span_hashes, Mapping)
-                else {},
+                "source_span_hashes": dict(span_hashes) if isinstance(span_hashes, Mapping) else {},
             }
         )
     return packets
@@ -2074,9 +2064,7 @@ def _metric_attribution_from_record(record: _AuditRecord) -> Dict[str, Any]:
         "pre_patch_metrics": dict(sorted(pre_patch_metrics.items())),
         "schema_version": "legal-ir-leanstral-metric-attribution-v1",
         "source": "leanstral_audit_evidence",
-        "status": "pre_patch_observed"
-        if pre_patch_metrics
-        else "missing_pre_patch_metrics",
+        "status": "pre_patch_observed" if pre_patch_metrics else "missing_pre_patch_metrics",
     }
 
 
@@ -2177,8 +2165,7 @@ def _families(response: LeanstralAuditResponse) -> Sequence[str]:
     families = _dedupe_strings(
         str(family).strip().lower()
         for family in response.affected_ir_families
-        if str(family).strip()
-        and str(family).strip().lower() not in component_labels
+        if str(family).strip() and str(family).strip().lower() not in component_labels
     )
     return families or ("modal",)
 
@@ -2219,24 +2206,18 @@ def _rule_identity(
     if (
         surface.component == "modal.ir_decompiler"
         and "preserv" in normalized_description
-        and (
-            "family" in normalized_description
-            or "classification" in normalized_description
-        )
+        and ("family" in normalized_description or "classification" in normalized_description)
     ):
         counterexample = response.counterexample
         expected = (
-            str(counterexample.get("expected", ""))
-            if isinstance(counterexample, Mapping)
-            else ""
+            str(counterexample.get("expected", "")) if isinstance(counterexample, Mapping) else ""
         ).lower()
         search_text = expected or normalized_description
         ignored = {"compiler", "decompiler", "modal", "unknown"}
         positioned = [
             (search_text.find(str(family).lower()), str(family).lower())
             for family in families
-            if str(family).lower() not in ignored
-            and search_text.find(str(family).lower()) >= 0
+            if str(family).lower() not in ignored and search_text.find(str(family).lower()) >= 0
         ]
         if positioned:
             _position, source_family = min(positioned)

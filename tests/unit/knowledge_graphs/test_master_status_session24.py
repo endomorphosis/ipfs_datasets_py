@@ -39,6 +39,7 @@ import pytest
 # Helpers — lightweight callable stubs for execute_ir_operations callbacks
 # ---------------------------------------------------------------------------
 
+
 def _resolve_value(val, params):
     """Return the literal value; substitute {param} references."""
     if isinstance(val, dict) and "param" in val:
@@ -129,17 +130,20 @@ def _make_executor(engine):
 #    424-426, 430-444, 448, 461-462, 475-476, 590-596, 657-661, 705
 # ===========================================================================
 
+
 class TestIRExecutorMissedPaths:
     """GIVEN an IR operations list WHEN executed THEN specific edge-case lines are hit."""
 
     @pytest.fixture()
     def engine(self):
         from ipfs_datasets_py.knowledge_graphs.core.graph_engine import GraphEngine
+
         return GraphEngine()
 
     @pytest.fixture()
     def executor(self, engine):
         from ipfs_datasets_py.knowledge_graphs.core.query_executor import QueryExecutor
+
         return QueryExecutor(engine)
 
     # ------------------------------------------------------------------
@@ -207,9 +211,7 @@ class TestIRExecutorMissedPaths:
         n1 = engine.create_node(labels=["Person"], properties={"name": "Alice"})
         # Dangling relationship: target does not exist
         engine.create_relationship("LINKED", n1.id, "nonexistent-999", {})
-        r = executor.execute(
-            "MATCH (n:Person) OPTIONAL MATCH (n)-[:LINKED]->(m) RETURN n.name, m"
-        )
+        r = executor.execute("MATCH (n:Person) OPTIONAL MATCH (n)-[:LINKED]->(m) RETURN n.name, m")
         recs = list(r)
         assert isinstance(recs, list)
 
@@ -408,9 +410,7 @@ class TestIRExecutorMissedPaths:
             {"op": "ScanLabel", "label": "Tag", "variable": "n"},
             {
                 "op": "Project",
-                "items": [
-                    {"expression": {"property": "n.name"}, "alias": "n.name"}
-                ],
+                "items": [{"expression": {"property": "n.name"}, "alias": "n.name"}],
                 "distinct": False,
             },
             {
@@ -454,9 +454,7 @@ class TestIRExecutorMissedPaths:
             {"op": "ScanLabel", "label": "Mixed", "variable": "n"},
             {
                 "op": "Project",
-                "items": [
-                    {"expression": {"property": "n.val"}, "alias": "n.val"}
-                ],
+                "items": [{"expression": {"property": "n.val"}, "alias": "n.val"}],
                 "distinct": False,
             },
             {
@@ -493,9 +491,7 @@ class TestIRExecutorMissedPaths:
         WHEN we MERGE and specify ON MATCH SET n.updated = 1
         THEN lines 590-596 are hit and the existing node is updated."""
         n1 = engine.create_node(labels=["Person"], properties={"name": "Alice"})
-        r = executor.execute(
-            'MERGE (n:Person {name: "Alice"}) ON MATCH SET n.updated = 1 RETURN n'
-        )
+        r = executor.execute('MERGE (n:Person {name: "Alice"}) ON MATCH SET n.updated = 1 RETURN n')
         recs = list(r)
         assert recs
         node = recs[0].get("n")
@@ -506,9 +502,7 @@ class TestIRExecutorMissedPaths:
         """GIVEN no existing Carol node
         WHEN we MERGE Carol ON MATCH SET
         THEN ON CREATE path is taken, ON MATCH SET is NOT applied (match_found=False)."""
-        r = executor.execute(
-            'MERGE (n:Person {name: "Carol"}) ON MATCH SET n.flag = 1 RETURN n'
-        )
+        r = executor.execute('MERGE (n:Person {name: "Carol"}) ON MATCH SET n.flag = 1 RETURN n')
         recs = list(r)
         assert recs
         node = recs[0].get("n")
@@ -548,9 +542,7 @@ class TestIRExecutorMissedPaths:
         WHEN the expression evaluates to a single value
         THEN line 705 (lst = [lst]) is hit and exactly one iteration runs."""
         before = len(engine.find_nodes(labels=["NumNode"]))
-        r = executor.execute(
-            "FOREACH (x IN 42 | CREATE (:NumNode {val: x})) RETURN 1"
-        )
+        r = executor.execute("FOREACH (x IN 42 | CREATE (:NumNode {val: x})) RETURN 1")
         list(r)  # consume results
         nodes = engine.find_nodes(labels=["NumNode"])
         # One node created per scalar value (42)
@@ -561,9 +553,7 @@ class TestIRExecutorMissedPaths:
         WHEN none → empty list → no iterations
         THEN no nodes are created."""
         before = len(engine.find_nodes(labels=["NullNode"]))
-        r = executor.execute(
-            "FOREACH (x IN null | CREATE (:NullNode)) RETURN 1"
-        )
+        r = executor.execute("FOREACH (x IN null | CREATE (:NullNode)) RETURN 1")
         list(r)
         after = len(engine.find_nodes(labels=["NullNode"]))
         assert after == before
@@ -691,17 +681,20 @@ class TestIRExecutorMissedPaths:
 # 2. cypher/parser.py — covering missed lines
 # ===========================================================================
 
+
 class TestParserMissedPaths:
     """GIVEN Cypher parser WHEN parsing specific queries THEN missed lines are exercised."""
 
     @pytest.fixture()
     def parser(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.parser import CypherParser
+
         return CypherParser()
 
     @pytest.fixture()
     def lexer(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.lexer import CypherLexer
+
         return CypherLexer()
 
     # ------------------------------------------------------------------
@@ -713,6 +706,7 @@ class TestParserMissedPaths:
         WHEN passed directly to parse()
         THEN line 115 (tokens = query) is hit and the query is parsed correctly."""
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import QueryNode
+
         tokens = lexer.tokenize("MATCH (n:Person) RETURN n")
         ast = parser.parse(tokens)
         assert isinstance(ast, QueryNode)
@@ -722,6 +716,7 @@ class TestParserMissedPaths:
         WHEN passed to parse()
         THEN line 115 is taken and WHERE clause is parsed."""
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import QueryNode
+
         tokens = lexer.tokenize("MATCH (n) WHERE n.age > 18 RETURN n")
         ast = parser.parse(tokens)
         assert isinstance(ast, QueryNode)
@@ -735,6 +730,7 @@ class TestParserMissedPaths:
         WHEN parse() catches it
         THEN line 128-129 raises CypherParseError wrapping the original."""
         from ipfs_datasets_py.knowledge_graphs.cypher.parser import CypherParseError
+
         # Trigger by passing a non-string to the parser (will cause an internal error)
         # We mock _parse_query to raise AttributeError
         with patch.object(parser, "_parse_query", side_effect=AttributeError("oops")):
@@ -750,6 +746,7 @@ class TestParserMissedPaths:
         WHEN _current() is called
         THEN line 134 raises 'Unexpected end of input'."""
         from ipfs_datasets_py.knowledge_graphs.cypher.parser import CypherParseError
+
         parser.current_token = None
         with pytest.raises(CypherParseError, match="Unexpected end of input"):
             parser._current()
@@ -793,6 +790,7 @@ class TestParserMissedPaths:
         THEN line 166 returns False."""
         parser.current_token = None
         from ipfs_datasets_py.knowledge_graphs.cypher.lexer import TokenType
+
         result = parser._match(TokenType.MATCH)
         assert result is False
 
@@ -805,6 +803,7 @@ class TestParserMissedPaths:
         WHEN parsed
         THEN line 202 (break at UNION) is hit and two parts are returned."""
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import QueryNode
+
         ast = parser.parse("MATCH (n) RETURN n UNION ALL MATCH (m) RETURN m")
         assert isinstance(ast, QueryNode)
 
@@ -817,6 +816,7 @@ class TestParserMissedPaths:
         WHEN parsed
         THEN line 303 raises 'Expected node pattern after relationship'."""
         from ipfs_datasets_py.knowledge_graphs.cypher.parser import CypherParseError
+
         with pytest.raises(CypherParseError, match="Expected node pattern after relationship"):
             parser.parse("MATCH (n)-[:REL] RETURN n")
 
@@ -829,6 +829,7 @@ class TestParserMissedPaths:
         WHEN parsed
         THEN lines 349-351 (LT → DASH → direction='left') are taken and parsed OK."""
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import QueryNode
+
         ast = parser.parse("MATCH (n)< -[:REL]-(m) RETURN n")
         assert isinstance(ast, QueryNode)
 
@@ -841,6 +842,7 @@ class TestParserMissedPaths:
         WHEN parsed
         THEN line 367 raises 'Expected relationship type after :'."""
         from ipfs_datasets_py.knowledge_graphs.cypher.parser import CypherParseError
+
         with pytest.raises(CypherParseError, match="Expected relationship type after :"):
             parser.parse("MATCH (n)-[:]-(m) RETURN n")
 
@@ -853,6 +855,7 @@ class TestParserMissedPaths:
         WHEN parsed
         THEN lines 383-385 (GT → direction='right') are taken and parsed OK."""
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import QueryNode
+
         ast = parser.parse("MATCH (n)- >(m) RETURN n")
         assert isinstance(ast, QueryNode)
 
@@ -865,6 +868,7 @@ class TestParserMissedPaths:
         WHEN parsed
         THEN line 501 (break) exits the ON-clause loop and parse succeeds."""
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import QueryNode
+
         ast = parser.parse('MERGE (n:Person {name: "Alice"}) RETURN n')
         assert isinstance(ast, QueryNode)
 
@@ -877,6 +881,7 @@ class TestParserMissedPaths:
         WHEN parsed
         THEN lines 521-525 (COMMA → second item) are taken and both items parsed."""
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import QueryNode, SetClause
+
         ast = parser.parse("MATCH (n) SET n.x = 1, n.y = 2 RETURN n")
         assert isinstance(ast, QueryNode)
         set_clauses = [c for c in ast.clauses if isinstance(c, SetClause)]
@@ -892,6 +897,7 @@ class TestParserMissedPaths:
         WHEN parsed
         THEN lines 567-568 (COMMA → second item) are taken."""
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import QueryNode, RemoveClause
+
         ast = parser.parse("MATCH (n) REMOVE n.x, n.y RETURN n")
         assert isinstance(ast, QueryNode)
         remove_clauses = [c for c in ast.clauses if isinstance(c, RemoveClause)]
@@ -907,6 +913,7 @@ class TestParserMissedPaths:
         WHEN parsed
         THEN line 592 raises \"Expected 'IN' after FOREACH variable\"."""
         from ipfs_datasets_py.knowledge_graphs.cypher.parser import CypherParseError
+
         with pytest.raises(CypherParseError, match="Expected 'IN' after FOREACH"):
             parser.parse("FOREACH (x BLAH [1,2] | CREATE (:Foo))")
 
@@ -919,6 +926,7 @@ class TestParserMissedPaths:
         WHEN parsed
         THEN line 605 (body.append(self._parse_set())) is taken."""
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import QueryNode
+
         ast = parser.parse("FOREACH (x IN [1,2] | SET n.val = x)")
         assert isinstance(ast, QueryNode)
 
@@ -931,6 +939,7 @@ class TestParserMissedPaths:
         WHEN parsed
         THEN loop processes known clauses and exits at )."""
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import QueryNode
+
         ast = parser.parse("FOREACH (x IN [1,2,3] | MERGE (:Num {n: x}))")
         assert isinstance(ast, QueryNode)
 
@@ -943,6 +952,7 @@ class TestParserMissedPaths:
         WHEN parsed
         THEN lines 637-646 (depth tracking for nested braces) are exercised."""
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import QueryNode
+
         ast = parser.parse("CALL { MATCH (n {a: {b: 1}}) RETURN n } YIELD n RETURN n")
         assert isinstance(ast, QueryNode)
 
@@ -955,6 +965,7 @@ class TestParserMissedPaths:
         WHEN parsed
         THEN line 732 raises 'Expected identifier after AS'."""
         from ipfs_datasets_py.knowledge_graphs.cypher.parser import CypherParseError
+
         with pytest.raises(CypherParseError, match="Expected identifier after AS"):
             parser.parse("MATCH (n) RETURN n AS")
 
@@ -967,6 +978,7 @@ class TestParserMissedPaths:
         WHEN _parse_delete() is called directly with DETACH as the current token
         THEN lines 779-780 (detach=True, self._advance()) are taken and detach=True."""
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import DeleteClause
+
         # Tokenize 'DETACH DELETE n' — gives [IDENTIFIER('DETACH'), DELETE, IDENTIFIER('n'), EOF]
         tokens = lexer.tokenize("DETACH DELETE n")
         # Position parser at the DETACH token so _parse_delete sees it
@@ -986,6 +998,7 @@ class TestParserMissedPaths:
         WHEN parsed
         THEN line 879 raises 'Expected WITH after STARTS'."""
         from ipfs_datasets_py.knowledge_graphs.cypher.parser import CypherParseError
+
         with pytest.raises(CypherParseError, match="Expected WITH after STARTS"):
             parser.parse("MATCH (n) WHERE n.name STARTS n RETURN n")
 
@@ -998,6 +1011,7 @@ class TestParserMissedPaths:
         WHEN parsed
         THEN line 888 raises 'Expected WITH after ENDS'."""
         from ipfs_datasets_py.knowledge_graphs.cypher.parser import CypherParseError
+
         with pytest.raises(CypherParseError, match="Expected WITH after ENDS"):
             parser.parse("MATCH (n) WHERE n.name ENDS n RETURN n")
 
@@ -1010,6 +1024,7 @@ class TestParserMissedPaths:
         WHEN parsed
         THEN MERGE inside body is handled."""
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import QueryNode
+
         ast = parser.parse("FOREACH (item IN items | MERGE (:Label {id: item}))")
         assert isinstance(ast, QueryNode)
 
@@ -1018,6 +1033,7 @@ class TestParserMissedPaths:
         WHEN parsed
         THEN DELETE inside body is handled."""
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import QueryNode
+
         ast = parser.parse("FOREACH (x IN [1] | DELETE x)")
         assert isinstance(ast, QueryNode)
 
@@ -1026,6 +1042,7 @@ class TestParserMissedPaths:
         WHEN parsed
         THEN REMOVE inside body is handled."""
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import QueryNode
+
         ast = parser.parse("FOREACH (x IN [1] | REMOVE n.val)")
         assert isinstance(ast, QueryNode)
 
@@ -1038,6 +1055,7 @@ class TestParserMissedPaths:
         WHEN parsed
         THEN line 202 (break at UNION) is hit in _parse_query_part."""
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import QueryNode
+
         ast = parser.parse("MATCH (n) UNION MATCH (m) RETURN m")
         assert isinstance(ast, QueryNode)
 
@@ -1050,6 +1068,7 @@ class TestParserMissedPaths:
         WHEN parsed
         THEN line 501 (else: break in ON loop) is hit and parse continues."""
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import QueryNode
+
         ast = parser.parse("MERGE (n:Person) ON RETURN n")
         assert isinstance(ast, QueryNode)
 
@@ -1062,6 +1081,7 @@ class TestParserMissedPaths:
         WHEN parsed
         THEN lines 521-525 (_parse_set_items COMMA loop) are exercised."""
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import QueryNode
+
         ast = parser.parse(
             'MERGE (n:Person {name: "Alice"}) ON MATCH SET n.x = 1, n.y = 2 RETURN n'
         )
@@ -1072,9 +1092,8 @@ class TestParserMissedPaths:
         WHEN parsed
         THEN lines 521-525 (_parse_set_items COMMA loop) are exercised."""
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import QueryNode
-        ast = parser.parse(
-            'MERGE (n:Person {name: "Bob"}) ON CREATE SET n.x = 1, n.y = 2 RETURN n'
-        )
+
+        ast = parser.parse('MERGE (n:Person {name: "Bob"}) ON CREATE SET n.x = 1, n.y = 2 RETURN n')
         assert isinstance(ast, QueryNode)
 
     # ------------------------------------------------------------------
@@ -1087,6 +1106,7 @@ class TestParserMissedPaths:
         THEN line 592 (elif IDENTIFIER 'IN' advance) is taken."""
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import ForeachClause
         from ipfs_datasets_py.knowledge_graphs.cypher.lexer import TokenType, Token
+
         # Build tokens where IN is an IDENTIFIER with value 'IN'
         tokens_raw = lexer.tokenize("FOREACH (x IN [1] | CREATE (:F))")
         tokens = []
@@ -1114,6 +1134,7 @@ class TestParserMissedPaths:
         THEN line 613 (else: break) exits the body loop immediately."""
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import ForeachClause
         from ipfs_datasets_py.knowledge_graphs.cypher.lexer import TokenType, Token
+
         # Construct: FOREACH ( x IN [1] | RETURN x )
         # RETURN is not CREATE/SET/MERGE/DELETE/REMOVE → line 613 break
         # Then _expect(RPAREN) should succeed since RETURN is still the token...
@@ -1134,6 +1155,7 @@ class TestParserMissedPaths:
         # The RETURN token is left unconsumed, so _expect(RPAREN) will fail
         # Instead just verify line 613 is reached by checking CypherParseError
         from ipfs_datasets_py.knowledge_graphs.cypher.parser import CypherParseError
+
         try:
             clause = parser._parse_foreach()
         except CypherParseError:
@@ -1144,6 +1166,7 @@ class TestParserMissedPaths:
 # 3. migration/formats.py — covering missed lines 88, 507, 679, 798/807-808,
 #    877, 912-930 (CAR save errors)
 # ===========================================================================
+
 
 class TestMigrationFormatsAdditionalPaths:
     """GIVEN migration formats WHEN specific paths are taken THEN missed lines are covered."""
@@ -1161,9 +1184,9 @@ class TestMigrationFormatsAdditionalPaths:
         WHEN to_json() is called
         THEN line 88 is hit and the JSON can be deserialized back."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import RelationshipData
+
         rel = RelationshipData(
-            id="r1", type="KNOWS", start_node="n1", end_node="n2",
-            properties={"weight": 1.5}
+            id="r1", type="KNOWS", start_node="n1", end_node="n2", properties={"weight": 1.5}
         )
         json_str = rel.to_json()
         data = json.loads(json_str)
@@ -1176,6 +1199,7 @@ class TestMigrationFormatsAdditionalPaths:
         WHEN to_json() is called
         THEN line 88 produces valid JSON."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import RelationshipData
+
         rel = RelationshipData(id="e0", type="LIKES", start_node="a", end_node="b", properties={})
         j = json.loads(rel.to_json())
         assert j["type"] == "LIKES"
@@ -1189,15 +1213,16 @@ class TestMigrationFormatsAdditionalPaths:
         WHEN _load_from_graphml() is called
         THEN line 507 (root.find('graph') fallback) is hit and nodes are loaded."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
+
         graphml_content = (
             '<?xml version="1.0" encoding="UTF-8"?>\n'
-            '<graphml>\n'
+            "<graphml>\n"
             '  <key id="d0" for="node" attr.name="label" attr.type="string"/>\n'
             '  <graph id="G" edgedefault="directed">\n'
             '    <node id="n0"><data key="d0">Person</data></node>\n'
             '    <node id="n1"><data key="d0">Company</data></node>\n'
-            '  </graph>\n'
-            '</graphml>\n'
+            "  </graph>\n"
+            "</graphml>\n"
         )
         path = str(tmp_path_custom / "no_ns.graphml")
         with open(path, "w") as f:
@@ -1210,16 +1235,17 @@ class TestMigrationFormatsAdditionalPaths:
         WHEN loaded
         THEN the edge is parsed into a relationship."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
+
         graphml_content = (
             '<?xml version="1.0" encoding="UTF-8"?>\n'
-            '<graphml>\n'
+            "<graphml>\n"
             '  <key id="d0" for="edge" attr.name="type" attr.type="string"/>\n'
             '  <graph id="G" edgedefault="directed">\n'
             '    <node id="n0"/>\n'
             '    <node id="n1"/>\n'
             '    <edge id="e0" source="n0" target="n1"><data key="d0">KNOWS</data></edge>\n'
-            '  </graph>\n'
-            '</graphml>\n'
+            "  </graph>\n"
+            "</graphml>\n"
         )
         path = str(tmp_path_custom / "no_ns_edge.graphml")
         with open(path, "w") as f:
@@ -1237,17 +1263,18 @@ class TestMigrationFormatsAdditionalPaths:
         WHEN _load_from_gexf() is called
         THEN line 679 (root.find('graph') fallback) is hit and nodes are loaded."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
+
         gexf_content = (
             '<?xml version="1.0" encoding="UTF-8"?>\n'
-            '<gexf>\n'
+            "<gexf>\n"
             '  <graph defaultedgetype="directed">\n'
-            '    <nodes>\n'
+            "    <nodes>\n"
             '      <node id="n0" label="Alice"/>\n'
             '      <node id="n1" label="Bob"/>\n'
-            '    </nodes>\n'
-            '    <edges></edges>\n'
-            '  </graph>\n'
-            '</gexf>\n'
+            "    </nodes>\n"
+            "    <edges></edges>\n"
+            "  </graph>\n"
+            "</gexf>\n"
         )
         path = str(tmp_path_custom / "no_ns.gexf")
         with open(path, "w") as f:
@@ -1260,19 +1287,20 @@ class TestMigrationFormatsAdditionalPaths:
         WHEN loaded
         THEN edges are parsed into relationships."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
+
         gexf_content = (
             '<?xml version="1.0" encoding="UTF-8"?>\n'
-            '<gexf>\n'
+            "<gexf>\n"
             '  <graph defaultedgetype="directed">\n'
-            '    <nodes>\n'
+            "    <nodes>\n"
             '      <node id="n0" label="A"/>\n'
             '      <node id="n1" label="B"/>\n'
-            '    </nodes>\n'
-            '    <edges>\n'
+            "    </nodes>\n"
+            "    <edges>\n"
             '      <edge id="e0" source="n0" target="n1" label="KNOWS"/>\n'
-            '    </edges>\n'
-            '  </graph>\n'
-            '</gexf>\n'
+            "    </edges>\n"
+            "  </graph>\n"
+            "</gexf>\n"
         )
         path = str(tmp_path_custom / "no_ns_edges.gexf")
         with open(path, "w") as f:
@@ -1290,16 +1318,9 @@ class TestMigrationFormatsAdditionalPaths:
         WHEN _load_from_pajek() is called
         THEN lines 803-808 are hit and both arc and edge types are loaded."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
+
         pajek_content = (
-            "*Vertices 3\n"
-            '1 "Alice"\n'
-            '2 "Bob"\n'
-            '3 "Carol"\n'
-            "*Arcs\n"
-            "1 2 1.0\n"
-            "*Edges\n"
-            "2 3 0.5\n"
-            "3 1 2.0\n"
+            '*Vertices 3\n1 "Alice"\n2 "Bob"\n3 "Carol"\n*Arcs\n1 2 1.0\n*Edges\n2 3 0.5\n3 1 2.0\n'
         )
         path = str(tmp_path_custom / "arcs_and_edges.net")
         with open(path, "w") as f:
@@ -1313,13 +1334,8 @@ class TestMigrationFormatsAdditionalPaths:
         WHEN _load_from_pajek() is called
         THEN lines 807-808 (mode='edges') are hit."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
-        pajek_content = (
-            "*Vertices 2\n"
-            '1 "X"\n'
-            '2 "Y"\n'
-            "*Edges\n"
-            "1 2 1.0\n"
-        )
+
+        pajek_content = '*Vertices 2\n1 "X"\n2 "Y"\n*Edges\n1 2 1.0\n'
         path = str(tmp_path_custom / "edges_only.net")
         with open(path, "w") as f:
             f.write(pajek_content)
@@ -1332,6 +1348,7 @@ class TestMigrationFormatsAdditionalPaths:
         WHEN loaded
         THEN weight defaults to 1.0."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
+
         pajek_content = (
             "*Vertices 2\n"
             '1 "A"\n'
@@ -1354,8 +1371,12 @@ class TestMigrationFormatsAdditionalPaths:
         WHEN saved to JSON Lines and loaded back
         THEN line 877 (schema saved) is hit and schema is restored."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import (
-            GraphData, NodeData, SchemaData, MigrationFormat
+            GraphData,
+            NodeData,
+            SchemaData,
+            MigrationFormat,
         )
+
         schema = SchemaData(
             indexes=[{"name": "idx_person_name"}],
             node_labels=["Person", "Company"],
@@ -1380,8 +1401,11 @@ class TestMigrationFormatsAdditionalPaths:
         WHEN _builtin_save_car() is called
         THEN lines 908-911 raise ImportError mentioning 'libipld'."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import (
-            GraphData, _builtin_save_car, NodeData
+            GraphData,
+            _builtin_save_car,
+            NodeData,
         )
+
         gd = GraphData(nodes=[NodeData("n1", ["N"], {})], relationships=[])
         path = str(tmp_path_custom / "out.car")
         with patch.dict("sys.modules", {"libipld": None}):
@@ -1393,8 +1417,11 @@ class TestMigrationFormatsAdditionalPaths:
         WHEN _builtin_save_car() is called after libipld import succeeds
         THEN lines 913-919 raise ImportError mentioning 'ipld-car'."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import (
-            GraphData, _builtin_save_car, NodeData
+            GraphData,
+            _builtin_save_car,
+            NodeData,
         )
+
         gd = GraphData(nodes=[NodeData("n1", ["N"], {})], relationships=[])
         path = str(tmp_path_custom / "out2.car")
         fake_libipld = MagicMock()
@@ -1408,6 +1435,7 @@ class TestMigrationFormatsAdditionalPaths:
         WHEN _builtin_load_car() is called on a dummy car file
         THEN lines 962-965 raise ImportError."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import _builtin_load_car
+
         # Write a dummy 'car' file
         path = str(tmp_path_custom / "dummy.car")
         with open(path, "wb") as f:
@@ -1422,12 +1450,14 @@ class TestMigrationFormatsAdditionalPaths:
 #    325-329, 367-374, 439
 # ===========================================================================
 
+
 class TestWALMissedPaths:
     """GIVEN WriteAheadLog WHEN exceptions occur in operations THEN error handling lines fire."""
 
     @pytest.fixture()
     def wal_with_storage(self):
         from ipfs_datasets_py.knowledge_graphs.transactions.wal import WriteAheadLog
+
         storage = MagicMock()
         return WriteAheadLog(storage), storage
 
@@ -1440,6 +1470,7 @@ class TestWALMissedPaths:
         WHEN wal.read() iterates the chain
         THEN line 188-189 re-raises DeserializationError."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import DeserializationError
+
         wal, storage = wal_with_storage
         wal.wal_head_cid = "cid-001"
         storage.retrieve_json.side_effect = DeserializationError("corrupt", details={})
@@ -1455,6 +1486,7 @@ class TestWALMissedPaths:
         WHEN compact() calls append() internally
         THEN lines 253-255 re-raise SerializationError."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import SerializationError
+
         wal, storage = wal_with_storage
         storage.store_json.side_effect = TypeError("not serializable")
         with pytest.raises(SerializationError):
@@ -1469,6 +1501,7 @@ class TestWALMissedPaths:
         WHEN compact() calls append() internally
         THEN lines 256-257 re-raise TransactionError."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import TransactionError, StorageError
+
         wal, storage = wal_with_storage
         storage.store_json.side_effect = StorageError("disk full", details={})
         with pytest.raises(TransactionError):
@@ -1483,6 +1516,7 @@ class TestWALMissedPaths:
         WHEN wal.recover() is called
         THEN lines 323-325 re-raise DeserializationError."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import DeserializationError
+
         wal, storage = wal_with_storage
         wal.wal_head_cid = "cid-001"
         storage.retrieve_json.side_effect = DeserializationError("bad block", details={})
@@ -1498,6 +1532,7 @@ class TestWALMissedPaths:
         WHEN read() wraps it in TransactionError and recover() sees that
         THEN lines 326-327 re-raise the TransactionError."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import TransactionError
+
         wal, storage = wal_with_storage
         wal.wal_head_cid = "cid-002"
         # MemoryError is a generic Exception not caught as StorageError, so
@@ -1517,6 +1552,7 @@ class TestWALMissedPaths:
         WHEN get_transaction_history() is called
         THEN lines 367-369 catch it and return [] (partial results)."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import DeserializationError
+
         wal, storage = wal_with_storage
         wal.wal_head_cid = "cid-001"
         storage.retrieve_json.side_effect = DeserializationError("corrupt", details={})
@@ -1527,9 +1563,7 @@ class TestWALMissedPaths:
     # Lines 370-374 – get_transaction_history() returns [] on generic Exception
     # ------------------------------------------------------------------
 
-    def test_wal_get_transaction_history_returns_empty_on_generic_error(
-        self, wal_with_storage
-    ):
+    def test_wal_get_transaction_history_returns_empty_on_generic_error(self, wal_with_storage):
         """GIVEN storage raises RuntimeError during read
         WHEN get_transaction_history() is called
         THEN lines 372-374 catch it and return empty list."""
@@ -1543,22 +1577,19 @@ class TestWALMissedPaths:
     # Additional wal tests: verify_integrity returns False on bad entries
     # ------------------------------------------------------------------
 
-    def test_wal_verify_integrity_returns_false_on_deserialization_error(
-        self, wal_with_storage
-    ):
+    def test_wal_verify_integrity_returns_false_on_deserialization_error(self, wal_with_storage):
         """GIVEN storage raises DeserializationError during integrity check
         WHEN verify_integrity() is called
         THEN it catches and returns False."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import DeserializationError
+
         wal, storage = wal_with_storage
         wal.wal_head_cid = "cid-001"
         storage.retrieve_json.side_effect = DeserializationError("bad", details={})
         result = wal.verify_integrity()
         assert result is False
 
-    def test_wal_verify_integrity_returns_false_on_generic_error(
-        self, wal_with_storage
-    ):
+    def test_wal_verify_integrity_returns_false_on_generic_error(self, wal_with_storage):
         """GIVEN storage raises RuntimeError during integrity check
         WHEN verify_integrity() is called
         THEN it catches and returns False."""
@@ -1568,25 +1599,23 @@ class TestWALMissedPaths:
         result = wal.verify_integrity()
         assert result is False
 
-    def test_wal_compact_generic_exception_wraps_in_transaction_error(
-        self, wal_with_storage
-    ):
+    def test_wal_compact_generic_exception_wraps_in_transaction_error(self, wal_with_storage):
         """GIVEN append() raises an unexpected Exception
         WHEN compact() is called
         THEN lines 260-270 wrap it in TransactionError."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import TransactionError
+
         wal, storage = wal_with_storage
         storage.store_json.side_effect = MemoryError("OOM")
         with pytest.raises(TransactionError):
             wal.compact("cid-003")
 
-    def test_wal_recover_generic_exception_wraps_in_transaction_error(
-        self, wal_with_storage
-    ):
+    def test_wal_recover_generic_exception_wraps_in_transaction_error(self, wal_with_storage):
         """GIVEN an unexpected error during recover()
         WHEN recover() is called
         THEN lines 330-339 wrap it in TransactionError."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import TransactionError
+
         wal, storage = wal_with_storage
         wal.wal_head_cid = "cid-003"
         storage.retrieve_json.side_effect = MemoryError("out of memory")

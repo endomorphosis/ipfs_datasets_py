@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional, TypedDict
 
 class QueryOptimizationPlanStep(TypedDict, total=False):
     """Single step in a query execution plan."""
+
     step_type: str  # e.g., "vector_search", "graph_traversal", "ranking"
     description: str
     estimated_time_ms: float
@@ -18,6 +19,7 @@ class QueryOptimizationPlanStep(TypedDict, total=False):
 
 class QueryOptimizationPlan(TypedDict, total=False):
     """Complete execution plan for a query optimization."""
+
     query: Dict[str, Any]
     weights: Dict[str, float]
     budget: Dict[str, Any]
@@ -31,6 +33,7 @@ class QueryOptimizationPlan(TypedDict, total=False):
 
 class TraversalOptimization(TypedDict, total=False):
     """Result of optimized query traversal."""
+
     query: Dict[str, Any]
     edge_types: List[str]
     traversal_costs: Dict[str, float]
@@ -40,6 +43,7 @@ class TraversalOptimization(TypedDict, total=False):
 
 class QueryOptimizationResult(TypedDict, total=False):
     """Complete result from query optimization."""
+
     query: Dict[str, Any]
     weights: Dict[str, float]
     budget: Dict[str, Any]
@@ -52,6 +56,7 @@ class QueryOptimizationResult(TypedDict, total=False):
 
 class PerformanceAnalysis(TypedDict, total=False):
     """Analysis of query optimizer performance."""
+
     avg_query_time_ms: float
     total_queries: int
     cache_hit_rate: float
@@ -62,6 +67,7 @@ class PerformanceAnalysis(TypedDict, total=False):
 
 class BudgetAllocation(TypedDict, total=False):
     """Allocated resource budget for a query."""
+
     vector_search_ms: float
     graph_traversal_ms: float
     ranking_ms: float
@@ -72,6 +78,7 @@ class BudgetAllocation(TypedDict, total=False):
 
 class ConsumptionReport(TypedDict, total=False):
     """Current resource consumption report."""
+
     vector_search_time_ms: float
     graph_traversal_time_ms: float
     ranking_time_ms: float
@@ -83,6 +90,7 @@ class ConsumptionReport(TypedDict, total=False):
 
 class WikipediaTraversalOptimization(TypedDict, total=False):
     """Traversal optimization specific to Wikipedia graphs."""
+
     query: Dict[str, Any]
     edge_priority: List[str]
     traversal_costs: Dict[str, float]
@@ -92,6 +100,7 @@ class WikipediaTraversalOptimization(TypedDict, total=False):
 
 class IPLDTraversalOptimization(TypedDict, total=False):
     """Traversal optimization specific to IPLD graphs."""
+
     query: Dict[str, Any]
     cid_paths: List[str]
     traversal_strategy: str
@@ -101,6 +110,7 @@ class IPLDTraversalOptimization(TypedDict, total=False):
 
 class ValidatedQueryParameters(TypedDict, total=False):
     """Query parameters after validation and normalization."""
+
     query_text: str
     max_vector_results: int
     min_similarity: float
@@ -113,6 +123,7 @@ class ValidatedQueryParameters(TypedDict, total=False):
 
 class FallbackQueryPlan(TypedDict, total=False):
     """Fallback query plan when optimization fails."""
+
     query: Dict[str, Any]
     weights: Dict[str, float]
     budget: Dict[str, Any]
@@ -126,6 +137,7 @@ class FallbackQueryPlan(TypedDict, total=False):
 
 class EnhancedTraversalParameters(TypedDict, total=False):
     """Traversal parameters enhanced for specific query types."""
+
     strategy: str
     max_depth: int
     bidirectional_entity_limit: int
@@ -143,6 +155,7 @@ class EnhancedTraversalParameters(TypedDict, total=False):
 
 class ExtractionStatistics(TypedDict, total=False):
     """Comprehensive extraction statistics and metrics."""
+
     total_entities: int
     total_relationships: int
     unique_types: int
@@ -158,6 +171,7 @@ class ExtractionStatistics(TypedDict, total=False):
 
 class RelationshipCoherenceIssues(TypedDict, total=False):
     """Analysis of relationship quality and coherence issues."""
+
     low_confidence_relationships: List[tuple]
     dangling_relationships: List[tuple]
     self_relationships: List[tuple]
@@ -168,6 +182,7 @@ class RelationshipCoherenceIssues(TypedDict, total=False):
 
 class SyntheticOntologyResult(TypedDict, total=False):
     """Result from synthetic ontology generation."""
+
     entities: List[Dict[str, Any]]
     relationships: List[Dict[str, Any]]
     metadata: Dict[str, Any]
@@ -176,6 +191,7 @@ class SyntheticOntologyResult(TypedDict, total=False):
 
 class EntityDictSerialization(TypedDict, total=False):
     """Serialized entity representation."""
+
     id: str
     type: str
     text: str
@@ -187,6 +203,7 @@ class EntityDictSerialization(TypedDict, total=False):
 
 class RelationshipDictSerialization(TypedDict, total=False):
     """Serialized relationship representation."""
+
     id: str
     source_id: str
     target_id: str
@@ -218,9 +235,7 @@ RelationshipTypeCounts = Dict[str, int]
 
 # TIER 4: Advanced Analysis and Summary Contracts
 ConfidenceQuartiles = TypedDict(
-    "ConfidenceQuartiles",
-    {"q1": float, "q2": float, "q3": float},
-    total=False
+    "ConfidenceQuartiles", {"q1": float, "q2": float, "q3": float}, total=False
 )
 # Example: {"q1": 0.45, "q2": 0.72, "q3": 0.88}
 # Maps quartile names (25th, 50th, 75th percentile) to confidence scores
@@ -249,7 +264,7 @@ ResultSummaryDict = TypedDict(
         "has_errors": bool,
         "error_count": int,
     },
-    total=False
+    total=False,
 )
 # Example: {"entity_count": 42, "relationship_count": 68, "unique_types": 5, ...}
 # Structured summary of extraction result metrics
@@ -268,7 +283,7 @@ MergeEvidenceDict = TypedDict(
         "confidence2": float,
         "confidence_difference": float,
     },
-    total=False
+    total=False,
 )
 # Example: {"name_similarity": 0.85, "type_match": True, "type1": "Organization", ...}
 # Evidence dictionary for entity merge suggestions

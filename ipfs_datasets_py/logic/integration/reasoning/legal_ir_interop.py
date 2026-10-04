@@ -133,7 +133,9 @@ class LegalIRInteropSchemaMapping:
             source_node_ids=tuple(_strings(data.get("source_node_ids", ()))),
             source_span_ids=tuple(_strings(data.get("source_span_ids", ()))),
             metadata=_mapping(data.get("metadata")),
-            schema_version=str(data.get("schema_version") or LEGAL_IR_INTEROP_MAPPING_SCHEMA_VERSION),
+            schema_version=str(
+                data.get("schema_version") or LEGAL_IR_INTEROP_MAPPING_SCHEMA_VERSION
+            ),
         )
 
 
@@ -303,7 +305,9 @@ class LegalIRInteropEnvelope:
             "profile": self.profile,
             "schema_mappings": [mapping.to_dict() for mapping in self.schema_mappings],
             "schema_version": self.schema_version,
-            "source_map": self.source_map.to_dict() if isinstance(self.source_map, LegalIRSourceMap) else None,
+            "source_map": self.source_map.to_dict()
+            if isinstance(self.source_map, LegalIRSourceMap)
+            else None,
             "source_map_schema_version": LEGAL_IR_SOURCE_MAP_SCHEMA_VERSION,
             "unsupported_count": self.unsupported_count,
         }
@@ -350,7 +354,11 @@ class LegalIRInteropRoundTripResult:
 
     @property
     def conformant(self) -> bool:
-        return not self.mismatches and self.exported.diagnostics.valid and self.imported.diagnostics.valid
+        return (
+            not self.mismatches
+            and self.exported.diagnostics.valid
+            and self.imported.diagnostics.valid
+        )
 
     @property
     def lossless(self) -> bool:
@@ -444,7 +452,11 @@ def import_legal_ir_interchange(
     else:  # pragma: no cover - enum guard
         raise LegalIRInteropError(f"Unsupported LegalIR interchange format: {source_format!r}")
 
-    resolved_source_map = _source_map(source_map) or _source_map_from_payload(raw_payload) or _source_map_for_legal_ir(legal_ir)
+    resolved_source_map = (
+        _source_map(source_map)
+        or _source_map_from_payload(raw_payload)
+        or _source_map_for_legal_ir(legal_ir)
+    )
     diagnostics = _diagnostics_from_losses(losses, source_map=resolved_source_map)
     return LegalIRInteropEnvelope(
         format=fmt.value,
@@ -526,7 +538,11 @@ def supported_legal_ir_projection(
     """Return the canonical LegalIR subset that the format claims to support."""
 
     fmt = _format(interchange_format)
-    legal_ir = artifact.legal_ir if isinstance(artifact, LegalIRInteropEnvelope) else _normalized_legal_ir(artifact)[0]
+    legal_ir = (
+        artifact.legal_ir
+        if isinstance(artifact, LegalIRInteropEnvelope)
+        else _normalized_legal_ir(artifact)[0]
+    )
     if fmt in {
         LegalIRInteropFormat.LEGAL_XML,
         LegalIRInteropFormat.RDF_OWL_JSONLD,
@@ -536,8 +552,7 @@ def supported_legal_ir_projection(
             "citation": legal_ir.get("citation", ""),
             "document_id": legal_ir.get("document_id", ""),
             "obligations": [
-                _projection_obligation(row)
-                for row in _sequence(legal_ir.get("obligations"))
+                _projection_obligation(row) for row in _sequence(legal_ir.get("obligations"))
             ],
             "text": legal_ir.get("text", ""),
         }
@@ -577,7 +592,9 @@ def write_legal_ir_interchange_json(
 ) -> None:
     """Write a LegalIR interop envelope as deterministic JSON."""
 
-    payload = envelope.to_dict() if isinstance(envelope, LegalIRInteropEnvelope) else _mapping(envelope)
+    payload = (
+        envelope.to_dict() if isinstance(envelope, LegalIRInteropEnvelope) else _mapping(envelope)
+    )
     Path(path).write_text(
         json.dumps(
             _json_ready(payload),
@@ -644,10 +661,22 @@ def _export_legal_xml(
                 "operator": str(row.get("operator") or ""),
             },
         )
-        for key in ("statement", "subject", "action", "object", "conditions", "exceptions", "citations", "proof_status", "metadata"):
+        for key in (
+            "statement",
+            "subject",
+            "action",
+            "object",
+            "conditions",
+            "exceptions",
+            "citations",
+            "proof_status",
+            "metadata",
+        ):
             child = ET.SubElement(element, _camel_tag(key))
             value = row.get(key)
-            child.text = json.dumps(_json_ready(value), allow_nan=False, ensure_ascii=True, sort_keys=True)
+            child.text = json.dumps(
+                _json_ready(value), allow_nan=False, ensure_ascii=True, sort_keys=True
+            )
         mappings.append(
             _mapping_lossless(
                 f"$.obligations[{index}]",
@@ -750,7 +779,9 @@ def _export_rdf_owl(
         row = _mapping(obligation)
         graph.append(
             {
-                "@id": _rdf_id("obligation", str(row.get("obligation_id") or f"obligation-{index + 1}")),
+                "@id": _rdf_id(
+                    "obligation", str(row.get("obligation_id") or f"obligation-{index + 1}")
+                ),
                 "@type": "lir:Obligation",
                 "lir:action": _json_ready(row.get("action")),
                 "lir:citation": _json_ready(row.get("citations")),
@@ -787,7 +818,14 @@ def _export_rdf_owl(
     losses = _unsupported_top_level(
         legal_ir,
         LegalIRInteropFormat.RDF_OWL_JSONLD,
-        supported={"citation", "document_id", "obligations", "schema_version", "source_map_id", "text"},
+        supported={
+            "citation",
+            "document_id",
+            "obligations",
+            "schema_version",
+            "source_map_id",
+            "text",
+        },
     )
     return payload, mappings, losses
 
@@ -877,8 +915,12 @@ def _export_kg(
         )
         for citation in _strings(row.get("citations", ())):
             citation_id = "citation:" + _slug(citation)
-            nodes.append({"id": citation_id, "kind": "citation", "properties": {"citation": citation}})
-            edges.append({"from": f"obligation:{obligation_id}", "kind": "cites", "to": citation_id})
+            nodes.append(
+                {"id": citation_id, "kind": "citation", "properties": {"citation": citation}}
+            )
+            edges.append(
+                {"from": f"obligation:{obligation_id}", "kind": "cites", "to": citation_id}
+            )
     existing_kg = _mapping(legal_ir.get("kg"))
     if existing_kg:
         nodes.extend(_mapping(item) for item in _sequence(existing_kg.get("nodes")))
@@ -894,7 +936,15 @@ def _export_kg(
     losses = _unsupported_top_level(
         legal_ir,
         LegalIRInteropFormat.KG_JSON,
-        supported={"citation", "document_id", "kg", "obligations", "schema_version", "source_map_id", "text"},
+        supported={
+            "citation",
+            "document_id",
+            "kg",
+            "obligations",
+            "schema_version",
+            "source_map_id",
+            "text",
+        },
     )
     return payload, mappings, losses
 
@@ -910,7 +960,9 @@ def _import_kg(
     for node in nodes:
         if node.get("kind") != "obligation":
             continue
-        obligations.append(_normalize_obligation(_mapping(node.get("properties")), len(obligations)))
+        obligations.append(
+            _normalize_obligation(_mapping(node.get("properties")), len(obligations))
+        )
     legal_ir = _canonical_legal_ir(
         {
             "citation": str(document_props.get("citation") or ""),
@@ -1093,7 +1145,10 @@ def _normalized_legal_ir(
     payload = _payload_from_input(artifact)
     if isinstance(artifact, LegalIRProofCarryingArtifact):
         payload = artifact.to_dict()
-    if str(_mapping(payload).get("schema_version") or "") == LEGAL_IR_PROOF_CARRYING_ARTIFACT_SCHEMA_VERSION:
+    if (
+        str(_mapping(payload).get("schema_version") or "")
+        == LEGAL_IR_PROOF_CARRYING_ARTIFACT_SCHEMA_VERSION
+    ):
         proof_artifact = LegalIRProofCarryingArtifact.from_dict(_mapping(payload))
         validation = validate_legal_ir_proof_carrying_artifact(
             proof_artifact,
@@ -1113,12 +1168,22 @@ def _normalized_legal_ir(
                 "artifact_id": proof_artifact.artifact_id,
                 "evidence": {
                     "diagnostics": [item.to_dict() for item in proof_artifact.diagnostics],
-                    "evidence_bindings": [item.to_dict() for item in proof_artifact.evidence_bindings],
-                    "hammer_guidance_artifacts": [item.to_dict() for item in proof_artifact.hammer_guidance_artifacts],
-                    "reconstruction_receipts": [item.to_dict() for item in proof_artifact.reconstruction_receipts],
+                    "evidence_bindings": [
+                        item.to_dict() for item in proof_artifact.evidence_bindings
+                    ],
+                    "hammer_guidance_artifacts": [
+                        item.to_dict() for item in proof_artifact.hammer_guidance_artifacts
+                    ],
+                    "reconstruction_receipts": [
+                        item.to_dict() for item in proof_artifact.reconstruction_receipts
+                    ],
                     "route_results": [_json_ready(item) for item in proof_artifact.route_results],
-                    "translation_records": [item.to_dict() for item in proof_artifact.translation_records],
-                    "unsupported_diagnostics": [item.to_dict() for item in proof_artifact.unsupported_diagnostics],
+                    "translation_records": [
+                        item.to_dict() for item in proof_artifact.translation_records
+                    ],
+                    "unsupported_diagnostics": [
+                        item.to_dict() for item in proof_artifact.unsupported_diagnostics
+                    ],
                     "validation": validation.to_dict(),
                 },
                 "verification_policy": proof_artifact.verification_policy.to_dict(),
@@ -1138,7 +1203,11 @@ def _canonical_legal_ir(
     data = _mapping(payload)
     normalized_document = _mapping(data.get("normalized_document"))
     resolved_source_map = source_map or _source_map_from_payload(data)
-    first_source = resolved_source_map.sources[0] if resolved_source_map and resolved_source_map.sources else None
+    first_source = (
+        resolved_source_map.sources[0]
+        if resolved_source_map and resolved_source_map.sources
+        else None
+    )
     text = str(
         data.get("text")
         or data.get("raw_document")
@@ -1172,7 +1241,9 @@ def _canonical_legal_ir(
             for index, item in enumerate(proof_obligations)
         ]
     decompiler = _mapping(data.get("decompiler"))
-    if not decompiler and (data.get("decompiled_text") or data.get("statements") or data.get("decompiler_losses")):
+    if not decompiler and (
+        data.get("decompiled_text") or data.get("statements") or data.get("decompiler_losses")
+    ):
         decompiler = {
             "decompiled_text": str(data.get("decompiled_text") or ""),
             "losses": _sequence(data.get("decompiler_losses")),
@@ -1189,7 +1260,9 @@ def _canonical_legal_ir(
         "proof": _json_ready(_mapping(data.get("proof"))),
         "proof_obligations": _json_ready(proof_obligations),
         "schema_version": LEGAL_IR_INTEROP_SCHEMA_VERSION,
-        "source_map_id": resolved_source_map.source_map_id if resolved_source_map else str(data.get("source_map_id") or ""),
+        "source_map_id": resolved_source_map.source_map_id
+        if resolved_source_map
+        else str(data.get("source_map_id") or ""),
         "text": text,
     }
     return _drop_empty(result)
@@ -1207,7 +1280,9 @@ def _normalize_obligation(
     statement = str(row.get("statement") or row.get("text") or "")
     obligation_id = str(row.get("obligation_id") or row.get("id") or f"obligation-{index + 1:04d}")
     formula_id = str(row.get("formula_id") or row.get("formula") or f"formula-{obligation_id}")
-    citations = _strings(row.get("citations", ())) or ([default_citation] if default_citation else [])
+    citations = _strings(row.get("citations", ())) or (
+        [default_citation] if default_citation else []
+    )
     metadata = {
         str(key): value
         for key, value in row.items()
@@ -1244,7 +1319,8 @@ def _normalize_obligation(
             "obligation_id": obligation_id,
             "operator": str(row.get("operator") or _operator_from_statement(statement)),
             "proof_status": _json_ready(_mapping(row.get("proof_status"))),
-            "source_node_ids": _strings(row.get("source_node_ids", ())) or ([formula_id] if formula_id else []),
+            "source_node_ids": _strings(row.get("source_node_ids", ()))
+            or ([formula_id] if formula_id else []),
             "statement": statement,
             "subject": _list_value(row.get("subject")),
         }
@@ -1355,9 +1431,8 @@ def _source_map_for_legal_ir(legal_ir: Mapping[str, Any]) -> LegalIRSourceMap | 
     document_id = str(legal_ir.get("document_id") or "legal-ir-interop-source")
     citation = str(legal_ir.get("citation") or f"uncited:{document_id}")
     builder = LegalIRSourceMapBuilder(
-        source_map_id="lir-interop-source-map-" + _stable_hash(
-            {"citation": citation, "document_id": document_id, "text": text}
-        )[:24],
+        source_map_id="lir-interop-source-map-"
+        + _stable_hash({"citation": citation, "document_id": document_id, "text": text})[:24],
         metadata={"builder": "legal_ir_interop"},
     )
     builder.add_source_document(document_id, text, citation=citation)
@@ -1464,7 +1539,11 @@ def _diff_values(before: Any, after: Any, *, path: str = "$") -> list[dict[str, 
         for key in sorted(set(before) | set(after), key=str):
             mismatches.extend(_diff_values(before.get(key), after.get(key), path=f"{path}.{key}"))
         return mismatches
-    if isinstance(before, Sequence) and isinstance(after, Sequence) and not isinstance(before, (str, bytes, bytearray)):
+    if (
+        isinstance(before, Sequence)
+        and isinstance(after, Sequence)
+        and not isinstance(before, (str, bytes, bytearray))
+    ):
         mismatches = []
         for index in range(max(len(before), len(after))):
             left = before[index] if index < len(before) else None
@@ -1678,7 +1757,10 @@ def _json_ready(value: Any) -> Any:
     if hasattr(value, "to_dict"):
         return _json_ready(value.to_dict())
     if isinstance(value, Mapping):
-        return {str(key): _json_ready(item) for key, item in sorted(value.items(), key=lambda item: str(item[0]))}
+        return {
+            str(key): _json_ready(item)
+            for key, item in sorted(value.items(), key=lambda item: str(item[0]))
+        }
     if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         return [_json_ready(item) for item in value]
     return str(value)

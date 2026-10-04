@@ -102,17 +102,11 @@ def test_interfaces_are_versioned() -> None:
     assert SYMAI_ADVISOR_INTERFACE == "SymAIAdvisor@1"
     leanstral = LeanstralProposalAdvisor(
         StaticProposalModel(
-            build_json_candidates_response(
-                [_candidate_record(provider="leanstral")]
-            )
+            build_json_candidates_response([_candidate_record(provider="leanstral")])
         )
     )
     symai = SymAIProposalAdvisor(
-        StaticProposalModel(
-            build_json_candidates_response(
-                [_candidate_record(provider="symai")]
-            )
-        )
+        StaticProposalModel(build_json_candidates_response([_candidate_record(provider="symai")]))
     )
     assert isinstance(leanstral, LeanstralAdvisor)
     assert isinstance(symai, SymAIAdvisor)
@@ -200,9 +194,7 @@ def test_rejects_executable_markers_in_body() -> None:
     )
     advisor = LeanstralProposalAdvisor(StaticProposalModel(response))
     with pytest.raises(ProposalAdvisorValidationError, match="executable marker"):
-        advisor.propose(
-            _request(source_ref_ids=("source:module.py",), notes="")
-        )
+        advisor.propose(_request(source_ref_ids=("source:module.py",), notes=""))
 
 
 def test_rejects_ungrounded_request() -> None:
@@ -287,9 +279,7 @@ def test_max_candidates_bound() -> None:
 
 def test_confidence_never_yields_proof() -> None:
     assert confidence_never_yields_proof(is_valid=True, confidence=1.0) is False
-    assert (
-        confidence_never_yields_proof(similarity=0.99, confidence=0.99) is False
-    )
+    assert confidence_never_yields_proof(similarity=0.99, confidence=0.99) is False
     candidate = ProposalCandidate(
         candidate_id="cand:hi-conf",
         kind=ProposalKind.LEMMA,
@@ -311,21 +301,15 @@ def test_accept_candidate_requires_compilation_and_independent_validation() -> N
         provider=ProposalProvider.SYMAI,
         confidence=0.99,
     )
-    rejected = accept_candidate(
-        candidate, compiled=True, independently_validated=False
-    )
+    rejected = accept_candidate(candidate, compiled=True, independently_validated=False)
     assert rejected.accepted is False
     assert rejected.authority == UNVERIFIED_AUTHORITY
     assert "missing_independent_solver_or_kernel_validation" in rejected.reasons
 
-    rejected2 = accept_candidate(
-        candidate, compiled=False, independently_validated=True
-    )
+    rejected2 = accept_candidate(candidate, compiled=False, independently_validated=True)
     assert rejected2.accepted is False
 
-    admitted = accept_candidate(
-        candidate, compiled=True, independently_validated=True
-    )
+    admitted = accept_candidate(candidate, compiled=True, independently_validated=True)
     assert admitted.accepted is True
     assert admitted.authority == "candidate_admitted_for_validation"
     # Admission is not proof — still not theorem authority.
@@ -378,9 +362,7 @@ def test_leanstral_and_symai_propose_round_trip() -> None:
     lean_result = leanstral.propose(
         _request(kind=ProposalKind.SPECIFICATION, request_id="req:spec")
     )
-    sym_result = symai.propose(
-        _request(kind=ProposalKind.PREMISE, request_id="req:prem")
-    )
+    sym_result = symai.propose(_request(kind=ProposalKind.PREMISE, request_id="req:prem"))
     assert lean_result.provider is ProposalProvider.LEANSTRAL
     assert sym_result.provider is ProposalProvider.SYMAI
     assert lean_result.interface_id == LEANSTRAL_ADVISOR_INTERFACE
@@ -393,9 +375,7 @@ def test_leanstral_and_symai_propose_round_trip() -> None:
 
 
 def test_freeform_response_becomes_source_bound_candidate() -> None:
-    advisor = LeanstralProposalAdvisor(
-        StaticProposalModel("apply Nat.add_comm")
-    )
+    advisor = LeanstralProposalAdvisor(StaticProposalModel("apply Nat.add_comm"))
     result = advisor.propose(_request(kind=ProposalKind.TACTIC))
     assert len(result.candidates) == 1
     assert result.candidates[0].body == "apply Nat.add_comm"
@@ -412,9 +392,7 @@ def test_request_and_result_dicts_round_trip() -> None:
     assert restored.digest == request.digest
     advisor = SymAIProposalAdvisor(
         StaticProposalModel(
-            build_json_candidates_response(
-                [_candidate_record(provider="symai", confidence=0.2)]
-            )
+            build_json_candidates_response([_candidate_record(provider="symai", confidence=0.2)])
         )
     )
     result = advisor.propose(request)
@@ -456,10 +434,7 @@ class _TrustedProvedResult:
 
 
 def test_router_never_treats_bare_is_valid_as_proof() -> None:
-    assert (
-        ProverRouter._result_is_proved(_LegacyValidOnlyResult(is_valid=True))
-        is False
-    )
+    assert ProverRouter._result_is_proved(_LegacyValidOnlyResult(is_valid=True)) is False
     assert (
         ProverRouter._result_is_proved(
             SyntacticProofResult(formula="P", is_valid=True, message="ok")
@@ -472,9 +447,7 @@ def test_router_never_treats_bare_is_valid_as_proof() -> None:
 
 def test_router_never_treats_symbolicai_or_neural_as_proof() -> None:
     neural = _NeuralConfidenceResult(is_valid=True, confidence=0.99)
-    assert (
-        ProverRouter._result_is_proved(neural, prover_name="symbolicai") is False
-    )
+    assert ProverRouter._result_is_proved(neural, prover_name="symbolicai") is False
     assert ProverRouter._result_is_proved(neural, prover_name="leanstral") is False
     assert ProverRouter._result_is_proved(neural, prover_name="neural") is False
     # Class-name / method heuristics also fence when prover_name omitted.
@@ -503,9 +476,7 @@ def test_router_select_best_skips_untrusted_providers() -> None:
         prover_used="symbolicai",
         proof_time=0.0,
         all_results={
-            "symbolicai": _NeuralConfidenceResult(
-                is_valid=True, confidence=1.0
-            ),
+            "symbolicai": _NeuralConfidenceResult(is_valid=True, confidence=1.0),
             "native": _TrustedProvedResult(),
         },
         strategy_used="parallel",
@@ -580,9 +551,7 @@ def test_coordinator_hybrid_path_requires_symbolic_for_proof() -> None:
 
 
 def test_coordinator_capabilities_declare_no_neural_proof_authority() -> None:
-    coordinator = NeuralSymbolicCoordinator(
-        use_cec=False, use_modal=False, use_embeddings=False
-    )
+    coordinator = NeuralSymbolicCoordinator(use_cec=False, use_modal=False, use_embeddings=False)
     caps = coordinator.get_capabilities()
     assert caps["neural_proof_authority"] is False
     assert caps["neural_role"] == "untrusted_proposal_provider"

@@ -102,9 +102,7 @@ def _obligation(
 
 
 def test_detect_opaque_security_verification_condition_json() -> None:
-    kind = detect_payload_kind(
-        {"family": "security_verification_condition", "claim": "opaque"}
-    )
+    kind = detect_payload_kind({"family": "security_verification_condition", "claim": "opaque"})
     assert kind is ObligationPayloadKind.SECURITY_VERIFICATION_CONDITION
     assert not is_executable_payload(kind)
 
@@ -678,20 +676,13 @@ def test_disagreement_receipt_non_proof() -> None:
 
 def test_proof_authority_lattice() -> None:
     assert proof_authority_for_outcome(AttemptOutcome.PROVED) is ProofAuthority.PROOF
-    assert (
-        proof_authority_for_outcome(AttemptOutcome.DISPROVED) is ProofAuthority.DISPROOF
-    )
+    assert proof_authority_for_outcome(AttemptOutcome.DISPROVED) is ProofAuthority.DISPROOF
     assert (
         proof_authority_for_outcome(AttemptOutcome.SATISFIABLE)
         is ProofAuthority.SATISFIABILITY_ONLY
     )
-    assert (
-        proof_authority_for_outcome(AttemptOutcome.TIMEOUT) is ProofAuthority.NON_PROOF
-    )
-    assert (
-        proof_authority_for_outcome(AttemptOutcome.UNAVAILABLE)
-        is ProofAuthority.NON_PROOF
-    )
+    assert proof_authority_for_outcome(AttemptOutcome.TIMEOUT) is ProofAuthority.NON_PROOF
+    assert proof_authority_for_outcome(AttemptOutcome.UNAVAILABLE) is ProofAuthority.NON_PROOF
 
 
 def test_timeout_injected_attempt_is_non_proof() -> None:

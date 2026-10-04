@@ -89,7 +89,10 @@ async def search_patents_by_inventor_from_parameters(parameters: Dict[str, Any])
             "status": "success",
             "patents": patents_data,
             "count": len(patents_data),
-            "query": {"inventor_name": parameters["inventor_name"], "limit": parameters.get("limit", 100)},
+            "query": {
+                "inventor_name": parameters["inventor_name"],
+                "limit": parameters.get("limit", 100),
+            },
         }
     except Exception as e:
         logger.error("Patent inventor search failed: %s", e, exc_info=True)
@@ -109,7 +112,10 @@ async def search_patents_by_assignee_from_parameters(parameters: Dict[str, Any])
             "status": "success",
             "patents": patents_data,
             "count": len(patents_data),
-            "query": {"assignee_name": parameters["assignee_name"], "limit": parameters.get("limit", 100)},
+            "query": {
+                "assignee_name": parameters["assignee_name"],
+                "limit": parameters.get("limit", 100),
+            },
         }
     except Exception as e:
         logger.error("Patent assignee search failed: %s", e, exc_info=True)

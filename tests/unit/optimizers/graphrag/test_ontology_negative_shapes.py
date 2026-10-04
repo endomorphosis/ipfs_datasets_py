@@ -30,11 +30,11 @@ class TestInvalidEntityShapes:
             "entities": [
                 {"text": "Alice", "type": "Person", "confidence": 0.9},  # missing id
             ],
-            "relationships": []
+            "relationships": [],
         }
         # validate_basic_schema checks structure but not individual entity fields
         assert validator.validate_basic_schema(ontology) is True
-        
+
         # suggest_entity_merges should handle gracefully (skip entities without IDs)
         suggestions = validator.suggest_entity_merges(ontology, threshold=0.8)
         assert suggestions == []  # no suggestions since entity lacks ID
@@ -51,7 +51,7 @@ class TestInvalidEntityShapes:
                 {"id": "e1", "text": "Alice", "confidence": 0.9},  # missing type
                 {"id": "e2", "text": "Bob", "type": "Person", "confidence": 0.85},
             ],
-            "relationships": []
+            "relationships": [],
         }
         assert validator.validate_basic_schema(ontology) is True
         # suggest_entity_merges should still work (treats missing type as "Unknown")
@@ -71,7 +71,7 @@ class TestInvalidEntityShapes:
                 {"id": 123, "text": "Alice", "type": "Person", "confidence": 0.9},
                 {"id": 456, "text": "Alice", "type": "Person", "confidence": 0.85},
             ],
-            "relationships": []
+            "relationships": [],
         }
         assert validator.validate_basic_schema(ontology) is True
         # Should not crash; validator extracts and converts IDs
@@ -91,7 +91,7 @@ class TestInvalidEntityShapes:
                 {"id": "", "text": "Alice", "type": "Person", "confidence": 0.9},
                 {"id": "e2", "text": "Bob", "type": "Person", "confidence": 0.85},
             ],
-            "relationships": []
+            "relationships": [],
         }
         assert validator.validate_basic_schema(ontology) is True
         suggestions = validator.suggest_entity_merges(ontology, threshold=0.8)
@@ -110,7 +110,7 @@ class TestInvalidEntityShapes:
                 {"id": "e1", "text": "", "type": "Person", "confidence": 0.9},
                 {"id": "e2", "text": "", "type": "Person", "confidence": 0.85},
             ],
-            "relationships": []
+            "relationships": [],
         }
         assert validator.validate_basic_schema(ontology) is True
         suggestions = validator.suggest_entity_merges(ontology, threshold=0.8)
@@ -128,7 +128,7 @@ class TestInvalidEntityShapes:
             "entities": [
                 {"id": "e1", "text": "Alice", "type": "Person", "confidence": "high"},
             ],
-            "relationships": []
+            "relationships": [],
         }
         assert validator.validate_basic_schema(ontology) is True
         # suggest_entity_merges should convert confidence safely
@@ -147,7 +147,7 @@ class TestInvalidEntityShapes:
                 {"id": "e1", "text": "Alice", "type": "Person", "confidence": -0.5},
                 {"id": "e2", "text": "Alice", "type": "Person", "confidence": 0.9},
             ],
-            "relationships": []
+            "relationships": [],
         }
         assert validator.validate_basic_schema(ontology) is True
         suggestions = validator.suggest_entity_merges(ontology, threshold=0.8)
@@ -165,7 +165,7 @@ class TestInvalidEntityShapes:
                 {"id": "e1", "text": "Alice", "type": "Person", "confidence": 1.5},
                 {"id": "e2", "text": "Alice", "type": "Person", "confidence": 0.9},
             ],
-            "relationships": []
+            "relationships": [],
         }
         assert validator.validate_basic_schema(ontology) is True
         suggestions = validator.suggest_entity_merges(ontology, threshold=0.8)
@@ -189,7 +189,7 @@ class TestInvalidRelationshipShapes:
             ],
             "relationships": [
                 {"target": "e2", "type": "knows"},  # missing source
-            ]
+            ],
         }
         assert validator.validate_basic_schema(ontology) is True
 
@@ -206,7 +206,7 @@ class TestInvalidRelationshipShapes:
             ],
             "relationships": [
                 {"source": "e1", "type": "knows"},  # missing target
-            ]
+            ],
         }
         assert validator.validate_basic_schema(ontology) is True
 
@@ -224,7 +224,7 @@ class TestInvalidRelationshipShapes:
             ],
             "relationships": [
                 {"source": 123, "target": "e2", "type": "knows"},
-            ]
+            ],
         }
         assert validator.validate_basic_schema(ontology) is True
         suggestions = validator.suggest_entity_merges(ontology, threshold=0.8)
@@ -339,7 +339,7 @@ class TestEdgeCaseShapes:
                 {"id": "e1", "text": long_text, "type": "Person", "confidence": 0.9},
                 {"id": "e2", "text": "Alice", "type": "Person", "confidence": 0.85},
             ],
-            "relationships": []
+            "relationships": [],
         }
         assert validator.validate_basic_schema(ontology) is True
         suggestions = validator.suggest_entity_merges(ontology, threshold=0.8)
@@ -357,7 +357,7 @@ class TestEdgeCaseShapes:
                 {"id": "e1", "text": "张三 (Alice)", "type": "Person", "confidence": 0.9},
                 {"id": "e2", "text": "張三 (Alice)", "type": "Person", "confidence": 0.85},
             ],
-            "relationships": []
+            "relationships": [],
         }
         assert validator.validate_basic_schema(ontology) is True
         suggestions = validator.suggest_entity_merges(ontology, threshold=0.8)
@@ -375,7 +375,7 @@ class TestEdgeCaseShapes:
                 {"id": "e@#$%1", "text": "Alice", "type": "Person", "confidence": 0.9},
                 {"id": "e@#$%2", "text": "Alice", "type": "Person", "confidence": 0.85},
             ],
-            "relationships": []
+            "relationships": [],
         }
         assert validator.validate_basic_schema(ontology) is True
         suggestions = validator.suggest_entity_merges(ontology, threshold=0.8)
@@ -393,7 +393,7 @@ class TestEdgeCaseShapes:
                 {"id": "e1", "text": "  Alice  ", "type": "Person", "confidence": 0.9},
                 {"id": "e2", "text": "Alice", "type": "Person", "confidence": 0.85},
             ],
-            "relationships": []
+            "relationships": [],
         }
         assert validator.validate_basic_schema(ontology) is True
         suggestions = validator.suggest_entity_merges(ontology, threshold=0.8)
@@ -412,7 +412,7 @@ class TestEdgeCaseShapes:
             for i in range(10000)
         ]
         ontology = {"entities": entities, "relationships": []}
-        
+
         assert validator.validate_basic_schema(ontology) is True
         # Just check that it doesn't crash (don't actually run suggest_entity_merges
         # which would be O(n^2) = 100M comparisons)
@@ -429,7 +429,7 @@ class TestEdgeCaseShapes:
                 {"id": "e1", "text": "Alice", "type": "Person", "confidence": 0.9},
                 {"id": "e1", "text": "Alice Smith", "type": "Person", "confidence": 0.85},
             ],
-            "relationships": []
+            "relationships": [],
         }
         assert validator.validate_basic_schema(ontology) is True
         suggestions = validator.suggest_entity_merges(ontology, threshold=0.8)

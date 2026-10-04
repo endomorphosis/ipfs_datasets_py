@@ -167,9 +167,7 @@ class DifferentialResult:
             "right_receipt_id",
             _identifier(self.right_receipt_id, "right_receipt_id"),
         )
-        object.__setattr__(
-            self, "status", _enum(DifferentialStatus, self.status, "status")
-        )
+        object.__setattr__(self, "status", _enum(DifferentialStatus, self.status, "status"))
         for name in (
             "left_provider_id",
             "right_provider_id",
@@ -179,9 +177,7 @@ class DifferentialResult:
             "request_id",
             "obligation_id",
         ):
-            object.__setattr__(
-                self, name, _text(getattr(self, name), name, allow_empty=True)
-            )
+            object.__setattr__(self, name, _text(getattr(self, name), name, allow_empty=True))
         object.__setattr__(
             self,
             "agreement_fields",
@@ -209,22 +205,14 @@ class DifferentialResult:
             _enum(AnalysisOutcome, self.analysis_outcome, "analysis_outcome"),
         )
         if self.analysis_outcome is AnalysisOutcome.PROVED:
-            raise DifferentialError(
-                "differential result cannot claim analysis PROVED"
-            )
+            raise DifferentialError("differential result cannot claim analysis PROVED")
         # Status consistency with disagreement set.
         if self.status is DifferentialStatus.AGREE and self.disagreement_fields:
-            raise DifferentialError(
-                "AGREE status cannot list disagreement_fields"
-            )
+            raise DifferentialError("AGREE status cannot list disagreement_fields")
         if self.status is DifferentialStatus.DISAGREE and not self.disagreement_fields:
-            raise DifferentialError(
-                "DISAGREE status requires non-empty disagreement_fields"
-            )
+            raise DifferentialError("DISAGREE status requires non-empty disagreement_fields")
         object.__setattr__(self, "attributes", _attributes(self.attributes))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
 
     @property
     def is_explicit_disagreement(self) -> bool:
@@ -257,9 +245,7 @@ class DifferentialResult:
             "right_receipt_id": self.right_receipt_id,
             "schema_version": self.schema_version,
             "status": (
-                self.status.value
-                if isinstance(self.status, DifferentialStatus)
-                else self.status
+                self.status.value if isinstance(self.status, DifferentialStatus) else self.status
             ),
         }
 
@@ -281,13 +267,9 @@ class DifferentialResult:
             reason=value.get("reason", ""),
             request_id=value.get("request_id", ""),
             obligation_id=value.get("obligation_id", ""),
-            analysis_outcome=value.get(
-                "analysis_outcome", AnalysisOutcome.UNKNOWN
-            ),
+            analysis_outcome=value.get("analysis_outcome", AnalysisOutcome.UNKNOWN),
             attributes=value.get("attributes", {}),
-            schema_version=value.get(
-                "schema_version", DIFFERENTIAL_RESULT_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", DIFFERENTIAL_RESULT_SCHEMA_VERSION),
         )
 
     @property
@@ -308,9 +290,7 @@ def compare_receipts(
 ) -> DifferentialResult:
     """Compare two receipts field-by-field; disagreement stays explicit."""
 
-    if not isinstance(left, SimulationReceipt) or not isinstance(
-        right, SimulationReceipt
-    ):
+    if not isinstance(left, SimulationReceipt) or not isinstance(right, SimulationReceipt):
         raise DifferentialError("left and right must be SimulationReceipt instances")
 
     compared = tuple(fields) if fields is not None else _COMPARE_FIELDS
@@ -374,9 +354,7 @@ def compare_receipts(
         left_provider_id=left.provider_id,
         right_provider_id=right.provider_id,
         left_outcome=(
-            left.outcome.value
-            if isinstance(left.outcome, SimulationOutcome)
-            else str(left.outcome)
+            left.outcome.value if isinstance(left.outcome, SimulationOutcome) else str(left.outcome)
         ),
         right_outcome=(
             right.outcome.value

@@ -92,9 +92,7 @@ if response.success and response.document:
     print(response.document.title)
 
 # domain-aware parsing for structured fields
-legal_response = api.fetch(
-    UnifiedFetchRequest(url="https://example.com/law", domain="legal")
-)
+legal_response = api.fetch(UnifiedFetchRequest(url="https://example.com/law", domain="legal"))
 ```
 
 ### 4.3 Search and Fetch Pipeline

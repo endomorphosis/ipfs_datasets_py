@@ -10,7 +10,10 @@ This system provides a complete pipeline for converting legal documents processe
 
 ```python
 from ipfs_datasets_py.logic_integration import (
-    DeonticLogicConverter, LegalDomainKnowledge, ConversionContext, LegalDomain
+    DeonticLogicConverter,
+    LegalDomainKnowledge,
+    ConversionContext,
+    LegalDomain,
 )
 
 # Initialize components
@@ -19,9 +22,7 @@ converter = DeonticLogicConverter(knowledge)
 
 # Create conversion context
 context = ConversionContext(
-    source_document_path="contract.pdf",
-    legal_domain=LegalDomain.CONTRACT,
-    confidence_threshold=0.6
+    source_document_path="contract.pdf", legal_domain=LegalDomain.CONTRACT, confidence_threshold=0.6
 )
 
 # Convert GraphRAG knowledge graph to deontic logic
@@ -63,9 +64,7 @@ tracker = LogicProvenanceTracker(storage)
 # Store formulas with complete provenance
 for formula in result.deontic_formulas:
     formula_cid = tracker.track_formula_creation(
-        formula=formula,
-        source_pdf_path="contract.pdf",
-        knowledge_graph_cid=knowledge_graph_cid
+        formula=formula, source_pdf_path="contract.pdf", knowledge_graph_cid=knowledge_graph_cid
     )
     print(f"Stored formula with CID: {formula_cid}")
 
@@ -91,15 +90,12 @@ print(f"Found {permissions.total_matches} inspection permissions")
 
 # Check compliance
 compliance = query_engine.check_compliance(
-    proposed_action="subcontract work without approval",
-    agent="contractor"
+    proposed_action="subcontract work without approval", agent="contractor"
 )
 print(f"Compliance: {'OK' if compliance.is_compliant else 'VIOLATION'}")
 
 # Natural language query
-result = query_engine.query_by_natural_language(
-    "What are the contractor's insurance obligations?"
-)
+result = query_engine.query_by_natural_language("What are the contractor's insurance obligations?")
 print(f"Found {result.total_matches} relevant rules")
 ```
 

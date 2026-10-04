@@ -45,9 +45,7 @@ from benchmarks.semantic_roundtrip.metrics import compare_semantic_ir
 ORACLE_REVERSE_CALIBRATION_INTERFACE: Final = "OracleReverseCalibration@1"
 REALIZER_LEAKAGE_GUARD_INTERFACE: Final = "RealizerLeakageGuard@1"
 COMMON_REALIZER_IDS: Final = ("deterministic", "leanstral")
-NON_RANKING_REASON: Final = (
-    "oracle reverse-stage diagnostic has adjudicated IR as its input"
-)
+NON_RANKING_REASON: Final = "oracle reverse-stage diagnostic has adjudicated IR as its input"
 TYPED_RECOMPILER_IDENTITY: Final = "TypedDeonticCanonicalConstructor@1"
 
 FORBIDDEN_BUDGET_INPUTS: Final = frozenset(
@@ -96,12 +94,16 @@ _PROVENANCE_KEYS: Final = frozenset(
 
 
 def _normalize_name(value: object) -> str:
-    return re.sub(
-        r"[^a-z0-9]+",
-        "_",
-        re.sub(r"(?<=[a-z0-9])(?=[A-Z])", "_", str(value).strip()),
-        flags=re.IGNORECASE,
-    ).strip("_").lower()
+    return (
+        re.sub(
+            r"[^a-z0-9]+",
+            "_",
+            re.sub(r"(?<=[a-z0-9])(?=[A-Z])", "_", str(value).strip()),
+            flags=re.IGNORECASE,
+        )
+        .strip("_")
+        .lower()
+    )
 
 
 def _plain_json(value: object) -> object:
@@ -109,21 +111,15 @@ def _plain_json(value: object) -> object:
 
     if isinstance(value, Mapping):
         return {str(key): _plain_json(item) for key, item in value.items()}
-    if isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         return [_plain_json(item) for item in value]
     return value
 
 
 def _freeze_json(value: object) -> object:
     if isinstance(value, Mapping):
-        return MappingProxyType(
-            {str(key): _freeze_json(item) for key, item in value.items()}
-        )
-    if isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+        return MappingProxyType({str(key): _freeze_json(item) for key, item in value.items()})
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         return tuple(_freeze_json(item) for item in value)
     return value
 
@@ -137,8 +133,7 @@ def _identity(component: object, role: str) -> str:
 
 def _is_forbidden_channel(name: str) -> bool:
     return any(
-        name == prefix or name.startswith(prefix + "_")
-        for prefix in _FORBIDDEN_CHANNEL_PREFIXES
+        name == prefix or name.startswith(prefix + "_") for prefix in _FORBIDDEN_CHANNEL_PREFIXES
     )
 
 
@@ -149,20 +144,15 @@ def _walk_config(value: object, path: str = "config") -> None:
         for key, item in value.items():
             normalized = _normalize_name(key)
             if _is_forbidden_channel(normalized):
-                raise ContractError(
-                    f"realizer calibration payload may not contain {path}.{key}"
-                )
+                raise ContractError(f"realizer calibration payload may not contain {path}.{key}")
             if normalized in _PROVENANCE_KEYS:
                 provenance_values: Sequence[object]
-                if isinstance(item, Sequence) and not isinstance(
-                    item, (str, bytes, bytearray)
-                ):
+                if isinstance(item, Sequence) and not isinstance(item, (str, bytes, bytearray)):
                     provenance_values = item
                 else:
                     provenance_values = (item,)
                 forbidden = {
-                    _normalize_name(entry)
-                    for entry in provenance_values
+                    _normalize_name(entry) for entry in provenance_values
                 } & FORBIDDEN_BUDGET_INPUTS
                 if forbidden:
                     raise ContractError(
@@ -170,9 +160,7 @@ def _walk_config(value: object, path: str = "config") -> None:
                         f"{path}.{key} names {sorted(forbidden)!r}"
                     )
             _walk_config(item, f"{path}.{key}")
-    elif isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    elif isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         for index, item in enumerate(value):
             _walk_config(item, f"{path}[{index}]")
 
@@ -183,9 +171,7 @@ def detect_vacuous_empty_identity(
 ) -> bool:
     """Return true only for the meaningless equality of two empty IRs."""
 
-    if not isinstance(reference, CanonicalRuleIR) or not isinstance(
-        candidate, CanonicalRuleIR
-    ):
+    if not isinstance(reference, CanonicalRuleIR) or not isinstance(candidate, CanonicalRuleIR):
         raise ContractError("identity inputs must be CanonicalRuleIR")
     return reference.is_empty and candidate.is_empty
 
@@ -214,9 +200,7 @@ class RealizerLeakageGuard:
     """
 
     interface: Final = REALIZER_LEAKAGE_GUARD_INTERFACE
-    allowed_payload_fields: Final = frozenset(
-        {"canonical_ir", "allowed_atom_vocabulary", "config"}
-    )
+    allowed_payload_fields: Final = frozenset({"canonical_ir", "allowed_atom_vocabulary", "config"})
     forbidden_budget_inputs: Final = FORBIDDEN_BUDGET_INPUTS
 
     @property
@@ -224,9 +208,7 @@ class RealizerLeakageGuard:
         return self.interface
 
     @classmethod
-    def validate_budget_inputs(
-        cls, budget_inputs: Sequence[str] = ()
-    ) -> tuple[str, ...]:
+    def validate_budget_inputs(cls, budget_inputs: Sequence[str] = ()) -> tuple[str, ...]:
         if isinstance(budget_inputs, (str, bytes, bytearray)) or not isinstance(
             budget_inputs, Sequence
         ):
@@ -234,15 +216,12 @@ class RealizerLeakageGuard:
         normalized: list[str] = []
         for index, value in enumerate(budget_inputs):
             if not isinstance(value, str) or not value.strip():
-                raise ContractError(
-                    f"budget_inputs[{index}] must be a nonblank string"
-                )
+                raise ContractError(f"budget_inputs[{index}] must be a nonblank string")
             normalized.append(_normalize_name(value))
         forbidden = set(normalized) & cls.forbidden_budget_inputs
         if forbidden:
             raise ContractError(
-                "gold-derived budgets are forbidden; budget inputs include "
-                f"{sorted(forbidden)!r}"
+                f"gold-derived budgets are forbidden; budget inputs include {sorted(forbidden)!r}"
             )
         return tuple(normalized)
 
@@ -262,9 +241,7 @@ class RealizerLeakageGuard:
         missing = cls.allowed_payload_fields - set(payload)
         if extra or missing:
             forbidden = sorted(
-                str(key)
-                for key in extra
-                if _is_forbidden_channel(_normalize_name(key))
+                str(key) for key in extra if _is_forbidden_channel(_normalize_name(key))
             )
             if forbidden:
                 raise ContractError(
@@ -291,12 +268,8 @@ class RealizerLeakageGuard:
     ) -> RealizerRequest:
         if not isinstance(canonical_ir, CanonicalRuleIR):
             raise ContractError("canonical_ir must be CanonicalRuleIR")
-        if not isinstance(
-            allowed_atom_vocabulary, AllowedAtomVocabulary
-        ):
-            raise ContractError(
-                "allowed_atom_vocabulary must be AllowedAtomVocabulary"
-            )
+        if not isinstance(allowed_atom_vocabulary, AllowedAtomVocabulary):
+            raise ContractError("allowed_atom_vocabulary must be AllowedAtomVocabulary")
         if config is None:
             config = {}
         if not isinstance(config, Mapping):
@@ -304,9 +277,7 @@ class RealizerLeakageGuard:
         return cls.request_from_payload(
             {
                 "canonical_ir": canonical_ir.to_dict(),
-                "allowed_atom_vocabulary": (
-                    allowed_atom_vocabulary.to_dict()
-                ),
+                "allowed_atom_vocabulary": (allowed_atom_vocabulary.to_dict()),
                 "config": _plain_json(config),
             },
             budget_inputs=budget_inputs,
@@ -329,9 +300,7 @@ class RealizerLeakageGuard:
             return RealizerResult(
                 status=ComponentStatus.FAILED,
                 failure_reason=FailureReason.EXCEPTION,
-                failure_detail=(
-                    f"realizer raised {type(exc).__name__}"
-                )[:1000],
+                failure_detail=(f"realizer raised {type(exc).__name__}")[:1000],
             )
         if not isinstance(result, RealizerResult):
             return RealizerResult(
@@ -353,18 +322,12 @@ class OracleCalibrationCase:
     def __post_init__(self) -> None:
         if not isinstance(self.case_id, str) or not self.case_id.strip():
             raise ContractError("case_id must be a nonblank string")
-        if not isinstance(
-            self.allowed_atom_vocabulary, AllowedAtomVocabulary
-        ):
-            raise ContractError(
-                "allowed_atom_vocabulary must be AllowedAtomVocabulary"
-            )
+        if not isinstance(self.allowed_atom_vocabulary, AllowedAtomVocabulary):
+            raise ContractError("allowed_atom_vocabulary must be AllowedAtomVocabulary")
         if not isinstance(self.gold_ir, CanonicalRuleIR):
             raise ContractError("gold_ir must be CanonicalRuleIR")
         if self.gold_ir.is_empty:
-            raise ContractError(
-                "gold_ir must be nonempty; empty/empty identity is vacuous"
-            )
+            raise ContractError("gold_ir must be nonempty; empty/empty identity is vacuous")
         self.gold_ir.validate_vocabulary(self.allowed_atom_vocabulary)
 
     @classmethod
@@ -379,22 +342,17 @@ class OracleCalibrationCase:
         if set(value) != allowed_fields:
             extra = set(value) - allowed_fields
             forbidden = sorted(
-                str(key)
-                for key in extra
-                if _is_forbidden_channel(_normalize_name(key))
+                str(key) for key in extra if _is_forbidden_channel(_normalize_name(key))
             )
             if forbidden:
                 raise ContractError(
-                    "oracle calibration case may not contain source/native "
-                    f"fields: {forbidden!r}"
+                    f"oracle calibration case may not contain source/native fields: {forbidden!r}"
                 )
             raise ContractError(
                 "oracle calibration case must contain exactly case_id, "
                 "allowed_atom_vocabulary, and gold_ir"
             )
-        vocabulary = AllowedAtomVocabulary.from_dict(
-            value["allowed_atom_vocabulary"]
-        )
+        vocabulary = AllowedAtomVocabulary.from_dict(value["allowed_atom_vocabulary"])
         return cls(
             case_id=value["case_id"],  # type: ignore[arg-type]
             allowed_atom_vocabulary=vocabulary,
@@ -436,31 +394,22 @@ class OracleReverseArmRecord:
         ):
             value = getattr(self, field)
             if not isinstance(value, str) or not value.strip():
-                raise ContractError(
-                    f"calibration {field} must be a nonblank string"
-                )
+                raise ContractError(f"calibration {field} must be a nonblank string")
         if not isinstance(self.status, ComponentStatus):
             raise ContractError("calibration status is invalid")
-        if self.failure_reason is not None and not isinstance(
-            self.failure_reason, FailureReason
-        ):
+        if self.failure_reason is not None and not isinstance(self.failure_reason, FailureReason):
             raise ContractError("calibration failure reason is invalid")
         if self.failure_detail is not None and (
-            not isinstance(self.failure_detail, str)
-            or not self.failure_detail.strip()
+            not isinstance(self.failure_detail, str) or not self.failure_detail.strip()
         ):
-            raise ContractError(
-                "calibration failure detail must be a nonblank string"
-            )
+            raise ContractError("calibration failure detail must be a nonblank string")
         if (
             isinstance(self.reverse_loss, bool)
             or not isinstance(self.reverse_loss, (int, float))
             or not math.isfinite(float(self.reverse_loss))
             or not 0.0 <= float(self.reverse_loss) <= 1.0
         ):
-            raise ContractError(
-                "reverse_loss must be a finite number from zero to one"
-            )
+            raise ContractError("reverse_loss must be a finite number from zero to one")
         object.__setattr__(self, "reverse_loss", float(self.reverse_loss))
         if self.ranking_eligible:
             raise ContractError("oracle calibration arms must be non-ranking")
@@ -477,22 +426,13 @@ class OracleReverseArmRecord:
         )
         if self.status is ComponentStatus.SUCCESS and not complete:
             raise ContractError(
-                "successful calibration requires nonvacuous reconstruction "
-                "and recompiled IR"
+                "successful calibration requires nonvacuous reconstruction and recompiled IR"
             )
         if self.status is ComponentStatus.FAILED:
             if self.failure_reason is None or self.reverse_loss != 1.0:
-                raise ContractError(
-                    "failed calibration requires a reason and loss one"
-                )
-            if (
-                self.reconstructed_ir is not None
-                or self.semantic_comparison is not None
-            ):
-                raise ContractError(
-                    "failed calibration cannot carry recompiled semantic "
-                    "artifacts"
-                )
+                raise ContractError("failed calibration requires a reason and loss one")
+            if self.reconstructed_ir is not None or self.semantic_comparison is not None:
+                raise ContractError("failed calibration cannot carry recompiled semantic artifacts")
         if self.semantic_comparison is not None:
             comparison_loss = self.semantic_comparison.get("semantic_loss")
             if (
@@ -500,9 +440,7 @@ class OracleReverseArmRecord:
                 or not isinstance(comparison_loss, (int, float))
                 or float(comparison_loss) != self.reverse_loss
             ):
-                raise ContractError(
-                    "reverse_loss must equal semantic comparison loss"
-                )
+                raise ContractError("reverse_loss must equal semantic comparison loss")
             object.__setattr__(
                 self,
                 "semantic_comparison",
@@ -545,9 +483,7 @@ class OracleReverseArmRecord:
             "artifacts": {
                 "t1": self.reconstruction,
                 "l2": (
-                    self.reconstructed_ir.to_dict()
-                    if self.reconstructed_ir is not None
-                    else None
+                    self.reconstructed_ir.to_dict() if self.reconstructed_ir is not None else None
                 ),
             },
             "reverse_loss": self.reverse_loss,
@@ -622,10 +558,7 @@ class OracleReverseCalibrationReceipt:
                 "originating_constructor_available": False,
                 "empty_empty_identity_is_vacuous": True,
             },
-            "cases": [
-                [record.to_dict() for record in records]
-                for records in self.cases
-            ],
+            "cases": [[record.to_dict() for record in records] for records in self.cases],
             "summaries": _plain_json(self.summaries),
         }
 
@@ -642,17 +575,13 @@ def _safe_construct(
         return ConstructorResult(
             status=ComponentStatus.FAILED,
             failure_reason=FailureReason.EXCEPTION,
-            failure_detail=(
-                f"typed recompiler raised {type(exc).__name__}"
-            )[:1000],
+            failure_detail=(f"typed recompiler raised {type(exc).__name__}")[:1000],
         )
     if not isinstance(result, ConstructorResult):
         return ConstructorResult(
             status=ComponentStatus.FAILED,
             failure_reason=FailureReason.INVALID_OUTPUT,
-            failure_detail=(
-                "typed recompiler returned a non-ConstructorResult"
-            ),
+            failure_detail=("typed recompiler returned a non-ConstructorResult"),
         )
     return result
 
@@ -687,28 +616,14 @@ class OracleReverseCalibration:
             }
         supplied = dict(realizers)
         if not supplied:
-            raise ContractError(
-                "oracle calibration requires nonempty realizers"
-            )
-        if require_common_realizers and set(supplied) != set(
-            COMMON_REALIZER_IDS
-        ):
-            raise ContractError(
-                "oracle calibration requires deterministic and leanstral arms"
-            )
-        ordered_ids = (
-            COMMON_REALIZER_IDS
-            if require_common_realizers
-            else tuple(supplied)
-        )
-        self._realizers = {
-            realizer_id: supplied[realizer_id] for realizer_id in ordered_ids
-        }
+            raise ContractError("oracle calibration requires nonempty realizers")
+        if require_common_realizers and set(supplied) != set(COMMON_REALIZER_IDS):
+            raise ContractError("oracle calibration requires deterministic and leanstral arms")
+        ordered_ids = COMMON_REALIZER_IDS if require_common_realizers else tuple(supplied)
+        self._realizers = {realizer_id: supplied[realizer_id] for realizer_id in ordered_ids}
         for realizer in self._realizers.values():
             if not isinstance(realizer, RoundTripRealizer):
-                raise ContractError(
-                    "realizers must implement RoundTripRealizer"
-                )
+                raise ContractError("realizers must implement RoundTripRealizer")
             _identity(realizer, "realizer")
 
         if typed_recompiler is None:
@@ -718,49 +633,34 @@ class OracleReverseCalibration:
 
             typed_recompiler = TypedDeonticCanonicalConstructor()
         if not isinstance(typed_recompiler, RoundTripConstructor):
-            raise ContractError(
-                "typed_recompiler must implement RoundTripConstructor"
-            )
-        if _identity(typed_recompiler, "typed recompiler") != (
-            TYPED_RECOMPILER_IDENTITY
-        ):
-            raise ContractError(
-                "oracle calibration must use the fixed typed deontic "
-                "recompiler"
-            )
+            raise ContractError("typed_recompiler must implement RoundTripConstructor")
+        if _identity(typed_recompiler, "typed recompiler") != (TYPED_RECOMPILER_IDENTITY):
+            raise ContractError("oracle calibration must use the fixed typed deontic recompiler")
         self._typed_recompiler = typed_recompiler
         self._recompiler_identity = TYPED_RECOMPILER_IDENTITY
 
         configs = dict(realizer_configs or {})
         extra_configs = set(configs) - set(self._realizers)
         if extra_configs:
-            raise ContractError(
-                "realizer configs contain unknown ids: "
-                f"{sorted(extra_configs)!r}"
-            )
+            raise ContractError(f"realizer configs contain unknown ids: {sorted(extra_configs)!r}")
         budget_inputs = dict(realizer_budget_inputs or {})
         extra_budget_inputs = set(budget_inputs) - set(self._realizers)
         if extra_budget_inputs:
             raise ContractError(
-                "realizer budget inputs contain unknown ids: "
-                f"{sorted(extra_budget_inputs)!r}"
+                f"realizer budget inputs contain unknown ids: {sorted(extra_budget_inputs)!r}"
             )
         self._realizer_configs: dict[str, Mapping[str, object]] = {}
         self._realizer_budget_inputs: dict[str, tuple[str, ...]] = {}
         for realizer_id in self._realizers:
             config = configs.get(realizer_id, {})
             if not isinstance(config, Mapping):
-                raise ContractError(
-                    f"realizer config {realizer_id!r} must be an object"
-                )
+                raise ContractError(f"realizer config {realizer_id!r} must be an object")
             _walk_config(config)
             detached = _plain_json(config)
             assert isinstance(detached, Mapping)
             self._realizer_configs[realizer_id] = detached
-            self._realizer_budget_inputs[realizer_id] = (
-                RealizerLeakageGuard.validate_budget_inputs(
-                    budget_inputs.get(realizer_id, ())
-                )
+            self._realizer_budget_inputs[realizer_id] = RealizerLeakageGuard.validate_budget_inputs(
+                budget_inputs.get(realizer_id, ())
             )
 
         if recompiler_config is None:
@@ -771,9 +671,7 @@ class OracleReverseCalibration:
         detached_recompiler_config = _plain_json(recompiler_config)
         assert isinstance(detached_recompiler_config, Mapping)
         self._recompiler_config = detached_recompiler_config
-        RealizerLeakageGuard.validate_budget_inputs(
-            recompiler_budget_inputs
-        )
+        RealizerLeakageGuard.validate_budget_inputs(recompiler_budget_inputs)
 
     @property
     def identity(self) -> str:
@@ -811,9 +709,7 @@ class OracleReverseCalibration:
             failure_detail=detail,
         )
 
-    def run_case(
-        self, case: OracleCalibrationCase
-    ) -> tuple[OracleReverseArmRecord, ...]:
+    def run_case(self, case: OracleCalibrationCase) -> tuple[OracleReverseArmRecord, ...]:
         if not isinstance(case, OracleCalibrationCase):
             raise ContractError("case must be OracleCalibrationCase")
 
@@ -834,9 +730,7 @@ class OracleReverseCalibration:
                 realized = RealizerResult(
                     status=ComponentStatus.FAILED,
                     failure_reason=FailureReason.INVALID_OUTPUT,
-                    failure_detail=(
-                        "realizer identity changed during calibration"
-                    ),
+                    failure_detail=("realizer identity changed during calibration"),
                 )
             if realized.status is ComponentStatus.FAILED:
                 assert realized.failure_reason is not None
@@ -859,18 +753,12 @@ class OracleReverseCalibration:
                 allowed_atom_vocabulary=case.allowed_atom_vocabulary,
                 config=self._recompiler_config,
             )
-            recompiled = _safe_construct(
-                self._typed_recompiler, second_request
-            )
-            if _identity(
-                self._typed_recompiler, "typed recompiler"
-            ) != self._recompiler_identity:
+            recompiled = _safe_construct(self._typed_recompiler, second_request)
+            if _identity(self._typed_recompiler, "typed recompiler") != self._recompiler_identity:
                 recompiled = ConstructorResult(
                     status=ComponentStatus.FAILED,
                     failure_reason=FailureReason.INVALID_OUTPUT,
-                    failure_detail=(
-                        "typed recompiler identity changed during calibration"
-                    ),
+                    failure_detail=("typed recompiler identity changed during calibration"),
                 )
             if recompiled.status is ComponentStatus.FAILED:
                 reason = recompiled.failure_reason
@@ -932,9 +820,7 @@ class OracleReverseCalibration:
 
         return tuple(records)
 
-    def run(
-        self, cases: Sequence[OracleCalibrationCase]
-    ) -> OracleReverseCalibrationReceipt:
+    def run(self, cases: Sequence[OracleCalibrationCase]) -> OracleReverseCalibrationReceipt:
         if (
             not isinstance(cases, Sequence)
             or isinstance(cases, (str, bytes, bytearray))
@@ -945,9 +831,7 @@ class OracleReverseCalibration:
         case_records: list[tuple[OracleReverseArmRecord, ...]] = []
         for case in cases:
             if not isinstance(case, OracleCalibrationCase):
-                raise ContractError(
-                    "cases must contain OracleCalibrationCase values"
-                )
+                raise ContractError("cases must contain OracleCalibrationCase values")
             if case.case_id in seen:
                 raise ContractError("calibration case ids must be unique")
             seen.add(case.case_id)
@@ -964,21 +848,14 @@ class OracleReverseCalibration:
             summaries[realizer_id] = {
                 "scheduled_case_count": len(records),
                 "success_count": sum(
-                    record.status is ComponentStatus.SUCCESS
-                    for record in records
+                    record.status is ComponentStatus.SUCCESS for record in records
                 ),
-                "failure_count": sum(
-                    record.status is ComponentStatus.FAILED
-                    for record in records
-                ),
+                "failure_count": sum(record.status is ComponentStatus.FAILED for record in records),
                 "mean_reverse_loss": round(
-                    sum(record.reverse_loss for record in records)
-                    / len(records),
+                    sum(record.reverse_loss for record in records) / len(records),
                     9,
                 ),
-                "denominator_policy": (
-                    "all_scheduled_cases_including_failures"
-                ),
+                "denominator_policy": ("all_scheduled_cases_including_failures"),
                 "ranking_eligible": False,
                 "selection_effect": "none",
                 "non_ranking_reason": NON_RANKING_REASON,

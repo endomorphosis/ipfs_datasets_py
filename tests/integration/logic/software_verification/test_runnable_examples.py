@@ -477,7 +477,9 @@ def _probe_optional_tools(
             backend_id=str(tool),
             request_id=f"req:opt:{case_id}:{tool}",
         )
-        status = response.status.value if hasattr(response.status, "value") else str(response.status)
+        status = (
+            response.status.value if hasattr(response.status, "value") else str(response.status)
+        )
         evidence = "live"
         if response.status in {
             VerificationStatus.UNAVAILABLE,
@@ -558,7 +560,11 @@ def run_contracts_case(
     property_ids = [f"property:{case_id}"]
     if adapted.document is not None:
         doc = adapted.document.to_dict()
-        props = [item.get("property_id", "") for item in doc.get("properties") or [] if item.get("property_id")]
+        props = [
+            item.get("property_id", "")
+            for item in doc.get("properties") or []
+            if item.get("property_id")
+        ]
         if props:
             property_ids = props
         run_identity["document_id"] = adapted.document.document_id
@@ -604,9 +610,7 @@ def run_contracts_case(
         if pipe.bindings is not None:
             run_identity["program_id"] = pipe.bindings.source.program_id
             run_identity["pipeline_source_sha256"] = pipe.bindings.source.content_sha256
-            run_identity["translation_receipt_ids"] = list(
-                pipe.bindings.translation_receipt_ids
-            )
+            run_identity["translation_receipt_ids"] = list(pipe.bindings.translation_receipt_ids)
         if pipe.obligation_results:
             obl = pipe.obligation_results[0]
             run_identity["translation_receipt_id"] = obl.compilation.receipt.receipt_id
@@ -991,9 +995,7 @@ def build_live_report(
                 1 for r in runs if r.kind == "negative" and r.generated_witness
             ),
             "positive_with_receipt_count": sum(
-                1
-                for r in runs
-                if r.kind == "positive" and r.run_identity.get("receipt_id")
+                1 for r in runs if r.kind == "positive" and r.run_identity.get("receipt_id")
             ),
             "solvers_available": _solvers_available(),
         },
@@ -1142,9 +1144,11 @@ def test_negative_variants_generate_rather_than_inject(all_runs: list[CaseRun]) 
             assert "differential_classification" in run.run_identity
             assert run.witness_summary
         else:
-            assert run.run_identity.get("explain_request_id") or run.run_identity.get(
-                "monitor_request_id"
-            ) or run.run_identity.get("differential_classification")
+            assert (
+                run.run_identity.get("explain_request_id")
+                or run.run_identity.get("monitor_request_id")
+                or run.run_identity.get("differential_classification")
+            )
 
 
 def test_positive_variants_generate_current_receipts(all_runs: list[CaseRun]) -> None:
@@ -1203,11 +1207,7 @@ def test_optional_tools_degrade_explicitly_never_silent(
     all_runs: list[CaseRun],
 ) -> None:
     # At least the contracts lane declares optional tools.
-    tool_outcomes = [
-        outcome
-        for run in all_runs
-        for outcome in run.optional_tool_outcomes
-    ]
+    tool_outcomes = [outcome for run in all_runs for outcome in run.optional_tool_outcomes]
     assert tool_outcomes, "expected optional tool probes"
     for outcome in tool_outcomes:
         assert outcome["status"] != "succeeded" or outcome["provider_id"]
@@ -1249,16 +1249,8 @@ def test_report_does_not_hardcode_synthetic_readiness_percentage(
 
 @pytest.mark.skipif(not _solvers_available(), reason="z3/cvc5 not on PATH")
 def test_contracts_lane_live_generation_when_solvers_present(all_runs: list[CaseRun]) -> None:
-    positives = [
-        r
-        for r in all_runs
-        if r.lane_id == "contracts_resources" and r.kind == "positive"
-    ]
-    negatives = [
-        r
-        for r in all_runs
-        if r.lane_id == "contracts_resources" and r.kind == "negative"
-    ]
+    positives = [r for r in all_runs if r.lane_id == "contracts_resources" and r.kind == "positive"]
+    negatives = [r for r in all_runs if r.lane_id == "contracts_resources" and r.kind == "negative"]
     assert positives and negatives
     assert positives[0].evidence_class == "live"
     assert positives[0].result_status == "proved"

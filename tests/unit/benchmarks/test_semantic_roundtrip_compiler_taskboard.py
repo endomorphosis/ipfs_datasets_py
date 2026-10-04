@@ -99,23 +99,11 @@ def test_semantic_roundtrip_taskboard_is_supervisor_compatible() -> None:
         else:
             assert "provider id" not in task.metadata
 
-    dependencies = {
-        task.task_id: tuple(task.depends_on)
-        for task in tasks
-    }
+    dependencies = {task.task_id: tuple(task.depends_on) for task in tasks}
     _assert_acyclic(dependencies)
 
-    completed = {
-        task.task_id
-        for task in tasks
-        if task.status == "completed"
-    }
-    ready = [
-        task
-        for task in tasks
-        if task.status == "todo"
-        and set(task.depends_on) <= completed
-    ]
+    completed = {task.task_id for task in tasks if task.status == "completed"}
+    ready = [task for task in tasks if task.status == "todo" and set(task.depends_on) <= completed]
     assert ready, "the supervisor needs at least one initially claimable task"
     assert {"SRT-001", "SRT-002", "SRT-020"} <= completed
     assert {
@@ -125,11 +113,7 @@ def test_semantic_roundtrip_taskboard_is_supervisor_compatible() -> None:
         "SRT-006",
     } == {task.task_id for task in ready}
     assert len({task.metadata["parallel lane"] for task in ready}) >= 2
-    ready_outputs = [
-        output
-        for task in ready
-        for output in task.outputs
-    ]
+    ready_outputs = [output for task in ready for output in task.outputs]
     assert len(ready_outputs) == len(set(ready_outputs))
 
     tracks = {task.track for task in tasks}
@@ -141,10 +125,7 @@ def test_semantic_roundtrip_taskboard_is_supervisor_compatible() -> None:
 
 
 def test_downstream_canonical_tasks_own_shared_contracts_and_validators() -> None:
-    tasks = {
-        task.task_id: task
-        for task in parse_task_file(TASKBOARD, TASK_PREFIX)
-    }
+    tasks = {task.task_id: task for task in parse_task_file(TASKBOARD, TASK_PREFIX)}
 
     srt015 = tasks["SRT-015"]
     assert set(
@@ -162,9 +143,7 @@ def test_downstream_canonical_tasks_own_shared_contracts_and_validators() -> Non
     assert srt015.metadata["implementation timeout seconds"] == "7200"
     assert "CanonicalDesignGate@1" in srt015.metadata["preconditions"]
     assert "frozen 30-arm preregistration" in srt015.metadata["preconditions"]
-    assert "without consuming an implementation attempt" in (
-        srt015.metadata["preconditions"]
-    )
+    assert "without consuming an implementation attempt" in (srt015.metadata["preconditions"])
     assert "replacement report" in srt015.metadata["preconditions"]
     assert "replacement report and gate CIDs" in srt015.acceptance
     assert "tie representative is semantically superior" in srt015.acceptance
@@ -177,9 +156,7 @@ def test_downstream_canonical_tasks_own_shared_contracts_and_validators() -> Non
 
     srt018 = tasks["SRT-018"]
     assert "ipfs_datasets_py/logic/legal_ir/__init__.py" in srt018.outputs
-    assert "exact canonical DAG-JSON parity-policy CID" in (
-        srt018.metadata["preconditions"]
-    )
+    assert "exact canonical DAG-JSON parity-policy CID" in (srt018.metadata["preconditions"])
     assert set(srt018.depends_on) == {"SRT-016", "SRT-017"}
     assert srt018.metadata["implementation timeout seconds"] == "14400"
 
@@ -187,10 +164,7 @@ def test_downstream_canonical_tasks_own_shared_contracts_and_validators() -> Non
     assert {
         "benchmarks/semantic_roundtrip/canonical_decision.py",
         "benchmarks/bench_semantic_roundtrip_compositions.py",
-        (
-            "tests/unit/benchmarks/semantic_roundtrip/"
-            "test_canonical_decision.py"
-        ),
+        ("tests/unit/benchmarks/semantic_roundtrip/test_canonical_decision.py"),
     } <= set(srt019.outputs)
     assert len(srt019.validation) == 2
     assert "test_canonical_decision.py" in srt019.validation[0]
@@ -201,10 +175,7 @@ def test_downstream_canonical_tasks_own_shared_contracts_and_validators() -> Non
 
 
 def test_no_eligible_remediation_dag_is_bounded_and_file_disjoint() -> None:
-    tasks = {
-        task.task_id: task
-        for task in parse_task_file(TASKBOARD, TASK_PREFIX)
-    }
+    tasks = {task.task_id: task for task in parse_task_file(TASKBOARD, TASK_PREFIX)}
     remediation_ids = {
         "SRT-021",
         "SRT-022",
@@ -237,8 +208,7 @@ def test_no_eligible_remediation_dag_is_bounded_and_file_disjoint() -> None:
         for command in tasks["SRT-021"].validation
     )
     assert {
-        task_id: tasks[task_id].depends_on
-        for task_id in ("SRT-022", "SRT-023", "SRT-024")
+        task_id: tasks[task_id].depends_on for task_id in ("SRT-022", "SRT-023", "SRT-024")
     } == {
         "SRT-022": ["SRT-021"],
         "SRT-023": ["SRT-021"],
@@ -269,53 +239,32 @@ def test_no_eligible_remediation_dag_is_bounded_and_file_disjoint() -> None:
             if task_id < other_id:
                 assert paths.isdisjoint(other_paths)
     immutable_originals = {
-        (
-            "docs/performance_snapshots/"
-            "2026-07-26_semantic_roundtrip_composition_pilot.json"
-        ),
+        ("docs/performance_snapshots/2026-07-26_semantic_roundtrip_composition_pilot.json"),
         "docs/benchmarks/semantic_roundtrip_composition_results.md",
-        (
-            "workspace/benchmarks/semantic-roundtrip-compositions/"
-            "run_manifest.json"
-        ),
+        ("workspace/benchmarks/semantic-roundtrip-compositions/run_manifest.json"),
         "docs/benchmarks/semantic_roundtrip_composition_protocol.md",
     }
-    assert all(
-        paths.isdisjoint(immutable_originals)
-        for paths in predicted.values()
+    assert all(paths.isdisjoint(immutable_originals) for paths in predicted.values())
+    assert (
+        len(
+            {
+                tasks[task_id].metadata["parallel lane"]
+                for task_id in ("SRT-022", "SRT-023", "SRT-024")
+            }
+        )
+        == 3
     )
-    assert len(
-        {
-            tasks[task_id].metadata["parallel lane"]
-            for task_id in ("SRT-022", "SRT-023", "SRT-024")
-        }
-    ) == 3
-    assert "unavailable_no_reviewed_causal_l1_adapter" in (
-        tasks["SRT-024"].acceptance
-    )
+    assert "unavailable_no_reviewed_causal_l1_adapter" in (tasks["SRT-024"].acceptance)
     assert "mean primary loss `0.0883333334`" in tasks["SRT-022"].acceptance
     assert "manifest-gate" in tasks["SRT-021"].validation[1]
-    assert (
-        tasks["SRT-023"].metadata["implementation timeout seconds"] == "7200"
-    )
-    assert "do not require every arm to be selection-eligible" in (
-        tasks["SRT-025"].acceptance
-    )
-    assert (
-        tasks["SRT-025"].metadata["implementation timeout seconds"] == "7200"
-    )
+    assert tasks["SRT-023"].metadata["implementation timeout seconds"] == "7200"
+    assert "do not require every arm to be selection-eligible" in (tasks["SRT-025"].acceptance)
+    assert tasks["SRT-025"].metadata["implementation timeout seconds"] == "7200"
     assert "670 total terminal observations" in tasks["SRT-026"].acceptance
-    assert (
-        tasks["SRT-026"].metadata["implementation timeout seconds"] == "21600"
-    )
-    artifact_envelope = json.loads(
-        tasks["SRT-026"].metadata["proposal artifact envelope"]
-    )
+    assert tasks["SRT-026"].metadata["implementation timeout seconds"] == "21600"
+    artifact_envelope = json.loads(tasks["SRT-026"].metadata["proposal artifact envelope"])
     assert artifact_envelope == {
-        "schema": (
-            "ipfs_accelerate_py/agent-supervisor/"
-            "task-artifact-envelope@1"
-        ),
+        "schema": ("ipfs_accelerate_py/agent-supervisor/task-artifact-envelope@1"),
         "paths": tasks["SRT-026"].outputs,
         "max_file_bytes": 12_000_000,
         "max_patch_bytes": 14_000_000,

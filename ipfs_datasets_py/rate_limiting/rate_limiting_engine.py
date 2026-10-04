@@ -91,9 +91,7 @@ class MockRateLimiter:
     # Core check
     # ------------------------------------------------------------------
 
-    def check_rate_limit(
-        self, limit_name: str, identifier: str = "default"
-    ) -> Dict[str, Any]:
+    def check_rate_limit(self, limit_name: str, identifier: str = "default") -> Dict[str, Any]:
         """Check whether *identifier* is within the *limit_name* rule."""
         if limit_name not in self.limits:
             return {
@@ -162,9 +160,7 @@ class MockRateLimiter:
             "allowed": False,
             "reason": "Rate limit exceeded",
             "remaining": 0,
-            "reset_time": (
-                now + timedelta(seconds=1.0 / config.requests_per_second)
-            ).isoformat(),
+            "reset_time": (now + timedelta(seconds=1.0 / config.requests_per_second)).isoformat(),
         }
 
     def _check_sliding_window(
@@ -225,17 +221,13 @@ class MockRateLimiter:
                 "total_requests": total_req,
                 "total_blocked": total_blocked,
                 "block_rate": total_blocked / max(total_req, 1),
-                "active_users": sum(
-                    1 for k in self.usage_stats if k.startswith(f"{limit_name}:")
-                ),
+                "active_users": sum(1 for k in self.usage_stats if k.startswith(f"{limit_name}:")),
             }
 
         return {
             "global_stats": self.global_stats,
             "active_limits": list(self.limits.keys()),
-            "uptime_seconds": (
-                datetime.now() - self.global_stats["start_time"]
-            ).total_seconds(),
+            "uptime_seconds": (datetime.now() - self.global_stats["start_time"]).total_seconds(),
             "overall_block_rate": self.global_stats["total_blocked"]
             / max(self.global_stats["total_requests"], 1),
         }

@@ -84,18 +84,10 @@ MAX_MONEY_SATS: Final[int] = 21_000_000 * 100_000_000
 
 # Genesis block hashes (full 32-byte hex, no 0x prefix). BIP122 chain_id is
 # the first 32 hex characters of the genesis hash.
-MAINNET_GENESIS: Final[str] = (
-    "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"
-)
-TESTNET_GENESIS: Final[str] = (
-    "000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943"
-)
-SIGNET_GENESIS: Final[str] = (
-    "00000008819873e925422c1ff0f99f7cc9bbb232af63a077a480a3633bee1ef6"
-)
-REGTEST_GENESIS: Final[str] = (
-    "0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206"
-)
+MAINNET_GENESIS: Final[str] = "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"
+TESTNET_GENESIS: Final[str] = "000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943"
+SIGNET_GENESIS: Final[str] = "00000008819873e925422c1ff0f99f7cc9bbb232af63a077a480a3633bee1ef6"
+REGTEST_GENESIS: Final[str] = "0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206"
 
 MAINNET_NETWORK: Final[str] = "bitcoin-mainnet"
 TESTNET_NETWORK: Final[str] = "bitcoin-testnet"
@@ -108,9 +100,7 @@ COINBASE_VOUT: Final[int] = 0xFFFFFFFF
 _TXID_RE: Final[re.Pattern[str]] = re.compile(r"^(?:0x)?[0-9a-fA-F]{64}$")
 _HEX_RE: Final[re.Pattern[str]] = re.compile(r"^(?:0x)?(?:[0-9a-fA-F]{2})*$")
 _DECIMAL_INTEGER: Final[re.Pattern[str]] = re.compile(r"^(?:0|[1-9][0-9]*)$")
-_ID_RE: Final[re.Pattern[str]] = re.compile(
-    r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
-)
+_ID_RE: Final[re.Pattern[str]] = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$")
 
 
 class BitcoinAdapterError(CryptoIRAdapterError):
@@ -301,17 +291,13 @@ def parse_sats(value: object, *, field: str = "value_sats") -> str:
     if isinstance(value, bool):
         raise BitcoinAdapterError(f"{field} must not be a boolean")
     if isinstance(value, float):
-        raise BitcoinAdapterError(
-            f"{field} must not be a binary float; use integer satoshis"
-        )
+        raise BitcoinAdapterError(f"{field} must not be a binary float; use integer satoshis")
     if type(value) is int:
         sats = value
     elif isinstance(value, str):
         text = value.strip()
         if not _DECIMAL_INTEGER.fullmatch(text):
-            raise BitcoinAdapterError(
-                f"{field} must be a canonical decimal integer string"
-            )
+            raise BitcoinAdapterError(f"{field} must be a canonical decimal integer string")
         sats = int(text, 10)
     else:
         raise BitcoinAdapterError(f"{field} must be an int or decimal integer string")
@@ -632,9 +618,7 @@ def resolve_network(
                 and provided_chain_id != known.chain_id
                 and provided_chain_id != known.genesis_hash
             ):
-                raise BitcoinAdapterError(
-                    f"chain_id does not match known network {known.network}"
-                )
+                raise BitcoinAdapterError(f"chain_id does not match known network {known.network}")
             return known
         # Unknown network label requires explicit genesis.
         if provided_genesis is None:
@@ -749,7 +733,9 @@ class Outpoint:
                     raise BitcoinAdapterError(
                         "txid_internal must be the byte-reverse of display txid"
                     )
-            object.__setattr__(self, "txid_internal", internal if internal == expected else expected)
+            object.__setattr__(
+                self, "txid_internal", internal if internal == expected else expected
+            )
         else:
             object.__setattr__(self, "txid_internal", reverse_hex_bytes(display))
 
@@ -811,9 +797,7 @@ class SpendingCondition:
 
     def __post_init__(self) -> None:
         if not isinstance(self.script_type, ScriptType):
-            object.__setattr__(
-                self, "script_type", parse_script_type(self.script_type)
-            )
+            object.__setattr__(self, "script_type", parse_script_type(self.script_type))
         script = normalize_hex_script(self.script_hex, field="script_hex")
         object.__setattr__(self, "script_hex", script)
         if self.script_commitment:
@@ -828,15 +812,11 @@ class SpendingCondition:
                     )
             expected = script_commitment(script)
             if commitment != expected and script:
-                raise BitcoinAdapterError(
-                    "script_commitment does not match script_hex bytes"
-                )
+                raise BitcoinAdapterError("script_commitment does not match script_hex bytes")
             object.__setattr__(self, "script_commitment", commitment)
         else:
             object.__setattr__(self, "script_commitment", script_commitment(script))
-        object.__setattr__(
-            self, "address", _text(self.address, "address", allow_empty=True)
-        )
+        object.__setattr__(self, "address", _text(self.address, "address", allow_empty=True))
         if self.witness_version is not None:
             if (
                 isinstance(self.witness_version, bool)
@@ -927,14 +907,10 @@ class UtxoInput:
             if self.outpoint is not None and not self.outpoint.is_coinbase_prevout:
                 # Allow None or the conventional null outpoint for coinbase.
                 if self.outpoint is not None:
-                    raise BitcoinAdapterError(
-                        "coinbase input must not reference a spent outpoint"
-                    )
+                    raise BitcoinAdapterError("coinbase input must not reference a spent outpoint")
         else:
             if self.outpoint is None:
-                raise BitcoinAdapterError(
-                    "non-coinbase input requires an outpoint"
-                )
+                raise BitcoinAdapterError("non-coinbase input requires an outpoint")
             if not isinstance(self.outpoint, Outpoint):
                 object.__setattr__(
                     self,
@@ -978,20 +954,14 @@ class UtxoInput:
                 self,
                 "prevout_spending_condition",
                 SpendingCondition.from_dict(
-                    _as_mapping(
-                        self.prevout_spending_condition, "prevout_spending_condition"
-                    )
+                    _as_mapping(self.prevout_spending_condition, "prevout_spending_condition")
                 ),
             )
         if type(self.previous_output_known) is not bool:
             raise BitcoinAdapterError("previous_output_known must be a boolean")
         # Missing value or script implies incomplete prevout.
-        if (
-            not self.is_coinbase
-            and (
-                self.prevout_value_sats is None
-                or self.prevout_spending_condition is None
-            )
+        if not self.is_coinbase and (
+            self.prevout_value_sats is None or self.prevout_spending_condition is None
         ):
             object.__setattr__(self, "previous_output_known", False)
         object.__setattr__(self, "attributes", _attributes(self.attributes))
@@ -1023,10 +993,7 @@ class UtxoInput:
         if is_coinbase and prev is None:
             outpoint = None
         elif isinstance(prev, Mapping) and (
-            "txid" in prev
-            or "txid_display" in prev
-            or "hash" in prev
-            or "vout" in prev
+            "txid" in prev or "txid_display" in prev or "hash" in prev or "vout" in prev
         ):
             # Nested outpoint object.
             if "value" in prev or "value_sats" in prev or "scriptpubkey" in prev:
@@ -1125,9 +1092,7 @@ class TxOutputRecord:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "n", _non_negative_int(self.n, "n"))
-        object.__setattr__(
-            self, "value_sats", parse_sats(self.value_sats, field="value_sats")
-        )
+        object.__setattr__(self, "value_sats", parse_sats(self.value_sats, field="value_sats"))
         if not isinstance(self.spending_condition, SpendingCondition):
             object.__setattr__(
                 self,
@@ -1136,9 +1101,7 @@ class TxOutputRecord:
                     _as_mapping(self.spending_condition, "spending_condition")
                 ),
             )
-        object.__setattr__(
-            self, "spent_by", _text(self.spent_by, "spent_by", allow_empty=True)
-        )
+        object.__setattr__(self, "spent_by", _text(self.spent_by, "spent_by", allow_empty=True))
         object.__setattr__(self, "attributes", _attributes(self.attributes))
 
     def to_dict(self) -> dict[str, Any]:
@@ -1213,9 +1176,7 @@ class UtxoEntry:
                 "outpoint",
                 Outpoint.from_dict(_as_mapping(self.outpoint, "outpoint")),
             )
-        object.__setattr__(
-            self, "value_sats", parse_sats(self.value_sats, field="value_sats")
-        )
+        object.__setattr__(self, "value_sats", parse_sats(self.value_sats, field="value_sats"))
         if not isinstance(self.spending_condition, SpendingCondition):
             object.__setattr__(
                 self,
@@ -1230,9 +1191,7 @@ class UtxoEntry:
             "created_height",
             _optional_non_negative_int(self.created_height, "created_height"),
         )
-        object.__setattr__(
-            self, "spent_by", _text(self.spent_by, "spent_by", allow_empty=True)
-        )
+        object.__setattr__(self, "spent_by", _text(self.spent_by, "spent_by", allow_empty=True))
         object.__setattr__(
             self,
             "spent_height",
@@ -1355,25 +1314,19 @@ class BitcoinTransactionObservation:
             self,
             "outputs",
             tuple(
-                item
-                if isinstance(item, TxOutputRecord)
-                else TxOutputRecord.from_dict(item)
+                item if isinstance(item, TxOutputRecord) else TxOutputRecord.from_dict(item)
                 for item in self.outputs
             ),
         )
         if not isinstance(self.status, TxStatus):
             object.__setattr__(self, "status", parse_tx_status(self.status))
-        object.__setattr__(
-            self, "network", _text(self.network, "network", allow_empty=True)
-        )
+        object.__setattr__(self, "network", _text(self.network, "network", allow_empty=True))
         object.__setattr__(
             self,
             "genesis_hash",
             _text(self.genesis_hash, "genesis_hash", allow_empty=True),
         )
-        object.__setattr__(
-            self, "chain_id", _text(self.chain_id, "chain_id", allow_empty=True)
-        )
+        object.__setattr__(self, "chain_id", _text(self.chain_id, "chain_id", allow_empty=True))
         object.__setattr__(
             self,
             "block_height",
@@ -1391,19 +1344,11 @@ class BitcoinTransactionObservation:
             _optional_non_negative_int(self.confirmations, "confirmations"),
         )
         if self.fee_sats is not None:
-            object.__setattr__(
-                self, "fee_sats", parse_sats(self.fee_sats, field="fee_sats")
-            )
-        object.__setattr__(
-            self, "weight", _optional_non_negative_int(self.weight, "weight")
-        )
-        object.__setattr__(
-            self, "replaces", _text(self.replaces, "replaces", allow_empty=True)
-        )
+            object.__setattr__(self, "fee_sats", parse_sats(self.fee_sats, field="fee_sats"))
+        object.__setattr__(self, "weight", _optional_non_negative_int(self.weight, "weight"))
+        object.__setattr__(self, "replaces", _text(self.replaces, "replaces", allow_empty=True))
         if self.replaces:
-            object.__setattr__(
-                self, "replaces", normalize_txid(self.replaces, field="replaces")
-            )
+            object.__setattr__(self, "replaces", normalize_txid(self.replaces, field="replaces"))
         object.__setattr__(
             self,
             "replaced_by",
@@ -1415,9 +1360,7 @@ class BitcoinTransactionObservation:
                 "replaced_by",
                 normalize_txid(self.replaced_by, field="replaced_by"),
             )
-        object.__setattr__(
-            self, "finality", _text(self.finality, "finality", allow_empty=True)
-        )
+        object.__setattr__(self, "finality", _text(self.finality, "finality", allow_empty=True))
         object.__setattr__(
             self, "retraction", _text(self.retraction, "retraction", allow_empty=True)
         )
@@ -1485,18 +1428,14 @@ class BitcoinTransactionObservation:
         txid = value.get("txid", value.get("tx_hash", value.get("hash", "")))
         inputs_raw = value.get("inputs", value.get("vin", ()))
         outputs_raw = value.get("outputs", value.get("vout", ()))
-        if not isinstance(inputs_raw, Sequence) or isinstance(
-            inputs_raw, (str, bytes, bytearray)
-        ):
+        if not isinstance(inputs_raw, Sequence) or isinstance(inputs_raw, (str, bytes, bytearray)):
             raise BitcoinAdapterError("inputs must be a sequence")
         if not isinstance(outputs_raw, Sequence) or isinstance(
             outputs_raw, (str, bytes, bytearray)
         ):
             raise BitcoinAdapterError("outputs must be a sequence")
         return cls(
-            observation_id=str(
-                value.get("observation_id", value.get("id", f"btc-tx-{txid}"))
-            ),
+            observation_id=str(value.get("observation_id", value.get("id", f"btc-tx-{txid}"))),
             txid=str(txid),
             inputs=tuple(inputs_raw),
             outputs=tuple(outputs_raw),
@@ -1521,9 +1460,7 @@ class BitcoinTransactionObservation:
             observed_at=str(value.get("observed_at", "") or ""),
             validity_start=str(value.get("validity_start", "") or ""),
             validity_end=str(value.get("validity_end", "") or ""),
-            raw=value.get("raw", {})
-            if isinstance(value.get("raw"), Mapping)
-            else {},
+            raw=value.get("raw", {}) if isinstance(value.get("raw"), Mapping) else {},
             attributes=value.get("attributes", {})
             if isinstance(value.get("attributes"), Mapping)
             else {},
@@ -1547,9 +1484,7 @@ class BitcoinUtxoSetObservation:
         object.__setattr__(
             self, "observation_id", _identifier(self.observation_id, "observation_id")
         )
-        if isinstance(self.utxos, (str, bytes, bytearray)) or not isinstance(
-            self.utxos, Sequence
-        ):
+        if isinstance(self.utxos, (str, bytes, bytearray)) or not isinstance(self.utxos, Sequence):
             raise BitcoinAdapterError("utxos must be a sequence")
         object.__setattr__(
             self,
@@ -1559,17 +1494,13 @@ class BitcoinUtxoSetObservation:
                 for item in self.utxos
             ),
         )
-        object.__setattr__(
-            self, "network", _text(self.network, "network", allow_empty=True)
-        )
+        object.__setattr__(self, "network", _text(self.network, "network", allow_empty=True))
         object.__setattr__(
             self,
             "genesis_hash",
             _text(self.genesis_hash, "genesis_hash", allow_empty=True),
         )
-        object.__setattr__(
-            self, "chain_id", _text(self.chain_id, "chain_id", allow_empty=True)
-        )
+        object.__setattr__(self, "chain_id", _text(self.chain_id, "chain_id", allow_empty=True))
         object.__setattr__(
             self, "observed_at", _text(self.observed_at, "observed_at", allow_empty=True)
         )
@@ -1598,17 +1529,13 @@ class BitcoinUtxoSetObservation:
         value = _as_mapping(value, "BitcoinUtxoSetObservation")
         utxos = value.get("utxos", value.get("entries", value.get("outputs", ())))
         return cls(
-            observation_id=str(
-                value.get("observation_id", value.get("id", "btc-utxo-set"))
-            ),
+            observation_id=str(value.get("observation_id", value.get("id", "btc-utxo-set"))),
             utxos=tuple(utxos) if isinstance(utxos, Sequence) else (),
             network=str(value.get("network", "") or ""),
             genesis_hash=str(value.get("genesis_hash", "") or ""),
             chain_id=str(value.get("chain_id", "") or ""),
             observed_at=str(value.get("observed_at", "") or ""),
-            raw=value.get("raw", {})
-            if isinstance(value.get("raw"), Mapping)
-            else {},
+            raw=value.get("raw", {}) if isinstance(value.get("raw"), Mapping) else {},
             attributes=value.get("attributes", {})
             if isinstance(value.get("attributes"), Mapping)
             else {},
@@ -1649,27 +1576,19 @@ class BitcoinSpendIntent:
             self,
             "outputs",
             tuple(
-                item
-                if isinstance(item, TxOutputRecord)
-                else TxOutputRecord.from_dict(item)
+                item if isinstance(item, TxOutputRecord) else TxOutputRecord.from_dict(item)
                 for item in self.outputs
             ),
         )
-        object.__setattr__(
-            self, "network", _text(self.network, "network", allow_empty=True)
-        )
+        object.__setattr__(self, "network", _text(self.network, "network", allow_empty=True))
         object.__setattr__(
             self,
             "genesis_hash",
             _text(self.genesis_hash, "genesis_hash", allow_empty=True),
         )
-        object.__setattr__(
-            self, "chain_id", _text(self.chain_id, "chain_id", allow_empty=True)
-        )
+        object.__setattr__(self, "chain_id", _text(self.chain_id, "chain_id", allow_empty=True))
         if self.fee_sats is not None:
-            object.__setattr__(
-                self, "fee_sats", parse_sats(self.fee_sats, field="fee_sats")
-            )
+            object.__setattr__(self, "fee_sats", parse_sats(self.fee_sats, field="fee_sats"))
         object.__setattr__(
             self,
             "change_address",
@@ -1700,9 +1619,7 @@ class BitcoinSpendIntent:
         }
 
     @classmethod
-    def from_dict(
-        cls, value: Mapping[str, Any] | "BitcoinSpendIntent"
-    ) -> "BitcoinSpendIntent":
+    def from_dict(cls, value: Mapping[str, Any] | "BitcoinSpendIntent") -> "BitcoinSpendIntent":
         if isinstance(value, BitcoinSpendIntent):
             return value
         value = _as_mapping(value, "BitcoinSpendIntent")
@@ -1795,9 +1712,7 @@ class BitcoinWalletAdapter:
         if not isinstance(capability, CapabilityDescriptor):
             raise BitcoinAdapterError("capability must be a CapabilityDescriptor")
         if not capability.side_effect_free:
-            raise BitcoinAdapterError(
-                "Bitcoin adapter capability must be side-effect-free"
-            )
+            raise BitcoinAdapterError("Bitcoin adapter capability must be side-effect-free")
         self._capability = capability
 
     @property
@@ -1833,9 +1748,7 @@ class BitcoinWalletAdapter:
         elif isinstance(payload, Mapping):
             payload_map = payload
         else:
-            raise BitcoinAdapterError(
-                "payload must be a mapping or Bitcoin structured record"
-            )
+            raise BitcoinAdapterError("payload must be a mapping or Bitcoin structured record")
 
         source_digest = f"sha256:{content_sha256_hex(dict(payload_map))}"
         provenance_dict: dict[str, Any] = {}
@@ -1857,22 +1770,21 @@ class BitcoinWalletAdapter:
             )
             if source_authority is AuthorityKind.AUTHORIZATION:
                 raise BitcoinAdapterError(
-                    "cannot convert authorization-authority payload through "
-                    "Bitcoin adapter"
+                    "cannot convert authorization-authority payload through Bitcoin adapter"
                 )
             result_authority = source_authority
 
             if kind is BitcoinPayloadKind.TRANSACTION_OBSERVATION:
-                result_payload, unsupported, diagnostics, status = (
-                    self._convert_observation(payload_map)
+                result_payload, unsupported, diagnostics, status = self._convert_observation(
+                    payload_map
                 )
             elif kind is BitcoinPayloadKind.UTXO_SET:
-                result_payload, unsupported, diagnostics, status = (
-                    self._convert_utxo_set(payload_map)
+                result_payload, unsupported, diagnostics, status = self._convert_utxo_set(
+                    payload_map
                 )
             elif kind is BitcoinPayloadKind.SPEND_INTENT:
-                result_payload, unsupported, diagnostics, status = (
-                    self._convert_spend_intent(payload_map)
+                result_payload, unsupported, diagnostics, status = self._convert_spend_intent(
+                    payload_map
                 )
             elif kind is BitcoinPayloadKind.SERIALIZED_CANDIDATE:
                 result_payload, unsupported, diagnostics, status = (
@@ -1944,9 +1856,7 @@ class BitcoinWalletAdapter:
             else:
                 kind = default
             return data, kind
-        raise BitcoinAdapterError(
-            "source_provenance must be CryptoIRProvenance or mapping"
-        )
+        raise BitcoinAdapterError("source_provenance must be CryptoIRProvenance or mapping")
 
     def _detect_kind(self, payload: Mapping[str, Any]) -> BitcoinPayloadKind:
         kind_raw = payload.get("kind", payload.get("payload_kind", ""))
@@ -1955,9 +1865,7 @@ class BitcoinWalletAdapter:
             aliases = {
                 "transaction_observation": BitcoinPayloadKind.TRANSACTION_OBSERVATION,
                 "observation": BitcoinPayloadKind.TRANSACTION_OBSERVATION,
-                "bitcoin_transaction_observation": (
-                    BitcoinPayloadKind.TRANSACTION_OBSERVATION
-                ),
+                "bitcoin_transaction_observation": (BitcoinPayloadKind.TRANSACTION_OBSERVATION),
                 "tx": BitcoinPayloadKind.TRANSACTION_OBSERVATION,
                 "utxo_set": BitcoinPayloadKind.UTXO_SET,
                 "utxo": BitcoinPayloadKind.UTXO_SET,
@@ -2011,11 +1919,7 @@ class BitcoinWalletAdapter:
             confirmations=obs.confirmations,
             status=obs.status,
         )
-        if (
-            not obs.finality
-            and obs.confirmations is None
-            and obs.status == TxStatus.UNKNOWN
-        ):
+        if not obs.finality and obs.confirmations is None and obs.status == TxStatus.UNKNOWN:
             missing_coverage.append("finality")
             unsupported.append(
                 UnsupportedField(
@@ -2043,8 +1947,7 @@ class BitcoinWalletAdapter:
                     UnsupportedField(
                         path=f"inputs[{index}].previous_output",
                         reason=(
-                            "previous output value/script unknown; "
-                            "left incomplete (not invented)"
+                            "previous output value/script unknown; left incomplete (not invented)"
                         ),
                     )
                 )
@@ -2100,8 +2003,7 @@ class BitcoinWalletAdapter:
             "finality": finality.value,
             "retraction": retraction.value,
             "status": obs.status.value,
-            "is_orphaned": obs.status == TxStatus.ORPHANED
-            or finality == FinalityStatus.REORGED,
+            "is_orphaned": obs.status == TxStatus.ORPHANED or finality == FinalityStatus.REORGED,
         }
 
         coordinate = LedgerCoordinate(
@@ -2141,9 +2043,7 @@ class BitcoinWalletAdapter:
         asset = native_asset(chain, network)
         transfers: list[dict[str, Any]] = []
         for vout in obs.outputs:
-            amount = ExactAmount(
-                base_units=vout.value_sats, decimals=network.native_decimals
-            )
+            amount = ExactAmount(base_units=vout.value_sats, decimals=network.native_decimals)
             transfers.append(
                 {
                     "kind": "native",
@@ -2163,9 +2063,7 @@ class BitcoinWalletAdapter:
             coordinate=coordinate,
             finality=finality,
             retraction=retraction,
-            validity=ValidityWindow(
-                start=obs.validity_start, end=obs.validity_end
-            ),
+            validity=ValidityWindow(start=obs.validity_start, end=obs.validity_end),
             from_account=from_account,
             to_account=to_account,
             provenance=provenance,
@@ -2212,9 +2110,7 @@ class BitcoinWalletAdapter:
             scope=f"bitcoin-tx:{obs.txid}",
             completeness=completeness_status,
             finality=finality,
-            validity=ValidityWindow(
-                start=obs.validity_start, end=obs.validity_end
-            ),
+            validity=ValidityWindow(start=obs.validity_start, end=obs.validity_end),
             retraction=retraction,
             covered_ranges=(coordinate,) if obs.block_height is not None else (),
             missing_ranges=(),
@@ -2254,9 +2150,7 @@ class BitcoinWalletAdapter:
             else AdapterConversionStatus.PARTIAL
         )
         if missing_coverage:
-            diagnostics.append(
-                "missing_coverage=" + ",".join(sorted(set(missing_coverage)))
-            )
+            diagnostics.append("missing_coverage=" + ",".join(sorted(set(missing_coverage))))
         diagnostics.append(
             f"network={network.network};genesis={network.genesis_hash};"
             f"txid_display={txid_order['txid_display']};"
@@ -2336,8 +2230,7 @@ class BitcoinWalletAdapter:
             else AdapterConversionStatus.PARTIAL
         )
         diagnostics.append(
-            f"network={network.network};utxo_count={len(entries)};"
-            f"genesis={network.genesis_hash}"
+            f"network={network.network};utxo_count={len(entries)};genesis={network.genesis_hash}"
         )
         return result_payload, tuple(unsupported), tuple(diagnostics), status
 
@@ -2381,9 +2274,7 @@ class BitcoinWalletAdapter:
             output_records.append(record)
             to_account = None
             if vout.spending_condition.address:
-                to_account = display_address_account(
-                    vout.spending_condition.address, chain
-                )
+                to_account = display_address_account(vout.spending_condition.address, chain)
             # TransferIntent requires from/to accounts — use outpoint-bound
             # synthetic account when address absent so declarations stay valid.
             if to_account is None:
@@ -2442,9 +2333,7 @@ class BitcoinWalletAdapter:
             if intent.origin_address
             else transfers[0].from_account
         )
-        signers = (
-            SignerRequirement(account=origin, role="spender"),
-        )
+        signers = (SignerRequirement(account=origin, role="spender"),)
         unsigned = UnsignedTransactionIntent(
             intent_id=intent.intent_id,
             chain=chain,
@@ -2485,8 +2374,7 @@ class BitcoinWalletAdapter:
             else AdapterConversionStatus.PARTIAL
         )
         diagnostics.append(
-            f"network={network.network};inputs={len(input_records)};"
-            f"outputs={len(output_records)}"
+            f"network={network.network};inputs={len(input_records)};outputs={len(output_records)}"
         )
         return result_payload, tuple(unsupported), tuple(diagnostics), status
 
@@ -2520,9 +2408,7 @@ class BitcoinWalletAdapter:
                 if re.fullmatch(r"[0-9a-fA-F]{64}", provided):
                     provided = f"sha256:{provided.lower()}"
             if provided != payload_digest:
-                raise BitcoinAdapterError(
-                    "payload_digest does not match raw_hex bytes"
-                )
+                raise BitcoinAdapterError("payload_digest does not match raw_hex bytes")
 
         intent_id = _identifier(
             str(payload.get("intent_id", f"intent-{candidate_id}")),
@@ -2551,9 +2437,7 @@ class BitcoinWalletAdapter:
             "payload_digest": payload_digest,
             "encoding": encoding,
             "script_execution": False,
-            "diagnostics": [
-                "raw transaction preserved without Script execution or parsing"
-            ],
+            "diagnostics": ["raw transaction preserved without Script execution or parsing"],
         }
         return (
             result_payload,

@@ -99,9 +99,7 @@ def _trusted(**changes: Any) -> TrustedProofReceipt:
         source,
         theorem_id=changes.pop("theorem_id", "theorem:sort-correct"),
         property_id=changes.pop("property_id", PROPERTY),
-        translation_receipt_id=changes.pop(
-            "translation_receipt_id", "translation:fol-to-lean:v1"
-        ),
+        translation_receipt_id=changes.pop("translation_receipt_id", "translation:fol-to-lean:v1"),
         tree_id=changes.pop("tree_id", TREE),
         policy_id=changes.pop("policy_id", "policy:formal@1"),
         receipt_id=changes.pop("receipt_id", ""),
@@ -281,9 +279,7 @@ def test_stale_digest_and_expiry_rejected() -> None:
     api = _api()
     receipt = _trusted()
 
-    stale_digest = api.verify_receipt(
-        receipt, _binding(source_result_digest="stale-digest-value")
-    )
+    stale_digest = api.verify_receipt(receipt, _binding(source_result_digest="stale-digest-value"))
     assert stale_digest.status is VerificationStatus.INVALID
     assert any("stale" in item for item in stale_digest.diagnostics)
 
@@ -291,9 +287,7 @@ def test_stale_digest_and_expiry_rejected() -> None:
     assert stale_window.status is VerificationStatus.INVALID
     assert any("stale" in item for item in stale_window.diagnostics)
 
-    wrong_receipt_id = api.verify_receipt(
-        receipt, _binding(receipt_id="receipt:not-this-one")
-    )
+    wrong_receipt_id = api.verify_receipt(receipt, _binding(receipt_id="receipt:not-this-one"))
     assert wrong_receipt_id.status is VerificationStatus.INVALID
     assert any("stale" in item for item in wrong_receipt_id.diagnostics)
 

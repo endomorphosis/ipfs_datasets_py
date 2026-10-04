@@ -106,10 +106,11 @@ docs/
 # 3. Show expected output
 # 4. Handle errors gracefully
 
+
 async def example_function():
     """
     Brief description of what this does.
-    
+
     Returns:
         Description of return value
     """

@@ -204,6 +204,7 @@ def test_descriptive_name():
 from typing import List, Optional
 from ipfs_datasets_py.logic.CEC.native import DCECContainer, Formula
 
+
 def test_type_annotated() -> None:
     container: DCECContainer = DCECContainer()
     formulas: List[Formula] = container.get_all_formulas()
@@ -327,18 +328,19 @@ def test_proof_caching_provides_100x_speedup():
     prover = TheoremProver(enable_cache=True)
     axioms = ["A → B", "A"]
     conjecture = "B"
-    
+
     # WHEN - First proof
     import time
+
     start1 = time.time()
     result1 = prover.prove(conjecture, axioms)
     time1 = time.time() - start1
-    
+
     # WHEN - Second proof (cached)
     start2 = time.time()
     result2 = prover.prove(conjecture, axioms)
     time2 = time.time() - start2
-    
+
     # THEN
     assert result1.success
     assert result2.success

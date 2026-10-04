@@ -31,7 +31,9 @@ def test_build_full_evidence_binder_from_manifest(tmp_path: Path):
     source_path.write_text("sample source text\n", encoding="utf-8")
 
     (family_dir / "exhibit_A_tab_cover_page.md").write_text(TAB_MD, encoding="utf-8")
-    (family_dir / "exhibit_A_cover_page.md").write_text(COVER_MD.format(source=source_path), encoding="utf-8")
+    (family_dir / "exhibit_A_cover_page.md").write_text(
+        COVER_MD.format(source=source_path), encoding="utf-8"
+    )
 
     manifest_path = tmp_path / "full_binder_manifest.json"
     manifest_path.write_text(

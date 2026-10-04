@@ -5,7 +5,9 @@
     ``ipfs_datasets_py.knowledge_graphs.reasoning.helpers``.
     Update your imports accordingly.
 """
+
 import warnings
+
 warnings.warn(
     "ipfs_datasets_py.knowledge_graphs._reasoning_helpers is deprecated. "
     "Use ipfs_datasets_py.knowledge_graphs.reasoning.helpers instead.",

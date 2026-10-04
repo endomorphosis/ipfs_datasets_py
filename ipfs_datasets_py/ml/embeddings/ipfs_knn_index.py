@@ -113,29 +113,29 @@ class IPFSKnnIndex:
     Usage Examples:
         # Initialize vector index with cosine similarity
         index = IPFSKnnIndex(dimension=768, metric='cosine')
-        
+
         # Add vectors with metadata
         vector1 = np.random.rand(768)
         vector_id = index.add_vector(
             vector=vector1,
             metadata={"document_id": "doc_001", "category": "technical"}
         )
-        
+
         # Batch addition for efficiency
         vectors = [np.random.rand(768) for _ in range(100)]
         metadata_list = [{"doc_id": f"doc_{i:03d}"} for i in range(100)]
         vector_ids = index.add_vectors(vectors, metadata_list)
-        
+
         # Search for similar vectors
         query_vector = np.random.rand(768)
         results = index.search(query_vector, k=5)
         for score, metadata in results:
             print(f"Similarity: {score:.4f}, Document: {metadata['document_id']}")
-        
+
         # Save index to IPFS for distribution
         index_cid = index.save_to_ipfs()
         print(f"Index stored at IPFS CID: {index_cid}")
-        
+
         # Load index from IPFS on another node
         new_index = IPFSKnnIndex(dimension=768, metric='cosine')
         new_index.load_from_ipfs(index_cid)
@@ -145,7 +145,7 @@ class IPFSKnnIndex:
         - numpy: Numerical computing for vector operations and similarity calculations
         - ipfs_datasets_py.data_transformation.ipld.storage: IPLD storage backend for IPFS integration
         - ipfs_datasets_py.dataset_serialization: Serialization utilities for data conversion
-        
+
         Optional:
         - faiss: High-performance similarity search library for large-scale operations
         - sklearn: Additional similarity metrics and preprocessing utilities
@@ -161,7 +161,9 @@ class IPFSKnnIndex:
         - Memory usage scales with active vector count and should be monitored for large indexes
     """
 
-    def __init__(self, dimension: int, metric: str = 'cosine', storage: Optional[IPLDStorage] = None):
+    def __init__(
+        self, dimension: int, metric: str = "cosine", storage: Optional[IPLDStorage] = None
+    ):
         """
         Initialize Distributed K-Nearest Neighbors Vector Index with IPFS Integration
 
@@ -184,10 +186,10 @@ class IPFSKnnIndex:
                 include 768 (BERT embeddings), 1536 (OpenAI embeddings), 384
                 (sentence-transformers), or custom dimensions for specialized models.
                 Example: 768 for BERT-base embeddings
-            
+
             metric (str, default='cosine'): Similarity metric for vector comparisons
                 and nearest neighbor calculations. Supported metrics include:
-                
+
                 - 'cosine': Cosine similarity measuring orientation between vectors,
                   normalized to range [-1, 1] where 1 indicates identical orientation.
                   Optimal for text embeddings and high-dimensional sparse vectors.
@@ -197,21 +199,21 @@ class IPFSKnnIndex:
                 - 'dot': Dot product measuring both magnitude and orientation
                   similarity. Higher values indicate greater similarity.
                   Useful when vector magnitudes contain meaningful information.
-                
+
                 Custom metrics can be implemented through metric extension framework.
                 Example: 'cosine' for text embedding similarity search
-            
+
             storage (Optional[IPLDStorage], default=None): IPLD storage backend
                 for content-addressable persistence and distributed storage operations.
                 If None, a new IPLDStorage instance will be created automatically
                 with default configuration. Custom storage instances enable:
-                
+
                 - Alternative IPFS node endpoints and gateway configurations
                 - Custom chunking strategies for large vector collections
                 - Specialized caching and performance optimization settings
                 - Security configurations including encryption and access control
                 - Network coordination for multi-node collaborative indexing
-                
+
                 Example: IPLDStorage(ipfs_gateway="http://custom-node:8080")
 
         Attributes Initialized:
@@ -237,16 +239,16 @@ class IPFSKnnIndex:
         Examples:
             # Basic index for BERT embeddings with cosine similarity
             index = IPFSKnnIndex(dimension=768, metric='cosine')
-            
+
             # Euclidean distance index for image embeddings
             image_index = IPFSKnnIndex(
                 dimension=2048,
                 metric='euclidean'
             )
-            
+
             # Custom storage configuration for distributed deployment
             from ipfs_datasets_py.processors.storage.ipld.storage import IPLDStorage
-            
+
             custom_storage = IPLDStorage(
                 ipfs_gateway="http://production-ipfs:8080",
                 chunk_size=1024*1024,  # 1MB chunks
@@ -257,7 +259,7 @@ class IPFSKnnIndex:
                 metric='dot',
                 storage=custom_storage
             )
-            
+
             # High-dimensional index for specialized embeddings
             specialized_index = IPFSKnnIndex(
                 dimension=4096,
@@ -286,16 +288,17 @@ class IPFSKnnIndex:
         # Try to import FAISS
         try:
             import faiss
+
             self._faiss_available = True
 
             # Create a FAISS index
-            if metric == 'cosine':
+            if metric == "cosine":
                 self._index = faiss.IndexFlatIP(dimension)  # Inner product for normalized vectors
                 self._normalizer = lambda v: v / np.linalg.norm(v, axis=1, keepdims=True)
-            elif metric == 'euclidean':
+            elif metric == "euclidean":
                 self._index = faiss.IndexFlatL2(dimension)  # L2 distance
                 self._normalizer = lambda v: v  # No normalization
-            elif metric == 'dot':
+            elif metric == "dot":
                 self._index = faiss.IndexFlatIP(dimension)  # Inner product
                 self._normalizer = lambda v: v  # No normalization
             else:
@@ -308,7 +311,9 @@ class IPFSKnnIndex:
             self._faiss_available = False
             print("Warning: FAISS not available. Using slower numpy-based similarity search.")
 
-    def add_vectors(self, vectors: np.ndarray, metadata: Optional[List[Dict[str, Any]]] = None) -> None:
+    def add_vectors(
+        self, vectors: np.ndarray, metadata: Optional[List[Dict[str, Any]]] = None
+    ) -> None:
         """
         Add vectors to the index.
 
@@ -324,7 +329,7 @@ class IPFSKnnIndex:
 
         if self._faiss_available:
             # Normalize vectors if using cosine similarity
-            if self.metric == 'cosine':
+            if self.metric == "cosine":
                 vectors = vectors / np.linalg.norm(vectors, axis=1, keepdims=True)
 
             # Add to FAISS index
@@ -347,7 +352,9 @@ class IPFSKnnIndex:
 
             self._metadata.extend(metadata)
 
-    def search(self, query_vector: np.ndarray, k: int = 10) -> List[Tuple[int, float, Dict[str, Any]]]:
+    def search(
+        self, query_vector: np.ndarray, k: int = 10
+    ) -> List[Tuple[int, float, Dict[str, Any]]]:
         """
         Search for vectors similar to the query vector.
 
@@ -366,14 +373,14 @@ class IPFSKnnIndex:
             query_vector = query_vector.reshape(1, -1)
 
             # Normalize query vector if using cosine similarity
-            if self.metric == 'cosine':
+            if self.metric == "cosine":
                 query_vector = query_vector / np.linalg.norm(query_vector)
 
             # Search in FAISS index
             distances, indices = self._index.search(query_vector.astype(np.float32), k)
 
             # Convert distances to similarities
-            if self.metric == 'euclidean':
+            if self.metric == "euclidean":
                 # For euclidean, smaller is better, so convert to similarity
                 similarities = 1.0 / (1.0 + distances[0])
             else:
@@ -396,16 +403,16 @@ class IPFSKnnIndex:
             all_vectors = np.vstack(self._vectors)
 
             # Calculate similarities
-            if self.metric == 'cosine':
+            if self.metric == "cosine":
                 # Normalize query and index vectors
                 query_norm = query_vector / np.linalg.norm(query_vector)
                 vectors_norm = all_vectors / np.linalg.norm(all_vectors, axis=1, keepdims=True)
                 similarities = np.dot(vectors_norm, query_norm)
-            elif self.metric == 'euclidean':
+            elif self.metric == "euclidean":
                 # Calculate euclidean distances
                 distances = np.sqrt(np.sum((all_vectors - query_vector) ** 2, axis=1))
                 similarities = 1.0 / (1.0 + distances)  # Convert to similarity
-            elif self.metric == 'dot':
+            elif self.metric == "dot":
                 # Calculate dot product
                 similarities = np.dot(all_vectors, query_vector)
 
@@ -431,18 +438,19 @@ class IPFSKnnIndex:
             index_file = tempfile.NamedTemporaryFile(delete=False)
             try:
                 import faiss
+
                 faiss.write_index(self._index, index_file.name)
                 index_file.close()
 
                 # Read index file
-                with open(index_file.name, 'rb') as f:
+                with open(index_file.name, "rb") as f:
                     index_data = f.read()
 
                 # Store index data
                 index_data_cid = self.storage.store(index_data)
 
                 # Store metadata
-                metadata_json = json.dumps(self._metadata).encode('utf-8')
+                metadata_json = json.dumps(self._metadata).encode("utf-8")
                 metadata_cid = self.storage.store(metadata_json)
 
                 # Store index info
@@ -452,10 +460,10 @@ class IPFSKnnIndex:
                     "metric": self.metric,
                     "num_vectors": len(self._metadata),
                     "index_data_cid": index_data_cid,
-                    "metadata_cid": metadata_cid
+                    "metadata_cid": metadata_cid,
                 }
 
-                index_info_json = json.dumps(index_info).encode('utf-8')
+                index_info_json = json.dumps(index_info).encode("utf-8")
                 self._index_cid = self.storage.store(index_info_json)
 
                 return self._index_cid
@@ -464,7 +472,9 @@ class IPFSKnnIndex:
                 os.unlink(index_file.name)
         else:
             # Serialize vectors and metadata using DatasetSerializer
-            all_vectors = np.vstack(self._vectors) if self._vectors else np.zeros((0, self.dimension))
+            all_vectors = (
+                np.vstack(self._vectors) if self._vectors else np.zeros((0, self.dimension))
+            )
             cid = self.serializer.serialize_vectors(all_vectors, self._metadata)
 
             # Store index info
@@ -473,16 +483,16 @@ class IPFSKnnIndex:
                 "dimension": self.dimension,
                 "metric": self.metric,
                 "num_vectors": len(self._metadata),
-                "vectors_metadata_cid": cid
+                "vectors_metadata_cid": cid,
             }
 
-            index_info_json = json.dumps(index_info).encode('utf-8')
+            index_info_json = json.dumps(index_info).encode("utf-8")
             self._index_cid = self.storage.store(index_info_json)
 
             return self._index_cid
 
     @classmethod
-    def load_from_ipfs(cls, cid: str, storage: Optional[IPLDStorage] = None) -> 'IPFSKnnIndex':
+    def load_from_ipfs(cls, cid: str, storage: Optional[IPLDStorage] = None) -> "IPFSKnnIndex":
         """
         Load an index from IPFS.
 
@@ -498,14 +508,10 @@ class IPFSKnnIndex:
 
         # Get index info
         index_info_json = storage.get(cid)
-        index_info = json.loads(index_info_json.decode('utf-8'))
+        index_info = json.loads(index_info_json.decode("utf-8"))
 
         # Create index
-        index = cls(
-            dimension=index_info["dimension"],
-            metric=index_info["metric"],
-            storage=storage
-        )
+        index = cls(dimension=index_info["dimension"], metric=index_info["metric"], storage=storage)
         index._index_cid = cid
 
         # Load index data
@@ -522,12 +528,13 @@ class IPFSKnnIndex:
 
                 # Load FAISS index
                 import faiss
+
                 index._index = faiss.read_index(index_file.name)
 
                 # Get metadata
                 metadata_cid = index_info["metadata_cid"]
                 metadata_json = storage.get(metadata_cid)
-                index._metadata = json.loads(metadata_json.decode('utf-8'))
+                index._metadata = json.loads(metadata_json.decode("utf-8"))
 
                 # Set flag for loaded index
                 index._is_index_new = False
@@ -565,7 +572,9 @@ class IPFSKnnIndex:
         return self.storage.export_to_car([self._index_cid], output_path)
 
     @classmethod
-    def import_from_car(cls, car_path: str, storage: Optional[IPLDStorage] = None) -> 'IPFSKnnIndex':
+    def import_from_car(
+        cls, car_path: str, storage: Optional[IPLDStorage] = None
+    ) -> "IPFSKnnIndex":
         """
         Import an index from a CAR file.
 
@@ -606,7 +615,7 @@ class IPFSKnnIndexManager:
         self.storage = storage or IPLDStorage()
         self.indexes = {}  # index_id -> IPFSKnnIndex
 
-    def create_index(self, index_id: str, dimension: int, metric: str = 'cosine') -> IPFSKnnIndex:
+    def create_index(self, index_id: str, dimension: int, metric: str = "cosine") -> IPFSKnnIndex:
         """
         Create a new vector index.
 
@@ -627,7 +636,9 @@ class IPFSKnnIndexManager:
         """Get an existing index by ID."""
         return self.indexes.get(index_id)
 
-    def search_index(self, index_id: str, query_vector: List[float], k: int = 5) -> List[Dict[str, Any]]:
+    def search_index(
+        self, index_id: str, query_vector: List[float], k: int = 5
+    ) -> List[Dict[str, Any]]:
         """
         Search an index for similar vectors.
 
@@ -645,6 +656,6 @@ class IPFSKnnIndexManager:
 
         # Simple mock search for testing
         return [
-            {"id": i, "score": 0.95 - i*0.1, "metadata": {"text": f"result_{i}"}}
+            {"id": i, "score": 0.95 - i * 0.1, "metadata": {"text": f"result_{i}"}}
             for i in range(min(k, 3))
         ]

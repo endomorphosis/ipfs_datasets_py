@@ -4,6 +4,7 @@ Demo script for IPFS Datasets MCP server.
 
 This script demonstrates how to use the IPFS Datasets MCP server with a simple workflow.
 """
+
 import anyio
 import json
 import os
@@ -38,11 +39,36 @@ EXAMPLE_DATA = {
         "created_at": "2023-05-12T12:00:00Z",
     },
     "records": [
-        {"id": 1, "title": "Introduction to IPFS", "content": "IPFS is a distributed file system...", "keywords": ["ipfs", "distributed", "web3"]},
-        {"id": 2, "title": "Using IPFS with Python", "content": "Python offers several libraries for IPFS...", "keywords": ["python", "ipfs", "programming"]},
-        {"id": 3, "title": "IPFS and Big Data", "content": "IPFS can be useful for storing and retrieving big data...", "keywords": ["ipfs", "big data", "storage"]},
-        {"id": 4, "title": "Decentralized Applications", "content": "Building decentralized applications with IPFS...", "keywords": ["dapps", "ipfs", "web3"]},
-        {"id": 5, "title": "IPFS and AI", "content": "Using IPFS for AI model and dataset storage...", "keywords": ["ai", "ipfs", "machine learning"]},
+        {
+            "id": 1,
+            "title": "Introduction to IPFS",
+            "content": "IPFS is a distributed file system...",
+            "keywords": ["ipfs", "distributed", "web3"],
+        },
+        {
+            "id": 2,
+            "title": "Using IPFS with Python",
+            "content": "Python offers several libraries for IPFS...",
+            "keywords": ["python", "ipfs", "programming"],
+        },
+        {
+            "id": 3,
+            "title": "IPFS and Big Data",
+            "content": "IPFS can be useful for storing and retrieving big data...",
+            "keywords": ["ipfs", "big data", "storage"],
+        },
+        {
+            "id": 4,
+            "title": "Decentralized Applications",
+            "content": "Building decentralized applications with IPFS...",
+            "keywords": ["dapps", "ipfs", "web3"],
+        },
+        {
+            "id": 5,
+            "title": "IPFS and AI",
+            "content": "Using IPFS for AI model and dataset storage...",
+            "keywords": ["ai", "ipfs", "machine learning"],
+        },
     ],
 }
 
@@ -113,10 +139,9 @@ class MCPDemoRunner:
 
         # Step 2: Load the dataset
         logger.info("\n=== Step 2: Load Dataset ===")
-        load_result = await self.client.call_tool("load_dataset", {
-            "source": str(self.example_data_path),
-            "format": "json"
-        })
+        load_result = await self.client.call_tool(
+            "load_dataset", {"source": str(self.example_data_path), "format": "json"}
+        )
         logger.info(f"Load result: {json.dumps(load_result, indent=2)}")
 
         if load_result.get("status") != "success":
@@ -127,13 +152,16 @@ class MCPDemoRunner:
 
         # Step 3: Process the dataset
         logger.info("\n=== Step 3: Process Dataset ===")
-        process_result = await self.client.call_tool("process_dataset", {
-            "dataset_id": dataset_id,
-            "operations": [
-                {"type": "filter", "column": "id", "condition": ">", "value": 2},
-                {"type": "select", "columns": ["id", "title", "keywords"]}
-            ]
-        })
+        process_result = await self.client.call_tool(
+            "process_dataset",
+            {
+                "dataset_id": dataset_id,
+                "operations": [
+                    {"type": "filter", "column": "id", "condition": ">", "value": 2},
+                    {"type": "select", "columns": ["id", "title", "keywords"]},
+                ],
+            },
+        )
         logger.info(f"Process result: {json.dumps(process_result, indent=2)}")
 
         if process_result.get("status") != "success":
@@ -145,11 +173,10 @@ class MCPDemoRunner:
         # Step 4: Save the processed dataset
         logger.info("\n=== Step 4: Save Processed Dataset ===")
         output_path = "processed_dataset.json"
-        save_result = await self.client.call_tool("save_dataset", {
-            "dataset_id": processed_id,
-            "destination": output_path,
-            "format": "json"
-        })
+        save_result = await self.client.call_tool(
+            "save_dataset",
+            {"dataset_id": processed_id, "destination": output_path, "format": "json"},
+        )
         logger.info(f"Save result: {json.dumps(save_result, indent=2)}")
 
         if save_result.get("status") != "success":
@@ -158,25 +185,24 @@ class MCPDemoRunner:
 
         # Step 5: Track provenance
         logger.info("\n=== Step 5: Track Provenance ===")
-        provenance_result = await self.client.call_tool("record_provenance", {
-            "dataset_id": processed_id,
-            "operation": "filter_and_select",
-            "inputs": [dataset_id],
-            "parameters": {
-                "filter": "id > 2",
-                "columns": ["id", "title", "keywords"]
+        provenance_result = await self.client.call_tool(
+            "record_provenance",
+            {
+                "dataset_id": processed_id,
+                "operation": "filter_and_select",
+                "inputs": [dataset_id],
+                "parameters": {"filter": "id > 2", "columns": ["id", "title", "keywords"]},
+                "description": "Filtered dataset to only include items with ID > 2 and selected specific columns",
             },
-            "description": "Filtered dataset to only include items with ID > 2 and selected specific columns"
-        })
+        )
         logger.info(f"Provenance result: {json.dumps(provenance_result, indent=2)}")
 
         # Step 6: Pin to IPFS (optional - may fail if IPFS is not running)
         logger.info("\n=== Step 6: Pin to IPFS (Optional) ===")
         try:
-            pin_result = await self.client.call_tool("pin_to_ipfs", {
-                "content_path": output_path,
-                "recursive": False
-            })
+            pin_result = await self.client.call_tool(
+                "pin_to_ipfs", {"content_path": output_path, "recursive": False}
+            )
             logger.info(f"Pin result: {json.dumps(pin_result, indent=2)}")
 
             if pin_result.get("status") == "success":
@@ -198,9 +224,17 @@ def start_server_in_background():
 
     logger.info("Starting MCP server in the background...")
     process = subprocess.Popen(
-        [sys.executable, "-m", "ipfs_datasets_py.mcp_server", "--host", "localhost", "--port", "8123"],
+        [
+            sys.executable,
+            "-m",
+            "ipfs_datasets_py.mcp_server",
+            "--host",
+            "localhost",
+            "--port",
+            "8123",
+        ],
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
+        stderr=subprocess.PIPE,
     )
 
     # Give the server some time to start
@@ -212,7 +246,9 @@ def start_server_in_background():
 async def main():
     """Run the demo."""
     parser = argparse.ArgumentParser(description="Demo for the IPFS Datasets MCP server")
-    parser.add_argument("--start-server", action="store_true", help="Start the MCP server as part of the demo")
+    parser.add_argument(
+        "--start-server", action="store_true", help="Start the MCP server as part of the demo"
+    )
     parser.add_argument("--host", default="localhost", help="Host of the MCP server")
     parser.add_argument("--port", type=int, default=8123, help="Port of the MCP server")
 

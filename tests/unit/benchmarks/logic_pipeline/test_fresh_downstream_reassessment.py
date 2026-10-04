@@ -73,10 +73,7 @@ def _native_kernel_receipt(
     candidate_artifact_sha256: str | None = None,
 ) -> dict[str, object]:
     body: dict[str, object] = {
-        "schema": (
-            "ipfs-datasets.logic-pipeline-benchmark."
-            "native-kernel-receipt.v1"
-        ),
+        "schema": ("ipfs-datasets.logic-pipeline-benchmark.native-kernel-receipt.v1"),
         "protocol_sha256": DEFAULT_PROTOCOL_SHA256,
         "run_id": RUN_ID,
         "case_id": case_id,
@@ -121,9 +118,7 @@ def _native_kernel_receipt(
                 "candidate_artifact_sha256": candidate_artifact_sha256,
                 "source_sha256": attempt["source_sha256"],
                 "semantic_context_sha256": _sha("semantic-context"),
-                "semantic_artifact_sha256s": [
-                    candidate_artifact_sha256
-                ],
+                "semantic_artifact_sha256s": [candidate_artifact_sha256],
                 "command_sha256": attempt["command_sha256"],
                 "stdout_sha256": attempt["stdout_sha256"],
                 "stderr_sha256": attempt["stderr_sha256"],
@@ -132,9 +127,7 @@ def _native_kernel_receipt(
                 "cancelled": attempt["cancelled"],
                 "resource_exhausted": attempt["resource_exhausted"],
                 "termination_reason": attempt["termination_reason"],
-                "process_group_reaped": attempt[
-                    "process_group_reaped"
-                ],
+                "process_group_reaped": attempt["process_group_reaped"],
                 "candidate_attempts": [attempt],
                 "candidate_attempts_sha256": _sha([attempt]),
                 "selected_attempt": {
@@ -224,9 +217,7 @@ def _synthetic_authorized_run(
             {
                 "text": f"Synthetic unopened input {index}",
                 "expected_class": (
-                    "disproved"
-                    if index in disproved_case_ordinals
-                    else "unsupported"
+                    "disproved" if index in disproved_case_ordinals else "unsupported"
                 ),
             },
             split=Split.HOLDOUT,
@@ -244,6 +235,7 @@ def _synthetic_authorized_run(
         environment_sha256=environment_sha256,
         holdout_access_log_id="synthetic-access-ledger",
     )
+
     def handler(stage_name: StageName):
         def invoke(
             request: adapters.StageRequest,
@@ -258,9 +250,7 @@ def _synthetic_authorized_run(
                     accepted=False,
                 )
                 return adapters.StageOutput(data=kernel_receipt)
-            return adapters.StageOutput(
-                data={"stage": stage_name.value, "synthetic": True}
-            )
+            return adapters.StageOutput(data={"stage": stage_name.value, "synthetic": True})
 
         return invoke
 
@@ -283,10 +273,7 @@ def _synthetic_authorized_run(
     audits = []
     for sequence, contract in enumerate(plan.run_contracts):
         audit_payload = {
-            "schema": (
-                "ipfs-datasets.logic-pipeline-benchmark."
-                "holdout-access.v1"
-            ),
+            "schema": ("ipfs-datasets.logic-pipeline-benchmark.holdout-access.v1"),
             "audit_id": contract.holdout_access_log_id,
             "sequence": sequence,
             "purpose": "evaluation",
@@ -302,9 +289,7 @@ def _synthetic_authorized_run(
             "configuration_sha256": contract.configuration_sha256,
             "prompts_sha256": authorization.prompts_sha256,
             "policy_sha256": authorization.policy_sha256,
-            "model_identities_sha256": (
-                authorization.model_identities_sha256
-            ),
+            "model_identities_sha256": (authorization.model_identities_sha256),
             "thresholds_sha256": authorization.thresholds_sha256,
             "prompt_example_sha256s": [],
             "prompts_frozen": True,
@@ -331,13 +316,9 @@ def _synthetic_authorized_run(
         "authorization_sha256": authorization.authorization_sha256,
         "pilot_gate_sha256": authorization.pilot_gate_sha256,
         "plan_sha256": plan.digest,
-        "access_audit_sha256s": tuple(
-            item.audit_sha256 for item in access_audits
-        ),
+        "access_audit_sha256s": tuple(item.audit_sha256 for item in access_audits),
         "result_sha256s": tuple(item.digest for item in results),
-        "cache_namespaces": tuple(
-            contract.cache_namespace for contract in plan.run_contracts
-        ),
+        "cache_namespaces": tuple(contract.cache_namespace for contract in plan.run_contracts),
         "executed_job_ids": execution.executed_job_ids,
         "complete": True,
     }
@@ -362,12 +343,8 @@ def _rebind_authorized_run(
     rebound_execution = execution or authorized.execution
     rebound_audits = access_audits or authorized.access_audits
     receipt_payload = authorized.receipt.identity_payload()
-    receipt_payload["result_sha256s"] = [
-        item.digest for item in rebound_execution.results
-    ]
-    receipt_payload["access_audit_sha256s"] = [
-        item.audit_sha256 for item in rebound_audits
-    ]
+    receipt_payload["result_sha256s"] = [item.digest for item in rebound_execution.results]
+    receipt_payload["access_audit_sha256s"] = [item.audit_sha256 for item in rebound_audits]
     receipt = HoldoutExecutionReceipt.from_dict(
         {
             **receipt_payload,
@@ -388,11 +365,7 @@ def _accept_terminal_kernel(
 ) -> CaseResultRecord:
     kernel = result.stages[-1]
     assert kernel.stage is StageName.KERNEL
-    consumed = tuple(
-        kernel.provenance.effective_identity[
-            "consumed_artifact_sha256"
-        ]
-    )
+    consumed = tuple(kernel.provenance.effective_identity["consumed_artifact_sha256"])
     assert consumed
     native_receipt = _native_kernel_receipt(
         case_id=result.case_id,
@@ -418,21 +391,15 @@ def _accept_terminal_kernel(
         telemetry=kernel.telemetry,
         data=native_receipt,
         kernel_accepted=True,
-        kernel_receipt_sha256=str(
-            native_receipt["receipt_sha256"]
-        ),
+        kernel_receipt_sha256=str(native_receipt["receipt_sha256"]),
     )
-    return CaseResultRecord.from_stages(
-        (*result.stages[:-1], accepted_kernel)
-    )
+    return CaseResultRecord.from_stages((*result.stages[:-1], accepted_kernel))
 
 
 def _synthetic_reviewed_corpus(
     authorized: AuthorizedHoldoutRun,
 ) -> SimpleNamespace:
-    jobs_by_case = {
-        job.case_id: job for job in authorized.execution.plan.jobs
-    }
+    jobs_by_case = {job.case_id: job for job in authorized.execution.plan.jobs}
     manifest = SimpleNamespace(
         cases=tuple(
             SimpleNamespace(
@@ -440,9 +407,7 @@ def _synthetic_reviewed_corpus(
                 case_id=case_id,
                 case_sha256=jobs_by_case[case_id].case_sha256,
                 source_sha256=hashlib.sha256(
-                    str(jobs_by_case[case_id].input_data["text"]).encode(
-                        "utf-8"
-                    )
+                    str(jobs_by_case[case_id].input_data["text"]).encode("utf-8")
                 ).hexdigest(),
             )
             for case_id in authorized.execution.plan.case_ids
@@ -474,9 +439,7 @@ def _install_synthetic_access_validator(
             or tuple(item.to_dict() for item in parsed)
             != tuple(item.to_dict() for item in expected)
         ):
-            raise HoldoutExecutionError(
-                "synthetic access audit differs from its frozen contract"
-            )
+            raise HoldoutExecutionError("synthetic access audit differs from its frozen contract")
         return parsed
 
     monkeypatch.setattr(
@@ -569,26 +532,23 @@ def test_authorized_holdout_ingestion_and_replay_selection_without_corpus_access
     assert report["status"] == "incomplete"
     assert report["outcomes"]["status"] == "complete"
     assert report["outcomes"]["observed_pair_count"] == 20
-    assert report["frozen_execution_contract"]["environment_sha256"] == (
-        environment_sha256
-    )
+    assert report["frozen_execution_contract"]["environment_sha256"] == (environment_sha256)
     assert report["prerequisite"]["authorization_sha256"] == (
         authorized.receipt.authorization_sha256
     )
     assert report["metrics"]["measured_domain_count"] == 1
-    latency = next(
-        item
-        for item in report["metrics"]["domains"]
-        if item["domain"] == "latency"
-    )
+    latency = next(item for item in report["metrics"]["domains"] if item["domain"] == "latency")
     assert latency["status"] == "incomplete"
     assert latency["complete"] is False
-    assert holdout_reassessment.validate_holdout_reassessment_report(
-        report,
-        repository_root=tmp_path,
-        run_id=RUN_ID,
-        benchmark_root=tmp_path / "benchmark",
-    ) == report
+    assert (
+        holdout_reassessment.validate_holdout_reassessment_report(
+            report,
+            repository_root=tmp_path,
+            run_id=RUN_ID,
+            benchmark_root=tmp_path / "benchmark",
+        )
+        == report
+    )
 
     layout.holdout_report.write_text(
         canonical_json(report) + "\n",
@@ -600,9 +560,7 @@ def test_authorized_holdout_ingestion_and_replay_selection_without_corpus_access
         layout=layout,
     )
     assert replay["status"] == "pending_required_replays"
-    assert replay["source_binding"]["environment_sha256"] == (
-        environment_sha256
-    )
+    assert replay["source_binding"]["environment_sha256"] == (environment_sha256)
     assert replay["selection"]["required_success_replay_count"] == 0
     assert replay["selection"]["required_sampled_failure_replay_count"] == 1
     assert replay["execution"]["replay_claimed"] is False
@@ -620,15 +578,9 @@ def test_authorized_report_rejects_missing_current_variant_route(
         output_root=tmp_path / "missing-route-execution",
     )
     results = list(authorized.execution.results)
-    index = next(
-        index
-        for index, result in enumerate(results)
-        if result.variant_id == "A1"
-    )
+    index = next(index for index, result in enumerate(results) if result.variant_id == "A1")
     assert results[index].stages[-1].stage is StageName.KERNEL
-    results[index] = CaseResultRecord.from_stages(
-        results[index].stages[:-1]
-    )
+    results[index] = CaseResultRecord.from_stages(results[index].stages[:-1])
     forged = _rebind_authorized_run(
         authorized,
         execution=replace(
@@ -661,19 +613,11 @@ def test_authorized_report_rejects_reordered_graph_invocations(
         output_root=tmp_path / "reordered-route-execution",
     )
     results = list(authorized.execution.results)
-    index = next(
-        index
-        for index, result in enumerate(results)
-        if result.variant_id == "A1"
-    )
+    index = next(index for index, result in enumerate(results) if result.variant_id == "A1")
     target = results[index]
     first, second = target.stages[:2]
-    first_index = first.provenance.effective_identity[
-        "graph_invocation_index"
-    ]
-    second_index = second.provenance.effective_identity[
-        "graph_invocation_index"
-    ]
+    first_index = first.provenance.effective_identity["graph_invocation_index"]
+    second_index = second.provenance.effective_identity["graph_invocation_index"]
     reordered_first = replace(
         first,
         provenance=replace(
@@ -736,8 +680,7 @@ def test_authorized_report_rejects_cold_warm_backend_identity_drift(
     index = next(
         index
         for index, result in enumerate(results)
-        if result.variant_id == "A1"
-        and result.cache_mode is CacheMode.WARM
+        if result.variant_id == "A1" and result.cache_mode is CacheMode.WARM
     )
     target = results[index]
     kernel = target.stages[-1]
@@ -751,9 +694,7 @@ def test_authorized_report_rejects_cold_warm_backend_identity_drift(
             },
         ),
     )
-    results[index] = CaseResultRecord.from_stages(
-        (*target.stages[:-1], drifted_kernel)
-    )
+    results[index] = CaseResultRecord.from_stages((*target.stages[:-1], drifted_kernel))
     forged = _rebind_authorized_run(
         authorized,
         execution=replace(
@@ -787,15 +728,9 @@ def test_authorized_report_rejects_rehashed_invented_access_audit(
     )
     original_audits = authorized.access_audits
     invented = original_audits[0].to_dict()
-    invented["policy_sha256"] = hashlib.sha256(
-        b"invented post-access policy"
-    ).hexdigest()
+    invented["policy_sha256"] = hashlib.sha256(b"invented post-access policy").hexdigest()
     invented["audit_sha256"] = _sha(
-        {
-            key: value
-            for key, value in invented.items()
-            if key != "audit_sha256"
-        }
+        {key: value for key, value in invented.items() if key != "audit_sha256"}
     )
     invented_audits = (
         HoldoutAccessAudit.from_dict(invented),
@@ -823,9 +758,7 @@ def test_holdout_safety_counts_only_unsupported_as_invalid_control(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
-    environment_sha256 = hashlib.sha256(
-        b"unsupported-only safety controls"
-    ).hexdigest()
+    environment_sha256 = hashlib.sha256(b"unsupported-only safety controls").hexdigest()
     pilot = _authorized_pilot(environment_sha256)
     authorized = _synthetic_authorized_run(
         pilot,
@@ -861,14 +794,8 @@ def test_holdout_safety_counts_only_unsupported_as_invalid_control(
         pilot=pilot,
         authorized=rebound,
     )
-    safety = next(
-        domain
-        for domain in report["metrics"]["domains"]
-        if domain["domain"] == "safety"
-    )
-    assert safety["values"][
-        "invalid_control_kernel_false_positive_count"
-    ] == 1
+    safety = next(domain for domain in report["metrics"]["domains"] if domain["domain"] == "safety")
+    assert safety["values"]["invalid_control_kernel_false_positive_count"] == 1
     assert report["outcomes"]["kernel_verified_success_count"] == 2
 
 

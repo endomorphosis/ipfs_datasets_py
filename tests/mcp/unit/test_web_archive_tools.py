@@ -2,6 +2,7 @@
 Phase B2 unit tests for web_archive_tools/common_crawl_search.py
 and web_archive_tools/common_crawl_advanced.py.
 """
+
 from __future__ import annotations
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -9,6 +10,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 # Guard: web_archive_tools require pydantic via processors.web_archiving
 try:
     import pydantic  # noqa: F401
+
     PYDANTIC_AVAILABLE = True
 except ImportError:
     PYDANTIC_AVAILABLE = False
@@ -23,6 +25,7 @@ pytestmark = pytest.mark.skipif(
 # search_common_crawl
 # ---------------------------------------------------------------------------
 
+
 class TestSearchCommonCrawl:
     """Tests for search_common_crawl."""
 
@@ -32,6 +35,7 @@ class TestSearchCommonCrawl:
         from ipfs_datasets_py.mcp_server.tools.web_archive_tools.common_crawl_search import (
             search_common_crawl,
         )
+
         try:
             result = await search_common_crawl(query="python programming")
             assert isinstance(result, dict)
@@ -44,6 +48,7 @@ class TestSearchCommonCrawl:
         from ipfs_datasets_py.mcp_server.tools.web_archive_tools.common_crawl_search import (
             search_common_crawl,
         )
+
         try:
             result = await search_common_crawl(query="")
             assert isinstance(result, dict)
@@ -56,6 +61,7 @@ class TestSearchCommonCrawl:
         from ipfs_datasets_py.mcp_server.tools.web_archive_tools.common_crawl_search import (
             search_common_crawl,
         )
+
         try:
             result = await search_common_crawl(query="test", max_results=5)
             assert isinstance(result, dict)
@@ -67,6 +73,7 @@ class TestSearchCommonCrawl:
 # list_common_crawl_indexes
 # ---------------------------------------------------------------------------
 
+
 class TestListCommonCrawlIndexes:
     """Tests for list_common_crawl_indexes."""
 
@@ -75,6 +82,7 @@ class TestListCommonCrawlIndexes:
         from ipfs_datasets_py.mcp_server.tools.web_archive_tools.common_crawl_search import (
             list_common_crawl_indexes,
         )
+
         try:
             result = await list_common_crawl_indexes()
             assert isinstance(result, dict)
@@ -86,6 +94,7 @@ class TestListCommonCrawlIndexes:
 # search_common_crawl_advanced
 # ---------------------------------------------------------------------------
 
+
 class TestSearchCommonCrawlAdvanced:
     """Tests for search_common_crawl_advanced."""
 
@@ -94,6 +103,7 @@ class TestSearchCommonCrawlAdvanced:
         from ipfs_datasets_py.mcp_server.tools.web_archive_tools.common_crawl_advanced import (
             search_common_crawl_advanced,
         )
+
         try:
             result = await search_common_crawl_advanced(query="AI safety", max_results=3)
             assert isinstance(result, dict)
@@ -105,6 +115,7 @@ class TestSearchCommonCrawlAdvanced:
         from ipfs_datasets_py.mcp_server.tools.web_archive_tools.common_crawl_advanced import (
             list_common_crawl_collections_advanced,
         )
+
         try:
             result = await list_common_crawl_collections_advanced()
             assert isinstance(result, dict)
@@ -115,6 +126,7 @@ class TestSearchCommonCrawlAdvanced:
 # ---------------------------------------------------------------------------
 # Thin wrapper stubs
 # ---------------------------------------------------------------------------
+
 
 class TestSearchWrappers:
     """Smoke tests for thin search wrapper modules."""

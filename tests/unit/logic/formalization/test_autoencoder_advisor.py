@@ -535,9 +535,7 @@ def test_bounded_repair_preserves_protected_semantics() -> None:
         ("/policy/trust_status", "trusted"),
     ),
 )
-def test_protected_fields_cannot_be_repaired(
-    path: str, replacement: object
-) -> None:
+def test_protected_fields_cannot_be_repaired(path: str, replacement: object) -> None:
     config = _config()
     model = _FakeModel(
         (

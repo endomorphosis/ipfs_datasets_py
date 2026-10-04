@@ -121,22 +121,17 @@ from benchmarks.semantic_roundtrip_capabilities import (
 )
 
 
-QUALIFIED_REPLACEMENT_MATRIX_INTERFACE: Final = (
-    "QualifiedReplacementSemanticRoundTripMatrix@1"
-)
+QUALIFIED_REPLACEMENT_MATRIX_INTERFACE: Final = "QualifiedReplacementSemanticRoundTripMatrix@1"
 REPLACEMENT_QUALIFICATION_SCHEMA: Final = (
     "ipfs-datasets.semantic-roundtrip-replacement-qualification.v1"
 )
 ROLE_AWARE_MODEL_RECOVERY_INTERFACE: Final = "RoleAwareModelRecovery@1"
-REPLACEMENT_COORDINATE_RUNNER_INTERFACE: Final = (
-    "QualifiedReplacementCoordinateRunner@1"
-)
+REPLACEMENT_COORDINATE_RUNNER_INTERFACE: Final = "QualifiedReplacementCoordinateRunner@1"
 REPLACEMENT_COORDINATE_RECEIPT_SCHEMA: Final = (
     "ipfs-datasets.semantic-roundtrip-replacement-coordinate.v1"
 )
 DEFAULT_REPLACEMENT_QUALIFICATION_RELATIVE_PATH: Final = Path(
-    "workspace/benchmarks/semantic-roundtrip-compositions/"
-    "replacement_capabilities.json"
+    "workspace/benchmarks/semantic-roundtrip-compositions/replacement_capabilities.json"
 )
 DEFAULT_CAPABILITY_INVENTORY_RELATIVE_PATH: Final = Path(
     "workspace/benchmarks/semantic-roundtrip-compositions/capabilities.json"
@@ -145,19 +140,15 @@ DEFAULT_CAUSAL_QUALIFICATION_RELATIVE_PATH: Final = Path(
     "workspace/benchmarks/semantic-roundtrip-compositions/"
     "causal_autoencoder_guidance_qualification.json"
 )
-DEFAULT_FIXTURE_RELATIVE_PATH: Final = Path(
-    "tests/fixtures/semantic_roundtrip/pilot_cases.json"
-)
+DEFAULT_FIXTURE_RELATIVE_PATH: Final = Path("tests/fixtures/semantic_roundtrip/pilot_cases.json")
 DEFAULT_PROTOCOL_RELATIVE_PATH: Final = Path(
     "docs/benchmarks/semantic_roundtrip_composition_protocol.md"
 )
 DEFAULT_SRT014_REPORT_RELATIVE_PATH: Final = Path(
-    "docs/performance_snapshots/"
-    "2026-07-26_semantic_roundtrip_composition_pilot.json"
+    "docs/performance_snapshots/2026-07-26_semantic_roundtrip_composition_pilot.json"
 )
 DEFAULT_REMEDIATION_MANIFEST_RELATIVE_PATH: Final = Path(
-    "workspace/benchmarks/semantic-roundtrip-compositions/"
-    "no_eligible_remediation_manifest.json"
+    "workspace/benchmarks/semantic-roundtrip-compositions/no_eligible_remediation_manifest.json"
 )
 REPO_ROOT: Final = Path(__file__).resolve().parents[2]
 DEFAULT_REPLACEMENT_QUALIFICATION_PATH: Final = (
@@ -166,15 +157,11 @@ DEFAULT_REPLACEMENT_QUALIFICATION_PATH: Final = (
 
 MODEL_REPEAT_COUNT: Final = 5
 PHYSICAL_MODEL_SLOT_COUNT: Final = 1
-PINNED_IPFS_ACCELERATE_GITLINK: Final = (
-    "f979431ac5fe3c4a088a2f15ec6379fba48bbde6"
-)
+PINNED_IPFS_ACCELERATE_GITLINK: Final = "f979431ac5fe3c4a088a2f15ec6379fba48bbde6"
 PINNED_SYMAI_ROUTER_SOURCE_CID: Final = (
     "bafkreigxv3z5osvvjjk5qhchno6tpcf6kbtivpg4iiwrel4ydyirxt5vce"
 )
-PINNED_SYMAI_ROUTER_SOURCE_PATH: Final = (
-    "ipfs_accelerate_py/llm_router.py"
-)
+PINNED_SYMAI_ROUTER_SOURCE_PATH: Final = "ipfs_accelerate_py/llm_router.py"
 SELECTION_GATE_IDS: Final = (
     "source_copy_exclusion",
     "polarity_preservation",
@@ -201,8 +188,7 @@ _ADAPTER_SOURCES: Final[Mapping[str, tuple[str, str]]] = {
     ),
     "source_withheld_paraphrase": (
         SOURCE_WITHHELD_CANONICAL_PARAPHRASER_INTERFACE,
-        "benchmarks/semantic_roundtrip/realizers/"
-        "source_withheld_paraphrase.py",
+        "benchmarks/semantic_roundtrip/realizers/source_withheld_paraphrase.py",
     ),
     "selective_repair": (
         SELECTIVE_LEANSTRAL_REPAIR_INTERFACE,
@@ -214,8 +200,7 @@ _ADAPTER_SOURCES: Final[Mapping[str, tuple[str, str]]] = {
     ),
     "causal_guidance": (
         CAUSAL_AUTOENCODER_GUIDANCE_INTERFACE,
-        "benchmarks/semantic_roundtrip/constructors/"
-        "causal_autoencoder_guidance.py",
+        "benchmarks/semantic_roundtrip/constructors/causal_autoencoder_guidance.py",
     ),
     "extended_plan": (
         "ExtendedSemanticRoundTripMatrix@1",
@@ -251,9 +236,7 @@ def _require_cid(value: object, *, codec: str, label: str) -> str:
     try:
         return validate_cid(value, codecs=(codec,))
     except (TypeError, ValueError) as exc:
-        raise ReplacementQualificationError(
-            f"{label} must be a canonical {codec} CID"
-        ) from exc
+        raise ReplacementQualificationError(f"{label} must be a canonical {codec} CID") from exc
 
 
 def _cid_receipt(payload: Mapping[str, object], field: str) -> dict[str, object]:
@@ -269,8 +252,7 @@ def _raw_file_binding(repo_root: Path, relative_path: Path | str) -> dict[str, o
         raw = path.read_bytes()
     except OSError as exc:
         raise ReplacementQualificationError(
-            f"cannot bind required file {relative.as_posix()}: "
-            f"{type(exc).__name__}"
+            f"cannot bind required file {relative.as_posix()}: {type(exc).__name__}"
         ) from exc
     return {
         "path": relative.as_posix(),
@@ -283,9 +265,7 @@ def _strict_object(path: Path, label: str) -> dict[str, object]:
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
-        raise ReplacementQualificationError(
-            f"cannot load {label}: {type(exc).__name__}"
-        ) from exc
+        raise ReplacementQualificationError(f"cannot load {label}: {type(exc).__name__}") from exc
     if not isinstance(value, dict):
         raise ReplacementQualificationError(f"{label} must be a JSON object")
     return value
@@ -297,9 +277,7 @@ def _capability_bindings(inventory: CapabilityInventory) -> dict[str, object]:
         payload = record.to_dict()
         records[record.id] = {
             **payload,
-            "requested_identity_cid": cid_for_dag_json(
-                payload["requested_identity"]
-            ),
+            "requested_identity_cid": cid_for_dag_json(payload["requested_identity"]),
             "effective_identity_cid": (
                 None
                 if payload["effective_identity"] is None
@@ -339,9 +317,7 @@ def _adapter_bindings(repo_root: Path) -> dict[str, object]:
     bindings["source_withheld_paraphrase"].update(  # type: ignore[union-attr]
         {
             "configuration_cid": FROZEN_REPLACEMENT_CONFIG_CID,
-            "rendering_spec_cid": (
-                SOURCE_WITHHELD_PARAPHRASE_RENDERING_SPEC_CID
-            ),
+            "rendering_spec_cid": (SOURCE_WITHHELD_PARAPHRASE_RENDERING_SPEC_CID),
             "source_withheld": True,
         }
     )
@@ -398,15 +374,11 @@ def _adapter_bindings(repo_root: Path) -> dict[str, object]:
         ) from exc
     if gitlink != PINNED_IPFS_ACCELERATE_GITLINK:
         raise ReplacementQualificationError(
-            "ipfs_accelerate_py gitlink differs from the reviewed SyMAI "
-            "replacement-schema contract"
+            "ipfs_accelerate_py gitlink differs from the reviewed SyMAI replacement-schema contract"
         )
-    initialized_source = repo_root / "ipfs_accelerate_py" / (
-        PINNED_SYMAI_ROUTER_SOURCE_PATH
-    )
+    initialized_source = repo_root / "ipfs_accelerate_py" / (PINNED_SYMAI_ROUTER_SOURCE_PATH)
     if initialized_source.is_file() and (
-        cid_for_bytes(initialized_source.read_bytes())
-        != PINNED_SYMAI_ROUTER_SOURCE_CID
+        cid_for_bytes(initialized_source.read_bytes()) != PINNED_SYMAI_ROUTER_SOURCE_CID
     ):
         raise ReplacementQualificationError(
             "initialized SyMAI router source differs from its pinned CID"
@@ -417,9 +389,7 @@ def _adapter_bindings(repo_root: Path) -> dict[str, object]:
         "source_path": PINNED_SYMAI_ROUTER_SOURCE_PATH,
         "raw_cid": PINNED_SYMAI_ROUTER_SOURCE_CID,
         "source_raw_cid": PINNED_SYMAI_ROUTER_SOURCE_CID,
-        "reviewed_contract": (
-            "accepts exact srt023_replacement_l1/t1/l2 JSON schemas"
-        ),
+        "reviewed_contract": ("accepts exact srt023_replacement_l1/t1/l2 JSON schemas"),
     }
     bindings["symai_router_contract"] = {
         **router_binding,
@@ -443,9 +413,7 @@ def _fixture_binding(repo_root: Path) -> tuple[dict[str, object], tuple[MatrixCa
             "unchanged": True,
             "case_count": 5,
             "case_ids": [case.case_id for case in cases],
-            "case_cids": {
-                case.case_id: case.case_cid for case in cases
-            },
+            "case_cids": {case.case_id: case.case_cid for case in cases},
         },
         cases,
     )
@@ -471,32 +439,23 @@ def _historical_binding(repo_root: Path) -> dict[str, object]:
     manifest_body = dict(manifest)
     del manifest_body["manifest_cid"]
     if cid_for_dag_json(manifest_body) != manifest_cid:
-        raise ReplacementQualificationError(
-            "SRT-021 remediation manifest CID drifted"
-        )
+        raise ReplacementQualificationError("SRT-021 remediation manifest CID drifted")
     return {
         "protocol_immutable": True,
         "replacement_run_namespace_required": True,
         "srt014": {
-            **_raw_file_binding(
-                repo_root, DEFAULT_SRT014_REPORT_RELATIVE_PATH
-            ),
+            **_raw_file_binding(repo_root, DEFAULT_SRT014_REPORT_RELATIVE_PATH),
             "report_cid": report_cid,
         },
         "srt021": {
-            **_raw_file_binding(
-                repo_root, DEFAULT_REMEDIATION_MANIFEST_RELATIVE_PATH
-            ),
+            **_raw_file_binding(repo_root, DEFAULT_REMEDIATION_MANIFEST_RELATIVE_PATH),
             "manifest_cid": manifest_cid,
         },
     }
 
 
 def _deterministic_cell(spec: CompositionSpec, realizer: RealizerSpec) -> bool:
-    return (
-        spec.repair is RepairMode.NO_REPAIR
-        and realizer.mode is RealizerMode.DETERMINISTIC
-    )
+    return spec.repair is RepairMode.NO_REPAIR and realizer.mode is RealizerMode.DETERMINISTIC
 
 
 def _required_capabilities(
@@ -511,10 +470,7 @@ def _required_capabilities(
     uses_model = not _deterministic_cell(spec, realizer)
     if uses_model:
         required.append("leanstral_direct")
-    if (
-        spec.constructor_route is ModelRoute.SYMAI
-        or realizer.route is ModelRoute.SYMAI
-    ):
+    if spec.constructor_route is ModelRoute.SYMAI or realizer.route is ModelRoute.SYMAI:
         required.append("symai_leanstral_route")
     return tuple(dict.fromkeys(required))
 
@@ -526,10 +482,7 @@ def _route_requirements(
     routes: list[str] = []
     if not _deterministic_cell(spec, realizer):
         routes.append("direct")
-    if (
-        spec.constructor_route is ModelRoute.SYMAI
-        or realizer.route is ModelRoute.SYMAI
-    ):
+    if spec.constructor_route is ModelRoute.SYMAI or realizer.route is ModelRoute.SYMAI:
         routes.append("symai")
     return tuple(routes)
 
@@ -544,7 +497,7 @@ def _arm_adapter_ids(
             spec.base_constructor_id
             if spec.base_constructor_id != "model"
             else "model_output_recovery"
-        )
+        ),
     ]
     if spec.guidance is GuidanceMode.GUIDED:
         values.append("causal_guidance")
@@ -554,10 +507,7 @@ def _arm_adapter_ids(
         values.append("source_withheld_paraphrase")
     else:
         values.append("model_output_recovery")
-    if (
-        spec.constructor_route is ModelRoute.SYMAI
-        or realizer.route is ModelRoute.SYMAI
-    ):
+    if spec.constructor_route is ModelRoute.SYMAI or realizer.route is ModelRoute.SYMAI:
         values.append("symai_router_contract")
     return tuple(dict.fromkeys(values))
 
@@ -565,53 +515,38 @@ def _arm_adapter_ids(
 def _validate_model_smokes(smokes: Mapping[str, object]) -> dict[str, object]:
     supplied = _json_clone(dict(smokes))
     if set(supplied) != {"negative_controls", "routes", "smoke_cid"}:
-        raise ReplacementQualificationError(
-            "model smoke receipt fields changed"
-        )
-    smoke_cid = _require_cid(
-        supplied["smoke_cid"], codec="dag-json", label="model smoke CID"
-    )
+        raise ReplacementQualificationError("model smoke receipt fields changed")
+    smoke_cid = _require_cid(supplied["smoke_cid"], codec="dag-json", label="model smoke CID")
     body = dict(supplied)
     del body["smoke_cid"]
     if cid_for_dag_json(body) != smoke_cid:
-        raise ReplacementQualificationError(
-            "model smoke CID does not match its payload"
-        )
+        raise ReplacementQualificationError("model smoke CID does not match its payload")
     routes = supplied["routes"]
     if not isinstance(routes, dict) or set(routes) != {"direct", "symai"}:
-        raise ReplacementQualificationError(
-            "model smokes must cover direct and SyMAI routes"
-        )
+        raise ReplacementQualificationError("model smokes must cover direct and SyMAI routes")
     for route_id, route in routes.items():
         if not isinstance(route, dict):
-            raise ReplacementQualificationError(
-                f"{route_id} route smoke must be an object"
-            )
+            raise ReplacementQualificationError(f"{route_id} route smoke must be an object")
         status = route.get("status")
         if status not in {"passed", "unavailable"}:
-            raise ReplacementQualificationError(
-                f"{route_id} route smoke status is invalid"
-            )
+            raise ReplacementQualificationError(f"{route_id} route smoke status is invalid")
         if route.get("fallback_used") is not False:
-            raise ReplacementQualificationError(
-                f"{route_id} route smoke cannot use fallback"
-            )
+            raise ReplacementQualificationError(f"{route_id} route smoke cannot use fallback")
         calls = route.get("roles")
         if not isinstance(calls, list) or not calls:
-            raise ReplacementQualificationError(
-                f"{route_id} route smoke requires role evidence"
-            )
-        observed_roles = [
-            call.get("role") for call in calls if isinstance(call, dict)
-        ]
-        if status == "passed" and observed_roles != [
-            "l1",
-            "t1",
-            "l2",
-        ] * 3:
-            raise ReplacementQualificationError(
-                f"{route_id} route role evidence is incomplete"
-            )
+            raise ReplacementQualificationError(f"{route_id} route smoke requires role evidence")
+        observed_roles = [call.get("role") for call in calls if isinstance(call, dict)]
+        if (
+            status == "passed"
+            and observed_roles
+            != [
+                "l1",
+                "t1",
+                "l2",
+            ]
+            * 3
+        ):
+            raise ReplacementQualificationError(f"{route_id} route role evidence is incomplete")
         for call in calls:
             if not isinstance(call, dict):
                 raise ReplacementQualificationError("model role smoke is invalid")
@@ -627,13 +562,9 @@ def _validate_model_smokes(smokes: Mapping[str, object]) -> dict[str, object]:
                     label=f"{route_id} {call.get('role')} {field}",
                 )
             if not isinstance(call.get("schema_name"), str):
-                raise ReplacementQualificationError(
-                    "model smoke schema name must be exact"
-                )
+                raise ReplacementQualificationError("model smoke schema name must be exact")
             if call.get("probe_modality") not in {"O", "P", "F"}:
-                raise ReplacementQualificationError(
-                    "model smoke must bind its O/P/F probe"
-                )
+                raise ReplacementQualificationError("model smoke must bind its O/P/F probe")
         if status == "passed":
             if (
                 route.get("nonempty_l1_t1_l2") is not True
@@ -644,9 +575,7 @@ def _validate_model_smokes(smokes: Mapping[str, object]) -> dict[str, object]:
                     f"{route_id} positive smoke did not satisfy its contract"
                 )
         elif not isinstance(route.get("reason"), str) or not route["reason"]:
-            raise ReplacementQualificationError(
-                f"{route_id} unavailable smoke requires a reason"
-            )
+            raise ReplacementQualificationError(f"{route_id} unavailable smoke requires a reason")
     controls = supplied["negative_controls"]
     required_controls = {
         "blank_t1_rejected",
@@ -658,13 +587,9 @@ def _validate_model_smokes(smokes: Mapping[str, object]) -> dict[str, object]:
         "route_substitution_prohibited",
     }
     if not isinstance(controls, dict) or set(controls) != required_controls:
-        raise ReplacementQualificationError(
-            "model negative-control inventory changed"
-        )
+        raise ReplacementQualificationError("model negative-control inventory changed")
     if any(controls[key] is not True for key in required_controls):
-        raise ReplacementQualificationError(
-            "every model negative control must pass"
-        )
+        raise ReplacementQualificationError("every model negative control must pass")
     return supplied
 
 
@@ -699,9 +624,7 @@ def _arm_qualifications(
             ]
             routes = _route_requirements(spec, realizer)
             unavailable_routes = [
-                route
-                for route in routes
-                if _route_smoke_status(smokes, route) != "passed"
+                route for route in routes if _route_smoke_status(smokes, route) != "passed"
             ]
             if spec.guidance is GuidanceMode.GUIDED:
                 status = TERMINAL_UNSUPPORTED
@@ -713,9 +636,7 @@ def _arm_qualifications(
                 selection = False
             elif unavailable_routes:
                 status = CAPABILITY_UNAVAILABLE
-                reason = "route_preflight_unavailable:" + ",".join(
-                    unavailable_routes
-                )
+                reason = "route_preflight_unavailable:" + ",".join(unavailable_routes)
                 selection = False
             elif (
                 realizer.mode is RealizerMode.DETERMINISTIC
@@ -762,8 +683,7 @@ def _arm_qualifications(
             )
     if len(deterministic_ids) != 4 or len(model_ids) != 26:
         raise ReplacementQualificationError(
-            "replacement plan must preserve exactly 4 deterministic and "
-            "26 model-backed cells"
+            "replacement plan must preserve exactly 4 deterministic and 26 model-backed cells"
         )
     if len({record["arm_identity_cid"] for record in records}) != 30:
         raise ReplacementQualificationError(
@@ -782,9 +702,7 @@ def run_deterministic_pilot_smoke(
     records: list[dict[str, object]] = []
     for case in cases:
         l1 = constructor.construct(
-            ConstructorRequest(
-                case.source_text, case.allowed_atom_vocabulary, {}
-            )
+            ConstructorRequest(case.source_text, case.allowed_atom_vocabulary, {})
         )
         t1: RealizerResult | None = None
         l2: ConstructorResult | None = None
@@ -798,9 +716,7 @@ def run_deterministic_pilot_smoke(
             )
         if t1 is not None and t1.status is ComponentStatus.SUCCESS and t1.text:
             l2 = constructor.construct(
-                ConstructorRequest(
-                    t1.text, case.allowed_atom_vocabulary, {}
-                )
+                ConstructorRequest(t1.text, case.allowed_atom_vocabulary, {})
             )
         complete = bool(
             l1.status is ComponentStatus.SUCCESS
@@ -815,9 +731,7 @@ def run_deterministic_pilot_smoke(
             and l2.canonical_ir is not None
             and not l2.canonical_ir.is_empty
         )
-        copy_gate = source_copy_diagnostics(
-            case.source_text, None if t1 is None else t1.text
-        )
+        copy_gate = source_copy_diagnostics(case.source_text, None if t1 is None else t1.text)
         polarity_gate = polarity_diagnostics(
             case.gold_ir,
             None if l2 is None else l2.canonical_ir,
@@ -826,14 +740,10 @@ def run_deterministic_pilot_smoke(
             "case_id": case.case_id,
             "case_cid": case.case_cid,
             "l1_cid": (
-                None
-                if l1.canonical_ir is None
-                else cid_for_dag_json(l1.canonical_ir.to_dict())
+                None if l1.canonical_ir is None else cid_for_dag_json(l1.canonical_ir.to_dict())
             ),
             "t1_cid": (
-                None
-                if t1 is None or t1.text is None
-                else cid_for_bytes(t1.text.encode("utf-8"))
+                None if t1 is None or t1.text is None else cid_for_bytes(t1.text.encode("utf-8"))
             ),
             "l2_cid": (
                 None
@@ -844,9 +754,7 @@ def run_deterministic_pilot_smoke(
             "gates": {
                 "full_coverage": complete,
                 "source_copy_exclusion": bool(copy_gate["gate_passed"]),
-                "polarity_preservation": bool(
-                    polarity_gate["gate_passed"]
-                ),
+                "polarity_preservation": bool(polarity_gate["gate_passed"]),
             },
         }
         records.append(_cid_receipt(record, "record_cid"))
@@ -859,8 +767,7 @@ def run_deterministic_pilot_smoke(
             "passed"
             if len(records) == 5
             and all(
-                record["nonempty_l1_t1_l2"] is True
-                and all(record["gates"].values())  # type: ignore[union-attr]
+                record["nonempty_l1_t1_l2"] is True and all(record["gates"].values())  # type: ignore[union-attr]
                 for record in records
             )
             else "failed"
@@ -904,9 +811,7 @@ def _negative_controls(
     blank_rejected = False
     empty_rejected = False
     try:
-        SyMAIPolarityContract.validate_realization(
-            {"rules": []}, obligation
-        )
+        SyMAIPolarityContract.validate_realization({"rules": []}, obligation)
     except ContractError:
         blank_rejected = True
     try:
@@ -935,8 +840,7 @@ def _negative_controls(
             and causal_control.get("status") == "passed_zero_change"
         ),
         "polarity_inversion_rejected": (
-            polarity_diagnostics(obligation, prohibition)["gate_passed"]
-            is False
+            polarity_diagnostics(obligation, prohibition)["gate_passed"] is False
         ),
         "route_substitution_prohibited": True,
     }
@@ -993,11 +897,7 @@ def _role_smoke_record(
         "role": role,
         "probe_modality": probe_modality,
         "status": result.status.value,
-        "failure_reason": (
-            None
-            if result.failure_reason is None
-            else result.failure_reason.value
-        ),
+        "failure_reason": (None if result.failure_reason is None else result.failure_reason.value),
         "request_cid": result.receipt.request_cid,
         "prompt_cid": call["prompt_cid"],
         "system_cid": call["system_cid"],
@@ -1024,11 +924,7 @@ def _run_route_smoke(route: RecoveryRoute) -> dict[str, object]:
         ("P", "The company may access the records when authorized."),
         ("F", "The court must not destroy the evidence unless ordered."),
     )
-    raw_client: object = (
-        LeanstralClient()
-        if route is RecoveryRoute.DIRECT
-        else SyMAIClient()
-    )
+    raw_client: object = LeanstralClient() if route is RecoveryRoute.DIRECT else SyMAIClient()
     client = _RecordingClient(raw_client)
     recovery = BoundedModelOutputRecovery(client, route=route)
     roles: list[dict[str, object]] = []
@@ -1037,9 +933,7 @@ def _run_route_smoke(route: RecoveryRoute) -> dict[str, object]:
     source_copy_results: dict[str, bool] = {}
     failure_reason: str | None = None
     for modality, source in probes:
-        l1 = recovery.recover_l1(
-            ConstructorRequest(source, vocabulary, {})
-        )
+        l1 = recovery.recover_l1(ConstructorRequest(source, vocabulary, {}))
         roles.append(
             _role_smoke_record(
                 "l1",
@@ -1048,21 +942,14 @@ def _run_route_smoke(route: RecoveryRoute) -> dict[str, object]:
                 probe_modality=modality,
             )
         )
-        if (
-            l1.status is not ComponentStatus.SUCCESS
-            or l1.canonical_ir is None
-        ):
+        if l1.status is not ComponentStatus.SUCCESS or l1.canonical_ir is None:
             complete = False
             opf = False
             failure_reason = (
-                l1.failure_reason.value
-                if l1.failure_reason is not None
-                else "unknown_failure"
+                l1.failure_reason.value if l1.failure_reason is not None else "unknown_failure"
             )
             break
-        t1 = recovery.recover_t1(
-            RealizerRequest(l1.canonical_ir, vocabulary, {})
-        )
+        t1 = recovery.recover_t1(RealizerRequest(l1.canonical_ir, vocabulary, {}))
         roles.append(
             _role_smoke_record(
                 "t1",
@@ -1075,9 +962,7 @@ def _run_route_smoke(route: RecoveryRoute) -> dict[str, object]:
             complete = False
             opf = False
             failure_reason = (
-                t1.failure_reason.value
-                if t1.failure_reason is not None
-                else "blank_t1"
+                t1.failure_reason.value if t1.failure_reason is not None else "blank_t1"
             )
             break
         source_copy_results[modality] = bool(
@@ -1121,8 +1006,7 @@ def _run_route_smoke(route: RecoveryRoute) -> dict[str, object]:
         "reason": (
             None
             if complete and opf
-            else "typed_model_preflight:"
-            + (failure_reason or "opf_not_preserved")
+            else "typed_model_preflight:" + (failure_reason or "opf_not_preserved")
         ),
         "roles": roles,
         "source_copy_gate_by_modality": source_copy_results,
@@ -1157,17 +1041,12 @@ class RoleAwareModelRecovery:
 
     @property
     def identity(self) -> str:
-        return (
-            f"{ROLE_AWARE_MODEL_RECOVERY_INTERFACE}:"
-            f"{self.recovery.identity}"
-        )
+        return f"{ROLE_AWARE_MODEL_RECOVERY_INTERFACE}:{self.recovery.identity}"
 
     def construct_l1(self, request: ConstructorRequest) -> ConstructorResult:
         return self._constructor_result(self.recover_l1(request))
 
-    def recover_l1(
-        self, request: ConstructorRequest
-    ) -> ModelOutputRecoveryResult:
+    def recover_l1(self, request: ConstructorRequest) -> ModelOutputRecoveryResult:
         """Return the raw typed L1 result so orchestration retains its receipt."""
 
         return self.recovery.recover_l1(request)
@@ -1182,9 +1061,7 @@ class RoleAwareModelRecovery:
             failure_detail=result.failure_detail,
         )
 
-    def recover_t1(
-        self, request: RealizerRequest
-    ) -> ModelOutputRecoveryResult:
+    def recover_t1(self, request: RealizerRequest) -> ModelOutputRecoveryResult:
         """Return the raw typed T1 result so orchestration retains its receipt."""
 
         return self.recovery.recover_t1(request)
@@ -1196,12 +1073,8 @@ class RoleAwareModelRecovery:
         expected_l1: CanonicalRuleIR,
     ) -> ConstructorResult:
         if not isinstance(expected_l1, CanonicalRuleIR) or expected_l1.is_empty:
-            raise ContractError(
-                "L2 recovery requires the exact nonempty preceding L1"
-            )
-        return self._constructor_result(
-            self.recover_l2(request, expected_l1=expected_l1)
-        )
+            raise ContractError("L2 recovery requires the exact nonempty preceding L1")
+        return self._constructor_result(self.recover_l2(request, expected_l1=expected_l1))
 
     def recover_l2(
         self,
@@ -1212,9 +1085,7 @@ class RoleAwareModelRecovery:
         """Return raw L2 evidence under explicit preceding-L1 authority."""
 
         if not isinstance(expected_l1, CanonicalRuleIR) or expected_l1.is_empty:
-            raise ContractError(
-                "L2 recovery requires the exact nonempty preceding L1"
-            )
+            raise ContractError("L2 recovery requires the exact nonempty preceding L1")
         return self.recovery.recover_l2(
             request,
             expected_ir=expected_l1,
@@ -1238,9 +1109,7 @@ class RoleAwareModelRecovery:
 
 def _runtime_plain(value: object) -> object:
     if isinstance(value, Mapping):
-        return {
-            str(key): _runtime_plain(item) for key, item in value.items()
-        }
+        return {str(key): _runtime_plain(item) for key, item in value.items()}
     if isinstance(value, (tuple, list)):
         return [_runtime_plain(item) for item in value]
     to_dict = getattr(value, "to_dict", None)
@@ -1271,22 +1140,12 @@ def _model_recovery_evidence(
         "interface": "RoleExplicitModelRecoveryResult@1",
         "role": result.role.value,
         "status": result.status.value,
-        "failure_reason": (
-            None
-            if result.failure_reason is None
-            else result.failure_reason.value
-        ),
+        "failure_reason": (None if result.failure_reason is None else result.failure_reason.value),
         "failure_detail": result.failure_detail,
         "canonical_ir_cid": (
-            None
-            if result.canonical_ir is None
-            else cid_for_dag_json(result.canonical_ir.to_dict())
+            None if result.canonical_ir is None else cid_for_dag_json(result.canonical_ir.to_dict())
         ),
-        "text_cid": (
-            None
-            if result.text is None
-            else cid_for_bytes(result.text.encode("utf-8"))
-        ),
+        "text_cid": (None if result.text is None else cid_for_bytes(result.text.encode("utf-8"))),
         "recovery_receipt": receipt,
         "recovery_receipt_cid": result.receipt.receipt_cid,
     }
@@ -1304,42 +1163,26 @@ def _stage_receipt(
     request_payload = request.to_payload()
     if isinstance(result, ConstructorResult):
         output_cid = (
-            None
-            if result.canonical_ir is None
-            else cid_for_dag_json(result.canonical_ir.to_dict())
+            None if result.canonical_ir is None else cid_for_dag_json(result.canonical_ir.to_dict())
         )
         output_codec = "dag-json" if output_cid is not None else None
     else:
-        output_cid = (
-            None
-            if result.text is None
-            else cid_for_bytes(result.text.encode("utf-8"))
-        )
+        output_cid = None if result.text is None else cid_for_bytes(result.text.encode("utf-8"))
         output_codec = "raw" if output_cid is not None else None
-    plain_component = (
-        None
-        if component_receipt is None
-        else _runtime_plain(component_receipt)
-    )
+    plain_component = None if component_receipt is None else _runtime_plain(component_receipt)
     payload: dict[str, object] = {
         "interface": "ReplacementCoordinateStageReceipt@1",
         "role": role,
         "component_identity": component_identity,
         "request_cid": cid_for_dag_json(request_payload),
         "status": result.status.value,
-        "failure_reason": (
-            None
-            if result.failure_reason is None
-            else result.failure_reason.value
-        ),
+        "failure_reason": (None if result.failure_reason is None else result.failure_reason.value),
         "failure_detail": result.failure_detail,
         "output_cid": output_cid,
         "output_codec": output_codec,
         "component_receipt": plain_component,
         "component_receipt_cid": (
-            None
-            if plain_component is None
-            else cid_for_dag_json(plain_component)
+            None if plain_component is None else cid_for_dag_json(plain_component)
         ),
     }
     return _cid_receipt(payload, "stage_receipt_cid")
@@ -1385,15 +1228,11 @@ def _invoke_constructor_stage(
                     expected_l1=expected_l1,
                 )
             else:
-                raise ContractError(
-                    "constructor stage requires explicit L1 or authorized L2"
-                )
+                raise ContractError("constructor stage requires explicit L1 or authorized L2")
             result = component._constructor_result(recovered)
             component_receipt = _model_recovery_evidence(recovered)
         else:
-            diagnostic_method = getattr(
-                component, "construct_with_diagnostics", None
-            )
+            diagnostic_method = getattr(component, "construct_with_diagnostics", None)
             if callable(diagnostic_method):
                 outcome = diagnostic_method(request)
                 result = getattr(outcome, "result", None)
@@ -1466,10 +1305,7 @@ def _invoke_realizer_stage(
             receipt_method = getattr(component, "realize_with_receipt", None)
             if callable(receipt_method):
                 outcome = receipt_method(request)
-                if (
-                    not isinstance(outcome, tuple)
-                    or len(outcome) != 2
-                ):
+                if not isinstance(outcome, tuple) or len(outcome) != 2:
                     result = _failed_realizer(
                         FailureReason.INVALID_OUTPUT,
                         "realizer receipt method returned an invalid pair",
@@ -1531,14 +1367,10 @@ class ReplacementCoordinateExecution:
         body = dict(supplied)
         del body["coordinate_cid"]
         if cid_for_dag_json(body) != coordinate_cid:
-            raise ContractError(
-                "replacement coordinate CID does not match its payload"
-            )
+            raise ContractError("replacement coordinate CID does not match its payload")
         if (
-            supplied.get("schema_version")
-            != REPLACEMENT_COORDINATE_RECEIPT_SCHEMA
-            or supplied.get("interface")
-            != REPLACEMENT_COORDINATE_RUNNER_INTERFACE
+            supplied.get("schema_version") != REPLACEMENT_COORDINATE_RECEIPT_SCHEMA
+            or supplied.get("interface") != REPLACEMENT_COORDINATE_RUNNER_INTERFACE
             or supplied.get("status") != self.result.status.value
             or supplied.get("losses")
             != {
@@ -1548,9 +1380,7 @@ class ReplacementCoordinateExecution:
                 "primary": self.result.primary_loss,
             }
         ):
-            raise ContractError(
-                "replacement coordinate receipt contradicts its typed result"
-            )
+            raise ContractError("replacement coordinate receipt contradicts its typed result")
         object.__setattr__(self, "receipt", supplied)
 
     @property
@@ -1578,10 +1408,7 @@ class ReplacementCoordinateRunner:
         self,
         qualification: Mapping[str, object],
         *,
-        client_factories: Mapping[
-            RecoveryRoute | str, Callable[[], object]
-        ]
-        | None = None,
+        client_factories: Mapping[RecoveryRoute | str, Callable[[], object]] | None = None,
         validators: Mapping[str, PostHocValidator] | None = None,
     ) -> None:
         if not isinstance(qualification, Mapping):
@@ -1597,16 +1424,12 @@ class ReplacementCoordinateRunner:
         qualification_body = dict(supplied)
         del qualification_body["qualification_cid"]
         if cid_for_dag_json(qualification_body) != qualification_cid:
-            raise ContractError(
-                "replacement qualification CID does not match its payload"
-            )
+            raise ContractError("replacement qualification CID does not match its payload")
         if (
             supplied.get("interface") != QUALIFIED_REPLACEMENT_MATRIX_INTERFACE
             or supplied.get("frozen_before_scored_execution") is not True
         ):
-            raise ContractError(
-                "coordinate runner requires the frozen replacement qualification"
-            )
+            raise ContractError("coordinate runner requires the frozen replacement qualification")
         plan = supplied.get("plan")
         schedule = supplied.get("schedule")
         lineage = supplied.get("lineage")
@@ -1615,9 +1438,7 @@ class ReplacementCoordinateRunner:
             or not isinstance(schedule, dict)
             or not isinstance(lineage, dict)
         ):
-            raise ContractError(
-                "qualification plan, schedule, or lineage is missing"
-            )
+            raise ContractError("qualification plan, schedule, or lineage is missing")
         plan_cid = _require_cid(
             plan.get("plan_cid"),
             codec="dag-json",
@@ -1630,29 +1451,21 @@ class ReplacementCoordinateRunner:
         raw_arms = plan.get("arms")
         if not isinstance(raw_arms, list):
             raise ContractError("replacement plan arms are missing")
-        arms = {
-            str(arm.get("cell_id")): arm
-            for arm in raw_arms
-            if isinstance(arm, dict)
-        }
+        arms = {str(arm.get("cell_id")): arm for arm in raw_arms if isinstance(arm, dict)}
         static_specs = {
             f"{spec.arm_id}__{realizer.realizer_id}": (spec, realizer)
             for spec in DEFAULT_EXTENDED_MATRIX_PLAN.compositions
             for realizer in DEFAULT_EXTENDED_MATRIX_PLAN.realizers
         }
         if set(arms) != set(static_specs) or len(raw_arms) != len(arms):
-            raise ContractError(
-                "qualification arms differ from the frozen 30-cell registry"
-            )
+            raise ContractError("qualification arms differ from the frozen 30-cell registry")
         for cell_id, (spec, realizer) in static_specs.items():
             arm = arms[cell_id]
             if (
                 arm.get("composition") != spec.to_dict()
                 or arm.get("realizer") != realizer.to_dict()
             ):
-                raise ContractError(
-                    f"qualification arm {cell_id!r} changed its axes"
-                )
+                raise ContractError(f"qualification arm {cell_id!r} changed its axes")
         fixture = lineage.get("fixture")
         if not isinstance(fixture, dict):
             raise ContractError("qualification fixture binding is missing")
@@ -1697,15 +1510,11 @@ class ReplacementCoordinateRunner:
                     str(coordinate["arm_id"]),
                 )
                 if key in scheduled:
-                    raise ContractError(
-                        "qualification schedule duplicates a coordinate"
-                    )
+                    raise ContractError("qualification schedule duplicates a coordinate")
                 scheduled[key] = str(coordinate["cache_namespace"])
                 model_coordinate_order.append(key)
         if len(scheduled) != 650:
-            raise ContractError(
-                "qualification schedule must contain 650 model coordinates"
-            )
+            raise ContractError("qualification schedule must contain 650 model coordinates")
 
         factories: dict[RecoveryRoute, Callable[[], object]] = {
             RecoveryRoute.DIRECT: LeanstralClient,
@@ -1715,44 +1524,30 @@ class ReplacementCoordinateRunner:
             try:
                 route = key if isinstance(key, RecoveryRoute) else RecoveryRoute(key)
             except (TypeError, ValueError) as exc:
-                raise ContractError(
-                    f"unknown model client route: {key!r}"
-                ) from exc
+                raise ContractError(f"unknown model client route: {key!r}") from exc
             if not callable(factory):
-                raise ContractError(
-                    f"model client factory for {route.value} must be callable"
-                )
+                raise ContractError(f"model client factory for {route.value} must be callable")
             factories[route] = factory
 
         selected_validators = (
-            default_post_hoc_validators()
-            if validators is None
-            else dict(validators)
+            default_post_hoc_validators() if validators is None else dict(validators)
         )
         expected_validators = {
-            item.validator_id
-            for item in DEFAULT_EXTENDED_MATRIX_PLAN.validation_overlays
+            item.validator_id for item in DEFAULT_EXTENDED_MATRIX_PLAN.validation_overlays
         }
-        if (
-            set(selected_validators) != expected_validators
-            or any(not callable(item) for item in selected_validators.values())
+        if set(selected_validators) != expected_validators or any(
+            not callable(item) for item in selected_validators.values()
         ):
-            raise ContractError(
-                "coordinate validators must equal the frozen validation overlays"
-            )
+            raise ContractError("coordinate validators must equal the frozen validation overlays")
 
         self._qualification_cid = qualification_cid
         self._plan_cid = plan_cid
         self._arms = arms
         self._specs = static_specs
         self._case_ids = tuple(str(value) for value in case_ids)
-        self._case_cids = {
-            str(key): str(value) for key, value in case_cids.items()
-        }
+        self._case_cids = {str(key): str(value) for key, value in case_cids.items()}
         self._model_ids = tuple(str(value) for value in model_ids)
-        self._deterministic_ids = tuple(
-            str(value) for value in deterministic_ids
-        )
+        self._deterministic_ids = tuple(str(value) for value in deterministic_ids)
         self._scheduled = scheduled
         self._model_coordinate_order = tuple(model_coordinate_order)
         self._client_factories = factories
@@ -1760,9 +1555,7 @@ class ReplacementCoordinateRunner:
 
     @property
     def identity(self) -> str:
-        return (
-            f"{self.interface}:{self._qualification_cid}:{self._plan_cid}"
-        )
+        return f"{self.interface}:{self._qualification_cid}:{self._plan_cid}"
 
     @property
     def cell_ids(self) -> tuple[str, ...]:
@@ -1785,13 +1578,9 @@ class ReplacementCoordinateRunner:
             try:
                 return self._scheduled[(case_id, repeat_index, cell_id)]
             except KeyError as exc:
-                raise ContractError(
-                    "model coordinate is absent from the frozen schedule"
-                ) from exc
+                raise ContractError("model coordinate is absent from the frozen schedule") from exc
         if repeat_index != 0:
-            raise ContractError(
-                "deterministic coordinates have exactly repeat_index zero"
-            )
+            raise ContractError("deterministic coordinates have exactly repeat_index zero")
         namespace_cid = cid_for_dag_json(
             {
                 "plan_cid": self._plan_cid,
@@ -1835,9 +1624,7 @@ class ReplacementCoordinateRunner:
                 }
             )
         if len(values) != 670:
-            raise ContractError(
-                "replacement coordinate registry must contain exactly 670 entries"
-            )
+            raise ContractError("replacement coordinate registry must contain exactly 670 entries")
         return tuple(values)
 
     def _route_mapping(
@@ -1871,34 +1658,22 @@ class ReplacementCoordinateRunner:
         arm = self._arms[cell_id]
         spec, realizer = self._specs[cell_id]
         declared_constructor_identity = (
-            constructor_identity
-            or f"{self.interface}:terminal:{spec.arm_id}"
+            constructor_identity or f"{self.interface}:terminal:{spec.arm_id}"
         )
         declared_realizer_identity = (
-            realizer_identity
-            or f"{self.interface}:terminal:{realizer.realizer_id}"
+            realizer_identity or f"{self.interface}:terminal:{realizer.realizer_id}"
         )
         constructor_id = spec.arm_id
         realizer_id = realizer.realizer_id
         realizer_config = (
-            frozen_replacement_config()
-            if realizer.mode is RealizerMode.DETERMINISTIC
-            else {}
+            frozen_replacement_config() if realizer.mode is RealizerMode.DETERMINISTIC else {}
         )
         # Reuse the unchanged semantic authority rather than maintaining a
         # near-copy of its scorer, diagnostics, gate, candidate-binding, and
         # post-hoc validation contract in this replacement orchestrator.
         semantic_sealer = SemanticRoundTripMatrix(
-            {
-                constructor_id: _IdentityOnlyComponent(
-                    declared_constructor_identity
-                )
-            },
-            {
-                realizer_id: _IdentityOnlyComponent(
-                    declared_realizer_identity
-                )
-            },
+            {constructor_id: _IdentityOnlyComponent(declared_constructor_identity)},
+            {realizer_id: _IdentityOnlyComponent(declared_realizer_identity)},
             constructor_configs={constructor_id: {}},
             realizer_configs={realizer_id: realizer_config},
             validators=self._validators,
@@ -1912,13 +1687,8 @@ class ReplacementCoordinateRunner:
             realizer_identity=declared_realizer_identity,
             result=result,
         )
-        if (
-            semantic.cell_id != cell_id
-            or semantic.validation["candidate_unchanged"] is not True
-        ):
-            raise ContractError(
-                "unchanged semantic sealer did not retain the exact coordinate"
-            )
+        if semantic.cell_id != cell_id or semantic.validation["candidate_unchanged"] is not True:
+            raise ContractError("unchanged semantic sealer did not retain the exact coordinate")
         semantic_record = semantic.to_dict()
         payload: dict[str, object] = {
             "schema_version": REPLACEMENT_COORDINATE_RECEIPT_SCHEMA,
@@ -1931,15 +1701,9 @@ class ReplacementCoordinateRunner:
             "cell_id": cell_id,
             "repeat_index": repeat_index,
             "cache": {
-                "mode": (
-                    "uncached"
-                    if cell_id in self._model_ids
-                    else "deterministic_uncached"
-                ),
+                "mode": ("uncached" if cell_id in self._model_ids else "deterministic_uncached"),
                 "namespace": cache_namespace,
-                "namespace_cid": cid_for_bytes(
-                    cache_namespace.encode("utf-8")
-                ),
+                "namespace_cid": cid_for_bytes(cache_namespace.encode("utf-8")),
                 "prompt_cache_enabled": False,
                 "response_cache_enabled": False,
                 "cache_hit": False,
@@ -1989,8 +1753,7 @@ class ReplacementCoordinateRunner:
         qualification_status = arm["qualification_status"]
         if qualification_status != QUALIFIED_CANDIDATE:
             reason = str(
-                arm["qualification_reason"]
-                or "replacement arm is not qualified for execution"
+                arm["qualification_reason"] or "replacement arm is not qualified for execution"
             )
             result = make_round_trip_result(
                 case.gold_ir,
@@ -2034,21 +1797,12 @@ class ReplacementCoordinateRunner:
             constructor: object = TypedDeonticCanonicalConstructor()
         elif spec.base_constructor_id == "modal_spacy":
             constructor = ModalSpacyCanonicalConstructor()
-        elif (
-            spec.base_constructor_id == "model"
-            and spec.repair is RepairMode.ALWAYS_ON
-        ):
-            constructor = model_recovery(
-                RecoveryRoute(spec.constructor_route.value)
-            )
+        elif spec.base_constructor_id == "model" and spec.repair is RepairMode.ALWAYS_ON:
+            constructor = model_recovery(RecoveryRoute(spec.constructor_route.value))
         else:
-            raise ContractError(
-                f"unsupported constructor registry entry: {spec.arm_id}"
-            )
+            raise ContractError(f"unsupported constructor registry entry: {spec.arm_id}")
         if spec.guidance is GuidanceMode.GUIDED:
-            raise ContractError(
-                "guided arm reached execution despite terminal qualification"
-            )
+            raise ContractError("guided arm reached execution despite terminal qualification")
         if spec.repair is RepairMode.SELECTIVE:
             constructor = SelectiveLeanstralRepair(
                 constructor,  # type: ignore[arg-type]
@@ -2058,13 +1812,9 @@ class ReplacementCoordinateRunner:
 
         if realizer_spec.mode is RealizerMode.DETERMINISTIC:
             realizer: object = SourceWithheldCanonicalParaphraser()
-            realizer_config: Mapping[str, object] = (
-                frozen_replacement_config()
-            )
+            realizer_config: Mapping[str, object] = frozen_replacement_config()
         else:
-            realizer = model_recovery(
-                RecoveryRoute(realizer_spec.route.value)
-            )
+            realizer = model_recovery(RecoveryRoute(realizer_spec.route.value))
             realizer_config = {}
 
         stages: list[dict[str, object]] = []
@@ -2078,18 +1828,13 @@ class ReplacementCoordinateRunner:
             role=RecoveryRole.L1,
         )
         stages.append(l1_stage)
-        if (
-            l1_result.status is ComponentStatus.FAILED
-            or l1_result.canonical_ir is None
-        ):
+        if l1_result.status is ComponentStatus.FAILED or l1_result.canonical_ir is None:
             result = make_round_trip_result(
                 case.gold_ir,
                 None,
                 None,
                 None,
-                failure_reason=(
-                    l1_result.failure_reason or FailureReason.INVALID_OUTPUT
-                ),
+                failure_reason=(l1_result.failure_reason or FailureReason.INVALID_OUTPUT),
                 failure_detail=l1_result.failure_detail,
             )
             return self._seal(
@@ -2099,9 +1844,7 @@ class ReplacementCoordinateRunner:
                 cache_namespace=cache_namespace,
                 result=result,
                 stages=stages,
-                constructor_identity=_component_identity(
-                    constructor, "constructor"
-                ),
+                constructor_identity=_component_identity(constructor, "constructor"),
                 realizer_identity=_component_identity(realizer, "realizer"),
                 disposition="executed_loss_one",
             )
@@ -2122,9 +1865,7 @@ class ReplacementCoordinateRunner:
                 l1,
                 None,
                 None,
-                failure_reason=(
-                    t1_result.failure_reason or FailureReason.INVALID_OUTPUT
-                ),
+                failure_reason=(t1_result.failure_reason or FailureReason.INVALID_OUTPUT),
                 failure_detail=t1_result.failure_detail,
             )
             return self._seal(
@@ -2134,9 +1875,7 @@ class ReplacementCoordinateRunner:
                 cache_namespace=cache_namespace,
                 result=result,
                 stages=stages,
-                constructor_identity=_component_identity(
-                    constructor, "constructor"
-                ),
+                constructor_identity=_component_identity(constructor, "constructor"),
                 realizer_identity=_component_identity(realizer, "realizer"),
                 disposition="executed_loss_one",
             )
@@ -2153,18 +1892,13 @@ class ReplacementCoordinateRunner:
             expected_l1=l1,
         )
         stages.append(l2_stage)
-        if (
-            l2_result.status is ComponentStatus.FAILED
-            or l2_result.canonical_ir is None
-        ):
+        if l2_result.status is ComponentStatus.FAILED or l2_result.canonical_ir is None:
             result = make_round_trip_result(
                 case.gold_ir,
                 l1,
                 reconstruction,
                 None,
-                failure_reason=(
-                    l2_result.failure_reason or FailureReason.INVALID_OUTPUT
-                ),
+                failure_reason=(l2_result.failure_reason or FailureReason.INVALID_OUTPUT),
                 failure_detail=l2_result.failure_detail,
             )
             disposition = "executed_loss_one"
@@ -2183,9 +1917,7 @@ class ReplacementCoordinateRunner:
             cache_namespace=cache_namespace,
             result=result,
             stages=stages,
-            constructor_identity=_component_identity(
-                constructor, "constructor"
-            ),
+            constructor_identity=_component_identity(constructor, "constructor"),
             realizer_identity=_component_identity(realizer, "realizer"),
             disposition=disposition,
         )
@@ -2201,13 +1933,8 @@ class ReplacementCoordinateRunner:
 
         if not isinstance(case, MatrixCase):
             raise ContractError("case must be MatrixCase")
-        if (
-            case.case_id not in self._case_cids
-            or self._case_cids[case.case_id] != case.case_cid
-        ):
-            raise ContractError(
-                "case differs from the frozen five-case fixture"
-            )
+        if case.case_id not in self._case_cids or self._case_cids[case.case_id] != case.case_cid:
+            raise ContractError("case differs from the frozen five-case fixture")
         if cell_id not in self._specs:
             raise ContractError("cell_id is absent from the frozen plan")
         expected_namespace = self.cache_namespace_for(
@@ -2215,13 +1942,8 @@ class ReplacementCoordinateRunner:
             cell_id=cell_id,
             repeat_index=repeat_index,
         )
-        if (
-            not isinstance(cache_namespace, str)
-            or cache_namespace != expected_namespace
-        ):
-            raise ContractError(
-                "cache_namespace differs from the frozen coordinate"
-            )
+        if not isinstance(cache_namespace, str) or cache_namespace != expected_namespace:
+            raise ContractError("cache_namespace differs from the frozen coordinate")
         model_backed = bool(self._arms[cell_id]["model_backed"])
         if model_backed:
             with _REPLACEMENT_MODEL_LOCK:
@@ -2249,12 +1971,7 @@ def build_balanced_model_schedule(
 
     arms = tuple(model_arm_ids)
     cases = tuple(case_ids)
-    if (
-        len(arms) != 26
-        or len(set(arms)) != 26
-        or len(cases) != 5
-        or len(set(cases)) != 5
-    ):
+    if len(arms) != 26 or len(set(arms)) != 26 or len(cases) != 5 or len(set(cases)) != 5:
         raise ReplacementQualificationError(
             "balanced schedule requires 26 model arms and five cases"
         )
@@ -2345,9 +2062,7 @@ def _validate_balanced_schedule(
         )
         observed = [counts[arm] for arm in arms]
         if max(observed) - min(observed) > 1:
-            raise ReplacementQualificationError(
-                "replacement schedule is not position balanced"
-            )
+            raise ReplacementQualificationError("replacement schedule is not position balanced")
     return supplied
 
 
@@ -2404,12 +2119,10 @@ def build_replacement_qualification(
         "model_backed_cell_ids": model_ids,
         "arms": arms,
         "validation_overlays": [
-            overlay.to_dict()
-            for overlay in DEFAULT_EXTENDED_MATRIX_PLAN.validation_overlays
+            overlay.to_dict() for overlay in DEFAULT_EXTENDED_MATRIX_PLAN.validation_overlays
         ],
         "typed_omissions": [
-            omission.to_dict()
-            for omission in DEFAULT_EXTENDED_MATRIX_PLAN.omissions
+            omission.to_dict() for omission in DEFAULT_EXTENDED_MATRIX_PLAN.omissions
         ],
         "loss_policy": {
             "primary": "end_to_end",
@@ -2436,9 +2149,7 @@ def build_replacement_qualification(
                 "t1": "recover_t1",
                 "l2": "recover_l2_requires_exact_l1",
             },
-            "deterministic_realizer_configuration_cid": (
-                FROZEN_REPLACEMENT_CONFIG_CID
-            ),
+            "deterministic_realizer_configuration_cid": (FROZEN_REPLACEMENT_CONFIG_CID),
             "terminal_unsupported_is_typed_loss_one": True,
             "native_stage_receipts_required": True,
             "post_hoc_validation_receipts_required": True,
@@ -2452,9 +2163,7 @@ def build_replacement_qualification(
         plan_cid=plan["plan_cid"],  # type: ignore[arg-type]
     )
     capability_payload = inventory.to_dict()
-    causal_raw = _raw_file_binding(
-        root, DEFAULT_CAUSAL_QUALIFICATION_RELATIVE_PATH
-    )
+    causal_raw = _raw_file_binding(root, DEFAULT_CAUSAL_QUALIFICATION_RELATIVE_PATH)
     causal_raw["qualification_cid"] = causal["qualification_cid"]
     payload: dict[str, object] = {
         "schema_version": REPLACEMENT_QUALIFICATION_SCHEMA,
@@ -2463,16 +2172,12 @@ def build_replacement_qualification(
         "frozen_before_scored_execution": True,
         "lineage": {
             "capability_inventory": {
-                **_raw_file_binding(
-                    root, DEFAULT_CAPABILITY_INVENTORY_RELATIVE_PATH
-                ),
+                **_raw_file_binding(root, DEFAULT_CAPABILITY_INVENTORY_RELATIVE_PATH),
                 "inventory_cid": cid_for_dag_json(capability_payload),
             },
             "causal_guidance": causal_raw,
             "fixture": fixture_binding,
-            "protocol": _raw_file_binding(
-                root, DEFAULT_PROTOCOL_RELATIVE_PATH
-            ),
+            "protocol": _raw_file_binding(root, DEFAULT_PROTOCOL_RELATIVE_PATH),
             "historical": _historical_binding(root),
         },
         "bindings": {
@@ -2519,9 +2224,7 @@ def validate_replacement_qualification(
     """Validate a checked receipt against fresh repository-bound evidence."""
 
     if not isinstance(value, Mapping):
-        raise ReplacementQualificationError(
-            "replacement qualification must be an object"
-        )
+        raise ReplacementQualificationError("replacement qualification must be an object")
     supplied = _json_clone(dict(value))
     qualification_cid = _require_cid(
         supplied.get("qualification_cid"),
@@ -2539,9 +2242,7 @@ def validate_replacement_qualification(
         raise ReplacementQualificationError("replacement smokes are missing")
     model_smokes = smokes_container.get("model_routes")
     if not isinstance(model_smokes, dict):
-        raise ReplacementQualificationError(
-            "replacement model smokes are missing"
-        )
+        raise ReplacementQualificationError("replacement model smokes are missing")
     expected = build_replacement_qualification(
         repo_root=repo_root,
         model_smokes=model_smokes,
@@ -2562,9 +2263,7 @@ def validate_replacement_qualification(
         plan_cid=plan["plan_cid"],  # type: ignore[arg-type]
     )
     if summary["at_least_one_fully_qualified_candidate"] is not True:
-        raise ReplacementQualificationError(
-            "qualification contains no fully qualified candidate"
-        )
+        raise ReplacementQualificationError("qualification contains no fully qualified candidate")
     return expected
 
 
@@ -2580,10 +2279,7 @@ def load_replacement_qualification(
 def build_replacement_coordinate_runner(
     qualification: Mapping[str, object] | None = None,
     *,
-    client_factories: Mapping[
-        RecoveryRoute | str, Callable[[], object]
-    ]
-    | None = None,
+    client_factories: Mapping[RecoveryRoute | str, Callable[[], object]] | None = None,
     validators: Mapping[str, PostHocValidator] | None = None,
     qualification_path: Path = DEFAULT_REPLACEMENT_QUALIFICATION_PATH,
     repo_root: Path = REPO_ROOT,
@@ -2606,13 +2302,16 @@ def build_replacement_coordinate_runner(
 
 
 def canonical_qualification_json(value: Mapping[str, object]) -> str:
-    return json.dumps(
-        value,
-        allow_nan=False,
-        ensure_ascii=False,
-        indent=2,
-        sort_keys=True,
-    ) + "\n"
+    return (
+        json.dumps(
+            value,
+            allow_nan=False,
+            ensure_ascii=False,
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -2633,9 +2332,7 @@ def research_evaluation_mode_registry() -> dict[str, object]:
     registry = hybrid_arm_registry()
     promotion_ids = list(DEFAULT_EXTENDED_MATRIX_PLAN.cell_ids)
     if not research_modes_do_not_alter_promotion_set(promotion_ids):
-        raise ContractError(
-            "research hybrid arms collide with the frozen promotion cell set"
-        )
+        raise ContractError("research hybrid arms collide with the frozen promotion cell set")
     payload = {
         "interface": QUALIFIED_REPLACEMENT_MATRIX_INTERFACE,
         "hybrid_interface": HYBRID_ROUND_TRIP_ARMS_INTERFACE,
@@ -2643,11 +2340,7 @@ def research_evaluation_mode_registry() -> dict[str, object]:
         "promotion_cell_count": len(promotion_ids),
         "promotion_cell_ids": promotion_ids,
         "research_modes": {
-            mode.value: [
-                arm.arm_id
-                for arm in PREREGISTERED_HYBRID_ARMS
-                if arm.mode is mode
-            ]
+            mode.value: [arm.arm_id for arm in PREREGISTERED_HYBRID_ARMS if arm.mode is mode]
             for mode in EvaluationMode
         },
         "required_modes": [
@@ -2720,14 +2413,10 @@ def schedule_research_hybrid_arms(
 
     promotion_ids = list(DEFAULT_EXTENDED_MATRIX_PLAN.cell_ids)
     if not research_modes_do_not_alter_promotion_set(promotion_ids):
-        raise ContractError(
-            "research hybrid arms collide with the frozen promotion cell set"
-        )
+        raise ContractError("research hybrid arms collide with the frozen promotion cell set")
     research_ids = [arm.arm_id for arm in selected]
     if set(research_ids) & set(promotion_ids):
-        raise ContractError(
-            "research schedule must not include promotion cell ids"
-        )
+        raise ContractError("research schedule must not include promotion cell ids")
 
     if require_preflight:
         assert_hybrid_mode_preflight(
@@ -2804,9 +2493,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         root = args.repo_root.resolve()
         if args.validate is not None:
-            value = load_replacement_qualification(
-                args.validate, repo_root=root
-            )
+            value = load_replacement_qualification(args.validate, repo_root=root)
         elif args.run_live_smokes:
             causal = load_causal_guidance_qualification(
                 root / DEFAULT_CAUSAL_QUALIFICATION_RELATIVE_PATH,
