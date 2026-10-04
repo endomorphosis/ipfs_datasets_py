@@ -477,7 +477,19 @@ def test_tlc_passed_run_is_bounded_model_check_not_theorem():
 
 def test_explicit_java_is_validated_and_bound_to_tlc_process_environment(
     tmp_path: Path,
+    monkeypatch,
 ):
+    from ipfs_datasets_py.logic.backends import resource_admission
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import resource_scheduler
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.proof_resource_safety import ProofHostResources
+
+    healthy = ProofHostResources(8, 8192, 8192, pid_task_limit=8192, available_pid_tasks=8192)
+    owner = resource_scheduler.GlobalResourceScheduler(resource_scheduler.ResourceSchedulerConfig.for_proof_host(
+        state_path=tmp_path / "java-probe-pool.json", proof_resource_sampler=lambda: healthy,
+        total_cpu_slots=2, total_memory_mb=1024, total_child_process_slots=2,
+        proof_memory_headroom_mb=64, lane_reservations={}, auto_renew_leases=False,
+        proof_backoff_seconds=0.025, poll_interval_seconds=0.002))
+    monkeypatch.setattr(resource_admission, "get_global_resource_scheduler", lambda: owner)
     java = tmp_path / "selected-jdk" / "bin" / "java"
     java.parent.mkdir(parents=True)
     java.write_text(
@@ -508,6 +520,8 @@ def test_explicit_java_is_validated_and_bound_to_tlc_process_environment(
     assert process_path[0] == str(java.parent.resolve())
     for variable in ("JAVA_TOOL_OPTIONS", "_JAVA_OPTIONS", "JDK_JAVA_OPTIONS"):
         assert variable not in invocations[0].environment
+    state = owner.snapshot()
+    assert state["active_lease_count"] == state["waiting_request_count"] == 0
 
 
 def test_apalache_does_not_claim_liveness_and_passes_on_safety_markers():

@@ -1,0 +1,48 @@
+{
+  "repository_id": "Publicus/autoencoder-decoder-checkpoints",
+  "revision": "cce278a763b5f7435a9895333a8af99b7fe8ea43",
+  "release_prefix": "releases/20261004-historical-git-assets-v1",
+  "private": true,
+  "entries": [
+    {
+      "repository": "https://github.com/endomorphosis/ipfs_datasets_py",
+      "original_path": "docs/implementation/reports/evidence/decoder-action-binding-20261003/evidence.tar.xz",
+      "git_blob_oid": "3328ec7edccf75229b3d402d31a7af1fe8d1dfe5",
+      "sha256": "1830569d1c79cfdd897531655ba3283799edf9da0f5891347cf8bbb82f487ec6",
+      "size_bytes": 106911344,
+      "object_path": "objects/1830569d1c79cfdd897531655ba3283799edf9da0f5891347cf8bbb82f487ec6.bin"
+    },
+    {
+      "repository": "https://github.com/endomorphosis/ipfs_datasets_py",
+      "original_path": "docs/implementation/reports/evidence/decoder-action-consistency-20261003/evidence.tar.xz",
+      "git_blob_oid": "0be6b6e0639997edb9029c3e32700532c540c0f2",
+      "sha256": "c64296732d874ca3179e0b17a94aa522eca1dc63e1af81cd9cab7757f4ffb87b",
+      "size_bytes": 196205088,
+      "object_path": "objects/c64296732d874ca3179e0b17a94aa522eca1dc63e1af81cd9cab7757f4ffb87b.bin"
+    },
+    {
+      "repository": "https://github.com/endomorphosis/ipfs_datasets_py",
+      "original_path": "docs/implementation/reports/evidence/decoder-context-boundary-training-20261003/evidence.tar.xz",
+      "git_blob_oid": "81530fd237ea4b1f929dd631cae0a6532d61c6bc",
+      "sha256": "178cf075698ad20de36bc114e6bbd5102632f35b555ab861623a49c9cf42b0f0",
+      "size_bytes": 119263308,
+      "object_path": "objects/178cf075698ad20de36bc114e6bbd5102632f35b555ab861623a49c9cf42b0f0.bin"
+    },
+    {
+      "repository": "https://github.com/endomorphosis/ipfs_datasets_py",
+      "original_path": "docs/implementation/reports/evidence/decoder-generated-field-training-r2-20261003/evidence.tar.xz",
+      "git_blob_oid": "ef215b8ffb1ed15505a0145a50dd080528fcdccf",
+      "sha256": "868f2d28b691f8815568146af45c224f112e8eb324ce29b4ca2c5d9ebf2d8abc",
+      "size_bytes": 203598796,
+      "object_path": "objects/868f2d28b691f8815568146af45c224f112e8eb324ce29b4ca2c5d9ebf2d8abc.bin"
+    },
+    {
+      "repository": "https://github.com/endomorphosis/ipfs_accelerate_py",
+      "original_path": "data/agent_supervisor/proof_grounded_ir_learning/datasets/pgir-objective-ast.jsonl",
+      "git_blob_oid": "9b6ded832adffea56cd1402bb08d1dca484eb3c8",
+      "sha256": "829685569fa11e2a699d973fed8a6d68e59d5e76c4c2205edf82e521a30d34c5",
+      "size_bytes": 2022179327,
+      "object_path": "objects/829685569fa11e2a699d973fed8a6d68e59d5e76c4c2205edf82e521a30d34c5.bin"
+    }
+  ]
+}

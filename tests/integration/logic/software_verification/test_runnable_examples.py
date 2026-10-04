@@ -61,12 +61,12 @@ from ipfs_datasets_py.logic.verification_api import (
 
 # test lives at: <datasets>/tests/integration/logic/software_verification/
 DATASETS_ROOT = Path(__file__).resolve().parents[4]
-REPO_ROOT = Path(__file__).resolve().parents[5]
+ACCELERATE_ROOT = DATASETS_ROOT.parent / "ipfs_accelerate"
 EXAMPLES_DIR = DATASETS_ROOT / "examples" / "logic" / "software_verification"
 MANIFEST_PATH = EXAMPLES_DIR / "manifest.json"
 README_PATH = EXAMPLES_DIR / "README.md"
 LIVE_REPORT_PATH = (
-    REPO_ROOT / "docs" / "architecture" / "formal_verification_live_example_report.json"
+    ACCELERATE_ROOT / "docs" / "architecture" / "formal_verification_live_example_report.json"
 )
 
 RUNNABLE_INTERFACE = "RunnableVerificationExamples@1"
@@ -109,7 +109,7 @@ def resource_counter(n, budget):
 """
 
 SUPPORTED_RESOURCE_NEGATIVE = """\
-def resource_counter(n, budget):
+def resource_counter(n: int, budget: int) -> int:
     return budget - 1
 """
 

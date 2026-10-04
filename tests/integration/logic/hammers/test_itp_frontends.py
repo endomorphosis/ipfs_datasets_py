@@ -20,12 +20,9 @@ These tests cover:
   is parsed into a :class:`GoalSnapshot` whose goal text, hypotheses,
   imports, and universe context are exactly what that real invocation
   produced — never a copy of the caller's plain-text input.
-- Isabelle is confirmed unavailable in this repository's environment
-  (matching the HAMMER-002 capability inventory), so its adapter is
-  exercised for (a) the real "unavailable" capability-evidence path and
-  (b) its instrumentation/parsing logic against a synthetic,
-  format-accurate ``isabelle process`` transcript with the real subprocess
-  call replaced — never against invented "available" behavior.
+- Isabelle's missing-runtime projection and instrumentation/parser paths
+  use synthetic execution receipts; live runtime tests separately exercise
+  admitted native execution.
 - No adapter ever fabricates a native goal from plain text: a source with no
   genuine incomplete-proof marker (``sorry``/``admit.``/``Admitted.``)
   raises :class:`GoalCaptureError` rather than returning a snapshot derived
@@ -37,6 +34,8 @@ from __future__ import annotations
 import shutil
 
 import pytest
+
+from tests.integration.logic.hammers.isabelle_execution_fixtures import unavailable_operation
 
 from ipfs_datasets_py.logic.hammers.frontends import (
     CapabilityEvidence,
@@ -203,9 +202,8 @@ class TestCapabilityEvidence:
             if not evidence.available:
                 assert evidence.unavailable_reason
 
-    def test_isabelle_is_reported_unavailable_in_this_environment(self):
-        # Matches docs/logic/itp_hammer_capability_inventory.md: Isabelle has
-        # neither an executable nor a prior bridge module in this repo.
+    def test_isabelle_is_reported_unavailable_when_missing(self, monkeypatch):
+        monkeypatch.setattr(isabelle_module, "run_isabelle_operation", unavailable_operation)
         evidence = IsabelleFrontend().capability()
         assert evidence.available is False
         assert evidence.unavailable_reason
@@ -297,11 +295,6 @@ class TestNonFabrication:
 
     def test_isabelle_refuses_source_without_sorry(self, monkeypatch):
         frontend = IsabelleFrontend()
-        monkeypatch.setattr(
-            isabelle_module,
-            "find_executable",
-            lambda name: "/fake/isabelle" if name == "isabelle" else None,
-        )
         with pytest.raises(GoalCaptureError):
             frontend.snapshot_goal(
                 "theory HammerIsabelleGoal\n  imports Main\nbegin\nend\n",
@@ -309,6 +302,7 @@ class TestNonFabrication:
             )
 
     def test_unavailable_frontend_raises_before_any_invocation(self, monkeypatch):
+        monkeypatch.setattr(isabelle_module, "run_isabelle_operation", unavailable_operation)
         frontend = IsabelleFrontend()
         assert frontend.capability().available is False
         with pytest.raises(FrontendUnavailableError) as excinfo:
@@ -441,14 +435,16 @@ class TestCoqFrontendReal:
 
 
 class TestIsabelleFrontend:
-    def test_real_capability_is_unavailable_here(self):
+    def test_capability_is_unavailable_when_missing(self, monkeypatch):
+        monkeypatch.setattr(isabelle_module, "run_isabelle_operation", unavailable_operation)
         evidence = IsabelleFrontend().capability()
         assert evidence.available is False
         assert evidence.unavailable_reason == (
             "isabelle_executable_not_found_on_path_or_common_install_dirs"
         )
 
-    def test_real_snapshot_goal_raises_frontend_unavailable(self):
+    def test_snapshot_goal_raises_when_missing(self, monkeypatch):
+        monkeypatch.setattr(isabelle_module, "run_isabelle_operation", unavailable_operation)
         with pytest.raises(FrontendUnavailableError):
             IsabelleFrontend().snapshot_goal(
                 ISABELLE_SORRY_SOURCE, theorem_id="hammer_isabelle_goal"
@@ -457,41 +453,33 @@ class TestIsabelleFrontend:
     def test_snapshot_goal_parses_synthetic_print_state_transcript(self, monkeypatch):
         """Exercises the real instrumentation + parsing code path with the
         underlying subprocess call replaced by a synthetic, format-accurate
-        `isabelle process` transcript (Isabelle is not installed in this
-        environment; see the module docstring in ``.isabelle``)."""
+        `isabelle process` transcript. Resource admission is covered by
+        the execution-owner tests; this test covers projection and parsing."""
 
         frontend = IsabelleFrontend()
-        monkeypatch.setattr(
-            isabelle_module,
-            "find_executable",
-            lambda name: "/fake/isabelle" if name == "isabelle" else None,
-        )
 
         captured_sources = {}
 
-        def _fake_run_bounded_process(command, *, timeout, cwd=None):
-            from ipfs_datasets_py.logic.hammers.frontends.base import BoundedProcessResult
-
-            if command[:2] == ["/fake/isabelle", "version"]:
-                return BoundedProcessResult(
-                    command=command, returncode=0, stdout="Isabelle2024 (fake)", stderr=""
-                )
-
-            # Record the instrumented theory file's contents so the test can
-            # assert `print_state` was really inserted before invocation.
-            import pathlib
-
-            if cwd is not None:
-                for path in pathlib.Path(cwd).glob("*.thy"):
-                    captured_sources["instrumented"] = path.read_text(encoding="utf-8")
-            return BoundedProcessResult(
-                command=command,
-                returncode=0,
-                stdout=SYNTHETIC_ISABELLE_TRANSCRIPT,
-                stderr="",
+        def fake_operation(**kwargs):
+            from types import SimpleNamespace
+            import hashlib
+            from ipfs_datasets_py.logic.external_provers.isabelle_runtime import theory_command
+            captured_sources["instrumented"] = kwargs["source"]
+            return SimpleNamespace(
+                status="completed", reason_code="bounded_theory_observed", runtime_unchanged=True,
+                source_sha256=hashlib.sha256(kwargs["source"].encode()).hexdigest(),
+                theory_name="HammerIsabelleGoal",
+                native_runtime={"executable": "/fake/isabelle", "version": "Isabelle2025-2"},
+                preparation=SimpleNamespace(command_available=True),
+                observation=SimpleNamespace(returncode=0, stdout=SYNTHETIC_ISABELLE_TRANSCRIPT,
+                    command=tuple(theory_command("/fake/isabelle", "HammerIsabelleGoal", "{workspace}", capture=True)),
+                    stderr="", error="", cancelled=False, timed_out=False, unavailable=False,
+                    resource_exhausted=False, output_truncated=False,
+                    workspace_limit_exceeded=False, workspace_cleaned=True),
+                to_dict=lambda: {"status": "completed", "grants_proof_authority": False},
             )
 
-        monkeypatch.setattr(isabelle_module, "run_bounded_process", _fake_run_bounded_process)
+        monkeypatch.setattr(isabelle_module, "run_isabelle_operation", fake_operation)
 
         snapshot = frontend.snapshot_goal(ISABELLE_SORRY_SOURCE, theorem_id="hammer_isabelle_goal")
         snapshot.validate()
@@ -504,11 +492,6 @@ class TestIsabelleFrontend:
 
     def test_missing_theory_header_raises_goal_capture_error(self, monkeypatch):
         frontend = IsabelleFrontend()
-        monkeypatch.setattr(
-            isabelle_module,
-            "find_executable",
-            lambda name: "/fake/isabelle" if name == "isabelle" else None,
-        )
         with pytest.raises(GoalCaptureError):
             frontend.snapshot_goal("theorem foo: True sorry", theorem_id="foo")
 

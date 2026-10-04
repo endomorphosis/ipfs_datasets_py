@@ -1,0 +1,95 @@
+{
+  "schema": "reserved-validation-followup-v1",
+  "recorded_at": "2026-09-25T11:55:59.090322+00:00",
+  "scope": "test-reference repair, production-adoption plan and historical forensic profile; no production code changes or native training",
+  "original_regression": {
+    "path": "workspace/test-logs/federal-corpus-audits/reserved-validation-20260925/receipt.json",
+    "sha256": "378f21875bb862fe7e423a0648fecdf92af18cd83c930524f8eadd74c2d5a107",
+    "bytes": 1748
+  },
+  "investigation": {
+    "path": "workspace/test-logs/federal-corpus-audits/reserved-validation-20260925/observation-investigation/investigation.json",
+    "sha256": "d6ef62ee31c90227f060edbc66ae6ed80835612ac45d20859bba939f1071858a",
+    "bytes": 3622
+  },
+  "corrected_combined_regression": {
+    "path": "workspace/test-logs/federal-corpus-audits/reserved-validation-20260925/corrected-combined-receipt.json",
+    "sha256": "cd78cfe263e1d4fe5998a47a9e56dfb6632f56b0585f1cd22e07926b07e61476",
+    "bytes": 1755
+  },
+  "corrected_combined_metrics": {
+    "tests": 248,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "corrected_test": {
+    "path": "tests/unit/logic/test_ontology_capture_observation.py",
+    "sha256": "4b581e7e82e7a580a4c9784c85fd240275f61a8f6933c489c900155adb20fdb2",
+    "bytes": 20274
+  },
+  "forensic_harness": {
+    "path": "scripts/ops/legal_ir/profile_report_hydration.py",
+    "sha256": "180ba84c1bf509e098281bd5ff867dd3240a0f871dc2819b584dbc99b6b4b719",
+    "bytes": 13329
+  },
+  "forensic_receipt": {
+    "path": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/report-hydration-profile-20260925.json",
+    "sha256": "9077167ff9399d988979e791b38f06868748301c4621a18eab3f9094f7b0b43f",
+    "bytes": 1276231
+  },
+  "forensic_passed": true,
+  "documents": [
+    {
+      "path": "docs/implementation/reports/autoencoder_daemon_production_adoption_audit.md",
+      "sha256": "7ca0531c2b92eed50a5f34a90d59c93b445eafac4d6cd0fec177b8be5ae1be72",
+      "bytes": 14517
+    },
+    {
+      "path": "docs/implementation/reports/autoencoder_report_hydration_profile.md",
+      "sha256": "b5d3544096638455050bc97e8f721b2210689bbb5478907b9cdfd6bde2edfff1",
+      "bytes": 4412
+    },
+    {
+      "path": "docs/implementation/reports/autoencoder_daemon_shared_reports.md",
+      "sha256": "49f346a257b2855ca07ee34e749996a2f1d7f17b37b61e9cbe3b911036de0fbc",
+      "bytes": 15020
+    },
+    {
+      "path": "docs/implementation/reports/autoencoder_ontology_observation.md",
+      "sha256": "46de018411bc831ae4780bf401345979a6e7668deb0267d62c7a5da8226daf3f",
+      "bytes": 11620
+    },
+    {
+      "path": "docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "sha256": "c60d404dc192c88bd5fe8d7079c77c1bb05c3096478bf0630364ec4b35d4c15a",
+      "bytes": 64134
+    },
+    {
+      "path": "docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "sha256": "12b4da90b40d83b99c13cfde582813a8e0d2ede1b7d338d8f49c28d05bb0c764",
+      "bytes": 54225
+    }
+  ],
+  "documentation_links_checked": 92,
+  "missing_links": [],
+  "package_source_files": 7720,
+  "package_changes_since_reserved_check": {},
+  "protected_checkpoint": {
+    "path": "workspace/todo-queues/legal-ir-daemon-restart12-20260608T075001Z-best-8h-autoencoder.state.json",
+    "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd",
+    "bytes": 25895338,
+    "inode": 57804548,
+    "links": 2,
+    "matches_expected": true
+  },
+  "known_unfixed_actor_import_fallback": "ImportError can be followed by UnboundLocalError for actor_triples; preserved in investigation receipt",
+  "full_native_comparison_qualified": false,
+  "native_speed_claim": false,
+  "production_ducklake_activation": false,
+  "hf_upload": false,
+  "weights_downloaded": false,
+  "admitted": false,
+  "constitution_formalized": false,
+  "checks_passed": true
+}

@@ -1,0 +1,26 @@
+{
+  "schema": "alignment-checkpoint-experiment-config/v1",
+  "study_id": "autoformalization-checkpoint-development-v1",
+  "context_report": {
+    "path": "artifacts/autoformalization-alignment-20261003/context-02/report.json",
+    "sha256": "981c280dd6d1c9116502238af8c4f86b0ea828b140a3d6b829a79624b8d12e3e"
+  },
+  "source384_checkpoint": {
+    "path": "artifacts/source-reconstruction-v2-20261001/run-01/legal_ir/raw_ce-1729-checkpoint.json",
+    "sha256": "6e3f4d731d798aa2732afc37bd74fec34da3267a323844975d2dab78f59f9c61"
+  },
+  "preserved_repository_root": "/home/barberb/lift_coding/artifacts/legal-ir-inference-speed-review/audit/baseline_tree",
+  "spacy_manifest": {
+    "path": "external/ipfs_datasets/workspace/test-logs/legacy-linguistic-20261001/release-e2e/local_en_core_web_sm/checkpoint-after-two-epochs/manifest.json",
+    "sha256": "d0657114967d2019889d8b39b2581107bd4a3affcd07f2555fe8f73fbe5e9a39"
+  },
+  "spacy_core": {
+    "path": "external/ipfs_datasets/workspace/test-logs/legacy-linguistic-20261001/release-e2e/local_en_core_web_sm/checkpoint-after-two-epochs/core.state.json",
+    "sha256": "498fa1029c349903a38ca58ef20115a45c3248d2258aaae8a013f69ce2a5ef94"
+  },
+  "parallel_lineages": {
+    "path": "external/ipfs_datasets/configs/autoencoders/gte_parallel_lineages_v1.json",
+    "sha256": "0312cb577521a98565ea0706f918bf4532c017cacd7f9fcbd53e50a9cfd4f0a4"
+  },
+  "max_seconds": 300
+}

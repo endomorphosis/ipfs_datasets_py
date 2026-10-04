@@ -1,0 +1,12 @@
+{
+  "repository_id": "Publicus/autoencoder-decoder-checkpoints",
+  "revision": "6dfe18de636ab84d61cb922f8cbfa2badd2e2f73",
+  "commit_url": "https://huggingface.co/Publicus/autoencoder-decoder-checkpoints/commit/6dfe18de636ab84d61cb922f8cbfa2badd2e2f73",
+  "private": true,
+  "release_prefix": "releases/20261004-local-history-v1",
+  "checkpoint_paths": 741,
+  "distinct_objects": 610,
+  "remote_lfs_sha256_verified": 610,
+  "manifest_exact_download_verified": true,
+  "largest_objects_redownload_verified": 3
+}

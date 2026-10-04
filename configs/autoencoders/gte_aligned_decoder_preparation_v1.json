@@ -1,0 +1,17 @@
+{
+  "schema": "gte-aligned-decoder-preparation-config/v1",
+  "workspace_root": "/home/barberb/lift_coding",
+  "mode": "prepare",
+  "alignment_manifest": {
+    "path": "artifacts/gte-affine-alignment-preparation-20261001/run-02/manifest.json",
+    "sha256": "d51b1e626b89834060a086cb3dd8becf787860aa4b1edf7733ec71d6b0571c6b"
+  },
+  "initialization": {
+    "path": "artifacts/gte-decoder-reuse-20261001/run-01/student-initialization.json",
+    "sha256": "7443c8a60cb1f95e9a35017edcd394c0f47fd457c3733e0863d37bfc09a09a12"
+  },
+  "donor_pins": {
+    "path": "artifacts/gte-decoder-reuse-20261001/run-01/donor-pins.json",
+    "sha256": "8284f3dda68384de197c71f38a641bfc71cc036cdb8497b464e9a511337bb965"
+  }
+}

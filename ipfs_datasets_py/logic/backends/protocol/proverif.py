@@ -52,6 +52,7 @@ from ..process import (
     ToolRunResult,
     ToolRuntime,
 )
+from ..resource_admission import ResourceAdmittedToolRunner
 from ..results import (
     ProtocolResult,
     ResultAuthority,
@@ -78,7 +79,20 @@ _QUERY_LINE = re.compile(
     r"(?im)^\s*query\s+(.+?)\s*\.\s*$"
 )
 _RESULT_LINE = re.compile(
-    r"(?im)^\s*RESULT\s+(.+?)\s+is\s+(true|false|cannot be proved)\s*\.?\s*$"
+    r"(?im)^\s*RESULT\s+(.+?)\s+(?:is\s+(true|false|cannot be proved)"
+    r"|(cannot be proved))\s*\.?\s*$"
+)
+_QUERY_IDENTIFIER = r"[A-Za-z][A-Za-z0-9_']*"
+_GROUND_ATTACKER_QUERY = re.compile(rf"attacker\s*\(\s*({_QUERY_IDENTIFIER})\s*\)")
+_GROUND_SECRECY_RESULT = re.compile(
+    rf"not\s+attacker\s*\(\s*({_QUERY_IDENTIFIER})\s*\[\s*\]\s*\)"
+)
+_GROUND_FREE_DECLARATION = re.compile(
+    rf"free\s+({_QUERY_IDENTIFIER})\s*:\s*(?:bitstring|channel)\s*"
+    r"(?:\[\s*private\s*\]\s*)?\."
+)
+_GROUND_QUERY_DECLARATION = re.compile(
+    rf"query\s+(attacker\s*\(\s*({_QUERY_IDENTIFIER})\s*\))\s*\."
 )
 _ATTACK_STEP = re.compile(
     r"(?im)^\s*(?:->|=>|\*)?\s*(?:out|in|event|new|let|phase)\s*"
@@ -786,7 +800,82 @@ def parse_attack_trace(
 
 
 def _normalize_query_key(query: str) -> str:
-    return re.sub(r"\s+", " ", query.strip().lower())
+    # ProVerif identifiers are case-sensitive, including within exact matches.
+    return re.sub(r"\s+", " ", query.strip())
+
+
+def _ground_secrecy_bindings(
+    source: str | None, claim_queries: Mapping[str, str]
+) -> dict[str, str]:
+    """Check a conservative source shape before accepting native secrecy aliases.
+
+    Only complete single-name free declarations and ground attacker queries
+    before ``process`` are supported. Other source forms retain the legacy
+    exact-match path. The backend requires a successful native parse/run first;
+    this helper does not validate reserved words or process-body syntax.
+    """
+    if (not isinstance(source, str) or "\x00" in source
+            or len(source.encode("utf-8")) > DEFAULT_MAX_SOURCE_BYTES):
+        return {}
+    masked: list[str] = []
+    depth = offset = 0
+    while offset < len(source):
+        if source.startswith("(*", offset):
+            depth += 1
+            masked.append("  ")
+            offset += 2
+        elif source.startswith("*)", offset):
+            if depth == 0:
+                return {}
+            depth -= 1
+            masked.append("  ")
+            offset += 2
+        else:
+            char = source[offset]
+            if depth == 0 and char == '"':
+                return {}  # Strings are outside this conservative source profile.
+            masked.append(" " if depth else char)
+            offset += 1
+    if depth:
+        return {}
+    text = "".join(masked)
+    process_start = re.search(r"\bprocess\b", text)
+    if process_start is None:
+        return {}
+    prefix = text[:process_start.start()]
+    names: set[str] = set()
+    queries: list[str] = []
+    offset = 0
+    while offset < len(prefix):
+        if prefix[offset].isspace():
+            offset += 1
+            continue
+        declaration = _GROUND_FREE_DECLARATION.match(prefix, offset)
+        if declaration is not None:
+            name = declaration.group(1)
+            if name in names or queries:
+                return {}
+            names.add(name)
+            offset = declaration.end()
+            continue
+        query = _GROUND_QUERY_DECLARATION.match(prefix, offset)
+        if query is None or query.group(2) not in names:
+            return {}
+        queries.append(query.group(2))
+        offset = query.end()
+    if not queries or len(queries) != len(set(queries)):
+        return {}
+    bindings: dict[str, str] = {}
+    for claim_id, query_text in claim_queries.items():
+        query = _GROUND_ATTACKER_QUERY.fullmatch(query_text.strip())
+        if query is None:
+            return {}
+        bindings[claim_id] = query.group(1)
+    # Check the whole declared population, including unlabeled/duplicate queries
+    # that the older compiler's text extraction might otherwise omit.
+    if len(bindings) != len(queries) or set(bindings.values()) != set(queries):
+        return {}
+    return bindings
 
 
 def parse_proverif_claim_outcomes(
@@ -794,6 +883,7 @@ def parse_proverif_claim_outcomes(
     stderr: str,
     *,
     claim_queries: Mapping[str, str],
+    source: str | None = None,
 ) -> tuple[ClaimOutcome, ...]:
     """Parse RESULT lines into claim outcomes."""
 
@@ -802,7 +892,7 @@ def parse_proverif_claim_outcomes(
     results: list[tuple[str, ClaimVerdict]] = []
     for match in _RESULT_LINE.finditer(combined):
         query = match.group(1).strip()
-        token = match.group(2).lower()
+        token = (match.group(2) or match.group(3)).lower()
         if token == "true":
             verdict = ClaimVerdict.TRUE
         elif token == "false":
@@ -811,17 +901,41 @@ def parse_proverif_claim_outcomes(
             verdict = ClaimVerdict.CANNOT_PROVE
         results.append((query, verdict))
 
-    inverse = {
-        _normalize_query_key(query): claim_id
-        for claim_id, query in claim_queries.items()
-    }
+    inverse: dict[str, list[str]] = {}
+    for claim_id, query in claim_queries.items():
+        inverse.setdefault(_normalize_query_key(query), []).append(claim_id)
+    secrecy_bindings = _ground_secrecy_bindings(source, claim_queries)
     outcomes: list[ClaimOutcome] = []
     seen_claims: set[str] = set()
+    seen_results: set[tuple[str, ClaimVerdict]] = set()
 
     for query, verdict in results:
-        claim_id = inverse.get(_normalize_query_key(query), query)
+        candidates = [claim_id for claim_id in inverse.get(_normalize_query_key(query), ())
+                      if claim_id not in secrecy_bindings]
+        secrecy = _GROUND_SECRECY_RESULT.fullmatch(query)
+        if secrecy is not None:
+            candidates.extend(claim_id for claim_id, name in secrecy_bindings.items()
+                              if name == secrecy.group(1))
+        if len(candidates) != 1:
+            # Foreign output is diagnostic evidence, never an additional claim
+            # that can make an empty or incomplete requested population secure.
+            unbound_id = f"unbound-result:{len(outcomes)}"
+            while unbound_id in claim_queries:
+                unbound_id = "unbound:" + unbound_id
+            outcomes.append(ClaimOutcome(
+                claim_id=unbound_id, query_text=query, verdict=ClaimVerdict.UNKNOWN,
+                reason="ProVerif result has no unique requested claim binding",
+            ))
+            continue
+        claim_id = candidates[0]
+        if (claim_id, verdict) in seen_results:
+            continue
+        seen_results.add((claim_id, verdict))
         attack = None
-        if verdict is ClaimVerdict.FALSE:
+        reason = ""
+        if verdict is ClaimVerdict.FALSE and claim_id in secrecy_bindings:
+            reason = "native secrecy attack is unvalidated; requires validated reconstruction"
+        elif verdict is ClaimVerdict.FALSE:
             attack = parse_attack_trace(
                 combined, claim_id=claim_id, raw_digest=raw_digest
             )
@@ -831,6 +945,7 @@ def parse_proverif_claim_outcomes(
                 query_text=query,
                 verdict=verdict,
                 attack_trace=attack,
+                reason=reason,
             )
         )
         seen_claims.add(claim_id)
@@ -886,7 +1001,7 @@ def classify_claim_outcomes(
                     "ProVerif reported both true and false claims; "
                     "the batch is quarantined rather than promoted"
                 ),
-                claim_ids=tuple(item.claim_id for item in (*true_hits, *false_hits)),
+                claim_ids=tuple(dict.fromkeys(item.claim_id for item in (*true_hits, *false_hits))),
             ),
             False,
         )
@@ -1228,7 +1343,11 @@ def _result_id(backend_id: str, request: BackendRequest) -> str:
 
 
 class ProVerifBackend:
-    """Canonical ProVerif protocol backend implementing ``ProVerifBackend@1``."""
+    """Canonical ProVerif backend with shared resource admission by default.
+
+    Explicit runners retain caller-owned admission and execution behavior.
+    Construction and capability discovery do not acquire resources.
+    """
 
     interface_version: Final = PROVERIF_BACKEND_VERSION
     backend_id: Final = "proverif"
@@ -1273,7 +1392,7 @@ class ProVerifBackend:
         self.executable = _text(executable, "executable")
         self.opam_package = _text(opam_package, "opam_package")
         self.opam_version = _text(opam_version, "opam_version", optional=True)
-        self._runner = runner or BoundedToolRunner()
+        self._runner = runner if runner is not None else ResourceAdmittedToolRunner()
         if not isinstance(self._runner, BoundedToolRunner):
             raise ProVerifBackendError("runner must be a BoundedToolRunner")
         if version_probe is not None and not callable(version_probe):
@@ -1428,6 +1547,7 @@ class ProVerifBackend:
         compile_result: ProVerifCompileResult,
         reason: str = "",
         diagnostics: Sequence[str] = (),
+        process: ToolRunResult | None = None,
     ) -> ProtocolResult:
         witness: dict[str, Any] = {
             "receipt_id": receipt.receipt_id,
@@ -1450,6 +1570,29 @@ class ProVerifBackend:
                 for item in receipt.claim_outcomes
                 if item.attack_trace is not None
             ]
+        metadata: dict[str, Any] = {
+            "adapter_interface": PROVERIF_BACKEND_VERSION,
+            "protocol_receipt": receipt.to_dict(),
+            "source_binding": binding.to_dict(),
+            "symbolic_model_ceiling": receipt.ceiling.to_dict(),
+        }
+        if process is not None:
+            metadata["process"] = {
+                "cancelled": process.cancelled,
+                "command": list(process.command),
+                "error": process.error,
+                "output_truncated": process.output_truncated,
+                "process_tree_terminated": process.process_tree_terminated,
+                "returncode": process.returncode,
+                "resource_exhausted": process.resource_exhausted,
+                "stderr_digest": stable_digest({"content": process.stderr}),
+                "stdout_digest": stable_digest({"content": process.stdout}),
+                "timed_out": process.timed_out,
+                "termination_reason": process.termination_reason,
+                "unavailable": process.unavailable,
+                "workspace_cleaned": process.workspace_cleaned,
+                "workspace_limit_exceeded": process.workspace_limit_exceeded,
+            }
         return ProtocolResult(
             result_id=_result_id(self.backend_id, request),
             backend_id=self.backend_id,
@@ -1467,12 +1610,7 @@ class ProVerifBackend:
             witness=witness,
             diagnostics=bound_diagnostics(diagnostics),
             reason=sanitize_diagnostic(reason) if reason else "",
-            metadata={
-                "adapter_interface": PROVERIF_BACKEND_VERSION,
-                "protocol_receipt": receipt.to_dict(),
-                "source_binding": binding.to_dict(),
-                "symbolic_model_ceiling": receipt.ceiling.to_dict(),
-            },
+            metadata=metadata,
         )
 
     def run(
@@ -1588,8 +1726,32 @@ class ProVerifBackend:
                 detail=reason,
             )
             accepted = False
-        elif process.resource_exhausted or process.output_truncated:
+        elif (process.resource_exhausted or process.output_truncated
+              or process.workspace_limit_exceeded):
             reason = process.error or "ProVerif exceeded a resource or output bound"
+            status = ResultStatus.ERROR
+            outcomes = ()
+            quarantine = None
+            accepted = False
+        elif (process.error or not process.workspace_cleaned
+              or process.process_tree_terminated):
+            reason = process.error or "ProVerif did not complete a clean native lifecycle"
+            status = ResultStatus.ERROR
+            outcomes = ()
+            quarantine = None
+            accepted = False
+        elif usage.output_bytes > request.bounds.max_output_bytes:
+            reason = "ProVerif exceeded its combined output bound"
+            status = ResultStatus.ERROR
+            outcomes = ()
+            quarantine = None
+            accepted = False
+        elif type(process.returncode) is not int or process.returncode != 0:
+            reason = (
+                "ProVerif did not report an integer exit status"
+                if type(process.returncode) is not int
+                else f"ProVerif exited with status {process.returncode}"
+            )
             status = ResultStatus.ERROR
             outcomes = ()
             quarantine = None
@@ -1599,20 +1761,10 @@ class ProVerifBackend:
                 process.stdout,
                 process.stderr,
                 claim_queries=compile_result.claim_queries.to_dict(),
+                source=compile_result.source,
             )
             status, quarantine, accepted = classify_claim_outcomes(outcomes)
-            reason = process.error or ""
-            if process.returncode not in (0, None) and status is ResultStatus.SECURE:
-                status = ResultStatus.UNKNOWN
-                accepted = False
-                quarantine = ResultQuarantine(
-                    reason=QuarantineReason.INCONCLUSIVE,
-                    detail=(
-                        f"ProVerif exited with status {process.returncode} despite "
-                        "true queries; quarantined"
-                    ),
-                )
-                reason = quarantine.detail
+            reason = ""
 
         diagnostics = bound_diagnostics(
             [
@@ -1641,6 +1793,7 @@ class ProVerifBackend:
             compile_result=compile_result,
             reason=reason,
             diagnostics=diagnostics,
+            process=process,
         )
         return ProVerifBackendOutcome(
             request_digest=request.digest,

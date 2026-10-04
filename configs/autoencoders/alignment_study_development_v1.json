@@ -1,0 +1,69 @@
+{
+  "schema": "alignment-study-config/v1",
+  "study_id": "autoformalization-alignment-development-v1",
+  "scope": "inventory_and_exposed_development_baseline",
+  "evaluation_role": "exposed_development",
+  "protected_protocols": [
+    {
+      "path": "papers/completion/autoformalization/protocol.md",
+      "sha256": "8f81d8d7c46de327f14b93100a24b97f18194518d18220ad459521e849f51401"
+    }
+  ],
+  "corpus": {
+    "train": {
+      "path": "artifacts/source-native-v3-20261001/run-02/legal_ir/train.json",
+      "sha256": "00f4074cca56daed9f766e74c90d3d35e608bfb1058c24db99fc30250314704f"
+    },
+    "development": {
+      "path": "artifacts/source-native-v3-20261001/run-02/legal_ir/validation.json",
+      "sha256": "6a07b7a4d7c73802fc4a31a2666adcb312706fcc3deffbc46626d9d8914d43c9"
+    },
+    "dimension": 384,
+    "vector_space_id": "thenlper/gte-small@17e1f347d17fe144873b1201da91788898c639cd:d384:pool=mean:norm=l2:precision=float32:input_policy=exact_source_no_truncation",
+    "target_origin": "synthetic_authored_unreviewed",
+    "evaluation_role": "exposed_development",
+    "domain_id": "legal_ir",
+    "max_rows": 5000,
+    "max_file_bytes": 16000000,
+    "provenance": [
+      {
+        "path": "artifacts/source-native-v3-20261001/run-02/preparation.json",
+        "sha256": "688d06be83671d0274801958fcc47c725c5023f0ca9e41a8330cff657eafb914"
+      },
+      {
+        "path": "artifacts/gte-embedding-reuse-20261002/archive-reuse-audit.json",
+        "sha256": "4218b8d58fc09cb6b06610936b13855f4f0a6fb0447f6ec5473332941c89c593"
+      },
+      {
+        "path": "external/ipfs_datasets/tests/fixtures/logic/source_reconstruction_v3.py",
+        "sha256": "5498592e48f174e872b059b055da596aff543fbce76709408f835ca92bfd36da"
+      }
+    ],
+    "encoder_execution_authenticated": false,
+    "independent_source_review_available": false
+  },
+  "retrieval": {
+    "top_k": 5,
+    "kind": "source_to_source_demonstrations"
+  },
+  "arms": [
+    {"id": "B0", "description": "Current canonical compiler with training-only vocabulary", "status": "planned"},
+    {"id": "B1", "description": "Cached raw 384D source-to-source demonstration retrieval", "status": "planned"},
+    {"id": "B2", "description": "Autoencoder representations under the same retrieval envelope", "status": "planned"},
+    {"id": "B3", "description": "Paired source and typed-statement projection heads", "status": "planned"},
+    {"id": "B4", "description": "Verified proof-state or transition representations", "status": "planned"},
+    {"id": "B5", "description": "Bounded retrieval and Leanstral repair", "status": "planned"},
+    {"id": "E8", "description": "Additional 8D diagnostic signals", "status": "planned"},
+    {"id": "E768", "description": "Independent native 768D encoder and adapter", "status": "planned"},
+    {"id": "EL", "description": "Leanstral hidden-representation retrieval experiment", "status": "planned"},
+    {"id": "ED", "description": "Qualified teacher distillation", "status": "planned"}
+  ],
+  "resource_policy": {
+    "model_loads": 0,
+    "provider_calls": 0,
+    "prover_calls": 0,
+    "optimizer_steps": 0,
+    "max_baseline_seconds": 120,
+    "cpu_threads": 1
+  }
+}

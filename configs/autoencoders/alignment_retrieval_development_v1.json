@@ -1,0 +1,15 @@
+{
+  "schema": "alignment-retrieval-experiment-config/v1",
+  "study_id": "autoformalization-retrieval-development-v1",
+  "projection_report": {
+    "path": "artifacts/autoformalization-alignment-20261003/projection-01/report.json",
+    "sha256": "d33e08af18174716813a67de443893d46c5324d2fcf018154cef01cef6b7ad6c"
+  },
+  "policies": ["cosine", "mmr", "facet_cover"],
+  "top_k": 5,
+  "shortlist": 20,
+  "diversity_lambda": 0.7,
+  "ridge_regularization": 0.01,
+  "include_formal_geometries": true,
+  "max_seconds": 180
+}

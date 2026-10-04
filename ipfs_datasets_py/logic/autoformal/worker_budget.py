@@ -1,11 +1,19 @@
-"""Choose how many ingest workers fit the machine right now.
+"""Choose how many workers fit the machine right now.
 
-The DuckDB owner stays single-writer. This budget only limits how many
-parse and compile processes run beside it.
+A 20-CPU host with about 45 GB free finished 20 compiler processes and 20
+one-epoch autoencoder processes at the same time. Compiler workers were about
+41 MB. Autoencoder workers were about 760–813 MB. The budget therefore uses
+the CPU count whenever free memory can hold that width. Existing load does
+not shrink it: that same host was already near load 8 and still completed a
+full CPU-width batch. The DuckDB owner stays single-writer.
 """
 from __future__ import annotations
 
 import os
+
+# Measured resident size, rounded up so a worker is not packed against the reserve.
+COMPILER_WORKER_MB = 64
+AUTOENCODER_WORKER_MB = 1024
 
 
 def available_memory_mb() -> int:
@@ -26,23 +34,44 @@ def worker_budget(
     cpu_count: int | None = None,
     load_average: float | None = None,
     available_mb: int | None = None,
-    per_worker_mb: int = 400,
+    per_worker_mb: int | None = None,
     reserve_mb: int = 512,
+    kind: str = "compiler",
 ) -> int:
-    """Return how many worker processes to run on this machine."""
+    """Return how many worker processes to run on this machine.
 
-    cpus = int(cpu_count if cpu_count is not None else (os.cpu_count() or 1))
-    cpus = max(1, cpus)
-    if load_average is None:
-        try:
-            load_average = float(os.getloadavg()[0])
-        except OSError:
-            load_average = 0.0
+    ``kind`` is ``compiler`` or ``autoencoder``. ``load_average`` is accepted
+    and ignored: a full-width run completed while the host was already busy.
+    """
+
+    del load_average
+    cpus = max(1, int(cpu_count if cpu_count is not None else (os.cpu_count() or 1)))
+    if per_worker_mb is None:
+        per_worker_mb = AUTOENCODER_WORKER_MB if kind == "autoencoder" else COMPILER_WORKER_MB
     if available_mb is None:
         available_mb = available_memory_mb()
-    cpu_room = max(1, cpus - int(max(0.0, float(load_average) - 1.0)))
-    if available_mb <= reserve_mb:
+    if int(available_mb) <= reserve_mb:
         mem_room = 1
     else:
-        mem_room = max(1, (int(available_mb) - reserve_mb) // max(1, per_worker_mb))
-    return max(1, min(cpus, cpu_room, mem_room))
+        mem_room = max(1, (int(available_mb) - reserve_mb) // max(1, int(per_worker_mb)))
+    return max(1, min(cpus, mem_room))
+
+
+def resolve_worker_count(
+    requested: int | None = None,
+    *,
+    maximum: int = 32,
+    kind: str = "compiler",
+) -> int:
+    """Use an explicit count, or the current CPU and memory budget.
+
+    Zero and None mean automatic. The result stays inside 1..maximum.
+    """
+
+    if requested is None or int(requested) == 0:
+        count = worker_budget(kind=kind)
+    else:
+        count = int(requested)
+    if count < 1:
+        raise ValueError("worker count must be positive")
+    return min(count, int(maximum))

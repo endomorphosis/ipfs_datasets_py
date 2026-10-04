@@ -406,7 +406,6 @@ def _dependency_payload(
     edges: Sequence[DependencyEdge],
     *,
     fact_by_stable_id: Mapping[str, SymbolFactNode],
-    fact_cids: Mapping[str, str] | None = None,
 ) -> dict[str, Any]:
     """Derive dependency / relation fields from sealed outgoing edges."""
     dependency_stable_ids: list[str] = []
@@ -435,9 +434,7 @@ def _dependency_payload(
                 dependency_stable_ids.append(target_id)
             if fact is not None:
                 dependency_version_cids.append(fact.version_cid)
-                dependency_fact_cids.append(
-                    fact.fact_cid if fact_cids is None else fact_cids[fact.stable_symbol_id]
-                )
+                dependency_fact_cids.append(fact.fact_cid)
 
         if relation in _EFFECT_RELATIONS:
             effects.append(f"{relation}:{target_id}")
@@ -485,7 +482,6 @@ def _compile_one_capsule(
     edges: Sequence[DependencyEdge],
     fact_by_stable_id: Mapping[str, SymbolFactNode],
     projection: RelevantBindingProjection,
-    fact_cids: Mapping[str, str] | None = None,
 ) -> SemanticCapsule:
     """Compile one authoritative capsule from sealed producer inputs."""
     if projection.stable_symbol_id != symbol.stable_id:
@@ -499,7 +495,7 @@ def _compile_one_capsule(
     meta_exception = _thaw_mapping(metadata.get("exception_behavior"))
     meta_effects = list(_as_text_sequence(metadata.get("effects")))
 
-    dep = _dependency_payload(edges, fact_by_stable_id=fact_by_stable_id, fact_cids=fact_cids)
+    dep = _dependency_payload(edges, fact_by_stable_id=fact_by_stable_id)
 
     effects = sorted(set(meta_effects) | set(dep["effects"]))
     exception_behavior = dict(meta_exception)
@@ -530,7 +526,7 @@ def _compile_one_capsule(
         capsule_compiler_version=CAPSULE_COMPILER_VERSION,
         source_slice_path=symbol.module_path,
         source_cid=symbol.source_cid,
-        symbol_fact_cid=fact.fact_cid if fact_cids is None else fact_cids[fact.stable_symbol_id],
+        symbol_fact_cid=fact.fact_cid,
         signature=signature,
         annotations=annotations,
         defaults=defaults,
@@ -705,19 +701,6 @@ def compile_semantic_capsules(
     previous_blocks = _previous_blocks(previous_bundle)
 
     facts = {item.stable_id: SymbolFactNode(symbol=item) for item in ordered}
-    # These facts are immutable and belong only to this compilation. Bind each
-    # current fact once instead of serializing large ASTs for every dependent
-    # symbol. Every emitted capsule still passes the unchanged block verifier.
-    fact_cids = {stable_id: fact.fact_cid for stable_id, fact in facts.items()}
-    # Preserve the original per-source edge-ID order without scanning the full
-    # edge inventory for every symbol. Edges with no compiled source remain
-    # outside this compiler's scope, as on the individual compilation path.
-    outgoing_by_symbol: dict[str, list[DependencyEdge]] = {stable_id: [] for stable_id in facts}
-    for edge in edges:
-        if edge.source_id in outgoing_by_symbol:
-            outgoing_by_symbol[edge.source_id].append(edge)
-    for outgoing in outgoing_by_symbol.values():
-        outgoing.sort(key=lambda edge: edge.edge_id)
     capsules: list[SemanticCapsule] = []
     pairs: list[tuple[str, str]] = []
     blocks: dict[str, bytes] = {}
@@ -728,14 +711,13 @@ def compile_semantic_capsules(
         # Projection blocks are not root inputs for this task, but their CID is
         # bound into the capsule and must reverify as a structured record.
         _ = projection.projection_cid
-        outgoing = outgoing_by_symbol[symbol.stable_id]
+        outgoing = _outgoing_edges(edges, symbol.stable_id)
         capsule = _compile_one_capsule(
             symbol,
             fact=facts[symbol.stable_id],
             edges=outgoing,
             fact_by_stable_id=facts,
             projection=projection,
-            fact_cids=fact_cids,
         )
         cid, data = _record_block(capsule.identity_payload(), capsule.capsule_cid)
         data, was_reused = _try_reuse_block(cid, data, previous_blocks)

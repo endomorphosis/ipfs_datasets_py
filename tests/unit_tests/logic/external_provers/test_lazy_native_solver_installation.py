@@ -4,10 +4,17 @@ from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
+import os
 from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+
+
+@pytest.fixture(autouse=True)
+def _restore_installer_path(monkeypatch):
+    """Installer publication prepends PATH directly; keep it inside each test."""
+    monkeypatch.setenv("PATH", os.environ.get("PATH", ""))
 
 
 def _clear_lazy_install_environment(monkeypatch) -> None:

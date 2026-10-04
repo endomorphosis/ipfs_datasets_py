@@ -16,7 +16,7 @@ from ...logic.families import profile_catalog_v3
 from ...logic.software_verification import syntax_bridge
 
 SCHEMA = "autoencoder-logic-requirements/v1"
-DOMAINS = ("legal_ir", "intent_ir", "security_ir", "ui_ux_ir")
+DOMAINS = ("legal_ir", "intent_ir", "security_ir", "ui_ux_ir", "codebase_ir")
 MAX_BYTES = 128 * 1024
 FALSE = {"qualified": False, "admitted": False, "formalized": False,
          "proof_authority": False, "semantic_correctness_verified": False,
@@ -121,7 +121,7 @@ def describe_logic_requirements(domain, *, contains_code=False):
     ``contains_code`` requests the code extension in this description. False
     never waives it: execution must derive applicability from the trusted typed
     source/output adapter, including executable UI/IDL contracts. Security
-    always requires the code extension. This function runs no backend.
+    and CodebaseIR always require the code extension. This function runs no backend.
     """
     if type(domain) is not str or domain not in DOMAINS:
         raise LogicRequirementError("unknown autoencoder domain")
@@ -129,7 +129,7 @@ def describe_logic_requirements(domain, *, contains_code=False):
         raise LogicRequirementError("contains_code must be boolean")
     from ...logic.autoformal.tree_pin import require_workspace_logic_tree
     require_workspace_logic_tree()
-    code = domain == "security_ir" or contains_code
+    code = domain in ("security_ir", "codebase_ir") or contains_code
     source_before = _source_identity()
     floor = _floor_requirements()
     routes = _software_routes()
@@ -139,6 +139,7 @@ def describe_logic_requirements(domain, *, contains_code=False):
         "contains_code": code,
         "code_requirement_trigger": {
             "security_ir_always_required": True,
+            "codebase_ir_always_required": True,
             "otherwise": "trusted_typed_source_or_output_contains_code_state_transition_or_executable_idl_contract",
             "false_is_not_a_waiver": True,
             "applicability_owner": "trusted_domain_adapter_not_dataset_or_caller_pass_flags",

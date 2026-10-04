@@ -232,7 +232,7 @@ _MODAL_RE = re.compile(
     )
     \s*,?\s+
     (?P<action>.+?)
-    (?=(?:\s+(?:and|or)\s+(?!which\b|who\b|that\b)(?:shall|must|may|cannot|can\s+not|is\s+required|are\s+required|is\s+authorized|are\s+authorized|is\s+permitted|are\s+permitted)\b)|(?:\s+(?:if|when(?!\s+compared\b)|where|provided\s+that|unless|except|except\s+that|without|absent\s+(?:a|an|the|any|such|this)|"""
+    (?=(?:\s+(?:and|or)\s+(?!which\b|who\b|that\b)(?:shall|must|may|cannot|can\s+not|is\s+required|are\s+required|is\s+authorized|are\s+authorized|is\s+permitted|are\s+permitted)\b)|(?:\s+(?:if|when|where|provided\s+that|unless|except|except\s+that|without|absent\s+(?:a|an|the|any|such|this)|"""
     + _ACTION_TEMPORAL_CUT
     + r"""|not\s+later\s+than|no\s+later\s+than|not\s+more\s+than|no\s+more\s+than)\b)|(?:,\s+(?:the\s+)?(?!which\b|who\b|that\b|or\b|and\b|nor\b|but\b)[A-Za-z][A-Za-z'’\-]*(?:\s+(?!which\b|who\b|that\b)[A-Za-z'’\-]+){0,6}\s+shall\b)|[.]|(?:\:(?!\s*[\"“—]))|$)
     """,
@@ -264,7 +264,7 @@ _IMPLICIT_MODAL_RE = re.compile(
     )
     \s+
     (?P<action>.+?)
-    (?=(?:\s+(?:and|or)\s+(?!which\b|who\b|that\b)(?:shall|must|may|cannot|can\s+not)\b)|(?:\s+(?:if|when(?!\s+compared\b)|where|provided\s+that|unless|except|except\s+that|without|absent\s+(?:a|an|the|any|such|this)|"""
+    (?=(?:\s+(?:and|or)\s+(?!which\b|who\b|that\b)(?:shall|must|may|cannot|can\s+not)\b)|(?:\s+(?:if|when|where|provided\s+that|unless|except|except\s+that|without|absent\s+(?:a|an|the|any|such|this)|"""
     + _ACTION_TEMPORAL_CUT
     + r"""|not\s+later\s+than|no\s+later\s+than|not\s+more\s+than|no\s+more\s+than)\b)|(?:,\s+(?:the\s+)?(?!which\b|who\b|that\b|or\b|and\b|nor\b|but\b)[A-Za-z][A-Za-z'’\-]*(?:\s+(?!which\b|who\b|that\b)[A-Za-z'’\-]+){0,6}\s+shall\b)|[.]|(?:\:(?!\s*[\"“—]))|$)
     """,
@@ -279,7 +279,7 @@ _IMPERSONAL_NORM_RE = re.compile(
         |
         (?P<duty>(?:a|an|the)\s+duty\s+is\s+imposed\s+on\s+(?P<duty_subject>.+?)\s+to\s+(?P<duty_action>.+?))
     )
-    (?=(?:\s+(?:if|when(?!\s+compared\b)|where|provided\s+that|unless|except|without|absent|before|after|within|not\s+later\s+than|no\s+later\s+than|not\s+more\s+than|no\s+more\s+than)\b)|[.;:]|$)
+    (?=(?:\s+(?:if|when|where|provided\s+that|unless|except|without|absent|before|after|within|not\s+later\s+than|no\s+later\s+than|not\s+more\s+than|no\s+more\s+than)\b)|[.;:]|$)
     """,
     re.IGNORECASE | re.VERBOSE,
 )
@@ -404,10 +404,10 @@ _CONDITION_PATTERNS = [
     ("whenever", r"\b(whenever\s+.+?),\s+(?:the\s+)?(?-i:[A-Z])[^,;]{0,80}?\s+shall\b"),
     ("whenever", rf"\b(whenever\s+.+?){_CLAUSE_END_RE}"),
     ("until", rf"\b(until\s+.+?){_CLAUSE_END_RE}"),
-    ("when", r"\bwhen\s+(?!compared\b)(.+?),\s+(?:the\s+)?(?-i:[A-Z])[^,;]{0,80}?\s+shall\b"),
+    ("when", r"\bwhen\s+(.+?),\s+(?:the\s+)?(?-i:[A-Z])[^,;]{0,80}?\s+shall\b"),
     # "when the right to vote ... is denied, the basis ... shall be reduced"
-    ("when", r"\bwhen\s+(?!compared\b)(.+?),\s+the\s+[^,;]{0,80}?\s+shall\b"),
-    ("when", rf"\bwhen\s+(?!compared\b)(.+?){_CLAUSE_END_RE}"),
+    ("when", r"\bwhen\s+(.+?),\s+the\s+[^,;]{0,80}?\s+shall\b"),
+    ("when", rf"\bwhen\s+(.+?){_CLAUSE_END_RE}"),
     ("where", rf"\bwhere\s+(.+?){_CLAUSE_END_RE}"),
     # "Provided that no Amendment shall affect" is a prohibition, not a proviso condition.
     ("provided_that", rf"\bprovided that\s+(?!no\b)(.+?){_CLAUSE_END_RE}"),
@@ -569,110 +569,13 @@ _PASSIVE_BENEFIT_RECIPIENT_RE = re.compile(
 _PAST_PARTICIPLE_BASE = {
     "adopted": "adopt",
     "awarded": "award",
-    "carried": "carry",
-    "completed": "complete",
     "filed": "file",
-    "fulfilled": "fulfill",
-    "implemented": "implement",
     "issued": "issue",
     "maintained": "maintain",
     "prepared": "prepare",
     "provided": "provide",
     "submitted": "submit",
 }
-_COPULA_STATUS_COMPLEMENTS = frozenset(
-    {
-        "able",
-        "applicable",
-        "available",
-        "binding",
-        "effective",
-        "eligible",
-        "entitled",
-        "essential",
-        "final",
-        "inoperative",
-        "insufficient",
-        "invalid",
-        "lawful",
-        "liable",
-        "necessary",
-        "null",
-        "operative",
-        "responsible",
-        "subject",
-        "sufficient",
-        "unlawful",
-        "valid",
-        "void",
-    }
-)
-_IRREGULAR_PARTICIPLES = frozenset(
-    {
-        "begun",
-        "bound",
-        "brought",
-        "built",
-        "bought",
-        "caught",
-        "chosen",
-        "cut",
-        "done",
-        "drawn",
-        "driven",
-        "eaten",
-        "fallen",
-        "flown",
-        "forgotten",
-        "found",
-        "frozen",
-        "given",
-        "grown",
-        "held",
-        "hidden",
-        "hit",
-        "hurt",
-        "kept",
-        "known",
-        "led",
-        "left",
-        "lost",
-        "made",
-        "met",
-        "paid",
-        "put",
-        "read",
-        "ridden",
-        "risen",
-        "seen",
-        "sent",
-        "set",
-        "shown",
-        "sold",
-        "sought",
-        "spoken",
-        "spent",
-        "spread",
-        "stolen",
-        "sworn",
-        "taken",
-        "taught",
-        "thought",
-        "thrown",
-        "told",
-        "torn",
-        "won",
-        "worn",
-        "written",
-    }
-)
-_COPULA_PASSIVE_RE = re.compile(
-    r"^(?:be|been|being)\s+"
-    r"(?P<head>[A-Za-z][A-Za-z0-9'’\-]*)"
-    r"(?:\s+(?P<particle>out|off|up|down|through|into|away|over|along|forth))?"
-    r"\b",
-    re.IGNORECASE,
-)
 _MENTAL_STATE_TERMS = {
     "intentionally",
     "knowingly",
@@ -782,24 +685,11 @@ _ORGANIZATION_ACTORS = {
 _LEGAL_INSTRUMENT_ENTITIES = {
     "approval",
     "certificate",
-    "clause",
-    "compact",
-    "constitution",
     "easement",
     "franchise",
-    "instrument",
     "license",
-    "ordinance",
-    "paragraph",
     "permit",
-    "proclamation",
     "registration",
-    "regulation",
-    "resolution",
-    "statute",
-    "subparagraph",
-    "subsection",
-    "treaty",
     "variance",
 }
 _LEGAL_EVENT_ENTITIES = {
@@ -3206,9 +3096,7 @@ def _build_element(
     enumerated_items = extract_enumerated_items(sentence)
     if enumerated_items and re.match(r"^\([A-Za-z0-9]+\)\s+", action_text or ""):
         action_text = enumerated_items[0]["text"]
-    action_text = _keep_compared_clause(sentence, action_text)
     field_spans = dict(field_spans or {})
-    compared_on_action = bool(re.search(r"\bwhen\s+compared\b", action_text, flags=re.IGNORECASE))
     complex_mental_state = ""
     original_action_text = action_text
     complex_split = _split_leading_complex_mental_state(action_text)
@@ -3231,7 +3119,7 @@ def _build_element(
     subject = [subject_text] if subject_text else extract_legal_subject(sentence)
     action = [action_text]
     spans = _complete_field_spans(sentence, subject_text, action_text, field_spans)
-    payload = {
+    return {
         "schema_version": PARSER_SCHEMA_VERSION,
         "source_id": "",
         "canonical_citation": "",
@@ -3284,9 +3172,6 @@ def _build_element(
         "extraction_method": extraction_method,
         "confidence_floor": 0.35,
     }
-    if compared_on_action:
-        payload["slot_details_scoped"] = True
-    return payload
 
 
 def _complete_field_spans(
@@ -5467,22 +5352,6 @@ def _keep_inhabitant_clause(sentence: str, action_text: str) -> str:
     return action_text.rstrip(", ") + ", " + rest
 
 
-def _keep_compared_clause(sentence: str, action_text: str) -> str:
-    """``when compared with`` stays on the action. It is not ``if compared``."""
-
-    match = re.search(
-        r"\b(when\s+compared\b(?:\s+(?:with|to|against)\b)?[^.]*)",
-        sentence,
-        flags=re.IGNORECASE,
-    )
-    if not match:
-        return action_text
-    rest = " ".join(match.group(1).split()).rstrip(" ,;:")
-    if not rest or rest.lower() in action_text.lower():
-        return action_text
-    return (action_text.rstrip(" ,") + " " + rest).strip()
-
-
 def _coordinated_no_head(sentence: str, match: re.Match[str]) -> str:
     """``No Capitation, or other direct, Tax`` is one negated subject, not ``Tax``."""
 
@@ -5497,11 +5366,10 @@ def _coordinated_no_head(sentence: str, match: re.Match[str]) -> str:
 
 
 def _manner_phrase(sentence: str, match: re.Match[str]) -> str:
-    """Keep manner adjuncts on the duty. They are not a second shall."""
+    """``in such Manner as they shall direct`` stays on the duty. It is not a second shall."""
 
     found = re.search(
-        r"\bin such manner\b[^.;]*"
-        r"|\bin (?:coordination|consultation|conjunction|concert) with\b[^.;]*",
+        r"\bin such manner\b[^.;]*",
         sentence[match.end() :],
         flags=re.IGNORECASE,
     )
@@ -5770,34 +5638,7 @@ def _clean_action(value: str) -> str:
     return text
 
 
-def _looks_like_past_participle(word: str) -> bool:
-    """True for verbal participles. Status adjectives stay copular complements."""
-
-    token = str(word or "").lower()
-    if not token or token in _COPULA_STATUS_COMPLEMENTS:
-        return False
-    if token in _PAST_PARTICIPLE_BASE or token in _IRREGULAR_PARTICIPLES:
-        return True
-    return len(token) > 4 and token.endswith(("ed", "en"))
-
-
-def _copular_passive_verb(action: str) -> str:
-    """Return ``be {participle}`` for copular passives such as ``be fulfilled``."""
-
-    match = _COPULA_PASSIVE_RE.match(_action_without_mental_state(action) or "")
-    if not match:
-        return ""
-    head = match.group("head").lower()
-    if not _looks_like_past_participle(head):
-        return ""
-    particle = str(match.group("particle") or "").lower()
-    return f"be {head} {particle}".strip() if particle else f"be {head}"
-
-
 def _first_verb(action: str) -> str:
-    copular = _copular_passive_verb(action)
-    if copular:
-        return copular
     words = re.findall(r"[A-Za-z][A-Za-z0-9'’\-]*", _action_without_mental_state(action) or "")
     return words[0].lower() if words else ""
 
@@ -5815,13 +5656,7 @@ _OBJECT_TOKEN_RE = re.compile(
 
 def _action_object(action: str) -> str:
     words = _OBJECT_TOKEN_RE.findall(_action_without_mental_state(action) or "")
-    verb_words = _OBJECT_TOKEN_RE.findall(_first_verb(action) or "")
-    skip = len(verb_words)
-    if skip and [word.lower() for word in words[:skip]] != [word.lower() for word in verb_words]:
-        skip = 1 if words else 0
-    elif not skip:
-        skip = 1 if words else 0
-    return " ".join(words[skip:]).strip() if len(words) > skip else ""
+    return " ".join(words[1:]).strip() if len(words) > 1 else ""
 
 
 def _mental_state(action: str) -> str:
@@ -6104,28 +5939,9 @@ def _is_qualification_when(sentence: str, item: Dict[str, Any]) -> bool:
     )
 
 
-def _is_comparative_when(sentence: str, item: Dict[str, Any]) -> bool:
-    """``when compared with`` qualifies the action. It is not ``if compared``."""
-
-    if str(item.get("clause_type") or "") != "when":
-        return False
-    body = str(item.get("normalized_text") or item.get("raw_text") or item.get("value") or "")
-    if re.match(r"(?:when\s+)?compared\b", body, flags=re.IGNORECASE):
-        return True
-    span = item.get("clause_span") or item.get("span") or []
-    if not isinstance(span, (list, tuple)) or len(span) != 2:
-        return False
-    start = int(span[0])
-    return bool(re.match(r"when\s+compared\b", sentence[start:], flags=re.IGNORECASE))
-
-
 def extract_condition_details(sentence: str) -> List[Dict[str, Any]]:
     details = _extract_clause_details(sentence, _CONDITION_PATTERNS, "condition")
-    return [
-        item
-        for item in details
-        if not _is_qualification_when(sentence, item) and not _is_comparative_when(sentence, item)
-    ]
+    return [item for item in details if not _is_qualification_when(sentence, item)]
 
 
 def extract_override_clauses(sentence: str) -> List[str]:
@@ -6153,12 +5969,10 @@ def extract_cross_reference_details(sentence: str) -> List[Dict[str, Any]]:
         ("section", r"\bsection\s+([0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*)"),
         ("section", r"§\s*([0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*)"),
         ("section", r"\b(this\s+section)\b"),
-        ("subsection", r"\bsubsection\s+((?:\([A-Za-z0-9]+\))+)"),
+        ("subsection", r"\bsubsection\s+\(([a-z0-9]+)\)"),
         ("subsection", r"\b(this\s+subsection)\b"),
-        ("paragraph", r"\bparagraph\s+((?:\([A-Za-z0-9]+\))+)"),
+        ("paragraph", r"\bparagraph\s+\(([a-z0-9]+)\)"),
         ("paragraph", r"\b(this\s+paragraph)\b"),
-        ("subparagraph", r"\bsubparagraph\s+((?:\([A-Za-z0-9]+\))+)") ,
-        ("clause", r"\bclause\s+((?:\([A-Za-z0-9]+\))+)"),
         ("chapter", r"\bchapter\s+([0-9A-Za-z][0-9A-Za-z.\-]*)"),
         ("chapter", r"\b(this\s+chapter)\b"),
         ("title", r"\btitle\s+([0-9A-Za-z]+)"),
@@ -6178,8 +5992,6 @@ def extract_cross_reference_details(sentence: str) -> List[Dict[str, Any]]:
                 value = " ".join(part for part in match.groups() if part).strip().lower()
             else:
                 value = str(match.group(1) or "").strip().lower()
-            if re.fullmatch(r"\([a-z0-9]+\)", value):
-                value = value[1:-1]
             if not value:
                 continue
             key = (ref_type, value)

@@ -53,6 +53,27 @@ def test_cold_and_incremental_scans_have_the_same_root(tmp_path) -> None:
     assert first.to_dict() == second.to_dict()
 
 
+def test_hidden_python_scripts_have_distinct_nonempty_namespaces_and_local_calls(tmp_path) -> None:
+    source = "def target():\n    return 1\n\ndef caller():\n    return target()\n"
+    paths = (".supervisor-public-smoke.py", ".other-smoke.py")
+    for path in paths:
+        (tmp_path / path).write_text(source, encoding="utf-8")
+    first = scan_repository_state(tmp_path, repository_id="repo:hidden-scripts")
+    repeated = scan_repository_state(tmp_path, repository_id="repo:hidden-scripts", previous_state=first)
+    assert repeated == first
+    targets = []
+    for path in paths:
+        module = path[:-3]
+        symbols = {item.qualified_name: item for item in first.symbols if item.module_path == path}
+        assert symbols and all(item.namespace == module for item in symbols.values())
+        target, caller = symbols[module + ".target"], symbols[module + ".caller"]
+        targets.append(target.stable_id)
+        assert any(edge.relation == RelationType.CALLS.value
+                   and edge.source_id == caller.stable_id and edge.target_id == target.stable_id
+                   for edge in first.edges)
+    assert len(set(targets)) == len(paths)
+
+
 def test_formatting_and_unrelated_edits_do_not_change_other_symbol_versions(tmp_path) -> None:
     path = tmp_path / "module.py"
     path.write_text("def stable():\n    return 1\n\ndef changed():\n    return 2\n", encoding="utf-8")

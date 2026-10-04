@@ -1,0 +1,36 @@
+{
+  "schema": "gte-decoder-transfer-preparation-config/v1",
+  "workspace_root": "/home/barberb/lift_coding",
+  "mode": "prepare",
+  "max_rows_per_head": 16,
+  "teacher384_repository_root": "artifacts/legal-ir-inference-speed-review/audit/baseline_tree",
+  "legacy8_implementation_root": "external/ipfs_datasets/workspace/test-logs/legacy-teacher-release-20261001/source",
+  "initialization": {
+    "path": "artifacts/gte-decoder-reuse-20261001/run-01/student-initialization.json",
+    "sha256": "7443c8a60cb1f95e9a35017edcd394c0f47fd457c3733e0863d37bfc09a09a12"
+  },
+  "donor_pins": {
+    "path": "artifacts/gte-decoder-reuse-20261001/run-01/donor-pins.json",
+    "sha256": "8284f3dda68384de197c71f38a641bfc71cc036cdb8497b464e9a511337bb965"
+  },
+  "primary_checkpoint": {
+    "path": "artifacts/source-reconstruction-v2-20261001/run-01/legal_ir/raw_ce-1729-checkpoint.json",
+    "sha256": "6e3f4d731d798aa2732afc37bd74fec34da3267a323844975d2dab78f59f9c61"
+  },
+  "legacy8_checkpoint": {
+    "path": "external/ipfs_datasets/workspace/test-logs/modal-joint-e2e-20261001-final/legacy_v1/formula-head.json",
+    "sha256": "ffca84492b81ab94fa291ae6ddbe52cfc84318f3516a22f901d468de255b6cbe"
+  },
+  "primary_training_archive": {
+    "path": "artifacts/source-reconstruction-v2-20261001/run-01/legal_ir/train.json",
+    "sha256": "f4ad1d39677ed3184d019ad8556bf0cabd0957f855281c64343e8dfd73319c7b"
+  },
+  "legacy8_inputs": {
+    "path": "external/ipfs_datasets/workspace/test-logs/modal-joint-e2e-20261001-final/legacy_v1/schema/inputs.json",
+    "sha256": "2180ac2d5d0b666d4f3088ded217e31d630a00b68fe736b81d2b8e28ed07107d"
+  },
+  "legacy8_inference": {
+    "path": "external/ipfs_datasets/workspace/test-logs/modal-joint-e2e-20261001-final/legacy_v1/inference.json",
+    "sha256": "a41eed532b7457b8f2ac41a50046cb3d98853c0df9df5d9742f2c2d34fdb1b28"
+  }
+}

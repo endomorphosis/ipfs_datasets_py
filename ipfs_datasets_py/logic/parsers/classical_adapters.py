@@ -31,7 +31,7 @@ from ipfs_datasets_py.logic.backends.atp.adapters import (
     EProverBackend,
     VampireBackend,
 )
-from ipfs_datasets_py.logic.backends.cvc5.compiler import CVC5Backend
+from ipfs_datasets_py.logic.backends.cvc5 import CVC5Backend
 from ipfs_datasets_py.logic.backends.datalog.adapters import (
     AuthorizationBackendOutcome,
     SecPALAuthorizationBackend,
@@ -45,7 +45,7 @@ from ipfs_datasets_py.logic.backends.results import (
     TheoremResult,
     TypedBackendResult,
 )
-from ipfs_datasets_py.logic.backends.z3.compiler import Z3Backend
+from ipfs_datasets_py.logic.backends.z3 import Z3Backend
 from ipfs_datasets_py.logic.families.models import EvidenceAuthority
 from ipfs_datasets_py.logic.ir_core.claims import FrozenMap, stable_digest
 from ipfs_datasets_py.logic.ir_core.protocols import (

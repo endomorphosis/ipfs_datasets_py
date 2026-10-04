@@ -31,7 +31,7 @@ if TYPE_CHECKING:
 from .cache import ImmutableCAS
 from .ast_ir import ASTRecord
 from .content import cid_for_structured, validate_cid
-from .duckdb_ast_store import ASTCatalogProjection, DuckDBASTBatchReadLimitError
+from .duckdb_ast_store import ASTCatalogProjection
 from .duckdb_ingest import DuckDBASTIngestor
 from .semantic_index.models import RepositoryState
 from .semantic_index.scanner import RepositoryScanner
@@ -901,42 +901,12 @@ class RepositoryCodebaseIndex:
                 raise CodebaseIRError("catalog head does not bind its manifest")
             captured = manifest.snapshot
             CodebaseScanLimits(captured.max_entries, captured.max_file_bytes).validate_reservation(memory_mb)
-            units = {unit.source_key: unit for unit in manifest.units}
-            # Each batch reads current SQL rows and fully revalidates their
-            # canonical projections. Keep only a bounded chunk resident while
-            # independently checking CAS bodies/provenance. The fresh identity
-            # fence afterwards catches invalidation or replacement during CAS
-            # reads; no projection is retained across observations.
-            store = self.ingestor.store
-            def observe_entries(entries) -> None:
-                ast_entries = [entry for entry in entries if units[entry.source_key].ast_cid is not None]
-                oversized = False
-                try:
-                    projections = store.get_many_by_ast_cid(
-                        [units[entry.source_key].ast_cid for entry in ast_entries], checkpoint=checkpoint)
-                except DuckDBASTBatchReadLimitError:
-                    if len(ast_entries) <= 1:
-                        raise
-                    oversized = True
-                # Leave the exception handler before retrying so its traceback
-                # and partially loaded SQL rows cannot retain the failed batch.
-                if oversized:
-                    middle = len(entries) // 2
-                    observe_entries(entries[:middle])
-                    observe_entries(entries[middle:])
-                    return
-                by_path = dict(zip((entry.path for entry in ast_entries), projections))
-                for entry in entries:
-                    checkpoint()
-                    if not entry.is_opaque:
-                        self.artifacts.get_bytes(entry.source_cid)
-                    unit = units[entry.source_key]
-                    if unit.ast_cid is not None:
-                        self._require_ast_projection(manifest, entry, unit, by_path[entry.path])
-                    self.load_ast_artifact(manifest, entry.path)
-                store.require_active_identities(projections, checkpoint=checkpoint)
-            for offset in range(0, len(captured.entries), 32):
-                observe_entries(captured.entries[offset:offset + 32])
+            for entry in captured.entries:
+                checkpoint()
+                if not entry.is_opaque:
+                    self.artifacts.get_bytes(entry.source_cid)
+                self.lookup(manifest, entry.path)
+                self.load_ast_artifact(manifest, entry.path)
             checkpoint()
             observed = snapshot_repository(
                 repository, repository_id=expected_head.repository_id,
@@ -964,18 +934,13 @@ class RepositoryCodebaseIndex:
         if unit.ast_cid is None:
             return None
         found = self.ingestor.store.get_by_ast_cid(unit.ast_cid)
-        self._require_ast_projection(manifest, entry, unit, found)
-        return found
-
-    @staticmethod
-    def _require_ast_projection(manifest, entry, unit, found) -> None:
         if found is None:
             raise CodebaseIRError("AST projection is missing or invalidated")
-        if (found.ast_cid != unit.ast_cid or found.source_cid != entry.source_cid
-                or found.source_file.path != entry.path
+        if (found.source_cid != entry.source_cid or found.source_file.path != path
                 or found.source_revision.revision_id != manifest.ast_revision_id
                 or found.ast_blob.parse_status != unit.parse_status):
             raise CodebaseIRError("AST projection does not match the manifest")
+        return found
 
     def load_ast_artifact(self, manifest: CodebaseIRManifest, path: str) -> ASTRecord | None:
         """Read immutable AST history without asserting active index eligibility."""

@@ -1,0 +1,121 @@
+{
+  "accepted_projection_epochs": 0,
+  "admitted": false,
+  "combined_tests": {
+    "bytes": 2841,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/daemon-owned-invocation-20260925/combined-r1-receipt.json",
+    "sha256": "fdd80caae5b833c314acde786f949f7aa5960a89850bccee5742cbe5e1c6d969"
+  },
+  "constitution_formalized": false,
+  "current_source_matches_native_and_final_test_capture": true,
+  "documents": [
+    {
+      "bytes": 19105,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/autoencoder_daemon_owned_invocation.md",
+      "sha256": "38aac60dede1722b7c171edfa77feb800da0c871987232ba5746c9aff17a5006"
+    },
+    {
+      "bytes": 27277,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/plans/AUTOENCODER_DAEMON_OWNED_INVOCATION_PLAN.md",
+      "sha256": "7cdce4edccaf39dfad21d324d3bd6e834b1ad7f9a7e56fd115c79f1c1f46488f"
+    },
+    {
+      "bytes": 67263,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "sha256": "c73bdc59d343eac99daa477eb974399933c3a331314944a1448460cf13d2bf63"
+    },
+    {
+      "bytes": 57631,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "sha256": "15ab0595507fb365125620a35ca78fb7c821f2d6b9a119e8e4e42faa358e312f"
+    }
+  ],
+  "earlier_preflight_failure": {
+    "bytes": 2552284,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/owned-daemon-invocation-native-20260925-r1.json",
+    "sha256": "c88e6b0dbbd13322f76a15257a27e1ea8db25b936457c4ca7f9ed8ac6a8b8a84"
+  },
+  "failure_audit": {
+    "bytes": 8262,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/owned-daemon-invocation-native-20260925-r1-independent-failure-audit.json",
+    "sha256": "8d94c5cde0194dce758d6d5eb29815d8ad20edb3fbc98d21fdadd92175e5ba7f"
+  },
+  "head_unchanged": true,
+  "historical_receipts_unchanged": {
+    "constitution-on-restart12.json": {
+      "bytes": 55254,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/constitution-on-restart12.json",
+      "sha256": "da3cbac63a44bdd1862bfe6809f0179b73db337f66a1051ee491c823789cd1a3"
+    },
+    "restart12-bridge-on-measurement.json": {
+      "bytes": 8889,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-measurement.json",
+      "sha256": "bcc035a9a923ff0d60f70837a4604b3dd65092c04bc0c7afbd525a52f72b56b1"
+    },
+    "restart12-bridge-on-one-step.json": {
+      "bytes": 1148,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-one-step.json",
+      "sha256": "f799be3ff83d48513bd6a23669d334b24c73f08564c7cfdc86841bc21b696535"
+    }
+  },
+  "independent_audit": {
+    "bytes": 61987,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/owned-daemon-invocation-native-20260925-r2-independent-audit.json",
+    "sha256": "6244283f167dfd2476baa5de06df8f2a1d2567d7eb2a52823038b7082f5565c7"
+  },
+  "lane_fix_tests": {
+    "bytes": 1490,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/daemon-owned-invocation-20260925/lane-fix-r1-receipt.json",
+    "sha256": "253add31f95435bad678f838ef8ae9f5901af000f5c29f2f8ac74e8a49abcbed"
+  },
+  "native": {
+    "bytes": 4371004,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/owned-daemon-invocation-native-20260925-r2.json",
+    "sha256": "0c7b84a8cd11dc9f181c68d2124786b020edaff990a5565dfa3e54c8fdc7863f"
+  },
+  "native_lifecycle_qualified": true,
+  "protected_checkpoint": {
+    "bytes": 25895338,
+    "inode": 57804548,
+    "links": 2,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/legal-ir-daemon-restart12-20260608T075001Z-best-8h-autoencoder.state.json",
+    "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+  },
+  "publication_performed": false,
+  "recorded_at": "2026-09-25T14:11:38.323714+00:00",
+  "reservation_statuses_at_closeout": {
+    "38cb18749d8a40a6839f5d2f55cc139a": {
+      "retention_reason": null,
+      "scheduler_lane": "hammer_lean",
+      "status": "released",
+      "storage_bytes": 1000000000,
+      "workload": "canonical_trainer"
+    },
+    "3e0c1491f9f74b7c9950578ff9355429": {
+      "retention_reason": null,
+      "scheduler_lane": "hammer_lean",
+      "status": "released",
+      "storage_bytes": 1000000000,
+      "workload": "canonical_trainer"
+    },
+    "6898803c6ae041b081a0a3a2f407c9c2": {
+      "retention_reason": null,
+      "scheduler_lane": "hammer_lean",
+      "status": "released",
+      "storage_bytes": 1000000000,
+      "workload": "canonical_trainer"
+    },
+    "8827ac316aae4ecbbfddf9dedf0332d7": {
+      "retention_reason": "scheduler_admission_failed",
+      "scheduler_lane": null,
+      "status": "retained",
+      "storage_bytes": 1000000000,
+      "workload": null
+    }
+  },
+  "schema": "owned-daemon-qualification-closeout-v1",
+  "scope": "Exact three-training/three-validation zero-update owner lifecycle; no changed-state training, speed comparison or broad canary claim.",
+  "source_file_count": 7729,
+  "training_repeated_by_closeout": false,
+  "valid_local_document_links": 113
+}

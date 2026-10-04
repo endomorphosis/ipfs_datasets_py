@@ -1,0 +1,68 @@
+[
+  {
+    "schema": "huggingface-historical-git-asset@1",
+    "repo_id": "Publicus/autoencoder-decoder-checkpoints",
+    "revision": "cce278a763b5f7435a9895333a8af99b7fe8ea43",
+    "filename": "releases/20261004-historical-git-assets-v1/objects/1830569d1c79cfdd897531655ba3283799edf9da0f5891347cf8bbb82f487ec6.bin",
+    "sha256": "1830569d1c79cfdd897531655ba3283799edf9da0f5891347cf8bbb82f487ec6",
+    "size_bytes": 106911344,
+    "original_path": "docs/implementation/reports/evidence/decoder-action-binding-20261003/evidence.tar.xz",
+    "original_git_blob": "3328ec7edccf75229b3d402d31a7af1fe8d1dfe5",
+    "repository": "https://github.com/endomorphosis/ipfs_datasets_py"
+  },
+  {
+    "schema": "huggingface-historical-git-asset@1",
+    "repo_id": "Publicus/autoencoder-decoder-checkpoints",
+    "revision": "cce278a763b5f7435a9895333a8af99b7fe8ea43",
+    "filename": "releases/20261004-historical-git-assets-v1/objects/c64296732d874ca3179e0b17a94aa522eca1dc63e1af81cd9cab7757f4ffb87b.bin",
+    "sha256": "c64296732d874ca3179e0b17a94aa522eca1dc63e1af81cd9cab7757f4ffb87b",
+    "size_bytes": 196205088,
+    "original_path": "docs/implementation/reports/evidence/decoder-action-consistency-20261003/evidence.tar.xz",
+    "original_git_blob": "0be6b6e0639997edb9029c3e32700532c540c0f2",
+    "repository": "https://github.com/endomorphosis/ipfs_datasets_py"
+  },
+  {
+    "schema": "huggingface-historical-git-asset@1",
+    "repo_id": "Publicus/autoencoder-decoder-checkpoints",
+    "revision": "cce278a763b5f7435a9895333a8af99b7fe8ea43",
+    "filename": "releases/20261004-historical-git-assets-v1/objects/178cf075698ad20de36bc114e6bbd5102632f35b555ab861623a49c9cf42b0f0.bin",
+    "sha256": "178cf075698ad20de36bc114e6bbd5102632f35b555ab861623a49c9cf42b0f0",
+    "size_bytes": 119263308,
+    "original_path": "docs/implementation/reports/evidence/decoder-context-boundary-training-20261003/evidence.tar.xz",
+    "original_git_blob": "81530fd237ea4b1f929dd631cae0a6532d61c6bc",
+    "repository": "https://github.com/endomorphosis/ipfs_datasets_py"
+  },
+  {
+    "schema": "huggingface-historical-git-asset@1",
+    "repo_id": "Publicus/autoencoder-decoder-checkpoints",
+    "revision": "cce278a763b5f7435a9895333a8af99b7fe8ea43",
+    "filename": "releases/20261004-historical-git-assets-v1/objects/868f2d28b691f8815568146af45c224f112e8eb324ce29b4ca2c5d9ebf2d8abc.bin",
+    "sha256": "868f2d28b691f8815568146af45c224f112e8eb324ce29b4ca2c5d9ebf2d8abc",
+    "size_bytes": 203598796,
+    "original_path": "docs/implementation/reports/evidence/decoder-generated-field-training-r2-20261003/evidence.tar.xz",
+    "original_git_blob": "ef215b8ffb1ed15505a0145a50dd080528fcdccf",
+    "repository": "https://github.com/endomorphosis/ipfs_datasets_py"
+  },
+  {
+    "schema": "huggingface-historical-git-asset@1",
+    "repo_id": "Publicus/autoencoder-decoder-checkpoints",
+    "revision": "cce278a763b5f7435a9895333a8af99b7fe8ea43",
+    "filename": "releases/20261004-historical-git-assets-v1/objects/829685569fa11e2a699d973fed8a6d68e59d5e76c4c2205edf82e521a30d34c5.bin",
+    "sha256": "829685569fa11e2a699d973fed8a6d68e59d5e76c4c2205edf82e521a30d34c5",
+    "size_bytes": 2022179327,
+    "original_path": "data/agent_supervisor/proof_grounded_ir_learning/datasets/pgir-objective-ast.jsonl",
+    "original_git_blob": "9b6ded832adffea56cd1402bb08d1dca484eb3c8",
+    "repository": "https://github.com/endomorphosis/ipfs_accelerate_py"
+  },
+  {
+    "schema": "huggingface-historical-git-asset@1",
+    "original_git_blob": "14d6706502842110d16161a81d168281d6989a1c",
+    "original_path": "data/agent_supervisor/formal_verification_tactician_readiness/bundles/index.duckdb",
+    "size_bytes": 142880768,
+    "sha256": "080ad89846dcc7fbef2015d8335d441a49bf38861ddf3fe311af58fcfbc0c833",
+    "repository": "https://github.com/endomorphosis/ipfs_accelerate_py",
+    "repo_id": "Publicus/autoencoder-decoder-checkpoints",
+    "revision": "df5b78e844b2b502a95dda1bfe5b0a060c5bf8a8",
+    "filename": "releases/20261004-independent-history-v1/objects/14d6706502842110d16161a81d168281d6989a1c.bin"
+  }
+]

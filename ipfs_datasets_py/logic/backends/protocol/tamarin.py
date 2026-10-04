@@ -51,6 +51,7 @@ from ..process import (
     ToolRunResult,
     ToolRuntime,
 )
+from ..resource_admission import ResourceAdmittedToolRunner
 from ..results import (
     ProtocolResult,
     ResultAuthority,
@@ -70,6 +71,13 @@ TAMARIN_QUARANTINE_VERSION: Final = "protocol-result-quarantine/v1"
 DEFAULT_MAX_DIAGNOSTIC_CHARS: Final = 512
 DEFAULT_MAX_DIAGNOSTICS: Final = 32
 DEFAULT_MAX_SOURCE_BYTES: Final = 1_048_576
+
+# Reservation estimates for one Haskell capability plus Maude and launcher
+# helpers. Multiple Maude handles can coexist; these are not OS process caps.
+TAMARIN_CPU_SLOTS: Final = 2
+TAMARIN_PROCESS_SLOTS: Final = 8
+TAMARIN_ADDRESS_SPACE_FLOOR_BYTES: Final = 2 * 1024**3
+_MAUDE_COMMAND = re.compile(r"[A-Za-z0-9_./+][A-Za-z0-9_./+\-]*", re.ASCII)
 
 _DIGEST = re.compile(r"^[0-9a-f]{64}$")
 _CONTROL = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
@@ -1241,7 +1249,18 @@ class TamarinBackend:
         self.executable = _text(executable, "executable")
         self.maude_executable = _text(maude_executable, "maude_executable")
         self.maude_version = _text(maude_version, "maude_version", optional=True)
-        self._runner = runner or BoundedToolRunner()
+        self._owns_runner = runner is None
+        if self._owns_runner and _MAUDE_COMMAND.fullmatch(self.maude_executable) is None:
+            # Tamarin uses this value both as a subprocess executable and in a
+            # shell command. Shell quoting would break the former invocation.
+            raise TamarinBackendError("managed maude_executable must be a shell-safe path or name")
+        self._runner = (
+            ResourceAdmittedToolRunner(
+                cpu_slots=TAMARIN_CPU_SLOTS,
+                child_process_slots=TAMARIN_PROCESS_SLOTS,
+            )
+            if self._owns_runner else runner
+        )
         if not isinstance(self._runner, BoundedToolRunner):
             raise TamarinBackendError("runner must be a BoundedToolRunner")
         if version_probe is not None and not callable(version_probe):
@@ -1367,17 +1386,30 @@ class TamarinBackend:
             bounds.max_output_bytes * 2,
             len(source.encode("utf-8")) + bounds.max_output_bytes + 1024,
         )
+        argv = (self.executable, "--prove", "{workspace}/protocol.spthy")
+        memory_bytes = bounds.max_memory_bytes
+        resident_memory_bytes = None
+        if self._owns_runner:
+            # The GHC runtime otherwise defaults to all cores. Its virtual
+            # reservation must fit the separate finite address-space limit.
+            # Keep physical memory admission tied to the caller's bound and
+            # leave space for Maude/runtime overhead.
+            # Heap and sampled tree RSS limits are not hard aggregate OOM caps.
+            argv = (
+                self.executable, "--prove", f"--with-maude={self.maude_executable}",
+                "{workspace}/protocol.spthy", "+RTS", "-N1",
+                f"-M{max(1, bounds.max_memory_bytes // 2)}", "-RTS",
+            )
+            resident_memory_bytes = bounds.max_memory_bytes
+            memory_bytes = max(TAMARIN_ADDRESS_SPACE_FLOOR_BYTES, 4 * bounds.max_memory_bytes)
         return ToolRunRequest(
-            argv=(
-                self.executable,
-                "--prove",
-                "{workspace}/protocol.spthy",
-            ),
+            argv=argv,
             runtime=ToolRuntime.NATIVE,
             limits=ToolRunLimits(
                 timeout_seconds=bounds.timeout_ms / 1000,
                 cpu_seconds=bounds.timeout_ms / 1000,
-                memory_bytes=bounds.max_memory_bytes,
+                memory_bytes=memory_bytes,
+                resident_memory_bytes=resident_memory_bytes,
                 max_output_bytes=bounds.max_output_bytes,
                 max_input_bytes=bounds.max_output_bytes,
                 max_workspace_bytes=max_workspace_bytes,
@@ -1396,6 +1428,7 @@ class TamarinBackend:
         compile_result: TamarinCompileResult,
         reason: str = "",
         diagnostics: Sequence[str] = (),
+        process: ToolRunResult | None = None,
     ) -> ProtocolResult:
         witness: dict[str, Any] = {
             "receipt_id": receipt.receipt_id,
@@ -1418,6 +1451,29 @@ class TamarinBackend:
                 for item in receipt.claim_outcomes
                 if item.attack_trace is not None
             ]
+        metadata: dict[str, Any] = {
+            "adapter_interface": TAMARIN_BACKEND_VERSION,
+            "protocol_receipt": receipt.to_dict(),
+            "source_binding": binding.to_dict(),
+            "symbolic_model_ceiling": receipt.ceiling.to_dict(),
+        }
+        if process is not None:
+            metadata["process"] = {
+                "cancelled": process.cancelled,
+                "command": list(process.command),
+                "error": process.error,
+                "output_truncated": process.output_truncated,
+                "process_tree_terminated": process.process_tree_terminated,
+                "returncode": process.returncode,
+                "resource_exhausted": process.resource_exhausted,
+                "stderr_digest": stable_digest({"content": process.stderr}),
+                "stdout_digest": stable_digest({"content": process.stdout}),
+                "timed_out": process.timed_out,
+                "termination_reason": process.termination_reason,
+                "unavailable": process.unavailable,
+                "workspace_cleaned": process.workspace_cleaned,
+                "workspace_limit_exceeded": process.workspace_limit_exceeded,
+            }
         return ProtocolResult(
             result_id=_result_id(self.backend_id, request),
             backend_id=self.backend_id,
@@ -1435,12 +1491,7 @@ class TamarinBackend:
             witness=witness,
             diagnostics=bound_diagnostics(diagnostics),
             reason=sanitize_diagnostic(reason) if reason else "",
-            metadata={
-                "adapter_interface": TAMARIN_BACKEND_VERSION,
-                "protocol_receipt": receipt.to_dict(),
-                "source_binding": binding.to_dict(),
-                "symbolic_model_ceiling": receipt.ceiling.to_dict(),
-            },
+            metadata=metadata,
         )
 
     def run(
@@ -1556,8 +1607,32 @@ class TamarinBackend:
                 detail=reason,
             )
             accepted = False
-        elif process.resource_exhausted or process.output_truncated:
+        elif (process.resource_exhausted or process.output_truncated
+              or process.workspace_limit_exceeded):
             reason = process.error or "Tamarin exceeded a resource or output bound"
+            status = ResultStatus.ERROR
+            outcomes = ()
+            quarantine = None
+            accepted = False
+        elif (process.error or not process.workspace_cleaned
+              or process.process_tree_terminated):
+            reason = process.error or "Tamarin did not complete a clean native lifecycle"
+            status = ResultStatus.ERROR
+            outcomes = ()
+            quarantine = None
+            accepted = False
+        elif usage.output_bytes > request.bounds.max_output_bytes:
+            reason = "Tamarin exceeded its combined output bound"
+            status = ResultStatus.ERROR
+            outcomes = ()
+            quarantine = None
+            accepted = False
+        elif type(process.returncode) is not int or process.returncode != 0:
+            reason = (
+                "Tamarin did not report an integer exit status"
+                if type(process.returncode) is not int
+                else f"Tamarin exited with status {process.returncode}"
+            )
             status = ResultStatus.ERROR
             outcomes = ()
             quarantine = None
@@ -1569,19 +1644,7 @@ class TamarinBackend:
                 claim_lemmas=compile_result.claim_lemmas.to_dict(),
             )
             status, quarantine, accepted = classify_claim_outcomes(outcomes)
-            reason = process.error or ""
-            if process.returncode not in (0, None) and status is ResultStatus.SECURE:
-                # Non-zero exit with all-verified is treated as inconclusive.
-                status = ResultStatus.UNKNOWN
-                accepted = False
-                quarantine = ResultQuarantine(
-                    reason=QuarantineReason.INCONCLUSIVE,
-                    detail=(
-                        f"Tamarin exited with status {process.returncode} despite "
-                        "verified lemmas; quarantined"
-                    ),
-                )
-                reason = quarantine.detail
+            reason = ""
 
         diagnostics = bound_diagnostics(
             [
@@ -1614,6 +1677,7 @@ class TamarinBackend:
             compile_result=compile_result,
             reason=reason,
             diagnostics=diagnostics,
+            process=process,
         )
         return TamarinBackendOutcome(
             request_digest=request.digest,

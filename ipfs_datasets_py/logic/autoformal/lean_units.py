@@ -87,6 +87,101 @@ def render_statute_lean(
     return source
 
 
+def _mappings(clauses: Sequence[Mapping[str, Any]]) -> list[Mapping[str, Any]]:
+    return [item for item in clauses if isinstance(item, Mapping)]
+
+
+def _statute_ids(statute_ids: Sequence[str]) -> list[str]:
+    return [str(item).strip() for item in statute_ids if str(item).strip()]
+
+
+def statute_lean_unit(legal_id: str, clauses: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    """Render the capped statute file and keep the clause ids that did not fit."""
+
+    rows = _mappings(clauses)
+    overflow = [
+        str(row.get("source_span_id") or row.get("id") or index)
+        for index, row in enumerate(rows)
+        if index >= MAX_CLAUSES
+    ]
+    source = render_statute_lean(legal_id, rows)
+    return {
+        "admitted": False,
+        "count": min(len(rows), MAX_CLAUSES),
+        "formalized": False,
+        "kind": "lean_unit_overflow" if overflow else "",
+        "lean": source,
+        "overflow_ids": overflow,
+        "source_sha256": _sha(source),
+    }
+
+
+def term_lean_unit(
+    kind: str,
+    value: str,
+    *,
+    statute_ids: Sequence[str] = (),
+    term_id: str = "",
+) -> dict[str, Any]:
+    """Render the capped term file and keep the statute ids that did not fit."""
+
+    statutes = _statute_ids(statute_ids)
+    overflow = statutes[MAX_TERM_STATUTES:]
+    source = render_term_lean(kind, value, statute_ids=statutes)
+    return {
+        "admitted": False,
+        "count": min(len(statutes), MAX_TERM_STATUTES),
+        "formalized": False,
+        "kind": str(kind or ""),
+        "lean": source,
+        "overflow_ids": overflow,
+        "overflow_kind": "lean_unit_overflow" if overflow else "",
+        "source_sha256": _sha(source),
+        "statute_ids": statutes[:MAX_TERM_STATUTES],
+        "term_id": str(term_id or ""),
+        "value": str(value or ""),
+    }
+
+
+def lake_receipt(
+    source: str,
+    previous: Mapping[str, Any] | None = None,
+    *,
+    verify: bool = False,
+    check: Callable[[str], Mapping[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Reuse a stored Lake result when the source hash is unchanged."""
+
+    digest = _sha(source)
+    if isinstance(previous, Mapping) and str(previous.get("source_sha256") or "") == digest:
+        return {
+            "admitted": False,
+            "checked": False,
+            "formalized": False,
+            "lake_error": str(previous.get("lake_error") or ""),
+            "lake_ok": bool(previous.get("lake_ok")),
+            "source_sha256": digest,
+        }
+    if verify:
+        probed = probe_lean_source(source, check=check)
+        return {
+            "admitted": False,
+            "checked": True,
+            "formalized": False,
+            "lake_error": str(probed.get("error") or ""),
+            "lake_ok": bool(probed.get("lake_ok")),
+            "source_sha256": digest,
+        }
+    return {
+        "admitted": False,
+        "checked": False,
+        "formalized": False,
+        "lake_error": "lake_not_run",
+        "lake_ok": False,
+        "source_sha256": digest,
+    }
+
+
 def render_term_lean(
     kind: str,
     value: str,

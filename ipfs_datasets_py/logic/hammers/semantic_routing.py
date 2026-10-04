@@ -17,6 +17,7 @@ from __future__ import annotations
 from functools import reduce
 import hashlib
 import json
+import math
 from pathlib import Path
 
 from . import models, policy, portfolio, translation
@@ -143,20 +144,44 @@ def prepare_family_portfolio(*, request_id, source_construct, logic_family, ast_
 
 def run_family_portfolio(*, expected_routing, run_policy, resource_scheduler=None,
                          resource_lane="hammer_lean", resource_wait_timeout_seconds=30,
+                         parent_lease=None, cancel_event=None,
                          **target):
     """Replay family/AST/capability checks immediately before raw execution.
 
     Raw caller-supplied TranslationRecord objects are never accepted. A cached
     routing receipt is only an equality check, not an authority token.
+    A native parent lease supplies its scheduler when omitted. Serialized
+    parent tokens require an explicitly supplied matching scheduler: a token
+    does not carry scheduler configuration. Neither form falls back to a new
+    root reservation. Cancellation reaches resource waits and native children.
     """
+    if parent_lease is not None:
+        if isinstance(parent_lease, portfolio.ResourceLease):
+            owner = parent_lease._scheduler
+            if resource_scheduler is not None and resource_scheduler is not owner:
+                raise ValueError("parent lease requires its owning resource scheduler")
+            resource_scheduler = owner
+        elif isinstance(parent_lease, portfolio.ResourceLeaseToken):
+            if not isinstance(resource_scheduler, portfolio.GlobalResourceScheduler):
+                raise ValueError("parent token requires an explicit resource scheduler")
+            if Path(parent_lease.state_path).resolve() != resource_scheduler.state_path:
+                raise ValueError("parent token belongs to another resource scheduler")
+        else:
+            raise ValueError("parent_lease must be a native ResourceLease or ResourceLeaseToken")
+    if cancel_event is not None and not callable(getattr(cancel_event, "is_set", None)):
+        raise ValueError("cancel_event must provide is_set")
+    if resource_wait_timeout_seconds is not None and (
+            type(resource_wait_timeout_seconds) not in (int, float)
+            or not math.isfinite(resource_wait_timeout_seconds) or resource_wait_timeout_seconds < 0):
+        raise ValueError("resource wait timeout must be finite and non-negative")
     attempts, routing = prepare_family_portfolio(**target)
-    if routing != expected_routing:
+    if _raw(routing) != _raw(expected_routing):
         raise ValueError("semantic routing changed before execution")
     if run_policy.cancel_on_first_conclusive and len({r["operation"] for r in routing["routes"]}) != 1:
         raise ValueError("mixed solver operations cannot cancel one another as conclusive")
     runner = portfolio.SolverPortfolio(run_policy, resource_scheduler=resource_scheduler,
         resource_lane=resource_lane, resource_wait_timeout_seconds=resource_wait_timeout_seconds)
-    result = runner.run(target["request_id"], attempts)
+    result = runner.run(target["request_id"], attempts, parent_lease=parent_lease, cancel_event=cancel_event)
     _guard()
     return result
 

@@ -302,10 +302,8 @@ def compile_semantic_links(
     edge_items = list(edges)
     if any(not isinstance(item, DependencyEdge) for item in edge_items):
         raise MerkleCompilerError("edges must be DependencyEdge values")
-    # These records are immutable for this compilation. Retain the producer
-    # identity beside each input instead of reserializing it for every use.
-    ordered = sorted(((item.edge_id, item) for item in edge_items), key=lambda item: item[0])
-    if len({edge_id for edge_id, _ in ordered}) != len(ordered):
+    ordered = sorted(edge_items, key=lambda item: item.edge_id)
+    if len({item.edge_id for item in ordered}) != len(ordered):
         raise MerkleCompilerError("edges must not contain duplicate edge_id values")
 
     links: list[SemanticLinkNode] = []
@@ -324,11 +322,11 @@ def compile_semantic_links(
             symbol_fact_cids[key] = fact.fact_cid
         return symbol_fact_cids[key]
 
-    for edge_id, edge in ordered:
+    for edge in ordered:
         source = symbol_by_id.get(edge.source_id)
         if source is None:
             raise MerkleCompilerError(
-                f"edge {edge_id} source_id {edge.source_id!r} is not a known symbol"
+                f"edge {edge.edge_id} source_id {edge.source_id!r} is not a known symbol"
             )
         target_symbol = symbol_by_id.get(edge.target_id)
         target_artifact = artifact_by_id.get(edge.target_id)
@@ -351,7 +349,7 @@ def compile_semantic_links(
         # Metadata is preserved verbatim from the producer edge (already closed).
         metadata = dict(edge.metadata) if edge.metadata else {}
         link = SemanticLinkNode(
-            edge_id=edge_id,
+            edge_id=edge.edge_id,
             source_stable_id=source.stable_symbol_id,
             source_version_cid=source.version_cid,
             source_fact_cid=symbol_cid(source),
@@ -367,7 +365,7 @@ def compile_semantic_links(
             metadata=metadata,
         )
         # Authoritative edge_id must be preserved verbatim (no re-derivation).
-        if link.edge_id != edge_id:
+        if link.edge_id != edge.edge_id:
             raise MerkleCompilerError(
                 "SemanticLinkNode edge_id must equal DependencyEdge.edge_id verbatim"
             )
@@ -434,15 +432,14 @@ def compile_symbol_nodes(
     outgoing: dict[str, list[str]] = {fact.stable_symbol_id: [] for fact in ordered_facts}
     incoming: dict[str, list[str]] = {fact.stable_symbol_id: [] for fact in ordered_facts}
     for link in links:
-        link_cid = link.link_cid
         if link.source_stable_id in outgoing:
-            outgoing[link.source_stable_id].append(link_cid)
+            outgoing[link.source_stable_id].append(link.link_cid)
         if (
             link.target_kind == LinkTargetKind.SYMBOL.value
             and link.target_stable_id is not None
             and link.target_stable_id in incoming
         ):
-            incoming[link.target_stable_id].append(link_cid)
+            incoming[link.target_stable_id].append(link.link_cid)
 
     reason_map = raw_source_required_reasons or {}
     nodes: list[SymbolMerkleNode] = []
@@ -651,72 +648,60 @@ def verify_symbol_merkle_dag(dag: SymbolMerkleDag) -> SymbolMerkleDag:
             data = dag.blocks[cid]
         except KeyError as exc:
             raise MerkleCompilerError(f"missing block {cid}") from exc
-        payload = json.loads(data.decode("utf-8"))
-        if canonical_dag_json_bytes(payload) != data:
+        if canonical_dag_json_bytes(json.loads(data.decode("utf-8"))) != data:
             raise MerkleCompilerError(f"block {cid} is not canonical")
+        payload = json.loads(data.decode("utf-8"))
         if cid_for_structured(payload) != cid:
             raise MerkleCompilerError(f"block CID {cid} does not reverify")
         return payload
 
-    # Recompute current record identities once within this verification. The
-    # stored block and independently restored record still rehash separately;
-    # no result survives the call or replaces any canonical/schema check.
-    fact_pairs, art_pairs, link_pairs, node_pairs = {}, {}, {}, {}
     for fact in dag.symbol_facts:
-        fact_cid = fact.fact_cid
-        payload = _load(fact_cid)
+        payload = _load(fact.fact_cid)
         if payload != fact.identity_payload():
             raise MerkleCompilerError(
-                f"symbol fact block {fact_cid} does not match record"
+                f"symbol fact block {fact.fact_cid} does not match record"
             )
-        restored = SymbolFactNode.from_dict({**payload, "fact_cid": fact_cid})
-        if restored.fact_cid != fact_cid:
+        restored = SymbolFactNode.from_dict(fact.to_dict())
+        if restored.fact_cid != fact.fact_cid:
             raise MerkleCompilerError("symbol fact CID round-trip failed")
-        fact_pairs[fact.stable_symbol_id] = fact_cid
 
     for fact in dag.artifact_facts:
-        fact_cid = fact.fact_cid
-        payload = _load(fact_cid)
+        payload = _load(fact.fact_cid)
         if payload != fact.identity_payload():
             raise MerkleCompilerError(
-                f"artifact fact block {fact_cid} does not match record"
+                f"artifact fact block {fact.fact_cid} does not match record"
             )
-        restored = ArtifactFactNode.from_dict({**payload, "fact_cid": fact_cid})
-        if restored.fact_cid != fact_cid:
+        restored = ArtifactFactNode.from_dict(fact.to_dict())
+        if restored.fact_cid != fact.fact_cid:
             raise MerkleCompilerError("artifact fact CID round-trip failed")
-        art_pairs[fact.artifact_id] = fact_cid
 
     # The immutable node inventory is shared by every link. Rebuilding these
     # CIDs inside the edge loop makes verification O(edges * nodes) in hashing.
-    node_inventory = [(node, node.node_cid) for node in dag.symbol_nodes]
-    node_cids = {cid for _, cid in node_inventory}
+    node_cids = {node.node_cid for node in dag.symbol_nodes}
     for link in dag.links:
-        link_cid = link.link_cid
-        payload = _load(link_cid)
+        payload = _load(link.link_cid)
         if payload != link.identity_payload():
             raise MerkleCompilerError(
-                f"link block {link_cid} does not match record"
+                f"link block {link.link_cid} does not match record"
             )
-        restored = SemanticLinkNode.from_dict({**payload, "link_cid": link_cid})
-        if restored.link_cid != link_cid:
+        restored = SemanticLinkNode.from_dict(link.to_dict())
+        if restored.link_cid != link.link_cid:
             raise MerkleCompilerError("link CID round-trip failed")
-        link_pairs[link.edge_id] = link_cid
         # Layering: links must not reference node CIDs.
         if restored.source_fact_cid in node_cids or (
             restored.target_fact_cid is not None and restored.target_fact_cid in node_cids
         ):
             raise MerkleCompilerError("link references a symbol-node CID")
 
-    for node, node_cid in node_inventory:
-        payload = _load(node_cid)
+    for node in dag.symbol_nodes:
+        payload = _load(node.node_cid)
         if payload != node.identity_payload():
             raise MerkleCompilerError(
-                f"node block {node_cid} does not match record"
+                f"node block {node.node_cid} does not match record"
             )
-        restored = SymbolMerkleNode.from_dict({**payload, "node_cid": node_cid})
-        if restored.node_cid != node_cid:
+        restored = SymbolMerkleNode.from_dict(node.to_dict())
+        if restored.node_cid != node.node_cid:
             raise MerkleCompilerError("node CID round-trip failed")
-        node_pairs[node.stable_symbol_id] = node_cid
 
     for index in (
         dag.symbol_fact_index,
@@ -724,23 +709,26 @@ def verify_symbol_merkle_dag(dag: SymbolMerkleDag) -> SymbolMerkleDag:
         dag.semantic_link_index,
         dag.symbol_node_index,
     ):
-        index_cid = index.index_cid
-        payload = _load(index_cid)
+        payload = _load(index.index_cid)
         if payload != index.identity_payload():
             raise MerkleCompilerError(
-                f"index block {index_cid} does not match record"
+                f"index block {index.index_cid} does not match record"
             )
-        restored = SortedPairIndex.from_dict({**payload, "index_cid": index_cid})
-        if restored.index_cid != index_cid:
+        restored = SortedPairIndex.from_dict(index.to_dict())
+        if restored.index_cid != index.index_cid:
             raise MerkleCompilerError("index CID round-trip failed")
 
     # Index membership consistency.
+    fact_pairs = {fact.stable_symbol_id: fact.fact_cid for fact in dag.symbol_facts}
     if dict(dag.symbol_fact_index.pairs) != fact_pairs:
         raise MerkleCompilerError("symbol_fact_index membership mismatch")
+    art_pairs = {fact.artifact_id: fact.fact_cid for fact in dag.artifact_facts}
     if dict(dag.artifact_fact_index.pairs) != art_pairs:
         raise MerkleCompilerError("artifact_fact_index membership mismatch")
+    link_pairs = {link.edge_id: link.link_cid for link in dag.links}
     if dict(dag.semantic_link_index.pairs) != link_pairs:
         raise MerkleCompilerError("semantic_link_index membership mismatch")
+    node_pairs = {node.stable_symbol_id: node.node_cid for node in dag.symbol_nodes}
     if dict(dag.symbol_node_index.pairs) != node_pairs:
         raise MerkleCompilerError("symbol_node_index membership mismatch")
 

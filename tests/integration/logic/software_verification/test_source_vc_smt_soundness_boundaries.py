@@ -29,7 +29,7 @@ from ipfs_datasets_py.logic.software_verification.vc import (
 
 
 BRANCH_SOURCE = """\
-def f(x):
+def f(x: int) -> int:
     if x > 0:
         return 1
     else:
@@ -42,16 +42,16 @@ def f(x):
     "source, reason",
     [
         (BRANCH_SOURCE, "path_sensitive_cfg"),
-        ("def f(x):\n    y = 1\n    y = 2\n    return y\n", "SSA"),
-        ("def f(x):\n    x = x + 1\n    return x\n", "SSA"),
-        ("def f(x):\n    y = y + 1\n    return y\n", "ProgramIR validation failed"),
-        ("def f(x):\n    y = missing\n    missing = 1\n    return y\n", "ProgramIR validation failed"),
-        ("def f(x):\n    return 1\n    return 2\n", "after return"),
-        ("def f(x):\n    return 1\n    y = 2\n", "after return"),
-        ("def f(x):\n    return\n", "implicit/null return"),
-        ("def f(x):\n    return None\n", "unsupported value None"),
-        ("def f(x):\n    pass\n", "explicit terminal return"),
-        ("def f(x):\n    callback(x)\n    return 1\n", "ProgramIR validation failed"),
+        ("def f(x: int) -> int:\n    y: int = 1\n    y = 2\n    return y\n", "SSA"),
+        ("def f(x: int) -> int:\n    x = x + 1\n    return x\n", "SSA"),
+        ("def f(x: int) -> int:\n    y = y + 1\n    return y\n", "ProgramIR validation failed"),
+        ("def f(x: int) -> int:\n    y = missing\n    missing = 1\n    return y\n", "ProgramIR validation failed"),
+        ("def f(x: int) -> int:\n    return 1\n    return 2\n", "after return"),
+        ("def f(x: int) -> int:\n    return 1\n    y = 2\n", "after return"),
+        ("def f(x: int) -> int:\n    return\n", "implicit/null return"),
+        ("def f(x: int) -> int:\n    return None\n", "unsupported value None"),
+        ("def f(x: int) -> int:\n    pass\n", "explicit terminal return"),
+        ("def f(x: int) -> int:\n    callback(x)\n    return 1\n", "ProgramIR validation failed"),
     ],
 )
 def test_unmodeled_execution_cannot_prove_arbitrary_postcondition(
@@ -76,7 +76,7 @@ def test_unmodeled_execution_cannot_prove_arbitrary_postcondition(
 
 
 def test_branch_observations_remain_available_without_complete_semantics() -> None:
-    result = adapt_source_to_software_verification(BRANCH_SOURCE, path="branch.py")
+    result = adapt_source_to_software_verification(BRANCH_SOURCE, path="branch.py", preserve_type_annotations=True)
     assert result.status is SourceAdapterStatus.PARTIAL
     assert result.program is not None
     assert "python.if.path_sensitive_cfg" in result.unsupported_constructs
@@ -84,7 +84,7 @@ def test_branch_observations_remain_available_without_complete_semantics() -> No
 
 
 def test_direct_ir_to_smt_entrypoint_also_rejects_linearized_branches() -> None:
-    adapted = adapt_source_to_software_verification(BRANCH_SOURCE, path="branch.py")
+    adapted = adapt_source_to_software_verification(BRANCH_SOURCE, path="branch.py", preserve_type_annotations=True)
     program, contracts = attach_contract_specs(
         adapted.program,
         (ContractSpec("f", postconditions=("result == 999",)),),
@@ -98,7 +98,7 @@ def test_direct_ir_to_smt_entrypoint_also_rejects_linearized_branches() -> None:
 @pytest.mark.skipif(shutil.which("z3") is None, reason="z3 not on PATH")
 @pytest.mark.skipif(shutil.which("cvc5") is None, reason="cvc5 not on PATH")
 def test_supported_single_assignment_fragment_still_checks_real_solvers() -> None:
-    source = "def f(x):\n    y = x + 1\n    z = y + 2\n    return z\n"
+    source = "def f(x: int) -> int:\n    y = x + 1\n    z: int = y + 2\n    return z\n"
     pipeline = SourceToVerificationPipeline()
     valid = pipeline.run(
         source,

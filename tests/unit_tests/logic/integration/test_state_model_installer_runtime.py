@@ -14,6 +14,25 @@ from pathlib import Path
 import pytest
 from ipfs_datasets_py.logic.backends.installers import state_model
 
+
+@pytest.fixture(autouse=True)
+def _private_java_probe_admission(tmp_path, monkeypatch):
+    """Installer fixtures must not depend on the mutable workstation pool."""
+    from ipfs_datasets_py.logic.backends import resource_admission
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import resource_scheduler
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.proof_resource_safety import ProofHostResources
+
+    healthy = ProofHostResources(8, 8192, 8192, pid_task_limit=8192, available_pid_tasks=8192)
+    owner = resource_scheduler.GlobalResourceScheduler(resource_scheduler.ResourceSchedulerConfig.for_proof_host(
+        state_path=tmp_path / "java-probe-pool.json", proof_resource_sampler=lambda: healthy,
+        total_cpu_slots=2, total_memory_mb=1024, total_child_process_slots=6,
+        proof_memory_headroom_mb=64, lane_reservations={}, auto_renew_leases=False,
+        proof_backoff_seconds=0.025, poll_interval_seconds=0.002))
+    monkeypatch.setattr(resource_admission, "get_global_resource_scheduler", lambda: owner)
+    yield
+    state = owner.snapshot()
+    assert state["active_lease_count"] == state["waiting_request_count"] == 0
+
 TLC_HELP_OUTPUT = """\
 NAME
     TLC - provides model checking and simulation of TLA+ specifications - Version 2026.07.31
@@ -41,7 +60,8 @@ def _fake_java(
     return _write_executable(
         path,
         (
-            'if [ "${1:-}" = "-version" ]; then\n'
+            'for argument do final_argument="$argument"; done\n'
+            'if [ "${final_argument:-}" = "-version" ]; then\n'
             f'  echo \'openjdk version "{version}"\' >&2\n'
             "  exit 0\n"
             "fi\n"
@@ -497,14 +517,18 @@ def test_download_artifact_uses_unique_partial_paths_and_cleans_them(
     original_named_temporary_file = state_model.tempfile.NamedTemporaryFile
 
     class Response:
+        def __init__(self):
+            import io
+            self.stream = io.BytesIO(payload)
+
         def __enter__(self):
             return self
 
         def __exit__(self, *_args):
             return False
 
-        def read(self) -> bytes:
-            return payload
+        def read(self, size: int) -> bytes:
+            return self.stream.read(size)
 
     def recording_temporary_file(*args, **kwargs):
         handle = original_named_temporary_file(*args, **kwargs)

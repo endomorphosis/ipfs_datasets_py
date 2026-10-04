@@ -1,0 +1,19 @@
+{
+  "schema": "alignment-embedding-experiment-config/v1",
+  "study_id": "autoformalization-richer-embedding-development-v1",
+  "structure_report": {
+    "path": "artifacts/autoformalization-alignment-20261003/structure-01/report.json",
+    "sha256": "8e9deb8b957447907f94fac6116225481742b4616a5c7ece6133aed802e153a5"
+  },
+  "spacy_backend": "local_en_core_web_sm",
+  "gte384_snapshot": "/home/barberb/.cache/huggingface/hub/models--thenlper--gte-small/snapshots/17e1f347d17fe144873b1201da91788898c639cd",
+  "gte768_assets": {
+    "manifest": {
+      "path": "configs/autoencoders/gte_multilingual_local_assets_v1.json",
+      "sha256": "8beb874aa7b06599346173fde12e95f9f926b3028942d5014cdd2f99c4385166"
+    },
+    "model_directory": "/home/barberb/lift_coding/artifacts/autoformalization-alignment-20261003/richer-encoder-assets/model",
+    "code_directory": "/home/barberb/lift_coding/artifacts/autoformalization-alignment-20261003/richer-encoder-assets/code"
+  },
+  "max_seconds": 600
+}

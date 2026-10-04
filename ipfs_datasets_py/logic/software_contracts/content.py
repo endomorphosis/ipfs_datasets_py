@@ -206,7 +206,7 @@ def _require_unchanged_registration(registration: tuple[Any, ...]) -> None:
 def _encode_digest(digest: bytes, *, codec: str) -> str:
     from multiformats import CID
 
-    registration = _memo_registration_key()
+    registration = _memo_registration_key() if type(CID_BASE) is str and type(CID_VERSION) is int else None
     if (registration is not None and type(codec) is str and type(digest) is bytes
             and len(digest) == 34 and digest[:2] == b"\x12\x20"):
         try:
@@ -773,3 +773,27 @@ __all__ = [
     "verify_source_read",
     "verify_structured_read",
 ]
+
+
+# Compatibility names retain the current live-registration-aware memo owners.
+def _encode_cid_digest(base, version, codec, digest):
+    if type(base) is str and type(codec) is str and type(digest) is bytes and base == CID_BASE and type(version) is int and version == CID_VERSION:
+        return _encode_digest(digest, codec=codec)
+    return _encode_cid_digest_uncached(base, version, codec, digest)
+
+def _encode_cid_digest_uncached(base, version, codec, digest):
+    from multiformats import CID
+    return str(CID(base, version, codec, digest))
+
+_encode_cid_digest.cache_clear = _memo_encode_digest.cache_clear
+_encode_cid_digest.cache_info = _memo_encode_digest.cache_info
+_encode_cid_digest.__wrapped__ = _encode_cid_digest_uncached
+
+def _validate_canonical_cid_syntax(value, allowed, profile):
+    if profile != (PROFILE_ID, PROFILE_VERSION, CID_VERSION, CID_BASE, MULTIHASH_TYPE):
+        raise ContentIdentityError("CID profile differs")
+    validate_cid(value, codecs=allowed)
+
+_validate_canonical_cid_syntax.cache_clear = _memo_validate_cid.cache_clear
+_validate_canonical_cid_syntax.cache_info = _memo_validate_cid.cache_info
+_validate_canonical_cid_syntax.__wrapped__ = _validate_canonical_cid_syntax

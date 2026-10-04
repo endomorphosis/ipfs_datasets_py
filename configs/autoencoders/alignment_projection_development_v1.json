@@ -1,0 +1,17 @@
+{
+  "schema": "alignment-projection-experiment-config/v1",
+  "study_id": "autoformalization-projection-development-v1",
+  "study_config": {
+    "path": "external/ipfs_datasets/configs/autoencoders/alignment_study_development_v1.json",
+    "sha256": "413e7250098d39e3e1ff59405c75c5eca283ec5820828d8be7fb00beb01e2f31"
+  },
+  "shared_dimensions": [384, 512],
+  "seeds": [0, 1, 2],
+  "negative_weights": [1, 2],
+  "steps": 80,
+  "learning_rate": 0.1,
+  "temperature": 0.07,
+  "weight_decay": 0.0001,
+  "top_k": 5,
+  "max_seconds": 180
+}
