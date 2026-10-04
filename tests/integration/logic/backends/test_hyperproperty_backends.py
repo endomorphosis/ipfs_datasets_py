@@ -67,6 +67,10 @@ from ipfs_datasets_py.logic.software_verification.hyperproperties import (
     TraceVariable,
 )
 
+from tests.unit.logic.backends._python_admission_fixtures import python_pool
+
+pytestmark = pytest.mark.usefixtures("python_pool")
+
 
 def _policy(
     *,
@@ -426,10 +430,12 @@ TRACE pi1:
   public.user_id = alice
   obs.status = ok
   obs.public_token = tok
+  subject.task_id = task:1
 TRACE pi2:
   public.user_id = alice
   obs.status = leak
   obs.public_token = tok
+  subject.task_id = task:1
 DIFF field=status left=ok right=leak
 """
     parsed = parse_hyper_counterexample(
@@ -448,12 +454,17 @@ DIFF field=status left=ok right=leak
     assert "private_inputs" not in parsed.traces[0].to_dict()
 
     replayed = replay_hyper_counterexample(
-        parsed, translation.observation_map, translation.quantifier_order
+        parsed, translation.observation_map, translation.quantifier_order,
+        formula_id=document.formula.formula_id,
     )
     assert replayed.replayed is True
     assert any("replayed observations" in note for note in replayed.replay_notes)
     assert any("status" in note for note in replayed.replay_notes)
-    bundle = replayed.to_witness_bundle()
+    bundle = replayed.to_witness_bundle(
+        observation_map=translation.observation_map,
+        quantifier_order=translation.quantifier_order,
+        formula_id=document.formula.formula_id,
+    )
     assert bundle.authorizes_universal_proof is False
     assert len(bundle.traces) == 2
 
@@ -464,9 +475,13 @@ unsat
 TRACE pi1:
   public.user_id = alice
   obs.status = ok
+  obs.public_token = tok
+  subject.task_id = task:1
 TRACE pi2:
   public.user_id = alice
   obs.status = leak
+  obs.public_token = tok
+  subject.task_id = task:1
 DIFF field=status left=ok right=leak
 """
     document = _document()

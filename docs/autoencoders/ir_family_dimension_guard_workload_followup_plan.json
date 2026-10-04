@@ -1,0 +1,549 @@
+{
+  "schema": "ir-family-dimension-guard-workload-followup-plan/v1",
+  "created_utc": "2026-10-04",
+  "status": "completed_current_fixture_qualification_and_ordinary_closure; production_rows_remain_open",
+  "previous_plan": "ir_family_dimension_cuda_guard_followup_plan.json",
+  "previous_plan_sha256": "f6b1b5f7ba8a625941a6a5faab98e9ecbd67659f9ff00d23efea6c89c095936a",
+  "historical_plan_changed": false,
+  "dimensions": [
+    8,
+    384,
+    768,
+    4096
+  ],
+  "dimension_role": "source_input_representation_width",
+  "ir_family_ids": [
+    "codebase_ir",
+    "security_ir",
+    "legal_ir",
+    "intent_ir"
+  ],
+  "qualification_is_per_family_task_checkpoint_encoder_and_execution_profile": true,
+  "report": "../../../ipfs_accelerate/docs/agent_supervisor/codebase_multi_head_bitwise_workload_qualification.md",
+  "inference_policy": {
+    "optimization_default": true,
+    "cuda_selected_when_available_and_admitted": true,
+    "optimized_false_selects_cpu_reference": true,
+    "selected_existing_profiles_unchanged": true,
+    "new_bitwise_profiles_are_separate_candidate_apis": true,
+    "candidate_default_rollout_requires_correctness_custody_and_complete_call_performance_evidence": true,
+    "successful_verification_cached": false,
+    "source_checkpoint_tensor_anchor_callback_boundary_checks_removed": 0,
+    "primitive_speedup_alone_qualifies_complete_session_speedup": false
+  },
+  "CG2_candidate_profiles": [
+    {
+      "dimensions": [
+        8,
+        384
+      ],
+      "lineage_by_dimension": {
+        "8": "legacy_hub_v1",
+        "384": "current_legal_v2"
+      },
+      "class": "BitwiseDeviceLatentFormulaDecoder",
+      "source": "external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_latent_formula_bitwise_device_inference.py",
+      "source_bytes": 35609,
+      "source_sha256": "5b5631eb1cf779ea8b6fcf3073d074355f52ef8c74adea84fc595421dea85089",
+      "profile_id": "modal-latent-formula-bitwise-owned-device-float32/v1",
+      "report_schema": "modal-latent-formula-inference/v1",
+      "checkpoint_schema": "modal-latent-formula-checkpoint/v1",
+      "admission": "externally supplied checkpoint SHA256, parent lease, cancellation and deadline",
+      "anchor_origin": "immutable bytes from the single original validated CPU checkpoint restore before reference cloning or device upload",
+      "adam_restoration_performed": true,
+      "adam_restore_count_per_construction": 1,
+      "optimizer_free_construction": false,
+      "optimizer_steps_executed": 0,
+      "new_training_fits": 0,
+      "cpu_controls": {
+        "status": "passed",
+        "passed": 142,
+        "failures": 0,
+        "errors": 0,
+        "skips": 0,
+        "receipt": "artifacts/codebase_ir_terminal_bench/native-formula-bitwise-controls-20261004-05/receipt.json",
+        "receipt_bytes": 11802,
+        "receipt_sha256": "50fdba20957d265c770af40e0a886a58b327a968de72e6d67af41ea101169a28",
+        "test_source": "external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_modal_latent_formula_bitwise_device_inference.py",
+        "test_sha256": "d4b71eafce77e828ffd81b540c6e1ce0b7c2887746ccae526d7e150848ee1a73",
+        "owned_child_closed": true,
+        "resources_returned_to_zero": true,
+        "earlier_refused_or_unexecuted_attempts_count_as_success": false
+      },
+      "trained_native_replay": {
+        "status": "numeric_and_canonical_fixture_passed_no_complete_call_gain",
+        "result": "artifacts/codebase_ir_terminal_bench/bitwise-trained-head-device-qualification-20261004-04/result.json",
+        "result_bytes": 594992,
+        "result_sha256": "d178edbced905e3b55d36a067f8f797aa9a95a612f80162e6aaf6c64f9f26f79",
+        "complete_call_gain_qualified": false
+      },
+      "production_selected": false,
+      "anchor_layout": "logical name/shape/element coverage; separately bound post-upload physical model/reference layout",
+      "uploaded_model_bytes_checked_against_cpu_anchor_before_acceptance": true
+    },
+    {
+      "dimensions": [
+        768
+      ],
+      "class": "DeviceBitwiseDimensionalSpanSession",
+      "source": "external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_device_bitwise_inference.py",
+      "source_bytes": 22528,
+      "source_sha256": "d1c12eb54ca8c17c9815ed20db9237c86876361ac3d72fa30ce2d470b0fccf91",
+      "profile_id": "native-768-source-span-batched-device-bitwise-checkpoint-anchor-float32/v1",
+      "original_profile_id": "native-768-source-span-batched-device-float32-cpu-decisions/v1",
+      "strict_cuda_gru_profile_id": "native-768-source-span-device-strict-cuda-float32/v2",
+      "anchor_origin": "independently restored validated CPU checkpoint model before upload",
+      "cpu_controls": {
+        "status": "passed",
+        "passed": 42,
+        "failures": 0,
+        "errors": 0,
+        "skips": 0,
+        "receipt": "artifacts/codebase_ir_terminal_bench/native-768-bitwise-controls-20261004-02/receipt.json",
+        "receipt_bytes": 11308,
+        "receipt_sha256": "a9b85eff90b11d98f281d00d80c97e93823bc0b1b6067e7450ee3ab1a0329124",
+        "earlier_pressure_timeout_counted_as_success": false
+      },
+      "trained_native_replay": {
+        "status": "numeric_and_canonical_fixture_passed_no_complete_call_gain",
+        "result": "artifacts/codebase_ir_terminal_bench/bitwise-trained-head-device-qualification-20261004-04/result.json",
+        "result_bytes": 594992,
+        "result_sha256": "d178edbced905e3b55d36a067f8f797aa9a95a612f80162e6aaf6c64f9f26f79",
+        "complete_call_gain_qualified": false
+      },
+      "production_selected": false
+    },
+    {
+      "dimensions": [
+        4096
+      ],
+      "class": "BitwiseDeviceLeanstral4096SpanSession",
+      "source": "external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_4096_bitwise_device_inference_v2.py",
+      "source_bytes": 10472,
+      "source_sha256": "14678654b927d0b6910fda6a8c82961978a9e7ebc29334aaae6cb2320abc5dc3",
+      "profile_id": "native-4096-source-span-batched-device-bitwise-float32-cpu-decisions/v2",
+      "original_profile_id": "native-4096-source-span-batched-device-float32-cpu-decisions/v2",
+      "strict_cuda_gru_profile_id": "native-4096-source-span-strict-cuda-float32/v1",
+      "qualification_scope": "untrained synthetic architecture fixture with authored complete 4096-wide inputs",
+      "native_leanstral_embeddings_qualified": false,
+      "latent_conditioning_trained": false,
+      "broad_workload_correctness_qualified": true,
+      "broad_suite_complete_call_gain_qualified": false,
+      "production_selected": false
+    }
+  ],
+  "CG2_actual_broad4096_workload_observation": {
+    "result": "artifacts/codebase_ir_terminal_bench/native-4096-guard-workloads-qualification-20261004-01/result.json",
+    "result_bytes": 465902,
+    "result_sha256": "0aa67e1f6e6c148fccdfca704840c9ea460ffb425022271cfeeb30242a7eb111",
+    "producer": "external/ipfs_datasets/benchmarks/qualify_synthetic_4096_guard_workloads.py",
+    "producer_bytes": 60085,
+    "producer_sha256": "8fa92ebd37c6d38fcd13b34e13034e9634a1cc6e104ff004e28f4af47a78003d",
+    "architecture_fixture_qualified": true,
+    "head_numerical_fixture_qualified": true,
+    "bitwise_full_session_fixture_qualified": true,
+    "complete_gpu_session_speedups_qualified_reported": true,
+    "complete_gpu_session_speedups_field_means_valid_measurements_not_all_workload_gain": true,
+    "conservative_complete_call_gain_observed": false,
+    "suite_empirical_gain_criteria_met": false,
+    "workloads": [
+      "short-rows8",
+      "short-rows16",
+      "short-rows32",
+      "medium-rows8",
+      "medium-rows16",
+      "medium-rows32",
+      "long-rows8",
+      "long-rows16",
+      "long-rows32"
+    ],
+    "workloads_with_conservative_empirical_gain": [
+      "short-rows8",
+      "medium-rows8"
+    ],
+    "timed_return_count": 270,
+    "expected_timed_return_count": 270,
+    "every_timed_return_exact_decision_profile_and_shape_checked": true,
+    "four_logit_replay_scope": "once per lane and workload under a guarded private scope; this is not four-logit replay for every timed return",
+    "lanes_per_workload": 4,
+    "numerical_replays": 36,
+    "cpu_samples_per_lane_workload": 3,
+    "cuda_paired_samples_per_workload": 12,
+    "cuda_first_order_counts_per_workload": [
+      6,
+      6
+    ],
+    "source_lengths_truncated": false,
+    "ragged_widths_qualified": false,
+    "complete_call_timing_includes_guard_boundaries": true,
+    "timed_forward_calls_overlap": false,
+    "observed_old_cuda_over_candidate_cuda_median_ratios": {
+      "short-rows8": 1.0604415226967452,
+      "short-rows16": 1.0361756223706924,
+      "short-rows32": 1.0326503103567695,
+      "medium-rows8": 1.063374544922187,
+      "medium-rows16": 1.0480081077122037,
+      "medium-rows32": 1.0169955541613431,
+      "long-rows8": 1.029902587143882,
+      "long-rows16": 1.034496387355247,
+      "long-rows32": 1.0382962073455941
+    },
+    "conservative_suite_rule": "all nine workloads must meet all paired ratios greater than 1.02, both first-order group medians greater than 1.02, and paired-ratio median greater than 1.05",
+    "uncertainty_profile": "descriptive-seeded-paired-log-ratio-median-bootstrap/v1",
+    "uncertainty_scope": "descriptive retained observations; stationarity and independent sampling are not established",
+    "future_repeatability_claimed": false,
+    "family_or_task_semantics_qualified": false,
+    "new_training_fits": 0,
+    "embedding_calls": 0,
+    "optimizer_constructions": 0,
+    "optimizer_steps": 0,
+    "owned_allocations_returned_to_baseline": true,
+    "owned_child_and_root_leases_closed": true,
+    "resources_returned_to_zero": true,
+    "closed_reader": {
+      "source": "external/ipfs_datasets/benchmarks/audit_synthetic_4096_guard_workloads.py",
+      "scope": "bounded ordinary retained-byte and report-consistency checks",
+      "cpu_controls": {
+        "status": "passed",
+        "defined_test_functions": 31,
+        "actual_junit_cases_including_subtests": 38,
+        "passed": 38,
+        "failures": 0,
+        "errors": 0,
+        "skips": 0,
+        "receipt": "artifacts/codebase_ir_terminal_bench/native-4096-workload-reader-controls-20261004-01/receipt.json",
+        "receipt_bytes": 11261,
+        "receipt_sha256": "26572457f565cd44ed27db0f497d84f7e0b9008c85334b847c8a34e9f6a573ec"
+      },
+      "actual_result_audit": {
+        "status": "passed",
+        "receipt": "artifacts/codebase_ir_terminal_bench/native-4096-workload-closed-audit-20261004-01/receipt.json",
+        "receipt_bytes": 9077,
+        "receipt_sha256": "eb5920f970b22bee38fa6ba169e171cc690f716cafd818200783306accd3b472",
+        "report": "artifacts/codebase_ir_terminal_bench/native-4096-workload-closed-audit-20261004-01/audit.json",
+        "report_bytes": 73255,
+        "report_sha256": "f9a8b56379b2bab395996fe5cf8290dba5d617d09a9aef67b53c9e53980aee8c",
+        "consistent": true,
+        "current_sources_checked": true,
+        "source_pins_checked": 24,
+        "retained_files_checked": 397,
+        "timed_returns_checked": 270,
+        "maximum_logit_absolute_error": 1.7881393432617188e-07,
+        "suite_gain_preserved_false": true,
+        "owned_cpu_lease_closed": true,
+        "resources_returned_to_zero": true
+      },
+      "execution_attestation": false,
+      "proof_authority": false
+    }
+  },
+  "CG2_saved_trained_replay": {
+    "producer": "external/ipfs_datasets/benchmarks/qualify_bitwise_trained_head_devices.py",
+    "producer_final_pin_status": "qualified_frozen",
+    "producer_sha256": "29720e69e03eeaa6a5bb62e74bc5ae1fdd8a3da5661d17c767df9cc04099f110",
+    "dimensions": [
+      8,
+      384,
+      768
+    ],
+    "status": "numeric_canonical_and_complete_ordinary_archive_fixture_passed_no_complete_call_gain",
+    "result": "artifacts/codebase_ir_terminal_bench/bitwise-trained-head-device-qualification-20261004-04/result.json",
+    "result_sha256": "d178edbced905e3b55d36a067f8f797aa9a95a612f80162e6aaf6c64f9f26f79",
+    "expected_paired_timed_returns": 216,
+    "expected_retained_returns_including_cpu_reference_optout_and_cuda_warmup": 240,
+    "expected_counts_are_not_actual_execution_evidence": false,
+    "counts_are_separate_from_the_broad4096_270_return_suite": true,
+    "new_training_fits_allowed": 0,
+    "new_embeddings_allowed": 0,
+    "new_optimizer_steps_allowed": 0,
+    "retained_training_progress_is_historical": true,
+    "target_teacher_access_during_inference_allowed": false,
+    "formula_adam_constructor_restore_is_validation_not_training": true,
+    "formula_optimizer_free_claim": false,
+    "span_optimizer_constructor_count": 0,
+    "timing_must_distinguish_constructor_restore_from_warm_inference": true,
+    "retained_formula_checkpoints": [
+      {
+        "dimension": 8,
+        "path": "artifacts/codebase_ir_terminal_bench/legal-cuda-device-qualification-20261003-05/legal-8-checkpoint.json",
+        "sha256": "09558c8db4455bf3caad1f287cea9448da47393fe0fae1c5c140f0ff00e0e466",
+        "historical_optimizer_steps": 30
+      },
+      {
+        "dimension": 384,
+        "path": "artifacts/codebase_ir_terminal_bench/legal-cuda-device-qualification-20261003-05/legal-384-checkpoint.json",
+        "sha256": "7d8d0e60f7d644bed06e0a48ffc82c014c9ed697d89b9cdc2e4a5d55863885ce",
+        "historical_optimizer_steps": 30
+      }
+    ],
+    "retained_768_checkpoint": {
+      "status": "retained_historical_one_step_child_replayed",
+      "path": "artifacts/codebase_ir_terminal_bench/native-768-device-qualification-20261004-04/diagnostic-native768-head.json",
+      "sha256": "9fcd8dd3b9727f5ee93b5b2cb2d7f23e482f16c24f64c23a3ae9da2168e3117b",
+      "historical_optimizer_steps": 1,
+      "new_fits": 0
+    },
+    "required_checks": [
+      "current independently supplied checkpoint and transitive source pins",
+      "immutable checkpoint-origin byte anchors before mutable device references",
+      "exact source shape, lineage, task codec, encoder and execution profile",
+      "all public decisions plus independently compared numerical outputs",
+      "paired model/reference finite, signed-zero, subnormal, NaN and infinity mutation refusal",
+      "original source, checkpoint, callback, cancellation and lease boundary schedules",
+      "contiguous float32 state and preserved non-float buffer checks",
+      "raw alternating paired complete-call timing; no primitive-only promotion",
+      "checkpoint and Adam bytes unchanged, scoped precision restored, allocations and leases closed"
+    ],
+    "producer_bytes": 55557,
+    "result_bytes": 594992,
+    "observed_paired_timed_returns": 216,
+    "observed_retained_public_returns": 240,
+    "actual_formula_adam_restore_constructor_count": 8,
+    "all_nine_original_over_candidate_median_ratios_below_one": true,
+    "complete_call_gain_qualified": false,
+    "elapsed_seconds_total": 40.65277193499787,
+    "elapsed_seconds_after_root_admission": 39.41710309100745,
+    "gpu_peak_allocated_bytes": 51226624,
+    "root_release_observed": true,
+    "owned_child_release_count": 12,
+    "reported_active_leases": 0,
+    "gpu_allocation_after_framework_workspace_clear_bytes": 0,
+    "archive_files": 697,
+    "archive_bytes": 38107252,
+    "observed_median_ratios": {
+      "formula384": {
+        "1": 0.1510843553735148,
+        "16": 0.4671553185024403,
+        "32": 0.24359018297936252
+      },
+      "formula8": {
+        "1": 0.13868062526264605,
+        "16": 0.4776255466081144,
+        "32": 0.18122814907872614
+      },
+      "span768": {
+        "1": 0.9386033762233581,
+        "16": 0.970846332615359,
+        "32": 0.9828177824153606
+      }
+    },
+    "native_corruption_controls_scope": "paired finite, admitted signed-zero, anchor replacement, subnormal bits, post-forward paired/input mutations and cancellation; no semantic or execution attestation",
+    "native_zero_to_subnormal_control_scope": "span768 only; native formula controls replace nonzero values",
+    "independent_archive_review": {
+      "reader": {
+        "path": "external/ipfs_datasets/benchmarks/review_bitwise_trained_head_devices.py",
+        "bytes": 69735,
+        "sha256": "fd020261328d05d6e4df7ec1e85e2d9c5278fa01195dac3c8f8bb156be2a11c2"
+      },
+      "controls_source": {
+        "path": "external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_review_bitwise_trained_head_devices.py",
+        "bytes": 21911,
+        "sha256": "f732c4ac0ebb1adf5b4832eebb247790a31716729c4f2d9c1e8aea4e7ef994ac"
+      },
+      "passed_control_cases": 78,
+      "controls_receipt": {
+        "path": "artifacts/codebase_ir_terminal_bench/bitwise-trained-head-reader-controls-20261004-03/receipt.json",
+        "bytes": 10837,
+        "sha256": "8721389e16e4c0086e68b5c4effc0096be42adba56af758d8f984d5fceab4f14"
+      },
+      "audit": {
+        "path": "artifacts/codebase_ir_terminal_bench/bitwise-trained-head-closed-audit-20261004-02/audit.json",
+        "bytes": 192558,
+        "sha256": "5074df63cf8dbc753aa9d1d85e0de917346de9f95cfdcad0713d7154fda1beab"
+      },
+      "owned_audit_receipt": {
+        "path": "artifacts/codebase_ir_terminal_bench/bitwise-trained-head-closed-audit-20261004-02/receipt.json",
+        "bytes": 9134,
+        "sha256": "358a2b4c4a2978ea147b1aff82be0d88a29f77114d16bd7f74897c0af5563608"
+      },
+      "all_unique_public_reports": 240,
+      "paired_timed_reports": 216,
+      "complete_formula_projections": 160,
+      "complete_span_four_logit_snapshots": 12,
+      "current_source_pins": 24,
+      "tensor_library_imported": false,
+      "model_executed": false,
+      "retained_python_executed": false,
+      "proof_authority": false,
+      "execution_attestation": false
+    },
+    "required_checks_scope": "fixture-specific observed controls, numerical outputs and ordinary artifact joins; remaining live-method and comprehensive native corruption controls are future candidate-promotion work"
+  },
+  "next_performance_avenues": [
+    {
+      "id": "CG3-formula-fresh-boundary-receipts",
+      "status": "planned_separate_v2_source_and_profile",
+      "hypothesis_only": true,
+      "scope": "keep all four currentness boundaries and reduce duplicate same-boundary source verification and discarded receipt formatting",
+      "static_counts_current_v1": {
+        "full_boundaries_per_warm_call": 4,
+        "native_pin_passes_per_warm_call": 8,
+        "implementation_currentness_deepcopies_per_warm_call": 20,
+        "approximate_direct_source_SHA_reads_per_boundary": 24
+      },
+      "first_candidate_targets": {
+        "native_pin_passes_per_warm_call": 4,
+        "approximate_direct_source_SHA_reads_per_boundary": 18
+      },
+      "cache_prior_successful_verification_allowed": false,
+      "guard_boundary_removal_allowed": false,
+      "same_boundary_observations_only": true,
+      "bind_and_test_inherited_checkpoint_guard_matches_before_candidate_promotion": true,
+      "acceptance": [
+        "source-bound original/v1/v2 replay using unchanged retained trained fixtures",
+        "balanced complete-call raw samples and separate constructor timing",
+        "all four entry/exit position mutation, source/callback/cancel/lease controls",
+        "exact decisions and complete float32 numerical output joins",
+        "no new fitting, embeddings or optimizer steps",
+        "independent ordinary source/input/checkpoint/result/timing audit and closed resources"
+      ],
+      "performance_gain_claimed": false
+    },
+    {
+      "id": "CG2-formula-restore",
+      "status": "planned_separate_candidate",
+      "scope": "optimizer-free inference restoration and model initialization only",
+      "motivation": "the current new formula session still constructs and restores Adam once for original validation",
+      "preserve": [
+        "current formula adapter and qualified old sources",
+        "checkpoint schema and all Adam-content integrity validation",
+        "model/reference anchor custody",
+        "forward, projection, source and admission boundaries"
+      ],
+      "acceptance": [
+        "equivalent rejection of malformed optimizer metadata and moments",
+        "exact CPU model and checkpoint-reference anchor bytes",
+        "zero optimizer construction and zero steps in the new constructor",
+        "separate cold construction timing and unchanged warm-call numerical replay"
+      ],
+      "performance_gain_claimed": false
+    },
+    {
+      "id": "CG2-768-guard-gru",
+      "status": "planned_after_current_trained_replay",
+      "scope": "measure 768D guard, recurrent GRU and full public-call costs before selecting an optimization",
+      "preserve": [
+        "all checkpoint, source, reference, finite-value and callback checks",
+        "original precision policy and source lengths",
+        "owned admission, cancellation and cleanup"
+      ],
+      "acceptance": [
+        "full trained 768D replay with unchanged checkpoint and outputs",
+        "separate component observations plus paired complete-call measurements",
+        "short, medium and long rows at several batch sizes",
+        "retained raw samples, first-order balance and descriptive uncertainty",
+        "current source and report audit joins"
+      ],
+      "guard_boundary_removal_allowed": false,
+      "performance_gain_claimed": false
+    },
+    {
+      "id": "CG3-bounded-ordinary-enumeration",
+      "status": "planned_separate_broad_reader_successor",
+      "scope": "bound directory entry collection before sorting in the preserved 397-file broad4096 reader",
+      "current_qualified_scope": "fixed397-file authored workload archive; no arbitrary oversized-directory allocation qualification",
+      "existing_reader_source_changed": false,
+      "current_new_manifest_assembler_bounds_entries_before_collection": true
+    }
+  ],
+  "distinct_later_milestones": [
+    {
+      "id": "CG3-native4096-owner",
+      "status": "gated_pending_trusted_native_owner",
+      "scope": "actual complete Leanstral native4096 output custody and same-profile positive-step training",
+      "requirements": [
+        "separate admitted native embedding owner",
+        "complete model-content and CIDv1 verification",
+        "native embedding mode and last-pooling width",
+        "untruncated outputs and tokenizer/normalization identity",
+        "actual device, native entry/closing callbacks, cancellation and cleanup",
+        "receipt-bound same-profile training and ablation evidence"
+      ],
+      "foreign_generation_service_changed": false,
+      "embedding_or_generation_post_performed": false,
+      "full_model_loading_performed": false,
+      "native_outputs_qualified": false,
+      "positive_step_native4096_training_admitted": false
+    },
+    {
+      "id": "CG4-family-semantics-and-scans",
+      "status": "distinct_pending_family_task_evidence",
+      "scope": "CodebaseIR, IntentIR, SecurityIR and LegalIR correspondence, planning, repository scans and proof indexes",
+      "requirements": [
+        "family/task training and independent current-source correspondence",
+        "full repository disposition and larger resumable successor scans",
+        "codebase_IR representation trained on the repository under test",
+        "DuckDB/DuckLake repository root and index custody",
+        "formal logic proposals checked by an independent formal checker",
+        "intent planning joined to the current repository and ipfs_accelerate_py symbolic planner"
+      ],
+      "neural_encoding_itself_is_formal_proof": false,
+      "head_device_replay_establishes_family_semantics": false
+    },
+    {
+      "id": "CG4-signed-successor-dispatch",
+      "status": "distinct_pending_signed_admission_and_worker_evidence",
+      "scope": "signed full successor scan dispatch and worker integration",
+      "requirements": [
+        "current repository, source, model, encoder, task codec and checker roots",
+        "signed admission with replay/cancellation/lease boundaries",
+        "worker output and resume lineage joined to admitted successor",
+        "index and proof-cache entries retained with independently checked evidence"
+      ],
+      "timing_report_is_signed_worker_admission": false
+    },
+    {
+      "id": "CG5-federation",
+      "status": "distinct_pending_training_and_transport_qualification",
+      "scope": "combine worker updates into one model per compatible lineage",
+      "requirements": [
+        "same width, task, encoder, checkpoint and execution profile",
+        "versioned immutable tensor checkpoint storage and CIDv1 custody",
+        "aggregation, recovery and admission evidence",
+        "future gradient synchronization integration with ipfs_accelerate_py and mcp-plus-plus"
+      ],
+      "cross_width_averaging_allowed": false,
+      "cross_task_or_lineage_averaging_allowed": false,
+      "duckdb_ducklake_indexes_replace_tensor_integrity_checks": false
+    }
+  ],
+  "production_scope": {
+    "existing_production_acceptance_rows": 32,
+    "rows_changed": 0,
+    "rows_closed_by_this_milestone": 0,
+    "selected_production_profile_changed": false,
+    "candidate_promoted": false,
+    "runtime_database_or_remote_repository_created": false,
+    "ipfs_publication_performed": false,
+    "proof_authority": false,
+    "execution_attestation": false,
+    "kernel_resource_enforcement": false
+  },
+  "plan_author_validation": "Root retained native CUDA fixture runs, passing CPU controls and closed ordinary archive audits; static next-profile cost hypotheses remain unmeasured.",
+  "production_acceptance_rows_closed": 0,
+  "production_acceptance_rows_unchanged": 32,
+  "qualification_closure": {
+    "formula_cpu_receipt_finalized": true,
+    "span768_cpu_receipt_finalized": true,
+    "broad4096_reader_and_archive_audit_finalized": true,
+    "trained_three_head_reader_and_archive_audit_finalized": true,
+    "current_passed_cpu_control_cases": 364,
+    "case_breakdown": {
+      "formula": 142,
+      "span768": 42,
+      "broad4096_reader": 38,
+      "closure_builder": 64,
+      "trained_head_reader": 78
+    },
+    "inherited_historical_control_cases_not_rerun": 443,
+    "historical_138_case_formula_pass_not_counted_again": true,
+    "failed_or_superseded_attempts_count_as_current_success": false,
+    "all_selected_existing_routes_unchanged": true,
+    "local_manifest_assembly_record": "artifacts/codebase_ir_terminal_bench/guard-workload-review-20261004-01/closure.json",
+    "machine_review": "external/ipfs_accelerate/docs/architecture/repository_proof_index_and_codebase_ir.guard_workload_review.json",
+    "cid_scope": "local canonical DAG-JSON manifest bytes only",
+    "ipfs_publication_performed": false,
+    "execution_attestation": false,
+    "proof_authority": false
+  }
+}

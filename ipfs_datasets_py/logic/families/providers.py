@@ -707,7 +707,55 @@ def build_baseline_provider_entries() -> tuple[ProviderCapabilityEntry, ...]:
             runtime_ids=("native_process",),
             evidence_ids=("counterexample", "model"),
             boundedness_ids=("resource_bounded", "step_bounded"),
-            notes="HyperLTL AutoHyper/MCHyper lane.",
+            notes="Compatibility hyperproperty lane executing HyperLTL; independent engines have their own IDs.",
+        ),
+        _entry(
+            "hyperltl",
+            authority_ceiling=EvidenceAuthority.BOUNDED,
+            family_support=(
+                _support(
+                    "hyperproperty",
+                    fragments=("hypertrace", "information_flow", "linear_time"),
+                    properties=("hyperproperty", "noninterference"),
+                    operations=("check_hyperproperty",),
+                ),
+            ),
+            runtime_ids=("native_process",),
+            evidence_ids=("counterexample", "model"),
+            boundedness_ids=("resource_bounded", "step_bounded"),
+            notes="Independent HyperLTL provider; availability and evidence remain engine-specific.",
+        ),
+        _entry(
+            "autohyper",
+            authority_ceiling=EvidenceAuthority.BOUNDED,
+            family_support=(
+                _support(
+                    "hyperproperty",
+                    fragments=("hypertrace", "information_flow", "linear_time"),
+                    properties=("hyperproperty", "noninterference"),
+                    operations=("check_hyperproperty",),
+                ),
+            ),
+            runtime_ids=("native_process",),
+            evidence_ids=("counterexample", "model"),
+            boundedness_ids=("resource_bounded", "step_bounded"),
+            notes="Independent AutoHyper provider; no other engine establishes its availability or evidence.",
+        ),
+        _entry(
+            "mchyper",
+            authority_ceiling=EvidenceAuthority.BOUNDED,
+            family_support=(
+                _support(
+                    "hyperproperty",
+                    fragments=("hypertrace", "information_flow", "linear_time"),
+                    properties=("hyperproperty", "noninterference"),
+                    operations=("check_hyperproperty",),
+                ),
+            ),
+            runtime_ids=("native_process",),
+            evidence_ids=("counterexample", "model"),
+            boundedness_ids=("resource_bounded", "step_bounded"),
+            notes="Independent MCHyper provider requiring an explicit system model.",
         ),
         _entry(
             "vampire",

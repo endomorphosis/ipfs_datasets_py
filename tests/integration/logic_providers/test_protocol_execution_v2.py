@@ -831,6 +831,7 @@ def test_source_only_execution_binds_compile_identity() -> None:
 
 
 def test_tamarin_attack_trace_is_parsed_and_replayed() -> None:
+    """Retain the historical test ID while refusing unvalidated native replay."""
     single_lemma = """\
 theory AttackOnly
 begin
@@ -852,22 +853,20 @@ end
         request_id="req:tm:attack",
         engine=engine,
     )
-    assert result.disposition is ProtocolDisposition.ATTACK_FOUND
-    assert result.attack_status is ProtocolAttackStatus.ATTACK_REPLAYED
-    assert result.evidence.attack.replayed is True
+    assert result.disposition is ProtocolDisposition.QUARANTINED
+    assert result.attack_status is ProtocolAttackStatus.NONE
+    assert result.evidence.attack.replayed is False
     assert result.evidence.attack.non_replayable is False
-    assert result.evidence.attack.attack_count >= 1
-    assert result.evidence.attack.replay_tokens
-    assert all(
-        isinstance(token, str) and ":" in token
-        for token in result.evidence.attack.replay_tokens
-    )
-    assert result.evidence.attack.attack_traces
-    assert result.evidence.protocol_established is True
-    assert result.evidence.result_status is ResultStatus.ATTACK_FOUND
+    assert result.evidence.attack.attack_count == 0
+    assert not result.evidence.attack.replay_tokens
+    assert not result.evidence.attack.attack_traces
+    assert result.evidence.protocol_established is False
+    assert result.evidence.result_status is ResultStatus.UNKNOWN
+    assert result.evidence.translation_ceiling is EvidenceAuthority.NONE
+    assert result.backend_result.metadata["protocol_receipt"]["quarantine"]["reason"] == "malformed_output"
     wire = result.evidence.to_dict()
-    assert wire["attack_status"] == "attack_replayed"
-    assert wire["attack"]["replayed"] is True
+    assert wire["attack_status"] == "none"
+    assert wire["attack"]["replayed"] is False
 
 
 def test_proverif_attack_trace_is_parsed_and_replayed() -> None:

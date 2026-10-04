@@ -1232,6 +1232,23 @@ PROVIDER_SURFACE_PATHS: Final[Mapping[str, Mapping[str, tuple[str, ...]]]] = (
                 "replay": (),
                 "kernel": (),
             },
+            **{
+                engine: {
+                    "registry": (_BACKEND_REGISTRY, _FAMILY_PROVIDERS),
+                    "matrix": (_MATRIX_MODULE,),
+                    "parser": (_pkg("parsers", "hyper.py"),),
+                    "translator": (_FAMILY_TRANSLATIONS, _GENERATED_CATALOG),
+                    "compiler": (_pkg("backends", "hyperproperties", "adapters.py"),),
+                    "runner": (
+                        _pkg("backends", "hyperproperties", "adapters.py"),
+                        _PROCESS_MODULE,
+                    ),
+                    "decoder": (_RESULTS_MODULE,),
+                    "replay": (),
+                    "kernel": (),
+                }
+                for engine in ("hyperltl", "autohyper", "mchyper")
+            },
             "isabelle": {
                 "registry": (_BACKEND_REGISTRY, _FAMILY_PROVIDERS),
                 "matrix": (_MATRIX_MODULE,),

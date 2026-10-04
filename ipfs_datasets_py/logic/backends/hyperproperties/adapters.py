@@ -21,7 +21,7 @@ import json
 import re
 import shutil
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from enum import StrEnum
 from pathlib import Path
 from typing import Any, Final
@@ -50,6 +50,7 @@ from ...software_verification.hyperproperties import (
     WitnessRole,
     WitnessTrace,
     WitnessTraceBundle,
+    normalize_execution_traces,
     quantifier_order_is_canonical,
 )
 from ..process import (
@@ -60,6 +61,15 @@ from ..process import (
     ToolRunRequest,
     ToolRunResult,
     ToolRuntime,
+)
+from ..resource_admission import ResourceAdmittedToolRunner
+from ..python_admission import admitted_python_work
+from ..smt.operation_budget import (
+    MAX_OPERATION_TIMEOUT_MS,
+    ProofOperationInterrupted,
+    _Signals,
+    current_proof_operation,
+    proof_operation_scope,
 )
 from ..results import (
     HyperpropertyResult,
@@ -79,10 +89,25 @@ HYPER_CHECK_RECEIPT_VERSION: Final = "hyperproperty-check-receipt/v1"
 HYPER_SOURCE_BINDING_VERSION: Final = "hyperproperty-source-binding/v1"
 
 DEFAULT_VERSION_TIMEOUT_SECONDS: Final = 3.0
+
+_CANONICAL_BOUNDED_EVALUATOR = HyperpropertyIR.evaluate_bounded_noninterference
+
+
+def _operation_checkpoint(phase: str) -> float | None:
+    operation = current_proof_operation()
+    return operation.checkpoint(phase) if operation is not None else None
+
+
 DEFAULT_MAX_OUTPUT_BYTES: Final = 2 * 1024 * 1024
 DEFAULT_MAX_ALTERNATIONS_HYPERLTL: Final = 4
 DEFAULT_MAX_ALTERNATIONS_AUTOHYPER: Final = 2
 DEFAULT_MAX_ALTERNATIONS_MCHYPER: Final = 2
+
+# Estimates for a launcher and one sequential solver/tool chain, not OS caps.
+HYPER_CPU_SLOTS: Final = 2
+HYPER_PROCESS_SLOTS: Final = 4
+HYPER_ADDRESS_SPACE_FLOOR_BYTES: Final = 2 * 1024**3
+AUTOHYPER_ADDRESS_SPACE_FLOOR_BYTES: Final = 4 * 1024**3
 
 _DIGEST = re.compile(r"^[0-9a-f]{64}$")
 _UNSUPPORTED_LINES: Final = frozenset(
@@ -532,7 +557,7 @@ class ObservationMap:
             )
             for key, value in self.observation_kinds.items()
         }
-        object.__setattr__(self, "observation_kinds", FrozenMap(kinds).to_dict())
+        object.__setattr__(self, "observation_kinds", FrozenMap(kinds))
 
     @classmethod
     def from_document(cls, document: HyperpropertyIR) -> ObservationMap:
@@ -580,7 +605,7 @@ class QuantifierOrder:
     signature: tuple[str, ...]
     variable_ids: tuple[str, ...]
     variable_names: tuple[str, ...]
-    bindings: tuple[dict[str, Any], ...]
+    bindings: tuple[Mapping[str, Any], ...]
 
     def __post_init__(self) -> None:
         object.__setattr__(
@@ -607,10 +632,17 @@ class QuantifierOrder:
             raise HyperpropertyAdapterError(
                 "quantifier order components must have equal length"
             )
+        # Rows contain only the scalar QuantifierBinding contract. Validate
+        # before recursive freezing so malformed cycles cannot recurse here.
+        for item in self.bindings:
+            try:
+                QuantifierBinding.from_dict(item)
+            except (HyperpropertyValidationError, TypeError, ValueError) as error:
+                raise HyperpropertyAdapterError("invalid quantifier binding row") from error
         object.__setattr__(
             self,
             "bindings",
-            tuple(dict(item) for item in self.bindings),
+            tuple(FrozenMap(item) for item in self.bindings),
         )
 
     @classmethod
@@ -643,7 +675,7 @@ class QuantifierOrder:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "bindings": [dict(item) for item in self.bindings],
+            "bindings": [item.to_dict() for item in self.bindings],
             "signature": list(self.signature),
             "variable_ids": list(self.variable_ids),
             "variable_names": list(self.variable_names),
@@ -710,7 +742,7 @@ class HyperpropertyTranslation:
             )
             for key, value in self.auxiliary_files.items()
         }
-        object.__setattr__(self, "auxiliary_files", FrozenMap(aux).to_dict())
+        object.__setattr__(self, "auxiliary_files", FrozenMap(aux))
         object.__setattr__(
             self,
             "losses",
@@ -804,7 +836,21 @@ class HyperCounterexampleTrace:
         self,
         *,
         bundle_id: str = "bundle:engine-counterexample",
+        observation_map: ObservationMap | None = None,
+        quantifier_order: QuantifierOrder | None = None,
+        formula_id: str | None = None,
     ) -> WitnessTraceBundle:
+        """Build only a context-checked structural projection, not model replay.
+
+        A caller-supplied ``replayed`` flag is not validation evidence. Native
+        bundles require the actual request's maps and formula identity.
+        """
+        if observation_map is None or quantifier_order is None or formula_id is None:
+            raise HyperpropertyAdapterError("witness bundle requires observation, quantifier and formula context")
+        checked = replay_hyper_counterexample(self, observation_map, quantifier_order,
+                                             formula_id=formula_id)
+        if not checked.replayed:
+            raise HyperpropertyAdapterError("counterexample failed structural projection validation")
         return WitnessTraceBundle(
             bundle_id=bundle_id,
             role=WitnessRole.COUNTEREXAMPLE,
@@ -812,7 +858,7 @@ class HyperCounterexampleTrace:
             traces=self.traces,
             differences=self.differences,
             observed_fields=self.observed_fields,
-            description="Engine counterexample with redacted high inputs",
+            description="Structurally checked observation projection; native model membership and temporal semantics unvalidated",
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -1232,6 +1278,51 @@ def _autohyper_explicit_system(document: HyperpropertyIR) -> str:
     )
 
 
+_MAX_COUNTEREXAMPLE_BYTES: Final = DEFAULT_MAX_OUTPUT_BYTES
+_MAX_COUNTEREXAMPLE_LINES: Final = 4096
+_MAX_COUNTEREXAMPLE_FIELDS: Final = 256
+_MAX_COUNTEREXAMPLE_TRACES: Final = 8
+
+
+def _counterexample_maps_valid(
+    observation_map: ObservationMap, quantifier_order: QuantifierOrder,
+) -> bool:
+    """Check context consistency before interpreting any untrusted trace text."""
+    if not isinstance(observation_map, ObservationMap) or not isinstance(quantifier_order, QuantifierOrder):
+        return False
+    groups = (observation_map.low_input_fields, observation_map.high_input_fields,
+              observation_map.observation_fields, observation_map.subject_fields)
+    if sum(map(len, groups)) > _MAX_COUNTEREXAMPLE_FIELDS or any(len(g) != len(set(g)) for g in groups):
+        return False
+    if set(observation_map.high_input_fields) & set().union(groups[0], groups[2], groups[3]):
+        return False
+    order = quantifier_order
+    if not (0 < len(order.variable_ids) <= _MAX_COUNTEREXAMPLE_TRACES
+            and len(order.variable_ids) == len(set(order.variable_ids))
+            and len(order.variable_names) == len(set(order.variable_names))):
+        return False
+    try:
+        bindings = tuple(QuantifierBinding.from_dict(row) for row in order.bindings)
+    except (ValueError, TypeError, KeyError):
+        return False
+    return (len({row.binding_id for row in bindings}) == len(bindings)
+            and all(row.index == i and row.variable_id == order.variable_ids[i]
+                    and row.quantifier.value == order.signature[i] for i, row in enumerate(bindings)))
+
+
+def _trace_differences(
+    traces: tuple[WitnessTrace, ...], observation_map: ObservationMap,
+) -> tuple[ObservationDifference, ...]:
+    if len(traces) < 2:
+        return ()
+    left, right = traces[:2]
+    return tuple(ObservationDifference(field=name,
+        left_digest="sha256:" + _content_digest(left.observations[name]),
+        right_digest="sha256:" + _content_digest(right.observations[name]))
+        for name in observation_map.observation_fields
+        if left.observations[name] != right.observations[name])
+
+
 def parse_hyper_counterexample(
     output: str,
     *,
@@ -1239,231 +1330,175 @@ def parse_hyper_counterexample(
     observation_map: ObservationMap,
     quantifier_order: QuantifierOrder,
 ) -> HyperCounterexampleTrace | None:
-    """Parse multi-trace counterexample blocks from engine stdout/stderr.
+    """Parse complete, unambiguous native TRACE records within finite limits.
 
-    Recognized forms::
-
-        TRACE pi1:
-          public.user_id = alice
-          obs.status = ok
-        TRACE pi2:
-          public.user_id = alice
-          obs.status = leak
-
-        DIFF field=status left=... right=...
+    Labels must name declared variables. Assignments cover the complete approved
+    projection exactly once. Optional DIFF rows must agree with actual values in
+    declaration order. No missing value, trace or difference is fabricated.
+    Returned raw text contains only approved assignments, without engine logs.
+    Parsing alone does not validate a counterexample or native model membership.
     """
-
-    text = str(output or "")
-    if not text.strip():
+    if (not isinstance(output, str) or len(output) > _MAX_COUNTEREXAMPLE_BYTES
+            or not output.strip() or "\x00" in output
+            or not _counterexample_maps_valid(observation_map, quantifier_order)):
         return None
-    trace_pattern = re.compile(
-        r"(?ms)^TRACE\s+([A-Za-z0-9_.:/-]+)\s*:\s*\n(.*?)(?=^TRACE\s|\Z)"
-    )
-    parsed: list[WitnessTrace] = []
-    for index, match in enumerate(trace_pattern.finditer(text)):
-        name = match.group(1).strip()
-        body = match.group(2)
-        public_inputs: dict[str, str] = {}
-        observations: dict[str, str] = {}
-        subject: dict[str, str] = {}
-        for line in body.splitlines():
-            line = line.strip()
-            if not line or line.startswith("#") or "=" not in line:
-                continue
-            key, _, value = line.partition("=")
-            key = key.strip()
-            value = value.strip()
-            if key.startswith("public."):
-                public_inputs[key.removeprefix("public.")] = value
-            elif key.startswith("obs."):
-                observations[key.removeprefix("obs.")] = value
-            elif key.startswith("subject."):
-                subject[key.removeprefix("subject.")] = value
-            elif key in observation_map.observation_fields:
-                observations[key] = value
-            elif key in observation_map.low_input_fields:
-                public_inputs[key] = value
-            elif key in observation_map.subject_fields:
-                subject[key] = value
-        variable_id = (
-            quantifier_order.variable_ids[index]
-            if index < len(quantifier_order.variable_ids)
-            else f"var:{name}"
-        )
-        # Prefer declared variable names when the TRACE label matches them.
-        for offset, declared_name in enumerate(quantifier_order.variable_names):
-            if declared_name == name and offset < len(quantifier_order.variable_ids):
-                variable_id = quantifier_order.variable_ids[offset]
-                break
-        parsed.append(
-            WitnessTrace.from_execution(
-                trace_id=f"trace:{name}",
-                variable_id=variable_id,
-                public_inputs=public_inputs,
-                observations=observations,
-                subject=subject,
-            )
-        )
-
-    if not parsed:
+    try:
+        if len(output.encode("utf-8")) > _MAX_COUNTEREXAMPLE_BYTES:
+            return None
+    except UnicodeEncodeError:
         return None
-
-    differences: list[ObservationDifference] = []
-    for match in re.finditer(
-        r"(?m)^DIFF\s+field=(\S+)\s+left=(\S+)\s+right=(\S+)\s*$",
-        text,
-    ):
-        field_name = match.group(1)
-        left_raw = match.group(2)
-        right_raw = match.group(3)
-        differences.append(
-            ObservationDifference(
-                field=field_name,
-                left_digest="sha256:" + _content_digest(left_raw),
-                right_digest="sha256:" + _content_digest(right_raw),
-            )
-        )
-
-    if not differences and len(parsed) >= 2:
-        left, right = parsed[0], parsed[1]
-        for field_name in observation_map.observation_fields:
-            left_value = dict(left.observations).get(field_name)
-            right_value = dict(right.observations).get(field_name)
-            if left_value != right_value:
-                differences.append(
-                    ObservationDifference(
-                        field=field_name,
-                        left_digest="sha256:"
-                        + _content_digest(
-                            "" if left_value is None else str(left_value)
-                        ),
-                        right_digest="sha256:"
-                        + _content_digest(
-                            "" if right_value is None else str(right_value)
-                        ),
-                    )
-                )
-                break
-
-    if not differences:
-        # Still return a parseable multi-trace tuple so callers can replay structure.
-        differences = (
-            ObservationDifference(
-                field=observation_map.observation_fields[0]
-                if observation_map.observation_fields
-                else "observation",
-                left_digest="sha256:" + _content_digest("left"),
-                right_digest="sha256:" + _content_digest("right"),
-            ),
-        )
-
-    return HyperCounterexampleTrace(
-        formula_id=formula_id,
-        observation_policy_id=observation_map.policy_id,
-        observed_fields=observation_map.observation_fields,
-        traces=tuple(parsed),
-        differences=tuple(differences),
-        raw=text,
-        replayed=False,
-        replay_notes=(),
-    )
+    # Accept LF and CRLF records; other control/separator characters must not
+    # manufacture trace boundaries or hide extra assignments.
+    normalized = output.replace("\r\n", "\n")
+    if any((ord(char) < 32 and char not in "\n\t")
+           or char in "\x7f\x85\u2028\u2029" for char in normalized):
+        return None
+    lines = normalized.split("\n")
+    if len(lines) > _MAX_COUNTEREXAMPLE_LINES:
+        return None
+    approved = {"public": set(observation_map.low_input_fields),
+                "obs": set(observation_map.observation_fields),
+                "subject": set(observation_map.subject_fields)}
+    labels = dict(zip(quantifier_order.variable_names, quantifier_order.variable_ids))
+    records, supplied_diffs = {}, {}
+    current = None
+    for raw_line in lines:
+        _operation_checkpoint("hyper counterexample parsing")
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        header = re.fullmatch(r"TRACE\s+([A-Za-z0-9_.:/-]+)\s*:", line)
+        if header:
+            name = header.group(1)
+            if name not in labels or name in records:
+                return None
+            records[name] = {group: {} for group in approved}
+            current = records[name]
+            continue
+        if line.startswith("TRACE"):
+            return None
+        if line.startswith("DIFF"):
+            difference = re.fullmatch(r"DIFF\s+field=(\S+)\s+left=(\S+)\s+right=(\S+)", line)
+            if difference is None or current is None:
+                return None
+            name, left, right = difference.groups()
+            if name not in approved["obs"] or name in supplied_diffs:
+                return None
+            supplied_diffs[name] = (left, right)
+            continue
+        if current is None:
+            # Engine verdicts/log headers are not retained as witness data.
+            continue
+        key, separator, value = line.partition("=")
+        key, value = key.strip(), value.strip()
+        if not separator or not key or not value:
+            return None
+        group, dot, name = key.partition(".")
+        if group in approved and dot:
+            candidates = [(group, name)] if name in approved[group] else []
+        else:
+            candidates = [(group, key) for group, fields in approved.items() if key in fields]
+        if len(candidates) != 1:
+            return None
+        group, name = candidates[0]
+        if name in current[group]:
+            return None
+        current[group][name] = value
+    if set(records) != set(labels):
+        return None
+    if any(set(record[group]) != fields for record in records.values() for group, fields in approved.items()):
+        return None
+    try:
+        traces = tuple(WitnessTrace.from_execution(trace_id="trace:" + name, variable_id=labels[name],
+            public_inputs=records[name]["public"], observations=records[name]["obs"],
+            subject=records[name]["subject"]) for name in quantifier_order.variable_names)
+        differences = _trace_differences(traces, observation_map)
+        if supplied_diffs:
+            if len(traces) < 2:
+                return None
+            left, right = traces[:2]
+            for name, values in supplied_diffs.items():
+                if (values != (left.observations[name], right.observations[name])
+                        or values[0] == values[1]):
+                    return None
+        canonical = []
+        for name in quantifier_order.variable_names:
+            canonical.append("TRACE " + name + ":")
+            for group, fields in (("public", observation_map.low_input_fields),
+                                  ("obs", observation_map.observation_fields),
+                                  ("subject", observation_map.subject_fields)):
+                canonical.extend("  " + group + "." + field + " = " + records[name][group][field]
+                                 for field in fields)
+        return HyperCounterexampleTrace(formula_id=formula_id,
+            observation_policy_id=observation_map.policy_id, observed_fields=observation_map.observation_fields,
+            traces=traces, differences=differences, raw="\n".join(canonical) + "\n")
+    except (HyperpropertyValidationError, HyperpropertyAdapterError, TypeError, KeyError):
+        return None
 
 
 def replay_hyper_counterexample(
     counterexample: HyperCounterexampleTrace,
     observation_map: ObservationMap,
     quantifier_order: QuantifierOrder,
+    *,
+    formula_id: str | None = None,
 ) -> HyperCounterexampleTrace:
-    """Replay a parsed multi-trace counterexample against the observation map.
+    """Validate a two-forall structural observation projection against context.
 
-    Replay is structural: every observation key and TRACE variable must match
-    the translation package.  Missing or extra keys become notes; success is
-    never invented.
+    The legacy ``replayed`` flag means only this finite structural check. It does
+    not attest native system reachability, temporal semantics, high-input
+    variation, or authenticity of solver output. Caller flags/notes are ignored.
+    Native raw records are reparsed to detect omitted or altered assignments.
     """
-
     if not isinstance(counterexample, HyperCounterexampleTrace):
-        raise HyperpropertyAdapterError(
-            "counterexample must be a HyperCounterexampleTrace"
-        )
-    notes: list[str] = []
-    approved = set(observation_map.observation_fields)
-    low_inputs = set(observation_map.low_input_fields)
-    subjects = set(observation_map.subject_fields)
-    declared_names = set(quantifier_order.variable_names)
-    declared_ids = set(quantifier_order.variable_ids)
-
-    if len(counterexample.traces) != len(quantifier_order.variable_ids):
-        notes.append(
-            "trace arity "
-            f"{len(counterexample.traces)} does not match quantifier arity "
-            f"{len(quantifier_order.variable_ids)}"
-        )
-
-    for index, trace in enumerate(counterexample.traces):
-        unknown_obs = sorted(set(trace.observations) - approved)
-        if unknown_obs:
-            notes.append(
-                f"trace {trace.trace_id}: unapproved observation keys: "
-                + ", ".join(unknown_obs)
-            )
-        known_obs = sorted(set(trace.observations) & approved)
-        if known_obs:
-            notes.append(
-                f"trace {trace.trace_id}: replayed observations: "
-                + ", ".join(known_obs)
-            )
-        unknown_public = sorted(set(trace.public_inputs) - low_inputs)
-        if unknown_public:
-            notes.append(
-                f"trace {trace.trace_id}: public keys outside low-input map: "
-                + ", ".join(unknown_public)
-            )
-        unknown_subject = sorted(set(trace.subject) - subjects) if subjects else ()
-        if unknown_subject:
-            notes.append(
-                f"trace {trace.trace_id}: subject keys outside subject map: "
-                + ", ".join(unknown_subject)
-            )
-        if (
-            trace.variable_id not in declared_ids
-            and index < len(quantifier_order.variable_ids)
-        ):
-            notes.append(
-                f"trace {trace.trace_id}: variable_id {trace.variable_id} "
-                "does not match quantifier order"
-            )
-        # TRACE ids may use names; note whether the name is declared.
-        label = trace.trace_id.removeprefix("trace:")
-        if label not in declared_names and trace.variable_id not in declared_ids:
-            notes.append(
-                f"trace {trace.trace_id}: label is not in quantifier variable names"
-            )
-
-    for difference in counterexample.differences:
-        if difference.field not in approved and approved:
-            notes.append(
-                f"difference field {difference.field!r} is not an approved observation"
-            )
-        else:
-            notes.append(f"difference field {difference.field!r} is approved")
-
-    if not notes:
-        notes.append("counterexample structure matches observation and quantifier maps")
-
-    return HyperCounterexampleTrace(
-        formula_id=counterexample.formula_id,
-        observation_policy_id=counterexample.observation_policy_id,
-        observed_fields=counterexample.observed_fields,
-        traces=counterexample.traces,
-        differences=counterexample.differences,
-        raw=counterexample.raw,
-        replayed=True,
-        replay_notes=tuple(notes),
-    )
+        raise HyperpropertyAdapterError("counterexample must be a HyperCounterexampleTrace")
+    notes = []
+    if not _counterexample_maps_valid(observation_map, quantifier_order):
+        return replace(counterexample, replayed=False, replay_notes=("invalid observation or quantifier context",))
+    if (len(counterexample.traces) != len(quantifier_order.variable_ids)
+            or len(counterexample.differences) > len(observation_map.observation_fields)
+            or len(counterexample.observed_fields) > _MAX_COUNTEREXAMPLE_FIELDS):
+        return replace(counterexample, replayed=False,
+                       replay_notes=("counterexample containers exceed the approved projection",))
+    if formula_id is None or counterexample.formula_id != formula_id:
+        notes.append("missing or mismatched expected formula identity")
+    if counterexample.observation_policy_id != observation_map.policy_id:
+        notes.append("observation policy identity mismatch")
+    if counterexample.observed_fields != observation_map.observation_fields:
+        notes.append("observed fields differ from the approved ordered projection")
+    if quantifier_order.signature != ("forall", "forall"):
+        notes.append("structural pair validation requires exactly two forall variables")
+    parsed = parse_hyper_counterexample(counterexample.raw,
+        formula_id=formula_id or counterexample.formula_id,
+        observation_map=observation_map, quantifier_order=quantifier_order)
+    if parsed is None:
+        notes.append("native TRACE records are absent, incomplete, malformed or exceed limits")
+    else:
+        if tuple(row.to_dict() for row in counterexample.traces) != tuple(row.to_dict() for row in parsed.traces):
+            notes.append("trace labels, values or digests do not match the complete raw projection")
+        if counterexample.differences != parsed.differences:
+            notes.append("difference fields or digests do not match actual observations")
+        if len(parsed.traces) == 2:
+            left, right = parsed.traces
+            if left.public_inputs != right.public_inputs:
+                notes.append("traces have different low-input projections")
+            if left.subject != right.subject:
+                notes.append("traces have different subject projections")
+        if not parsed.differences:
+            notes.append("no genuine approved observation difference")
+    valid = not notes
+    if valid:
+        notes.append("replayed observations: " + ", ".join(observation_map.observation_fields))
+    notes.append("structural projection only; native model membership, temporal semantics and high-input variation unvalidated")
+    return replace(counterexample, replayed=valid, replay_notes=tuple(notes))
 
 
 class HyperpropertyBackend:
-    """Shared lifecycle for HyperLTL-family external tools and fallback."""
+    """Shared lifecycle with lazy resource admission for owned default runners.
+
+    Explicit runners retain caller-owned admission and resource profiles.
+    Discovery is inert; owned execution never starts a second version process.
+    """
 
     engine: HyperEngine
     backend_id: str
@@ -1479,7 +1514,10 @@ class HyperpropertyBackend:
         engine_identity: object | None = None,
         runtime_environment: Mapping[str, str] | None = None,
     ) -> None:
-        self._runner = runner or BoundedToolRunner()
+        self._managed_runner = runner is None
+        self._runner = runner if runner is not None else ResourceAdmittedToolRunner(
+            cpu_slots=HYPER_CPU_SLOTS, child_process_slots=HYPER_PROCESS_SLOTS,
+        )
         self._which = which
         if engine_identity is not None and (
             executable is not None or runtime_environment is not None
@@ -1638,13 +1676,52 @@ class HyperpropertyBackend:
         document: HyperpropertyIR,
         *,
         request: BackendRequest | None = None,
+        bounds: ExecutionBounds | None = None,
         traces: Sequence[ExecutionTrace] | None = None,
         system_model: bytes | str | None = None,
         allow_fallback: bool = False,
         cancellation: CancellationSignal | None = None,
     ) -> HyperCheckOutcome:
+        """Observe any enclosing proof operation without changing declared bounds.
+
+        Standalone direct checks retain their existing invocation limits. V2 and
+        registry scopes also bound preparation, metadata and receipt publication.
+        Opaque Python work remains cooperative at callback boundaries.
+        """
+        _operation_checkpoint("before hyper check")
+        operation = current_proof_operation()
+        if operation is not None:
+            cancellation = (operation if cancellation is None or cancellation is operation
+                            else _Signals(operation, cancellation))
+        try:
+            outcome = self._check(document, request=request, bounds=bounds,
+                traces=traces, system_model=system_model, allow_fallback=allow_fallback,
+                cancellation=cancellation)
+        except Exception:
+            _operation_checkpoint("hyper check exception boundary")
+            raise
+        _operation_checkpoint("after hyper receipt construction")
+        return outcome
+
+    def _check(
+        self,
+        document: HyperpropertyIR,
+        *,
+        request: BackendRequest | None = None,
+        bounds: ExecutionBounds | None = None,
+        traces: Sequence[ExecutionTrace] | None = None,
+        system_model: bytes | str | None = None,
+        allow_fallback: bool = False,
+        cancellation: CancellationSignal | None = None,
+    ) -> HyperCheckOutcome:
+        if bounds is not None and not isinstance(bounds, ExecutionBounds):
+            raise HyperpropertyAdapterError("bounds must be ExecutionBounds")
+        if request is not None and bounds is not None and bounds != request.bounds:
+            raise HyperpropertyAdapterError("bounds must match request.bounds")
         document = _document_from_value(document)
+        _operation_checkpoint("after hyper document normalization")
         translation = self.translate(document)
+        _operation_checkpoint("after hyper translation")
         request_digest = (
             request.digest
             if request is not None
@@ -1653,10 +1730,13 @@ class HyperpropertyBackend:
         bounds = (
             request.bounds
             if request is not None
+            else bounds if bounds is not None
             else ExecutionBounds(timeout_ms=10_000, max_steps=1_000)
         )
 
+        _operation_checkpoint("before hyper prefix check")
         supported, unsupported_reason = self.supports_prefix(document)
+        _operation_checkpoint("after hyper prefix check")
         if not supported:
             receipt = self._terminal_receipt(
                 document=document,
@@ -1669,7 +1749,7 @@ class HyperpropertyBackend:
             return HyperCheckOutcome(
                 request_digest=request_digest,
                 result=self._result_from_receipt(
-                    receipt, request=request, bounds=bounds
+                    receipt, request=request, bounds=bounds, document=document
                 ),
                 receipt=receipt,
                 translation=translation,
@@ -1677,6 +1757,7 @@ class HyperpropertyBackend:
             )
 
         probe = self.probe()
+        _operation_checkpoint("after hyper discovery")
         if not probe.available:
             if allow_fallback and self.capability.supports_self_composition_fallback:
                 return self._fallback_outcome(
@@ -1686,6 +1767,7 @@ class HyperpropertyBackend:
                     request_digest=request_digest,
                     bounds=bounds,
                     traces=traces,
+                    cancellation=cancellation,
                     unavailable_reason=probe.reason
                     or f"{self.engine.value} executable unavailable",
                 )
@@ -1701,7 +1783,7 @@ class HyperpropertyBackend:
             return HyperCheckOutcome(
                 request_digest=request_digest,
                 result=self._result_from_receipt(
-                    receipt, request=request, bounds=bounds
+                    receipt, request=request, bounds=bounds, document=document
                 ),
                 receipt=receipt,
                 translation=translation,
@@ -1723,7 +1805,7 @@ class HyperpropertyBackend:
             return HyperCheckOutcome(
                 request_digest=request_digest,
                 result=self._result_from_receipt(
-                    receipt, request=request, bounds=bounds
+                    receipt, request=request, bounds=bounds, document=document
                 ),
                 receipt=receipt,
                 translation=translation,
@@ -1783,8 +1865,38 @@ class HyperpropertyBackend:
             for content in input_files.values()
         )
         max_input_bytes = max(input_size, 4096)
+        # RSS is the admitted memory estimate and a sampled process-tree guard.
+        # Managed runtimes need separate virtual-address-space headroom. Neither
+        # this allowance nor sampled RSS establishes hard aggregate containment.
+        memory_bytes = None
+        resident_memory_bytes = None
+        environment = dict(self._runtime_environment)
+        if self._managed_runner:
+            resident_memory_bytes = bounds.max_memory_bytes
+            floor = (AUTOHYPER_ADDRESS_SPACE_FLOOR_BYTES
+                     if self.engine is HyperEngine.AUTOHYPER
+                     else HYPER_ADDRESS_SPACE_FLOOR_BYTES)
+            memory_bytes = max(floor, 4 * bounds.max_memory_bytes)
+            environment.pop("GHCRTS", None)
+            if self.engine is HyperEngine.AUTOHYPER:
+                # Reviewed .NET controls are owned by this execution profile.
+                # Remove aliases/per-heap overrides that could defeat it.
+                for name in tuple(environment):
+                    if name.startswith(("DOTNET_GC", "COMPlus_GC", "DOTNET_gc", "COMPlus_gc")):
+                        del environment[name]
+                environment.update({
+                    "DOTNET_PROCESSOR_COUNT": "1",
+                    "DOTNET_gcServer": "0",
+                    "DOTNET_GCHeapHardLimit": format(max(1, bounds.max_memory_bytes // 2), "x"),
+                })
+        remaining = _operation_checkpoint("before hyper native execution")
+        effective_timeout = (min(timeout_seconds, remaining)
+                             if remaining is not None else timeout_seconds)
         limits = ToolRunLimits(
-            timeout_seconds=timeout_seconds,
+            timeout_seconds=effective_timeout,
+            cpu_seconds=effective_timeout if self._managed_runner else None,
+            memory_bytes=memory_bytes,
+            resident_memory_bytes=resident_memory_bytes,
             max_output_bytes=min(bounds.max_output_bytes, DEFAULT_MAX_OUTPUT_BYTES),
             max_input_bytes=max_input_bytes,
             max_workspace_bytes=max(16_777_216, max_input_bytes * 2),
@@ -1799,17 +1911,28 @@ class HyperpropertyBackend:
                 limits=limits,
                 input_files=input_files,
                 output_paths=("counterexample.txt", "witness.txt"),
-                environment=self._runtime_environment,
+                environment=environment,
             ),
             cancellation=cancellation,
         )
-        version = self._identity_version or self._tool_version(
-            executable, environment=self._runtime_environment
-        )
+        _operation_checkpoint("after hyper native execution")
         combined = "\n".join(
             part for part in (process.stdout, process.stderr) if part
         )
-        status, reason = self._classify(process, combined)
+        status, reason = self._classify(
+            process, combined, max_output_bytes=limits.max_output_bytes,
+        )
+        _operation_checkpoint("after hyper verdict classification")
+        version = self._identity_version
+        if (not version and not self._managed_runner
+                and self._lifecycle_failure(process, limits.max_output_bytes) is None
+                and type(process.returncode) is int and process.returncode == 0):
+            _operation_checkpoint("before hyper version metadata")
+            version = self._tool_version(
+                executable, environment=self._runtime_environment,
+                cancellation=cancellation,
+            )
+            _operation_checkpoint("after hyper version metadata")
         counterexample: HyperCounterexampleTrace | None = None
         if status is HyperCheckOutcomeStatus.VIOLATED:
             supplemental = ""
@@ -1818,23 +1941,26 @@ class HyperpropertyBackend:
                 if raw:
                     supplemental = raw.decode("utf-8", errors="replace")
                     break
+            _operation_checkpoint("before hyper counterexample parsing")
             parsed = parse_hyper_counterexample(
                 supplemental or combined,
                 formula_id=document.formula.formula_id,
                 observation_map=translation.observation_map,
                 quantifier_order=translation.quantifier_order,
             )
+            _operation_checkpoint("after hyper counterexample parsing")
             if parsed is not None:
                 counterexample = replay_hyper_counterexample(
                     parsed,
                     translation.observation_map,
                     translation.quantifier_order,
+                    formula_id=document.formula.formula_id,
                 )
+                _operation_checkpoint("after hyper counterexample replay")
             else:
                 reason = (
                     reason
-                    + "; counterexample markers present but no multi-trace "
-                    "tuple could be parsed"
+                    + "; counterexample records absent, malformed, incomplete or over limits; no structural witness validated"
                 )
 
         receipt = HyperCheckReceipt(
@@ -1850,8 +1976,9 @@ class HyperpropertyBackend:
             quantifier_order=translation.quantifier_order,
             observation_map=translation.observation_map,
             returncode=process.returncode,
-            stdout=process.stdout,
-            stderr=process.stderr,
+            # Receipt text excludes NUL; process metadata retains raw digests.
+            stdout=process.stdout.replace("\x00", "\ufffd"),
+            stderr=process.stderr.replace("\x00", "\ufffd"),
             elapsed_ms=max(0, round(process.elapsed_seconds * 1000)),
             timeout_seconds=timeout_seconds,
             output_truncated=process.output_truncated,
@@ -1863,7 +1990,7 @@ class HyperpropertyBackend:
         return HyperCheckOutcome(
             request_digest=request_digest,
             result=self._result_from_receipt(
-                receipt, request=request, bounds=bounds
+                receipt, request=request, bounds=bounds, document=document, process=process,
             ),
             receipt=receipt,
             translation=translation,
@@ -1878,31 +2005,24 @@ class HyperpropertyBackend:
     ) -> HyperCheckOutcome:
         if not isinstance(request, BackendRequest):
             raise HyperpropertyAdapterError("request must be a BackendRequest")
-        payload = request.payload.to_dict()
+        # Keep immutable payload fields in place until bounded normalization;
+        # exporting the whole payload would first copy every private trace.
+        payload = request.payload
         document = payload.get("document") or payload.get("hyperproperty")
         if document is None:
             raise HyperpropertyAdapterError(
                 "request payload must include document or hyperproperty"
             )
         traces_payload = payload.get("traces") or ()
-        traces: list[ExecutionTrace] = []
-        for item in traces_payload:
-            if isinstance(item, ExecutionTrace):
-                traces.append(item)
-            elif isinstance(item, Mapping):
-                traces.append(
-                    ExecutionTrace(
-                        trace_id=str(item.get("trace_id", "")),
-                        public_inputs=dict(item.get("public_inputs") or {}),
-                        observations=dict(item.get("observations") or {}),
-                        private_inputs=dict(item.get("private_inputs") or {}),
-                        subject=dict(item.get("subject") or {}),
-                    )
-                )
-            else:
-                raise HyperpropertyAdapterError(
-                    "traces must be ExecutionTrace values or mappings"
-                )
+        try:
+            traces = ()
+            if traces_payload:
+                with proof_operation_scope(timeout_ms=min(request.bounds.timeout_ms, MAX_OPERATION_TIMEOUT_MS),
+                                           cancellation=cancellation):
+                    traces = normalize_execution_traces(traces_payload, allow_mappings=True,
+                        require_trace_ids=True, checkpoint=_operation_checkpoint)
+        except HyperpropertyValidationError:
+            raise HyperpropertyAdapterError("invalid or excessive trace inputs") from None
         allow_fallback = bool(payload.get("allow_fallback", False))
         system_model = payload.get("system_model")
         if system_model is None and self.engine is HyperEngine.AUTOHYPER:
@@ -1915,7 +2035,7 @@ class HyperpropertyBackend:
         return self.check(
             document,
             request=request,
-            traces=tuple(traces),
+            traces=traces,
             system_model=system_model,
             allow_fallback=allow_fallback,
             cancellation=cancellation,
@@ -1931,118 +2051,131 @@ class HyperpropertyBackend:
         bounds: ExecutionBounds,
         traces: Sequence[ExecutionTrace] | None,
         unavailable_reason: str,
+        cancellation: CancellationSignal | None = None,
     ) -> HyperCheckOutcome:
-        bound = document.self_composition_bound
-        disclosure = FallbackBoundDisclosure.from_bound(bound)
-        if traces is None:
-            receipt = self._terminal_receipt(
-                document=document,
-                translation=translation,
-                status=HyperCheckOutcomeStatus.UNAVAILABLE,
-                evidence_path=HyperEvidencePath.NONE,
-                reason=(
-                    f"{unavailable_reason}; fallback requested but no traces "
-                    "were supplied for bounded self-composition"
-                ),
-                bounds=bounds,
-                fallback_bounds=disclosure,
-            )
-            return HyperCheckOutcome(
-                request_digest=request_digest,
-                result=self._result_from_receipt(
-                    receipt, request=request, bounds=bounds
-                ),
-                receipt=receipt,
-                translation=translation,
-                interface_version=self.backend_version,
-            )
+        with proof_operation_scope(timeout_ms=min(bounds.timeout_ms, MAX_OPERATION_TIMEOUT_MS),
+                                   cancellation=cancellation):
+            bound = document.self_composition_bound
+            disclosure = FallbackBoundDisclosure.from_bound(bound)
+            if traces is None:
+                receipt = self._terminal_receipt(
+                    document=document,
+                    translation=translation,
+                    status=HyperCheckOutcomeStatus.UNAVAILABLE,
+                    evidence_path=HyperEvidencePath.NONE,
+                    reason=(
+                        f"{unavailable_reason}; fallback requested but no traces "
+                        "were supplied for bounded self-composition"
+                    ),
+                    bounds=bounds,
+                    fallback_bounds=disclosure,
+                )
+                return HyperCheckOutcome(
+                    request_digest=request_digest,
+                    result=self._result_from_receipt(
+                        receipt, request=request, bounds=bounds, document=document
+                    ),
+                    receipt=receipt,
+                    translation=translation,
+                    interface_version=self.backend_version,
+                )
 
-        try:
-            evaluation = document.evaluate_bounded_noninterference(traces)
-        except HyperpropertyValidationError as error:
-            receipt = self._terminal_receipt(
-                document=document,
-                translation=translation,
-                status=HyperCheckOutcomeStatus.UNSUPPORTED,
-                evidence_path=HyperEvidencePath.BOUNDED_SELF_COMPOSITION,
-                reason=(
-                    f"bounded self-composition unavailable for this formula: {error}"
-                ),
-                bounds=bounds,
-                fallback_bounds=disclosure,
-            )
-            return HyperCheckOutcome(
-                request_digest=request_digest,
-                result=self._result_from_receipt(
-                    receipt, request=request, bounds=bounds
-                ),
-                receipt=receipt,
-                translation=translation,
-                interface_version=self.backend_version,
-            )
+            with admitted_python_work(memory_bytes=bounds.max_memory_bytes) as checkpoint:
+                try:
+                    checkpoint("before bounded fallback evaluation")
+                    evaluate = document.evaluate_bounded_noninterference
+                    if getattr(evaluate, "__func__", None) is _CANONICAL_BOUNDED_EVALUATOR:
+                        evaluation = evaluate(traces, checkpoint=checkpoint)
+                    else:
+                        # Preserve legacy callback signatures; opaque work is only
+                        # cooperative at its boundaries. V2 verifies canonical output.
+                        evaluation = evaluate(traces)
+                    checkpoint("after bounded fallback evaluation")
+                except HyperpropertyValidationError as error:
+                    receipt = self._terminal_receipt(
+                        document=document,
+                        translation=translation,
+                        status=HyperCheckOutcomeStatus.UNSUPPORTED,
+                        evidence_path=HyperEvidencePath.BOUNDED_SELF_COMPOSITION,
+                        reason=(
+                            f"bounded self-composition unavailable for this formula: {error}"
+                        ),
+                        bounds=bounds,
+                        fallback_bounds=disclosure,
+                    )
+                    return HyperCheckOutcome(
+                        request_digest=request_digest,
+                        result=self._result_from_receipt(
+                            receipt, request=request, bounds=bounds, document=document
+                        ),
+                        receipt=receipt,
+                        translation=translation,
+                        interface_version=self.backend_version,
+                    )
 
-        if evaluation.verdict is HyperpropertyVerdict.VIOLATED:
-            status = HyperCheckOutcomeStatus.VIOLATED
-        elif evaluation.verdict is HyperpropertyVerdict.HOLDS:
-            # Bounded holds are inconclusive for universal claims.
-            status = HyperCheckOutcomeStatus.UNKNOWN
-        else:
-            status = HyperCheckOutcomeStatus.UNKNOWN
+                if evaluation.verdict is HyperpropertyVerdict.VIOLATED:
+                    status = HyperCheckOutcomeStatus.VIOLATED
+                elif evaluation.verdict is HyperpropertyVerdict.HOLDS:
+                    # Bounded holds are inconclusive for universal claims.
+                    status = HyperCheckOutcomeStatus.UNKNOWN
+                else:
+                    status = HyperCheckOutcomeStatus.UNKNOWN
 
-        counterexample: HyperCounterexampleTrace | None = None
-        if evaluation.witness_bundle is not None and evaluation.verdict is HyperpropertyVerdict.VIOLATED:
-            bundle = evaluation.witness_bundle
-            counterexample = HyperCounterexampleTrace(
-                formula_id=bundle.formula_id,
-                observation_policy_id=document.information_flow_policy.policy_id,
-                observed_fields=bundle.observed_fields,
-                traces=bundle.traces,
-                differences=bundle.differences,
-                raw="",
-                replayed=True,
-                replay_notes=(
-                    "fallback counterexample from bounded self-composition",
-                    "not an external-tool proof",
-                ),
-            )
+                counterexample: HyperCounterexampleTrace | None = None
+                if evaluation.witness_bundle is not None and evaluation.verdict is HyperpropertyVerdict.VIOLATED:
+                    bundle = evaluation.witness_bundle
+                    counterexample = HyperCounterexampleTrace(
+                        formula_id=bundle.formula_id,
+                        observation_policy_id=document.information_flow_policy.policy_id,
+                        observed_fields=bundle.observed_fields,
+                        traces=bundle.traces,
+                        differences=bundle.differences,
+                        raw="",
+                        replayed=True,
+                        replay_notes=(
+                            "fallback counterexample from bounded self-composition",
+                            "not an external-tool proof",
+                        ),
+                    )
 
-        reason = (
-            f"{unavailable_reason}; used non-authoritative bounded self-composition "
-            f"with max_traces={disclosure.max_traces}, max_pairs={disclosure.max_pairs}: "
-            f"{evaluation.reason}"
-        )
-        receipt = HyperCheckReceipt(
-            engine=self.engine,
-            status=status,
-            evidence_path=HyperEvidencePath.BOUNDED_SELF_COMPOSITION,
-            document_digest=translation.document_digest,
-            translation_digest=translation.translation_digest,
-            executable="",
-            tool_version="",
-            command=(),
-            capability=self.capability,
-            quantifier_order=translation.quantifier_order,
-            observation_map=translation.observation_map,
-            returncode=None,
-            stdout="",
-            stderr="",
-            elapsed_ms=0,
-            timeout_seconds=max(0.001, bounds.timeout_ms / 1000.0),
-            output_truncated=False,
-            reason=reason,
-            counterexample=counterexample,
-            fallback_bounds=disclosure,
-            authorizes_universal_proof=False,
-        )
-        return HyperCheckOutcome(
-            request_digest=request_digest,
-            result=self._result_from_receipt(
-                receipt, request=request, bounds=bounds
-            ),
-            receipt=receipt,
-            translation=translation,
-            interface_version=self.backend_version,
-        )
+                reason = (
+                    f"{unavailable_reason}; used non-authoritative bounded self-composition "
+                    f"with max_traces={disclosure.max_traces}, max_pairs={disclosure.max_pairs}: "
+                    f"{evaluation.reason}"
+                )
+                receipt = HyperCheckReceipt(
+                    engine=self.engine,
+                    status=status,
+                    evidence_path=HyperEvidencePath.BOUNDED_SELF_COMPOSITION,
+                    document_digest=translation.document_digest,
+                    translation_digest=translation.translation_digest,
+                    executable="",
+                    tool_version="",
+                    command=(),
+                    capability=self.capability,
+                    quantifier_order=translation.quantifier_order,
+                    observation_map=translation.observation_map,
+                    returncode=None,
+                    stdout="",
+                    stderr="",
+                    elapsed_ms=0,
+                    timeout_seconds=max(0.001, bounds.timeout_ms / 1000.0),
+                    output_truncated=False,
+                    reason=reason,
+                    counterexample=counterexample,
+                    fallback_bounds=disclosure,
+                    authorizes_universal_proof=False,
+                )
+                return HyperCheckOutcome(
+                    request_digest=request_digest,
+                    result=self._result_from_receipt(
+                        receipt, request=request, bounds=bounds, document=document,
+                        fallback_bundle=evaluation.witness_bundle if counterexample is not None else None,
+                    ),
+                    receipt=receipt,
+                    translation=translation,
+                    interface_version=self.backend_version,
+                )
 
     def _terminal_receipt(
         self,
@@ -2079,9 +2212,9 @@ class HyperpropertyBackend:
             authorizes_universal_proof=False,
         )
 
-    def _classify(
-        self, process: ToolRunResult, combined: str
-    ) -> tuple[HyperCheckOutcomeStatus, str]:
+    def _lifecycle_failure(
+        self, process: ToolRunResult, max_output_bytes: int,
+    ) -> tuple[HyperCheckOutcomeStatus, str] | None:
         if process.unavailable:
             return (
                 HyperCheckOutcomeStatus.UNAVAILABLE,
@@ -2097,6 +2230,34 @@ class HyperpropertyBackend:
                 HyperCheckOutcomeStatus.ERROR,
                 f"{self.engine.value} run was cancelled",
             )
+        normal_exit = process.termination_reason in {"", "completed"} or (
+            process.termination_reason == "nonzero_exit"
+            and type(process.returncode) is int and process.returncode != 0
+        )
+        if (process.resource_exhausted or process.workspace_limit_exceeded
+                or process.error or process.process_tree_terminated
+                or not process.workspace_cleaned or not normal_exit):
+            return (
+                HyperCheckOutcomeStatus.ERROR,
+                process.error or f"{self.engine.value} did not complete a clean bounded lifecycle",
+            )
+        output_bytes = len(process.stdout.encode("utf-8")) + len(process.stderr.encode("utf-8"))
+        if process.output_truncated or output_bytes > max_output_bytes:
+            return (
+                HyperCheckOutcomeStatus.UNKNOWN,
+                f"{self.engine.value} output exceeded the declared capture bound",
+            )
+        if "\x00" in process.stdout or "\x00" in process.stderr:
+            return (HyperCheckOutcomeStatus.ERROR, "engine output contains NUL bytes")
+        return None
+
+    def _classify(
+        self, process: ToolRunResult, combined: str, *,
+        max_output_bytes: int = DEFAULT_MAX_OUTPUT_BYTES,
+    ) -> tuple[HyperCheckOutcomeStatus, str]:
+        failure = self._lifecycle_failure(process, max_output_bytes)
+        if failure is not None:
+            return failure
         lines = tuple(
             line.strip() for line in combined.splitlines() if line.strip()
         )
@@ -2106,12 +2267,7 @@ class HyperpropertyBackend:
                 HyperCheckOutcomeStatus.UNSUPPORTED,
                 f"{self.engine.value} reported unsupported quantifier/fragment",
             )
-        if process.output_truncated:
-            return (
-                HyperCheckOutcomeStatus.UNKNOWN,
-                f"{self.engine.value} output was truncated before a verdict",
-            )
-        if process.returncode != 0:
+        if type(process.returncode) is not int or process.returncode != 0:
             return (
                 HyperCheckOutcomeStatus.ERROR,
                 f"{self.engine.value} exited with code {process.returncode}",
@@ -2183,22 +2339,35 @@ class HyperpropertyBackend:
         executable: str,
         *,
         environment: Mapping[str, str] | None = None,
+        cancellation: CancellationSignal | None = None,
     ) -> str:
+        remaining = _operation_checkpoint("before hyper version probe")
+        if self._managed_runner:
+            return self._identity_version
+        timeout = DEFAULT_VERSION_TIMEOUT_SECONDS
+        if remaining is not None:
+            timeout = min(timeout, remaining)
         try:
             result = self._runner.run(
                 ToolRunRequest(
                     argv=(executable, "--version"),
                     runtime=ToolRuntime.NATIVE,
                     limits=ToolRunLimits(
-                        timeout_seconds=DEFAULT_VERSION_TIMEOUT_SECONDS,
+                        timeout_seconds=timeout,
                         max_output_bytes=16_384,
                     ),
                     environment=environment or {},
-                )
+                ),
+                cancellation=cancellation,
             )
+            _operation_checkpoint("after hyper version probe")
+        except ProofOperationInterrupted:
+            raise
         except Exception:  # pragma: no cover - defensive
+            _operation_checkpoint("hyper version exception boundary")
             return ""
-        if result.unavailable or result.timed_out:
+        if (self._lifecycle_failure(result, 16_384) is not None
+                or type(result.returncode) is not int or result.returncode != 0):
             return ""
         text = (result.stdout or result.stderr or "").strip().splitlines()
         return text[0][:200] if text else ""
@@ -2209,6 +2378,9 @@ class HyperpropertyBackend:
         *,
         request: BackendRequest | None,
         bounds: ExecutionBounds,
+        document: HyperpropertyIR | None = None,
+        fallback_bundle: WitnessTraceBundle | None = None,
+        process: ToolRunResult | None = None,
     ) -> HyperpropertyResult:
         status_map = {
             HyperCheckOutcomeStatus.SATISFIED: ResultStatus.SATISFIED,
@@ -2230,10 +2402,23 @@ class HyperpropertyBackend:
             "receipt_id": receipt.receipt_id,
         }
         if receipt.counterexample is not None:
-            witness["counterexample"] = receipt.counterexample.to_dict()
-            witness["witness_bundle"] = (
-                receipt.counterexample.to_witness_bundle().to_dict()
-            )
+            checked = receipt.counterexample
+            if receipt.evidence_path is HyperEvidencePath.ENGINE:
+                checked = replay_hyper_counterexample(checked,
+                    ObservationMap.from_document(document) if document is not None else receipt.observation_map,
+                    QuantifierOrder.from_document(document) if document is not None else receipt.quantifier_order,
+                    formula_id=document.formula.formula_id if document is not None else None)
+                if checked.replayed and document is not None:
+                    witness["witness_bundle"] = checked.to_witness_bundle(
+                        observation_map=ObservationMap.from_document(document),
+                        quantifier_order=QuantifierOrder.from_document(document),
+                        formula_id=document.formula.formula_id).to_dict()
+            elif (receipt.evidence_path is HyperEvidencePath.BOUNDED_SELF_COMPOSITION
+                  and fallback_bundle is not None):
+                # This bundle was built by the bounded evaluator from supplied
+                # execution traces. It is never native structural replay.
+                witness["witness_bundle"] = fallback_bundle.to_dict()
+            witness["counterexample"] = checked.to_dict()
         if receipt.fallback_bounds is not None:
             witness["fallback_bounds"] = receipt.fallback_bounds.to_dict()
             witness["evidence_kind"] = (
@@ -2247,6 +2432,28 @@ class HyperpropertyBackend:
         result_id = (
             f"hyperproperty-result:{stable_digest({'receipt': receipt.receipt_id})}"
         )
+        metadata: dict[str, Any] = {
+            "engine": receipt.engine.value,
+            "evidence_path": receipt.evidence_path.value,
+            "external_tool_proof": receipt.external_tool_proof,
+        }
+        if process is not None:
+            metadata["process"] = {
+                "cancelled": process.cancelled,
+                "command": list(process.command),
+                "error": process.error,
+                "output_truncated": process.output_truncated,
+                "process_tree_terminated": process.process_tree_terminated,
+                "returncode": process.returncode,
+                "resource_exhausted": process.resource_exhausted,
+                "stderr_digest": stable_digest({"content": process.stderr}),
+                "stdout_digest": stable_digest({"content": process.stdout}),
+                "timed_out": process.timed_out,
+                "termination_reason": process.termination_reason,
+                "unavailable": process.unavailable,
+                "workspace_cleaned": process.workspace_cleaned,
+                "workspace_limit_exceeded": process.workspace_limit_exceeded,
+            }
         return HyperpropertyResult(
             result_id=result_id,
             backend_id=self.backend_id,
@@ -2260,19 +2467,15 @@ class HyperpropertyBackend:
                 elapsed_ms=receipt.elapsed_ms,
                 steps=0,
                 peak_memory_bytes=0,
-                output_bytes=len(receipt.stdout.encode("utf-8"))
-                + len(receipt.stderr.encode("utf-8")),
+                output_bytes=(len(process.stdout.encode("utf-8"))
+                    + len(process.stderr.encode("utf-8")) if process is not None
+                    else len(receipt.stdout.encode("utf-8"))
+                    + len(receipt.stderr.encode("utf-8"))),
             ),
             witness=FrozenMap(witness),
             diagnostics=tuple(receipt.capability.limitations[:3]),
             reason=receipt.reason,
-            metadata=FrozenMap(
-                {
-                    "engine": receipt.engine.value,
-                    "evidence_path": receipt.evidence_path.value,
-                    "external_tool_proof": receipt.external_tool_proof,
-                }
-            ),
+            metadata=FrozenMap(metadata),
         )
 
 
@@ -2308,6 +2511,12 @@ DEFAULT_HYPERPROPERTY_BACKENDS: Final = (
     AutoHyperBackend,
     MCHyperBackend,
 )
+
+# The registry may interpret a normal False from this native-only discovery
+# method as a missing tool for an explicitly requested bounded fallback. Keep
+# the original identities so caller overrides remain availability vetoes.
+_CANONICAL_NATIVE_AVAILABILITY: Final = HyperpropertyBackend.is_available
+_CANONICAL_NATIVE_PROBE: Final = HyperpropertyBackend.probe
 
 
 def probe_hyperproperty_backends(

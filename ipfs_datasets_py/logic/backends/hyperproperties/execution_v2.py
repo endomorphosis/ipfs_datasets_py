@@ -17,9 +17,12 @@ Hyperproperty evidence remains bounded (never universal proof).
 from __future__ import annotations
 
 import hashlib
+import json
+from contextlib import nullcontext
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from enum import StrEnum
+from types import MappingProxyType
 from typing import Any, ClassVar, Final
 
 from ipfs_datasets_py.logic.backends.hyperproperties.adapters import (
@@ -41,9 +44,22 @@ from ipfs_datasets_py.logic.backends.hyperproperties.adapters import (
     MCHyperBackend,
     ObservationMap,
     QuantifierOrder,
+    _autohyper_explicit_system,
+    parse_hyper_counterexample,
     quantifier_alternation_count,
+    replay_hyper_counterexample,
+    render_hyperltl_formula,
 )
 from ipfs_datasets_py.logic.backends.process import BoundedToolRunner
+from ipfs_datasets_py.logic.backends.python_admission import admitted_python_work
+from ipfs_datasets_py.logic.backends.smt.operation_budget import (
+    MAX_OPERATION_TIMEOUT_MS,
+    ProofOperationInterrupted,
+    _Signals,
+    current_proof_operation,
+    proof_operation_scope,
+    validate_operation_timeout_ms,
+)
 from ipfs_datasets_py.logic.backends.results import (
     HyperpropertyResult,
     ResultAuthority,
@@ -61,15 +77,19 @@ from ipfs_datasets_py.logic.families.namespaces import (
     provider_id,
 )
 from ipfs_datasets_py.logic.ir_core.protocols import ExecutionBounds
+from ipfs_datasets_py.logic.ir_core.claims import stable_digest
 from ipfs_datasets_py.logic.software_verification.hyperproperties import (
     ExecutionTrace,
     HyperpropertyIR,
     HyperpropertyValidationError,
+    HyperpropertyVerdict,
     SelfCompositionBound,
+    ObservationDifference,
+    WitnessTrace,
+    normalize_execution_traces,
 )
 from ipfs_datasets_py.logic.syntax_core.contracts import (
     SyntaxContractError,
-    _freeze_mapping,
     _record_id,
     _require_mapping,
     _require_sequence,
@@ -378,7 +398,59 @@ def _optional_bool(value: object, field_name: str) -> bool:
 
 
 def _digest_of(payload: Mapping[str, Any]) -> str:
-    return content_sha256(canonical_json_bytes(dict(payload)))
+    return content_sha256(canonical_json_bytes(_thaw_mapping(payload)))
+
+
+def _immutable_mapping(value: object, field_name: str) -> Mapping[str, Any]:
+    """Copy contract JSON into immutable containers with finite traversal work.
+
+    Keep the existing scalar contract and wire format. Shared syntax helpers
+    intentionally remain unchanged; their nested containers are mutable.
+    """
+    nodes, remaining = 65_536, 16 * 1024 * 1024
+    ancestors: set[int] = set()
+
+    def freeze(item: object, depth: int = 0) -> Any:
+        nonlocal nodes, remaining
+        nodes -= 1
+        if nodes < 0 or depth > 64:
+            raise HyperExecutionError(f"{field_name} exceeds JSON traversal limits")
+        if nodes % 64 == 0:
+            _operation_checkpoint("hyper evidence immutable projection")
+        if item is None or type(item) is bool:
+            return item
+        if type(item) is int:
+            if abs(item) > (1 << 53) - 1:
+                raise HyperExecutionError(f"{field_name} integer exceeds safe JSON range")
+            return item
+        if type(item) is str:
+            if len(item) > remaining:
+                raise HyperExecutionError(f"{field_name} exceeds JSON byte limit")
+            try:
+                remaining -= len(item.encode("utf-8"))
+            except UnicodeEncodeError as error:
+                raise HyperExecutionError(f"{field_name} contains invalid Unicode") from error
+            if remaining < 0:
+                raise HyperExecutionError(f"{field_name} exceeds JSON byte limit")
+            return item
+        if id(item) in ancestors:
+            raise HyperExecutionError(f"{field_name} contains cyclic JSON")
+        ancestors.add(id(item))
+        try:
+            if isinstance(item, Mapping):
+                copied = {}
+                for key, child in item.items():
+                    if type(key) is not str or not key:
+                        raise HyperExecutionError(f"{field_name} keys must be non-empty strings")
+                    copied[freeze(key, depth + 1)] = freeze(child, depth + 1)
+                return MappingProxyType(copied)
+            if isinstance(item, Sequence) and not isinstance(item, (str, bytes, bytearray)):
+                return tuple(freeze(child, depth + 1) for child in item)
+            raise HyperExecutionError(f"{field_name} is not contract-safe JSON")
+        finally:
+            ancestors.remove(id(item))
+
+    return freeze({} if value is None else _require_mapping(value, field_name))
 
 
 def _source_ref_ids(
@@ -520,7 +592,7 @@ class HyperFormulaBindingV2:
     formula_digest: str
     document_digest: str
     quantifier_signature: tuple[str, ...]
-    quantifier_prefix: tuple[dict[str, Any], ...]
+    quantifier_prefix: tuple[Mapping[str, Any], ...]
     matrix_statement: str
     alternation_count: int
     trace_cardinality: int
@@ -550,7 +622,7 @@ class HyperFormulaBindingV2:
         )
         object.__setattr__(self, "quantifier_signature", signature)
         prefix = tuple(
-            dict(_require_mapping(item, f"quantifier_prefix[{index}]"))
+            _immutable_mapping(item, f"quantifier_prefix[{index}]")
             for index, item in enumerate(self.quantifier_prefix)
         )
         object.__setattr__(self, "quantifier_prefix", prefix)
@@ -644,7 +716,7 @@ class HyperFormulaBindingV2:
             "formula_text": self.formula_text,
             "interface": self.interface,
             "matrix_statement": self.matrix_statement,
-            "quantifier_prefix": [dict(item) for item in self.quantifier_prefix],
+            "quantifier_prefix": [_thaw_mapping(item) for item in self.quantifier_prefix],
             "quantifier_signature": list(self.quantifier_signature),
             "schema_version": self.schema_version,
             "trace_cardinality": self.trace_cardinality,
@@ -703,7 +775,7 @@ class HyperSystemBindingV2:
             )
         else:
             object.__setattr__(self, "observation_policy_id", "")
-        obs = _freeze_mapping(self.observation_map, "observation_map")
+        obs = _immutable_mapping(self.observation_map, "observation_map")
         object.__setattr__(self, "observation_map", obs)
         if self.schema_version != HYPER_SYSTEM_BINDING_SCHEMA:
             raise HyperExecutionError(
@@ -968,7 +1040,7 @@ class HyperWitnessBindingV2:
         else:
             cex = _require_mapping(self.counterexample, "counterexample")
             object.__setattr__(
-                self, "counterexample", dict(_freeze_mapping(cex, "counterexample"))
+                self, "counterexample", _immutable_mapping(cex, "counterexample")
             )
         if self.schema_version != HYPER_WITNESS_BINDING_SCHEMA:
             raise HyperExecutionError(
@@ -997,6 +1069,15 @@ class HyperWitnessBindingV2:
         counterexample: HyperCounterexampleTrace | None,
         observation_policy_id: str,
     ) -> HyperWitnessBindingV2:
+        # Native replay flags are derived against the requested document, never
+        # accepted from a receipt's flag or its self-declared projection maps.
+        if counterexample is not None and evidence_path is HyperEvidencePath.ENGINE:
+            counterexample = replay_hyper_counterexample(
+                counterexample,
+                ObservationMap.from_document(document),
+                QuantifierOrder.from_document(document),
+                formula_id=document.formula.formula_id,
+            )
         status = _witness_status_from(
             counterexample,
             evidence_path=evidence_path,
@@ -1010,7 +1091,7 @@ class HyperWitnessBindingV2:
         return cls(
             status=status,
             formula_id=document.formula.formula_id,
-            observation_policy_id=observation_policy_id or document.information_flow_policy.policy_id,
+            observation_policy_id=document.information_flow_policy.policy_id,
             replayed=replayed,
             trace_count=trace_count,
             difference_count=difference_count,
@@ -1024,7 +1105,7 @@ class HyperWitnessBindingV2:
         return {
             "authorizes_universal_proof": False,
             "counterexample": (
-                None if self.counterexample is None else dict(self.counterexample)
+                None if self.counterexample is None else _thaw_mapping(self.counterexample)
             ),
             "difference_count": self.difference_count,
             "formula_id": self.formula_id,
@@ -1081,7 +1162,7 @@ class HyperCapabilityReceiptV2:
             )
         # Re-bind to the canonical independent capability for this engine only.
         canonical = capability_for(engine).to_dict()
-        object.__setattr__(self, "capability", dict(canonical))
+        object.__setattr__(self, "capability", _immutable_mapping(canonical, "capability"))
         object.__setattr__(
             self, "reason", _text(self.reason, "reason", allow_empty=True, maximum=1_024)
         )
@@ -1112,7 +1193,7 @@ class HyperCapabilityReceiptV2:
     def to_dict(self) -> dict[str, Any]:
         return {
             "available": self.available,
-            "capability": dict(self.capability),
+            "capability": _thaw_mapping(self.capability),
             "engine": (
                 self.engine.value
                 if isinstance(self.engine, HyperProviderKind)
@@ -1184,25 +1265,12 @@ class HyperExecutionRequestV2:
                     f"system_model exceeds hard limit {_MAX_SYSTEM_BYTES} bytes"
                 )
 
-        traces: list[ExecutionTrace] = []
-        for index, item in enumerate(self.traces or ()):
-            if isinstance(item, ExecutionTrace):
-                traces.append(item)
-            elif isinstance(item, Mapping):
-                traces.append(
-                    ExecutionTrace(
-                        trace_id=str(item.get("trace_id", f"trace:{index}")),
-                        public_inputs=dict(item.get("public_inputs") or {}),
-                        private_inputs=dict(item.get("private_inputs") or {}),
-                        observations=dict(item.get("observations") or {}),
-                        subject=dict(item.get("subject") or {}),
-                    )
-                )
-            else:
-                raise HyperExecutionError(
-                    f"traces[{index}] must be ExecutionTrace or mapping"
-                )
-        object.__setattr__(self, "traces", tuple(traces))
+        try:
+            traces = normalize_execution_traces(self.traces, allow_mappings=True,
+                                               checkpoint=_operation_checkpoint)
+        except HyperpropertyValidationError:
+            raise HyperExecutionError("invalid or excessive trace inputs") from None
+        object.__setattr__(self, "traces", traces)
 
         object.__setattr__(
             self, "mode", _enum(self.mode, HyperExecutionMode, "mode")
@@ -1245,7 +1313,7 @@ class HyperExecutionRequestV2:
         else:
             mock = _require_mapping(self.mock_output, "mock_output")
             object.__setattr__(
-                self, "mock_output", dict(_freeze_mapping(mock, "mock_output"))
+                self, "mock_output", _immutable_mapping(mock, "mock_output")
             )
         if self.fallback_output is None:
             object.__setattr__(self, "fallback_output", None)
@@ -1254,12 +1322,12 @@ class HyperExecutionRequestV2:
             object.__setattr__(
                 self,
                 "fallback_output",
-                dict(_freeze_mapping(fallback, "fallback_output")),
+                _immutable_mapping(fallback, "fallback_output"),
             )
 
-        metadata = _freeze_mapping(self.metadata, "metadata")
+        metadata = _immutable_mapping(self.metadata, "metadata")
         _forbid_authority_metadata(metadata, "metadata")
-        if len(canonical_json_bytes(dict(metadata))) > _MAX_METADATA_BYTES:
+        if len(canonical_json_bytes(_thaw_mapping(metadata))) > _MAX_METADATA_BYTES:
             raise HyperExecutionError("metadata exceeds hard byte limit")
         object.__setattr__(self, "metadata", metadata)
 
@@ -1305,7 +1373,7 @@ class HyperExecutionRequestV2:
             "document_id": self.document.document_id,  # type: ignore[union-attr]
             "evidence_kind": self.evidence_kind.to_dict(),
             "fallback_output": (
-                None if self.fallback_output is None else dict(self.fallback_output)
+                None if self.fallback_output is None else _thaw_mapping(self.fallback_output)
             ),
             "fluent_text": self.fluent_text,
             "has_fallback_output": self.has_fallback_output,
@@ -1314,7 +1382,7 @@ class HyperExecutionRequestV2:
             "lane": self.lane.to_dict(),
             "metadata": _thaw_mapping(self.metadata),
             "mock_output": (
-                None if self.mock_output is None else dict(self.mock_output)
+                None if self.mock_output is None else _thaw_mapping(self.mock_output)
             ),
             "mode": (
                 self.mode.value
@@ -1646,7 +1714,7 @@ class HyperProviderEvidenceV2:
         else:
             receipt = _require_mapping(self.receipt, "receipt")
             object.__setattr__(
-                self, "receipt", dict(_freeze_mapping(receipt, "receipt"))
+                self, "receipt", _immutable_mapping(receipt, "receipt")
             )
 
         diagnostics: list[str] = []
@@ -1663,7 +1731,7 @@ class HyperProviderEvidenceV2:
                 break
         object.__setattr__(self, "diagnostics", tuple(diagnostics))
 
-        metadata = _freeze_mapping(self.metadata, "metadata")
+        metadata = _immutable_mapping(self.metadata, "metadata")
         _forbid_authority_metadata(metadata, "metadata")
         object.__setattr__(self, "metadata", metadata)
 
@@ -1673,42 +1741,36 @@ class HyperProviderEvidenceV2:
                 f"{self.schema_version!r}"
             )
 
-        if not self.content_digest:
-            object.__setattr__(
-                self,
-                "content_digest",
-                _digest_of(
-                    {
-                        "bounds": self.bounds.to_dict(),  # type: ignore[union-attr]
-                        "disposition": (
-                            self.disposition.value
-                            if isinstance(self.disposition, HyperDisposition)
-                            else self.disposition
-                        ),
-                        "engine": (
-                            self.engine.value
-                            if isinstance(self.engine, HyperProviderKind)
-                            else self.engine
-                        ),
-                        "formula": self.formula.to_dict(),  # type: ignore[union-attr]
-                        "mode": (
-                            self.mode.value
-                            if isinstance(self.mode, HyperExecutionMode)
-                            else self.mode
-                        ),
-                        "request_digest": self.request_digest,
-                        "request_id": self.request_id,
-                        "system": self.system.to_dict(),  # type: ignore[union-attr]
-                        "witness": self.witness.to_dict(),  # type: ignore[union-attr]
-                    }
+        expected_digest = _digest_of(
+            {
+                "bounds": self.bounds.to_dict(),  # type: ignore[union-attr]
+                "disposition": (
+                    self.disposition.value
+                    if isinstance(self.disposition, HyperDisposition)
+                    else self.disposition
                 ),
-            )
-        else:
-            object.__setattr__(
-                self,
-                "content_digest",
-                _sha256_hex(self.content_digest, "content_digest"),
-            )
+                "engine": (
+                    self.engine.value
+                    if isinstance(self.engine, HyperProviderKind)
+                    else self.engine
+                ),
+                "formula": self.formula.to_dict(),  # type: ignore[union-attr]
+                "mode": (
+                    self.mode.value
+                    if isinstance(self.mode, HyperExecutionMode)
+                    else self.mode
+                ),
+                "request_digest": self.request_digest,
+                "request_id": self.request_id,
+                "system": self.system.to_dict(),  # type: ignore[union-attr]
+                "witness": self.witness.to_dict(),  # type: ignore[union-attr]
+            }
+        )
+        if self.content_digest:
+            supplied = _sha256_hex(self.content_digest, "content_digest")
+            if supplied != expected_digest:
+                raise HyperExecutionError("content_digest does not match evidence bindings")
+        object.__setattr__(self, "content_digest", expected_digest)
 
     # --- identity / authority queries --------------------------------------
 
@@ -1848,7 +1910,7 @@ class HyperProviderEvidenceV2:
             "provider_identity": provider_logic_identity(
                 self.engine  # type: ignore[arg-type]
             ).to_dict(),
-            "receipt": None if self.receipt is None else dict(self.receipt),
+            "receipt": None if self.receipt is None else _thaw_mapping(self.receipt),
             "request_digest": self.request_digest,
             "request_id": self.request_id,
             "result_authority": ResultAuthority.HYPERPROPERTY.value,
@@ -1980,6 +2042,225 @@ def _evidence_receipt_payload(
 # ---------------------------------------------------------------------------
 
 
+def _validate_result_bindings(result: HyperExecutionResultV2) -> None:
+    """Check consistency against the retained request, without executing tools.
+
+    These checks are not signatures or native execution attestations. The
+    existing request descriptor binds trace count, not private trace contents.
+    """
+    req, ev = result.request, result.evidence
+    doc, translation, backend = req.document, result.translation, result.backend_result
+
+    def same(actual: object, expected: object, field: str) -> None:
+        json_types = (Mapping, list, tuple, str, int, float, bool, type(None))
+        if isinstance(actual, json_types) and isinstance(expected, json_types):
+            equal = canonical_json_bytes(_thaw_mapping({"value": actual})) == canonical_json_bytes(
+                _thaw_mapping({"value": expected}))
+        else:
+            equal = actual == expected
+        if not equal:
+            raise HyperExecutionError(f"result {field} does not match request-bound evidence")
+
+    _operation_checkpoint("hyper result binding validation")
+    same(ev.request_id, req.request_id, "request_id")
+    same(ev.request_digest, _digest_of(req.to_dict()), "request_digest")
+    same(ev.source_ref_ids, req.source_ref_ids, "source_ref_ids")
+    same(ev.confidence, req.confidence, "confidence")
+    same(ev.fluent_text_present, bool(req.fluent_text), "fluent_text_present")
+    obs, order = ObservationMap.from_document(doc), QuantifierOrder.from_document(doc)
+    if translation is not None:
+        same(translation.engine.value, req.provider.value, "translation engine")
+        # Adapter digests use UTF-8 JSON; V2 request descriptors use ASCII JSON.
+        same(translation.document_digest, stable_digest(doc.semantic_dict()), "translation document")
+        same(translation.formula_id, doc.formula.formula_id, "translation formula")
+        same(translation.matrix_statement, doc.formula.matrix_statement, "translation matrix")
+        same(translation.observation_map.to_dict(), obs.to_dict(), "translation observation map")
+        same(translation.quantifier_order.to_dict(), order.to_dict(), "translation quantifier order")
+        same(translation.formula_text, render_hyperltl_formula(doc, engine=translation.engine),
+             "translation formula text")
+        auxiliary = {
+            "observation_map.json": json.dumps(obs.to_dict(), sort_keys=True, separators=(",", ":")) + "\n",
+            "quantifier_order.json": json.dumps(order.to_dict(), sort_keys=True, separators=(",", ":")) + "\n",
+        }
+        if req.provider is HyperProviderKind.AUTOHYPER:
+            auxiliary["system.explicit"] = _autohyper_explicit_system(doc)
+        same(dict(translation.auxiliary_files), auxiliary, "translation auxiliary files")
+
+    same(ev.formula.to_dict(), HyperFormulaBindingV2.from_document(
+        doc, translation=translation).to_dict(), "formula")
+    same(ev.system.to_dict(), HyperSystemBindingV2.from_request(
+        provider=req.provider, document=doc, system_model=req.system_model,
+        translation=translation, evidence_path=ev.evidence_path).to_dict(), "system")
+    same(ev.witness.formula_id, doc.formula.formula_id, "witness formula")
+    same(ev.witness.observation_policy_id, obs.policy_id, "witness observation policy")
+
+    mock = req.has_mock_output or req.mode is HyperExecutionMode.MOCK
+    fallback = not mock and (req.has_fallback_output or req.mode is HyperExecutionMode.FALLBACK)
+    mode = (HyperExecutionMode.MOCK if mock else HyperExecutionMode.FALLBACK if fallback
+            else req.mode)
+    same(ev.mode, mode, "mode")
+    same(ev.available, req.available if mock or fallback else ev.capability.available,
+         "availability")
+    same(ev.mock_output_present, mock, "mock output")
+    same(ev.fallback_output_present, req.has_fallback_output or fallback, "fallback output")
+    if backend is None:
+        same(translation, None, "absent backend translation")
+        same(ev.receipt, None, "absent backend receipt")
+        same(ev.evidence_path, HyperEvidencePath.NONE, "absent backend evidence path")
+        disposition = {
+            HyperExecutionMode.MOCK: HyperDisposition.MOCK_REJECTED,
+            HyperExecutionMode.FALLBACK: HyperDisposition.FALLBACK_REJECTED,
+            HyperExecutionMode.CAPABILITY_PROBE: HyperDisposition.CAPABILITY_ONLY,
+            HyperExecutionMode.ENGINE: HyperDisposition.ERROR,
+        }[mode]
+        same(ev.disposition, disposition, "non-execution disposition")
+        same(ev.result_status, ResultStatus.ERROR if mode is HyperExecutionMode.ENGINE
+             else ResultStatus.UNKNOWN, "non-execution status")
+        semantics = (HyperSemanticsKind.CAPABILITY_ONLY if mode is HyperExecutionMode.CAPABILITY_PROBE
+                     else HyperSemanticsKind.NONE)
+        same(ev.witness.to_dict(), HyperWitnessBindingV2(status=HyperWitnessStatus.NONE,
+            formula_id=doc.formula.formula_id, observation_policy_id=obs.policy_id).to_dict(),
+            "non-execution witness")
+    else:
+        same(mode, HyperExecutionMode.ENGINE, "backend mode")
+        if translation is None or ev.receipt is None:
+            raise HyperExecutionError("backend result requires translation and receipt")
+        receipt = _thaw_mapping(ev.receipt)
+        same(backend.backend_id, req.provider.value, "backend provider")
+        same(backend.bounds, req.bounds, "backend execution bounds")
+        same(backend.authority, ResultAuthority.HYPERPROPERTY, "backend authority")
+        same(backend.translation_ceiling, EvidenceAuthority.BOUNDED, "backend ceiling")
+        same(backend.status, ev.result_status, "backend status")
+        try:
+            status = HyperCheckOutcomeStatus(receipt.get("status"))
+        except (TypeError, ValueError) as error:
+            raise HyperExecutionError("invalid receipt status") from error
+        same(ev.disposition, _status_to_disposition(status), "receipt disposition")
+        same(ev.result_status, _status_to_result_status(status), "receipt status")
+        expected_receipt = {
+            "engine": req.provider.value, "document_digest": translation.document_digest,
+            "translation_digest": translation.translation_digest,
+            "observation_map": obs.to_dict(), "quantifier_order": order.to_dict(),
+            "capability": capability_for(req.provider).to_dict(),
+            "evidence_path": ev.evidence_path.value, "authorizes_universal_proof": False,
+            "timeout_ms": req.bounds.timeout_ms,
+        }
+        for key, value in expected_receipt.items():
+            same(receipt.get(key), value, "receipt " + key)
+        if "timeout_seconds" in receipt:
+            same(receipt["timeout_seconds"] * 1000, req.bounds.timeout_ms, "receipt timeout seconds")
+        # The typed adapter receipt has exactly one floating field. Restore its
+        # declared timeout before checking its original UTF-8 content identity.
+        receipt_preimage = {k: v for k, v in receipt.items() if k not in {"receipt_id", "timeout_ms"}}
+        receipt_preimage["timeout_seconds"] = max(0.001, req.bounds.timeout_ms / 1000.0)
+        same(receipt.get("receipt_id"), "hyperproperty-check-receipt:" + stable_digest(receipt_preimage),
+             "receipt content identity")
+        same(backend.witness.get("receipt_id"), receipt.get("receipt_id"), "backend receipt id")
+        same(backend.result_id, "hyperproperty-result:" + stable_digest({"receipt": receipt.get("receipt_id")}),
+             "backend result id")
+        for key in ("engine", "evidence_path", "external_tool_proof"):
+            same(backend.witness.get(key), receipt.get(key), "backend witness " + key)
+            same(backend.metadata.get(key), receipt.get(key), "backend metadata " + key)
+        for key in ("observation_map", "quantifier_order"):
+            same(backend.witness.to_dict().get(key), expected_receipt[key], "backend " + key)
+        if receipt.get("fallback_bounds") is not None:
+            same(req.allow_fallback, True, "fallback permission")
+            disclosure = FallbackBoundDisclosure.from_bound(doc.self_composition_bound).to_dict()
+            same(receipt.get("fallback_bounds"), disclosure, "fallback bounds")
+            same(backend.witness.to_dict().get("fallback_bounds"), disclosure, "backend fallback bounds")
+        else:
+            same(backend.witness.get("fallback_bounds"), None, "backend absent fallback bounds")
+        if ev.evidence_path is HyperEvidencePath.BOUNDED_SELF_COMPOSITION:
+            same(req.allow_fallback, True, "fallback permission")
+            if receipt.get("fallback_bounds") is None:
+                raise HyperExecutionError("fallback evidence requires bounds disclosure")
+            semantics = HyperSemanticsKind.FALLBACK_BOUNDED
+        else:
+            semantics = (HyperSemanticsKind.ENGINE_BOUNDED if ev.evidence_path is HyperEvidencePath.ENGINE
+                         else HyperSemanticsKind.FINITE_BOUNDED)
+        external = (ev.evidence_path is HyperEvidencePath.ENGINE
+                    and ev.disposition in {HyperDisposition.SATISFIED, HyperDisposition.VIOLATED})
+        same(receipt.get("external_tool_proof"), external, "receipt external proof")
+        counterexample = None
+        raw_counterexample = receipt.get("counterexample")
+        if ev.evidence_path is HyperEvidencePath.NONE and (
+                raw_counterexample is not None or backend.witness.get("witness_bundle") is not None):
+            raise HyperExecutionError("no-evidence path cannot carry counterexample or witness bundle")
+        if raw_counterexample is not None:
+            try:
+                counterexample = HyperCounterexampleTrace(**{
+                    **raw_counterexample,
+                    "traces": tuple(WitnessTrace.from_dict(row) for row in raw_counterexample["traces"]),
+                    "differences": tuple(ObservationDifference.from_dict(row) for row in raw_counterexample["differences"]),
+                })
+            except (TypeError, ValueError, KeyError) as error:
+                raise HyperExecutionError("invalid receipt counterexample") from error
+        expected_witness = HyperWitnessBindingV2.from_outcome(document=doc,
+            disposition=ev.disposition, evidence_path=ev.evidence_path,
+            counterexample=counterexample, observation_policy_id=obs.policy_id)
+        same(ev.witness.to_dict(), expected_witness.to_dict(), "receipt witness projection")
+        backend_witness = backend.witness.to_dict()
+        same(backend_witness.get("counterexample"), expected_witness.to_dict()["counterexample"],
+             "backend counterexample")
+        bundle = backend_witness.get("witness_bundle")
+        if ev.evidence_path is HyperEvidencePath.ENGINE:
+            expected_bundle = None
+            if counterexample is not None and expected_witness.replayed:
+                expected_bundle = counterexample.to_witness_bundle(observation_map=obs,
+                    quantifier_order=order, formula_id=doc.formula.formula_id).to_dict()
+            same(bundle, expected_bundle, "backend native witness bundle")
+        elif ev.evidence_path is HyperEvidencePath.BOUNDED_SELF_COMPOSITION:
+            # The descriptor intentionally omits private inputs. Validate
+            # applicability by reading the retained traces in memory instead
+            # of adding public private-input commitments or trusting equality
+            # (ExecutionTrace equality deliberately ignores private_inputs).
+            if not req.traces:
+                raise HyperExecutionError("fallback evaluation requires retained traces")
+            expected_counterexample = None
+            expected_bundle = None
+            _operation_checkpoint("before fallback applicability validation")
+            try:
+                evaluation = _CANONICAL_BOUNDED_EVALUATOR(doc, req.traces,
+                                                       checkpoint=_operation_checkpoint)
+            except HyperpropertyValidationError:
+                expected_status = HyperDisposition.UNSUPPORTED
+            else:
+                expected_status = HyperDisposition.UNKNOWN
+                if evaluation.verdict is HyperpropertyVerdict.VIOLATED:
+                    expected_status = HyperDisposition.VIOLATED
+                    evaluated_bundle = evaluation.witness_bundle
+                    expected_bundle = evaluated_bundle.to_dict()
+                    expected_counterexample = HyperCounterexampleTrace(
+                        formula_id=evaluated_bundle.formula_id,
+                        observation_policy_id=doc.information_flow_policy.policy_id,
+                        observed_fields=evaluated_bundle.observed_fields,
+                        traces=evaluated_bundle.traces,
+                        differences=evaluated_bundle.differences,
+                        raw="", replayed=True,
+                        replay_notes=("fallback counterexample from bounded self-composition",
+                                      "not an external-tool proof"),
+                    ).to_dict()
+                # UNKNOWN includes both clean and inconclusive samples. Keep
+                # their existing descriptive reason consistent too, while
+                # allowing the engine-specific unavailable-discovery prefix.
+                suffix = ("; used non-authoritative bounded self-composition "
+                          f"with max_traces={doc.self_composition_bound.max_traces}, "
+                          f"max_pairs={doc.self_composition_bound.max_pairs}: {evaluation.reason}")
+                if not str(receipt.get("reason", "")).endswith(suffix):
+                    raise HyperExecutionError("fallback evaluation reason does not match retained traces")
+                same(backend.reason, receipt.get("reason"), "fallback backend reason")
+            _operation_checkpoint("after fallback applicability validation")
+            same(ev.disposition, expected_status, "fallback evaluated disposition")
+            same(raw_counterexample, expected_counterexample, "fallback evaluated counterexample")
+            same(bundle, expected_bundle, "fallback evaluated witness bundle")
+    same(ev.bounds.to_dict(), HyperBoundsBindingV2.from_capability(capability_for(req.provider),
+        bounds=req.bounds, document=doc, semantics=semantics).to_dict(), "bounds")
+    established = (backend is not None and ev.evidence_path is HyperEvidencePath.ENGINE
+                   and ev.disposition in {HyperDisposition.SATISFIED, HyperDisposition.VIOLATED})
+    same(ev.hyperproperty_established, established, "bounded authority")
+    same(ev.external_tool_proof, established, "external tool proof")
+
+
 @dataclass(frozen=True, slots=True)
 class HyperExecutionResultV2:
     """Typed result of one hyperproperty engine execution.
@@ -2026,6 +2307,47 @@ class HyperExecutionResultV2:
             raise HyperAuthorityError(
                 "result engine must match request provider"
             )
+        # Standalone reconstruction also gets a finite budget; nested
+        # validation inherits any tighter caller deadline and cancellation.
+        with proof_operation_scope(timeout_ms=_operation_timeout(self.request.bounds, None)), (
+            admitted_python_work(memory_bytes=self.request.bounds.max_memory_bytes)
+            if self.evidence.evidence_path is HyperEvidencePath.BOUNDED_SELF_COMPOSITION
+            else nullcontext()
+        ):
+            _validate_result_bindings(self)
+            witness = self.evidence.witness
+            if self.evidence.evidence_path is HyperEvidencePath.ENGINE and witness.replayed:
+                # Deserializing/reconstructing a result must not bypass the check
+                # performed by from_outcome. This checks structural projection only.
+                document = self.request.document
+                observation_map = ObservationMap.from_document(document)
+                quantifier_order = QuantifierOrder.from_document(document)
+                payload = _thaw_mapping(witness.counterexample or {})
+                parsed = parse_hyper_counterexample(
+                    payload.get("raw", ""),
+                    formula_id=document.formula.formula_id,
+                    observation_map=observation_map,
+                    quantifier_order=quantifier_order,
+                )
+                checked = (replay_hyper_counterexample(
+                    parsed, observation_map, quantifier_order,
+                    formula_id=document.formula.formula_id,
+                ) if parsed is not None else None)
+                expected = checked.to_dict() if checked is not None else {}
+                projection_keys = ("schema_version", "formula_id", "observation_policy_id",
+                                   "observed_fields", "traces", "differences")
+                if (checked is None or not checked.replayed
+                        or witness.status is not HyperWitnessStatus.COUNTEREXAMPLE_REPLAYED
+                        or witness.formula_id != document.formula.formula_id
+                        or witness.observation_policy_id != observation_map.policy_id
+                        or witness.trace_count != len(checked.traces)
+                        or witness.difference_count != len(checked.differences)
+                        or payload.get("replayed") is not True
+                        or any(canonical_json_bytes(payload.get(key)) != canonical_json_bytes(expected[key])
+                               for key in projection_keys)):
+                    raise HyperExecutionError(
+                        "native replayed witness failed request-bound structural projection validation"
+                    )
 
     @property
     def disposition(self) -> HyperDisposition:
@@ -2109,15 +2431,17 @@ class HyperExecutionEngineV2:
         autohyper: HyperpropertyBackend | None = None,
         mchyper: HyperpropertyBackend | None = None,
         runner: BoundedToolRunner | None = None,
+        operation_timeout_ms: int | None = None,
+        cancellation=None,
     ) -> None:
+        validate_operation_timeout_ms(operation_timeout_ms)
         self._runner = runner
+        self._operation_timeout_ms = operation_timeout_ms
+        self._operation_cancellation = cancellation
         self._backends: dict[HyperProviderKind, HyperpropertyBackend] = {
-            HyperProviderKind.HYPERLTL: hyperltl
-            or HyperLTLBackend(runner=runner),
-            HyperProviderKind.AUTOHYPER: autohyper
-            or AutoHyperBackend(runner=runner),
-            HyperProviderKind.MCHYPER: mchyper
-            or MCHyperBackend(runner=runner),
+            HyperProviderKind.HYPERLTL: HyperLTLBackend(runner=runner) if hyperltl is None else hyperltl,
+            HyperProviderKind.AUTOHYPER: AutoHyperBackend(runner=runner) if autohyper is None else autohyper,
+            HyperProviderKind.MCHYPER: MCHyperBackend(runner=runner) if mchyper is None else mchyper,
         }
         # Enforce engine identity isolation at construction.
         for kind, backend in self._backends.items():
@@ -2132,6 +2456,12 @@ class HyperExecutionEngineV2:
                 raise HyperAuthorityError(
                     "backend capability engine mismatch"
                 )
+
+    def _operation_settings(self, bounds, operation_timeout_ms, cancellation):
+        validate_operation_timeout_ms(operation_timeout_ms)
+        timeout = self._operation_timeout_ms if operation_timeout_ms is None else operation_timeout_ms
+        return (_operation_timeout(bounds, timeout),
+                _Signals(self._operation_cancellation, cancellation))
 
     def backend(self, provider: HyperProviderKind | str) -> HyperpropertyBackend:
         kind = normalize_hyper_provider(provider)
@@ -2155,13 +2485,17 @@ class HyperExecutionEngineV2:
     ) -> HyperCapabilityReceiptV2:
         kind = normalize_hyper_provider(provider)
         backend = self.backend(kind)
+        _operation_checkpoint("before hyper availability probe")
         available = backend.is_available()
+        _operation_checkpoint("after hyper availability probe")
         supported = True
         reason = ""
         if document is not None:
             supported, reason = backend.supports_prefix(document)
+            _operation_checkpoint("after hyper prefix probe")
         if not available and not reason:
             probe = backend.probe()
+            _operation_checkpoint("after hyper capability discovery")
             reason = probe.reason or f"{kind.value} executable unavailable"
         return HyperCapabilityReceiptV2(
             engine=kind,
@@ -2183,8 +2517,28 @@ class HyperExecutionEngineV2:
     def execute(
         self,
         request: HyperExecutionRequestV2 | Mapping[str, Any],
+        *,
+        operation_timeout_ms: int | None = None,
+        cancellation=None,
     ) -> HyperExecutionResultV2:
-        """Execute one typed hyperproperty request on a single engine path."""
+        """Execute within one cooperative budget through evidence publication.
+
+        Controls can tighten the requested timeout without rewriting the request
+        or its declared bounds. Interruption raises a typed proof-operation
+        exception and returns no evidence. Python callbacks are checked at
+        boundaries; they cannot be forcibly preempted.
+        """
+        bounds = _operation_bounds(request.bounds if isinstance(request, HyperExecutionRequestV2)
+                                   else _require_mapping(request, "request").get("bounds"))
+        timeout, signal = self._operation_settings(bounds, operation_timeout_ms, cancellation)
+        with proof_operation_scope(timeout_ms=timeout, cancellation=signal):
+            result = self._execute_request(request)
+            _operation_checkpoint("after hyper evidence construction")
+            return result
+
+    def _execute_request(
+        self, request: HyperExecutionRequestV2 | Mapping[str, Any],
+    ) -> HyperExecutionResultV2:
 
         req = (
             request
@@ -2213,10 +2567,13 @@ class HyperExecutionEngineV2:
                 )
             )
         )
+        _operation_checkpoint("after hyper request normalization")
         request_digest = _digest_of(req.to_dict())
         document: HyperpropertyIR = req.document  # type: ignore[assignment]
         provider: HyperProviderKind = req.provider  # type: ignore[assignment]
+        _operation_checkpoint("before hyper capability probe")
         capability = self.capability_receipt(provider, document=document)
+        _operation_checkpoint("after hyper capability probe")
 
         # Mock path: never establishes hyperproperty authority.
         if req.has_mock_output or req.mode is HyperExecutionMode.MOCK:
@@ -2275,13 +2632,31 @@ class HyperExecutionEngineV2:
         system_models: Mapping[str, bytes | str] | None = None,
         bounds: ExecutionBounds | None = None,
         allow_fallback: bool = False,
+        operation_timeout_ms: int | None = None,
+        cancellation=None,
     ) -> dict[HyperProviderKind, HyperExecutionResultV2]:
-        """Run each engine path independently; results never cross-establish."""
+        """Run all independent paths within one shared operation budget.
+
+        A stopped split returns no partial mapping. Engine results never
+        establish another engine's capability.
+        """
+        selected_bounds = _operation_bounds(bounds)
+        timeout, signal = self._operation_settings(selected_bounds, operation_timeout_ms, cancellation)
+        with proof_operation_scope(timeout_ms=timeout, cancellation=signal):
+            return self._execute_split(document, request_id_prefix=request_id_prefix,
+                system_models=system_models, bounds=selected_bounds,
+                allow_fallback=allow_fallback, operation_timeout_ms=timeout)
+
+    def _execute_split(self, document, *, request_id_prefix, system_models, bounds,
+                       allow_fallback, operation_timeout_ms):
 
         doc = _document_from_value(document)
+        _operation_checkpoint("after split hyper document normalization")
         models = dict(system_models or {})
+        _operation_checkpoint("after split hyper system normalization")
         results: dict[HyperProviderKind, HyperExecutionResultV2] = {}
         for kind in HyperProviderKind:
+            _operation_checkpoint("before split hyper engine")
             model = models.get(kind.value)
             req = HyperExecutionRequestV2(
                 request_id=f"{request_id_prefix}:{kind.value}",
@@ -2292,7 +2667,7 @@ class HyperExecutionEngineV2:
                 allow_fallback=allow_fallback,
                 mode=HyperExecutionMode.ENGINE,
             )
-            results[kind] = self.execute(req)
+            results[kind] = _execute_in_operation(self, req, operation_timeout_ms=operation_timeout_ms)
             # Explicit independence assertion on the live result.
             for other in HyperProviderKind:
                 if other is kind:
@@ -2317,14 +2692,19 @@ class HyperExecutionEngineV2:
         bounds: ExecutionBounds = req.bounds  # type: ignore[assignment]
         backend = self.backend(provider)
 
+        _operation_checkpoint("before hyper backend execution")
         try:
-            outcome = backend.check(
-                document,
-                traces=req.traces or None,
-                system_model=req.system_model,
-                allow_fallback=req.allow_fallback,
-            )
+            check = backend.check
+            kwargs = dict(bounds=bounds, traces=req.traces or None,
+                          system_model=req.system_model, allow_fallback=req.allow_fallback)
+            if getattr(check, "__func__", None) is _CANONICAL_BACKEND_CHECK:
+                kwargs["cancellation"] = current_proof_operation()
+            # Legacy overrides keep their original signature and are called once.
+            outcome = check(document, **kwargs)
+        except ProofOperationInterrupted:
+            raise
         except (HyperpropertyAdapterError, HyperpropertyValidationError, OSError, ValueError, TypeError) as error:
+            _operation_checkpoint("hyper backend exception boundary")
             # Keep engine/system/formula/bounds/witness bindings even when the
             # selected path cannot produce a holds/violated verdict.  Never
             # promote another engine's capability from this failure.
@@ -2370,6 +2750,7 @@ class HyperExecutionEngineV2:
             )
             return HyperExecutionResultV2(request=req, evidence=evidence)
 
+        _operation_checkpoint("after hyper backend execution")
         return self._from_outcome(
             req,
             request_digest=request_digest,
@@ -2604,6 +2985,44 @@ class HyperExecutionEngineV2:
 # ---------------------------------------------------------------------------
 
 
+_CANONICAL_BACKEND_CHECK = HyperpropertyBackend.check
+_CANONICAL_ENGINE_EXECUTE = HyperExecutionEngineV2.execute
+_CANONICAL_BOUNDED_EVALUATOR = HyperpropertyIR.evaluate_bounded_noninterference
+
+
+def _operation_bounds(bounds):
+    if bounds is None:
+        return ExecutionBounds(timeout_ms=1_000, max_steps=1_000)
+    if not isinstance(bounds, ExecutionBounds):
+        raise HyperExecutionError("bounds must be ExecutionBounds")
+    return bounds
+
+
+def _operation_timeout(bounds, override):
+    validate_operation_timeout_ms(override)
+    return min(bounds.timeout_ms, MAX_OPERATION_TIMEOUT_MS,
+               override if override is not None else MAX_OPERATION_TIMEOUT_MS)
+
+
+def _operation_checkpoint(phase):
+    operation = current_proof_operation()
+    if operation is not None:
+        return operation.checkpoint(phase)
+    return None
+
+
+def _execute_in_operation(engine, request, *, operation_timeout_ms):
+    """Preserve execute(request)-only overrides without retrying callbacks."""
+    _operation_checkpoint("before hyper engine execution")
+    execute = engine.execute
+    if getattr(execute, "__func__", None) is _CANONICAL_ENGINE_EXECUTE:
+        result = execute(request, operation_timeout_ms=operation_timeout_ms)
+    else:
+        result = execute(request)
+    _operation_checkpoint("after hyper engine execution")
+    return result
+
+
 def execute_hyper(
     document: HyperpropertyIR | Mapping[str, Any],
     *,
@@ -2619,26 +3038,35 @@ def execute_hyper(
     confidence: float = 0.0,
     fluent_text: str = "",
     engine: HyperExecutionEngineV2 | None = None,
+    operation_timeout_ms: int | None = None,
+    cancellation=None,
 ) -> HyperExecutionResultV2:
-    """Execute one hyperproperty document through HyperProviderEvidence@2."""
+    """Normalize and execute a document within one cooperative operation."""
 
-    gate = engine or HyperExecutionEngineV2()
-    req = HyperExecutionRequestV2(
-        request_id=request_id,
-        provider=provider,
-        document=document,
-        system_model=system_model,
-        traces=tuple(traces or ()),
-        allow_fallback=allow_fallback,
-        bounds=bounds,
-        mock_output=mock_output,
-        fallback_output=fallback_output,
-        available=available,
-        confidence=confidence,
-        fluent_text=fluent_text,
-        mode=HyperExecutionMode.ENGINE,
-    )
-    return gate.execute(req)
+    validate_operation_timeout_ms(operation_timeout_ms)
+    gate = HyperExecutionEngineV2() if engine is None else engine
+    selected_bounds = _operation_bounds(bounds)
+    if isinstance(gate, HyperExecutionEngineV2):
+        timeout, signal = gate._operation_settings(selected_bounds, operation_timeout_ms, cancellation)
+    else:
+        timeout, signal = _operation_timeout(selected_bounds, operation_timeout_ms), cancellation
+    with proof_operation_scope(timeout_ms=timeout, cancellation=signal):
+        req = HyperExecutionRequestV2(
+            request_id=request_id,
+            provider=provider,
+            document=document,
+            system_model=system_model,
+            traces=traces,
+            allow_fallback=allow_fallback,
+            bounds=selected_bounds,
+            mock_output=mock_output,
+            fallback_output=fallback_output,
+            available=available,
+            confidence=confidence,
+            fluent_text=fluent_text,
+            mode=HyperExecutionMode.ENGINE,
+        )
+        return _execute_in_operation(gate, req, operation_timeout_ms=timeout)
 
 
 def execute_hyperltl(
